@@ -50,20 +50,20 @@ private static final long serialVersionUID = 0L;
             break;
           case 10: {
             if (!((mutable_bitField0_ & 0x00000001) != 0)) {
-              inputs_ = new java.util.ArrayList<com.tangem.blockchain.blockchains.binance.proto.Send.Input>();
+              inputs_ = new java.util.ArrayList<Input>();
               mutable_bitField0_ |= 0x00000001;
             }
             inputs_.add(
-                input.readMessage(com.tangem.blockchain.blockchains.binance.proto.Send.Input.parser(), extensionRegistry));
+                input.readMessage(Input.parser(), extensionRegistry));
             break;
           }
           case 18: {
             if (!((mutable_bitField0_ & 0x00000002) != 0)) {
-              outputs_ = new java.util.ArrayList<com.tangem.blockchain.blockchains.binance.proto.Send.Output>();
+              outputs_ = new java.util.ArrayList<Output>();
               mutable_bitField0_ |= 0x00000002;
             }
             outputs_.add(
-                input.readMessage(com.tangem.blockchain.blockchains.binance.proto.Send.Output.parser(), extensionRegistry));
+                input.readMessage(Output.parser(), extensionRegistry));
             break;
           }
           default: {
@@ -93,15 +93,15 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_descriptor;
+    return Transaction.internal_static_transaction_Send_descriptor;
   }
 
   @Override
   protected FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_fieldAccessorTable
+    return Transaction.internal_static_transaction_Send_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.tangem.blockchain.blockchains.binance.proto.Send.class, com.tangem.blockchain.blockchains.binance.proto.Send.Builder.class);
+            Send.class, Builder.class);
   }
 
   public interface TokenOrBuilder extends
@@ -199,15 +199,15 @@ private static final long serialVersionUID = 0L;
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_Token_descriptor;
+      return Transaction.internal_static_transaction_Send_Token_descriptor;
     }
 
     @Override
     protected FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_Token_fieldAccessorTable
+      return Transaction.internal_static_transaction_Send_Token_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.tangem.blockchain.blockchains.binance.proto.Send.Token.class, com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder.class);
+              Token.class, Builder.class);
     }
 
     public static final int DENOM_FIELD_NUMBER = 1;
@@ -299,10 +299,10 @@ private static final long serialVersionUID = 0L;
       if (obj == this) {
        return true;
       }
-      if (!(obj instanceof com.tangem.blockchain.blockchains.binance.proto.Send.Token)) {
+      if (!(obj instanceof Token)) {
         return super.equals(obj);
       }
-      com.tangem.blockchain.blockchains.binance.proto.Send.Token other = (com.tangem.blockchain.blockchains.binance.proto.Send.Token) obj;
+      Token other = (Token) obj;
 
       if (!getDenom()
           .equals(other.getDenom())) return false;
@@ -329,69 +329,69 @@ private static final long serialVersionUID = 0L;
       return hash;
     }
 
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Token parseFrom(
+    public static Token parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Token parseFrom(
+    public static Token parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Token parseFrom(
+    public static Token parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Token parseFrom(
+    public static Token parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Token parseFrom(byte[] data)
+    public static Token parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Token parseFrom(
+    public static Token parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Token parseFrom(java.io.InputStream input)
+    public static Token parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Token parseFrom(
+    public static Token parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Token parseDelimitedFrom(java.io.InputStream input)
+    public static Token parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Token parseDelimitedFrom(
+    public static Token parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Token parseFrom(
+    public static Token parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Token parseFrom(
+    public static Token parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -404,7 +404,7 @@ private static final long serialVersionUID = 0L;
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
     }
-    public static Builder newBuilder(com.tangem.blockchain.blockchains.binance.proto.Send.Token prototype) {
+    public static Builder newBuilder(Token prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
     @Override
@@ -429,18 +429,18 @@ private static final long serialVersionUID = 0L;
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:transaction.Send.Token)
-        com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder {
+        TokenOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_Token_descriptor;
+        return Transaction.internal_static_transaction_Send_Token_descriptor;
       }
 
       @Override
       protected FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_Token_fieldAccessorTable
+        return Transaction.internal_static_transaction_Send_Token_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                com.tangem.blockchain.blockchains.binance.proto.Send.Token.class, com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder.class);
+                Token.class, Builder.class);
       }
 
       // Construct using com.tangem.blockchain.blockchains.binance.proto.Send.Token.newBuilder()
@@ -471,17 +471,17 @@ private static final long serialVersionUID = 0L;
       @Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_Token_descriptor;
+        return Transaction.internal_static_transaction_Send_Token_descriptor;
       }
 
       @Override
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Token getDefaultInstanceForType() {
-        return com.tangem.blockchain.blockchains.binance.proto.Send.Token.getDefaultInstance();
+      public Token getDefaultInstanceForType() {
+        return Token.getDefaultInstance();
       }
 
       @Override
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Token build() {
-        com.tangem.blockchain.blockchains.binance.proto.Send.Token result = buildPartial();
+      public Token build() {
+        Token result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
@@ -489,8 +489,8 @@ private static final long serialVersionUID = 0L;
       }
 
       @Override
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Token buildPartial() {
-        com.tangem.blockchain.blockchains.binance.proto.Send.Token result = new com.tangem.blockchain.blockchains.binance.proto.Send.Token(this);
+      public Token buildPartial() {
+        Token result = new Token(this);
         result.denom_ = denom_;
         result.amount_ = amount_;
         onBuilt();
@@ -531,16 +531,16 @@ private static final long serialVersionUID = 0L;
       }
       @Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.tangem.blockchain.blockchains.binance.proto.Send.Token) {
-          return mergeFrom((com.tangem.blockchain.blockchains.binance.proto.Send.Token)other);
+        if (other instanceof Token) {
+          return mergeFrom((Token)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(com.tangem.blockchain.blockchains.binance.proto.Send.Token other) {
-        if (other == com.tangem.blockchain.blockchains.binance.proto.Send.Token.getDefaultInstance()) return this;
+      public Builder mergeFrom(Token other) {
+        if (other == Token.getDefaultInstance()) return this;
         if (!other.getDenom().isEmpty()) {
           denom_ = other.denom_;
           onChanged();
@@ -563,11 +563,11 @@ private static final long serialVersionUID = 0L;
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        com.tangem.blockchain.blockchains.binance.proto.Send.Token parsedMessage = null;
+        Token parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.tangem.blockchain.blockchains.binance.proto.Send.Token) e.getUnfinishedMessage();
+          parsedMessage = (Token) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
@@ -688,12 +688,12 @@ private static final long serialVersionUID = 0L;
     }
 
     // @@protoc_insertion_point(class_scope:transaction.Send.Token)
-    private static final com.tangem.blockchain.blockchains.binance.proto.Send.Token DEFAULT_INSTANCE;
+    private static final Token DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new com.tangem.blockchain.blockchains.binance.proto.Send.Token();
+      DEFAULT_INSTANCE = new Token();
     }
 
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Token getDefaultInstance() {
+    public static Token getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
@@ -718,7 +718,7 @@ private static final long serialVersionUID = 0L;
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.Send.Token getDefaultInstanceForType() {
+    public Token getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -736,12 +736,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
-    java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Token>
+    java.util.List<Token>
         getCoinsList();
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
-    com.tangem.blockchain.blockchains.binance.proto.Send.Token getCoins(int index);
+    Token getCoins(int index);
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
@@ -749,13 +749,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
-    java.util.List<? extends com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder>
+    java.util.List<? extends TokenOrBuilder>
         getCoinsOrBuilderList();
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
-    com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder getCoinsOrBuilder(
-            int index);
+    TokenOrBuilder getCoinsOrBuilder(int index);
   }
   /**
    * Protobuf type {@code transaction.Send.Input}
@@ -805,11 +804,11 @@ private static final long serialVersionUID = 0L;
             }
             case 18: {
               if (!((mutable_bitField0_ & 0x00000002) != 0)) {
-                coins_ = new java.util.ArrayList<com.tangem.blockchain.blockchains.binance.proto.Send.Token>();
+                coins_ = new java.util.ArrayList<Token>();
                 mutable_bitField0_ |= 0x00000002;
               }
               coins_.add(
-                  input.readMessage(com.tangem.blockchain.blockchains.binance.proto.Send.Token.parser(), extensionRegistry));
+                  input.readMessage(Token.parser(), extensionRegistry));
               break;
             }
             default: {
@@ -836,15 +835,15 @@ private static final long serialVersionUID = 0L;
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_Input_descriptor;
+      return Transaction.internal_static_transaction_Send_Input_descriptor;
     }
 
     @Override
     protected FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_Input_fieldAccessorTable
+      return Transaction.internal_static_transaction_Send_Input_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.tangem.blockchain.blockchains.binance.proto.Send.Input.class, com.tangem.blockchain.blockchains.binance.proto.Send.Input.Builder.class);
+              Input.class, Builder.class);
     }
 
     private int bitField0_;
@@ -858,17 +857,17 @@ private static final long serialVersionUID = 0L;
     }
 
     public static final int COINS_FIELD_NUMBER = 2;
-    private java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Token> coins_;
+    private java.util.List<Token> coins_;
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
-    public java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Token> getCoinsList() {
+    public java.util.List<Token> getCoinsList() {
       return coins_;
     }
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
-    public java.util.List<? extends com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder>
+    public java.util.List<? extends TokenOrBuilder>
         getCoinsOrBuilderList() {
       return coins_;
     }
@@ -881,13 +880,13 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
-    public com.tangem.blockchain.blockchains.binance.proto.Send.Token getCoins(int index) {
+    public Token getCoins(int index) {
       return coins_.get(index);
     }
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
-    public com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder getCoinsOrBuilder(
+    public TokenOrBuilder getCoinsOrBuilder(
         int index) {
       return coins_.get(index);
     }
@@ -939,10 +938,10 @@ private static final long serialVersionUID = 0L;
       if (obj == this) {
        return true;
       }
-      if (!(obj instanceof com.tangem.blockchain.blockchains.binance.proto.Send.Input)) {
+      if (!(obj instanceof Input)) {
         return super.equals(obj);
       }
-      com.tangem.blockchain.blockchains.binance.proto.Send.Input other = (com.tangem.blockchain.blockchains.binance.proto.Send.Input) obj;
+      Input other = (Input) obj;
 
       if (!getAddress()
           .equals(other.getAddress())) return false;
@@ -970,69 +969,69 @@ private static final long serialVersionUID = 0L;
       return hash;
     }
 
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Input parseFrom(
+    public static Input parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Input parseFrom(
+    public static Input parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Input parseFrom(
+    public static Input parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Input parseFrom(
+    public static Input parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Input parseFrom(byte[] data)
+    public static Input parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Input parseFrom(
+    public static Input parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Input parseFrom(java.io.InputStream input)
+    public static Input parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Input parseFrom(
+    public static Input parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Input parseDelimitedFrom(java.io.InputStream input)
+    public static Input parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Input parseDelimitedFrom(
+    public static Input parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Input parseFrom(
+    public static Input parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Input parseFrom(
+    public static Input parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -1045,7 +1044,7 @@ private static final long serialVersionUID = 0L;
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
     }
-    public static Builder newBuilder(com.tangem.blockchain.blockchains.binance.proto.Send.Input prototype) {
+    public static Builder newBuilder(Input prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
     @Override
@@ -1066,18 +1065,18 @@ private static final long serialVersionUID = 0L;
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:transaction.Send.Input)
-        com.tangem.blockchain.blockchains.binance.proto.Send.InputOrBuilder {
+        InputOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_Input_descriptor;
+        return Transaction.internal_static_transaction_Send_Input_descriptor;
       }
 
       @Override
       protected FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_Input_fieldAccessorTable
+        return Transaction.internal_static_transaction_Send_Input_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                com.tangem.blockchain.blockchains.binance.proto.Send.Input.class, com.tangem.blockchain.blockchains.binance.proto.Send.Input.Builder.class);
+                Input.class, Builder.class);
       }
 
       // Construct using com.tangem.blockchain.blockchains.binance.proto.Send.Input.newBuilder()
@@ -1113,17 +1112,17 @@ private static final long serialVersionUID = 0L;
       @Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_Input_descriptor;
+        return Transaction.internal_static_transaction_Send_Input_descriptor;
       }
 
       @Override
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Input getDefaultInstanceForType() {
-        return com.tangem.blockchain.blockchains.binance.proto.Send.Input.getDefaultInstance();
+      public Input getDefaultInstanceForType() {
+        return Input.getDefaultInstance();
       }
 
       @Override
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Input build() {
-        com.tangem.blockchain.blockchains.binance.proto.Send.Input result = buildPartial();
+      public Input build() {
+        Input result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
@@ -1131,8 +1130,8 @@ private static final long serialVersionUID = 0L;
       }
 
       @Override
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Input buildPartial() {
-        com.tangem.blockchain.blockchains.binance.proto.Send.Input result = new com.tangem.blockchain.blockchains.binance.proto.Send.Input(this);
+      public Input buildPartial() {
+        Input result = new Input(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         result.address_ = address_;
@@ -1184,16 +1183,16 @@ private static final long serialVersionUID = 0L;
       }
       @Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.tangem.blockchain.blockchains.binance.proto.Send.Input) {
-          return mergeFrom((com.tangem.blockchain.blockchains.binance.proto.Send.Input)other);
+        if (other instanceof Input) {
+          return mergeFrom((Input)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(com.tangem.blockchain.blockchains.binance.proto.Send.Input other) {
-        if (other == com.tangem.blockchain.blockchains.binance.proto.Send.Input.getDefaultInstance()) return this;
+      public Builder mergeFrom(Input other) {
+        if (other == Input.getDefaultInstance()) return this;
         if (other.getAddress() != com.google.protobuf.ByteString.EMPTY) {
           setAddress(other.getAddress());
         }
@@ -1238,11 +1237,11 @@ private static final long serialVersionUID = 0L;
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        com.tangem.blockchain.blockchains.binance.proto.Send.Input parsedMessage = null;
+        Input parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.tangem.blockchain.blockchains.binance.proto.Send.Input) e.getUnfinishedMessage();
+          parsedMessage = (Input) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
@@ -1282,22 +1281,22 @@ private static final long serialVersionUID = 0L;
         return this;
       }
 
-      private java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Token> coins_ =
+      private java.util.List<Token> coins_ =
         java.util.Collections.emptyList();
       private void ensureCoinsIsMutable() {
         if (!((bitField0_ & 0x00000002) != 0)) {
-          coins_ = new java.util.ArrayList<com.tangem.blockchain.blockchains.binance.proto.Send.Token>(coins_);
+          coins_ = new java.util.ArrayList<Token>(coins_);
           bitField0_ |= 0x00000002;
          }
       }
 
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          com.tangem.blockchain.blockchains.binance.proto.Send.Token, com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder, com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder> coinsBuilder_;
+          Token, Token.Builder, TokenOrBuilder> coinsBuilder_;
 
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Token> getCoinsList() {
+      public java.util.List<Token> getCoinsList() {
         if (coinsBuilder_ == null) {
           return java.util.Collections.unmodifiableList(coins_);
         } else {
@@ -1317,7 +1316,7 @@ private static final long serialVersionUID = 0L;
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Token getCoins(int index) {
+      public Token getCoins(int index) {
         if (coinsBuilder_ == null) {
           return coins_.get(index);
         } else {
@@ -1328,7 +1327,7 @@ private static final long serialVersionUID = 0L;
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
       public Builder setCoins(
-          int index, com.tangem.blockchain.blockchains.binance.proto.Send.Token value) {
+          int index, Token value) {
         if (coinsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -1345,7 +1344,7 @@ private static final long serialVersionUID = 0L;
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
       public Builder setCoins(
-          int index, com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder builderForValue) {
+          int index, Token.Builder builderForValue) {
         if (coinsBuilder_ == null) {
           ensureCoinsIsMutable();
           coins_.set(index, builderForValue.build());
@@ -1358,7 +1357,7 @@ private static final long serialVersionUID = 0L;
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public Builder addCoins(com.tangem.blockchain.blockchains.binance.proto.Send.Token value) {
+      public Builder addCoins(Token value) {
         if (coinsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -1375,7 +1374,7 @@ private static final long serialVersionUID = 0L;
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
       public Builder addCoins(
-          int index, com.tangem.blockchain.blockchains.binance.proto.Send.Token value) {
+          int index, Token value) {
         if (coinsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -1392,7 +1391,7 @@ private static final long serialVersionUID = 0L;
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
       public Builder addCoins(
-          com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder builderForValue) {
+          Token.Builder builderForValue) {
         if (coinsBuilder_ == null) {
           ensureCoinsIsMutable();
           coins_.add(builderForValue.build());
@@ -1406,7 +1405,7 @@ private static final long serialVersionUID = 0L;
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
       public Builder addCoins(
-          int index, com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder builderForValue) {
+          int index, Token.Builder builderForValue) {
         if (coinsBuilder_ == null) {
           ensureCoinsIsMutable();
           coins_.add(index, builderForValue.build());
@@ -1420,7 +1419,7 @@ private static final long serialVersionUID = 0L;
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
       public Builder addAllCoins(
-          Iterable<? extends com.tangem.blockchain.blockchains.binance.proto.Send.Token> values) {
+          Iterable<? extends Token> values) {
         if (coinsBuilder_ == null) {
           ensureCoinsIsMutable();
           com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -1460,14 +1459,14 @@ private static final long serialVersionUID = 0L;
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder getCoinsBuilder(
+      public Token.Builder getCoinsBuilder(
           int index) {
         return getCoinsFieldBuilder().getBuilder(index);
       }
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder getCoinsOrBuilder(
+      public TokenOrBuilder getCoinsOrBuilder(
           int index) {
         if (coinsBuilder_ == null) {
           return coins_.get(index);  } else {
@@ -1477,7 +1476,7 @@ private static final long serialVersionUID = 0L;
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public java.util.List<? extends com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder>
+      public java.util.List<? extends TokenOrBuilder>
            getCoinsOrBuilderList() {
         if (coinsBuilder_ != null) {
           return coinsBuilder_.getMessageOrBuilderList();
@@ -1488,31 +1487,31 @@ private static final long serialVersionUID = 0L;
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder addCoinsBuilder() {
+      public Token.Builder addCoinsBuilder() {
         return getCoinsFieldBuilder().addBuilder(
-            com.tangem.blockchain.blockchains.binance.proto.Send.Token.getDefaultInstance());
+            Token.getDefaultInstance());
       }
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder addCoinsBuilder(
+      public Token.Builder addCoinsBuilder(
           int index) {
         return getCoinsFieldBuilder().addBuilder(
-            index, com.tangem.blockchain.blockchains.binance.proto.Send.Token.getDefaultInstance());
+            index, Token.getDefaultInstance());
       }
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder>
+      public java.util.List<Token.Builder>
            getCoinsBuilderList() {
         return getCoinsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          com.tangem.blockchain.blockchains.binance.proto.Send.Token, com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder, com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder>
+          Token, Token.Builder, TokenOrBuilder>
           getCoinsFieldBuilder() {
         if (coinsBuilder_ == null) {
           coinsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-              com.tangem.blockchain.blockchains.binance.proto.Send.Token, com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder, com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder>(
+              Token, Token.Builder, TokenOrBuilder>(
                   coins_,
                   ((bitField0_ & 0x00000002) != 0),
                   getParentForChildren(),
@@ -1538,12 +1537,12 @@ private static final long serialVersionUID = 0L;
     }
 
     // @@protoc_insertion_point(class_scope:transaction.Send.Input)
-    private static final com.tangem.blockchain.blockchains.binance.proto.Send.Input DEFAULT_INSTANCE;
+    private static final Input DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new com.tangem.blockchain.blockchains.binance.proto.Send.Input();
+      DEFAULT_INSTANCE = new Input();
     }
 
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Input getDefaultInstance() {
+    public static Input getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
@@ -1568,7 +1567,7 @@ private static final long serialVersionUID = 0L;
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.Send.Input getDefaultInstanceForType() {
+    public Input getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -1586,12 +1585,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
-    java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Token>
+    java.util.List<Token>
         getCoinsList();
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
-    com.tangem.blockchain.blockchains.binance.proto.Send.Token getCoins(int index);
+    Token getCoins(int index);
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
@@ -1599,13 +1598,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
-    java.util.List<? extends com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder>
+    java.util.List<? extends TokenOrBuilder>
         getCoinsOrBuilderList();
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
-    com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder getCoinsOrBuilder(
-            int index);
+    TokenOrBuilder getCoinsOrBuilder(int index);
   }
   /**
    * Protobuf type {@code transaction.Send.Output}
@@ -1655,11 +1653,11 @@ private static final long serialVersionUID = 0L;
             }
             case 18: {
               if (!((mutable_bitField0_ & 0x00000002) != 0)) {
-                coins_ = new java.util.ArrayList<com.tangem.blockchain.blockchains.binance.proto.Send.Token>();
+                coins_ = new java.util.ArrayList<Token>();
                 mutable_bitField0_ |= 0x00000002;
               }
               coins_.add(
-                  input.readMessage(com.tangem.blockchain.blockchains.binance.proto.Send.Token.parser(), extensionRegistry));
+                  input.readMessage(Token.parser(), extensionRegistry));
               break;
             }
             default: {
@@ -1686,15 +1684,15 @@ private static final long serialVersionUID = 0L;
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_Output_descriptor;
+      return Transaction.internal_static_transaction_Send_Output_descriptor;
     }
 
     @Override
     protected FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_Output_fieldAccessorTable
+      return Transaction.internal_static_transaction_Send_Output_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.tangem.blockchain.blockchains.binance.proto.Send.Output.class, com.tangem.blockchain.blockchains.binance.proto.Send.Output.Builder.class);
+              Output.class, Builder.class);
     }
 
     private int bitField0_;
@@ -1708,17 +1706,17 @@ private static final long serialVersionUID = 0L;
     }
 
     public static final int COINS_FIELD_NUMBER = 2;
-    private java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Token> coins_;
+    private java.util.List<Token> coins_;
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
-    public java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Token> getCoinsList() {
+    public java.util.List<Token> getCoinsList() {
       return coins_;
     }
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
-    public java.util.List<? extends com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder>
+    public java.util.List<? extends TokenOrBuilder>
         getCoinsOrBuilderList() {
       return coins_;
     }
@@ -1731,13 +1729,13 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
-    public com.tangem.blockchain.blockchains.binance.proto.Send.Token getCoins(int index) {
+    public Token getCoins(int index) {
       return coins_.get(index);
     }
     /**
      * <code>repeated .transaction.Send.Token coins = 2;</code>
      */
-    public com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder getCoinsOrBuilder(
+    public TokenOrBuilder getCoinsOrBuilder(
         int index) {
       return coins_.get(index);
     }
@@ -1789,10 +1787,10 @@ private static final long serialVersionUID = 0L;
       if (obj == this) {
        return true;
       }
-      if (!(obj instanceof com.tangem.blockchain.blockchains.binance.proto.Send.Output)) {
+      if (!(obj instanceof Output)) {
         return super.equals(obj);
       }
-      com.tangem.blockchain.blockchains.binance.proto.Send.Output other = (com.tangem.blockchain.blockchains.binance.proto.Send.Output) obj;
+      Output other = (Output) obj;
 
       if (!getAddress()
           .equals(other.getAddress())) return false;
@@ -1820,69 +1818,69 @@ private static final long serialVersionUID = 0L;
       return hash;
     }
 
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Output parseFrom(
+    public static Output parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Output parseFrom(
+    public static Output parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Output parseFrom(
+    public static Output parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Output parseFrom(
+    public static Output parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Output parseFrom(byte[] data)
+    public static Output parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Output parseFrom(
+    public static Output parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Output parseFrom(java.io.InputStream input)
+    public static Output parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Output parseFrom(
+    public static Output parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Output parseDelimitedFrom(java.io.InputStream input)
+    public static Output parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Output parseDelimitedFrom(
+    public static Output parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Output parseFrom(
+    public static Output parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Output parseFrom(
+    public static Output parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -1895,7 +1893,7 @@ private static final long serialVersionUID = 0L;
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
     }
-    public static Builder newBuilder(com.tangem.blockchain.blockchains.binance.proto.Send.Output prototype) {
+    public static Builder newBuilder(Output prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
     @Override
@@ -1916,18 +1914,18 @@ private static final long serialVersionUID = 0L;
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:transaction.Send.Output)
-        com.tangem.blockchain.blockchains.binance.proto.Send.OutputOrBuilder {
+        OutputOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_Output_descriptor;
+        return Transaction.internal_static_transaction_Send_Output_descriptor;
       }
 
       @Override
       protected FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_Output_fieldAccessorTable
+        return Transaction.internal_static_transaction_Send_Output_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                com.tangem.blockchain.blockchains.binance.proto.Send.Output.class, com.tangem.blockchain.blockchains.binance.proto.Send.Output.Builder.class);
+                Output.class, Builder.class);
       }
 
       // Construct using com.tangem.blockchain.blockchains.binance.proto.Send.Output.newBuilder()
@@ -1963,17 +1961,17 @@ private static final long serialVersionUID = 0L;
       @Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_Output_descriptor;
+        return Transaction.internal_static_transaction_Send_Output_descriptor;
       }
 
       @Override
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Output getDefaultInstanceForType() {
-        return com.tangem.blockchain.blockchains.binance.proto.Send.Output.getDefaultInstance();
+      public Output getDefaultInstanceForType() {
+        return Output.getDefaultInstance();
       }
 
       @Override
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Output build() {
-        com.tangem.blockchain.blockchains.binance.proto.Send.Output result = buildPartial();
+      public Output build() {
+        Output result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
@@ -1981,8 +1979,8 @@ private static final long serialVersionUID = 0L;
       }
 
       @Override
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Output buildPartial() {
-        com.tangem.blockchain.blockchains.binance.proto.Send.Output result = new com.tangem.blockchain.blockchains.binance.proto.Send.Output(this);
+      public Output buildPartial() {
+        Output result = new Output(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         result.address_ = address_;
@@ -2034,16 +2032,16 @@ private static final long serialVersionUID = 0L;
       }
       @Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.tangem.blockchain.blockchains.binance.proto.Send.Output) {
-          return mergeFrom((com.tangem.blockchain.blockchains.binance.proto.Send.Output)other);
+        if (other instanceof Output) {
+          return mergeFrom((Output)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(com.tangem.blockchain.blockchains.binance.proto.Send.Output other) {
-        if (other == com.tangem.blockchain.blockchains.binance.proto.Send.Output.getDefaultInstance()) return this;
+      public Builder mergeFrom(Output other) {
+        if (other == Output.getDefaultInstance()) return this;
         if (other.getAddress() != com.google.protobuf.ByteString.EMPTY) {
           setAddress(other.getAddress());
         }
@@ -2088,11 +2086,11 @@ private static final long serialVersionUID = 0L;
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        com.tangem.blockchain.blockchains.binance.proto.Send.Output parsedMessage = null;
+        Output parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.tangem.blockchain.blockchains.binance.proto.Send.Output) e.getUnfinishedMessage();
+          parsedMessage = (Output) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
@@ -2132,22 +2130,22 @@ private static final long serialVersionUID = 0L;
         return this;
       }
 
-      private java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Token> coins_ =
+      private java.util.List<Token> coins_ =
         java.util.Collections.emptyList();
       private void ensureCoinsIsMutable() {
         if (!((bitField0_ & 0x00000002) != 0)) {
-          coins_ = new java.util.ArrayList<com.tangem.blockchain.blockchains.binance.proto.Send.Token>(coins_);
+          coins_ = new java.util.ArrayList<Token>(coins_);
           bitField0_ |= 0x00000002;
          }
       }
 
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          com.tangem.blockchain.blockchains.binance.proto.Send.Token, com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder, com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder> coinsBuilder_;
+          Token, Token.Builder, TokenOrBuilder> coinsBuilder_;
 
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Token> getCoinsList() {
+      public java.util.List<Token> getCoinsList() {
         if (coinsBuilder_ == null) {
           return java.util.Collections.unmodifiableList(coins_);
         } else {
@@ -2167,7 +2165,7 @@ private static final long serialVersionUID = 0L;
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Token getCoins(int index) {
+      public Token getCoins(int index) {
         if (coinsBuilder_ == null) {
           return coins_.get(index);
         } else {
@@ -2178,7 +2176,7 @@ private static final long serialVersionUID = 0L;
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
       public Builder setCoins(
-          int index, com.tangem.blockchain.blockchains.binance.proto.Send.Token value) {
+          int index, Token value) {
         if (coinsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -2195,7 +2193,7 @@ private static final long serialVersionUID = 0L;
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
       public Builder setCoins(
-          int index, com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder builderForValue) {
+          int index, Token.Builder builderForValue) {
         if (coinsBuilder_ == null) {
           ensureCoinsIsMutable();
           coins_.set(index, builderForValue.build());
@@ -2208,7 +2206,7 @@ private static final long serialVersionUID = 0L;
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public Builder addCoins(com.tangem.blockchain.blockchains.binance.proto.Send.Token value) {
+      public Builder addCoins(Token value) {
         if (coinsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -2225,7 +2223,7 @@ private static final long serialVersionUID = 0L;
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
       public Builder addCoins(
-          int index, com.tangem.blockchain.blockchains.binance.proto.Send.Token value) {
+          int index, Token value) {
         if (coinsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -2242,7 +2240,7 @@ private static final long serialVersionUID = 0L;
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
       public Builder addCoins(
-          com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder builderForValue) {
+          Token.Builder builderForValue) {
         if (coinsBuilder_ == null) {
           ensureCoinsIsMutable();
           coins_.add(builderForValue.build());
@@ -2256,7 +2254,7 @@ private static final long serialVersionUID = 0L;
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
       public Builder addCoins(
-          int index, com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder builderForValue) {
+          int index, Token.Builder builderForValue) {
         if (coinsBuilder_ == null) {
           ensureCoinsIsMutable();
           coins_.add(index, builderForValue.build());
@@ -2270,7 +2268,7 @@ private static final long serialVersionUID = 0L;
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
       public Builder addAllCoins(
-          Iterable<? extends com.tangem.blockchain.blockchains.binance.proto.Send.Token> values) {
+          Iterable<? extends Token> values) {
         if (coinsBuilder_ == null) {
           ensureCoinsIsMutable();
           com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -2310,14 +2308,14 @@ private static final long serialVersionUID = 0L;
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder getCoinsBuilder(
+      public Token.Builder getCoinsBuilder(
           int index) {
         return getCoinsFieldBuilder().getBuilder(index);
       }
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder getCoinsOrBuilder(
+      public TokenOrBuilder getCoinsOrBuilder(
           int index) {
         if (coinsBuilder_ == null) {
           return coins_.get(index);  } else {
@@ -2327,7 +2325,7 @@ private static final long serialVersionUID = 0L;
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public java.util.List<? extends com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder>
+      public java.util.List<? extends TokenOrBuilder>
            getCoinsOrBuilderList() {
         if (coinsBuilder_ != null) {
           return coinsBuilder_.getMessageOrBuilderList();
@@ -2338,31 +2336,31 @@ private static final long serialVersionUID = 0L;
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder addCoinsBuilder() {
+      public Token.Builder addCoinsBuilder() {
         return getCoinsFieldBuilder().addBuilder(
-            com.tangem.blockchain.blockchains.binance.proto.Send.Token.getDefaultInstance());
+            Token.getDefaultInstance());
       }
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder addCoinsBuilder(
+      public Token.Builder addCoinsBuilder(
           int index) {
         return getCoinsFieldBuilder().addBuilder(
-            index, com.tangem.blockchain.blockchains.binance.proto.Send.Token.getDefaultInstance());
+            index, Token.getDefaultInstance());
       }
       /**
        * <code>repeated .transaction.Send.Token coins = 2;</code>
        */
-      public java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder>
+      public java.util.List<Token.Builder>
            getCoinsBuilderList() {
         return getCoinsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          com.tangem.blockchain.blockchains.binance.proto.Send.Token, com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder, com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder>
+          Token, Token.Builder, TokenOrBuilder>
           getCoinsFieldBuilder() {
         if (coinsBuilder_ == null) {
           coinsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-              com.tangem.blockchain.blockchains.binance.proto.Send.Token, com.tangem.blockchain.blockchains.binance.proto.Send.Token.Builder, com.tangem.blockchain.blockchains.binance.proto.Send.TokenOrBuilder>(
+              Token, Token.Builder, TokenOrBuilder>(
                   coins_,
                   ((bitField0_ & 0x00000002) != 0),
                   getParentForChildren(),
@@ -2388,12 +2386,12 @@ private static final long serialVersionUID = 0L;
     }
 
     // @@protoc_insertion_point(class_scope:transaction.Send.Output)
-    private static final com.tangem.blockchain.blockchains.binance.proto.Send.Output DEFAULT_INSTANCE;
+    private static final Output DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new com.tangem.blockchain.blockchains.binance.proto.Send.Output();
+      DEFAULT_INSTANCE = new Output();
     }
 
-    public static com.tangem.blockchain.blockchains.binance.proto.Send.Output getDefaultInstance() {
+    public static Output getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
@@ -2418,24 +2416,24 @@ private static final long serialVersionUID = 0L;
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.Send.Output getDefaultInstanceForType() {
+    public Output getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
   }
 
   public static final int INPUTS_FIELD_NUMBER = 1;
-  private java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Input> inputs_;
+  private java.util.List<Input> inputs_;
   /**
    * <code>repeated .transaction.Send.Input inputs = 1;</code>
    */
-  public java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Input> getInputsList() {
+  public java.util.List<Input> getInputsList() {
     return inputs_;
   }
   /**
    * <code>repeated .transaction.Send.Input inputs = 1;</code>
    */
-  public java.util.List<? extends com.tangem.blockchain.blockchains.binance.proto.Send.InputOrBuilder>
+  public java.util.List<? extends InputOrBuilder>
       getInputsOrBuilderList() {
     return inputs_;
   }
@@ -2448,29 +2446,29 @@ private static final long serialVersionUID = 0L;
   /**
    * <code>repeated .transaction.Send.Input inputs = 1;</code>
    */
-  public com.tangem.blockchain.blockchains.binance.proto.Send.Input getInputs(int index) {
+  public Input getInputs(int index) {
     return inputs_.get(index);
   }
   /**
    * <code>repeated .transaction.Send.Input inputs = 1;</code>
    */
-  public com.tangem.blockchain.blockchains.binance.proto.Send.InputOrBuilder getInputsOrBuilder(
+  public InputOrBuilder getInputsOrBuilder(
       int index) {
     return inputs_.get(index);
   }
 
   public static final int OUTPUTS_FIELD_NUMBER = 2;
-  private java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Output> outputs_;
+  private java.util.List<Output> outputs_;
   /**
    * <code>repeated .transaction.Send.Output outputs = 2;</code>
    */
-  public java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Output> getOutputsList() {
+  public java.util.List<Output> getOutputsList() {
     return outputs_;
   }
   /**
    * <code>repeated .transaction.Send.Output outputs = 2;</code>
    */
-  public java.util.List<? extends com.tangem.blockchain.blockchains.binance.proto.Send.OutputOrBuilder>
+  public java.util.List<? extends OutputOrBuilder>
       getOutputsOrBuilderList() {
     return outputs_;
   }
@@ -2483,13 +2481,13 @@ private static final long serialVersionUID = 0L;
   /**
    * <code>repeated .transaction.Send.Output outputs = 2;</code>
    */
-  public com.tangem.blockchain.blockchains.binance.proto.Send.Output getOutputs(int index) {
+  public Output getOutputs(int index) {
     return outputs_.get(index);
   }
   /**
    * <code>repeated .transaction.Send.Output outputs = 2;</code>
    */
-  public com.tangem.blockchain.blockchains.binance.proto.Send.OutputOrBuilder getOutputsOrBuilder(
+  public OutputOrBuilder getOutputsOrBuilder(
       int index) {
     return outputs_.get(index);
   }
@@ -2541,10 +2539,10 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof com.tangem.blockchain.blockchains.binance.proto.Send)) {
+    if (!(obj instanceof Send)) {
       return super.equals(obj);
     }
-    com.tangem.blockchain.blockchains.binance.proto.Send other = (com.tangem.blockchain.blockchains.binance.proto.Send) obj;
+    Send other = (Send) obj;
 
     if (!getInputsList()
         .equals(other.getInputsList())) return false;
@@ -2574,69 +2572,69 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static com.tangem.blockchain.blockchains.binance.proto.Send parseFrom(
+  public static Send parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.Send parseFrom(
+  public static Send parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.Send parseFrom(
+  public static Send parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.Send parseFrom(
+  public static Send parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.Send parseFrom(byte[] data)
+  public static Send parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.Send parseFrom(
+  public static Send parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.Send parseFrom(java.io.InputStream input)
+  public static Send parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.Send parseFrom(
+  public static Send parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.Send parseDelimitedFrom(java.io.InputStream input)
+  public static Send parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.Send parseDelimitedFrom(
+  public static Send parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.Send parseFrom(
+  public static Send parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.Send parseFrom(
+  public static Send parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -2649,7 +2647,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(com.tangem.blockchain.blockchains.binance.proto.Send prototype) {
+  public static Builder newBuilder(Send prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   @Override
@@ -2674,18 +2672,18 @@ private static final long serialVersionUID = 0L;
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:transaction.Send)
-      com.tangem.blockchain.blockchains.binance.proto.SendOrBuilder {
+      SendOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_descriptor;
+      return Transaction.internal_static_transaction_Send_descriptor;
     }
 
     @Override
     protected FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_fieldAccessorTable
+      return Transaction.internal_static_transaction_Send_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.tangem.blockchain.blockchains.binance.proto.Send.class, com.tangem.blockchain.blockchains.binance.proto.Send.Builder.class);
+              Send.class, Builder.class);
     }
 
     // Construct using com.tangem.blockchain.blockchains.binance.proto.Send.newBuilder()
@@ -2726,17 +2724,17 @@ private static final long serialVersionUID = 0L;
     @Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_Send_descriptor;
+      return Transaction.internal_static_transaction_Send_descriptor;
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.Send getDefaultInstanceForType() {
-      return com.tangem.blockchain.blockchains.binance.proto.Send.getDefaultInstance();
+    public Send getDefaultInstanceForType() {
+      return Send.getDefaultInstance();
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.Send build() {
-      com.tangem.blockchain.blockchains.binance.proto.Send result = buildPartial();
+    public Send build() {
+      Send result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
@@ -2744,8 +2742,8 @@ private static final long serialVersionUID = 0L;
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.Send buildPartial() {
-      com.tangem.blockchain.blockchains.binance.proto.Send result = new com.tangem.blockchain.blockchains.binance.proto.Send(this);
+    public Send buildPartial() {
+      Send result = new Send(this);
       int from_bitField0_ = bitField0_;
       if (inputsBuilder_ == null) {
         if (((bitField0_ & 0x00000001) != 0)) {
@@ -2803,16 +2801,16 @@ private static final long serialVersionUID = 0L;
     }
     @Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof com.tangem.blockchain.blockchains.binance.proto.Send) {
-        return mergeFrom((com.tangem.blockchain.blockchains.binance.proto.Send)other);
+      if (other instanceof Send) {
+        return mergeFrom((Send)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(com.tangem.blockchain.blockchains.binance.proto.Send other) {
-      if (other == com.tangem.blockchain.blockchains.binance.proto.Send.getDefaultInstance()) return this;
+    public Builder mergeFrom(Send other) {
+      if (other == Send.getDefaultInstance()) return this;
       if (inputsBuilder_ == null) {
         if (!other.inputs_.isEmpty()) {
           if (inputs_.isEmpty()) {
@@ -2880,11 +2878,11 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.tangem.blockchain.blockchains.binance.proto.Send parsedMessage = null;
+      Send parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.tangem.blockchain.blockchains.binance.proto.Send) e.getUnfinishedMessage();
+        parsedMessage = (Send) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -2895,22 +2893,22 @@ private static final long serialVersionUID = 0L;
     }
     private int bitField0_;
 
-    private java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Input> inputs_ =
+    private java.util.List<Input> inputs_ =
       java.util.Collections.emptyList();
     private void ensureInputsIsMutable() {
       if (!((bitField0_ & 0x00000001) != 0)) {
-        inputs_ = new java.util.ArrayList<com.tangem.blockchain.blockchains.binance.proto.Send.Input>(inputs_);
+        inputs_ = new java.util.ArrayList<Input>(inputs_);
         bitField0_ |= 0x00000001;
        }
     }
 
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.tangem.blockchain.blockchains.binance.proto.Send.Input, com.tangem.blockchain.blockchains.binance.proto.Send.Input.Builder, com.tangem.blockchain.blockchains.binance.proto.Send.InputOrBuilder> inputsBuilder_;
+        Input, Input.Builder, InputOrBuilder> inputsBuilder_;
 
     /**
      * <code>repeated .transaction.Send.Input inputs = 1;</code>
      */
-    public java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Input> getInputsList() {
+    public java.util.List<Input> getInputsList() {
       if (inputsBuilder_ == null) {
         return java.util.Collections.unmodifiableList(inputs_);
       } else {
@@ -2930,7 +2928,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .transaction.Send.Input inputs = 1;</code>
      */
-    public com.tangem.blockchain.blockchains.binance.proto.Send.Input getInputs(int index) {
+    public Input getInputs(int index) {
       if (inputsBuilder_ == null) {
         return inputs_.get(index);
       } else {
@@ -2941,7 +2939,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .transaction.Send.Input inputs = 1;</code>
      */
     public Builder setInputs(
-        int index, com.tangem.blockchain.blockchains.binance.proto.Send.Input value) {
+        int index, Input value) {
       if (inputsBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -2958,7 +2956,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .transaction.Send.Input inputs = 1;</code>
      */
     public Builder setInputs(
-        int index, com.tangem.blockchain.blockchains.binance.proto.Send.Input.Builder builderForValue) {
+        int index, Input.Builder builderForValue) {
       if (inputsBuilder_ == null) {
         ensureInputsIsMutable();
         inputs_.set(index, builderForValue.build());
@@ -2971,7 +2969,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .transaction.Send.Input inputs = 1;</code>
      */
-    public Builder addInputs(com.tangem.blockchain.blockchains.binance.proto.Send.Input value) {
+    public Builder addInputs(Input value) {
       if (inputsBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -2988,7 +2986,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .transaction.Send.Input inputs = 1;</code>
      */
     public Builder addInputs(
-        int index, com.tangem.blockchain.blockchains.binance.proto.Send.Input value) {
+        int index, Input value) {
       if (inputsBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -3005,7 +3003,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .transaction.Send.Input inputs = 1;</code>
      */
     public Builder addInputs(
-        com.tangem.blockchain.blockchains.binance.proto.Send.Input.Builder builderForValue) {
+        Input.Builder builderForValue) {
       if (inputsBuilder_ == null) {
         ensureInputsIsMutable();
         inputs_.add(builderForValue.build());
@@ -3019,7 +3017,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .transaction.Send.Input inputs = 1;</code>
      */
     public Builder addInputs(
-        int index, com.tangem.blockchain.blockchains.binance.proto.Send.Input.Builder builderForValue) {
+        int index, Input.Builder builderForValue) {
       if (inputsBuilder_ == null) {
         ensureInputsIsMutable();
         inputs_.add(index, builderForValue.build());
@@ -3033,7 +3031,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .transaction.Send.Input inputs = 1;</code>
      */
     public Builder addAllInputs(
-        Iterable<? extends com.tangem.blockchain.blockchains.binance.proto.Send.Input> values) {
+        Iterable<? extends Input> values) {
       if (inputsBuilder_ == null) {
         ensureInputsIsMutable();
         com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -3073,14 +3071,14 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .transaction.Send.Input inputs = 1;</code>
      */
-    public com.tangem.blockchain.blockchains.binance.proto.Send.Input.Builder getInputsBuilder(
+    public Input.Builder getInputsBuilder(
         int index) {
       return getInputsFieldBuilder().getBuilder(index);
     }
     /**
      * <code>repeated .transaction.Send.Input inputs = 1;</code>
      */
-    public com.tangem.blockchain.blockchains.binance.proto.Send.InputOrBuilder getInputsOrBuilder(
+    public InputOrBuilder getInputsOrBuilder(
         int index) {
       if (inputsBuilder_ == null) {
         return inputs_.get(index);  } else {
@@ -3090,7 +3088,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .transaction.Send.Input inputs = 1;</code>
      */
-    public java.util.List<? extends com.tangem.blockchain.blockchains.binance.proto.Send.InputOrBuilder>
+    public java.util.List<? extends InputOrBuilder>
          getInputsOrBuilderList() {
       if (inputsBuilder_ != null) {
         return inputsBuilder_.getMessageOrBuilderList();
@@ -3101,31 +3099,31 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .transaction.Send.Input inputs = 1;</code>
      */
-    public com.tangem.blockchain.blockchains.binance.proto.Send.Input.Builder addInputsBuilder() {
+    public Input.Builder addInputsBuilder() {
       return getInputsFieldBuilder().addBuilder(
-          com.tangem.blockchain.blockchains.binance.proto.Send.Input.getDefaultInstance());
+          Input.getDefaultInstance());
     }
     /**
      * <code>repeated .transaction.Send.Input inputs = 1;</code>
      */
-    public com.tangem.blockchain.blockchains.binance.proto.Send.Input.Builder addInputsBuilder(
+    public Input.Builder addInputsBuilder(
         int index) {
       return getInputsFieldBuilder().addBuilder(
-          index, com.tangem.blockchain.blockchains.binance.proto.Send.Input.getDefaultInstance());
+          index, Input.getDefaultInstance());
     }
     /**
      * <code>repeated .transaction.Send.Input inputs = 1;</code>
      */
-    public java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Input.Builder>
+    public java.util.List<Input.Builder>
          getInputsBuilderList() {
       return getInputsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.tangem.blockchain.blockchains.binance.proto.Send.Input, com.tangem.blockchain.blockchains.binance.proto.Send.Input.Builder, com.tangem.blockchain.blockchains.binance.proto.Send.InputOrBuilder>
+        Input, Input.Builder, InputOrBuilder>
         getInputsFieldBuilder() {
       if (inputsBuilder_ == null) {
         inputsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-            com.tangem.blockchain.blockchains.binance.proto.Send.Input, com.tangem.blockchain.blockchains.binance.proto.Send.Input.Builder, com.tangem.blockchain.blockchains.binance.proto.Send.InputOrBuilder>(
+            Input, Input.Builder, InputOrBuilder>(
                 inputs_,
                 ((bitField0_ & 0x00000001) != 0),
                 getParentForChildren(),
@@ -3135,22 +3133,22 @@ private static final long serialVersionUID = 0L;
       return inputsBuilder_;
     }
 
-    private java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Output> outputs_ =
+    private java.util.List<Output> outputs_ =
       java.util.Collections.emptyList();
     private void ensureOutputsIsMutable() {
       if (!((bitField0_ & 0x00000002) != 0)) {
-        outputs_ = new java.util.ArrayList<com.tangem.blockchain.blockchains.binance.proto.Send.Output>(outputs_);
+        outputs_ = new java.util.ArrayList<Output>(outputs_);
         bitField0_ |= 0x00000002;
        }
     }
 
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.tangem.blockchain.blockchains.binance.proto.Send.Output, com.tangem.blockchain.blockchains.binance.proto.Send.Output.Builder, com.tangem.blockchain.blockchains.binance.proto.Send.OutputOrBuilder> outputsBuilder_;
+        Output, Output.Builder, OutputOrBuilder> outputsBuilder_;
 
     /**
      * <code>repeated .transaction.Send.Output outputs = 2;</code>
      */
-    public java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Output> getOutputsList() {
+    public java.util.List<Output> getOutputsList() {
       if (outputsBuilder_ == null) {
         return java.util.Collections.unmodifiableList(outputs_);
       } else {
@@ -3170,7 +3168,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .transaction.Send.Output outputs = 2;</code>
      */
-    public com.tangem.blockchain.blockchains.binance.proto.Send.Output getOutputs(int index) {
+    public Output getOutputs(int index) {
       if (outputsBuilder_ == null) {
         return outputs_.get(index);
       } else {
@@ -3181,7 +3179,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .transaction.Send.Output outputs = 2;</code>
      */
     public Builder setOutputs(
-        int index, com.tangem.blockchain.blockchains.binance.proto.Send.Output value) {
+        int index, Output value) {
       if (outputsBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -3198,7 +3196,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .transaction.Send.Output outputs = 2;</code>
      */
     public Builder setOutputs(
-        int index, com.tangem.blockchain.blockchains.binance.proto.Send.Output.Builder builderForValue) {
+        int index, Output.Builder builderForValue) {
       if (outputsBuilder_ == null) {
         ensureOutputsIsMutable();
         outputs_.set(index, builderForValue.build());
@@ -3211,7 +3209,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .transaction.Send.Output outputs = 2;</code>
      */
-    public Builder addOutputs(com.tangem.blockchain.blockchains.binance.proto.Send.Output value) {
+    public Builder addOutputs(Output value) {
       if (outputsBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -3228,7 +3226,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .transaction.Send.Output outputs = 2;</code>
      */
     public Builder addOutputs(
-        int index, com.tangem.blockchain.blockchains.binance.proto.Send.Output value) {
+        int index, Output value) {
       if (outputsBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -3245,7 +3243,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .transaction.Send.Output outputs = 2;</code>
      */
     public Builder addOutputs(
-        com.tangem.blockchain.blockchains.binance.proto.Send.Output.Builder builderForValue) {
+        Output.Builder builderForValue) {
       if (outputsBuilder_ == null) {
         ensureOutputsIsMutable();
         outputs_.add(builderForValue.build());
@@ -3259,7 +3257,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .transaction.Send.Output outputs = 2;</code>
      */
     public Builder addOutputs(
-        int index, com.tangem.blockchain.blockchains.binance.proto.Send.Output.Builder builderForValue) {
+        int index, Output.Builder builderForValue) {
       if (outputsBuilder_ == null) {
         ensureOutputsIsMutable();
         outputs_.add(index, builderForValue.build());
@@ -3273,7 +3271,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .transaction.Send.Output outputs = 2;</code>
      */
     public Builder addAllOutputs(
-        Iterable<? extends com.tangem.blockchain.blockchains.binance.proto.Send.Output> values) {
+        Iterable<? extends Output> values) {
       if (outputsBuilder_ == null) {
         ensureOutputsIsMutable();
         com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -3313,14 +3311,14 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .transaction.Send.Output outputs = 2;</code>
      */
-    public com.tangem.blockchain.blockchains.binance.proto.Send.Output.Builder getOutputsBuilder(
+    public Output.Builder getOutputsBuilder(
         int index) {
       return getOutputsFieldBuilder().getBuilder(index);
     }
     /**
      * <code>repeated .transaction.Send.Output outputs = 2;</code>
      */
-    public com.tangem.blockchain.blockchains.binance.proto.Send.OutputOrBuilder getOutputsOrBuilder(
+    public OutputOrBuilder getOutputsOrBuilder(
         int index) {
       if (outputsBuilder_ == null) {
         return outputs_.get(index);  } else {
@@ -3330,7 +3328,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .transaction.Send.Output outputs = 2;</code>
      */
-    public java.util.List<? extends com.tangem.blockchain.blockchains.binance.proto.Send.OutputOrBuilder>
+    public java.util.List<? extends OutputOrBuilder>
          getOutputsOrBuilderList() {
       if (outputsBuilder_ != null) {
         return outputsBuilder_.getMessageOrBuilderList();
@@ -3341,31 +3339,31 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .transaction.Send.Output outputs = 2;</code>
      */
-    public com.tangem.blockchain.blockchains.binance.proto.Send.Output.Builder addOutputsBuilder() {
+    public Output.Builder addOutputsBuilder() {
       return getOutputsFieldBuilder().addBuilder(
-          com.tangem.blockchain.blockchains.binance.proto.Send.Output.getDefaultInstance());
+          Output.getDefaultInstance());
     }
     /**
      * <code>repeated .transaction.Send.Output outputs = 2;</code>
      */
-    public com.tangem.blockchain.blockchains.binance.proto.Send.Output.Builder addOutputsBuilder(
+    public Output.Builder addOutputsBuilder(
         int index) {
       return getOutputsFieldBuilder().addBuilder(
-          index, com.tangem.blockchain.blockchains.binance.proto.Send.Output.getDefaultInstance());
+          index, Output.getDefaultInstance());
     }
     /**
      * <code>repeated .transaction.Send.Output outputs = 2;</code>
      */
-    public java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Output.Builder>
+    public java.util.List<Output.Builder>
          getOutputsBuilderList() {
       return getOutputsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.tangem.blockchain.blockchains.binance.proto.Send.Output, com.tangem.blockchain.blockchains.binance.proto.Send.Output.Builder, com.tangem.blockchain.blockchains.binance.proto.Send.OutputOrBuilder>
+        Output, Output.Builder, OutputOrBuilder>
         getOutputsFieldBuilder() {
       if (outputsBuilder_ == null) {
         outputsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-            com.tangem.blockchain.blockchains.binance.proto.Send.Output, com.tangem.blockchain.blockchains.binance.proto.Send.Output.Builder, com.tangem.blockchain.blockchains.binance.proto.Send.OutputOrBuilder>(
+            Output, Output.Builder, OutputOrBuilder>(
                 outputs_,
                 ((bitField0_ & 0x00000002) != 0),
                 getParentForChildren(),
@@ -3391,12 +3389,12 @@ private static final long serialVersionUID = 0L;
   }
 
   // @@protoc_insertion_point(class_scope:transaction.Send)
-  private static final com.tangem.blockchain.blockchains.binance.proto.Send DEFAULT_INSTANCE;
+  private static final Send DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new com.tangem.blockchain.blockchains.binance.proto.Send();
+    DEFAULT_INSTANCE = new Send();
   }
 
-  public static com.tangem.blockchain.blockchains.binance.proto.Send getDefaultInstance() {
+  public static Send getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
@@ -3421,7 +3419,7 @@ private static final long serialVersionUID = 0L;
   }
 
   @Override
-  public com.tangem.blockchain.blockchains.binance.proto.Send getDefaultInstanceForType() {
+  public Send getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 
