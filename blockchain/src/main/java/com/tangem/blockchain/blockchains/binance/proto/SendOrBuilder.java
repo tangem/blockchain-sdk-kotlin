@@ -10,12 +10,12 @@ public interface SendOrBuilder extends
   /**
    * <code>repeated .transaction.Send.Input inputs = 1;</code>
    */
-  java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Input>
+  java.util.List<Send.Input>
       getInputsList();
   /**
    * <code>repeated .transaction.Send.Input inputs = 1;</code>
    */
-  com.tangem.blockchain.blockchains.binance.proto.Send.Input getInputs(int index);
+  Send.Input getInputs(int index);
   /**
    * <code>repeated .transaction.Send.Input inputs = 1;</code>
    */
@@ -23,23 +23,22 @@ public interface SendOrBuilder extends
   /**
    * <code>repeated .transaction.Send.Input inputs = 1;</code>
    */
-  java.util.List<? extends com.tangem.blockchain.blockchains.binance.proto.Send.InputOrBuilder>
+  java.util.List<? extends Send.InputOrBuilder>
       getInputsOrBuilderList();
   /**
    * <code>repeated .transaction.Send.Input inputs = 1;</code>
    */
-  com.tangem.blockchain.blockchains.binance.proto.Send.InputOrBuilder getInputsOrBuilder(
-          int index);
+  Send.InputOrBuilder getInputsOrBuilder(int index);
 
   /**
    * <code>repeated .transaction.Send.Output outputs = 2;</code>
    */
-  java.util.List<com.tangem.blockchain.blockchains.binance.proto.Send.Output>
+  java.util.List<Send.Output>
       getOutputsList();
   /**
    * <code>repeated .transaction.Send.Output outputs = 2;</code>
    */
-  com.tangem.blockchain.blockchains.binance.proto.Send.Output getOutputs(int index);
+  Send.Output getOutputs(int index);
   /**
    * <code>repeated .transaction.Send.Output outputs = 2;</code>
    */
@@ -47,11 +46,10 @@ public interface SendOrBuilder extends
   /**
    * <code>repeated .transaction.Send.Output outputs = 2;</code>
    */
-  java.util.List<? extends com.tangem.blockchain.blockchains.binance.proto.Send.OutputOrBuilder>
+  java.util.List<? extends Send.OutputOrBuilder>
       getOutputsOrBuilderList();
   /**
    * <code>repeated .transaction.Send.Output outputs = 2;</code>
    */
-  com.tangem.blockchain.blockchains.binance.proto.Send.OutputOrBuilder getOutputsOrBuilder(
-          int index);
+  Send.OutputOrBuilder getOutputsOrBuilder(int index);
 }

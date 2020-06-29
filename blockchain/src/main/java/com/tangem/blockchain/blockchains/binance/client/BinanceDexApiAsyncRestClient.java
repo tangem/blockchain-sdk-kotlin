@@ -45,11 +45,10 @@ public interface BinanceDexApiAsyncRestClient {
 
     void getOrderBook(String symbol, Integer limit, BinanceDexApiCallback<OrderBook> callback);
 
-    void getCandleStickBars(String symbol, CandlestickInterval interval,
-                            BinanceDexApiCallback<List<Candlestick>> callback);
+    void getCandleStickBars(String symbol, CandlestickInterval interval, BinanceDexApiCallback<List<Candlestick>> callback);
 
     void getCandleStickBars(String symbol, CandlestickInterval interval, Integer limit, Long startTime, Long endTime,
-                            BinanceDexApiCallback<List<Candlestick>> callback);
+        BinanceDexApiCallback<List<Candlestick>> callback);
 
     void getOpenOrders(String address, BinanceDexApiCallback<OrderList> callback);
 

@@ -112,15 +112,15 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_NewOrder_descriptor;
+    return Transaction.internal_static_transaction_NewOrder_descriptor;
   }
 
   @Override
   protected FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_NewOrder_fieldAccessorTable
+    return Transaction.internal_static_transaction_NewOrder_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.tangem.blockchain.blockchains.binance.proto.NewOrder.class, com.tangem.blockchain.blockchains.binance.proto.NewOrder.Builder.class);
+            NewOrder.class, Builder.class);
   }
 
   public static final int SENDER_FIELD_NUMBER = 1;
@@ -372,10 +372,10 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof com.tangem.blockchain.blockchains.binance.proto.NewOrder)) {
+    if (!(obj instanceof NewOrder)) {
       return super.equals(obj);
     }
-    com.tangem.blockchain.blockchains.binance.proto.NewOrder other = (com.tangem.blockchain.blockchains.binance.proto.NewOrder) obj;
+    NewOrder other = (NewOrder) obj;
 
     if (!getSender()
         .equals(other.getSender())) return false;
@@ -430,69 +430,69 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static com.tangem.blockchain.blockchains.binance.proto.NewOrder parseFrom(
+  public static NewOrder parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.NewOrder parseFrom(
+  public static NewOrder parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.NewOrder parseFrom(
+  public static NewOrder parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.NewOrder parseFrom(
+  public static NewOrder parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.NewOrder parseFrom(byte[] data)
+  public static NewOrder parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.NewOrder parseFrom(
+  public static NewOrder parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.NewOrder parseFrom(java.io.InputStream input)
+  public static NewOrder parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.NewOrder parseFrom(
+  public static NewOrder parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.NewOrder parseDelimitedFrom(java.io.InputStream input)
+  public static NewOrder parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.NewOrder parseDelimitedFrom(
+  public static NewOrder parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.NewOrder parseFrom(
+  public static NewOrder parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.NewOrder parseFrom(
+  public static NewOrder parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -505,7 +505,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(com.tangem.blockchain.blockchains.binance.proto.NewOrder prototype) {
+  public static Builder newBuilder(NewOrder prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   @Override
@@ -530,18 +530,18 @@ private static final long serialVersionUID = 0L;
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:transaction.NewOrder)
-      com.tangem.blockchain.blockchains.binance.proto.NewOrderOrBuilder {
+      NewOrderOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_NewOrder_descriptor;
+      return Transaction.internal_static_transaction_NewOrder_descriptor;
     }
 
     @Override
     protected FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_NewOrder_fieldAccessorTable
+      return Transaction.internal_static_transaction_NewOrder_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.tangem.blockchain.blockchains.binance.proto.NewOrder.class, com.tangem.blockchain.blockchains.binance.proto.NewOrder.Builder.class);
+              NewOrder.class, Builder.class);
     }
 
     // Construct using com.tangem.blockchain.blockchains.binance.proto.NewOrder.newBuilder()
@@ -584,17 +584,17 @@ private static final long serialVersionUID = 0L;
     @Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_NewOrder_descriptor;
+      return Transaction.internal_static_transaction_NewOrder_descriptor;
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.NewOrder getDefaultInstanceForType() {
-      return com.tangem.blockchain.blockchains.binance.proto.NewOrder.getDefaultInstance();
+    public NewOrder getDefaultInstanceForType() {
+      return NewOrder.getDefaultInstance();
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.NewOrder build() {
-      com.tangem.blockchain.blockchains.binance.proto.NewOrder result = buildPartial();
+    public NewOrder build() {
+      NewOrder result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
@@ -602,8 +602,8 @@ private static final long serialVersionUID = 0L;
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.NewOrder buildPartial() {
-      com.tangem.blockchain.blockchains.binance.proto.NewOrder result = new com.tangem.blockchain.blockchains.binance.proto.NewOrder(this);
+    public NewOrder buildPartial() {
+      NewOrder result = new NewOrder(this);
       result.sender_ = sender_;
       result.id_ = id_;
       result.symbol_ = symbol_;
@@ -650,16 +650,16 @@ private static final long serialVersionUID = 0L;
     }
     @Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof com.tangem.blockchain.blockchains.binance.proto.NewOrder) {
-        return mergeFrom((com.tangem.blockchain.blockchains.binance.proto.NewOrder)other);
+      if (other instanceof NewOrder) {
+        return mergeFrom((NewOrder)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(com.tangem.blockchain.blockchains.binance.proto.NewOrder other) {
-      if (other == com.tangem.blockchain.blockchains.binance.proto.NewOrder.getDefaultInstance()) return this;
+    public Builder mergeFrom(NewOrder other) {
+      if (other == NewOrder.getDefaultInstance()) return this;
       if (other.getSender() != com.google.protobuf.ByteString.EMPTY) {
         setSender(other.getSender());
       }
@@ -701,11 +701,11 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.tangem.blockchain.blockchains.binance.proto.NewOrder parsedMessage = null;
+      NewOrder parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.tangem.blockchain.blockchains.binance.proto.NewOrder) e.getUnfinishedMessage();
+        parsedMessage = (NewOrder) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -1140,12 +1140,12 @@ private static final long serialVersionUID = 0L;
   }
 
   // @@protoc_insertion_point(class_scope:transaction.NewOrder)
-  private static final com.tangem.blockchain.blockchains.binance.proto.NewOrder DEFAULT_INSTANCE;
+  private static final NewOrder DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new com.tangem.blockchain.blockchains.binance.proto.NewOrder();
+    DEFAULT_INSTANCE = new NewOrder();
   }
 
-  public static com.tangem.blockchain.blockchains.binance.proto.NewOrder getDefaultInstance() {
+  public static NewOrder getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
@@ -1170,7 +1170,7 @@ private static final long serialVersionUID = 0L;
   }
 
   @Override
-  public com.tangem.blockchain.blockchains.binance.proto.NewOrder getDefaultInstanceForType() {
+  public NewOrder getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 
