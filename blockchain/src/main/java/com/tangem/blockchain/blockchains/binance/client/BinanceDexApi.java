@@ -61,20 +61,16 @@ public interface BinanceDexApi {
 
     @GET("/api/v1/klines")
     Call<List<Candlestick>> getCandlestickBars(@Query("symbol") String symbol, @Query("interval") String interval,
-                                               @Query("limit") Integer limit, @Query("startTime") Long startTime,
-                                               @Query("endTime") Long endTime);
+        @Query("limit") Integer limit, @Query("startTime") Long startTime, @Query("endTime") Long endTime);
 
     @GET("/api/v1/orders/open")
     Call<OrderList> getOpenOrders(@Query("address") String address, @Query("limit") Integer limit,
-                                  @Query("offset") Integer offset, @Query("symbol") String symbol,
-                                  @Query("total") Integer total);
+        @Query("offset") Integer offset, @Query("symbol") String symbol, @Query("total") Integer total);
 
     @GET("/api/v1/orders/closed")
-    Call<OrderList> getClosedOrders(@Query("address") String address, @Query("end") Long end,
-                                    @Query("limit") Integer limit, @Query("offset") Integer offset,
-                                    @Query("side") String side, @Query("start") Long start,
-                                    @Query("status") List<String> status, @Query("symbol") String symbol,
-                                    @Query("total") Integer total);
+    Call<OrderList> getClosedOrders(@Query("address") String address, @Query("end") Long end, @Query("limit") Integer limit,
+        @Query("offset") Integer offset, @Query("side") String side, @Query("start") Long start,
+        @Query("status") List<String> status, @Query("symbol") String symbol, @Query("total") Integer total);
 
     @GET("/api/v1/orders/{id}")
     Call<Order> getOrder(@Path("id") String id);
@@ -83,19 +79,16 @@ public interface BinanceDexApi {
     Call<List<TickerStatistics>> get24HrPriceStatistics();
 
     @GET("/api/v1/trades")
-    Call<TradePage> getTrades(@Query("address") String address,
-                              @Query("buyerOrderId") String buyerOrderId, @Query("end") Long end,
-                              @Query("height") Long height, @Query("limit") Integer limit,
-                              @Query("offset") Integer offset, @Query("quoteAsset") String quoteAsset,
-                              @Query("sellerOrderId") String sellerOrderId, @Query("side") String side,
-                              @Query("start") Long start, @Query("symbol") String symbol, @Query("total") Integer total);
+    Call<TradePage> getTrades(@Query("address") String address, @Query("buyerOrderId") String buyerOrderId,
+        @Query("end") Long end, @Query("height") Long height, @Query("limit") Integer limit, @Query("offset") Integer offset,
+        @Query("quoteAsset") String quoteAsset, @Query("sellerOrderId") String sellerOrderId, @Query("side") String side,
+        @Query("start") Long start, @Query("symbol") String symbol, @Query("total") Integer total);
 
     @GET("/api/v1/transactions")
     Call<TransactionPage> getTransactions(@Query("address") String address, @Query("blockHeight") Long blockHeight,
-                                          @Query("endTime") Long endTime, @Query("limit") Integer limit,
-                                          @Query("offset") Integer offset, @Query("side") String side,
-                                          @Query("startTime") Long startTime, @Query("txAsset") String txAsset,
-                                          @Query("txType") String txType);
+        @Query("endTime") Long endTime, @Query("limit") Integer limit, @Query("offset") Integer offset,
+        @Query("side") String side, @Query("startTime") Long startTime, @Query("txAsset") String txAsset,
+        @Query("txType") String txType);
 
     @POST("/api/v1/broadcast")
     Call<List<TransactionMetadata>> broadcast(@Query("sync") boolean sync, @Body RequestBody transaction);
