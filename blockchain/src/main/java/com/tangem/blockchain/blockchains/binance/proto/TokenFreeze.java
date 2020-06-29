@@ -85,15 +85,15 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_TokenFreeze_descriptor;
+    return Transaction.internal_static_transaction_TokenFreeze_descriptor;
   }
 
   @Override
   protected FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_TokenFreeze_fieldAccessorTable
+    return Transaction.internal_static_transaction_TokenFreeze_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.tangem.blockchain.blockchains.binance.proto.TokenFreeze.class, com.tangem.blockchain.blockchains.binance.proto.TokenFreeze.Builder.class);
+            TokenFreeze.class, Builder.class);
   }
 
   public static final int FROM_FIELD_NUMBER = 1;
@@ -217,10 +217,10 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof com.tangem.blockchain.blockchains.binance.proto.TokenFreeze)) {
+    if (!(obj instanceof TokenFreeze)) {
       return super.equals(obj);
     }
-    com.tangem.blockchain.blockchains.binance.proto.TokenFreeze other = (com.tangem.blockchain.blockchains.binance.proto.TokenFreeze) obj;
+    TokenFreeze other = (TokenFreeze) obj;
 
     if (!getFrom()
         .equals(other.getFrom())) return false;
@@ -251,69 +251,69 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static com.tangem.blockchain.blockchains.binance.proto.TokenFreeze parseFrom(
+  public static TokenFreeze parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.TokenFreeze parseFrom(
+  public static TokenFreeze parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.TokenFreeze parseFrom(
+  public static TokenFreeze parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.TokenFreeze parseFrom(
+  public static TokenFreeze parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.TokenFreeze parseFrom(byte[] data)
+  public static TokenFreeze parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.TokenFreeze parseFrom(
+  public static TokenFreeze parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.TokenFreeze parseFrom(java.io.InputStream input)
+  public static TokenFreeze parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.TokenFreeze parseFrom(
+  public static TokenFreeze parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.TokenFreeze parseDelimitedFrom(java.io.InputStream input)
+  public static TokenFreeze parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.TokenFreeze parseDelimitedFrom(
+  public static TokenFreeze parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.TokenFreeze parseFrom(
+  public static TokenFreeze parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.TokenFreeze parseFrom(
+  public static TokenFreeze parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -326,7 +326,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(com.tangem.blockchain.blockchains.binance.proto.TokenFreeze prototype) {
+  public static Builder newBuilder(TokenFreeze prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   @Override
@@ -351,18 +351,18 @@ private static final long serialVersionUID = 0L;
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:transaction.TokenFreeze)
-      com.tangem.blockchain.blockchains.binance.proto.TokenFreezeOrBuilder {
+      TokenFreezeOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_TokenFreeze_descriptor;
+      return Transaction.internal_static_transaction_TokenFreeze_descriptor;
     }
 
     @Override
     protected FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_TokenFreeze_fieldAccessorTable
+      return Transaction.internal_static_transaction_TokenFreeze_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.tangem.blockchain.blockchains.binance.proto.TokenFreeze.class, com.tangem.blockchain.blockchains.binance.proto.TokenFreeze.Builder.class);
+              TokenFreeze.class, Builder.class);
     }
 
     // Construct using com.tangem.blockchain.blockchains.binance.proto.TokenFreeze.newBuilder()
@@ -395,17 +395,17 @@ private static final long serialVersionUID = 0L;
     @Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_TokenFreeze_descriptor;
+      return Transaction.internal_static_transaction_TokenFreeze_descriptor;
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.TokenFreeze getDefaultInstanceForType() {
-      return com.tangem.blockchain.blockchains.binance.proto.TokenFreeze.getDefaultInstance();
+    public TokenFreeze getDefaultInstanceForType() {
+      return TokenFreeze.getDefaultInstance();
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.TokenFreeze build() {
-      com.tangem.blockchain.blockchains.binance.proto.TokenFreeze result = buildPartial();
+    public TokenFreeze build() {
+      TokenFreeze result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
@@ -413,8 +413,8 @@ private static final long serialVersionUID = 0L;
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.TokenFreeze buildPartial() {
-      com.tangem.blockchain.blockchains.binance.proto.TokenFreeze result = new com.tangem.blockchain.blockchains.binance.proto.TokenFreeze(this);
+    public TokenFreeze buildPartial() {
+      TokenFreeze result = new TokenFreeze(this);
       result.from_ = from_;
       result.symbol_ = symbol_;
       result.amount_ = amount_;
@@ -456,16 +456,16 @@ private static final long serialVersionUID = 0L;
     }
     @Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof com.tangem.blockchain.blockchains.binance.proto.TokenFreeze) {
-        return mergeFrom((com.tangem.blockchain.blockchains.binance.proto.TokenFreeze)other);
+      if (other instanceof TokenFreeze) {
+        return mergeFrom((TokenFreeze)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(com.tangem.blockchain.blockchains.binance.proto.TokenFreeze other) {
-      if (other == com.tangem.blockchain.blockchains.binance.proto.TokenFreeze.getDefaultInstance()) return this;
+    public Builder mergeFrom(TokenFreeze other) {
+      if (other == TokenFreeze.getDefaultInstance()) return this;
       if (other.getFrom() != com.google.protobuf.ByteString.EMPTY) {
         setFrom(other.getFrom());
       }
@@ -491,11 +491,11 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.tangem.blockchain.blockchains.binance.proto.TokenFreeze parsedMessage = null;
+      TokenFreeze parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.tangem.blockchain.blockchains.binance.proto.TokenFreeze) e.getUnfinishedMessage();
+        parsedMessage = (TokenFreeze) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -689,12 +689,12 @@ private static final long serialVersionUID = 0L;
   }
 
   // @@protoc_insertion_point(class_scope:transaction.TokenFreeze)
-  private static final com.tangem.blockchain.blockchains.binance.proto.TokenFreeze DEFAULT_INSTANCE;
+  private static final TokenFreeze DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new com.tangem.blockchain.blockchains.binance.proto.TokenFreeze();
+    DEFAULT_INSTANCE = new TokenFreeze();
   }
 
-  public static com.tangem.blockchain.blockchains.binance.proto.TokenFreeze getDefaultInstance() {
+  public static TokenFreeze getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
@@ -719,7 +719,7 @@ private static final long serialVersionUID = 0L;
   }
 
   @Override
-  public com.tangem.blockchain.blockchains.binance.proto.TokenFreeze getDefaultInstanceForType() {
+  public TokenFreeze getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 
