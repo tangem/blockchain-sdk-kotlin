@@ -85,15 +85,15 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_StdSignature_descriptor;
+    return Transaction.internal_static_transaction_StdSignature_descriptor;
   }
 
   @Override
   protected FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_StdSignature_fieldAccessorTable
+    return Transaction.internal_static_transaction_StdSignature_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.tangem.blockchain.blockchains.binance.proto.StdSignature.class, com.tangem.blockchain.blockchains.binance.proto.StdSignature.Builder.class);
+            StdSignature.class, Builder.class);
   }
 
   public interface PubKeyOrBuilder extends
@@ -163,15 +163,15 @@ private static final long serialVersionUID = 0L;
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_StdSignature_PubKey_descriptor;
+      return Transaction.internal_static_transaction_StdSignature_PubKey_descriptor;
     }
 
     @Override
     protected FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_StdSignature_PubKey_fieldAccessorTable
+      return Transaction.internal_static_transaction_StdSignature_PubKey_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey.class, com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey.Builder.class);
+              PubKey.class, Builder.class);
     }
 
     private byte memoizedIsInitialized = -1;
@@ -207,10 +207,10 @@ private static final long serialVersionUID = 0L;
       if (obj == this) {
        return true;
       }
-      if (!(obj instanceof com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey)) {
+      if (!(obj instanceof PubKey)) {
         return super.equals(obj);
       }
-      com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey other = (com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey) obj;
+      PubKey other = (PubKey) obj;
 
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
@@ -228,69 +228,69 @@ private static final long serialVersionUID = 0L;
       return hash;
     }
 
-    public static com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey parseFrom(
+    public static PubKey parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey parseFrom(
+    public static PubKey parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey parseFrom(
+    public static PubKey parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey parseFrom(
+    public static PubKey parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey parseFrom(byte[] data)
+    public static PubKey parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey parseFrom(
+    public static PubKey parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey parseFrom(java.io.InputStream input)
+    public static PubKey parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey parseFrom(
+    public static PubKey parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey parseDelimitedFrom(java.io.InputStream input)
+    public static PubKey parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey parseDelimitedFrom(
+    public static PubKey parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey parseFrom(
+    public static PubKey parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey parseFrom(
+    public static PubKey parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -303,7 +303,7 @@ private static final long serialVersionUID = 0L;
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
     }
-    public static Builder newBuilder(com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey prototype) {
+    public static Builder newBuilder(PubKey prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
     @Override
@@ -328,18 +328,18 @@ private static final long serialVersionUID = 0L;
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:transaction.StdSignature.PubKey)
-        com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKeyOrBuilder {
+        PubKeyOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_StdSignature_PubKey_descriptor;
+        return Transaction.internal_static_transaction_StdSignature_PubKey_descriptor;
       }
 
       @Override
       protected FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_StdSignature_PubKey_fieldAccessorTable
+        return Transaction.internal_static_transaction_StdSignature_PubKey_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey.class, com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey.Builder.class);
+                PubKey.class, Builder.class);
       }
 
       // Construct using com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey.newBuilder()
@@ -366,17 +366,17 @@ private static final long serialVersionUID = 0L;
       @Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_StdSignature_PubKey_descriptor;
+        return Transaction.internal_static_transaction_StdSignature_PubKey_descriptor;
       }
 
       @Override
-      public com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey getDefaultInstanceForType() {
-        return com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey.getDefaultInstance();
+      public PubKey getDefaultInstanceForType() {
+        return PubKey.getDefaultInstance();
       }
 
       @Override
-      public com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey build() {
-        com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey result = buildPartial();
+      public PubKey build() {
+        PubKey result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
@@ -384,8 +384,8 @@ private static final long serialVersionUID = 0L;
       }
 
       @Override
-      public com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey buildPartial() {
-        com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey result = new com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey(this);
+      public PubKey buildPartial() {
+        PubKey result = new PubKey(this);
         onBuilt();
         return result;
       }
@@ -424,16 +424,16 @@ private static final long serialVersionUID = 0L;
       }
       @Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey) {
-          return mergeFrom((com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey)other);
+        if (other instanceof PubKey) {
+          return mergeFrom((PubKey)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey other) {
-        if (other == com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey.getDefaultInstance()) return this;
+      public Builder mergeFrom(PubKey other) {
+        if (other == PubKey.getDefaultInstance()) return this;
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
@@ -449,11 +449,11 @@ private static final long serialVersionUID = 0L;
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey parsedMessage = null;
+        PubKey parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey) e.getUnfinishedMessage();
+          parsedMessage = (PubKey) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
@@ -479,12 +479,12 @@ private static final long serialVersionUID = 0L;
     }
 
     // @@protoc_insertion_point(class_scope:transaction.StdSignature.PubKey)
-    private static final com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey DEFAULT_INSTANCE;
+    private static final PubKey DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey();
+      DEFAULT_INSTANCE = new PubKey();
     }
 
-    public static com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey getDefaultInstance() {
+    public static PubKey getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
@@ -509,7 +509,7 @@ private static final long serialVersionUID = 0L;
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.StdSignature.PubKey getDefaultInstanceForType() {
+    public PubKey getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -628,10 +628,10 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof com.tangem.blockchain.blockchains.binance.proto.StdSignature)) {
+    if (!(obj instanceof StdSignature)) {
       return super.equals(obj);
     }
-    com.tangem.blockchain.blockchains.binance.proto.StdSignature other = (com.tangem.blockchain.blockchains.binance.proto.StdSignature) obj;
+    StdSignature other = (StdSignature) obj;
 
     if (!getPubKey()
         .equals(other.getPubKey())) return false;
@@ -667,69 +667,69 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static com.tangem.blockchain.blockchains.binance.proto.StdSignature parseFrom(
+  public static StdSignature parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.StdSignature parseFrom(
+  public static StdSignature parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.StdSignature parseFrom(
+  public static StdSignature parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.StdSignature parseFrom(
+  public static StdSignature parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.StdSignature parseFrom(byte[] data)
+  public static StdSignature parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.StdSignature parseFrom(
+  public static StdSignature parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.StdSignature parseFrom(java.io.InputStream input)
+  public static StdSignature parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.StdSignature parseFrom(
+  public static StdSignature parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.StdSignature parseDelimitedFrom(java.io.InputStream input)
+  public static StdSignature parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.StdSignature parseDelimitedFrom(
+  public static StdSignature parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.StdSignature parseFrom(
+  public static StdSignature parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.StdSignature parseFrom(
+  public static StdSignature parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -742,7 +742,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(com.tangem.blockchain.blockchains.binance.proto.StdSignature prototype) {
+  public static Builder newBuilder(StdSignature prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   @Override
@@ -763,18 +763,18 @@ private static final long serialVersionUID = 0L;
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:transaction.StdSignature)
-      com.tangem.blockchain.blockchains.binance.proto.StdSignatureOrBuilder {
+      StdSignatureOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_StdSignature_descriptor;
+      return Transaction.internal_static_transaction_StdSignature_descriptor;
     }
 
     @Override
     protected FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_StdSignature_fieldAccessorTable
+      return Transaction.internal_static_transaction_StdSignature_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.tangem.blockchain.blockchains.binance.proto.StdSignature.class, com.tangem.blockchain.blockchains.binance.proto.StdSignature.Builder.class);
+              StdSignature.class, Builder.class);
     }
 
     // Construct using com.tangem.blockchain.blockchains.binance.proto.StdSignature.newBuilder()
@@ -809,17 +809,17 @@ private static final long serialVersionUID = 0L;
     @Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_StdSignature_descriptor;
+      return Transaction.internal_static_transaction_StdSignature_descriptor;
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.StdSignature getDefaultInstanceForType() {
-      return com.tangem.blockchain.blockchains.binance.proto.StdSignature.getDefaultInstance();
+    public StdSignature getDefaultInstanceForType() {
+      return StdSignature.getDefaultInstance();
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.StdSignature build() {
-      com.tangem.blockchain.blockchains.binance.proto.StdSignature result = buildPartial();
+    public StdSignature build() {
+      StdSignature result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
@@ -827,8 +827,8 @@ private static final long serialVersionUID = 0L;
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.StdSignature buildPartial() {
-      com.tangem.blockchain.blockchains.binance.proto.StdSignature result = new com.tangem.blockchain.blockchains.binance.proto.StdSignature(this);
+    public StdSignature buildPartial() {
+      StdSignature result = new StdSignature(this);
       result.pubKey_ = pubKey_;
       result.signature_ = signature_;
       result.accountNumber_ = accountNumber_;
@@ -871,16 +871,16 @@ private static final long serialVersionUID = 0L;
     }
     @Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof com.tangem.blockchain.blockchains.binance.proto.StdSignature) {
-        return mergeFrom((com.tangem.blockchain.blockchains.binance.proto.StdSignature)other);
+      if (other instanceof StdSignature) {
+        return mergeFrom((StdSignature)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(com.tangem.blockchain.blockchains.binance.proto.StdSignature other) {
-      if (other == com.tangem.blockchain.blockchains.binance.proto.StdSignature.getDefaultInstance()) return this;
+    public Builder mergeFrom(StdSignature other) {
+      if (other == StdSignature.getDefaultInstance()) return this;
       if (other.getPubKey() != com.google.protobuf.ByteString.EMPTY) {
         setPubKey(other.getPubKey());
       }
@@ -908,11 +908,11 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.tangem.blockchain.blockchains.binance.proto.StdSignature parsedMessage = null;
+      StdSignature parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.tangem.blockchain.blockchains.binance.proto.StdSignature) e.getUnfinishedMessage();
+        parsedMessage = (StdSignature) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -1096,12 +1096,12 @@ private static final long serialVersionUID = 0L;
   }
 
   // @@protoc_insertion_point(class_scope:transaction.StdSignature)
-  private static final com.tangem.blockchain.blockchains.binance.proto.StdSignature DEFAULT_INSTANCE;
+  private static final StdSignature DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new com.tangem.blockchain.blockchains.binance.proto.StdSignature();
+    DEFAULT_INSTANCE = new StdSignature();
   }
 
-  public static com.tangem.blockchain.blockchains.binance.proto.StdSignature getDefaultInstance() {
+  public static StdSignature getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
@@ -1126,7 +1126,7 @@ private static final long serialVersionUID = 0L;
   }
 
   @Override
-  public com.tangem.blockchain.blockchains.binance.proto.StdSignature getDefaultInstanceForType() {
+  public StdSignature getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

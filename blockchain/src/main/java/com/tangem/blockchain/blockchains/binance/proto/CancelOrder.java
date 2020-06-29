@@ -87,15 +87,15 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_CancelOrder_descriptor;
+    return Transaction.internal_static_transaction_CancelOrder_descriptor;
   }
 
   @Override
   protected FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_CancelOrder_fieldAccessorTable
+    return Transaction.internal_static_transaction_CancelOrder_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.tangem.blockchain.blockchains.binance.proto.CancelOrder.class, com.tangem.blockchain.blockchains.binance.proto.CancelOrder.Builder.class);
+            CancelOrder.class, Builder.class);
   }
 
   public static final int SENDER_FIELD_NUMBER = 1;
@@ -247,10 +247,10 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof com.tangem.blockchain.blockchains.binance.proto.CancelOrder)) {
+    if (!(obj instanceof CancelOrder)) {
       return super.equals(obj);
     }
-    com.tangem.blockchain.blockchains.binance.proto.CancelOrder other = (com.tangem.blockchain.blockchains.binance.proto.CancelOrder) obj;
+    CancelOrder other = (CancelOrder) obj;
 
     if (!getSender()
         .equals(other.getSender())) return false;
@@ -280,69 +280,69 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static com.tangem.blockchain.blockchains.binance.proto.CancelOrder parseFrom(
+  public static CancelOrder parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.CancelOrder parseFrom(
+  public static CancelOrder parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.CancelOrder parseFrom(
+  public static CancelOrder parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.CancelOrder parseFrom(
+  public static CancelOrder parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.CancelOrder parseFrom(byte[] data)
+  public static CancelOrder parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.CancelOrder parseFrom(
+  public static CancelOrder parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.CancelOrder parseFrom(java.io.InputStream input)
+  public static CancelOrder parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.CancelOrder parseFrom(
+  public static CancelOrder parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.CancelOrder parseDelimitedFrom(java.io.InputStream input)
+  public static CancelOrder parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.CancelOrder parseDelimitedFrom(
+  public static CancelOrder parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.CancelOrder parseFrom(
+  public static CancelOrder parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.tangem.blockchain.blockchains.binance.proto.CancelOrder parseFrom(
+  public static CancelOrder parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -355,7 +355,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(com.tangem.blockchain.blockchains.binance.proto.CancelOrder prototype) {
+  public static Builder newBuilder(CancelOrder prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   @Override
@@ -380,18 +380,18 @@ private static final long serialVersionUID = 0L;
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:transaction.CancelOrder)
-      com.tangem.blockchain.blockchains.binance.proto.CancelOrderOrBuilder {
+      CancelOrderOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_CancelOrder_descriptor;
+      return Transaction.internal_static_transaction_CancelOrder_descriptor;
     }
 
     @Override
     protected FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_CancelOrder_fieldAccessorTable
+      return Transaction.internal_static_transaction_CancelOrder_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.tangem.blockchain.blockchains.binance.proto.CancelOrder.class, com.tangem.blockchain.blockchains.binance.proto.CancelOrder.Builder.class);
+              CancelOrder.class, Builder.class);
     }
 
     // Construct using com.tangem.blockchain.blockchains.binance.proto.CancelOrder.newBuilder()
@@ -424,17 +424,17 @@ private static final long serialVersionUID = 0L;
     @Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return com.tangem.blockchain.blockchains.binance.proto.Transaction.internal_static_transaction_CancelOrder_descriptor;
+      return Transaction.internal_static_transaction_CancelOrder_descriptor;
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.CancelOrder getDefaultInstanceForType() {
-      return com.tangem.blockchain.blockchains.binance.proto.CancelOrder.getDefaultInstance();
+    public CancelOrder getDefaultInstanceForType() {
+      return CancelOrder.getDefaultInstance();
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.CancelOrder build() {
-      com.tangem.blockchain.blockchains.binance.proto.CancelOrder result = buildPartial();
+    public CancelOrder build() {
+      CancelOrder result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
@@ -442,8 +442,8 @@ private static final long serialVersionUID = 0L;
     }
 
     @Override
-    public com.tangem.blockchain.blockchains.binance.proto.CancelOrder buildPartial() {
-      com.tangem.blockchain.blockchains.binance.proto.CancelOrder result = new com.tangem.blockchain.blockchains.binance.proto.CancelOrder(this);
+    public CancelOrder buildPartial() {
+      CancelOrder result = new CancelOrder(this);
       result.sender_ = sender_;
       result.symbol_ = symbol_;
       result.refid_ = refid_;
@@ -485,16 +485,16 @@ private static final long serialVersionUID = 0L;
     }
     @Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof com.tangem.blockchain.blockchains.binance.proto.CancelOrder) {
-        return mergeFrom((com.tangem.blockchain.blockchains.binance.proto.CancelOrder)other);
+      if (other instanceof CancelOrder) {
+        return mergeFrom((CancelOrder)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(com.tangem.blockchain.blockchains.binance.proto.CancelOrder other) {
-      if (other == com.tangem.blockchain.blockchains.binance.proto.CancelOrder.getDefaultInstance()) return this;
+    public Builder mergeFrom(CancelOrder other) {
+      if (other == CancelOrder.getDefaultInstance()) return this;
       if (other.getSender() != com.google.protobuf.ByteString.EMPTY) {
         setSender(other.getSender());
       }
@@ -521,11 +521,11 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.tangem.blockchain.blockchains.binance.proto.CancelOrder parsedMessage = null;
+      CancelOrder parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.tangem.blockchain.blockchains.binance.proto.CancelOrder) e.getUnfinishedMessage();
+        parsedMessage = (CancelOrder) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -770,12 +770,12 @@ private static final long serialVersionUID = 0L;
   }
 
   // @@protoc_insertion_point(class_scope:transaction.CancelOrder)
-  private static final com.tangem.blockchain.blockchains.binance.proto.CancelOrder DEFAULT_INSTANCE;
+  private static final CancelOrder DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new com.tangem.blockchain.blockchains.binance.proto.CancelOrder();
+    DEFAULT_INSTANCE = new CancelOrder();
   }
 
-  public static com.tangem.blockchain.blockchains.binance.proto.CancelOrder getDefaultInstance() {
+  public static CancelOrder getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
@@ -800,7 +800,7 @@ private static final long serialVersionUID = 0L;
   }
 
   @Override
-  public com.tangem.blockchain.blockchains.binance.proto.CancelOrder getDefaultInstanceForType() {
+  public CancelOrder getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 
