@@ -17,6 +17,7 @@ allprojects {
     repositories {
         google()
         jcenter()
+        maven { url "https://api.bitbucket.org/2.0/repositories/tangem/maven_repository/src/releases" }
         maven { url 'https://jitpack.io' }
     }
 }
