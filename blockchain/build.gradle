@@ -41,8 +41,8 @@ android {
 
 dependencies {
 //    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "com.github.tangem.tangem-sdk-android:tangem-core:0.9.0"
-    implementation "com.github.tangem.tangem-sdk-android:tangem-sdk:0.9.0"
+    implementation 'com.tangem:core:0.9.1'
+    implementation 'com.tangem:sdk:0.9.1'
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$versions.kotlin"
     implementation 'androidx.appcompat:appcompat:1.1.0'
@@ -79,11 +79,11 @@ dependencies {
 
     implementation files('libs/ripple-core-0.0.1.jar')
     //4 dependencies for ripple-core
-    implementation 'net.i2p.crypto:eddsa:0.3.0'
-    implementation 'org.bouncycastle:bcprov-jdk15on:1.61'
+//    implementation 'net.i2p.crypto:eddsa:0.3.0'
+//    implementation 'org.bouncycastle:bcprov-jdk15on:1.61'
     //noinspection DuplicatePlatformClasses
-    implementation 'org.json:json:20180813'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+//    implementation 'org.json:json:20180813'
+//    implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
 
     //dependencies for binance
     implementation 'com.google.protobuf:protobuf-java:3.6.1'
