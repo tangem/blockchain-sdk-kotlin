@@ -1,5 +1,6 @@
 package com.tangem.blockchain.extensions
 
+import com.tangem.TangemError
 import com.tangem.TangemSdk
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.commands.SignResponse
@@ -52,6 +53,11 @@ sealed class Result<out T : Any> {
 sealed class SimpleResult {
     object Success : SimpleResult()
     data class Failure(val error: Throwable?) : SimpleResult()
+
+    companion object {
+        fun failure(sdkError: TangemError): Failure =
+                Failure(Exception("TangemError: code: ${sdkError.code}, message: ${sdkError.customMessage}"))
+    }
 }
 
 class Signer(private val tangemSdk: TangemSdk) : TransactionSigner {
