@@ -47,7 +47,7 @@ class CardanoWalletManager(
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
                 return networkManager.sendTransaction(transactionToSend.encodeBase64NoWrap())
             }
-            is CompletionResult.Failure -> return SimpleResult.Failure(signerResponse.error)
+            is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
         }
     }
 
