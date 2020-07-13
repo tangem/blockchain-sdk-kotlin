@@ -52,7 +52,7 @@ open class BitcoinWalletManager(
                         val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
                         return networkManager.sendTransaction(transactionToSend.toHexString())
                     }
-                    is CompletionResult.Failure -> return SimpleResult.Failure(signerResponse.error)
+                    is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
                 }
             }
         }
