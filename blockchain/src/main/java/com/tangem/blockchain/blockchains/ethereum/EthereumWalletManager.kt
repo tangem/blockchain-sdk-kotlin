@@ -60,7 +60,7 @@ class EthereumWalletManager(
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature, transactionToSign)
                 return networkManager.sendTransaction(String.format("0x%s", transactionToSend.toHexString()))
             }
-            is CompletionResult.Failure -> return SimpleResult.Failure(signerResponse.error)
+            is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
         }
     }
 
