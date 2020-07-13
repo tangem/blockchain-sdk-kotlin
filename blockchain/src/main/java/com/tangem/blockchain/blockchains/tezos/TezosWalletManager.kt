@@ -63,7 +63,7 @@ class TezosWalletManager(
         val dataToSign = transactionBuilder.buildToSign(forgedContents)
 
         val signature = when (val signerResponse = signer.sign(arrayOf(dataToSign), cardId)) {
-            is CompletionResult.Failure -> return SimpleResult.Failure(signerResponse.error)
+            is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
             is CompletionResult.Success -> signerResponse.data.signature
         }
 
