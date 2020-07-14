@@ -90,11 +90,11 @@ private fun makeAccountBody(address: String, validated: Boolean): RippledBody {
     val params = HashMap<String, String>()
     params["account"] = address
     params["ledger_index"] = if (validated) "validated" else "current"
-    return RippledBody(RippledMethod.ACCOUNT_INFO.value, params)
+    return RippledBody(RippledMethod.ACCOUNT_INFO.value, mutableListOf(params))
 }
 
 private fun makeSubmitBody(transaction: String): RippledBody {
     val params = HashMap<String, String>()
     params["tx_blob"] = transaction
-    return RippledBody(RippledMethod.SUBMIT.value, params)
+    return RippledBody(RippledMethod.SUBMIT.value, mutableListOf(params))
 }
