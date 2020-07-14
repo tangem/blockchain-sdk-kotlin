@@ -31,7 +31,7 @@ enum class RippledMethod(val value: String) {
 
 data class RippledBody(
         val method: String,
-        val params: MutableList<MutableMap<String, String>> = mutableListOf() //TODO =null?
+        val params: List<Map<String, String>> = listOf() //TODO =null?
 )
 
 val serverStateBody = RippledBody(RippledMethod.SERVER_STATE.value)
