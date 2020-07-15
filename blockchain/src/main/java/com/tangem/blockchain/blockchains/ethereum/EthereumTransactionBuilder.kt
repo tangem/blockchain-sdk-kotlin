@@ -87,7 +87,8 @@ class TransactionToSign(val transaction: Transaction, val hashes: List<ByteArray
 
 enum class GasLimit(val value: Long) {
     Default(21000),
-    Token(60000),
+    Erc20(60000),
+    Medium(150000),
     High(300000)
 }
 
@@ -95,8 +96,8 @@ internal fun getGasLimit(amount: Amount): GasLimit {
     return when (amount.currencySymbol) {
         Blockchain.Ethereum.currency -> GasLimit.Default
         "DGX" -> GasLimit.High
-        "CGT" -> GasLimit.High
-        else -> GasLimit.Token
+        "AWG" -> GasLimit.Medium
+        else -> GasLimit.Erc20
     }
 }
 
