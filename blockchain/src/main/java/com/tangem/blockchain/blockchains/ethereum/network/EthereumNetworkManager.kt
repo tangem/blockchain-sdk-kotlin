@@ -1,11 +1,15 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
+import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
+import com.tangem.blockchain.network.API_BLOCKCYPHER
 import com.tangem.blockchain.network.API_INFURA
 import com.tangem.blockchain.network.API_RSK
+import com.tangem.blockchain.network.blockcypher.BlockcypherApi
+import com.tangem.blockchain.network.blockcypher.BlockcypherProvider
 import com.tangem.blockchain.network.createRetrofitInstance
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -27,6 +31,16 @@ class EthereumNetworkManager(blockchain: Blockchain) {
         createRetrofitInstance(baseUrl).create(EthereumApi::class.java)
     }
 
+    private val blockcypherProvider: BlockcypherProvider? by lazy {
+        when (blockchain) {
+            Blockchain.Ethereum -> {
+                val blockcypherApi = createRetrofitInstance(API_BLOCKCYPHER).create(BlockcypherApi::class.java)
+                BlockcypherProvider(blockcypherApi, blockchain)
+            }
+            else -> null
+        }
+    }
+
     private val apiKey = when (blockchain) {
         Blockchain.Ethereum -> INFURA_API_KEY
         Blockchain.RSK -> ""
@@ -35,6 +49,38 @@ class EthereumNetworkManager(blockchain: Blockchain) {
 
     private val provider: EthereumProvider by lazy { EthereumProvider(api, apiKey) }
     private val decimals = Blockchain.Ethereum.decimals()
+
+    suspend fun getInfo(address: String, contractAddress: String? = null, tokenDecimals: Int? = null)
+            : Result<EthereumInfoResponse> {
+        return try {
+            coroutineScope {
+                val balanceResponse = retryIO { async { provider.getBalance(address) } }
+                val txCountResponse = retryIO { async { provider.getTxCount(address) } }
+                val pendingTxCountResponse = retryIO { async { provider.getPendingTxCount(address) } }
+
+                val blockcypherAddressData = //TODO: check, we don't use anything except transactions
+                        retryIO { async { blockcypherProvider?.getInfo(address) } }
+
+                var tokenBalanceResponse: Deferred<EthereumResponse>? = null
+                if (contractAddress != null && tokenDecimals != null) {
+                    tokenBalanceResponse = retryIO { async { provider.getTokenBalance(address, contractAddress) } }
+                }
+                val recentTransactions = when (val result = blockcypherAddressData.await()) {
+                    is Result.Success -> result.data.recentTransactions
+                    else -> null
+                }
+                Result.Success(EthereumInfoResponse(
+                        balanceResponse.await().result!!.parseAmount(decimals),
+                        tokenBalanceResponse?.await()?.result?.parseAmount(tokenDecimals!!),
+                        txCountResponse.await().result?.responseToNumber()?.toLong() ?: 0,
+                        pendingTxCountResponse.await().result?.responseToNumber()?.toLong() ?: 0,
+                        recentTransactions
+                ))
+            }
+        } catch (error: Exception) {
+            Result.Failure(error)
+        }
+    }
 
     suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
@@ -59,27 +105,9 @@ class EthereumNetworkManager(blockchain: Blockchain) {
         }
     }
 
-    suspend fun getInfo(address: String, contractAddress: String? = null, tokenDecimals: Int? = null)
-            : Result<EthereumInfoResponse> {
-        return try {
-            coroutineScope {
-                val balanceResponse = retryIO { async { provider.getBalance(address) } }
-                val txCountResponse = retryIO { async { provider.getTxCount(address) } }
-                val pendingTxCountResponse = retryIO { async { provider.getPendingTxCount(address) } }
-                var tokenBalanceResponse: Deferred<EthereumResponse>? = null
-                if (contractAddress != null && tokenDecimals != null) {
-                    tokenBalanceResponse = retryIO { async { provider.getTokenBalance(address, contractAddress) } }
-                }
-                Result.Success(EthereumInfoResponse(
-                        balanceResponse.await().result!!.parseAmount(decimals),
-                        tokenBalanceResponse?.await()?.result?.parseAmount(tokenDecimals!!),
-                        txCountResponse.await().result?.responseToNumber()?.toLong() ?: 0,
-                        pendingTxCountResponse.await().result?.responseToNumber()?.toLong() ?: 0
-                ))
-            }
-        } catch (error: Exception) {
-            Result.Failure(error)
-        }
+    suspend fun getSignatureCount(address: String): Result<Int> {
+        return blockcypherProvider?.getSignatureCount(address)
+                ?: Result.Failure(Exception("No signature count provider found"))
     }
 
     private fun String.parseFee(gasLimit: Long): List<BigDecimal> {
@@ -99,17 +127,14 @@ class EthereumNetworkManager(blockchain: Blockchain) {
     private fun String.parseAmount(decimals: Int): BigDecimal =
             this.responseToNumber().toBigDecimal().movePointLeft(decimals)
 
-    private fun BigDecimal.convertFeeToEth(): BigDecimal {
-        return this.movePointLeft(decimals).setScale(decimals, BigDecimal.ROUND_DOWN).stripTrailingZeros()
-    }
-
 }
 
 data class EthereumInfoResponse(
         val balance: BigDecimal,
         val tokenBalance: BigDecimal?,
         val txCount: Long,
-        val pendingTxCount: Long
+        val pendingTxCount: Long,
+        val recentTransactions: List<BasicTransactionData>?
 )
 
 private const val INFURA_API_KEY = "613a0b14833145968b1f656240c7d245"

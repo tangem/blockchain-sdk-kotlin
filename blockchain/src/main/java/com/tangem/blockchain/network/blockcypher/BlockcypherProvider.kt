@@ -4,7 +4,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinProvider
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinTransaction
+import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -20,6 +20,7 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
     private val blockchainPath = when (blockchain) {
         Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> "btc"
         Blockchain.Litecoin -> "ltc"
+        Blockchain.Ethereum -> "eth"
         else -> throw Exception(
                 "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
         )
@@ -38,8 +39,8 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
                     retryIO { api.getAddressData(blockchainPath, network, address) }
 
             val transactions =
-                    addressData.txrefs!!.toBitcoinTransactions(isConfirmed = true) +
-                    addressData.unconfirmedTxrefs!!.toBitcoinTransactions(isConfirmed = false)
+                    addressData.txrefs!!.toBasicTransactionsData(isConfirmed = true) +
+                            addressData.unconfirmedTxrefs!!.toBasicTransactionsData(isConfirmed = false)
 
             val unspentOutputs = addressData.txrefs.filter { it.spent == false }.map {
                 BitcoinUnspentOutput(
@@ -104,8 +105,8 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
         }
     }
 
-    private fun List<BlockcypherTxref>.toBitcoinTransactions(isConfirmed: Boolean): List<BitcoinTransaction> {
-        val transactionsMap: MutableMap<String, BitcoinTransaction> = mutableMapOf()
+    private fun List<BlockcypherTxref>.toBasicTransactionsData(isConfirmed: Boolean): List<BasicTransactionData> {
+        val transactionsMap: MutableMap<String, BasicTransactionData> = mutableMapOf()
 
         this.forEach {
             var balanceDif = if (it.outputIndex == -1) { // outgoing only
@@ -119,11 +120,11 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
 
             val date = if (!it.received.isNullOrEmpty()) {
                 Calendar.getInstance().apply { time = dateFormat.parse(it.received!!)!! }
-            }else {
+            } else {
                 null
             }
 
-            val transaction = BitcoinTransaction(
+            val transaction = BasicTransactionData(
                     balanceDif = balanceDif,
                     hash = it.hash!!,
                     date = date,
