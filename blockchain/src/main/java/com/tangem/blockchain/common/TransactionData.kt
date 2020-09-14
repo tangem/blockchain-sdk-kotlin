@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import java.math.BigDecimal
 import java.util.*
 
 data class TransactionData(
@@ -17,3 +18,10 @@ data class TransactionData(
 enum class TransactionStatus { Confirmed, Unconfirmed }
 
 enum class TransactionError { WrongAmount, WrongFee, WrongTotal }
+
+data class BasicTransactionData(
+        val balanceDif: BigDecimal, //change of balance
+        val hash: String,
+        val date: Calendar?,
+        val isConfirmed: Boolean
+)
