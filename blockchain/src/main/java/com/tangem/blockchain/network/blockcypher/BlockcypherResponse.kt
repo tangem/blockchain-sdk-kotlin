@@ -4,18 +4,18 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-data class BlockcypherResponse(
+data class BlockcypherAddress(
         @Json(name = "address")
         val address: String? = null,
 
-        @Json(name = "balance")
+        @Json(name = "final_balance")
         val balance: Long? = null,
 
-        @Json(name = "unconfirmed_balance")
-        val unconfirmedBalance: Long? = null,
-
         @Json(name = "txrefs")
-        val txrefs: List<BlockcypherTxref>? = null
+        val txrefs: List<BlockcypherTxref>? = null,
+
+        @Json(name = "unconfirmed_txrefs")
+        val unconfirmedTxrefs: List<BlockcypherTxref>? = null
 )
 
 @JsonClass(generateAdapter = true)
@@ -33,7 +33,13 @@ data class BlockcypherTxref(
         val confirmations: Long? = null,
 
         @Json(name = "script")
-        val outputScript: String? = null
+        val outputScript: String? = null,
+
+        @Json(name = "spent")
+        var spent: Boolean? = null,
+
+        @Json(name = "received")
+        var received: String? = null
 )
 
 @JsonClass(generateAdapter = true)
