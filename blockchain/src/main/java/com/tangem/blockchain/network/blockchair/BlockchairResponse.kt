@@ -18,7 +18,7 @@ data class BlockchairAddressData(
         val unspentOutputs: List<BlockchairUnspentOutput>? = null,
 
         @Json(name = "transactions")
-        val transactions: List<String>? = null
+        val transactions: List<BlockchairTransactionInfo>? = null
 )
 
 data class BlockchairAddressInfo(
@@ -61,7 +61,14 @@ data class BlockchairTransactionData(
 
 data class BlockchairTransactionInfo(
         @Json(name = "block_id")
-        val block: Int? = null
+        val block: Int? = null,
+
+        val hash: String? = null,
+
+        val time: String? = null,
+
+        @Json(name = "balance_change")
+        val balanceDif: Long? = null
 )
 
 data class BlockchairStats(

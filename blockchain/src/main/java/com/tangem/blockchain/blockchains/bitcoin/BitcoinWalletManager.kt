@@ -1,21 +1,23 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import android.util.Log
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressResponse
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinProvider
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinTransaction
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
+import java.util.*
 
 open class BitcoinWalletManager(
         cardId: String,
         wallet: Wallet,
         protected val transactionBuilder: BitcoinTransactionBuilder,
         private val networkManager: BitcoinProvider
-) : WalletManager(cardId, wallet), TransactionSender {
+) : WalletManager(cardId, wallet), TransactionSender, SignatureCountValidator {
 
     protected val blockchain = wallet.blockchain
 
@@ -27,15 +29,11 @@ open class BitcoinWalletManager(
         }
     }
 
-    private fun updateWallet(response: BitcoinAddressResponse) {
+    private fun updateWallet(response: BitcoinAddressInfo) {
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
         wallet.amounts[AmountType.Coin]?.value = response.balance
         transactionBuilder.unspentOutputs = response.unspentOutputs
-        if (response.hasUnconfirmed) {
-            if (wallet.transactions.isEmpty()) wallet.addIncomingTransaction()
-        } else {
-            wallet.transactions.clear()
-        }
+        updateRecentTransactions(response.recentTransactions)
     }
 
     private fun updateError(error: Throwable?) {
@@ -43,16 +41,58 @@ open class BitcoinWalletManager(
         if (error != null) throw error
     }
 
+    protected open fun updateRecentTransactions(transactions: List<BitcoinTransaction>) {
+        val (confirmedTransactions, unconfirmedTransactions) =
+                transactions.partition { it.isConfirmed }
+
+        wallet.recentTransactions.forEach {
+            if (confirmedTransactions.find {confirmed -> confirmed.hash == it.hash } != null) {
+                it.status = TransactionStatus.Confirmed
+            }
+        }
+        unconfirmedTransactions.forEach {
+            if (wallet.recentTransactions.find { unconfirmed -> unconfirmed.hash == it.hash } == null) {
+                wallet.recentTransactions.add(it.toTransactionData())
+            }
+        }
+        wallet.sentTransactionsCount = transactions.filter { it.balanceDif < 0.toBigDecimal() }.size
+    }
+
+    private fun BitcoinTransaction.toTransactionData(): TransactionData {
+        val isIncoming = this.balanceDif.signum() > 0
+        return TransactionData(
+                amount = Amount(wallet.amounts[AmountType.Coin]!!, this.balanceDif.abs()),
+                fee = null,
+                sourceAddress = if (isIncoming) "unknown" else wallet.address,
+                destinationAddress = if (isIncoming) wallet.address else "Unknown",
+                hash = this.hash,
+                date = this.date,
+                status = if (this.isConfirmed) {
+                    TransactionStatus.Confirmed
+                } else {
+                    TransactionStatus.Unconfirmed
+                }
+        )
+    }
+
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
             is Result.Success -> {
-                when (val signerResponse = signer.sign(buildTransactionResult.data.toTypedArray(), cardId)) {
+                when (val signerResult = signer.sign(buildTransactionResult.data.toTypedArray(), cardId)) {
                     is CompletionResult.Success -> {
-                        val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
-                        return networkManager.sendTransaction(transactionToSend.toHexString())
+                        val transactionToSend = transactionBuilder.buildToSend(signerResult.data.signature)
+                        val sendResult = networkManager.sendTransaction(transactionToSend.toHexString())
+
+                        if (sendResult is SimpleResult.Success) {
+                            transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
+                            transactionData.date = Calendar.getInstance()
+                            transactionData.status = TransactionStatus.Unconfirmed
+                            wallet.recentTransactions.add(transactionData)
+                        }
+                        return sendResult
                     }
-                    is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
+                    is CompletionResult.Failure -> return SimpleResult.failure(signerResult.error)
                 }
             }
         }
@@ -87,6 +127,17 @@ open class BitcoinWalletManager(
                     }
                 }
             }
+        }
+    }
+
+    override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
+        return when (val result = networkManager.getSignatureCount(wallet.address)) {
+            is Result.Success -> if (result.data == signedHashes) {
+                SimpleResult.Success
+            } else {
+                SimpleResult.Failure(Exception("Number of signatures does not match"))
+            }
+            is Result.Failure -> SimpleResult.Failure(result.error)
         }
     }
 
