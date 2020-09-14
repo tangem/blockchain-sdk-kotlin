@@ -10,7 +10,7 @@ data class TransactionData(
         val contractAddress: String? = null,
         var status: TransactionStatus = TransactionStatus.Unconfirmed,
         var date: Calendar? = null,
-        val hash: String? = null
+        var hash: String? = null
 )
 
 

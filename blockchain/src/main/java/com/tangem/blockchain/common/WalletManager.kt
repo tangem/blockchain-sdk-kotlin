@@ -46,3 +46,7 @@ interface TransactionSender {
 interface TransactionSigner {
     suspend fun sign(hashes: Array<ByteArray>, cardId: String): CompletionResult<SignResponse>
 }
+
+interface SignatureCountValidator {
+    suspend fun validateSignatureCount(signedHashes: Int): SimpleResult
+}
