@@ -38,7 +38,7 @@ class StellarWalletManager(
         baseReserve = data.baseReserve
 
         val currentTime = Calendar.getInstance().timeInMillis
-        wallet.transactions.forEach { transaction ->
+        wallet.recentTransactions.forEach { transaction ->
             if (transaction.date?.timeInMillis ?: 0 - currentTime > 10) {
                 transaction.status = TransactionStatus.Confirmed
             }
