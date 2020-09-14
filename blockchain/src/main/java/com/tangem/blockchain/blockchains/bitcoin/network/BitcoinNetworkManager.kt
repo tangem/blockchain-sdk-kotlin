@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo.BitcoinfeesEarnApi
 import com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo.BlockchainInfoApi
 import com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo.BlockchainInfoProvider
+import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.network.blockcypher.BlockcypherApi
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
@@ -13,7 +14,6 @@ import com.tangem.blockchain.network.blockcypher.BlockcypherProvider
 import retrofit2.HttpException
 import java.io.IOException
 import java.math.BigDecimal
-import java.util.*
 
 
 class BitcoinNetworkManager(blockchain: Blockchain) : BitcoinProvider {
@@ -106,18 +106,11 @@ class BitcoinNetworkManager(blockchain: Blockchain) : BitcoinProvider {
 data class BitcoinAddressInfo(
         val balance: BigDecimal,
         val unspentOutputs: List<BitcoinUnspentOutput>,
-        val recentTransactions: List<BitcoinTransaction>
+        val recentTransactions: List<BasicTransactionData>
 )
 
 data class BitcoinFee(
         val minimalPerKb: BigDecimal,
         val normalPerKb: BigDecimal,
         val priorityPerKb: BigDecimal
-)
-
-data class BitcoinTransaction(
-        val balanceDif: BigDecimal, //change of balance
-        val hash: String,
-        val date: Calendar?,
-        val isConfirmed: Boolean
 )
