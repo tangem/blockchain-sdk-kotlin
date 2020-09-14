@@ -4,8 +4,11 @@ import okhttp3.ResponseBody
 import retrofit2.http.*
 
 interface BlockchainInfoApi {
-    @GET("rawaddr/{address}?limit=5")
-    suspend fun getAddress(@Path("address") address: String): BlockchainInfoAddress
+    @GET("rawaddr/{address}")
+    suspend fun getAddressData(
+            @Path("address") address: String,
+            @Query("offset") transactionOffset: Int?
+    ): BlockchainInfoAddress
 
     @GET("unspent")
     suspend fun getUnspents(@Query("active") address: String): BlockchainInfoUnspents

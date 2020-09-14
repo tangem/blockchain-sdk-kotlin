@@ -4,7 +4,7 @@ import com.squareup.moshi.JsonClass
 import retrofit2.http.*
 
 interface BlockchairApi {
-    @GET("{blockchain}/dashboards/address/{address}")
+    @GET("{blockchain}/dashboards/address/{address}?transaction_details=true")
     suspend fun getAddressData(
             @Path("address") address: String,
             @Path("blockchain") blockchain: String,

@@ -78,6 +78,8 @@ open class BitcoinTransactionBuilder(
         val signature = TransactionSignature(r, canonicalS)
         return ScriptBuilder.createInputScript(signature, ECKey.fromPublicOnly(publicKey))
     }
+
+    fun getTransactionHash() = transaction.txId.bytes
 }
 
 internal fun TransactionData.toBitcoinJTransaction(networkParameters: NetworkParameters?,
