@@ -4,7 +4,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinProvider
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinTransaction
+import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -33,7 +33,7 @@ class BlockchainInfoProvider(
                 val unspents = unspentsDeferred.await()
 
                 val transactions = addressData.transactions!!.map {
-                    BitcoinTransaction(
+                    BasicTransactionData(
                             balanceDif = it.balanceDif!!.toBigDecimal().movePointLeft(decimals),
                             hash = it.hash!!,
                             isConfirmed = it.blockHeight != 0L,
