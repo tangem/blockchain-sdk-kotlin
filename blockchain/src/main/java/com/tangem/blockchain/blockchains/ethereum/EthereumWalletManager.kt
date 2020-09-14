@@ -41,9 +41,9 @@ class EthereumWalletManager(
         txCount = data.txCount
         pendingTxCount = data.pendingTxCount
         if (txCount == pendingTxCount) {
-            wallet.transactions.forEach { it.status = TransactionStatus.Confirmed }
-        } else if (wallet.transactions.isEmpty()) {
-            wallet.addIncomingTransaction()
+            wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
+        } else if (wallet.recentTransactions.isEmpty()) {
+            wallet.addIncomingTransactionDummy()
         }
     }
 

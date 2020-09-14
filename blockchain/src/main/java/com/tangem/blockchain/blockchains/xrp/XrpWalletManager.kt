@@ -37,9 +37,9 @@ class XrpWalletManager(
         transactionBuilder.sequence = response.sequence
 
         if (response.hasUnconfirmed) {
-            if (wallet.transactions.isEmpty()) wallet.addIncomingTransaction()
+            if (wallet.recentTransactions.isEmpty()) wallet.addIncomingTransactionDummy()
         } else {
-            wallet.transactions.clear()
+            wallet.recentTransactions.clear()
         }
     }
 
