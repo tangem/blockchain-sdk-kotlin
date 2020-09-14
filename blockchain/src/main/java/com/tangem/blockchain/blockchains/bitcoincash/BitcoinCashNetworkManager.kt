@@ -1,6 +1,6 @@
 package com.tangem.blockchain.blockchains.bitcoincash
 
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressResponse
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinProvider
 import com.tangem.blockchain.common.Blockchain
@@ -19,7 +19,7 @@ class BitcoinCashNetworkManager : BitcoinProvider {
         BlockchairProvider(api, blockchain)
     }
 
-    override suspend fun getInfo(address: String): Result<BitcoinAddressResponse> {
+    override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         return blockchairProvider.getInfo(address)
     }
 
@@ -29,5 +29,9 @@ class BitcoinCashNetworkManager : BitcoinProvider {
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return blockchairProvider.sendTransaction(transaction)
+    }
+
+    override suspend fun getSignatureCount(address: String): Result<Int> {
+        return blockchairProvider.getSignatureCount(address)
     }
 }
