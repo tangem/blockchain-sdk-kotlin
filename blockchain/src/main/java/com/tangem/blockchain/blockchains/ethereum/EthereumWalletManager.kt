@@ -15,7 +15,7 @@ class EthereumWalletManager(
         wallet: Wallet,
         private val transactionBuilder: EthereumTransactionBuilder,
         private val networkManager: EthereumNetworkManager
-) : WalletManager(cardId, wallet), TransactionSender {
+) : WalletManager(cardId, wallet), TransactionSender, SignatureCountValidator {
 
     private val blockchain = wallet.blockchain
 
@@ -43,7 +43,7 @@ class EthereumWalletManager(
         if (txCount == pendingTxCount) {
             wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
         } else if (!data.recentTransactions.isNullOrEmpty()) {
-            updateRecentTransactions(data.recentTransactions)
+            updateRecentTransactionsBasic(data.recentTransactions)
         }
     }
 
@@ -73,6 +73,17 @@ class EthereumWalletManager(
                         feeValues.map { feeValue -> Amount(wallet.amounts[AmountType.Coin]!!, feeValue) })
             }
             is Result.Failure -> return result
+        }
+    }
+
+    override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
+        return when (val result = networkManager.getSignatureCount(wallet.address)) {
+            is Result.Success -> if (result.data == signedHashes) {
+                SimpleResult.Success
+            } else {
+                SimpleResult.Failure(Exception("Number of signatures does not match"))
+            }
+            is Result.Failure -> SimpleResult.Failure(result.error)
         }
     }
 }
