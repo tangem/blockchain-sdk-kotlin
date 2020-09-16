@@ -15,7 +15,7 @@ import java.util.*
 
 class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchain) : BitcoinProvider {
     private val limitCap = 2000
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
     private val blockchainPath = when (blockchain) {
         Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> "btc"
