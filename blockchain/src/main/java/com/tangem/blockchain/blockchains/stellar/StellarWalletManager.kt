@@ -13,7 +13,7 @@ class StellarWalletManager(
         wallet: Wallet,
         private val transactionBuilder: StellarTransactionBuilder,
         private val networkManager: StellarNetworkManager
-) : WalletManager(cardId, wallet), TransactionSender {
+) : WalletManager(cardId, wallet), TransactionSender, SignatureCountValidator {
 
     private val blockchain = wallet.blockchain
 
@@ -36,13 +36,7 @@ class StellarWalletManager(
         sequence = data.sequence
         baseFee = data.baseFee
         baseReserve = data.baseReserve
-
-        val currentTime = Calendar.getInstance().timeInMillis
-        wallet.recentTransactions.forEach { transaction ->
-            if (transaction.date?.timeInMillis ?: 0 - currentTime > 10) {
-                transaction.status = TransactionStatus.Confirmed
-            }
-        }
+        updateRecentTransactions(data.recentTransactions)
     }
 
     private fun updateError(error: Throwable?) {
@@ -65,6 +59,17 @@ class StellarWalletManager(
         return Result.Success(listOf(
                 Amount(baseFee, blockchain)
         ))
+    }
+
+    override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
+        return when (val result = networkManager.getSignatureCount(wallet.address)) {
+            is Result.Success -> if (result.data == signedHashes) {
+                SimpleResult.Success
+            } else {
+                SimpleResult.Failure(Exception("Number of signatures does not match"))
+            }
+            is Result.Failure -> SimpleResult.Failure(result.error)
+        }
     }
 
     private fun BigDecimal.toStroops(): Int {
