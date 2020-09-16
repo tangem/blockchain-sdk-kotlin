@@ -12,7 +12,7 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
 
     abstract suspend fun update()
 
-    protected open fun updateRecentTransactions(transactions: List<BasicTransactionData>) {
+    protected open fun updateRecentTransactionsBasic(transactions: List<BasicTransactionData>) {
         val (confirmedTransactions, unconfirmedTransactions) =
                 transactions.partition { it.isConfirmed }
 
@@ -26,7 +26,22 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
                 wallet.recentTransactions.add(it.toTransactionData())
             }
         }
-        wallet.sentTransactionsCount = transactions.filter { it.balanceDif < 0.toBigDecimal() }.size
+    }
+
+    protected fun updateRecentTransactions(transactions: List<TransactionData>) {
+        val (confirmedTransactions, unconfirmedTransactions) =
+                transactions.partition { it.status == TransactionStatus.Confirmed }
+
+        wallet.recentTransactions.forEach {
+            if (confirmedTransactions.find {confirmed -> confirmed.hash == it.hash } != null) {
+                it.status = TransactionStatus.Confirmed
+            }
+        }
+        unconfirmedTransactions.forEach {
+            if (wallet.recentTransactions.find { unconfirmed -> unconfirmed.hash == it.hash } == null) {
+                wallet.recentTransactions.add(it)
+            }
+        }
     }
 
     fun createTransaction(amount: Amount, fee: Amount, destination: String): TransactionData {

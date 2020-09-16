@@ -17,7 +17,8 @@ class DucatusWalletManager(
         transactionBuilder: BitcoinTransactionBuilder,
         networkManager: DucatusNetworkManager
 ) : BitcoinWalletManager(cardId, wallet, transactionBuilder, networkManager), TransactionSender {
-    override fun updateRecentTransactions(transactions: List<BasicTransactionData>) {
+
+    override fun updateRecentTransactionsBasic(transactions: List<BasicTransactionData>) {
         if (transactions.isEmpty()) {
             wallet.recentTransactions.clear()
         }
