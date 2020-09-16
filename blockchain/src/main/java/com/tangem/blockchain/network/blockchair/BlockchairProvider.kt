@@ -16,7 +16,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class BlockchairProvider(private val api: BlockchairApi, blockchain: Blockchain) : BitcoinProvider {
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss")
 
     private val blockchainPath = when (blockchain) {
         Blockchain.BitcoinCash -> "bitcoin-cash"
