@@ -12,7 +12,6 @@ class Wallet(
     val shareUrl: String
     val recentTransactions: MutableList<TransactionData> = mutableListOf() //we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
-    var sentTransactionsCount: Int = 0
 
     init {
         setAmount(Amount(null, blockchain, address))
