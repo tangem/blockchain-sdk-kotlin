@@ -45,6 +45,8 @@ class XrpTransactionBuilder(walletPublicKey: ByteArray) {
         return transaction!!.tx_blob
     }
 
+    fun getTransactionHash() = transaction?.hash?.bytes()
+
     private fun encodeDerSignature(signature: ByteArray): ByteArray {
         val r = BigInteger(1, signature.copyOfRange(0, 32))
         val s = BigInteger(1, signature.copyOfRange(32, 64))

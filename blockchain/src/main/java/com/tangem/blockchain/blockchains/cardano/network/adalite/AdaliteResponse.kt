@@ -12,14 +12,14 @@ data class AdaliteAddress(
 @JsonClass(generateAdapter = true)
 data class AdaliteAddressData(
         @Json(name = "caBalance")
-        var balanceData: BalanceData? = null
+        var balanceData: AdaliteBalance? = null,
 
-//        @Json(name = "caTxList")
-//        var transactions: List<AdaliteTransaction>
+        @Json(name = "caTxList")
+        var transactions: List<AdaliteTransaction>?
 )
 
 @JsonClass(generateAdapter = true)
-data class BalanceData(
+data class AdaliteBalance(
         @Json(name = "getCoin")
         var amount: Long? = null
 )
@@ -27,7 +27,7 @@ data class BalanceData(
 @JsonClass(generateAdapter = true)
 data class AdaliteUnspents(
         @Json(name = "Right")
-        var data: List<AdaliteUtxo>
+        var data: List<AdaliteUtxo>?
 )
 
 @JsonClass(generateAdapter = true)
@@ -39,11 +39,11 @@ data class AdaliteUtxo(
         var outputIndex: Int? = null,
 
         @Json(name = "cuCoins")
-        var amountData: BalanceData? = null
+        var amountData: AdaliteBalance? = null
 )
 
-//@JsonClass(generateAdapter = true)
-//data class AdaliteTransaction(
-//        @Json(name = "ctbId")
-//        var hash: String? = null
-//)
+@JsonClass(generateAdapter = true)
+data class AdaliteTransaction(
+        @Json(name = "ctbId")
+        var hash: String? = null
+)
