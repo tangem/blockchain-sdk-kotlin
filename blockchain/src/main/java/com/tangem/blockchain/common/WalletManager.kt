@@ -10,6 +10,8 @@ import java.util.*
 
 abstract class WalletManager(val cardId: String, var wallet: Wallet) {
 
+    var dustValue: BigDecimal? = null
+
     abstract suspend fun update()
 
     protected open fun updateRecentTransactionsBasic(transactions: List<BasicTransactionData>) {
@@ -50,6 +52,7 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
                     TransactionStatus.Unconfirmed, Calendar.getInstance(), null)
     }
 
+    // TODO: add dust (output too small) check, Cardano needs it for sure
     fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
         val errors = EnumSet.noneOf(TransactionError::class.java)
 
@@ -60,6 +63,10 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
         val total = (amount.value ?: BigDecimal.ZERO) + (fee.value ?: BigDecimal.ZERO)
         if (!validateAmount(Amount(amount, total))) errors.add(TransactionError.WrongTotal)
 
+        if (!validateNotDust(amount)) errors.add(TransactionError.DustAmount)
+        val change = total - (amount.value ?: BigDecimal.ZERO)
+        if (!validateNotDust(Amount(amount, change))) errors.add(TransactionError.DustChange)
+
         return errors
     }
 
@@ -68,7 +75,12 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
                 wallet.fundsAvailable(amount.type) >= amount.value
     }
 
-    protected fun BasicTransactionData.toTransactionData(): TransactionData {
+    private fun validateNotDust(amount: Amount): Boolean {
+        if (dustValue == null) return true
+        return dustValue!! <= amount.value
+    }
+
+    private fun BasicTransactionData.toTransactionData(): TransactionData {
         val isIncoming = this.balanceDif.signum() > 0
         return TransactionData(
                 amount = Amount(wallet.amounts[AmountType.Coin]!!, this.balanceDif.abs()),

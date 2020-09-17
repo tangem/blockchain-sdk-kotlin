@@ -51,9 +51,7 @@ open class BitcoinWalletManager(
 
                         if (sendResult is SimpleResult.Success) {
                             transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
-                            transactionData.date = Calendar.getInstance()
-                            transactionData.status = TransactionStatus.Unconfirmed
-                            wallet.recentTransactions.add(transactionData)
+                            wallet.addOutgoingTransaction(transactionData)
                         }
                         return sendResult
                     }
