@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.cardano.network
 import com.tangem.blockchain.blockchains.cardano.UnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.adalite.AdaliteProvider
 import com.tangem.blockchain.blockchains.cardano.network.api.AdaliteApi
+import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.API_ADALITE
@@ -63,5 +64,6 @@ class CardanoNetworkManager {
 
 data class CardanoAddressResponse(
         val balance: Long,
-        val unspentOutputs: List<UnspentOutput>
+        val unspentOutputs: List<UnspentOutput>,
+        val recentTransactionsHashes: List<String>
 )

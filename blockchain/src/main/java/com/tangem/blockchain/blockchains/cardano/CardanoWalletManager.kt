@@ -8,7 +8,9 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.encodeBase64NoWrap
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.toHexString
 import java.math.RoundingMode
+import java.util.*
 
 class CardanoWalletManager(
         cardId: String,
@@ -32,6 +34,10 @@ class CardanoWalletManager(
         wallet.amounts[AmountType.Coin]?.value =
                 response.balance.toBigDecimal().movePointLeft(blockchain.decimals())
         transactionBuilder.unspentOutputs = response.unspentOutputs
+        wallet.recentTransactions.forEach {
+            if (response.recentTransactionsHashes.contains(it.hash))
+                it.status = TransactionStatus.Confirmed
+        }
     }
 
     private fun updateError(error: Throwable?) {
@@ -45,7 +51,13 @@ class CardanoWalletManager(
         when (val signerResponse = signer.sign(arrayOf(transactionHash), cardId)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
-                return networkManager.sendTransaction(transactionToSend.encodeBase64NoWrap())
+                val sendResult = networkManager.sendTransaction(transactionToSend.encodeBase64NoWrap())
+
+                if (sendResult is SimpleResult.Success) {
+                    transactionData.hash = transactionHash.toHexString()
+                    wallet.addOutgoingTransaction(transactionData)
+                }
+                return sendResult
             }
             is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
         }
