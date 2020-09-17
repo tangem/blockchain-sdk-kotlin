@@ -2,12 +2,8 @@ package com.tangem.blockchain.blockchains.ducatus
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
-import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.blockchains.ducatus.network.DucatusNetworkManager
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionSender
-import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import java.math.BigDecimal
 
@@ -20,7 +16,7 @@ class DucatusWalletManager(
 
     override fun updateRecentTransactionsBasic(transactions: List<BasicTransactionData>) {
         if (transactions.isEmpty()) {
-            wallet.recentTransactions.clear()
+            wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
         }
     }
 

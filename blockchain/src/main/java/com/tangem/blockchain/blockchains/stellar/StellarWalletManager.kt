@@ -5,6 +5,8 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.toHexString
+import org.kethereum.keccakshortcut.keccak
 import java.math.BigDecimal
 import java.util.*
 
@@ -49,7 +51,13 @@ class StellarWalletManager(
         when (val signerResponse = signer.sign(hashes.toTypedArray(), cardId)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
-                return networkManager.sendTransaction(transactionToSend)
+                val sendResult = networkManager.sendTransaction(transactionToSend)
+
+                if (sendResult is SimpleResult.Success) {
+                    transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
+                    wallet.addOutgoingTransaction(transactionData)
+                }
+                return sendResult
             }
             is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
         }
