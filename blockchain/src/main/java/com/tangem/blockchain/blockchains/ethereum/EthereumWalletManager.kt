@@ -8,7 +8,9 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
+import org.kethereum.keccakshortcut.keccak
 import java.math.BigDecimal
+import java.util.*
 
 class EthereumWalletManager(
         cardId: String,
@@ -58,7 +60,13 @@ class EthereumWalletManager(
         when (val signerResponse = signer.sign(transactionToSign.hashes.toTypedArray(), cardId)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature, transactionToSign)
-                return networkManager.sendTransaction(String.format("0x%s", transactionToSend.toHexString()))
+                val sendResult = networkManager.sendTransaction(String.format("0x%s", transactionToSend.toHexString()))
+
+                if (sendResult is SimpleResult.Success) {
+                    transactionData.hash = transactionToSend.keccak().toHexString()
+                    wallet.addOutgoingTransaction(transactionData)
+                }
+                return sendResult
             }
             is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
         }

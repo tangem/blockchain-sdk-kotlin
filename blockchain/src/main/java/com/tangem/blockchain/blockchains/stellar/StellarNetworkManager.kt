@@ -159,7 +159,8 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
                 destinationAddress = to,
                 contractAddress = amount.address,
                 status = TransactionStatus.Confirmed,
-                date = Calendar.getInstance().apply { time = dateFormat.parse(createdAt)!! }
+                date = Calendar.getInstance().apply { time = dateFormat.parse(createdAt)!! },
+                hash = transactionHash
         )
     }
 
@@ -170,7 +171,8 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
                 sourceAddress = funder,
                 destinationAddress = account,
                 status = TransactionStatus.Confirmed,
-                date = Calendar.getInstance().apply { time = dateFormat.parse(createdAt)!! }
+                date = Calendar.getInstance().apply { time = dateFormat.parse(createdAt)!! },
+                hash = transactionHash
         )
     }
 }
