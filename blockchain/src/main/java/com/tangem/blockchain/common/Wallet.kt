@@ -50,6 +50,11 @@ class Wallet(
         recentTransactions.add(transaction)
     }
 
+    fun addOutgoingTransaction(transactionData: TransactionData) {
+        transactionData.date = Calendar.getInstance()
+        recentTransactions.add(transactionData)
+    }
+
     fun fundsAvailable(amountType: AmountType): BigDecimal {
         return amounts[amountType]?.value ?: BigDecimal.ZERO
     }

@@ -17,7 +17,7 @@ data class TransactionData(
 
 enum class TransactionStatus { Confirmed, Unconfirmed }
 
-enum class TransactionError { WrongAmount, WrongFee, WrongTotal }
+enum class TransactionError { WrongAmount, WrongFee, WrongTotal, DustAmount, DustChange }
 
 data class BasicTransactionData(
         val balanceDif: BigDecimal, //change of balance
