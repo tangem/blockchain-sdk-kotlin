@@ -19,7 +19,7 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
                 transactions.partition { it.isConfirmed }
 
         wallet.recentTransactions.forEach {
-            if (confirmedTransactions.find {confirmed -> confirmed.hash == it.hash } != null) {
+            if (confirmedTransactions.find { confirmed -> confirmed.hash == it.hash } != null) {
                 it.status = TransactionStatus.Confirmed
             }
         }
@@ -35,12 +35,15 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
                 transactions.partition { it.status == TransactionStatus.Confirmed }
 
         wallet.recentTransactions.forEach {
-            if (confirmedTransactions.find {confirmed -> confirmed.hash == it.hash } != null) {
+            if (confirmedTransactions.find { confirmed -> confirmed.hash == it.hash } != null) {
                 it.status = TransactionStatus.Confirmed
             }
         }
         unconfirmedTransactions.forEach {
-            if (wallet.recentTransactions.find { unconfirmed -> unconfirmed.hash == it.hash } == null) {
+            if (wallet.recentTransactions.find { unconfirmed ->
+                        unconfirmed.hash.equals(it.hash, true)
+                    } == null
+            ) {
                 wallet.recentTransactions.add(it)
             }
         }
@@ -48,8 +51,8 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
 
     fun createTransaction(amount: Amount, fee: Amount, destination: String): TransactionData {
         return TransactionData(amount, fee,
-                    wallet.address, destination, wallet.token?.contractAddress,
-                    TransactionStatus.Unconfirmed, Calendar.getInstance(), null)
+                wallet.address, destination, wallet.token?.contractAddress,
+                TransactionStatus.Unconfirmed, Calendar.getInstance(), null)
     }
 
     // TODO: add decimals and currency checks?
