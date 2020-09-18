@@ -78,4 +78,6 @@ class StellarTransactionBuilder(private val networkManager: StellarNetworkManage
         transaction.signatures.add(decoratedSignature)
         return transaction.toEnvelopeXdrBase64()
     }
+
+    fun getTransactionHash() = transaction.hash()
 }

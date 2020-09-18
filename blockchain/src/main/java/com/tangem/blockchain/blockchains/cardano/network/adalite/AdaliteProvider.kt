@@ -4,6 +4,7 @@ import com.squareup.moshi.Json
 import com.tangem.blockchain.blockchains.cardano.UnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.api.AdaliteApi
+import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
@@ -22,18 +23,22 @@ class AdaliteProvider(private val api: AdaliteApi) {
                 val addressData = addressDeferred.await()
                 val unspents = unspentsDeferred.await()
 
-                val cardanoUnspents = unspents.data.map {
+                val cardanoUnspents = unspents.data!!.map {
                     UnspentOutput(
                             it.amountData!!.amount!!,
                             it.outputIndex!!.toLong(),
                             it.hash!!.hexToBytes()
                     )
                 }
+                val recentTransactionsHashes = addressData.data!!.transactions!!.mapNotNull {
+                    it.hash
+                }
 
                 Result.Success(
                         CardanoAddressResponse(
                                 addressData.data!!.balanceData!!.amount!!,
-                                cardanoUnspents
+                                cardanoUnspents,
+                                recentTransactionsHashes
                         )
                 )
             }
@@ -44,7 +49,7 @@ class AdaliteProvider(private val api: AdaliteApi) {
 
     suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
-            val response = retryIO { api.sendTransaction(AdaliteSendBody(transaction)) }
+            retryIO { api.sendTransaction(AdaliteSendBody(transaction)) }
             SimpleResult.Success
         } catch (exception: Exception) {
             SimpleResult.Failure(exception)

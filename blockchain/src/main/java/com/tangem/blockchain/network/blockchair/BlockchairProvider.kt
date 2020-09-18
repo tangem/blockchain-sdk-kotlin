@@ -1,9 +1,10 @@
 package com.tangem.blockchain.network.blockchair
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressResponse
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinProvider
+import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -11,8 +12,12 @@ import com.tangem.blockchain.extensions.retryIO
 import com.tangem.common.extensions.hexToBytes
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.text.SimpleDateFormat
+import java.util.*
 
 class BlockchairProvider(private val api: BlockchairApi, blockchain: Blockchain) : BitcoinProvider {
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss")
+
     private val blockchainPath = when (blockchain) {
         Blockchain.BitcoinCash -> "bitcoin-cash"
         Blockchain.Litecoin -> "litecoin"
@@ -20,7 +25,7 @@ class BlockchairProvider(private val api: BlockchairApi, blockchain: Blockchain)
     }
     private val decimals = blockchain.decimals()
 
-    override suspend fun getInfo(address: String): Result<BitcoinAddressResponse> {
+    override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         return try {
             val blockchairAddress = retryIO { api.getAddressData(address, blockchainPath, API_KEY) }
 
@@ -28,9 +33,7 @@ class BlockchairProvider(private val api: BlockchairApi, blockchain: Blockchain)
             val addressInfo = addressData.addressInfo!!
             val script = addressInfo.script!!.hexToBytes()
 
-            val hasUnconfirmed = checkHasUnconfirmed(addressData)
-
-            val unspentTransactions = addressData.unspentOutputs!!.map {
+            val unspentOutputs = addressData.unspentOutputs!!.map {
                 BitcoinUnspentOutput(
                         amount = it.amount!!.toBigDecimal().movePointLeft(decimals),
                         outputIndex = it.index!!.toLong(),
@@ -39,35 +42,24 @@ class BlockchairProvider(private val api: BlockchairApi, blockchain: Blockchain)
                 )
             }
 
-            Result.Success(BitcoinAddressResponse(
+            val transactions = addressData.transactions!!.map {
+                BasicTransactionData(
+                        balanceDif = it.balanceDif!!.toBigDecimal().movePointLeft(decimals),
+                        hash = it.hash!!,
+                        isConfirmed = it.block!! != -1,
+                        date = Calendar.getInstance().apply { time = dateFormat.parse(it.time!!)!! }
+                )
+            }
+
+            Result.Success(BitcoinAddressInfo(
                     balance = addressInfo.balance!!.toBigDecimal().movePointLeft(decimals),
-                    hasUnconfirmed = hasUnconfirmed,
-                    unspentOutputs = unspentTransactions
+                    unspentOutputs = unspentOutputs,
+                    recentTransactions = transactions
             ))
         } catch (error: Exception) {
             Result.Failure(error)
         }
 
-    }
-
-    private suspend fun checkHasUnconfirmed(addressData: BlockchairAddressData): Boolean {
-        for (utxo in addressData.unspentOutputs!!) { //check utxos first
-            if (utxo.block == -1) return true
-        }
-
-        return if (addressData.addressInfo!!.balance != 0L) { // if balance is not zero, unconfirmed tx should have unconfirmed utxo
-            false
-        } else {
-            if (addressData.transactions!!.isEmpty()) { // no transactions from this address ever
-                false
-            } else { // check last transaction in case it spent all funds
-                val lastTransactionHash = addressData.transactions[0]
-                val blockchairTransaction = retryIO {
-                    api.getTransaction(lastTransactionHash, blockchainPath, API_KEY)
-                }
-                blockchairTransaction.data!!.getValue(lastTransactionHash).transaction!!.block == -1
-            }
-        }
     }
 
     override suspend fun getFee(): Result<BitcoinFee> {
@@ -90,6 +82,16 @@ class BlockchairProvider(private val api: BlockchairApi, blockchain: Blockchain)
             SimpleResult.Success
         } catch (error: Exception) {
             SimpleResult.Failure(error)
+        }
+    }
+
+    override suspend fun getSignatureCount(address: String): Result<Int> {
+        return try {
+            val blockchairAddress = retryIO { api.getAddressData(address, blockchainPath, API_KEY) }
+            val addressInfo = blockchairAddress.data!!.getValue(address).addressInfo!!
+            Result.Success(addressInfo.outputCount!! - addressInfo.unspentOutputCount!!)
+        } catch (error: Exception) {
+            Result.Failure(error)
         }
     }
 }
