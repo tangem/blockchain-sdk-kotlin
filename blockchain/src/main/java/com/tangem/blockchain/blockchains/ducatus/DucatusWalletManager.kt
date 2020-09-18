@@ -3,10 +3,7 @@ package com.tangem.blockchain.blockchains.ducatus
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.ducatus.network.DucatusNetworkManager
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionSender
-import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import java.math.BigDecimal
 
@@ -16,6 +13,13 @@ class DucatusWalletManager(
         transactionBuilder: BitcoinTransactionBuilder,
         networkManager: DucatusNetworkManager
 ) : BitcoinWalletManager(cardId, wallet, transactionBuilder, networkManager), TransactionSender {
+
+    override fun updateRecentTransactionsBasic(transactions: List<BasicTransactionData>) {
+        if (transactions.isEmpty()) {
+            wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
+        }
+    }
+
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
         val feeValue = BigDecimal.ONE.movePointLeft(blockchain.decimals())
         val sizeResult = transactionBuilder.getEstimateSize(

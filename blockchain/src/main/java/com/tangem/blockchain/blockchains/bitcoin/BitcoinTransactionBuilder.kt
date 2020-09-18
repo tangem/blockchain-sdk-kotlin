@@ -20,6 +20,7 @@ open class BitcoinTransactionBuilder(
 ) {
 
     private lateinit var transaction: Transaction
+
     protected var networkParameters = when (blockchain) {
         Blockchain.Bitcoin, Blockchain.BitcoinCash -> MainNetParams()
         Blockchain.BitcoinTestnet -> TestNet3Params()
@@ -52,6 +53,8 @@ open class BitcoinTransactionBuilder(
         }
         return transaction.bitcoinSerialize()
     }
+
+    fun getTransactionHash() = transaction.txId.bytes
 
     fun getEstimateSize(transactionData: TransactionData): Result<Int> {
         val buildTransactionResult = buildToSign(transactionData)

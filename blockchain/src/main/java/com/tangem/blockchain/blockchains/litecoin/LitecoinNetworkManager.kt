@@ -1,6 +1,6 @@
 package com.tangem.blockchain.blockchains.litecoin
 
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressResponse
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherProvider
@@ -38,7 +38,7 @@ class LitecoinNetworkManager : BitcoinProvider {
         provider = if (provider == blockchairProvider) blockcypherProvider else blockchairProvider
     }
 
-    override suspend fun getInfo(address: String): Result<BitcoinAddressResponse> {
+    override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         val result = provider.getInfo(address)
         when (result) {
             is Result.Success -> return result
@@ -76,6 +76,21 @@ class LitecoinNetworkManager : BitcoinProvider {
                 if (result.error is IOException || result.error is HttpException) {
                     changeProvider()
                     return provider.sendTransaction(transaction)
+                } else {
+                    return result
+                }
+            }
+        }
+    }
+
+    override suspend fun getSignatureCount(address: String): Result<Int> {
+        val result = provider.getSignatureCount(address)
+        when (result) {
+            is Result.Success -> return result
+            is Result.Failure -> {
+                if (result.error is IOException || result.error is HttpException) {
+                    changeProvider()
+                    return provider.getSignatureCount(address)
                 } else {
                     return result
                 }
