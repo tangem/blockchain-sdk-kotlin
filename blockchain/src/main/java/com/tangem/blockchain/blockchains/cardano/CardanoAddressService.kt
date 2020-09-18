@@ -9,6 +9,7 @@ import co.nstant.`in`.cbor.model.UnsignedInteger
 import com.tangem.blockchain.blockchains.cardano.crypto.Blake2b
 import com.tangem.blockchain.common.AddressService
 import com.tangem.blockchain.extensions.decodeBase58
+import com.tangem.blockchain.extensions.decodeBech32
 import com.tangem.blockchain.extensions.encodeBase58
 import org.spongycastle.crypto.util.DigestFactory
 import java.io.ByteArrayInputStream
@@ -31,6 +32,14 @@ class CardanoAddressService : AddressService {
     }
 
     override fun validate(address: String): Boolean {
+        return if (isShelleyAddress(address)) {
+            address.decodeBech32() != null
+        } else {
+            validateBase58Address(address)
+        }
+    }
+
+    private fun validateBase58Address(address: String): Boolean {
         val decoded = address.decodeBase58() ?: return false
 
         return try {
@@ -53,16 +62,16 @@ class CardanoAddressService : AddressService {
     private fun getPubKeyWithAttributes(extendedPublicKey: ByteArray): ByteArray {
         val pubKeyWithAttributes = ByteArrayOutputStream()
         CborEncoder(pubKeyWithAttributes).encode(CborBuilder()
-                    .addArray()
-                        .add(0)
-                            .addArray()
-                                .add(0)
-                                .add(extendedPublicKey)
-                            .end()
-                        .addMap()
-                        .end()
-                    .end()
-                    .build())
+                .addArray()
+                .add(0)
+                .addArray()
+                .add(0)
+                .add(extendedPublicKey)
+                .end()
+                .addMap()
+                .end()
+                .end()
+                .build())
         return pubKeyWithAttributes.toByteArray()
     }
 
@@ -78,10 +87,10 @@ class CardanoAddressService : AddressService {
         val hashWithAttributes = ByteArrayOutputStream()
         CborEncoder(hashWithAttributes).encode(CborBuilder()
                 .addArray()
-                    .add(blakeHash)
-                    .addMap() //additional attributes
-                    .end()
-                    .add(0) //address type
+                .add(blakeHash)
+                .addMap() //additional attributes
+                .end()
+                .add(0) //address type
                 .end()
                 .build())
         return hashWithAttributes.toByteArray()
@@ -97,8 +106,8 @@ class CardanoAddressService : AddressService {
         val address = ByteArrayOutputStream()
         CborEncoder(address).encode(CborBuilder()
                 .addArray()
-                    .add(addressItem)
-                    .add(checksum)
+                .add(addressItem)
+                .add(checksum)
                 .end()
                 .build())
 
@@ -112,10 +121,23 @@ class CardanoAddressService : AddressService {
     }
 
     companion object {
+        const val BECH32_HRP = "addr"
+        const val BECH32_SEPARATOR = "1"
+
         fun extendPublicKey(publicKey: ByteArray): ByteArray {
             val zeroBytes = ByteArray(32)
-            zeroBytes.fill(0)
+//            zeroBytes.fill(0) TODO: check
             return publicKey + zeroBytes
         }
+
+        fun decode(address: String): ByteArray? {
+            return if (isShelleyAddress(address)) {
+                address.decodeBech32()
+            } else {
+                address.decodeBase58()
+            }
+        }
+
+        fun isShelleyAddress(address: String) = address.startsWith(BECH32_HRP + BECH32_SEPARATOR)
     }
 }
