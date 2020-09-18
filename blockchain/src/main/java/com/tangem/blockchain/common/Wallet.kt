@@ -10,7 +10,7 @@ class Wallet(
 ) {
     val exploreUrl: String
     val shareUrl: String
-    val transactions: MutableList<TransactionData> = mutableListOf()
+    val recentTransactions: MutableList<TransactionData> = mutableListOf() //we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
 
     init {
@@ -42,16 +42,17 @@ class Wallet(
         setAmount(amount)
     }
 
-    fun addTransaction(transaction: TransactionData) {
-        transactions.add(transaction.copy(date = Calendar.getInstance()))
-    }
-
-    fun addIncomingTransaction() {
+    fun addIncomingTransactionDummy() { // TODO: do we still need this?
         val dummyAmount = Amount(null, blockchain)
         val transaction = TransactionData(dummyAmount, dummyAmount,
                 "unknown", address, date = Calendar.getInstance()
         )
-        transactions.add(transaction)
+        recentTransactions.add(transaction)
+    }
+
+    fun addOutgoingTransaction(transactionData: TransactionData) {
+        transactionData.date = Calendar.getInstance()
+        recentTransactions.add(transactionData)
     }
 
     fun fundsAvailable(amountType: AmountType): BigDecimal {
