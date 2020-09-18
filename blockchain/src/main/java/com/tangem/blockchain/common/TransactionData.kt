@@ -17,7 +17,15 @@ data class TransactionData(
 
 enum class TransactionStatus { Confirmed, Unconfirmed }
 
-enum class TransactionError { WrongAmount, WrongFee, WrongTotal, DustAmount, DustChange }
+enum class TransactionError {
+    AmountExceedsBalance,
+    FeeExceedsBalance,
+    TotalExceedsBalance,
+    InvalidAmountValue,
+    InvalidFeeValue,
+    DustAmount,
+    DustChange
+}
 
 data class BasicTransactionData(
         val balanceDif: BigDecimal, //change of balance
