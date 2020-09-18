@@ -63,8 +63,13 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
         if (!validateAmountValue(fee)) errors.add(TransactionError.InvalidFeeValue)
         if (!validateAmountAvalible(fee)) errors.add(TransactionError.FeeExceedsBalance)
 
-        val total = (amount.value ?: BigDecimal.ZERO) + (fee.value ?: BigDecimal.ZERO)
-        if (!validateAmountAvalible(Amount(amount, total))) errors.add(TransactionError.TotalExceedsBalance)
+        val total: BigDecimal
+        if (amount.type == AmountType.Coin) {
+            total = (amount.value ?: BigDecimal.ZERO) + (fee.value ?: BigDecimal.ZERO)
+            if (!validateAmountAvalible(Amount(amount, total))) errors.add(TransactionError.TotalExceedsBalance)
+        } else {
+            total = amount.value ?: BigDecimal.ZERO
+        }
 
         if (!validateNotDust(amount)) errors.add(TransactionError.DustAmount)
         val change = total - (amount.value ?: BigDecimal.ZERO)
