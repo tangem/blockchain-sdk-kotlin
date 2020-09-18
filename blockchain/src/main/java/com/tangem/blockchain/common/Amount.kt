@@ -21,6 +21,8 @@ data class Amount(
 
     constructor(amount: Amount, value: BigDecimal) :
             this(amount.currencySymbol, value, amount.address, amount.decimals, amount.type)
+
+    var longValue = this.value?.movePointRight(decimals)?.toLong()
 }
 
 enum class AmountType { Coin, Token, Reserve }
