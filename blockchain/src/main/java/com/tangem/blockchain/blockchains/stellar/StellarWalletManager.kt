@@ -5,6 +5,8 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.toHexString
+import org.kethereum.keccakshortcut.keccak
 import java.math.BigDecimal
 import java.util.*
 
@@ -13,7 +15,7 @@ class StellarWalletManager(
         wallet: Wallet,
         private val transactionBuilder: StellarTransactionBuilder,
         private val networkManager: StellarNetworkManager
-) : WalletManager(cardId, wallet), TransactionSender {
+) : WalletManager(cardId, wallet), TransactionSender, SignatureCountValidator {
 
     private val blockchain = wallet.blockchain
 
@@ -36,13 +38,7 @@ class StellarWalletManager(
         sequence = data.sequence
         baseFee = data.baseFee
         baseReserve = data.baseReserve
-
-        val currentTime = Calendar.getInstance().timeInMillis
-        wallet.transactions.forEach { transaction ->
-            if (transaction.date?.timeInMillis ?: 0 - currentTime > 10) {
-                transaction.status = TransactionStatus.Confirmed
-            }
-        }
+        updateRecentTransactions(data.recentTransactions)
     }
 
     private fun updateError(error: Throwable?) {
@@ -55,7 +51,13 @@ class StellarWalletManager(
         when (val signerResponse = signer.sign(hashes.toTypedArray(), cardId)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
-                return networkManager.sendTransaction(transactionToSend)
+                val sendResult = networkManager.sendTransaction(transactionToSend)
+
+                if (sendResult is SimpleResult.Success) {
+                    transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
+                    wallet.addOutgoingTransaction(transactionData)
+                }
+                return sendResult
             }
             is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
         }
@@ -65,6 +67,17 @@ class StellarWalletManager(
         return Result.Success(listOf(
                 Amount(baseFee, blockchain)
         ))
+    }
+
+    override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
+        return when (val result = networkManager.getSignatureCount(wallet.address)) {
+            is Result.Success -> if (result.data == signedHashes) {
+                SimpleResult.Success
+            } else {
+                SimpleResult.Failure(Exception("Number of signatures does not match"))
+            }
+            is Result.Failure -> SimpleResult.Failure(result.error)
+        }
     }
 
     private fun BigDecimal.toStroops(): Int {

@@ -1,18 +1,16 @@
 package com.tangem.blockchain.blockchains.bitcoin.network
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
+import com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo.BitcoinfeesEarnApi
 import com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo.BlockchainInfoApi
 import com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo.BlockchainInfoProvider
+import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.network.blockcypher.BlockcypherApi
-import com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo.EstimatefeeApi
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.network.API_BLOCKCHAIN_INFO
-import com.tangem.blockchain.network.API_BLOCKCYPHER
-import com.tangem.blockchain.network.API_ESTIMATEFEE
+import com.tangem.blockchain.network.*
 import com.tangem.blockchain.network.blockcypher.BlockcypherProvider
-import com.tangem.blockchain.network.createRetrofitInstance
 import retrofit2.HttpException
 import java.io.IOException
 import java.math.BigDecimal
@@ -29,9 +27,9 @@ class BitcoinNetworkManager(blockchain: Blockchain) : BitcoinProvider {
     private val blockchainInfoProvider by lazy {
         val api = createRetrofitInstance(API_BLOCKCHAIN_INFO)
                 .create(BlockchainInfoApi::class.java)
-        val estimateFeeApi = createRetrofitInstance(API_ESTIMATEFEE)
-                .create(EstimatefeeApi::class.java)
-        BlockchainInfoProvider(api, estimateFeeApi)
+        val bitcoinfeesEarnApi = createRetrofitInstance(API_BITCOINFEES_EARN)
+                .create(BitcoinfeesEarnApi::class.java)
+        BlockchainInfoProvider(api, bitcoinfeesEarnApi)
     }
 
     private var provider: BitcoinProvider = blockchainInfoProvider
@@ -44,7 +42,7 @@ class BitcoinNetworkManager(blockchain: Blockchain) : BitcoinProvider {
         }
     }
 
-    override suspend fun getInfo(address: String): Result<BitcoinAddressResponse> {
+    override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         val result = provider.getInfo(address)
         when (result) {
             is Result.Success -> return result
@@ -88,12 +86,27 @@ class BitcoinNetworkManager(blockchain: Blockchain) : BitcoinProvider {
             }
         }
     }
+
+    override suspend fun getSignatureCount(address: String): Result<Int> {
+        val result = provider.getSignatureCount(address)
+        when (result) {
+            is Result.Success -> return result
+            is Result.Failure -> {
+                if (result.error is IOException || result.error is HttpException) {
+                    changeProvider()
+                    return provider.getSignatureCount(address)
+                } else {
+                    return result
+                }
+            }
+        }
+    }
 }
 
-data class BitcoinAddressResponse(
+data class BitcoinAddressInfo(
         val balance: BigDecimal,
-        val hasUnconfirmed: Boolean,
-        val unspentOutputs: List<BitcoinUnspentOutput>?
+        val unspentOutputs: List<BitcoinUnspentOutput>,
+        val recentTransactions: List<BasicTransactionData>
 )
 
 data class BitcoinFee(
