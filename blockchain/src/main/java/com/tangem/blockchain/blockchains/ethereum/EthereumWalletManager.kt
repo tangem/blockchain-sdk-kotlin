@@ -8,14 +8,16 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
+import org.kethereum.keccakshortcut.keccak
 import java.math.BigDecimal
+import java.util.*
 
 class EthereumWalletManager(
         cardId: String,
         wallet: Wallet,
         private val transactionBuilder: EthereumTransactionBuilder,
         private val networkManager: EthereumNetworkManager
-) : WalletManager(cardId, wallet), TransactionSender {
+) : WalletManager(cardId, wallet), TransactionSender, SignatureCountValidator {
 
     private val blockchain = wallet.blockchain
 
@@ -41,9 +43,9 @@ class EthereumWalletManager(
         txCount = data.txCount
         pendingTxCount = data.pendingTxCount
         if (txCount == pendingTxCount) {
-            wallet.transactions.forEach { it.status = TransactionStatus.Confirmed }
-        } else if (wallet.transactions.isEmpty()) {
-            wallet.addIncomingTransaction()
+            wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
+        } else if (!data.recentTransactions.isNullOrEmpty()) {
+            updateRecentTransactionsBasic(data.recentTransactions)
         }
     }
 
@@ -58,7 +60,13 @@ class EthereumWalletManager(
         when (val signerResponse = signer.sign(transactionToSign.hashes.toTypedArray(), cardId)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature, transactionToSign)
-                return networkManager.sendTransaction(String.format("0x%s", transactionToSend.toHexString()))
+                val sendResult = networkManager.sendTransaction(String.format("0x%s", transactionToSend.toHexString()))
+
+                if (sendResult is SimpleResult.Success) {
+                    transactionData.hash = transactionToSend.keccak().toHexString()
+                    wallet.addOutgoingTransaction(transactionData)
+                }
+                return sendResult
             }
             is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
         }
@@ -73,6 +81,17 @@ class EthereumWalletManager(
                         feeValues.map { feeValue -> Amount(wallet.amounts[AmountType.Coin]!!, feeValue) })
             }
             is Result.Failure -> return result
+        }
+    }
+
+    override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
+        return when (val result = networkManager.getSignatureCount(wallet.address)) {
+            is Result.Success -> if (result.data == signedHashes) {
+                SimpleResult.Success
+            } else {
+                SimpleResult.Failure(Exception("Number of signatures does not match"))
+            }
+            is Result.Failure -> SimpleResult.Failure(result.error)
         }
     }
 }
