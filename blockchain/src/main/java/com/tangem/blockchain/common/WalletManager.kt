@@ -52,16 +52,24 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
                     TransactionStatus.Unconfirmed, Calendar.getInstance(), null)
     }
 
-    // TODO: add dust (output too small) check, Cardano needs it for sure
+    // TODO: add decimals and currency checks?
     fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
         val errors = EnumSet.noneOf(TransactionError::class.java)
 
-        if (!validateAmount(amount)) errors.add(TransactionError.WrongAmount)
+        if (!validateAmountValue(amount)) errors.add(TransactionError.InvalidAmountValue)
+        if (!validateAmountAvalible(amount)) errors.add(TransactionError.AmountExceedsBalance)
         if (fee == null) return errors
 
-        if (!validateAmount(fee)) errors.add(TransactionError.WrongFee)
-        val total = (amount.value ?: BigDecimal.ZERO) + (fee.value ?: BigDecimal.ZERO)
-        if (!validateAmount(Amount(amount, total))) errors.add(TransactionError.WrongTotal)
+        if (!validateAmountValue(fee)) errors.add(TransactionError.InvalidFeeValue)
+        if (!validateAmountAvalible(fee)) errors.add(TransactionError.FeeExceedsBalance)
+
+        val total: BigDecimal
+        if (amount.type == AmountType.Coin) {
+            total = (amount.value ?: BigDecimal.ZERO) + (fee.value ?: BigDecimal.ZERO)
+            if (!validateAmountAvalible(Amount(amount, total))) errors.add(TransactionError.TotalExceedsBalance)
+        } else {
+            total = amount.value ?: BigDecimal.ZERO
+        }
 
         if (!validateNotDust(amount)) errors.add(TransactionError.DustAmount)
         val change = total - (amount.value ?: BigDecimal.ZERO)
@@ -70,9 +78,10 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
         return errors
     }
 
-    private fun validateAmount(amount: Amount): Boolean {
-        return amount.isAboveZero() &&
-                wallet.fundsAvailable(amount.type) >= amount.value
+    private fun validateAmountValue(amount: Amount) = amount.isAboveZero()
+
+    private fun validateAmountAvalible(amount: Amount): Boolean {
+        return wallet.fundsAvailable(amount.type) >= amount.value
     }
 
     private fun validateNotDust(amount: Amount): Boolean {
