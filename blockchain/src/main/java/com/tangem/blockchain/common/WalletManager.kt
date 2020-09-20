@@ -18,14 +18,20 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
         val (confirmedTransactions, unconfirmedTransactions) =
                 transactions.partition { it.isConfirmed }
 
-        wallet.recentTransactions.forEach {
-            if (confirmedTransactions.find {confirmed -> confirmed.hash == it.hash } != null) {
-                it.status = TransactionStatus.Confirmed
+        wallet.recentTransactions.forEach { recent ->
+            if (confirmedTransactions.find { confirmed ->
+                        confirmed.hash.equals(recent.hash, true)
+                    } != null
+            ) {
+                recent.status = TransactionStatus.Confirmed
             }
         }
-        unconfirmedTransactions.forEach {
-            if (wallet.recentTransactions.find { unconfirmed -> unconfirmed.hash == it.hash } == null) {
-                wallet.recentTransactions.add(it.toTransactionData())
+        unconfirmedTransactions.forEach { unconfirmed ->
+            if (wallet.recentTransactions.find { recent ->
+                        recent.hash.equals(unconfirmed.hash, true)
+                    } == null
+            ) {
+                wallet.recentTransactions.add(unconfirmed.toTransactionData())
             }
         }
     }
@@ -34,22 +40,28 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
         val (confirmedTransactions, unconfirmedTransactions) =
                 transactions.partition { it.status == TransactionStatus.Confirmed }
 
-        wallet.recentTransactions.forEach {
-            if (confirmedTransactions.find {confirmed -> confirmed.hash == it.hash } != null) {
-                it.status = TransactionStatus.Confirmed
+        wallet.recentTransactions.forEach { recent ->
+            if (confirmedTransactions.find { confirmed ->
+                        confirmed.hash.equals(recent.hash, true)
+                    } != null
+            ) {
+                recent.status = TransactionStatus.Confirmed
             }
         }
-        unconfirmedTransactions.forEach {
-            if (wallet.recentTransactions.find { unconfirmed -> unconfirmed.hash == it.hash } == null) {
-                wallet.recentTransactions.add(it)
+        unconfirmedTransactions.forEach { unconfirmed ->
+            if (wallet.recentTransactions.find { recent ->
+                        recent.hash.equals(unconfirmed.hash, true)
+                    } == null
+            ) {
+                wallet.recentTransactions.add(unconfirmed)
             }
         }
     }
 
     fun createTransaction(amount: Amount, fee: Amount, destination: String): TransactionData {
         return TransactionData(amount, fee,
-                    wallet.address, destination, wallet.token?.contractAddress,
-                    TransactionStatus.Unconfirmed, Calendar.getInstance(), null)
+                wallet.address, destination, wallet.token?.contractAddress,
+                TransactionStatus.Unconfirmed, Calendar.getInstance(), null)
     }
 
     // TODO: add decimals and currency checks?
