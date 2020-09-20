@@ -51,7 +51,10 @@ class Wallet(
     }
 
     fun addOutgoingTransaction(transactionData: TransactionData) {
-        transactionData.date = Calendar.getInstance()
+        transactionData.apply {
+            date = Calendar.getInstance()
+            hash = hash?.toLowerCase()
+        }
         recentTransactions.add(transactionData)
     }
 
