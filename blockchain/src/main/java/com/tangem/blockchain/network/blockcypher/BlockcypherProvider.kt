@@ -15,7 +15,7 @@ import java.util.*
 
 class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchain) : BitcoinProvider {
     private val limitCap = 2000
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
 
     private val blockchainPath = when (blockchain) {
         Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> "btc"
@@ -38,11 +38,15 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
             val addressData: BlockcypherAddress =
                     retryIO { api.getAddressData(blockchainPath, network, address) }
 
-            val transactions =
-                    addressData.txrefs!!.toBasicTransactionsData(isConfirmed = true) +
-                            addressData.unconfirmedTxrefs!!.toBasicTransactionsData(isConfirmed = false)
+            val confirmedTransactions =
+                    addressData.txrefs?.toBasicTransactionsData(isConfirmed = true) ?: emptyList()
+            val unconfirmedTransactions =
+                    addressData.unconfirmedTxrefs?.toBasicTransactionsData(isConfirmed = false)
+                    ?: emptyList()
 
-            val unspentOutputs = addressData.txrefs.filter { it.spent == false }.map {
+            val transactions = confirmedTransactions + unconfirmedTransactions
+
+            val unspentOutputs = addressData.txrefs?.filter { it.spent == false }?.map {
                 BitcoinUnspentOutput(
                         it.amount!!.toBigDecimal().movePointLeft(decimals),
                         it.outputIndex!!.toLong(),
@@ -53,7 +57,7 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
             Result.Success(
                     BitcoinAddressInfo(
                             addressData.balance!!.toBigDecimal().movePointLeft(decimals),
-                            unspentOutputs,
+                            unspentOutputs ?: emptyList(),
                             transactions
                     )
             )
