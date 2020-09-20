@@ -10,7 +10,6 @@ import com.tangem.blockchain.extensions.encodeBase64NoWrap
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import java.math.RoundingMode
-import java.util.*
 
 class CardanoWalletManager(
         cardId: String,
@@ -35,8 +34,11 @@ class CardanoWalletManager(
                 response.balance.toBigDecimal().movePointLeft(blockchain.decimals())
         transactionBuilder.unspentOutputs = response.unspentOutputs
         wallet.recentTransactions.forEach {
-            if (response.recentTransactionsHashes.contains(it.hash))
+            if (response.recentTransactionsHashes.contains(it.hash)
+                    || response.recentTransactionsHashes.contains(it.hash?.toUpperCase() ?: "")
+            ) {
                 it.status = TransactionStatus.Confirmed
+            }
         }
     }
 
