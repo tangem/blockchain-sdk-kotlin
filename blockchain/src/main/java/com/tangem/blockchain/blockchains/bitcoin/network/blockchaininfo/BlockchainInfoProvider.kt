@@ -71,9 +71,9 @@ class BlockchainInfoProvider(
             val priorityFeePerKb = feeData.priorityFeePerByte!! * 1024
 
             Result.Success(BitcoinFee(
-                    minimalFeePerKb.toBigDecimal(),
-                    normalFeePerKb.toBigDecimal(),
-                    priorityFeePerKb.toBigDecimal()
+                    minimalFeePerKb.toBigDecimal().movePointLeft(decimals),
+                    normalFeePerKb.toBigDecimal().movePointLeft(decimals),
+                    priorityFeePerKb.toBigDecimal().movePointLeft(decimals)
             ))
         } catch (exception: Exception) {
             Result.Failure(exception)
