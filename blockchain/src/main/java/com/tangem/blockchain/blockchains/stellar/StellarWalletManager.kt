@@ -32,9 +32,10 @@ class StellarWalletManager(
     }
 
     private fun updateWallet(data: StellarResponse) {
-        wallet.amounts[AmountType.Coin]?.value = data.balance
-        wallet.amounts[AmountType.Token]?.value = data.assetBalance
-        wallet.amounts[AmountType.Reserve]?.value = data.baseReserve
+        val reserve = data.baseReserve * (2 + data.subEntryCount).toBigDecimal()
+        wallet.setCoinValue(data.balance - reserve)
+        wallet.setTokenValue(data.assetBalance ?: 0.toBigDecimal())
+        wallet.setReserveValue(reserve)
         sequence = data.sequence
         baseFee = data.baseFee
         baseReserve = data.baseReserve
@@ -81,11 +82,10 @@ class StellarWalletManager(
     }
 
     private fun BigDecimal.toStroops(): Int {
-        return this.multiply(STROOPS_IN_XLM).toInt()
+        return this.movePointRight(blockchain.decimals()).toInt()
     }
 
     companion object {
-        val STROOPS_IN_XLM = 10000000.toBigDecimal()
         val BASE_FEE = 0.00001.toBigDecimal()
         val BASE_RESERVE = 0.5.toBigDecimal()
     }
