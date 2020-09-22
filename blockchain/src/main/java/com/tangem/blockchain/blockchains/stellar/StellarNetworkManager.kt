@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.stellar
 
-import com.tangem.blockchain.blockchains.stellar.StellarWalletManager.Companion.STROOPS_IN_XLM
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -25,6 +24,7 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
     private val blockchain = Blockchain.Stellar
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
     private val recordsLimitCap = 200
+    private val decimals = Blockchain.Stellar.decimals()
 
     val network: Network = if (isTestNet) Network.TESTNET else Network.PUBLIC
     private val stellarServer by lazy {
@@ -61,7 +61,8 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
     suspend fun getInfo(accountId: String, assetCode: String? = null): Result<StellarResponse> {
         return try {
             coroutineScope {
-                val accountResponseDeferred = async(Dispatchers.IO) { stellarServer.accounts().account(accountId) }
+                val accountResponseDeferred =
+                        async(Dispatchers.IO) { stellarServer.accounts().account(accountId) }
                 val ledgerResponseDeferred = async(Dispatchers.IO) {
                     val latestLedger: Int = stellarServer.root().historyLatestLedger
                     stellarServer.ledgers().ledger(latestLedger.toLong())
@@ -85,22 +86,24 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
                             ?.balance?.toBigDecimal()
                             ?: return@coroutineScope Result.Failure(Exception("Stellar Balance not found"))
                 }
-                val sequence = accountResponse.sequenceNumber
 
                 val ledgerResponse = ledgerResponseDeferred.await()
-                val baseFee = ledgerResponse.baseFeeInStroops.toBigDecimal().divide(STROOPS_IN_XLM)
-                val baseReserve = ledgerResponse.baseReserveInStroops.toBigDecimal().divide(STROOPS_IN_XLM)
+                val baseFee =
+                        ledgerResponse.baseFeeInStroops.toBigDecimal().movePointLeft(decimals)
+                val baseReserve =
+                        ledgerResponse.baseReserveInStroops.toBigDecimal().movePointLeft(decimals)
 
                 val recentTransactions =
                         paymentsResponseDeferred.await().records.mapNotNull { it.toTransactionData() }
 
                 Result.Success(StellarResponse(
-                        baseFee,
-                        baseReserve,
-                        assetBalance,
-                        balance,
-                        sequence,
-                        recentTransactions
+                        baseFee = baseFee,
+                        baseReserve = baseReserve,
+                        assetBalance = assetBalance,
+                        balance = balance,
+                        sequence = accountResponse.sequenceNumber,
+                        recentTransactions = recentTransactions,
+                        subEntryCount = accountResponse.subentryCount
                 ))
             }
         } catch (error: Exception) {
@@ -183,5 +186,6 @@ data class StellarResponse(
         val assetBalance: BigDecimal?,
         val balance: BigDecimal,
         val sequence: Long,
-        val recentTransactions: List<TransactionData>
+        val recentTransactions: List<TransactionData>,
+        val subEntryCount: Int
 )
