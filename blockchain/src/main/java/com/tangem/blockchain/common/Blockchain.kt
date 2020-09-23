@@ -23,6 +23,7 @@ enum class Blockchain(
     Ethereum("ETH", "ETH", "Ethereum"),
     RSK("RSK", "RBTC", "RSK"),
     Cardano("CARDANO", "ADA", "Cardano"),
+    CardanoShelley("CARDANO-S", "ADA", "Cardano"),
     XRP("XRP", "XRP", "XRP Ledger"),
     Binance("BINANCE", "BNB", "Binance"),
     BinanceTestnet("BINANCE/test", "BNBt", "Binance"),
@@ -31,7 +32,7 @@ enum class Blockchain(
 
     fun decimals(): Int = when (this) {
         Bitcoin, BitcoinTestnet, BitcoinCash, Binance, BinanceTestnet, Litecoin, Ducatus -> 8
-        Cardano, XRP, Tezos -> 6
+        Cardano, CardanoShelley, XRP, Tezos -> 6
         Ethereum, RSK -> 18
         Stellar -> 7
         Unknown -> 0
@@ -49,7 +50,7 @@ enum class Blockchain(
         Bitcoin, BitcoinTestnet, Litecoin, Ducatus -> BitcoinAddressService(this)
         BitcoinCash -> BitcoinCashAddressService()
         Ethereum, RSK -> EthereumAddressService()
-        Cardano -> CardanoAddressService()
+        Cardano, CardanoShelley -> CardanoAddressService(this)
         XRP -> XrpAddressService()
         Binance -> BinanceAddressService()
         BinanceTestnet -> BinanceAddressService(true)
@@ -73,7 +74,7 @@ enum class Blockchain(
         BitcoinCash -> "https://blockchair.com/bitcoin-cash/address/$address"
         Litecoin -> "https://live.blockcypher.com/ltc/address/$address"
         Ducatus -> "https://insight.ducatus.io/#/DUC/mainnet/address/$address"
-        Cardano -> "https://cardanoexplorer.com/address/$address"
+        Cardano, CardanoShelley -> "https://cardanoexplorer.com/address/$address"
         Ethereum -> if (token == null) {
             "https://etherscan.io/address/$address"
         } else {
