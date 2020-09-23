@@ -6,29 +6,25 @@ import co.nstant.`in`.cbor.CborEncoder
 import co.nstant.`in`.cbor.model.Array
 import co.nstant.`in`.cbor.model.ByteString
 import co.nstant.`in`.cbor.model.UnsignedInteger
-import com.tangem.blockchain.blockchains.cardano.crypto.Blake2b
+import com.tangem.blockchain.blockchains.binance.client.encoding.Bech32
+import com.tangem.blockchain.blockchains.binance.client.encoding.Crypto
 import com.tangem.blockchain.common.AddressService
-import com.tangem.blockchain.extensions.decodeBase58
-import com.tangem.blockchain.extensions.decodeBech32
-import com.tangem.blockchain.extensions.encodeBase58
-import org.spongycastle.crypto.util.DigestFactory
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.extensions.*
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.CRC32
 
-class CardanoAddressService : AddressService {
+
+class CardanoAddressService(private val blockchain: Blockchain) : AddressService {
+    private val shelleyHeaderByte: Byte = 97
+
     override fun makeAddress(walletPublicKey: ByteArray): String {
-        val extendedPublicKey = extendPublicKey(walletPublicKey)
-
-        val pubKeyWithAttributes = getPubKeyWithAttributes(extendedPublicKey)
-        val sha3Hash = getSha3Hash(pubKeyWithAttributes)
-
-        val blake2b = Blake2b.Digest.newInstance(28)
-        val blakeHash = blake2b.digest(sha3Hash)
-
-        val hashWithAttributes = getHashWithAttributes(blakeHash)
-
-        return getAddress(hashWithAttributes)
+        return when (blockchain) {
+            Blockchain.Cardano -> makeByronAddress(walletPublicKey)
+            Blockchain.CardanoShelley -> makeShelleyAddress(walletPublicKey)
+            else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
+        }
     }
 
     override fun validate(address: String): Boolean {
@@ -37,6 +33,29 @@ class CardanoAddressService : AddressService {
         } else {
             validateBase58Address(address)
         }
+    }
+
+    private fun makeByronAddress(walletPublicKey: ByteArray): String {
+        val extendedPublicKey = extendPublicKey(walletPublicKey)
+
+        val pubKeyWithAttributes = makePubKeyWithAttributes(extendedPublicKey)
+        val sha3Hash = pubKeyWithAttributes.calculateSha3v256()
+
+        val blakeHash = sha3Hash.calculateBlake2b(28)
+
+        val hashWithAttributes = makeHashWithAttributes(blakeHash)
+
+        return makeByronAddressWithChecksum(hashWithAttributes)
+    }
+
+    private fun makeShelleyAddress(walletPublicKey: ByteArray): String {
+        val publicKeyHash = walletPublicKey.calculateBlake2b(28)
+
+        val addressBytes = byteArrayOf(shelleyHeaderByte) + publicKeyHash
+        val convertedAddressBytes =
+                Crypto.convertBits(addressBytes, 0, addressBytes.size, 8, 5, true)
+
+        return Bech32.encode(BECH32_HRP, convertedAddressBytes)
     }
 
     private fun validateBase58Address(address: String): Boolean {
@@ -59,7 +78,7 @@ class CardanoAddressService : AddressService {
         }
     }
 
-    private fun getPubKeyWithAttributes(extendedPublicKey: ByteArray): ByteArray {
+    private fun makePubKeyWithAttributes(extendedPublicKey: ByteArray): ByteArray {
         val pubKeyWithAttributes = ByteArrayOutputStream()
         CborEncoder(pubKeyWithAttributes).encode(CborBuilder()
                 .addArray()
@@ -75,15 +94,7 @@ class CardanoAddressService : AddressService {
         return pubKeyWithAttributes.toByteArray()
     }
 
-    private fun getSha3Hash(pubKeyWithAttributes: ByteArray): ByteArray {
-        val sha3Digest = DigestFactory.createSHA3_256()
-        sha3Digest.update(pubKeyWithAttributes, 0, pubKeyWithAttributes.size)
-        val sha3Hash = ByteArray(32)
-        sha3Digest.doFinal(sha3Hash, 0)
-        return sha3Hash
-    }
-
-    private fun getHashWithAttributes(blakeHash: ByteArray): ByteArray {
+    private fun makeHashWithAttributes(blakeHash: ByteArray): ByteArray {
         val hashWithAttributes = ByteArrayOutputStream()
         CborEncoder(hashWithAttributes).encode(CborBuilder()
                 .addArray()
@@ -96,7 +107,7 @@ class CardanoAddressService : AddressService {
         return hashWithAttributes.toByteArray()
     }
 
-    private fun getAddress(hashWithAttributes: ByteArray): String {
+    private fun makeByronAddressWithChecksum(hashWithAttributes: ByteArray): String {
         val checksum = getCheckSum(hashWithAttributes)
 
         val addressItem = CborBuilder().add(hashWithAttributes).build().get(0)
@@ -126,7 +137,6 @@ class CardanoAddressService : AddressService {
 
         fun extendPublicKey(publicKey: ByteArray): ByteArray {
             val zeroBytes = ByteArray(32)
-//            zeroBytes.fill(0) TODO: check
             return publicKey + zeroBytes
         }
 
