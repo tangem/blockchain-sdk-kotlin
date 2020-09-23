@@ -17,6 +17,9 @@ class CardanoWalletManager(
         private val transactionBuilder: CardanoTransactionBuilder,
         private val networkManager: CardanoNetworkManager
 ) : WalletManager(cardId, wallet), TransactionSender {
+    init {
+        dustValue = 1.toBigDecimal()
+    }
 
     private val blockchain = wallet.blockchain
 
