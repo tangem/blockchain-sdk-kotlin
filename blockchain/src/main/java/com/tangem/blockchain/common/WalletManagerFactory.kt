@@ -44,44 +44,44 @@ object WalletManagerFactory {
 
         val wallet = Wallet(blockchain, blockchain.makeAddress(walletPublicKey), token)
 
-        when (blockchain) {
+        return when (blockchain) {
             Blockchain.Bitcoin -> {
-                return BitcoinWalletManager(
+                BitcoinWalletManager(
                         cardId, wallet,
                         BitcoinTransactionBuilder(walletPublicKey, blockchain),
                         BitcoinNetworkManager(blockchain)
                 )
             }
             Blockchain.BitcoinTestnet -> {
-                return BitcoinWalletManager(
+                BitcoinWalletManager(
                         cardId, wallet,
                         BitcoinTransactionBuilder(walletPublicKey, blockchain),
                         BitcoinNetworkManager(blockchain)
                 )
             }
             Blockchain.BitcoinCash -> {
-                return BitcoinCashWalletManager(
+                BitcoinCashWalletManager(
                         cardId, wallet,
                         BitcoinCashTransactionBuilder(walletPublicKey.toCompressedPublicKey(), blockchain),
                         BitcoinCashNetworkManager()
                 )
             }
             Blockchain.Litecoin -> {
-                return LitecoinWalletManager(
+                LitecoinWalletManager(
                         cardId, wallet,
                         BitcoinTransactionBuilder(walletPublicKey, blockchain),
                         LitecoinNetworkManager()
                 )
             }
             Blockchain.Ducatus -> {
-                return DucatusWalletManager(
+                DucatusWalletManager(
                         cardId, wallet,
                         BitcoinTransactionBuilder(walletPublicKey, blockchain),
                         DucatusNetworkManager()
                 )
             }
             Blockchain.Ethereum, Blockchain.RSK -> {
-                return EthereumWalletManager(
+                EthereumWalletManager(
                         cardId, wallet,
                         EthereumTransactionBuilder(walletPublicKey, blockchain),
                         EthereumNetworkManager(blockchain)
@@ -90,42 +90,42 @@ object WalletManagerFactory {
             Blockchain.Stellar -> {
                 val networkManager = StellarNetworkManager()
 
-                return StellarWalletManager(
+                StellarWalletManager(
                         cardId, wallet,
                         StellarTransactionBuilder(networkManager, walletPublicKey),
                         networkManager
                 )
             }
-            Blockchain.Cardano -> {
-                return CardanoWalletManager(
+            Blockchain.Cardano, Blockchain.CardanoShelley -> {
+                CardanoWalletManager(
                         cardId, wallet,
                         CardanoTransactionBuilder(walletPublicKey),
                         CardanoNetworkManager()
                 )
             }
             Blockchain.XRP -> {
-                return XrpWalletManager(
+                XrpWalletManager(
                         cardId, wallet,
                         XrpTransactionBuilder(walletPublicKey),
                         XrpNetworkManager()
                 )
             }
             Blockchain.Binance -> {
-                return BinanceWalletManager(
+                BinanceWalletManager(
                         cardId, wallet,
                         BinanceTransactionBuilder(walletPublicKey),
                         BinanceNetworkManager()
                 )
             }
             Blockchain.BinanceTestnet -> {
-                return BinanceWalletManager(
+                BinanceWalletManager(
                         cardId, wallet,
                         BinanceTransactionBuilder(walletPublicKey, true),
                         BinanceNetworkManager(true)
                 )
             }
             Blockchain.Tezos -> {
-                return TezosWalletManager(
+                TezosWalletManager(
                         cardId, wallet,
                         TezosTransactionBuilder(walletPublicKey),
                         TezosNetworkManager()
