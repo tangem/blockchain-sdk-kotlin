@@ -4,6 +4,7 @@ import co.nstant.`in`.cbor.CborBuilder
 import co.nstant.`in`.cbor.CborEncoder
 import co.nstant.`in`.cbor.model.DataItem
 import com.tangem.blockchain.blockchains.cardano.crypto.Blake2b
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.decodeBase58
 import com.tangem.common.extensions.hexToBytes
@@ -64,6 +65,7 @@ class CardanoTransactionBuilder(private val walletPublicKey: ByteArray) {
         val amount = transactionData.amount.longValue!!
         val change = calculateChange(amount, transactionData.fee!!.longValue!!)
 
+        val sourceBytes = CardanoAddressService.decode(transactionData.sourceAddress)
         val destinationBytes = CardanoAddressService.decode(transactionData.destinationAddress)
 
         val outputsArray = CborBuilder().addArray()
@@ -76,7 +78,7 @@ class CardanoTransactionBuilder(private val walletPublicKey: ByteArray) {
         if (change > 0) {
             outputsArray
                     .addArray()
-                    .add(transactionData.sourceAddress.decodeBase58())
+                    .add(sourceBytes)
                     .add(change)
                     .end()
         }
