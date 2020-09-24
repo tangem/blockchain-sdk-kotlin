@@ -62,6 +62,7 @@ enum class Blockchain(
         Bitcoin -> "bitcoin:$address"
         Ethereum -> "ethereum:$address"
         XRP -> "ripple:$address"
+        Litecoin -> "litecoin:$address"
         else -> address
     }
 
