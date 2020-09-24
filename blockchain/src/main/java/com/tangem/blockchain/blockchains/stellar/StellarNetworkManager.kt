@@ -54,7 +54,7 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
             if (errorResponse.code == 404) return false
             return false
         } catch (exception: IOException) {
-            return false
+            return true // or let's assume it's created? (normally it is)
         }
     }
 
