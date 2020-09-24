@@ -19,7 +19,7 @@ open class BitcoinTransactionBuilder(
         private val walletPublicKey: ByteArray, blockchain: Blockchain
 ) {
 
-    private lateinit var transaction: Transaction
+    protected lateinit var transaction: Transaction
 
     protected var networkParameters = when (blockchain) {
         Blockchain.Bitcoin, Blockchain.BitcoinCash -> MainNetParams()
