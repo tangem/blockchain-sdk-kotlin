@@ -7,6 +7,7 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.API_RIPPLED
 import com.tangem.blockchain.network.API_RIPPLED_RESERVE
 import com.tangem.blockchain.network.createRetrofitInstance
+import org.stellar.sdk.requests.ErrorResponse
 import retrofit2.HttpException
 import java.io.IOException
 import java.math.BigDecimal
@@ -73,6 +74,10 @@ class XrpNetworkManager {
                 }
             }
         }
+    }
+
+    suspend fun checkIsAccountCreated(address: String): Boolean {
+        return provider.checkIsAccountCreated(address)
     }
 }
 
