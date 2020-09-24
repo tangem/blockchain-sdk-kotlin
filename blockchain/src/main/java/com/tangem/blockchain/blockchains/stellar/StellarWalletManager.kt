@@ -31,7 +31,7 @@ class StellarWalletManager(
         }
     }
 
-    private fun updateWallet(data: StellarResponse) {
+    private fun updateWallet(data: StellarResponse) { // TODO: rework reserve
         val reserve = data.baseReserve * (2 + data.subEntryCount).toBigDecimal()
         wallet.setCoinValue(data.balance - reserve)
         wallet.setTokenValue(data.assetBalance ?: 0.toBigDecimal())
@@ -39,6 +39,7 @@ class StellarWalletManager(
         sequence = data.sequence
         baseFee = data.baseFee
         baseReserve = data.baseReserve
+        transactionBuilder.minReserve = data.baseReserve * 2.toBigDecimal()
         updateRecentTransactions(data.recentTransactions)
     }
 
@@ -48,7 +49,12 @@ class StellarWalletManager(
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val hashes = transactionBuilder.buildToSign(transactionData, sequence, baseFee.toStroops())
+        val buildResult =
+                transactionBuilder.buildToSign(transactionData, sequence, baseFee.toStroops())
+        val hashes = when (buildResult) {
+            is Result.Success -> listOf(buildResult.data)
+            is Result.Failure -> return SimpleResult.Failure(buildResult.error)
+        }
         when (val signerResponse = signer.sign(hashes.toTypedArray(), cardId)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
