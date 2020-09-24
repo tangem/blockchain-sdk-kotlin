@@ -19,12 +19,20 @@ class XrpTransactionBuilder(walletPublicKey: ByteArray) {
     private var transaction: XrpSignedTransaction? = null
 
     fun buildToSign(transactionData: TransactionData): ByteArray {
+        val decodedXAddress =
+                XrpAddressService.decodeXAddress(transactionData.destinationAddress)
+        val destinationAddress = decodedXAddress?.address ?: transactionData.destinationAddress
+        val destinationTag = decodedXAddress?.destinationTag
+
         val payment = XrpPayment()
         payment.putTranslated(AccountID.Account, transactionData.sourceAddress)
-        payment.putTranslated(AccountID.Destination, transactionData.destinationAddress)
+        payment.putTranslated(AccountID.Destination, destinationAddress)
         payment.putTranslated(Amount.Amount, transactionData.amount.bigIntegerValue().toString())
         payment.putTranslated(UInt32.Sequence, sequence)
         payment.putTranslated(Amount.Fee, transactionData.fee!!.bigIntegerValue().toString())
+        if (destinationTag != null) {
+            payment.putTranslated(UInt32.DestinationTag, destinationTag)
+        }
 
         transaction = payment.prepare(canonicalPublicKey)
 
