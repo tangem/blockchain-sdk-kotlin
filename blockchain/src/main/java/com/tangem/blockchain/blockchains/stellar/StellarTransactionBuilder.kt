@@ -26,7 +26,7 @@ class StellarTransactionBuilder(
         return when (transactionData.amount.type) {
             AmountType.Coin -> {
                 val operation =
-                        if (networkManager.checkIsAccountCreated(transactionData.sourceAddress)) {
+                        if (networkManager.checkIsAccountCreated(transactionData.destinationAddress)) {
                             PaymentOperation.Builder(
                                     destinationKeyPair.accountId,
                                     AssetTypeNative(),
