@@ -8,6 +8,8 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import org.stellar.sdk.requests.ErrorResponse
+import java.io.IOException
 
 class RippledProvider(private val api: RippledApi) {
     private val decimals = Blockchain.XRP.decimals()
@@ -84,7 +86,19 @@ class RippledProvider(private val api: RippledApi) {
             SimpleResult.Failure(exception)
         }
     }
+
+    suspend fun checkIsAccountCreated(address: String): Boolean { // TODO: return result?
+        return try {
+            val accountBody = makeAccountBody(address, validated = true)
+            val accountData = retryIO { api.getAccount(accountBody) }
+            accountData.result!!.errorCode != 19
+        } catch (exception: Exception) {
+            true // or let's assume it's created? (normally it is)
+        }
+    }
 }
+
+
 
 private fun makeAccountBody(address: String, validated: Boolean): RippledBody {
     val params = HashMap<String, String>()
