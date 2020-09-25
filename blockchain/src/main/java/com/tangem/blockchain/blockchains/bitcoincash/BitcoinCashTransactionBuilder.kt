@@ -17,8 +17,6 @@ import java.math.BigInteger
 class BitcoinCashTransactionBuilder(private val walletPublicKey: ByteArray, blockchain: Blockchain)
     : BitcoinTransactionBuilder(walletPublicKey, blockchain) {
 
-    private lateinit var transaction: BitcoinCashTransaction
-
     override fun buildToSign(
             transactionData: TransactionData): Result<List<ByteArray>> {
 
@@ -32,7 +30,7 @@ class BitcoinCashTransactionBuilder(private val walletPublicKey: ByteArray, bloc
         for (input in transaction.inputs) {
             val index = input.index
             val value = Coin.parseCoin(unspentOutputs!![index].amount.toString())
-            hashesForSign[index] = transaction.hashForSignatureWitness(index, input.scriptBytes, value, Transaction.SigHash.ALL, false).bytes
+            hashesForSign[index] = getTransaction().hashForSignatureWitness(index, input.scriptBytes, value, Transaction.SigHash.ALL, false).bytes
         }
         return Result.Success(hashesForSign)
     }
@@ -53,6 +51,8 @@ class BitcoinCashTransactionBuilder(private val walletPublicKey: ByteArray, bloc
         val signature = TransactionSignature(r, canonicalS, sigHash)
         return ScriptBuilder.createInputScript(signature, ECKey.fromPublicOnly(publicKey))
     }
+
+    private fun getTransaction() = transaction as BitcoinCashTransaction
 }
 
 internal fun TransactionData.toBitcoinCashTransaction(networkParameters: NetworkParameters?,
