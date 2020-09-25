@@ -104,10 +104,12 @@ object WalletManagerFactory {
                 )
             }
             Blockchain.XRP -> {
+                val networkManager = XrpNetworkManager()
+
                 XrpWalletManager(
                         cardId, wallet,
-                        XrpTransactionBuilder(walletPublicKey),
-                        XrpNetworkManager()
+                        XrpTransactionBuilder(networkManager, walletPublicKey),
+                        networkManager
                 )
             }
             Blockchain.Binance -> {

@@ -28,14 +28,15 @@ class XrpWalletManager(
 
     private fun updateWallet(response: XrpInfoResponse) {
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
-        wallet.amounts[AmountType.Reserve]?.value = response.reserveBase
 
         if (!response.accountFound) {
             updateError(Exception("Account not found")) //TODO rework, add reserve
             return
         }
-        wallet.amounts[AmountType.Coin]?.value = response.balance - response.reserveBase
+        wallet.setCoinValue(response.balance - response.reserveBase)
+        wallet.setReserveValue(response.reserveBase)
         transactionBuilder.sequence = response.sequence
+        transactionBuilder.minReserve = response.reserveBase
 
         if (response.hasUnconfirmed) {
             if (wallet.recentTransactions.isEmpty()) wallet.addIncomingTransactionDummy()
@@ -50,8 +51,11 @@ class XrpWalletManager(
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val transactionHash = transactionBuilder.buildToSign(transactionData)
-
+        val transactionHash =
+                when (val buildResult = transactionBuilder.buildToSign(transactionData)) {
+                    is Result.Success -> buildResult.data
+                    is Result.Failure -> return SimpleResult.Failure(buildResult.error)
+                }
         when (val signerResponse = signer.sign(arrayOf(transactionHash), cardId)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
