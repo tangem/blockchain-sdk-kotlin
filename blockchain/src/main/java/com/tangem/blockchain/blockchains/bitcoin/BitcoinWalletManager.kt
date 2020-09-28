@@ -64,34 +64,38 @@ open class BitcoinWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
-        when (val feeResult = networkManager.getFee()) {
-            is Result.Failure -> return feeResult
-            is Result.Success -> {
-                val feeValue = BigDecimal.ONE.movePointLeft(blockchain.decimals())
-                amount.value = amount.value!! - feeValue
-                val sizeResult = transactionBuilder.getEstimateSize(
-                        TransactionData(amount, Amount(amount, feeValue), wallet.address, destination)
-                )
-                when (sizeResult) {
-                    is Result.Failure -> return sizeResult
-                    is Result.Success -> {
-                        val transactionSize = sizeResult.data.toBigDecimal()
-                        val minFee = feeResult.data.minimalPerKb.calculateFee(transactionSize)
-                        val normalFee = feeResult.data.normalPerKb.calculateFee(transactionSize)
-                        val priorityFee = feeResult.data.priorityPerKb.calculateFee(transactionSize)
-                        val fees = listOf(Amount(minFee, blockchain),
-                                Amount(normalFee, blockchain),
-                                Amount(priorityFee, blockchain)
-                        )
+        try {
+            when (val feeResult = networkManager.getFee()) {
+                is Result.Failure -> return feeResult
+                is Result.Success -> {
+                    val feeValue = BigDecimal.ONE.movePointLeft(blockchain.decimals())
+                    amount.value = amount.value!! - feeValue
+                    val sizeResult = transactionBuilder.getEstimateSize(
+                            TransactionData(amount, Amount(amount, feeValue), wallet.address, destination)
+                    )
+                    when (sizeResult) {
+                        is Result.Failure -> return sizeResult
+                        is Result.Success -> {
+                            val transactionSize = sizeResult.data.toBigDecimal()
+                            val minFee = feeResult.data.minimalPerKb.calculateFee(transactionSize)
+                            val normalFee = feeResult.data.normalPerKb.calculateFee(transactionSize)
+                            val priorityFee = feeResult.data.priorityPerKb.calculateFee(transactionSize)
+                            val fees = listOf(Amount(minFee, blockchain),
+                                    Amount(normalFee, blockchain),
+                                    Amount(priorityFee, blockchain)
+                            )
 
-                        val minimalFee = transactionSize.movePointLeft(blockchain.decimals())
-                        for (fee in fees) {
-                            if (fee.value!! < minimalFee) fee.value = minimalFee
+                            val minimalFee = transactionSize.movePointLeft(blockchain.decimals())
+                            for (fee in fees) {
+                                if (fee.value!! < minimalFee) fee.value = minimalFee
+                            }
+                            return Result.Success(fees)
                         }
-                        return Result.Success(fees)
                     }
                 }
             }
+        } catch (exception: Exception) {
+            return Result.Failure(exception)
         }
     }
 
