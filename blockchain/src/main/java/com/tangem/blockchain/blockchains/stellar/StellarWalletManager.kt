@@ -4,11 +4,10 @@ import android.util.Log
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
-import org.kethereum.keccakshortcut.keccak
 import java.math.BigDecimal
-import java.util.*
 
 class StellarWalletManager(
         cardId: String,
@@ -31,7 +30,7 @@ class StellarWalletManager(
         }
     }
 
-    private fun updateWallet(data: StellarResponse) {
+    private fun updateWallet(data: StellarResponse) { // TODO: rework reserve
         val reserve = data.baseReserve * (2 + data.subEntryCount).toBigDecimal()
         wallet.setCoinValue(data.balance - reserve)
         wallet.setTokenValue(data.assetBalance ?: 0.toBigDecimal())
@@ -39,6 +38,7 @@ class StellarWalletManager(
         sequence = data.sequence
         baseFee = data.baseFee
         baseReserve = data.baseReserve
+        transactionBuilder.minReserve = data.baseReserve * 2.toBigDecimal()
         updateRecentTransactions(data.recentTransactions)
     }
 
@@ -47,8 +47,15 @@ class StellarWalletManager(
         if (error != null) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val hashes = transactionBuilder.buildToSign(transactionData, sequence, baseFee.toStroops())
+    override suspend fun send(
+            transactionData: TransactionData, signer: TransactionSigner
+    ): Result<SignResponse> {
+        val buildResult =
+                transactionBuilder.buildToSign(transactionData, sequence, baseFee.toStroops())
+        val hashes = when (buildResult) {
+            is Result.Success -> listOf(buildResult.data)
+            is Result.Failure -> return Result.Failure(buildResult.error)
+        }
         when (val signerResponse = signer.sign(hashes.toTypedArray(), cardId)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
@@ -58,9 +65,9 @@ class StellarWalletManager(
                     transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
                     wallet.addOutgoingTransaction(transactionData)
                 }
-                return sendResult
+                return sendResult.toResultWithData(signerResponse.data)
             }
-            is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
+            is CompletionResult.Failure -> return Result.failure(signerResponse.error)
         }
     }
 
