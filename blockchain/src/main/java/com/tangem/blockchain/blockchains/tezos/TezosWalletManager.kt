@@ -6,9 +6,9 @@ import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkManager
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.isZero
-import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
@@ -42,36 +42,40 @@ class TezosWalletManager(
         if (error != null) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        if (publicKeyRevealed == null) return SimpleResult.Failure(Exception("publicKeyRevealed is null"))
+    override suspend fun send(
+            transactionData: TransactionData, signer: TransactionSigner
+    ): Result<SignResponse> {
+
+        if (publicKeyRevealed == null) return Result.Failure(Exception("publicKeyRevealed is null"))
 
         val contents =
                 when (val response = transactionBuilder.buildContents(transactionData, publicKeyRevealed!!)) {
-                    is Result.Failure -> return SimpleResult.Failure(response.error)
+                    is Result.Failure -> return Result.Failure(response.error)
                     is Result.Success -> response.data
                 }
         val header =
                 when (val response = networkManager.getHeader()) {
-                    is Result.Failure -> return SimpleResult.Failure(response.error)
+                    is Result.Failure -> return Result.Failure(response.error)
                     is Result.Success -> response.data
                 }
         val forgedContents = //TODO: CHANGE FOR PRODUCTION, this is potential security vulnerability, transaction should be forged locally
                 when (val response = networkManager.forgeContents(header.hash, contents)) {
-                    is Result.Failure -> return SimpleResult.Failure(response.error)
+                    is Result.Failure -> return Result.Failure(response.error)
                     is Result.Success -> response.data
                 }
         val dataToSign = transactionBuilder.buildToSign(forgedContents)
 
-        val signature = when (val signerResponse = signer.sign(arrayOf(dataToSign), cardId)) {
-            is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
+        val signerResponse = signer.sign(arrayOf(dataToSign), cardId)
+        val signature = when (signerResponse) {
+            is CompletionResult.Failure -> return Result.failure(signerResponse.error)
             is CompletionResult.Success -> signerResponse.data.signature
         }
 
         when (val response = networkManager.checkTransaction(header, contents, signature)) {
-            is SimpleResult.Failure -> return response
+            is SimpleResult.Failure -> return response.toResultWithData(signerResponse.data)
             is SimpleResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signature,forgedContents)
-                return networkManager.sendTransaction(transactionToSend)
+                return networkManager.sendTransaction(transactionToSend).toResultWithData(signerResponse.data)
             }
         }
     }
