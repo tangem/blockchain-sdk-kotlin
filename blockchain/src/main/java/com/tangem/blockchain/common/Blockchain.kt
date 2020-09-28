@@ -62,8 +62,9 @@ enum class Blockchain(
     fun getShareUri(address: String): String = when (this) {
         Bitcoin -> "bitcoin:$address"
         Ethereum -> "ethereum:$address"
-        XRP -> "ripple:$address"
+        XRP -> "xrpl:$address"
         Litecoin -> "litecoin:$address"
+        Binance -> "bnb:$address"
         else -> address
     }
 
