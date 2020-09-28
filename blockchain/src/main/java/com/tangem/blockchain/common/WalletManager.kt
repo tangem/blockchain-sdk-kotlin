@@ -120,7 +120,7 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
 }
 
 interface TransactionSender {
-    suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult
+    suspend fun send(transactionData: TransactionData, signer: TransactionSigner): Result<SignResponse>
     suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>>
 
 }
