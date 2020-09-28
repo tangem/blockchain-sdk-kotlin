@@ -9,7 +9,6 @@ import com.tangem.TangemSdkError
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.Signer
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain_demo.databinding.ActivityBlockchainDemoBinding
 import com.tangem.commands.Card
 import com.tangem.common.CompletionResult
@@ -142,10 +141,10 @@ class BlockchainDemoActivity : AppCompatActivity() {
                     signer)
             withContext(Dispatchers.Main) {
                 when (result) {
-                    is SimpleResult.Failure -> {
+                    is Result.Failure -> {
                         handleError(result.error?.localizedMessage ?: "Error")
                     }
-                    is SimpleResult.Success -> {
+                    is Result.Success -> {
                         binding.tvFee.text = "Success"
                     }
                 }

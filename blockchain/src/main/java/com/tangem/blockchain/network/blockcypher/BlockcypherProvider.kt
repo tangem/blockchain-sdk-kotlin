@@ -100,8 +100,8 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
             val addressData: BlockcypherAddress =
                     retryIO { api.getAddressData(blockchainPath, network, address, limitCap) }
 
-            var signatureCount = addressData.txrefs!!.filter { it.outputIndex == -1 }.size
-            signatureCount += addressData.unconfirmedTxrefs!!.filter { it.outputIndex == -1 }.size
+            var signatureCount = addressData.txrefs?.filter { it.outputIndex == -1 }?.size ?: 0
+            signatureCount += addressData.unconfirmedTxrefs?.filter { it.outputIndex == -1 }?.size ?: 0
 
             Result.Success(signatureCount)
         } catch (error: Exception) {
