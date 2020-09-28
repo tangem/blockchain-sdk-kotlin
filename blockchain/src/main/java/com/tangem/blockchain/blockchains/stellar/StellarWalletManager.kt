@@ -4,11 +4,10 @@ import android.util.Log
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
-import org.kethereum.keccakshortcut.keccak
 import java.math.BigDecimal
-import java.util.*
 
 class StellarWalletManager(
         cardId: String,
@@ -48,12 +47,14 @@ class StellarWalletManager(
         if (error != null) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+            transactionData: TransactionData, signer: TransactionSigner
+    ): Result<SignResponse> {
         val buildResult =
                 transactionBuilder.buildToSign(transactionData, sequence, baseFee.toStroops())
         val hashes = when (buildResult) {
             is Result.Success -> listOf(buildResult.data)
-            is Result.Failure -> return SimpleResult.Failure(buildResult.error)
+            is Result.Failure -> return Result.Failure(buildResult.error)
         }
         when (val signerResponse = signer.sign(hashes.toTypedArray(), cardId)) {
             is CompletionResult.Success -> {
@@ -64,9 +65,9 @@ class StellarWalletManager(
                     transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
                     wallet.addOutgoingTransaction(transactionData)
                 }
-                return sendResult
+                return sendResult.toResultWithData(signerResponse.data)
             }
-            is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
+            is CompletionResult.Failure -> return Result.failure(signerResponse.error)
         }
     }
 
