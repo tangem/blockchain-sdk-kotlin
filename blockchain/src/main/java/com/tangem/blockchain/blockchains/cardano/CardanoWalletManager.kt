@@ -7,6 +7,7 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.encodeBase64NoWrap
+import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import java.math.RoundingMode
@@ -50,7 +51,9 @@ class CardanoWalletManager(
         if (error != null) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+            transactionData: TransactionData, signer: TransactionSigner
+    ): Result<SignResponse> {
         val transactionHash = transactionBuilder.buildToSign(transactionData)
 
         when (val signerResponse = signer.sign(arrayOf(transactionHash), cardId)) {
@@ -62,9 +65,9 @@ class CardanoWalletManager(
                     transactionData.hash = transactionHash.toHexString()
                     wallet.addOutgoingTransaction(transactionData)
                 }
-                return sendResult
+                return sendResult.toResultWithData(signerResponse.data)
             }
-            is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
+            is CompletionResult.Failure -> return Result.failure(signerResponse.error)
         }
     }
 
