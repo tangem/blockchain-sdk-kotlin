@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
@@ -39,9 +40,11 @@ open class BitcoinWalletManager(
         if (error != null) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+            transactionData: TransactionData, signer: TransactionSigner
+    ): Result<SignResponse> {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
-            is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
+            is Result.Failure -> return Result.Failure(buildTransactionResult.error)
             is Result.Success -> {
                 when (val signerResult = signer.sign(buildTransactionResult.data.toTypedArray(), cardId)) {
                     is CompletionResult.Success -> {
@@ -52,9 +55,9 @@ open class BitcoinWalletManager(
                             transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
                             wallet.addOutgoingTransaction(transactionData)
                         }
-                        return sendResult
+                        return sendResult.toResultWithData(signerResult.data)
                     }
-                    is CompletionResult.Failure -> return SimpleResult.failure(signerResult.error)
+                    is CompletionResult.Failure -> return Result.failure(signerResult.error)
                 }
             }
         }
