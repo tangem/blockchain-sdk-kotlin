@@ -6,11 +6,11 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkManager
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import org.kethereum.keccakshortcut.keccak
 import java.math.BigDecimal
-import java.util.*
 
 class EthereumWalletManager(
         cardId: String,
@@ -54,9 +54,11 @@ class EthereumWalletManager(
         if (error != null) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+            transactionData: TransactionData, signer: TransactionSigner
+    ): Result<SignResponse> {
         val transactionToSign = transactionBuilder.buildToSign(transactionData, txCount.toBigInteger())
-                ?: return SimpleResult.Failure(Exception("Not enough data"))
+                ?: return Result.Failure(Exception("Not enough data"))
         when (val signerResponse = signer.sign(transactionToSign.hashes.toTypedArray(), cardId)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature, transactionToSign)
@@ -66,9 +68,9 @@ class EthereumWalletManager(
                     transactionData.hash = transactionToSend.keccak().toHexString()
                     wallet.addOutgoingTransaction(transactionData)
                 }
-                return sendResult
+                return sendResult.toResultWithData(signerResponse.data)
             }
-            is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
+            is CompletionResult.Failure -> return Result.failure(signerResponse.error)
         }
     }
 
