@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkManager
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 
@@ -50,11 +51,13 @@ class XrpWalletManager(
         if (error != null) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+            transactionData: TransactionData, signer: TransactionSigner
+    ): Result<SignResponse> {
         val transactionHash =
                 when (val buildResult = transactionBuilder.buildToSign(transactionData)) {
                     is Result.Success -> buildResult.data
-                    is Result.Failure -> return SimpleResult.Failure(buildResult.error)
+                    is Result.Failure -> return Result.Failure(buildResult.error)
                 }
         when (val signerResponse = signer.sign(arrayOf(transactionHash), cardId)) {
             is CompletionResult.Success -> {
@@ -65,9 +68,9 @@ class XrpWalletManager(
                     transactionData.hash = transactionBuilder.getTransactionHash()?.toHexString()
                     wallet.addOutgoingTransaction(transactionData)
                 }
-                return sendResult
+                return sendResult.toResultWithData(signerResponse.data)
             }
-            is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
+            is CompletionResult.Failure -> return Result.failure(signerResponse.error)
         }
     }
 
