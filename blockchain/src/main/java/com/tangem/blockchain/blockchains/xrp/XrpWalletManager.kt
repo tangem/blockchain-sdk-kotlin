@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkManager
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 
@@ -28,14 +29,15 @@ class XrpWalletManager(
 
     private fun updateWallet(response: XrpInfoResponse) {
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
-        wallet.amounts[AmountType.Reserve]?.value = response.reserveBase
 
         if (!response.accountFound) {
             updateError(Exception("Account not found")) //TODO rework, add reserve
             return
         }
-        wallet.amounts[AmountType.Coin]?.value = response.balance - response.reserveBase
+        wallet.setCoinValue(response.balance - response.reserveBase)
+        wallet.setReserveValue(response.reserveBase)
         transactionBuilder.sequence = response.sequence
+        transactionBuilder.minReserve = response.reserveBase
 
         if (response.hasUnconfirmed) {
             if (wallet.recentTransactions.isEmpty()) wallet.addIncomingTransactionDummy()
@@ -49,9 +51,14 @@ class XrpWalletManager(
         if (error != null) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val transactionHash = transactionBuilder.buildToSign(transactionData)
-
+    override suspend fun send(
+            transactionData: TransactionData, signer: TransactionSigner
+    ): Result<SignResponse> {
+        val transactionHash =
+                when (val buildResult = transactionBuilder.buildToSign(transactionData)) {
+                    is Result.Success -> buildResult.data
+                    is Result.Failure -> return Result.Failure(buildResult.error)
+                }
         when (val signerResponse = signer.sign(arrayOf(transactionHash), cardId)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
@@ -61,9 +68,9 @@ class XrpWalletManager(
                     transactionData.hash = transactionBuilder.getTransactionHash()?.toHexString()
                     wallet.addOutgoingTransaction(transactionData)
                 }
-                return sendResult
+                return sendResult.toResultWithData(signerResponse.data)
             }
-            is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
+            is CompletionResult.Failure -> return Result.failure(signerResponse.error)
         }
     }
 
