@@ -2,15 +2,15 @@ package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
-import com.tangem.blockchain.network.API_BLOCKCYPHER
-import com.tangem.blockchain.network.API_INFURA
-import com.tangem.blockchain.network.API_RSK
+import com.tangem.blockchain.network.*
+import com.tangem.blockchain.network.blockchair.BlockchairApi
+import com.tangem.blockchain.network.blockchair.BlockchairEthProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherApi
 import com.tangem.blockchain.network.blockcypher.BlockcypherProvider
-import com.tangem.blockchain.network.createRetrofitInstance
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -31,11 +31,23 @@ class EthereumNetworkManager(blockchain: Blockchain) {
         createRetrofitInstance(baseUrl).create(EthereumApi::class.java)
     }
 
-    private val blockcypherProvider: BlockcypherProvider? by lazy {
+    private val blockcypherProvider: BlockcypherProvider? by lazy { //TODO: remove
         when (blockchain) {
             Blockchain.Ethereum -> {
-                val blockcypherApi = createRetrofitInstance(API_BLOCKCYPHER).create(BlockcypherApi::class.java)
+                val blockcypherApi =
+                        createRetrofitInstance(API_BLOCKCYPHER).create(BlockcypherApi::class.java)
                 BlockcypherProvider(blockcypherApi, blockchain)
+            }
+            else -> null
+        }
+    }
+
+    private val blockchairProvider: BlockchairEthProvider? by lazy {
+        when (blockchain) {
+            Blockchain.Ethereum -> {
+                val blockchairApi =
+                        createRetrofitInstance(API_BLOCKCHAIR).create(BlockchairApi::class.java)
+                BlockchairEthProvider(blockchairApi)
             }
             else -> null
         }
@@ -58,17 +70,19 @@ class EthereumNetworkManager(blockchain: Blockchain) {
                 val txCountResponse = retryIO { async { provider.getTxCount(address) } }
                 val pendingTxCountResponse = retryIO { async { provider.getPendingTxCount(address) } }
 
-                val blockcypherAddressData = //TODO: check, we don't use anything except transactions
-                        retryIO { async { blockcypherProvider?.getInfo(address) } }
+                val transactionsResponse =
+                        retryIO { async { blockchairProvider?.getTransactions(address, contractAddress) } }
 
                 var tokenBalanceResponse: Deferred<EthereumResponse>? = null
                 if (contractAddress != null && tokenDecimals != null) {
                     tokenBalanceResponse = retryIO { async { provider.getTokenBalance(address, contractAddress) } }
                 }
-                val recentTransactions = when (val result = blockcypherAddressData.await()) {
-                    is Result.Success -> result.data.recentTransactions
-                    else -> null
+
+                val recentTransactions = when (val result = transactionsResponse.await()) {
+                    is Result.Success -> result.data
+                    else -> emptyList()
                 }
+
                 Result.Success(EthereumInfoResponse(
                         balanceResponse.await().result!!.parseAmount(decimals),
                         tokenBalanceResponse?.await()?.result?.parseAmount(tokenDecimals!!),
@@ -134,7 +148,7 @@ data class EthereumInfoResponse(
         val tokenBalance: BigDecimal?,
         val txCount: Long,
         val pendingTxCount: Long,
-        val recentTransactions: List<BasicTransactionData>?
+        val recentTransactions: List<TransactionData>?
 )
 
 private const val INFURA_API_KEY = "613a0b14833145968b1f656240c7d245"
