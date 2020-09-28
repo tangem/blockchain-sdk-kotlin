@@ -1,12 +1,12 @@
 package com.tangem.blockchain.blockchains.binance
 
 import android.util.Log
+import com.tangem.blockchain.blockchains.binance.network.BinanceInfoResponse
 import com.tangem.blockchain.blockchains.binance.network.BinanceNetworkManager
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
-import com.tangem.blockchain.blockchains.binance.network.BinanceInfoResponse
 
 class BinanceWalletManager(
         cardId: String,
@@ -39,17 +39,20 @@ class BinanceWalletManager(
         if (error != null) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+            transactionData: TransactionData, signer: TransactionSigner
+    ): Result<SignResponse> {
         val buildTransactionResult = transactionBuilder.buildToSign(transactionData)
-        when (buildTransactionResult) {
-            is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
+        return when (buildTransactionResult) {
+            is Result.Failure -> Result.Failure(buildTransactionResult.error)
             is Result.Success -> {
                 when (val signerResponse = signer.sign(arrayOf(buildTransactionResult.data), cardId)) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
-                        return networkManager.sendTransaction(transactionToSend)
+                        networkManager.sendTransaction(transactionToSend)
+                                .toResultWithData(signerResponse.data)
                     }
-                    is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
+                    is CompletionResult.Failure -> Result.failure(signerResponse.error)
                 }
             }
         }
