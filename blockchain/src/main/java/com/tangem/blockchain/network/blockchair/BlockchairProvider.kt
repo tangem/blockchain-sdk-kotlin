@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class BlockchairProvider(private val api: BlockchairApi, blockchain: Blockchain) : BitcoinProvider {
+
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss")
 
     private val blockchainPath = when (blockchain) {
@@ -27,7 +28,12 @@ class BlockchairProvider(private val api: BlockchairApi, blockchain: Blockchain)
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         return try {
-            val blockchairAddress = retryIO { api.getAddressData(address, blockchainPath, API_KEY) }
+            val blockchairAddress = retryIO { api.getAddressData(
+                    address = address,
+                    blockchain = blockchainPath,
+                    transactionDetails = true,
+                    limit = 50
+            ) }
 
             val addressData = blockchairAddress.data!!.getValue(address)
             val addressInfo = addressData.addressInfo!!
@@ -64,7 +70,7 @@ class BlockchairProvider(private val api: BlockchairApi, blockchain: Blockchain)
 
     override suspend fun getFee(): Result<BitcoinFee> {
         return try {
-            val stats = retryIO { api.getBlockchainStats(blockchainPath, API_KEY) }
+            val stats = retryIO { api.getBlockchainStats(blockchainPath) }
             val feePerKb = (stats.data!!.feePerByte!! * 1024).toBigDecimal().movePointLeft(decimals)
             Result.Success(BitcoinFee(
                     minimalPerKb = (feePerKb * BigDecimal.valueOf(0.8)).setScale(decimals, RoundingMode.DOWN),
@@ -78,7 +84,7 @@ class BlockchairProvider(private val api: BlockchairApi, blockchain: Blockchain)
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
-            retryIO { api.sendTransaction(BlockchairBody(transaction), blockchainPath, API_KEY) }
+            retryIO { api.sendTransaction(BlockchairBody(transaction), blockchainPath) }
             SimpleResult.Success
         } catch (error: Exception) {
             SimpleResult.Failure(error)
@@ -87,7 +93,7 @@ class BlockchairProvider(private val api: BlockchairApi, blockchain: Blockchain)
 
     override suspend fun getSignatureCount(address: String): Result<Int> {
         return try {
-            val blockchairAddress = retryIO { api.getAddressData(address, blockchainPath, API_KEY) }
+            val blockchairAddress = retryIO { api.getAddressData(address, blockchainPath) }
             val addressInfo = blockchairAddress.data!!.getValue(address).addressInfo!!
             Result.Success(addressInfo.outputCount!! - addressInfo.unspentOutputCount!!)
         } catch (error: Exception) {
@@ -95,5 +101,3 @@ class BlockchairProvider(private val api: BlockchairApi, blockchain: Blockchain)
         }
     }
 }
-
-private const val API_KEY = "A___0Shpsu4KagE7oSabrw20DfXAqWlT"
