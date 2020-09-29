@@ -78,7 +78,7 @@ class BlockchairEthProvider(private val api: BlockchairApi) {
                 destinationAddress = recipient ?: "unknown",
                 status = status,
                 date = Calendar.getInstance().apply { time = date!! },
-                hash = hash
+                hash = hash?.substring(2) // trim 0x
         )
     }
 }
