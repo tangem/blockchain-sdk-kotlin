@@ -4,9 +4,7 @@ import co.nstant.`in`.cbor.CborBuilder
 import co.nstant.`in`.cbor.CborEncoder
 import co.nstant.`in`.cbor.model.DataItem
 import com.tangem.blockchain.blockchains.cardano.crypto.Blake2b
-import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.extensions.decodeBase58
 import com.tangem.common.extensions.hexToBytes
 import java.io.ByteArrayOutputStream
 
@@ -14,8 +12,11 @@ class CardanoTransactionBuilder(private val walletPublicKey: ByteArray) {
 
     var unspentOutputs: List<UnspentOutput> = listOf()
     private var transactionBody: DataItem? = null
+    private var useShelleyWitness: Boolean? = null
 
     fun buildToSign(transactionData: TransactionData): ByteArray {
+        useShelleyWitness = CardanoAddressService.isShelleyAddress(transactionData.sourceAddress)
+
         val transactionMap = CborBuilder().addMap()
 
         transactionMap.put(0.toDataItem(), createInputsDataItem())
@@ -38,7 +39,11 @@ class CardanoTransactionBuilder(private val walletPublicKey: ByteArray) {
         val witnessMap = txArray.addMap()
         txArray.add(null as DataItem?)
 
-        witnessMap.put(2.toDataItem(), createWitnessDataItem(signature))
+        if (useShelleyWitness!!) {
+            witnessMap.put(0.toDataItem(), createShelleyWitnessDataItem(signature))
+        } else {
+            witnessMap.put(2.toDataItem(), createByronWitnessDataItem(signature))
+        }
 
         val baos = ByteArrayOutputStream()
         CborEncoder(baos).encode(txArray.end().build())
@@ -85,12 +90,19 @@ class CardanoTransactionBuilder(private val walletPublicKey: ByteArray) {
         return outputsArray.end().build()[0]
     }
 
-    private fun createWitnessDataItem(signature: ByteArray): DataItem? {
+    private fun createByronWitnessDataItem(signature: ByteArray): DataItem? {
         return CborBuilder().addArray().addArray()
                 .add(walletPublicKey)
                 .add(signature)
                 .add(ByteArray(32))
                 .add("A0".hexToBytes())
+                .end().end().build().get(0)
+    }
+
+    private fun createShelleyWitnessDataItem(signature: ByteArray): DataItem? {
+        return CborBuilder().addArray().addArray()
+                .add(walletPublicKey)
+                .add(signature)
                 .end().end().build().get(0)
     }
 
