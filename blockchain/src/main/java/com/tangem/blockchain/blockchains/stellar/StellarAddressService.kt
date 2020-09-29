@@ -12,7 +12,7 @@ class StellarAddressService: AddressService {
     override fun validate(address: String): Boolean {
         return try {
             KeyPair.fromAccountId(address) != null
-        } catch (exception: IllegalArgumentException) {
+        } catch (exception: Exception) {
             false
         }
     }
