@@ -83,10 +83,11 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
             total = amount.value ?: BigDecimal.ZERO
         }
 
-        if (!validateNotDust(amount)) errors.add(TransactionError.DustAmount)
-        val change = total - (amount.value ?: BigDecimal.ZERO)
-        if (!validateNotDust(Amount(amount, change))) errors.add(TransactionError.DustChange)
-
+        if (dustValue != null) {
+            if (!validateNotDust(amount)) errors.add(TransactionError.DustAmount)
+            val change = wallet.amounts[AmountType.Coin]!!.value!! - total
+            if (!validateNotDust(Amount(amount, change))) errors.add(TransactionError.DustChange)
+        }
         return errors
     }
 
