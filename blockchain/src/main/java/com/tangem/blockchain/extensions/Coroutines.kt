@@ -1,5 +1,6 @@
 package com.tangem.blockchain.extensions
 
+import com.tangem.Message
 import com.tangem.TangemError
 import com.tangem.TangemSdk
 import com.tangem.blockchain.common.TransactionSigner
@@ -72,10 +73,12 @@ sealed class SimpleResult {
     }
 }
 
-class Signer(private val tangemSdk: TangemSdk) : TransactionSigner {
+class Signer(
+        private val tangemSdk: TangemSdk, private val initialMessage: Message? = null
+) : TransactionSigner {
     override suspend fun sign(hashes: Array<ByteArray>, cardId: String): CompletionResult<SignResponse> =
             suspendCancellableCoroutine { continuation ->
-                tangemSdk.sign(hashes, cardId) { result ->
+                tangemSdk.sign(hashes, cardId, initialMessage) { result ->
                     if (continuation.isActive) continuation.resume(result)
                 }
             }
