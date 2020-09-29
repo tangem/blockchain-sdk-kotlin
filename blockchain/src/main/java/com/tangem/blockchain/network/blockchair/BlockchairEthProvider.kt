@@ -68,7 +68,7 @@ class BlockchairEthProvider(private val api: BlockchairApi) {
         }
 
         val status =
-                if (block == -1) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed
+                if (block == -1) TransactionStatus.Unconfirmed else TransactionStatus.Confirmed
         val date = dateFormat.parse(time!!)
 
         return TransactionData(
