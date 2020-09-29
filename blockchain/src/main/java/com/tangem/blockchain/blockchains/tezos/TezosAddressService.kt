@@ -20,15 +20,19 @@ class TezosAddressService : AddressService {
     }
 
     override fun validate(address: String): Boolean {
-        val prefixedHashWithChecksum = Base58.decode(address)
-        if (prefixedHashWithChecksum == null || prefixedHashWithChecksum.size != 27) return false
+        return try {
+            val prefixedHashWithChecksum = Base58.decode(address)
+            if (prefixedHashWithChecksum == null || prefixedHashWithChecksum.size != 27) return false
 
-        val prefixedHash = prefixedHashWithChecksum.copyOf(23)
-        val checksum = prefixedHashWithChecksum.copyOfRange(23, 27)
+            val prefixedHash = prefixedHashWithChecksum.copyOf(23)
+            val checksum = prefixedHashWithChecksum.copyOfRange(23, 27)
 
-        val calculatedChecksum = prefixedHash.calculateTezosChecksum()
+            val calculatedChecksum = prefixedHash.calculateTezosChecksum()
 
-        return calculatedChecksum.contentEquals(checksum)
+            calculatedChecksum.contentEquals(checksum)
+        } catch (exception: Exception) {
+            false
+        }
     }
 
     companion object {
