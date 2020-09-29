@@ -5,6 +5,7 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.isAboveZero
 import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.isZero
 import java.math.BigDecimal
 import java.util.*
 
@@ -83,10 +84,11 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
             total = amount.value ?: BigDecimal.ZERO
         }
 
-        if (!validateNotDust(amount)) errors.add(TransactionError.DustAmount)
-        val change = total - (amount.value ?: BigDecimal.ZERO)
-        if (!validateNotDust(Amount(amount, change))) errors.add(TransactionError.DustChange)
-
+        if (dustValue != null) {
+            if (!validateNotDust(amount)) errors.add(TransactionError.DustAmount)
+            val change = wallet.amounts[AmountType.Coin]!!.value!! - total
+            if (!validateNotDust(Amount(amount, change))) errors.add(TransactionError.DustChange)
+        }
         return errors
     }
 
@@ -98,7 +100,7 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
 
     private fun validateNotDust(amount: Amount): Boolean {
         if (dustValue == null) return true
-        return dustValue!! <= amount.value
+        return dustValue!! <= amount.value || amount.value!!.isZero()
     }
 
     private fun BasicTransactionData.toTransactionData(): TransactionData {
