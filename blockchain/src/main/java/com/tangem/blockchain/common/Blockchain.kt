@@ -21,6 +21,7 @@ enum class Blockchain(
     Litecoin("LTC", "LTC", "Litecoin"),
     Ducatus("DUC", "DUC", "Ducatus"),
     Ethereum("ETH", "ETH", "Ethereum"),
+    EthereumTestnet("ETH/test", "ETH", "Ethereum Testnet"),
     RSK("RSK", "RBTC", "RSK"),
     Cardano("CARDANO", "ADA", "Cardano"),
     CardanoShelley("CARDANO-S", "ADA", "Cardano"),
@@ -33,7 +34,7 @@ enum class Blockchain(
     fun decimals(): Int = when (this) {
         Bitcoin, BitcoinTestnet, BitcoinCash, Binance, BinanceTestnet, Litecoin, Ducatus -> 8
         Cardano, CardanoShelley, XRP, Tezos -> 6
-        Ethereum, RSK -> 18
+        Ethereum, EthereumTestnet, RSK -> 18
         Stellar -> 7
         Unknown -> 0
     }
@@ -49,7 +50,7 @@ enum class Blockchain(
     private fun getAddressService(): AddressService = when (this) {
         Bitcoin, BitcoinTestnet, Litecoin, Ducatus -> BitcoinAddressService(this)
         BitcoinCash -> BitcoinCashAddressService()
-        Ethereum, RSK -> EthereumAddressService()
+        Ethereum, EthereumTestnet, RSK -> EthereumAddressService()
         Cardano, CardanoShelley -> CardanoAddressService(this)
         XRP -> XrpAddressService()
         Binance -> BinanceAddressService()
@@ -81,6 +82,11 @@ enum class Blockchain(
             "https://etherscan.io/address/$address"
         } else {
             "https://etherscan.io/token/${token.contractAddress}?a=$address"
+        }
+        EthereumTestnet -> if (token == null) {
+            "https://rinkeby.etherscan.io/address/$address"
+        } else {
+            "https://rinkeby.etherscan.io/token/${token.contractAddress}?a=$address"
         }
         RSK -> {
             var url = "https://explorer.rsk.co/address/$address"
