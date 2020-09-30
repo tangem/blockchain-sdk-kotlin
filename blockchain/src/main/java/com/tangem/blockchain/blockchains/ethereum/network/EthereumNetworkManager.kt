@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
-import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
@@ -25,6 +24,7 @@ class EthereumNetworkManager(blockchain: Blockchain) {
     private val api: EthereumApi by lazy {
         val baseUrl = when (blockchain) {
             Blockchain.Ethereum -> API_INFURA + infuraPath
+            Blockchain.EthereumTestnet -> API_INFURA_TESTNET + infuraPath
             Blockchain.RSK -> API_RSK
             else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
         }
@@ -54,7 +54,7 @@ class EthereumNetworkManager(blockchain: Blockchain) {
     }
 
     private val apiKey = when (blockchain) {
-        Blockchain.Ethereum -> INFURA_API_KEY
+        Blockchain.Ethereum, Blockchain.EthereumTestnet -> INFURA_API_KEY
         Blockchain.RSK -> ""
         else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
