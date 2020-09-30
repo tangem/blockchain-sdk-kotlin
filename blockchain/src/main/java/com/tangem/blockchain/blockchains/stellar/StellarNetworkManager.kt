@@ -84,7 +84,6 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
                     accountResponse.balances
                             .find { it.assetType != "native" && it.assetIssuer == assetCode }
                             ?.balance?.toBigDecimal()
-                            ?: return@coroutineScope Result.Failure(Exception("Stellar Balance not found"))
                 }
 
                 val ledgerResponse = ledgerResponseDeferred.await()
