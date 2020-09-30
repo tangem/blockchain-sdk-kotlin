@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
@@ -50,7 +51,8 @@ enum class Blockchain(
     private fun getAddressService(): AddressService = when (this) {
         Bitcoin, BitcoinTestnet, Litecoin, Ducatus -> BitcoinAddressService(this)
         BitcoinCash -> BitcoinCashAddressService()
-        Ethereum, EthereumTestnet, RSK -> EthereumAddressService()
+        Ethereum, EthereumTestnet -> EthereumAddressService()
+        RSK -> RskAddressService()
         Cardano, CardanoShelley -> CardanoAddressService(this)
         XRP -> XrpAddressService()
         Binance -> BinanceAddressService()
