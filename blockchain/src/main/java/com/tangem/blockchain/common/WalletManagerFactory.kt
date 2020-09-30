@@ -80,7 +80,7 @@ object WalletManagerFactory {
                         DucatusNetworkManager()
                 )
             }
-            Blockchain.Ethereum, Blockchain.RSK -> {
+            Blockchain.Ethereum,  Blockchain.EthereumTestnet, Blockchain.RSK -> {
                 EthereumWalletManager(
                         cardId, wallet,
                         EthereumTransactionBuilder(walletPublicKey, blockchain),
