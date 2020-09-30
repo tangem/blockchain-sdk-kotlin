@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.cardano.UnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.adalite.AdaliteProvider
 import com.tangem.blockchain.blockchains.cardano.network.api.AdaliteApi
 import com.tangem.blockchain.common.BasicTransactionData
+import com.tangem.blockchain.common.SendException
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.API_ADALITE
@@ -55,7 +56,9 @@ class CardanoNetworkManager {
                     changeProvider()
                     return provider.sendTransaction(transaction)
                 } else {
-                    return result
+                    return SimpleResult.Failure(SendException(
+                            "Failed to send Cardano transaction: $transaction"
+                    ))
                 }
             }
         }
