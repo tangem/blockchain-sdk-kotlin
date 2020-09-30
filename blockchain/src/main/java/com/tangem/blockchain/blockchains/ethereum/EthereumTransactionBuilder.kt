@@ -93,11 +93,14 @@ enum class GasLimit(val value: Long) {
 }
 
 internal fun getGasLimit(amount: Amount): GasLimit {
-    return when (amount.currencySymbol) {
-        Blockchain.Ethereum.currency -> GasLimit.Default
-        "DGX" -> GasLimit.High
-        "AWG" -> GasLimit.Medium
-        else -> GasLimit.Erc20
+    return if (amount.type == AmountType.Coin) {
+        GasLimit.Default
+    } else {
+        when (amount.currencySymbol) {
+            "DGX" -> GasLimit.High
+            "AWG" -> GasLimit.Medium
+            else -> GasLimit.Erc20
+        }
     }
 }
 
