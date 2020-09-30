@@ -37,6 +37,7 @@ fun createRetrofitInstance(baseUrl: String): Retrofit =
 const val API_TANGEM = "https://verify.tangem.com/"
 const val API_COINMARKETCAP = "https://pro-api.coinmarketcap.com/"
 const val API_INFURA = "https://mainnet.infura.io/"
+const val API_INFURA_TESTNET = "https://rinkeby.infura.io/"
 const val API_SOCHAIN_V2 = "https://chain.so/"
 const val API_UPDATE_VERSION = "https://raw.githubusercontent.com/"
 const val API_RSK = "https://public-node.rsk.co/"
