@@ -7,7 +7,8 @@ interface BlockcypherApi {
     @GET("v1/{blockchain}/{network}")
     suspend fun getFee(
             @Path("blockchain") blockchain: String,
-            @Path("network") network: String
+            @Path("network") network: String,
+            @Query("token") token: String? = null
     ): BlockcypherFee
 
     @GET("v1/{blockchain}/{network}/addrs/{address}?includeScript=true")
@@ -15,7 +16,8 @@ interface BlockcypherApi {
             @Path("blockchain") blockchain: String,
             @Path("network") network: String,
             @Path("address") address: String,
-            @Query("limit") limit: Int? = null
+            @Query("limit") limit: Int? = null,
+            @Query("token") token: String? = null
     ): BlockcypherAddress
 
     @Headers("Content-Type: application/json")
