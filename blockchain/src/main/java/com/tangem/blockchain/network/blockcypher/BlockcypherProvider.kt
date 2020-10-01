@@ -10,6 +10,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.common.extensions.hexToBytes
+import retrofit2.HttpException
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -33,14 +34,12 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
 
     private val decimals = blockchain.decimals()
 
-    override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
+    override suspend fun getInfo(address: String) = getInfo(address, null)
+
+    suspend fun getInfo(address: String, token: String?): Result<BitcoinAddressInfo> {
         return try {
-            val addressData: BlockcypherAddress =
-                    retryIO {
-                        api.getAddressData(
-                                blockchainPath, network, address, token = BlockcypherToken.getToken()
-                        )
-                    }
+            val addressData =
+                    retryIO { api.getAddressData(blockchainPath, network, address, token = token) }
 
             val confirmedTransactions =
                     addressData.txrefs?.toBasicTransactionsData(isConfirmed = true) ?: emptyList()
@@ -65,16 +64,23 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
                             transactions
                     )
             )
-
+        } catch (error: HttpException) {
+            return if (error.code() == 429 && token == null) {
+                getInfo(address, BlockcypherToken.getToken())
+            } else {
+                Result.Failure(error)
+            }
         } catch (error: Exception) {
             Result.Failure(error)
         }
     }
 
-    override suspend fun getFee(): Result<BitcoinFee> {
+    override suspend fun getFee() = getFee(null)
+
+    suspend fun getFee(token: String?): Result<BitcoinFee> {
         return try {
             val receivedFee: BlockcypherFee =
-                    retryIO { api.getFee(blockchainPath, network, BlockcypherToken.getToken()) }
+                    retryIO { api.getFee(blockchainPath, network, token) }
             Result.Success(
                     BitcoinFee(
                             receivedFee.minFeePerKb!!.toBigDecimal().movePointLeft(decimals),
@@ -82,6 +88,12 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
                             receivedFee.priorityFeePerKb!!.toBigDecimal().movePointLeft(decimals)
                     )
             )
+        } catch (error: HttpException) {
+            return if (error.code() == 429 && token == null) {
+                getFee(BlockcypherToken.getToken())
+            } else {
+                Result.Failure(error)
+            }
         } catch (error: Exception) {
             Result.Failure(error)
         }
@@ -99,15 +111,14 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
         }
     }
 
+    override suspend fun getSignatureCount(address: String) = getSignatureCount(address, null)
+
     // TODO: there is a limit of 2000 txrefs, we can miss some transactions if there is more
     override suspend fun getSignatureCount(address: String): Result<Int> {
         return try {
             val addressData: BlockcypherAddress =
                     retryIO {
-                        api.getAddressData(
-                                blockchainPath, network, address, limitCap,
-                                BlockcypherToken.getToken()
-                        )
+                        api.getAddressData(blockchainPath, network, address, limitCap, token)
                     }
 
             var signatureCount = addressData.txrefs?.filter { it.outputIndex == -1 }?.size ?: 0
@@ -115,6 +126,13 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
                     ?: 0
 
             Result.Success(signatureCount)
+
+        } catch (error: HttpException) {
+            return if (error.code() == 429 && token == null) {
+                getSignatureCount(address, BlockcypherToken.getToken())
+            } else {
+                Result.Failure(error)
+            }
         } catch (error: Exception) {
             Result.Failure(error)
         }
