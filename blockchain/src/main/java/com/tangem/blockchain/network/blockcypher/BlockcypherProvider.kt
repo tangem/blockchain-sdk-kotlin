@@ -114,7 +114,7 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
     override suspend fun getSignatureCount(address: String) = getSignatureCount(address, null)
 
     // TODO: there is a limit of 2000 txrefs, we can miss some transactions if there is more
-    override suspend fun getSignatureCount(address: String): Result<Int> {
+    suspend fun getSignatureCount(address: String, token: String?): Result<Int> {
         return try {
             val addressData: BlockcypherAddress =
                     retryIO {
