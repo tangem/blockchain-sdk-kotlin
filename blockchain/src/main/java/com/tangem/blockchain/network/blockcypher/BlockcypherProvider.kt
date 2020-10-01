@@ -36,13 +36,17 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         return try {
             val addressData: BlockcypherAddress =
-                    retryIO { api.getAddressData(blockchainPath, network, address) }
+                    retryIO {
+                        api.getAddressData(
+                                blockchainPath, network, address, token = BlockcypherToken.getToken()
+                        )
+                    }
 
             val confirmedTransactions =
                     addressData.txrefs?.toBasicTransactionsData(isConfirmed = true) ?: emptyList()
             val unconfirmedTransactions =
                     addressData.unconfirmedTxrefs?.toBasicTransactionsData(isConfirmed = false)
-                    ?: emptyList()
+                            ?: emptyList()
 
             val transactions = confirmedTransactions + unconfirmedTransactions
 
@@ -69,7 +73,8 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
 
     override suspend fun getFee(): Result<BitcoinFee> {
         return try {
-            val receivedFee: BlockcypherFee = retryIO { api.getFee(blockchainPath, network) }
+            val receivedFee: BlockcypherFee =
+                    retryIO { api.getFee(blockchainPath, network, BlockcypherToken.getToken()) }
             Result.Success(
                     BitcoinFee(
                             receivedFee.minFeePerKb!!.toBigDecimal().movePointLeft(decimals),
@@ -98,10 +103,16 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
     override suspend fun getSignatureCount(address: String): Result<Int> {
         return try {
             val addressData: BlockcypherAddress =
-                    retryIO { api.getAddressData(blockchainPath, network, address, limitCap) }
+                    retryIO {
+                        api.getAddressData(
+                                blockchainPath, network, address, limitCap,
+                                BlockcypherToken.getToken()
+                        )
+                    }
 
             var signatureCount = addressData.txrefs?.filter { it.outputIndex == -1 }?.size ?: 0
-            signatureCount += addressData.unconfirmedTxrefs?.filter { it.outputIndex == -1 }?.size ?: 0
+            signatureCount += addressData.unconfirmedTxrefs?.filter { it.outputIndex == -1 }?.size
+                    ?: 0
 
             Result.Success(signatureCount)
         } catch (error: Exception) {
