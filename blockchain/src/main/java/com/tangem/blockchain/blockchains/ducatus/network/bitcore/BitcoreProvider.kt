@@ -59,7 +59,8 @@ open class BitcoreProvider(private val api: BitcoreApi) : BitcoinProvider {
     }
 
     override suspend fun getFee(): Result<BitcoinFee> {
-        TODO("Not yet implemented")// Bitcore is used only in Ducatus and fee is hardcoded there
+        // TODO Bitcore is used only in Ducatus and fee is hardcoded there
+        return Result.Failure(Exception("Not yet implemented"))
     }
 
 
@@ -77,6 +78,7 @@ open class BitcoreProvider(private val api: BitcoreApi) : BitcoinProvider {
     }
 
     override suspend fun getSignatureCount(address: String): Result<Int> {
-        TODO("Not yet implemented")// Bitcore is used only in Ducatus and we don't check signature count
+        // TODO Bitcore is used only in Ducatus and we don't check signature count
+        return Result.Failure(Exception("Not yet implemented"))
     }
 }
