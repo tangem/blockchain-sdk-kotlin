@@ -91,7 +91,7 @@ class EthereumWalletManager(
             is Result.Success -> if (result.data == signedHashes) {
                 SimpleResult.Success
             } else {
-                SimpleResult.Failure(Exception("Number of signatures does not match"))
+                SimpleResult.Failure(BlockchainSdkError.SignatureCountNotMatched)
             }
             is Result.Failure -> SimpleResult.Failure(result.error)
         }
