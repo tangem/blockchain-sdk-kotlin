@@ -73,7 +73,7 @@ class CardanoWalletManager(
 
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
         val a = 0.155381
-        val b = 0.000043946
+        val b = 0.000044
         val size = transactionBuilder.getEstimateSize(
                 TransactionData(amount, null, wallet.address, destination)
         )
