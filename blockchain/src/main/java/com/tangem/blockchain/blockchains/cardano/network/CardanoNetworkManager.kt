@@ -54,7 +54,17 @@ class CardanoNetworkManager {
             is SimpleResult.Failure -> {
                 if (result.error is IOException || result.error is HttpException) {
                     changeProvider()
-                    return provider.sendTransaction(transaction)
+                    return when (val result = provider.sendTransaction(transaction)) {
+                        is SimpleResult.Success -> result
+                        is SimpleResult.Failure ->
+                            if (result.error is HttpException && result.error.code() == 400) {
+                                SimpleResult.Failure(SendException(
+                                        "Failed to send Cardano transaction: $transaction"
+                                ))
+                            } else {
+                                result
+                            }
+                    }
                 } else {
                     return SimpleResult.Failure(SendException(
                             "Failed to send Cardano transaction: $transaction"
