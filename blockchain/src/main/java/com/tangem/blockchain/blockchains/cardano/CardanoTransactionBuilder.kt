@@ -7,6 +7,7 @@ import com.tangem.blockchain.blockchains.cardano.crypto.Blake2b
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.common.extensions.hexToBytes
 import java.io.ByteArrayOutputStream
+import java.math.BigDecimal
 
 class CardanoTransactionBuilder(private val walletPublicKey: ByteArray) {
 
@@ -111,10 +112,25 @@ class CardanoTransactionBuilder(private val walletPublicKey: ByteArray) {
         return fullAmount - (amount + fee)
     }
 
+//    fun getEstimateSize(transactionData: TransactionData): Int {
+//        val fullAmount = unspentOutputs.map { it.amount }.sum()
+//        val outputsNumber = if (transactionData.amount.longValue == fullAmount) 1 else 2
+//        return unspentOutputs.size * 40 + outputsNumber * 65 + 160
+//    }
+
     fun getEstimateSize(transactionData: TransactionData): Int {
-        val fullAmount = unspentOutputs.map { it.amount }.sum()
-        val outputsNumber = if (transactionData.amount.longValue == fullAmount) 1 else 2
-        return unspentOutputs.size * 40 + outputsNumber * 65 + 160
+        val dummyFeeValue = BigDecimal.valueOf(0.1)
+
+        val dummyFee = transactionData.amount.copy(value = dummyFeeValue)
+        val dummyAmount =
+                transactionData.amount.copy(value = transactionData.amount.value!! - dummyFeeValue)
+
+        val dummyTransactionData = transactionData.copy(
+                amount = dummyAmount,
+                fee = dummyFee
+        )
+        buildToSign(dummyTransactionData)
+        return buildToSend(ByteArray(64)).size
     }
 }
 
