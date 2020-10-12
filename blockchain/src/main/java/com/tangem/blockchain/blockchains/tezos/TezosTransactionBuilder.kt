@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.tezos
 
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService.Companion.calculateTezosChecksum
 import com.tangem.blockchain.blockchains.tezos.network.TezosOperationContent
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.bigIntegerValue
@@ -9,9 +10,11 @@ import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
 import org.bitcoinj.core.Base58
 import org.spongycastle.jcajce.provider.digest.Blake2b
+import java.math.BigDecimal
 
 class TezosTransactionBuilder(private val walletPublicKey: ByteArray) {
     var counter: Long? = null
+    val decimals = Blockchain.Tezos.decimals()
 
     fun buildContents(transactionData: TransactionData,
                       publicKeyRevealed: Boolean
@@ -26,7 +29,7 @@ class TezosTransactionBuilder(private val walletPublicKey: ByteArray) {
             val revealOp = TezosOperationContent(
                     kind = "reveal",
                     source = transactionData.sourceAddress,
-                    fee = "1300",
+                    fee = TezosWalletManager.REVEAL_FEE.toMutezValueString(),
                     counter = counter.toString(),
                     gas_limit = "10000",
                     storage_limit = "0",
@@ -39,10 +42,10 @@ class TezosTransactionBuilder(private val walletPublicKey: ByteArray) {
         val transactionOp = TezosOperationContent(
                 kind = "transaction",
                 source = transactionData.sourceAddress,
-                fee = "1350",
+                fee = TezosWalletManager.TRANSACTION_FEE.toMutezValueString(),
                 counter = counter.toString(),
                 gas_limit = "10600",
-                storage_limit = "277",
+                storage_limit = "300", // set it to 0?
                 destination = transactionData.destinationAddress,
                 amount = transactionData.amount.bigIntegerValue().toString()
         )
@@ -66,5 +69,9 @@ class TezosTransactionBuilder(private val walletPublicKey: ByteArray) {
         val prefixedHashWithChecksum = prefixedPubKey + checksum
 
         return Base58.encode(prefixedHashWithChecksum)
+    }
+
+    private fun Double.toMutezValueString(): String {
+        return BigDecimal.valueOf(this).movePointRight(decimals).toString()
     }
 }

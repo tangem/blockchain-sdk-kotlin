@@ -9,6 +9,7 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.isZero
+import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
@@ -33,6 +34,9 @@ class TezosWalletManager(
 
     private fun updateWallet(response: TezosInfoResponse) {
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
+        if (response.balance != wallet.amounts[AmountType.Coin]?.value) {
+            wallet.recentTransactions.clear()
+        }
         wallet.amounts[AmountType.Coin]?.value = response.balance
         transactionBuilder.counter = response.counter
     }
@@ -71,17 +75,22 @@ class TezosWalletManager(
             is CompletionResult.Success -> signerResponse.data.signature
         }
 
-        when (val response = networkManager.checkTransaction(header, contents, signature)) {
-            is SimpleResult.Failure -> return response.toResultWithData(signerResponse.data)
+        return when (val response = networkManager.checkTransaction(header, contents, signature)) {
+            is SimpleResult.Failure -> response.toResultWithData(signerResponse.data)
             is SimpleResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signature,forgedContents)
-                return networkManager.sendTransaction(transactionToSend).toResultWithData(signerResponse.data)
+                val sendResult = networkManager.sendTransaction(transactionToSend)
+
+                if (sendResult is SimpleResult.Success) {
+                    wallet.addOutgoingTransaction(transactionData)
+                }
+                sendResult.toResultWithData(signerResponse.data)
             }
         }
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
-        var fee: BigDecimal = BigDecimal.valueOf(0.00135)
+        var fee: BigDecimal = BigDecimal.valueOf(TRANSACTION_FEE)
         var error: Result.Failure? = null
 
         coroutineScope {
@@ -93,7 +102,7 @@ class TezosWalletManager(
                 is Result.Success -> {
                     publicKeyRevealed = result.data
                     if (!publicKeyRevealed!!) {
-                        fee += BigDecimal.valueOf(0.0013)
+                        fee += BigDecimal.valueOf(REVEAL_FEE)
                     }
                 }
             }
@@ -102,7 +111,7 @@ class TezosWalletManager(
                 is Result.Failure -> error = result
                 is Result.Success -> {
                     if (result.data.balance.isZero()) {
-                        fee += BigDecimal.valueOf(0.257)
+                        fee += BigDecimal.valueOf(ALLOCATION_FEE)
                     }
                 }
             }
@@ -110,4 +119,9 @@ class TezosWalletManager(
         return if (error == null) Result.Success(listOf(Amount(fee, blockchain))) else error!!
     }
 
+    companion object {
+        const val TRANSACTION_FEE = 0.00142
+        const val REVEAL_FEE = 0.0013
+        const val ALLOCATION_FEE = 0.257
+    }
 }
