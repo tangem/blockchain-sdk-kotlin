@@ -10,6 +10,8 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.*
+import com.tangem.blockchain.network.blockchair.BlockchairApi
+import com.tangem.blockchain.network.blockchair.BlockchairProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherProvider
 import retrofit2.HttpException
 import java.io.IOException
@@ -17,12 +19,6 @@ import java.math.BigDecimal
 
 
 class BitcoinNetworkManager(blockchain: Blockchain) : BitcoinProvider {
-
-    private val blockcypherProvider by lazy {
-        val api = createRetrofitInstance(API_BLOCKCYPHER)
-                .create(BlockcypherApi::class.java)
-        BlockcypherProvider(api, blockchain)
-    }
 
     private val blockchainInfoProvider by lazy {
         val api = createRetrofitInstance(API_BLOCKCHAIN_INFO)
@@ -32,13 +28,25 @@ class BitcoinNetworkManager(blockchain: Blockchain) : BitcoinProvider {
         BlockchainInfoProvider(api, bitcoinfeesEarnApi)
     }
 
+    private val blockchairProvider by lazy {
+        val api = createRetrofitInstance(API_BLOCKCHAIR)
+                .create(BlockchairApi::class.java)
+        BlockchairProvider(api, blockchain)
+    }
+
+    private val blockcypherProvider by lazy {
+        val api = createRetrofitInstance(API_BLOCKCYPHER)
+                .create(BlockcypherApi::class.java)
+        BlockcypherProvider(api, blockchain)
+    }
+
     private var provider: BitcoinProvider = blockchainInfoProvider
 
     private fun changeProvider() {
-        provider = if (provider == blockchainInfoProvider) {
-            blockcypherProvider
-        } else {
-            blockchainInfoProvider
+        provider = when (provider) {
+            blockchainInfoProvider -> blockchairProvider
+            blockchairProvider -> blockcypherProvider
+            else -> blockchainInfoProvider
         }
     }
 
