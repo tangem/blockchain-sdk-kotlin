@@ -13,6 +13,7 @@ import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
+import java.util.*
 
 class TezosWalletManager(
         cardId: String,
@@ -117,6 +118,14 @@ class TezosWalletManager(
             }
         }
         return if (error == null) Result.Success(listOf(Amount(fee, blockchain))) else error!!
+    }
+
+    override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
+        val errors = super.validateTransaction(amount, fee)
+        if (wallet.amounts[AmountType.Coin]!!.value == amount.value!!.add(fee!!.value)) {
+            errors.add(TransactionError.TezosSendAll)
+        }
+        return errors
     }
 
     companion object {
