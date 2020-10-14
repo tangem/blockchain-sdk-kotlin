@@ -20,6 +20,7 @@ class BlockchairProvider(private val api: BlockchairApi, blockchain: Blockchain)
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss")
 
     private val blockchainPath = when (blockchain) {
+        Blockchain.Bitcoin -> "bitcoin"
         Blockchain.BitcoinCash -> "bitcoin-cash"
         Blockchain.Litecoin -> "litecoin"
         else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
