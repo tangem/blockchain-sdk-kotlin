@@ -28,6 +28,8 @@ enum class TransactionError {
     TezosSendAll
 }
 
+enum class TransactionDirection { Incoming, Outgoing }
+
 data class BasicTransactionData(
         val balanceDif: BigDecimal, //change of balance
         val hash: String,
