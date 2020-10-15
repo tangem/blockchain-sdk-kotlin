@@ -66,7 +66,7 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
     }
 
     // TODO: add decimals and currency checks?
-    fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
+    open fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
         val errors = EnumSet.noneOf(TransactionError::class.java)
 
         if (!validateAmountValue(amount)) errors.add(TransactionError.InvalidAmountValue)
