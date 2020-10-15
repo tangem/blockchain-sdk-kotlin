@@ -46,6 +46,8 @@ class EthereumWalletManager(
             wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
         } else if (!data.recentTransactions.isNullOrEmpty()) {
             updateRecentTransactions(data.recentTransactions)
+        } else {
+            wallet.addTransactionDummy()
         }
     }
 
