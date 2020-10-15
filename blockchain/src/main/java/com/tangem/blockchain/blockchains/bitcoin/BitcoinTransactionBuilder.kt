@@ -62,7 +62,7 @@ open class BitcoinTransactionBuilder(
             is Result.Failure -> return buildTransactionResult
             is Result.Success -> {
                 val hashes = buildTransactionResult.data
-                val finalTransaction = buildToSend(ByteArray(64 * hashes.size) { 1 })
+                val finalTransaction = buildToSend(ByteArray(64 * hashes.size) { -128 }) // needed for longer signature
                 return Result.Success(finalTransaction.size)
             }
         }
