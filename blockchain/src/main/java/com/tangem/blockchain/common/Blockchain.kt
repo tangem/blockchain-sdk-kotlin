@@ -30,7 +30,7 @@ enum class Blockchain(
     Binance("BINANCE", "BNB", "Binance"),
     BinanceTestnet("BINANCE/test", "BNBt", "Binance"),
     Stellar("XLM", "XLM", "Stellar"),
-    Tezos("TEZOS", "XTZ", "Tezos");
+    Tezos("XTZ", "XTZ", "Tezos");
 
     fun decimals(): Int = when (this) {
         Bitcoin, BitcoinTestnet, BitcoinCash, Binance, BinanceTestnet, Litecoin, Ducatus -> 8
