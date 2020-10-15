@@ -24,7 +24,8 @@ enum class TransactionError {
     InvalidAmountValue,
     InvalidFeeValue,
     DustAmount,
-    DustChange
+    DustChange,
+    TezosSendAll
 }
 
 data class BasicTransactionData(
