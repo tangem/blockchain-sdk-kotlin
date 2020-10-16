@@ -40,7 +40,7 @@ class XrpWalletManager(
         transactionBuilder.minReserve = response.reserveBase
 
         if (response.hasUnconfirmed) {
-            if (wallet.recentTransactions.isEmpty()) wallet.addIncomingTransactionDummy()
+            if (wallet.recentTransactions.isEmpty()) wallet.addTransactionDummy()
         } else {
             wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
         }
