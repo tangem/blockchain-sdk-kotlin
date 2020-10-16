@@ -42,10 +42,13 @@ class Wallet(
         setAmount(amount)
     }
 
-    fun addIncomingTransactionDummy() { // TODO: do we still need this?
-        val dummyAmount = Amount(null, blockchain)
-        val transaction = TransactionData(dummyAmount, dummyAmount,
-                "unknown", address, date = Calendar.getInstance()
+    fun addTransactionDummy(direction: TransactionDirection? = null) {
+        val transaction = TransactionData(
+                amount = Amount(null, blockchain),
+                fee = null,
+                sourceAddress = if (direction == TransactionDirection.Outgoing) address else "unknown",
+                destinationAddress = if (direction == TransactionDirection.Incoming) address else "unknown",
+                date = Calendar.getInstance()
         )
         recentTransactions.add(transaction)
     }

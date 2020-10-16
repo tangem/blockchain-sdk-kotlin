@@ -18,7 +18,7 @@ class DucatusWalletManager(
         if (transactions.isEmpty()) {
             wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
         } else if (wallet.recentTransactions.find { it.status == TransactionStatus.Unconfirmed } == null) {
-            wallet.addIncomingTransactionDummy()
+            wallet.addTransactionDummy()
         }
     }
 
