@@ -14,10 +14,25 @@ buildscript {
 }
 
 allprojects {
+    def nexusUser = "viewer"
+    def nexusPass = "smartcash124"
     repositories {
         google()
         jcenter()
-        maven { url "https://nexus.tangem.com/repository/maven-releases/" }
+        maven {
+            credentials {
+                username = nexusUser
+                password = nexusPass
+            }
+            url "https://nexus.tangem.com/repository/maven-releases/"
+        }
+        maven {
+            credentials {
+                username = nexusUser
+                password = nexusPass
+            }
+            url "https://nexus.tangem.com/repository/maven-snapshots/"
+        }
         maven { url 'https://jitpack.io' }
     }
 }
