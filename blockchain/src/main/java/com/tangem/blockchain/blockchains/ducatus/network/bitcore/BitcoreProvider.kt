@@ -39,18 +39,8 @@ open class BitcoreProvider(private val api: BitcoreApi) : BitcoinProvider {
                 Result.Success(BitcoinAddressInfo(
                         balance = balanceData.confirmed!!.toBigDecimal().movePointLeft(decimals), // only confirmed balance is returned right
                         unspentOutputs = unspentOutputs,
-                        recentTransactions = if (balanceData.unconfirmed!! == 0L) {
-                            emptyList()
-                        } else {
-                            // Transaction dummy
-                            val balanceDif = balanceData.unconfirmed!! - balanceData.confirmed!! // actual if unconfirmed balance is right
-                            listOf(BasicTransactionData(
-                                    balanceDif = balanceDif.toBigDecimal().movePointLeft(decimals),
-                                    hash = "unknown",
-                                    date = null,
-                                    isConfirmed = false
-                            ))
-                        }
+                        recentTransactions = emptyList(),
+                        hasUnconfirmed = balanceData.unconfirmed!! != 0L
                 ))
             }
         } catch (error: Exception) {
