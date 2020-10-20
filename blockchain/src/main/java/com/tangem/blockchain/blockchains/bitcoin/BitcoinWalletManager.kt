@@ -32,7 +32,14 @@ open class BitcoinWalletManager(
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
         wallet.amounts[AmountType.Coin]?.value = response.balance
         transactionBuilder.unspentOutputs = response.unspentOutputs
-        updateRecentTransactionsBasic(response.recentTransactions)
+        if (response.recentTransactions.isNotEmpty()) {
+            updateRecentTransactionsBasic(response.recentTransactions)
+        } else {
+            when (response.hasUnconfirmed) {
+                true -> wallet.addTransactionDummy()
+                false -> wallet.recentTransactions.clear()
+            }
+        }
     }
 
     private fun updateError(error: Throwable?) {

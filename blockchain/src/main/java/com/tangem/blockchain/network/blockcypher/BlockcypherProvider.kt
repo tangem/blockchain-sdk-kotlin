@@ -61,7 +61,8 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
                     BitcoinAddressInfo(
                             addressData.balance!!.toBigDecimal().movePointLeft(decimals),
                             unspentOutputs ?: emptyList(),
-                            transactions
+                            transactions,
+                            addressData.unconfirmedBalance != 0L
                     )
             )
         } catch (error: HttpException) {
