@@ -114,7 +114,8 @@ class BitcoinNetworkManager(blockchain: Blockchain) : BitcoinProvider {
 data class BitcoinAddressInfo(
         val balance: BigDecimal,
         val unspentOutputs: List<BitcoinUnspentOutput>,
-        val recentTransactions: List<BasicTransactionData>
+        val recentTransactions: List<BasicTransactionData>,
+        val hasUnconfirmed: Boolean? = null //additional logic for when recent transactions are absent or not reliable
 )
 
 data class BitcoinFee(
