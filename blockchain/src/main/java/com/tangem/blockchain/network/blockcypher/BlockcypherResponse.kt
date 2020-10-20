@@ -15,7 +15,10 @@ data class BlockcypherAddress(
         val txrefs: List<BlockcypherTxref>? = null,
 
         @Json(name = "unconfirmed_txrefs")
-        val unconfirmedTxrefs: List<BlockcypherTxref>? = null
+        val unconfirmedTxrefs: List<BlockcypherTxref>? = null,
+
+        @Json(name = "unconfirmed_balance")
+        val unconfirmedBalance: Long? = null
 )
 
 @JsonClass(generateAdapter = true)
