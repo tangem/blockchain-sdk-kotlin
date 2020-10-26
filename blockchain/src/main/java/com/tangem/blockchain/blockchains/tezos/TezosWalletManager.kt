@@ -122,7 +122,8 @@ class TezosWalletManager(
 
     override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
         val errors = super.validateTransaction(amount, fee)
-        if (wallet.amounts[AmountType.Coin]!!.value == amount.value!!.add(fee!!.value)) {
+        val total = fee?.value?.add(amount.value) ?: amount.value
+        if (wallet.amounts[AmountType.Coin]!!.value == total) {
             errors.add(TransactionError.TezosSendAll)
         }
         return errors
