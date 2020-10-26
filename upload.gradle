@@ -10,6 +10,12 @@ uploadArchives {
             pom.artifactId = artifactId
             pom.version = artifactVersion
             pom.packaging = artifactPackaging
+
+            pom.whenConfigured {
+                p -> p.dependencies = p.dependencies.findAll {
+                    dep -> dep.groupId != "com.tangem"
+                }
+            }
         }
     }
 }
@@ -26,6 +32,12 @@ task uploadSnapshot(type: Upload) {
                 authentication(userName: "developer", password: "smartcash987")
             }
             pom.version = "$prefix-SNAPSHOT"
+
+            pom.whenConfigured {
+                p -> p.dependencies = p.dependencies.findAll {
+                    dep -> dep.groupId != "com.tangem"
+                }
+            }
         }
     }
 }
