@@ -42,7 +42,7 @@ android {
 dependencies {
 //    implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "com.tangem:core:$versions.tangem"
-    implementation "com.tangem:sdk:$versions.tangem"
+    implementation "com.tangem:sdk:1.73.0"
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$versions.kotlin"
     implementation 'androidx.appcompat:appcompat:1.1.0'
