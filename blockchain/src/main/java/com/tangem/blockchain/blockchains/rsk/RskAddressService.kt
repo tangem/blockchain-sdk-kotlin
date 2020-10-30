@@ -30,8 +30,8 @@ class RskAddressService : AddressService {
 
     private fun Address.hasValidChecksumOrNoChecksum(): Boolean {
         return isValid() &&
-                withChecksum().hex == hex ||
-                cleanHex.toLowerCase() == cleanHex ||
-                cleanHex.toUpperCase() == cleanHex
+                (withChecksum().hex == hex ||
+                        cleanHex.toLowerCase() == cleanHex ||
+                        cleanHex.toUpperCase() == cleanHex)
     }
 }
