@@ -51,3 +51,12 @@ data class BlockchainInfoUtxo(
         @Json(name = "script")
         val outputScript: String? = null
 )
+
+@JsonClass(generateAdapter = true)
+data class BlockchainInfoFees(
+        @Json(name = "regular")
+        val regularFeePerByte: Int? = null,
+
+        @Json(name = "priority")
+        val priorityFeePerByte: Int? = null
+)
