@@ -17,8 +17,8 @@ import java.util.*
 
 
 class BlockchainInfoProvider(
-        private val blockchainApi: BlockchainInfoApi,
-        private val bitcoinfeesEarnApi: BitcoinfeesEarnApi
+        private val blockchainApi: BlockchainInfoApi
+//        private val bitcoinfeesEarnApi: BitcoinfeesEarnApi
 ) : BitcoinProvider {
     private val decimals = Blockchain.Bitcoin.decimals()
     private val responseTransactionCap = 50
@@ -64,10 +64,10 @@ class BlockchainInfoProvider(
 
     override suspend fun getFee(): Result<BitcoinFee> {
         return try {
-            val feeData = retryIO { bitcoinfeesEarnApi.getFees() }
+            val feeData = retryIO { blockchainApi.getFees() }
 
-            val minimalFeePerKb = feeData.minimalFeePerByte!! * 1024
-            val normalFeePerKb = feeData.normalFeePerByte!! * 1024
+            val minimalFeePerKb = feeData.regularFeePerByte!! * 1024
+            val normalFeePerKb = feeData.regularFeePerByte * 1024 * 12 / 10 // 1.2 ratio
             val priorityFeePerKb = feeData.priorityFeePerByte!! * 1024
 
             Result.Success(BitcoinFee(
