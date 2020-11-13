@@ -43,11 +43,11 @@ class BitcoinNetworkManager(blockchain: Blockchain) : BitcoinProvider {
     private var provider: BitcoinProvider = blockchainInfoProvider
 
     private fun changeProvider() {
-//        provider = when (provider) {
-//            blockchainInfoProvider -> blockchairProvider
-//            blockchairProvider -> blockcypherProvider
-//            else -> blockchainInfoProvider
-//        }
+        provider = when (provider) {
+            blockchainInfoProvider -> blockchairProvider
+            blockchairProvider -> blockcypherProvider
+            else -> blockchainInfoProvider
+        }
     }
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
