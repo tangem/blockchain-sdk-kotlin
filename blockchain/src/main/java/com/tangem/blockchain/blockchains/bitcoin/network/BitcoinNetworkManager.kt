@@ -23,9 +23,9 @@ class BitcoinNetworkManager(blockchain: Blockchain) : BitcoinProvider {
     private val blockchainInfoProvider by lazy {
         val api = createRetrofitInstance(API_BLOCKCHAIN_INFO)
                 .create(BlockchainInfoApi::class.java)
-        val bitcoinfeesEarnApi = createRetrofitInstance(API_BITCOINFEES_EARN)
-                .create(BitcoinfeesEarnApi::class.java)
-        BlockchainInfoProvider(api, bitcoinfeesEarnApi)
+//        val bitcoinfeesEarnApi = createRetrofitInstance(API_BITCOINFEES_EARN)
+//                .create(BitcoinfeesEarnApi::class.java)
+        BlockchainInfoProvider(api)
     }
 
     private val blockchairProvider by lazy {
@@ -43,11 +43,11 @@ class BitcoinNetworkManager(blockchain: Blockchain) : BitcoinProvider {
     private var provider: BitcoinProvider = blockchainInfoProvider
 
     private fun changeProvider() {
-        provider = when (provider) {
-            blockchainInfoProvider -> blockchairProvider
-            blockchairProvider -> blockcypherProvider
-            else -> blockchainInfoProvider
-        }
+//        provider = when (provider) {
+//            blockchainInfoProvider -> blockchairProvider
+//            blockchairProvider -> blockcypherProvider
+//            else -> blockchainInfoProvider
+//        }
     }
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
