@@ -25,33 +25,27 @@ class BinanceNetworkManager(isTestNet: Boolean = false) {
         )
     }
 
-    suspend fun getInfo(address: String, assetCode: String? = null): Result<BinanceInfoResponse> {
+    suspend fun getInfo(address: String): Result<BinanceInfoResponse> {
         return try {
             val accountData = retryIO { client.getAccount(address) }
+            val balances = accountData.balances.map { it.symbol to it.free.toBigDecimal() }.toMap()
 
-            var coinBalance = BigDecimal.ZERO
-            var assetBalance = BigDecimal.ZERO
-            for (balance in accountData.balances) {
-                when (balance.symbol) {
-                    "BNB" -> coinBalance = balance.free.toBigDecimal()
-                    assetCode -> assetBalance = balance.free.toBigDecimal()
-                }
-            }
-
-            Result.Success(BinanceInfoResponse(
-                    balance = coinBalance,
-                    assetBalance = assetBalance,
-                    accountNumber = accountData.accountNumber.toLong(),
-                    sequence = accountData.sequence
-            ))
+            Result.Success(
+                    BinanceInfoResponse(
+                            balances = balances,
+                            accountNumber = accountData.accountNumber.toLong(),
+                            sequence = accountData.sequence
+                    )
+            )
         } catch (exception: Exception) {
             if (exception.message == "account not found") {
-                Result.Success(BinanceInfoResponse(
-                        balance = BigDecimal.ZERO, //TODO check account not found logic
-                        assetBalance = null,
-                        accountNumber = null,
-                        sequence = null
-                ))
+                Result.Success(
+                        BinanceInfoResponse(
+                                balances = emptyMap(),
+                                accountNumber = null,
+                                sequence = null
+                        )
+                )
             } else {
                 Result.Failure(exception)
             }
@@ -91,8 +85,7 @@ class BinanceNetworkManager(isTestNet: Boolean = false) {
 }
 
 data class BinanceInfoResponse(
-        val balance: BigDecimal,
-        val assetBalance: BigDecimal?,
+        val balances: Map<String, BigDecimal>,
         val accountNumber: Long?,
         val sequence: Long?
 )
