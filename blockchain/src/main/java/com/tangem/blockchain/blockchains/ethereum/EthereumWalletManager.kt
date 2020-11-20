@@ -16,8 +16,9 @@ class EthereumWalletManager(
         cardId: String,
         wallet: Wallet,
         private val transactionBuilder: EthereumTransactionBuilder,
-        private val networkManager: EthereumNetworkManager
-) : WalletManager(cardId, wallet), TransactionSender, SignatureCountValidator {
+        private val networkManager: EthereumNetworkManager,
+        presetTokens: Set<Token>
+) : WalletManager(cardId, wallet, presetTokens), TransactionSender, SignatureCountValidator {
 
     private val blockchain = wallet.blockchain
 
@@ -26,22 +27,19 @@ class EthereumWalletManager(
 
     override suspend fun update() {
 
-        val result = networkManager.getInfo(
-                wallet.address,
-                wallet.amounts[AmountType.Token]?.address,
-                wallet.amounts[AmountType.Token]?.decimals
-        )
-        when (result) {
+        when (val result = networkManager.getInfo(wallet.address, presetTokens)) {
             is Result.Failure -> updateError(result.error)
             is Result.Success -> updateWallet(result.data)
         }
     }
 
     private fun updateWallet(data: EthereumInfoResponse) {
-        wallet.amounts[AmountType.Coin]?.value = data.balance
-        wallet.amounts[AmountType.Token]?.value = data.tokenBalance
+        wallet.setCoinValue(data.coinBalance)
+        data.tokenBalances.forEach { wallet.setTokenValue(it.value, it.key) }
+
         txCount = data.txCount
         pendingTxCount = data.pendingTxCount
+
         if (txCount == pendingTxCount) {
             wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
         } else if (!data.recentTransactions.isNullOrEmpty()) {
