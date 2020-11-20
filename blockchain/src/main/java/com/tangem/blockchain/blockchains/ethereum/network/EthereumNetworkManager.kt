@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -10,7 +11,6 @@ import com.tangem.blockchain.network.blockchair.BlockchairApi
 import com.tangem.blockchain.network.blockchair.BlockchairEthProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherApi
 import com.tangem.blockchain.network.blockcypher.BlockcypherProvider
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
@@ -62,34 +62,44 @@ class EthereumNetworkManager(blockchain: Blockchain) {
     private val provider: EthereumProvider by lazy { EthereumProvider(api, apiKey) }
     private val decimals = Blockchain.Ethereum.decimals()
 
-    suspend fun getInfo(address: String, contractAddress: String? = null, tokenDecimals: Int? = null)
+    suspend fun getInfo(address: String, tokens: Set<Token>)
             : Result<EthereumInfoResponse> {
         return try {
             coroutineScope {
-                val balanceResponse = retryIO { async { provider.getBalance(address) } }
-                val txCountResponse = retryIO { async { provider.getTxCount(address) } }
-                val pendingTxCountResponse = retryIO { async { provider.getPendingTxCount(address) } }
+                val balanceResponseDeferred = retryIO { async { provider.getBalance(address) } }
+                val txCountResponseDeferred = retryIO { async { provider.getTxCount(address) } }
+                val pendingTxCountResponseDeferred =
+                        retryIO { async { provider.getPendingTxCount(address) } }
+                val transactionsResponseDeferred =
+                        retryIO { async { blockchairProvider?.getTransactions(address, tokens) } }
+                val tokenBalancesDeferred = tokens.map {
+                    it to retryIO { async { provider.getTokenBalance(address, it.contractAddress) } }
+                }.toMap()
 
-                val transactionsResponse =
-                        retryIO { async { blockchairProvider?.getTransactions(address, contractAddress) } }
+                val balance = balanceResponseDeferred.await().result!!.parseAmount(decimals)
+                val txCount = txCountResponseDeferred.await()
+                        .result?.responseToNumber()?.toLong() ?: 0
+                val pendingTxCount = pendingTxCountResponseDeferred.await()
+                        .result?.responseToNumber()?.toLong() ?: 0
 
-                var tokenBalanceResponse: Deferred<EthereumResponse>? = null
-                if (contractAddress != null && tokenDecimals != null) {
-                    tokenBalanceResponse = retryIO { async { provider.getTokenBalance(address, contractAddress) } }
+                val tokenBalances = tokenBalancesDeferred.mapValues {
+                    it.value.await().result!!.parseAmount(it.key.decimals)
                 }
 
-                val recentTransactions = when (val result = transactionsResponse.await()) {
+                val recentTransactions = when (val result = transactionsResponseDeferred.await()) {
                     is Result.Success -> result.data
                     else -> emptyList()
                 }
 
-                Result.Success(EthereumInfoResponse(
-                        balanceResponse.await().result!!.parseAmount(decimals),
-                        tokenBalanceResponse?.await()?.result?.parseAmount(tokenDecimals!!),
-                        txCountResponse.await().result?.responseToNumber()?.toLong() ?: 0,
-                        pendingTxCountResponse.await().result?.responseToNumber()?.toLong() ?: 0,
-                        recentTransactions
-                ))
+                Result.Success(
+                        EthereumInfoResponse(
+                                coinBalance = balance,
+                                tokenBalances = tokenBalances,
+                                txCount = txCount,
+                                pendingTxCount = pendingTxCount,
+                                recentTransactions = recentTransactions
+                        )
+                )
             }
         } catch (error: Exception) {
             Result.Failure(error)
@@ -144,8 +154,8 @@ class EthereumNetworkManager(blockchain: Blockchain) {
 }
 
 data class EthereumInfoResponse(
-        val balance: BigDecimal,
-        val tokenBalance: BigDecimal?,
+        val coinBalance: BigDecimal,
+        val tokenBalances: Map<Token, BigDecimal>,
         val txCount: Long,
         val pendingTxCount: Long,
         val recentTransactions: List<TransactionData>?

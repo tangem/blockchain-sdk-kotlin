@@ -17,39 +17,44 @@ class BlockchairEthProvider(private val api: BlockchairApi) {
     private val blockchain = Blockchain.Ethereum
     private val blockchainPath = "ethereum"
 
-    suspend fun getTransactions(address: String, contractAddress: String?): Result<List<TransactionData>> {
+    suspend fun getTransactions(address: String, tokens: Set<Token>): Result<List<TransactionData>> {
         return try {
             coroutineScope {
-                val blockchairAddressDeferred = retryIO { async {
-                    api.getAddressData(
-                            address = address,
-                            blockchain = blockchainPath,
-                            transactionDetails = true,
-                            limit = 50
-                    )
-                } }
-                val blockchairTokenHolderDeferred = retryIO { async {
-                    if (contractAddress != null) {
-                        api.getTokenHolderData(
+                val addressDeferred = retryIO {
+                    async {
+                        api.getAddressData(
                                 address = address,
-                                contractAddress = contractAddress,
                                 blockchain = blockchainPath,
+                                transactionDetails = true,
                                 limit = 50
                         )
-                    } else {
-                        null
                     }
-                } }
+                }
+                val tokenHolderDeferredList = tokens.map {
+                    retryIO {
+                        async {
+                            api.getTokenHolderData(
+                                    address = address,
+                                    contractAddress = it.contractAddress,
+                                    blockchain = blockchainPath,
+                                    limit = 50
+                            )
+                        }
+                    }
+                }
 
-                val calls = blockchairAddressDeferred.await().data!!
+                val calls = addressDeferred.await().data!!
                         .getValue(address.toLowerCase()).calls ?: emptyList()
-                val tokenCalls =
-                        blockchairTokenHolderDeferred.await()?.data
-                                ?.getValue(address.toLowerCase())?.transactions ?: emptyList()
 
-                val coinTransactions = calls.map { it.toTransactionData() }
+                val tokenCalls = mutableListOf<BlockchairCallInfo>()
+                tokenHolderDeferredList.forEach {
+                    tokenCalls.addAll(it.await().data.getValue(address.toLowerCase()).transactions
+                            ?: emptyList())
+                }
+
+                val coinTransactions = calls.map { it.toTransactionData(tokens) }
                         .filter { !it.amount.value!!.isZero() }
-                val tokenTransactions = tokenCalls.map { it.toTransactionData() }
+                val tokenTransactions = tokenCalls.map { it.toTransactionData(tokens) }
 
                 Result.Success(coinTransactions + tokenTransactions)
             }
@@ -58,13 +63,13 @@ class BlockchairEthProvider(private val api: BlockchairApi) {
         }
     }
 
-    private fun BlockchairCallInfo.toTransactionData(): TransactionData {
+    private fun BlockchairCallInfo.toTransactionData(tokens: Set<Token>): TransactionData {
         val amount = if (contractAddress == null) { // coin transaction
             val value = BigDecimal(value).movePointLeft(blockchain.decimals())
             Amount(value, blockchain)
         } else { // token transaction
             val value = BigDecimal(value).movePointLeft(tokenDecimals!!)
-            Amount(tokenSymbol!!, value, contractAddress, tokenDecimals, AmountType.Token)
+            Amount(tokens.find { it.contractAddress == contractAddress}!!, value)
         }
 
         val status =
