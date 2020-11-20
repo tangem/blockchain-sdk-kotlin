@@ -9,6 +9,10 @@ import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
+import com.tangem.blockchain.common.address.Address
+import com.tangem.blockchain.common.address.AddressService
+import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.DefaultAddressType
 
 enum class Blockchain(
         val id: String,
@@ -28,7 +32,7 @@ enum class Blockchain(
     CardanoShelley("CARDANO-S", "ADA", "Cardano"),
     XRP("XRP", "XRP", "XRP Ledger"),
     Binance("BINANCE", "BNB", "Binance"),
-    BinanceTestnet("BINANCE/test", "BNBt", "Binance"),
+    BinanceTestnet("BINANCE/test", "BNBt", "Binance Chain"),
     Stellar("XLM", "XLM", "Stellar"),
     Tezos("XTZ", "XTZ", "Tezos");
 
@@ -40,11 +44,11 @@ enum class Blockchain(
         Unknown -> 0
     }
 
-    fun pendingTransactionsTimeout(): Int = when (this) {
-        else -> 0
-    }
+//    fun makeAddress(walletPublicKey: ByteArray): String = //TODO: shall we leave it for backwards compatibility?
+//            getAddressService().makeAddress(walletPublicKey)
 
-    fun makeAddress(walletPublicKey: ByteArray): String = getAddressService().makeAddress(walletPublicKey)
+    fun makeAddresses(walletPublicKey: ByteArray): Set<Address> =
+            getAddressService().makeAddresses(walletPublicKey)
 
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
@@ -71,7 +75,7 @@ enum class Blockchain(
         else -> address
     }
 
-    fun getExploreUrl(address: String, token: Token? = null): String = when (this) {
+    fun getExploreUrl(address: String, tokenContractAddress: String? = null): String = when (this) {
         Binance -> "https://explorer.binance.org/address/$address"
         BinanceTestnet -> "https://testnet-explorer.binance.org/address/$address"
         Bitcoin -> "https://blockchain.info/address/$address"
@@ -80,19 +84,19 @@ enum class Blockchain(
         Litecoin -> "https://live.blockcypher.com/ltc/address/$address"
         Ducatus -> "https://insight.ducatus.io/#/DUC/mainnet/address/$address"
         Cardano, CardanoShelley -> "https://cardanoexplorer.com/address/$address"
-        Ethereum -> if (token == null) {
+        Ethereum -> if (tokenContractAddress == null) {
             "https://etherscan.io/address/$address"
         } else {
-            "https://etherscan.io/token/${token.contractAddress}?a=$address"
+            "https://etherscan.io/token/$tokenContractAddress?a=$address"
         }
-        EthereumTestnet -> if (token == null) {
+        EthereumTestnet -> if (tokenContractAddress == null) {
             "https://rinkeby.etherscan.io/address/$address"
         } else {
-            "https://rinkeby.etherscan.io/token/${token.contractAddress}?a=$address"
+            "https://rinkeby.etherscan.io/token/$tokenContractAddress?a=$address"
         }
         RSK -> {
             var url = "https://explorer.rsk.co/address/$address"
-            if (token != null) {
+            if (tokenContractAddress != null) {
                 url += "?__tab=tokens"
             }
             url
@@ -101,6 +105,17 @@ enum class Blockchain(
         XRP -> "https://xrpscan.com/account/$address"
         Tezos -> "https://tezblock.io/account/$address"
         Unknown -> throw Exception("unsupported blockchain")
+    }
+
+    fun defaultAddressType(): AddressType = when (this) {
+        else -> DefaultAddressType
+    }
+
+    fun tokenDisplayName(): String = when (this) { // TODO: do we need it?
+        Ethereum -> "Ethereum smart contract token"
+        Stellar -> "Stellar Asset"
+        Binance -> "Binance Asset"
+        else -> fullName
     }
 
     companion object {

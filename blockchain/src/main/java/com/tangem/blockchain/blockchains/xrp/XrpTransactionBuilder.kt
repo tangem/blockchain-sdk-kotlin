@@ -7,10 +7,7 @@ import com.ripple.utils.HashUtils
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkManager
 import com.tangem.blockchain.blockchains.xrp.override.XrpPayment
 import com.tangem.blockchain.blockchains.xrp.override.XrpSignedTransaction
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.CreateAccountUnderfunded
-import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.bigIntegerValue
 import org.bitcoinj.core.ECKey
@@ -29,7 +26,17 @@ class XrpTransactionBuilder(private val networkManager: XrpNetworkManager, publi
         val decodedXAddress =
                 XrpAddressService.decodeXAddress(transactionData.destinationAddress)
         val destinationAddress = decodedXAddress?.address ?: transactionData.destinationAddress
-        val destinationTag = decodedXAddress?.destinationTag
+        val xAddressDestinationTag = decodedXAddress?.destinationTag
+
+        val destinationTag = if (transactionData.extras is XrpTransactionExtras) {
+            val extrasTag = transactionData.extras.destinationTag
+            if (xAddressDestinationTag != null && xAddressDestinationTag != extrasTag) {
+                return Result.Failure(Exception("Two distinct destination tags found"))
+            }
+            extrasTag
+        } else {
+            xAddressDestinationTag
+        }
 
         if (!networkManager.checkIsAccountCreated(destinationAddress)
                 && transactionData.amount.value!! < minReserve) {
@@ -76,4 +83,6 @@ class XrpTransactionBuilder(private val networkManager: XrpNetworkManager, publi
         val ecdsaSignature = ECDSASignature(r, canonicalS)
         return ecdsaSignature.encodeToDER()
     }
+
+    data class XrpTransactionExtras(val destinationTag: Long): TransactionExtras
 }
