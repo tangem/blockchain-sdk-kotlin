@@ -13,8 +13,9 @@ class StellarWalletManager(
         cardId: String,
         wallet: Wallet,
         private val transactionBuilder: StellarTransactionBuilder,
-        private val networkManager: StellarNetworkManager
-) : WalletManager(cardId, wallet), TransactionSender, SignatureCountValidator {
+        private val networkManager: StellarNetworkManager,
+        presetTokens: Set<Token>
+) : WalletManager(cardId, wallet, presetTokens), TransactionSender, SignatureCountValidator {
 
     private val blockchain = wallet.blockchain
 
@@ -23,7 +24,7 @@ class StellarWalletManager(
     private var sequence = 0L
 
     override suspend fun update() {
-        val result = networkManager.getInfo(wallet.address, wallet.amounts[AmountType.Token]?.address)
+        val result = networkManager.getInfo(wallet.address)
         when (result) {
             is Result.Failure -> updateError(result.error)
             is Result.Success -> updateWallet(result.data)
@@ -32,14 +33,30 @@ class StellarWalletManager(
 
     private fun updateWallet(data: StellarResponse) { // TODO: rework reserve
         val reserve = data.baseReserve * (2 + data.subEntryCount).toBigDecimal()
-        wallet.setCoinValue(data.balance - reserve)
-        wallet.setTokenValue(data.assetBalance ?: 0.toBigDecimal())
+        wallet.setCoinValue(data.coinBalance - reserve)
         wallet.setReserveValue(reserve)
         sequence = data.sequence
         baseFee = data.baseFee
         baseReserve = data.baseReserve
         transactionBuilder.minReserve = data.baseReserve * 2.toBigDecimal()
+
+        presetTokens.forEach { token ->
+            val tokenBalance = data.tokenBalances
+                    .find { it.symbol == token.symbol && it.issuer == token.contractAddress }?.balance
+                    ?: 0.toBigDecimal()
+            wallet.setTokenValue(tokenBalance, token)
+        }
+        // only if no token(s) specified on manager creation or stored on card
+        if (presetTokens.isEmpty()) updateUnplannedTokens(data.tokenBalances)
+
         updateRecentTransactions(data.recentTransactions)
+    }
+
+    private fun updateUnplannedTokens(balances: Set<StellarAssetBalance>) {
+        balances.forEach {
+            val token = Token(it.symbol, it.issuer, blockchain.decimals())
+            wallet.setTokenValue(it.balance, token)
+        }
     }
 
     private fun updateError(error: Throwable?) {
@@ -56,7 +73,7 @@ class StellarWalletManager(
             is Result.Success -> listOf(buildResult.data)
             is Result.Failure -> return Result.Failure(buildResult.error)
         }
-        when (val signerResponse = signer.sign(hashes.toTypedArray(), cardId)) {
+        return when (val signerResponse = signer.sign(hashes.toTypedArray(), cardId)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
                 val sendResult = networkManager.sendTransaction(transactionToSend)
@@ -65,9 +82,9 @@ class StellarWalletManager(
                     transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
                     wallet.addOutgoingTransaction(transactionData)
                 }
-                return sendResult.toResultWithData(signerResponse.data)
+                sendResult.toResultWithData(signerResponse.data)
             }
-            is CompletionResult.Failure -> return Result.failure(signerResponse.error)
+            is CompletionResult.Failure -> Result.failure(signerResponse.error)
         }
     }
 
