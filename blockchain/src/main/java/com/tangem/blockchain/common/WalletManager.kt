@@ -9,7 +9,11 @@ import com.tangem.common.extensions.isZero
 import java.math.BigDecimal
 import java.util.*
 
-abstract class WalletManager(val cardId: String, var wallet: Wallet) {
+abstract class WalletManager(
+        val cardId: String,
+        var wallet: Wallet,
+        val presetTokens: Set<Token> = emptySet()
+) {
 
     var dustValue: BigDecimal? = null
 
@@ -60,8 +64,13 @@ abstract class WalletManager(val cardId: String, var wallet: Wallet) {
     }
 
     fun createTransaction(amount: Amount, fee: Amount, destination: String): TransactionData {
+        val contractAddress = if (amount.type is AmountType.Token) {
+            amount.type.token.contractAddress
+        } else {
+            null
+        }
         return TransactionData(amount, fee,
-                wallet.address, destination, wallet.token?.contractAddress,
+                wallet.address, destination, contractAddress,
                 TransactionStatus.Unconfirmed, Calendar.getInstance(), null)
     }
 
