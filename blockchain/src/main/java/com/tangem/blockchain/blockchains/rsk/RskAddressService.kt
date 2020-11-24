@@ -1,6 +1,6 @@
 package com.tangem.blockchain.blockchains.rsk
 
-import com.tangem.blockchain.common.AddressService
+import com.tangem.blockchain.common.address.AddressService
 import com.tangem.common.extensions.toHexString
 import org.kethereum.crypto.toAddress
 import org.kethereum.erc55.isValid
@@ -9,7 +9,7 @@ import org.kethereum.model.Address
 import org.kethereum.model.PublicKey
 import java.util.*
 
-class RskAddressService : AddressService {
+class RskAddressService : AddressService() {
     override fun makeAddress(walletPublicKey: ByteArray): String =
             PublicKey(walletPublicKey.sliceArray(1..64)).toAddress().withChecksum().hex
 

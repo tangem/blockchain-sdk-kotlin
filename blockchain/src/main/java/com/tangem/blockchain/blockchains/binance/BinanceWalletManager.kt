@@ -7,18 +7,20 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
+import java.math.BigDecimal
 
 class BinanceWalletManager(
         cardId: String,
         wallet: Wallet,
         private val transactionBuilder: BinanceTransactionBuilder,
-        private val networkManager: BinanceNetworkManager
-) : WalletManager(cardId, wallet), TransactionSender {
+        private val networkManager: BinanceNetworkManager,
+        presetTokens: Set<Token>
+) : WalletManager(cardId, wallet, presetTokens), TransactionSender {
 
     private val blockchain = wallet.blockchain
 
     override suspend fun update() {
-        val result = networkManager.getInfo(wallet.address, wallet.amounts[AmountType.Token]?.address)
+        val result = networkManager.getInfo(wallet.address)
         when (result) {
             is Result.Success -> updateWallet(result.data)
             is Result.Failure -> updateError(result.error)
@@ -26,12 +28,32 @@ class BinanceWalletManager(
     }
 
     private fun updateWallet(response: BinanceInfoResponse) {
-        Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
-        wallet.amounts[AmountType.Coin]?.value = response.balance
-        wallet.amounts[AmountType.Token]?.value = response.assetBalance
+        val coinBalance = response.balances[blockchain.currency] ?: 0.toBigDecimal()
+        Log.d(this::class.java.simpleName, "Balance is $coinBalance")
+        wallet.setCoinValue(coinBalance)
+
+        presetTokens.forEach {
+            val tokenBalance = response.balances[it.contractAddress] ?: 0.toBigDecimal()
+            wallet.setTokenValue(tokenBalance, it)
+        }
+        if (presetTokens.isEmpty()) { // only if no token(s) specified on manager creation or stored on card
+            val tokenBalances = response.balances.filterKeys { it != blockchain.currency}
+            updateUnplannedTokens(tokenBalances)
+        }
 
         transactionBuilder.accountNumber = response.accountNumber
         transactionBuilder.sequence = response.sequence
+    }
+
+    private fun updateUnplannedTokens(balances: Map<String, BigDecimal>) {
+        balances.forEach {
+            val token = Token(
+                    symbol = it.key.split("-")[0],
+                    contractAddress = it.key,
+                    decimals = blockchain.decimals()
+            )
+            wallet.setTokenValue(it.value, token)
+        }
     }
 
     private fun updateError(error: Throwable?) {
