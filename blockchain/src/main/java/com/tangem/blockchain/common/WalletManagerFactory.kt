@@ -33,16 +33,16 @@ import com.tangem.common.extensions.toCompressedPublicKey
 
 object WalletManagerFactory {
 
-    fun makeWalletManager(card: Card): WalletManager? {
+    fun makeWalletManager(card: Card, tokens: Set<Token>? = null): WalletManager? {
         val walletPublicKey: ByteArray = card.walletPublicKey ?: return null
         val blockchainName: String = card.cardData?.blockchainName ?: return null
         val blockchain = Blockchain.fromId(blockchainName)
 
         val cardId = card.cardId
 
-        val token = getToken(card)
+        val presetTokens = tokens ?: getToken(card)?.let { setOf(it) } ?: emptySet()
 
-        val wallet = Wallet(blockchain, blockchain.makeAddress(walletPublicKey), token)
+        val wallet = Wallet(blockchain, blockchain.makeAddresses(walletPublicKey), presetTokens)
 
         return when (blockchain) {
             Blockchain.Bitcoin -> {
@@ -84,7 +84,8 @@ object WalletManagerFactory {
                 EthereumWalletManager(
                         cardId, wallet,
                         EthereumTransactionBuilder(walletPublicKey, blockchain),
-                        EthereumNetworkManager(blockchain)
+                        EthereumNetworkManager(blockchain),
+                        presetTokens
                 )
             }
             Blockchain.Stellar -> {
@@ -93,7 +94,8 @@ object WalletManagerFactory {
                 StellarWalletManager(
                         cardId, wallet,
                         StellarTransactionBuilder(networkManager, walletPublicKey),
-                        networkManager
+                        networkManager,
+                        presetTokens
                 )
             }
             Blockchain.Cardano, Blockchain.CardanoShelley -> {
@@ -116,14 +118,16 @@ object WalletManagerFactory {
                 BinanceWalletManager(
                         cardId, wallet,
                         BinanceTransactionBuilder(walletPublicKey),
-                        BinanceNetworkManager()
+                        BinanceNetworkManager(),
+                        presetTokens
                 )
             }
             Blockchain.BinanceTestnet -> {
                 BinanceWalletManager(
                         cardId, wallet,
                         BinanceTransactionBuilder(walletPublicKey, true),
-                        BinanceNetworkManager(true)
+                        BinanceNetworkManager(true),
+                        presetTokens
                 )
             }
             Blockchain.Tezos -> {
