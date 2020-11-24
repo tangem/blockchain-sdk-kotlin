@@ -1,12 +1,12 @@
 package com.tangem.blockchain.blockchains.tezos
 
-import com.tangem.blockchain.common.AddressService
+import com.tangem.blockchain.common.address.AddressService
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
 import org.bitcoinj.core.Base58
 import org.spongycastle.jcajce.provider.digest.Blake2b
 
-class TezosAddressService : AddressService {
+class TezosAddressService : AddressService() {
     override fun makeAddress(walletPublicKey: ByteArray): String {
         val publicKeyHash = Blake2b.Blake2b160().digest(walletPublicKey)
 
