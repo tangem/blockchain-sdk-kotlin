@@ -11,7 +11,8 @@ data class TransactionData(
         val contractAddress: String? = null,
         var status: TransactionStatus = TransactionStatus.Unconfirmed,
         var date: Calendar? = null,
-        var hash: String? = null
+        var hash: String? = null,
+        val extras: TransactionExtras? = null
 )
 
 
@@ -36,3 +37,5 @@ data class BasicTransactionData(
         val date: Calendar?,
         val isConfirmed: Boolean
 )
+
+interface TransactionExtras
