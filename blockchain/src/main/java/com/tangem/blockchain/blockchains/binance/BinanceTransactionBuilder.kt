@@ -36,7 +36,11 @@ class BinanceTransactionBuilder(
         val sequence = sequence ?: return Result.Failure(Exception("No sequence"))
 
         val transfer = Transfer()
-        transfer.coin = if (amount.type == AmountType.Coin) amount.currencySymbol else amount.address
+        transfer.coin = if (amount.type is AmountType.Token) {
+            amount.type.token.contractAddress
+        } else {
+            amount.currencySymbol
+        }
         transfer.fromAddress = transactionData.sourceAddress
         transfer.toAddress = transactionData.destinationAddress
         transfer.amount = transactionData.amount.value!!

@@ -3,8 +3,10 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
 import com.tangem.blockchain.blockchains.litecoin.LitecoinMainNetParams
-import com.tangem.blockchain.common.AddressService
+import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.address.Address
+import com.tangem.blockchain.common.address.AddressType
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import org.bitcoinj.core.Base58
@@ -14,7 +16,7 @@ import org.bitcoinj.core.SegwitAddress
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.params.TestNet3Params
 
-class BitcoinAddressService(private val blockchain: Blockchain) : AddressService {
+class BitcoinAddressService(private val blockchain: Blockchain) : AddressService() {
 
     private val networkParameters: NetworkParameters = when (blockchain) {
         Blockchain.Bitcoin -> MainNetParams()
@@ -63,5 +65,14 @@ class BitcoinAddressService(private val blockchain: Blockchain) : AddressService
         } catch (e: Exception) {
             false
         }
+    }
+}
+
+sealed class BitcoinAddressType: AddressType {
+    object Legacy : AddressType {
+        override val displayNameRes = 1 //TODO: change to string resource
+    }
+    object Segwit : AddressType {
+        override val displayNameRes = 2 //TODO: change to string resource
     }
 }

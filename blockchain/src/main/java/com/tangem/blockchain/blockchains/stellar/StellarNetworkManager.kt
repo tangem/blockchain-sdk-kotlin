@@ -24,7 +24,7 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
     private val blockchain = Blockchain.Stellar
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
     private val recordsLimitCap = 200
-    private val decimals = Blockchain.Stellar.decimals()
+    private val decimals = blockchain.decimals()
 
     val network: Network = if (isTestNet) Network.TESTNET else Network.PUBLIC
     private val stellarServer by lazy {
@@ -58,7 +58,7 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
         }
     }
 
-    suspend fun getInfo(accountId: String, assetCode: String? = null): Result<StellarResponse> {
+    suspend fun getInfo(accountId: String): Result<StellarResponse> {
         return try {
             coroutineScope {
                 val accountResponseDeferred =
@@ -74,16 +74,13 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
                 }
 
                 val accountResponse = accountResponseDeferred.await()
-                val balance = accountResponse.balances
-                        .find { it.assetType == "native" }
+                val coinBalance = accountResponse.balances
+                        .find { it.asset is AssetTypeNative }
                         ?.balance?.toBigDecimal()
                         ?: return@coroutineScope Result.Failure(Exception("Stellar Balance not found"))
-                val assetBalance = if (assetCode == null) {
-                    null
-                } else {
-                    accountResponse.balances
-                            .find { it.assetType != "native" && it.assetIssuer == assetCode }
-                            ?.balance?.toBigDecimal()
+
+                val tokenBalances = accountResponse.balances.filter { it.asset !is AssetTypeNative }.map {
+                    StellarAssetBalance(it.balance.toBigDecimal(), it.assetCode, it.assetIssuer)
                 }
 
                 val ledgerResponse = ledgerResponseDeferred.await()
@@ -95,15 +92,17 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
                 val recentTransactions =
                         paymentsResponseDeferred.await().records.mapNotNull { it.toTransactionData() }
 
-                Result.Success(StellarResponse(
-                        baseFee = baseFee,
-                        baseReserve = baseReserve,
-                        assetBalance = assetBalance,
-                        balance = balance,
-                        sequence = accountResponse.sequenceNumber,
-                        recentTransactions = recentTransactions,
-                        subEntryCount = accountResponse.subentryCount
-                ))
+                Result.Success(
+                        StellarResponse(
+                                coinBalance = coinBalance,
+                                tokenBalances = tokenBalances.toSet(),
+                                baseFee = baseFee,
+                                baseReserve = baseReserve,
+                                sequence = accountResponse.sequenceNumber,
+                                recentTransactions = recentTransactions,
+                                subEntryCount = accountResponse.subentryCount
+                        )
+                )
             }
         } catch (error: Exception) {
             Result.Failure(error)
@@ -148,18 +147,19 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
             is AssetTypeCreditAlphaNum -> Amount(
                     currencySymbol = asset.code,
                     value = amount.toBigDecimal(),
-                    address = asset.issuer,
-                    decimals = blockchain.decimals(),
-                    type = AmountType.Token
+                    decimals = decimals,
+                    type = AmountType.Token(Token(asset.code, asset.issuer, decimals))
             )
             else -> throw Exception("Unknown asset type")
         }
+        val issuer = (asset as? AssetTypeCreditAlphaNum)?.issuer
+
         return TransactionData(
                 amount = amount,
                 fee = null,
                 sourceAddress = from,
                 destinationAddress = to,
-                contractAddress = amount.address,
+                contractAddress = issuer,
                 status = TransactionStatus.Confirmed,
                 date = Calendar.getInstance().apply { time = dateFormat.parse(createdAt)!! },
                 hash = transactionHash
@@ -180,11 +180,17 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
 }
 
 data class StellarResponse(
+        val coinBalance: BigDecimal,
+        val tokenBalances: Set<StellarAssetBalance>,
         val baseFee: BigDecimal,
         val baseReserve: BigDecimal,
-        val assetBalance: BigDecimal?,
-        val balance: BigDecimal,
         val sequence: Long,
         val recentTransactions: List<TransactionData>,
         val subEntryCount: Int
+)
+
+data class StellarAssetBalance(
+        val balance: BigDecimal,
+        val symbol: String,
+        val issuer: String
 )
