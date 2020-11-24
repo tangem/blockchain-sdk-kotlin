@@ -8,7 +8,7 @@ import co.nstant.`in`.cbor.model.ByteString
 import co.nstant.`in`.cbor.model.UnsignedInteger
 import com.tangem.blockchain.blockchains.binance.client.encoding.Bech32
 import com.tangem.blockchain.blockchains.binance.client.encoding.Crypto
-import com.tangem.blockchain.common.AddressService
+import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.*
 import java.io.ByteArrayInputStream
@@ -16,7 +16,7 @@ import java.io.ByteArrayOutputStream
 import java.util.zip.CRC32
 
 
-class CardanoAddressService(private val blockchain: Blockchain) : AddressService {
+class CardanoAddressService(private val blockchain: Blockchain) : AddressService() {
     private val shelleyHeaderByte: Byte = 97
 
     override fun makeAddress(walletPublicKey: ByteArray): String {
