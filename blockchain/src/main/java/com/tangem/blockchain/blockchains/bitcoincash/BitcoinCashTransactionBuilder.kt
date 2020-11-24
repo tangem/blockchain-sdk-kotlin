@@ -35,21 +35,12 @@ class BitcoinCashTransactionBuilder(private val walletPublicKey: ByteArray, bloc
         return Result.Success(hashesForSign)
     }
 
-    override fun buildToSend(signedTransaction: ByteArray): ByteArray {
-        for (index in transaction.inputs.indices) {
-            transaction.inputs[index].scriptSig = createScript(index, signedTransaction, walletPublicKey)
-        }
-        return transaction.bitcoinSerialize()
-    }
-
-    override fun createScript(index: Int, signedTransaction: ByteArray, publicKey: ByteArray): Script {
-        val r = BigInteger(1, signedTransaction.copyOfRange(index * 64, 32 + index * 64))
-        val s = BigInteger(1, signedTransaction.copyOfRange(32 + index * 64, 64 + index * 64))
+    override fun extractSignature(index: Int, signatures: ByteArray): TransactionSignature {
+        val r = BigInteger(1, signatures.copyOfRange(index * 64, 32 + index * 64))
+        val s = BigInteger(1, signatures.copyOfRange(32 + index * 64, 64 + index * 64))
         val canonicalS = ECKey.ECDSASignature(r, s).toCanonicalised().s
-
         val sigHash = 0x41
-        val signature = TransactionSignature(r, canonicalS, sigHash)
-        return ScriptBuilder.createInputScript(signature, ECKey.fromPublicOnly(publicKey))
+        return TransactionSignature(r, canonicalS, sigHash)
     }
 
     private fun getTransaction() = transaction as BitcoinCashTransaction
