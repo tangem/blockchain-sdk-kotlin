@@ -5,6 +5,8 @@ import com.tangem.blockchain.blockchains.litecoin.LitecoinMainNetParams
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
+import com.tangem.common.extensions.calculateRipemd160
+import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.isZero
 import org.bitcoinj.core.*
 import org.bitcoinj.crypto.TransactionSignature
@@ -12,13 +14,16 @@ import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.params.TestNet3Params
 import org.bitcoinj.script.Script
 import org.bitcoinj.script.ScriptBuilder
+import org.bitcoinj.script.ScriptPattern
 import java.math.BigDecimal
 import java.math.BigInteger
 
 open class BitcoinTransactionBuilder(
-        private val walletPublicKey: ByteArray, blockchain: Blockchain
+        private val walletPublicKey: ByteArray, blockchain: Blockchain,
+        walletAddresses: Set<com.tangem.blockchain.common.address.Address> = emptySet()
 ) {
-
+    private val walletScripts =
+            walletAddresses.filterIsInstance<BitcoinScriptAddress>().map { it.script }
     protected lateinit var transaction: Transaction
 
     protected var networkParameters = when (blockchain) {
@@ -32,24 +37,49 @@ open class BitcoinTransactionBuilder(
 
     open fun buildToSign(
             transactionData: TransactionData): Result<List<ByteArray>> {
-
         if (unspentOutputs == null) return Result.Failure(Exception("Currently there's an unconfirmed transaction"))
 
         val change: BigDecimal = calculateChange(transactionData, unspentOutputs!!)
-
         transaction = transactionData.toBitcoinJTransaction(networkParameters, unspentOutputs!!, change)
 
         val hashesForSign: MutableList<ByteArray> = MutableList(transaction.inputs.size) { byteArrayOf() }
         for (input in transaction.inputs) {
             val index = input.index
-            hashesForSign[index] = transaction.hashForSignature(index, input.scriptBytes, Transaction.SigHash.ALL, false).bytes
+            val outputScript = Script(transaction.inputs[index].scriptBytes)
+            val scriptToSign = when (outputScript.scriptType) {
+                Script.ScriptType.P2PKH -> outputScript
+                Script.ScriptType.P2SH -> findSpendingScript(outputScript)
+                else -> throw Exception("Unsupported output script")
+            }
+            hashesForSign[index] = transaction.hashForSignature(
+                    index,
+                    scriptToSign,
+                    Transaction.SigHash.ALL,
+                    false
+            ).bytes
         }
         return Result.Success(hashesForSign)
     }
 
-    open fun buildToSend(signedTransaction: ByteArray): ByteArray {
+    open fun buildToSend(signatures: ByteArray): ByteArray {
         for (index in transaction.inputs.indices) {
-            transaction.inputs[index].scriptSig = createScript(index, signedTransaction, walletPublicKey)
+            val outputScript = Script(transaction.inputs[index].scriptBytes)
+            val signature = extractSignature(index, signatures)
+
+            transaction.inputs[index].scriptSig = when (outputScript.scriptType) {
+
+                Script.ScriptType.P2PKH -> {
+                    ScriptBuilder.createInputScript(signature, ECKey.fromPublicOnly(walletPublicKey))
+                }
+                Script.ScriptType.P2SH -> { // only 1 of 2 multisig script for now
+                    val script = findSpendingScript(outputScript)
+                    if (!ScriptPattern.isSentToMultisig(script)) {
+                        throw Exception("Unsupported wallet script")
+                    }
+                    ScriptBuilder.createP2SHMultiSigInputScript(mutableListOf(signature), script)
+                }
+                else -> throw Exception("Unsupported output script")
+            }
         }
         return transaction.bitcoinSerialize()
     }
@@ -74,12 +104,18 @@ open class BitcoinTransactionBuilder(
                 ?: 0.toBigDecimal()))
     }
 
-    open fun createScript(index: Int, signedTransaction: ByteArray, publicKey: ByteArray): Script {
-        val r = BigInteger(1, signedTransaction.copyOfRange(index * 64, 32 + index * 64))
-        val s = BigInteger(1, signedTransaction.copyOfRange(32 + index * 64, 64 + index * 64))
+    open fun extractSignature(index: Int, signatures: ByteArray): TransactionSignature {
+        val r = BigInteger(1, signatures.copyOfRange(index * 64, 32 + index * 64))
+        val s = BigInteger(1, signatures.copyOfRange(32 + index * 64, 64 + index * 64))
         val canonicalS = ECKey.ECDSASignature(r, s).toCanonicalised().s
-        val signature = TransactionSignature(r, canonicalS)
-        return ScriptBuilder.createInputScript(signature, ECKey.fromPublicOnly(publicKey))
+        return TransactionSignature(r, canonicalS)
+    }
+
+    private fun findSpendingScript(outputScript: Script): Script {
+        val scriptHash = ScriptPattern.extractHashFromP2SH(outputScript)
+        return walletScripts.find {
+            it.program.calculateSha256().calculateRipemd160().contentEquals(scriptHash)
+        } ?: throw Exception("No script for P2SH output found")
     }
 }
 
