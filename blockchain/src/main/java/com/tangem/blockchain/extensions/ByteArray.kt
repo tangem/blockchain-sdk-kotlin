@@ -22,6 +22,6 @@ fun ByteArray.calculateSha3v256(): ByteArray {
 }
 
 fun ByteArray.calculateBlake2b(digestByteSize: Int): ByteArray {
-    val digest = Blake2b.Digest.newInstance(28)
+    val digest = Blake2b.Digest.newInstance(digestByteSize)
     return digest.digest(this)
 }

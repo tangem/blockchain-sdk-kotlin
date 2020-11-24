@@ -1,53 +1,57 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.common.address.Address
 import java.math.BigDecimal
 import java.util.*
 
 class Wallet(
         val blockchain: Blockchain,
-        val address: String,
-        val token: Token? = null
+        val addresses: Set<Address>,
+        tokens: Set<Token>
 ) {
-    val exploreUrl: String
-    val shareUrl: String
     val recentTransactions: MutableList<TransactionData> = mutableListOf() //we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
+    val address = addresses.find { it.type == blockchain.defaultAddressType() }?.value
+            ?: throw Exception("Addresses must contain default address")
 
     init {
-        setAmount(Amount(null, blockchain, address))
-        if (token != null) setAmount(Amount(token))
-
-        exploreUrl = blockchain.getExploreUrl(address, token)
-        shareUrl = blockchain.getShareUri(address)
+        setAmount(Amount(null, blockchain, AmountType.Coin))
+        tokens.forEach { setAmount(Amount(it)) }
     }
 
     fun setAmount(amount: Amount) {
         amounts[amount.type] = amount
     }
 
-    fun setCoinValue(value: BigDecimal) {
-        val amount = Amount(value, blockchain, address)
-        setAmount(amount)
+    fun setCoinValue(value: BigDecimal) =
+            setAmount(Amount(value, blockchain, AmountType.Coin))
+
+    fun setTokenValue(value: BigDecimal, token: Token) = setAmount(Amount(token, value))
+
+    fun setReserveValue(value: BigDecimal) =
+            setAmount(Amount(value, blockchain, AmountType.Reserve))
+
+    fun getTokenAmount(token: Token): Amount? {
+        val key = amounts.keys.find { it is AmountType.Token && it.token == token }
+        return amounts[key]
     }
 
-    fun setTokenValue(value: BigDecimal) {
-        if (token != null) {
-            val amount = Amount(token, value)
-            setAmount(amount)
-        }
-    }
-
-    fun setReserveValue(value: BigDecimal) {
-        val amount = Amount(value, blockchain, address, AmountType.Reserve)
-        setAmount(amount)
-    }
+    fun getTokens(): Set<Token> =
+            amounts.keys.filterIsInstance<AmountType.Token>().map {it.token}.toSet()
 
     fun addTransactionDummy(direction: TransactionDirection? = null) {
+        var sourceAddress = "unknown"
+        var destinationAddress = "unknown"
+        when (direction) {
+            TransactionDirection.Outgoing -> sourceAddress = address
+            TransactionDirection.Incoming -> destinationAddress = address
+        }
+
         val transaction = TransactionData(
                 amount = Amount(null, blockchain),
                 fee = null,
-                sourceAddress = if (direction == TransactionDirection.Outgoing) address else "unknown",
-                destinationAddress = if (direction == TransactionDirection.Incoming) address else "unknown",
+                sourceAddress = sourceAddress,
+                destinationAddress = destinationAddress,
                 date = Calendar.getInstance()
         )
         recentTransactions.add(transaction)
@@ -65,4 +69,8 @@ class Wallet(
         return amounts[amountType]?.value ?: BigDecimal.ZERO
     }
 
+    fun getExploreUrl(address: String? = null, token: Token? = null) =
+        blockchain.getExploreUrl(address ?: this.address, token?.contractAddress)
+
+    fun getShareUri(address: String?) = blockchain.getShareUri(address ?: this.address)
 }
