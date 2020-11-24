@@ -2,13 +2,13 @@ package com.tangem.blockchain.blockchains.xrp
 
 import com.ripple.encodings.addresses.Addresses
 import com.ripple.encodings.base58.B58
-import com.tangem.blockchain.common.AddressService
+import com.tangem.blockchain.common.address.AddressService
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
 import org.kethereum.extensions.toBigInteger
 
-class XrpAddressService : AddressService {
+class XrpAddressService : AddressService() {
 
     override fun makeAddress(walletPublicKey: ByteArray): String {
         val canonicalPublicKey = canonizePublicKey(walletPublicKey)
@@ -60,11 +60,11 @@ class XrpAddressService : AddressService {
                 val reservedTagBytes = addressBytes.slice(27..30).toByteArray()
                 if (!reservedTagBytes.contentEquals(zeroTagBytes)) return null
 
-                var tag: Int? = null
+                var tag: Long? = null
                 when (flag) {
                     0.toByte() -> if (!tagBytes.contentEquals(zeroTagBytes)) return null
                     1.toByte() -> {
-                        tag = tagBytes.reversedArray().toBigInteger().toInt()
+                        tag = tagBytes.reversedArray().toBigInteger().toLong()
                     }
                     else -> return null
                 }
@@ -78,5 +78,5 @@ class XrpAddressService : AddressService {
 
 data class XrpTaggedAddress(
         val address: String,
-        val destinationTag: Int?
+        val destinationTag: Long?
 )
