@@ -178,7 +178,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
                 walletManager.wallet.amounts[AmountType.Coin]!!.copy(value = fee),
                 walletManager.wallet.address,
                 binding.etReceiverAddress.text.toString(),
-                contractAddress = token!!.contractAddress
+                contractAddress = token?.contractAddress
         )
     }
 
