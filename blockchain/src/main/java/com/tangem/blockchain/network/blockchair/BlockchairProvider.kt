@@ -21,6 +21,7 @@ class BlockchairProvider(private val api: BlockchairApi, blockchain: Blockchain)
 
     private val blockchainPath = when (blockchain) {
         Blockchain.Bitcoin -> "bitcoin"
+        Blockchain.BitcoinTestnet -> "bitcoin/testnet"
         Blockchain.BitcoinCash -> "bitcoin-cash"
         Blockchain.Litecoin -> "litecoin"
         else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
