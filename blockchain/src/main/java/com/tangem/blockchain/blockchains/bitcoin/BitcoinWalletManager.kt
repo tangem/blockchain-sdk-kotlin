@@ -9,6 +9,8 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 
 open class BitcoinWalletManager(
@@ -21,11 +23,41 @@ open class BitcoinWalletManager(
     protected val blockchain = wallet.blockchain
 
     override suspend fun update() {
-        val response = networkManager.getInfo(wallet.address)
-        when (response) {
-            is Result.Success -> updateWallet(response.data)
-            is Result.Failure -> updateError(response.error)
+        coroutineScope {
+            val addressInfos = mutableListOf<BitcoinAddressInfo>()
+            val responsesDeferred =
+                    wallet.addresses.map { async { networkManager.getInfo(it.value) } }
+
+            responsesDeferred.forEach {
+                when (val response = it.await()) {
+                    is Result.Success -> addressInfos.add(response.data)
+                    is Result.Failure -> {
+                        updateError(response.error)
+                        return@coroutineScope
+                    }
+                }
+            }
+            updateWallet(addressInfos.merge())
         }
+    }
+
+    private fun List<BitcoinAddressInfo>.merge(): BitcoinAddressInfo {
+        var balance = BigDecimal.ZERO
+        val unspentOutputs = mutableListOf<BitcoinUnspentOutput>()
+        val recentTransactions = mutableListOf<BasicTransactionData>()
+        var hasUnconfirmed: Boolean? = false
+
+        this.forEach {
+            balance += it.balance
+            unspentOutputs.addAll(it.unspentOutputs)
+            recentTransactions.addAll(it.recentTransactions)
+            hasUnconfirmed = if (hasUnconfirmed == null || it.hasUnconfirmed == null) {
+                null
+            } else {
+                hasUnconfirmed!! || it.hasUnconfirmed
+            }
+        }
+        return BitcoinAddressInfo(balance, unspentOutputs, recentTransactions, hasUnconfirmed)
     }
 
     private fun updateWallet(response: BitcoinAddressInfo) {
