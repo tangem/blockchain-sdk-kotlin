@@ -20,13 +20,13 @@ import java.math.BigDecimal
 
 class BitcoinNetworkManager(blockchain: Blockchain) : BitcoinProvider {
 
-    private val blockchainInfoProvider by lazy {
-        val api = createRetrofitInstance(API_BLOCKCHAIN_INFO)
-                .create(BlockchainInfoApi::class.java)
-//        val bitcoinfeesEarnApi = createRetrofitInstance(API_BITCOINFEES_EARN)
-//                .create(BitcoinfeesEarnApi::class.java)
-        BlockchainInfoProvider(api)
-    }
+//    private val blockchainInfoProvider by lazy {
+//        val api = createRetrofitInstance(API_BLOCKCHAIN_INFO)
+//                .create(BlockchainInfoApi::class.java)
+////        val bitcoinfeesEarnApi = createRetrofitInstance(API_BITCOINFEES_EARN)
+////                .create(BitcoinfeesEarnApi::class.java)
+//        BlockchainInfoProvider(api)
+//    }
 
     private val blockchairProvider by lazy {
         val api = createRetrofitInstance(API_BLOCKCHAIR)
@@ -40,13 +40,12 @@ class BitcoinNetworkManager(blockchain: Blockchain) : BitcoinProvider {
         BlockcypherProvider(api, blockchain)
     }
 
-    private var provider: BitcoinProvider = blockchainInfoProvider
+    private var provider: BitcoinProvider = blockchairProvider
 
     private fun changeProvider() {
         provider = when (provider) {
-            blockchainInfoProvider -> blockchairProvider
             blockchairProvider -> blockcypherProvider
-            else -> blockchainInfoProvider
+            else -> blockchairProvider
         }
     }
 
