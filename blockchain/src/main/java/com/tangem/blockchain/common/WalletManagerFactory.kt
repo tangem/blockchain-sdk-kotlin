@@ -29,10 +29,6 @@ import com.tangem.blockchain.blockchains.xrp.XrpTransactionBuilder
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkManager
 import com.tangem.commands.Card
-import com.tangem.common.extensions.toCompressedPublicKey
-import com.tangem.common.extensions.toHexString
-import org.bitcoinj.core.SegwitAddress
-import org.bitcoinj.params.MainNetParams
 
 object WalletManagerFactory {
 
@@ -83,7 +79,7 @@ object WalletManagerFactory {
                         DucatusNetworkManager()
                 )
             }
-            Blockchain.Ethereum,  Blockchain.EthereumTestnet, Blockchain.RSK -> {
+            Blockchain.Ethereum, Blockchain.EthereumTestnet, Blockchain.RSK -> {
                 EthereumWalletManager(
                         cardId, wallet,
                         EthereumTransactionBuilder(walletPublicKey, blockchain),
