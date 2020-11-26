@@ -26,6 +26,7 @@ open class BitcoinTransactionBuilder(
     private val walletScripts =
             walletAddresses.filterIsInstance<BitcoinScriptAddress>().map { it.script }
     protected lateinit var transaction: Transaction
+    private var transactionSizeWithoutWitness = 0
 
     protected var networkParameters = when (blockchain) {
         Blockchain.Bitcoin, Blockchain.BitcoinCash -> MainNetParams()
@@ -60,16 +61,9 @@ open class BitcoinTransactionBuilder(
                             ScriptBuilder.createOutputScript(legacyAddress).program
                     ).build()
                 }
-                Script.ScriptType.P2WSH -> {
-//                    val legacyAddress = LegacyAddress.fromScriptHash(
-//                            networkParameters,
-//                            findSpendingScript(scriptPubKey).program.calculateSha256().calculateRipemd160()
-//                    )
-//                    ScriptBuilder().data(
-//                            ScriptBuilder.createOutputScript(legacyAddress).program
-//                    ).build()
-                    findSpendingScript(scriptPubKey)
-                }
+                Script.ScriptType.P2WSH -> ScriptBuilder().data(
+                        findSpendingScript(scriptPubKey).program
+                ).build()
                 else -> throw Exception("Unsupported output script")
             }
             hashesForSign[index] = when (scriptPubKey.scriptType) {
@@ -97,6 +91,8 @@ open class BitcoinTransactionBuilder(
     }
 
     open fun buildToSend(signatures: ByteArray): ByteArray {
+//        witnessSize = 0
+
         for (index in transaction.inputs.indices) {
             val scriptPubKey = Script(transaction.inputs[index].scriptBytes) // output script
             val signature = extractSignature(index, signatures)
@@ -116,6 +112,7 @@ open class BitcoinTransactionBuilder(
                 Script.ScriptType.P2WPKH, Script.ScriptType.P2WSH -> ScriptBuilder.createEmpty()
                 else -> throw Exception("Unsupported output script")
             }
+            transactionSizeWithoutWitness = transaction.messageSize
 
             transaction.inputs[index].witness = when (scriptPubKey.scriptType) {
                 Script.ScriptType.P2WPKH -> TransactionWitness.redeemP2WPKH(
@@ -142,9 +139,15 @@ open class BitcoinTransactionBuilder(
             is Result.Failure -> buildTransactionResult
             is Result.Success -> {
                 val hashes = buildTransactionResult.data
-                val finalTransaction = buildToSend(ByteArray(64 * hashes.size) { -128 }) // needed for longer signature
-                val newEstimateSize = transaction.messageSize
-                Result.Success(finalTransaction.size)
+                val finalTransactionSize =
+                        buildToSend(ByteArray(64 * hashes.size) { -128 }).size // needed for longer signature
+                val vsize = if (transaction.hasWitnesses()) {
+                    val weight = transactionSizeWithoutWitness * 3 + finalTransactionSize
+                    (weight + 3) / 4 // round up
+                } else {
+                    finalTransactionSize
+                }
+                Result.Success(vsize)
             }
         }
     }
@@ -164,10 +167,14 @@ open class BitcoinTransactionBuilder(
 
     private fun findSpendingScript(scriptPubKey: Script): Script {
         val scriptHash = ScriptPattern.extractHashFromP2SH(scriptPubKey)
-        return walletScripts.find {
-            it.program.calculateSha256().calculateRipemd160().contentEquals(scriptHash)
-        } ?: walletScripts.find {
-            it.program.calculateSha256().contentEquals(scriptHash)
+        return when (scriptHash.size) {
+            20 -> walletScripts.find {
+                it.program.calculateSha256().calculateRipemd160().contentEquals(scriptHash)
+            }
+            32 -> walletScripts.find {
+                it.program.calculateSha256().contentEquals(scriptHash)
+            }
+            else -> null
         } ?: throw Exception("No script for P2SH output found")
     }
 }
