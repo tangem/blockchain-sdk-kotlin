@@ -72,5 +72,6 @@ class Wallet(
     fun getExploreUrl(address: String? = null, token: Token? = null) =
         blockchain.getExploreUrl(address ?: this.address, token?.contractAddress)
 
-    fun getShareUri(address: String?) = blockchain.getShareUri(address ?: this.address)
+    fun getShareUri(address: String? = null) =
+            blockchain.getShareUri(address ?: this.address)
 }
