@@ -10,10 +10,7 @@ import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
-import com.tangem.blockchain.common.address.Address
-import com.tangem.blockchain.common.address.AddressService
-import com.tangem.blockchain.common.address.AddressType
-import com.tangem.blockchain.common.address.DefaultAddressType
+import com.tangem.blockchain.common.address.*
 
 enum class Blockchain(
         val id: String,
@@ -50,6 +47,11 @@ enum class Blockchain(
 
     fun makeAddresses(walletPublicKey: ByteArray): Set<Address> =
             getAddressService().makeAddresses(walletPublicKey)
+
+    fun makeMultisigAddress(walletPublicKey: ByteArray, pairPublicKey: ByteArray): Set<Address>? {
+        return (getAddressService() as? MultisigAddressProvider)
+                ?.makeMultisigAddress(walletPublicKey, pairPublicKey)
+    }
 
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
