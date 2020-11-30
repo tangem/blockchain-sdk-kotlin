@@ -133,9 +133,9 @@ class BlockchainDemoActivity : AppCompatActivity() {
                             binding.tvFee.text = fees[0].value.toString()
                             fee = fees[0].value ?: BigDecimal(0)
                         } else {
-                            binding.tvFee.text = fees[0].value.toString() + "\n" +
-                                    fees[1].value.toString() + "\n" +
-                                    fees[2].value.toString()
+                            binding.tvFee.text = fees[0].value?.toPlainString() + "\n" +
+                                    fees[1].value?.toPlainString() + "\n" +
+                                    fees[2].value?.toPlainString()
                             fee = fees[1].value ?: BigDecimal(0)
 
                         }
