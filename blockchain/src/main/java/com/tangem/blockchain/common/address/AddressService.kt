@@ -6,3 +6,7 @@ abstract class AddressService {
     open fun makeAddresses(walletPublicKey: ByteArray): Set<Address> =
             setOf(Address(makeAddress(walletPublicKey)))
 }
+
+interface MultisigAddressProvider {
+    fun makeMultisigAddress(walletPublicKey: ByteArray, pairPublicKey: ByteArray): Set<Address>
+}
