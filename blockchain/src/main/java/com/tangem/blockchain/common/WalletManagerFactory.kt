@@ -29,7 +29,6 @@ import com.tangem.blockchain.blockchains.xrp.XrpTransactionBuilder
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkManager
 import com.tangem.commands.Card
-import com.tangem.common.extensions.toCompressedPublicKey
 
 object WalletManagerFactory {
 
@@ -39,30 +38,30 @@ object WalletManagerFactory {
         val blockchain = Blockchain.fromId(blockchainName)
 
         val cardId = card.cardId
-
+        val addresses = blockchain.makeAddresses(walletPublicKey)
         val presetTokens = tokens ?: getToken(card)?.let { setOf(it) } ?: emptySet()
 
-        val wallet = Wallet(blockchain, blockchain.makeAddresses(walletPublicKey), presetTokens)
+        val wallet = Wallet(blockchain, addresses, presetTokens)
 
         return when (blockchain) {
             Blockchain.Bitcoin -> {
                 BitcoinWalletManager(
                         cardId, wallet,
-                        BitcoinTransactionBuilder(walletPublicKey, blockchain),
+                        BitcoinTransactionBuilder(walletPublicKey, blockchain, addresses),
                         BitcoinNetworkManager(blockchain)
                 )
             }
             Blockchain.BitcoinTestnet -> {
                 BitcoinWalletManager(
                         cardId, wallet,
-                        BitcoinTransactionBuilder(walletPublicKey, blockchain),
+                        BitcoinTransactionBuilder(walletPublicKey, blockchain, addresses),
                         BitcoinNetworkManager(blockchain)
                 )
             }
             Blockchain.BitcoinCash -> {
                 BitcoinCashWalletManager(
                         cardId, wallet,
-                        BitcoinCashTransactionBuilder(walletPublicKey.toCompressedPublicKey(), blockchain),
+                        BitcoinCashTransactionBuilder(walletPublicKey, blockchain),
                         BitcoinCashNetworkManager()
                 )
             }
@@ -80,7 +79,7 @@ object WalletManagerFactory {
                         DucatusNetworkManager()
                 )
             }
-            Blockchain.Ethereum,  Blockchain.EthereumTestnet, Blockchain.RSK -> {
+            Blockchain.Ethereum, Blockchain.EthereumTestnet, Blockchain.RSK -> {
                 EthereumWalletManager(
                         cardId, wallet,
                         EthereumTransactionBuilder(walletPublicKey, blockchain),
