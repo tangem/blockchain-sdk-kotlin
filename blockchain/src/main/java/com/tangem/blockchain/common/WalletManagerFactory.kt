@@ -140,6 +140,40 @@ object WalletManagerFactory {
         }
     }
 
+
+    fun makeMultisigWalletManager(
+            card: Card, pairPublicKey: ByteArray, tokens: Set<Token>? = null
+    ): WalletManager? {
+        val walletPublicKey: ByteArray = card.walletPublicKey ?: return null
+        val blockchainName: String = card.cardData?.blockchainName ?: return null
+        val blockchain = Blockchain.fromId(blockchainName)
+
+        val cardId = card.cardId
+        val addresses = blockchain.makeMultisigAddress(walletPublicKey, pairPublicKey)
+                ?: return null
+        val presetTokens = tokens ?: getToken(card)?.let { setOf(it) } ?: emptySet()
+
+        val wallet = Wallet(blockchain, addresses, presetTokens)
+
+        return when (blockchain) {
+            Blockchain.Bitcoin -> {
+                BitcoinWalletManager(
+                        cardId, wallet,
+                        BitcoinTransactionBuilder(walletPublicKey, blockchain, addresses),
+                        BitcoinNetworkManager(blockchain)
+                )
+            }
+            Blockchain.BitcoinTestnet -> {
+                BitcoinWalletManager(
+                        cardId, wallet,
+                        BitcoinTransactionBuilder(walletPublicKey, blockchain, addresses),
+                        BitcoinNetworkManager(blockchain)
+                )
+            }
+            else -> return null
+        }
+    }
+
     private fun getToken(card: Card): Token? {
         val symbol = card.cardData?.tokenSymbol ?: return null
         val contractAddress = card.cardData?.tokenContractAddress ?: return null
