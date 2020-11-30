@@ -2,6 +2,7 @@ package com.tangem.blockchain.common
 
 import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
+import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressType
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
@@ -108,6 +109,7 @@ enum class Blockchain(
     }
 
     fun defaultAddressType(): AddressType = when (this) {
+        Bitcoin, BitcoinTestnet -> BitcoinAddressType.Segwit
         else -> DefaultAddressType
     }
 
