@@ -4,10 +4,7 @@ package com.tangem.blockchain.blockchains.bitcoin
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
 import com.tangem.blockchain.blockchains.litecoin.LitecoinMainNetParams
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.address.Address
-import com.tangem.blockchain.common.address.AddressService
-import com.tangem.blockchain.common.address.AddressType
-import com.tangem.blockchain.common.address.DefaultAddressType
+import com.tangem.blockchain.common.address.*
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
@@ -20,7 +17,7 @@ import org.bitcoinj.params.TestNet3Params
 import org.bitcoinj.script.Script
 import org.bitcoinj.script.ScriptBuilder
 
-open class BitcoinAddressService(private val blockchain: Blockchain) : AddressService() {
+open class BitcoinAddressService(private val blockchain: Blockchain) : AddressService(), MultisigAddressProvider {
 
     private val networkParameters: NetworkParameters = when (blockchain) {
         Blockchain.Bitcoin -> MainNetParams()
@@ -77,6 +74,10 @@ open class BitcoinAddressService(private val blockchain: Blockchain) : AddressSe
             false
         }
     }
+
+    override fun makeMultisigAddress(
+            walletPublicKey: ByteArray, pairPublicKey: ByteArray
+    ): Set<Address> = make1of2MultisigAddresses(walletPublicKey, pairPublicKey)
 
     fun make1of2MultisigAddresses(publicKey1: ByteArray, publicKey2: ByteArray): Set<Address> {
         val script = create1of2MultisigOutputScript(publicKey1, publicKey2)
