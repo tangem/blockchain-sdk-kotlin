@@ -78,7 +78,11 @@ class Signer(
 ) : TransactionSigner {
     override suspend fun sign(hashes: Array<ByteArray>, cardId: String): CompletionResult<SignResponse> =
             suspendCancellableCoroutine { continuation ->
-                tangemSdk.sign(hashes, cardId, initialMessage) { result ->
+                tangemSdk.sign(
+                        hashes = hashes,
+                        cardId = cardId,
+                        initialMessage = initialMessage
+                ) { result ->
                     if (continuation.isActive) continuation.resume(result)
                 }
             }

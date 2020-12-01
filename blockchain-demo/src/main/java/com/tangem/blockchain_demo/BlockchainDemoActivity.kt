@@ -10,7 +10,7 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.Signer
 import com.tangem.blockchain_demo.databinding.ActivityBlockchainDemoBinding
-import com.tangem.commands.Card
+import com.tangem.commands.common.card.Card
 import com.tangem.common.CompletionResult
 import com.tangem.tangem_sdk_new.extensions.init
 import kotlinx.coroutines.*
