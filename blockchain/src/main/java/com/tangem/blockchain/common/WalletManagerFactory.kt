@@ -28,7 +28,7 @@ import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkManager
 import com.tangem.blockchain.blockchains.xrp.XrpTransactionBuilder
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkManager
-import com.tangem.commands.Card
+import com.tangem.commands.common.card.Card
 
 object WalletManagerFactory {
 
