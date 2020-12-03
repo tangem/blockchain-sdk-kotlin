@@ -57,7 +57,22 @@ open class BitcoinWalletManager(
                 hasUnconfirmed!! || it.hasUnconfirmed
             }
         }
-        return BitcoinAddressInfo(balance, unspentOutputs, recentTransactions, hasUnconfirmed)
+
+        // merge same transaction on different addresses
+        val transactionsByHash = mutableMapOf<String, List<BasicTransactionData>>()
+        recentTransactions.forEach { transaction ->
+            val sameHashTransactions = recentTransactions.filter { it.hash == transaction.hash }
+            transactionsByHash[transaction.hash] = sameHashTransactions
+        }
+        val finalTransactions = transactionsByHash.map {
+            BasicTransactionData(
+                    balanceDif = it.value.sumOf { transaction -> transaction.balanceDif },
+                    hash = it.value[0].hash,
+                    date = it.value[0].date,
+                    isConfirmed = it.value[0].isConfirmed
+            )
+        }
+        return BitcoinAddressInfo(balance, unspentOutputs, finalTransactions, hasUnconfirmed)
     }
 
     private fun updateWallet(response: BitcoinAddressInfo) {
