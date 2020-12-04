@@ -18,7 +18,7 @@ data class TransactionData(
 
 enum class TransactionStatus { Confirmed, Unconfirmed }
 
-enum class TransactionError {
+enum class TransactionError { // TODO: add address validation?
     AmountExceedsBalance,
     FeeExceedsBalance,
     TotalExceedsBalance,
