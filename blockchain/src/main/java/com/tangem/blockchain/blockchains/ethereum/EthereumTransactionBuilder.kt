@@ -5,6 +5,7 @@ import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.common.extensions.hexToBytes
+import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.crypto.api.ec.ECDSASignature
 import org.kethereum.crypto.determineRecId
 import org.kethereum.crypto.impl.ec.canonicalise
@@ -18,6 +19,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 
 class EthereumTransactionBuilder(private val walletPublicKey: ByteArray, blockchain: Blockchain) {
+    internal var gasLimit = DEFAULT_GAS_LIMIT
 
     private val chainId = when (blockchain) {
         Blockchain.Ethereum -> Chain.Mainnet.id
@@ -31,7 +33,6 @@ class EthereumTransactionBuilder(private val walletPublicKey: ByteArray, blockch
         val transactionFee: BigDecimal = transactionData.fee?.value ?: return null
 
         val fee = transactionFee.movePointRight(transactionData.fee.decimals).toBigInteger()
-        val gasLimit = getGasLimit(transactionData.amount).value.toBigInteger()
         val bigIntegerAmount = amount.movePointRight(transactionData.amount.decimals).toBigInteger()
 
         val to: Address
@@ -76,33 +77,19 @@ class EthereumTransactionBuilder(private val walletPublicKey: ByteArray, blockch
         return transactionToSign.transaction.encodeRLP(signatureData)
     }
 
-    private fun createErc20TransferData(recepient: String, amount: BigInteger): ByteArray {
-        return tokenTransferSignature.toByteArray() +
-                recepient.substring(2).hexToBytes().toFixedLengthByteArray(32) +
-                amount.toBytesPadded(32)
-    }
+    private fun createErc20TransferData(recepient: String, amount: BigInteger) =
+            tokenTransferSignature.toByteArray() +
+                    recepient.substring(2).hexToBytes().toFixedLengthByteArray(32) +
+                    amount.toBytesPadded(32)
+
+    internal fun createErc20TransferData(recepient: String, amount: Amount) =
+            createErc20TransferData(
+                    recepient, amount.value!!.movePointRight(amount.decimals).toBigInteger()
+            )
+
 }
 
 class TransactionToSign(val transaction: Transaction, val hashes: List<ByteArray>)
-
-enum class GasLimit(val value: Long) {
-    Default(21000),
-    Erc20(60000),
-    Medium(150000),
-    High(300000)
-}
-
-internal fun getGasLimit(amount: Amount): GasLimit {
-    return if (amount.type == AmountType.Coin) {
-        GasLimit.Default
-    } else {
-        when (amount.currencySymbol) {
-            "DGX" -> GasLimit.High
-            "AWG" -> GasLimit.Medium
-            else -> GasLimit.Erc20
-        }
-    }
-}
 
 enum class Chain(val id: Int) {
     Mainnet(1),
