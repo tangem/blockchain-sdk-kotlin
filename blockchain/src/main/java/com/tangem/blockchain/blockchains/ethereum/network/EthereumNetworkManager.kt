@@ -14,7 +14,6 @@ import com.tangem.blockchain.network.blockcypher.BlockcypherProvider
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
-import java.math.BigInteger
 import java.math.RoundingMode
 
 
@@ -76,14 +75,21 @@ class EthereumNetworkManager(blockchain: Blockchain) {
                     it to retryIO { async { provider.getTokenBalance(address, it.contractAddress) } }
                 }.toMap()
 
-                val balance = balanceResponseDeferred.await().result!!.parseAmount(decimals)
-                val txCount = txCountResponseDeferred.await()
-                        .result?.responseToNumber()?.toLong() ?: 0
-                val pendingTxCount = pendingTxCountResponseDeferred.await()
-                        .result?.responseToNumber()?.toLong() ?: 0
+                val balanceResponse = balanceResponseDeferred.await()
+                val balance = balanceResponse.result?.parseAmount(decimals)
+                        ?: throw balanceResponse.error?.toException()
+                                ?: Exception("Unknown balance response format")
 
-                val tokenBalances = tokenBalancesDeferred.mapValues {
-                    it.value.await().result!!.parseAmount(it.key.decimals)
+                val txCount = txCountResponseDeferred.await()
+                        .result?.responseToBigInteger()?.toLong() ?: 0
+                val pendingTxCount = pendingTxCountResponseDeferred.await()
+                        .result?.responseToBigInteger()?.toLong() ?: 0
+
+                val tokenBalanceResponses = tokenBalancesDeferred.mapValues { it.value.await() }
+                val tokenBalances = tokenBalanceResponses.mapValues {
+                    it.value.result?.parseAmount(it.key.decimals)
+                            ?: throw it.value.error?.toException()
+                                    ?: Exception("Unknown token balance response format")
                 }
 
                 val recentTransactions = when (val result = transactionsResponseDeferred.await()) {
@@ -112,18 +118,32 @@ class EthereumNetworkManager(blockchain: Blockchain) {
             if (response.error == null) {
                 SimpleResult.Success
             } else {
-                SimpleResult.Failure(Exception("Code: ${(response.error.code)}, ${(response.error.message)}"))
+                SimpleResult.Failure(response.error.toException())
             }
         } catch (error: Exception) {
             SimpleResult.Failure(error)
         }
     }
 
-    suspend fun getFee(gasLimit: Long): Result<List<BigDecimal>> {
+    suspend fun getFee(to: String, from: String, data: String?, fallbackGasLimit: Long?): Result<EthereumFeeResponse> {
         return try {
-            Result.Success(
-                    provider.getGasPrice().result!!.parseFee(gasLimit)
-            )
+            coroutineScope {
+                val gasLimitDeferred = retryIO { async { provider.getGasLimit(to, from, data) } }
+                val feeDeffered = retryIO { async { provider.getGasPrice() } }
+
+                val gasLimitResponse = gasLimitDeferred.await()
+                val gasLimit = gasLimitResponse.result?.responseToBigInteger()?.toLong()
+                        ?: fallbackGasLimit // TODO: remove?
+                        ?: throw gasLimitResponse.error?.toException()
+                                ?: Exception("Unknown estimate gas response format")
+
+                val feeResponse = feeDeffered.await()
+                val fees = feeResponse.result?.parseFee(gasLimit)
+                        ?: throw feeResponse.error?.toException()
+                                ?: Exception("Unknown gas price response format")
+
+                Result.Success(EthereumFeeResponse(fees, gasLimit))
+            }
         } catch (error: Exception) {
             Result.Failure(error)
         }
@@ -135,7 +155,7 @@ class EthereumNetworkManager(blockchain: Blockchain) {
     }
 
     private fun String.parseFee(gasLimit: Long): List<BigDecimal> {
-        val gasPrice = this.responseToNumber().toBigDecimal()
+        val gasPrice = this.responseToBigInteger().toBigDecimal()
         val minFee = gasPrice.multiply(gasLimit.toBigDecimal())
         val normalFee = minFee.multiply(BigDecimal(1.2)).setScale(0, RoundingMode.HALF_UP)
         val priorityFee = minFee.multiply(BigDecimal(1.5)).setScale(0, RoundingMode.HALF_UP)
@@ -146,10 +166,14 @@ class EthereumNetworkManager(blockchain: Blockchain) {
         )
     }
 
-    private fun String.responseToNumber(): BigInteger = this.substring(2).toBigInteger(16)
+    private fun String.responseToBigInteger() =
+            this.substring(2).toBigInteger(16)
 
-    private fun String.parseAmount(decimals: Int): BigDecimal =
-            this.responseToNumber().toBigDecimal().movePointLeft(decimals)
+    private fun String.parseAmount(decimals: Int) =
+            this.responseToBigInteger().toBigDecimal().movePointLeft(decimals)
+
+    private fun EthereumError.toException() =
+            Exception("Code: ${this.code}, ${this.message}")
 
 }
 
@@ -159,6 +183,11 @@ data class EthereumInfoResponse(
         val txCount: Long,
         val pendingTxCount: Long,
         val recentTransactions: List<TransactionData>?
+)
+
+data class EthereumFeeResponse(
+        val fees: List<BigDecimal>,
+        val gasLimit: Long
 )
 
 private const val INFURA_API_KEY = "613a0b14833145968b1f656240c7d245"
