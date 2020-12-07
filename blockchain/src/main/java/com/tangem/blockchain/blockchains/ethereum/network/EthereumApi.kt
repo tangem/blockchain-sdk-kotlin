@@ -14,19 +14,25 @@ interface EthereumApi {
 
 @JsonClass(generateAdapter = true)
 data class EthereumBody(
+        val method: String,
+        val params: List<Any> = listOf(),
         val jsonrpc: String = "2.0",
-        val id: Int = 67,
-        val method: String? = null,
-        val params: List<Any> = listOf()
+        val id: Int = 67
 )
 
-data class EthCallParams(private val data: String, private val to: String)
+data class EthCallObject(val to: String, val from: String? = null, val data: String? = null)
 
 enum class EthereumMethod(val value: String) {
     GET_BALANCE("eth_getBalance"),
     GET_TRANSACTION_COUNT("eth_getTransactionCount"),
-    GET_PENDING_COUNT("eth_getPendingCount"),
     CALL("eth_call"),
     SEND_RAW_TRANSACTION("eth_sendRawTransaction"),
+    ESTIMATE_GAS("eth_estimateGas"),
     GAS_PRICE("eth_gasPrice")
+}
+
+enum class EthBlockParam(val value: String) {
+    EARLIEST("earliest"),
+    LATEST("latest"),
+    PENDING("pending")
 }
