@@ -59,30 +59,42 @@ class EthereumWalletManager(
     ): Result<SignResponse> {
         val transactionToSign = transactionBuilder.buildToSign(transactionData, txCount.toBigInteger())
                 ?: return Result.Failure(Exception("Not enough data"))
-        when (val signerResponse = signer.sign(transactionToSign.hashes.toTypedArray(), cardId)) {
+        return when (val signerResponse = signer.sign(transactionToSign.hashes.toTypedArray(), cardId)) {
             is CompletionResult.Success -> {
-                val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature, transactionToSign)
-                val sendResult = networkManager.sendTransaction(String.format("0x%s", transactionToSend.toHexString()))
+                val transactionToSend = transactionBuilder
+                        .buildToSend(signerResponse.data.signature, transactionToSign)
+                val sendResult = networkManager
+                        .sendTransaction("0x" + transactionToSend.toHexString())
 
                 if (sendResult is SimpleResult.Success) {
                     transactionData.hash = transactionToSend.keccak().toHexString()
                     wallet.addOutgoingTransaction(transactionData)
                 }
-                return sendResult.toResultWithData(signerResponse.data)
+                sendResult.toResultWithData(signerResponse.data)
             }
-            is CompletionResult.Failure -> return Result.failure(signerResponse.error)
+            is CompletionResult.Failure -> Result.failure(signerResponse.error)
         }
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
-        val result = networkManager.getFee(getGasLimit(amount).value)
-        when (result) {
+        var to = destination
+        val from = wallet.address
+        var data: String? = null
+        val fallbackGasLimit = estimateGasLimit(amount).value
+
+        if (amount.type is AmountType.Token) {
+            to = amount.type.token.contractAddress
+            data = "0x" + transactionBuilder.createErc20TransferData(destination, amount).toHexString()
+        }
+
+        return when (val result = networkManager.getFee(to, from, data, fallbackGasLimit)) {
             is Result.Success -> {
-                val feeValues: List<BigDecimal> = result.data
-                return Result.Success(
+                transactionBuilder.gasLimit = result.data.gasLimit.toBigInteger()
+                val feeValues: List<BigDecimal> = result.data.fees
+                Result.Success(
                         feeValues.map { feeValue -> Amount(wallet.amounts[AmountType.Coin]!!, feeValue) })
             }
-            is Result.Failure -> return result
+            is Result.Failure -> result
         }
     }
 
@@ -95,5 +107,24 @@ class EthereumWalletManager(
             }
             is Result.Failure -> SimpleResult.Failure(result.error)
         }
+    }
+
+    private fun estimateGasLimit(amount: Amount): GasLimit { //TODO: remove?
+        return if (amount.type == AmountType.Coin) {
+            GasLimit.Default
+        } else {
+            when (amount.currencySymbol) {
+                "DGX" -> GasLimit.High
+                "AWG" -> GasLimit.Medium
+                else -> GasLimit.Erc20
+            }
+        }
+    }
+
+    enum class GasLimit(val value: Long) {
+        Default(21000),
+        Erc20(60000),
+        Medium(150000),
+        High(300000)
     }
 }
