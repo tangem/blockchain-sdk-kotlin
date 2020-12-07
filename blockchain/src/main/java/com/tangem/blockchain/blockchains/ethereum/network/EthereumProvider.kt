@@ -1,39 +1,54 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
 class EthereumProvider(private val api: EthereumApi, private val apiKey: String) {
-    suspend fun getBalance(address: String) = api.post(createEthereumBody(EthereumMethod.GET_BALANCE, address), apiKey)
-    suspend fun getTokenBalance(address: String, contractAddress: String) = api.post(createEthereumBody(EthereumMethod.CALL, address, contractAddress), apiKey)
-    suspend fun getTxCount(address: String) = api.post(createEthereumBody(EthereumMethod.GET_TRANSACTION_COUNT, address), apiKey)
-    suspend fun getPendingTxCount(address: String) = api.post(createEthereumBody(EthereumMethod.GET_PENDING_COUNT, address), apiKey)
-    suspend fun getGasPrice() = api.post(createEthereumBody(EthereumMethod.GAS_PRICE), apiKey)
-    suspend fun sendTransaction(transaction: String) = api.post(createEthereumBody(EthereumMethod.SEND_RAW_TRANSACTION, transaction = transaction), apiKey)
-}
 
-private fun createEthereumBody(
-        method: EthereumMethod,
-        address: String? = null,
-        contractAddress: String? = null,
-        transaction: String? = null): EthereumBody {
+    suspend fun getBalance(address: String) =
+            createEthereumBody(
+                    EthereumMethod.GET_BALANCE,
+                    address,
+                    EthBlockParam.LATEST.value
+            ).post()
 
-    return when (method) {
-        EthereumMethod.GET_BALANCE ->
-            EthereumBody(method = EthereumMethod.GET_BALANCE.value, params = listOf(address ?: "", "latest"))
-        EthereumMethod.GET_TRANSACTION_COUNT ->
-            EthereumBody(method = EthereumMethod.GET_TRANSACTION_COUNT.value, params = listOf(address ?: "", "latest"))
-        EthereumMethod.GET_PENDING_COUNT ->
-            EthereumBody(method = EthereumMethod.GET_TRANSACTION_COUNT.value, params = listOf(address ?: "", "pending"))
-        EthereumMethod.GAS_PRICE ->
-            EthereumBody(method = EthereumMethod.GAS_PRICE.value)
-        EthereumMethod.SEND_RAW_TRANSACTION ->
-            EthereumBody(method = EthereumMethod.SEND_RAW_TRANSACTION.value, params = listOf(transaction ?: ""))
-        EthereumMethod.CALL -> {
-            EthereumBody(
-                    method = EthereumMethod.CALL.value,
-                    params = listOf(EthCallParams(
-                            "0x70a08231000000000000000000000000" + address?.substring(2), contractAddress
-                            ?: ""),
-                            "latest"
-                    ))
-        }
-    }
+    suspend fun getTokenBalance(address: String, contractAddress: String) =
+            createEthereumBody(
+                    EthereumMethod.CALL,
+                    createTokenBalanceCallObject(address, contractAddress),
+                    EthBlockParam.LATEST.value
+            ).post()
+
+    suspend fun getTxCount(address: String) =
+            createEthereumBody(
+                    EthereumMethod.GET_TRANSACTION_COUNT,
+                    address,
+                    EthBlockParam.LATEST.value
+            ).post()
+
+    suspend fun getPendingTxCount(address: String) =
+            createEthereumBody(
+                    EthereumMethod.GET_TRANSACTION_COUNT,
+                    address,
+                    EthBlockParam.PENDING.value
+            ).post()
+
+    suspend fun sendTransaction(transaction: String) =
+            createEthereumBody(EthereumMethod.SEND_RAW_TRANSACTION, transaction).post()
+
+    suspend fun getGasLimit(to: String, from: String, data: String?) =
+            createEthereumBody(EthereumMethod.ESTIMATE_GAS, EthCallObject(to, from, data)).post()
+
+    suspend fun getGasPrice() = createEthereumBody(EthereumMethod.GAS_PRICE).post()
+
+
+    private fun createEthereumBody(method: EthereumMethod, vararg params: Any) =
+            EthereumBody(method.value, params.toList())
+
+    private fun createTokenBalanceCallObject(
+            address: String,
+            contractAddress: String
+    ) = EthCallObject(
+            to = contractAddress,
+            data = "0x70a08231000000000000000000000000" + address.substring(2),
+    )
+
+    private suspend fun EthereumBody.post() = api.post(this, apiKey)
 }
