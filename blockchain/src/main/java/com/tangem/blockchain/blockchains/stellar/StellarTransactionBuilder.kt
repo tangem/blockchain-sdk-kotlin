@@ -136,7 +136,7 @@ private fun StellarMemo.toStellarSdkMemo(): Memo {
         is StellarMemo.Text -> Memo.text(this.value)
         is StellarMemo.Id -> {
             val id = this.value
-            if (id in BigInteger.ZERO..(Long.MAX_VALUE.toBigInteger() * 2.toBigInteger())) { // ID is uint64
+            if (id !in BigInteger.ZERO..(Long.MAX_VALUE.toBigInteger() * 2.toBigInteger())) { // ID is uint64
                 throw Exception("ID value out of uint64 range")
             }
             Memo.id(id.toLong())
