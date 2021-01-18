@@ -11,13 +11,10 @@ import java.math.BigDecimal
 
 class CardanoTransactionBuilder(private val walletPublicKey: ByteArray) {
 
-    var unspentOutputs: List<UnspentOutput> = listOf()
+    var unspentOutputs: List<CardanoUnspentOutput> = listOf()
     private var transactionBody: DataItem? = null
-    private var useShelleyWitness: Boolean? = null
 
     fun buildToSign(transactionData: TransactionData): ByteArray {
-        useShelleyWitness = CardanoAddressService.isShelleyAddress(transactionData.sourceAddress)
-
         val transactionMap = CborBuilder().addMap()
 
         transactionMap.put(0.toDataItem(), createInputsDataItem())
@@ -35,15 +32,21 @@ class CardanoTransactionBuilder(private val walletPublicKey: ByteArray) {
     }
 
     fun buildToSend(signature: ByteArray): ByteArray {
+        val useByronWitness =
+                unspentOutputs.find { !CardanoAddressService.isShelleyAddress(it.address) } != null
+        val useShelleyWitness =
+                unspentOutputs.find { CardanoAddressService.isShelleyAddress(it.address) } != null
+
         val txArray = CborBuilder().addArray()
         txArray.add(transactionBody)
         val witnessMap = txArray.addMap()
         txArray.add(null as DataItem?)
 
-        if (useShelleyWitness!!) {
-            witnessMap.put(0.toDataItem(), createShelleyWitnessDataItem(signature))
-        } else {
+        if (useByronWitness) {
             witnessMap.put(2.toDataItem(), createByronWitnessDataItem(signature))
+        }
+        if (useShelleyWitness) {
+            witnessMap.put(0.toDataItem(), createShelleyWitnessDataItem(signature))
         }
 
         val baos = ByteArrayOutputStream()
@@ -134,7 +137,8 @@ class CardanoTransactionBuilder(private val walletPublicKey: ByteArray) {
     }
 }
 
-class UnspentOutput(
+class CardanoUnspentOutput(
+        val address: String,
         val amount: Long,
         val outputIndex: Long,
         val transactionHash: ByteArray
