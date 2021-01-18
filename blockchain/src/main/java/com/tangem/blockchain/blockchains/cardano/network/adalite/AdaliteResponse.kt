@@ -32,6 +32,9 @@ data class AdaliteUnspents(
 
 @JsonClass(generateAdapter = true)
 data class AdaliteUtxo(
+        @Json(name = "cuAddress")
+        var address: String? = null,
+
         @Json(name = "cuId")
         var hash: String? = null,
 
