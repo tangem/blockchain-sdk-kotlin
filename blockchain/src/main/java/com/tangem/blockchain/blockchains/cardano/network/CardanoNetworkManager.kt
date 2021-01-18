@@ -1,9 +1,8 @@
 package com.tangem.blockchain.blockchains.cardano.network
 
-import com.tangem.blockchain.blockchains.cardano.UnspentOutput
+import com.tangem.blockchain.blockchains.cardano.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.adalite.AdaliteProvider
 import com.tangem.blockchain.blockchains.cardano.network.api.AdaliteApi
-import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.SendException
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -32,24 +31,22 @@ class CardanoNetworkManager {
         provider = if (provider == adaliteProvider) adaliteReserveProvider else adaliteProvider
     }
 
-    suspend fun getInfo(address: String): Result<CardanoAddressResponse> {
-        val result = provider.getInfo(address)
-        when (result) {
-            is Result.Success -> return result
+    suspend fun getInfo(addresses: Set<String>): Result<CardanoAddressResponse> {
+        return when (val result = provider.getInfo(addresses)) {
+            is Result.Success -> result
             is Result.Failure -> {
                 if (result.error is IOException || result.error is HttpException) {
                     changeProvider()
-                    return provider.getInfo(address)
+                    provider.getInfo(addresses)
                 } else {
-                    return result
+                    result
                 }
             }
         }
     }
 
     suspend fun sendTransaction(transaction: String): SimpleResult {
-        val result = provider.sendTransaction(transaction)
-        when (result) {
+        when (val result = provider.sendTransaction(transaction)) {
             is SimpleResult.Success -> return result
             is SimpleResult.Failure -> {
                 if (result.error is IOException || result.error is HttpException) {
@@ -77,6 +74,6 @@ class CardanoNetworkManager {
 
 data class CardanoAddressResponse(
         val balance: Long,
-        val unspentOutputs: List<UnspentOutput>,
+        val unspentOutputs: List<CardanoUnspentOutput>,
         val recentTransactionsHashes: List<String>
 )
