@@ -10,6 +10,8 @@ import com.tangem.blockchain.blockchains.binance.client.encoding.Bech32
 import com.tangem.blockchain.blockchains.binance.client.encoding.Crypto
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.address.Address
+import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.extensions.*
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -34,6 +36,18 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
             validateBase58Address(address)
         }
     }
+
+    override fun makeAddresses(walletPublicKey: ByteArray): Set<Address> {
+        return if (blockchain == Blockchain.CardanoShelley) {
+            setOf(
+                    Address(makeByronAddress(walletPublicKey), CardanoAddressType.Byron),
+                    Address(makeShelleyAddress(walletPublicKey), CardanoAddressType.Shelley)
+            )
+        } else {
+            setOf(Address(makeAddress(walletPublicKey)))
+        }
+    }
+
 
     private fun makeByronAddress(walletPublicKey: ByteArray): String {
         val extendedPublicKey = extendPublicKey(walletPublicKey)
@@ -149,5 +163,14 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
         }
 
         fun isShelleyAddress(address: String) = address.startsWith(BECH32_HRP + BECH32_SEPARATOR)
+    }
+}
+
+sealed class CardanoAddressType : AddressType {
+    object Byron : AddressType {
+        override val displayNameRes = 1 //TODO: change to string resource
+    }
+    object Shelley : AddressType {
+        override val displayNameRes = 2 //TODO: change to string resource
     }
 }
