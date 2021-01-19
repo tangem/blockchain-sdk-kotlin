@@ -1,10 +1,9 @@
 package com.tangem.blockchain.blockchains.cardano.network.adalite
 
 import com.squareup.moshi.Json
-import com.tangem.blockchain.blockchains.cardano.UnspentOutput
+import com.tangem.blockchain.blockchains.cardano.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.api.AdaliteApi
-import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
@@ -14,29 +13,29 @@ import kotlinx.coroutines.coroutineScope
 
 class AdaliteProvider(private val api: AdaliteApi) {
 
-    suspend fun getInfo(address: String): Result<CardanoAddressResponse> {
+    suspend fun getInfo(addresses: Set<String>): Result<CardanoAddressResponse> {
         return try {
             coroutineScope {
-                val addressDeferred = retryIO { async { api.getAddress(address) } }
-                val unspentsDeferred = retryIO { async { api.getUnspents(listOf(address)) } }
+                val addressesDeferred = addresses.map { retryIO { async { api.getAddress(it) } } }
+                val unspentsDeferred = retryIO { async { api.getUnspents(addresses.toList()) } }
 
-                val addressData = addressDeferred.await()
+                val addressesData = addressesDeferred.map { it.await() }
                 val unspents = unspentsDeferred.await()
 
                 val cardanoUnspents = unspents.data!!.map {
-                    UnspentOutput(
+                    CardanoUnspentOutput(
+                            it.address!!,
                             it.amountData!!.amount!!,
                             it.outputIndex!!.toLong(),
                             it.hash!!.hexToBytes()
                     )
                 }
-                val recentTransactionsHashes = addressData.data!!.transactions!!.mapNotNull {
-                    it.hash
-                }
+                val recentTransactionsHashes = addressesData
+                        .flatMap { it.data!!.transactions!!.mapNotNull { it.hash } }
 
                 Result.Success(
                         CardanoAddressResponse(
-                                addressData.data!!.balanceData!!.amount!!,
+                                addressesData.map { it.data!!.balanceData!!.amount!! }.sum(),
                                 cardanoUnspents,
                                 recentTransactionsHashes
                         )
