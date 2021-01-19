@@ -25,8 +25,7 @@ class CardanoWalletManager(
     private val blockchain = wallet.blockchain
 
     override suspend fun update() {
-        val response = networkManager.getInfo(wallet.address)
-        when (response) {
+        when (val response = networkManager.getInfo(wallet.addresses.map { it.value }.toSet())) {
             is Result.Success -> updateWallet(response.data)
             is Result.Failure -> updateError(response.error)
         }
