@@ -70,13 +70,21 @@ enum class Blockchain(
         Unknown -> throw Exception("unsupported blockchain")
     }
 
-    fun getShareUri(address: String): String = when (this) {
-        Bitcoin -> "bitcoin:$address"
-        Ethereum -> "ethereum:$address"
-        XRP -> "xrpl:$address"
-        Litecoin -> "litecoin:$address"
-        Binance -> "bnb:$address"
-        else -> address
+    fun getShareScheme(): String? = when (this) {
+        Bitcoin -> "bitcoin"
+        Ethereum -> "ethereum"
+        XRP -> "xrpl"
+        Litecoin -> "litecoin"
+        Binance -> "bnb"
+        else -> null
+    }
+
+    fun getShareUri(address: String): String = getShareScheme()?.plus(":$address")
+            ?: address
+
+    fun validateShareScheme(scheme: String): Boolean {
+        if (this == XRP && scheme == "ripple") return true
+        return scheme == getShareScheme()
     }
 
     fun getExploreUrl(address: String, tokenContractAddress: String? = null): String = when (this) {
