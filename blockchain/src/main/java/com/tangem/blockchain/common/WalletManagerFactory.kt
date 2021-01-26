@@ -149,7 +149,7 @@ object WalletManagerFactory {
         val blockchain = Blockchain.fromId(blockchainName)
 
         val cardId = card.cardId
-        val addresses = blockchain.makeMultisigAddress(walletPublicKey, pairPublicKey)
+        val addresses = blockchain.makeMultisigAddresses(walletPublicKey, pairPublicKey)
                 ?: return null
         val presetTokens = tokens ?: getToken(card)?.let { setOf(it) } ?: emptySet()
 
