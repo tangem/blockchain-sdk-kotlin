@@ -75,7 +75,7 @@ open class BitcoinAddressService(private val blockchain: Blockchain) : AddressSe
         }
     }
 
-    override fun makeMultisigAddress(
+    override fun makeMultisigAddresses(
             walletPublicKey: ByteArray, pairPublicKey: ByteArray
     ): Set<Address> = make1of2MultisigAddresses(walletPublicKey, pairPublicKey)
 
