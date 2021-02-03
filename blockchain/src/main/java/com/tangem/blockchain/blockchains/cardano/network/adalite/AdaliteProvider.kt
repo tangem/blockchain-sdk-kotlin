@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.cardano.network.adalite
 import com.squareup.moshi.Json
 import com.tangem.blockchain.blockchains.cardano.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
+import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkService
 import com.tangem.blockchain.blockchains.cardano.network.api.AdaliteApi
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -11,9 +12,9 @@ import com.tangem.common.extensions.hexToBytes
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
-class AdaliteProvider(private val api: AdaliteApi) {
+class AdaliteProvider(private val api: AdaliteApi) : CardanoNetworkService {
 
-    suspend fun getInfo(addresses: Set<String>): Result<CardanoAddressResponse> {
+    override suspend fun getInfo(addresses: Set<String>): Result<CardanoAddressResponse> {
         return try {
             coroutineScope {
                 val addressesDeferred = addresses.map { retryIO { async { api.getAddress(it) } } }
@@ -46,7 +47,7 @@ class AdaliteProvider(private val api: AdaliteApi) {
         }
     }
 
-    suspend fun sendTransaction(transaction: String): SimpleResult {
+    override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
             retryIO { api.sendTransaction(AdaliteSendBody(transaction)) }
             SimpleResult.Success

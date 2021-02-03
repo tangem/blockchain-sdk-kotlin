@@ -14,7 +14,7 @@ import com.tangem.blockchain.network.createRetrofitInstance
 import okhttp3.RequestBody
 import java.math.BigDecimal
 
-class BinanceNetworkManager(isTestNet: Boolean = false) {
+class BinanceNetworkManager(isTestNet: Boolean = false) : BinanceNetworkService {
     val api: BinanceApi by lazy {
         createRetrofitInstance(if (!isTestNet) API_BINANCE else API_BINANCE_TESTNET)
                 .create(BinanceApi::class.java)
@@ -25,7 +25,7 @@ class BinanceNetworkManager(isTestNet: Boolean = false) {
         )
     }
 
-    suspend fun getInfo(address: String): Result<BinanceInfoResponse> {
+    override suspend fun getInfo(address: String): Result<BinanceInfoResponse> {
         return try {
             val accountData = retryIO { client.getAccount(address) }
             val balances = accountData.balances.map { it.symbol to it.free.toBigDecimal() }.toMap()
@@ -52,7 +52,7 @@ class BinanceNetworkManager(isTestNet: Boolean = false) {
         }
     }
 
-    suspend fun getFee(): Result<BigDecimal> {
+    override suspend fun getFee(): Result<BigDecimal> {
         return try {
             val feeData = api.getFees()
             var fee: BigDecimal? = null
@@ -69,7 +69,7 @@ class BinanceNetworkManager(isTestNet: Boolean = false) {
         }
     }
 
-    suspend fun sendTransaction(transaction: ByteArray): SimpleResult {
+    override suspend fun sendTransaction(transaction: ByteArray): SimpleResult {
         return try {
             val requestBody: RequestBody = TransactionRequestAssemblerExtSign.createRequestBody(transaction)
             val response = retryIO { client.broadcastNoWallet(requestBody, true) }
