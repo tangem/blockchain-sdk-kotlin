@@ -1,9 +1,6 @@
 package com.tangem.blockchain.blockchains.bitcoin.network
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
-import com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo.BitcoinfeesEarnApi
-import com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo.BlockchainInfoApi
-import com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo.BlockchainInfoProvider
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.network.blockcypher.BlockcypherApi
 import com.tangem.blockchain.common.Blockchain
@@ -18,7 +15,7 @@ import java.io.IOException
 import java.math.BigDecimal
 
 
-class BitcoinNetworkManager(blockchain: Blockchain) : BitcoinProvider {
+class BitcoinNetworkManager(blockchain: Blockchain) : BitcoinNetworkService {
 
 //    private val blockchainInfoProvider by lazy {
 //        val api = createRetrofitInstance(API_BLOCKCHAIN_INFO)
@@ -40,7 +37,7 @@ class BitcoinNetworkManager(blockchain: Blockchain) : BitcoinProvider {
         BlockcypherProvider(api, blockchain)
     }
 
-    private var provider: BitcoinProvider = blockchairProvider
+    private var provider: BitcoinNetworkService = blockchairProvider
 
     private fun changeProvider() {
         provider = when (provider) {

@@ -12,7 +12,7 @@ import retrofit2.HttpException
 import java.io.IOException
 import java.math.BigDecimal
 
-class XrpNetworkManager {
+class XrpNetworkManager : XrpNetworkService {
     private val rippledProvider by lazy {
         val api = createRetrofitInstance(API_RIPPLED)
                 .create(RippledApi::class.java)
@@ -31,52 +31,49 @@ class XrpNetworkManager {
         provider = if (provider == rippledProvider) rippledReserveProvider else rippledProvider
     }
 
-    suspend fun getInfo(address: String): Result<XrpInfoResponse> {
-        val result = provider.getInfo(address)
-        when (result) {
-            is Result.Success -> return result
+    override suspend fun getInfo(address: String): Result<XrpInfoResponse> {
+        return when (val result = provider.getInfo(address)) {
+            is Result.Success -> result
             is Result.Failure -> {
                 if (result.error is IOException || result.error is HttpException) {
                     changeProvider()
-                    return provider.getInfo(address)
+                    provider.getInfo(address)
                 } else {
-                    return result
+                    result
                 }
             }
         }
     }
 
-    suspend fun sendTransaction(transaction: String): SimpleResult {
-        val result = provider.sendTransaction(transaction)
-        when (result) {
-            is SimpleResult.Success -> return result
+    override suspend fun sendTransaction(transaction: String): SimpleResult {
+        return when (val result = provider.sendTransaction(transaction)) {
+            is SimpleResult.Success -> result
             is SimpleResult.Failure -> {
                 if (result.error is IOException || result.error is HttpException) {
                     changeProvider()
-                    return provider.sendTransaction(transaction)
+                    provider.sendTransaction(transaction)
                 } else {
-                    return result
+                    result
                 }
             }
         }
     }
 
-    suspend fun getFee(): Result<XrpFeeResponse> {
-        val result = provider.getFee()
-        when (result) {
-            is Result.Success -> return result
+    override suspend fun getFee(): Result<XrpFeeResponse> {
+        return when (val result = provider.getFee()) {
+            is Result.Success -> result
             is Result.Failure -> {
                 if (result.error is IOException || result.error is HttpException) {
                     changeProvider()
-                    return provider.getFee()
+                    provider.getFee()
                 } else {
-                    return result
+                    result
                 }
             }
         }
     }
 
-    suspend fun checkIsAccountCreated(address: String): Boolean {
+    override suspend fun checkIsAccountCreated(address: String): Boolean {
         return provider.checkIsAccountCreated(address)
     }
 }

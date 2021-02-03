@@ -4,7 +4,7 @@ import com.ripple.core.coretypes.AccountID
 import com.ripple.core.coretypes.uint.UInt32
 import com.ripple.crypto.ecdsa.ECDSASignature
 import com.ripple.utils.HashUtils
-import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkManager
+import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
 import com.tangem.blockchain.blockchains.xrp.override.XrpPayment
 import com.tangem.blockchain.blockchains.xrp.override.XrpSignedTransaction
 import com.tangem.blockchain.common.*
@@ -14,7 +14,7 @@ import org.bitcoinj.core.ECKey
 import java.math.BigInteger
 import com.ripple.core.coretypes.Amount as XrpAmount
 
-class XrpTransactionBuilder(private val networkManager: XrpNetworkManager, publicKey: ByteArray) {
+class XrpTransactionBuilder(private val networkService: XrpNetworkService, publicKey: ByteArray) {
     var sequence: Long? = null
     var minReserve = 20.toBigDecimal()
     val blockchain = Blockchain.XRP
@@ -38,7 +38,7 @@ class XrpTransactionBuilder(private val networkManager: XrpNetworkManager, publi
             xAddressDestinationTag
         }
 
-        if (!networkManager.checkIsAccountCreated(destinationAddress)
+        if (!networkService.checkIsAccountCreated(destinationAddress)
                 && transactionData.amount.value!! < minReserve) {
             return Result.Failure(
                     CreateAccountUnderfunded(Amount(minReserve, blockchain))
@@ -84,5 +84,5 @@ class XrpTransactionBuilder(private val networkManager: XrpNetworkManager, publi
         return ecdsaSignature.encodeToDER()
     }
 
-    data class XrpTransactionExtras(val destinationTag: Long): TransactionExtras
+    data class XrpTransactionExtras(val destinationTag: Long) : TransactionExtras
 }
