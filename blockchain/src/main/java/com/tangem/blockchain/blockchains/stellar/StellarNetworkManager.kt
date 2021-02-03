@@ -20,18 +20,21 @@ import java.net.URISyntaxException
 import java.text.SimpleDateFormat
 import java.util.*
 
-class StellarNetworkManager(isTestNet: Boolean = false) {
+class StellarNetworkManager : StellarNetworkService {
     private val blockchain = Blockchain.Stellar
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
     private val recordsLimitCap = 200
     private val decimals = blockchain.decimals()
 
-    val network: Network = if (isTestNet) Network.TESTNET else Network.PUBLIC
-    private val stellarServer by lazy {
-        Server(if (isTestNet) API_STELLAR_TESTNET else API_STELLAR)
-    }
+    val network: Network = Network.PUBLIC
+    private val stellarServer by lazy { Server(API_STELLAR) }
 
-    suspend fun sendTransaction(transaction: String): SimpleResult {
+//    val network: Network = if (isTestNet) Network.TESTNET else Network.PUBLIC
+//    private val stellarServer by lazy {
+//        Server(if (isTestNet) API_STELLAR_TESTNET else API_STELLAR)
+//    }
+
+    override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
             val response = stellarServer.submitTransaction(Transaction.fromEnvelopeXdr(transaction, network))
             if (response.isSuccess) {
@@ -46,7 +49,7 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
         }
     }
 
-    suspend fun checkIsAccountCreated(address: String): Boolean { // TODO: return result?
+    override suspend fun checkIsAccountCreated(address: String): Boolean { // TODO: return result?
         try {
             stellarServer.accounts().account(address)
             return true
@@ -58,7 +61,7 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
         }
     }
 
-    suspend fun getInfo(accountId: String): Result<StellarResponse> {
+    override suspend fun getInfo(accountId: String): Result<StellarResponse> {
         return try {
             coroutineScope {
                 val accountResponseDeferred =
@@ -109,24 +112,25 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
         }
     }
 
-    suspend fun getSignatureCount(accountId: String): Result<Int> {
+    override suspend fun getSignatureCount(accountId: String): Result<Int> {
         return try {
-            var operationsPage = stellarServer.operations().forAccount(accountId)
-                    .limit(recordsLimitCap)
-                    .includeFailed(true)
-                    .execute()
-            val operations = operationsPage.records
+            coroutineScope {
+                var operationsPage = stellarServer.operations().forAccount(accountId)
+                        .limit(recordsLimitCap)
+                        .includeFailed(true)
+                        .execute()
+                val operations = operationsPage.records
 
-            while (operationsPage.records.size == recordsLimitCap) {
-                try {
-                    operationsPage = operationsPage.getNextPage(stellarServer.httpClient)
-                    operations.addAll(operationsPage.records)
-                } catch (e: URISyntaxException) {
-                    break
+                while (operationsPage.records.size == recordsLimitCap) {
+                    try {
+                        operationsPage = operationsPage.getNextPage(stellarServer.httpClient)
+                        operations.addAll(operationsPage.records)
+                    } catch (e: URISyntaxException) {
+                        break
+                    }
                 }
+                Result.Success(operations.filter { it.sourceAccount == accountId }.size)
             }
-            Result.Success(operations.filter { it.sourceAccount == accountId }.size)
-
         } catch (error: Exception) {
             Result.Failure(error)
         }

@@ -3,7 +3,7 @@ package com.tangem.blockchain.network.blockchair
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinProvider
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
@@ -15,7 +15,7 @@ import java.math.RoundingMode
 import java.text.SimpleDateFormat
 import java.util.*
 
-class BlockchairProvider(private val api: BlockchairApi, blockchain: Blockchain) : BitcoinProvider {
+class BlockchairProvider(private val api: BlockchairApi, blockchain: Blockchain) : BitcoinNetworkService {
 
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss")
 
