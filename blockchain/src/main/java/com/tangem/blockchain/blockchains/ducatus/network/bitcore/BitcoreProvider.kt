@@ -3,7 +3,7 @@ package com.tangem.blockchain.blockchains.ducatus.network.bitcore
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinProvider
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -14,7 +14,7 @@ import kotlinx.coroutines.coroutineScope
 
 // Now it supports only Ducatus, due to Ducatus Api strange behaviour. Transactions aren't checked.
 // Don't have too much time to spend on this stillborn coin.
-open class BitcoreProvider(private val api: BitcoreApi) : BitcoinProvider {
+open class BitcoreProvider(private val api: BitcoreApi) : BitcoinNetworkService {
     private val decimals = Blockchain.Ducatus.decimals()
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
