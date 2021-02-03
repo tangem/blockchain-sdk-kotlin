@@ -3,7 +3,7 @@ package com.tangem.blockchain.network.blockcypher
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinProvider
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
@@ -14,7 +14,7 @@ import retrofit2.HttpException
 import java.text.SimpleDateFormat
 import java.util.*
 
-class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchain) : BitcoinProvider {
+class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchain) : BitcoinNetworkService {
     private val limitCap = 2000
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
 
