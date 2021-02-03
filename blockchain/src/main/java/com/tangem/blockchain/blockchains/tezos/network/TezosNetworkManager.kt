@@ -9,7 +9,7 @@ import retrofit2.HttpException
 import java.io.IOException
 import java.math.BigDecimal
 
-class TezosNetworkManager {
+class TezosNetworkManager : TezosNetworkService {
     private val tezosProvider by lazy {
         val api = createRetrofitInstance(API_TEZOS)
                 .create(TezosApi::class.java)
@@ -28,95 +28,89 @@ class TezosNetworkManager {
         provider = if (provider == tezosProvider) tezosReserveProvider else tezosProvider
     }
 
-    suspend fun getInfo(address: String): Result<TezosInfoResponse> {
-        val result = provider.getInfo(address)
-        when (result) {
-            is Result.Success -> return result
+    override suspend fun getInfo(address: String): Result<TezosInfoResponse> {
+        return when (val result = provider.getInfo(address)) {
+            is Result.Success -> result
             is Result.Failure -> {
                 if (result.error is IOException || result.error is HttpException) {
                     changeProvider()
-                    return provider.getInfo(address)
+                    provider.getInfo(address)
                 } else {
-                    return result
+                    result
                 }
             }
         }
     }
 
-    suspend fun isPublicKeyRevealed(address: String): Result<Boolean> {
-        val result = provider.isPublicKeyRevealed(address)
-        when (result) {
-            is Result.Success -> return result
+    override suspend fun isPublicKeyRevealed(address: String): Result<Boolean> {
+        return when (val result = provider.isPublicKeyRevealed(address)) {
+            is Result.Success -> result
             is Result.Failure -> {
                 if (result.error is IOException || result.error is HttpException) {
                     changeProvider()
-                    return provider.isPublicKeyRevealed(address)
+                    provider.isPublicKeyRevealed(address)
                 } else {
-                    return result
+                    result
                 }
             }
         }
     }
 
-    suspend fun getHeader(): Result<TezosHeader> {
-        val result = provider.getHeader()
-        when (result) {
-            is Result.Success -> return result
+    override suspend fun getHeader(): Result<TezosHeader> {
+        return when (val result = provider.getHeader()) {
+            is Result.Success -> result
             is Result.Failure -> {
                 if (result.error is IOException || result.error is HttpException) {
                     changeProvider()
-                    return provider.getHeader()
+                    provider.getHeader()
                 } else {
-                    return result
+                    result
                 }
             }
         }
     }
 
-    suspend fun forgeContents(headerHash: String, contents: List<TezosOperationContent>): Result<String> {
-        val result = provider.forgeContents(headerHash, contents)
-        when (result) {
-            is Result.Success -> return result
+    override suspend fun forgeContents(headerHash: String, contents: List<TezosOperationContent>): Result<String> {
+        return when (val result = provider.forgeContents(headerHash, contents)) {
+            is Result.Success -> result
             is Result.Failure -> {
                 if (result.error is IOException || result.error is HttpException) {
                     changeProvider()
-                    return provider.forgeContents(headerHash, contents)
+                    provider.forgeContents(headerHash, contents)
                 } else {
-                    return result
+                    result
                 }
             }
         }
     }
 
-    suspend fun checkTransaction(
+    override suspend fun checkTransaction(
             header: TezosHeader,
             contents: List<TezosOperationContent>,
             signature: ByteArray
     ): SimpleResult {
-        val result = provider.checkTransaction(header, contents, signature)
-        when (result) {
-            is SimpleResult.Success -> return result
+        return when (val result = provider.checkTransaction(header, contents, signature)) {
+            is SimpleResult.Success -> result
             is SimpleResult.Failure -> {
                 if (result.error is IOException || result.error is HttpException) {
                     changeProvider()
-                    return provider.checkTransaction(header, contents, signature)
+                    provider.checkTransaction(header, contents, signature)
                 } else {
-                    return result
+                    result
                 }
             }
         }
     }
 
-    suspend fun sendTransaction(transaction: String): SimpleResult {
-        val result = provider.sendTransaction(transaction)
-        when (result) {
-            is SimpleResult.Success -> return result
+    override suspend fun sendTransaction(transaction: String): SimpleResult {
+        return when (val result = provider.sendTransaction(transaction)) {
+            is SimpleResult.Success -> result
             is SimpleResult.Failure -> {
                 if (result.error is IOException || result.error is HttpException) {
                     changeProvider()
-                    return provider.sendTransaction(transaction)
+                    provider.sendTransaction(transaction)
                 } else {
-                    return result
+                    result
                 }
             }
         }

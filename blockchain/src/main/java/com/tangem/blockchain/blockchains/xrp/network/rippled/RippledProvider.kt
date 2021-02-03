@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.xrp.network.rippled
 
 import com.tangem.blockchain.blockchains.xrp.network.XrpFeeResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpInfoResponse
+import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -11,10 +12,10 @@ import kotlinx.coroutines.coroutineScope
 import org.stellar.sdk.requests.ErrorResponse
 import java.io.IOException
 
-class RippledProvider(private val api: RippledApi) {
+class RippledProvider(private val api: RippledApi) : XrpNetworkService {
     private val decimals = Blockchain.XRP.decimals()
 
-    suspend fun getInfo(address: String): Result<XrpInfoResponse> {
+    override suspend fun getInfo(address: String): Result<XrpInfoResponse> {
         return try {
             coroutineScope {
                 val accountBody = makeAccountBody(address, validated = true)
@@ -59,7 +60,7 @@ class RippledProvider(private val api: RippledApi) {
         }
     }
 
-    suspend fun getFee(): Result<XrpFeeResponse> {
+    override suspend fun getFee(): Result<XrpFeeResponse> {
         return try {
             val feeData = retryIO { api.getFee() }
             Result.Success(XrpFeeResponse(
@@ -72,7 +73,7 @@ class RippledProvider(private val api: RippledApi) {
         }
     }
 
-    suspend fun sendTransaction(transaction: String): SimpleResult {
+    override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
             val submitBody = makeSubmitBody(transaction)
             val submitData = retryIO { api.submitTransaction(submitBody) }
@@ -87,7 +88,7 @@ class RippledProvider(private val api: RippledApi) {
         }
     }
 
-    suspend fun checkIsAccountCreated(address: String): Boolean { // TODO: return result?
+    override suspend fun checkIsAccountCreated(address: String): Boolean { // TODO: return result?
         return try {
             val accountBody = makeAccountBody(address, validated = true)
             val accountData = retryIO { api.getAccount(accountBody) }

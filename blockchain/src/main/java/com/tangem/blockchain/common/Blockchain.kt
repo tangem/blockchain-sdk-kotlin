@@ -25,7 +25,7 @@ enum class Blockchain(
     Litecoin("LTC", "LTC", "Litecoin"),
     Ducatus("DUC", "DUC", "Ducatus"),
     Ethereum("ETH", "ETH", "Ethereum"),
-    EthereumTestnet("ETH/test", "ETH", "Ethereum Testnet"),
+    EthereumTestnet("ETH/test", "ETHt", "Ethereum Testnet"),
     RSK("RSK", "RBTC", "RSK"),
     Cardano("CARDANO", "ADA", "Cardano"),
     CardanoShelley("CARDANO-S", "ADA", "Cardano"),

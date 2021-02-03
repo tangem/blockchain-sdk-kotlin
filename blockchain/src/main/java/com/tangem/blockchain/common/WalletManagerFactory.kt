@@ -88,12 +88,12 @@ object WalletManagerFactory {
                 )
             }
             Blockchain.Stellar -> {
-                val networkManager = StellarNetworkManager()
+                val networkService = StellarNetworkManager()
 
                 StellarWalletManager(
                         cardId, wallet,
-                        StellarTransactionBuilder(networkManager, walletPublicKey),
-                        networkManager,
+                        StellarTransactionBuilder(networkService, walletPublicKey),
+                        networkService,
                         presetTokens
                 )
             }
@@ -105,12 +105,12 @@ object WalletManagerFactory {
                 )
             }
             Blockchain.XRP -> {
-                val networkManager = XrpNetworkManager()
+                val networkService = XrpNetworkManager()
 
                 XrpWalletManager(
                         cardId, wallet,
-                        XrpTransactionBuilder(networkManager, walletPublicKey),
-                        networkManager
+                        XrpTransactionBuilder(networkService, walletPublicKey),
+                        networkService
                 )
             }
             Blockchain.Binance -> {

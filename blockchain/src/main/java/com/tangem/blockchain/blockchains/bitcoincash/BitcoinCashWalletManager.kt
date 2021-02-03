@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.bitcoincash
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.TransactionSender
 import com.tangem.blockchain.common.Wallet
@@ -11,8 +12,8 @@ class BitcoinCashWalletManager(
         cardId: String,
         wallet: Wallet,
         transactionBuilder: BitcoinCashTransactionBuilder,
-        networkManager: BitcoinCashNetworkManager
-) : BitcoinWalletManager(cardId, wallet, transactionBuilder, networkManager), TransactionSender {
+        networkService: BitcoinNetworkService
+) : BitcoinWalletManager(cardId, wallet, transactionBuilder, networkService), TransactionSender {
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
         val minimalFee = BigDecimal("0.00001")
         when (val result = super.getFee(amount, destination)) {
