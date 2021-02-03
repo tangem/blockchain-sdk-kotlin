@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.litecoin
 
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinProvider
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
 import com.tangem.blockchain.network.blockcypher.BlockcypherProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherApi
 import com.tangem.blockchain.common.Blockchain
@@ -17,7 +17,7 @@ import retrofit2.HttpException
 import java.io.IOException
 
 
-class LitecoinNetworkManager : BitcoinProvider {
+class LitecoinNetworkManager : BitcoinNetworkService {
     private val blockchain = Blockchain.Litecoin
 
     private val blockchairProvider by lazy {
@@ -32,7 +32,7 @@ class LitecoinNetworkManager : BitcoinProvider {
         BlockcypherProvider(api, blockchain)
     }
 
-    private var provider: BitcoinProvider = blockchairProvider
+    private var provider: BitcoinNetworkService = blockchairProvider
 
     private fun changeProvider() {
         provider = if (provider == blockchairProvider) blockcypherProvider else blockchairProvider
