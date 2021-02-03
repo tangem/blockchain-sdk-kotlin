@@ -11,15 +11,17 @@ import java.math.BigInteger
 import java.util.*
 
 class StellarTransactionBuilder(
-        private val networkManager: StellarNetworkManager,
-        private val publicKey: ByteArray
+        private val networkService: StellarNetworkService,
+        private val publicKey: ByteArray,
+        private val calendar: Calendar = Calendar.getInstance(),
 ) {
 
+    val network: Network = Network.PUBLIC
     private lateinit var transaction: Transaction
     var minReserve = 1.toBigDecimal()
     private val blockchain = Blockchain.Stellar
 
-    suspend fun buildToSign(transactionData: TransactionData, sequence: Long, fee: Int): Result<ByteArray> {
+    suspend fun buildToSign(transactionData: TransactionData, sequence: Long, fee: Int): Result<ByteArray> { //TODO: use fee from transaction data
 
         val amount = transactionData.amount
         val destinationKeyPair = KeyPair.fromAccountId(transactionData.destinationAddress)
@@ -35,7 +37,7 @@ class StellarTransactionBuilder(
         return when (amount.type) {
             is AmountType.Coin -> {
                 val operation =
-                        if (networkManager.checkIsAccountCreated(transactionData.destinationAddress)) {
+                        if (networkService.checkIsAccountCreated(transactionData.destinationAddress)) {
                             PaymentOperation.Builder(
                                     destinationKeyPair.accountId,
                                     AssetTypeNative(),
@@ -92,13 +94,13 @@ class StellarTransactionBuilder(
 
         val accountID = AccountID()
         accountID.accountID = sourceKeyPair.xdrPublicKey
-        val currentTime = Calendar.getInstance().timeInMillis / 1000
+        val currentTime = calendar.timeInMillis / 1000
         val minTime = 0L
         val maxTime = currentTime + 120
 
         val transactionBuilder = Transaction.Builder(
                 Account(sourceKeyPair.accountId, sequence),
-                networkManager.network
+                network
         )
         transactionBuilder
                 .addOperation(this)
