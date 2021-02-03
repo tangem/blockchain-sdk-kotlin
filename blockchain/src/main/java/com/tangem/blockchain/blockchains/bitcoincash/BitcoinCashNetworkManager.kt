@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.bitcoincash
 
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinProvider
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -11,7 +11,7 @@ import com.tangem.blockchain.network.blockchair.BlockchairApi
 import com.tangem.blockchain.network.blockchair.BlockchairProvider
 import com.tangem.blockchain.network.createRetrofitInstance
 
-class BitcoinCashNetworkManager : BitcoinProvider {
+class BitcoinCashNetworkManager : BitcoinNetworkService {
     private val blockchain = Blockchain.BitcoinCash
 
     private val blockchairProvider by lazy {
