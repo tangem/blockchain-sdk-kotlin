@@ -17,7 +17,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 
-class EthereumNetworkManager(blockchain: Blockchain) {
+class EthereumNetworkManager(blockchain: Blockchain) : EthereumNetworkService {
     private val infuraPath = "v3/"
 
     private val api: EthereumApi by lazy {
@@ -61,8 +61,7 @@ class EthereumNetworkManager(blockchain: Blockchain) {
     private val provider: EthereumProvider by lazy { EthereumProvider(api, apiKey) }
     private val decimals = Blockchain.Ethereum.decimals()
 
-    suspend fun getInfo(address: String, tokens: Set<Token>)
-            : Result<EthereumInfoResponse> {
+    override suspend fun getInfo(address: String, tokens: Set<Token>): Result<EthereumInfoResponse> {
         return try {
             coroutineScope {
                 val balanceResponseDeferred = retryIO { async { provider.getBalance(address) } }
@@ -112,7 +111,7 @@ class EthereumNetworkManager(blockchain: Blockchain) {
         }
     }
 
-    suspend fun sendTransaction(transaction: String): SimpleResult {
+    override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
             val response = retryIO { provider.sendTransaction(transaction) }
             if (response.error == null) {
@@ -125,7 +124,7 @@ class EthereumNetworkManager(blockchain: Blockchain) {
         }
     }
 
-    suspend fun getFee(to: String, from: String, data: String?, fallbackGasLimit: Long?): Result<EthereumFeeResponse> {
+    override suspend fun getFee(to: String, from: String, data: String?, fallbackGasLimit: Long?): Result<EthereumFeeResponse> {
         return try {
             coroutineScope {
                 val gasLimitDeferred = retryIO { async { provider.getGasLimit(to, from, data) } }
@@ -149,7 +148,7 @@ class EthereumNetworkManager(blockchain: Blockchain) {
         }
     }
 
-    suspend fun getSignatureCount(address: String): Result<Int> {
+    override suspend fun getSignatureCount(address: String): Result<Int> {
         return blockcypherProvider?.getSignatureCount(address)
                 ?: Result.Failure(Exception("No signature count provider found"))
     }

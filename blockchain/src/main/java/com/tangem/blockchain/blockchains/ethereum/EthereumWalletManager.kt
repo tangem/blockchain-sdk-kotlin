@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.ethereum
 
 import android.util.Log
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
-import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkManager
+import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -16,7 +16,7 @@ class EthereumWalletManager(
         cardId: String,
         wallet: Wallet,
         private val transactionBuilder: EthereumTransactionBuilder,
-        private val networkManager: EthereumNetworkManager,
+        private val networkService: EthereumNetworkService,
         presetTokens: Set<Token>
 ) : WalletManager(cardId, wallet, presetTokens), TransactionSender, SignatureCountValidator {
 
@@ -27,7 +27,7 @@ class EthereumWalletManager(
 
     override suspend fun update() {
 
-        when (val result = networkManager.getInfo(wallet.address, presetTokens)) {
+        when (val result = networkService.getInfo(wallet.address, presetTokens)) {
             is Result.Failure -> updateError(result.error)
             is Result.Success -> updateWallet(result.data)
         }
@@ -63,7 +63,7 @@ class EthereumWalletManager(
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder
                         .buildToSend(signerResponse.data.signature, transactionToSign)
-                val sendResult = networkManager
+                val sendResult = networkService
                         .sendTransaction("0x" + transactionToSend.toHexString())
 
                 if (sendResult is SimpleResult.Success) {
@@ -87,7 +87,7 @@ class EthereumWalletManager(
             data = "0x" + transactionBuilder.createErc20TransferData(destination, amount).toHexString()
         }
 
-        return when (val result = networkManager.getFee(to, from, data, fallbackGasLimit)) {
+        return when (val result = networkService.getFee(to, from, data, fallbackGasLimit)) {
             is Result.Success -> {
                 transactionBuilder.gasLimit = result.data.gasLimit.toBigInteger()
                 val feeValues: List<BigDecimal> = result.data.fees
@@ -99,7 +99,7 @@ class EthereumWalletManager(
     }
 
     override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
-        return when (val result = networkManager.getSignatureCount(wallet.address)) {
+        return when (val result = networkService.getSignatureCount(wallet.address)) {
             is Result.Success -> if (result.data == signedHashes) {
                 SimpleResult.Success
             } else {
