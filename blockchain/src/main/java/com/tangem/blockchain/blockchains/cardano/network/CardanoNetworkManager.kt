@@ -12,7 +12,7 @@ import com.tangem.blockchain.network.createRetrofitInstance
 import retrofit2.HttpException
 import java.io.IOException
 
-class CardanoNetworkManager {
+class CardanoNetworkManager: CardanoNetworkService {
     private val adaliteProvider by lazy {
         val api = createRetrofitInstance(API_ADALITE)
                 .create(AdaliteApi::class.java)
@@ -31,7 +31,7 @@ class CardanoNetworkManager {
         provider = if (provider == adaliteProvider) adaliteReserveProvider else adaliteProvider
     }
 
-    suspend fun getInfo(addresses: Set<String>): Result<CardanoAddressResponse> {
+    override suspend fun getInfo(addresses: Set<String>): Result<CardanoAddressResponse> {
         return when (val result = provider.getInfo(addresses)) {
             is Result.Success -> result
             is Result.Failure -> {
@@ -45,7 +45,7 @@ class CardanoNetworkManager {
         }
     }
 
-    suspend fun sendTransaction(transaction: String): SimpleResult {
+    override suspend fun sendTransaction(transaction: String): SimpleResult {
         when (val result = provider.sendTransaction(transaction)) {
             is SimpleResult.Success -> return result
             is SimpleResult.Failure -> {
