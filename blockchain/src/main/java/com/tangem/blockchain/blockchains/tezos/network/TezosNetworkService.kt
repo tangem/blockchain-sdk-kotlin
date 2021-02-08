@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.tezos.network
 
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import java.math.BigDecimal
 
 interface TezosNetworkService {
     suspend fun getInfo(address: String): Result<TezosInfoResponse>
@@ -13,5 +14,16 @@ interface TezosNetworkService {
             contents: List<TezosOperationContent>,
             signature: ByteArray
     ): SimpleResult
+
     suspend fun sendTransaction(transaction: String): SimpleResult
 }
+
+data class TezosInfoResponse(
+        val balance: BigDecimal,
+        val counter: Long
+)
+
+data class TezosHeader(
+        val hash: String,
+        val protocol: String
+)
