@@ -8,5 +8,5 @@ abstract class AddressService {
 }
 
 interface MultisigAddressProvider {
-    fun makeMultisigAddress(walletPublicKey: ByteArray, pairPublicKey: ByteArray): Set<Address>
+    fun makeMultisigAddresses(walletPublicKey: ByteArray, pairPublicKey: ByteArray): Set<Address>
 }
