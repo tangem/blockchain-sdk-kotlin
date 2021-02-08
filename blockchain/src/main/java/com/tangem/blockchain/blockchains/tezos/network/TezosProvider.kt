@@ -5,19 +5,24 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
+import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.hexToBytes
 import org.bitcoinj.core.Base58
 
-class TezosProvider(private val api: TezosApi) : TezosNetworkService {
+class TezosProvider(baseUrl: String) : TezosNetworkService {
+
+    private val api: TezosApi by lazy {
+        createRetrofitInstance(baseUrl).create(TezosApi::class.java)
+    }
     private val decimals = Blockchain.Tezos.decimals()
 
     override suspend fun getInfo(address: String): Result<TezosInfoResponse> {
         return try {
-                val addressData = retryIO { api.getAddressData(address) }
-                Result.Success(TezosInfoResponse(
-                        balance = addressData.balance!!.toBigDecimal().movePointLeft(decimals),
-                        counter = addressData.counter!!
-                ))
+            val addressData = retryIO { api.getAddressData(address) }
+            Result.Success(TezosInfoResponse(
+                    balance = addressData.balance!!.toBigDecimal().movePointLeft(decimals),
+                    counter = addressData.counter!!
+            ))
         } catch (exception: Exception) {
             Result.Failure(exception)
         }
