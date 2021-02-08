@@ -15,14 +15,13 @@ class DucatusAddressTest {
         val walletPublicKey = "0485D520C8B907F0BC5E03FCBBAC212CCD270764BBFF4990A28653A2FB0D656C342DF143C4D52C43582289E20A81D5D014C1384A1FFFEA1D121903AD7ED35A01EA".hexToBytes()
         val expected = "Ly3SZetcgr5gkZMwiNwVrts2z2r3jYieAG"
 
-        Truth.assertThat(addressService.makeAddress(walletPublicKey))
-                .isEqualTo(expected)
+        Truth.assertThat(addressService.makeAddress(walletPublicKey)).isEqualTo(expected)
     }
 
     @Test
     fun validateCorrectAddress() {
         val address = "Ly3SZetcgr5gkZMwiNwVrts2z2r3jYieAG"
-        Truth.assertThat(addressService.validate(address))
-                .isTrue()
+
+        Truth.assertThat(addressService.validate(address)).isTrue()
     }
 }
