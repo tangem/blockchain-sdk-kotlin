@@ -21,7 +21,7 @@ class BitcoinCashAddressTest {
     @Test
     fun validateCorrectAddress() {
         val address = "bitcoincash:qp7atyzvetwq8a0x02y2snvnns5jfwnzacf9vfa4x3"
-        Truth.assertThat(addressService.validate(address))
-                .isTrue()
+
+        Truth.assertThat(addressService.validate(address)).isTrue()
     }
 }
