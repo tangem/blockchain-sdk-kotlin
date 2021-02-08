@@ -4,27 +4,21 @@ import com.squareup.moshi.JsonClass
 import retrofit2.http.*
 
 interface BlockcypherApi {
-    @GET("v1/{blockchain}/{network}")
+    @GET("./")
     suspend fun getFee(
-            @Path("blockchain") blockchain: String,
-            @Path("network") network: String,
             @Query("token") token: String? = null
     ): BlockcypherFee
 
-    @GET("v1/{blockchain}/{network}/addrs/{address}?includeScript=true")
+    @GET("addrs/{address}?includeScript=true")
     suspend fun getAddressData(
-            @Path("blockchain") blockchain: String,
-            @Path("network") network: String,
             @Path("address") address: String,
             @Query("limit") limit: Int? = null,
             @Query("token") token: String? = null
     ): BlockcypherAddress
 
     @Headers("Content-Type: application/json")
-    @POST("v1/{blockchain}/{network}/txs/push")
+    @POST("txs/push")
     suspend fun sendTransaction(
-            @Path("blockchain") blockchain: String,
-            @Path("network") network: String,
             @Body body: BlockcypherSendBody,
             @Query("token") token: String
     ): BlockcypherTx
