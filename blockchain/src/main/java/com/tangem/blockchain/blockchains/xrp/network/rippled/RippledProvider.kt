@@ -7,12 +7,15 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
+import com.tangem.blockchain.network.createRetrofitInstance
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import org.stellar.sdk.requests.ErrorResponse
-import java.io.IOException
 
-class RippledProvider(private val api: RippledApi) : XrpNetworkService {
+class RippledProvider(baseUrl: String) : XrpNetworkService {
+
+    private val api: RippledApi by lazy {
+        createRetrofitInstance(baseUrl).create(RippledApi::class.java)
+    }
     private val decimals = Blockchain.XRP.decimals()
 
     override suspend fun getInfo(address: String): Result<XrpInfoResponse> {
@@ -98,7 +101,6 @@ class RippledProvider(private val api: RippledApi) : XrpNetworkService {
         }
     }
 }
-
 
 
 private fun makeAccountBody(address: String, validated: Boolean): RippledBody {
