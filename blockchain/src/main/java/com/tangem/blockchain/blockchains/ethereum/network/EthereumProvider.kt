@@ -1,6 +1,10 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
-class EthereumProvider(private val api: EthereumApi, private val apiKey: String) {
+import com.tangem.blockchain.network.createRetrofitInstance
+
+class EthereumProvider(baseUrl: String) {
+
+    private val api = createRetrofitInstance(baseUrl).create(EthereumApi::class.java)
 
     suspend fun getBalance(address: String) =
             createEthereumBody(
@@ -50,5 +54,5 @@ class EthereumProvider(private val api: EthereumApi, private val apiKey: String)
             data = "0x70a08231000000000000000000000000" + address.substring(2),
     )
 
-    private suspend fun EthereumBody.post() = api.post(this, apiKey)
+    private suspend fun EthereumBody.post() = api.post(this)
 }

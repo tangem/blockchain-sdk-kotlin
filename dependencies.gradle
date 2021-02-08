@@ -1,5 +1,5 @@
 ext.versions = [
         kotlin      : '1.4.10',
-        build_gradle: '4.1.1',
+        build_gradle: '4.1.2',
         tangem      : '1.86.0'
 ]

@@ -3,6 +3,8 @@ package com.tangem.blockchain.network.blockchair
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.retryIO
+import com.tangem.blockchain.network.API_BLOCKCHAIR
+import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.isZero
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -10,12 +12,14 @@ import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.*
 
-class BlockchairEthProvider(private val api: BlockchairApi) {
+class BlockchairEthProvider(private val apiKey: String? = null) {
 
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss")
-
+    private val api: BlockchairApi by lazy {
+        val blockchainPath = "ethereum/"
+        createRetrofitInstance(API_BLOCKCHAIR + blockchainPath).create(BlockchairApi::class.java)
+    }
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.US)
     private val blockchain = Blockchain.Ethereum
-    private val blockchainPath = "ethereum"
 
     suspend fun getTransactions(address: String, tokens: Set<Token>): Result<List<TransactionData>> {
         return try {
@@ -24,9 +28,9 @@ class BlockchairEthProvider(private val api: BlockchairApi) {
                     async {
                         api.getAddressData(
                                 address = address,
-                                blockchain = blockchainPath,
                                 transactionDetails = true,
-                                limit = 50
+                                limit = 50,
+                                key = apiKey
                         )
                     }
                 }
@@ -36,20 +40,22 @@ class BlockchairEthProvider(private val api: BlockchairApi) {
                             api.getTokenHolderData(
                                     address = address,
                                     contractAddress = it.contractAddress,
-                                    blockchain = blockchainPath,
-                                    limit = 50
+                                    limit = 50,
+                                    key = apiKey
                             )
                         }
                     }
                 }
 
                 val calls = addressDeferred.await().data!!
-                        .getValue(address.toLowerCase()).calls ?: emptyList()
+                        .getValue(address.toLowerCase(Locale.US)).calls ?: emptyList()
 
                 val tokenCalls = mutableListOf<BlockchairCallInfo>()
                 tokenHolderDeferredList.forEach {
-                    tokenCalls.addAll(it.await().data.getValue(address.toLowerCase()).transactions
-                            ?: emptyList())
+                    tokenCalls.addAll(
+                            it.await().data
+                                    .getValue(address.toLowerCase(Locale.US)).transactions
+                                    ?: emptyList())
                 }
 
                 val coinTransactions = calls.map { it.toTransactionData(tokens) }
@@ -69,7 +75,7 @@ class BlockchairEthProvider(private val api: BlockchairApi) {
             Amount(value, blockchain)
         } else { // token transaction
             val value = BigDecimal(value).movePointLeft(tokenDecimals!!)
-            Amount(tokens.find { it.contractAddress == contractAddress}!!, value)
+            Amount(tokens.find { it.contractAddress == contractAddress }!!, value)
         }
 
         val status =
