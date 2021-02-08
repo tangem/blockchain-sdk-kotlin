@@ -49,9 +49,9 @@ enum class Blockchain(
     fun makeAddresses(walletPublicKey: ByteArray): Set<Address> =
             getAddressService().makeAddresses(walletPublicKey)
 
-    fun makeMultisigAddress(walletPublicKey: ByteArray, pairPublicKey: ByteArray): Set<Address>? {
+    fun makeMultisigAddresses(walletPublicKey: ByteArray, pairPublicKey: ByteArray): Set<Address>? {
         return (getAddressService() as? MultisigAddressProvider)
-                ?.makeMultisigAddress(walletPublicKey, pairPublicKey)
+                ?.makeMultisigAddresses(walletPublicKey, pairPublicKey)
     }
 
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
