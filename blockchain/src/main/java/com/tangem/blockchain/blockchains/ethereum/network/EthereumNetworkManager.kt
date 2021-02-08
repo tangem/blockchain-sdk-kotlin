@@ -6,10 +6,10 @@ import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
-import com.tangem.blockchain.network.*
-import com.tangem.blockchain.network.blockchair.BlockchairApi
+import com.tangem.blockchain.network.API_INFURA
+import com.tangem.blockchain.network.API_INFURA_TESTNET
+import com.tangem.blockchain.network.API_RSK
 import com.tangem.blockchain.network.blockchair.BlockchairEthProvider
-import com.tangem.blockchain.network.blockcypher.BlockcypherApi
 import com.tangem.blockchain.network.blockcypher.BlockcypherProvider
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -17,48 +17,30 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 
-class EthereumNetworkManager(blockchain: Blockchain) : EthereumNetworkService {
-    private val infuraPath = "v3/"
+class EthereumNetworkManager(
+        blockchain: Blockchain,
+        infuraProjectId: String?,
+        private val blockcypherProvider: BlockcypherProvider? = null,
+        private val blockchairEthProvider: BlockchairEthProvider? = null
+) : EthereumNetworkService {
+    init {
+        if (infuraProjectId == null &&
+                (blockchain == Blockchain.Ethereum || blockchain == Blockchain.EthereumTestnet)
+        ) {
+            throw Exception("Infura project Id is required for Ethereum network manager")
+        }
+    }
 
-    private val api: EthereumApi by lazy {
-        val baseUrl = when (blockchain) {
-            Blockchain.Ethereum -> API_INFURA + infuraPath
-            Blockchain.EthereumTestnet -> API_INFURA_TESTNET + infuraPath
+    private val provider: EthereumProvider by lazy {
+        val infuraApiVersionPath = "v3/"
+        val ethereumApiUrl = when (blockchain) {
+            Blockchain.Ethereum -> API_INFURA + infuraApiVersionPath + infuraProjectId
+            Blockchain.EthereumTestnet -> API_INFURA_TESTNET + infuraApiVersionPath + infuraProjectId
             Blockchain.RSK -> API_RSK
             else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
         }
-        createRetrofitInstance(baseUrl).create(EthereumApi::class.java)
+        EthereumProvider(ethereumApiUrl)
     }
-
-    private val blockcypherProvider: BlockcypherProvider? by lazy { //TODO: remove
-        when (blockchain) {
-            Blockchain.Ethereum -> {
-                val blockcypherApi =
-                        createRetrofitInstance(API_BLOCKCYPHER).create(BlockcypherApi::class.java)
-                BlockcypherProvider(blockcypherApi, blockchain)
-            }
-            else -> null
-        }
-    }
-
-    private val blockchairProvider: BlockchairEthProvider? by lazy {
-        when (blockchain) {
-            Blockchain.Ethereum -> {
-                val blockchairApi =
-                        createRetrofitInstance(API_BLOCKCHAIR).create(BlockchairApi::class.java)
-                BlockchairEthProvider(blockchairApi)
-            }
-            else -> null
-        }
-    }
-
-    private val apiKey = when (blockchain) {
-        Blockchain.Ethereum, Blockchain.EthereumTestnet -> INFURA_API_KEY
-        Blockchain.RSK -> ""
-        else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
-    }
-
-    private val provider: EthereumProvider by lazy { EthereumProvider(api, apiKey) }
     private val decimals = Blockchain.Ethereum.decimals()
 
     override suspend fun getInfo(address: String, tokens: Set<Token>): Result<EthereumInfoResponse> {
@@ -69,7 +51,7 @@ class EthereumNetworkManager(blockchain: Blockchain) : EthereumNetworkService {
                 val pendingTxCountResponseDeferred =
                         retryIO { async { provider.getPendingTxCount(address) } }
                 val transactionsResponseDeferred =
-                        retryIO { async { blockchairProvider?.getTransactions(address, tokens) } }
+                        retryIO { async { blockchairEthProvider?.getTransactions(address, tokens) } }
                 val tokenBalancesDeferred = tokens.map {
                     it to retryIO { async { provider.getTokenBalance(address, it.contractAddress) } }
                 }.toMap()
@@ -188,5 +170,3 @@ data class EthereumFeeResponse(
         val fees: List<BigDecimal>,
         val gasLimit: Long
 )
-
-private const val INFURA_API_KEY = "613a0b14833145968b1f656240c7d245"
