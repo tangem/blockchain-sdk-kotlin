@@ -105,6 +105,7 @@ internal class WalletManagerFactoryTest {
     private fun makeWalletManager(dataString: String): WalletManager? {
         val responseApdu = ResponseApdu(dataString.hexToBytes())
         val card = ReadCommand().deserialize(SessionEnvironment(), responseApdu)
-        return WalletManagerFactory().makeWalletManager(card)
+        return WalletManagerFactory(BlockchainSdkConfig(infuraProjectId = "0"))
+                .makeWalletManager(card)
     }
 }
