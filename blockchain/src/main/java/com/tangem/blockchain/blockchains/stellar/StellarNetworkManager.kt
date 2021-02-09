@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.stellar
 
+import com.tangem.blockchain.R
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -36,13 +37,16 @@ class StellarNetworkManager : StellarNetworkService {
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
-            val response = stellarServer.submitTransaction(Transaction.fromEnvelopeXdr(transaction, network))
+            val response = stellarServer
+                    .submitTransaction(Transaction.fromEnvelopeXdr(transaction, network))
             if (response.isSuccess) {
                 SimpleResult.Success
             } else {
-                val trResult: String? = response.extras?.resultCodes?.transactionResultCode +
-                        (response.extras?.resultCodes?.operationsResultCodes?.getOrNull(0) ?: "")
-                SimpleResult.Failure(Exception(trResult ?: "transaction failed"))
+                var trResult: String = response.extras?.resultCodes?.transactionResultCode +
+                        (response.extras?.resultCodes?.operationsResultCodes?.getOrNull(0)
+                                ?: "")
+                if (trResult == "tx_too_late") trResult = "The system time is invalid"
+                SimpleResult.Failure(Exception(trResult))
             }
         } catch (error: Exception) {
             SimpleResult.Failure(error)
