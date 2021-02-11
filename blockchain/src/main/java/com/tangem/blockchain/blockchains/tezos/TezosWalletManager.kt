@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.tezos
 
 import android.util.Log
 import com.tangem.blockchain.blockchains.tezos.network.TezosInfoResponse
-import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkService
+import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -18,15 +18,14 @@ class TezosWalletManager(
         cardId: String,
         wallet: Wallet,
         private val transactionBuilder: TezosTransactionBuilder,
-        private val networkService: TezosNetworkService
+        private val networkProvider: TezosNetworkProvider
 ) : WalletManager(cardId, wallet), TransactionSender {
 
     private val blockchain = wallet.blockchain
     private var publicKeyRevealed: Boolean? = null
 
     override suspend fun update() {
-        val response = networkService.getInfo(wallet.address)
-        when (response) {
+        when (val response = networkProvider.getInfo(wallet.address)) {
             is Result.Success -> updateWallet(response.data)
             is Result.Failure -> updateError(response.error)
         }
@@ -58,12 +57,12 @@ class TezosWalletManager(
                     is Result.Success -> response.data
                 }
         val header =
-                when (val response = networkService.getHeader()) {
+                when (val response = networkProvider.getHeader()) {
                     is Result.Failure -> return Result.Failure(response.error)
                     is Result.Success -> response.data
                 }
         val forgedContents = //TODO: CHANGE FOR PRODUCTION, this is potential security vulnerability, transaction should be forged locally
-                when (val response = networkService.forgeContents(header.hash, contents)) {
+                when (val response = networkProvider.forgeContents(header.hash, contents)) {
                     is Result.Failure -> return Result.Failure(response.error)
                     is Result.Success -> response.data
                 }
@@ -75,11 +74,11 @@ class TezosWalletManager(
             is CompletionResult.Success -> signerResponse.data.signature
         }
 
-        return when (val response = networkService.checkTransaction(header, contents, signature)) {
+        return when (val response = networkProvider.checkTransaction(header, contents, signature)) {
             is SimpleResult.Failure -> response.toResultWithData(signerResponse.data)
             is SimpleResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signature,forgedContents)
-                val sendResult = networkService.sendTransaction(transactionToSend)
+                val sendResult = networkProvider.sendTransaction(transactionToSend)
 
                 if (sendResult is SimpleResult.Success) {
                     wallet.addOutgoingTransaction(transactionData)
@@ -94,8 +93,8 @@ class TezosWalletManager(
         var error: Result.Failure? = null
 
         coroutineScope {
-            val publicKeyRevealedDeferred = async { networkService.isPublicKeyRevealed(wallet.address) }
-            val destinationInfoDeferred = async { networkService.getInfo(destination) }
+            val publicKeyRevealedDeferred = async { networkProvider.isPublicKeyRevealed(wallet.address) }
+            val destinationInfoDeferred = async { networkProvider.getInfo(destination) }
 
             when (val result = publicKeyRevealedDeferred.await()) {
                 is Result.Failure -> error = result

@@ -2,14 +2,13 @@ package com.tangem.blockchain.blockchains.xrp
 
 import com.tangem.blockchain.blockchains.xrp.network.XrpFeeResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpInfoResponse
-import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkManager
-import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
+import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 
-class XrpNetworkServiceMock(
+class XrpNetworkProviderMock(
         private val isAccountCreatedResponse: Boolean = true
-) : XrpNetworkService {
+) : XrpNetworkProvider {
     override suspend fun getInfo(address: String): Result<XrpInfoResponse> {
         TODO("Not yet implemented")
     }
