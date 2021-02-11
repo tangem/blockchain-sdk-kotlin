@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.xrp.network.rippled
 
 import com.tangem.blockchain.blockchains.xrp.network.XrpFeeResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpInfoResponse
-import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
+import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -11,7 +11,7 @@ import com.tangem.blockchain.network.createRetrofitInstance
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
-class RippledProvider(baseUrl: String) : XrpNetworkService {
+class RippledProvider(baseUrl: String) : XrpNetworkProvider {
 
     private val api: RippledApi by lazy {
         createRetrofitInstance(baseUrl).create(RippledApi::class.java)
