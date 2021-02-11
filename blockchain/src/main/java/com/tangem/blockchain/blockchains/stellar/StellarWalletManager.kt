@@ -13,7 +13,7 @@ class StellarWalletManager(
         cardId: String,
         wallet: Wallet,
         private val transactionBuilder: StellarTransactionBuilder,
-        private val networkService: StellarNetworkService,
+        private val networkProvider: StellarNetworkProvider,
         presetTokens: Set<Token>
 ) : WalletManager(cardId, wallet, presetTokens), TransactionSender, SignatureCountValidator {
 
@@ -24,7 +24,7 @@ class StellarWalletManager(
     private var sequence = 0L
 
     override suspend fun update() {
-        when (val result = networkService.getInfo(wallet.address)) {
+        when (val result = networkProvider.getInfo(wallet.address)) {
             is Result.Failure -> updateError(result.error)
             is Result.Success -> updateWallet(result.data)
         }
@@ -75,7 +75,7 @@ class StellarWalletManager(
         return when (val signerResponse = signer.sign(hashes.toTypedArray(), cardId)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
-                val sendResult = networkService.sendTransaction(transactionToSend)
+                val sendResult = networkProvider.sendTransaction(transactionToSend)
 
                 if (sendResult is SimpleResult.Success) {
                     transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
@@ -94,7 +94,7 @@ class StellarWalletManager(
     }
 
     override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
-        return when (val result = networkService.getSignatureCount(wallet.address)) {
+        return when (val result = networkProvider.getSignatureCount(wallet.address)) {
             is Result.Success -> if (result.data == signedHashes) {
                 SimpleResult.Success
             } else {
