@@ -27,7 +27,7 @@ class XrpTransactionTest {
         val destinationAddress = "X7gd8rw2UJP3HSS9oxkDc3cYVgpJy4cR9R5TEjF9XoZYJ1p"
 
         val walletAddress = XrpAddressService().makeAddress(walletPublicKey)
-        val transactionBuilder = XrpTransactionBuilder(XrpNetworkServiceMock(), walletPublicKey)
+        val transactionBuilder = XrpTransactionBuilder(XrpNetworkProviderMock(), walletPublicKey)
         transactionBuilder.sequence = sequence
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
@@ -67,7 +67,7 @@ class XrpTransactionTest {
         val destinationAddress = "rnruxxLTbJUMNtFNBJ7X2xSiy1KE7ajUuH"
 
         val walletAddress = XrpAddressService().makeAddress(walletPublicKey)
-        val transactionBuilder = XrpTransactionBuilder(XrpNetworkServiceMock(), walletPublicKey)
+        val transactionBuilder = XrpTransactionBuilder(XrpNetworkProviderMock(), walletPublicKey)
         transactionBuilder.sequence = sequence
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
