@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.cardano
 
 import android.util.Log
 import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
-import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkService
+import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -11,12 +11,13 @@ import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import java.math.RoundingMode
+import java.util.*
 
 class CardanoWalletManager(
         cardId: String,
         wallet: Wallet,
         private val transactionBuilder: CardanoTransactionBuilder,
-        private val networkService: CardanoNetworkService
+        private val networkProvider: CardanoNetworkProvider
 ) : WalletManager(cardId, wallet), TransactionSender {
     init {
         dustValue = 1.toBigDecimal()
@@ -25,7 +26,7 @@ class CardanoWalletManager(
     private val blockchain = wallet.blockchain
 
     override suspend fun update() {
-        when (val response = networkService.getInfo(wallet.addresses.map { it.value }.toSet())) {
+        when (val response = networkProvider.getInfo(wallet.addresses.map { it.value }.toSet())) {
             is Result.Success -> updateWallet(response.data)
             is Result.Failure -> updateError(response.error)
         }
@@ -38,7 +39,8 @@ class CardanoWalletManager(
         transactionBuilder.unspentOutputs = response.unspentOutputs
         wallet.recentTransactions.forEach {
             if (response.recentTransactionsHashes.contains(it.hash)
-                    || response.recentTransactionsHashes.contains(it.hash?.toUpperCase() ?: "")
+                    || response.recentTransactionsHashes
+                            .contains(it.hash?.toUpperCase(Locale.ROOT) ?: "")
             ) {
                 it.status = TransactionStatus.Confirmed
             }
@@ -58,7 +60,8 @@ class CardanoWalletManager(
         when (val signerResponse = signer.sign(arrayOf(transactionHash), cardId)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
-                val sendResult = networkService.sendTransaction(transactionToSend.encodeBase64NoWrap())
+                val sendResult =
+                        networkProvider.sendTransaction(transactionToSend.encodeBase64NoWrap())
 
                 if (sendResult is SimpleResult.Success) {
                     transactionData.hash = transactionHash.toHexString()
