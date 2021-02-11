@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 import android.util.Log
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -17,7 +17,7 @@ open class BitcoinWalletManager(
         cardId: String,
         wallet: Wallet,
         protected val transactionBuilder: BitcoinTransactionBuilder,
-        private val networkService: BitcoinNetworkService
+        private val networkProvider: BitcoinNetworkProvider
 ) : WalletManager(cardId, wallet), TransactionSender, SignatureCountValidator {
 
     protected val blockchain = wallet.blockchain
@@ -26,7 +26,7 @@ open class BitcoinWalletManager(
         coroutineScope {
             val addressInfos = mutableListOf<BitcoinAddressInfo>()
             val responsesDeferred =
-                    wallet.addresses.map { async { networkService.getInfo(it.value) } }
+                    wallet.addresses.map { async { networkProvider.getInfo(it.value) } }
 
             responsesDeferred.forEach {
                 when (val response = it.await()) {
@@ -103,7 +103,7 @@ open class BitcoinWalletManager(
                 when (val signerResult = signer.sign(buildTransactionResult.data.toTypedArray(), cardId)) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(signerResult.data.signature)
-                        val sendResult = networkService.sendTransaction(transactionToSend.toHexString())
+                        val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())
 
                         if (sendResult is SimpleResult.Success) {
                             transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
@@ -119,7 +119,7 @@ open class BitcoinWalletManager(
 
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
         try {
-            when (val feeResult = networkService.getFee()) {
+            when (val feeResult = networkProvider.getFee()) {
                 is Result.Failure -> return feeResult
                 is Result.Success -> {
                     val feeValue = BigDecimal.ONE.movePointLeft(blockchain.decimals())
@@ -154,7 +154,7 @@ open class BitcoinWalletManager(
     }
 
     override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
-        return when (val result = networkService.getSignatureCount(wallet.address)) {
+        return when (val result = networkProvider.getSignatureCount(wallet.address)) {
             is Result.Success -> if (result.data == signedHashes) {
                 SimpleResult.Success
             } else {
