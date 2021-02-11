@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.network.createRetrofitInstance
 
-class EthereumProvider(baseUrl: String) {
+class EthereumJsonRpcProvider(baseUrl: String) {
 
     private val api = createRetrofitInstance(baseUrl).create(EthereumApi::class.java)
 

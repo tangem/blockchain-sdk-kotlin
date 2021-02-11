@@ -11,7 +11,7 @@ import java.math.BigInteger
 import java.util.*
 
 class StellarTransactionBuilder(
-        private val networkService: StellarNetworkService,
+        private val networkProvider: StellarNetworkProvider,
         private val publicKey: ByteArray,
         private val calendar: Calendar = Calendar.getInstance(),
 ) {
@@ -37,7 +37,7 @@ class StellarTransactionBuilder(
         return when (amount.type) {
             is AmountType.Coin -> {
                 val operation =
-                        if (networkService.checkIsAccountCreated(transactionData.destinationAddress)) {
+                        if (networkProvider.checkIsAccountCreated(transactionData.destinationAddress)) {
                             PaymentOperation.Builder(
                                     destinationKeyPair.accountId,
                                     AssetTypeNative(),

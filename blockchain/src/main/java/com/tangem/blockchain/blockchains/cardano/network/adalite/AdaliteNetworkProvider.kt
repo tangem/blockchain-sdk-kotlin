@@ -3,7 +3,7 @@ package com.tangem.blockchain.blockchains.cardano.network.adalite
 import com.squareup.moshi.Json
 import com.tangem.blockchain.blockchains.cardano.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
-import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkService
+import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
 import com.tangem.blockchain.blockchains.cardano.network.api.AdaliteApi
 import com.tangem.blockchain.common.SendException
 import com.tangem.blockchain.extensions.Result
@@ -15,7 +15,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import retrofit2.HttpException
 
-class AdaliteProvider(baseUrl: String) : CardanoNetworkService {
+class AdaliteProvider(baseUrl: String) : CardanoNetworkProvider {
 
     private val api: AdaliteApi by lazy {
         createRetrofitInstance(baseUrl).create(AdaliteApi::class.java)

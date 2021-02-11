@@ -2,7 +2,6 @@ package com.tangem.blockchain.blockchains.tezos
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.tezos.network.TezosHeader
-import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkManager
 import com.tangem.blockchain.blockchains.tezos.network.TezosOperationContent
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
@@ -10,7 +9,6 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.hexToBytes
-import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class TezosTransactionTest {
@@ -25,10 +23,6 @@ class TezosTransactionTest {
         val sendValue = "0.1".toBigDecimal()
         val feeValue = "0.01".toBigDecimal()
         val destinationAddress = "KT1G1ARHx4Ujry8PzTis6HLNwQ29rYQY2Nay"
-        val header = TezosHeader(
-                hash = "BM5D7Nj1x2weGHxGPqizT8kx4jnFARpSk3d4d1TLea2KBSu61KZ",
-                protocol = "PsDELPH1Kxsxt8f9eWbxQeRxkjfbxoqM52jvs5Y5fBxWWh4ifpo"
-        )
         val counter = 1561L
         val isPublicKeyRevealed = false
 

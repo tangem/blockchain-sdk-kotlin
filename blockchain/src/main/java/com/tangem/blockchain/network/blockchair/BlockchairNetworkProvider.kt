@@ -3,7 +3,7 @@ package com.tangem.blockchain.network.blockchair
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
@@ -17,10 +17,10 @@ import java.math.RoundingMode
 import java.text.SimpleDateFormat
 import java.util.*
 
-open class BlockchairProvider(
+open class BlockchairNetworkProvider(
         blockchain: Blockchain,
         private val apiKey: String? = null
-) : BitcoinNetworkService {
+) : BitcoinNetworkProvider {
 
     private val api: BlockchairApi by lazy {
         val blockchainPath = when (blockchain) {
@@ -32,7 +32,7 @@ open class BlockchairProvider(
         }
         createRetrofitInstance(API_BLOCKCHAIR + blockchainPath).create(BlockchairApi::class.java)
     }
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.US)
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.ROOT)
     private val decimals = blockchain.decimals()
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
