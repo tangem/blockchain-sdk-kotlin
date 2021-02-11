@@ -37,7 +37,7 @@ class Wallet(
     }
 
     fun getTokens(): Set<Token> =
-            amounts.keys.filterIsInstance<AmountType.Token>().map {it.token}.toSet()
+            amounts.keys.filterIsInstance<AmountType.Token>().map { it.token }.toSet()
 
     fun addTransactionDummy(direction: TransactionDirection? = null) {
         var sourceAddress = "unknown"
@@ -70,7 +70,7 @@ class Wallet(
     }
 
     fun getExploreUrl(address: String? = null, token: Token? = null) =
-        blockchain.getExploreUrl(address ?: this.address, token?.contractAddress)
+            blockchain.getExploreUrl(address ?: this.address, token?.contractAddress)
 
     fun getShareUri(address: String? = null) =
             blockchain.getShareUri(address ?: this.address)
