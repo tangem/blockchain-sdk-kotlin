@@ -23,7 +23,8 @@ class BinanceTransactionBuilder(
     var sequence: Long? = null
 
     private val chainId = BinanceChain.getChain(isTestNet).value
-    private val prefixedPubKey = MessageType.PubKey.typePrefixBytes + 33.toByte() + publicKey.toCompressedPublicKey()
+    private val prefixedPubKey =
+            MessageType.PubKey.typePrefixBytes + 33.toByte() + publicKey.toCompressedPublicKey()
 
     private var transactionAssembler: TransactionRequestAssemblerExtSign? = null
     private var transferMessage: TransferMessage? = null
@@ -62,7 +63,8 @@ class BinanceTransactionBuilder(
         val canonicalS = ECKey.ECDSASignature(r, s).toCanonicalised().s
 
         //bigIntegerToBytes cuts leading zero if present
-        val canonicalSignature = Utils.bigIntegerToBytes(r, 32) + Utils.bigIntegerToBytes(canonicalS, 32)
+        val canonicalSignature =
+                Utils.bigIntegerToBytes(r, 32) + Utils.bigIntegerToBytes(canonicalS, 32)
         val encodedSignature = transactionAssembler!!.encodeSignature(canonicalSignature)
 
         val encodedTransferMessage = transactionAssembler!!.encodeTransferMessage(transferMessage)

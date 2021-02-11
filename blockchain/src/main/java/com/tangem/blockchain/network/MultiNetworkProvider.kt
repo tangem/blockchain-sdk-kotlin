@@ -5,7 +5,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.isNetworkError
 
-abstract class MultiProvider<E>(private val providers: List<E>) {
+abstract class MultiNetworkProvider<E>(private val providers: List<E>) {
 
     private val providerIterator = CycleListIterator(providers)
     protected var provider = providerIterator.next()
