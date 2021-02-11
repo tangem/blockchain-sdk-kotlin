@@ -5,7 +5,7 @@ import com.tangem.blockchain.extensions.SimpleResult
 
 class StellarNetworkServiceMock(
         private val isAccountCreatedResponse: Boolean = true
-) : StellarNetworkService {
+) : StellarNetworkProvider {
     override suspend fun getInfo(accountId: String): Result<StellarResponse> {
         TODO("Not yet implemented")
     }

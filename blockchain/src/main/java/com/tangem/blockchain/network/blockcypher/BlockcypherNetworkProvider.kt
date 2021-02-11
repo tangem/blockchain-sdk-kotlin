@@ -3,7 +3,7 @@ package com.tangem.blockchain.network.blockcypher
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
@@ -16,10 +16,10 @@ import retrofit2.HttpException
 import java.text.SimpleDateFormat
 import java.util.*
 
-class BlockcypherProvider(
+class BlockcypherNetworkProvider(
         blockchain: Blockchain,
         private val tokens: Set<String>?
-) : BitcoinNetworkService {
+) : BitcoinNetworkProvider {
 
     private val api: BlockcypherApi by lazy {
         val apiVersionPath = "v1/"
@@ -41,7 +41,7 @@ class BlockcypherProvider(
     }
 
     private val limitCap = 2000
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ROOT)
     private val decimals = blockchain.decimals()
 
     override suspend fun getInfo(address: String) = getInfo(address, null)
@@ -153,7 +153,9 @@ class BlockcypherProvider(
         }
     }
 
-    private fun List<BlockcypherTxref>.toBasicTransactionsData(isConfirmed: Boolean): List<BasicTransactionData> {
+    private fun List<BlockcypherTxref>.toBasicTransactionsData(
+            isConfirmed: Boolean
+    ): List<BasicTransactionData> {
         val transactionsMap: MutableMap<String, BasicTransactionData> = mutableMapOf()
 
         this.forEach {

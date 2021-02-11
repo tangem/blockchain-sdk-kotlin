@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.xrp
 
 import android.util.Log
 import com.tangem.blockchain.blockchains.xrp.network.XrpInfoResponse
-import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
+import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -14,13 +14,13 @@ class XrpWalletManager(
         cardId: String,
         wallet: Wallet,
         private val transactionBuilder: XrpTransactionBuilder,
-        private val networkService: XrpNetworkService
+        private val networkProvider: XrpNetworkProvider
 ) : WalletManager(cardId, wallet), TransactionSender {
 
     private val blockchain = wallet.blockchain
 
     override suspend fun update() {
-        when (val result = networkService.getInfo(wallet.address)) {
+        when (val result = networkProvider.getInfo(wallet.address)) {
             is Result.Success -> updateWallet(result.data)
             is Result.Failure -> updateError(result.error)
         }
@@ -60,7 +60,7 @@ class XrpWalletManager(
         return when (val signerResponse = signer.sign(arrayOf(transactionHash), cardId)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
-                val sendResult = networkService.sendTransaction(transactionToSend)
+                val sendResult = networkProvider.sendTransaction(transactionToSend)
 
                 if (sendResult is SimpleResult.Success) {
                     transactionData.hash = transactionBuilder.getTransactionHash()?.toHexString()
@@ -73,7 +73,7 @@ class XrpWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
-        return when (val result = networkService.getFee()) {
+        return when (val result = networkProvider.getFee()) {
             is Result.Failure -> result
             is Result.Success -> Result.Success(listOf(
                     Amount(result.data.minimalFee, blockchain),

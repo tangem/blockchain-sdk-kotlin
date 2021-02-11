@@ -12,13 +12,13 @@ import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.*
 
-class BlockchairEthProvider(private val apiKey: String? = null) {
+class BlockchairEthNetworkProvider(private val apiKey: String? = null) {
 
     private val api: BlockchairApi by lazy {
         val blockchainPath = "ethereum/"
         createRetrofitInstance(API_BLOCKCHAIR + blockchainPath).create(BlockchairApi::class.java)
     }
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.US)
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.ROOT)
     private val blockchain = Blockchain.Ethereum
 
     suspend fun getTransactions(address: String, tokens: Set<Token>): Result<List<TransactionData>> {
@@ -48,13 +48,13 @@ class BlockchairEthProvider(private val apiKey: String? = null) {
                 }
 
                 val calls = addressDeferred.await().data!!
-                        .getValue(address.toLowerCase(Locale.US)).calls ?: emptyList()
+                        .getValue(address.toLowerCase(Locale.ROOT)).calls ?: emptyList()
 
                 val tokenCalls = mutableListOf<BlockchairCallInfo>()
                 tokenHolderDeferredList.forEach {
                     tokenCalls.addAll(
                             it.await().data
-                                    .getValue(address.toLowerCase(Locale.US)).transactions
+                                    .getValue(address.toLowerCase(Locale.ROOT)).transactions
                                     ?: emptyList())
                 }
 
