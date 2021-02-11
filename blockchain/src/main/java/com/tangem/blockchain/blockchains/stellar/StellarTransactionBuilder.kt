@@ -59,6 +59,12 @@ class StellarTransactionBuilder(
 
             }
             is AmountType.Token -> {
+                if (!networkManager.checkIsAccountCreated(transactionData.destinationAddress)) {
+                    return Result.Failure(
+                            Exception("Target account is not created. To create account send 1+ XLM.") // TODO: check for a trustline?
+                    )
+                }
+
                 val asset = Asset.createNonNativeAsset(
                         amount.currencySymbol,
                         amount.type.token.contractAddress
