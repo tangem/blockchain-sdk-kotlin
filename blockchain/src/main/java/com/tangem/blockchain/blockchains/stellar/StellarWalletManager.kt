@@ -68,7 +68,7 @@ class StellarWalletManager(
     ): Result<SignResponse> {
 
         val hashes = when (val buildResult =
-                transactionBuilder.buildToSign(transactionData, sequence, baseFee.toStroops())
+                transactionBuilder.buildToSign(transactionData, sequence)
         ) {
             is Result.Success -> listOf(buildResult.data)
             is Result.Failure -> return buildResult
@@ -103,10 +103,6 @@ class StellarWalletManager(
             }
             is Result.Failure -> SimpleResult.Failure(result.error)
         }
-    }
-
-    private fun BigDecimal.toStroops(): Int {
-        return this.movePointRight(blockchain.decimals()).toInt()
     }
 
     companion object {
