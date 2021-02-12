@@ -34,10 +34,19 @@ class StellarTransactionBuilder(
             return Result.Failure(exception)
         }
 
+        val amountType = transactionData.amount.type
+        val token = if (amountType is AmountType.Token) amountType.token else null
+        val targetAccountResponse = when (val result =
+                networkProvider.checkTargetAccount(transactionData.destinationAddress, token)
+        ) {
+            is Result.Success -> result.data
+            is Result.Failure -> return result
+        }
+
         return when (amount.type) {
             is AmountType.Coin -> {
                 val operation =
-                        if (networkProvider.checkIsAccountCreated(transactionData.destinationAddress)) {
+                        if (targetAccountResponse.accountCreated) {
                             PaymentOperation.Builder(
                                     destinationKeyPair.accountId,
                                     AssetTypeNative(),
@@ -61,10 +70,12 @@ class StellarTransactionBuilder(
 
             }
             is AmountType.Token -> {
-                if (!networkProvider.checkIsAccountCreated(transactionData.destinationAddress)) {
-                    return Result.Failure(
-                            Exception("Target account is not created. To create account send 1+ XLM.") // TODO: check for a trustline?
-                    )
+                if (!targetAccountResponse.accountCreated) {
+                    return Result.Failure(Exception("The destination account is not created. To create account send 1+ XLM."))
+                }
+
+                if (!targetAccountResponse.trustlineCreated!!) {
+                    return Result.Failure(Exception("The destination account does not have a trustline for the asset being sent."))
                 }
 
                 val asset = Asset.createNonNativeAsset(
