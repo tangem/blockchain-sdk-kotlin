@@ -66,11 +66,12 @@ class StellarWalletManager(
     override suspend fun send(
             transactionData: TransactionData, signer: TransactionSigner
     ): Result<SignResponse> {
-        val buildResult =
+
+        val hashes = when (val buildResult =
                 transactionBuilder.buildToSign(transactionData, sequence, baseFee.toStroops())
-        val hashes = when (buildResult) {
+        ) {
             is Result.Success -> listOf(buildResult.data)
-            is Result.Failure -> return Result.Failure(buildResult.error)
+            is Result.Failure -> return buildResult
         }
         return when (val signerResponse = signer.sign(hashes.toTypedArray(), cardId)) {
             is CompletionResult.Success -> {
