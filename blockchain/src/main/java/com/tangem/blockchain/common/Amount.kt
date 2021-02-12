@@ -20,7 +20,8 @@ data class Amount(
     constructor(amount: Amount, value: BigDecimal) :
             this(amount.currencySymbol, value, amount.decimals, amount.type)
 
-    var longValue = this.value?.movePointRight(decimals)?.toLong()
+    val longValue
+        get() = value?.movePointRight(decimals)?.toLong()
 }
 
 sealed class AmountType {
