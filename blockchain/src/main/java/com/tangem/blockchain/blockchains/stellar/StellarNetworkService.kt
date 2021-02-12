@@ -13,8 +13,6 @@ import org.stellar.sdk.requests.RequestBuilder
 import org.stellar.sdk.responses.operations.CreateAccountOperationResponse
 import org.stellar.sdk.responses.operations.OperationResponse
 import org.stellar.sdk.responses.operations.PaymentOperationResponse
-import java.io.IOException
-import java.math.BigDecimal
 import java.net.URISyntaxException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -51,15 +49,33 @@ class StellarNetworkService : StellarNetworkProvider {
         }
     }
 
-    override suspend fun checkIsAccountCreated(address: String): Boolean { // TODO: return result?
-        try {
-            stellarServer.accounts().account(address)
-            return true
+    override suspend fun checkTargetAccount(
+            address: String,
+            token: Token?
+    ): Result<StellarTargetAccountResponse> {
+        return try {
+            val account = stellarServer.accounts().account(address)
+
+            if (token == null) { // xlm transaction
+                Result.Success(StellarTargetAccountResponse(accountCreated = true))
+            } else { // token transaction
+                val tokenBalance = account.balances.filter { it.assetCode == token.symbol }
+                        .find { it.assetIssuer == token.contractAddress } // null if trustline not created
+                Result.Success(
+                        StellarTargetAccountResponse(
+                                accountCreated = true,
+                                trustlineCreated = tokenBalance != null
+                        )
+                )
+            }
         } catch (errorResponse: ErrorResponse) {
-            if (errorResponse.code == 404) return false
-            return false
-        } catch (exception: IOException) {
-            return true // or let's assume it's created? (normally it is)
+            if (errorResponse.code == 404) {
+                Result.Success(StellarTargetAccountResponse(accountCreated = false))
+            } else {
+                Result.Failure(errorResponse)
+            }
+        } catch (exception: Exception) {
+            Result.Failure(exception)
         }
     }
 
