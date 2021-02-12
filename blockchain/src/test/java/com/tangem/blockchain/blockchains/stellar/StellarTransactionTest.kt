@@ -21,7 +21,6 @@ class StellarTransactionTest {
                 .hexToBytes()
         val sendValue = "0.1".toBigDecimal()
         val feeValue = "0.01".toBigDecimal()
-        val intFee = feeValue.movePointRight(blockchain.decimals()).toInt()
         val destinationAddress = "GAI3GJ2Q3B35AOZJ36C4ANE3HSS4NK7WI6DNO4ZSHRAX6NG7BMX6VJER"
         val sequence = 123118694988529223L
         val instant = 1612201818L
@@ -46,7 +45,7 @@ class StellarTransactionTest {
 
         // act
         val buildToSignResult = runBlocking {
-                transactionBuilder.buildToSign(transactionData, sequence, intFee) as Result.Success
+                transactionBuilder.buildToSign(transactionData, sequence) as Result.Success
         }
         val signedTransaction = transactionBuilder.buildToSend(signature)
 
@@ -64,7 +63,6 @@ class StellarTransactionTest {
                 .hexToBytes()
         val sendValue = "3".toBigDecimal()
         val feeValue = "0.01".toBigDecimal()
-        val intFee = feeValue.movePointRight(blockchain.decimals()).toInt()
         val destinationAddress = "GAI3GJ2Q3B35AOZJ36C4ANE3HSS4NK7WI6DNO4ZSHRAX6NG7BMX6VJER"
         val sequence = 123118694988529223L
         val instant = 1612201818L
@@ -94,7 +92,7 @@ class StellarTransactionTest {
 
         // act
         val buildToSignResult = runBlocking {
-            transactionBuilder.buildToSign(transactionData, sequence, intFee) as Result.Success
+            transactionBuilder.buildToSign(transactionData, sequence) as Result.Success
         }
         val signedTransaction = transactionBuilder.buildToSend(signature)
 

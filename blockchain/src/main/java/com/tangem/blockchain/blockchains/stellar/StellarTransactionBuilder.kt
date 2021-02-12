@@ -21,9 +21,10 @@ class StellarTransactionBuilder(
     var minReserve = 1.toBigDecimal()
     private val blockchain = Blockchain.Stellar
 
-    suspend fun buildToSign(transactionData: TransactionData, sequence: Long, fee: Int): Result<ByteArray> { //TODO: use fee from transaction data
+    suspend fun buildToSign(transactionData: TransactionData, sequence: Long): Result<ByteArray> {
 
         val amount = transactionData.amount
+        val fee = transactionData.fee!!.longValue!!.toInt()
         val destinationKeyPair = KeyPair.fromAccountId(transactionData.destinationAddress)
         val sourceKeyPair = KeyPair.fromAccountId(transactionData.sourceAddress)
 
