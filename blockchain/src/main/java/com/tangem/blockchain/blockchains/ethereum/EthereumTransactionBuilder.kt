@@ -23,6 +23,7 @@ class EthereumTransactionBuilder(private val walletPublicKey: ByteArray, blockch
 
     private val chainId = when (blockchain) {
         Blockchain.Ethereum -> Chain.Mainnet.id
+        Blockchain.EthereumTestnet -> Chain.Rinkeby.id
         Blockchain.RSK -> Chain.RskMainnet.id
         else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
