@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.binance
 
 import android.util.Log
 import com.tangem.blockchain.blockchains.binance.network.BinanceInfoResponse
-import com.tangem.blockchain.blockchains.binance.network.BinanceNetworkManager
+import com.tangem.blockchain.blockchains.binance.network.BinanceNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.commands.SignResponse
@@ -13,14 +13,14 @@ class BinanceWalletManager(
         cardId: String,
         wallet: Wallet,
         private val transactionBuilder: BinanceTransactionBuilder,
-        private val networkManager: BinanceNetworkManager,
+        private val networkProvider: BinanceNetworkProvider,
         presetTokens: Set<Token>
 ) : WalletManager(cardId, wallet, presetTokens), TransactionSender {
 
     private val blockchain = wallet.blockchain
 
     override suspend fun update() {
-        val result = networkManager.getInfo(wallet.address)
+        val result = networkProvider.getInfo(wallet.address)
         when (result) {
             is Result.Success -> updateWallet(result.data)
             is Result.Failure -> updateError(result.error)
@@ -71,7 +71,7 @@ class BinanceWalletManager(
                 when (val signerResponse = signer.sign(arrayOf(buildTransactionResult.data), cardId)) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
-                        networkManager.sendTransaction(transactionToSend)
+                        networkProvider.sendTransaction(transactionToSend)
                                 .toResultWithData(signerResponse.data)
                     }
                     is CompletionResult.Failure -> Result.failure(signerResponse.error)
@@ -81,7 +81,7 @@ class BinanceWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
-        when (val result = networkManager.getFee()) {
+        when (val result = networkProvider.getFee()) {
             is Result.Success -> return Result.Success(listOf(Amount(result.data, blockchain)))
             is Result.Failure -> return result
         }
