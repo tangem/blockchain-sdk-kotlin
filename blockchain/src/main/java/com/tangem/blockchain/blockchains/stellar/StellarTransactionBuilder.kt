@@ -11,17 +11,20 @@ import java.math.BigInteger
 import java.util.*
 
 class StellarTransactionBuilder(
-        private val networkManager: StellarNetworkManager,
-        private val publicKey: ByteArray
+        private val networkProvider: StellarNetworkProvider,
+        private val publicKey: ByteArray,
+        private val calendar: Calendar = Calendar.getInstance(),
 ) {
 
+    val network: Network = Network.PUBLIC
     private lateinit var transaction: Transaction
     var minReserve = 1.toBigDecimal()
     private val blockchain = Blockchain.Stellar
 
-    suspend fun buildToSign(transactionData: TransactionData, sequence: Long, fee: Int): Result<ByteArray> {
+    suspend fun buildToSign(transactionData: TransactionData, sequence: Long): Result<ByteArray> {
 
         val amount = transactionData.amount
+        val fee = transactionData.fee!!.longValue!!.toInt()
         val destinationKeyPair = KeyPair.fromAccountId(transactionData.destinationAddress)
         val sourceKeyPair = KeyPair.fromAccountId(transactionData.sourceAddress)
 
@@ -32,10 +35,19 @@ class StellarTransactionBuilder(
             return Result.Failure(exception)
         }
 
+        val amountType = transactionData.amount.type
+        val token = if (amountType is AmountType.Token) amountType.token else null
+        val targetAccountResponse = when (val result =
+                networkProvider.checkTargetAccount(transactionData.destinationAddress, token)
+        ) {
+            is Result.Success -> result.data
+            is Result.Failure -> return result
+        }
+
         return when (amount.type) {
             is AmountType.Coin -> {
                 val operation =
-                        if (networkManager.checkIsAccountCreated(transactionData.destinationAddress)) {
+                        if (targetAccountResponse.accountCreated) {
                             PaymentOperation.Builder(
                                     destinationKeyPair.accountId,
                                     AssetTypeNative(),
@@ -59,10 +71,12 @@ class StellarTransactionBuilder(
 
             }
             is AmountType.Token -> {
-                if (!networkManager.checkIsAccountCreated(transactionData.destinationAddress)) {
-                    return Result.Failure(
-                            Exception("Target account is not created. To create account send 1+ XLM.") // TODO: check for a trustline?
-                    )
+                if (!targetAccountResponse.accountCreated) {
+                    return Result.Failure(Exception("The destination account is not created. To create account send 1+ XLM."))
+                }
+
+                if (!targetAccountResponse.trustlineCreated!!) {
+                    return Result.Failure(Exception("The destination account does not have a trustline for the asset being sent."))
                 }
 
                 val asset = Asset.createNonNativeAsset(
@@ -98,13 +112,13 @@ class StellarTransactionBuilder(
 
         val accountID = AccountID()
         accountID.accountID = sourceKeyPair.xdrPublicKey
-        val currentTime = Calendar.getInstance().timeInMillis / 1000
+        val currentTime = calendar.timeInMillis / 1000
         val minTime = 0L
         val maxTime = currentTime + 120
 
         val transactionBuilder = Transaction.Builder(
                 Account(sourceKeyPair.accountId, sequence),
-                networkManager.network
+                network
         )
         transactionBuilder
                 .addOperation(this)
