@@ -61,7 +61,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
         tangemSdk.scanCard { result ->
             when (result) {
                 is CompletionResult.Success -> {
-                    walletManager = WalletManagerFactory.makeWalletManager(result.data)!!
+                    walletManager = WalletManagerFactory().makeWalletManager(result.data)!!
                     token = walletManager.wallet.getTokens().toList().getOrNull(0)
                     getInfo()
                 }

@@ -13,7 +13,7 @@ class StellarWalletManager(
         cardId: String,
         wallet: Wallet,
         private val transactionBuilder: StellarTransactionBuilder,
-        private val networkManager: StellarNetworkManager,
+        private val networkProvider: StellarNetworkProvider,
         presetTokens: Set<Token>
 ) : WalletManager(cardId, wallet, presetTokens), TransactionSender, SignatureCountValidator {
 
@@ -24,8 +24,7 @@ class StellarWalletManager(
     private var sequence = 0L
 
     override suspend fun update() {
-        val result = networkManager.getInfo(wallet.address)
-        when (result) {
+        when (val result = networkProvider.getInfo(wallet.address)) {
             is Result.Failure -> updateError(result.error)
             is Result.Success -> updateWallet(result.data)
         }
@@ -67,16 +66,17 @@ class StellarWalletManager(
     override suspend fun send(
             transactionData: TransactionData, signer: TransactionSigner
     ): Result<SignResponse> {
-        val buildResult =
-                transactionBuilder.buildToSign(transactionData, sequence, baseFee.toStroops())
-        val hashes = when (buildResult) {
+
+        val hashes = when (val buildResult =
+                transactionBuilder.buildToSign(transactionData, sequence)
+        ) {
             is Result.Success -> listOf(buildResult.data)
-            is Result.Failure -> return Result.Failure(buildResult.error)
+            is Result.Failure -> return buildResult
         }
         return when (val signerResponse = signer.sign(hashes.toTypedArray(), cardId)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
-                val sendResult = networkManager.sendTransaction(transactionToSend)
+                val sendResult = networkProvider.sendTransaction(transactionToSend)
 
                 if (sendResult is SimpleResult.Success) {
                     transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
@@ -95,7 +95,7 @@ class StellarWalletManager(
     }
 
     override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
-        return when (val result = networkManager.getSignatureCount(wallet.address)) {
+        return when (val result = networkProvider.getSignatureCount(wallet.address)) {
             is Result.Success -> if (result.data == signedHashes) {
                 SimpleResult.Success
             } else {
@@ -103,10 +103,6 @@ class StellarWalletManager(
             }
             is Result.Failure -> SimpleResult.Failure(result.error)
         }
-    }
-
-    private fun BigDecimal.toStroops(): Int {
-        return this.movePointRight(blockchain.decimals()).toInt()
     }
 
     companion object {
