@@ -8,6 +8,7 @@ import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
+import retrofit2.HttpException
 import java.io.IOException
 import kotlin.coroutines.resume
 
@@ -86,5 +87,19 @@ class Signer(
                     if (continuation.isActive) continuation.resume(result)
                 }
             }
+}
+
+fun Result<*>.isNetworkError(): Boolean {
+    return when (this) {
+        is Result.Success -> false
+        is Result.Failure -> this.error is IOException || this.error is HttpException
+    }
+}
+
+fun SimpleResult.isNetworkError(): Boolean {
+    return when (this) {
+        is SimpleResult.Success -> false
+        is SimpleResult.Failure -> this.error is IOException || this.error is HttpException
+    }
 }
 
