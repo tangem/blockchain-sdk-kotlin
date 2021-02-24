@@ -14,18 +14,22 @@ import com.tangem.blockchain.network.createRetrofitInstance
 import okhttp3.RequestBody
 import java.math.BigDecimal
 
-class BinanceNetworkManager(isTestNet: Boolean = false) {
-    val api: BinanceApi by lazy {
+class BinanceNetworkService(isTestNet: Boolean = false) : BinanceNetworkProvider {
+    private val api: BinanceApi by lazy {
         createRetrofitInstance(if (!isTestNet) API_BINANCE else API_BINANCE_TESTNET)
                 .create(BinanceApi::class.java)
     }
-    val client: BinanceDexApiRestClient by lazy {
+    private val client: BinanceDexApiRestClient by lazy {
         BinanceDexApiClientFactory.newInstance().newRestClient(
-                if (!isTestNet) BinanceDexEnvironment.PROD.baseUrl else BinanceDexEnvironment.TEST_NET.baseUrl
+                if (!isTestNet) {
+                    BinanceDexEnvironment.PROD.baseUrl
+                } else {
+                    BinanceDexEnvironment.TEST_NET.baseUrl
+                }
         )
     }
 
-    suspend fun getInfo(address: String): Result<BinanceInfoResponse> {
+    override suspend fun getInfo(address: String): Result<BinanceInfoResponse> {
         return try {
             val accountData = retryIO { client.getAccount(address) }
             val balances = accountData.balances.map { it.symbol to it.free.toBigDecimal() }.toMap()
@@ -52,7 +56,7 @@ class BinanceNetworkManager(isTestNet: Boolean = false) {
         }
     }
 
-    suspend fun getFee(): Result<BigDecimal> {
+    override suspend fun getFee(): Result<BigDecimal> {
         return try {
             val feeData = api.getFees()
             var fee: BigDecimal? = null
@@ -69,9 +73,9 @@ class BinanceNetworkManager(isTestNet: Boolean = false) {
         }
     }
 
-    suspend fun sendTransaction(transaction: ByteArray): SimpleResult {
+    override suspend fun sendTransaction(transaction: ByteArray): SimpleResult {
         return try {
-            val requestBody: RequestBody = TransactionRequestAssemblerExtSign.createRequestBody(transaction)
+            val requestBody = TransactionRequestAssemblerExtSign.createRequestBody(transaction)
             val response = retryIO { client.broadcastNoWallet(requestBody, true) }
             if (response.isNotEmpty() && response[0].isOk) {
                 SimpleResult.Success
@@ -83,9 +87,3 @@ class BinanceNetworkManager(isTestNet: Boolean = false) {
         }
     }
 }
-
-data class BinanceInfoResponse(
-        val balances: Map<String, BigDecimal>,
-        val accountNumber: Long?,
-        val sequence: Long?
-)

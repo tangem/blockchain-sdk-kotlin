@@ -3,17 +3,25 @@ package com.tangem.blockchain.blockchains.cardano.network.adalite
 import com.squareup.moshi.Json
 import com.tangem.blockchain.blockchains.cardano.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
+import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
 import com.tangem.blockchain.blockchains.cardano.network.api.AdaliteApi
+import com.tangem.blockchain.common.SendException
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
+import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.hexToBytes
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import retrofit2.HttpException
 
-class AdaliteProvider(private val api: AdaliteApi) {
+class AdaliteProvider(baseUrl: String) : CardanoNetworkProvider {
 
-    suspend fun getInfo(addresses: Set<String>): Result<CardanoAddressResponse> {
+    private val api: AdaliteApi by lazy {
+        createRetrofitInstance(baseUrl).create(AdaliteApi::class.java)
+    }
+
+    override suspend fun getInfo(addresses: Set<String>): Result<CardanoAddressResponse> {
         return try {
             coroutineScope {
                 val addressesDeferred = addresses.map { retryIO { async { api.getAddress(it) } } }
@@ -46,12 +54,18 @@ class AdaliteProvider(private val api: AdaliteApi) {
         }
     }
 
-    suspend fun sendTransaction(transaction: String): SimpleResult {
+    override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
             retryIO { api.sendTransaction(AdaliteSendBody(transaction)) }
             SimpleResult.Success
         } catch (exception: Exception) {
-            SimpleResult.Failure(exception)
+            if (exception is HttpException && exception.code() == 400) {
+                SimpleResult.Failure(
+                        SendException("Failed to send Cardano transaction: $transaction")
+                )
+            } else {
+                SimpleResult.Failure(exception)
+            }
         }
     }
 }
