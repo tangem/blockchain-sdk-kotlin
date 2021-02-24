@@ -1,11 +1,9 @@
 package com.tangem.blockchain.blockchains.stellar
 
-import com.tangem.blockchain.R
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.API_STELLAR
-import com.tangem.blockchain.network.API_STELLAR_TESTNET
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -15,24 +13,25 @@ import org.stellar.sdk.requests.RequestBuilder
 import org.stellar.sdk.responses.operations.CreateAccountOperationResponse
 import org.stellar.sdk.responses.operations.OperationResponse
 import org.stellar.sdk.responses.operations.PaymentOperationResponse
-import java.io.IOException
-import java.math.BigDecimal
 import java.net.URISyntaxException
 import java.text.SimpleDateFormat
 import java.util.*
 
-class StellarNetworkManager(isTestNet: Boolean = false) {
+class StellarNetworkService : StellarNetworkProvider {
     private val blockchain = Blockchain.Stellar
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ROOT)
     private val recordsLimitCap = 200
     private val decimals = blockchain.decimals()
 
-    val network: Network = if (isTestNet) Network.TESTNET else Network.PUBLIC
-    private val stellarServer by lazy {
-        Server(if (isTestNet) API_STELLAR_TESTNET else API_STELLAR)
-    }
+    val network: Network = Network.PUBLIC
+    private val stellarServer by lazy { Server(API_STELLAR) }
 
-    suspend fun sendTransaction(transaction: String): SimpleResult {
+//    val network: Network = if (isTestNet) Network.TESTNET else Network.PUBLIC
+//    private val stellarServer by lazy {
+//        Server(if (isTestNet) API_STELLAR_TESTNET else API_STELLAR)
+//    }
+
+    override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
             val response = stellarServer
                     .submitTransaction(Transaction.fromEnvelopeXdr(transaction, network))
@@ -50,19 +49,37 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
         }
     }
 
-    suspend fun checkIsAccountCreated(address: String): Boolean { // TODO: return result?
-        try {
-            stellarServer.accounts().account(address)
-            return true
+    override suspend fun checkTargetAccount(
+            address: String,
+            token: Token?
+    ): Result<StellarTargetAccountResponse> {
+        return try {
+            val account = stellarServer.accounts().account(address)
+
+            if (token == null) { // xlm transaction
+                Result.Success(StellarTargetAccountResponse(accountCreated = true))
+            } else { // token transaction
+                val tokenBalance = account.balances.filter { it.assetCode == token.symbol }
+                        .find { it.assetIssuer == token.contractAddress } // null if trustline not created
+                Result.Success(
+                        StellarTargetAccountResponse(
+                                accountCreated = true,
+                                trustlineCreated = tokenBalance != null
+                        )
+                )
+            }
         } catch (errorResponse: ErrorResponse) {
-            if (errorResponse.code == 404) return false
-            return false
-        } catch (exception: IOException) {
-            return true // or let's assume it's created? (normally it is)
+            if (errorResponse.code == 404) {
+                Result.Success(StellarTargetAccountResponse(accountCreated = false))
+            } else {
+                Result.Failure(errorResponse)
+            }
+        } catch (exception: Exception) {
+            Result.Failure(exception)
         }
     }
 
-    suspend fun getInfo(accountId: String): Result<StellarResponse> {
+    override suspend fun getInfo(accountId: String): Result<StellarResponse> {
         return try {
             coroutineScope {
                 val accountResponseDeferred =
@@ -113,24 +130,25 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
         }
     }
 
-    suspend fun getSignatureCount(accountId: String): Result<Int> {
+    override suspend fun getSignatureCount(accountId: String): Result<Int> {
         return try {
-            var operationsPage = stellarServer.operations().forAccount(accountId)
-                    .limit(recordsLimitCap)
-                    .includeFailed(true)
-                    .execute()
-            val operations = operationsPage.records
+            coroutineScope {
+                var operationsPage = stellarServer.operations().forAccount(accountId)
+                        .limit(recordsLimitCap)
+                        .includeFailed(true)
+                        .execute()
+                val operations = operationsPage.records
 
-            while (operationsPage.records.size == recordsLimitCap) {
-                try {
-                    operationsPage = operationsPage.getNextPage(stellarServer.httpClient)
-                    operations.addAll(operationsPage.records)
-                } catch (e: URISyntaxException) {
-                    break
+                while (operationsPage.records.size == recordsLimitCap) {
+                    try {
+                        operationsPage = operationsPage.getNextPage(stellarServer.httpClient)
+                        operations.addAll(operationsPage.records)
+                    } catch (e: URISyntaxException) {
+                        break
+                    }
                 }
+                Result.Success(operations.filter { it.sourceAccount == accountId }.size)
             }
-            Result.Success(operations.filter { it.sourceAccount == accountId }.size)
-
         } catch (error: Exception) {
             Result.Failure(error)
         }
@@ -182,19 +200,3 @@ class StellarNetworkManager(isTestNet: Boolean = false) {
         )
     }
 }
-
-data class StellarResponse(
-        val coinBalance: BigDecimal,
-        val tokenBalances: Set<StellarAssetBalance>,
-        val baseFee: BigDecimal,
-        val baseReserve: BigDecimal,
-        val sequence: Long,
-        val recentTransactions: List<TransactionData>,
-        val subEntryCount: Int
-)
-
-data class StellarAssetBalance(
-        val balance: BigDecimal,
-        val symbol: String,
-        val issuer: String
-)

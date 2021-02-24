@@ -5,25 +5,30 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
+import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.hexToBytes
 import org.bitcoinj.core.Base58
 
-class TezosProvider(private val api: TezosApi) {
+class TezosJsonRpcProvider(baseUrl: String) : TezosNetworkProvider {
+
+    private val api: TezosApi by lazy {
+        createRetrofitInstance(baseUrl).create(TezosApi::class.java)
+    }
     private val decimals = Blockchain.Tezos.decimals()
 
-    suspend fun getInfo(address: String): Result<TezosInfoResponse> {
+    override suspend fun getInfo(address: String): Result<TezosInfoResponse> {
         return try {
-                val addressData = retryIO { api.getAddressData(address) }
-                Result.Success(TezosInfoResponse(
-                        balance = addressData.balance!!.toBigDecimal().movePointLeft(decimals),
-                        counter = addressData.counter!!
-                ))
+            val addressData = retryIO { api.getAddressData(address) }
+            Result.Success(TezosInfoResponse(
+                    balance = addressData.balance!!.toBigDecimal().movePointLeft(decimals),
+                    counter = addressData.counter!!
+            ))
         } catch (exception: Exception) {
             Result.Failure(exception)
         }
     }
 
-    suspend fun isPublicKeyRevealed(address: String): Result<Boolean> {
+    override suspend fun isPublicKeyRevealed(address: String): Result<Boolean> {
         return try {
             retryIO { api.getManagerKey(address) }
             Result.Success(true)
@@ -32,7 +37,7 @@ class TezosProvider(private val api: TezosApi) {
         }
     }
 
-    suspend fun getHeader(): Result<TezosHeader> {
+    override suspend fun getHeader(): Result<TezosHeader> {
         return try {
             val headerResponse = retryIO { api.getHeader() }
             Result.Success(TezosHeader(
@@ -44,7 +49,7 @@ class TezosProvider(private val api: TezosApi) {
         }
     }
 
-    suspend fun forgeContents(headerHash: String, contents: List<TezosOperationContent>): Result<String> {
+    override suspend fun forgeContents(headerHash: String, contents: List<TezosOperationContent>): Result<String> {
         return try {
             val forgedContents = retryIO { api.forgeOperations(TezosForgeBody(headerHash, contents)) }
             Result.Success(forgedContents)
@@ -53,7 +58,7 @@ class TezosProvider(private val api: TezosApi) {
         }
     }
 
-    suspend fun checkTransaction(
+    override suspend fun checkTransaction(
             header: TezosHeader,
             contents: List<TezosOperationContent>,
             signature: ByteArray
@@ -72,7 +77,7 @@ class TezosProvider(private val api: TezosApi) {
         }
     }
 
-    suspend fun sendTransaction(transaction: String): SimpleResult {
+    override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
             retryIO { api.sendTransaction(transaction) }
             SimpleResult.Success

@@ -8,7 +8,7 @@ data class TransactionData(
         val fee: Amount?,
         val sourceAddress: String,
         val destinationAddress: String,
-        val contractAddress: String? = null,
+        val contractAddress: String? = null, // TODO: remove this field, contract address is located in amount type
         var status: TransactionStatus = TransactionStatus.Unconfirmed,
         var date: Calendar? = null,
         var hash: String? = null,

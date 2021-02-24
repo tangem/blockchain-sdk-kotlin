@@ -6,73 +6,54 @@ import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
-import com.tangem.blockchain.network.*
-import com.tangem.blockchain.network.blockchair.BlockchairApi
-import com.tangem.blockchain.network.blockchair.BlockchairEthProvider
-import com.tangem.blockchain.network.blockcypher.BlockcypherApi
-import com.tangem.blockchain.network.blockcypher.BlockcypherProvider
+import com.tangem.blockchain.network.API_INFURA
+import com.tangem.blockchain.network.API_INFURA_TESTNET
+import com.tangem.blockchain.network.API_RSK
+import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
+import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 import java.math.RoundingMode
 
 
-class EthereumNetworkManager(blockchain: Blockchain) {
-    private val infuraPath = "v3/"
+class EthereumNetworkService(
+        blockchain: Blockchain,
+        infuraProjectId: String?,
+        private val blockcypherNetworkProvider: BlockcypherNetworkProvider? = null,
+        private val blockchairEthNetworkProvider: BlockchairEthNetworkProvider? = null
+) : EthereumNetworkProvider {
+    init {
+        if (infuraProjectId == null &&
+                (blockchain == Blockchain.Ethereum || blockchain == Blockchain.EthereumTestnet)
+        ) {
+            throw Exception("Infura project Id is required for Ethereum network service")
+        }
+    }
 
-    private val api: EthereumApi by lazy {
-        val baseUrl = when (blockchain) {
-            Blockchain.Ethereum -> API_INFURA + infuraPath
-            Blockchain.EthereumTestnet -> API_INFURA_TESTNET + infuraPath
+    private val jsonRpcProvider: EthereumJsonRpcProvider by lazy {
+        val infuraApiVersionPath = "v3/"
+        val ethereumApiUrl = when (blockchain) {
+            Blockchain.Ethereum -> API_INFURA + infuraApiVersionPath + infuraProjectId
+            Blockchain.EthereumTestnet -> API_INFURA_TESTNET + infuraApiVersionPath + infuraProjectId
             Blockchain.RSK -> API_RSK
             else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
         }
-        createRetrofitInstance(baseUrl).create(EthereumApi::class.java)
+        EthereumJsonRpcProvider(ethereumApiUrl)
     }
-
-    private val blockcypherProvider: BlockcypherProvider? by lazy { //TODO: remove
-        when (blockchain) {
-            Blockchain.Ethereum -> {
-                val blockcypherApi =
-                        createRetrofitInstance(API_BLOCKCYPHER).create(BlockcypherApi::class.java)
-                BlockcypherProvider(blockcypherApi, blockchain)
-            }
-            else -> null
-        }
-    }
-
-    private val blockchairProvider: BlockchairEthProvider? by lazy {
-        when (blockchain) {
-            Blockchain.Ethereum -> {
-                val blockchairApi =
-                        createRetrofitInstance(API_BLOCKCHAIR).create(BlockchairApi::class.java)
-                BlockchairEthProvider(blockchairApi)
-            }
-            else -> null
-        }
-    }
-
-    private val apiKey = when (blockchain) {
-        Blockchain.Ethereum, Blockchain.EthereumTestnet -> INFURA_API_KEY
-        Blockchain.RSK -> ""
-        else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
-    }
-
-    private val provider: EthereumProvider by lazy { EthereumProvider(api, apiKey) }
     private val decimals = Blockchain.Ethereum.decimals()
 
-    suspend fun getInfo(address: String, tokens: Set<Token>)
-            : Result<EthereumInfoResponse> {
+    override suspend fun getInfo(address: String, tokens: Set<Token>): Result<EthereumInfoResponse> {
         return try {
             coroutineScope {
-                val balanceResponseDeferred = retryIO { async { provider.getBalance(address) } }
-                val txCountResponseDeferred = retryIO { async { provider.getTxCount(address) } }
+                val balanceResponseDeferred = retryIO { async { jsonRpcProvider.getBalance(address) } }
+                val txCountResponseDeferred = retryIO { async { jsonRpcProvider.getTxCount(address) } }
                 val pendingTxCountResponseDeferred =
-                        retryIO { async { provider.getPendingTxCount(address) } }
+                        retryIO { async { jsonRpcProvider.getPendingTxCount(address) } }
                 val transactionsResponseDeferred =
-                        retryIO { async { blockchairProvider?.getTransactions(address, tokens) } }
+                        retryIO { async { blockchairEthNetworkProvider?.getTransactions(address, tokens) } }
                 val tokenBalancesDeferred = tokens.map {
-                    it to retryIO { async { provider.getTokenBalance(address, it.contractAddress) } }
+                    it to retryIO { async { jsonRpcProvider.getTokenBalance(address, it.contractAddress) } }
                 }.toMap()
 
                 val balanceResponse = balanceResponseDeferred.await()
@@ -112,9 +93,9 @@ class EthereumNetworkManager(blockchain: Blockchain) {
         }
     }
 
-    suspend fun sendTransaction(transaction: String): SimpleResult {
+    override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
-            val response = retryIO { provider.sendTransaction(transaction) }
+            val response = retryIO { jsonRpcProvider.sendTransaction(transaction) }
             if (response.error == null) {
                 SimpleResult.Success
             } else {
@@ -125,11 +106,11 @@ class EthereumNetworkManager(blockchain: Blockchain) {
         }
     }
 
-    suspend fun getFee(to: String, from: String, data: String?, fallbackGasLimit: Long?): Result<EthereumFeeResponse> {
+    override suspend fun getFee(to: String, from: String, data: String?, fallbackGasLimit: Long?): Result<EthereumFeeResponse> {
         return try {
             coroutineScope {
-                val gasLimitDeferred = retryIO { async { provider.getGasLimit(to, from, data) } }
-                val feeDeffered = retryIO { async { provider.getGasPrice() } }
+                val gasLimitDeferred = retryIO { async { jsonRpcProvider.getGasLimit(to, from, data) } }
+                val feeDeffered = retryIO { async { jsonRpcProvider.getGasPrice() } }
 
                 val gasLimitResponse = gasLimitDeferred.await()
                 val gasLimit = gasLimitResponse.result?.responseToBigInteger()?.toLong()
@@ -149,8 +130,8 @@ class EthereumNetworkManager(blockchain: Blockchain) {
         }
     }
 
-    suspend fun getSignatureCount(address: String): Result<Int> {
-        return blockcypherProvider?.getSignatureCount(address)
+    override suspend fun getSignatureCount(address: String): Result<Int> {
+        return blockcypherNetworkProvider?.getSignatureCount(address)
                 ?: Result.Failure(Exception("No signature count provider found"))
     }
 
@@ -176,18 +157,3 @@ class EthereumNetworkManager(blockchain: Blockchain) {
             Exception("Code: ${this.code}, ${this.message}")
 
 }
-
-data class EthereumInfoResponse(
-        val coinBalance: BigDecimal,
-        val tokenBalances: Map<Token, BigDecimal>,
-        val txCount: Long,
-        val pendingTxCount: Long,
-        val recentTransactions: List<TransactionData>?
-)
-
-data class EthereumFeeResponse(
-        val fees: List<BigDecimal>,
-        val gasLimit: Long
-)
-
-private const val INFURA_API_KEY = "613a0b14833145968b1f656240c7d245"
