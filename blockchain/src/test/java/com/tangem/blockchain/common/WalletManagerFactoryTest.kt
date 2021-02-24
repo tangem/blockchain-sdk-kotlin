@@ -97,7 +97,7 @@ internal class WalletManagerFactoryTest {
         val responseApdu = ResponseApdu(data.hexToBytes())
         val card = ReadCommand().deserialize(SessionEnvironment(), responseApdu)
         val walletManager =
-                WalletManagerFactory.makeMultisigWalletManager(card, pairPublicKey.hexToBytes())
+                WalletManagerFactory().makeMultisigWalletManager(card, pairPublicKey.hexToBytes())
 
         Truth.assertThat(walletManager).isInstanceOf(BitcoinWalletManager::class.java)
     }
@@ -105,6 +105,7 @@ internal class WalletManagerFactoryTest {
     private fun makeWalletManager(dataString: String): WalletManager? {
         val responseApdu = ResponseApdu(dataString.hexToBytes())
         val card = ReadCommand().deserialize(SessionEnvironment(), responseApdu)
-        return WalletManagerFactory.makeWalletManager(card)
+        return WalletManagerFactory(BlockchainSdkConfig(infuraProjectId = "0"))
+                .makeWalletManager(card)
     }
 }

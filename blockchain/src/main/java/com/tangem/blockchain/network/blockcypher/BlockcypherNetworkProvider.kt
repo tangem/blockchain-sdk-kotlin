@@ -3,35 +3,45 @@ package com.tangem.blockchain.network.blockcypher
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinProvider
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
+import com.tangem.blockchain.network.API_BLOCKCYPHER
+import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.hexToBytes
 import retrofit2.HttpException
 import java.text.SimpleDateFormat
 import java.util.*
 
-class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchain) : BitcoinProvider {
+class BlockcypherNetworkProvider(
+        blockchain: Blockchain,
+        private val tokens: Set<String>?
+) : BitcoinNetworkProvider {
+
+    private val api: BlockcypherApi by lazy {
+        val apiVersionPath = "v1/"
+        val blockchainPath = when (blockchain) {
+            Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> "btc/"
+            Blockchain.Litecoin -> "ltc/"
+            Blockchain.Ethereum -> "eth/"
+            else -> throw Exception(
+                    "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
+            )
+        }
+        val networkPath = when (blockchain) {
+            Blockchain.BitcoinTestnet -> "test3/"
+            else -> "main/"
+        }
+        val baseUrl = API_BLOCKCYPHER + apiVersionPath + blockchainPath + networkPath
+
+        createRetrofitInstance(baseUrl).create(BlockcypherApi::class.java)
+    }
+
     private val limitCap = 2000
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-
-    private val blockchainPath = when (blockchain) {
-        Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> "btc"
-        Blockchain.Litecoin -> "ltc"
-        Blockchain.Ethereum -> "eth"
-        else -> throw Exception(
-                "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
-        )
-    }
-
-    private val network = when (blockchain) {
-        Blockchain.BitcoinTestnet -> "test3"
-        else -> "main"
-    }
-
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ROOT)
     private val decimals = blockchain.decimals()
 
     override suspend fun getInfo(address: String) = getInfo(address, null)
@@ -39,7 +49,7 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
     suspend fun getInfo(address: String, token: String?): Result<BitcoinAddressInfo> {
         return try {
             val addressData =
-                    retryIO { api.getAddressData(blockchainPath, network, address, token = token) }
+                    retryIO { api.getAddressData(address, token = token) }
 
             val confirmedTransactions =
                     addressData.txrefs?.toBasicTransactionsData(isConfirmed = true) ?: emptyList()
@@ -66,8 +76,8 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
                     )
             )
         } catch (error: HttpException) {
-            return if (error.code() == 429 && token == null) {
-                getInfo(address, BlockcypherToken.getToken())
+            return if (error.code() == 429 && token == null && !tokens.isNullOrEmpty()) {
+                getInfo(address, getToken())
             } else {
                 Result.Failure(error)
             }
@@ -81,7 +91,7 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
     suspend fun getFee(token: String?): Result<BitcoinFee> {
         return try {
             val receivedFee: BlockcypherFee =
-                    retryIO { api.getFee(blockchainPath, network, token) }
+                    retryIO { api.getFee(token) }
             Result.Success(
                     BitcoinFee(
                             receivedFee.minFeePerKb!!.toBigDecimal().movePointLeft(decimals),
@@ -90,8 +100,8 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
                     )
             )
         } catch (error: HttpException) {
-            return if (error.code() == 429 && token == null) {
-                getFee(BlockcypherToken.getToken())
+            return if (error.code() == 429 && token == null && !tokens.isNullOrEmpty()) {
+                getFee(getToken())
             } else {
                 Result.Failure(error)
             }
@@ -101,10 +111,14 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
     }
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
+        if (tokens.isNullOrEmpty()) {
+            return SimpleResult.Failure(
+                    Exception("Send transaction request is unavailable without a token")
+            )
+        }
         return try {
             retryIO {
-                api.sendTransaction(
-                        blockchainPath, network, BlockcypherSendBody(transaction), BlockcypherToken.getToken())
+                api.sendTransaction(BlockcypherSendBody(transaction), getToken()!!)
             }
             SimpleResult.Success
         } catch (error: Exception) {
@@ -119,7 +133,7 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
         return try {
             val addressData: BlockcypherAddress =
                     retryIO {
-                        api.getAddressData(blockchainPath, network, address, limitCap, token)
+                        api.getAddressData(address, limitCap, token)
                     }
 
             var signatureCount = addressData.txrefs?.filter { it.outputIndex == -1 }?.size ?: 0
@@ -129,8 +143,8 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
             Result.Success(signatureCount)
 
         } catch (error: HttpException) {
-            return if (error.code() == 429 && token == null) {
-                getSignatureCount(address, BlockcypherToken.getToken())
+            return if (error.code() == 429 && token == null && !tokens.isNullOrEmpty()) {
+                getSignatureCount(address, getToken())
             } else {
                 Result.Failure(error)
             }
@@ -139,7 +153,9 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
         }
     }
 
-    private fun List<BlockcypherTxref>.toBasicTransactionsData(isConfirmed: Boolean): List<BasicTransactionData> {
+    private fun List<BlockcypherTxref>.toBasicTransactionsData(
+            isConfirmed: Boolean
+    ): List<BasicTransactionData> {
         val transactionsMap: MutableMap<String, BasicTransactionData> = mutableMapOf()
 
         this.forEach {
@@ -168,14 +184,6 @@ class BlockcypherProvider(private val api: BlockcypherApi, blockchain: Blockchai
         }
         return transactionsMap.values.toList()
     }
-}
 
-private object BlockcypherToken {
-    private val tokens = listOf(
-            "aa8184b0e0894b88a5688e01b3dc1e82",
-            "56c4ca23c6484c8f8864c32fde4def8d",
-            "66a8a37c5e9d4d2c9bb191acfe7f93aa"
-    )
-
-    fun getToken(): String = tokens.random()
+    private fun getToken(): String? = tokens?.random()
 }
