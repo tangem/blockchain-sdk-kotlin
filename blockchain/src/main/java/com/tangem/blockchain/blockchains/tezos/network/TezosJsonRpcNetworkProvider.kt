@@ -9,7 +9,7 @@ import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.hexToBytes
 import org.bitcoinj.core.Base58
 
-class TezosJsonRpcProvider(baseUrl: String) : TezosNetworkProvider {
+class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
 
     private val api: TezosApi by lazy {
         createRetrofitInstance(baseUrl).create(TezosApi::class.java)
