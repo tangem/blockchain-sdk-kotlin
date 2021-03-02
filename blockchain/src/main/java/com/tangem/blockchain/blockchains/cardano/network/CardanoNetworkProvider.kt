@@ -6,7 +6,7 @@ import com.tangem.blockchain.extensions.SimpleResult
 
 interface CardanoNetworkProvider {
     suspend fun getInfo(addresses: Set<String>): Result<CardanoAddressResponse>
-    suspend fun sendTransaction(transaction: String): SimpleResult
+    suspend fun sendTransaction(transaction: ByteArray): SimpleResult
 }
 
 data class CardanoAddressResponse(
