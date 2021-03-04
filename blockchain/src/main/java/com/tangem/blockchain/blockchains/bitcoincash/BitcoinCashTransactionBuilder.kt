@@ -21,7 +21,7 @@ class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, blockchain: Bloc
     override fun buildToSign(
             transactionData: TransactionData): Result<List<ByteArray>> {
 
-        if (unspentOutputs == null) return Result.Failure(Exception("Currently there's an unconfirmed transaction"))
+        if (unspentOutputs.isNullOrEmpty()) return Result.Failure(Exception("Unspent outputs are missing"))
 
         val change: BigDecimal = calculateChange(transactionData, unspentOutputs!!)
 
