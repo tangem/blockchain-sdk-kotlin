@@ -39,7 +39,7 @@ open class BitcoinTransactionBuilder(
 
     open fun buildToSign(
             transactionData: TransactionData): Result<List<ByteArray>> {
-        if (unspentOutputs == null) return Result.Failure(Exception("Currently there's an unconfirmed transaction"))
+        if (unspentOutputs.isNullOrEmpty()) return Result.Failure(Exception("Unspent outputs are missing"))
 
         val change: BigDecimal = calculateChange(transactionData, unspentOutputs!!)
         transaction = transactionData.toBitcoinJTransaction(networkParameters, unspentOutputs!!, change)
