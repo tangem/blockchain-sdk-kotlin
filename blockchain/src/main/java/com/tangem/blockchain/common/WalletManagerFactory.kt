@@ -125,11 +125,9 @@ class WalletManagerFactory(
             }
             Blockchain.Cardano, Blockchain.CardanoShelley -> {
                 val adaliteNetworkProvider1 by lazy { AdaliteNetworkProvider(API_ADALITE) }
-                val adaliteNetworkProvider2 by lazy { AdaliteNetworkProvider(API_ADALITE_RESERVE) }
-                val rosettaNetworkProvider by lazy { RosettaNetworkProvider(API_ROSETTA) }
+                val rosettaNetworkProvider by lazy { RosettaNetworkProvider(API_TANGEM_ROSETTA) }
                 val providers = listOf(
                         adaliteNetworkProvider1,
-                        adaliteNetworkProvider2,
                         rosettaNetworkProvider
                 )
 
