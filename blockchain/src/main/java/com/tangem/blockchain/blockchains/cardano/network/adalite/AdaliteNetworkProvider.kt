@@ -8,6 +8,7 @@ import com.tangem.blockchain.blockchains.cardano.network.api.AdaliteApi
 import com.tangem.blockchain.common.SendException
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.encodeBase64NoWrap
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.hexToBytes
@@ -15,7 +16,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import retrofit2.HttpException
 
-class AdaliteProvider(baseUrl: String) : CardanoNetworkProvider {
+class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
 
     private val api: AdaliteApi by lazy {
         createRetrofitInstance(baseUrl).create(AdaliteApi::class.java)
@@ -24,7 +25,7 @@ class AdaliteProvider(baseUrl: String) : CardanoNetworkProvider {
     override suspend fun getInfo(addresses: Set<String>): Result<CardanoAddressResponse> {
         return try {
             coroutineScope {
-                val addressesDeferred = addresses.map { retryIO { async { api.getAddress(it) } } }
+                val addressesDeferred = addresses.map { retryIO { async { api.getAddressData(it) } } }
                 val unspentsDeferred = retryIO { async { api.getUnspents(addresses.toList()) } }
 
                 val addressesData = addressesDeferred.map { it.await() }
@@ -54,9 +55,9 @@ class AdaliteProvider(baseUrl: String) : CardanoNetworkProvider {
         }
     }
 
-    override suspend fun sendTransaction(transaction: String): SimpleResult {
+    override suspend fun sendTransaction(transaction: ByteArray): SimpleResult {
         return try {
-            retryIO { api.sendTransaction(AdaliteSendBody(transaction)) }
+            retryIO { api.sendTransaction(AdaliteSendBody(transaction.encodeBase64NoWrap())) }
             SimpleResult.Success
         } catch (exception: Exception) {
             if (exception is HttpException && exception.code() == 400) {
