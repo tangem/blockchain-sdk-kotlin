@@ -8,8 +8,8 @@ import retrofit2.http.Path
 
 interface EthereumApi {
     @Headers("Content-Type: application/json")
-    @POST("./")
-    suspend fun post(@Body body: EthereumBody?): EthereumResponse
+    @POST("{apiKey}")
+    suspend fun post(@Body body: EthereumBody?, @Path("apiKey") apiKey: String): EthereumResponse
 }
 
 @JsonClass(generateAdapter = true)
