@@ -17,8 +17,10 @@ class EthereumWalletManager(
         wallet: Wallet,
         private val transactionBuilder: EthereumTransactionBuilder,
         private val networkProvider: EthereumNetworkProvider,
-        presetTokens: Set<Token>
-) : WalletManager(cardId, wallet, presetTokens), TransactionSender, SignatureCountValidator {
+        presetToken: MutableSet<Token>,
+        canManageTokens: Boolean = false
+) : WalletManager(cardId, wallet, presetToken, canManageTokens),
+        TransactionSender, SignatureCountValidator, TokenManager {
 
     private var pendingTxCount = -1L
     private var txCount = -1L
@@ -33,7 +35,7 @@ class EthereumWalletManager(
 
     private fun updateWallet(data: EthereumInfoResponse) {
         wallet.setCoinValue(data.coinBalance)
-        data.tokenBalances.forEach { wallet.setTokenValue(it.value, it.key) }
+        data.tokenBalances.forEach { wallet.addTokenValue(it.value, it.key) }
 
         txCount = data.txCount
         pendingTxCount = data.pendingTxCount
@@ -105,6 +107,21 @@ class EthereumWalletManager(
             }
             is Result.Failure -> SimpleResult.Failure(result.error)
         }
+    }
+
+    override suspend fun addToken(token: Token): Result<Amount> {
+        if (!presetTokens.contains(token)) {
+            presetTokens.add(token)
+        }
+        val result =  networkProvider.getTokensBalance(wallet.address, setOf(token))
+        return when (result) {
+            is Result.Failure -> Result.Failure(result.error)
+            is Result.Success -> {
+                val amount = wallet.addTokenValue(result.data[token]!!, token)
+                Result.Success(amount)
+            }
+        }
+
     }
 
     private fun estimateGasLimit(amount: Amount): GasLimit { //TODO: remove?
