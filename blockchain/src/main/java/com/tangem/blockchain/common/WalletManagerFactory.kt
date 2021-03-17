@@ -13,7 +13,8 @@ import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashWalletManager
 import com.tangem.blockchain.blockchains.cardano.CardanoTransactionBuilder
 import com.tangem.blockchain.blockchains.cardano.CardanoWalletManager
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkService
-import com.tangem.blockchain.blockchains.cardano.network.adalite.AdaliteProvider
+import com.tangem.blockchain.blockchains.cardano.network.adalite.AdaliteNetworkProvider
+import com.tangem.blockchain.blockchains.cardano.network.rosetta.RosettaNetworkProvider
 import com.tangem.blockchain.blockchains.ducatus.DucatusWalletManager
 import com.tangem.blockchain.blockchains.ducatus.network.DucatusNetworkService
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
@@ -25,12 +26,12 @@ import com.tangem.blockchain.blockchains.stellar.StellarTransactionBuilder
 import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
 import com.tangem.blockchain.blockchains.tezos.TezosTransactionBuilder
 import com.tangem.blockchain.blockchains.tezos.TezosWalletManager
-import com.tangem.blockchain.blockchains.tezos.network.TezosJsonRpcProvider
+import com.tangem.blockchain.blockchains.tezos.network.TezosJsonRpcNetworkProvider
 import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkService
 import com.tangem.blockchain.blockchains.xrp.XrpTransactionBuilder
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
-import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledProvider
+import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledNetworkProvider
 import com.tangem.blockchain.network.*
 import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairNetworkProvider
@@ -144,9 +145,12 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.Cardano, Blockchain.CardanoShelley -> {
-                val adaliteNetworkProvider1 by lazy { AdaliteProvider(API_ADALITE) }
-                val adaliteNetworkProvider2 by lazy { AdaliteProvider(API_ADALITE_RESERVE) }
-                val providers = listOf(adaliteNetworkProvider1, adaliteNetworkProvider2)
+                val adaliteNetworkProvider1 by lazy { AdaliteNetworkProvider(API_ADALITE) }
+                val rosettaNetworkProvider by lazy { RosettaNetworkProvider(API_TANGEM_ROSETTA) }
+                val providers = listOf(
+                        adaliteNetworkProvider1,
+                        rosettaNetworkProvider
+                )
 
                 CardanoWalletManager(
                         cardId, wallet,
@@ -155,8 +159,8 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.XRP -> {
-                val rippledProvider1 by lazy { RippledProvider(API_RIPPLED) }
-                val rippledProvider2 by lazy { RippledProvider(API_RIPPLED_RESERVE) }
+                val rippledProvider1 by lazy { RippledNetworkProvider(API_RIPPLED) }
+                val rippledProvider2 by lazy { RippledNetworkProvider(API_RIPPLED_RESERVE) }
                 val providers = listOf(rippledProvider1, rippledProvider2)
                 val networkService = XrpNetworkService(providers)
 
@@ -183,8 +187,8 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.Tezos -> {
-                val tezosJsonRpcProvider1 by lazy { TezosJsonRpcProvider(API_TEZOS) }
-                val tezosJsonRpcProvider2 by lazy { TezosJsonRpcProvider(API_TEZOS_RESERVE) }
+                val tezosJsonRpcProvider1 by lazy { TezosJsonRpcNetworkProvider(API_TEZOS) }
+                val tezosJsonRpcProvider2 by lazy { TezosJsonRpcNetworkProvider(API_TEZOS_RESERVE) }
                 val providers = listOf(tezosJsonRpcProvider1, tezosJsonRpcProvider2)
 
                 TezosWalletManager(
