@@ -14,7 +14,7 @@ class CardanoNetworkService(providers: List<CardanoNetworkProvider>) :
         return if (result.needsRetry()) getInfo(addresses) else result
     }
 
-    override suspend fun sendTransaction(transaction: String): SimpleResult {
+    override suspend fun sendTransaction(transaction: ByteArray): SimpleResult {
         val result = provider.sendTransaction(transaction)
         return if (result.needsRetry()) sendTransaction(transaction) else result
     }
