@@ -7,7 +7,7 @@ import retrofit2.http.*
 
 interface AdaliteApi {
     @GET("/api/addresses/summary/{address}")
-    suspend fun getAddress(@Path("address") address: String): AdaliteAddress
+    suspend fun getAddressData(@Path("address") address: String): AdaliteAddress
 
     @Headers("Content-Type: application/json")
     @POST("/api/bulk/addresses/utxo")
