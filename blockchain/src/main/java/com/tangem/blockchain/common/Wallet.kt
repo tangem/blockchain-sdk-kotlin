@@ -26,7 +26,15 @@ class Wallet(
     fun setCoinValue(value: BigDecimal) =
             setAmount(Amount(value, blockchain, AmountType.Coin))
 
-    fun setTokenValue(value: BigDecimal, token: Token) = setAmount(Amount(token, value))
+    fun addTokenValue(value: BigDecimal, token: Token): Amount {
+        val amount = Amount(token, value)
+        setAmount(amount)
+        return amount
+    }
+
+    fun removeToken(token: Token) {
+        amounts.remove(AmountType.Token(token))
+    }
 
     fun setReserveValue(value: BigDecimal) =
             setAmount(Amount(value, blockchain, AmountType.Reserve))
@@ -60,7 +68,7 @@ class Wallet(
     fun addOutgoingTransaction(transactionData: TransactionData) {
         transactionData.apply {
             date = Calendar.getInstance()
-            hash = hash?.toLowerCase()
+            hash = hash?.toLowerCase(Locale.US)
         }
         recentTransactions.add(transactionData)
     }
