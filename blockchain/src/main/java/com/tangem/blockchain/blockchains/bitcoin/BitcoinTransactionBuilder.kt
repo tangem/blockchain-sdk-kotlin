@@ -33,40 +33,35 @@ open class BitcoinTransactionBuilder(
         Blockchain.BitcoinTestnet -> TestNet3Params()
         Blockchain.Litecoin -> LitecoinMainNetParams()
         Blockchain.Ducatus -> DucatusMainNetParams()
-        else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
+        else -> throw Exception(
+                "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
+        )
     }
     var unspentOutputs: List<BitcoinUnspentOutput>? = null
 
-    open fun buildToSign(
-            transactionData: TransactionData): Result<List<ByteArray>> {
-        if (unspentOutputs.isNullOrEmpty()) return Result.Failure(Exception("Unspent outputs are missing"))
+    open fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
+        if (unspentOutputs.isNullOrEmpty()) {
+            return Result.Failure(Exception("Unspent outputs are missing"))
+        }
 
         val change: BigDecimal = calculateChange(transactionData, unspentOutputs!!)
-        transaction = transactionData.toBitcoinJTransaction(networkParameters, unspentOutputs!!, change)
+        transaction =
+                transactionData.toBitcoinJTransaction(networkParameters, unspentOutputs!!, change)
 
-        val hashesForSign = MutableList(transaction.inputs.size) { byteArrayOf() }
+        val hashesToSign = MutableList(transaction.inputs.size) { byteArrayOf() }
         for (input in transaction.inputs) {
             val index = input.index
             val scriptPubKey = Script(transaction.inputs[index].scriptBytes)
 
             val scriptToSign = when (scriptPubKey.scriptType) {
                 Script.ScriptType.P2PKH -> scriptPubKey
-                Script.ScriptType.P2SH -> findSpendingScript(scriptPubKey)
-                Script.ScriptType.P2WPKH -> {
-                    val legacyAddress = LegacyAddress.fromKey(
-                            networkParameters,
-                            ECKey.fromPublicOnly(walletPublicKey.toCompressedPublicKey())
-                    )
-                    ScriptBuilder().data(
-                            ScriptBuilder.createOutputScript(legacyAddress).program
-                    ).build()
-                }
-                Script.ScriptType.P2WSH -> ScriptBuilder().data(
-                        findSpendingScript(scriptPubKey).program
-                ).build()
+                Script.ScriptType.P2SH, Script.ScriptType.P2WSH -> findSpendingScript(scriptPubKey)
+                Script.ScriptType.P2WPKH -> ScriptBuilder.createP2PKHOutputScript(
+                        ECKey.fromPublicOnly(walletPublicKey.toCompressedPublicKey())
+                )
                 else -> throw Exception("Unsupported output script")
             }
-            hashesForSign[index] = when (scriptPubKey.scriptType) {
+            hashesToSign[index] = when (scriptPubKey.scriptType) {
                 Script.ScriptType.P2PKH, Script.ScriptType.P2SH -> {
                     transaction.hashForSignature(
                             index,
@@ -87,7 +82,7 @@ open class BitcoinTransactionBuilder(
                 else -> throw Exception("Unsupported output script")
             }
         }
-        return Result.Success(hashesForSign)
+        return Result.Success(hashesToSign)
     }
 
     open fun buildToSend(signatures: ByteArray): ByteArray {
@@ -152,7 +147,10 @@ open class BitcoinTransactionBuilder(
         }
     }
 
-    fun calculateChange(transactionData: TransactionData, unspentOutputs: List<BitcoinUnspentOutput>): BigDecimal {
+    fun calculateChange(
+            transactionData: TransactionData,
+            unspentOutputs: List<BitcoinUnspentOutput>
+    ): BigDecimal {
         val fullAmount = unspentOutputs.map { it.amount }.reduce { acc, number -> acc + number }
         return fullAmount - (transactionData.amount.value!! + (transactionData.fee?.value
                 ?: 0.toBigDecimal()))
@@ -179,12 +177,18 @@ open class BitcoinTransactionBuilder(
     }
 }
 
-internal fun TransactionData.toBitcoinJTransaction(networkParameters: NetworkParameters?,
-                                                   unspentOutputs: List<BitcoinUnspentOutput>,
-                                                   change: BigDecimal): Transaction {
+internal fun TransactionData.toBitcoinJTransaction(
+        networkParameters: NetworkParameters?,
+        unspentOutputs: List<BitcoinUnspentOutput>,
+        change: BigDecimal
+): Transaction {
     val transaction = Transaction(networkParameters)
     for (utxo in unspentOutputs) {
-        transaction.addInput(Sha256Hash.wrap(utxo.transactionHash), utxo.outputIndex, Script(utxo.outputScript))
+        transaction.addInput(
+                Sha256Hash.wrap(utxo.transactionHash),
+                utxo.outputIndex,
+                Script(utxo.outputScript)
+        )
     }
     transaction.addOutput(
             Coin.parseCoin(this.amount.value!!.toPlainString()),

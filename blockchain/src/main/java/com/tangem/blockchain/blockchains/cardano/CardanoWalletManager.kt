@@ -6,12 +6,10 @@ import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.extensions.encodeBase64NoWrap
 import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import java.math.RoundingMode
-import java.util.*
 
 class CardanoWalletManager(
         cardId: String,
@@ -37,12 +35,23 @@ class CardanoWalletManager(
         wallet.amounts[AmountType.Coin]?.value =
                 response.balance.toBigDecimal().movePointLeft(blockchain.decimals())
         transactionBuilder.unspentOutputs = response.unspentOutputs
-        wallet.recentTransactions.forEach {
-            if (response.recentTransactionsHashes.contains(it.hash)
-                    || response.recentTransactionsHashes
-                            .contains(it.hash?.toUpperCase(Locale.ROOT) ?: "")
-            ) {
-                it.status = TransactionStatus.Confirmed
+
+        wallet.recentTransactions.forEach { recentTransaction ->
+            if (response.recentTransactionsHashes.isEmpty()) { // case for Rosetta API, it lacks recent transactions
+                if (response.unspentOutputs.isEmpty() ||
+                        response.unspentOutputs.find {
+                            it.transactionHash.toHexString()
+                                    .equals(recentTransaction.hash, ignoreCase = true)
+                        } != null
+                ) {
+                    recentTransaction.status = TransactionStatus.Confirmed
+                }
+            } else { // case for APIs with recent transactions
+                if (response.recentTransactionsHashes
+                                .find { it.equals(recentTransaction.hash, true) } != null
+                ) {
+                    recentTransaction.status = TransactionStatus.Confirmed
+                }
             }
         }
     }
@@ -57,19 +66,18 @@ class CardanoWalletManager(
     ): Result<SignResponse> {
         val transactionHash = transactionBuilder.buildToSign(transactionData)
 
-        when (val signerResponse = signer.sign(arrayOf(transactionHash), cardId)) {
+        return when (val signerResponse = signer.sign(arrayOf(transactionHash), cardId)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
-                val sendResult =
-                        networkProvider.sendTransaction(transactionToSend.encodeBase64NoWrap())
+                val sendResult = networkProvider.sendTransaction(transactionToSend)
 
                 if (sendResult is SimpleResult.Success) {
                     transactionData.hash = transactionHash.toHexString()
                     wallet.addOutgoingTransaction(transactionData)
                 }
-                return sendResult.toResultWithData(signerResponse.data)
+                sendResult.toResultWithData(signerResponse.data)
             }
-            is CompletionResult.Failure -> return Result.failure(signerResponse.error)
+            is CompletionResult.Failure -> Result.failure(signerResponse.error)
         }
     }
 
