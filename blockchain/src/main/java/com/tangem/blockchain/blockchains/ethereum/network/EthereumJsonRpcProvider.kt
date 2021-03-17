@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.network.createRetrofitInstance
 
-class EthereumJsonRpcProvider(baseUrl: String) {
+class EthereumJsonRpcProvider(baseUrl: String, private val apiKey: String) {
 
     private val api = createRetrofitInstance(baseUrl).create(EthereumApi::class.java)
 
@@ -54,5 +54,5 @@ class EthereumJsonRpcProvider(baseUrl: String) {
             data = "0x70a08231000000000000000000000000" + address.substring(2),
     )
 
-    private suspend fun EthereumBody.post() = api.post(this)
+    private suspend fun EthereumBody.post() = api.post(this, apiKey)
 }

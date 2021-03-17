@@ -5,8 +5,8 @@ import com.tangem.blockchain.blockchains.binance.BinanceWalletManager
 import com.tangem.blockchain.blockchains.binance.network.BinanceNetworkService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashNetworkService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashWalletManager
@@ -41,16 +41,29 @@ class WalletManagerFactory(
         private val blockchainSdkConfig: BlockchainSdkConfig = BlockchainSdkConfig()
 ) {
 
-    fun makeWalletManager(card: Card, tokens: Set<Token>? = null): WalletManager? {
-        val walletPublicKey: ByteArray = card.walletPublicKey ?: return null
+    fun makeWalletManager(card: Card,  tokens: Set<Token>? = null): WalletManager? {
         val blockchainName: String = card.cardData?.blockchainName ?: return null
         val blockchain = Blockchain.fromId(blockchainName)
+        return makeWalletManager(card, blockchain, tokens)
+    }
+
+    fun makeWalletManager(card: Card, blockchain: Blockchain, tokens: Set<Token>? = null): WalletManager? {
+        val walletPublicKey: ByteArray = card.walletPublicKey ?: return null
 
         val cardId = card.cardId
         val addresses = blockchain.makeAddresses(walletPublicKey)
-        val presetTokens = tokens ?: getToken(card)?.let { setOf(it) } ?: emptySet()
+        val presetTokens = getToken(card)?.let { mutableSetOf(it) }
+        val canManageTokens: Boolean
 
-        val wallet = Wallet(blockchain, addresses, presetTokens)
+        val tokensForWallet = if (presetTokens != null) {
+            canManageTokens = false
+            presetTokens
+        } else {
+            canManageTokens = true
+            tokens?.toMutableSet() ?: mutableSetOf()
+        }
+
+        val wallet = Wallet(blockchain, addresses, tokensForWallet)
 
         return when (blockchain) {
             Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> {
@@ -101,15 +114,23 @@ class WalletManagerFactory(
                         cardId, wallet,
                         EthereumTransactionBuilder(walletPublicKey, blockchain),
                         networkService,
-                        presetTokens
+                        tokensForWallet, canManageTokens
                 )
             }
-            Blockchain.EthereumTestnet, Blockchain.RSK -> {
+            Blockchain.EthereumTestnet -> {
                 EthereumWalletManager(
                         cardId, wallet,
                         EthereumTransactionBuilder(walletPublicKey, blockchain),
                         EthereumNetworkService(blockchain, blockchainSdkConfig.infuraProjectId),
-                        presetTokens
+                        tokensForWallet, canManageTokens
+                )
+            }
+            Blockchain.RSK -> {
+                EthereumWalletManager(
+                        cardId, wallet,
+                        EthereumTransactionBuilder(walletPublicKey, blockchain),
+                        EthereumNetworkService(blockchain, blockchainSdkConfig.infuraProjectId),
+                        tokensForWallet
                 )
             }
             Blockchain.Stellar -> {
@@ -119,7 +140,7 @@ class WalletManagerFactory(
                         cardId, wallet,
                         StellarTransactionBuilder(networkService, walletPublicKey),
                         networkService,
-                        presetTokens
+                        tokensForWallet
                 )
             }
             Blockchain.Cardano, Blockchain.CardanoShelley -> {
@@ -150,7 +171,7 @@ class WalletManagerFactory(
                         cardId, wallet,
                         BinanceTransactionBuilder(walletPublicKey),
                         BinanceNetworkService(),
-                        presetTokens
+                        tokensForWallet
                 )
             }
             Blockchain.BinanceTestnet -> {
@@ -158,7 +179,7 @@ class WalletManagerFactory(
                         cardId, wallet,
                         BinanceTransactionBuilder(walletPublicKey, true),
                         BinanceNetworkService(true),
-                        presetTokens
+                        tokensForWallet
                 )
             }
             Blockchain.Tezos -> {
