@@ -2,7 +2,6 @@ package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Token
-import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
@@ -34,12 +33,12 @@ class EthereumNetworkService(
     private val jsonRpcProvider: EthereumJsonRpcProvider by lazy {
         val infuraApiVersionPath = "v3/"
         val ethereumApiUrl = when (blockchain) {
-            Blockchain.Ethereum -> API_INFURA + infuraApiVersionPath + infuraProjectId
-            Blockchain.EthereumTestnet -> API_INFURA_TESTNET + infuraApiVersionPath + infuraProjectId
+            Blockchain.Ethereum -> API_INFURA + infuraApiVersionPath
+            Blockchain.EthereumTestnet -> API_INFURA_TESTNET + infuraApiVersionPath
             Blockchain.RSK -> API_RSK
             else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
         }
-        EthereumJsonRpcProvider(ethereumApiUrl)
+        EthereumJsonRpcProvider(ethereumApiUrl, infuraProjectId ?: "")
     }
     private val decimals = Blockchain.Ethereum.decimals()
 
@@ -52,9 +51,7 @@ class EthereumNetworkService(
                         retryIO { async { jsonRpcProvider.getPendingTxCount(address) } }
                 val transactionsResponseDeferred =
                         retryIO { async { blockchairEthNetworkProvider?.getTransactions(address, tokens) } }
-                val tokenBalancesDeferred = tokens.map {
-                    it to retryIO { async { jsonRpcProvider.getTokenBalance(address, it.contractAddress) } }
-                }.toMap()
+
 
                 val balanceResponse = balanceResponseDeferred.await()
                 val balance = balanceResponse.result?.parseAmount(decimals)
@@ -66,12 +63,7 @@ class EthereumNetworkService(
                 val pendingTxCount = pendingTxCountResponseDeferred.await()
                         .result?.responseToBigInteger()?.toLong() ?: 0
 
-                val tokenBalanceResponses = tokenBalancesDeferred.mapValues { it.value.await() }
-                val tokenBalances = tokenBalanceResponses.mapValues {
-                    it.value.result?.parseAmount(it.key.decimals)
-                            ?: throw it.value.error?.toException()
-                                    ?: Exception("Unknown token balance response format")
-                }
+                val tokenBalances = getTokensBalanceInternal(address, tokens)
 
                 val recentTransactions = when (val result = transactionsResponseDeferred.await()) {
                     is Result.Success -> result.data
@@ -145,6 +137,28 @@ class EthereumNetworkService(
                 normalFee.movePointLeft(decimals),
                 priorityFee.movePointLeft(decimals)
         )
+    }
+
+    override suspend fun getTokensBalance(address: String, tokens: Set<Token>): Result<Map<Token, BigDecimal>> {
+        return try {
+            Result.Success(getTokensBalanceInternal(address, tokens))
+        } catch (error: Exception) {
+            Result.Failure(error)
+        }
+    }
+
+    private suspend fun getTokensBalanceInternal(address: String, tokens: Set<Token>): Map<Token, BigDecimal> {
+        return coroutineScope {
+            val tokenBalancesDeferred = tokens.map { token ->
+                token to retryIO { async { jsonRpcProvider.getTokenBalance(address, token.contractAddress) } }
+            }.toMap()
+            val tokenBalanceResponses = tokenBalancesDeferred.mapValues { it.value.await() }
+            tokenBalanceResponses.mapValues {
+                it.value.result?.parseAmount(it.key.decimals)
+                        ?: throw it.value.error?.toException()
+                                ?: Exception("Unknown token balance response format")
+            }
+        }
     }
 
     private fun String.responseToBigInteger() =
