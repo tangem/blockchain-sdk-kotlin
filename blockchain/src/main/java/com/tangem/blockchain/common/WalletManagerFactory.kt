@@ -130,7 +130,7 @@ class WalletManagerFactory(
                 EthereumWalletManager(
                         cardId, wallet,
                         EthereumTransactionBuilder(walletPublicKey, blockchain),
-                        EthereumNetworkService(blockchain, blockchainSdkConfig.infuraProjectId),
+                        EthereumNetworkService(blockchain, null),
                         tokensForWallet
                 )
             }
