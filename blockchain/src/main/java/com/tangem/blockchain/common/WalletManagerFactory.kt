@@ -166,9 +166,11 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.Tezos -> {
-                val tezosJsonRpcProvider1 by lazy { TezosJsonRpcNetworkProvider(API_TEZOS) }
-                val tezosJsonRpcProvider2 by lazy { TezosJsonRpcNetworkProvider(API_TEZOS_RESERVE) }
-                val providers = listOf(tezosJsonRpcProvider1, tezosJsonRpcProvider2)
+                val tezosProvider1 by lazy { TezosJsonRpcNetworkProvider(API_TEZOS_LETZBAKE) }
+                val tezosProvider2 by lazy { TezosJsonRpcNetworkProvider(API_TEZOS_BLOCKSCALE) }
+                val tezosProvider3 by lazy { TezosJsonRpcNetworkProvider(API_TEZOS_SMARTPY) }
+                val tezosProvider4 by lazy { TezosJsonRpcNetworkProvider(API_TEZOS_ECAD) }
+                val providers = listOf(tezosProvider1, tezosProvider2, tezosProvider3, tezosProvider4)
 
                 TezosWalletManager(
                         cardId, wallet,
