@@ -7,14 +7,13 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
-import java.math.BigDecimal
 
 class StellarWalletManager(
         cardId: String,
         wallet: Wallet,
         private val transactionBuilder: StellarTransactionBuilder,
         private val networkProvider: StellarNetworkProvider,
-        presetTokens: Set<Token>
+        presetTokens: MutableSet<Token>
 ) : WalletManager(cardId, wallet, presetTokens), TransactionSender, SignatureCountValidator {
 
     private val blockchain = wallet.blockchain
@@ -43,7 +42,7 @@ class StellarWalletManager(
             val tokenBalance = data.tokenBalances
                     .find { it.symbol == token.symbol && it.issuer == token.contractAddress }?.balance
                     ?: 0.toBigDecimal()
-            wallet.setTokenValue(tokenBalance, token)
+            wallet.addTokenValue(tokenBalance, token)
         }
         // only if no token(s) specified on manager creation or stored on card
         if (presetTokens.isEmpty()) updateUnplannedTokens(data.tokenBalances)
@@ -54,7 +53,7 @@ class StellarWalletManager(
     private fun updateUnplannedTokens(balances: Set<StellarAssetBalance>) {
         balances.forEach {
             val token = Token(it.symbol, it.issuer, blockchain.decimals())
-            wallet.setTokenValue(it.balance, token)
+            wallet.addTokenValue(it.balance, token)
         }
     }
 
