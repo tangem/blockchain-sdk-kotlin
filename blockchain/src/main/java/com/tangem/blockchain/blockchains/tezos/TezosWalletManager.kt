@@ -130,6 +130,6 @@ class TezosWalletManager(
     companion object {
         const val TRANSACTION_FEE = 0.00142
         const val REVEAL_FEE = 0.0013
-        const val ALLOCATION_FEE = 0.257
+        const val ALLOCATION_FEE = 0.06425
     }
 }
