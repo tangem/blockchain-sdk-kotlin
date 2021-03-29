@@ -13,7 +13,6 @@ abstract class WalletManager(
         val cardId: String,
         var wallet: Wallet,
         val presetTokens: MutableSet<Token> = mutableSetOf(),
-        val canManageTokens: Boolean = false
 ) {
 
     var dustValue: BigDecimal? = null
@@ -107,6 +106,10 @@ abstract class WalletManager(
         wallet.removeToken(token)
     }
 
+    open suspend fun addToken(token: Token): Result<Amount> {
+        return Result.Failure(Exception("Adding tokens not supported for ${wallet.blockchain.currency}"))
+    }
+
     private fun validateAmountValue(amount: Amount) = amount.isAboveZero()
 
     private fun validateAmountAvalible(amount: Amount): Boolean {
@@ -150,6 +153,6 @@ interface SignatureCountValidator {
     suspend fun validateSignatureCount(signedHashes: Int): SimpleResult
 }
 
-interface TokenManager {
-    suspend fun addToken(token: Token): Result<Amount>
+interface TokenFinder {
+    suspend fun findTokens() : Result<List<Token>>
 }
