@@ -92,4 +92,17 @@ class BlockchairEthNetworkProvider(private val apiKey: String? = null) {
                 hash = hash?.substring(2) // trim 0x
         )
     }
+
+    suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>> {
+        return try {
+            coroutineScope {
+                val tokens = retryIO { api.findErc20Tokens(address) }.data
+                        ?.getValue(address.toLowerCase(Locale.ROOT))?.tokensInfo?.tokens
+                        ?: emptyList()
+                Result.Success(tokens)
+            }
+        } catch (error: Exception) {
+            Result.Failure(error)
+        }
+    }
 }
