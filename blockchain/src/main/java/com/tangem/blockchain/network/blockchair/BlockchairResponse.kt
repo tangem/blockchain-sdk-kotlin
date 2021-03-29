@@ -2,6 +2,7 @@ package com.tangem.blockchain.network.blockchair
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import com.tangem.blockchain.common.Token
 
 @JsonClass(generateAdapter = true)
 data class BlockchairAddress(
@@ -107,3 +108,43 @@ data class BlockchairCallInfo(
         @Json(name = "token_address")
         val contractAddress: String? = null
 )
+
+@JsonClass(generateAdapter = true)
+data class BlockchairTokensResponse(
+        val data: Map<String, BlockchairTokensData>? = null
+)
+
+
+data class BlockchairTokensData(
+        @Json(name = "layer_2")
+        val tokensInfo: TokensInfo
+)
+
+data class TokensInfo(
+        @Json(name = "erc_20")
+        val tokens: List<BlockchairToken>
+)
+
+//data class Erc20Tokens(val tokens: List<BlockchairToken>)
+data class BlockchairToken(
+        @Json(name = "token_address")
+        val address: String,
+
+        @Json(name = "token_name")
+        val name: String,
+
+        @Json(name = "token_symbol")
+        val symbol: String,
+
+        @Json(name = "token_decimals")
+        val decimals: Int,
+
+        @Json(name = "balance_approximate")
+        val approximateBalance: Double,
+
+        val balance: String,
+) {
+    fun toToken(): Token {
+        return Token(name = name, symbol = symbol, contractAddress = address, decimals = decimals)
+    }
+}
