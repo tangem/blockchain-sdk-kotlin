@@ -11,6 +11,7 @@ interface EthereumNetworkProvider {
     suspend fun sendTransaction(transaction: String): SimpleResult
     suspend fun getFee(to: String, from: String, data: String?, fallbackGasLimit: Long?): Result<EthereumFeeResponse>
     suspend fun getSignatureCount(address: String): Result<Int>
+    suspend fun getTokensBalance(address: String, tokens: Set<Token>): Result<Map<Token, BigDecimal>>
 }
 
 data class EthereumInfoResponse(

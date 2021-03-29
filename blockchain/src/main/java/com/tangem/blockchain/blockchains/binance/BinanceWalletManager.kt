@@ -14,7 +14,7 @@ class BinanceWalletManager(
         wallet: Wallet,
         private val transactionBuilder: BinanceTransactionBuilder,
         private val networkProvider: BinanceNetworkProvider,
-        presetTokens: Set<Token>
+        presetTokens: MutableSet<Token>
 ) : WalletManager(cardId, wallet, presetTokens), TransactionSender {
 
     private val blockchain = wallet.blockchain
@@ -34,7 +34,7 @@ class BinanceWalletManager(
 
         presetTokens.forEach {
             val tokenBalance = response.balances[it.contractAddress] ?: 0.toBigDecimal()
-            wallet.setTokenValue(tokenBalance, it)
+            wallet.addTokenValue(tokenBalance, it)
         }
         if (presetTokens.isEmpty()) { // only if no token(s) specified on manager creation or stored on card
             val tokenBalances = response.balances.filterKeys { it != blockchain.currency}
@@ -52,7 +52,7 @@ class BinanceWalletManager(
                     contractAddress = it.key,
                     decimals = blockchain.decimals()
             )
-            wallet.setTokenValue(it.value, token)
+            wallet.addTokenValue(it.value, token)
         }
     }
 
