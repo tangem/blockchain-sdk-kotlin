@@ -36,6 +36,12 @@ interface BlockchairApi {
             @Query("limit") limit: Int? = null,
             @Query("key") key: String?
     ): BlockchairTokenHolder
+
+    @GET("dashboards/address/{address}")
+    suspend fun findErc20Tokens(
+            @Path("address") address: String,
+            @Query("erc_20") erc20: Boolean = true,
+    ): BlockchairTokensResponse
 }
 
 @JsonClass(generateAdapter = true)
