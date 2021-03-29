@@ -9,6 +9,7 @@ import com.tangem.blockchain.network.API_INFURA
 import com.tangem.blockchain.network.API_INFURA_TESTNET
 import com.tangem.blockchain.network.API_RSK
 import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
+import com.tangem.blockchain.network.blockchair.BlockchairToken
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -159,6 +160,12 @@ class EthereumNetworkService(
                                 ?: Exception("Unknown token balance response format")
             }
         }
+    }
+
+    override suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>> {
+        return blockchairEthNetworkProvider?.findErc20Tokens(address)
+                ?: Result.Failure(Exception("Unsupported feature"))
+
     }
 
     private fun String.responseToBigInteger() =
