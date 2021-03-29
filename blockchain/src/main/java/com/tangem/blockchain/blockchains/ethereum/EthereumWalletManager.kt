@@ -18,9 +18,8 @@ class EthereumWalletManager(
         private val transactionBuilder: EthereumTransactionBuilder,
         private val networkProvider: EthereumNetworkProvider,
         presetToken: MutableSet<Token>,
-        canManageTokens: Boolean = false
-) : WalletManager(cardId, wallet, presetToken, canManageTokens),
-        TransactionSender, SignatureCountValidator, TokenManager {
+) : WalletManager(cardId, wallet, presetToken),
+        TransactionSender, SignatureCountValidator, TokenFinder {
 
     private var pendingTxCount = -1L
     private var txCount = -1L
@@ -113,7 +112,7 @@ class EthereumWalletManager(
         if (!presetTokens.contains(token)) {
             presetTokens.add(token)
         }
-        val result =  networkProvider.getTokensBalance(wallet.address, setOf(token))
+        val result = networkProvider.getTokensBalance(wallet.address, setOf(token))
         return when (result) {
             is Result.Failure -> Result.Failure(result.error)
             is Result.Success -> {
@@ -121,7 +120,26 @@ class EthereumWalletManager(
                 Result.Success(amount)
             }
         }
+    }
 
+    override suspend fun findTokens(): Result<List<Token>> {
+        return when (val result = networkProvider.findErc20Tokens(wallet.address)) {
+            is Result.Failure -> Result.Failure(result.error)
+            is Result.Success -> {
+                val tokens: List<Token> = result.data.map { blockchairToken ->
+                    val token = blockchairToken.toToken()
+                    if (!presetTokens.contains(token)) {
+                        presetTokens.add(token)
+                    }
+                    val balance = blockchairToken.balance.toBigDecimalOrNull()
+                            ?.movePointLeft(blockchairToken.decimals)
+                            ?: BigDecimal.ZERO
+                    wallet.addTokenValue(balance, token)
+                    token
+                }
+                return Result.Success(tokens)
+            }
+        }
     }
 
     private fun estimateGasLimit(amount: Amount): GasLimit { //TODO: remove?
