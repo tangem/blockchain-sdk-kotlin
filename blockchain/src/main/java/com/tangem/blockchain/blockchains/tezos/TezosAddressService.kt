@@ -10,8 +10,7 @@ class TezosAddressService : AddressService() {
     override fun makeAddress(walletPublicKey: ByteArray): String {
         val publicKeyHash = Blake2b.Blake2b160().digest(walletPublicKey)
 
-        val tz1Prefix = "06A19F".hexToBytes()
-        val prefixedHash = tz1Prefix + publicKeyHash
+        val prefixedHash = TezosConstants.TZ1_PREFIX.hexToBytes() + publicKeyHash
 
         val checksum = prefixedHash.calculateTezosChecksum()
         val prefixedHashWithChecksum = prefixedHash + checksum
@@ -36,6 +35,7 @@ class TezosAddressService : AddressService() {
     }
 
     companion object {
-        fun ByteArray.calculateTezosChecksum() = this.calculateSha256().calculateSha256().copyOfRange(0, 4)
+        fun ByteArray.calculateTezosChecksum() =
+                this.calculateSha256().calculateSha256().copyOfRange(0, 4)
     }
 }
