@@ -52,7 +52,9 @@ class TezosWalletManager(
         if (publicKeyRevealed == null) return Result.Failure(Exception("publicKeyRevealed is null"))
 
         val contents =
-                when (val response = transactionBuilder.buildContents(transactionData, publicKeyRevealed!!)) {
+                when (val response =
+                        transactionBuilder.buildContents(transactionData, publicKeyRevealed!!)
+                ) {
                     is Result.Failure -> return Result.Failure(response.error)
                     is Result.Success -> response.data
                 }
@@ -61,11 +63,12 @@ class TezosWalletManager(
                     is Result.Failure -> return Result.Failure(response.error)
                     is Result.Success -> response.data
                 }
-        val forgedContents = //TODO: CHANGE FOR PRODUCTION, this is potential security vulnerability, transaction should be forged locally
-                when (val response = networkProvider.forgeContents(header.hash, contents)) {
-                    is Result.Failure -> return Result.Failure(response.error)
-                    is Result.Success -> response.data
-                }
+        val forgedContents = transactionBuilder.forgeContents(header.hash, contents)
+                // potential security vulnerability, transaction should be forged locally
+//                when (val response = networkProvider.forgeContents(header.hash, contents)) {
+//                    is Result.Failure -> return Result.Failure(response.error)
+//                    is Result.Success -> response.data
+//                }
         val dataToSign = transactionBuilder.buildToSign(forgedContents)
 
         val signerResponse = signer.sign(arrayOf(dataToSign), cardId)
@@ -89,11 +92,12 @@ class TezosWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
-        var fee: BigDecimal = BigDecimal.valueOf(TRANSACTION_FEE)
+        var fee: BigDecimal = BigDecimal.valueOf(TezosConstants.TRANSACTION_FEE)
         var error: Result.Failure? = null
 
         coroutineScope {
-            val publicKeyRevealedDeferred = async { networkProvider.isPublicKeyRevealed(wallet.address) }
+            val publicKeyRevealedDeferred =
+                    async { networkProvider.isPublicKeyRevealed(wallet.address) }
             val destinationInfoDeferred = async { networkProvider.getInfo(destination) }
 
             when (val result = publicKeyRevealedDeferred.await()) {
@@ -101,7 +105,7 @@ class TezosWalletManager(
                 is Result.Success -> {
                     publicKeyRevealed = result.data
                     if (!publicKeyRevealed!!) {
-                        fee += BigDecimal.valueOf(REVEAL_FEE)
+                        fee += BigDecimal.valueOf(TezosConstants.REVEAL_FEE)
                     }
                 }
             }
@@ -110,7 +114,7 @@ class TezosWalletManager(
                 is Result.Failure -> error = result
                 is Result.Success -> {
                     if (result.data.balance.isZero()) {
-                        fee += BigDecimal.valueOf(ALLOCATION_FEE)
+                        fee += BigDecimal.valueOf(TezosConstants.ALLOCATION_FEE)
                     }
                 }
             }
@@ -125,11 +129,5 @@ class TezosWalletManager(
             errors.add(TransactionError.TezosSendAll)
         }
         return errors
-    }
-
-    companion object {
-        const val TRANSACTION_FEE = 0.00142
-        const val REVEAL_FEE = 0.0013
-        const val ALLOCATION_FEE = 0.06425
     }
 }
