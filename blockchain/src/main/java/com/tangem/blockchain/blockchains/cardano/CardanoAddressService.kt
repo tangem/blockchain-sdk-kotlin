@@ -13,6 +13,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.extensions.*
+import com.tangem.commands.common.card.EllipticCurve
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.CRC32
@@ -21,7 +22,7 @@ import java.util.zip.CRC32
 class CardanoAddressService(private val blockchain: Blockchain) : AddressService() {
     private val shelleyHeaderByte: Byte = 97
 
-    override fun makeAddress(walletPublicKey: ByteArray): String {
+    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         return when (blockchain) {
             Blockchain.Cardano -> makeByronAddress(walletPublicKey)
             Blockchain.CardanoShelley -> makeShelleyAddress(walletPublicKey)
@@ -37,7 +38,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
         }
     }
 
-    override fun makeAddresses(walletPublicKey: ByteArray): Set<Address> {
+    override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?): Set<Address> {
         return if (blockchain == Blockchain.CardanoShelley) {
             setOf(
                     Address(makeByronAddress(walletPublicKey), CardanoAddressType.Byron),

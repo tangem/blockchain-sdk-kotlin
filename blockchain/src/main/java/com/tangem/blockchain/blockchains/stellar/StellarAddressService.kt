@@ -1,10 +1,11 @@
 package com.tangem.blockchain.blockchains.stellar
 
 import com.tangem.blockchain.common.address.AddressService
+import com.tangem.commands.common.card.EllipticCurve
 import org.stellar.sdk.KeyPair
 
 class StellarAddressService: AddressService() {
-    override fun makeAddress(walletPublicKey: ByteArray): String {
+    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         val kp = KeyPair.fromPublicKey(walletPublicKey)
         return kp.accountId
     }
