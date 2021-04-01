@@ -12,6 +12,7 @@ import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.*
+import com.tangem.commands.common.card.EllipticCurve
 
 enum class Blockchain(
         val id: String,
@@ -43,12 +44,16 @@ enum class Blockchain(
         Unknown -> 0
     }
 
-    fun makeAddresses(walletPublicKey: ByteArray, pairPublicKey: ByteArray? = null): Set<Address> {
+    fun makeAddresses(
+            walletPublicKey: ByteArray,
+            pairPublicKey: ByteArray? = null,
+            curve: EllipticCurve? = null
+    ): Set<Address> {
         return if (pairPublicKey != null) {
             (getAddressService() as? MultisigAddressProvider)
                     ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()
         } else {
-            getAddressService().makeAddresses(walletPublicKey)
+            getAddressService().makeAddresses(walletPublicKey, curve)
         }
     }
 
