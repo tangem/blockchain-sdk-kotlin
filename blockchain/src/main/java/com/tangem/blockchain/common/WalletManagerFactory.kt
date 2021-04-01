@@ -88,7 +88,7 @@ class WalletManagerFactory(
             tokens: MutableSet<Token> = mutableSetOf()
     ): WalletManager {
 
-        val addresses = blockchain.makeAddresses(walletPublicKey, walletPairPublickKey)
+        val addresses = blockchain.makeAddresses(walletPublicKey, walletPairPublickKey, cardCurve)
 
         val wallet = Wallet(blockchain, addresses, tokens)
 

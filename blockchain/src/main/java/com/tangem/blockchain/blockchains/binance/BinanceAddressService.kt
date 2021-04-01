@@ -2,13 +2,14 @@ package com.tangem.blockchain.blockchains.binance
 
 import com.tangem.blockchain.blockchains.binance.client.encoding.Crypto
 import com.tangem.blockchain.common.address.AddressService
+import com.tangem.commands.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
 import org.bitcoinj.core.Bech32
 
 class BinanceAddressService(private val testNet: Boolean = false) : AddressService() {
-    override fun makeAddress(walletPublicKey: ByteArray): String {
+    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         val publicKeyHash = walletPublicKey.toCompressedPublicKey().calculateSha256().calculateRipemd160()
         return if (testNet) {
             Bech32.encode("tbnb", Crypto.convertBits(publicKeyHash, 0,
