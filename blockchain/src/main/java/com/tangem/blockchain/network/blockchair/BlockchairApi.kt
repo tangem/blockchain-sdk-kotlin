@@ -40,6 +40,7 @@ interface BlockchairApi {
     @GET("dashboards/address/{address}")
     suspend fun findErc20Tokens(
             @Path("address") address: String,
+            @Query("key") key: String?,
             @Query("erc_20") erc20: Boolean = true,
     ): BlockchairTokensResponse
 }
