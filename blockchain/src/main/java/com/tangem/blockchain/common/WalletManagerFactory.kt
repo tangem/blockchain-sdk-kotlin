@@ -221,8 +221,9 @@ class WalletManagerFactory(
 
                 TezosWalletManager(
                         cardId, wallet,
-                        TezosTransactionBuilder(walletPublicKey),
-                        TezosNetworkService(providers)
+                        TezosTransactionBuilder(walletPublicKey, cardCurve),
+                        TezosNetworkService(providers),
+                        cardCurve
                 )
             }
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
