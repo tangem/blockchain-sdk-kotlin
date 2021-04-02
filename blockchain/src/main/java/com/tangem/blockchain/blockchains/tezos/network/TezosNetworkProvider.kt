@@ -12,7 +12,7 @@ interface TezosNetworkProvider {
     suspend fun checkTransaction(
             header: TezosHeader,
             contents: List<TezosOperationContent>,
-            signature: ByteArray
+            encodedSignature: String
     ): SimpleResult
 
     suspend fun sendTransaction(transaction: String): SimpleResult

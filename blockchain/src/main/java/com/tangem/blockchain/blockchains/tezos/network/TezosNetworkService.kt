@@ -34,10 +34,14 @@ class TezosNetworkService(providers: List<TezosNetworkProvider>) :
     override suspend fun checkTransaction(
             header: TezosHeader,
             contents: List<TezosOperationContent>,
-            signature: ByteArray
+            encodedSignature: String
     ): SimpleResult {
-        val result = provider.checkTransaction(header, contents, signature)
-        return if (result.needsRetry()) checkTransaction(header, contents, signature) else result
+        val result = provider.checkTransaction(header, contents, encodedSignature)
+        return if (result.needsRetry()) {
+            checkTransaction(header, contents, encodedSignature)
+        } else {
+            result
+        }
     }
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
