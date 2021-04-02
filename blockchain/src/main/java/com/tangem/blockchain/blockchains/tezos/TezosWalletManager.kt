@@ -1,16 +1,22 @@
 package com.tangem.blockchain.blockchains.tezos
 
 import android.util.Log
+import com.tangem.blockchain.blockchains.tezos.TezosAddressService.Companion.calculateTezosChecksum
 import com.tangem.blockchain.blockchains.tezos.network.TezosInfoResponse
 import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.toCanonicalECDSASignature
 import com.tangem.commands.SignResponse
+import com.tangem.commands.common.card.EllipticCurve
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.isZero
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import org.bitcoinj.core.Base58
+import org.bitcoinj.core.Utils
 import java.math.BigDecimal
 import java.util.*
 
@@ -18,7 +24,8 @@ class TezosWalletManager(
         cardId: String,
         wallet: Wallet,
         private val transactionBuilder: TezosTransactionBuilder,
-        private val networkProvider: TezosNetworkProvider
+        private val networkProvider: TezosNetworkProvider,
+        private val curve: EllipticCurve
 ) : WalletManager(cardId, wallet), TransactionSender {
 
     private val blockchain = wallet.blockchain
@@ -64,7 +71,7 @@ class TezosWalletManager(
                     is Result.Success -> response.data
                 }
         val forgedContents = transactionBuilder.forgeContents(header.hash, contents)
-                // potential security vulnerability, transaction should be forged locally
+        // potential security vulnerability, transaction should be forged locally
 //                when (val response = networkProvider.forgeContents(header.hash, contents)) {
 //                    is Result.Failure -> return Result.Failure(response.error)
 //                    is Result.Success -> response.data
@@ -76,11 +83,14 @@ class TezosWalletManager(
             is CompletionResult.Failure -> return Result.failure(signerResponse.error)
             is CompletionResult.Success -> signerResponse.data.signature
         }
+        val canonicalSignature = canonicalizeSignature(signature)
 
-        return when (val response = networkProvider.checkTransaction(header, contents, signature)) {
+        return when (val response = networkProvider
+                .checkTransaction(header, contents, encodeSignature(canonicalSignature))
+        ) {
             is SimpleResult.Failure -> response.toResultWithData(signerResponse.data)
             is SimpleResult.Success -> {
-                val transactionToSend = transactionBuilder.buildToSend(signature,forgedContents)
+                val transactionToSend = transactionBuilder.buildToSend(signature, forgedContents)
                 val sendResult = networkProvider.sendTransaction(transactionToSend)
 
                 if (sendResult is SimpleResult.Success) {
@@ -109,7 +119,6 @@ class TezosWalletManager(
                     }
                 }
             }
-
             when (val result = destinationInfoDeferred.await()) {
                 is Result.Failure -> error = result
                 is Result.Success -> {
@@ -129,5 +138,25 @@ class TezosWalletManager(
             errors.add(TransactionError.TezosSendAll)
         }
         return errors
+    }
+
+    private fun canonicalizeSignature(signature: ByteArray): ByteArray {
+        return when (curve) {
+            EllipticCurve.Ed25519 -> signature
+            EllipticCurve.Secp256k1 -> {
+                val canonicalECDSASignature = signature.toCanonicalECDSASignature()
+                //bigIntegerToBytes cuts leading zero if present
+                Utils.bigIntegerToBytes(canonicalECDSASignature.r, 32) +
+                        Utils.bigIntegerToBytes(canonicalECDSASignature.s, 32)
+            }
+        }
+    }
+
+    private fun encodeSignature(signature: ByteArray): String {
+        val prefix = TezosConstants.getSignaturePrefix(curve).hexToBytes()
+        val prefixedSignature = prefix + signature
+        val checksum = prefixedSignature.calculateTezosChecksum()
+
+        return Base58.encode(prefixedSignature + checksum)
     }
 }

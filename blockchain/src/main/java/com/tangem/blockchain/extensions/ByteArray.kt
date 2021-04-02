@@ -3,7 +3,11 @@ package com.tangem.blockchain.extensions
 import android.util.Base64
 import com.tangem.blockchain.blockchains.cardano.crypto.Blake2b
 import org.bitcoinj.core.Base58
+import org.bitcoinj.core.ECKey
+import org.bitcoinj.core.Utils
 import org.spongycastle.crypto.util.DigestFactory
+import java.lang.Exception
+import java.math.BigInteger
 
 fun ByteArray.encodeBase58(): String {
     return Base58.encode(this)
@@ -24,4 +28,11 @@ fun ByteArray.calculateSha3v256(): ByteArray {
 fun ByteArray.calculateBlake2b(digestByteSize: Int): ByteArray {
     val digest = Blake2b.Digest.newInstance(digestByteSize)
     return digest.digest(this)
+}
+
+fun ByteArray.toCanonicalECDSASignature(): ECKey.ECDSASignature {
+    if (this.size != 64) throw Exception("Invalid signature length")
+    val r = BigInteger(1, this.copyOfRange(0, 32))
+    val s = BigInteger(1, this.copyOfRange(32, 64))
+    return ECKey.ECDSASignature(r, s).toCanonicalised()
 }
