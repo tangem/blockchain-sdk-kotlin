@@ -3,7 +3,7 @@ apply plugin: 'maven'
 uploadArchives {
     repositories {
         mavenDeployer {
-            repository(url: "https://nexus.tangem.com/repository/maven-releases/") {
+            repository(url: "https://nexus.tangem-tech.com/repository/maven-releases/") {
                 authentication(userName: "$nexusUser", password: "$nexusPass")
             }
             pom.groupId = artifactGroup
@@ -28,7 +28,7 @@ task uploadSnapshot(type: Upload) {
     configuration = configurations.archives
     repositories {
         mavenDeployer {
-            repository(url: "https://nexus.tangem.com/repository/maven-snapshots/") {
+            repository(url: "https://nexus.tangem-tech.com/repository/maven-snapshots/") {
                 authentication(userName: "developer", password: "smartcash987")
             }
             pom.version = "$prefix-SNAPSHOT"
