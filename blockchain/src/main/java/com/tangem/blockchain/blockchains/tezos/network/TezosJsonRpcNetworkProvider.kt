@@ -61,14 +61,14 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
     override suspend fun checkTransaction(
             header: TezosHeader,
             contents: List<TezosOperationContent>,
-            signature: ByteArray
+            encodedSignature: String
     ): SimpleResult {
         return try {
             val tezosPreapplyBody = TezosPreapplyBody(
                     protocol = header.protocol,
                     branch = header.hash,
                     contents = contents,
-                    signature = encodeSignature(signature)
+                    signature = encodedSignature
             )
             retryIO { api.preapplyOperations(listOf(tezosPreapplyBody)) }
             SimpleResult.Success
@@ -84,14 +84,5 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
         } catch (exception: Exception) {
             SimpleResult.Failure(exception)
         }
-    }
-
-    private fun encodeSignature(signature: ByteArray): String {
-        val edsigPrefix = "09F5CD8612".hexToBytes()
-        val prefixedSignature = edsigPrefix + signature
-        val checksum = prefixedSignature.calculateTezosChecksum()
-        val prefixedSignatureWithChecksum = prefixedSignature + checksum
-
-        return Base58.encode(prefixedSignatureWithChecksum)
     }
 }

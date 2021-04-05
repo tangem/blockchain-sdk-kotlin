@@ -1,13 +1,13 @@
 package com.tangem.blockchain.blockchains.tezos
 
 import com.google.common.truth.Truth
-import com.tangem.blockchain.blockchains.tezos.network.TezosHeader
 import com.tangem.blockchain.blockchains.tezos.network.TezosOperationContent
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
+import com.tangem.commands.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
@@ -26,8 +26,8 @@ class TezosTransactionTest {
         val counter = 1561L
         val isPublicKeyRevealed = false
 
-        val walletAddress = TezosAddressService().makeAddress(walletPublicKey)
-        val transactionBuilder = TezosTransactionBuilder(walletPublicKey)
+        val walletAddress = TezosAddressService().makeAddress(walletPublicKey, EllipticCurve.Ed25519)
+        val transactionBuilder = TezosTransactionBuilder(walletPublicKey, EllipticCurve.Ed25519)
         transactionBuilder.counter = counter
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
@@ -73,7 +73,7 @@ class TezosTransactionTest {
         val expectedHashToSign = "545BBB1561486843BE9D923B6BA578646612082BCF53FAD8E1A5D30C3FC0A998"
                 .hexToBytes()
 
-        val hashToSign = TezosTransactionBuilder("".toByteArray()).buildToSign(forgedContents)
+        val hashToSign = TezosTransactionBuilder("".toByteArray(), EllipticCurve.Ed25519).buildToSign(forgedContents)
 
         Truth.assertThat(hashToSign).isEqualTo(expectedHashToSign)
     }
@@ -85,7 +85,7 @@ class TezosTransactionTest {
                 .hexToBytes()
         val expectedSignedTransaction = "b336b959766f8b6a7771b59334025f31af28ec13dfedca8b2049539361b079ef6b00722f2b1cf1abe10aeef0875211d0406edcb9e292940a9a0c904e000064df67680f2167e1a085083fe3085561e6bef5aa1fc165785ffae6264706db8c6c00722f2b1cf1abe10aeef0875211d0406edcb9e2928c0b9b0ce852ac02a08d06015165f0e9a47be7958c6250a0b52fd53dc2321df30000B945398FB90158761F6D61789B594D042F0F490F9656FBFFAE8F18B49D5F30054F43EE43CCAB2703F0E2E4E61D99CF3D4A875CD759569787CF0AED02415434C6"
 
-        val signedTransaction = TezosTransactionBuilder("".toByteArray())
+        val signedTransaction = TezosTransactionBuilder("".toByteArray(), EllipticCurve.Ed25519)
                 .buildToSend(signature, forgedContents)
 
         Truth.assertThat(signedTransaction).isEqualTo(expectedSignedTransaction)
