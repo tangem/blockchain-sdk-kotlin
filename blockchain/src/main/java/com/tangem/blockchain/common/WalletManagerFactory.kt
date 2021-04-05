@@ -88,7 +88,7 @@ class WalletManagerFactory(
             tokens: MutableSet<Token> = mutableSetOf()
     ): WalletManager {
 
-        val addresses = blockchain.makeAddresses(walletPublicKey, walletPairPublickKey)
+        val addresses = blockchain.makeAddresses(walletPublicKey, walletPairPublickKey, cardCurve)
 
         val wallet = Wallet(blockchain, addresses, tokens)
 
@@ -221,8 +221,9 @@ class WalletManagerFactory(
 
                 TezosWalletManager(
                         cardId, wallet,
-                        TezosTransactionBuilder(walletPublicKey),
-                        TezosNetworkService(providers)
+                        TezosTransactionBuilder(walletPublicKey, cardCurve),
+                        TezosNetworkService(providers),
+                        cardCurve
                 )
             }
             Blockchain.Unknown -> throw Exception("unsupported blockchain")

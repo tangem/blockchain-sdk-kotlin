@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
 import com.tangem.blockchain.blockchains.litecoin.LitecoinMainNetParams
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.*
+import com.tangem.commands.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
@@ -17,17 +18,21 @@ import org.bitcoinj.params.TestNet3Params
 import org.bitcoinj.script.Script
 import org.bitcoinj.script.ScriptBuilder
 
-open class BitcoinAddressService(private val blockchain: Blockchain) : AddressService(), MultisigAddressProvider {
+open class BitcoinAddressService(
+        private val blockchain: Blockchain
+        ) : AddressService(), MultisigAddressProvider {
 
     private val networkParameters: NetworkParameters = when (blockchain) {
         Blockchain.Bitcoin -> MainNetParams()
         Blockchain.BitcoinTestnet -> TestNet3Params()
         Blockchain.Litecoin -> LitecoinMainNetParams()
         Blockchain.Ducatus -> DucatusMainNetParams()
-        else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
+        else -> throw Exception(
+                "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
+        )
     }
 
-    override fun makeAddress(walletPublicKey: ByteArray): String {
+    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         val ecPublicKey = ECKey.fromPublicOnly(walletPublicKey)
         return LegacyAddress.fromKey(networkParameters, ecPublicKey).toBase58()
     }
@@ -36,13 +41,13 @@ open class BitcoinAddressService(private val blockchain: Blockchain) : AddressSe
         return validateLegacyAddress(address) || validateSegwitAddress(address)
     }
 
-    override fun makeAddresses(walletPublicKey: ByteArray): Set<Address> {
+    override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?): Set<Address> {
         return when (blockchain) {
             Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> {
                 setOf(makeLegacyAddress(walletPublicKey), makeSegwitAddress(walletPublicKey))
             }
             else -> {
-                super.makeAddresses(walletPublicKey)
+                super.makeAddresses(walletPublicKey, curve)
             }
         }
     }
@@ -76,7 +81,7 @@ open class BitcoinAddressService(private val blockchain: Blockchain) : AddressSe
     }
 
     override fun makeMultisigAddresses(
-            walletPublicKey: ByteArray, pairPublicKey: ByteArray
+            walletPublicKey: ByteArray, pairPublicKey: ByteArray, curve: EllipticCurve?
     ): Set<Address> = make1of2MultisigAddresses(walletPublicKey, pairPublicKey)
 
     fun make1of2MultisigAddresses(publicKey1: ByteArray, publicKey2: ByteArray): Set<Address> {
