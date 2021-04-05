@@ -2,7 +2,6 @@ package com.tangem.blockchain.blockchains.ducatus
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
-import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressType
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionTest
 import com.tangem.blockchain.common.Amount

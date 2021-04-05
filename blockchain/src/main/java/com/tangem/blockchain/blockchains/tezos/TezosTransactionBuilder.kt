@@ -6,13 +6,18 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.bigIntegerValue
+import com.tangem.commands.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
+import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
 import org.bitcoinj.core.Base58
 import org.spongycastle.jcajce.provider.digest.Blake2b
 import java.math.BigDecimal
 
-class TezosTransactionBuilder(private val walletPublicKey: ByteArray) {
+class TezosTransactionBuilder(
+        private val walletPublicKey: ByteArray,
+        private val curve: EllipticCurve
+) {
     var counter: Long? = null
     val decimals = Blockchain.Tezos.decimals()
 
@@ -94,12 +99,11 @@ class TezosTransactionBuilder(private val walletPublicKey: ByteArray) {
     fun buildToSend(signature: ByteArray, forgedContents: String) = forgedContents + signature.toHexString()
 
     private fun ByteArray.encodePublicKey(): String {
-        val prefixedPubKey = TezosConstants.EDPK_PREFIX.hexToBytes() + this
-
+        val prefix = TezosConstants.getPublicKeyPrefix(curve)
+        val prefixedPubKey = prefix.hexToBytes() + this.toCompressedPublicKey()
         val checksum = prefixedPubKey.calculateTezosChecksum()
-        val prefixedHashWithChecksum = prefixedPubKey + checksum
 
-        return Base58.encode(prefixedHashWithChecksum)
+        return Base58.encode(prefixedPubKey + checksum)
     }
 
     private fun Double.toMutezValueString(): String {
