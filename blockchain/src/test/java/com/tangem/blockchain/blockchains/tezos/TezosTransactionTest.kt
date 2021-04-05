@@ -26,7 +26,7 @@ class TezosTransactionTest {
         val counter = 1561L
         val isPublicKeyRevealed = false
 
-        val walletAddress = TezosAddressService().makeAddress(walletPublicKey)
+        val walletAddress = TezosAddressService().makeAddress(walletPublicKey, EllipticCurve.Ed25519)
         val transactionBuilder = TezosTransactionBuilder(walletPublicKey, EllipticCurve.Ed25519)
         transactionBuilder.counter = counter
 
