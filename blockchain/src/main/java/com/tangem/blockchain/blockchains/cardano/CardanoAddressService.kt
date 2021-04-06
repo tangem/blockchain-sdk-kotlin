@@ -74,6 +74,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
     }
 
     private fun validateBase58Address(address: String): Boolean {
+        if (!address.startsWith("A") && !address.startsWith("D")) return false
         val decoded = address.decodeBase58() ?: return false
 
         return try {
