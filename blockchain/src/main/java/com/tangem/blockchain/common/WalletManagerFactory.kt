@@ -50,7 +50,12 @@ class WalletManagerFactory(
         val walletPublicKey: ByteArray = card.walletPublicKey ?: return null
         val curve = card.curve ?: return null
         val cardId = card.cardId
-        val presetTokens = card.getToken()?.let { mutableSetOf(it) } ?: mutableSetOf()
+        val presetTokens = if (card.getBlockchain() == selectedBlockchain) {
+            // preset tokens must match card's preset currency
+            card.getToken()?.let { mutableSetOf(it) } ?: mutableSetOf()
+        } else {
+            mutableSetOf()
+        }
 
         return makeWalletManager(selectedBlockchain, walletPublicKey, cardId, curve, tokens = presetTokens)
     }
