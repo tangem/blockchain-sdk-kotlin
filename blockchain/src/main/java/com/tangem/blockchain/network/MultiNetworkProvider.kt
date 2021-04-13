@@ -26,9 +26,9 @@ abstract class MultiNetworkProvider<E>(private val providers: List<E>) {
     protected fun SimpleResult.needsRetry(): Boolean {
         retryCounter += 1
         return if (this.isNetworkError() && retryCounter < providers.size) {
+            provider = providerIterator.next()
             true
         } else {
-            provider = providerIterator.next()
             retryCounter = 0
             false
         }
