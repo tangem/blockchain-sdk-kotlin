@@ -5,17 +5,17 @@ import com.tangem.blockchain.blockchains.binance.network.BinanceInfoResponse
 import com.tangem.blockchain.blockchains.binance.network.BinanceNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import java.math.BigDecimal
 
 class BinanceWalletManager(
-        cardId: String,
         wallet: Wallet,
         private val transactionBuilder: BinanceTransactionBuilder,
         private val networkProvider: BinanceNetworkProvider,
         presetTokens: MutableSet<Token>
-) : WalletManager(cardId, wallet, presetTokens), TransactionSender {
+) : WalletManager(wallet, presetTokens), TransactionSender {
 
     private val blockchain = wallet.blockchain
 
@@ -37,7 +37,7 @@ class BinanceWalletManager(
             wallet.addTokenValue(tokenBalance, it)
         }
         if (presetTokens.isEmpty()) { // only if no token(s) specified on manager creation or stored on card
-            val tokenBalances = response.balances.filterKeys { it != blockchain.currency}
+            val tokenBalances = response.balances.filterKeys { it != blockchain.currency }
             updateUnplannedTokens(tokenBalances)
         }
 
@@ -63,18 +63,21 @@ class BinanceWalletManager(
 
     override suspend fun send(
             transactionData: TransactionData, signer: TransactionSigner
-    ): Result<SignResponse> {
+    ): SimpleResult {
         val buildTransactionResult = transactionBuilder.buildToSign(transactionData)
         return when (buildTransactionResult) {
-            is Result.Failure -> Result.Failure(buildTransactionResult.error)
+            is Result.Failure -> SimpleResult.Failure(buildTransactionResult.error)
             is Result.Success -> {
-                when (val signerResponse = signer.sign(arrayOf(buildTransactionResult.data), cardId)) {
+                val signerResponse = signer.sign(
+                        buildTransactionResult.data,
+                        wallet.cardId, walletPublicKey = wallet.publicKey
+                )
+                when (signerResponse) {
                     is CompletionResult.Success -> {
-                        val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
+                        val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
                         networkProvider.sendTransaction(transactionToSend)
-                                .toResultWithData(signerResponse.data)
                     }
-                    is CompletionResult.Failure -> Result.failure(signerResponse.error)
+                    is CompletionResult.Failure -> SimpleResult.failure(signerResponse.error)
                 }
             }
         }
