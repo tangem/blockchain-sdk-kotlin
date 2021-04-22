@@ -12,7 +12,9 @@ import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
 import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
 import com.tangem.blockchain.blockchains.tezos.TezosWalletManager
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
-import com.tangem.commands.ReadCommand
+import com.tangem.commands.read.ReadCommand
+import com.tangem.commands.wallet.WalletIndex
+import com.tangem.common.TangemSdkConstants
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
@@ -97,7 +99,10 @@ internal class WalletManagerFactoryTest {
         val responseApdu = ResponseApdu(data.hexToBytes())
         val card = ReadCommand().deserialize(SessionEnvironment(), responseApdu)
         val walletManager =
-                WalletManagerFactory().makeMultisigWalletManager(card, pairPublicKey.hexToBytes())
+                WalletManagerFactory().makeMultisigWalletManager(
+                        card.cardId,
+                        card.wallet(WalletIndex.Index(TangemSdkConstants.oldCardDefaultWalletIndex))!!.publicKey!!,
+                        pairPublicKey.hexToBytes())
 
         Truth.assertThat(walletManager).isInstanceOf(BitcoinWalletManager::class.java)
     }
@@ -106,6 +111,10 @@ internal class WalletManagerFactoryTest {
         val responseApdu = ResponseApdu(dataString.hexToBytes())
         val card = ReadCommand().deserialize(SessionEnvironment(), responseApdu)
         return WalletManagerFactory(BlockchainSdkConfig(infuraProjectId = "0"))
-                .makeWalletManager(card)
+                .makeWalletManager(
+                        card.cardId,
+                        card.wallet(WalletIndex.Index(TangemSdkConstants.oldCardDefaultWalletIndex))!!.publicKey!!,
+                        Blockchain.fromId(card.cardData!!.blockchainName!!)
+                )
     }
 }
