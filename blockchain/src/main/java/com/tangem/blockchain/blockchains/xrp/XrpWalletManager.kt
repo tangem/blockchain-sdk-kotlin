@@ -11,11 +11,10 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 
 class XrpWalletManager(
-        cardId: String,
         wallet: Wallet,
         private val transactionBuilder: XrpTransactionBuilder,
         private val networkProvider: XrpNetworkProvider
-) : WalletManager(cardId, wallet), TransactionSender {
+) : WalletManager(wallet), TransactionSender {
 
     private val blockchain = wallet.blockchain
 
@@ -52,23 +51,26 @@ class XrpWalletManager(
 
     override suspend fun send(
             transactionData: TransactionData, signer: TransactionSigner
-    ): Result<SignResponse> {
+    ): SimpleResult {
         val transactionHash = when (val buildResult = transactionBuilder.buildToSign(transactionData)) {
-                    is Result.Success -> buildResult.data
-                    is Result.Failure -> return Result.Failure(buildResult.error)
-                }
-        return when (val signerResponse = signer.sign(arrayOf(transactionHash), cardId)) {
+            is Result.Success -> buildResult.data
+            is Result.Failure -> return SimpleResult.Failure(buildResult.error)
+        }
+        val signerResponse = signer.sign(
+                transactionHash, wallet.cardId, walletPublicKey = wallet.publicKey
+        )
+        return when (signerResponse) {
             is CompletionResult.Success -> {
-                val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
+                val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
                 val sendResult = networkProvider.sendTransaction(transactionToSend)
 
                 if (sendResult is SimpleResult.Success) {
                     transactionData.hash = transactionBuilder.getTransactionHash()?.toHexString()
                     wallet.addOutgoingTransaction(transactionData)
                 }
-                sendResult.toResultWithData(signerResponse.data)
+                sendResult
             }
-            is CompletionResult.Failure -> Result.failure(signerResponse.error)
+            is CompletionResult.Failure -> SimpleResult.failure(signerResponse.error)
         }
     }
 
