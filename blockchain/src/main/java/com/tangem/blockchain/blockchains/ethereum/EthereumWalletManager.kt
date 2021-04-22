@@ -13,12 +13,11 @@ import org.kethereum.keccakshortcut.keccak
 import java.math.BigDecimal
 
 class EthereumWalletManager(
-        cardId: String,
         wallet: Wallet,
         private val transactionBuilder: EthereumTransactionBuilder,
         private val networkProvider: EthereumNetworkProvider,
         presetToken: MutableSet<Token>,
-) : WalletManager(cardId, wallet, presetToken),
+) : WalletManager(wallet, presetToken),
         TransactionSender, SignatureCountValidator, TokenFinder {
 
     private var pendingTxCount = -1L
@@ -55,13 +54,17 @@ class EthereumWalletManager(
 
     override suspend fun send(
             transactionData: TransactionData, signer: TransactionSigner
-    ): Result<SignResponse> {
+    ): SimpleResult {
         val transactionToSign = transactionBuilder.buildToSign(transactionData, txCount.toBigInteger())
-                ?: return Result.Failure(Exception("Not enough data"))
-        return when (val signerResponse = signer.sign(transactionToSign.hashes.toTypedArray(), cardId)) {
+                ?: return SimpleResult.Failure(Exception("Not enough data"))
+        val signerResponse = signer.sign(
+                transactionToSign.hash,
+                wallet.cardId, walletPublicKey = wallet.publicKey
+        )
+        return when (signerResponse) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder
-                        .buildToSend(signerResponse.data.signature, transactionToSign)
+                        .buildToSend(signerResponse.data, transactionToSign)
                 val sendResult = networkProvider
                         .sendTransaction("0x" + transactionToSend.toHexString())
 
@@ -69,9 +72,9 @@ class EthereumWalletManager(
                     transactionData.hash = transactionToSend.keccak().toHexString()
                     wallet.addOutgoingTransaction(transactionData)
                 }
-                sendResult.toResultWithData(signerResponse.data)
+                sendResult
             }
-            is CompletionResult.Failure -> Result.failure(signerResponse.error)
+            is CompletionResult.Failure -> SimpleResult.failure(signerResponse.error)
         }
     }
 
