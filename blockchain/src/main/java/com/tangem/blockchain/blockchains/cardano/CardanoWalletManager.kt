@@ -12,11 +12,10 @@ import com.tangem.common.extensions.toHexString
 import java.math.RoundingMode
 
 class CardanoWalletManager(
-        cardId: String,
         wallet: Wallet,
         private val transactionBuilder: CardanoTransactionBuilder,
         private val networkProvider: CardanoNetworkProvider
-) : WalletManager(cardId, wallet), TransactionSender {
+) : WalletManager(wallet), TransactionSender {
     init {
         dustValue = 1.toBigDecimal()
     }
@@ -63,21 +62,24 @@ class CardanoWalletManager(
 
     override suspend fun send(
             transactionData: TransactionData, signer: TransactionSigner
-    ): Result<SignResponse> {
+    ): SimpleResult {
         val transactionHash = transactionBuilder.buildToSign(transactionData)
-
-        return when (val signerResponse = signer.sign(arrayOf(transactionHash), cardId)) {
+        val signerResponse = signer.sign(
+                transactionHash,
+                wallet.cardId, walletPublicKey = wallet.publicKey
+        )
+        return when (signerResponse) {
             is CompletionResult.Success -> {
-                val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
+                val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
                 val sendResult = networkProvider.sendTransaction(transactionToSend)
 
                 if (sendResult is SimpleResult.Success) {
                     transactionData.hash = transactionHash.toHexString()
                     wallet.addOutgoingTransaction(transactionData)
                 }
-                sendResult.toResultWithData(signerResponse.data)
+                sendResult
             }
-            is CompletionResult.Failure -> Result.failure(signerResponse.error)
+            is CompletionResult.Failure -> SimpleResult.failure(signerResponse.error)
         }
     }
 

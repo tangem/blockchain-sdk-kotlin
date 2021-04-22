@@ -10,11 +10,10 @@ import com.tangem.blockchain.extensions.Result
 import java.math.BigDecimal
 
 class LitecoinWalletManager(
-        cardId: String,
         wallet: Wallet,
         transactionBuilder: BitcoinTransactionBuilder,
         networkProvider: BitcoinNetworkProvider
-) : BitcoinWalletManager(cardId, wallet, transactionBuilder, networkProvider), TransactionSender {
+) : BitcoinWalletManager(wallet, transactionBuilder, networkProvider), TransactionSender {
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
         val minimalFee = BigDecimal("0.00001")
         when (val result = super.getFee(amount, destination)) {
