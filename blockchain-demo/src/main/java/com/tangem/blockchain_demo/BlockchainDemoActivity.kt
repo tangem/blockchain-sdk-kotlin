@@ -19,6 +19,7 @@ import com.tangem.tangem_sdk_new.extensions.init
 import kotlinx.coroutines.*
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.lang.Exception
 import java.math.BigDecimal
 import kotlin.coroutines.CoroutineContext
 
@@ -70,15 +71,20 @@ class BlockchainDemoActivity : AppCompatActivity() {
         tangemSdk.scanCard { result ->
             when (result) {
                 is CompletionResult.Success -> {
-                    walletManager = WalletManagerFactory().makeWalletManager(
-                            result.data.cardId,
-                            result.data.getWallets().firstOrNull()?.publicKey!!,
-                            Blockchain.fromId(result.data.cardData?.blockchainName
-                                    ?: Blockchain.Ethereum.id),
-                            result.data.getWallets().firstOrNull()?.curve ?: EllipticCurve.Secp256k1
-                    )!!
-                    token = walletManager.wallet.getTokens().toList().getOrNull(0)
-                    getInfo()
+                    try {
+                        val wallet = result.data.getWallets().first()
+                        walletManager = WalletManagerFactory().makeWalletManager(
+                                result.data.cardId,
+                                wallet.publicKey!!,
+                                Blockchain.fromId(result.data.cardData?.blockchainName
+                                        ?: Blockchain.Ethereum.id),
+                                wallet.curve!!
+                        )!!
+                        token = walletManager.wallet.getTokens().firstOrNull()
+                        getInfo()
+                    } catch (exception: Exception) {
+                        handleError(exception.message)
+                    }
                 }
                 is CompletionResult.Failure -> {
                     if (result.error !is TangemSdkError.UserCancelled) {
