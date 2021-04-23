@@ -92,12 +92,12 @@ class WalletManagerFactory(
             cardId: String,
             walletPublicKey: ByteArray,
             blockchain: Blockchain,
-            tokens: List<Token> = emptyList(),
+            tokens: Collection<Token> = emptyList(),
             walletPairPublickKey: ByteArray? = null,
             curve: EllipticCurve = EllipticCurve.Secp256k1
     ): WalletManager? {
 
-        if (curve == EllipticCurve.Ed25519 && walletPublicKey.size > 32) return null //wrong key
+        if (checkIfWrongKey(curve, walletPublicKey)) return null
 
         val addresses = blockchain.makeAddresses(walletPublicKey, walletPairPublickKey, curve)
 
@@ -240,6 +240,12 @@ class WalletManagerFactory(
             }
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
         }
+    }
+
+    private fun checkIfWrongKey(curve: EllipticCurve, walletPublicKey: ByteArray): Boolean {
+        return (curve == EllipticCurve.Ed25519 && walletPublicKey.size != 32) ||
+                ((curve == EllipticCurve.Secp256k1 || curve == EllipticCurve.Secp256r1)
+                        && walletPublicKey.size != 65)
     }
 
     private fun makeBitcoinNetworkService(blockchain: Blockchain): BitcoinNetworkService {
