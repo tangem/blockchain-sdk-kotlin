@@ -149,7 +149,7 @@ interface TransactionSigner {
     ): CompletionResult<List<ByteArray>>
 
     suspend fun sign(
-            hashes: ByteArray, cardId: String, walletPublicKey: ByteArray
+            hash: ByteArray, cardId: String, walletPublicKey: ByteArray
     ): CompletionResult<ByteArray>
 }
 
