@@ -91,11 +91,11 @@ class Signer(
             }
 
     override suspend fun sign(
-            hashes: ByteArray, cardId: String, walletPublicKey: ByteArray
+            hash: ByteArray, cardId: String, walletPublicKey: ByteArray
     ): CompletionResult<ByteArray> =
             suspendCancellableCoroutine { continuation ->
                 tangemSdk.sign(
-                        hashes = arrayOf(hashes),
+                        hashes = arrayOf(hash),
                         cardId = cardId,
                         walletPublicKey = walletPublicKey,
                         initialMessage = initialMessage,

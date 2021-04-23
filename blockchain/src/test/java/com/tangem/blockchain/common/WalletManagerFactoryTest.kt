@@ -102,7 +102,8 @@ internal class WalletManagerFactoryTest {
                 WalletManagerFactory().makeMultisigWalletManager(
                         card.cardId,
                         card.wallet(WalletIndex.Index(TangemSdkConstants.oldCardDefaultWalletIndex))!!.publicKey!!,
-                        pairPublicKey.hexToBytes())
+                        pairPublicKey.hexToBytes()
+                )
 
         Truth.assertThat(walletManager).isInstanceOf(BitcoinWalletManager::class.java)
     }
