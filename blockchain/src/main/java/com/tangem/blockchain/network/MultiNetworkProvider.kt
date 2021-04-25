@@ -8,14 +8,14 @@ import com.tangem.blockchain.extensions.isNetworkError
 abstract class MultiNetworkProvider<E>(private val providers: List<E>) {
 
     private val providerIterator = CycleListIterator(providers)
-    protected var provider = providerIterator.next()
+    protected var currentProvider = providerIterator.next()
 
     var retryCounter = 0
 
     protected fun Result<*>.needsRetry(): Boolean {
         retryCounter += 1
         return if (this.isNetworkError() && retryCounter < providers.size) {
-            provider = providerIterator.next()
+            currentProvider = providerIterator.next()
             true
         } else {
             retryCounter = 0
@@ -26,7 +26,7 @@ abstract class MultiNetworkProvider<E>(private val providers: List<E>) {
     protected fun SimpleResult.needsRetry(): Boolean {
         retryCounter += 1
         return if (this.isNetworkError() && retryCounter < providers.size) {
-            provider = providerIterator.next()
+            currentProvider = providerIterator.next()
             true
         } else {
             retryCounter = 0
