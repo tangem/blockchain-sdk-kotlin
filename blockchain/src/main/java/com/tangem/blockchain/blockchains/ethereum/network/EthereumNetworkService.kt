@@ -5,9 +5,7 @@ import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
-import com.tangem.blockchain.network.API_INFURA
-import com.tangem.blockchain.network.API_INFURA_TESTNET
-import com.tangem.blockchain.network.API_RSK
+import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairToken
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
@@ -18,29 +16,13 @@ import java.math.RoundingMode
 
 
 class EthereumNetworkService(
-        blockchain: Blockchain,
-        infuraProjectId: String?,
+        private val jsonRpcProviders: List<EthereumJsonRpcProvider>,
         private val blockcypherNetworkProvider: BlockcypherNetworkProvider? = null,
         private val blockchairEthNetworkProvider: BlockchairEthNetworkProvider? = null
-) : EthereumNetworkProvider {
-    init {
-        if (infuraProjectId == null &&
-                (blockchain == Blockchain.Ethereum || blockchain == Blockchain.EthereumTestnet)
-        ) {
-            throw Exception("Infura project Id is required for Ethereum network service")
-        }
-    }
+) : MultiNetworkProvider<EthereumJsonRpcProvider>(jsonRpcProviders), EthereumNetworkProvider {
 
-    private val jsonRpcProvider: EthereumJsonRpcProvider by lazy {
-        val infuraApiVersionPath = "v3/"
-        val ethereumApiUrl = when (blockchain) {
-            Blockchain.Ethereum -> API_INFURA + infuraApiVersionPath
-            Blockchain.EthereumTestnet -> API_INFURA_TESTNET + infuraApiVersionPath
-            Blockchain.RSK -> API_RSK
-            else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
-        }
-        EthereumJsonRpcProvider(ethereumApiUrl, infuraProjectId ?: "")
-    }
+    private val jsonRpcProvider
+        get() = currentProvider
     private val decimals = Blockchain.Ethereum.decimals()
 
     override suspend fun getInfo(address: String, tokens: Set<Token>): Result<EthereumInfoResponse> {
@@ -82,7 +64,8 @@ class EthereumNetworkService(
                 )
             }
         } catch (error: Exception) {
-            Result.Failure(error)
+            val result = Result.Failure(error)
+            return if (result.needsRetry()) getInfo(address, tokens) else result
         }
     }
 
@@ -95,31 +78,42 @@ class EthereumNetworkService(
                 SimpleResult.Failure(response.error.toException())
             }
         } catch (error: Exception) {
-            SimpleResult.Failure(error)
+            val result = SimpleResult.Failure(error)
+            return if (result.needsRetry()) sendTransaction(transaction) else result
         }
     }
 
     override suspend fun getFee(to: String, from: String, data: String?, fallbackGasLimit: Long?): Result<EthereumFeeResponse> {
         return try {
             coroutineScope {
-                val gasLimitDeferred = retryIO { async { jsonRpcProvider.getGasLimit(to, from, data) } }
-                val feeDeffered = retryIO { async { jsonRpcProvider.getGasPrice() } }
+                val gasLimitResponsesDeferred = jsonRpcProviders.map {
+                    async { retryIO { jsonRpcProvider.getGasLimit(to, from, data) } }
+                }
+                val gasPriceResponsesDeferred = jsonRpcProviders.map {
+                    async { retryIO { jsonRpcProvider.getGasPrice() } }
+                }
 
-                val gasLimitResponse = gasLimitDeferred.await()
-                val gasLimit = gasLimitResponse.result?.responseToBigInteger()?.toLong()
-                        ?: fallbackGasLimit // TODO: remove?
-                        ?: throw gasLimitResponse.error?.toException()
+                val gasLimitResponses = gasLimitResponsesDeferred.map { it.await() }
+                val gasLimit = gasLimitResponses
+                        .mapNotNull { it.result?.responseToLong() }.maxOrNull()
+                        ?: fallbackGasLimit
+                        ?: throw gasLimitResponses.mapNotNull { it.error }
+                                .firstOrNull()?.toException()
                                 ?: Exception("Unknown estimate gas response format")
 
-                val feeResponse = feeDeffered.await()
-                val fees = feeResponse.result?.parseFee(gasLimit)
-                        ?: throw feeResponse.error?.toException()
+                val gasPriceResponses = gasPriceResponsesDeferred.map { it.await() }
+                val gasPrice = gasPriceResponses
+                        .mapNotNull { it.result?.responseToLong() }.maxOrNull()
+                        ?: throw gasPriceResponses.mapNotNull { it.error }
+                                .firstOrNull()?.toException()
                                 ?: Exception("Unknown gas price response format")
 
+                val fees = calculateFees(gasPrice, gasLimit)
                 Result.Success(EthereumFeeResponse(fees, gasLimit))
             }
         } catch (error: Exception) {
-            Result.Failure(error)
+            val result = Result.Failure(error)
+            return if (result.needsRetry()) getFee(to, from, data, fallbackGasLimit) else result
         }
     }
 
@@ -128,9 +122,8 @@ class EthereumNetworkService(
                 ?: Result.Failure(Exception("No signature count provider found"))
     }
 
-    private fun String.parseFee(gasLimit: Long): List<BigDecimal> {
-        val gasPrice = this.responseToBigInteger().toBigDecimal()
-        val minFee = gasPrice.multiply(gasLimit.toBigDecimal())
+    private fun calculateFees(gasPrice: Long, gasLimit: Long): List<BigDecimal> {
+        val minFee = gasPrice.toBigDecimal().multiply(gasLimit.toBigDecimal())
         val normalFee = minFee.multiply(BigDecimal(1.2)).setScale(0, RoundingMode.HALF_UP)
         val priorityFee = minFee.multiply(BigDecimal(1.5)).setScale(0, RoundingMode.HALF_UP)
         return listOf(
@@ -144,7 +137,8 @@ class EthereumNetworkService(
         return try {
             Result.Success(getTokensBalanceInternal(address, tokens))
         } catch (error: Exception) {
-            Result.Failure(error)
+            val result = Result.Failure(error)
+            return if (result.needsRetry()) getTokensBalance(address, tokens) else result
         }
     }
 
@@ -165,11 +159,12 @@ class EthereumNetworkService(
     override suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>> {
         return blockchairEthNetworkProvider?.findErc20Tokens(address)
                 ?: Result.Failure(Exception("Unsupported feature"))
-
     }
 
     private fun String.responseToBigInteger() =
             this.substring(2).toBigInteger(16)
+
+    private fun String.responseToLong() = this.responseToBigInteger().toLong()
 
     private fun String.parseAmount(decimals: Int) =
             this.responseToBigInteger().toBigDecimal().movePointLeft(decimals)
