@@ -112,8 +112,7 @@ class EthereumWalletManager(
         if (!presetTokens.contains(token)) {
             presetTokens.add(token)
         }
-        val result = networkProvider.getTokensBalance(wallet.address, setOf(token))
-        return when (result) {
+        return when (val result = networkProvider.getTokensBalance(wallet.address, setOf(token))) {
             is Result.Failure -> Result.Failure(result.error)
             is Result.Success -> {
                 val amount = wallet.addTokenValue(result.data[token]!!, token)
