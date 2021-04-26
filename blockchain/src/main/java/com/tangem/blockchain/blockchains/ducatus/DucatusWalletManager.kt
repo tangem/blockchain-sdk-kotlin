@@ -8,11 +8,10 @@ import com.tangem.blockchain.extensions.Result
 import java.math.BigDecimal
 
 class DucatusWalletManager(
-        cardId: String,
         wallet: Wallet,
         transactionBuilder: BitcoinTransactionBuilder,
         networkProvider: BitcoinNetworkProvider
-) : BitcoinWalletManager(cardId, wallet, transactionBuilder, networkProvider), TransactionSender {
+) : BitcoinWalletManager(wallet, transactionBuilder, networkProvider), TransactionSender {
 
     override fun updateRecentTransactionsBasic(transactions: List<BasicTransactionData>) {
         if (transactions.isEmpty()) {
