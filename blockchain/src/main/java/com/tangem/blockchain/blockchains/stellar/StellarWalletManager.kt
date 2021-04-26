@@ -9,12 +9,11 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 
 class StellarWalletManager(
-        cardId: String,
         wallet: Wallet,
         private val transactionBuilder: StellarTransactionBuilder,
         private val networkProvider: StellarNetworkProvider,
         presetTokens: MutableSet<Token>
-) : WalletManager(cardId, wallet, presetTokens), TransactionSender, SignatureCountValidator {
+) : WalletManager(wallet, presetTokens), TransactionSender, SignatureCountValidator {
 
     private val blockchain = wallet.blockchain
 
@@ -64,26 +63,27 @@ class StellarWalletManager(
 
     override suspend fun send(
             transactionData: TransactionData, signer: TransactionSigner
-    ): Result<SignResponse> {
+    ): SimpleResult {
 
-        val hashes = when (val buildResult =
+        val hash = when (val buildResult =
                 transactionBuilder.buildToSign(transactionData, sequence)
         ) {
-            is Result.Success -> listOf(buildResult.data)
-            is Result.Failure -> return buildResult
+            is Result.Success -> buildResult.data
+            is Result.Failure -> return SimpleResult.Failure(buildResult.error)
         }
-        return when (val signerResponse = signer.sign(hashes.toTypedArray(), cardId)) {
+        val signerResponse = signer.sign(hash, wallet.cardId, wallet.publicKey)
+        return when (signerResponse) {
             is CompletionResult.Success -> {
-                val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
+                val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
                 val sendResult = networkProvider.sendTransaction(transactionToSend)
 
                 if (sendResult is SimpleResult.Success) {
                     transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
                     wallet.addOutgoingTransaction(transactionData)
                 }
-                sendResult.toResultWithData(signerResponse.data)
+                sendResult
             }
-            is CompletionResult.Failure -> Result.failure(signerResponse.error)
+            is CompletionResult.Failure -> SimpleResult.failure(signerResponse.error)
         }
     }
 
