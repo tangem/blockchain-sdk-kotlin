@@ -10,7 +10,6 @@ import java.math.BigDecimal
 import java.util.*
 
 abstract class WalletManager(
-        val cardId: String,
         var wallet: Wallet,
         val presetTokens: MutableSet<Token> = mutableSetOf(),
 ) {
@@ -140,13 +139,19 @@ abstract class WalletManager(
 }
 
 interface TransactionSender {
-    suspend fun send(transactionData: TransactionData, signer: TransactionSigner): Result<SignResponse>
+    suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult
     suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>>
 
 }
 
 interface TransactionSigner {
-    suspend fun sign(hashes: Array<ByteArray>, cardId: String): CompletionResult<SignResponse>
+    suspend fun sign(
+            hashes: List<ByteArray>, cardId: String, walletPublicKey: ByteArray
+    ): CompletionResult<List<ByteArray>>
+
+    suspend fun sign(
+            hash: ByteArray, cardId: String, walletPublicKey: ByteArray
+    ): CompletionResult<ByteArray>
 }
 
 interface SignatureCountValidator {
