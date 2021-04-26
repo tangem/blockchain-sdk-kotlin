@@ -2,6 +2,7 @@ package com.tangem.blockchain_demo
 
 import android.os.Bundle
 import android.text.Editable
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.tangem.TangemSdk
@@ -9,11 +10,16 @@ import com.tangem.TangemSdkError
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.Signer
+import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain_demo.databinding.ActivityBlockchainDemoBinding
 import com.tangem.commands.common.card.Card
+import com.tangem.commands.common.card.EllipticCurve
 import com.tangem.common.CompletionResult
 import com.tangem.tangem_sdk_new.extensions.init
 import kotlinx.coroutines.*
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.lang.Exception
 import java.math.BigDecimal
 import kotlin.coroutines.CoroutineContext
 
@@ -31,7 +37,11 @@ class BlockchainDemoActivity : AppCompatActivity() {
 
     private val parentJob = Job()
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
-        handleError(throwable.localizedMessage)
+        val sw = StringWriter()
+        throwable.printStackTrace(PrintWriter(sw))
+        val exceptionAsString: String = sw.toString()
+        Log.e("Coroutine", exceptionAsString)
+        throw throwable
     }
     private val coroutineContext: CoroutineContext
         get() = parentJob + Dispatchers.IO + exceptionHandler
@@ -61,9 +71,20 @@ class BlockchainDemoActivity : AppCompatActivity() {
         tangemSdk.scanCard { result ->
             when (result) {
                 is CompletionResult.Success -> {
-                    walletManager = WalletManagerFactory().makeWalletManager(result.data)!!
-                    token = walletManager.wallet.getTokens().toList().getOrNull(0)
-                    getInfo()
+                    try {
+                        val wallet = result.data.getWallets().first()
+                        walletManager = WalletManagerFactory().makeWalletManager(
+                                result.data.cardId,
+                                wallet.publicKey!!,
+                                Blockchain.fromId(result.data.cardData?.blockchainName
+                                        ?: Blockchain.Ethereum.id),
+                                wallet.curve!!
+                        )!!
+                        token = walletManager.wallet.getTokens().firstOrNull()
+                        getInfo()
+                    } catch (exception: Exception) {
+                        handleError(exception.message)
+                    }
                 }
                 is CompletionResult.Failure -> {
                     if (result.error !is TangemSdkError.UserCancelled) {
@@ -84,18 +105,18 @@ class BlockchainDemoActivity : AppCompatActivity() {
                                     ?: "error"
                         } ${walletManager.wallet.blockchain.currency}"
 
-                        if (token != null) {
-                            val tokenAmount = walletManager.wallet.getTokenAmount(token!!)
-                            binding.tvBalance.text = tokenAmount?.value?.toPlainString() + " " + tokenAmount?.currencySymbol
-                            binding.etSumToSend.text = Editable.Factory.getInstance().newEditable(
-                                    tokenAmount?.value?.toPlainString() ?: ""
+                if (token != null) {
+                    val tokenAmount = walletManager.wallet.getTokenAmount(token!!)
+                    binding.tvBalance.text = tokenAmount?.value?.toPlainString() + " " + tokenAmount?.currencySymbol
+                    binding.etSumToSend.text = Editable.Factory.getInstance().newEditable(
+                            tokenAmount?.value?.toPlainString() ?: ""
+                    )
+                } else {
+                    binding.etSumToSend.text =
+                            Editable.Factory.getInstance().newEditable(
+                                    walletManager.wallet.amounts[AmountType.Coin]?.value?.toPlainString()
                             )
-                        } else {
-                            binding.etSumToSend.text =
-                                    Editable.Factory.getInstance().newEditable(
-                                            walletManager.wallet.amounts[AmountType.Coin]?.value?.toPlainString()
-                                    )
-                        }
+                }
                 binding.btnCheckFee.isEnabled = true
             }
         }
@@ -152,10 +173,10 @@ class BlockchainDemoActivity : AppCompatActivity() {
                     signer)
             withContext(Dispatchers.Main) {
                 when (result) {
-                    is Result.Failure -> {
+                    is SimpleResult.Failure -> {
                         handleError(result.error?.localizedMessage ?: "Error")
                     }
-                    is Result.Success -> {
+                    is SimpleResult.Success -> {
                         binding.tvFee.text = "Success"
                     }
                 }
