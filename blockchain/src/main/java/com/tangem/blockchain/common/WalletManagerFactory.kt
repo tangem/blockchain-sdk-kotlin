@@ -90,11 +90,11 @@ class WalletManagerFactory(
             walletPublicKey: ByteArray,
             cardId: String,
             cardCurve: EllipticCurve,
-            walletPairPublickKey: ByteArray? = null,
+            walletPairPublicKey: ByteArray? = null,
             tokens: MutableSet<Token> = mutableSetOf()
     ): WalletManager {
 
-        val addresses = blockchain.makeAddresses(walletPublicKey, walletPairPublickKey, cardCurve)
+        val addresses = blockchain.makeAddresses(walletPublicKey, walletPairPublicKey, cardCurve)
 
         val wallet = Wallet(blockchain, addresses, tokens)
 
@@ -131,27 +131,19 @@ class WalletManagerFactory(
             }
             Blockchain.Ethereum -> {
                 val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
-
                 if (blockchainSdkConfig.infuraProjectId != null) {
-                    val infuraProvider by lazy {
-                        EthereumJsonRpcProvider.infura(
-                                API_INFURA_TESTNET, blockchainSdkConfig.infuraProjectId
-                                ?: throw Exception("Infura project Id is required")
-                        )
-                    }
-                    jsonRpcProviders.add(infuraProvider)
+                    jsonRpcProviders.add(
+                            EthereumJsonRpcProvider
+                                    .infura(API_INFURA_TESTNET, blockchainSdkConfig.infuraProjectId)
+                    )
                 }
-                val tangemProvider by lazy {
-                    EthereumJsonRpcProvider(API_TANGEM_ETHEREUM)
-                }
-                jsonRpcProviders.add(tangemProvider)
+                jsonRpcProviders.add(EthereumJsonRpcProvider(API_TANGEM_ETHEREUM))
 
-                val blockchairEthNetworkProvider by lazy {
-                    BlockchairEthNetworkProvider(blockchainSdkConfig.blockchairApiKey)
-                }
-                val blockcypherNetworkProvider by lazy {
+                val blockchairEthNetworkProvider =
+                        BlockchairEthNetworkProvider(blockchainSdkConfig.blockchairApiKey)
+                val blockcypherNetworkProvider =
                     BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
-                }
+
                 val networkService = EthereumNetworkService(
                         jsonRpcProviders,
                         blockcypherNetworkProvider,
@@ -166,12 +158,10 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.EthereumTestnet -> {
-                val jsonRpcProvider by lazy {
-                    EthereumJsonRpcProvider.infura(
-                            API_INFURA_TESTNET, blockchainSdkConfig.infuraProjectId
-                                    ?: throw Exception("Infura project Id is required")
-                    )
-                }
+                val jsonRpcProvider = EthereumJsonRpcProvider.infura(
+                        API_INFURA_TESTNET, blockchainSdkConfig.infuraProjectId
+                        ?: throw Exception("Infura project Id is required")
+                )
                 EthereumWalletManager(
                         cardId, wallet,
                         EthereumTransactionBuilder(walletPublicKey, blockchain),
@@ -180,9 +170,8 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.RSK -> {
-                val jsonRpcProvider by lazy {
-                    EthereumJsonRpcProvider(API_RSK)
-                }
+                val jsonRpcProvider = EthereumJsonRpcProvider(API_RSK)
+
                 EthereumWalletManager(
                         cardId, wallet,
                         EthereumTransactionBuilder(walletPublicKey, blockchain),
@@ -201,12 +190,9 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.Cardano, Blockchain.CardanoShelley -> {
-                val adaliteNetworkProvider by lazy { AdaliteNetworkProvider(API_ADALITE) }
-                val rosettaNetworkProvider by lazy { RosettaNetworkProvider(API_TANGEM_ROSETTA) }
-                val providers = listOf(
-                        adaliteNetworkProvider,
-                        rosettaNetworkProvider
-                )
+                val adaliteNetworkProvider = AdaliteNetworkProvider(API_ADALITE)
+                val rosettaNetworkProvider = RosettaNetworkProvider(API_TANGEM_ROSETTA)
+                val providers = listOf(adaliteNetworkProvider, rosettaNetworkProvider)
 
                 CardanoWalletManager(
                         cardId, wallet,
@@ -215,8 +201,8 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.XRP -> {
-                val rippledProvider1 by lazy { RippledNetworkProvider(API_RIPPLED) }
-                val rippledProvider2 by lazy { RippledNetworkProvider(API_RIPPLED_RESERVE) }
+                val rippledProvider1 = RippledNetworkProvider(API_RIPPLED)
+                val rippledProvider2 = RippledNetworkProvider(API_RIPPLED_RESERVE)
                 val providers = listOf(rippledProvider1, rippledProvider2)
                 val networkService = XrpNetworkService(providers)
 
@@ -243,10 +229,10 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.Tezos -> {
-                val tezosProvider1 by lazy { TezosJsonRpcNetworkProvider(API_TEZOS_LETZBAKE) }
-                val tezosProvider2 by lazy { TezosJsonRpcNetworkProvider(API_TEZOS_BLOCKSCALE) }
-                val tezosProvider3 by lazy { TezosJsonRpcNetworkProvider(API_TEZOS_SMARTPY) }
-                val tezosProvider4 by lazy { TezosJsonRpcNetworkProvider(API_TEZOS_ECAD) }
+                val tezosProvider1 = TezosJsonRpcNetworkProvider(API_TEZOS_LETZBAKE)
+                val tezosProvider2 = TezosJsonRpcNetworkProvider(API_TEZOS_BLOCKSCALE)
+                val tezosProvider3 = TezosJsonRpcNetworkProvider(API_TEZOS_SMARTPY)
+                val tezosProvider4 = TezosJsonRpcNetworkProvider(API_TEZOS_ECAD)
                 val providers = listOf(tezosProvider1, tezosProvider2, tezosProvider3, tezosProvider4)
 
                 TezosWalletManager(
@@ -262,18 +248,11 @@ class WalletManagerFactory(
 
     private fun makeBitcoinNetworkService(blockchain: Blockchain): BitcoinNetworkService {
         val providers = mutableListOf<BitcoinNetworkProvider>()
-
-        val blockchairProvider by lazy {
-            BlockchairNetworkProvider(blockchain, blockchainSdkConfig.blockchairApiKey)
-        }
-        providers.add(blockchairProvider)
+        providers.add(BlockchairNetworkProvider(blockchain, blockchainSdkConfig.blockchairApiKey))
 
         val blockcypherTokens = blockchainSdkConfig.blockcypherTokens
         if (!blockcypherTokens.isNullOrEmpty()) {
-            val blockcypherProvider by lazy {
-                BlockcypherNetworkProvider(blockchain, blockcypherTokens)
-            }
-            providers.add(blockcypherProvider)
+            providers.add(BlockcypherNetworkProvider(blockchain, blockcypherTokens))
         }
         return BitcoinNetworkService(providers)
     }
