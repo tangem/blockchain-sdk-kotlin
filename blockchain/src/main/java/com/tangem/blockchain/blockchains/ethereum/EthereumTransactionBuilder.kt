@@ -62,7 +62,7 @@ class EthereumTransactionBuilder(private val walletPublicKey: ByteArray, blockch
 //                chain = ChainId(chainId.toLong())
         )
         val hash = transaction.encodeRLP(SignatureData(v = chainId.toBigInteger())).keccak()
-        return TransactionToSign(transaction, listOf(hash))
+        return TransactionToSign(transaction, hash)
     }
 
     fun buildToSend(signature: ByteArray, transactionToSign: TransactionToSign): ByteArray {
@@ -71,7 +71,7 @@ class EthereumTransactionBuilder(private val walletPublicKey: ByteArray, blockch
 
         val ecdsaSignature = ECDSASignature(r, s).canonicalise()
 
-        val recId = ecdsaSignature.determineRecId(transactionToSign.hashes[0], PublicKey(walletPublicKey.sliceArray(1..64)))
+        val recId = ecdsaSignature.determineRecId(transactionToSign.hash, PublicKey(walletPublicKey.sliceArray(1..64)))
         val v = (recId + 27 + 8 + (chainId * 2)).toBigInteger()
         val signatureData = SignatureData(ecdsaSignature.r, ecdsaSignature.s, v)
 
@@ -90,7 +90,7 @@ class EthereumTransactionBuilder(private val walletPublicKey: ByteArray, blockch
 
 }
 
-class TransactionToSign(val transaction: Transaction, val hashes: List<ByteArray>)
+class TransactionToSign(val transaction: Transaction, val hash: ByteArray)
 
 enum class Chain(val id: Int) {
     Mainnet(1),
