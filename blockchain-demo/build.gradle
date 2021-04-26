@@ -46,8 +46,14 @@ android {
 
 dependencies {
     implementation project(':blockchain')
-    implementation "com.tangem:core:$versions.tangem"
-    implementation "com.tangem:sdk:$versions.tangem"
+
+    //TODO: change to prod dependencies
+
+    //    implementation "com.tangem:core:$versions.tangem"
+//    implementation "com.tangem:sdk:$versions.tangem"
+    implementation 'com.tangem:tangem-core:tangem-20210414.185224-2'
+    implementation 'com.tangem:tangem-sdk:tangem-20210414.185231-2'
+
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$versions.kotlin"
     implementation 'androidx.appcompat:appcompat:1.1.0'

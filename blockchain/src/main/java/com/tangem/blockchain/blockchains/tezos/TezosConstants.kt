@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.tezos
 
 import com.tangem.commands.common.card.EllipticCurve
+import java.lang.Exception
 
 class TezosConstants {
     companion object {
@@ -29,16 +30,19 @@ class TezosConstants {
         fun getAddressPrefix(curve: EllipticCurve) = when (curve) {
             EllipticCurve.Ed25519 -> TZ1_PREFIX
             EllipticCurve.Secp256k1 -> TZ2_PREFIX
+            EllipticCurve.Secp256r1 ->  throw Exception("Secp256r1 is not supported")
         }
 
         fun getPublicKeyPrefix(curve: EllipticCurve) = when (curve) {
             EllipticCurve.Ed25519 -> EDPK_PREFIX
             EllipticCurve.Secp256k1 -> SPPK_PREFIX
+            EllipticCurve.Secp256r1 ->  throw Exception("Secp256r1 is not supported")
         }
 
         fun getSignaturePrefix(curve: EllipticCurve) = when (curve) {
             EllipticCurve.Ed25519 -> EDSIG_PREFIX
             EllipticCurve.Secp256k1 -> SPSIG_PREFIX
+            EllipticCurve.Secp256r1 ->  throw Exception("Secp256r1 is not supported")
         }
     }
 }
