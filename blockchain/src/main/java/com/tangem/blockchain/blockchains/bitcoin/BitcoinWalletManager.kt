@@ -14,11 +14,10 @@ import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 
 open class BitcoinWalletManager(
-        cardId: String,
         wallet: Wallet,
         protected val transactionBuilder: BitcoinTransactionBuilder,
         private val networkProvider: BitcoinNetworkProvider
-) : WalletManager(cardId, wallet), TransactionSender, SignatureCountValidator {
+) : WalletManager(wallet), TransactionSender, SignatureCountValidator {
 
     protected val blockchain = wallet.blockchain
 
@@ -96,22 +95,28 @@ open class BitcoinWalletManager(
 
     override suspend fun send(
             transactionData: TransactionData, signer: TransactionSigner
-    ): Result<SignResponse> {
+    ): SimpleResult {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
-            is Result.Failure -> return Result.Failure(buildTransactionResult.error)
+            is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
             is Result.Success -> {
-                when (val signerResult = signer.sign(buildTransactionResult.data.toTypedArray(), cardId)) {
+                val signerResult = signer.sign(
+                        buildTransactionResult.data,
+                        wallet.cardId, walletPublicKey = wallet.publicKey
+                )
+                when (signerResult) {
                     is CompletionResult.Success -> {
-                        val transactionToSend = transactionBuilder.buildToSend(signerResult.data.signature)
+                        val transactionToSend = transactionBuilder.buildToSend(
+                                signerResult.data.reduce { acc, bytes -> acc + bytes }
+                        )
                         val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())
 
                         if (sendResult is SimpleResult.Success) {
                             transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
                             wallet.addOutgoingTransaction(transactionData)
                         }
-                        return sendResult.toResultWithData(signerResult.data)
+                        return sendResult
                     }
-                    is CompletionResult.Failure -> return Result.failure(signerResult.error)
+                    is CompletionResult.Failure -> return SimpleResult.failure(signerResult.error)
                 }
             }
         }
