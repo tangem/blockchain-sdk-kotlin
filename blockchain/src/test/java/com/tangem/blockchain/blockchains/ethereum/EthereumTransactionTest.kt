@@ -43,7 +43,7 @@ class EthereumTransactionTest {
         val signedTransaction = transactionBuilder.buildToSend(signature, transactionToSign!!)
 
         // assert
-        Truth.assertThat(transactionToSign.hashes[0]).isEqualTo(expectedHashToSign)
+        Truth.assertThat(transactionToSign.hash).isEqualTo(expectedHashToSign)
         Truth.assertThat(signedTransaction).isEqualTo(expectedSignedTransaction)
     }
 
@@ -88,7 +88,7 @@ class EthereumTransactionTest {
         val signedTransaction = transactionBuilder.buildToSend(signature, transactionToSign!!)
 
         // assert
-        Truth.assertThat(transactionToSign.hashes[0]).isEqualTo(expectedHashToSign)
+        Truth.assertThat(transactionToSign.hash).isEqualTo(expectedHashToSign)
         Truth.assertThat(signedTransaction).isEqualTo(expectedSignedTransaction)
     }
 }
