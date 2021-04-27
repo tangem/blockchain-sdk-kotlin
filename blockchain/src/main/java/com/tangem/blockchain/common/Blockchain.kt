@@ -47,7 +47,7 @@ enum class Blockchain(
     fun makeAddresses(
             walletPublicKey: ByteArray,
             pairPublicKey: ByteArray? = null,
-            curve: EllipticCurve? = null
+            curve: EllipticCurve = EllipticCurve.Secp256k1
     ): Set<Address> {
         return if (pairPublicKey != null) {
             (getAddressService() as? MultisigAddressProvider)

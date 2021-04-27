@@ -21,12 +21,11 @@ import java.math.BigDecimal
 import java.util.*
 
 class TezosWalletManager(
-        cardId: String,
         wallet: Wallet,
         private val transactionBuilder: TezosTransactionBuilder,
         private val networkProvider: TezosNetworkProvider,
         private val curve: EllipticCurve
-) : WalletManager(cardId, wallet), TransactionSender {
+) : WalletManager(wallet), TransactionSender {
 
     private val blockchain = wallet.blockchain
     private var publicKeyRevealed: Boolean? = null
@@ -54,20 +53,20 @@ class TezosWalletManager(
 
     override suspend fun send(
             transactionData: TransactionData, signer: TransactionSigner
-    ): Result<SignResponse> {
+    ): SimpleResult {
 
-        if (publicKeyRevealed == null) return Result.Failure(Exception("publicKeyRevealed is null"))
+        if (publicKeyRevealed == null) return SimpleResult.Failure(Exception("publicKeyRevealed is null"))
 
         val contents =
                 when (val response =
                         transactionBuilder.buildContents(transactionData, publicKeyRevealed!!)
                 ) {
-                    is Result.Failure -> return Result.Failure(response.error)
+                    is Result.Failure -> return SimpleResult.Failure(response.error)
                     is Result.Success -> response.data
                 }
         val header =
                 when (val response = networkProvider.getHeader()) {
-                    is Result.Failure -> return Result.Failure(response.error)
+                    is Result.Failure -> return SimpleResult.Failure(response.error)
                     is Result.Success -> response.data
                 }
         val forgedContents = transactionBuilder.forgeContents(header.hash, contents)
@@ -78,17 +77,17 @@ class TezosWalletManager(
 //                }
         val dataToSign = transactionBuilder.buildToSign(forgedContents)
 
-        val signerResponse = signer.sign(arrayOf(dataToSign), cardId)
+        val signerResponse = signer.sign(dataToSign, wallet.cardId, wallet.publicKey)
         val signature = when (signerResponse) {
-            is CompletionResult.Failure -> return Result.failure(signerResponse.error)
-            is CompletionResult.Success -> signerResponse.data.signature
+            is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
+            is CompletionResult.Success -> signerResponse.data
         }
         val canonicalSignature = canonicalizeSignature(signature)
 
         return when (val response = networkProvider
                 .checkTransaction(header, contents, encodeSignature(canonicalSignature))
         ) {
-            is SimpleResult.Failure -> response.toResultWithData(signerResponse.data)
+            is SimpleResult.Failure -> response
             is SimpleResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signature, forgedContents)
                 val sendResult = networkProvider.sendTransaction(transactionToSend)
@@ -96,7 +95,7 @@ class TezosWalletManager(
                 if (sendResult is SimpleResult.Success) {
                     wallet.addOutgoingTransaction(transactionData)
                 }
-                sendResult.toResultWithData(signerResponse.data)
+                sendResult
             }
         }
     }
@@ -149,6 +148,8 @@ class TezosWalletManager(
                 Utils.bigIntegerToBytes(canonicalECDSASignature.r, 32) +
                         Utils.bigIntegerToBytes(canonicalECDSASignature.s, 32)
             }
+            else -> throw java.lang.Exception("This curve ($curve) is not supported")
+
         }
     }
 
