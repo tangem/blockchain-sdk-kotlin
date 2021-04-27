@@ -5,8 +5,10 @@ import java.math.BigDecimal
 import java.util.*
 
 class Wallet(
+        val cardId: String,
         val blockchain: Blockchain,
         val addresses: Set<Address>,
+        val publicKey: ByteArray,
         tokens: Set<Token>
 ) {
     val recentTransactions: MutableList<TransactionData> = mutableListOf() //we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
