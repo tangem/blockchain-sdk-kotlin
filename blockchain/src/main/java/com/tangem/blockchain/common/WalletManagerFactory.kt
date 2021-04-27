@@ -44,29 +44,40 @@ class WalletManagerFactory(
 ) {
 
     fun makeWalletManager(
-            cardId: String, walletPublicKey: ByteArray, blockchain: Blockchain,
+            cardId: String,
+            walletPublicKey: ByteArray,
+            blockchain: Blockchain,
             curve: EllipticCurve = EllipticCurve.Secp256k1
     ): WalletManager? {
         return makeWalletManager(
-                cardId = cardId, walletPublicKey = walletPublicKey,
-                blockchain = blockchain, curve = curve, walletPairPublicKey = null
+                cardId = cardId,
+                walletPublicKey = walletPublicKey,
+                blockchain = blockchain,
+                curve = curve,
+                walletPairPublicKey = null
         )
     }
 
     fun makeWalletManagers(
-            cardId: String, walletPublicKey: ByteArray, blockchains: List<Blockchain>,
+            cardId: String,
+            walletPublicKey: ByteArray,
+            blockchains: List<Blockchain>,
             curve: EllipticCurve = EllipticCurve.Secp256k1
     ): List<WalletManager> {
         return blockchains.mapNotNull { blockchain ->
             makeWalletManager(
-                    cardId = cardId, walletPublicKey = walletPublicKey,
-                    blockchain = blockchain, curve = curve
+                    cardId = cardId,
+                    walletPublicKey = walletPublicKey,
+                    blockchain = blockchain,
+                    curve = curve
             )
         }
     }
 
     fun makeEthereumWalletManager(
-            cardId: String, walletPublicKey: ByteArray, tokens: List<Token>,
+            cardId: String,
+            walletPublicKey: ByteArray,
+            tokens: List<Token>,
             isTestNet: Boolean = false
     ): WalletManager? {
         val blockchain = if (isTestNet) Blockchain.EthereumTestnet else Blockchain.Ethereum
@@ -78,13 +89,18 @@ class WalletManagerFactory(
     }
 
     fun makeMultisigWalletManager(
-            cardId: String, walletPublicKey: ByteArray, pairPublicKey: ByteArray,
+            cardId: String,
+            walletPublicKey: ByteArray,
+            pairPublicKey: ByteArray,
             blockchain: Blockchain = Blockchain.Bitcoin,
             curve: EllipticCurve = EllipticCurve.Secp256k1
     ): WalletManager? {
         return makeWalletManager(
-                cardId = cardId, walletPublicKey = walletPublicKey, blockchain,
-                walletPairPublicKey = pairPublicKey, curve = curve
+                cardId = cardId,
+                walletPublicKey = walletPublicKey,
+                blockchain = blockchain,
+                walletPairPublicKey = pairPublicKey,
+                curve = curve
         )
     }
 
@@ -149,7 +165,7 @@ class WalletManagerFactory(
                 val blockchairEthNetworkProvider =
                         BlockchairEthNetworkProvider(blockchainSdkConfig.blockchairApiKey)
                 val blockcypherNetworkProvider =
-                    BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
+                        BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
 
                 val networkService = EthereumNetworkService(
                         jsonRpcProviders,
