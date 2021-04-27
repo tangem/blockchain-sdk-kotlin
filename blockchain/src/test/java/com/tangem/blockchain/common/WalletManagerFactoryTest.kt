@@ -101,7 +101,7 @@ internal class WalletManagerFactoryTest {
         val walletManager =
                 WalletManagerFactory().makeMultisigWalletManager(
                         card.cardId,
-                        card.wallet(WalletIndex.Index(TangemSdkConstants.oldCardDefaultWalletIndex))!!.publicKey!!,
+                        card.getWallets().first().publicKey!!,
                         pairPublicKey.hexToBytes()
                 )
 
@@ -111,11 +111,15 @@ internal class WalletManagerFactoryTest {
     private fun makeWalletManager(dataString: String): WalletManager? {
         val responseApdu = ResponseApdu(dataString.hexToBytes())
         val card = ReadCommand().deserialize(SessionEnvironment(), responseApdu)
-        return WalletManagerFactory(BlockchainSdkConfig(infuraProjectId = "0"))
+        val wallet = card.getWallets().first()
+        val blockchain = Blockchain.fromId(card.cardData!!.blockchainName!!)
+
+        return WalletManagerFactory(BlockchainSdkConfig())
                 .makeWalletManager(
-                        card.cardId,
-                        card.wallet(WalletIndex.Index(TangemSdkConstants.oldCardDefaultWalletIndex))!!.publicKey!!,
-                        Blockchain.fromId(card.cardData!!.blockchainName!!)
+                        cardId = card.cardId,
+                        walletPublicKey = wallet.publicKey!!,
+                        blockchain = blockchain,
+                        curve = wallet.curve!!
                 )
     }
 }
