@@ -9,17 +9,17 @@ class TezosNetworkService(providers: List<TezosNetworkProvider>) :
         TezosNetworkProvider {
 
     override suspend fun getInfo(address: String): Result<TezosInfoResponse> {
-        val result = provider.getInfo(address)
+        val result = currentProvider.getInfo(address)
         return if (result.needsRetry()) getInfo(address) else result
     }
 
     override suspend fun isPublicKeyRevealed(address: String): Result<Boolean> {
-        val result = provider.isPublicKeyRevealed(address)
+        val result = currentProvider.isPublicKeyRevealed(address)
         return if (result.needsRetry()) isPublicKeyRevealed(address) else result
     }
 
     override suspend fun getHeader(): Result<TezosHeader> {
-        val result = provider.getHeader()
+        val result = currentProvider.getHeader()
         return if (result.needsRetry()) getHeader() else result
     }
 
@@ -27,7 +27,7 @@ class TezosNetworkService(providers: List<TezosNetworkProvider>) :
             headerHash: String,
             contents: List<TezosOperationContent>
     ): Result<String> {
-        val result = provider.forgeContents(headerHash, contents)
+        val result = currentProvider.forgeContents(headerHash, contents)
         return if (result.needsRetry()) forgeContents(headerHash, contents) else result
     }
 
@@ -36,7 +36,7 @@ class TezosNetworkService(providers: List<TezosNetworkProvider>) :
             contents: List<TezosOperationContent>,
             encodedSignature: String
     ): SimpleResult {
-        val result = provider.checkTransaction(header, contents, encodedSignature)
+        val result = currentProvider.checkTransaction(header, contents, encodedSignature)
         return if (result.needsRetry()) {
             checkTransaction(header, contents, encodedSignature)
         } else {
@@ -45,7 +45,7 @@ class TezosNetworkService(providers: List<TezosNetworkProvider>) :
     }
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
-        val result = provider.sendTransaction(transaction)
+        val result = currentProvider.sendTransaction(transaction)
         return if (result.needsRetry()) sendTransaction(transaction) else result
     }
 }
