@@ -157,7 +157,7 @@ class WalletManagerFactory(
                 if (blockchainSdkConfig.infuraProjectId != null) {
                     jsonRpcProviders.add(
                             EthereumJsonRpcProvider
-                                    .infura(API_INFURA_TESTNET, blockchainSdkConfig.infuraProjectId)
+                                    .infura(API_INFURA, blockchainSdkConfig.infuraProjectId)
                     )
                 }
                 jsonRpcProviders.add(EthereumJsonRpcProvider(API_TANGEM_ETHEREUM))
