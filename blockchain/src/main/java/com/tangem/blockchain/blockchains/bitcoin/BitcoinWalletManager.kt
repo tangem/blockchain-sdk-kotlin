@@ -20,6 +20,8 @@ open class BitcoinWalletManager(
 ) : WalletManager(wallet), TransactionSender, SignatureCountValidator {
 
     protected val blockchain = wallet.blockchain
+    open val minimalFeePerKb = 0.0001.toBigDecimal()
+    open val minimalFee = 0.00001.toBigDecimal()
 
     override suspend fun update() {
         coroutineScope {
@@ -103,7 +105,7 @@ open class BitcoinWalletManager(
                         buildTransactionResult.data,
                         wallet.cardId, walletPublicKey = wallet.publicKey
                 )
-                when (signerResult) {
+                return when (signerResult) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(
                                 signerResult.data.reduce { acc, bytes -> acc + bytes }
@@ -114,9 +116,9 @@ open class BitcoinWalletManager(
                             transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
                             wallet.addOutgoingTransaction(transactionData)
                         }
-                        return sendResult
+                        sendResult
                     }
-                    is CompletionResult.Failure -> return SimpleResult.failure(signerResult.error)
+                    is CompletionResult.Failure -> SimpleResult.failure(signerResult.error)
                 }
             }
         }
@@ -132,8 +134,8 @@ open class BitcoinWalletManager(
                     val sizeResult = transactionBuilder.getEstimateSize(
                             TransactionData(amount, Amount(amount, feeValue), wallet.address, destination)
                     )
-                    when (sizeResult) {
-                        is Result.Failure -> return sizeResult
+                    return when (sizeResult) {
+                        is Result.Failure -> sizeResult
                         is Result.Success -> {
                             val transactionSize = sizeResult.data.toBigDecimal()
                             val minFee = feeResult.data.minimalPerKb.calculateFee(transactionSize)
@@ -143,12 +145,7 @@ open class BitcoinWalletManager(
                                     Amount(normalFee, blockchain),
                                     Amount(priorityFee, blockchain)
                             )
-
-                            val minimalFee = transactionSize.movePointLeft(blockchain.decimals())
-                            for (fee in fees) {
-                                if (fee.value!! < minimalFee) fee.value = minimalFee
-                            }
-                            return Result.Success(fees)
+                            Result.Success(fees)
                         }
                     }
                 }
@@ -170,8 +167,10 @@ open class BitcoinWalletManager(
     }
 
     private fun BigDecimal.calculateFee(transactionSize: BigDecimal): BigDecimal {
+        val feePerKb = maxOf(this, minimalFeePerKb)
         val bytesInKb = BigDecimal(1024)
-        return this.divide(bytesInKb).multiply(transactionSize)
+        val calculatedFee = feePerKb.divide(bytesInKb).multiply(transactionSize)
                 .setScale(8, BigDecimal.ROUND_DOWN)
+        return maxOf(calculatedFee, minimalFee)
     }
 }
