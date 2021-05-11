@@ -76,7 +76,6 @@ enum class Blockchain(
     fun getShareScheme(): String? = when (this) {
         Bitcoin -> "bitcoin"
         Ethereum -> "ethereum"
-        XRP -> "xrpl"
         Litecoin -> "litecoin"
         Binance -> "bnb"
         else -> null
@@ -86,7 +85,7 @@ enum class Blockchain(
             ?: address
 
     fun validateShareScheme(scheme: String): Boolean {
-        if (this == XRP && scheme == "ripple") return true
+        if (this == XRP && (scheme == "ripple" || scheme == "xrpl" || scheme == "xrp")) return true
         return scheme == getShareScheme()
     }
 
