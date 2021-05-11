@@ -7,7 +7,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
 
-class BitcoinNetworkService(private val providers: List<BitcoinNetworkProvider>) :
+open class BitcoinNetworkService(private val providers: List<BitcoinNetworkProvider>) :
         MultiNetworkProvider<BitcoinNetworkProvider>(providers),
         BitcoinNetworkProvider {
 
