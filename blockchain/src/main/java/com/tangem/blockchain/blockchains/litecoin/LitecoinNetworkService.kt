@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.litecoin
 
+import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
@@ -14,7 +15,9 @@ class LitecoinNetworkService(
         return when {
             result.needsRetry() -> getFee()
             result is Result.Success -> {
-                Result.Success(result.data.copy(minimalPerKb = 0.00001024.toBigDecimal()))
+                Result.Success(result.data.copy(
+                        minimalPerKb = BitcoinWalletManager.DEFAULT_MINIMAL_FEE_PER_KB.toBigDecimal()
+                ))
             }
             else -> result
         }
