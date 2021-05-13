@@ -14,5 +14,5 @@ class LitecoinWalletManager(
         transactionBuilder: BitcoinTransactionBuilder,
         networkProvider: BitcoinNetworkProvider
 ) : BitcoinWalletManager(wallet, transactionBuilder, networkProvider), TransactionSender {
-    override val minimalFeePerKb = 0.00001024.toBigDecimal()
+    override val minimalFeePerKb = DEFAULT_MINIMAL_FEE_PER_KB.toBigDecimal()
 }
