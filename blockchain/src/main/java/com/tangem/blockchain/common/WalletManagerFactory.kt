@@ -21,6 +21,7 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
+import com.tangem.blockchain.blockchains.litecoin.LitecoinNetworkService
 import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
 import com.tangem.blockchain.blockchains.stellar.StellarNetworkService
 import com.tangem.blockchain.blockchains.stellar.StellarTransactionBuilder
@@ -283,6 +284,14 @@ class WalletManagerFactory(
         if (!blockcypherTokens.isNullOrEmpty()) {
             providers.add(BlockcypherNetworkProvider(blockchain, blockcypherTokens))
         }
-        return BitcoinNetworkService(providers)
+        return when (blockchain) {
+            Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> BitcoinNetworkService(providers)
+            Blockchain.Litecoin -> LitecoinNetworkService(providers)
+            else -> {
+                throw Exception(
+                        blockchain.name + " blockchain is not supported by BitcoinNetworkService"
+                )
+            }
+        }
     }
 }
