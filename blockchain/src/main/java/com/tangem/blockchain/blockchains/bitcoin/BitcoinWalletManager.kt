@@ -173,4 +173,8 @@ open class BitcoinWalletManager(
                 .setScale(8, BigDecimal.ROUND_DOWN)
         return maxOf(calculatedFee, minimalFee)
     }
+
+    companion object {
+        const val DEFAULT_MINIMAL_FEE_PER_KB = 0.00001024
+    }
 }
