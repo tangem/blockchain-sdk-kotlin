@@ -26,19 +26,11 @@ open class BitcoinNetworkService(private val providers: List<BitcoinNetworkProvi
             val fees = results.filterIsInstance<Result.Success<BitcoinFee>>().map { it.data }
             if (fees.isEmpty()) return@coroutineScope results.first()
 
-            val bicoinFee =  if (fees.size > 2) {
-                val sortedMinimalFees = fees.map { it.minimalPerKb }.sorted().toMutableList()
-                val sortedNormalFees = fees.map { it.normalPerKb }.sorted().toMutableList()
-                val sortedPriorityFees = fees.map { it.priorityPerKb }.sorted().toMutableList()
-
-                sortedMinimalFees.removeFirst()
-                sortedNormalFees.removeFirst()
-                sortedPriorityFees.removeFirst()
-
+            val bitcoinFee =  if (fees.size > 2) {
                 BitcoinFee(
-                        minimalPerKb = sortedMinimalFees.average(),
-                        normalPerKb = sortedNormalFees.average(),
-                        priorityPerKb = sortedPriorityFees.average()
+                        minimalPerKb = fees.map { it.minimalPerKb }.sorted().drop(1).average(),
+                        normalPerKb = fees.map { it.normalPerKb }.sorted().drop(1).average(),
+                        priorityPerKb = fees.map { it.priorityPerKb }.sorted().drop(1).average()
 
                 )
             } else {
@@ -49,7 +41,7 @@ open class BitcoinNetworkService(private val providers: List<BitcoinNetworkProvi
                 )
             }
 
-            Result.Success(bicoinFee)
+            Result.Success(bitcoinFee)
         }
     }
 
