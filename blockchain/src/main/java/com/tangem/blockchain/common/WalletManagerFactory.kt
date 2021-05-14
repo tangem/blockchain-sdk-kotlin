@@ -7,6 +7,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
+import com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo.BlockchainInfoNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashNetworkService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashWalletManager
@@ -278,6 +279,9 @@ class WalletManagerFactory(
 
     private fun makeBitcoinNetworkService(blockchain: Blockchain): BitcoinNetworkService {
         val providers = mutableListOf<BitcoinNetworkProvider>()
+
+        if (blockchain == Blockchain.Bitcoin) providers.add(BlockchainInfoNetworkProvider())
+
         providers.add(BlockchairNetworkProvider(blockchain, blockchainSdkConfig.blockchairApiKey))
 
         val blockcypherTokens = blockchainSdkConfig.blockcypherTokens
