@@ -9,6 +9,8 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
+import com.tangem.blockchain.network.API_BLOCKCHAIN_INFO
+import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.hexToBytes
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -16,18 +18,18 @@ import kotlinx.coroutines.coroutineScope
 import java.util.*
 
 
-class BlockchainInfoNetworkProvider(
-        private val blockchainApi: BlockchainInfoApi
-//        private val bitcoinfeesEarnApi: BitcoinfeesEarnApi
-) : BitcoinNetworkProvider {
+class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
+    private val api =
+            createRetrofitInstance(API_BLOCKCHAIN_INFO).create(BlockchainInfoApi::class.java)
+
     private val decimals = Blockchain.Bitcoin.decimals()
     private val responseTransactionCap = 50
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         return try {
             coroutineScope {
-                val addressDeferred = retryIO { async { blockchainApi.getAddressData(address, null) } }
-                val unspentsDeferred = retryIO { async { blockchainApi.getUnspents(address) } }
+                val addressDeferred = retryIO { async { api.getAddressData(address, null) } }
+                val unspentsDeferred = retryIO { async { api.getUnspents(address) } }
 
                 val addressData = addressDeferred.await()
                 val unspents = unspentsDeferred.await()
@@ -64,7 +66,7 @@ class BlockchainInfoNetworkProvider(
 
     override suspend fun getFee(): Result<BitcoinFee> {
         return try {
-            val feeData = retryIO { blockchainApi.getFees() }
+            val feeData = retryIO { api.getFees() }
 
             val minimalFeePerKb = feeData.regularFeePerByte!! * 1024
             val normalFeePerKb = feeData.regularFeePerByte * 1024 * 12 / 10 // 1.2 ratio
@@ -83,7 +85,7 @@ class BlockchainInfoNetworkProvider(
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
-            retryIO { blockchainApi.sendTransaction(transaction) }
+            retryIO { api.sendTransaction(transaction) }
             SimpleResult.Success
         } catch (exception: Exception) {
             SimpleResult.Failure(exception)
@@ -93,7 +95,7 @@ class BlockchainInfoNetworkProvider(
     override suspend fun getSignatureCount(address: String): Result<Int> {
         return try {
             coroutineScope {
-                val addressData = retryIO { blockchainApi.getAddressData(address, null) }
+                val addressData = retryIO { api.getAddressData(address, null) }
 
                 val transactions = addressData.transactions!!.toMutableList()
 
@@ -129,7 +131,7 @@ class BlockchainInfoNetworkProvider(
                     val offsetAddressDeferred =
                             retryIO {
                                 async {
-                                    blockchainApi.getAddressData(address, transactionsRequestedCount)
+                                    api.getAddressData(address, transactionsRequestedCount)
                                 }
                             }
                     offsetAddressDeferredList.add(offsetAddressDeferred)
