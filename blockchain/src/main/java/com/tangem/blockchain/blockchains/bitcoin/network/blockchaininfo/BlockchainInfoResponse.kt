@@ -20,15 +20,20 @@ data class BlockchainInfoTransaction(
         val hash: String? = null,
 
         @Json(name = "block_height")
-        val blockHeight: Long? = null,
+        val block: Long? = null,
 
         @Json(name = "result")
-        val balanceDif: Long? = null,
+        val balanceDif: Long? = null, // in address data only
 
         @Json(name = "vin_sz")
         val inputCount: Int? = null,
 
-        val time: Long? = null
+        val time: Long? = null,
+
+        val inputs: List<BlockchainInfoInput>? = null,
+
+        @Json(name = "out")
+        val outputs: List<BlockchainInfoOutput>? = null
 )
 
 @JsonClass(generateAdapter = true)
@@ -59,4 +64,28 @@ data class BlockchainInfoFees(
 
         @Json(name = "priority")
         val priorityFeePerByte: Int? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class BlockchainInfoInput(
+        val sequence: Long? = null,
+
+        @Json(name = "prev_out")
+        val prevOutput: BlockchainInfoOutput? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class BlockchainInfoOutput(
+        val script: String? = null,
+
+        @Json(name = "tx_index")
+        val transactionIndex: Long? = null,
+
+        @Json(name = "n")
+        val index: Int? = null,
+
+        val value: Long? = null,
+
+        @Json(name = "addr")
+        val address: String? = null
 )

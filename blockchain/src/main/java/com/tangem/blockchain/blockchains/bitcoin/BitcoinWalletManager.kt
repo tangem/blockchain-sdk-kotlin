@@ -3,25 +3,29 @@ package com.tangem.blockchain.blockchains.bitcoin
 import android.util.Log
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinTransaction
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.commands.SignResponse
+import com.tangem.blockchain.extensions.sum
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import org.bitcoinj.core.TransactionInput
 import java.math.BigDecimal
 
 open class BitcoinWalletManager(
         wallet: Wallet,
         protected val transactionBuilder: BitcoinTransactionBuilder,
         private val networkProvider: BitcoinNetworkProvider
-) : WalletManager(wallet), TransactionSender, SignatureCountValidator {
+) : WalletManager(wallet), TransactionSender, TransactionPusher, SignatureCountValidator {
 
     protected val blockchain = wallet.blockchain
     open val minimalFeePerKb = 0.0001.toBigDecimal()
     open val minimalFee = 0.00001.toBigDecimal()
+    private val cachedTransactions = mutableMapOf<String, BitcoinTransaction>()
 
     override suspend fun update() {
         coroutineScope {
@@ -39,6 +43,7 @@ open class BitcoinWalletManager(
                 }
             }
             updateWallet(addressInfos.merge())
+            cachedTransactions.clear()
         }
     }
 
@@ -96,9 +101,16 @@ open class BitcoinWalletManager(
     }
 
     override suspend fun send(
-            transactionData: TransactionData, signer: TransactionSigner
+            transactionData: TransactionData,
+            signer: TransactionSigner
+    ) = send(transactionData, signer, null)
+
+    private suspend fun send(
+            transactionData: TransactionData,
+            signer: TransactionSigner,
+            sequence: Long?
     ): SimpleResult {
-        when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
+        when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData, sequence)) {
             is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
             is Result.Success -> {
                 val signerResult = signer.sign(
@@ -177,4 +189,109 @@ open class BitcoinWalletManager(
     companion object {
         const val DEFAULT_MINIMAL_FEE_PER_KB = 0.00001024
     }
+
+    override suspend fun isPushAvailable(transactionHash: String): Result<Boolean> {
+        if (!networkProvider.supportsRbf) return Result.Success(false)
+
+        val transaction = when (val result = getTransaction(transactionHash)) {
+            is Result.Success -> result.data
+            is Result.Failure -> return result
+        }
+        val notRbfInput = transaction.inputs
+                .find { it.sequence >= TransactionInput.NO_SEQUENCE - 1 }
+        val walletAddresses = wallet.addresses.map { it.value }
+        val otherAccountInput =
+                transaction.inputs.find { !walletAddresses.contains(it.sender) }
+
+        return Result.Success(
+                notRbfInput == null && otherAccountInput == null && !transaction.isConfirmed
+        )
+    }
+
+    override suspend fun getTransactionData(transactionHash: String) =
+            when (val result = getTransaction(transactionHash)) {
+                is Result.Success -> Result.Success(result.data.toTransactionData())
+                is Result.Failure -> result
+            }
+
+    override suspend fun getPushFee(
+            transactionHash: String,
+            amount: Amount,
+            destination: String
+    ): Result<List<Amount>> {
+        val transaction = when (val result = getTransaction(transactionHash)) {
+            is Result.Success -> result.data
+            is Result.Failure -> return result
+        }
+        val unspentOutputs = transactionBuilder.unspentOutputs ?: emptyList()
+
+        val pushUnspentOutputs = transaction.inputs.map { it.unspentOutput }
+        transactionBuilder.unspentOutputs =
+                unspentOutputs.filterOutTransaction(transactionHash) + pushUnspentOutputs
+
+        val fee = getFee(amount, destination)
+        transactionBuilder.unspentOutputs = unspentOutputs
+        return fee
+    }
+
+    override suspend fun push(
+            transactionHash: String,
+            newTransactionData: TransactionData,
+            signer: TransactionSigner
+    ): SimpleResult {
+        val transaction = when (val result = getTransaction(transactionHash)) {
+            is Result.Success -> result.data
+            is Result.Failure -> return SimpleResult.Failure(result.error)
+        }
+        val oldFee = transaction.toTransactionData().fee?.value ?: 0.toBigDecimal()
+        val newFee = newTransactionData.fee?.value ?: 0.toBigDecimal()
+        if (newFee <= oldFee) {
+            return SimpleResult.Failure(Exception("New fee should be greater than the old"))
+        }
+
+        transactionBuilder.unspentOutputs = transaction.inputs.map { it.unspentOutput }.plus(
+                        transactionBuilder.unspentOutputs?.filterOutTransaction(transactionHash)
+                        ?: emptyList()
+                )
+        val sequence = transaction.inputs.map { it.sequence }.maxOrNull()
+                ?: return SimpleResult.Failure(Exception("Transaction inputs are absent"))
+
+        return send(newTransactionData, signer, sequence + 1)
+    }
+
+    private suspend fun getTransaction(transactionHash: String): Result<BitcoinTransaction> {
+        val transaction = cachedTransactions[transactionHash]
+                ?: when (val result = networkProvider.getTransaction(transactionHash)) {
+                    is Result.Success -> result.data
+                            .also { cachedTransactions[it.hash] = it }
+                    is Result.Failure -> return result
+                }
+        return Result.Success(transaction)
+    }
+
+    private fun BitcoinTransaction.toTransactionData(): TransactionData {
+        val inputsTotal = inputs.map { it.unspentOutput.amount }.sum()
+
+        val walletAddresses = wallet.addresses.map { it.value }
+        val (changeOutputs, sentOutputs) =
+                outputs.partition { walletAddresses.contains(it.recipient) }
+        val changeOutput = changeOutputs.firstOrNull()
+        val sentOutput = sentOutputs.first()
+
+        val changeValue = changeOutput?.amount ?: 0.toBigDecimal()
+        val sentValue = sentOutput.amount
+        val feeValue = inputsTotal - sentValue - changeValue
+
+        return TransactionData(
+                amount = Amount(sentValue, blockchain),
+                fee = Amount(feeValue, blockchain),
+                sourceAddress = inputs.first().sender,
+                destinationAddress = sentOutput.recipient,
+                date = time,
+                hash = hash
+        )
+    }
+
+    private fun List<BitcoinUnspentOutput>.filterOutTransaction(transactionHash: String) =
+            this.filter { !it.transactionHash.contentEquals(transactionHash.hexToBytes()) }
 }

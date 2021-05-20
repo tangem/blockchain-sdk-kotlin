@@ -1,15 +1,14 @@
 package com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.bitcoin.network.*
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.API_BLOCKCHAIN_INFO
+import com.tangem.blockchain.network.API_BLOCKCHAIN_INFO_FEE
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.hexToBytes
 import kotlinx.coroutines.Deferred
@@ -18,17 +17,21 @@ import kotlinx.coroutines.coroutineScope
 import java.util.*
 
 
-class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
+class BlockchainInfoNetworkProvider : BitcoinNetworkProvider {
     private val api =
             createRetrofitInstance(API_BLOCKCHAIN_INFO).create(BlockchainInfoApi::class.java)
+    private val feeApi =
+            createRetrofitInstance(API_BLOCKCHAIN_INFO_FEE).create(BlockchainInfoFeeApi::class.java)
 
     private val decimals = Blockchain.Bitcoin.decimals()
     private val responseTransactionCap = 50
+    override val supportsRbf = true // TODO: check
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         return try {
             coroutineScope {
-                val addressDeferred = retryIO { async { api.getAddressData(address, null) } }
+                val addressDeferred =
+                        retryIO { async { api.getAddressData(address, null) } }
                 val unspentsDeferred = retryIO { async { api.getUnspents(address) } }
 
                 val addressData = addressDeferred.await()
@@ -38,8 +41,9 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
                     BasicTransactionData(
                             balanceDif = it.balanceDif!!.toBigDecimal().movePointLeft(decimals),
                             hash = it.hash!!,
-                            isConfirmed = it.blockHeight != 0L,
-                            date = Calendar.getInstance().apply { this.timeInMillis = it.time!! * 1000 }
+                            isConfirmed = it.block != null,
+                            date = Calendar.getInstance()
+                                    .apply { this.timeInMillis = it.time!! * 1000 }
                     )
                 }
 
@@ -53,7 +57,8 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
 
                 Result.Success(
                         BitcoinAddressInfo(
-                                balance = addressData.finalBalance?.toBigDecimal()?.movePointLeft(decimals)
+                                balance = addressData.finalBalance
+                                        ?.toBigDecimal()?.movePointLeft(decimals)
                                         ?: 0.toBigDecimal(),
                                 unspentOutputs = unspentOutputs,
                                 recentTransactions = transactions
@@ -66,7 +71,7 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
 
     override suspend fun getFee(): Result<BitcoinFee> {
         return try {
-            val feeData = retryIO { api.getFees() }
+            val feeData = retryIO { feeApi.getFees() }
 
             val minimalFeePerKb = feeData.regularFeePerByte!! * 1024
             val normalFeePerKb = feeData.regularFeePerByte * 1024 * 12 / 10 // 1.2 ratio
@@ -92,6 +97,56 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
         }
     }
 
+    override suspend fun getTransaction(transactionHash: String): Result<BitcoinTransaction> {
+        return try {
+            val transaction = retryIO { api.getTransaction(transactionHash) }
+            val inputTransactionIndexes =
+                    transaction.inputs!!.map { it.prevOutput!!.transactionIndex!! }
+
+            coroutineScope {
+                val inputTransactionsDeferred = inputTransactionIndexes.associateBy(
+                        { it }, { retryIO { async { api.getTransaction(it.toString(10)) } } }
+                )
+                val inputTransactionHashes =
+                        inputTransactionsDeferred.mapValues { it.value.await().hash }
+
+                val inputs = transaction.inputs.map {
+                    BitcoinTransactionInput(
+                            unspentOutput = BitcoinUnspentOutput(
+                                    amount = it.prevOutput!!.value!!
+                                            .toBigDecimal().movePointLeft(decimals),
+                                    outputIndex = it.prevOutput.index!!.toLong(),
+                                    transactionHash = inputTransactionHashes
+                                            .get(it.prevOutput.transactionIndex)!!.hexToBytes(),
+                                    outputScript = it.prevOutput.script!!.hexToBytes()
+                            ),
+                            sender = it.prevOutput.address!!,
+                            sequence = it.sequence!!
+                    )
+                }
+
+                val outputs = transaction.outputs!!.map {
+                    BitcoinTransactionOutput(
+                            amount = it.value!!.toBigDecimal().movePointLeft(decimals),
+                            recipient = it.address!!
+                    )
+                }
+                Result.Success(
+                        BitcoinTransaction(
+                                hash = transaction.hash!!,
+                                isConfirmed = transaction.block != null,
+                                time = Calendar.getInstance()
+                                        .apply { timeInMillis = transaction.time!! },
+                                inputs = inputs,
+                                outputs = outputs
+                        )
+                )
+            }
+        } catch (exception: Exception) {
+            Result.Failure(exception)
+        }
+    }
+
     override suspend fun getSignatureCount(address: String): Result<Int> {
         return try {
             coroutineScope {
@@ -107,7 +162,8 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
                 }
 
                 var signatureCount = 0
-                transactions.filter { it.balanceDif!! < 0 }.forEach { signatureCount += it.inputCount!! }
+                transactions.filter { it.balanceDif!! < 0 }
+                        .forEach { signatureCount += it.inputCount!! }
 
                 Result.Success(transactions.size)
             }

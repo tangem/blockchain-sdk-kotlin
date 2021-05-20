@@ -9,6 +9,7 @@ data class BlockchairAddress(
         val data: Map<String, BlockchairAddressData>? = null
 )
 
+@JsonClass(generateAdapter = true)
 data class BlockchairAddressData(
         @Json(name = "address")
         val addressInfo: BlockchairAddressInfo? = null,
@@ -21,6 +22,7 @@ data class BlockchairAddressData(
         val calls: List<BlockchairCallInfo>? = null //eth-like only
 )
 
+@JsonClass(generateAdapter = true)
 data class BlockchairAddressInfo(
         val balance: Long? = null,
 
@@ -31,9 +33,10 @@ data class BlockchairAddressInfo(
         val outputCount: Int? = null,
 
         @Json(name = "unspent_output_count")
-        val unspentOutputCount: Int? = null
+        val unspentOutputCount: Int? = null // only in address data
 )
 
+@JsonClass(generateAdapter = true)
 data class BlockchairUnspentOutput(
         @Json(name = "block_id")
         val block: Int? = null,
@@ -43,18 +46,22 @@ data class BlockchairUnspentOutput(
 
         val index: Int? = null,
 
-        @Json(name = "value")
-        val amount: Long? = null
+        val value: Long? = null
 )
 
+@JsonClass(generateAdapter = true)
 data class BlockchairTransaction(
         val data: Map<String, BlockchairTransactionData>? = null
 )
 
+@JsonClass(generateAdapter = true)
 data class BlockchairTransactionData(
-        val transaction: BlockchairTransactionInfo? = null
+        val transaction: BlockchairTransactionInfo? = null,
+        val inputs: List<BlockchairInput>? = null,
+        val outputs: List<BlockchairOutput>? = null
 )
 
+@JsonClass(generateAdapter = true)
 data class BlockchairTransactionInfo(
         @Json(name = "block_id")
         val block: Int? = null,
@@ -67,23 +74,28 @@ data class BlockchairTransactionInfo(
         val balanceDif: Long? = null
 )
 
+@JsonClass(generateAdapter = true)
 data class BlockchairStats(
         val data: BlockchairStatsData? = null
 )
 
+@JsonClass(generateAdapter = true)
 data class BlockchairStatsData(
         @Json(name = "suggested_transaction_fee_per_byte_sat")
         val feePerByte: Int? = null
 )
 
+@JsonClass(generateAdapter = true)
 data class BlockchairTokenHolder(
         val data: Map<String, TokenHolderData>
 )
 
+@JsonClass(generateAdapter = true)
 data class TokenHolderData(
         val transactions: List<BlockchairCallInfo>? = null
 )
 
+@JsonClass(generateAdapter = true)
 data class BlockchairCallInfo(
         @Json(name = "block_id")
         val block: Int? = null,
@@ -114,18 +126,20 @@ data class BlockchairTokensResponse(
         val data: Map<String, BlockchairTokensData>? = null
 )
 
-
+@JsonClass(generateAdapter = true)
 data class BlockchairTokensData(
         @Json(name = "layer_2")
         val tokensInfo: TokensInfo
 )
 
+@JsonClass(generateAdapter = true)
 data class TokensInfo(
         @Json(name = "erc_20")
         val tokens: List<BlockchairToken>
 )
 
 //data class Erc20Tokens(val tokens: List<BlockchairToken>)
+@JsonClass(generateAdapter = true)
 data class BlockchairToken(
         @Json(name = "token_address")
         val address: String,
@@ -148,3 +162,31 @@ data class BlockchairToken(
         return Token(name = name, symbol = symbol, contractAddress = address, decimals = decimals)
     }
 }
+
+@JsonClass(generateAdapter = true)
+data class BlockchairInput(
+        @Json(name = "block_id")
+        val block: Int? = null,
+
+        @Json(name = "transaction_hash")
+        val transactionHash: String? = null,
+
+        val index: Int? = null,
+
+        val value: Long? = null,
+
+        @Json(name = "script_hex")
+        val script: String? = null,
+
+        @Json(name = "spending_sequence")
+        val sequence: Long? = null,
+
+        val recipient: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class BlockchairOutput(
+        val value: Long? = null,
+
+        val recipient: String? = null
+)

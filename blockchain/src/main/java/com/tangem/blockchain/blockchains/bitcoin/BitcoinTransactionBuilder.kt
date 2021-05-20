@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.litecoin.LitecoinMainNetParams
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.sum
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.isZero
@@ -39,14 +40,18 @@ open class BitcoinTransactionBuilder(
     }
     var unspentOutputs: List<BitcoinUnspentOutput>? = null
 
-    open fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
+    open fun buildToSign(
+            transactionData: TransactionData,
+            sequence: Long? = null
+    ): Result<List<ByteArray>> {
+
         if (unspentOutputs.isNullOrEmpty()) {
             return Result.Failure(Exception("Unspent outputs are missing"))
         }
 
         val change: BigDecimal = calculateChange(transactionData, unspentOutputs!!)
-        transaction =
-                transactionData.toBitcoinJTransaction(networkParameters, unspentOutputs!!, change)
+        transaction = transactionData
+                .toBitcoinJTransaction(networkParameters, unspentOutputs!!, change, sequence)
 
         val hashesToSign = MutableList(transaction.inputs.size) { byteArrayOf() }
         for (input in transaction.inputs) {
@@ -151,7 +156,7 @@ open class BitcoinTransactionBuilder(
             transactionData: TransactionData,
             unspentOutputs: List<BitcoinUnspentOutput>
     ): BigDecimal {
-        val fullAmount = unspentOutputs.map { it.amount }.reduce { acc, number -> acc + number }
+        val fullAmount = unspentOutputs.map { it.amount }.sum()
         return fullAmount - (transactionData.amount.value!! + (transactionData.fee?.value
                 ?: 0.toBigDecimal()))
     }
@@ -180,7 +185,8 @@ open class BitcoinTransactionBuilder(
 internal fun TransactionData.toBitcoinJTransaction(
         networkParameters: NetworkParameters?,
         unspentOutputs: List<BitcoinUnspentOutput>,
-        change: BigDecimal
+        change: BigDecimal,
+        sequence: Long?
 ): Transaction {
     val transaction = Transaction(networkParameters)
     for (utxo in unspentOutputs) {
@@ -200,6 +206,7 @@ internal fun TransactionData.toBitcoinJTransaction(
                         this.sourceAddress)
         )
     }
+    transaction.inputs.forEach { it.sequenceNumber = sequence ?: 0 }
     return transaction
 }
 

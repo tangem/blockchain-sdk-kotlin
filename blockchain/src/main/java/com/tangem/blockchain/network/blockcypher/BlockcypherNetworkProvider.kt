@@ -1,9 +1,7 @@
 package com.tangem.blockchain.network.blockcypher
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.bitcoin.network.*
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
@@ -43,10 +41,11 @@ class BlockcypherNetworkProvider(
     private val limitCap = 2000
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ROOT)
     private val decimals = blockchain.decimals()
+    override val supportsRbf = false
 
     override suspend fun getInfo(address: String) = getInfo(address, null)
 
-    suspend fun getInfo(address: String, token: String?): Result<BitcoinAddressInfo> {
+    private suspend fun getInfo(address: String, token: String?): Result<BitcoinAddressInfo> {
         return try {
             val addressData =
                     retryIO { api.getAddressData(address, token = token) }
@@ -61,7 +60,7 @@ class BlockcypherNetworkProvider(
 
             val unspentOutputs = addressData.txrefs?.filter { it.spent == false }?.map {
                 BitcoinUnspentOutput(
-                        it.amount!!.toBigDecimal().movePointLeft(decimals),
+                        it.value!!.toBigDecimal().movePointLeft(decimals),
                         it.outputIndex!!.toLong(),
                         it.hash!!.hexToBytes(),
                         it.outputScript!!.hexToBytes()
@@ -88,10 +87,9 @@ class BlockcypherNetworkProvider(
 
     override suspend fun getFee() = getFee(null)
 
-    suspend fun getFee(token: String?): Result<BitcoinFee> {
+    private suspend fun getFee(token: String?): Result<BitcoinFee> {
         return try {
-            val receivedFee: BlockcypherFee =
-                    retryIO { api.getFee(token) }
+            val receivedFee = retryIO { api.getFee(token) }
             Result.Success(
                     BitcoinFee(
                             receivedFee.minFeePerKb!!.toBigDecimal().movePointLeft(decimals),
@@ -126,10 +124,58 @@ class BlockcypherNetworkProvider(
         }
     }
 
+    override suspend fun getTransaction(transactionHash: String) =
+            getTransaction(transactionHash, null)
+
+    private suspend fun getTransaction(transactionHash: String, token: String?): Result<BitcoinTransaction> {
+        return try {
+            val transaction = retryIO { api.getTransaction(transactionHash) }
+
+            val inputs = transaction.inputs!!.map {
+                BitcoinTransactionInput(
+                        unspentOutput = BitcoinUnspentOutput(
+                                amount = it.value!!.toBigDecimal().movePointLeft(decimals),
+                                outputIndex = it.index!!.toLong(),
+                                transactionHash = it.transactionHash!!.hexToBytes(),
+                                outputScript = it.script!!.hexToBytes()
+                        ),
+                        sender = it.addresses!!.first(),
+                        sequence = it.sequence!!
+                )
+            }
+            val outputs = transaction.outputs!!.map {
+                BitcoinTransactionOutput(
+                        amount = it.value!!.toBigDecimal().movePointLeft(decimals),
+                        recipient = it.addresses!!.first()
+                )
+            }
+            val transactionTime = transaction.confirmed ?: transaction.received!!
+
+            Result.Success(
+                    BitcoinTransaction(
+                            hash = transaction.hash!!,
+                            isConfirmed = transaction.block!! > 0,
+                            time = Calendar.getInstance()
+                                    .apply { time = dateFormat.parse(transactionTime)!! },
+                            inputs = inputs,
+                            outputs = outputs
+                    )
+            )
+        } catch (error: HttpException) {
+            return if (error.code() == 429 && token == null && !tokens.isNullOrEmpty()) {
+                getTransaction(transactionHash, getToken())
+            } else {
+                Result.Failure(error)
+            }
+        } catch (error: Exception) {
+            Result.Failure(error)
+        }
+    }
+
     override suspend fun getSignatureCount(address: String) = getSignatureCount(address, null)
 
     // TODO: there is a limit of 2000 txrefs, we can miss some transactions if there is more
-    suspend fun getSignatureCount(address: String, token: String?): Result<Int> {
+    private suspend fun getSignatureCount(address: String, token: String?): Result<Int> {
         return try {
             val addressData: BlockcypherAddress =
                     retryIO {
@@ -160,9 +206,9 @@ class BlockcypherNetworkProvider(
 
         this.forEach {
             var balanceDif = if (it.outputIndex == -1) { // outgoing only
-                -it.amount!!.toBigDecimal().movePointLeft(decimals)
+                -it.value!!.toBigDecimal().movePointLeft(decimals)
             } else { // incoming only
-                it.amount!!.toBigDecimal().movePointLeft(decimals)
+                it.value!!.toBigDecimal().movePointLeft(decimals)
             }
             if (it.hash in transactionsMap) {
                 balanceDif += transactionsMap[it.hash]!!.balanceDif

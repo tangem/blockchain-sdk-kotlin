@@ -1,9 +1,7 @@
 package com.tangem.blockchain.network.blockchair
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.bitcoin.network.*
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
@@ -28,12 +26,16 @@ open class BlockchairNetworkProvider(
             Blockchain.BitcoinTestnet -> "bitcoin/testnet/"
             Blockchain.BitcoinCash -> "bitcoin-cash/"
             Blockchain.Litecoin -> "litecoin/"
-            else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
+            else -> throw Exception(
+                    "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
+            )
         }
-        createRetrofitInstance(API_BLOCKCHAIR + blockchainPath).create(BlockchairApi::class.java)
+        createRetrofitInstance(API_BLOCKCHAIR + blockchainPath)
+                .create(BlockchairApi::class.java)
     }
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.ROOT)
     private val decimals = blockchain.decimals()
+    override val supportsRbf = true
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         return try {
@@ -52,7 +54,7 @@ open class BlockchairNetworkProvider(
 
             val unspentOutputs = addressData.unspentOutputs!!.map {
                 BitcoinUnspentOutput(
-                        amount = it.amount!!.toBigDecimal().movePointLeft(decimals),
+                        amount = it.value!!.toBigDecimal().movePointLeft(decimals),
                         outputIndex = it.index!!.toLong(),
                         transactionHash = it.transactionHash!!.hexToBytes(),
                         outputScript = script
@@ -84,9 +86,11 @@ open class BlockchairNetworkProvider(
             val stats = retryIO { api.getBlockchainStats(apiKey) }
             val feePerKb = (stats.data!!.feePerByte!! * 1024).toBigDecimal().movePointLeft(decimals)
             Result.Success(BitcoinFee(
-                    minimalPerKb = (feePerKb * BigDecimal.valueOf(0.8)).setScale(decimals, RoundingMode.DOWN),
+                    minimalPerKb = (feePerKb * BigDecimal.valueOf(0.8))
+                            .setScale(decimals, RoundingMode.DOWN),
                     normalPerKb = feePerKb.setScale(decimals, RoundingMode.DOWN),
-                    priorityPerKb = (feePerKb * BigDecimal.valueOf(1.2)).setScale(decimals, RoundingMode.DOWN)
+                    priorityPerKb = (feePerKb * BigDecimal.valueOf(1.2))
+                            .setScale(decimals, RoundingMode.DOWN)
             ))
         } catch (error: Exception) {
             Result.Failure(error)
@@ -99,6 +103,46 @@ open class BlockchairNetworkProvider(
             SimpleResult.Success
         } catch (error: Exception) {
             SimpleResult.Failure(error)
+        }
+    }
+
+    override suspend fun getTransaction(transactionHash: String): Result<BitcoinTransaction> {
+        return try {
+            val transactionResponse = retryIO { api.getTransaction(transactionHash, apiKey) }
+            val transactionData = transactionResponse.data!!.getValue(transactionHash)
+            val transaction = transactionData.transaction!!
+
+            val inputs = transactionData.inputs!!.map {
+                BitcoinTransactionInput(
+                        unspentOutput = BitcoinUnspentOutput(
+                                amount = it.value!!.toBigDecimal().movePointLeft(decimals),
+                                outputIndex = it.index!!.toLong(),
+                                transactionHash = it.transactionHash!!.hexToBytes(),
+                                outputScript = it.script!!.hexToBytes()
+                        ),
+                        sender = it.recipient!!,
+                        sequence = it.sequence!!
+                )
+            }
+            val outputs = transactionData.outputs!!.map {
+                BitcoinTransactionOutput(
+                        amount = it.value!!.toBigDecimal().movePointLeft(decimals),
+                        recipient = it.recipient!!
+                )
+            }
+
+            Result.Success(
+                    BitcoinTransaction(
+                            hash = transaction.hash!!,
+                            isConfirmed = transaction.block!! > 0,
+                            time = Calendar.getInstance()
+                                    .apply { time = dateFormat.parse(transaction.time!!)!! },
+                            inputs = inputs,
+                            outputs = outputs
+                    )
+            )
+        } catch (error: Exception) {
+            Result.Failure(error)
         }
     }
 
