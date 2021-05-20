@@ -13,11 +13,13 @@ interface BlockchainInfoApi {
     @GET("unspent")
     suspend fun getUnspents(@Query("active") address: String): BlockchainInfoUnspents
 
-    @GET("https://api.blockchain.info/mempool/fees")
-    suspend fun getFees(): BlockchainInfoFees
-
     @FormUrlEncoded
     @POST("pushtx")
     suspend fun sendTransaction(@Field("tx") transaction: String): ResponseBody
+
+    @GET("rawtx/{transaction}")
+    suspend fun getTransaction(
+            @Path("transaction") transaction: String
+    ): BlockchainInfoTransaction
 }
 
