@@ -47,6 +47,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
         get() = parentJob + Dispatchers.IO + exceptionHandler
     private val scope = CoroutineScope(coroutineContext)
     private var token: Token? = null
+    private var transactionToPushHash: String? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,6 +65,8 @@ class BlockchainDemoActivity : AppCompatActivity() {
         binding.btnCheckFee.setOnClickListener { requestFee() }
 
         binding.btnSend.setOnClickListener { send() }
+
+        binding.btnPush.setOnClickListener { push() }
     }
 
 
@@ -77,7 +80,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
                                 result.data.cardId,
                                 wallet.publicKey!!,
                                 Blockchain.fromId(result.data.cardData?.blockchainName
-                                        ?: Blockchain.Ethereum.id),
+                                        ?: Blockchain.Bitcoin.id),
                                 wallet.curve!!
                         )!!
                         token = walletManager.wallet.getTokens().firstOrNull()
@@ -98,6 +101,29 @@ class BlockchainDemoActivity : AppCompatActivity() {
     private fun getInfo() {
         scope.launch {
             walletManager.update()
+
+            val pushAvailable = if (walletManager is TransactionPusher) {
+                val wallet = walletManager.wallet
+                val transactionToPush = wallet.recentTransactions.find {
+                    it.status == TransactionStatus.Unconfirmed &&
+                            wallet.addresses.map{ it.value }.contains(it.sourceAddress)
+                }
+                if (transactionToPush?.hash == null) {
+                    false
+                } else {
+                    val isPushAvailableResult = (walletManager as TransactionPusher)
+                            .isPushAvailable(transactionToPush.hash!!)
+                    transactionToPushHash = transactionToPush.hash!!
+
+                    when (isPushAvailableResult) {
+                        is Result.Success -> isPushAvailableResult.data
+                        is Result.Failure -> false
+                    }
+                }
+            } else {
+                false
+            }
+
             withContext(Dispatchers.Main) {
                 binding.tvBalance.text =
                         "${
@@ -118,6 +144,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
                             )
                 }
                 binding.btnCheckFee.isEnabled = true
+                binding.btnPush.isEnabled = pushAvailable
             }
         }
     }
@@ -171,6 +198,39 @@ class BlockchainDemoActivity : AppCompatActivity() {
             val result = (walletManager as TransactionSender).send(
                     formTransactionData(),
                     signer)
+            withContext(Dispatchers.Main) {
+                when (result) {
+                    is SimpleResult.Failure -> {
+                        handleError(result.error?.localizedMessage ?: "Error")
+                    }
+                    is SimpleResult.Success -> {
+                        binding.tvFee.text = "Success"
+                    }
+                }
+            }
+        }
+    }
+
+    private fun push() {
+        scope.launch {
+            var error: Throwable? = null
+            val transactionPusher = walletManager as TransactionPusher
+            val transactionData =
+                    when (val result = transactionPusher.getTransactionData(transactionToPushHash!!)) {
+                        is Result.Success -> result.data
+                        is Result.Failure -> {
+                            error = result.error
+                            null
+                        }
+                    }
+            transactionData?.fee?.value = transactionData?.fee?.value?.add(0.00001.toBigDecimal())
+
+            val result = if (error == null) {
+                transactionPusher.push(transactionToPushHash!!, transactionData!!, signer)
+            } else {
+                SimpleResult.Failure(error)
+            }
+
             withContext(Dispatchers.Main) {
                 when (result) {
                     is SimpleResult.Failure -> {

@@ -3,7 +3,6 @@ package com.tangem.blockchain.common
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.isAboveZero
-import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.isZero
 import java.math.BigDecimal
@@ -141,7 +140,22 @@ abstract class WalletManager(
 interface TransactionSender {
     suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult
     suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>>
+}
 
+interface TransactionPusher {
+    suspend fun isPushAvailable(transactionHash: String): Result<Boolean>
+    suspend fun getTransactionData(transactionHash: String): Result<TransactionData>
+    suspend fun getPushFee(
+            transactionHash: String,
+            amount: Amount,
+            destination: String
+    ): Result<List<Amount>>
+
+    suspend fun push(
+            transactionHash: String,
+            newTransactionData: TransactionData,
+            signer: TransactionSigner
+    ): SimpleResult
 }
 
 interface TransactionSigner {
