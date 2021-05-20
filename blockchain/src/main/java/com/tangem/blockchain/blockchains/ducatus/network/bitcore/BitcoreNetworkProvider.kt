@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinTransaction
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -20,6 +21,7 @@ open class BitcoreNetworkProvider(baseUrl: String) : BitcoinNetworkProvider {
     private val api = createRetrofitInstance(baseUrl).create(BitcoreApi::class.java)
 
     private val decimals = Blockchain.Ducatus.decimals()
+    override val supportsRbf = false
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         return try {
@@ -68,6 +70,11 @@ open class BitcoreNetworkProvider(baseUrl: String) : BitcoinNetworkProvider {
         } catch (error: Exception) {
             SimpleResult.Failure(error)
         }
+    }
+
+    override suspend fun getTransaction(transactionHash: String): Result<BitcoinTransaction> {
+        // TODO Bitcore is used only in Ducatus and we don't need transaction pushing for it
+        return Result.Failure(Exception("Not yet implemented"))
     }
 
     override suspend fun getSignatureCount(address: String): Result<Int> {

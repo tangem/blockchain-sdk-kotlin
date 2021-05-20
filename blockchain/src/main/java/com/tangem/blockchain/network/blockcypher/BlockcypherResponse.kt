@@ -29,8 +29,7 @@ data class BlockcypherTxref(
         @Json(name = "tx_output_n")
         val outputIndex: Int? = null,
 
-        @Json(name = "value")
-        val amount: Long? = null,
+        val value: Long? = null,
 
         @Json(name = "confirmations")
         val confirmations: Long? = null,
@@ -46,9 +45,50 @@ data class BlockcypherTxref(
 )
 
 @JsonClass(generateAdapter = true)
-data class BlockcypherTx(
+data class BlockcypherRawTx(
         @Json(name = "hex")
         val hex: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class BlockcypherTransaction(
+        @Json(name = "block_height")
+        val block: Int? = null,
+
+        val hash: String? = null,
+
+        val received: String? = null,
+
+        val confirmed: String? = null,
+
+        val inputs: List<BlockcypherInput>? = null,
+
+        val outputs: List<BlockcypherOutput>? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class BlockcypherInput(
+        @Json(name = "prev_hash")
+        val transactionHash: String? = null,
+
+        @Json(name = "output_index")
+        val index: Int? = null,
+
+        val script: String? = null,
+
+        @Json(name = "output_value")
+        val value: Long? = null,
+
+        val sequence: Long? = null,
+
+        val addresses: List<String>? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class BlockcypherOutput(
+        val value: Long? = null,
+
+        val addresses: List<String>? = null
 )
 
 @JsonClass(generateAdapter = true)
