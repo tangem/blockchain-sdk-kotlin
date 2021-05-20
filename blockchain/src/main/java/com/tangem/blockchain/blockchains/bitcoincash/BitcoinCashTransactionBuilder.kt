@@ -11,7 +11,6 @@ import org.bitcoinj.core.*
 import org.bitcoinj.core.LegacyAddress.fromPubKeyHash
 import org.bitcoinj.crypto.TransactionSignature
 import org.bitcoinj.script.Script
-import org.bitcoinj.script.ScriptBuilder
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -19,7 +18,9 @@ class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, blockchain: Bloc
     : BitcoinTransactionBuilder(walletPublicKey.toCompressedPublicKey(), blockchain) {
 
     override fun buildToSign(
-            transactionData: TransactionData): Result<List<ByteArray>> {
+            transactionData: TransactionData,
+            sequence: Long?
+    ): Result<List<ByteArray>> {
 
         if (unspentOutputs.isNullOrEmpty()) return Result.Failure(Exception("Unspent outputs are missing"))
 
