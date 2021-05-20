@@ -21,7 +21,13 @@ interface BlockcypherApi {
     suspend fun sendTransaction(
             @Body body: BlockcypherSendBody,
             @Query("token") token: String
-    ): BlockcypherTx
+    ): BlockcypherRawTx
+
+    @GET("txs/{hash}")
+    suspend fun getTransaction(
+            @Path("hash") transactionHash: String,
+            @Query("token") token: String? = null
+    ): BlockcypherTransaction
 }
 
 @JsonClass(generateAdapter = true)
