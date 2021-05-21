@@ -105,7 +105,7 @@ open class BitcoinWalletManager(
             signer: TransactionSigner
     ) = send(transactionData, signer, null)
 
-    private suspend fun send(
+    protected suspend fun send(
             transactionData: TransactionData,
             signer: TransactionSigner,
             sequence: Long?
