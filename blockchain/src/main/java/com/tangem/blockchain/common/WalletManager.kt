@@ -105,6 +105,9 @@ abstract class WalletManager(
     }
 
     open suspend fun addToken(token: Token): Result<Amount> {
+        if (!presetTokens.contains(token)) {
+            presetTokens.add(token)
+        }
         return Result.Failure(Exception("Adding tokens not supported for ${wallet.blockchain.currency}"))
     }
 
