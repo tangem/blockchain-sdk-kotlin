@@ -11,6 +11,8 @@ import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.address.DefaultAddressType
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.hexToBytes
+import org.bitcoinj.core.TransactionInput
+import org.bitcoinj.core.TransactionInput.NO_SEQUENCE
 import org.junit.Test
 
 class LitecoinTransactionTest {
@@ -52,7 +54,8 @@ class LitecoinTransactionTest {
                 .hexToBytes()
 
         // act
-        val buildToSignResult = transactionBuilder.buildToSign(transactionData) as Result.Success
+        val buildToSignResult =
+                transactionBuilder.buildToSign(transactionData, NO_SEQUENCE) as Result.Success
         val signedTransaction = transactionBuilder.buildToSend(signature)
 
         // assert
