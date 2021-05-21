@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
+import org.bitcoinj.core.TransactionInput
 import java.math.BigDecimal
 
 class DucatusWalletManager(
@@ -42,4 +43,9 @@ class DucatusWalletManager(
             }
         }
     }
+
+    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner) =
+            send(transactionData, signer, TransactionInput.NO_SEQUENCE)
+
+    override suspend fun isPushAvailable(transactionHash: String) = Result.Success(false)
 }
