@@ -4,12 +4,12 @@ import com.squareup.moshi.JsonClass
 import retrofit2.http.Body
 import retrofit2.http.Headers
 import retrofit2.http.POST
-import retrofit2.http.Path
+import retrofit2.http.Url
 
 interface EthereumApi {
     @Headers("Content-Type: application/json")
-    @POST("./")
-    suspend fun post(@Body body: EthereumBody?): EthereumResponse
+    @POST()
+    suspend fun post(@Body body: EthereumBody?, @Url infuraProjectId: String): EthereumResponse
 }
 
 @JsonClass(generateAdapter = true)
