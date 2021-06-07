@@ -13,13 +13,11 @@ import com.tangem.blockchain.extensions.Signer
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain_demo.databinding.ActivityBlockchainDemoBinding
 import com.tangem.commands.common.card.Card
-import com.tangem.commands.common.card.EllipticCurve
 import com.tangem.common.CompletionResult
 import com.tangem.tangem_sdk_new.extensions.init
 import kotlinx.coroutines.*
 import java.io.PrintWriter
 import java.io.StringWriter
-import java.lang.Exception
 import java.math.BigDecimal
 import kotlin.coroutines.CoroutineContext
 
@@ -72,7 +70,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
             when (result) {
                 is CompletionResult.Success -> {
                     try {
-                        val wallet = result.data.getWallets().first()
+                        val wallet = result.data.wallets.first()
                         walletManager = WalletManagerFactory().makeWalletManager(
                                 result.data.cardId,
                                 wallet.publicKey!!,
