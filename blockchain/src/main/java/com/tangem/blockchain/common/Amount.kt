@@ -20,6 +20,9 @@ data class Amount(
     constructor(amount: Amount, value: BigDecimal) :
             this(amount.currencySymbol, value, amount.decimals, amount.type)
 
+    constructor(blockchain: Blockchain) :
+            this(blockchain.currency, BigDecimal.ZERO, blockchain.decimals(), AmountType.Coin)
+
     val longValue
         get() = value?.movePointRight(decimals)?.toLong()
 }
