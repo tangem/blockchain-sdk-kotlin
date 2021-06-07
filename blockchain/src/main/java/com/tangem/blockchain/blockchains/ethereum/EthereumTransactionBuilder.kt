@@ -1,68 +1,29 @@
 package com.tangem.blockchain.blockchains.ethereum
 
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
-import com.tangem.common.extensions.hexToBytes
 import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.crypto.api.ec.ECDSASignature
 import org.kethereum.crypto.determineRecId
 import org.kethereum.crypto.impl.ec.canonicalise
-import org.kethereum.extensions.toBytesPadded
-import org.kethereum.extensions.toFixedLengthByteArray
 import org.kethereum.extensions.transactions.encodeRLP
-import org.kethereum.extensions.transactions.tokenTransferSignature
-import org.kethereum.keccakshortcut.keccak
-import org.kethereum.model.*
-import java.math.BigDecimal
+import org.kethereum.model.PublicKey
+import org.kethereum.model.SignatureData
+import org.kethereum.model.Transaction
 import java.math.BigInteger
 
-class EthereumTransactionBuilder(private val walletPublicKey: ByteArray, blockchain: Blockchain) {
+class EthereumTransactionBuilder(
+    private val walletPublicKey: ByteArray, private val blockchain: Blockchain,
+) {
     internal var gasLimit = DEFAULT_GAS_LIMIT
 
-    private val chainId = when (blockchain) {
-        Blockchain.Ethereum -> Chain.Mainnet.id
-        Blockchain.EthereumTestnet -> Chain.Rinkeby.id
-        Blockchain.RSK -> Chain.RskMainnet.id
-        else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
-    }
-
     fun buildToSign(transactionData: TransactionData, nonce: BigInteger?): TransactionToSign? {
-
-        val amount: BigDecimal = transactionData.amount.value ?: return null
-        val transactionFee: BigDecimal = transactionData.fee?.value ?: return null
-
-        val fee = transactionFee.movePointRight(transactionData.fee.decimals).toBigInteger()
-        val bigIntegerAmount = amount.movePointRight(transactionData.amount.decimals).toBigInteger()
-
-        val to: Address
-        val value: BigInteger
-        val input: ByteArray //data for smart contract
-
-        if (transactionData.amount.type == AmountType.Coin) { //coin transfer
-            to = Address(transactionData.destinationAddress)
-            value = bigIntegerAmount
-            input = ByteArray(0)
-        } else { //token transfer
-            to = Address(transactionData.contractAddress
-                    ?: throw Exception("Contract address is not specified!"))
-            value = BigInteger.ZERO
-            input = createErc20TransferData(transactionData.destinationAddress, bigIntegerAmount)
-        }
-
-        val transaction = createTransactionWithDefaults(
-                from = Address(transactionData.sourceAddress),
-                to = to,
-                value = value,
-                gasPrice = fee.divide(gasLimit),
-                gasLimit = gasLimit,
-                nonce = nonce,
-                input = input
-//                chain = ChainId(chainId.toLong())
+        return EthereumHelper.buildTransactionToSign(
+            transactionData = transactionData,
+            nonce = nonce,
+            blockchain = blockchain,
+            gasLimit = gasLimit
         )
-        val hash = transaction.encodeRLP(SignatureData(v = chainId.toBigInteger())).keccak()
-        return TransactionToSign(transaction, hash)
     }
 
     fun buildToSend(signature: ByteArray, transactionToSign: TransactionToSign): ByteArray {
@@ -72,22 +33,12 @@ class EthereumTransactionBuilder(private val walletPublicKey: ByteArray, blockch
         val ecdsaSignature = ECDSASignature(r, s).canonicalise()
 
         val recId = ecdsaSignature.determineRecId(transactionToSign.hash, PublicKey(walletPublicKey.sliceArray(1..64)))
+        val chainId = EthereumHelper.getChainId(blockchain)
         val v = (recId + 27 + 8 + (chainId * 2)).toBigInteger()
         val signatureData = SignatureData(ecdsaSignature.r, ecdsaSignature.s, v)
 
         return transactionToSign.transaction.encodeRLP(signatureData)
     }
-
-    private fun createErc20TransferData(recepient: String, amount: BigInteger) =
-            tokenTransferSignature.toByteArray() +
-                    recepient.substring(2).hexToBytes().toFixedLengthByteArray(32) +
-                    amount.toBytesPadded(32)
-
-    internal fun createErc20TransferData(recepient: String, amount: Amount) =
-            createErc20TransferData(
-                    recepient, amount.value!!.movePointRight(amount.decimals).toBigInteger()
-            )
-
 }
 
 class TransactionToSign(val transaction: Transaction, val hash: ByteArray)
