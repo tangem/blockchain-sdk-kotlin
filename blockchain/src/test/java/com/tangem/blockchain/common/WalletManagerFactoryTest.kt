@@ -13,8 +13,6 @@ import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
 import com.tangem.blockchain.blockchains.tezos.TezosWalletManager
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.commands.read.ReadCommand
-import com.tangem.commands.wallet.WalletIndex
-import com.tangem.common.TangemSdkConstants
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
@@ -101,7 +99,7 @@ internal class WalletManagerFactoryTest {
         val walletManager =
                 WalletManagerFactory().makeMultisigWalletManager(
                         card.cardId,
-                        card.getWallets().first().publicKey!!,
+                        card.wallets.first().publicKey!!,
                         pairPublicKey.hexToBytes()
                 )
 
@@ -111,7 +109,7 @@ internal class WalletManagerFactoryTest {
     private fun makeWalletManager(dataString: String): WalletManager? {
         val responseApdu = ResponseApdu(dataString.hexToBytes())
         val card = ReadCommand().deserialize(SessionEnvironment(), responseApdu)
-        val wallet = card.getWallets().first()
+        val wallet = card.wallets.first()
         val blockchain = Blockchain.fromId(card.cardData!!.blockchainName!!)
 
         return WalletManagerFactory(BlockchainSdkConfig())
