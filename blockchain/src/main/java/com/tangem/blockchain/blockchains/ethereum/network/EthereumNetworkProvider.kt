@@ -10,10 +10,13 @@ import java.math.BigDecimal
 interface EthereumNetworkProvider {
     suspend fun getInfo(address: String, tokens: Set<Token>): Result<EthereumInfoResponse>
     suspend fun sendTransaction(transaction: String): SimpleResult
-    suspend fun getFee(to: String, from: String, data: String?, fallbackGasLimit: Long?): Result<EthereumFeeResponse>
     suspend fun getSignatureCount(address: String): Result<Int>
     suspend fun getTokensBalance(address: String, tokens: Set<Token>): Result<Map<Token, BigDecimal>>
     suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>>
+    suspend fun getGasPrice(): Result<Long>
+    suspend fun getGasLimit(
+        to: String, from: String, data: String?,fallbackGasLimit: Long?,
+    ): Result<Long>
 }
 
 data class EthereumInfoResponse(
@@ -22,9 +25,4 @@ data class EthereumInfoResponse(
         val txCount: Long,
         val pendingTxCount: Long,
         val recentTransactions: List<TransactionData>?
-)
-
-data class EthereumFeeResponse(
-        val fees: List<BigDecimal>,
-        val gasLimit: Long
 )
