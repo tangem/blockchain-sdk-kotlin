@@ -3,6 +3,7 @@ package com.tangem.blockchain.extensions
 import com.tangem.blockchain.blockchains.binance.client.encoding.Bech32
 import com.tangem.blockchain.blockchains.binance.client.encoding.Crypto
 import org.bitcoinj.core.Base58
+import java.math.BigDecimal
 
 fun String.decodeBase58(): ByteArray? {
     return try {
@@ -19,4 +20,8 @@ fun String.decodeBech32(): ByteArray? {
     } catch (exception: Exception) {
         null
     }
+}
+
+fun String.hexToBigDecimal(): BigDecimal? {
+    return removePrefix("0x").toBigIntegerOrNull(16)?.toBigDecimal()
 }

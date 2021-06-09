@@ -1,0 +1,93 @@
+package com.tangem.blockchain.blockchains.ethereum
+
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.common.extensions.hexToBytes
+import org.kethereum.extensions.toBytesPadded
+import org.kethereum.extensions.toFixedLengthByteArray
+import org.kethereum.extensions.transactions.encodeRLP
+import org.kethereum.extensions.transactions.tokenTransferSignature
+import org.kethereum.keccakshortcut.keccak
+import org.kethereum.model.Address
+import org.kethereum.model.SignatureData
+import org.kethereum.model.createTransactionWithDefaults
+import java.math.BigDecimal
+import java.math.BigInteger
+
+class EthereumHelper {
+    companion object {
+
+        fun getChainId(blockchain: Blockchain): Int {
+            return when (blockchain) {
+                Blockchain.Ethereum -> Chain.Mainnet.id
+                Blockchain.EthereumTestnet -> Chain.Rinkeby.id
+                Blockchain.RSK -> Chain.RskMainnet.id
+                else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
+            }
+        }
+
+        fun buildTransactionToSign(
+            transactionData: TransactionData,
+            nonce: BigInteger?,
+            blockchain: Blockchain,
+            gasLimit: BigInteger?,
+        ): TransactionToSign? {
+
+            val extras = transactionData.extras as? EthereumTransactionExtras
+
+            val nonceValue = extras?.nonce ?: nonce ?: return null
+
+            val amount: BigDecimal = transactionData.amount.value ?: return null
+            val transactionFee: BigDecimal = transactionData.fee?.value ?: return null
+
+            val fee = transactionFee.movePointRight(transactionData.fee.decimals).toBigInteger()
+            val bigIntegerAmount =
+                amount.movePointRight(transactionData.amount.decimals).toBigInteger()
+
+            val to: Address
+            val value: BigInteger
+            val input: ByteArray //data for smart contract
+
+            if (transactionData.amount.type == AmountType.Coin) { //coin transfer
+                to = Address(transactionData.destinationAddress)
+                value = bigIntegerAmount
+                input = ByteArray(0)
+            } else { //token transfer
+                to = Address(transactionData.contractAddress
+                    ?: throw Exception("Contract address is not specified!"))
+                value = BigInteger.ZERO
+                input =
+                    createErc20TransferData(transactionData.destinationAddress, bigIntegerAmount)
+            }
+
+            val gasLimitToUse = extras?.gasLimit ?: gasLimit ?: return null
+
+            val transaction = createTransactionWithDefaults(
+                from = Address(transactionData.sourceAddress),
+                to = to,
+                value = value,
+                gasPrice = fee.divide(gasLimitToUse),
+                gasLimit = extras?.gasLimit ?: gasLimitToUse,
+                nonce = nonceValue,
+                input = extras?.data ?: input
+//                chain = ChainId(chainId.toLong())
+            )
+            val hash = transaction
+                .encodeRLP(SignatureData(v = getChainId(blockchain).toBigInteger()))
+                .keccak()
+            return TransactionToSign(transaction, hash)
+        }
+
+        private fun createErc20TransferData(recepient: String, amount: BigInteger) =
+            tokenTransferSignature.toByteArray() +
+                    recepient.substring(2).hexToBytes().toFixedLengthByteArray(32) +
+                    amount.toBytesPadded(32)
+
+        internal fun createErc20TransferData(recepient: String, amount: Amount) =
+            createErc20TransferData(
+                recepient, amount.value!!.movePointRight(amount.decimals).toBigInteger()
+            )
+    }
+}
