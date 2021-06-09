@@ -39,6 +39,11 @@ android {
     }
 }
 
+task sourceJar(type: Jar) {
+  from android.sourceSets.main.java.srcDirs
+  classifier "sources"
+}
+
 dependencies {
 
     implementation 'com.tangem:core:develop-36'
