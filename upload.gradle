@@ -1,43 +1,34 @@
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            repository(url: "https://nexus.tangem-tech.com/repository/maven-releases/") {
-                authentication(userName: "$nexusUser", password: "$nexusPass")
-            }
-            pom.groupId = artifactGroup
-            pom.artifactId = artifactId
-            pom.version = artifactVersion
-            pom.packaging = artifactPackaging
+afterEvaluate {
+  publishing {
+    publications {
+      maven(MavenPublication) {
+        groupId = "$project.artifactGroupId"
+        artifactId = "$project.artifactId"
+        version = "$project.artifactVersion"
 
-            pom.whenConfigured {
-                p -> p.dependencies = p.dependencies.findAll {
-                    dep -> dep.groupId != "com.tangem"
-                }
-            }
+        from components.release
+        artifact(sourceJar)
+
+        pom.withXml {
+          Node pomNode = asNode()
+          pomNode.dependencies.'*'.findAll() {
+            it.groupId.text() == project.artifactGroupId
+          }.each() {
+            it.parent().remove(it)
+          }
         }
+      }
     }
-}
-
-task uploadSnapshot(type: Upload) {
-    Properties properties = new Properties()
-    properties.load(project.rootProject.file('local.properties').newDataInputStream())
-    def prefix = project.hasProperty('snapshotsPrefix') ? properties.getProperty('snapshotsPrefix') : "tangem"
-
-    configuration = configurations.archives
     repositories {
-        mavenDeployer {
-            repository(url: "https://nexus.tangem-tech.com/repository/maven-snapshots/") {
-                authentication(userName: "developer", password: "smartcash987")
-            }
-            pom.version = "$prefix-SNAPSHOT"
-
-            pom.whenConfigured {
-                p -> p.dependencies = p.dependencies.findAll {
-                    dep -> dep.groupId != "com.tangem"
-                }
-            }
+      maven {
+        url = "https://nexus.tangem-tech.com/repository/maven-releases"
+        credentials {
+          username = "$nexusUser"
+          password = "$nexusPass"
         }
+      }
     }
+  }
 }
