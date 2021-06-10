@@ -1,15 +1,14 @@
 package com.tangem.blockchain.blockchains.tezos.network
 
-import com.tangem.blockchain.blockchains.tezos.TezosAddressService.Companion.calculateTezosChecksum
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.createRetrofitInstance
-import com.tangem.common.extensions.hexToBytes
-import org.bitcoinj.core.Base58
 
 class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
+
+    override val host: String = baseUrl
 
     private val api: TezosApi by lazy {
         createRetrofitInstance(baseUrl).create(TezosApi::class.java)

@@ -8,7 +8,6 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.toCanonicalECDSASignature
-import com.tangem.commands.SignResponse
 import com.tangem.commands.common.card.EllipticCurve
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.hexToBytes
@@ -26,6 +25,9 @@ class TezosWalletManager(
         private val networkProvider: TezosNetworkProvider,
         private val curve: EllipticCurve
 ) : WalletManager(wallet), TransactionSender {
+
+    override val currentHost: String
+        get() = networkProvider.host
 
     private val blockchain = wallet.blockchain
     private var publicKeyRevealed: Boolean? = null
