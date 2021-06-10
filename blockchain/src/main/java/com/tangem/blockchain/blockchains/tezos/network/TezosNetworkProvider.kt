@@ -5,6 +5,7 @@ import com.tangem.blockchain.extensions.SimpleResult
 import java.math.BigDecimal
 
 interface TezosNetworkProvider {
+    val host: String
     suspend fun getInfo(address: String): Result<TezosInfoResponse>
     suspend fun isPublicKeyRevealed(address: String): Result<Boolean>
     suspend fun getHeader(): Result<TezosHeader>
