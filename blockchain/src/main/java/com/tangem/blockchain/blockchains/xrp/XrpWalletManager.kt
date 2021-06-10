@@ -6,7 +6,6 @@ import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 
@@ -15,6 +14,9 @@ class XrpWalletManager(
         private val transactionBuilder: XrpTransactionBuilder,
         private val networkProvider: XrpNetworkProvider
 ) : WalletManager(wallet), TransactionSender {
+
+    override val currentHost: String
+        get() = networkProvider.host
 
     private val blockchain = wallet.blockchain
 
