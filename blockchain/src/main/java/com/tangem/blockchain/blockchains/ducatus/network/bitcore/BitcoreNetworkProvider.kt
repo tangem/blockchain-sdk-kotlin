@@ -15,7 +15,9 @@ import kotlinx.coroutines.coroutineScope
 
 // Now it supports only Ducatus, due to Ducatus Api strange behaviour. Transactions aren't checked.
 // Don't have too much time to spend on this stillborn coin.
-open class BitcoreNetworkProvider(baseUrl: String) : BitcoinNetworkProvider {
+open class BitcoreNetworkProvider(val baseUrl: String) : BitcoinNetworkProvider {
+
+    override val host: String = baseUrl
 
     private val api = createRetrofitInstance(baseUrl).create(BitcoreApi::class.java)
 
