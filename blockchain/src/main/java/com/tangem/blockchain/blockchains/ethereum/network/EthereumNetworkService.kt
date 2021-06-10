@@ -20,6 +20,9 @@ class EthereumNetworkService(
     private val blockchairEthNetworkProvider: BlockchairEthNetworkProvider? = null,
 ) : MultiNetworkProvider<EthereumJsonRpcProvider>(jsonRpcProviders), EthereumNetworkProvider {
 
+    override val host
+        get() = currentProvider.host
+
     private val jsonRpcProvider
         get() = currentProvider
     private val decimals = Blockchain.Ethereum.decimals()
