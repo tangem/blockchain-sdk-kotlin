@@ -8,6 +8,9 @@ class TezosNetworkService(providers: List<TezosNetworkProvider>) :
         MultiNetworkProvider<TezosNetworkProvider>(providers),
         TezosNetworkProvider {
 
+    override val host: String
+        get() = currentProvider.host
+
     override suspend fun getInfo(address: String): Result<TezosInfoResponse> {
         val result = currentProvider.getInfo(address)
         return if (result.needsRetry()) getInfo(address) else result

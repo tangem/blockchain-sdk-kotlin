@@ -7,6 +7,7 @@ import com.tangem.blockchain.extensions.SimpleResult
 import java.math.BigDecimal
 
 interface BitcoinNetworkProvider {
+    val host: String
     suspend fun getInfo(address: String): Result<BitcoinAddressInfo>
     suspend fun getFee(): Result<BitcoinFee>
     suspend fun sendTransaction(transaction: String): SimpleResult

@@ -95,14 +95,16 @@ class BlockchairEthNetworkProvider(private val apiKey: String? = null) {
 
     suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>> {
         return try {
-            coroutineScope {
                 val tokens = retryIO { api.findErc20Tokens(address = address, key = apiKey) }.data
                         ?.getValue(address.toLowerCase(Locale.ROOT))?.tokensInfo?.tokens
                         ?: emptyList()
                 Result.Success(tokens)
-            }
         } catch (error: Exception) {
             Result.Failure(error)
         }
+    }
+
+    companion object {
+       private const val BLOCKCHAIN_PATH = "ethereum/"
     }
 }
