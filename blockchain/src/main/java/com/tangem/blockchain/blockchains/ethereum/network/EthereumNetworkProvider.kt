@@ -8,6 +8,7 @@ import com.tangem.blockchain.network.blockchair.BlockchairToken
 import java.math.BigDecimal
 
 interface EthereumNetworkProvider {
+    val host: String
     suspend fun getInfo(address: String, tokens: Set<Token>): Result<EthereumInfoResponse>
     suspend fun sendTransaction(transaction: String): SimpleResult
     suspend fun getSignatureCount(address: String): Result<Int>

@@ -3,7 +3,6 @@ package com.tangem.blockchain.common
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.isAboveZero
-import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.isZero
 import java.math.BigDecimal
@@ -13,6 +12,8 @@ abstract class WalletManager(
         var wallet: Wallet,
         val presetTokens: MutableSet<Token> = mutableSetOf(),
 ) {
+
+    abstract val currentHost: String
 
     var dustValue: BigDecimal? = null
 
