@@ -5,18 +5,22 @@ import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.common.extensions.hexToBytes
+import org.kethereum.crypto.api.ec.ECDSASignature
+import org.kethereum.crypto.determineRecId
+import org.kethereum.crypto.impl.ec.canonicalise
 import org.kethereum.extensions.toBytesPadded
 import org.kethereum.extensions.toFixedLengthByteArray
 import org.kethereum.extensions.transactions.encodeRLP
 import org.kethereum.extensions.transactions.tokenTransferSignature
 import org.kethereum.keccakshortcut.keccak
 import org.kethereum.model.Address
+import org.kethereum.model.PublicKey
 import org.kethereum.model.SignatureData
 import org.kethereum.model.createTransactionWithDefaults
 import java.math.BigDecimal
 import java.math.BigInteger
 
-class EthereumHelper {
+class EthereumUtils {
     companion object {
 
         fun getChainId(blockchain: Blockchain): Int {
@@ -26,6 +30,28 @@ class EthereumHelper {
                 Blockchain.RSK -> Chain.RskMainnet.id
                 else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
             }
+        }
+
+        fun ByteArray.toKeccak(): ByteArray {
+            return this.keccak()
+        }
+
+        fun prepareSignedMessageData(
+            signedHash: ByteArray,
+            hashToSign: ByteArray,
+            publicKey: ByteArray
+        ): String {
+            val r = BigInteger(1, signedHash.copyOfRange(0, 32))
+            val s = BigInteger(1, signedHash.copyOfRange(32, 64))
+
+            val ecdsaSignature = ECDSASignature(r, s).canonicalise()
+
+            val recId = ecdsaSignature.determineRecId(hashToSign,
+                PublicKey(publicKey.sliceArray(1..64)))
+            val v = (recId + 27).toBigInteger()
+
+            return HEX_PREFIX + ecdsaSignature.r.toString(16) + ecdsaSignature.s.toString(16) +
+                    v.toString(16)
         }
 
         fun buildTransactionToSign(
@@ -72,7 +98,6 @@ class EthereumHelper {
                 gasLimit = extras?.gasLimit ?: gasLimitToUse,
                 nonce = nonceValue,
                 input = extras?.data ?: input
-//                chain = ChainId(chainId.toLong())
             )
             val hash = transaction
                 .encodeRLP(SignatureData(v = getChainId(blockchain).toBigInteger()))
@@ -89,5 +114,7 @@ class EthereumHelper {
             createErc20TransferData(
                 recepient, amount.value!!.movePointRight(amount.decimals).toBigInteger()
             )
+
+        private const val HEX_PREFIX = "0x"
     }
 }
