@@ -22,15 +22,10 @@ open class BlockchairNetworkProvider(
         private val apiKey: String? = null
 ) : BitcoinNetworkProvider {
 
+    override val host: String = API_BLOCKCHAIR + getPath(blockchain)
+
     private val api: BlockchairApi by lazy {
-        val blockchainPath = when (blockchain) {
-            Blockchain.Bitcoin -> "bitcoin/"
-            Blockchain.BitcoinTestnet -> "bitcoin/testnet/"
-            Blockchain.BitcoinCash -> "bitcoin-cash/"
-            Blockchain.Litecoin -> "litecoin/"
-            else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
-        }
-        createRetrofitInstance(API_BLOCKCHAIR + blockchainPath).create(BlockchairApi::class.java)
+        createRetrofitInstance(host).create(BlockchairApi::class.java)
     }
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.ROOT)
     private val decimals = blockchain.decimals()
@@ -114,6 +109,16 @@ open class BlockchairNetworkProvider(
             Result.Success(addressInfo.outputCount!! - addressInfo.unspentOutputCount!!)
         } catch (error: Exception) {
             Result.Failure(error)
+        }
+    }
+
+    private fun getPath(blockchain: Blockchain) {
+        val blockchainPath = when (blockchain) {
+            Blockchain.Bitcoin -> "bitcoin/"
+            Blockchain.BitcoinTestnet -> "bitcoin/testnet/"
+            Blockchain.BitcoinCash -> "bitcoin-cash/"
+            Blockchain.Litecoin -> "litecoin/"
+            else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
         }
     }
 }

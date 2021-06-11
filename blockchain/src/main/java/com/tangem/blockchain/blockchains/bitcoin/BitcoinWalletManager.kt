@@ -6,7 +6,6 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
@@ -22,6 +21,9 @@ open class BitcoinWalletManager(
     protected val blockchain = wallet.blockchain
     open val minimalFeePerKb = 0.0001.toBigDecimal()
     open val minimalFee = 0.00001.toBigDecimal()
+
+    override val currentHost: String
+        get() = networkProvider.host
 
     override suspend fun update() {
         coroutineScope {

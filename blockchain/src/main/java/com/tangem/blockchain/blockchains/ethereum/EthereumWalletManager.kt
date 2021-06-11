@@ -25,6 +25,9 @@ class EthereumWalletManager(
     private var pendingTxCount = -1L
     private var txCount = -1L
 
+    override val currentHost: String
+        get() = networkProvider.host
+
     override suspend fun update() {
 
         when (val result = networkProvider.getInfo(wallet.address, presetTokens)) {
