@@ -163,7 +163,7 @@ class EthereumWalletManager(
         if (amount.type is AmountType.Token) {
             to = amount.type.token.contractAddress
             data =
-                "0x" + EthereumHelper.createErc20TransferData(destination, amount).toHexString()
+                "0x" + EthereumUtils.createErc20TransferData(destination, amount).toHexString()
         }
 
         return when (val result =  networkProvider.getGasLimit(to, from, data, fallbackGasLimit) ){
