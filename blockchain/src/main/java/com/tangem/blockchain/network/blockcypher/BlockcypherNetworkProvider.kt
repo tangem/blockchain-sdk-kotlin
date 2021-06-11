@@ -21,23 +21,10 @@ class BlockcypherNetworkProvider(
         private val tokens: Set<String>?
 ) : BitcoinNetworkProvider {
 
-    private val api: BlockcypherApi by lazy {
-        val apiVersionPath = "v1/"
-        val blockchainPath = when (blockchain) {
-            Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> "btc/"
-            Blockchain.Litecoin -> "ltc/"
-            Blockchain.Ethereum -> "eth/"
-            else -> throw Exception(
-                    "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
-            )
-        }
-        val networkPath = when (blockchain) {
-            Blockchain.BitcoinTestnet -> "test3/"
-            else -> "main/"
-        }
-        val baseUrl = API_BLOCKCYPHER + apiVersionPath + blockchainPath + networkPath
+    override val host: String = getBaseUrl(blockchain)
 
-        createRetrofitInstance(baseUrl).create(BlockcypherApi::class.java)
+    private val api: BlockcypherApi by lazy {
+        createRetrofitInstance(host).create(BlockcypherApi::class.java)
     }
 
     private val limitCap = 2000
@@ -186,4 +173,21 @@ class BlockcypherNetworkProvider(
     }
 
     private fun getToken(): String? = tokens?.random()
+
+    private fun getBaseUrl(blockchain: Blockchain): String {
+        val apiVersionPath = "v1/"
+        val blockchainPath = when (blockchain) {
+            Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> "btc/"
+            Blockchain.Litecoin -> "ltc/"
+            Blockchain.Ethereum -> "eth/"
+            else -> throw Exception(
+                "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
+            )
+        }
+        val networkPath = when (blockchain) {
+            Blockchain.BitcoinTestnet -> "test3/"
+            else -> "main/"
+        }
+        return API_BLOCKCYPHER + apiVersionPath + blockchainPath + networkPath
+    }
 }

@@ -11,13 +11,13 @@ import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.API_BINANCE
 import com.tangem.blockchain.network.API_BINANCE_TESTNET
 import com.tangem.blockchain.network.createRetrofitInstance
-import okhttp3.RequestBody
 import java.math.BigDecimal
 
 class BinanceNetworkService(isTestNet: Boolean = false) : BinanceNetworkProvider {
+    override val host: String = if (!isTestNet) API_BINANCE else API_BINANCE_TESTNET
+
     private val api: BinanceApi by lazy {
-        createRetrofitInstance(if (!isTestNet) API_BINANCE else API_BINANCE_TESTNET)
-                .create(BinanceApi::class.java)
+        createRetrofitInstance(host).create(BinanceApi::class.java)
     }
     private val client: BinanceDexApiRestClient by lazy {
         BinanceDexApiClientFactory.newInstance().newRestClient(
