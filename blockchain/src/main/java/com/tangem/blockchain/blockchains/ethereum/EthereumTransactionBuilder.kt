@@ -18,7 +18,7 @@ class EthereumTransactionBuilder(
     internal var gasLimit = DEFAULT_GAS_LIMIT
 
     fun buildToSign(transactionData: TransactionData, nonce: BigInteger?): TransactionToSign? {
-        return EthereumHelper.buildTransactionToSign(
+        return EthereumUtils.buildTransactionToSign(
             transactionData = transactionData,
             nonce = nonce,
             blockchain = blockchain,
@@ -33,7 +33,7 @@ class EthereumTransactionBuilder(
         val ecdsaSignature = ECDSASignature(r, s).canonicalise()
 
         val recId = ecdsaSignature.determineRecId(transactionToSign.hash, PublicKey(walletPublicKey.sliceArray(1..64)))
-        val chainId = EthereumHelper.getChainId(blockchain)
+        val chainId = EthereumUtils.getChainId(blockchain)
         val v = (recId + 27 + 8 + (chainId * 2)).toBigInteger()
         val signatureData = SignatureData(ecdsaSignature.r, ecdsaSignature.s, v)
 
