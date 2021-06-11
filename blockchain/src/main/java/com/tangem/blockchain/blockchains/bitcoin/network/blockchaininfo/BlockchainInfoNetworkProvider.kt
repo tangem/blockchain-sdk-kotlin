@@ -19,6 +19,8 @@ import java.util.*
 
 
 class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
+    override val host: String = API_BLOCKCHAIN_INFO
+
     private val api =
             createRetrofitInstance(API_BLOCKCHAIN_INFO).create(BlockchainInfoApi::class.java)
 
