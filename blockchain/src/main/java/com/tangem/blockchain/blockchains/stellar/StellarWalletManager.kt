@@ -4,7 +4,6 @@ import android.util.Log
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 
@@ -14,6 +13,9 @@ class StellarWalletManager(
         private val networkProvider: StellarNetworkProvider,
         presetTokens: MutableSet<Token>
 ) : WalletManager(wallet, presetTokens), TransactionSender, SignatureCountValidator {
+
+    override val currentHost: String
+        get() = networkProvider.host
 
     private val blockchain = wallet.blockchain
 
