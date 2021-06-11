@@ -13,6 +13,8 @@ import kotlinx.coroutines.coroutineScope
 
 class RippledNetworkProvider(baseUrl: String) : XrpNetworkProvider {
 
+    override val host: String = baseUrl
+
     private val api: RippledApi by lazy {
         createRetrofitInstance(baseUrl).create(RippledApi::class.java)
     }
