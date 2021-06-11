@@ -14,6 +14,9 @@ open class BitcoinNetworkService(private val providers: List<BitcoinNetworkProvi
         MultiNetworkProvider<BitcoinNetworkProvider>(providers),
         BitcoinNetworkProvider {
 
+    override val host: String
+        get() = currentProvider.host
+
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         val result = currentProvider.getInfo(address)
         return if (result.needsRetry()) getInfo(address) else result
