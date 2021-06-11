@@ -18,6 +18,8 @@ import retrofit2.HttpException
 
 class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
 
+    override val host: String = baseUrl
+
     private val api: AdaliteApi by lazy {
         createRetrofitInstance(baseUrl).create(AdaliteApi::class.java)
     }

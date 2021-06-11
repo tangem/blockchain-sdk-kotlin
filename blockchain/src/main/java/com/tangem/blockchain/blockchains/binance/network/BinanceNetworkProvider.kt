@@ -5,6 +5,7 @@ import com.tangem.blockchain.extensions.SimpleResult
 import java.math.BigDecimal
 
 interface BinanceNetworkProvider {
+    val host: String
     suspend fun getInfo(address: String): Result<BinanceInfoResponse>
     suspend fun getFee(): Result<BigDecimal>
     suspend fun sendTransaction(transaction: ByteArray): SimpleResult

@@ -4,6 +4,8 @@ import com.tangem.blockchain.network.createRetrofitInstance
 
 class EthereumJsonRpcProvider(baseUrl: String, private val infuraProjectId: String = "") {
 
+    val host: String = baseUrl
+
     private val api = createRetrofitInstance(baseUrl).create(EthereumApi::class.java)
 
     suspend fun getBalance(address: String) =

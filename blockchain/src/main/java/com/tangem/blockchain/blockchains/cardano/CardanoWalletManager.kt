@@ -6,7 +6,6 @@ import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import java.math.RoundingMode
@@ -21,6 +20,9 @@ class CardanoWalletManager(
     }
 
     private val blockchain = wallet.blockchain
+
+    override val currentHost: String
+        get() = networkProvider.host
 
     override suspend fun update() {
         when (val response = networkProvider.getInfo(wallet.addresses.map { it.value }.toSet())) {
