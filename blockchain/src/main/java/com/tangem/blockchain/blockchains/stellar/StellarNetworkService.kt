@@ -126,7 +126,11 @@ class StellarNetworkService : StellarNetworkProvider {
                 )
             }
         } catch (error: Exception) {
-            Result.Failure(error)
+            if (error is ErrorResponse && error.code == 404) {
+                Result.Failure(Exception("Account not found"))
+            } else {
+                Result.Failure(error)
+            }
         }
     }
 
