@@ -7,6 +7,7 @@ import com.tangem.blockchain.extensions.SimpleResult
 import java.math.BigDecimal
 
 interface StellarNetworkProvider {
+    val host: String
     suspend fun getInfo(accountId: String): Result<StellarResponse>
     suspend fun sendTransaction(transaction: String): SimpleResult
     suspend fun checkTargetAccount(
