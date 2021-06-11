@@ -6,7 +6,6 @@ import com.tangem.blockchain.blockchains.binance.network.BinanceNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
 import java.math.BigDecimal
 
@@ -18,6 +17,9 @@ class BinanceWalletManager(
 ) : WalletManager(wallet, presetTokens), TransactionSender {
 
     private val blockchain = wallet.blockchain
+
+    override val currentHost: String
+        get() = networkProvider.host
 
     override suspend fun update() {
         val result = networkProvider.getInfo(wallet.address)

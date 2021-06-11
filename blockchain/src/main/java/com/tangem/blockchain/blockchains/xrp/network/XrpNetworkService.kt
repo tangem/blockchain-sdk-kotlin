@@ -8,6 +8,9 @@ class XrpNetworkService(providers: List<XrpNetworkProvider>) :
         MultiNetworkProvider<XrpNetworkProvider>(providers),
         XrpNetworkProvider {
 
+    override val host: String
+        get() = currentProvider.host
+
     override suspend fun getInfo(address: String): Result<XrpInfoResponse> {
         val result = currentProvider.getInfo(address)
         return if (result.needsRetry()) getInfo(address) else result

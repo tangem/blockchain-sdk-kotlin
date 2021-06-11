@@ -9,6 +9,10 @@ class StellarNetworkServiceMock(
                 StellarTargetAccountResponse(accountCreated = true, trustlineCreated = true)
         )
 ) : StellarNetworkProvider {
+
+    override val host: String
+        get() = TODO("Not yet implemented")
+
     override suspend fun getInfo(accountId: String): Result<StellarResponse> {
         TODO("Not yet implemented")
     }
