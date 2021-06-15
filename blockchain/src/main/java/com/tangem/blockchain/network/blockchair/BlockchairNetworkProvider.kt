@@ -118,6 +118,7 @@ open class BlockchairNetworkProvider(
             Blockchain.BitcoinTestnet -> "bitcoin/testnet/"
             Blockchain.BitcoinCash -> "bitcoin-cash/"
             Blockchain.Litecoin -> "litecoin/"
+            Blockchain.Dogecoin -> "dogecoin/"
             else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
         }
     }
