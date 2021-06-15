@@ -112,8 +112,8 @@ open class BlockchairNetworkProvider(
         }
     }
 
-    private fun getPath(blockchain: Blockchain) {
-        val blockchainPath = when (blockchain) {
+    private fun getPath(blockchain: Blockchain): String {
+       return when (blockchain) {
             Blockchain.Bitcoin -> "bitcoin/"
             Blockchain.BitcoinTestnet -> "bitcoin/testnet/"
             Blockchain.BitcoinCash -> "bitcoin-cash/"
