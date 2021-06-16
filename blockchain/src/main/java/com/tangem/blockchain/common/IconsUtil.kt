@@ -26,12 +26,13 @@ class IconsUtil {
             Blockchain.BitcoinCash -> "bitcoincash"
             Blockchain.Litecoin -> "litecoin"
             Blockchain.Ethereum -> "ethereum"
+            Blockchain.BSC -> "smartchain"
+            Blockchain.Polygon -> "polygon"
             Blockchain.Cardano, Blockchain.CardanoShelley -> "cardano"
             Blockchain.XRP -> "xrp"
             Blockchain.Binance -> "binance"
             Blockchain.Stellar -> "stellar"
             Blockchain.Tezos -> "tezos"
-            Blockchain.BSC, Blockchain.BSCTestnet -> "smartchain"
             else -> null
         }
 
