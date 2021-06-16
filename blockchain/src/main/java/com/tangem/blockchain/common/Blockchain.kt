@@ -34,12 +34,15 @@ enum class Blockchain(
     Binance("BINANCE", "BNB", "Binance"),
     BinanceTestnet("BINANCE/test", "BNBt", "Binance Chain"),
     Stellar("XLM", "XLM", "Stellar"),
-    Tezos("XTZ", "XTZ", "Tezos");
+    Tezos("XTZ", "XTZ", "Tezos"),
+    BSC("BSC", "BNB", "Binance Smart Chain"),
+    BSCTestnet("BSC/test", "BNB", "Binance Smart Chain - Testnet"),
+    ;
 
     fun decimals(): Int = when (this) {
         Bitcoin, BitcoinTestnet, BitcoinCash, Binance, BinanceTestnet, Litecoin, Ducatus -> 8
         Cardano, CardanoShelley, XRP, Tezos -> 6
-        Ethereum, EthereumTestnet, RSK -> 18
+        Ethereum, EthereumTestnet, RSK, BSC, BSCTestnet -> 18
         Stellar -> 7
         Unknown -> 0
     }
@@ -70,6 +73,7 @@ enum class Blockchain(
         BinanceTestnet -> BinanceAddressService(true)
         Stellar -> StellarAddressService()
         Tezos -> TezosAddressService()
+        BSC, BSCTestnet -> EthereumAddressService()
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -118,6 +122,8 @@ enum class Blockchain(
         Stellar -> "https://stellar.expert/explorer/public/account/$address"
         XRP -> "https://xrpscan.com/account/$address"
         Tezos -> "https://tezblock.io/account/$address"
+        BSC -> "https://bscscan.com/address/$address"
+        BSCTestnet -> "https://testnet.bscscan.com/address/$address"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
