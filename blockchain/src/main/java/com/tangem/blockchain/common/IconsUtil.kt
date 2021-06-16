@@ -31,6 +31,7 @@ class IconsUtil {
             Blockchain.Binance -> "binance"
             Blockchain.Stellar -> "stellar"
             Blockchain.Tezos -> "tezos"
+            Blockchain.BSC, Blockchain.BSCTestnet -> "smartchain"
             else -> null
         }
 
