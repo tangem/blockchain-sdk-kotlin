@@ -8,29 +8,37 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 
-private val okHttpClient: OkHttpClient by lazy {
-    OkHttpClient.Builder().apply {
-        if (BuildConfig.DEBUG) addInterceptor(createHttpLoggingInterceptor())
-    }.build()
+object BlockchainSdkRetrofitBuilder {
+
+    var enableNetworkLogging: Boolean = false
+
+    internal val okHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder().apply {
+            if (BuildConfig.DEBUG || enableNetworkLogging) addInterceptor(createHttpLoggingInterceptor())
+        }.build()
+    }
+
+    private fun createHttpLoggingInterceptor(): HttpLoggingInterceptor {
+        val logging = HttpLoggingInterceptor()
+        logging.level = HttpLoggingInterceptor.Level.BODY
+        return logging
+    }
+
+
 }
 
-private fun createHttpLoggingInterceptor(): HttpLoggingInterceptor {
-    val logging = HttpLoggingInterceptor()
-    logging.level = HttpLoggingInterceptor.Level.BODY
-    return logging
-}
 
 private val moshi: Moshi by lazy {
     Moshi.Builder()
-            .add(KotlinJsonAdapterFactory())
-            .build()
+        .add(KotlinJsonAdapterFactory())
+        .build()
 }
 
 fun createRetrofitInstance(baseUrl: String): Retrofit =
         Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(MoshiConverterFactory.create(moshi))
-                .client(okHttpClient)
+                .client(BlockchainSdkRetrofitBuilder.okHttpClient)
                 .build()
 
 
