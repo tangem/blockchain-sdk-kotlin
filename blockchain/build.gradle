@@ -46,8 +46,8 @@ task sourceJar(type: Jar) {
 
 dependencies {
 
-    implementation 'com.tangem:core:develop-36'
-    implementation 'com.tangem:sdk:develop-36'
+    implementation 'com.tangem.tangem-sdk-kotlin:core:develop-42'
+    implementation 'com.tangem.tangem-sdk-kotlin:android:develop-42'
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$versions.kotlin"
     implementation 'androidx.appcompat:appcompat:1.2.0'
