@@ -16,7 +16,7 @@ import org.junit.Test
 class LitecoinTransactionTest {
 
     private val blockchain = Blockchain.Litecoin
-    private val networkParameters = LitecoinMainNetParams()
+    private val networkParameters = LitecoinSegwitMainNetParams()
 
     @Test
     fun buildCorrectTransaction() {
