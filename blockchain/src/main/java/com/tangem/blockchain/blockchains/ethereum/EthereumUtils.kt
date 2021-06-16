@@ -28,6 +28,8 @@ class EthereumUtils {
                 Blockchain.Ethereum -> Chain.Mainnet.id
                 Blockchain.EthereumTestnet -> Chain.Rinkeby.id
                 Blockchain.RSK -> Chain.RskMainnet.id
+                Blockchain.BSC -> Chain.BscMainnet.id
+                Blockchain.BSCTestnet -> Chain.BscTestnet.id
                 else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
             }
         }
