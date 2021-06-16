@@ -15,9 +15,9 @@ import com.tangem.blockchain.common.address.*
 import com.tangem.commands.common.card.EllipticCurve
 
 enum class Blockchain(
-        val id: String,
-        val currency: String,
-        val fullName: String
+    val id: String,
+    val currency: String,
+    val fullName: String
 ) {
     Unknown("", "", ""),
     Bitcoin("BTC", "BTC", "Bitcoin"),
@@ -28,6 +28,10 @@ enum class Blockchain(
     Ethereum("ETH", "ETH", "Ethereum"),
     EthereumTestnet("ETH/test", "ETHt", "Ethereum Testnet"),
     RSK("RSK", "RBTC", "RSK"),
+    BSC("BSC", "BNB", "Binance Smart Chain"),
+    BSCTestnet("BSC/test", "BNB", "Binance Smart Chain - Testnet"),
+    Polygon("POLYGON", "MATIC", "Polygon"),
+    PolygonTestnet("POLYGON/test", "MATIC", "Polygon Testnet"),
     Cardano("CARDANO", "ADA", "Cardano"),
     CardanoShelley("CARDANO-S", "ADA", "Cardano"),
     XRP("XRP", "XRP", "XRP Ledger"),
@@ -35,26 +39,24 @@ enum class Blockchain(
     BinanceTestnet("BINANCE/test", "BNBt", "Binance Chain"),
     Stellar("XLM", "XLM", "Stellar"),
     Tezos("XTZ", "XTZ", "Tezos"),
-    BSC("BSC", "BNB", "Binance Smart Chain"),
-    BSCTestnet("BSC/test", "BNB", "Binance Smart Chain - Testnet"),
     ;
 
     fun decimals(): Int = when (this) {
         Bitcoin, BitcoinTestnet, BitcoinCash, Binance, BinanceTestnet, Litecoin, Ducatus -> 8
         Cardano, CardanoShelley, XRP, Tezos -> 6
-        Ethereum, EthereumTestnet, RSK, BSC, BSCTestnet -> 18
+        Ethereum, EthereumTestnet, RSK, BSC, BSCTestnet, Polygon, PolygonTestnet -> 18
         Stellar -> 7
         Unknown -> 0
     }
 
     fun makeAddresses(
-            walletPublicKey: ByteArray,
-            pairPublicKey: ByteArray? = null,
-            curve: EllipticCurve = EllipticCurve.Secp256k1
+        walletPublicKey: ByteArray,
+        pairPublicKey: ByteArray? = null,
+        curve: EllipticCurve = EllipticCurve.Secp256k1
     ): Set<Address> {
         return if (pairPublicKey != null) {
             (getAddressService() as? MultisigAddressProvider)
-                    ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()
+                ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()
         } else {
             getAddressService().makeAddresses(walletPublicKey, curve)
         }
@@ -65,7 +67,8 @@ enum class Blockchain(
     private fun getAddressService(): AddressService = when (this) {
         Bitcoin, BitcoinTestnet, Litecoin, Ducatus -> BitcoinAddressService(this)
         BitcoinCash -> BitcoinCashAddressService()
-        Ethereum, EthereumTestnet -> EthereumAddressService()
+        Ethereum, EthereumTestnet, BSC, BSCTestnet, Polygon, PolygonTestnet ->
+            EthereumAddressService()
         RSK -> RskAddressService()
         Cardano, CardanoShelley -> CardanoAddressService(this)
         XRP -> XrpAddressService()
@@ -73,7 +76,6 @@ enum class Blockchain(
         BinanceTestnet -> BinanceAddressService(true)
         Stellar -> StellarAddressService()
         Tezos -> TezosAddressService()
-        BSC, BSCTestnet -> EthereumAddressService()
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -86,7 +88,7 @@ enum class Blockchain(
     }
 
     fun getShareUri(address: String): String = getShareScheme()?.plus(":$address")
-            ?: address
+        ?: address
 
     fun validateShareScheme(scheme: String): Boolean {
         if (this == XRP && (scheme == "ripple" || scheme == "xrpl" || scheme == "xrp")) return true
@@ -119,11 +121,13 @@ enum class Blockchain(
             }
             url
         }
+        BSC -> "https://bscscan.com/address/$address"
+        BSCTestnet -> "https://testnet.bscscan.com/address/$address"
+        Polygon -> "https://polygonscan.com/address/$address"
+        PolygonTestnet -> "https://explorer-mumbai.maticvigil.com/address/$address"
         Stellar -> "https://stellar.expert/explorer/public/account/$address"
         XRP -> "https://xrpscan.com/account/$address"
         Tezos -> "https://tezblock.io/account/$address"
-        BSC -> "https://bscscan.com/address/$address"
-        BSCTestnet -> "https://testnet.bscscan.com/address/$address"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -145,6 +149,6 @@ enum class Blockchain(
         fun fromId(id: String): Blockchain = values.find { it.id == id } ?: Unknown
         fun fromName(name: String): Blockchain = values.find { it.name == name } ?: Unknown
         fun fromCurrency(currency: String): Blockchain = values.find { it.currency == currency }
-                ?: Unknown
+            ?: Unknown
     }
 }
