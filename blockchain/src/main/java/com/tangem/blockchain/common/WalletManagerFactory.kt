@@ -267,6 +267,17 @@ class WalletManagerFactory(
                         curve
                 )
             }
+            Blockchain.BSC, Blockchain.BSCTestnet -> {
+                val api = if (blockchain == Blockchain.BSC) API_BSC_MAINNET else API_BSC_TESTNET
+                val jsonRpcProvider = EthereumJsonRpcProvider(api)
+
+                EthereumWalletManager(
+                    wallet,
+                    EthereumTransactionBuilder(walletPublicKey, blockchain),
+                    EthereumNetworkService(listOf(jsonRpcProvider)),
+                    tokens
+                )
+            }
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
         }
     }
