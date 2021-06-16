@@ -18,6 +18,11 @@ afterEvaluate {
           }.each() {
             it.parent().remove(it)
           }
+          pomNode.dependencies.'*'.findAll() {
+            it.scope.text() == 'runtime'
+          }.each {
+            it.scope*.value = 'compile'
+          }
         }
       }
     }
