@@ -24,6 +24,7 @@ enum class Blockchain(
     BitcoinTestnet("BTC/test", "BTCt", "Bitcoin Testnet"),
     BitcoinCash("BCH", "BCH", "Bitcoin Cash"),
     Litecoin("LTC", "LTC", "Litecoin"),
+    Dogecoin("DOGE", "DOGE", "Dogecoin"),
     Ducatus("DUC", "DUC", "Ducatus"),
     Ethereum("ETH", "ETH", "Ethereum"),
     EthereumTestnet("ETH/test", "ETHt", "Ethereum Testnet"),
@@ -40,7 +41,7 @@ enum class Blockchain(
     ;
 
     fun decimals(): Int = when (this) {
-        Bitcoin, BitcoinTestnet, BitcoinCash, Binance, BinanceTestnet, Litecoin, Ducatus -> 8
+        Bitcoin, BitcoinTestnet, BitcoinCash, Binance, BinanceTestnet, Litecoin, Ducatus, Dogecoin -> 8
         Cardano, CardanoShelley, XRP, Tezos -> 6
         Ethereum, EthereumTestnet, RSK, BSC, BSCTestnet -> 18
         Stellar -> 7
@@ -63,7 +64,7 @@ enum class Blockchain(
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
     private fun getAddressService(): AddressService = when (this) {
-        Bitcoin, BitcoinTestnet, Litecoin, Ducatus -> BitcoinAddressService(this)
+        Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus -> BitcoinAddressService(this)
         BitcoinCash -> BitcoinCashAddressService()
         Ethereum, EthereumTestnet -> EthereumAddressService()
         RSK -> RskAddressService()
@@ -96,10 +97,11 @@ enum class Blockchain(
     fun getExploreUrl(address: String, tokenContractAddress: String? = null): String = when (this) {
         Binance -> "https://explorer.binance.org/address/$address"
         BinanceTestnet -> "https://testnet-explorer.binance.org/address/$address"
-        Bitcoin -> "https://blockchain.info/address/$address"
+        Bitcoin -> "https://www.blockchain.com/btc/address/$address"
         BitcoinTestnet -> "https://live.blockcypher.com/btc-testnet/address/$address"
         BitcoinCash -> "https://blockchair.com/bitcoin-cash/address/$address"
         Litecoin -> "https://live.blockcypher.com/ltc/address/$address"
+        Dogecoin -> "https://blockchair.com/dogecoin/address/$address"
         Ducatus -> "https://insight.ducatus.io/#/DUC/mainnet/address/$address"
         Cardano, CardanoShelley -> "https://cardanoexplorer.com/address/$address"
         Ethereum -> if (tokenContractAddress == null) {
