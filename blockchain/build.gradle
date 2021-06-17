@@ -65,6 +65,7 @@ dependencies {
 
     implementation 'org.bitcoinj:bitcoinj-core:0.15.10'
     implementation 'com.github.stellar:java-stellar-sdk:0.14.0'
+    implementation 'com.github.dogecoin:libdohj:v0.15.9'
 
     implementation "com.madgag.spongycastle:core:1.58.0.0"
     implementation "com.madgag.spongycastle:prov:1.58.0.0"

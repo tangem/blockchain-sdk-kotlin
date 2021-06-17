@@ -25,6 +25,7 @@ class IconsUtil {
             Blockchain.Bitcoin -> "bitcoin"
             Blockchain.BitcoinCash -> "bitcoincash"
             Blockchain.Litecoin -> "litecoin"
+            Blockchain.Dogecoin -> "doge"
             Blockchain.Ethereum -> "ethereum"
             Blockchain.BSC -> "smartchain"
             Blockchain.Polygon -> "polygon"

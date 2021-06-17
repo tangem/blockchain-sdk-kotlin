@@ -15,7 +15,7 @@ abstract class WalletManager(
 
     abstract val currentHost: String
 
-    var dustValue: BigDecimal? = null
+    open val dustValue: BigDecimal? = null
 
     abstract suspend fun update()
 
