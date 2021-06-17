@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
-import com.tangem.blockchain.blockchains.litecoin.LitecoinMainNetParams
+import com.tangem.blockchain.blockchains.litecoin.LitecoinSegwitMainNetParams
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.*
 import com.tangem.commands.common.card.EllipticCurve
@@ -17,15 +17,18 @@ import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.params.TestNet3Params
 import org.bitcoinj.script.Script
 import org.bitcoinj.script.ScriptBuilder
+import org.libdohj.params.DogecoinMainNetParams
+
 
 open class BitcoinAddressService(
         private val blockchain: Blockchain
-        ) : AddressService(), MultisigAddressProvider {
+) : AddressService(), MultisigAddressProvider {
 
     private val networkParameters: NetworkParameters = when (blockchain) {
         Blockchain.Bitcoin -> MainNetParams()
         Blockchain.BitcoinTestnet -> TestNet3Params()
-        Blockchain.Litecoin -> LitecoinMainNetParams()
+        Blockchain.Litecoin -> LitecoinSegwitMainNetParams()
+        Blockchain.Dogecoin -> DogecoinMainNetParams()
         Blockchain.Ducatus -> DucatusMainNetParams()
         else -> throw Exception(
                 "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
