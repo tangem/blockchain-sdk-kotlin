@@ -202,6 +202,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
     }
 
     private fun handleError(error: String?) {
+        error?.let { Log.e("ERROR", it) }
         Toast.makeText(this, error, Toast.LENGTH_LONG).show()
     }
 

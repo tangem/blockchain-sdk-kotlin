@@ -8,6 +8,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
+import java.math.BigDecimal
 import java.math.RoundingMode
 
 class CardanoWalletManager(
@@ -15,10 +16,8 @@ class CardanoWalletManager(
         private val transactionBuilder: CardanoTransactionBuilder,
         private val networkProvider: CardanoNetworkProvider
 ) : WalletManager(wallet), TransactionSender {
-    init {
-        dustValue = 1.toBigDecimal()
-    }
 
+    override val dustValue: BigDecimal = BigDecimal.ONE
     private val blockchain = wallet.blockchain
 
     override val currentHost: String
