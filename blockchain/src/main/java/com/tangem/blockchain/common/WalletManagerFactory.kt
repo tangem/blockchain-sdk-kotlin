@@ -210,6 +210,28 @@ class WalletManagerFactory(
                     tokens
                 )
             }
+            Blockchain.BSC, Blockchain.BSCTestnet -> {
+                val api = if (blockchain == Blockchain.BSC) API_BSC else API_BSC_TESTNET
+                val jsonRpcProvider = EthereumJsonRpcProvider(api)
+
+                EthereumWalletManager(
+                    wallet,
+                    EthereumTransactionBuilder(walletPublicKey, blockchain),
+                    EthereumNetworkService(listOf(jsonRpcProvider)),
+                    tokens
+                )
+            }
+            Blockchain.Polygon, Blockchain.PolygonTestnet -> {
+                val api = if (blockchain == Blockchain.Polygon) API_POLYGON else API_POLYGON_TESTNET
+                val jsonRpcProvider = EthereumJsonRpcProvider(api)
+
+                EthereumWalletManager(
+                    wallet,
+                    EthereumTransactionBuilder(walletPublicKey, blockchain),
+                    EthereumNetworkService(listOf(jsonRpcProvider)),
+                    tokens
+                )
+            }
             Blockchain.Stellar -> {
                 val networkService = StellarNetworkService()
 
@@ -243,22 +265,15 @@ class WalletManagerFactory(
                     networkService
                 )
             }
-            Blockchain.Binance ->
+            Blockchain.Binance, Blockchain.BinanceTestnet -> {
+                val isTestNet = blockchain == Blockchain.BinanceTestnet
                 BinanceWalletManager(
                     wallet,
-                    BinanceTransactionBuilder(walletPublicKey),
-                    BinanceNetworkService(),
+                    BinanceTransactionBuilder(walletPublicKey, isTestNet),
+                    BinanceNetworkService(isTestNet),
                     tokens
                 )
-
-            Blockchain.BinanceTestnet ->
-                BinanceWalletManager(
-                    wallet,
-                    BinanceTransactionBuilder(walletPublicKey, true),
-                    BinanceNetworkService(true),
-                    tokens
-                )
-
+            }
             Blockchain.Tezos -> {
                 val tezosProvider1 = TezosJsonRpcNetworkProvider(API_TEZOS_LETZBAKE)
                 val tezosProvider2 = TezosJsonRpcNetworkProvider(API_TEZOS_BLOCKSCALE)
@@ -272,17 +287,6 @@ class WalletManagerFactory(
                     TezosTransactionBuilder(walletPublicKey, curve),
                     TezosNetworkService(providers),
                     curve
-                )
-            }
-            Blockchain.BSC, Blockchain.BSCTestnet -> {
-                val api = if (blockchain == Blockchain.BSC) API_BSC_MAINNET else API_BSC_TESTNET
-                val jsonRpcProvider = EthereumJsonRpcProvider(api)
-
-                EthereumWalletManager(
-                    wallet,
-                    EthereumTransactionBuilder(walletPublicKey, blockchain),
-                    EthereumNetworkService(listOf(jsonRpcProvider)),
-                    tokens
                 )
             }
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
