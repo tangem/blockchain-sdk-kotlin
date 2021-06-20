@@ -11,7 +11,7 @@ import org.junit.Test
 
 class BitcoinCashTransactionTest {
 
-    private val blockchain = Blockchain.Bitcoin
+    private val blockchain = Blockchain.BitcoinCash
     private val networkParameters = MainNetParams()
     private val addressService = BitcoinCashAddressService()
 
@@ -32,8 +32,8 @@ class BitcoinCashTransactionTest {
                 .toBase58()
 
         val transactionBuilder = BitcoinCashTransactionBuilder(walletPublicKey, blockchain)
-        transactionBuilder.unspentOutputs =
-                BitcoinTransactionTest.prepareTwoUnspentOutputs(listOf(legacyAddress), networkParameters)
+        transactionBuilder.unspentOutputs = BitcoinTransactionTest
+            .prepareTwoUnspentOutputs(listOf(legacyAddress), networkParameters)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
         val fee = Amount(amountToSend, feeValue)
