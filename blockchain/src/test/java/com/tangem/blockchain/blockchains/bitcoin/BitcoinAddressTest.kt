@@ -52,14 +52,14 @@ class BitcoinAddressTest {
     @Test
     fun validateCorrectLegacyAddress() {
         val address = "1D3vYSjCvzrsVVK5bNaPTjU3NxcN7NNXMN"
-        Truth.assertThat(addressService.validate(address))
-                .isTrue()
+
+        Truth.assertThat(addressService.validate(address)).isTrue()
     }
 
     @Test
     fun validateCorrectSegwitAddress() {
         val address = "bc1qtdsvnsf7cfu8l3w7qahwwhhxfrdzmdhsgdzky2"
-        Truth.assertThat(addressService.validate(address))
-                .isTrue()
+
+        Truth.assertThat(addressService.validate(address)).isTrue()
     }
 }
