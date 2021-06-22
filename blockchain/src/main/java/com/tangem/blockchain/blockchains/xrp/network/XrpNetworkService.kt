@@ -11,20 +11,14 @@ class XrpNetworkService(providers: List<XrpNetworkProvider>) :
     override val host: String
         get() = currentProvider.host
 
-    override suspend fun getInfo(address: String): Result<XrpInfoResponse> {
-        val result = currentProvider.getInfo(address)
-        return if (result.needsRetry()) getInfo(address) else result
-    }
+    override suspend fun getInfo(address: String): Result<XrpInfoResponse> =
+        DefaultRequest(XrpNetworkProvider::getInfo, address).perform()
 
-    override suspend fun sendTransaction(transaction: String): SimpleResult {
-        val result = currentProvider.sendTransaction(transaction)
-        return if (result.needsRetry()) sendTransaction(transaction) else result
-    }
+    override suspend fun sendTransaction(transaction: String): SimpleResult =
+        SimpleRequest(XrpNetworkProvider::sendTransaction, transaction).perform()
 
-    override suspend fun getFee(): Result<XrpFeeResponse> {
-        val result = currentProvider.getFee()
-        return if (result.needsRetry()) getFee() else result
-    }
+    override suspend fun getFee(): Result<XrpFeeResponse> =
+        NoDataRequest(XrpNetworkProvider::getFee).perform()
 
     override suspend fun checkIsAccountCreated(address: String): Boolean {
         return currentProvider.checkIsAccountCreated(address)

@@ -18,10 +18,12 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
     override suspend fun getInfo(address: String): Result<TezosInfoResponse> {
         return try {
             val addressData = retryIO { api.getAddressData(address) }
-            Result.Success(TezosInfoResponse(
+            Result.Success(
+                TezosInfoResponse(
                     balance = addressData.balance!!.toBigDecimal().movePointLeft(decimals),
                     counter = addressData.counter!!
-            ))
+                )
+            )
         } catch (exception: Exception) {
             Result.Failure(exception)
         }
@@ -39,35 +41,35 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
     override suspend fun getHeader(): Result<TezosHeader> {
         return try {
             val headerResponse = retryIO { api.getHeader() }
-            Result.Success(TezosHeader(
+            Result.Success(
+                TezosHeader(
                     hash = headerResponse.hash!!,
                     protocol = headerResponse.protocol!!
-            ))
+                )
+            )
         } catch (exception: Exception) {
             Result.Failure(exception)
         }
     }
 
-    override suspend fun forgeContents(headerHash: String, contents: List<TezosOperationContent>): Result<String> {
+    override suspend fun forgeContents(forgeData: TezosForgeData): Result<String> {
         return try {
-            val forgedContents = retryIO { api.forgeOperations(TezosForgeBody(headerHash, contents)) }
+            val forgedContents = retryIO {
+                api.forgeOperations(TezosForgeBody(forgeData.headerHash, forgeData.contents))
+            }
             Result.Success(forgedContents)
         } catch (exception: Exception) {
             Result.Failure(exception)
         }
     }
 
-    override suspend fun checkTransaction(
-            header: TezosHeader,
-            contents: List<TezosOperationContent>,
-            encodedSignature: String
-    ): SimpleResult {
+    override suspend fun checkTransaction(transactionData: TezosTransactionData): SimpleResult {
         return try {
             val tezosPreapplyBody = TezosPreapplyBody(
-                    protocol = header.protocol,
-                    branch = header.hash,
-                    contents = contents,
-                    signature = encodedSignature
+                protocol = transactionData.header.protocol,
+                branch = transactionData.header.hash,
+                contents = transactionData.contents,
+                signature = transactionData.encodedSignature
             )
             retryIO { api.preapplyOperations(listOf(tezosPreapplyBody)) }
             SimpleResult.Success
