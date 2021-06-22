@@ -74,8 +74,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
                         walletManager = WalletManagerFactory().makeWalletManager(
                                 result.data.cardId,
                                 wallet.publicKey!!,
-                                Blockchain.fromId(result.data.cardData?.blockchainName
-                                        ?: Blockchain.Ethereum.id),
+                                Blockchain.Ethereum,
                                 wallet.curve!!
                         )!!
                         token = walletManager.wallet.getTokens().firstOrNull()
