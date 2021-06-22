@@ -11,13 +11,9 @@ class CardanoNetworkService(providers: List<CardanoNetworkProvider>) :
     override val host: String
         get() = currentProvider.host
 
-    override suspend fun getInfo(addresses: Set<String>): Result<CardanoAddressResponse> {
-        val result = currentProvider.getInfo(addresses)
-        return if (result.needsRetry()) getInfo(addresses) else result
-    }
+    override suspend fun getInfo(addresses: Set<String>): Result<CardanoAddressResponse> =
+        DefaultRequest(CardanoNetworkProvider::getInfo, addresses).perform()
 
-    override suspend fun sendTransaction(transaction: ByteArray): SimpleResult {
-        val result = currentProvider.sendTransaction(transaction)
-        return if (result.needsRetry()) sendTransaction(transaction) else result
-    }
+    override suspend fun sendTransaction(transaction: ByteArray): SimpleResult =
+        SimpleRequest(CardanoNetworkProvider::sendTransaction, transaction).perform()
 }
