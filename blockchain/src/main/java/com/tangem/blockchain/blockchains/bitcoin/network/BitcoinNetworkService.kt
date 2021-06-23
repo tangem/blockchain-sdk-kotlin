@@ -10,19 +10,18 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 
-open class BitcoinNetworkService(providers: List<BitcoinNetworkProvider>) :
-    MultiNetworkProvider<BitcoinNetworkProvider>(providers),
-    BitcoinNetworkProvider {
+open class BitcoinNetworkService(providers: List<BitcoinNetworkProvider>) : BitcoinNetworkProvider {
 
+    private val multiProvider = MultiNetworkProvider(providers)
     override val host: String
-        get() = currentProvider.host
+        get() = multiProvider.currentProvider.host
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> =
-        DefaultRequest(BitcoinNetworkProvider::getInfo, address).perform()
+        multiProvider.performRequest(BitcoinNetworkProvider::getInfo, address)
 
     override suspend fun getFee(): Result<BitcoinFee> {
         return coroutineScope {
-            val resultsDeferred = providers.map { async { it.getFee() } }
+            val resultsDeferred = multiProvider.providers.map { async { it.getFee() } }
             val results = resultsDeferred.map { it.await() }
             val fees = results.filterIsInstance<Result.Success<BitcoinFee>>().map { it.data }
             if (fees.isEmpty()) return@coroutineScope results.first()
@@ -47,10 +46,10 @@ open class BitcoinNetworkService(providers: List<BitcoinNetworkProvider>) :
     }
 
     override suspend fun sendTransaction(transaction: String): SimpleResult =
-        SimpleRequest(BitcoinNetworkProvider::sendTransaction, transaction).perform()
+        multiProvider.performRequest(BitcoinNetworkProvider::sendTransaction, transaction)
 
     override suspend fun getSignatureCount(address: String): Result<Int> =
-        DefaultRequest(BitcoinNetworkProvider::getSignatureCount, address).perform()
+        multiProvider.performRequest(BitcoinNetworkProvider::getSignatureCount, address)
 
     private fun List<BigDecimal>.average(): BigDecimal =
         this.reduce { acc, number -> acc + number }.divide(this.size.toBigDecimal())
