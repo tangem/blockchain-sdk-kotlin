@@ -4,28 +4,27 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
 
-class TezosNetworkService(providers: List<TezosNetworkProvider>) :
-    MultiNetworkProvider<TezosNetworkProvider>(providers),
-    TezosNetworkProvider {
+class TezosNetworkService(providers: List<TezosNetworkProvider>) : TezosNetworkProvider {
 
+    private val multiProvider = MultiNetworkProvider(providers)
     override val host: String
-        get() = currentProvider.host
+        get() = multiProvider.currentProvider.host
 
     override suspend fun getInfo(address: String): Result<TezosInfoResponse> =
-        DefaultRequest(TezosNetworkProvider::getInfo, address).perform()
+        multiProvider.performRequest(TezosNetworkProvider::getInfo, address)
 
     override suspend fun isPublicKeyRevealed(address: String): Result<Boolean> =
-        DefaultRequest(TezosNetworkProvider::isPublicKeyRevealed, address).perform()
+        multiProvider.performRequest(TezosNetworkProvider::isPublicKeyRevealed, address)
 
     override suspend fun getHeader(): Result<TezosHeader> =
-        NoDataRequest(TezosNetworkProvider::getHeader).perform()
+        multiProvider.performRequest(TezosNetworkProvider::getHeader)
 
     override suspend fun forgeContents(forgeData: TezosForgeData): Result<String> =
-        DefaultRequest(TezosNetworkProvider::forgeContents, forgeData).perform()
+        multiProvider.performRequest(TezosNetworkProvider::forgeContents, forgeData)
 
     override suspend fun checkTransaction(transactionData: TezosTransactionData): SimpleResult =
-        SimpleRequest(TezosNetworkProvider::checkTransaction, transactionData).perform()
+        multiProvider.performRequest(TezosNetworkProvider::checkTransaction, transactionData)
 
     override suspend fun sendTransaction(transaction: String): SimpleResult =
-        SimpleRequest(TezosNetworkProvider::sendTransaction, transaction).perform()
+        multiProvider.performRequest(TezosNetworkProvider::sendTransaction, transaction)
 }

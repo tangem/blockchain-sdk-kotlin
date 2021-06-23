@@ -17,13 +17,12 @@ class EthereumNetworkService(
     jsonRpcProviders: List<EthereumJsonRpcProvider>,
     private val blockcypherNetworkProvider: BlockcypherNetworkProvider? = null,
     private val blockchairEthNetworkProvider: BlockchairEthNetworkProvider? = null,
-) : MultiNetworkProvider<EthereumJsonRpcProvider>(jsonRpcProviders), EthereumNetworkProvider {
+) : EthereumNetworkProvider {
 
+    private val multiJsonRpcProvider = MultiNetworkProvider(jsonRpcProviders)
     override val host
-        get() = currentProvider.host
+        get() = multiJsonRpcProvider.currentProvider.host
 
-    private val jsonRpcProviders
-        get() = providers
     private val decimals = Blockchain.Ethereum.decimals()
 
     override suspend fun getInfo(
@@ -33,13 +32,16 @@ class EthereumNetworkService(
         return try {
             coroutineScope {
                 val balanceResponseDeferred = async {
-                    DefaultRequest(EthereumJsonRpcProvider::getBalance, address).perform()
+                    multiJsonRpcProvider
+                        .performRequest(EthereumJsonRpcProvider::getBalance, address)
                 }
                 val txCountResponseDeferred = async {
-                    DefaultRequest(EthereumJsonRpcProvider::getTxCount, address).perform()
+                    multiJsonRpcProvider
+                        .performRequest(EthereumJsonRpcProvider::getTxCount, address)
                 }
                 val pendingTxCountResponseDeferred = async {
-                    DefaultRequest(EthereumJsonRpcProvider::getPendingTxCount, address).perform()
+                    multiJsonRpcProvider
+                        .performRequest(EthereumJsonRpcProvider::getPendingTxCount, address)
                 }
                 val transactionsResponseDeferred = async {
                     blockchairEthNetworkProvider?.getTransactions(address, tokens)
@@ -76,7 +78,8 @@ class EthereumNetworkService(
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
-            DefaultRequest(EthereumJsonRpcProvider::sendTransaction, transaction).perform()
+            multiJsonRpcProvider
+                .performRequest(EthereumJsonRpcProvider::sendTransaction, transaction)
                 .extractResult()
             SimpleResult.Success
         } catch (error: Exception) {
@@ -107,13 +110,13 @@ class EthereumNetworkService(
         return coroutineScope {
             val tokenBalancesDeferred = tokens.map { token ->
                 token to async {
-                    DefaultRequest(
+                    multiJsonRpcProvider.performRequest(
                         EthereumJsonRpcProvider::getTokenBalance,
                         EthereumTokenBalanceRequestData(
                             address,
                             token.contractAddress
                         )
-                    ).perform()
+                    )
                 }
             }.toMap()
             val tokenBalanceResponses = tokenBalancesDeferred.mapValues { it.value.await() }
@@ -131,7 +134,7 @@ class EthereumNetworkService(
     override suspend fun getGasPrice(): Result<Long> {
         return try {
             coroutineScope {
-                val gasPriceResponses = jsonRpcProviders.map {
+                val gasPriceResponses = multiJsonRpcProvider.providers.map {
                     async { it.getGasPrice() }
                 }.map { it.await() }
 
@@ -152,10 +155,10 @@ class EthereumNetworkService(
 
     override suspend fun getGasLimit(to: String, from: String, data: String?): Result<Long> {
         return try {
-            val gasLimit = DefaultRequest(
+            val gasLimit = multiJsonRpcProvider.performRequest(
                 EthereumJsonRpcProvider::getGasLimit,
                 EthCallObject(to, from, data)
-            ).perform().extractResult().responseToLong()
+            ).extractResult().responseToLong()
             Result.Success(gasLimit)
         } catch (error: Exception) {
             Result.Failure(error)
