@@ -5,15 +5,25 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.isNetworkError
 
-abstract class MultiNetworkProvider<P>(protected val providers: List<P>) {
+class MultiNetworkProvider<P>(val providers: List<P>) {
     init {
         if (providers.isEmpty()) throw Exception("Empty providers list")
     }
 
     private val providerIterator = CycleListIterator(providers)
-    protected var currentProvider = providerIterator.next()
+    var currentProvider = providerIterator.next()
 
-    protected suspend fun <T> Request<P, T>.perform() : T {
+    suspend fun <D, R> performRequest(request: suspend P.(D) -> Result<R>, data: D): Result<R> =
+        DefaultRequest(request, data).perform()
+
+    @JvmName("performSimpleRequest")
+    suspend fun <D> performRequest(request: suspend P.(D) -> SimpleResult, data: D): SimpleResult =
+        SimpleRequest(request, data).perform()
+
+    suspend fun <R> performRequest(request: suspend P.() -> Result<R>): Result<R> =
+        NoDataRequest(request).perform()
+
+    private suspend fun <T> Request<P, T>.perform() : T {
         var result: T? = null
 
         repeat(providers.size) {
@@ -24,13 +34,13 @@ abstract class MultiNetworkProvider<P>(protected val providers: List<P>) {
         return result!!
     }
 
-    protected abstract class Request<P, T> {
+    private abstract class Request<P, T> {
         var lastProvider: P? = null
 
         abstract suspend fun performWith(provider: P): T
     }
 
-    protected class DefaultRequest<P, D, R>(
+    private class DefaultRequest<P, D, R>(
         val request: suspend P.(D) -> Result<R>,
         val data: D
     ) : Request<P, Result<R>>() {
@@ -41,7 +51,7 @@ abstract class MultiNetworkProvider<P>(protected val providers: List<P>) {
         }
     }
 
-    protected class SimpleRequest<P, D>(
+    private class SimpleRequest<P, D>(
         val request: suspend P.(D) -> SimpleResult,
         val data: D
     ) : Request<P, SimpleResult>() {
@@ -52,7 +62,7 @@ abstract class MultiNetworkProvider<P>(protected val providers: List<P>) {
         }
     }
 
-    protected class NoDataRequest<P, R>(
+    private class NoDataRequest<P, R>(
         val request: suspend P.() -> Result<R>
     ) : Request<P, Result<R>>() {
 
