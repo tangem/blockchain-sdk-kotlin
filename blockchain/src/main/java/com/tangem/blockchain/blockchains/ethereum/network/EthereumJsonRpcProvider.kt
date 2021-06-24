@@ -1,5 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
+import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.createRetrofitInstance
 
 class EthereumJsonRpcProvider(baseUrl: String, private val infuraProjectId: String = "") {
@@ -9,57 +11,75 @@ class EthereumJsonRpcProvider(baseUrl: String, private val infuraProjectId: Stri
     private val api = createRetrofitInstance(baseUrl).create(EthereumApi::class.java)
 
     suspend fun getBalance(address: String) =
-            createEthereumBody(
-                    EthereumMethod.GET_BALANCE,
-                    address,
-                    EthBlockParam.LATEST.value
-            ).post()
+        createEthereumBody(
+            EthereumMethod.GET_BALANCE,
+            address,
+            EthBlockParam.LATEST.value
+        ).post()
 
-    suspend fun getTokenBalance(address: String, contractAddress: String) =
-            createEthereumBody(
-                    EthereumMethod.CALL,
-                    createTokenBalanceCallObject(address, contractAddress),
-                    EthBlockParam.LATEST.value
-            ).post()
+    suspend fun getTokenBalance(data: EthereumTokenBalanceRequestData) =
+        createEthereumBody(
+            EthereumMethod.CALL,
+            createTokenBalanceCallObject(data.address, data.contractAddress),
+            EthBlockParam.LATEST.value
+        ).post()
 
     suspend fun getTxCount(address: String) =
-            createEthereumBody(
-                    EthereumMethod.GET_TRANSACTION_COUNT,
-                    address,
-                    EthBlockParam.LATEST.value
-            ).post()
+        createEthereumBody(
+            EthereumMethod.GET_TRANSACTION_COUNT,
+            address,
+            EthBlockParam.LATEST.value
+        ).post()
 
     suspend fun getPendingTxCount(address: String) =
-            createEthereumBody(
-                    EthereumMethod.GET_TRANSACTION_COUNT,
-                    address,
-                    EthBlockParam.PENDING.value
-            ).post()
+        createEthereumBody(
+            EthereumMethod.GET_TRANSACTION_COUNT,
+            address,
+            EthBlockParam.PENDING.value
+        ).post()
 
     suspend fun sendTransaction(transaction: String) =
-            createEthereumBody(EthereumMethod.SEND_RAW_TRANSACTION, transaction).post()
+        createEthereumBody(EthereumMethod.SEND_RAW_TRANSACTION, transaction).post()
 
-    suspend fun getGasLimit(to: String, from: String, data: String?) =
-            createEthereumBody(EthereumMethod.ESTIMATE_GAS, EthCallObject(to, from, data)).post()
+    suspend fun getGasLimit(call: EthCallObject) =
+        createEthereumBody(EthereumMethod.ESTIMATE_GAS, call).post()
 
     suspend fun getGasPrice() = createEthereumBody(EthereumMethod.GAS_PRICE).post()
 
 
     private fun createEthereumBody(method: EthereumMethod, vararg params: Any) =
-            EthereumBody(method.value, params.toList())
+        EthereumBody(method.value, params.toList())
 
     private fun createTokenBalanceCallObject(
-            address: String,
-            contractAddress: String
+        address: String,
+        contractAddress: String
     ) = EthCallObject(
-            to = contractAddress,
-            data = "0x70a08231000000000000000000000000" + address.substring(2),
+        to = contractAddress,
+        data = "0x70a08231000000000000000000000000" + address.substring(2),
     )
 
-    private suspend fun EthereumBody.post() = api.post(this, infuraProjectId)
+    private suspend fun EthereumBody.post(): Result<EthereumResponse> {
+        return try {
+            val result = retryIO { api.post(this, infuraProjectId) }
+            Result.Success(result)
+        } catch (exception: Exception) {
+            Result.Failure(exception)
+        }
+    }
 
     companion object {
         fun infura(baseUrl: String, infuraProjectId: String) =
-                EthereumJsonRpcProvider(baseUrl + "v3/", infuraProjectId)
+            EthereumJsonRpcProvider(baseUrl + "v3/", infuraProjectId)
     }
 }
+
+data class EthereumTokenBalanceRequestData(
+    val address: String,
+    val contractAddress: String
+)
+
+data class EthereumGasLimitRequestData(
+    val to: String,
+    val from: String,
+    val data: String?
+)
