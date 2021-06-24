@@ -161,7 +161,6 @@ class EthereumWalletManager(
         var to = destination
         val from = wallet.address
         var data: String? = null
-        val fallbackGasLimit = estimateGasLimit(amount).value
 
         if (amount.type is AmountType.Token) {
             to = amount.type.token.contractAddress
@@ -169,23 +168,11 @@ class EthereumWalletManager(
                 "0x" + EthereumUtils.createErc20TransferData(destination, amount).toHexString()
         }
 
-        return when (val result =  networkProvider.getGasLimit(to, from, data, fallbackGasLimit) ){
+        return when (val result =  networkProvider.getGasLimit(to, from, data) ){
             is Result.Failure -> result
             is Result.Success -> {
                 transactionBuilder.gasLimit = result.data.toBigInteger()
                 result
-            }
-        }
-    }
-
-    private fun estimateGasLimit(amount: Amount): GasLimit { //TODO: remove?
-        return if (amount.type == AmountType.Coin) {
-            GasLimit.Default
-        } else {
-            when (amount.currencySymbol) {
-                "DGX" -> GasLimit.High
-                "AWG" -> GasLimit.Medium
-                else -> GasLimit.Erc20
             }
         }
     }
@@ -199,12 +186,5 @@ class EthereumWalletManager(
             normalFee.movePointLeft(Blockchain.Ethereum.decimals()),
             priorityFee.movePointLeft(Blockchain.Ethereum.decimals())
         )
-    }
-
-    enum class GasLimit(val value: Long) {
-        Default(21000),
-        Erc20(60000),
-        Medium(150000),
-        High(300000)
     }
 }
