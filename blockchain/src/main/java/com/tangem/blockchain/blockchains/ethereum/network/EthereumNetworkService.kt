@@ -4,7 +4,6 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairToken
@@ -15,16 +14,15 @@ import java.math.BigDecimal
 
 
 class EthereumNetworkService(
-    private val jsonRpcProviders: List<EthereumJsonRpcProvider>,
+    jsonRpcProviders: List<EthereumJsonRpcProvider>,
     private val blockcypherNetworkProvider: BlockcypherNetworkProvider? = null,
     private val blockchairEthNetworkProvider: BlockchairEthNetworkProvider? = null,
-) : MultiNetworkProvider<EthereumJsonRpcProvider>(jsonRpcProviders), EthereumNetworkProvider {
+) : EthereumNetworkProvider {
 
+    private val multiJsonRpcProvider = MultiNetworkProvider(jsonRpcProviders)
     override val host
-        get() = currentProvider.host
+        get() = multiJsonRpcProvider.currentProvider.host
 
-    private val jsonRpcProvider
-        get() = currentProvider
     private val decimals = Blockchain.Ethereum.decimals()
 
     override suspend fun getInfo(
@@ -33,30 +31,28 @@ class EthereumNetworkService(
     ): Result<EthereumInfoResponse> {
         return try {
             coroutineScope {
-                val balanceResponseDeferred =
-                    retryIO { async { jsonRpcProvider.getBalance(address) } }
-                val txCountResponseDeferred =
-                    retryIO { async { jsonRpcProvider.getTxCount(address) } }
-                val pendingTxCountResponseDeferred =
-                    retryIO { async { jsonRpcProvider.getPendingTxCount(address) } }
-                val transactionsResponseDeferred =
-                    retryIO {
-                        async {
-                            blockchairEthNetworkProvider?.getTransactions(address,
-                                tokens)
-                        }
-                    }
+                val balanceResponseDeferred = async {
+                    multiJsonRpcProvider
+                        .performRequest(EthereumJsonRpcProvider::getBalance, address)
+                }
+                val txCountResponseDeferred = async {
+                    multiJsonRpcProvider
+                        .performRequest(EthereumJsonRpcProvider::getTxCount, address)
+                }
+                val pendingTxCountResponseDeferred = async {
+                    multiJsonRpcProvider
+                        .performRequest(EthereumJsonRpcProvider::getPendingTxCount, address)
+                }
+                val transactionsResponseDeferred = async {
+                    blockchairEthNetworkProvider?.getTransactions(address, tokens)
+                }
 
-
-                val balanceResponse = balanceResponseDeferred.await()
-                val balance = balanceResponse.result?.parseAmount(decimals)
-                    ?: throw balanceResponse.error?.toException()
-                        ?: Exception("Unknown balance response format")
-
-                val txCount = txCountResponseDeferred.await()
-                    .result?.responseToBigInteger()?.toLong() ?: 0
-                val pendingTxCount = pendingTxCountResponseDeferred.await()
-                    .result?.responseToBigInteger()?.toLong() ?: 0
+                val balance = balanceResponseDeferred.await().extractResult()
+                    .parseAmount(decimals)
+                val txCount = txCountResponseDeferred.await().extractResult()
+                    .responseToBigInteger().toLong()
+                val pendingTxCount = pendingTxCountResponseDeferred.await().extractResult()
+                    .responseToBigInteger().toLong()
 
                 val tokenBalances = getTokensBalanceInternal(address, tokens)
 
@@ -76,22 +72,18 @@ class EthereumNetworkService(
                 )
             }
         } catch (error: Exception) {
-            val result = Result.Failure(error)
-            return if (result.needsRetry()) getInfo(address, tokens) else result
+            Result.Failure(error)
         }
     }
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
-            val response = retryIO { jsonRpcProvider.sendTransaction(transaction) }
-            if (response.error == null) {
-                SimpleResult.Success
-            } else {
-                SimpleResult.Failure(response.error.toException())
-            }
+            multiJsonRpcProvider
+                .performRequest(EthereumJsonRpcProvider::sendTransaction, transaction)
+                .extractResult()
+            SimpleResult.Success
         } catch (error: Exception) {
-            val result = SimpleResult.Failure(error)
-            return if (result.needsRetry()) sendTransaction(transaction) else result
+            SimpleResult.Failure(error)
         }
     }
 
@@ -107,8 +99,7 @@ class EthereumNetworkService(
         return try {
             Result.Success(getTokensBalanceInternal(address, tokens))
         } catch (error: Exception) {
-            val result = Result.Failure(error)
-            return if (result.needsRetry()) getTokensBalance(address, tokens) else result
+            Result.Failure(error)
         }
     }
 
@@ -118,18 +109,19 @@ class EthereumNetworkService(
     ): Map<Token, BigDecimal> {
         return coroutineScope {
             val tokenBalancesDeferred = tokens.map { token ->
-                token to retryIO {
-                    async {
-                        jsonRpcProvider.getTokenBalance(address,
-                            token.contractAddress)
-                    }
+                token to async {
+                    multiJsonRpcProvider.performRequest(
+                        EthereumJsonRpcProvider::getTokenBalance,
+                        EthereumTokenBalanceRequestData(
+                            address,
+                            token.contractAddress
+                        )
+                    )
                 }
             }.toMap()
             val tokenBalanceResponses = tokenBalancesDeferred.mapValues { it.value.await() }
             tokenBalanceResponses.mapValues {
-                it.value.result?.parseAmount(it.key.decimals)
-                    ?: throw it.value.error?.toException()
-                        ?: Exception("Unknown token balance response format")
+                it.value.extractResult().parseAmount(it.key.decimals)
             }
         }
     }
@@ -142,50 +134,34 @@ class EthereumNetworkService(
     override suspend fun getGasPrice(): Result<Long> {
         return try {
             coroutineScope {
-                val gasPriceResponses = jsonRpcProviders.map {
-                    async { retryIO { jsonRpcProvider.getGasPrice() } }
+                val gasPriceResponses = multiJsonRpcProvider.providers.map {
+                    async { it.getGasPrice() }
                 }.map { it.await() }
 
-                val gasPrice = gasPriceResponses
-                    .mapNotNull { it.result?.responseToLong() }.maxOrNull()
-                    ?: throw gasPriceResponses.mapNotNull { it.error }
-                        .firstOrNull()?.toException()
-                        ?: Exception("Unknown gas price response format")
+                val gasPrice = gasPriceResponses.filter { it is Result.Success }
+                    .map { it.extractResult().responseToLong() }.maxOrNull()
+                // all responses have failed
+                    ?: return@coroutineScope Result.Failure(
+                        (gasPriceResponses.first() as Result.Failure).error
+                    )
+
                 Result.Success(gasPrice)
             }
         } catch (exception: Exception) {
-            val result = Result.Failure(exception)
-            if (result.needsRetry()) getGasPrice() else result
+            Result.Failure(exception)
         }
 
     }
 
-    override suspend fun getGasLimit(
-        to: String,
-        from: String,
-        data: String?,
-        fallbackGasLimit: Long?,
-    ): Result<Long> {
+    override suspend fun getGasLimit(to: String, from: String, data: String?): Result<Long> {
         return try {
-            coroutineScope {
-                val gasLimitResponsesDeferred = jsonRpcProviders.map {
-                    async { retryIO { jsonRpcProvider.getGasLimit(to, from, data) } }
-                }
-                val gasLimitResponses = gasLimitResponsesDeferred.map { it.await() }
-                val gasLimit = gasLimitResponses
-                    .mapNotNull { it.result?.responseToLong() }.maxOrNull()
-                    ?: fallbackGasLimit
-                    ?: throw gasLimitResponses.mapNotNull { it.error }
-                        .firstOrNull()?.toException()
-                        ?: Exception("Unknown estimate gas response format")
-                Result.Success(gasLimit)
-            }
+            val gasLimit = multiJsonRpcProvider.performRequest(
+                EthereumJsonRpcProvider::getGasLimit,
+                EthCallObject(to, from, data)
+            ).extractResult().responseToLong()
+            Result.Success(gasLimit)
         } catch (error: Exception) {
-            val result = Result.Failure(error)
-            return if (result.needsRetry()) getGasLimit(to,
-                from,
-                data,
-                fallbackGasLimit) else result
+            Result.Failure(error)
         }
     }
 
@@ -200,4 +176,12 @@ class EthereumNetworkService(
     private fun EthereumError.toException() =
         Exception("Code: ${this.code}, ${this.message}")
 
+    private fun Result<EthereumResponse>.extractResult(): String =
+        when (this) {
+            is Result.Success -> this.data.result
+                ?: throw this.data.error?.toException()
+                    ?: Exception("Unknown response format")
+            is Result.Failure -> throw this.error
+                ?: Exception()
+        }
 }
