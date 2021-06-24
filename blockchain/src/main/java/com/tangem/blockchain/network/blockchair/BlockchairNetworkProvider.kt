@@ -18,8 +18,9 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 open class BlockchairNetworkProvider(
-        blockchain: Blockchain,
-        private val apiKey: String? = null
+    blockchain: Blockchain,
+    private val apiKey: String? = null,
+    private val authorizationToken: String? = null
 ) : BitcoinNetworkProvider {
 
     override val host: String = API_BLOCKCHAIR + getPath(blockchain)
@@ -34,10 +35,11 @@ open class BlockchairNetworkProvider(
         return try {
             val blockchairAddress = retryIO {
                 api.getAddressData(
-                        address = address,
-                        transactionDetails = true,
-                        limit = 50,
-                        key = apiKey
+                    address = address,
+                    transactionDetails = true,
+                    limit = 50,
+                    key = apiKey,
+                    authorizationToken = authorizationToken
                 )
             }
 
@@ -47,27 +49,29 @@ open class BlockchairNetworkProvider(
 
             val unspentOutputs = addressData.unspentOutputs!!.map {
                 BitcoinUnspentOutput(
-                        amount = it.amount!!.toBigDecimal().movePointLeft(decimals),
-                        outputIndex = it.index!!.toLong(),
-                        transactionHash = it.transactionHash!!.hexToBytes(),
-                        outputScript = script
+                    amount = it.amount!!.toBigDecimal().movePointLeft(decimals),
+                    outputIndex = it.index!!.toLong(),
+                    transactionHash = it.transactionHash!!.hexToBytes(),
+                    outputScript = script
                 )
             }
 
             val transactions = addressData.transactions!!.map {
                 BasicTransactionData(
-                        balanceDif = it.balanceDif!!.toBigDecimal().movePointLeft(decimals),
-                        hash = it.hash!!,
-                        isConfirmed = it.block!! != -1,
-                        date = Calendar.getInstance().apply { time = dateFormat.parse(it.time!!)!! }
+                    balanceDif = it.balanceDif!!.toBigDecimal().movePointLeft(decimals),
+                    hash = it.hash!!,
+                    isConfirmed = it.block!! != -1,
+                    date = Calendar.getInstance().apply { time = dateFormat.parse(it.time!!)!! }
                 )
             }
 
-            Result.Success(BitcoinAddressInfo(
+            Result.Success(
+                BitcoinAddressInfo(
                     balance = addressInfo.balance!!.toBigDecimal().movePointLeft(decimals),
                     unspentOutputs = unspentOutputs,
                     recentTransactions = transactions
-            ))
+                )
+            )
         } catch (error: Exception) {
             Result.Failure(error)
         }
@@ -76,13 +80,21 @@ open class BlockchairNetworkProvider(
 
     override suspend fun getFee(): Result<BitcoinFee> {
         return try {
-            val stats = retryIO { api.getBlockchainStats(apiKey) }
+            val stats = retryIO { api.getBlockchainStats(apiKey, authorizationToken) }
             val feePerKb = (stats.data!!.feePerByte!! * 1024).toBigDecimal().movePointLeft(decimals)
-            Result.Success(BitcoinFee(
-                    minimalPerKb = (feePerKb * BigDecimal.valueOf(0.8)).setScale(decimals, RoundingMode.DOWN),
+            Result.Success(
+                BitcoinFee(
+                    minimalPerKb = (feePerKb * BigDecimal.valueOf(0.8)).setScale(
+                        decimals,
+                        RoundingMode.DOWN
+                    ),
                     normalPerKb = feePerKb.setScale(decimals, RoundingMode.DOWN),
-                    priorityPerKb = (feePerKb * BigDecimal.valueOf(1.2)).setScale(decimals, RoundingMode.DOWN)
-            ))
+                    priorityPerKb = (feePerKb * BigDecimal.valueOf(1.2)).setScale(
+                        decimals,
+                        RoundingMode.DOWN
+                    )
+                )
+            )
         } catch (error: Exception) {
             Result.Failure(error)
         }
@@ -90,7 +102,7 @@ open class BlockchairNetworkProvider(
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
-            retryIO { api.sendTransaction(BlockchairBody(transaction), apiKey) }
+            retryIO { api.sendTransaction(BlockchairBody(transaction), apiKey, authorizationToken) }
             SimpleResult.Success
         } catch (error: Exception) {
             SimpleResult.Failure(error)
@@ -101,8 +113,9 @@ open class BlockchairNetworkProvider(
         return try {
             val blockchairAddress = retryIO {
                 api.getAddressData(
-                        address = address,
-                        key = apiKey
+                    address = address,
+                    key = apiKey,
+                    authorizationToken = authorizationToken
                 )
             }
             val addressInfo = blockchairAddress.data!!.getValue(address).addressInfo!!
@@ -113,7 +126,7 @@ open class BlockchairNetworkProvider(
     }
 
     private fun getPath(blockchain: Blockchain): String {
-       return when (blockchain) {
+        return when (blockchain) {
             Blockchain.Bitcoin -> "bitcoin/"
             Blockchain.BitcoinTestnet -> "bitcoin/testnet/"
             Blockchain.BitcoinCash -> "bitcoin-cash/"
