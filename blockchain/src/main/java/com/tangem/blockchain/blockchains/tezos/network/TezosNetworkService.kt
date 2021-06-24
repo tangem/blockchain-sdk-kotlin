@@ -4,51 +4,27 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
 
-class TezosNetworkService(providers: List<TezosNetworkProvider>) :
-        MultiNetworkProvider<TezosNetworkProvider>(providers),
-        TezosNetworkProvider {
+class TezosNetworkService(providers: List<TezosNetworkProvider>) : TezosNetworkProvider {
 
+    private val multiProvider = MultiNetworkProvider(providers)
     override val host: String
-        get() = currentProvider.host
+        get() = multiProvider.currentProvider.host
 
-    override suspend fun getInfo(address: String): Result<TezosInfoResponse> {
-        val result = currentProvider.getInfo(address)
-        return if (result.needsRetry()) getInfo(address) else result
-    }
+    override suspend fun getInfo(address: String): Result<TezosInfoResponse> =
+        multiProvider.performRequest(TezosNetworkProvider::getInfo, address)
 
-    override suspend fun isPublicKeyRevealed(address: String): Result<Boolean> {
-        val result = currentProvider.isPublicKeyRevealed(address)
-        return if (result.needsRetry()) isPublicKeyRevealed(address) else result
-    }
+    override suspend fun isPublicKeyRevealed(address: String): Result<Boolean> =
+        multiProvider.performRequest(TezosNetworkProvider::isPublicKeyRevealed, address)
 
-    override suspend fun getHeader(): Result<TezosHeader> {
-        val result = currentProvider.getHeader()
-        return if (result.needsRetry()) getHeader() else result
-    }
+    override suspend fun getHeader(): Result<TezosHeader> =
+        multiProvider.performRequest(TezosNetworkProvider::getHeader)
 
-    override suspend fun forgeContents(
-            headerHash: String,
-            contents: List<TezosOperationContent>
-    ): Result<String> {
-        val result = currentProvider.forgeContents(headerHash, contents)
-        return if (result.needsRetry()) forgeContents(headerHash, contents) else result
-    }
+    override suspend fun forgeContents(forgeData: TezosForgeData): Result<String> =
+        multiProvider.performRequest(TezosNetworkProvider::forgeContents, forgeData)
 
-    override suspend fun checkTransaction(
-            header: TezosHeader,
-            contents: List<TezosOperationContent>,
-            encodedSignature: String
-    ): SimpleResult {
-        val result = currentProvider.checkTransaction(header, contents, encodedSignature)
-        return if (result.needsRetry()) {
-            checkTransaction(header, contents, encodedSignature)
-        } else {
-            result
-        }
-    }
+    override suspend fun checkTransaction(transactionData: TezosTransactionData): SimpleResult =
+        multiProvider.performRequest(TezosNetworkProvider::checkTransaction, transactionData)
 
-    override suspend fun sendTransaction(transaction: String): SimpleResult {
-        val result = currentProvider.sendTransaction(transaction)
-        return if (result.needsRetry()) sendTransaction(transaction) else result
-    }
+    override suspend fun sendTransaction(transaction: String): SimpleResult =
+        multiProvider.performRequest(TezosNetworkProvider::sendTransaction, transaction)
 }
