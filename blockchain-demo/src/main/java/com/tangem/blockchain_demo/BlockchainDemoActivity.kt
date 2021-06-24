@@ -72,11 +72,13 @@ class BlockchainDemoActivity : AppCompatActivity() {
                     try {
                         val wallet = result.data.wallets.first()
                         walletManager = WalletManagerFactory().makeWalletManager(
-                                result.data.cardId,
-                                wallet.publicKey!!,
-                                Blockchain.fromId(result.data.cardData?.blockchainName
-                                        ?: Blockchain.Ethereum.id),
-                                wallet.curve!!
+                            result.data.cardId,
+                            wallet.publicKey!!,
+                            Blockchain.fromId(
+                                result.data.cardData?.blockchainName
+                                    ?: Blockchain.Ethereum.id
+                            ),
+                            wallet.curve!!
                         )!!
                         token = walletManager.wallet.getTokens().firstOrNull()
                         getInfo()
@@ -98,22 +100,23 @@ class BlockchainDemoActivity : AppCompatActivity() {
             walletManager.update()
             withContext(Dispatchers.Main) {
                 binding.tvBalance.text =
-                        "${
-                            walletManager.wallet.amounts[AmountType.Coin]?.value?.toPlainString()
-                                    ?: "error"
-                        } ${walletManager.wallet.blockchain.currency}"
+                    "${
+                        walletManager.wallet.amounts[AmountType.Coin]?.value?.toPlainString()
+                            ?: "error"
+                    } ${walletManager.wallet.blockchain.currency}"
 
                 if (token != null) {
                     val tokenAmount = walletManager.wallet.getTokenAmount(token!!)
-                    binding.tvBalance.text = tokenAmount?.value?.toPlainString() + " " + tokenAmount?.currencySymbol
+                    binding.tvBalance.text =
+                        tokenAmount?.value?.toPlainString() + " " + tokenAmount?.currencySymbol
                     binding.etSumToSend.text = Editable.Factory.getInstance().newEditable(
-                            tokenAmount?.value?.toPlainString() ?: ""
+                        tokenAmount?.value?.toPlainString() ?: ""
                     )
                 } else {
                     binding.etSumToSend.text =
-                            Editable.Factory.getInstance().newEditable(
-                                    walletManager.wallet.amounts[AmountType.Coin]?.value?.toPlainString()
-                            )
+                        Editable.Factory.getInstance().newEditable(
+                            walletManager.wallet.amounts[AmountType.Coin]?.value?.toPlainString()
+                        )
                 }
                 binding.btnCheckFee.isEnabled = true
             }
@@ -138,8 +141,9 @@ class BlockchainDemoActivity : AppCompatActivity() {
 
         scope.launch {
             val feeResult = (walletManager as TransactionSender).getFee(
-                    amountToSend,
-                    binding.etReceiverAddress.text.toString())
+                amountToSend,
+                binding.etReceiverAddress.text.toString()
+            )
             withContext(Dispatchers.Main) {
                 when (feeResult) {
                     is Result.Failure -> {
@@ -167,8 +171,9 @@ class BlockchainDemoActivity : AppCompatActivity() {
     private fun send() {
         scope.launch {
             val result = (walletManager as TransactionSender).send(
-                    formTransactionData(),
-                    signer)
+                formTransactionData(),
+                signer
+            )
             withContext(Dispatchers.Main) {
                 when (result) {
                     is SimpleResult.Failure -> {
@@ -185,19 +190,19 @@ class BlockchainDemoActivity : AppCompatActivity() {
     private fun formTransactionData(): TransactionData {
         val amount = if (token != null) {
             walletManager.wallet.getTokenAmount(token!!)!!.copy(
-                    value = binding.etSumToSend.text.toString().toBigDecimal()
+                value = binding.etSumToSend.text.toString().toBigDecimal()
             )
         } else {
             walletManager.wallet.amounts[AmountType.Coin]!!.copy(
-                    value = binding.etSumToSend.text.toString().toBigDecimal() - fee
+                value = binding.etSumToSend.text.toString().toBigDecimal() - fee
             )
         }
         return TransactionData(
-                amount,
-                walletManager.wallet.amounts[AmountType.Coin]!!.copy(value = fee),
-                walletManager.wallet.address,
-                binding.etReceiverAddress.text.toString(),
-                contractAddress = token?.contractAddress
+            amount,
+            walletManager.wallet.amounts[AmountType.Coin]!!.copy(value = fee),
+            walletManager.wallet.address,
+            binding.etReceiverAddress.text.toString(),
+            contractAddress = token?.contractAddress
         )
     }
 
