@@ -4,29 +4,22 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
 
-class XrpNetworkService(providers: List<XrpNetworkProvider>) :
-        MultiNetworkProvider<XrpNetworkProvider>(providers),
-        XrpNetworkProvider {
+class XrpNetworkService(providers: List<XrpNetworkProvider>) : XrpNetworkProvider {
 
+    private val multiProvider = MultiNetworkProvider(providers)
     override val host: String
-        get() = currentProvider.host
+        get() = multiProvider.currentProvider.host
 
-    override suspend fun getInfo(address: String): Result<XrpInfoResponse> {
-        val result = currentProvider.getInfo(address)
-        return if (result.needsRetry()) getInfo(address) else result
-    }
+    override suspend fun getInfo(address: String): Result<XrpInfoResponse> =
+        multiProvider.performRequest(XrpNetworkProvider::getInfo, address)
 
-    override suspend fun sendTransaction(transaction: String): SimpleResult {
-        val result = currentProvider.sendTransaction(transaction)
-        return if (result.needsRetry()) sendTransaction(transaction) else result
-    }
+    override suspend fun sendTransaction(transaction: String): SimpleResult =
+        multiProvider.performRequest(XrpNetworkProvider::sendTransaction, transaction)
 
-    override suspend fun getFee(): Result<XrpFeeResponse> {
-        val result = currentProvider.getFee()
-        return if (result.needsRetry()) getFee() else result
-    }
+    override suspend fun getFee(): Result<XrpFeeResponse> =
+        multiProvider.performRequest(XrpNetworkProvider::getFee)
 
     override suspend fun checkIsAccountCreated(address: String): Boolean {
-        return currentProvider.checkIsAccountCreated(address)
+        return multiProvider.currentProvider.checkIsAccountCreated(address)
     }
 }
