@@ -7,19 +7,19 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
 import com.tangem.blockchain.extensions.Result
 
 class LitecoinNetworkService(
-        providers: List<BitcoinNetworkProvider>
+    providers: List<BitcoinNetworkProvider>
 ) : BitcoinNetworkService(providers) {
 
     override suspend fun getFee(): Result<BitcoinFee> {
-        val result = currentProvider.getFee()
-        return when {
-            result.needsRetry() -> getFee()
-            result is Result.Success -> {
-                Result.Success(result.data.copy(
-                        minimalPerKb = BitcoinWalletManager.DEFAULT_MINIMAL_FEE_PER_KB.toBigDecimal()
-                ))
-            }
-            else -> result
+        val result = super.getFee()
+        return if (result is Result.Success) {
+            Result.Success(
+                result.data.copy(
+                    minimalPerKb = BitcoinWalletManager.DEFAULT_MINIMAL_FEE_PER_KB.toBigDecimal()
+                )
+            )
+        } else {
+            result
         }
     }
 }
