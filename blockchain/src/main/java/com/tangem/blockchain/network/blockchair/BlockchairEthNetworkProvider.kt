@@ -12,25 +12,32 @@ import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.*
 
-class BlockchairEthNetworkProvider(private val apiKey: String? = null) {
+class BlockchairEthNetworkProvider(
+    private val apiKey: String? = null,
+    private val authorizationToken: String? = null
+) {
 
     private val api: BlockchairApi by lazy {
-        val blockchainPath = "ethereum/"
-        createRetrofitInstance(API_BLOCKCHAIR + blockchainPath).create(BlockchairApi::class.java)
+        createRetrofitInstance(API_BLOCKCHAIR + ETHEREUM_BLOCKCHAIN_PATH)
+            .create(BlockchairApi::class.java)
     }
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.ROOT)
     private val blockchain = Blockchain.Ethereum
 
-    suspend fun getTransactions(address: String, tokens: Set<Token>): Result<List<TransactionData>> {
+    suspend fun getTransactions(
+        address: String,
+        tokens: Set<Token>
+    ): Result<List<TransactionData>> {
         return try {
             coroutineScope {
                 val addressDeferred = retryIO {
                     async {
                         api.getAddressData(
-                                address = address,
-                                transactionDetails = true,
-                                limit = 50,
-                                key = apiKey
+                            address = address,
+                            transactionDetails = true,
+                            limit = 50,
+                            key = apiKey,
+                            authorizationToken = authorizationToken
                         )
                     }
                 }
@@ -38,28 +45,30 @@ class BlockchairEthNetworkProvider(private val apiKey: String? = null) {
                     retryIO {
                         async {
                             api.getTokenHolderData(
-                                    address = address,
-                                    contractAddress = it.contractAddress,
-                                    limit = 50,
-                                    key = apiKey
+                                address = address,
+                                contractAddress = it.contractAddress,
+                                limit = 50,
+                                key = apiKey,
+                                authorizationToken = authorizationToken
                             )
                         }
                     }
                 }
 
                 val calls = addressDeferred.await().data!!
-                        .getValue(address.toLowerCase(Locale.ROOT)).calls ?: emptyList()
+                    .getValue(address.toLowerCase(Locale.ROOT)).calls ?: emptyList()
 
                 val tokenCalls = mutableListOf<BlockchairCallInfo>()
                 tokenHolderDeferredList.forEach {
                     tokenCalls.addAll(
-                            it.await().data
-                                    .getValue(address.toLowerCase(Locale.ROOT)).transactions
-                                    ?: emptyList())
+                        it.await().data
+                            .getValue(address.toLowerCase(Locale.ROOT)).transactions
+                            ?: emptyList()
+                    )
                 }
 
                 val coinTransactions = calls.map { it.toTransactionData(tokens) }
-                        .filter { !it.amount.value!!.isZero() }
+                    .filter { !it.amount.value!!.isZero() }
                 val tokenTransactions = tokenCalls.map { it.toTransactionData(tokens) }
 
                 Result.Success(coinTransactions + tokenTransactions)
@@ -79,32 +88,38 @@ class BlockchairEthNetworkProvider(private val apiKey: String? = null) {
         }
 
         val status =
-                if (block == -1) TransactionStatus.Unconfirmed else TransactionStatus.Confirmed
+            if (block == -1) TransactionStatus.Unconfirmed else TransactionStatus.Confirmed
         val date = dateFormat.parse(time!!)
 
         return TransactionData(
-                amount = amount,
-                fee = null,
-                sourceAddress = sender ?: "unknown",
-                destinationAddress = recipient ?: "unknown",
-                status = status,
-                date = Calendar.getInstance().apply { time = date!! },
-                hash = hash?.substring(2) // trim 0x
+            amount = amount,
+            fee = null,
+            sourceAddress = sender ?: "unknown",
+            destinationAddress = recipient ?: "unknown",
+            status = status,
+            date = Calendar.getInstance().apply { time = date!! },
+            hash = hash?.substring(2) // trim 0x
         )
     }
 
     suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>> {
         return try {
-                val tokens = retryIO { api.findErc20Tokens(address = address, key = apiKey) }.data
-                        ?.getValue(address.toLowerCase(Locale.ROOT))?.tokensInfo?.tokens
-                        ?: emptyList()
-                Result.Success(tokens)
+            val tokens = retryIO {
+                api.findErc20Tokens(
+                    address = address,
+                    key = apiKey,
+                    authorizationToken = authorizationToken
+                )
+            }.data
+                ?.getValue(address.toLowerCase(Locale.ROOT))?.tokensInfo?.tokens
+                ?: emptyList()
+            Result.Success(tokens)
         } catch (error: Exception) {
             Result.Failure(error)
         }
     }
 
     companion object {
-       private const val BLOCKCHAIN_PATH = "ethereum/"
+        private const val ETHEREUM_BLOCKCHAIN_PATH = "ethereum/"
     }
 }
