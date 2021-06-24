@@ -4,6 +4,7 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService.Companion.calculateTezosChecksum
 import com.tangem.blockchain.blockchains.tezos.network.TezosInfoResponse
 import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkProvider
+import com.tangem.blockchain.blockchains.tezos.network.TezosTransactionData
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -20,10 +21,10 @@ import java.math.BigDecimal
 import java.util.*
 
 class TezosWalletManager(
-        wallet: Wallet,
-        private val transactionBuilder: TezosTransactionBuilder,
-        private val networkProvider: TezosNetworkProvider,
-        private val curve: EllipticCurve
+    wallet: Wallet,
+    private val transactionBuilder: TezosTransactionBuilder,
+    private val networkProvider: TezosNetworkProvider,
+    private val curve: EllipticCurve
 ) : WalletManager(wallet), TransactionSender {
 
     override val currentHost: String
@@ -54,23 +55,23 @@ class TezosWalletManager(
     }
 
     override suspend fun send(
-            transactionData: TransactionData, signer: TransactionSigner
+        transactionData: TransactionData, signer: TransactionSigner
     ): SimpleResult {
 
         if (publicKeyRevealed == null) return SimpleResult.Failure(Exception("publicKeyRevealed is null"))
 
         val contents =
-                when (val response =
-                        transactionBuilder.buildContents(transactionData, publicKeyRevealed!!)
-                ) {
-                    is Result.Failure -> return SimpleResult.Failure(response.error)
-                    is Result.Success -> response.data
-                }
+            when (val response =
+                transactionBuilder.buildContents(transactionData, publicKeyRevealed!!)
+            ) {
+                is Result.Failure -> return SimpleResult.Failure(response.error)
+                is Result.Success -> response.data
+            }
         val header =
-                when (val response = networkProvider.getHeader()) {
-                    is Result.Failure -> return SimpleResult.Failure(response.error)
-                    is Result.Success -> response.data
-                }
+            when (val response = networkProvider.getHeader()) {
+                is Result.Failure -> return SimpleResult.Failure(response.error)
+                is Result.Success -> response.data
+            }
         val forgedContents = transactionBuilder.forgeContents(header.hash, contents)
         // potential security vulnerability, transaction should be forged locally
 //                when (val response = networkProvider.forgeContents(header.hash, contents)) {
@@ -86,8 +87,10 @@ class TezosWalletManager(
         }
         val canonicalSignature = canonicalizeSignature(signature)
 
-        return when (val response = networkProvider
-                .checkTransaction(header, contents, encodeSignature(canonicalSignature))
+        return when (
+            val response = networkProvider.checkTransaction(
+                TezosTransactionData(header, contents, encodeSignature(canonicalSignature))
+            )
         ) {
             is SimpleResult.Failure -> response
             is SimpleResult.Success -> {
@@ -108,7 +111,7 @@ class TezosWalletManager(
 
         coroutineScope {
             val publicKeyRevealedDeferred =
-                    async { networkProvider.isPublicKeyRevealed(wallet.address) }
+                async { networkProvider.isPublicKeyRevealed(wallet.address) }
             val destinationInfoDeferred = async { networkProvider.getInfo(destination) }
 
             when (val result = publicKeyRevealedDeferred.await()) {
