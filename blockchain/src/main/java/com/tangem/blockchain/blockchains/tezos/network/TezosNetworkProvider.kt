@@ -9,13 +9,8 @@ interface TezosNetworkProvider {
     suspend fun getInfo(address: String): Result<TezosInfoResponse>
     suspend fun isPublicKeyRevealed(address: String): Result<Boolean>
     suspend fun getHeader(): Result<TezosHeader>
-    suspend fun forgeContents(headerHash: String, contents: List<TezosOperationContent>): Result<String>
-    suspend fun checkTransaction(
-            header: TezosHeader,
-            contents: List<TezosOperationContent>,
-            encodedSignature: String
-    ): SimpleResult
-
+    suspend fun forgeContents(forgeData: TezosForgeData): Result<String>
+    suspend fun checkTransaction(transactionData: TezosTransactionData): SimpleResult
     suspend fun sendTransaction(transaction: String): SimpleResult
 }
 
@@ -27,4 +22,15 @@ data class TezosInfoResponse(
 data class TezosHeader(
         val hash: String,
         val protocol: String
+)
+
+data class TezosForgeData(
+    val headerHash: String,
+    val contents: List<TezosOperationContent>
+)
+
+data class TezosTransactionData(
+    val header: TezosHeader,
+    val contents: List<TezosOperationContent>,
+    val encodedSignature: String
 )
