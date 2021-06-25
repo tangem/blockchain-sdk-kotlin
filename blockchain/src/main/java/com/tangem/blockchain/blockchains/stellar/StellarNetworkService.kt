@@ -4,6 +4,7 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.API_STELLAR
+import com.tangem.blockchain.network.API_STELLAR_TESTNET
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -17,20 +18,15 @@ import java.net.URISyntaxException
 import java.text.SimpleDateFormat
 import java.util.*
 
-class StellarNetworkService : StellarNetworkProvider {
-    override val host: String = API_STELLAR
+class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
+    override val host: String = if (isTestnet) API_STELLAR_TESTNET else API_STELLAR
     private val blockchain = Blockchain.Stellar
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ROOT)
     private val recordsLimitCap = 200
     private val decimals = blockchain.decimals()
 
-    val network: Network = Network.PUBLIC
-    private val stellarServer by lazy { Server(API_STELLAR) }
-
-//    val network: Network = if (isTestNet) Network.TESTNET else Network.PUBLIC
-//    private val stellarServer by lazy {
-//        Server(if (isTestNet) API_STELLAR_TESTNET else API_STELLAR)
-//    }
+    val network: Network = if (isTestnet) Network.TESTNET else Network.PUBLIC
+    private val stellarServer by lazy { Server(host) }
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
