@@ -139,7 +139,7 @@ class WalletManagerFactory(
                     makeBitcoinNetworkService(blockchain)
                 )
 
-            Blockchain.BitcoinCash ->
+            Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet ->
                 BitcoinCashWalletManager(
                     wallet,
                     BitcoinCashTransactionBuilder(walletPublicKey, blockchain),
@@ -232,8 +232,9 @@ class WalletManagerFactory(
                     tokens
                 )
             }
-            Blockchain.Stellar -> {
-                val networkService = StellarNetworkService()
+            Blockchain.Stellar, Blockchain.StellarTestnet -> {
+                val isTestnet = blockchain == Blockchain.StellarTestnet
+                val networkService = StellarNetworkService(isTestnet)
 
                 StellarWalletManager(
                     wallet,
