@@ -254,9 +254,10 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.XRP -> {
-                val rippledProvider1 = RippledNetworkProvider(API_RIPPLED)
-                val rippledProvider2 = RippledNetworkProvider(API_RIPPLED_RESERVE)
-                val providers = listOf(rippledProvider1, rippledProvider2)
+                val rippledProvider1 = RippledNetworkProvider(API_XRP_LEDGER_FOUNDATION)
+                val rippledProvider2 = RippledNetworkProvider(API_RIPPLE)
+                val rippledProvider3 = RippledNetworkProvider(API_RIPPLE_RESERVE)
+                val providers = listOf(rippledProvider1, rippledProvider2, rippledProvider3)
                 val networkService = XrpNetworkService(providers)
 
                 XrpWalletManager(
