@@ -75,7 +75,7 @@ class WalletManagerFactory(
         tokens?.forEach { token ->
             val walletManager = walletManagersMap[token.blockchain]
                 ?: makeWalletManager(cardId, walletPublicKey, token.blockchain, curve)
-            walletManager?.presetTokens?.add(token)
+            walletManager?.cardTokens?.add(token)
         }
         return walletManagersMap.values.filterNotNull()
     }
@@ -89,8 +89,8 @@ class WalletManagerFactory(
         val blockchain = if (isTestNet) Blockchain.EthereumTestnet else Blockchain.Ethereum
         val walletManager =
             makeWalletManager(cardId, walletPublicKey, blockchain, tokens) ?: return null
-        val additionalTokens = tokens.filterNot { walletManager.presetTokens.contains(it) }
-        walletManager.presetTokens.addAll(additionalTokens)
+        val additionalTokens = tokens.filterNot { walletManager.cardTokens.contains(it) }
+        walletManager.cardTokens.addAll(additionalTokens)
         return walletManager
     }
 
