@@ -37,28 +37,29 @@ class RosettaNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
         return try {
             coroutineScope {
                 val addressBodies = addresses
-                        .map { RosettaAddressBody(networkIdentifier, RosettaAccountIdentifier(it)) }
-                val balancesDeferred = addressBodies
-                        .map {
-                            it.accountIdentifier.address!! to retryIO { async { api.getBalances(it) } }
-                        }.toMap()
+                    .map { RosettaAddressBody(networkIdentifier, RosettaAccountIdentifier(it)) }
+                val balancesDeferred =
+                    addressBodies.map { retryIO { async { api.getBalances(it) } } }
+                val coinsDeferred = addressBodies.map {
+                    it.accountIdentifier.address!! to retryIO { async { api.getCoins(it) } }
+                }.toMap()
 
-                val balancesMap = balancesDeferred.mapValues { it.value.await() }
-                val balance = balancesMap.map { entry ->
-                    entry.value.balances!!.find { it.currency!!.symbol == "ADA" }!!.value!!
+                val balances = balancesDeferred.map { it.await() }
+                val balance = balances.map {
+                    it.balances!!.find { it.currency!!.symbol == "ADA" }!!.value!!
                 }.sum()
 
-                val coinsMap = balancesMap.mapValues { it.value.coins!! }
+                val coinsMap = coinsDeferred.mapValues { it.value.await().coins!! }
                 val unspentOutputs = coinsMap.flatMap { entry ->
                     entry.value!!.mapNotNull {
                         if (it.amount!!.currency!!.symbol == "ADA") {
                             val identifierSplit =
-                                    it.coinIdentifier!!.identifier!!.split(":")
+                                it.coinIdentifier!!.identifier!!.split(":")
                             CardanoUnspentOutput(
-                                    address = entry.key,
-                                    amount = it.amount.value!!,
-                                    outputIndex = identifierSplit[1].toLong(),
-                                    transactionHash = identifierSplit[0].hexToBytes()
+                                address = entry.key,
+                                amount = it.amount.value!!,
+                                outputIndex = identifierSplit[1].toLong(),
+                                transactionHash = identifierSplit[0].hexToBytes()
                             )
                         } else {
                             null
@@ -67,7 +68,7 @@ class RosettaNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
                 }
 
                 Result.Success(
-                        CardanoAddressResponse(balance, unspentOutputs, emptyList())
+                    CardanoAddressResponse(balance, unspentOutputs, emptyList())
                 )
             }
         } catch (exception: Exception) {
@@ -83,7 +84,7 @@ class RosettaNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
             val encodedTransaction = baos.toByteArray()
 
             api.submitTransaction(
-                    RosettaSubmitBody(networkIdentifier, encodedTransaction.toHexString())
+                RosettaSubmitBody(networkIdentifier, encodedTransaction.toHexString())
             )
             SimpleResult.Success
         } catch (exception: Exception) {
