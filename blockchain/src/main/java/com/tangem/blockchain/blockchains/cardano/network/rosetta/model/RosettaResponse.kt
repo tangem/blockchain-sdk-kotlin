@@ -5,7 +5,11 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class RosettaBalanceResponse(
-        val balances: List<RosettaAmount>? = null,
+        val balances: List<RosettaAmount>? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class RosettaCoinsResponse(
         val coins: List<RosettaCoin>? = null
 )
 
