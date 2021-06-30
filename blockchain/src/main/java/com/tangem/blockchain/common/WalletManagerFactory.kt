@@ -143,7 +143,9 @@ class WalletManagerFactory(
                 BitcoinCashWalletManager(
                     wallet,
                     BitcoinCashTransactionBuilder(walletPublicKey, blockchain),
-                    BitcoinCashNetworkService(blockchainSdkConfig.blockchairApiKey)
+                    BitcoinCashNetworkService(
+                        blockchairAuthorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
+                    )
                 )
 
             Blockchain.Dogecoin ->
@@ -170,8 +172,9 @@ class WalletManagerFactory(
                 }
                 jsonRpcProviders.add(EthereumJsonRpcProvider(API_TANGEM_ETHEREUM))
 
-                val blockchairEthNetworkProvider =
-                    BlockchairEthNetworkProvider(blockchainSdkConfig.blockchairApiKey)
+                val blockchairEthNetworkProvider = BlockchairEthNetworkProvider(
+                    authorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
+                )
                 val blockcypherNetworkProvider =
                     BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
 
@@ -304,7 +307,12 @@ class WalletManagerFactory(
 
         if (blockchain == Blockchain.Bitcoin) providers.add(BlockchainInfoNetworkProvider())
 
-        providers.add(BlockchairNetworkProvider(blockchain, blockchainSdkConfig.blockchairApiKey))
+        providers.add(
+            BlockchairNetworkProvider(
+                blockchain = blockchain,
+                authorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
+            )
+        )
 
         val blockcypherTokens = blockchainSdkConfig.blockcypherTokens
         if (!blockcypherTokens.isNullOrEmpty()) {
