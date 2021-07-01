@@ -22,17 +22,17 @@ class IconsUtil {
         }
 
         private fun Blockchain.getPath(): String? = when (this) {
-            Blockchain.Bitcoin -> "bitcoin"
-            Blockchain.BitcoinCash -> "bitcoincash"
+            Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> "bitcoin"
+            Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet -> "bitcoincash"
             Blockchain.Litecoin -> "litecoin"
             Blockchain.Dogecoin -> "doge"
-            Blockchain.Ethereum -> "ethereum"
-            Blockchain.BSC -> "smartchain"
-            Blockchain.Polygon -> "polygon"
+            Blockchain.Ethereum, Blockchain.EthereumTestnet -> "ethereum"
+            Blockchain.BSC, Blockchain.BSCTestnet -> "smartchain"
+            Blockchain.Polygon, Blockchain.PolygonTestnet -> "polygon"
             Blockchain.Cardano, Blockchain.CardanoShelley -> "cardano"
             Blockchain.XRP -> "xrp"
-            Blockchain.Binance -> "binance"
-            Blockchain.Stellar -> "stellar"
+            Blockchain.Binance, Blockchain.BinanceTestnet -> "binance"
+            Blockchain.Stellar, Blockchain.StellarTestnet -> "stellar"
             Blockchain.Tezos -> "tezos"
             else -> null
         }
