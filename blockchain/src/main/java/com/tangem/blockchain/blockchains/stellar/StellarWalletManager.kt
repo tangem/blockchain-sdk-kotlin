@@ -39,14 +39,14 @@ class StellarWalletManager(
         baseReserve = data.baseReserve
         transactionBuilder.minReserve = data.baseReserve * 2.toBigDecimal()
 
-        presetTokens.forEach { token ->
+        cardTokens.forEach { token ->
             val tokenBalance = data.tokenBalances
                     .find { it.symbol == token.symbol && it.issuer == token.contractAddress }?.balance
                     ?: 0.toBigDecimal()
             wallet.addTokenValue(tokenBalance, token)
         }
         // only if no token(s) specified on manager creation or stored on card
-        if (presetTokens.isEmpty()) updateUnplannedTokens(data.tokenBalances)
+        if (cardTokens.isEmpty()) updateUnplannedTokens(data.tokenBalances)
 
         updateRecentTransactions(data.recentTransactions)
     }
