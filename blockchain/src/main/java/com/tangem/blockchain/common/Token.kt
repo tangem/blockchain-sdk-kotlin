@@ -6,7 +6,8 @@ data class Token(
         val name: String,
         val symbol: String,
         val contractAddress: String,
-        val decimals: Int
+        val decimals: Int,
+        val blockchain: Blockchain = Blockchain.Ethereum
 ) {
     constructor(symbol: String, contractAddress: String, decimals: Int) :
             this(symbol, symbol, contractAddress, decimals)
