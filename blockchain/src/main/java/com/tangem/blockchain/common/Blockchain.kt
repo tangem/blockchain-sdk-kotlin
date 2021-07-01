@@ -17,43 +17,47 @@ import com.tangem.commands.common.card.EllipticCurve
 enum class Blockchain(
     val id: String,
     val currency: String,
-    val fullName: String
+    val fullName: String,
 ) {
     Unknown("", "", ""),
     Bitcoin("BTC", "BTC", "Bitcoin"),
-    BitcoinTestnet("BTC/test", "BTCt", "Bitcoin Testnet"),
+    BitcoinTestnet("BTC/test", "BTC", "Bitcoin"),
     BitcoinCash("BCH", "BCH", "Bitcoin Cash"),
+    BitcoinCashTestnet("BCH/test", "BCH", "Bitcoin Cash"),
     Litecoin("LTC", "LTC", "Litecoin"),
     Dogecoin("DOGE", "DOGE", "Dogecoin"),
     Ducatus("DUC", "DUC", "Ducatus"),
     Ethereum("ETH", "ETH", "Ethereum"),
-    EthereumTestnet("ETH/test", "ETHt", "Ethereum Testnet"),
+    EthereumTestnet("ETH/test", "ETH", "Ethereum"),
     RSK("RSK", "RBTC", "RSK"),
     BSC("BSC", "BNB", "Binance Smart Chain"),
-    BSCTestnet("BSC/test", "BNB", "Binance Smart Chain - Testnet"),
+    BSCTestnet("BSC/test", "BNB", "Binance Smart Chain"),
     Polygon("POLYGON", "MATIC", "Polygon"),
-    PolygonTestnet("POLYGON/test", "MATIC", "Polygon Testnet"),
+    PolygonTestnet("POLYGON/test", "MATIC", "Polygon"),
     Cardano("CARDANO", "ADA", "Cardano"),
     CardanoShelley("CARDANO-S", "ADA", "Cardano"),
     XRP("XRP", "XRP", "XRP Ledger"),
     Binance("BINANCE", "BNB", "Binance"),
-    BinanceTestnet("BINANCE/test", "BNBt", "Binance Chain"),
+    BinanceTestnet("BINANCE/test", "BNB", "Binance"),
     Stellar("XLM", "XLM", "Stellar"),
+    StellarTestnet("XLM/test", "XLM", "Stellar"),
     Tezos("XTZ", "XTZ", "Tezos"),
     ;
 
     fun decimals(): Int = when (this) {
-        Bitcoin, BitcoinTestnet, BitcoinCash, Binance, BinanceTestnet, Litecoin, Ducatus, Dogecoin -> 8
+        Bitcoin, BitcoinTestnet, BitcoinCash, BitcoinCashTestnet,
+        Binance, BinanceTestnet, Litecoin, Ducatus, Dogecoin,
+        -> 8
         Cardano, CardanoShelley, XRP, Tezos -> 6
         Ethereum, EthereumTestnet, RSK, BSC, BSCTestnet, Polygon, PolygonTestnet -> 18
-        Stellar -> 7
+        Stellar, StellarTestnet -> 7
         Unknown -> 0
     }
 
     fun makeAddresses(
         walletPublicKey: ByteArray,
         pairPublicKey: ByteArray? = null,
-        curve: EllipticCurve = EllipticCurve.Secp256k1
+        curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): Set<Address> {
         return if (pairPublicKey != null) {
             (getAddressService() as? MultisigAddressProvider)
@@ -67,7 +71,7 @@ enum class Blockchain(
 
     private fun getAddressService(): AddressService = when (this) {
         Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus -> BitcoinAddressService(this)
-        BitcoinCash -> BitcoinCashAddressService()
+        BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService()
         Ethereum, EthereumTestnet, BSC, BSCTestnet, Polygon, PolygonTestnet ->
             EthereumAddressService()
         RSK -> RskAddressService()
@@ -75,7 +79,7 @@ enum class Blockchain(
         XRP -> XrpAddressService()
         Binance -> BinanceAddressService()
         BinanceTestnet -> BinanceAddressService(true)
-        Stellar -> StellarAddressService()
+        Stellar, StellarTestnet -> StellarAddressService()
         Tezos -> TezosAddressService()
         Unknown -> throw Exception("unsupported blockchain")
     }
@@ -102,6 +106,7 @@ enum class Blockchain(
         Bitcoin -> "https://www.blockchain.com/btc/address/$address"
         BitcoinTestnet -> "https://www.blockchain.com/btc-testnet/address/$address"
         BitcoinCash -> "https://www.blockchain.com/bch/address/$address"
+        BitcoinCashTestnet -> "https://www.blockchain.com/bch-testnet/address/$address"
         Litecoin -> "https://blockchair.com/litecoin/address/$address"
         Dogecoin -> "https://blockchair.com/dogecoin/address/$address"
         Ducatus -> "https://insight.ducatus.io/#/DUC/mainnet/address/$address"
@@ -128,9 +133,23 @@ enum class Blockchain(
         Polygon -> "https://polygonscan.com/address/$address"
         PolygonTestnet -> "https://explorer-mumbai.maticvigil.com/address/$address"
         Stellar -> "https://stellar.expert/explorer/public/account/$address"
+        StellarTestnet -> "https://stellar.expert/explorer/testnet/account/$address"
         XRP -> "https://xrpscan.com/account/$address"
         Tezos -> "https://tezblock.io/account/$address"
         Unknown -> throw Exception("unsupported blockchain")
+    }
+
+    fun getTestnetTopUpUrl(): String? {
+        return when (this) {
+            BitcoinTestnet -> "https://coinfaucet.eu/en/btc-testnet/"
+            EthereumTestnet -> "https://faucet.rinkeby.io"
+            BitcoinCashTestnet -> "https://coinfaucet.eu/en/bch-testnet/"
+            BinanceTestnet -> "https://docs.binance.org/smart-chain/wallet/binance.html"
+            BSCTestnet -> "https://testnet.binance.org/faucet-smart"
+            PolygonTestnet -> "https://faucet.matic.network"
+            StellarTestnet -> "https://laboratory.stellar.org/#account-creator?network=test"
+            else -> null
+        }
     }
 
     fun defaultAddressType(): AddressType = when (this) {
@@ -139,18 +158,96 @@ enum class Blockchain(
         else -> DefaultAddressType
     }
 
-    fun tokenDisplayName(): String = when (this) { // TODO: do we need it?
-        Ethereum -> "Ethereum smart contract token"
-        Stellar -> "Stellar Asset"
-        Binance -> "Binance Asset"
+    fun tokenDisplayName(): String = when (this) {
+        Ethereum, EthereumTestnet -> "Ethereum smart contract token"
+        Stellar, StellarTestnet -> "Stellar Asset"
+        Binance, BinanceTestnet -> "Binance Asset"
+        BSC, BSCTestnet -> "Binance Smart Chain Token"
         else -> fullName
+    }
+
+    fun isTestnet(): Boolean {
+        return when (this) {
+            Unknown, Bitcoin, BitcoinCash, Litecoin, Dogecoin, Ducatus, Ethereum, RSK, BSC, Polygon,
+            Cardano, CardanoShelley, XRP, Binance, Stellar, Tezos,
+            -> false
+            BitcoinTestnet, EthereumTestnet, BSCTestnet, PolygonTestnet, BinanceTestnet,
+            BitcoinCashTestnet, StellarTestnet,
+            -> true
+        }
+    }
+
+    fun getTestnetVersion(): Blockchain? {
+        return when (this) {
+            Bitcoin, BitcoinTestnet -> BitcoinTestnet
+            BitcoinCash, BitcoinCashTestnet -> BitcoinCashTestnet
+            Ethereum, EthereumTestnet -> EthereumTestnet
+            Binance, BinanceTestnet -> BinanceTestnet
+            BSC, BSCTestnet -> BSCTestnet
+            Polygon, PolygonTestnet -> PolygonTestnet
+            Stellar, StellarTestnet -> StellarTestnet
+            Litecoin -> null
+            Dogecoin -> null
+            Ducatus -> null
+            RSK -> null
+            Cardano -> null
+            CardanoShelley -> null
+            XRP -> null
+            Tezos -> null
+            Unknown -> null
+        }
+    }
+
+    fun getSupportedCurves(): List<EllipticCurve>? {
+        return when (this) {
+            Unknown -> null
+            Bitcoin, BitcoinTestnet, BitcoinCash, BitcoinCashTestnet, Litecoin, Ducatus,
+            Ethereum, EthereumTestnet, RSK, Binance, BinanceTestnet, Dogecoin, BSC, BSCTestnet,
+            Polygon, PolygonTestnet,
+            -> listOf(EllipticCurve.Secp256k1)
+            Tezos, XRP -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
+            Cardano, CardanoShelley, Stellar, StellarTestnet ->
+                listOf(EllipticCurve.Ed25519)
+        }
     }
 
     companion object {
         private val values = values()
         fun fromId(id: String): Blockchain = values.find { it.id == id } ?: Unknown
-        fun fromName(name: String): Blockchain = values.find { it.name == name } ?: Unknown
-        fun fromCurrency(currency: String): Blockchain = values.find { it.currency == currency }
-            ?: Unknown
+
+        fun secp256k1Blockchains(isTestnet: Boolean): List<Blockchain> {
+            return if (isTestnet) {
+                listOf(
+                    BitcoinTestnet,
+                    BitcoinCashTestnet,
+                    BinanceTestnet,
+                    BSCTestnet,
+                    EthereumTestnet,
+                    PolygonTestnet
+                )
+            } else {
+                listOf(
+                    Bitcoin,
+                    BitcoinCash,
+                    Binance,
+                    BSC,
+                    Litecoin,
+                    XRP,
+                    Tezos,
+                    Ethereum,
+                    RSK,
+                    Polygon,
+                    Dogecoin,
+                )
+            }
+        }
+
+        fun ed25519OnlyBlockchains(isTestnet: Boolean): List<Blockchain> {
+            return if (isTestnet) {
+                listOf(StellarTestnet)
+            } else {
+                listOf(CardanoShelley, Stellar)
+            }
+        }
     }
 }
