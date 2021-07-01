@@ -30,7 +30,7 @@ class EthereumWalletManager(
 
     override suspend fun update() {
 
-        when (val result = networkProvider.getInfo(wallet.address, presetTokens)) {
+        when (val result = networkProvider.getInfo(wallet.address, cardTokens)) {
             is Result.Failure -> updateError(result.error)
             is Result.Success -> updateWallet(result.data)
         }
@@ -121,8 +121,8 @@ class EthereumWalletManager(
     }
 
     override suspend fun addToken(token: Token): Result<Amount> {
-        if (!presetTokens.contains(token)) {
-            presetTokens.add(token)
+        if (!cardTokens.contains(token)) {
+            cardTokens.add(token)
         }
         return when (val result = networkProvider.getTokensBalance(wallet.address, setOf(token))) {
             is Result.Failure -> Result.Failure(result.error)
@@ -139,8 +139,8 @@ class EthereumWalletManager(
             is Result.Success -> {
                 val tokens: List<Token> = result.data.map { blockchairToken ->
                     val token = blockchairToken.toToken()
-                    if (!presetTokens.contains(token)) {
-                        presetTokens.add(token)
+                    if (!cardTokens.contains(token)) {
+                        cardTokens.add(token)
                     }
                     val balance = blockchairToken.balance.toBigDecimalOrNull()
                         ?.movePointLeft(blockchairToken.decimals)
