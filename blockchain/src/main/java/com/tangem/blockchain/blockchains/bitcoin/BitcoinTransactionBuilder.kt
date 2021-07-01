@@ -31,7 +31,7 @@ open class BitcoinTransactionBuilder(
 
     protected var networkParameters = when (blockchain) {
         Blockchain.Bitcoin, Blockchain.BitcoinCash -> MainNetParams()
-        Blockchain.BitcoinTestnet -> TestNet3Params()
+        Blockchain.BitcoinTestnet, Blockchain.BitcoinCashTestnet -> TestNet3Params()
         Blockchain.Litecoin -> LitecoinSegwitMainNetParams()
         Blockchain.Dogecoin -> DogecoinMainNetParams()
         Blockchain.Ducatus -> DucatusMainNetParams()
