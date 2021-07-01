@@ -9,8 +9,8 @@ import java.math.BigDecimal
 import java.util.*
 
 abstract class WalletManager(
-        var wallet: Wallet,
-        val presetTokens: MutableSet<Token> = mutableSetOf(),
+    var wallet: Wallet,
+    val cardTokens: MutableSet<Token> = mutableSetOf(),
 ) {
 
     abstract val currentHost: String
@@ -102,13 +102,13 @@ abstract class WalletManager(
     }
 
     fun removeToken(token: Token) {
-        presetTokens.remove(token)
+        cardTokens.remove(token)
         wallet.removeToken(token)
     }
 
     open suspend fun addToken(token: Token): Result<Amount> {
-        if (!presetTokens.contains(token)) {
-            presetTokens.add(token)
+        if (!cardTokens.contains(token)) {
+            cardTokens.add(token)
         }
         return Result.Failure(Exception("Adding tokens not supported for ${wallet.blockchain.currency}"))
     }
