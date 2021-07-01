@@ -34,11 +34,11 @@ class BinanceWalletManager(
         Log.d(this::class.java.simpleName, "Balance is $coinBalance")
         wallet.setCoinValue(coinBalance)
 
-        presetTokens.forEach {
+        cardTokens.forEach {
             val tokenBalance = response.balances[it.contractAddress] ?: 0.toBigDecimal()
             wallet.addTokenValue(tokenBalance, it)
         }
-        if (presetTokens.isEmpty()) { // only if no token(s) specified on manager creation or stored on card
+        if (cardTokens.isEmpty()) { // only if no token(s) specified on manager creation or stored on card
             val tokenBalances = response.balances.filterKeys { it != blockchain.currency }
             updateUnplannedTokens(tokenBalances)
         }
