@@ -65,16 +65,19 @@ class WalletManagerFactory(
         cardId: String,
         walletPublicKey: ByteArray,
         blockchains: List<Blockchain>,
+        tokens: List<Token>? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1
     ): List<WalletManager> {
-        return blockchains.mapNotNull { blockchain ->
-            makeWalletManager(
-                cardId = cardId,
-                walletPublicKey = walletPublicKey,
-                blockchain = blockchain,
-                curve = curve
-            )
+        val walletManagersMap = blockchains.map { blockchain ->
+            blockchain to makeWalletManager(cardId, walletPublicKey, blockchain, curve)
+        }.toMap().toMutableMap()
+
+        tokens?.forEach { token ->
+            val walletManager = walletManagersMap[token.blockchain]
+                ?: makeWalletManager(cardId, walletPublicKey, token.blockchain, curve)
+            walletManager?.cardTokens?.add(token)
         }
+        return walletManagersMap.values.filterNotNull()
     }
 
     fun makeEthereumWalletManager(
@@ -86,8 +89,8 @@ class WalletManagerFactory(
         val blockchain = if (isTestNet) Blockchain.EthereumTestnet else Blockchain.Ethereum
         val walletManager =
             makeWalletManager(cardId, walletPublicKey, blockchain, tokens) ?: return null
-        val additionalTokens = tokens.filterNot { walletManager.presetTokens.contains(it) }
-        walletManager.presetTokens.addAll(additionalTokens)
+        val additionalTokens = tokens.filterNot { walletManager.cardTokens.contains(it) }
+        walletManager.cardTokens.addAll(additionalTokens)
         return walletManager
     }
 
