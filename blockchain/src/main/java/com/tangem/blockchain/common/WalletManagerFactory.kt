@@ -65,16 +65,19 @@ class WalletManagerFactory(
         cardId: String,
         walletPublicKey: ByteArray,
         blockchains: List<Blockchain>,
+        tokens: List<Token>? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1
     ): List<WalletManager> {
-        return blockchains.mapNotNull { blockchain ->
-            makeWalletManager(
-                cardId = cardId,
-                walletPublicKey = walletPublicKey,
-                blockchain = blockchain,
-                curve = curve
-            )
+        val walletManagersMap = blockchains.map { blockchain ->
+            blockchain to makeWalletManager(cardId, walletPublicKey, blockchain, curve)
+        }.toMap().toMutableMap()
+
+        tokens?.forEach { token ->
+            val walletManager = walletManagersMap[token.blockchain]
+                ?: makeWalletManager(cardId, walletPublicKey, token.blockchain, curve)
+            walletManager?.cardTokens?.add(token)
         }
+        return walletManagersMap.values.filterNotNull()
     }
 
     fun makeEthereumWalletManager(
@@ -86,8 +89,8 @@ class WalletManagerFactory(
         val blockchain = if (isTestNet) Blockchain.EthereumTestnet else Blockchain.Ethereum
         val walletManager =
             makeWalletManager(cardId, walletPublicKey, blockchain, tokens) ?: return null
-        val additionalTokens = tokens.filterNot { walletManager.presetTokens.contains(it) }
-        walletManager.presetTokens.addAll(additionalTokens)
+        val additionalTokens = tokens.filterNot { walletManager.cardTokens.contains(it) }
+        walletManager.cardTokens.addAll(additionalTokens)
         return walletManager
     }
 
@@ -143,7 +146,9 @@ class WalletManagerFactory(
                 BitcoinCashWalletManager(
                     wallet,
                     BitcoinCashTransactionBuilder(walletPublicKey, blockchain),
-                    BitcoinCashNetworkService(blockchainSdkConfig.blockchairApiKey)
+                    BitcoinCashNetworkService(
+                        blockchairAuthorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
+                    )
                 )
 
             Blockchain.Dogecoin ->
@@ -170,8 +175,9 @@ class WalletManagerFactory(
                 }
                 jsonRpcProviders.add(EthereumJsonRpcProvider(API_TANGEM_ETHEREUM))
 
-                val blockchairEthNetworkProvider =
-                    BlockchairEthNetworkProvider(blockchainSdkConfig.blockchairApiKey)
+                val blockchairEthNetworkProvider = BlockchairEthNetworkProvider(
+                    authorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
+                )
                 val blockcypherNetworkProvider =
                     BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
 
@@ -255,9 +261,10 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.XRP -> {
-                val rippledProvider1 = RippledNetworkProvider(API_RIPPLED)
-                val rippledProvider2 = RippledNetworkProvider(API_RIPPLED_RESERVE)
-                val providers = listOf(rippledProvider1, rippledProvider2)
+                val rippledProvider1 = RippledNetworkProvider(API_XRP_LEDGER_FOUNDATION)
+                val rippledProvider2 = RippledNetworkProvider(API_RIPPLE)
+                val rippledProvider3 = RippledNetworkProvider(API_RIPPLE_RESERVE)
+                val providers = listOf(rippledProvider1, rippledProvider2, rippledProvider3)
                 val networkService = XrpNetworkService(providers)
 
                 XrpWalletManager(
@@ -305,7 +312,12 @@ class WalletManagerFactory(
 
         if (blockchain == Blockchain.Bitcoin) providers.add(BlockchainInfoNetworkProvider())
 
-        providers.add(BlockchairNetworkProvider(blockchain, blockchainSdkConfig.blockchairApiKey))
+        providers.add(
+            BlockchairNetworkProvider(
+                blockchain = blockchain,
+                authorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
+            )
+        )
 
         val blockcypherTokens = blockchainSdkConfig.blockcypherTokens
         if (!blockcypherTokens.isNullOrEmpty()) {
