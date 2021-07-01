@@ -3,14 +3,18 @@ package com.tangem.blockchain.common
 import java.util.*
 
 data class Token(
-        val name: String,
-        val symbol: String,
-        val contractAddress: String,
-        val decimals: Int,
-        val blockchain: Blockchain = Blockchain.Ethereum
+    val name: String,
+    val symbol: String,
+    val contractAddress: String,
+    val decimals: Int,
+    val blockchain: Blockchain = Blockchain.Ethereum
 ) {
-    constructor(symbol: String, contractAddress: String, decimals: Int) :
-            this(symbol, symbol, contractAddress, decimals)
+    constructor(
+        symbol: String,
+        contractAddress: String,
+        decimals: Int,
+        blockchain: Blockchain = Blockchain.Ethereum
+    ) : this(symbol, symbol, contractAddress, decimals, blockchain)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
