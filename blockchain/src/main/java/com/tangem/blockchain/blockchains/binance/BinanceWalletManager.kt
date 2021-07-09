@@ -52,7 +52,8 @@ class BinanceWalletManager(
             val token = Token(
                     symbol = it.key.split("-")[0],
                     contractAddress = it.key,
-                    decimals = blockchain.decimals()
+                    decimals = blockchain.decimals(),
+                    blockchain = blockchain
             )
             wallet.addTokenValue(it.value, token)
         }
