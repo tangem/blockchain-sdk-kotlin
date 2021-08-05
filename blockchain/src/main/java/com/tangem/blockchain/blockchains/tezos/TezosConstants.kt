@@ -1,7 +1,6 @@
 package com.tangem.blockchain.blockchains.tezos
 
-import com.tangem.commands.common.card.EllipticCurve
-import java.lang.Exception
+import com.tangem.common.card.EllipticCurve
 
 class TezosConstants {
     companion object {
