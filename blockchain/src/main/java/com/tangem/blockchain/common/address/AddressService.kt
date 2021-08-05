@@ -1,6 +1,6 @@
 package com.tangem.blockchain.common.address
 
-import com.tangem.commands.common.card.EllipticCurve
+import com.tangem.common.card.EllipticCurve
 
 abstract class AddressService {
     abstract fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve? = EllipticCurve.Secp256k1): String

@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.binance
 
 import com.tangem.blockchain.blockchains.binance.client.encoding.Crypto
 import com.tangem.blockchain.common.address.AddressService
-import com.tangem.commands.common.card.EllipticCurve
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
