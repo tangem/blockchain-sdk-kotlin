@@ -9,8 +9,8 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.toCanonicalECDSASignature
-import com.tangem.commands.common.card.EllipticCurve
 import com.tangem.common.CompletionResult
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.isZero
 import kotlinx.coroutines.async
