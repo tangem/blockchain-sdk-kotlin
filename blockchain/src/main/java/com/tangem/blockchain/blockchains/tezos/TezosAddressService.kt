@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.tezos
 
 import com.tangem.blockchain.common.address.AddressService
-import com.tangem.commands.common.card.EllipticCurve
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toCompressedPublicKey

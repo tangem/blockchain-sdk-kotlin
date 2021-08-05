@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum
 
 import com.tangem.blockchain.common.address.AddressService
-import com.tangem.commands.common.card.EllipticCurve
+import com.tangem.common.card.EllipticCurve
 import org.kethereum.crypto.toAddress
 import org.kethereum.erc55.hasValidERC55ChecksumOrNoChecksum
 import org.kethereum.erc55.withERC55Checksum
