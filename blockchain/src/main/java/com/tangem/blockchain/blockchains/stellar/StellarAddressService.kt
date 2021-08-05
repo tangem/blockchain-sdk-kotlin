@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.stellar
 
 import com.tangem.blockchain.common.address.AddressService
-import com.tangem.commands.common.card.EllipticCurve
+import com.tangem.common.card.EllipticCurve
 import org.stellar.sdk.KeyPair
 
 class StellarAddressService: AddressService() {

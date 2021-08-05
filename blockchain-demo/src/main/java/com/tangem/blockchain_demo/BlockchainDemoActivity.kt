@@ -6,14 +6,14 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.tangem.TangemSdk
-import com.tangem.TangemSdkError
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.Signer
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain_demo.databinding.ActivityBlockchainDemoBinding
-import com.tangem.commands.common.card.Card
 import com.tangem.common.CompletionResult
+import com.tangem.common.card.Card
+import com.tangem.common.core.TangemSdkError
 import com.tangem.tangem_sdk_new.extensions.init
 import kotlinx.coroutines.*
 import java.io.PrintWriter
@@ -73,12 +73,11 @@ class BlockchainDemoActivity : AppCompatActivity() {
                         val wallet = result.data.wallets.first()
                         walletManager = WalletManagerFactory().makeWalletManager(
                             result.data.cardId,
-                            wallet.publicKey!!,
+                            wallet.publicKey,
                             Blockchain.fromId(
-                                result.data.cardData?.blockchainName
-                                    ?: Blockchain.Ethereum.id
+                                Blockchain.Ethereum.id
                             ),
-                            wallet.curve!!
+                            wallet.curve
                         )!!
                         token = walletManager.wallet.getTokens().firstOrNull()
                         getInfo()
