@@ -1,6 +1,7 @@
 package com.tangem.blockchain.common
 
-import com.tangem.TangemError
+import com.tangem.common.core.TangemError
+
 
 class CreateAccountUnderfunded(val minReserve: Amount) : Exception()
 class SendException(message: String) : Exception(message)
