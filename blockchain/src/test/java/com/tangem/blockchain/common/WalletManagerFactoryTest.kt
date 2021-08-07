@@ -1,7 +1,6 @@
 package com.tangem.blockchain.common
 
 import com.google.common.truth.Truth
-import com.tangem.SessionEnvironment
 import com.tangem.blockchain.blockchains.binance.BinanceWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashWalletManager
@@ -12,14 +11,16 @@ import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
 import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
 import com.tangem.blockchain.blockchains.tezos.TezosWalletManager
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
-import com.tangem.commands.common.card.EllipticCurve
-import com.tangem.commands.read.ReadCommand
 import com.tangem.common.apdu.ResponseApdu
+import com.tangem.common.card.EllipticCurve
+import com.tangem.common.core.Config
+import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
+import com.tangem.common.services.secure.UnsafeInMemoryStorage
+import com.tangem.operations.read.ReadCommand
 import org.bitcoinj.core.ECKey
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters
-import org.bouncycastle.crypto.signers.ECDSASigner
 import org.bouncycastle.jcajce.provider.digest.Keccak
 import org.junit.Test
 import org.kethereum.crypto.CryptoAPI
@@ -115,11 +116,11 @@ internal class WalletManagerFactoryTest {
         val pairPublicKey = "04752A727E14BBA5BD73B6714D72500F61FFD11026AD1196D2E1C54577CBEEAC3D11FC68A64700F8D533F4E311964EA8FB3AA26C588295F2133868D69C3E628693"
 
         val responseApdu = ResponseApdu(data.hexToBytes())
-        val card = ReadCommand().deserialize(SessionEnvironment(), responseApdu)
+        val card = ReadCommand().deserialize(SessionEnvironment(Config(), UnsafeInMemoryStorage()), responseApdu).card
         val walletManager =
                 WalletManagerFactory().makeMultisigWalletManager(
                         card.cardId,
-                        card.wallets.first().publicKey!!,
+                        card.wallets.first().publicKey,
                         pairPublicKey.hexToBytes()
                 )
 
