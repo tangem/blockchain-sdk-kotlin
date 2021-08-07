@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.tezos
 
 import com.google.common.truth.Truth
-import com.tangem.commands.common.card.EllipticCurve
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
