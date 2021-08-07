@@ -40,7 +40,7 @@ import com.tangem.blockchain.network.*
 import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairNetworkProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
-import com.tangem.commands.common.card.EllipticCurve
+import com.tangem.common.card.EllipticCurve
 
 class WalletManagerFactory(
     private val blockchainSdkConfig: BlockchainSdkConfig = BlockchainSdkConfig()

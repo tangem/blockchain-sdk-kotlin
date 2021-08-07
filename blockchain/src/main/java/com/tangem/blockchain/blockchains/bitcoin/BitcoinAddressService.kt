@@ -5,7 +5,7 @@ import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
 import com.tangem.blockchain.blockchains.litecoin.LitecoinSegwitMainNetParams
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.*
-import com.tangem.commands.common.card.EllipticCurve
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey

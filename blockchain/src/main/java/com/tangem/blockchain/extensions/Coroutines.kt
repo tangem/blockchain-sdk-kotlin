@@ -1,17 +1,15 @@
 package com.tangem.blockchain.extensions
 
 import com.tangem.Message
-import com.tangem.TangemError
 import com.tangem.TangemSdk
 import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
+import com.tangem.common.core.TangemError
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import retrofit2.HttpException
 import java.io.IOException
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 
 suspend fun <T> retryIO(
@@ -76,38 +74,45 @@ sealed class SimpleResult {
 }
 
 class Signer(
-        private val tangemSdk: TangemSdk, private val initialMessage: Message? = null
+    private val tangemSdk: TangemSdk, private val initialMessage: Message? = null,
 ) : TransactionSigner {
     override suspend fun sign(
-            hashes: List<ByteArray>, cardId: String, walletPublicKey: ByteArray
+        hashes: List<ByteArray>, cardId: String, walletPublicKey: ByteArray,
     ): CompletionResult<List<ByteArray>> =
-            suspendCancellableCoroutine { continuation ->
-                tangemSdk.sign(
-                        hashes = hashes.toTypedArray(),
-                        cardId = cardId,
-                        walletPublicKey = walletPublicKey,
-                        initialMessage = initialMessage,
-                ) { result -> continuation.resume(result) }
-            }
-
-    override suspend fun sign(
-            hash: ByteArray, cardId: String, walletPublicKey: ByteArray
-    ): CompletionResult<ByteArray> =
-            suspendCancellableCoroutine { continuation ->
-                tangemSdk.sign(
-                        hashes = arrayOf(hash),
-                        cardId = cardId,
-                        walletPublicKey = walletPublicKey,
-                        initialMessage = initialMessage,
-                ) { result ->
-                    when (result) {
-                        is CompletionResult.Success ->
-                            continuation.resume(CompletionResult.Success(result.data.first()))
-                        is CompletionResult.Failure ->
-                            continuation.resume(CompletionResult.Failure(result.error))
-                    }
+        suspendCancellableCoroutine { continuation ->
+            tangemSdk.sign(
+                hashes = hashes.toTypedArray(),
+                cardId = cardId,
+                walletPublicKey = walletPublicKey,
+                initialMessage = initialMessage,
+            ) { result ->
+                when (result) {
+                    is CompletionResult.Success ->
+                        continuation.resume(CompletionResult.Success(result.data.signatures))
+                    is CompletionResult.Failure ->
+                        continuation.resume(CompletionResult.Failure(result.error))
                 }
             }
+        }
+
+    override suspend fun sign(
+        hash: ByteArray, cardId: String, walletPublicKey: ByteArray,
+    ): CompletionResult<ByteArray> =
+        suspendCancellableCoroutine { continuation ->
+            tangemSdk.sign(
+                hash = hash,
+                cardId = cardId,
+                walletPublicKey = walletPublicKey,
+                initialMessage = initialMessage,
+            ) { result ->
+                when (result) {
+                    is CompletionResult.Success ->
+                        continuation.resume(CompletionResult.Success(result.data.signature))
+                    is CompletionResult.Failure ->
+                        continuation.resume(CompletionResult.Failure(result.error))
+                }
+            }
+        }
 }
 
 fun Result<*>.isNetworkError(): Boolean {
