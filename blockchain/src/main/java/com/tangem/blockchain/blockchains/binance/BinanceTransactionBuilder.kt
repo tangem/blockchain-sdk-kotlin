@@ -8,6 +8,7 @@ import com.tangem.blockchain.blockchains.binance.client.encoding.message.Transfe
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionExtras
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.isAboveZero
 import com.tangem.common.extensions.calculateSha256
@@ -48,6 +49,7 @@ class BinanceTransactionBuilder(
                 .setScale(Blockchain.Binance.decimals()).toPlainString()
 
         val options = TransactionOption.DEFAULT_INSTANCE
+        options.memo = (transactionData.extras as? BinanceTransactionExtras)?.memo ?: ""
 
         val accountData = BinanceAccountData(chainId, accountNumber, sequence)
 
@@ -78,3 +80,5 @@ data class BinanceAccountData(
         val accountNumber: Long,
         val sequence: Long
 )
+
+data class BinanceTransactionExtras(val memo: String) : TransactionExtras
