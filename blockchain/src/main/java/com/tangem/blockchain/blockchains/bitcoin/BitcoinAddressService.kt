@@ -46,7 +46,7 @@ open class BitcoinAddressService(
 
     override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?): Set<Address> {
         return when (blockchain) {
-            Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> {
+            Blockchain.Bitcoin, Blockchain.BitcoinTestnet, Blockchain.Litecoin -> {
                 setOf(makeLegacyAddress(walletPublicKey), makeSegwitAddress(walletPublicKey))
             }
             else -> {
