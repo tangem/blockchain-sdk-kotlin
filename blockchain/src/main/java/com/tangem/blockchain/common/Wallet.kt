@@ -72,6 +72,8 @@ class Wallet(
             date = Calendar.getInstance()
             hash = hash?.toLowerCase(Locale.US)
         }
+        if (recentTransactions.any { it.hash == transactionData.hash }) return
+
         recentTransactions.add(transactionData)
     }
 
