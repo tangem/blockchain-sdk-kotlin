@@ -29,7 +29,7 @@ task uploadSnapshot(type: Upload) {
     repositories {
         mavenDeployer {
             repository(url: "https://nexus.tangem-tech.com/repository/maven-snapshots/") {
-                authentication(userName: "developer", password: "smartcash987")
+                authentication(userName: "$nexusUser", password: "$nexusPass")
             }
             pom.version = "$prefix-SNAPSHOT"
 
