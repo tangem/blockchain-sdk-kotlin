@@ -6,5 +6,8 @@ import com.tangem.blockchain.network.blockchair.BlockchairNetworkProvider
 class BitcoinCashNetworkService(
         blockchairApiKey: String? = null,
         blockchairAuthorizationToken: String? = null
-) :
-        BlockchairNetworkProvider(Blockchain.BitcoinCash, blockchairApiKey)
+) : BlockchairNetworkProvider(
+        Blockchain.BitcoinCash,
+        blockchairApiKey,
+        blockchairAuthorizationToken
+)
