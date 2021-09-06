@@ -23,19 +23,6 @@ import java.math.BigInteger
 class EthereumUtils {
     companion object {
 
-        fun getChainId(blockchain: Blockchain): Int {
-            return when (blockchain) {
-                Blockchain.Ethereum -> Chain.Mainnet.id
-                Blockchain.EthereumTestnet -> Chain.Rinkeby.id
-                Blockchain.RSK -> Chain.RskMainnet.id
-                Blockchain.BSC -> Chain.BscMainnet.id
-                Blockchain.BSCTestnet -> Chain.BscTestnet.id
-                Blockchain.Polygon -> Chain.Polygon.id
-                Blockchain.PolygonTestnet -> Chain.PolygonTestnet.id
-                else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
-            }
-        }
-
         fun ByteArray.toKeccak(): ByteArray {
             return this.keccak()
         }
@@ -43,7 +30,7 @@ class EthereumUtils {
         fun prepareSignedMessageData(
             signedHash: ByteArray,
             hashToSign: ByteArray,
-            publicKey: ByteArray
+            publicKey: ByteArray,
         ): String {
             val r = BigInteger(1, signedHash.copyOfRange(0, 32))
             val s = BigInteger(1, signedHash.copyOfRange(32, 64))
@@ -103,8 +90,10 @@ class EthereumUtils {
                 nonce = nonceValue,
                 input = extras?.data ?: input
             )
+            val chainId = blockchain.getChainId()
+                ?: throw Exception("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
             val hash = transaction
-                .encodeRLP(SignatureData(v = getChainId(blockchain).toBigInteger()))
+                .encodeRLP(SignatureData(v = chainId.toBigInteger()))
                 .keccak()
             return TransactionToSign(transaction, hash)
         }
