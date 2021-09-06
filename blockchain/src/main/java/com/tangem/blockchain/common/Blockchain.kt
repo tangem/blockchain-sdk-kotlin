@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressType
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressType
+import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
@@ -211,9 +212,36 @@ enum class Blockchain(
         }
     }
 
+    fun getChainId(): Int? {
+        return when (this) {
+            Ethereum -> Chain.Mainnet.id
+            EthereumTestnet -> Chain.Rinkeby.id
+            RSK -> Chain.RskMainnet.id
+            BSC -> Chain.BscMainnet.id
+            BSCTestnet -> Chain.BscTestnet.id
+            Polygon -> Chain.Polygon.id
+            PolygonTestnet -> Chain.PolygonTestnet.id
+            else -> null
+        }
+    }
+
     companion object {
         private val values = values()
         fun fromId(id: String): Blockchain = values.find { it.id == id } ?: Unknown
+
+        fun fromChainId(chainId: Int): Blockchain? {
+            return when (chainId) {
+                Chain.Mainnet.id -> Ethereum
+                Chain.Rinkeby.id -> EthereumTestnet
+                Chain.RskMainnet.id -> RSK
+                Chain.BscMainnet.id -> BSC
+                Chain.BscTestnet.id -> BSCTestnet
+                Chain.Polygon.id -> Polygon
+                Chain.PolygonTestnet.id -> PolygonTestnet
+                else -> null
+            }
+        }
+
 
         fun secp256k1Blockchains(isTestnet: Boolean): List<Blockchain> {
             return if (isTestnet) {
