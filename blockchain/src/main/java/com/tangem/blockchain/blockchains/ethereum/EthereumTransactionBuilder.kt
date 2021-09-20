@@ -32,8 +32,12 @@ class EthereumTransactionBuilder(
 
         val ecdsaSignature = ECDSASignature(r, s).canonicalise()
 
-        val recId = ecdsaSignature.determineRecId(transactionToSign.hash, PublicKey(walletPublicKey.sliceArray(1..64)))
-        val chainId = EthereumUtils.getChainId(blockchain)
+        val recId = ecdsaSignature.determineRecId(
+            transactionToSign.hash,
+            PublicKey(walletPublicKey.sliceArray(1..64))
+        )
+        val chainId = blockchain.getChainId()
+            ?: throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
         val v = (recId + 27 + 8 + (chainId * 2)).toBigInteger()
         val signatureData = SignatureData(ecdsaSignature.r, ecdsaSignature.s, v)
 
