@@ -48,7 +48,7 @@ suspend fun <T> retryIO(
 
 sealed class Result<out T> {
     data class Success<out T>(val data: T) : Result<T>()
-    data class Failure(val error: Throwable?) : Result<Nothing>()
+    data class Failure(val error: Throwable) : Result<Nothing>()
 
     companion object {
         fun failure(sdkError: TangemError): Failure =
@@ -59,13 +59,6 @@ sealed class Result<out T> {
 sealed class SimpleResult {
     object Success : SimpleResult()
     data class Failure(val error: Throwable?) : SimpleResult()
-
-    fun <T> toResultWithData(data: T): Result<T> {
-        return when (this) {
-            is Success -> Result.Success(data)
-            is Failure -> Result.Failure(this.error)
-        }
-    }
 
     companion object {
         fun failure(sdkError: TangemError): Failure =
