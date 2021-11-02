@@ -303,8 +303,7 @@ class WalletManagerFactory(
 
     private fun checkIfWrongKey(curve: EllipticCurve, walletPublicKey: ByteArray): Boolean {
         return (curve == EllipticCurve.Ed25519 && walletPublicKey.size != 32) ||
-                ((curve == EllipticCurve.Secp256k1 || curve == EllipticCurve.Secp256r1)
-                        && walletPublicKey.size != 65)
+            (curve == EllipticCurve.Secp256r1 && walletPublicKey.size != 65)
     }
 
     private fun makeBitcoinNetworkService(blockchain: Blockchain): BitcoinNetworkService {
