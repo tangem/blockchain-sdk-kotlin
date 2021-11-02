@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.rsk
 
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.common.card.EllipticCurve
+import com.tangem.common.extensions.toDecompressedPublicKey
 import com.tangem.common.extensions.toHexString
 import org.kethereum.crypto.toAddress
 import org.kethereum.erc55.isValid
@@ -12,7 +13,9 @@ import java.util.*
 
 class RskAddressService : AddressService() {
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String =
-            PublicKey(walletPublicKey.sliceArray(1..64)).toAddress().withChecksum().hex
+            PublicKey(
+                walletPublicKey.toDecompressedPublicKey().sliceArray(1..64)
+            ).toAddress().withChecksum().hex
 
     override fun validate(address: String): Boolean = Address(address).hasValidChecksumOrNoChecksum()
 
