@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.ethereum
 
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.common.extensions.toDecompressedPublicKey
 import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.crypto.api.ec.ECDSASignature
 import org.kethereum.crypto.determineRecId
@@ -13,8 +14,11 @@ import org.kethereum.model.Transaction
 import java.math.BigInteger
 
 class EthereumTransactionBuilder(
-    private val walletPublicKey: ByteArray, private val blockchain: Blockchain,
+    walletPublicKey: ByteArray,
+    private val blockchain: Blockchain,
 ) {
+    private val walletPublicKey: ByteArray = walletPublicKey.toDecompressedPublicKey().sliceArray(1..64)
+
     internal var gasLimit = DEFAULT_GAS_LIMIT
 
     fun buildToSign(transactionData: TransactionData, nonce: BigInteger?): TransactionToSign? {
@@ -34,7 +38,7 @@ class EthereumTransactionBuilder(
 
         val recId = ecdsaSignature.determineRecId(
             transactionToSign.hash,
-            PublicKey(walletPublicKey.sliceArray(1..64))
+            PublicKey(walletPublicKey)
         )
         val chainId = blockchain.getChainId()
             ?: throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
