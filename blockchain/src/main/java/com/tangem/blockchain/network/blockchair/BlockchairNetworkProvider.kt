@@ -10,6 +10,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.API_BLOCKCHAIR
+import com.tangem.blockchain.network.API_BLOCKCKAIR_TANGEM
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.hexToBytes
 import java.math.BigDecimal
@@ -23,13 +24,19 @@ open class BlockchairNetworkProvider(
     private val authorizationToken: String? = null
 ) : BitcoinNetworkProvider {
 
-    override val host: String = API_BLOCKCHAIR + getPath(blockchain)
+    override val host: String = createHost(blockchain)
 
     private val api: BlockchairApi by lazy {
         createRetrofitInstance(host).create(BlockchairApi::class.java)
     }
+
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.ROOT)
     private val decimals = blockchain.decimals()
+
+    private fun createHost(blockchain: Blockchain): String {
+        val api = if (apiKey != null) API_BLOCKCHAIR else API_BLOCKCKAIR_TANGEM
+        return api + getPath(blockchain)
+    }
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         return try {
