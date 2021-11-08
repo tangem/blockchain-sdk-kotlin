@@ -147,6 +147,7 @@ class WalletManagerFactory(
                     wallet,
                     BitcoinCashTransactionBuilder(walletPublicKey, blockchain),
                     BitcoinCashNetworkService(
+                        blockchairApiKey = blockchainSdkConfig.blockchairApiKey,
                         blockchairAuthorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
                     )
                 )
@@ -176,6 +177,7 @@ class WalletManagerFactory(
                 jsonRpcProviders.add(EthereumJsonRpcProvider(API_TANGEM_ETHEREUM))
 
                 val blockchairEthNetworkProvider = BlockchairEthNetworkProvider(
+                    apiKey = blockchainSdkConfig.blockchairApiKey,
                     authorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
                 )
                 val blockcypherNetworkProvider =
@@ -314,6 +316,7 @@ class WalletManagerFactory(
         providers.add(
             BlockchairNetworkProvider(
                 blockchain = blockchain,
+                apiKey = blockchainSdkConfig.blockchairApiKey,
                 authorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
             )
         )
