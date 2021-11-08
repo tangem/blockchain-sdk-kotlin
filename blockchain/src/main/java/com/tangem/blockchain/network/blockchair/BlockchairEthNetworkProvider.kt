@@ -4,6 +4,7 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.API_BLOCKCHAIR
+import com.tangem.blockchain.network.API_BLOCKCKAIR_TANGEM
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.isZero
 import kotlinx.coroutines.async
@@ -18,9 +19,11 @@ class BlockchairEthNetworkProvider(
 ) {
 
     private val api: BlockchairApi by lazy {
-        createRetrofitInstance(API_BLOCKCHAIR + ETHEREUM_BLOCKCHAIN_PATH)
-            .create(BlockchairApi::class.java)
+        val api = if (apiKey != null) API_BLOCKCHAIR else API_BLOCKCKAIR_TANGEM
+        val host = api + ETHEREUM_BLOCKCHAIN_PATH
+        createRetrofitInstance(host).create(BlockchairApi::class.java)
     }
+
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.ROOT)
     private val blockchain = Blockchain.Ethereum
 
