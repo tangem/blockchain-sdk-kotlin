@@ -82,11 +82,15 @@ class RippledNetworkProvider(baseUrl: String) : XrpNetworkProvider {
         return try {
             val submitBody = makeSubmitBody(transaction)
             val submitData = retryIO { api.submitTransaction(submitBody) }
-            if (submitData.result!!.resultCode == 0) {
+            val result = submitData.result!!
+            if (result.resultCode == 0) {
                 SimpleResult.Success
             } else {
-                SimpleResult.Failure(Exception(submitData.result!!.resultMessage
-                        ?: submitData.result!!.errorException))
+                if (result.resultMessage == "Held until escalated fee drops.") {
+                    SimpleResult.Success
+                } else {
+                    SimpleResult.Failure(Exception(result.resultMessage ?: result.errorException))
+                }
             }
         } catch (exception: Exception) {
             SimpleResult.Failure(exception)
