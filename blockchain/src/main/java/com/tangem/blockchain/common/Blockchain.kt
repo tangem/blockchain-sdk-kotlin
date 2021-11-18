@@ -154,8 +154,7 @@ enum class Blockchain(
     }
 
     fun defaultAddressType(): AddressType = when (this) {
-        Bitcoin, BitcoinTestnet -> BitcoinAddressType.Segwit
-        Litecoin -> BitcoinAddressType.Legacy //TODO: change to Segwit when sending from Segwit is  fixed
+        Bitcoin, BitcoinTestnet -> BitcoinAddressType.Segwit //TODO: add Litecoin when sending from Segwit is fixed
         CardanoShelley -> CardanoAddressType.Shelley
         else -> DefaultAddressType
     }
