@@ -27,8 +27,7 @@ class StellarTransactionTest {
 
         val walletAddress = StellarAddressService().makeAddress(walletPublicKey)
         val calendar = Calendar.Builder().setInstant(instant).build()
-        val transactionBuilder =
-                StellarTransactionBuilder(StellarNetworkServiceMock(), walletPublicKey, calendar)
+        val transactionBuilder = StellarTransactionBuilder(StellarNetworkServiceMock(), walletPublicKey)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
         val fee = Amount(amountToSend, feeValue)
@@ -36,7 +35,8 @@ class StellarTransactionTest {
                 sourceAddress = walletAddress,
                 destinationAddress = destinationAddress,
                 amount = amountToSend,
-                fee = fee
+                fee = fee,
+                date = calendar
         )
 
         val expectedHashToSign = "43D14A19E4FB9D21F461F9A2EC558D843E2E4CEEBEE8EB48740CFB496C38BC23"
@@ -74,8 +74,7 @@ class StellarTransactionTest {
 
         val walletAddress = StellarAddressService().makeAddress(walletPublicKey)
         val calendar = Calendar.Builder().setInstant(instant).build()
-        val transactionBuilder =
-                StellarTransactionBuilder(StellarNetworkServiceMock(), walletPublicKey, calendar)
+        val transactionBuilder = StellarTransactionBuilder(StellarNetworkServiceMock(), walletPublicKey)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Token(token))
         val fee = Amount(feeValue, blockchain, AmountType.Coin)
@@ -83,7 +82,8 @@ class StellarTransactionTest {
                 sourceAddress = walletAddress,
                 destinationAddress = destinationAddress,
                 amount = amountToSend,
-                fee = fee
+                fee = fee,
+                date = calendar
         )
 
         val expectedHashToSign = "89632F5A2FD4A6D94859F3A0C53468489EFE8BCAF0AB3A89847775C2D7610749"
