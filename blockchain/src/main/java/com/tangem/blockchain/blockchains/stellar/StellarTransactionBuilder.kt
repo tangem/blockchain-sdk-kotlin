@@ -13,7 +13,6 @@ import java.util.*
 class StellarTransactionBuilder(
         private val networkProvider: StellarNetworkProvider,
         private val publicKey: ByteArray,
-        private val calendar: Calendar = Calendar.getInstance(),
 ) {
 
     val network: Network = Network.PUBLIC
@@ -27,6 +26,7 @@ class StellarTransactionBuilder(
         val fee = transactionData.fee!!.longValue!!.toInt()
         val destinationKeyPair = KeyPair.fromAccountId(transactionData.destinationAddress)
         val sourceKeyPair = KeyPair.fromAccountId(transactionData.sourceAddress)
+        val timeBounds = getTimeBounds(transactionData)
 
         val stellarMemo = (transactionData.extras as? StellarTransactionExtras)?.memo
         val memo = try {
@@ -64,7 +64,7 @@ class StellarTransactionBuilder(
                                     amount.value.toString()
                             ).build()
                         }
-                transaction = operation.toTransaction(sourceKeyPair, sequence, fee, memo)
+                transaction = operation.toTransaction(sourceKeyPair, sequence, fee, timeBounds, memo)
                         ?: return Result.Failure(Exception("Failed to assemble transaction")) // should not happen
 
                 Result.Success(transaction.hash())
@@ -94,7 +94,7 @@ class StellarTransactionBuilder(
                             .setSourceAccount(sourceKeyPair.accountId)
                             .build()
                 }
-                transaction = operation.toTransaction(sourceKeyPair, sequence, fee, memo)
+                transaction = operation.toTransaction(sourceKeyPair, sequence, fee,timeBounds, memo)
                         ?: return Result.Failure(Exception("Failed to assemble transaction")) // should not happen
 
                 Result.Success(transaction.hash())
@@ -103,18 +103,23 @@ class StellarTransactionBuilder(
         }
     }
 
+    private fun getTimeBounds(transactionData: TransactionData): TimeBounds {
+        val calendar = transactionData.date ?: Calendar.getInstance()
+        val minTime = 0L
+        val maxTime = calendar.timeInMillis / 1000 + 120
+        return TimeBounds(minTime, maxTime)
+    }
+
     private fun Operation.toTransaction(
             sourceKeyPair: KeyPair,
             sequence: Long,
             fee: Int,
+            timeBounds: TimeBounds,
             memo: Memo?
     ): Transaction? {
 
         val accountID = AccountID()
         accountID.accountID = sourceKeyPair.xdrPublicKey
-        val currentTime = calendar.timeInMillis / 1000
-        val minTime = 0L
-        val maxTime = currentTime + 120
 
         val transactionBuilder = Transaction.Builder(
                 Account(sourceKeyPair.accountId, sequence),
@@ -122,7 +127,7 @@ class StellarTransactionBuilder(
         )
         transactionBuilder
                 .addOperation(this)
-                .addTimeBounds(TimeBounds(minTime, maxTime))
+                .addTimeBounds(timeBounds)
                 .setOperationFee(fee)
 
         if (memo != null) transactionBuilder.addMemo(memo)
