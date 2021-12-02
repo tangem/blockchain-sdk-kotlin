@@ -106,11 +106,14 @@ abstract class WalletManager(
         wallet.removeToken(token)
     }
 
-    open suspend fun addToken(token: Token): Result<Amount> {
+    open suspend fun addToken(token: Token) {
         if (!cardTokens.contains(token)) {
             cardTokens.add(token)
         }
-        return Result.Failure(Exception("Adding tokens not supported for ${wallet.blockchain.currency}"))
+    }
+
+    open suspend fun addTokens(tokens: List<Token>) {
+        tokens.forEach { addToken(it) }
     }
 
     private fun validateAmountValue(amount: Amount) = amount.isAboveZero()
@@ -150,11 +153,15 @@ interface TransactionSender {
 
 interface TransactionSigner {
     suspend fun sign(
-            hashes: List<ByteArray>, cardId: String, walletPublicKey: ByteArray
+        hashes: List<ByteArray>,
+        cardId: String,
+        publicKey: Wallet.PublicKey
     ): CompletionResult<List<ByteArray>>
 
     suspend fun sign(
-            hash: ByteArray, cardId: String, walletPublicKey: ByteArray
+        hash: ByteArray,
+        cardId: String,
+        publicKey: Wallet.PublicKey
     ): CompletionResult<ByteArray>
 }
 

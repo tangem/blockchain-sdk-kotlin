@@ -118,7 +118,7 @@ internal class WalletManagerFactoryTest {
         val responseApdu = ResponseApdu(data.hexToBytes())
         val card = ReadCommand().deserialize(SessionEnvironment(Config(), UnsafeInMemoryStorage()), responseApdu).card
         val walletManager =
-                WalletManagerFactory().makeMultisigWalletManager(
+                WalletManagerFactory().makeTwinWalletManager(
                         card.cardId,
                         card.wallets.first().publicKey,
                         pairPublicKey.hexToBytes()
@@ -135,10 +135,10 @@ internal class WalletManagerFactoryTest {
 
         return WalletManagerFactory(BlockchainSdkConfig())
                 .makeWalletManager(
-                        cardId = cardId,
-                        walletPublicKey = publicKey,
-                        blockchain = blockchain,
-                        curve = curve
+                    cardId,
+                    blockchain,
+                    Wallet.PublicKey(publicKey, null, null),
+                    curve = curve
                 )
     }
 
