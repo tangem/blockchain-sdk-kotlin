@@ -14,6 +14,9 @@ import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.*
 import com.tangem.common.card.EllipticCurve
+import com.tangem.common.hdWallet.DerivationPath
+import com.tangem.common.hdWallet.bip.BIP44
+import java.lang.UnsupportedOperationException
 
 enum class Blockchain(
     val id: String,
@@ -222,6 +225,32 @@ enum class Blockchain(
             Polygon -> Chain.Polygon.id
             PolygonTestnet -> Chain.PolygonTestnet.id
             else -> null
+        }
+    }
+
+    // BIP44
+    fun derivationPath(): DerivationPath? {
+        if (getSupportedCurves()?.contains(EllipticCurve.Secp256k1) == false) return null
+
+        val bip44 = BIP44(coinType(), 0, BIP44.Chain.External, 0)
+        return bip44.buildPath()
+    }
+
+    fun coinType(): Long {
+        if (isTestnet()) return 1
+
+        return when (this) {
+            Bitcoin, Ducatus -> 0
+            Litecoin -> 2
+            Dogecoin -> 3
+            Ethereum, BSC, RSK, Polygon -> 60
+            XRP -> 144
+            BitcoinCash -> 145
+            Stellar -> 148
+            Binance -> 714
+            Tezos -> 1729
+            Cardano,CardanoShelley -> 1815
+            else -> throw UnsupportedOperationException()
         }
     }
 
