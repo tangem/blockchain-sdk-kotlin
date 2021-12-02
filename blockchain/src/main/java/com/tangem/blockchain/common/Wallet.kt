@@ -1,20 +1,22 @@
 package com.tangem.blockchain.common
 
 import com.tangem.blockchain.common.address.Address
+import com.tangem.common.extensions.calculateHashCode
+import com.tangem.common.hdWallet.DerivationPath
 import java.math.BigDecimal
 import java.util.*
 
 class Wallet(
-        val cardId: String,
-        val blockchain: Blockchain,
-        val addresses: Set<Address>,
-        val publicKey: ByteArray,
-        tokens: Set<Token>
+    val cardId: String,
+    val blockchain: Blockchain,
+    val addresses: Set<Address>,
+    val publicKey: PublicKey,
+    tokens: Set<Token>
 ) {
     val recentTransactions: MutableList<TransactionData> = mutableListOf() //we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
     val address = addresses.find { it.type == blockchain.defaultAddressType() }?.value
-            ?: throw Exception("Addresses must contain default address")
+        ?: throw Exception("Addresses must contain default address")
 
     init {
         setAmount(Amount(null, blockchain, AmountType.Coin))
@@ -26,7 +28,7 @@ class Wallet(
     }
 
     fun setCoinValue(value: BigDecimal) =
-            setAmount(Amount(value, blockchain, AmountType.Coin))
+        setAmount(Amount(value, blockchain, AmountType.Coin))
 
     fun addTokenValue(value: BigDecimal, token: Token): Amount {
         val amount = Amount(token, value)
@@ -38,16 +40,14 @@ class Wallet(
         amounts.remove(AmountType.Token(token))
     }
 
-    fun setReserveValue(value: BigDecimal) =
-            setAmount(Amount(value, blockchain, AmountType.Reserve))
+    fun setReserveValue(value: BigDecimal) = setAmount(Amount(value, blockchain, AmountType.Reserve))
 
     fun getTokenAmount(token: Token): Amount? {
         val key = amounts.keys.find { it is AmountType.Token && it.token == token }
         return amounts[key]
     }
 
-    fun getTokens(): Set<Token> =
-            amounts.keys.filterIsInstance<AmountType.Token>().map { it.token }.toSet()
+    fun getTokens(): Set<Token> = amounts.keys.filterIsInstance<AmountType.Token>().map { it.token }.toSet()
 
     fun addTransactionDummy(direction: TransactionDirection? = null) {
         var sourceAddress = "unknown"
@@ -58,11 +58,11 @@ class Wallet(
         }
 
         val transaction = TransactionData(
-                amount = Amount(null, blockchain),
-                fee = null,
-                sourceAddress = sourceAddress,
-                destinationAddress = destinationAddress,
-                date = Calendar.getInstance()
+            amount = Amount(null, blockchain),
+            fee = null,
+            sourceAddress = sourceAddress,
+            destinationAddress = destinationAddress,
+            date = Calendar.getInstance()
         )
         recentTransactions.add(transaction)
     }
@@ -82,8 +82,37 @@ class Wallet(
     }
 
     fun getExploreUrl(address: String? = null, token: Token? = null) =
-            blockchain.getExploreUrl(address ?: this.address, token?.contractAddress)
+        blockchain.getExploreUrl(address ?: this.address, token?.contractAddress)
 
     fun getShareUri(address: String? = null) =
-            blockchain.getShareUri(address ?: this.address)
+        blockchain.getShareUri(address ?: this.address)
+
+    data class PublicKey(
+        val seedKey: ByteArray,
+        val derivedKey: ByteArray?,
+        val derivationPath: DerivationPath?
+    ) {
+        val blockchainKey: ByteArray = derivedKey ?: seedKey
+
+        override fun equals(other: Any?): Boolean {
+            val other = other as? PublicKey ?: return false
+
+            if (!seedKey.contentEquals(other.seedKey)) return false
+            if (!derivedKey.contentEquals(other.derivedKey)) return false
+
+            return when {
+                derivationPath == null && other.derivationPath == null -> true
+                derivationPath == null -> false
+                else -> derivationPath == other.derivationPath
+            }
+        }
+
+        override fun hashCode(): Int {
+            return calculateHashCode(
+                seedKey.contentHashCode(),
+                derivedKey?.contentHashCode() ?: 0,
+                derivationPath?.hashCode() ?: 0
+            )
+        }
+    }
 }

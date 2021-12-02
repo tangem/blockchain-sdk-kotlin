@@ -41,60 +41,43 @@ import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairNetworkProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import com.tangem.common.card.EllipticCurve
+import com.tangem.common.hdWallet.ExtendedPublicKey
 
 class WalletManagerFactory(
     private val blockchainSdkConfig: BlockchainSdkConfig = BlockchainSdkConfig()
 ) {
 
+    /**
+     * Base wallet manager initializer
+     * @param cardId: Card's cardId
+     * @param blockchain: blockchain to create. If null, card native blockchain will be used
+     * @param seedKey: ExtendedPublicKey of the wallet
+     * @param derivedKey: Derived ExtendedPublicKey by the card
+     */
     fun makeWalletManager(
         cardId: String,
-        walletPublicKey: ByteArray,
         blockchain: Blockchain,
-        curve: EllipticCurve = EllipticCurve.Secp256k1
+        seedKey: ExtendedPublicKey,
+        derivedKey: ExtendedPublicKey
     ): WalletManager? {
+        if (blockchain.derivationPath() != derivedKey.derivationPath) {
+//            throw BlockchainSdkError.WrongDerivationPath
+            return null
+        }
+
         return makeWalletManager(
             cardId = cardId,
-            walletPublicKey = walletPublicKey,
             blockchain = blockchain,
-            curve = curve,
-            walletPairPublicKey = null
+            publicKey = Wallet.PublicKey(
+                seedKey.compressedPublicKey,
+                derivedKey.compressedPublicKey,
+                derivedKey.derivationPath
+            )
         )
     }
 
-    fun makeWalletManagers(
-        cardId: String,
-        walletPublicKey: ByteArray,
-        blockchains: List<Blockchain>,
-        tokens: List<Token>? = null,
-        curve: EllipticCurve = EllipticCurve.Secp256k1
-    ): List<WalletManager> {
-        val walletManagersMap = blockchains.map { blockchain ->
-            blockchain to makeWalletManager(cardId, walletPublicKey, blockchain, curve)
-        }.toMap().toMutableMap()
-
-        tokens?.forEach { token ->
-            val walletManager = walletManagersMap[token.blockchain]
-                ?: makeWalletManager(cardId, walletPublicKey, token.blockchain, curve)
-            walletManager?.cardTokens?.add(token)
-        }
-        return walletManagersMap.values.filterNotNull()
-    }
-
-    fun makeEthereumWalletManager(
-        cardId: String,
-        walletPublicKey: ByteArray,
-        tokens: List<Token>,
-        isTestNet: Boolean = false
-    ): WalletManager? {
-        val blockchain = if (isTestNet) Blockchain.EthereumTestnet else Blockchain.Ethereum
-        val walletManager =
-            makeWalletManager(cardId, walletPublicKey, blockchain, tokens) ?: return null
-        val additionalTokens = tokens.filterNot { walletManager.cardTokens.contains(it) }
-        walletManager.cardTokens.addAll(additionalTokens)
-        return walletManager
-    }
-
-    fun makeMultisigWalletManager(
+    // Wallet manager initializer for twin cards
+    fun makeTwinWalletManager(
         cardId: String,
         walletPublicKey: ByteArray,
         pairPublicKey: ByteArray,
@@ -103,49 +86,76 @@ class WalletManagerFactory(
     ): WalletManager? {
         return makeWalletManager(
             cardId = cardId,
-            walletPublicKey = walletPublicKey,
             blockchain = blockchain,
-            walletPairPublicKey = pairPublicKey,
+            publicKey = Wallet.PublicKey(walletPublicKey, null, null),
+            pairPublicKey = pairPublicKey,
             curve = curve
         )
     }
 
+    fun makeEthereumWalletManager(
+        cardId: String,
+        publicKey: Wallet.PublicKey,
+        tokens: List<Token>,
+        isTestNet: Boolean = false
+    ): WalletManager? {
+        val blockchain = if (isTestNet) Blockchain.EthereumTestnet else Blockchain.Ethereum
+        val walletManager = makeWalletManager(cardId, blockchain, publicKey, tokens) ?: return null
+
+        val additionalTokens = tokens.filterNot { walletManager.cardTokens.contains(it) }
+        walletManager.cardTokens.addAll(additionalTokens)
+        return walletManager
+    }
+
+    // Legacy wallet manager initializer
+    fun makeWalletManager(
+        cardId: String,
+        blockchain: Blockchain,
+        walletPublicKey: ByteArray,
+        curve: EllipticCurve = EllipticCurve.Secp256k1
+    ): WalletManager? {
+        return makeWalletManager(
+            cardId = cardId,
+            blockchain = blockchain,
+            publicKey = Wallet.PublicKey(walletPublicKey, null, null),
+            curve = curve
+        )
+    }
 
     internal fun makeWalletManager(
         cardId: String,
-        walletPublicKey: ByteArray,
         blockchain: Blockchain,
+        publicKey: Wallet.PublicKey,
         tokens: Collection<Token> = emptyList(),
-        walletPairPublicKey: ByteArray? = null,
+        pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1
     ): WalletManager? {
 
-        if (checkIfWrongKey(curve, walletPublicKey)) return null
+        if (checkIfWrongKey(curve, publicKey)) return null
 
-        val addresses = blockchain.makeAddresses(walletPublicKey, walletPairPublicKey, curve)
-
+        val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
         val tokens = tokens.toMutableSet()
-        val wallet = Wallet(cardId, blockchain, addresses, walletPublicKey, tokens)
+        val wallet = Wallet(cardId, blockchain, addresses, publicKey, tokens)
 
         return when (blockchain) {
             Blockchain.Bitcoin, Blockchain.BitcoinTestnet ->
                 BitcoinWalletManager(
                     wallet,
-                    BitcoinTransactionBuilder(walletPublicKey, blockchain, addresses),
+                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain, addresses),
                     makeBitcoinNetworkService(blockchain)
                 )
 
             Blockchain.Litecoin ->
                 LitecoinWalletManager(
                     wallet,
-                    BitcoinTransactionBuilder(walletPublicKey, blockchain, addresses),
+                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain, addresses),
                     makeBitcoinNetworkService(blockchain)
                 )
 
             Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet ->
                 BitcoinCashWalletManager(
                     wallet,
-                    BitcoinCashTransactionBuilder(walletPublicKey, blockchain),
+                    BitcoinCashTransactionBuilder(publicKey.blockchainKey, blockchain),
                     BitcoinCashNetworkService(
                         blockchairApiKey = blockchainSdkConfig.blockchairApiKey,
                         blockchairAuthorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
@@ -155,14 +165,14 @@ class WalletManagerFactory(
             Blockchain.Dogecoin ->
                 DogecoinWalletManager(
                     wallet,
-                    BitcoinTransactionBuilder(walletPublicKey, blockchain),
+                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain),
                     makeBitcoinNetworkService(blockchain)
                 )
 
             Blockchain.Ducatus ->
                 DucatusWalletManager(
                     wallet,
-                    BitcoinTransactionBuilder(walletPublicKey, blockchain),
+                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain),
                     DucatusNetworkService()
                 )
 
@@ -191,7 +201,7 @@ class WalletManagerFactory(
 
                 EthereumWalletManager(
                     wallet,
-                    EthereumTransactionBuilder(walletPublicKey, blockchain),
+                    EthereumTransactionBuilder(publicKey.blockchainKey, blockchain),
                     networkService,
                     tokens
                 )
@@ -199,11 +209,11 @@ class WalletManagerFactory(
             Blockchain.EthereumTestnet -> {
                 val jsonRpcProvider = EthereumJsonRpcProvider.infura(
                     API_INFURA_TESTNET, blockchainSdkConfig.infuraProjectId
-                        ?: throw Exception("Infura project Id is required")
+                    ?: throw Exception("Infura project Id is required")
                 )
                 EthereumWalletManager(
                     wallet,
-                    EthereumTransactionBuilder(walletPublicKey, blockchain),
+                    EthereumTransactionBuilder(publicKey.blockchainKey, blockchain),
                     EthereumNetworkService(listOf(jsonRpcProvider)),
                     tokens
                 )
@@ -213,7 +223,7 @@ class WalletManagerFactory(
 
                 EthereumWalletManager(
                     wallet,
-                    EthereumTransactionBuilder(walletPublicKey, blockchain),
+                    EthereumTransactionBuilder(publicKey.blockchainKey, blockchain),
                     EthereumNetworkService(listOf(jsonRpcProvider)),
                     tokens
                 )
@@ -224,7 +234,7 @@ class WalletManagerFactory(
 
                 EthereumWalletManager(
                     wallet,
-                    EthereumTransactionBuilder(walletPublicKey, blockchain),
+                    EthereumTransactionBuilder(publicKey.blockchainKey, blockchain),
                     EthereumNetworkService(listOf(jsonRpcProvider)),
                     tokens
                 )
@@ -235,7 +245,7 @@ class WalletManagerFactory(
 
                 EthereumWalletManager(
                     wallet,
-                    EthereumTransactionBuilder(walletPublicKey, blockchain),
+                    EthereumTransactionBuilder(publicKey.blockchainKey, blockchain),
                     EthereumNetworkService(listOf(jsonRpcProvider)),
                     tokens
                 )
@@ -246,7 +256,7 @@ class WalletManagerFactory(
 
                 StellarWalletManager(
                     wallet,
-                    StellarTransactionBuilder(networkService, walletPublicKey),
+                    StellarTransactionBuilder(networkService, publicKey.blockchainKey),
                     networkService,
                     tokens
                 )
@@ -258,7 +268,7 @@ class WalletManagerFactory(
 
                 CardanoWalletManager(
                     wallet,
-                    CardanoTransactionBuilder(walletPublicKey),
+                    CardanoTransactionBuilder(publicKey.blockchainKey),
                     CardanoNetworkService(providers)
                 )
             }
@@ -271,7 +281,7 @@ class WalletManagerFactory(
 
                 XrpWalletManager(
                     wallet,
-                    XrpTransactionBuilder(networkService, walletPublicKey),
+                    XrpTransactionBuilder(networkService, publicKey.blockchainKey),
                     networkService
                 )
             }
@@ -279,7 +289,7 @@ class WalletManagerFactory(
                 val isTestNet = blockchain == Blockchain.BinanceTestnet
                 BinanceWalletManager(
                     wallet,
-                    BinanceTransactionBuilder(walletPublicKey, isTestNet),
+                    BinanceTransactionBuilder(publicKey.blockchainKey, isTestNet),
                     BinanceNetworkService(isTestNet),
                     tokens
                 )
@@ -294,7 +304,7 @@ class WalletManagerFactory(
 
                 TezosWalletManager(
                     wallet,
-                    TezosTransactionBuilder(walletPublicKey, curve),
+                    TezosTransactionBuilder(publicKey.blockchainKey, curve),
                     TezosNetworkService(providers),
                     curve
                 )
@@ -303,9 +313,11 @@ class WalletManagerFactory(
         }
     }
 
-    private fun checkIfWrongKey(curve: EllipticCurve, walletPublicKey: ByteArray): Boolean {
-        return (curve == EllipticCurve.Ed25519 && walletPublicKey.size != 32) ||
-            (curve == EllipticCurve.Secp256r1 && walletPublicKey.size != 65)
+    private fun checkIfWrongKey(curve: EllipticCurve, publicKey: Wallet.PublicKey): Boolean {
+        return when(curve) {
+            EllipticCurve.Ed25519 -> publicKey.seedKey.size > 32 || publicKey.blockchainKey.size > 32
+            else -> false
+        }
     }
 
     private fun makeBitcoinNetworkService(blockchain: Blockchain): BitcoinNetworkService {
