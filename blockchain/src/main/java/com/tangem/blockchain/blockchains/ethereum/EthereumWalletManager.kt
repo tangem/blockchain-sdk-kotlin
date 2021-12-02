@@ -63,10 +63,8 @@ class EthereumWalletManager(
         val transactionToSign =
             transactionBuilder.buildToSign(transactionData, txCount.toBigInteger())
                 ?: return SimpleResult.Failure(Exception("Not enough data"))
-        val signerResponse = signer.sign(
-            transactionToSign.hash,
-            wallet.cardId, walletPublicKey = wallet.publicKey
-        )
+
+        val signerResponse = signer.sign(transactionToSign.hash,wallet.cardId, wallet.publicKey)
         return when (signerResponse) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder
@@ -120,16 +118,12 @@ class EthereumWalletManager(
         }
     }
 
-    override suspend fun addToken(token: Token): Result<Amount> {
-        if (!cardTokens.contains(token)) {
-            cardTokens.add(token)
-        }
-        return when (val result = networkProvider.getTokensBalance(wallet.address, setOf(token))) {
+    override suspend fun addToken(token: Token) {
+        super.addToken(token)
+
+        when (val result = networkProvider.getTokensBalance(wallet.address, setOf(token))) {
+            is Result.Success -> Result.Success(wallet.addTokenValue(result.data[token]!!, token))
             is Result.Failure -> Result.Failure(result.error)
-            is Result.Success -> {
-                val amount = wallet.addTokenValue(result.data[token]!!, token)
-                Result.Success(amount)
-            }
         }
     }
 
