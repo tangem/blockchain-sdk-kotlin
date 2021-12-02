@@ -73,10 +73,8 @@ class BlockchainDemoActivity : AppCompatActivity() {
                         val wallet = result.data.wallets.first()
                         walletManager = WalletManagerFactory().makeWalletManager(
                             result.data.cardId,
+                            Blockchain.fromId(Blockchain.Ethereum.id),
                             wallet.publicKey,
-                            Blockchain.fromId(
-                                Blockchain.Ethereum.id
-                            ),
                             wallet.curve
                         )!!
                         token = walletManager.wallet.getTokens().firstOrNull()
