@@ -71,10 +71,7 @@ class BinanceWalletManager(
         return when (buildTransactionResult) {
             is Result.Failure -> SimpleResult.Failure(buildTransactionResult.error)
             is Result.Success -> {
-                val signerResponse = signer.sign(
-                        buildTransactionResult.data,
-                        wallet.cardId, walletPublicKey = wallet.publicKey
-                )
+                val signerResponse = signer.sign(buildTransactionResult.data,wallet.cardId, wallet.publicKey)
                 when (signerResponse) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)

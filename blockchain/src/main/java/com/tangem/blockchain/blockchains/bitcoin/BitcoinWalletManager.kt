@@ -103,10 +103,7 @@ open class BitcoinWalletManager(
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
             is Result.Success -> {
-                val signerResult = signer.sign(
-                        buildTransactionResult.data,
-                        wallet.cardId, walletPublicKey = wallet.publicKey
-                )
+                val signerResult = signer.sign(buildTransactionResult.data,wallet.cardId, wallet.publicKey)
                 return when (signerResult) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(
