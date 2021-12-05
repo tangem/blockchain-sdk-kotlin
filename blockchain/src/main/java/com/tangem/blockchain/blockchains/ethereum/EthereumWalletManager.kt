@@ -118,10 +118,11 @@ class EthereumWalletManager(
         }
     }
 
-    override suspend fun addToken(token: Token) {
-        super.addToken(token)
-
-        when (val result = networkProvider.getTokensBalance(wallet.address, setOf(token))) {
+    override suspend fun addToken(token: Token): Result<Amount> {
+        if (!cardTokens.contains(token)) {
+            cardTokens.add(token)
+        }
+        return when (val result = networkProvider.getTokensBalance(wallet.address, setOf(token))) {
             is Result.Success -> Result.Success(wallet.addTokenValue(result.data[token]!!, token))
             is Result.Failure -> Result.Failure(result.error)
         }
