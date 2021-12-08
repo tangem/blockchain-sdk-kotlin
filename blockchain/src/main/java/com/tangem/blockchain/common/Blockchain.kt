@@ -16,7 +16,6 @@ import com.tangem.blockchain.common.address.*
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.hdWallet.DerivationPath
 import com.tangem.common.hdWallet.bip.BIP44
-import java.lang.UnsupportedOperationException
 
 enum class Blockchain(
     val id: String,
@@ -243,13 +242,16 @@ enum class Blockchain(
             Bitcoin, Ducatus -> 0
             Litecoin -> 2
             Dogecoin -> 3
-            Ethereum, BSC, RSK, Polygon -> 60
+            Ethereum -> 60
+            RSK -> 137
             XRP -> 144
             BitcoinCash -> 145
             Stellar -> 148
             Binance -> 714
+            Polygon -> 966
             Tezos -> 1729
-            Cardano,CardanoShelley -> 1815
+            Cardano, CardanoShelley -> 1815
+            BSC -> 9006
             else -> throw UnsupportedOperationException()
         }
     }
