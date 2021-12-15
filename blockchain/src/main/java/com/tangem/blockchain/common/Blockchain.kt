@@ -14,6 +14,7 @@ import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.*
 import com.tangem.common.card.EllipticCurve
+import com.tangem.common.hdWallet.DerivationNode
 import com.tangem.common.hdWallet.DerivationPath
 import com.tangem.common.hdWallet.bip.BIP44
 
@@ -201,9 +202,9 @@ enum class Blockchain(
         }
     }
 
-    fun getSupportedCurves(): List<EllipticCurve>? {
+    fun getSupportedCurves(): List<EllipticCurve> {
         return when (this) {
-            Unknown -> null
+            Unknown -> emptyList()
             Bitcoin, BitcoinTestnet, BitcoinCash, BitcoinCashTestnet, Litecoin, Ducatus,
             Ethereum, EthereumTestnet, RSK, Binance, BinanceTestnet, Dogecoin, BSC, BSCTestnet,
             Polygon, PolygonTestnet,
@@ -227,12 +228,48 @@ enum class Blockchain(
         }
     }
 
-    // BIP44
     fun derivationPath(): DerivationPath? {
-        if (getSupportedCurves()?.contains(EllipticCurve.Secp256k1) == false) return null
+        if (!getSupportedCurves().contains(EllipticCurve.Secp256k1) &&
+            !getSupportedCurves().contains(EllipticCurve.Ed25519)
+        ) {
+            return null
+        }
 
-        val bip44 = BIP44(coinType(), 0, BIP44.Chain.External, 0)
-        return bip44.buildPath()
+        return when (this) {
+            Stellar -> {
+                //Path according to sep-0005.
+                // https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0005.md
+                DerivationPath(
+                    path = listOf(
+                        DerivationNode.Hardened(BIP44.purpose),
+                        DerivationNode.Hardened(coinType()),
+                        DerivationNode.Hardened(0)
+                    )
+                )
+            }
+            CardanoShelley -> { //We use shelley for all new cards with HD wallets feature
+                //Path according to CIP-1852. https://cips.cardano.org/cips/cip1852/
+                DerivationPath(
+                    path = listOf(
+                        DerivationNode.Hardened(1852),
+                        DerivationNode.Hardened(coinType()),
+                        DerivationNode.Hardened(0),
+                        DerivationNode.NonHardened(0),
+                        DerivationNode.NonHardened(0)
+                    )
+                )
+            }
+            else -> {
+                // Standard BIP44
+                val bip44 = BIP44(
+                    coinType = coinType(),
+                    account = 0,
+                    change = BIP44.Chain.External,
+                    addressIndex = 0
+                )
+                bip44.buildPath()
+            }
+        }
     }
 
     fun coinType(): Long {
