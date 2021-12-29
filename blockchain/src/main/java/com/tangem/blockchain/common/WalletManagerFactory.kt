@@ -60,11 +60,6 @@ class WalletManagerFactory(
         seedKey: ExtendedPublicKey,
         derivedKey: ExtendedPublicKey
     ): WalletManager? {
-        if (blockchain.derivationPath() != derivedKey.derivationPath) {
-//            throw BlockchainSdkError.WrongDerivationPath
-            return null
-        }
-
         return makeWalletManager(
             cardId = cardId,
             blockchain = blockchain,
@@ -122,7 +117,7 @@ class WalletManagerFactory(
         )
     }
 
-    internal fun makeWalletManager(
+    fun makeWalletManager(
         cardId: String,
         blockchain: Blockchain,
         publicKey: Wallet.PublicKey,
@@ -130,6 +125,10 @@ class WalletManagerFactory(
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1
     ): WalletManager? {
+        if (publicKey.derivationPath != null &&
+                blockchain.derivationPath() != publicKey.derivationPath) {
+            return null
+        }
 
         if (checkIfWrongKey(curve, publicKey)) return null
 
