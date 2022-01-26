@@ -51,22 +51,22 @@ class WalletManagerFactory(
      * Base wallet manager initializer
      * @param cardId: Card's cardId
      * @param blockchain: blockchain to create. If null, card native blockchain will be used
-     * @param seedKey: ExtendedPublicKey of the wallet
+     * @param seedKey: Public Key of the wallet
      * @param derivedKey: Derived ExtendedPublicKey by the card
      */
     fun makeWalletManager(
         cardId: String,
         blockchain: Blockchain,
-        seedKey: ExtendedPublicKey,
+        seedKey: ByteArray,
         derivedKey: ExtendedPublicKey
     ): WalletManager? {
         return makeWalletManager(
             cardId = cardId,
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(
-                seedKey.compressedPublicKey,
-                derivedKey.compressedPublicKey,
-                derivedKey.derivationPath
+                seedKey,
+                derivedKey.publicKey,
+                blockchain.derivationPath()
             )
         )
     }
