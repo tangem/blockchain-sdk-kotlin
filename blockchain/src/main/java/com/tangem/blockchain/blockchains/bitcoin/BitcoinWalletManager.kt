@@ -87,7 +87,7 @@ open class BitcoinWalletManager(
         } else {
             when (response.hasUnconfirmed) {
                 true -> wallet.addTransactionDummy()
-                false -> wallet.recentTransactions.clear()
+                else -> wallet.recentTransactions.clear()
             }
         }
     }
