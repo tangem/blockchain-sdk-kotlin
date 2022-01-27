@@ -55,6 +55,7 @@ class Wallet(
         when (direction) {
             TransactionDirection.Outgoing -> sourceAddress = address
             TransactionDirection.Incoming -> destinationAddress = address
+            else -> {}
         }
 
         val transaction = TransactionData(
