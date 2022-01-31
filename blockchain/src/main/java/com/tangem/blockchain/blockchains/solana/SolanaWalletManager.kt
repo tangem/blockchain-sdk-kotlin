@@ -15,7 +15,7 @@ import java.math.BigDecimal
 class SolanaWalletManager(
     wallet: Wallet,
     jsonRpcProvider: RpcClient
-) : WalletManager(wallet), TransactionSender {
+) : WalletManager(wallet), TransactionSender, RentProvider {
 
     override val currentHost: String = jsonRpcProvider.endpoint
 
@@ -136,6 +136,14 @@ class SolanaWalletManager(
             val amountValue = loadedSPLTokens.retrieveLamportsBy(token)?.toSOL() ?: BigDecimal.ZERO
             wallet.addTokenValue(amountValue, token)
         }
+    }
+
+    override suspend fun minimalBalanceForRentExemption(): Result<BigDecimal> {
+        return networkService.minimalBalanceForRentExemption()
+    }
+
+    override suspend fun rentAmount(): Result<BigDecimal> {
+        return networkService.accountRentFeeByEpoch()
     }
 }
 
