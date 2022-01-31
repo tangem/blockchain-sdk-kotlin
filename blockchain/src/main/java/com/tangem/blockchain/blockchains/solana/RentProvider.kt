@@ -8,5 +8,5 @@ import java.math.BigDecimal
  */
 interface RentProvider {
     suspend fun minimalBalanceForRentExemption(): Result<BigDecimal>
-    suspend fun rentAmount(): Result<BigDecimal>
+    suspend fun rentAmount(): BigDecimal
 }
