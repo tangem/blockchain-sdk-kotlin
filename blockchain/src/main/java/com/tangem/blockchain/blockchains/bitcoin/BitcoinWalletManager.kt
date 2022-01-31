@@ -117,7 +117,7 @@ open class BitcoinWalletManager(
                         }
                         sendResult
                     }
-                    is CompletionResult.Failure -> SimpleResult.failure(signerResult.error)
+                    is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResult.error)
                 }
             }
         }

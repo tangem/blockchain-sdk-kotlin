@@ -5,7 +5,8 @@ import com.tangem.blockchain.blockchains.cardano.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
 import com.tangem.blockchain.blockchains.cardano.network.api.AdaliteApi
-import com.tangem.blockchain.common.SendException
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.encodeBase64NoWrap
@@ -35,21 +36,21 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
 
                 val cardanoUnspents = unspents.data!!.map {
                     CardanoUnspentOutput(
-                            it.address!!,
-                            it.amountData!!.amount!!,
-                            it.outputIndex!!.toLong(),
-                            it.hash!!.hexToBytes()
+                        it.address!!,
+                        it.amountData!!.amount!!,
+                        it.outputIndex!!.toLong(),
+                        it.hash!!.hexToBytes()
                     )
                 }
                 val recentTransactionsHashes = addressesData
-                        .flatMap { it.data!!.transactions!!.mapNotNull { it.hash } }
+                    .flatMap { it.data!!.transactions!!.mapNotNull { it.hash } }
 
                 Result.Success(
-                        CardanoAddressResponse(
-                                addressesData.map { it.data!!.balanceData!!.amount!! }.sum(),
-                                cardanoUnspents,
-                                recentTransactionsHashes
-                        )
+                    CardanoAddressResponse(
+                        addressesData.map { it.data!!.balanceData!!.amount!! }.sum(),
+                        cardanoUnspents,
+                        recentTransactionsHashes
+                    )
                 )
             }
         } catch (exception: Exception) {
@@ -63,9 +64,11 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
             SimpleResult.Success
         } catch (exception: Exception) {
             if (exception is HttpException && exception.code() == 400) {
-                SimpleResult.Failure(
-                        SendException("Failed to send Cardano transaction: $transaction")
+                val error = BlockchainSdkError.SendException(
+                    Blockchain.Cardano,
+                    "Failed to send transaction: $transaction"
                 )
+                SimpleResult.Failure(error)
             } else {
                 SimpleResult.Failure(exception)
             }
@@ -74,6 +77,6 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
 }
 
 data class AdaliteSendBody(
-        @Json(name = "signedTx")
-        val signedTransaction: String
+    @Json(name = "signedTx")
+    val signedTransaction: String
 )
