@@ -25,6 +25,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvide
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.blockchains.litecoin.LitecoinNetworkService
 import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
+import com.tangem.blockchain.blockchains.solana.SolanaWalletManager
 import com.tangem.blockchain.blockchains.stellar.StellarNetworkService
 import com.tangem.blockchain.blockchains.stellar.StellarTransactionBuilder
 import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
@@ -42,6 +43,8 @@ import com.tangem.blockchain.network.blockchair.BlockchairNetworkProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.hdWallet.ExtendedPublicKey
+import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
+import org.p2p.solanaj.rpc.Cluster
 
 class WalletManagerFactory(
     private val blockchainSdkConfig: BlockchainSdkConfig = BlockchainSdkConfig()
@@ -259,6 +262,14 @@ class WalletManagerFactory(
                     networkService,
                     tokens
                 )
+            }
+            Blockchain.Solana, Blockchain.SolanaTestnet -> {
+                val cluster = when(blockchain) {
+                    Blockchain.Solana -> Cluster.MAINNET
+                    else -> Cluster.DEVNET
+                }
+                val rpcClient = RpcClient(cluster)
+                SolanaWalletManager(wallet, rpcClient)
             }
             Blockchain.Cardano, Blockchain.CardanoShelley -> {
                 val adaliteNetworkProvider = AdaliteNetworkProvider(API_ADALITE)
