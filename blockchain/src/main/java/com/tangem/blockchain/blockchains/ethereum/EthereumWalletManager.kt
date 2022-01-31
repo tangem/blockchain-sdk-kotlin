@@ -78,7 +78,7 @@ class EthereumWalletManager(
                 }
                 sendResult
             }
-            is CompletionResult.Failure -> SimpleResult.failure(signerResponse.error)
+            is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResponse.error)
         }
     }
 
