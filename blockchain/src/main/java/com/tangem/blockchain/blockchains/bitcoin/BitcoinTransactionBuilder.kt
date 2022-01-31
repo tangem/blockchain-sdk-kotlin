@@ -61,7 +61,7 @@ open class BitcoinTransactionBuilder(
                 Script.ScriptType.P2WPKH -> ScriptBuilder.createP2PKHOutputScript(
                     ECKey.fromPublicOnly(walletPublicKey.toCompressedPublicKey())
                 )
-                else -> throw Exception("Unsupported output script")
+                else -> throw Exception("AddIsUnsupported output script")
             }
             hashesToSign[index] = when (scriptPubKey.scriptType) {
                 Script.ScriptType.P2PKH, Script.ScriptType.P2SH -> {
@@ -81,7 +81,7 @@ open class BitcoinTransactionBuilder(
                         false
                     ).bytes
                 }
-                else -> throw Exception("Unsupported output script")
+                else -> throw Exception("AddIsUnsupported output script")
             }
         }
         return Result.Success(hashesToSign)
@@ -102,12 +102,12 @@ open class BitcoinTransactionBuilder(
                 Script.ScriptType.P2SH -> { // only 1 of 2 multisig script for now
                     val script = findSpendingScript(scriptPubKey)
                     if (!ScriptPattern.isSentToMultisig(script)) {
-                        throw Exception("Unsupported wallet script")
+                        throw Exception("AddIsUnsupported wallet script")
                     }
                     ScriptBuilder.createP2SHMultiSigInputScript(mutableListOf(signature), script)
                 }
                 Script.ScriptType.P2WPKH, Script.ScriptType.P2WSH -> ScriptBuilder.createEmpty()
-                else -> throw Exception("Unsupported output script")
+                else -> throw Exception("AddIsUnsupported output script")
             }
             transactionSizeWithoutWitness = transaction.messageSize
 
