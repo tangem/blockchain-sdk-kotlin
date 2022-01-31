@@ -49,7 +49,7 @@ sealed class SimpleResult {
     data class Failure(val error: Throwable?) : SimpleResult()
 
     companion object {
-        fun failure(sdkError: TangemError): Failure =
+        fun fromTangemSdkError(sdkError: TangemError): Failure =
             Failure(Exception("TangemError: code: ${sdkError.code}, message: ${sdkError.customMessage}"))
     }
 }
