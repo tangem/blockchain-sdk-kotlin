@@ -9,6 +9,7 @@ import com.tangem.blockchain.blockchains.cardano.CardanoAddressType
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
+import com.tangem.blockchain.blockchains.solana.SolanaAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
@@ -45,6 +46,8 @@ enum class Blockchain(
     BinanceTestnet("BINANCE/test", "BNB", "Binance"),
     Stellar("XLM", "XLM", "Stellar"),
     StellarTestnet("XLM/test", "XLM", "Stellar"),
+    Solana("SOLANA", "SOL", "Solana"),
+    SolanaTestnet("SOLANA/test", "SOL", "Solana"),
     Tezos("XTZ", "XTZ", "Tezos"),
     ;
 
@@ -55,6 +58,7 @@ enum class Blockchain(
         Cardano, CardanoShelley, XRP, Tezos -> 6
         Ethereum, EthereumTestnet, RSK, BSC, BSCTestnet, Polygon, PolygonTestnet -> 18
         Stellar, StellarTestnet -> 7
+        Solana, SolanaTestnet -> 9
         Unknown -> 0
     }
 
@@ -84,6 +88,7 @@ enum class Blockchain(
         Binance -> BinanceAddressService()
         BinanceTestnet -> BinanceAddressService(true)
         Stellar, StellarTestnet -> StellarAddressService()
+        Solana, SolanaTestnet -> SolanaAddressService()
         Tezos -> TezosAddressService()
         Unknown -> throw Exception("unsupported blockchain")
     }
@@ -138,6 +143,8 @@ enum class Blockchain(
         PolygonTestnet -> "https://explorer-mumbai.maticvigil.com/address/$address"
         Stellar -> "https://stellar.expert/explorer/public/account/$address"
         StellarTestnet -> "https://stellar.expert/explorer/testnet/account/$address"
+        Solana -> "https://explorer.solana.com/address/$address"
+        SolanaTestnet -> "https://explorer.solana.com/address/$address/?cluster=devnet"
         XRP -> "https://xrpscan.com/account/$address"
         Tezos -> "https://tezblock.io/account/$address"
         Unknown -> throw Exception("unsupported blockchain")
@@ -152,6 +159,7 @@ enum class Blockchain(
             BSCTestnet -> "https://testnet.binance.org/faucet-smart"
             PolygonTestnet -> "https://faucet.matic.network"
             StellarTestnet -> "https://laboratory.stellar.org/#account-creator?network=test"
+            SolanaTestnet -> "https://solfaucet.com/"
             else -> null
         }
     }
@@ -167,16 +175,17 @@ enum class Blockchain(
         Stellar, StellarTestnet -> "Stellar Asset"
         Binance, BinanceTestnet -> "Binance Asset"
         BSC, BSCTestnet -> "Binance Smart Chain Token"
+        Solana, SolanaTestnet -> "Solana Token"
         else -> fullName
     }
 
     fun isTestnet(): Boolean {
         return when (this) {
             Unknown, Bitcoin, BitcoinCash, Litecoin, Dogecoin, Ducatus, Ethereum, RSK, BSC, Polygon,
-            Cardano, CardanoShelley, XRP, Binance, Stellar, Tezos,
+            Cardano, CardanoShelley, XRP, Binance, Stellar, Solana, Tezos,
             -> false
             BitcoinTestnet, EthereumTestnet, BSCTestnet, PolygonTestnet, BinanceTestnet,
-            BitcoinCashTestnet, StellarTestnet,
+            BitcoinCashTestnet, StellarTestnet, SolanaTestnet,
             -> true
         }
     }
@@ -190,6 +199,7 @@ enum class Blockchain(
             BSC, BSCTestnet -> BSCTestnet
             Polygon, PolygonTestnet -> PolygonTestnet
             Stellar, StellarTestnet -> StellarTestnet
+            Solana, SolanaTestnet -> SolanaTestnet
             Litecoin -> null
             Dogecoin -> null
             Ducatus -> null
@@ -210,7 +220,7 @@ enum class Blockchain(
             Polygon, PolygonTestnet,
             -> listOf(EllipticCurve.Secp256k1)
             Tezos, XRP -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
-            Cardano, CardanoShelley, Stellar, StellarTestnet ->
+            Cardano, CardanoShelley, Stellar, StellarTestnet, Solana, SolanaTestnet ->
                 listOf(EllipticCurve.Ed25519)
         }
     }
@@ -236,9 +246,10 @@ enum class Blockchain(
         }
 
         return when (this) {
-            Stellar -> {
-                //Path according to sep-0005.
-                // https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0005.md
+            Stellar, Solana -> {
+                //Path according to sep-0005. https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0005.md
+                // Solana path consistent with TrustWallet:
+                // https://github.com/trustwallet/wallet-core/blob/456f22d6a8ce8a66ccc73e3b42bcfec5a6afe53a/registry.json#L1013
                 DerivationPath(
                     path = listOf(
                         DerivationNode.Hardened(BIP44.purpose),
@@ -284,6 +295,7 @@ enum class Blockchain(
             XRP -> 144
             BitcoinCash -> 145
             Stellar -> 148
+            Solana -> 501
             Binance -> 714
             Polygon -> 966
             Tezos -> 1729
@@ -340,9 +352,9 @@ enum class Blockchain(
 
         fun ed25519OnlyBlockchains(isTestnet: Boolean): List<Blockchain> {
             return if (isTestnet) {
-                listOf(StellarTestnet)
+                listOf(StellarTestnet, SolanaTestnet)
             } else {
-                listOf(CardanoShelley, Stellar)
+                listOf(CardanoShelley, Stellar, Solana)
             }
         }
     }
