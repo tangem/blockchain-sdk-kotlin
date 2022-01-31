@@ -23,8 +23,7 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
     private var transaction: XrpSignedTransaction? = null
 
     suspend fun buildToSign(transactionData: TransactionData): Result<ByteArray> {
-        val decodedXAddress =
-                XrpAddressService.decodeXAddress(transactionData.destinationAddress)
+        val decodedXAddress = XrpAddressService.decodeXAddress(transactionData.destinationAddress)
         val destinationAddress = decodedXAddress?.address ?: transactionData.destinationAddress
         val xAddressDestinationTag = decodedXAddress?.destinationTag
 
@@ -39,9 +38,9 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
         }
 
         if (!networkProvider.checkIsAccountCreated(destinationAddress)
-                && transactionData.amount.value!! < minReserve) {
+            && transactionData.amount.value!! < minReserve) {
             return Result.Failure(
-                    CreateAccountUnderfunded(Amount(minReserve, blockchain))
+                BlockchainSdkError.CreateAccountUnderfunded(Amount(minReserve, blockchain))
             )
         }
 
