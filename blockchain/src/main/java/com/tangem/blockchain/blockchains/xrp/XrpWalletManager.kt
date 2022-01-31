@@ -31,7 +31,7 @@ class XrpWalletManager(
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
 
         if (!response.accountFound) {
-            updateError(Exception("Account not found")) //TODO rework, add reserve
+            updateError(BlockchainSdkError.AccountNotFound)
             return
         }
         wallet.setCoinValue(response.balance - response.reserveBase)
@@ -71,7 +71,7 @@ class XrpWalletManager(
                 }
                 sendResult
             }
-            is CompletionResult.Failure -> SimpleResult.failure(signerResponse.error)
+            is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResponse.error)
         }
     }
 

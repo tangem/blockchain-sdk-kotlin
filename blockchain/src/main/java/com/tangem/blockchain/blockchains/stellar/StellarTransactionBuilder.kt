@@ -55,9 +55,8 @@ class StellarTransactionBuilder(
                             ).build()
                         } else {
                             if (amount.value!! < minReserve) {
-                                return Result.Failure(
-                                        CreateAccountUnderfunded(Amount(minReserve, blockchain))
-                                )
+                                val minAmount = Amount(minReserve, blockchain)
+                                return Result.Failure(BlockchainSdkError.CreateAccountUnderfunded(minAmount))
                             }
                             CreateAccountOperation.Builder(
                                     destinationKeyPair.accountId,

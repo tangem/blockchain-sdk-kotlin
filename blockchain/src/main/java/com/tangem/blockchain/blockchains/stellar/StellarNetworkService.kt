@@ -124,7 +124,7 @@ class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
             }
         } catch (error: Exception) {
             if (error is ErrorResponse && error.code == 404) {
-                Result.Failure(Exception("Account not found"))
+                Result.Failure(BlockchainSdkError.AccountNotFound)
             } else {
                 Result.Failure(error)
             }
