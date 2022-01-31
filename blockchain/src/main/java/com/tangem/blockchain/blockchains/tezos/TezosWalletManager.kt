@@ -82,7 +82,7 @@ class TezosWalletManager(
 
         val signerResponse = signer.sign(dataToSign, wallet.cardId, wallet.publicKey)
         val signature = when (signerResponse) {
-            is CompletionResult.Failure -> return SimpleResult.failure(signerResponse.error)
+            is CompletionResult.Failure -> return SimpleResult.fromTangemSdkError(signerResponse.error)
             is CompletionResult.Success -> signerResponse.data
         }
         val canonicalSignature = canonicalizeSignature(signature)
