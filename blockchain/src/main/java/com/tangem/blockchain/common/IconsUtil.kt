@@ -11,13 +11,14 @@ class IconsUtil {
 
         fun getBlockchainIconUri(blockchain: Blockchain): Uri? {
             val blockchainPath = blockchain.getPath() ?: return null
+
             return Uri.parse("$BASE_URL/$blockchainPath/info/logo.png")
         }
 
         fun getTokenIconUri(blockchain: Blockchain, token: Token): Uri? {
-            if (!blockchain.tokenIconsAvailable()) return null
             val blockchainPath = blockchain.getPath() ?: return null
-            val tokenPath = normalizeAssetPath(token.contractAddress, blockchain)
+
+            val tokenPath = normalizeAssetPath(token)
             return Uri.parse("$BASE_URL/$blockchainPath/assets/$tokenPath/logo.png")
         }
 
@@ -33,20 +34,20 @@ class IconsUtil {
             Blockchain.XRP -> "xrp"
             Blockchain.Binance, Blockchain.BinanceTestnet -> "binance"
             Blockchain.Stellar, Blockchain.StellarTestnet -> "stellar"
+            Blockchain.Solana, Blockchain.SolanaTestnet -> "solana"
             Blockchain.Tezos -> "tezos"
             else -> null
         }
 
-        private fun Blockchain.tokenIconsAvailable(): Boolean = when (this) {
-            Blockchain.Ethereum, Blockchain.Binance -> true
-            else -> false
+        private fun normalizeAssetPath(token: Token): String {
+            val path = token.contractAddress
+
+            return when (token.blockchain) {
+                Blockchain.Ethereum -> Address(path).withERC55Checksum().hex
+                Blockchain.Binance -> path.toUpperCase(Locale.ROOT)
+                else -> path
+            }
         }
 
-        private fun normalizeAssetPath(assetPath: String, blockchain: Blockchain): String =
-                when (blockchain) {
-                    Blockchain.Ethereum -> Address(assetPath).withERC55Checksum().hex
-                    Blockchain.Binance -> assetPath.toUpperCase(Locale.ROOT)
-                    else -> assetPath
-                }
     }
 }
