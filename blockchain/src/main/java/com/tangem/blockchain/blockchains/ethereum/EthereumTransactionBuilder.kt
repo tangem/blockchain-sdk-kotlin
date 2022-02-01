@@ -60,10 +60,12 @@ enum class Chain(val id: Int) {
     RskTestnet(31),
     Kovan(42),
     BscMainnet(56),
-    BscTestnet(97),
-    Polygon(137),
-    PolygonTestnet(80001),
     EthereumClassicMainnet(61),
     EthereumClassicTestnet(62),
-    Geth_private_chains(1337);
+    BscTestnet(97),
+    Polygon(137),
+    Geth_private_chains(1337),
+    Avalanche(43114),
+    AvalancheTestnet(43114),
+    PolygonTestnet(80001);
 }
