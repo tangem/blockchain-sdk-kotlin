@@ -26,6 +26,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.blockchains.litecoin.LitecoinNetworkService
 import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
 import com.tangem.blockchain.blockchains.solana.SolanaWalletManager
+import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
 import com.tangem.blockchain.blockchains.stellar.StellarNetworkService
 import com.tangem.blockchain.blockchains.stellar.StellarTransactionBuilder
 import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
@@ -43,7 +44,6 @@ import com.tangem.blockchain.network.blockchair.BlockchairNetworkProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.hdWallet.ExtendedPublicKey
-import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
 import org.p2p.solanaj.rpc.Cluster
 
 class WalletManagerFactory(
@@ -220,6 +220,16 @@ class WalletManagerFactory(
                     tokens
                 )
             }
+            Blockchain.Avalanche, Blockchain.AvalancheTestnet -> {
+                val api = if (blockchain == Blockchain.Avalanche) API_AVALANCHE else API_AVALANCHE_TESTNET
+
+                EthereumWalletManager(
+                    wallet,
+                    EthereumTransactionBuilder(publicKey.blockchainKey, blockchain),
+                    EthereumNetworkService(listOf(EthereumJsonRpcProvider(api))),
+                    tokens
+                )
+            }
             Blockchain.RSK -> {
                 val jsonRpcProvider = EthereumJsonRpcProvider(API_RSK)
 
@@ -264,7 +274,7 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.Solana, Blockchain.SolanaTestnet -> {
-                val cluster = when(blockchain) {
+                val cluster = when (blockchain) {
                     Blockchain.Solana -> Cluster.MAINNET
                     else -> Cluster.DEVNET
                 }
@@ -324,7 +334,7 @@ class WalletManagerFactory(
     }
 
     private fun checkIfWrongKey(curve: EllipticCurve, publicKey: Wallet.PublicKey): Boolean {
-        return when(curve) {
+        return when (curve) {
             EllipticCurve.Ed25519 -> publicKey.seedKey.size > 32 || publicKey.blockchainKey.size > 32
             else -> false
         }
