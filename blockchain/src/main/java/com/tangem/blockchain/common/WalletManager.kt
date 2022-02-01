@@ -110,7 +110,9 @@ abstract class WalletManager(
         if (!cardTokens.contains(token)) {
             cardTokens.add(token)
         }
-        return Result.Failure(Exception("Adding tokens not supported for ${wallet.blockchain.currency}"))
+        return Result.Failure(
+            BlockchainSdkError.UnsupportedOperation("Adding tokens not supported for ${wallet.blockchain.currency}")
+        )
     }
 
     open suspend fun addTokens(tokens: List<Token>): List<Result<Amount>> {
