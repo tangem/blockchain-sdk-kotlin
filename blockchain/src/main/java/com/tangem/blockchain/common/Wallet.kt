@@ -40,6 +40,12 @@ class Wallet(
         amounts.remove(AmountType.Token(token))
     }
 
+    fun removeAllTokens() {
+        val coin = amounts[AmountType.Coin]
+        amounts.clear()
+        coin?.let { amounts[AmountType.Coin] = it }
+    }
+
     fun setReserveValue(value: BigDecimal) = setAmount(Amount(value, blockchain, AmountType.Reserve))
 
     fun getTokenAmount(token: Token): Amount? {
