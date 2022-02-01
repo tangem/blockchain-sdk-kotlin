@@ -3,7 +3,7 @@ buildscript {
 
     repositories {
         google()
-        jcenter()
+        mavenCentral()
         maven { url 'https://maven.fabric.io/public' }
     }
     dependencies {
@@ -22,7 +22,7 @@ allprojects {
     def nexusPass = "smartcash124"
     repositories {
         google()
-        jcenter()
+        mavenCentral()
         mavenLocal()
         maven {
             credentials {
