@@ -88,7 +88,7 @@ class SolanaNetworkService(
         // https://docs.solana.com/developing/programming-model/accounts#calculation-of-rent
         // result in lamports
         val minimumAccountSizeInBytes = BigDecimal(MIN_ACCOUNT_SIZE)
-        val rentInLamportPerByteEpoch = BigDecimal(19.055441478439427)
+        val rentInLamportPerByteEpoch = BigDecimal(RENT_PER_BYTE_EPOCH)
         val rentFeePerEpoch = minimumAccountSizeInBytes
             .multiply(numberOfEpochs.toBigDecimal())
             .multiply(rentInLamportPerByteEpoch)
@@ -120,6 +120,7 @@ class SolanaNetworkService(
 
     companion object {
         const val MIN_ACCOUNT_SIZE = 128L
+        const val RENT_PER_BYTE_EPOCH = 19.055441478439427
     }
 }
 
@@ -140,3 +141,12 @@ data class SolanaTokenAccountInfo(
     val mint: String,
     val balance: BigDecimal,
 )
+
+private fun MutableMap<String, Any>.addCommitment(commitment: Commitment): MutableMap<String, Any> {
+    this["commitment"] = commitment
+    return this
+}
+
+private fun Commitment.toMap(): MutableMap<String, Any> {
+    return mutableMapOf("commitment" to this)
+}
