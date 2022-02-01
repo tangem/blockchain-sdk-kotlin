@@ -123,7 +123,7 @@ enum class Blockchain(
         Litecoin -> "https://blockchair.com/litecoin/address/$address"
         Dogecoin -> "https://blockchair.com/dogecoin/address/$address"
         Ducatus -> "https://insight.ducatus.io/#/DUC/mainnet/address/$address"
-        Cardano, CardanoShelley -> "https://cardanoexplorer.com/address/$address"
+        Cardano, CardanoShelley -> "explorer.cardano.org/en/address.html?address=$address"
         Ethereum -> if (tokenContractAddress == null) {
             "https://etherscan.io/address/$address"
         } else {
