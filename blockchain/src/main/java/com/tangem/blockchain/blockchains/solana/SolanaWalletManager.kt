@@ -139,11 +139,14 @@ class SolanaWalletManager(
     }
 
     override suspend fun minimalBalanceForRentExemption(): Result<BigDecimal> {
-        return networkService.minimalBalanceForRentExemption()
+        return when(val result = networkService.minimalBalanceForRentExemption()) {
+            is Result.Success -> Result.Success(result.data.toSOL())
+            is Result.Failure -> result
+        }
     }
 
     override suspend fun rentAmount(): BigDecimal {
-        return networkService.accountRentFeeByEpoch()
+        return networkService.accountRentFeeByEpoch().toSOL()
     }
 }
 
