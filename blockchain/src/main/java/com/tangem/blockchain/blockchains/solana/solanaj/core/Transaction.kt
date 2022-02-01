@@ -12,10 +12,12 @@ class Transaction(
     private val feePayerPublicKey: PublicKey
 ) : Transaction(Message(feePayerPublicKey)) {
 
+    @Deprecated("Instead, use getDataForSign and then addSignedDataSignature before submitting the transaction.")
     override fun sign(signer: Account?) {
         throw UnsupportedOperationException()
     }
 
+    @Deprecated("Instead, use getDataForSign and then addSignedDataSignature before submitting the transaction.")
     override fun sign(signers: List<Account>) {
         throw UnsupportedOperationException()
     }
