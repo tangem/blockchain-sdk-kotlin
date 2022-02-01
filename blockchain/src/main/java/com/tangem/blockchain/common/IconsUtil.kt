@@ -23,6 +23,7 @@ class IconsUtil {
         }
 
         private fun Blockchain.getPath(): String? = when (this) {
+            Blockchain.Avalanche, Blockchain.AvalancheTestnet -> "avalanchec"
             Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> "bitcoin"
             Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet -> "bitcoincash"
             Blockchain.Litecoin -> "litecoin"
