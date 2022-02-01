@@ -77,7 +77,7 @@ class BinanceWalletManager(
                         val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
                         networkProvider.sendTransaction(transactionToSend)
                     }
-                    is CompletionResult.Failure -> SimpleResult.failure(signerResponse.error)
+                    is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResponse.error)
                 }
             }
         }
