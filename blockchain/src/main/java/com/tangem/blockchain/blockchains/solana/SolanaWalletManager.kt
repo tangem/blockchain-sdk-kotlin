@@ -8,6 +8,7 @@ import com.tangem.common.CompletionResult
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.rpc.types.TokenAccountInfo
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 /**
 [REDACTED_AUTHOR]
@@ -139,7 +140,7 @@ class SolanaWalletManager(
     }
 
     override suspend fun minimalBalanceForRentExemption(): Result<BigDecimal> {
-        return when(val result = networkService.minimalBalanceForRentExemption()) {
+        return when (val result = networkService.minimalBalanceForRentExemption()) {
             is Result.Success -> Result.Success(result.data.toSOL())
             is Result.Failure -> result
         }
@@ -155,4 +156,17 @@ private fun <T> Result<T>.toSimpleResult(): SimpleResult {
         is Result.Success -> SimpleResult.Success
         is Result.Failure -> SimpleResult.Failure(this.error)
     }
+}
+
+internal fun BigDecimal.toSolanaDecimals(): BigDecimal = this.setScale(Blockchain.Solana.decimals(), RoundingMode.HALF_UP)
+
+private fun Long.toSOL(): BigDecimal = this.toBigDecimal().toSOL()
+private fun BigDecimal.toSOL(): BigDecimal = movePointLeft(Blockchain.Solana.decimals()).toSolanaDecimals()
+
+private fun List<TokenAccountInfo.Value>.retrieveLamportsBy(token: Token): Long? {
+    return getSplTokenBy(token)?.account?.lamports
+}
+
+private fun List<TokenAccountInfo.Value>.getSplTokenBy(token: Token): TokenAccountInfo.Value? {
+    return firstOrNull { it.pubkey == token.contractAddress }
 }
