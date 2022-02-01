@@ -72,7 +72,7 @@ class TezosTransactionBuilder(
                     when (operation.kind) {
                         "reveal" -> TezosConstants.REVEAL_OPERATION_KIND
                         "transaction" -> TezosConstants.TRANSACTION_OPERATION_KIND
-                        else -> throw Exception("AddIsUnsupported operation kind")
+                        else -> throw Exception("Unsupported operation kind")
                     }
             )
             stringBuilder.append(operation.source.txEncodePublicKeyHash())

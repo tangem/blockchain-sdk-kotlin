@@ -128,7 +128,7 @@ class EthereumNetworkService(
 
     override suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>> {
         return blockchairEthNetworkProvider?.findErc20Tokens(address)
-            ?: Result.Failure(Exception("AddIsUnsupported feature"))
+            ?: Result.Failure(Exception("Unsupported feature"))
     }
 
     override suspend fun getGasPrice(): Result<Long> {
