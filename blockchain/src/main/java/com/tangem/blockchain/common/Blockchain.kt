@@ -25,30 +25,32 @@ enum class Blockchain(
     val fullName: String,
 ) {
     Unknown("", "", ""),
+    Avalanche("XTZ", "AVAX", "Avalanche C-Chain"),
+    AvalancheTestnet("XTZ/test", "AVAX", "Avalanche C-Chain"),
+    Binance("BINANCE", "BNB", "Binance"),
+    BinanceTestnet("BINANCE/test", "BNB", "Binance"),
+    BSC("BSC", "BNB", "Binance Smart Chain"),
+    BSCTestnet("BSC/test", "BNB", "Binance Smart Chain"),
     Bitcoin("BTC", "BTC", "Bitcoin"),
     BitcoinTestnet("BTC/test", "BTC", "Bitcoin"),
     BitcoinCash("BCH", "BCH", "Bitcoin Cash"),
     BitcoinCashTestnet("BCH/test", "BCH", "Bitcoin Cash"),
-    Litecoin("LTC", "LTC", "Litecoin"),
+    Cardano("CARDANO", "ADA", "Cardano"),
+    CardanoShelley("CARDANO-S", "ADA", "Cardano"),
     Dogecoin("DOGE", "DOGE", "Dogecoin"),
     Ducatus("DUC", "DUC", "Ducatus"),
     Ethereum("ETH", "ETH", "Ethereum"),
     EthereumTestnet("ETH/test", "ETH", "Ethereum"),
-    RSK("RSK", "RBTC", "RSK"),
-    BSC("BSC", "BNB", "Binance Smart Chain"),
-    BSCTestnet("BSC/test", "BNB", "Binance Smart Chain"),
+    Litecoin("LTC", "LTC", "Litecoin"),
     Polygon("POLYGON", "MATIC", "Polygon"),
     PolygonTestnet("POLYGON/test", "MATIC", "Polygon"),
-    Cardano("CARDANO", "ADA", "Cardano"),
-    CardanoShelley("CARDANO-S", "ADA", "Cardano"),
-    XRP("XRP", "XRP", "XRP Ledger"),
-    Binance("BINANCE", "BNB", "Binance"),
-    BinanceTestnet("BINANCE/test", "BNB", "Binance"),
+    RSK("RSK", "RBTC", "RSK"),
     Stellar("XLM", "XLM", "Stellar"),
     StellarTestnet("XLM/test", "XLM", "Stellar"),
     Solana("SOLANA", "SOL", "Solana"),
     SolanaTestnet("SOLANA/test", "SOL", "Solana"),
     Tezos("XTZ", "XTZ", "Tezos"),
+    XRP("XRP", "XRP", "XRP Ledger"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -56,7 +58,7 @@ enum class Blockchain(
         Binance, BinanceTestnet, Litecoin, Ducatus, Dogecoin,
         -> 8
         Cardano, CardanoShelley, XRP, Tezos -> 6
-        Ethereum, EthereumTestnet, RSK, BSC, BSCTestnet, Polygon, PolygonTestnet -> 18
+        Ethereum, EthereumTestnet, RSK, BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet -> 18
         Stellar, StellarTestnet -> 7
         Solana, SolanaTestnet -> 9
         Unknown -> 0
@@ -80,7 +82,7 @@ enum class Blockchain(
     private fun getAddressService(): AddressService = when (this) {
         Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus -> BitcoinAddressService(this)
         BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService()
-        Ethereum, EthereumTestnet, BSC, BSCTestnet, Polygon, PolygonTestnet ->
+        Ethereum, EthereumTestnet, BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet ->
             EthereumAddressService()
         RSK -> RskAddressService()
         Cardano, CardanoShelley -> CardanoAddressService(this)
@@ -110,6 +112,8 @@ enum class Blockchain(
     }
 
     fun getExploreUrl(address: String, tokenContractAddress: String? = null): String = when (this) {
+        Avalanche -> "https://snowtrace.io/address/"
+        AvalancheTestnet -> "https://testnet.snowtrace.io/address/"
         Binance -> "https://explorer.binance.org/address/$address"
         BinanceTestnet -> "https://testnet-explorer.binance.org/address/$address"
         Bitcoin -> "https://www.blockchain.com/btc/address/$address"
@@ -181,10 +185,10 @@ enum class Blockchain(
 
     fun isTestnet(): Boolean {
         return when (this) {
-            Unknown, Bitcoin, BitcoinCash, Litecoin, Dogecoin, Ducatus, Ethereum, RSK, BSC, Polygon,
+            Unknown, Avalanche, Bitcoin, BitcoinCash, Litecoin, Dogecoin, Ducatus, Ethereum, RSK, BSC, Polygon,
             Cardano, CardanoShelley, XRP, Binance, Stellar, Solana, Tezos,
             -> false
-            BitcoinTestnet, EthereumTestnet, BSCTestnet, PolygonTestnet, BinanceTestnet,
+            AvalancheTestnet, BitcoinTestnet, EthereumTestnet, BSCTestnet, PolygonTestnet, BinanceTestnet,
             BitcoinCashTestnet, StellarTestnet, SolanaTestnet,
             -> true
         }
@@ -192,6 +196,7 @@ enum class Blockchain(
 
     fun getTestnetVersion(): Blockchain? {
         return when (this) {
+            Avalanche, AvalancheTestnet -> AvalancheTestnet
             Bitcoin, BitcoinTestnet -> BitcoinTestnet
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashTestnet
             Ethereum, EthereumTestnet -> EthereumTestnet
@@ -217,7 +222,7 @@ enum class Blockchain(
             Unknown -> emptyList()
             Bitcoin, BitcoinTestnet, BitcoinCash, BitcoinCashTestnet, Litecoin, Ducatus,
             Ethereum, EthereumTestnet, RSK, Binance, BinanceTestnet, Dogecoin, BSC, BSCTestnet,
-            Polygon, PolygonTestnet,
+            Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
             -> listOf(EllipticCurve.Secp256k1)
             Tezos, XRP -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
             Cardano, CardanoShelley, Stellar, StellarTestnet, Solana, SolanaTestnet ->
@@ -300,6 +305,7 @@ enum class Blockchain(
             Polygon -> 966
             Tezos -> 1729
             Cardano, CardanoShelley -> 1815
+            Avalanche -> 9000
             BSC -> 9006
             else -> throw UnsupportedOperationException()
         }
