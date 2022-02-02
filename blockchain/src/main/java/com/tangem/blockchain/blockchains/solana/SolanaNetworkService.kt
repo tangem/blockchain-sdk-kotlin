@@ -5,17 +5,19 @@ import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
 import com.tangem.blockchain.extensions.Result
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.Program
+import org.p2p.solanaj.rpc.Cluster
 import org.p2p.solanaj.rpc.RpcException
 import org.p2p.solanaj.rpc.types.FeesInfo
 import org.p2p.solanaj.rpc.types.TokenAccountInfo
 import org.p2p.solanaj.rpc.types.config.Commitment
+import java.lang.Exception
 import java.math.BigDecimal
 
 /**
 [REDACTED_AUTHOR]
  */
 class SolanaNetworkService(
-    private val provider: RpcClient,
+    private val provider: RpcClient
 ) {
 
     fun getInfo(account: PublicKey): Result<SolanaAccountInfo> {
@@ -88,7 +90,8 @@ class SolanaNetworkService(
         // https://docs.solana.com/developing/programming-model/accounts#calculation-of-rent
         // result in lamports
         val minimumAccountSizeInBytes = BigDecimal(MIN_ACCOUNT_SIZE)
-        val rentInLamportPerByteEpoch = BigDecimal(RENT_PER_BYTE_EPOCH)
+
+        val rentInLamportPerByteEpoch = BigDecimal(determineRentPerByteEpoch(provider.cluster))
         val rentFeePerEpoch = minimumAccountSizeInBytes
             .multiply(numberOfEpochs.toBigDecimal())
             .multiply(rentInLamportPerByteEpoch)
@@ -118,9 +121,18 @@ class SolanaNetworkService(
 
     fun getRecentBlockhash(commitment: Commitment? = null): String = provider.api.getRecentBlockhash(commitment)
 
+    private fun determineRentPerByteEpoch(cluster: Cluster): Double {
+        return when(cluster) {
+            Cluster.MAINNET -> RENT_PER_BYTE_EPOCH
+            Cluster.TESTNET -> RENT_PER_BYTE_EPOCH
+            Cluster.DEVNET -> RENT_PER_BYTE_EPOCH_DEV_NET
+        }
+    }
+
     companion object {
         const val MIN_ACCOUNT_SIZE = 128L
         const val RENT_PER_BYTE_EPOCH = 19.055441478439427
+        const val RENT_PER_BYTE_EPOCH_DEV_NET = 0.359375
     }
 }
 
