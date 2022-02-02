@@ -66,6 +66,6 @@ enum class Chain(val id: Int) {
     Polygon(137),
     Geth_private_chains(1337),
     Avalanche(43114),
-    AvalancheTestnet(43114),
+    AvalancheTestnet(43113),
     PolygonTestnet(80001);
 }
