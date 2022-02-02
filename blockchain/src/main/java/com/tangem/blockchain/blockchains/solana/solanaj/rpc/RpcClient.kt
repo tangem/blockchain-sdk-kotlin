@@ -6,7 +6,7 @@ import org.p2p.solanaj.rpc.RpcClient
 /**
 [REDACTED_AUTHOR]
  */
-class RpcClient(cluster: Cluster) : RpcClient(cluster) {
+class RpcClient(val cluster: Cluster) : RpcClient(cluster) {
 
     override fun createRpcApi(): RpcApi = RpcApi(this)
 
