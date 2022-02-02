@@ -226,7 +226,7 @@ class WalletManagerFactory(
                 EthereumWalletManager(
                     wallet,
                     EthereumTransactionBuilder(publicKey.blockchainKey, blockchain),
-                    EthereumNetworkService(listOf(EthereumJsonRpcProvider(api))),
+                    EthereumNetworkService(listOf(EthereumJsonRpcProvider(api, "ext/bc/C/rpc"))),
                     tokens
                 )
             }
