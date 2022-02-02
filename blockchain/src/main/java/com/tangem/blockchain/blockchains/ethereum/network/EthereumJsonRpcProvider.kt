@@ -4,7 +4,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.createRetrofitInstance
 
-class EthereumJsonRpcProvider(baseUrl: String, private val infuraProjectId: String = "") {
+class EthereumJsonRpcProvider(baseUrl: String, private val postfixUrl: String = "") {
 
     val host: String = baseUrl
 
@@ -60,7 +60,7 @@ class EthereumJsonRpcProvider(baseUrl: String, private val infuraProjectId: Stri
 
     private suspend fun EthereumBody.post(): Result<EthereumResponse> {
         return try {
-            val result = retryIO { api.post(this, infuraProjectId) }
+            val result = retryIO { api.post(this, postfixUrl) }
             Result.Success(result)
         } catch (exception: Exception) {
             Result.Failure(exception)
