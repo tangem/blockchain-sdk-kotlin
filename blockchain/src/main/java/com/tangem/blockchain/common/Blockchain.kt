@@ -25,8 +25,8 @@ enum class Blockchain(
     val fullName: String,
 ) {
     Unknown("", "", ""),
-    Avalanche("XTZ", "AVAX", "Avalanche C-Chain"),
-    AvalancheTestnet("XTZ/test", "AVAX", "Avalanche C-Chain"),
+    Avalanche("AVALANCHE", "AVAX", "Avalanche C-Chain"),
+    AvalancheTestnet("AVALANCHE/test", "AVAX", "Avalanche C-Chain"),
     Binance("BINANCE", "BNB", "Binance"),
     BinanceTestnet("BINANCE/test", "BNB", "Binance"),
     BSC("BSC", "BNB", "Binance Smart Chain"),
