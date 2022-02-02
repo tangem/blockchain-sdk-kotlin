@@ -112,8 +112,8 @@ enum class Blockchain(
     }
 
     fun getExploreUrl(address: String, tokenContractAddress: String? = null): String = when (this) {
-        Avalanche -> "https://snowtrace.io/address/"
-        AvalancheTestnet -> "https://testnet.snowtrace.io/address/"
+        Avalanche -> "https://snowtrace.io/address/$address"
+        AvalancheTestnet -> "https://testnet.snowtrace.io/address/$address"
         Binance -> "https://explorer.binance.org/address/$address"
         BinanceTestnet -> "https://testnet-explorer.binance.org/address/$address"
         Bitcoin -> "https://www.blockchain.com/btc/address/$address"
@@ -156,6 +156,7 @@ enum class Blockchain(
 
     fun getTestnetTopUpUrl(): String? {
         return when (this) {
+            AvalancheTestnet -> "https://faucet.avax-test.network/"
             BitcoinTestnet -> "https://coinfaucet.eu/en/btc-testnet/"
             EthereumTestnet -> "https://faucet.rinkeby.io"
             BitcoinCashTestnet -> "https://coinfaucet.eu/en/bch-testnet/"
@@ -232,6 +233,8 @@ enum class Blockchain(
 
     fun getChainId(): Int? {
         return when (this) {
+            Avalanche -> Chain.Avalanche.id
+            AvalancheTestnet -> Chain.AvalancheTestnet.id
             Ethereum -> Chain.Mainnet.id
             EthereumTestnet -> Chain.Rinkeby.id
             RSK -> Chain.RskMainnet.id
@@ -317,6 +320,8 @@ enum class Blockchain(
 
         fun fromChainId(chainId: Int): Blockchain? {
             return when (chainId) {
+                Chain.Avalanche.id -> Avalanche
+                Chain.AvalancheTestnet.id -> AvalancheTestnet
                 Chain.Mainnet.id -> Ethereum
                 Chain.Rinkeby.id -> EthereumTestnet
                 Chain.RskMainnet.id -> RSK
@@ -332,6 +337,7 @@ enum class Blockchain(
         fun secp256k1Blockchains(isTestnet: Boolean): List<Blockchain> {
             return if (isTestnet) {
                 listOf(
+                    AvalancheTestnet,
                     BitcoinTestnet,
                     BitcoinCashTestnet,
                     BinanceTestnet,
@@ -341,6 +347,7 @@ enum class Blockchain(
                 )
             } else {
                 listOf(
+                    Avalanche,
                     Bitcoin,
                     BitcoinCash,
                     Binance,
