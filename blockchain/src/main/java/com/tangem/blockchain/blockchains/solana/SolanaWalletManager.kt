@@ -1,12 +1,15 @@
 package com.tangem.blockchain.blockchains.solana
 
+import android.util.Log
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
 import org.p2p.solanaj.core.PublicKey
+import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.rpc.types.TokenAccountInfo
+import org.p2p.solanaj.rpc.types.config.Commitment
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -29,8 +32,11 @@ class SolanaWalletManager(
             is Result.Success -> {
                 val accountInfo = result.data
                 wallet.setCoinValue(accountInfo.balance.toSOL())
+                updateRecentTransactions()
+                addToRecentTransactions(accountInfo.txsInProgress)
+
                 cardTokens.forEach { cardToken ->
-                    val tokenBalance = accountInfo.tokensByMint[cardToken.contractAddress]?.balance
+                    val tokenBalance = accountInfo.tokensByMint[cardToken.contractAddress]?.uiAmount
                         ?: BigDecimal.ZERO
                     wallet.addTokenValue(tokenBalance, cardToken)
                 }
@@ -40,6 +46,44 @@ class SolanaWalletManager(
                 throw Exception(result.error)
             }
         }
+    }
+
+    private fun updateRecentTransactions() {
+        val txSignatures = wallet.recentTransactions.mapNotNull { it.hash }
+        val result = networkService.getSignatureStatuses(txSignatures)
+        when (result) {
+            is Result.Success -> {
+                val confirmedTxData = mutableListOf<TransactionData>()
+                val signaturesStatuses = txSignatures.zip(result.data.value)
+                signaturesStatuses.forEach { pair ->
+                    if (pair.second?.confirmationStatus == Commitment.FINALIZED.value) {
+                        val foundRecentTxData = wallet.recentTransactions.firstOrNull { it.hash == pair.first }
+                        foundRecentTxData?.let {
+                            confirmedTxData.add(it.copy(status = TransactionStatus.Confirmed))
+                        }
+                    }
+                }
+                updateRecentTransactions(confirmedTxData)
+            }
+            is Result.Failure -> {
+                Log.e(this.javaClass.simpleName, result.error.localizedMessage)
+            }
+        }
+    }
+
+    private fun addToRecentTransactions(txsInProgress: List<TransactionInfo>) {
+        val newUnconfirmedTxData = txsInProgress.mapNotNull {
+            if (it.instructions.isNotEmpty() && it.instructions[0].programId == Program.Id.system.toBase58()) {
+                val info = it.instructions[0].parsed.info
+                val amount = Amount(info.lamports.toSOL(), wallet.blockchain)
+                val fee = Amount(it.fee.toSOL(), wallet.blockchain)
+                TransactionData(amount, fee, info.source, info.destination, null,
+                    TransactionStatus.Unconfirmed, hash = it.signature)
+            } else {
+                null
+            }
+        }
+        wallet.recentTransactions.addAll(newUnconfirmedTxData)
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
@@ -56,7 +100,14 @@ class SolanaWalletManager(
             is CompletionResult.Success -> {
                 transaction.addSignedDataSignature(signResult.data)
                 val result = networkService.sendTransaction(transaction)
-                result.toSimpleResult()
+                when (result) {
+                    is Result.Success -> {
+                        transactionData.hash = result.data
+                        wallet.addOutgoingTransaction(transactionData, false)
+                        SimpleResult.Success
+                    }
+                    is Result.Failure -> SimpleResult.Failure(result.error)
+                }
             }
             is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signResult.error)
         }

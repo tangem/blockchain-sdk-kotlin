@@ -1,8 +1,8 @@
 package com.tangem.blockchain.blockchains.solana
 
-import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.blockchains.solana.solanaj.core.Transaction
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.TransactionData
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.SystemProgram
 import java.math.BigDecimal
