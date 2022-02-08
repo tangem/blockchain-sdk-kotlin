@@ -1,7 +1,6 @@
 package com.tangem.blockchain.blockchains.solana
 
 import android.util.Log
-import com.tangem.blockchain.BlockchainSdkLogger.logD
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
@@ -27,10 +26,11 @@ class SolanaWalletManager(
 
     private val publicKey: PublicKey = PublicKey(wallet.address)
     private val networkService = SolanaNetworkService(jsonRpcProvider)
-    private val txBuilder = SolanaTransactionBuilder()
+    private val txBuilder = SolanaTransactionBuilder(ValueConverter())
+
+    private val feeRentHolder = mutableMapOf<Amount, BigDecimal>()
 
     override suspend fun update() {
-        logD(this, "update")
         when (val result = networkService.getInfo(publicKey)) {
             is Result.Success -> {
                 val accountInfo = result.data
@@ -92,6 +92,19 @@ class SolanaWalletManager(
         wallet.recentTransactions.addAll(newUnconfirmedTxData)
     }
 
+    override fun createTransaction(amount: Amount, fee: Amount, destination: String): TransactionData {
+        val accountCreationRent = feeRentHolder[fee]
+        feeRentHolder.clear()
+
+        return if (accountCreationRent == null) {
+            super.createTransaction(amount, fee, destination)
+        } else {
+            val newFee = fee.minus(accountCreationRent)
+            val newAmount = amount.plus(accountCreationRent)
+            super.createTransaction(newAmount, newFee, destination)
+        }
+    }
+
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         return when (transactionData.amount.type) {
             AmountType.Coin -> sendCoin(transactionData, signer)
@@ -135,35 +148,63 @@ class SolanaWalletManager(
 //        return SimpleResult.Success
     }
 
+    /**
+     * This is not a natural fee, as it may contain additional information about the amount that may be required
+     * to open an account. Later, when creating a transaction, this amount will be deducted from fee and added
+     * to the amount of the main transfer
+     */
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
-        return when (val isDestinationAccountExist = networkService.isAccountExist(PublicKey(destination))) {
+        val feeResult = getNetworkFee()
+        val fee = (feeResult as? Result.Success)?.data
+            ?: return feeResult as Result.Failure
+
+        val creationRentResult = getAccountCreationRent(amount, destination)
+        val accountCreationRent = (creationRentResult as? Result.Success)?.data?.toSOL()
+            ?: return creationRentResult as Result.Failure
+
+        var feeAmount = Amount(fee.toSOL(), wallet.blockchain)
+        if (accountCreationRent > BigDecimal.ZERO) {
+            feeAmount = feeAmount.plus(accountCreationRent)
+            feeRentHolder[feeAmount] = accountCreationRent
+        }
+
+        return Result.Success(listOf(feeAmount))
+    }
+
+    private fun getNetworkFee(): Result<BigDecimal> {
+        return when (val result = networkService.getFees()) {
             is Result.Success -> {
-                val accountCreationFee = if (isDestinationAccountExist.data) {
+                val feePerSignature = result.data.value.feeCalculator.lamportsPerSignature
+                Result.Success(feePerSignature.toBigDecimal())
+            }
+            is Result.Failure -> result
+        }
+    }
+
+    private fun getAccountCreationRent(amount: Amount, destination: String): Result<BigDecimal> {
+        return when (val result = networkService.isAccountExist(PublicKey(destination))) {
+            is Result.Success -> {
+                val accountCreationFee = if (result.data) {
                     BigDecimal.ZERO
                 } else {
-                    when (amount.type) {
-                        AmountType.Coin -> networkService.mainAccountCreationFee()
-                        is AmountType.Token -> {
-                            when (val result = networkService.tokenAccountCreationFee()) {
-                                is Result.Success -> result.data
-                                is Result.Failure -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+                    when (val minRentExemptResult = networkService.minimalBalanceForRentExemption()) {
+                        is Result.Success -> {
+                            if (amount.value!!.toLamports().toBigDecimal() >= minRentExemptResult.data) {
+                                BigDecimal.ZERO
+                            } else {
+                                when (amount.type) {
+                                    AmountType.Coin -> networkService.mainAccountCreationFee()
+                                    is AmountType.Token -> minRentExemptResult.data
+                                    AmountType.Reserve -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+                                }
                             }
                         }
-                        AmountType.Reserve -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+                        is Result.Failure -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
                     }
                 }
-
-                when (val result = networkService.getFees()) {
-                    is Result.Success -> {
-                        val feePerSignature = result.data.value.feeCalculator.lamportsPerSignature.toBigDecimal()
-                        val fee = feePerSignature + accountCreationFee
-                        val feeAmount = Amount(fee.toSOL(), wallet.blockchain)
-                        Result.Success(listOf(feeAmount))
-                    }
-                    is Result.Failure -> result
-                }
+                Result.Success(accountCreationFee)
             }
-            is Result.Failure -> isDestinationAccountExist
+            is Result.Failure -> result
         }
     }
 
@@ -208,17 +249,29 @@ class SolanaWalletManager(
     }
 }
 
+interface SolanaValueConverter {
+    fun toSol(value: BigDecimal): BigDecimal
+    fun toSol(value: Long): BigDecimal
+    fun toLamports(value: BigDecimal): Long
+}
+
+class ValueConverter : SolanaValueConverter {
+    override fun toSol(value: BigDecimal): BigDecimal = value.toSOL()
+    override fun toSol(value: Long): BigDecimal = value.toBigDecimal().toSOL()
+    override fun toLamports(value: BigDecimal): Long = value.toLamports()
+}
+
+private fun Long.toSOL(): BigDecimal = this.toBigDecimal().toSOL()
+private fun BigDecimal.toSOL(): BigDecimal = movePointLeft(Blockchain.Solana.decimals()).toSolanaDecimals()
+private fun BigDecimal.toLamports(): Long = movePointRight(Blockchain.Solana.decimals()).toSolanaDecimals().toLong()
+private fun BigDecimal.toSolanaDecimals(): BigDecimal = this.setScale(Blockchain.Solana.decimals(), RoundingMode.HALF_UP)
+
 private fun <T> Result<T>.toSimpleResult(): SimpleResult {
     return when (this) {
         is Result.Success -> SimpleResult.Success
         is Result.Failure -> SimpleResult.Failure(this.error)
     }
 }
-
-internal fun BigDecimal.toSolanaDecimals(): BigDecimal = this.setScale(Blockchain.Solana.decimals(), RoundingMode.HALF_UP)
-
-private fun Long.toSOL(): BigDecimal = this.toBigDecimal().toSOL()
-private fun BigDecimal.toSOL(): BigDecimal = movePointLeft(Blockchain.Solana.decimals()).toSolanaDecimals()
 
 private fun List<TokenAccountInfo.Value>.retrieveLamportsBy(token: Token): Long? {
     return getSplTokenBy(token)?.account?.lamports
