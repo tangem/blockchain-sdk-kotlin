@@ -39,7 +39,7 @@ sealed class Result<out T> {
     data class Failure(val error: Throwable) : Result<Nothing>()
 
     companion object {
-        fun failure(sdkError: TangemError): Failure =
+        fun fromTangemSdkError(sdkError: TangemError): Failure =
             Failure(Exception("TangemError: code: ${sdkError.code}, message: ${sdkError.customMessage}"))
     }
 }
