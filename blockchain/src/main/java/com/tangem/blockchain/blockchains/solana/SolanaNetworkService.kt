@@ -8,9 +8,10 @@ import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.rpc.Cluster
 import org.p2p.solanaj.rpc.RpcException
 import org.p2p.solanaj.rpc.types.FeesInfo
+import org.p2p.solanaj.rpc.types.SignatureStatuses
 import org.p2p.solanaj.rpc.types.TokenAccountInfo
+import org.p2p.solanaj.rpc.types.TransactionResult
 import org.p2p.solanaj.rpc.types.config.Commitment
-import java.lang.Exception
 import java.math.BigDecimal
 
 /**
@@ -20,7 +21,7 @@ class SolanaNetworkService(
     private val provider: RpcClient
 ) {
 
-    fun getInfo(account: PublicKey): Result<SolanaAccountInfo> {
+    suspend fun getInfo(account: PublicKey): Result<SolanaAccountInfo> {
         val mainAccountResult = accountInfo(account)
         val mainAccount: SolanaMainAccountInfo = (mainAccountResult as? Result.Success)?.data
             ?: return mainAccountResult as Result.Failure
@@ -33,15 +34,48 @@ class SolanaNetworkService(
             SolanaTokenAccountInfo(
                 address = it.pubkey,
                 mint = it.account.data.parsed.info.mint,
-                balance = it.account.data.parsed.info.tokenAmount.uiAmount.toBigDecimal(),
+                uiAmount = it.account.data.parsed.info.tokenAmount.uiAmount.toBigDecimal(),
             )
         }.associateBy { it.mint }
+
+        val transactionsResult = getInProgressTransactionsInfo(account)
+        val txsInProgress: List<TransactionInfo> = (transactionsResult as? Result.Success)?.data
+            ?: listOf()
 
         return Result.Success(SolanaAccountInfo(
             balance = mainAccount.balance,
             accountExists = mainAccount.accountExists,
-            tokensByMint = tokensByMint
+            tokensByMint = tokensByMint,
+            txsInProgress = txsInProgress
         ))
+    }
+
+    private fun getInProgressTransactionsInfo(account: PublicKey): Result<List<TransactionInfo>> {
+        return try {
+            val allSignatures = provider.api.getSignaturesForAddress(account.toBase58(), Commitment.CONFIRMED)
+            val confirmedCommitmentSignnatires = allSignatures
+                .filter { it.confirmationStatus == Commitment.CONFIRMED.value }
+            val txInProgress = confirmedCommitmentSignnatires.mapNotNull { addressSignature ->
+                provider.api.getTransaction(addressSignature.signature)?.let { transaction ->
+                    TransactionInfo(
+                        addressSignature.signature,
+                        transaction.meta.fee,
+                        transaction.transaction.message.instructions
+                    )
+                }
+            }
+            Result.Success(txInProgress)
+        } catch (ex: RpcException) {
+            Result.Failure(ex)
+        }
+    }
+
+    fun getSignatureStatuses(signatures: List<String>): Result<SignatureStatuses> {
+        return try {
+            Result.Success(provider.api.getSignatureStatuses(signatures, true))
+        } catch (ex: RpcException) {
+            Result.Failure(ex)
+        }
     }
 
     fun accountInfo(account: PublicKey): Result<SolanaMainAccountInfo> {
@@ -122,7 +156,7 @@ class SolanaNetworkService(
     fun getRecentBlockhash(commitment: Commitment? = null): String = provider.api.getRecentBlockhash(commitment)
 
     private fun determineRentPerByteEpoch(cluster: Cluster): Double {
-        return when(cluster) {
+        return when (cluster) {
             Cluster.MAINNET -> RENT_PER_BYTE_EPOCH
             Cluster.TESTNET -> RENT_PER_BYTE_EPOCH
             Cluster.DEVNET -> RENT_PER_BYTE_EPOCH_DEV_NET
@@ -146,12 +180,19 @@ data class SolanaAccountInfo(
     val balance: Long,
     val accountExists: Boolean,
     val tokensByMint: Map<String, SolanaTokenAccountInfo>,
+    val txsInProgress: List<TransactionInfo>
 )
 
 data class SolanaTokenAccountInfo(
     val address: String,
     val mint: String,
-    val balance: BigDecimal,
+    val uiAmount: BigDecimal, // in SOL
+)
+
+data class TransactionInfo(
+    val signature: String,
+    val fee: Long, // in lamports
+    val instructions: List<TransactionResult.Instruction>
 )
 
 private fun MutableMap<String, Any>.addCommitment(commitment: Commitment): MutableMap<String, Any> {
