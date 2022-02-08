@@ -254,7 +254,7 @@ enum class Blockchain(
         }
 
         return when (this) {
-            Stellar, Solana -> {
+            Stellar, StellarTestnet, Solana, SolanaTestnet -> {
                 //Path according to sep-0005. https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0005.md
                 // Solana path consistent with TrustWallet:
                 // https://github.com/trustwallet/wallet-core/blob/456f22d6a8ce8a66ccc73e3b42bcfec5a6afe53a/registry.json#L1013
