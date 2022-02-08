@@ -52,11 +52,12 @@ class SolanaNetworkService(
 
     private fun getInProgressTransactionsInfo(account: PublicKey): Result<List<TransactionInfo>> {
         return try {
-            val allSignatures = provider.api.getSignaturesForAddress(account.toBase58(), Commitment.CONFIRMED)
-            val confirmedCommitmentSignnatires = allSignatures
+            val allSignatures = provider.api.getSignaturesForAddress(account.toBase58(), Commitment.CONFIRMED, 20)
+            val confirmedCommitmentSignatures = allSignatures
                 .filter { it.confirmationStatus == Commitment.CONFIRMED.value }
-            val txInProgress = confirmedCommitmentSignnatires.mapNotNull { addressSignature ->
-                provider.api.getTransaction(addressSignature.signature)?.let { transaction ->
+
+            val txInProgress = confirmedCommitmentSignatures.mapNotNull { addressSignature ->
+                provider.api.getTransaction(addressSignature.signature, Commitment.CONFIRMED)?.let { transaction ->
                     TransactionInfo(
                         addressSignature.signature,
                         transaction.meta.fee,
@@ -137,7 +138,7 @@ class SolanaNetworkService(
 
     fun minimalBalanceForRentExemption(): Result<BigDecimal> {
         return try {
-            val rent = provider.api.getMinimumBalanceForRentExemption(MIN_ACCOUNT_SIZE)
+            val rent = provider.api.getMinimumBalanceForRentExemption(0)
             Result.Success(rent.toBigDecimal())
         } catch (ex: RpcException) {
             Result.Failure(ex)

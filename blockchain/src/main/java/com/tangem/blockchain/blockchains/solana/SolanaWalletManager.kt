@@ -1,10 +1,12 @@
 package com.tangem.blockchain.blockchains.solana
 
 import android.util.Log
+import com.tangem.blockchain.BlockchainSdkLogger.logD
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.filterWith
 import com.tangem.common.CompletionResult
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.Program
@@ -28,6 +30,7 @@ class SolanaWalletManager(
     private val txBuilder = SolanaTransactionBuilder()
 
     override suspend fun update() {
+        logD(this, "update")
         when (val result = networkService.getInfo(publicKey)) {
             is Result.Success -> {
                 val accountInfo = result.data
@@ -72,7 +75,10 @@ class SolanaWalletManager(
     }
 
     private fun addToRecentTransactions(txsInProgress: List<TransactionInfo>) {
-        val newUnconfirmedTxData = txsInProgress.mapNotNull {
+        if (txsInProgress.isEmpty()) return
+
+        val newTxsInProgress = txsInProgress.filterWith(wallet.recentTransactions) { a, b -> a.signature != b.hash }
+        val newUnconfirmedTxData = newTxsInProgress.mapNotNull {
             if (it.instructions.isNotEmpty() && it.instructions[0].programId == Program.Id.system.toBase58()) {
                 val info = it.instructions[0].parsed.info
                 val amount = Amount(info.lamports.toSOL(), wallet.blockchain)
