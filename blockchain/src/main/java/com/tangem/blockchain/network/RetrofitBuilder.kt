@@ -41,7 +41,6 @@ fun createRetrofitInstance(baseUrl: String): Retrofit =
                 .client(BlockchainSdkRetrofitBuilder.okHttpClient)
                 .build()
 
-
 const val API_TANGEM = "https://verify.tangem.com/"
 const val API_COINMARKETCAP = "https://pro-api.coinmarketcap.com/"
 const val API_INFURA = "https://mainnet.infura.io/"
@@ -76,3 +75,8 @@ const val API_POLYGON_TESTNET = "https://rpc-mumbai.maticvigil.com/"
 const val API_BLOCKCKAIR_TANGEM = "https://api.tangem-tech.com/"
 const val API_AVALANCHE = "https://api.avax.network/"
 const val API_AVALANCHE_TESTNET = "https://api.avax-test.network/"
+const val API_FANTOM_TOOLS = "https://rpc.ftm.tools/"
+const val API_FANTOM_NETWORK = "https://rpcapi.fantom.network/"
+const val API_FANTOM_ANKR_TOOLS = "http://rpc.ankr.tools/"                      // ftm
+const val API_FANTOM_ULTIMATENODES = "https://ftmrpc.ultimatenodes.io/"
+const val API_FANTOM_TESTNET = "https://rpc.testnet.fantom.network/"
