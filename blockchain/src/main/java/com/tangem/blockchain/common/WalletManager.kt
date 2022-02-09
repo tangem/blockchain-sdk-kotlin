@@ -63,7 +63,7 @@ abstract class WalletManager(
         }
     }
 
-    fun createTransaction(amount: Amount, fee: Amount, destination: String): TransactionData {
+    open fun createTransaction(amount: Amount, fee: Amount, destination: String): TransactionData {
         val contractAddress = if (amount.type is AmountType.Token) {
             amount.type.token.contractAddress
         } else {
