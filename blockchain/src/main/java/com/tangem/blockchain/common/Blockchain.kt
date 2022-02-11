@@ -41,6 +41,8 @@ enum class Blockchain(
     Ducatus("DUC", "DUC", "Ducatus"),
     Ethereum("ETH", "ETH", "Ethereum"),
     EthereumTestnet("ETH/test", "ETH", "Ethereum Testnet"),
+    Fantom("FTM", "FTM", "Fantom"),
+    FantomTestnet("FTM/test", "FTM", "Fantom Testnet"),
     Litecoin("LTC", "LTC", "Litecoin"),
     Polygon("POLYGON", "MATIC", "Polygon"),
     PolygonTestnet("POLYGON/test", "MATIC", "Polygon Testnet"),
@@ -58,7 +60,8 @@ enum class Blockchain(
         Binance, BinanceTestnet, Litecoin, Ducatus, Dogecoin,
         -> 8
         Cardano, CardanoShelley, XRP, Tezos -> 6
-        Ethereum, EthereumTestnet, RSK, BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet -> 18
+        Ethereum, EthereumTestnet, RSK, BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
+        Fantom, FantomTestnet -> 18
         Stellar, StellarTestnet -> 7
         Solana, SolanaTestnet -> 9
         Unknown -> 0
@@ -82,8 +85,8 @@ enum class Blockchain(
     private fun getAddressService(): AddressService = when (this) {
         Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus -> BitcoinAddressService(this)
         BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService()
-        Ethereum, EthereumTestnet, BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet ->
-            EthereumAddressService()
+        Ethereum, EthereumTestnet, BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
+        Fantom, FantomTestnet -> EthereumAddressService()
         RSK -> RskAddressService()
         Cardano, CardanoShelley -> CardanoAddressService(this)
         XRP -> XrpAddressService()
@@ -134,6 +137,8 @@ enum class Blockchain(
         } else {
             "https://rinkeby.etherscan.io/token/$tokenContractAddress?a=$address"
         }
+        Fantom -> "https://ftmscan.com/address/$address"
+        FantomTestnet -> "https://testnet.ftmscan.com/address/$address"
         RSK -> {
             var url = "https://explorer.rsk.co/address/$address"
             if (tokenContractAddress != null) {
@@ -162,6 +167,7 @@ enum class Blockchain(
             BitcoinCashTestnet -> "https://coinfaucet.eu/en/bch-testnet/"
             BinanceTestnet -> "https://docs.binance.org/smart-chain/wallet/binance.html"
             BSCTestnet -> "https://testnet.binance.org/faucet-smart"
+            FantomTestnet -> "https://faucet.fantom.network"
             PolygonTestnet -> "https://faucet.matic.network"
             StellarTestnet -> "https://laboratory.stellar.org/#account-creator?network=test"
             SolanaTestnet -> "https://solfaucet.com/"
@@ -187,10 +193,10 @@ enum class Blockchain(
     fun isTestnet(): Boolean {
         return when (this) {
             Unknown, Avalanche, Bitcoin, BitcoinCash, Litecoin, Dogecoin, Ducatus, Ethereum, RSK, BSC, Polygon,
-            Cardano, CardanoShelley, XRP, Binance, Stellar, Solana, Tezos,
+            Cardano, CardanoShelley, XRP, Binance, Stellar, Solana, Tezos, Fantom
             -> false
             AvalancheTestnet, BitcoinTestnet, EthereumTestnet, BSCTestnet, PolygonTestnet, BinanceTestnet,
-            BitcoinCashTestnet, StellarTestnet, SolanaTestnet,
+            BitcoinCashTestnet, StellarTestnet, SolanaTestnet, FantomTestnet
             -> true
         }
     }
@@ -203,6 +209,7 @@ enum class Blockchain(
             Ethereum, EthereumTestnet -> EthereumTestnet
             Binance, BinanceTestnet -> BinanceTestnet
             BSC, BSCTestnet -> BSCTestnet
+            Fantom, FantomTestnet -> FantomTestnet
             Polygon, PolygonTestnet -> PolygonTestnet
             Stellar, StellarTestnet -> StellarTestnet
             Solana, SolanaTestnet -> SolanaTestnet
@@ -223,7 +230,7 @@ enum class Blockchain(
             Unknown -> emptyList()
             Bitcoin, BitcoinTestnet, BitcoinCash, BitcoinCashTestnet, Litecoin, Ducatus,
             Ethereum, EthereumTestnet, RSK, Binance, BinanceTestnet, Dogecoin, BSC, BSCTestnet,
-            Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
+            Polygon, PolygonTestnet, Avalanche, AvalancheTestnet, Fantom, FantomTestnet
             -> listOf(EllipticCurve.Secp256k1)
             Tezos, XRP -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
             Cardano, CardanoShelley, Stellar, StellarTestnet, Solana, SolanaTestnet ->
@@ -237,6 +244,8 @@ enum class Blockchain(
             AvalancheTestnet -> Chain.AvalancheTestnet.id
             Ethereum -> Chain.Mainnet.id
             EthereumTestnet -> Chain.Rinkeby.id
+            Fantom -> Chain.Fantom.id
+            FantomTestnet -> Chain.FantomTestnet.id
             RSK -> Chain.RskMainnet.id
             BSC -> Chain.BscMainnet.id
             BSCTestnet -> Chain.BscTestnet.id
@@ -291,6 +300,7 @@ enum class Blockchain(
         }
     }
 
+    //    https://github.com/satoshilabs/slips/blob/master/slip-0044.md
     fun coinType(): Long {
         if (isTestnet()) return 1
 
@@ -306,6 +316,7 @@ enum class Blockchain(
             Solana -> 501
             Binance -> 714
             Polygon -> 966
+            Fantom -> 1007
             Tezos -> 1729
             Cardano, CardanoShelley -> 1815
             Avalanche -> 9000
@@ -329,6 +340,8 @@ enum class Blockchain(
                 Chain.BscTestnet.id -> BSCTestnet
                 Chain.Polygon.id -> Polygon
                 Chain.PolygonTestnet.id -> PolygonTestnet
+                Chain.Fantom.id -> Fantom
+                Chain.FantomTestnet.id -> FantomTestnet
                 else -> null
             }
         }
@@ -343,7 +356,8 @@ enum class Blockchain(
                     BinanceTestnet,
                     BSCTestnet,
                     EthereumTestnet,
-                    PolygonTestnet
+                    PolygonTestnet,
+                    FantomTestnet,
                 )
             } else {
                 listOf(
@@ -359,6 +373,7 @@ enum class Blockchain(
                     RSK,
                     Polygon,
                     Dogecoin,
+                    Fantom,
                 )
             }
         }
