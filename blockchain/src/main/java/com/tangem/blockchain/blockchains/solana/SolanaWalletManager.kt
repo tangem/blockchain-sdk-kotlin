@@ -94,7 +94,6 @@ class SolanaWalletManager(
 
     override fun createTransaction(amount: Amount, fee: Amount, destination: String): TransactionData {
         val accountCreationRent = feeRentHolder[fee]
-        feeRentHolder.clear()
 
         return if (accountCreationRent == null) {
             super.createTransaction(amount, fee, destination)
@@ -121,6 +120,7 @@ class SolanaWalletManager(
                 val result = networkService.sendTransaction(transaction)
                 when (result) {
                     is Result.Success -> {
+                        feeRentHolder.clear()
                         transactionData.hash = result.data
                         wallet.addOutgoingTransaction(transactionData, false)
                         SimpleResult.Success
@@ -154,6 +154,7 @@ class SolanaWalletManager(
      * to the amount of the main transfer
      */
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+        feeRentHolder.clear()
         val feeResult = getNetworkFee()
         val fee = (feeResult as? Result.Success)?.data
             ?: return feeResult as Result.Failure
