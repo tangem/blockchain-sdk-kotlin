@@ -230,6 +230,24 @@ class WalletManagerFactory(
                     tokens
                 )
             }
+            Blockchain.Fantom, Blockchain.FantomTestnet -> {
+                val providers = mutableListOf<EthereumJsonRpcProvider>()
+                if (blockchain.isTestnet()) {
+                    providers.add(EthereumJsonRpcProvider(API_FANTOM_TESTNET))
+                } else {
+                    providers.add(EthereumJsonRpcProvider(API_FANTOM_NETWORK))
+                    providers.add(EthereumJsonRpcProvider(API_FANTOM_ULTIMATENODES))
+                    providers.add(EthereumJsonRpcProvider(API_FANTOM_TOOLS))
+                    providers.add(EthereumJsonRpcProvider(API_FANTOM_ANKR_TOOLS, "ftm"))
+                }
+
+                EthereumWalletManager(
+                    wallet,
+                    EthereumTransactionBuilder(publicKey.blockchainKey, blockchain),
+                    EthereumNetworkService(providers),
+                    tokens
+                )
+            }
             Blockchain.RSK -> {
                 val jsonRpcProvider = EthereumJsonRpcProvider(API_RSK)
 
