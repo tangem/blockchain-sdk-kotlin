@@ -128,8 +128,7 @@ class WalletManagerFactory(
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1
     ): WalletManager? {
-        if (publicKey.derivationPath != null &&
-                blockchain.derivationPath() != publicKey.derivationPath) {
+        if (publicKey.derivationPath != null && blockchain.derivationPath() != publicKey.derivationPath) {
             return null
         }
 
@@ -270,13 +269,20 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.Polygon, Blockchain.PolygonTestnet -> {
-                val api = if (blockchain == Blockchain.Polygon) API_POLYGON else API_POLYGON_TESTNET
-                val jsonRpcProvider = EthereumJsonRpcProvider(api)
+                val jsonRpcProviders = if (blockchain == Blockchain.Polygon) {
+                    listOf(
+                        EthereumJsonRpcProvider(API_POLYGON),
+                        EthereumJsonRpcProvider(API_POLYGON_MATICVIGIL),
+                    )
+
+                } else {
+                    listOf(EthereumJsonRpcProvider(API_POLYGON_TESTNET))
+                }
 
                 EthereumWalletManager(
                     wallet,
                     EthereumTransactionBuilder(publicKey.blockchainKey, blockchain),
-                    EthereumNetworkService(listOf(jsonRpcProvider)),
+                    EthereumNetworkService(jsonRpcProviders),
                     tokens
                 )
             }
