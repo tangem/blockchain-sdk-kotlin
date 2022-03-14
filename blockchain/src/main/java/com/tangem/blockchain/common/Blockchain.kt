@@ -19,6 +19,7 @@ import com.tangem.common.hdWallet.DerivationNode
 import com.tangem.common.hdWallet.DerivationPath
 import com.tangem.common.hdWallet.bip.BIP44
 
+
 enum class Blockchain(
     val id: String,
     val currency: String,
@@ -176,7 +177,8 @@ enum class Blockchain(
     }
 
     fun defaultAddressType(): AddressType = when (this) {
-        Bitcoin, BitcoinTestnet -> BitcoinAddressType.Segwit //TODO: add Litecoin when sending from Segwit is fixed
+        Bitcoin, BitcoinTestnet -> BitcoinAddressType.Segwit
+        Litecoin -> BitcoinAddressType.Legacy
         CardanoShelley -> CardanoAddressType.Shelley
         else -> DefaultAddressType
     }
