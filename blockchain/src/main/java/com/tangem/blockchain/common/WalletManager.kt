@@ -106,17 +106,14 @@ abstract class WalletManager(
         wallet.removeToken(token)
     }
 
-    open suspend fun addToken(token: Token): Result<Amount> {
+    open fun addToken(token: Token) {
         if (!cardTokens.contains(token)) {
             cardTokens.add(token)
         }
-        return Result.Failure(
-            BlockchainSdkError.UnsupportedOperation("Adding tokens not supported for ${wallet.blockchain.currency}")
-        )
     }
 
-    open suspend fun addTokens(tokens: List<Token>): List<Result<Amount>> {
-        return tokens.map { addToken(it) }
+    open fun addTokens(tokens: List<Token>) {
+        tokens.forEach { addToken(it) }
     }
 
     private fun validateAmountValue(amount: Amount) = amount.isAboveZero()
