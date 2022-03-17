@@ -209,23 +209,18 @@ class SolanaWalletManager(
         }
     }
 
-    override suspend fun addToken(token: Token): Result<Amount> {
+    override fun addToken(token: Token) {
         throw BlockchainSdkError.UnsupportedOperation()
-
-        if (!cardTokens.contains(token)) cardTokens.add(token)
-
-        return addTokens(listOf(token))[0]
     }
 
-    override suspend fun addTokens(tokens: List<Token>): List<Result<Amount>> {
+    override fun addTokens(tokens: List<Token>) {
         throw BlockchainSdkError.UnsupportedOperation()
 
-        tokens.forEach { if (!cardTokens.contains(it)) cardTokens.add(it) }
-
-        return when (val result = networkService.tokenAccountsInfo(publicKey)) {
-            is Result.Success -> addTokenValue(tokens, result.data).map { Result.Success(it) }
-            is Result.Failure -> tokens.map { Result.Failure(result.error) }
-        }
+//        tokens.forEach { if (!cardTokens.contains(it)) cardTokens.add(it) }
+//        when (val result = networkService.tokenAccountsInfo(publicKey)) {
+//            is Result.Success -> addTokenValue(tokens, result.data).map { Result.Success(it) }
+//            is Result.Failure -> tokens.map { Result.Failure(result.error) }
+//        }
     }
 
     private fun addTokenValue(
