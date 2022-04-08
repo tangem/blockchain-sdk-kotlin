@@ -43,6 +43,7 @@ import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairNetworkProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import com.tangem.common.card.EllipticCurve
+import com.tangem.common.hdWallet.DerivationPath
 import com.tangem.common.hdWallet.ExtendedPublicKey
 import org.p2p.solanaj.rpc.Cluster
 
@@ -56,20 +57,31 @@ class WalletManagerFactory(
      * @param blockchain: blockchain to create. If null, card native blockchain will be used
      * @param seedKey: Public Key of the wallet
      * @param derivedKey: Derived ExtendedPublicKey by the card
+     * @param derivation: derivation style or derivation path
      */
     fun makeWalletManager(
         cardId: String,
         blockchain: Blockchain,
         seedKey: ByteArray,
-        derivedKey: ExtendedPublicKey
+        derivedKey: ExtendedPublicKey,
+        derivation: DerivationParams
     ): WalletManager? {
+
+
+        var derivationPath: DerivationPath? =
+            when (derivation) {
+                is DerivationParams.Custom -> derivation.path
+                is DerivationParams.Default -> blockchain.derivationPath(derivation.style)
+            }
+
+
         return makeWalletManager(
             cardId = cardId,
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(
-                seedKey,
-                derivedKey.publicKey,
-                blockchain.derivationPath()
+                seedKey = seedKey,
+                derivedKey = derivedKey.publicKey,
+                derivationPath = derivationPath
             )
         )
     }
@@ -128,7 +140,10 @@ class WalletManagerFactory(
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1
     ): WalletManager? {
-        if (publicKey.derivationPath != null && blockchain.derivationPath() != publicKey.derivationPath) {
+        if (publicKey.derivationPath != null &&
+            (blockchain.derivationPath(DerivationStyle.NEW) != publicKey.derivationPath
+                    || blockchain.derivationPath(DerivationStyle.LEGACY) != publicKey.derivationPath)
+        ) {
             return null
         }
 
@@ -210,7 +225,7 @@ class WalletManagerFactory(
             Blockchain.EthereumTestnet -> {
                 val jsonRpcProvider = EthereumJsonRpcProvider.infura(
                     API_INFURA_TESTNET, blockchainSdkConfig.infuraProjectId
-                    ?: throw Exception("Infura project Id is required")
+                        ?: throw Exception("Infura project Id is required")
                 )
                 EthereumWalletManager(
                     wallet,
@@ -220,7 +235,8 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.Avalanche, Blockchain.AvalancheTestnet -> {
-                val api = if (blockchain == Blockchain.Avalanche) API_AVALANCHE else API_AVALANCHE_TESTNET
+                val api =
+                    if (blockchain == Blockchain.Avalanche) API_AVALANCHE else API_AVALANCHE_TESTNET
 
                 EthereumWalletManager(
                     wallet,
