@@ -53,7 +53,7 @@ class StellarWalletManager(
 
     private fun updateUnplannedTokens(balances: Set<StellarAssetBalance>) {
         balances.forEach {
-            val token = Token(it.symbol, it.issuer, blockchain.decimals(), blockchain)
+            val token = Token(it.symbol, it.issuer, blockchain.decimals())
             wallet.addTokenValue(it.balance, token)
         }
     }
