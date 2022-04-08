@@ -255,7 +255,8 @@ enum class Blockchain(
         }
     }
 
-    fun derivationPath(style: DerivationStyle): DerivationPath? {
+    fun derivationPath(style: DerivationStyle?): DerivationPath? {
+        if (style == null) return null
         if (!getSupportedCurves().contains(EllipticCurve.Secp256k1) &&
             !getSupportedCurves().contains(EllipticCurve.Ed25519)
         ) {
