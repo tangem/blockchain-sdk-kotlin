@@ -1,20 +1,21 @@
 package com.tangem.blockchain.common
 
+import com.squareup.moshi.JsonClass
 import java.util.*
 
+@JsonClass(generateAdapter = true)
 data class Token(
     val name: String,
     val symbol: String,
     val contractAddress: String,
     val decimals: Int,
-    val blockchain: Blockchain = Blockchain.Ethereum
+    val id: String? = null
 ) {
     constructor(
         symbol: String,
         contractAddress: String,
         decimals: Int,
-        blockchain: Blockchain = Blockchain.Ethereum
-    ) : this(symbol, symbol, contractAddress, decimals, blockchain)
+    ) : this(symbol, symbol, contractAddress, decimals)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -18,7 +18,7 @@ class IconsUtil {
         fun getTokenIconUri(blockchain: Blockchain, token: Token): Uri? {
             val blockchainPath = blockchain.getPath() ?: return null
 
-            val tokenPath = normalizeAssetPath(token)
+            val tokenPath = normalizeAssetPath(token, blockchain)
             return Uri.parse("$BASE_URL/$blockchainPath/assets/$tokenPath/logo.png")
         }
 
@@ -41,10 +41,10 @@ class IconsUtil {
             else -> null
         }
 
-        private fun normalizeAssetPath(token: Token): String {
+        private fun normalizeAssetPath(token: Token, blockchain: Blockchain): String {
             val path = token.contractAddress
 
-            return when (token.blockchain) {
+            return when (blockchain) {
                 Blockchain.Ethereum -> Address(path).withERC55Checksum().hex
                 Blockchain.Binance -> path.toUpperCase(Locale.ROOT)
                 else -> path
