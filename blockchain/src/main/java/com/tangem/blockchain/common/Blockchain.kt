@@ -255,7 +255,7 @@ enum class Blockchain(
         }
     }
 
-    fun derivationPath(): DerivationPath? {
+    fun derivationPath(style: DerivationStyle): DerivationPath? {
         if (!getSupportedCurves().contains(EllipticCurve.Secp256k1) &&
             !getSupportedCurves().contains(EllipticCurve.Ed25519)
         ) {
@@ -270,7 +270,7 @@ enum class Blockchain(
                 DerivationPath(
                     path = listOf(
                         DerivationNode.Hardened(BIP44.purpose),
-                        DerivationNode.Hardened(coinType()),
+                        DerivationNode.Hardened(coinType(style)),
                         DerivationNode.Hardened(0)
                     )
                 )
@@ -280,7 +280,7 @@ enum class Blockchain(
                 DerivationPath(
                     path = listOf(
                         DerivationNode.Hardened(1852),
-                        DerivationNode.Hardened(coinType()),
+                        DerivationNode.Hardened(coinType(style)),
                         DerivationNode.Hardened(0),
                         DerivationNode.NonHardened(0),
                         DerivationNode.NonHardened(0)
@@ -290,7 +290,7 @@ enum class Blockchain(
             else -> {
                 // Standard BIP44
                 val bip44 = BIP44(
-                    coinType = coinType(),
+                    coinType = coinType(style),
                     account = 0,
                     change = BIP44.Chain.External,
                     addressIndex = 0
@@ -301,14 +301,18 @@ enum class Blockchain(
     }
 
     //    https://github.com/satoshilabs/slips/blob/master/slip-0044.md
-    fun coinType(): Long {
+    fun coinType(style: DerivationStyle): Long {
         if (isTestnet()) return 1
+
+        val ethCoinType = 60L
+
+        if (style == DerivationStyle.NEW && this.isEvm()) return ethCoinType
 
         return when (this) {
             Bitcoin, Ducatus -> 0
             Litecoin -> 2
             Dogecoin -> 3
-            Ethereum -> 60
+            Ethereum -> ethCoinType
             RSK -> 137
             XRP -> 144
             BitcoinCash -> 145
@@ -386,4 +390,23 @@ enum class Blockchain(
             }
         }
     }
+
+    fun canHandleTokens(): Boolean {
+        return when (this) {
+            Ethereum, EthereumTestnet,
+            BSC, BSCTestnet,
+            Binance, BinanceTestnet,
+            Polygon, PolygonTestnet,
+            Avalanche, AvalancheTestnet,
+            Solana, SolanaTestnet,
+            Fantom, FantomTestnet -> true
+            else -> false
+        }
+    }
+
+    fun isEvm(): Boolean {
+        return getChainId() != null
+    }
+
+
 }
