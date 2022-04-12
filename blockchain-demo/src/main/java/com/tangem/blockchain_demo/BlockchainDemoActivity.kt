@@ -73,7 +73,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
                         val wallet = result.data.wallets.first()
                         walletManager = WalletManagerFactory().makeWalletManager(
                             result.data.cardId,
-                            Blockchain.fromId(Blockchain.Ethereum.id),
+                            Blockchain.fromId(Blockchain.Litecoin.id),
                             wallet.publicKey,
                             wallet.curve
                         )!!
