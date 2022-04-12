@@ -27,10 +27,10 @@ enum class Blockchain(
     Unknown("", "", ""),
     Avalanche("AVALANCHE", "AVAX", "Avalanche C-Chain"),
     AvalancheTestnet("AVALANCHE/test", "AVAX", "Avalanche C-Chain Testnet"),
-    Binance("BINANCE", "BNB", "Binance"),
-    BinanceTestnet("BINANCE/test", "BNB", "Binance Testnet"),
-    BSC("BSC", "BNB", "Binance Smart Chain"),
-    BSCTestnet("BSC/test", "BNB", "Binance Smart Chain Testnet"),
+    Binance("BINANCE", "BNB", "BNB Beacon Chain"),
+    BinanceTestnet("BINANCE/test", "BNB", "BNB Beacon Chain Testnet"),
+    BSC("BSC", "BNB", "BNB Smart Chain"),
+    BSCTestnet("BSC/test", "BNB", "BNB Smart Chain Testnet"),
     Bitcoin("BTC", "BTC", "Bitcoin"),
     BitcoinTestnet("BTC/test", "BTC", "Bitcoin Testnet"),
     BitcoinCash("BCH", "BCH", "Bitcoin Cash"),
@@ -255,7 +255,8 @@ enum class Blockchain(
         }
     }
 
-    fun derivationPath(style: DerivationStyle): DerivationPath? {
+    fun derivationPath(style: DerivationStyle?): DerivationPath? {
+        if (style == null) return null
         if (!getSupportedCurves().contains(EllipticCurve.Secp256k1) &&
             !getSupportedCurves().contains(EllipticCurve.Ed25519)
         ) {
@@ -398,7 +399,6 @@ enum class Blockchain(
             Binance, BinanceTestnet,
             Polygon, PolygonTestnet,
             Avalanche, AvalancheTestnet,
-            Solana, SolanaTestnet,
             Fantom, FantomTestnet -> true
             else -> false
         }
