@@ -2,7 +2,6 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
-import com.tangem.blockchain.blockchains.litecoin.LitecoinSegwitMainNetParams
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.*
 import com.tangem.common.card.EllipticCurve
@@ -18,6 +17,7 @@ import org.bitcoinj.params.TestNet3Params
 import org.bitcoinj.script.Script
 import org.bitcoinj.script.ScriptBuilder
 import org.libdohj.params.DogecoinMainNetParams
+import org.libdohj.params.LitecoinMainNetParams
 
 
 open class BitcoinAddressService(
@@ -27,7 +27,7 @@ open class BitcoinAddressService(
     private val networkParameters: NetworkParameters = when (blockchain) {
         Blockchain.Bitcoin -> MainNetParams()
         Blockchain.BitcoinTestnet -> TestNet3Params()
-        Blockchain.Litecoin -> LitecoinSegwitMainNetParams()
+        Blockchain.Litecoin -> LitecoinMainNetParams()
         Blockchain.Dogecoin -> DogecoinMainNetParams()
         Blockchain.Ducatus -> DucatusMainNetParams()
         else -> throw Exception(
@@ -46,7 +46,7 @@ open class BitcoinAddressService(
 
     override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?): Set<Address> {
         return when (blockchain) {
-            Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> { //TODO: add Litecoin when sending from Segwit is fixed
+            Blockchain.Bitcoin, Blockchain.BitcoinTestnet, Blockchain.Litecoin -> {
                 setOf(makeLegacyAddress(walletPublicKey), makeSegwitAddress(walletPublicKey))
             }
             else -> {
