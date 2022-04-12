@@ -1,7 +1,6 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
-import com.tangem.blockchain.blockchains.litecoin.LitecoinSegwitMainNetParams
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
@@ -17,6 +16,7 @@ import org.bitcoinj.script.Script
 import org.bitcoinj.script.ScriptBuilder
 import org.bitcoinj.script.ScriptPattern
 import org.libdohj.params.DogecoinMainNetParams
+import org.libdohj.params.LitecoinMainNetParams
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -32,7 +32,7 @@ open class BitcoinTransactionBuilder(
     protected var networkParameters = when (blockchain) {
         Blockchain.Bitcoin, Blockchain.BitcoinCash -> MainNetParams()
         Blockchain.BitcoinTestnet, Blockchain.BitcoinCashTestnet -> TestNet3Params()
-        Blockchain.Litecoin -> LitecoinSegwitMainNetParams()
+        Blockchain.Litecoin -> LitecoinMainNetParams()
         Blockchain.Dogecoin -> DogecoinMainNetParams()
         Blockchain.Ducatus -> DucatusMainNetParams()
         else -> throw Exception(
