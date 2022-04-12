@@ -140,12 +140,6 @@ class WalletManagerFactory(
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1
     ): WalletManager? {
-        if (publicKey.derivationPath != null &&
-            (blockchain.derivationPath(DerivationStyle.NEW) != publicKey.derivationPath
-                    || blockchain.derivationPath(DerivationStyle.LEGACY) != publicKey.derivationPath)
-        ) {
-            return null
-        }
 
         if (checkIfWrongKey(curve, publicKey)) return null
 
