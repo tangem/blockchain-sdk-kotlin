@@ -11,8 +11,10 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.API_BLOCKCHAIR
 import com.tangem.blockchain.network.API_BLOCKCKAIR_TANGEM
+import com.tangem.blockchain.network.blockchair.BlockchairApi.Companion.needRetryWithKey
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.hexToBytes
+import retrofit2.HttpException
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.SimpleDateFormat
@@ -30,6 +32,8 @@ open class BlockchairNetworkProvider(
         createRetrofitInstance(host).create(BlockchairApi::class.java)
     }
 
+    private var currentApiKey: String? = null
+
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.ROOT)
     private val decimals = blockchain.decimals()
 
@@ -38,9 +42,24 @@ open class BlockchairNetworkProvider(
         return api + getPath(blockchain)
     }
 
+    private suspend fun <T> makeRequestUsingKeyOnlyWhenNeeded(
+        block: suspend () -> T
+    ): T {
+        return try {
+            retryIO { block() }
+        } catch (error: HttpException) {
+            if (needRetryWithKey(error, currentApiKey, apiKey)) {
+                currentApiKey = apiKey
+                retryIO { block() }
+            } else {
+                throw error
+            }
+        }
+    }
+
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         return try {
-            val blockchairAddress = retryIO {
+            val blockchairAddress = makeRequestUsingKeyOnlyWhenNeeded {
                 api.getAddressData(
                     address = address,
                     transactionDetails = true,
@@ -87,7 +106,7 @@ open class BlockchairNetworkProvider(
 
     override suspend fun getFee(): Result<BitcoinFee> {
         return try {
-            val stats = retryIO { api.getBlockchainStats(apiKey, authorizationToken) }
+            val stats = makeRequestUsingKeyOnlyWhenNeeded { api.getBlockchainStats(apiKey, authorizationToken) }
             val feePerKb = (stats.data!!.feePerByte!! * 1024).toBigDecimal().movePointLeft(decimals)
             Result.Success(
                 BitcoinFee(
@@ -109,7 +128,9 @@ open class BlockchairNetworkProvider(
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
-            retryIO { api.sendTransaction(BlockchairBody(transaction), apiKey, authorizationToken) }
+            makeRequestUsingKeyOnlyWhenNeeded {
+                api.sendTransaction(BlockchairBody(transaction), apiKey, authorizationToken)
+            }
             SimpleResult.Success
         } catch (error: Exception) {
             SimpleResult.Failure(error)
@@ -118,7 +139,7 @@ open class BlockchairNetworkProvider(
 
     override suspend fun getSignatureCount(address: String): Result<Int> {
         return try {
-            val blockchairAddress = retryIO {
+            val blockchairAddress = makeRequestUsingKeyOnlyWhenNeeded {
                 api.getAddressData(
                     address = address,
                     key = apiKey,
