@@ -166,7 +166,8 @@ class EthereumNetworkService(
     }
 
     private fun String.responseToBigInteger() =
-        this.substring(2).toBigInteger(16)
+        this.substring(2).ifBlank { "0" }.toBigInteger(16)
+
 
     private fun String.responseToLong() = this.responseToBigInteger().toLong()
 
