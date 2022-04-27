@@ -7,7 +7,6 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
-import java.math.BigDecimal
 
 class BinanceWalletManager(
         wallet: Wallet,
@@ -38,24 +37,9 @@ class BinanceWalletManager(
             val tokenBalance = response.balances[it.contractAddress] ?: 0.toBigDecimal()
             wallet.addTokenValue(tokenBalance, it)
         }
-        if (cardTokens.isEmpty()) { // only if no token(s) specified on manager creation or stored on card
-            val tokenBalances = response.balances.filterKeys { it != blockchain.currency }
-            updateUnplannedTokens(tokenBalances)
-        }
 
         transactionBuilder.accountNumber = response.accountNumber
         transactionBuilder.sequence = response.sequence
-    }
-
-    private fun updateUnplannedTokens(balances: Map<String, BigDecimal>) {
-        balances.forEach {
-            val token = Token(
-                    symbol = it.key.split("-")[0],
-                    contractAddress = it.key,
-                    decimals = blockchain.decimals(),
-            )
-            wallet.addTokenValue(it.value, token)
-        }
     }
 
     private fun updateError(error: Throwable?) {
