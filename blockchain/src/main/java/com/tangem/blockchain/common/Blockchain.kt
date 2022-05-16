@@ -229,13 +229,23 @@ enum class Blockchain(
     fun getSupportedCurves(): List<EllipticCurve> {
         return when (this) {
             Unknown -> emptyList()
-            Bitcoin, BitcoinTestnet, BitcoinCash, BitcoinCashTestnet, Litecoin, Ducatus,
-            Ethereum, EthereumTestnet, RSK, Binance, BinanceTestnet, Dogecoin, BSC, BSCTestnet,
-            Polygon, PolygonTestnet, Avalanche, AvalancheTestnet, Fantom, FantomTestnet
-            -> listOf(EllipticCurve.Secp256k1)
             Tezos, XRP -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
-            Cardano, CardanoShelley, Stellar, StellarTestnet, Solana, SolanaTestnet ->
-                listOf(EllipticCurve.Ed25519)
+            Bitcoin, BitcoinTestnet,
+            BitcoinCash, BitcoinCashTestnet,
+            Binance, BinanceTestnet,
+            Ethereum, EthereumTestnet,
+            Polygon, PolygonTestnet,
+            Avalanche, AvalancheTestnet,
+            BSC, BSCTestnet,
+            Fantom, FantomTestnet,
+            Litecoin,
+            Ducatus,
+            RSK,
+            Dogecoin -> listOf(EllipticCurve.Secp256k1)
+            Stellar, StellarTestnet,
+            Solana, SolanaTestnet,
+            Cardano,
+            CardanoShelley -> listOf(EllipticCurve.Ed25519)
         }
     }
 
@@ -331,8 +341,25 @@ enum class Blockchain(
         }
     }
 
+    fun canHandleTokens(): Boolean = when (this) {
+        Ethereum, EthereumTestnet,
+        BSC, BSCTestnet,
+        Binance, BinanceTestnet,
+        Polygon, PolygonTestnet,
+        Avalanche, AvalancheTestnet,
+        Fantom, FantomTestnet,
+        Solana, SolanaTestnet -> true
+        else -> false
+    }
+
+    fun isEvm(): Boolean = getChainId() != null
+
     companion object {
         private val values = values()
+
+        fun fromCurve(curve: EllipticCurve): List<Blockchain> = values
+            .filter { it.getSupportedCurves().isNotEmpty() && it.getSupportedCurves()[0] == curve }
+
         fun fromId(id: String): Blockchain = values.find { it.id == id } ?: Unknown
 
         fun fromChainId(chainId: Int): Blockchain? {
@@ -392,22 +419,4 @@ enum class Blockchain(
             }
         }
     }
-
-    fun canHandleTokens(): Boolean {
-        return when (this) {
-            Ethereum, EthereumTestnet,
-            BSC, BSCTestnet,
-            Binance, BinanceTestnet,
-            Polygon, PolygonTestnet,
-            Avalanche, AvalancheTestnet,
-            Fantom, FantomTestnet -> true
-            else -> false
-        }
-    }
-
-    fun isEvm(): Boolean {
-        return getChainId() != null
-    }
-
-
 }
