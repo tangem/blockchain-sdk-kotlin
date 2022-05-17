@@ -2,15 +2,17 @@ package com.tangem.blockchain.blockchains.solana
 
 import com.tangem.blockchain.blockchains.solana.solanaj.core.Transaction
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
+import com.tangem.blockchain.common.BlockchainSdkError.Solana
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.successOr
+import com.tangem.common.extensions.guard
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.rpc.Cluster
 import org.p2p.solanaj.rpc.RpcException
-import org.p2p.solanaj.rpc.types.FeesInfo
-import org.p2p.solanaj.rpc.types.SignatureStatuses
-import org.p2p.solanaj.rpc.types.TokenAccountInfo
-import org.p2p.solanaj.rpc.types.TransactionResult
+import org.p2p.solanaj.rpc.types.*
 import org.p2p.solanaj.rpc.types.config.Commitment
 import java.math.BigDecimal
 
@@ -21,37 +23,33 @@ class SolanaNetworkService(
     private val provider: RpcClient
 ) {
 
-    suspend fun getInfo(account: PublicKey): Result<SolanaAccountInfo> {
-        val mainAccountResult = accountInfo(account)
-        val mainAccount: SolanaMainAccountInfo = (mainAccountResult as? Result.Success)?.data
-            ?: return mainAccountResult as Result.Failure
-
-        val tokenAccountsResult = tokenAccountsInfo(account)
-        val tokenAccounts: List<TokenAccountInfo.Value> = (tokenAccountsResult as? Result.Success)?.data
-            ?: return tokenAccountsResult as Result.Failure
+    suspend fun getMainAccountInfo(
+        account: PublicKey
+    ): Result<SolanaMainAccountInfo> = withContext(Dispatchers.IO) {
+        val accountInfo = accountInfo(account).successOr { return@withContext it }
+        val tokenAccounts = accountTokensInfo(account).successOr { return@withContext it }
 
         val tokensByMint = tokenAccounts.map {
             SolanaTokenAccountInfo(
+                value = it,
                 address = it.pubkey,
                 mint = it.account.data.parsed.info.mint,
                 uiAmount = it.account.data.parsed.info.tokenAmount.uiAmount.toBigDecimal(),
             )
         }.associateBy { it.mint }
 
-        val transactionsResult = getInProgressTransactionsInfo(account)
-        val txsInProgress: List<TransactionInfo> = (transactionsResult as? Result.Success)?.data
-            ?: listOf()
-
-        return Result.Success(SolanaAccountInfo(
-            balance = mainAccount.balance,
-            accountExists = mainAccount.accountExists,
+        val txsInProgress = getTransactionsInProgressInfo(account).successOr { listOf() }
+        Result.Success(SolanaMainAccountInfo(
+            value = accountInfo.value,
             tokensByMint = tokensByMint,
             txsInProgress = txsInProgress
         ))
     }
 
-    private fun getInProgressTransactionsInfo(account: PublicKey): Result<List<TransactionInfo>> {
-        return try {
+    private suspend fun getTransactionsInProgressInfo(
+        account: PublicKey
+    ): Result<List<TransactionInfo>> = withContext(Dispatchers.IO) {
+        try {
             val allSignatures = provider.api.getSignaturesForAddress(account.toBase58(), Commitment.CONFIRMED, 20)
             val confirmedCommitmentSignatures = allSignatures
                 .filter { it.confirmationStatus == Commitment.CONFIRMED.value }
@@ -67,59 +65,71 @@ class SolanaNetworkService(
             }
             Result.Success(txInProgress)
         } catch (ex: RpcException) {
-            Result.Failure(ex)
+            Result.Failure(Solana.Api(ex))
         }
     }
 
-    fun getSignatureStatuses(signatures: List<String>): Result<SignatureStatuses> {
-        return try {
+    suspend fun getSignatureStatuses(
+        signatures: List<String>
+    ): Result<SignatureStatuses> = withContext(Dispatchers.IO) {
+        try {
             Result.Success(provider.api.getSignatureStatuses(signatures, true))
         } catch (ex: RpcException) {
-            Result.Failure(ex)
+            Result.Failure(Solana.Api(ex))
         }
     }
 
-    fun accountInfo(account: PublicKey): Result<SolanaMainAccountInfo> {
-        return try {
-            val accountInfo = provider.api.getAccountInfo(account, Commitment.FINALIZED.toMap())
-            return if (accountInfo.value == null) {
-                Result.Success(SolanaMainAccountInfo(0L, false))
-            } else {
-                Result.Success(SolanaMainAccountInfo(accountInfo.value.lamports, true))
-            }
+    suspend fun accountInfo(account: PublicKey): Result<AccountInfo> = withContext(Dispatchers.IO) {
+        try {
+            Result.Success(provider.api.getAccountInfo(account, Commitment.FINALIZED.toMap()))
         } catch (ex: RpcException) {
-            Result.Failure(ex)
+            Result.Failure(Solana.Api(ex))
         }
     }
 
-    fun tokenAccountsInfo(account: PublicKey): Result<List<TokenAccountInfo.Value>> {
-        return try {
+    suspend fun accountTokensInfo(
+        account: PublicKey
+    ): Result<List<TokenAccountInfo.Value>> = withContext(Dispatchers.IO) {
+        try {
             val params = mutableMapOf<String, Any>("programId" to Program.Id.token)
             params.addCommitment(Commitment.RECENT)
             val tokensAccountsInfo = provider.api.getTokenAccountsByOwner(account, params, mutableMapOf())
             Result.Success(tokensAccountsInfo.value)
         } catch (ex: RpcException) {
-            Result.Failure(ex)
+            Result.Failure(Solana.Api(ex))
         }
     }
 
-    fun isAccountExist(account: PublicKey): Result<Boolean> {
-        return when (val result = accountInfo(account)) {
-            is Result.Success -> Result.Success(result.data.accountExists)
-            is Result.Failure -> result
+    suspend fun splAccountInfo(
+        account: PublicKey,
+        mintAddress: PublicKey,
+    ): Result<SolanaSplAccountInfo> = withContext(Dispatchers.IO) {
+        val associatedTokenAddress = PublicKey.associatedTokenAddress(account, mintAddress).guard {
+            return@withContext Result.Failure(Solana.FailedToCreateAssociatedTokenAddress)
+        }
+        try {
+            val splAccountInfo = provider.api.getSplTokenAccountInfo(associatedTokenAddress)
+            Result.Success(SolanaSplAccountInfo(splAccountInfo.value, associatedTokenAddress))
+        } catch (ex: RpcException) {
+            Result.Failure(Solana.Api(ex))
         }
     }
 
-    fun getFees(): Result<FeesInfo> {
-        return try {
+    suspend fun getFees(): Result<FeesInfo> = withContext(Dispatchers.IO) {
+        try {
             val params = provider.api.getFees(Commitment.FINALIZED)
             Result.Success(params)
         } catch (ex: RpcException) {
-            Result.Failure(ex)
+            Result.Failure(Solana.Api(ex))
         }
     }
 
-    fun mainAccountCreationFee(): BigDecimal = accountRentFeeByEpoch()
+    suspend fun isAccountExist(account: PublicKey): Result<Boolean> = withContext(Dispatchers.IO) {
+        val info = accountInfo(account).successOr { return@withContext it }
+        Result.Success(info.isAccountExist)
+    }
+
+    fun mainAccountCreationFee(): BigDecimal = accountRentFeeByEpoch(1)
 
     fun accountRentFeeByEpoch(numberOfEpochs: Int = 1): BigDecimal {
         // https://docs.solana.com/developing/programming-model/accounts#calculation-of-rent
@@ -134,34 +144,38 @@ class SolanaNetworkService(
         return rentFeePerEpoch
     }
 
-    fun tokenAccountCreationFee(): Result<BigDecimal> = minimalBalanceForRentExemption()
+    suspend fun tokenAccountCreationFee(): Result<BigDecimal> = minimalBalanceForRentExemption()
 
-    fun minimalBalanceForRentExemption(): Result<BigDecimal> {
-        return try {
+    suspend fun minimalBalanceForRentExemption(): Result<BigDecimal> = withContext(Dispatchers.IO) {
+        try {
             val rent = provider.api.getMinimumBalanceForRentExemption(0)
             Result.Success(rent.toBigDecimal())
         } catch (ex: RpcException) {
-            Result.Failure(ex)
+            Result.Failure(Solana.Api(ex))
         }
     }
 
-    fun sendTransaction(signedTransaction: Transaction): Result<String> {
-        return try {
+    suspend fun sendTransaction(signedTransaction: Transaction): Result<String> = withContext(Dispatchers.IO) {
+        try {
             val result = provider.api.sendSignedTransaction(signedTransaction)
             Result.Success(result)
         } catch (ex: RpcException) {
-            Result.Failure(ex)
+            Result.Failure(Solana.Api(ex))
         }
     }
 
-    fun getRecentBlockhash(commitment: Commitment? = null): String = provider.api.getRecentBlockhash(commitment)
-
-    private fun determineRentPerByteEpoch(cluster: Cluster): Double {
-        return when (cluster) {
-            Cluster.MAINNET -> RENT_PER_BYTE_EPOCH
-            Cluster.TESTNET -> RENT_PER_BYTE_EPOCH
-            Cluster.DEVNET -> RENT_PER_BYTE_EPOCH_DEV_NET
+    suspend fun getRecentBlockhash(commitment: Commitment? = null): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            Result.Success(provider.api.getRecentBlockhash(commitment))
+        } catch (ex: RpcException) {
+            Result.Failure(Solana.Api(ex))
         }
+    }
+
+    private fun determineRentPerByteEpoch(cluster: Cluster): Double = when (cluster) {
+        Cluster.MAINNET -> RENT_PER_BYTE_EPOCH
+        Cluster.TESTNET -> RENT_PER_BYTE_EPOCH
+        Cluster.DEVNET -> RENT_PER_BYTE_EPOCH_DEV_NET
     }
 
     companion object {
@@ -171,20 +185,41 @@ class SolanaNetworkService(
     }
 }
 
+private val AccountInfo.isAccountExist
+    get() = value != null
+
+private val AccountInfo.requireValue
+    get() = value!!
 
 data class SolanaMainAccountInfo(
-    val balance: Long,
-    val accountExists: Boolean,
-)
-
-data class SolanaAccountInfo(
-    val balance: Long,
-    val accountExists: Boolean,
+    val value: AccountInfo.Value?,
     val tokensByMint: Map<String, SolanaTokenAccountInfo>,
     val txsInProgress: List<TransactionInfo>
-)
+) {
+    val balance: Long
+        get() = value?.lamports ?: 0L
+
+    val accountExist: Boolean
+        get() = value != null
+
+    val requireValue: AccountInfo.Value
+        get() = value!!
+}
+
+data class SolanaSplAccountInfo(
+    val value: TokenResultObjects.Value?,
+    val associatedPubK: PublicKey,
+) {
+    val accountExist: Boolean
+        get() = value != null
+
+    val requireValue: TokenResultObjects.Value
+        get() = value!!
+}
+
 
 data class SolanaTokenAccountInfo(
+    val value: TokenAccountInfo.Value,
     val address: String,
     val mint: String,
     val uiAmount: BigDecimal, // in SOL
