@@ -81,7 +81,7 @@ dependencies {
     implementation 'co.nstant.in:cbor:0.8'
 
     implementation files('libs/ripple-core-0.0.1.jar')
-    implementation files('libs/solanaj-0.0.8.jar')
+    implementation files('libs/solanaj-0.0.9.jar')
     implementation 'net.i2p.crypto:eddsa:0.3.0'
 
     //dependencies for binance
