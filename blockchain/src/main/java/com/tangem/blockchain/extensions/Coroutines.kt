@@ -44,6 +44,13 @@ sealed class Result<out T> {
     }
 }
 
+inline fun <T> Result<T>.successOr(failureClause: (Result.Failure) -> T): T {
+    return when (this) {
+        is Result.Success -> this.data
+        is Result.Failure -> failureClause(this)
+    }
+}
+
 sealed class SimpleResult {
     object Success : SimpleResult()
     data class Failure(val error: Throwable?) : SimpleResult()
@@ -51,6 +58,13 @@ sealed class SimpleResult {
     companion object {
         fun fromTangemSdkError(sdkError: TangemError): Failure =
             Failure(Exception("TangemError: code: ${sdkError.code}, message: ${sdkError.customMessage}"))
+    }
+}
+
+inline fun SimpleResult.successOr(failureClause: (SimpleResult.Failure) -> Nothing): SimpleResult.Success {
+    return when (this) {
+        is SimpleResult.Success -> this
+        is SimpleResult.Failure -> failureClause(this)
     }
 }
 
