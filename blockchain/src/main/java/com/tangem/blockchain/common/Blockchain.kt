@@ -7,6 +7,7 @@ import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressType
 import com.tangem.blockchain.blockchains.ethereum.Chain
+import com.tangem.blockchain.blockchains.ethereum.Chain.EthereumClassicTestnet
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
@@ -43,7 +44,7 @@ enum class Blockchain(
     Ethereum("ETH", "ETH", "Ethereum"),
     EthereumTestnet("ETH/test", "ETH", "Ethereum Testnet"),
     EthereumClassic("ETC", "ETC", "Ethereum Classic"),
-    EthereumClassicTestnet("ETC/test", "ETC", "Ethereum Classic"),
+    EthereumClassicTestnet("ETC/test", "ETC", "Ethereum Classic Testnet"),
     Fantom("FTM", "FTM", "Fantom"),
     FantomTestnet("FTM/test", "FTM", "Fantom Testnet"),
     Litecoin("LTC", "LTC", "Litecoin"),
