@@ -42,6 +42,8 @@ enum class Blockchain(
     Ducatus("DUC", "DUC", "Ducatus"),
     Ethereum("ETH", "ETH", "Ethereum"),
     EthereumTestnet("ETH/test", "ETH", "Ethereum Testnet"),
+    EthereumClassic("ETC", "ETC", "Ethereum Classic"),
+    EthereumClassicTestnet("ETC/test", "ETC", "Ethereum Classic"),
     Fantom("FTM", "FTM", "Fantom"),
     FantomTestnet("FTM/test", "FTM", "Fantom Testnet"),
     Litecoin("LTC", "LTC", "Litecoin"),
@@ -61,7 +63,8 @@ enum class Blockchain(
         Binance, BinanceTestnet, Litecoin, Ducatus, Dogecoin,
         -> 8
         Cardano, CardanoShelley, XRP, Tezos -> 6
-        Ethereum, EthereumTestnet, RSK, BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
+        Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
+        RSK, BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet -> 18
         Stellar, StellarTestnet -> 7
         Solana, SolanaTestnet -> 9
@@ -86,7 +89,8 @@ enum class Blockchain(
     private fun getAddressService(): AddressService = when (this) {
         Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus -> BitcoinAddressService(this)
         BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService()
-        Ethereum, EthereumTestnet, BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
+        Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
+        BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet -> EthereumAddressService()
         RSK -> RskAddressService()
         Cardano, CardanoShelley -> CardanoAddressService(this)
@@ -138,6 +142,8 @@ enum class Blockchain(
         } else {
             "https://rinkeby.etherscan.io/token/$tokenContractAddress?a=$address"
         }
+        EthereumClassic -> "https://blockscout.com/etc/mainnet/address/$address/transactions"
+        EthereumClassicTestnet -> "https://blockscout.com/etc/testnet/address/$address/transactions"
         Fantom -> "https://ftmscan.com/address/$address"
         FantomTestnet -> "https://testnet.ftmscan.com/address/$address"
         RSK -> {
@@ -193,10 +199,10 @@ enum class Blockchain(
 
     fun isTestnet(): Boolean {
         return when (this) {
-            Unknown, Avalanche, Bitcoin, BitcoinCash, Litecoin, Dogecoin, Ducatus, Ethereum, RSK, BSC, Polygon,
+            Unknown, Avalanche, Bitcoin, BitcoinCash, Litecoin, Dogecoin, Ducatus, Ethereum, EthereumClassic, RSK, BSC, Polygon,
             Cardano, CardanoShelley, XRP, Binance, Stellar, Solana, Tezos, Fantom
             -> false
-            AvalancheTestnet, BitcoinTestnet, EthereumTestnet, BSCTestnet, PolygonTestnet, BinanceTestnet,
+            AvalancheTestnet, BitcoinTestnet, EthereumTestnet, EthereumClassicTestnet, BSCTestnet, PolygonTestnet, BinanceTestnet,
             BitcoinCashTestnet, StellarTestnet, SolanaTestnet, FantomTestnet
             -> true
         }
@@ -208,6 +214,7 @@ enum class Blockchain(
             Bitcoin, BitcoinTestnet -> BitcoinTestnet
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashTestnet
             Ethereum, EthereumTestnet -> EthereumTestnet
+            EthereumClassic, EthereumClassicTestnet -> EthereumClassicTestnet
             Binance, BinanceTestnet -> BinanceTestnet
             BSC, BSCTestnet -> BSCTestnet
             Fantom, FantomTestnet -> FantomTestnet
@@ -234,6 +241,7 @@ enum class Blockchain(
             BitcoinCash, BitcoinCashTestnet,
             Binance, BinanceTestnet,
             Ethereum, EthereumTestnet,
+            EthereumClassic, EthereumClassicTestnet,
             Polygon, PolygonTestnet,
             Avalanche, AvalancheTestnet,
             BSC, BSCTestnet,
@@ -255,6 +263,8 @@ enum class Blockchain(
             AvalancheTestnet -> Chain.AvalancheTestnet.id
             Ethereum -> Chain.Mainnet.id
             EthereumTestnet -> Chain.Rinkeby.id
+            EthereumClassic -> Chain.EthereumClassicMainnet.id
+            EthereumClassicTestnet -> Chain.EthereumClassicTestnet.id
             Fantom -> Chain.Fantom.id
             FantomTestnet -> Chain.FantomTestnet.id
             RSK -> Chain.RskMainnet.id
@@ -325,6 +335,7 @@ enum class Blockchain(
             Litecoin -> 2
             Dogecoin -> 3
             Ethereum -> ethCoinType
+            EthereumClassic -> 61
             RSK -> 137
             XRP -> 144
             BitcoinCash -> 145
@@ -368,6 +379,8 @@ enum class Blockchain(
                 Chain.AvalancheTestnet.id -> AvalancheTestnet
                 Chain.Mainnet.id -> Ethereum
                 Chain.Rinkeby.id -> EthereumTestnet
+                Chain.EthereumClassicMainnet.id -> EthereumClassic
+                Chain.EthereumClassicTestnet.id -> EthereumClassicTestnet
                 Chain.RskMainnet.id -> RSK
                 Chain.BscMainnet.id -> BSC
                 Chain.BscTestnet.id -> BSCTestnet
@@ -389,6 +402,7 @@ enum class Blockchain(
                     BinanceTestnet,
                     BSCTestnet,
                     EthereumTestnet,
+                    EthereumClassicTestnet,
                     PolygonTestnet,
                     FantomTestnet,
                 )
@@ -403,6 +417,7 @@ enum class Blockchain(
                     XRP,
                     Tezos,
                     Ethereum,
+                    EthereumClassic,
                     RSK,
                     Polygon,
                     Dogecoin,
