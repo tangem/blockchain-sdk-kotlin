@@ -70,6 +70,9 @@ class EthereumJsonRpcProvider(baseUrl: String, private val postfixUrl: String = 
     companion object {
         fun infura(baseUrl: String, infuraProjectId: String) =
             EthereumJsonRpcProvider(baseUrl + "v3/", infuraProjectId)
+
+        fun classic(baseUrl: String) =
+            EthereumJsonRpcProvider(baseUrl)
     }
 }
 
