@@ -2,15 +2,14 @@ package com.tangem.blockchain.extensions
 
 import android.util.Base64
 import com.tangem.blockchain.blockchains.cardano.crypto.Blake2b
+import com.tangem.blockchain.blockchains.tron.libs.Base58Check
 import org.bitcoinj.core.Base58
 import org.bitcoinj.core.ECKey
-import org.bitcoinj.core.Utils
 import org.spongycastle.crypto.util.DigestFactory
-import java.lang.Exception
 import java.math.BigInteger
 
-fun ByteArray.encodeBase58(): String {
-    return Base58.encode(this)
+fun ByteArray.encodeBase58(checked: Boolean = false): String {
+    return if (checked) Base58Check.bytesToBase58(this) else Base58.encode(this)
 }
 
 fun ByteArray.encodeBase64NoWrap(): String {
