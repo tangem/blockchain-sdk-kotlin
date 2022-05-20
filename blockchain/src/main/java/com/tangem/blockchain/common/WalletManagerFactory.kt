@@ -34,6 +34,10 @@ import com.tangem.blockchain.blockchains.tezos.TezosTransactionBuilder
 import com.tangem.blockchain.blockchains.tezos.TezosWalletManager
 import com.tangem.blockchain.blockchains.tezos.network.TezosJsonRpcNetworkProvider
 import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkService
+import com.tangem.blockchain.blockchains.tron.TronTransactionBuilder
+import com.tangem.blockchain.blockchains.tron.TronWalletManager
+import com.tangem.blockchain.blockchains.tron.network.TronJsonRpcNetworkProvider
+import com.tangem.blockchain.blockchains.tron.network.TronNetwork
 import com.tangem.blockchain.blockchains.xrp.XrpTransactionBuilder
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
@@ -363,6 +367,16 @@ class WalletManagerFactory(
                     curve
                 )
             }
+            Blockchain.Tron, Blockchain.TronTestnet -> {
+                val network = if (blockchain.isTestnet()) TronNetwork.NILE else TronNetwork.MAINNET
+                val rpcProvider = TronJsonRpcNetworkProvider(network)
+                TronWalletManager(
+                    wallet = wallet,
+                    transactionBuilder = TronTransactionBuilder(blockchain),
+                    networkProvider = rpcProvider
+                )
+            }
+
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
         }
     }
