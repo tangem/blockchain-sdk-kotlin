@@ -3,6 +3,7 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 apply from: '../upload.gradle'
+apply plugin: 'com.squareup.wire'
 
 android {
     compileSdkVersion 30
@@ -101,4 +102,12 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     implementation 'org.slf4j:slf4j-log4j12:1.7.26'
+}
+
+//Protobuf
+wire {
+    sourcePath {
+        srcDir 'src/main/java/com/tangem/blockchain/blockchains/tron/proto'
+    }
+    kotlin {}
 }
