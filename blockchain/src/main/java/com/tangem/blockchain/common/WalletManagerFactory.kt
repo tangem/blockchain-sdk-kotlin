@@ -190,6 +190,45 @@ class WalletManagerFactory(
                     DucatusNetworkService()
                 )
 
+            Blockchain.EthereumClassic -> {
+                val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
+                jsonRpcProviders.add(
+                    EthereumJsonRpcProvider
+                        .classic(API_ETHER_CLUSTER)
+                )
+                jsonRpcProviders.add(EthereumJsonRpcProvider(API_TANGEM_ETHEREUM))
+
+                val blockchairEthNetworkProvider = BlockchairEthNetworkProvider(
+                    apiKey = blockchainSdkConfig.blockchairApiKey,
+                    authorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
+                )
+                val blockcypherNetworkProvider =
+                    BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
+
+                val networkService = EthereumNetworkService(
+                    jsonRpcProviders,
+                    blockcypherNetworkProvider,
+                    blockchairEthNetworkProvider
+                )
+
+                EthereumWalletManager(
+                    wallet,
+                    EthereumTransactionBuilder(publicKey.blockchainKey, blockchain),
+                    networkService,
+                    tokens
+                )
+            }
+            Blockchain.EthereumClassicTestnet -> {
+                val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
+                jsonRpcProviders.add(EthereumJsonRpcProvider.classic(API_ETHER_CLUSTER_TESTNET))
+
+                EthereumWalletManager(
+                    wallet,
+                    EthereumTransactionBuilder(publicKey.blockchainKey, blockchain),
+                    EthereumNetworkService(jsonRpcProviders),
+                    tokens
+                )
+            }
             Blockchain.Ethereum -> {
                 val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
                 if (blockchainSdkConfig.infuraProjectId != null) {
