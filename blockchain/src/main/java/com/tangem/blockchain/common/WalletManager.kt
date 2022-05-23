@@ -82,7 +82,6 @@ abstract class WalletManager(
         if (!validateAmountAvalible(amount)) errors.add(TransactionError.AmountExceedsBalance)
         if (fee == null) return errors
 
-        if (!validateAmountValue(fee)) errors.add(TransactionError.InvalidFeeValue)
         if (!validateAmountAvalible(fee)) errors.add(TransactionError.FeeExceedsBalance)
 
         val total: BigDecimal
