@@ -5,9 +5,9 @@ import com.tangem.blockchain.blockchains.binance.client.encoding.Crypto
 import org.bitcoinj.core.Base58
 import java.math.BigDecimal
 
-fun String.decodeBase58(): ByteArray? {
+fun String.decodeBase58(checked: Boolean = false): ByteArray? {
     return try {
-        Base58.decode(this)
+        if (checked) Base58.decodeChecked(this) else Base58.decode(this)
     } catch (exception: Exception) {
         null
     }

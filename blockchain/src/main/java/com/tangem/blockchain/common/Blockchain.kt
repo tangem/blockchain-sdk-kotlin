@@ -13,6 +13,7 @@ import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
+import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.*
 import com.tangem.common.card.EllipticCurve
@@ -56,16 +57,26 @@ enum class Blockchain(
     Solana("SOLANA", "SOL", "Solana"),
     SolanaTestnet("SOLANA/test", "SOL", "Solana Testnet"),
     Tezos("XTZ", "XTZ", "Tezos"),
+    Tron("TRON", "TRX", "Tron"),
+    TronTestnet("TRON/test", "TRX", "Tron Testnet"),
     XRP("XRP", "XRP", "XRP Ledger"),
     ;
 
     fun decimals(): Int = when (this) {
-        Bitcoin, BitcoinTestnet, BitcoinCash, BitcoinCashTestnet,
-        Binance, BinanceTestnet, Litecoin, Ducatus, Dogecoin,
+        Bitcoin, BitcoinTestnet,
+        BitcoinCash, BitcoinCashTestnet,
+        Binance, BinanceTestnet,
+        Litecoin, Ducatus, Dogecoin,
         -> 8
-        Cardano, CardanoShelley, XRP, Tezos -> 6
-        Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
-        RSK, BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
+        Cardano, CardanoShelley,
+        XRP, Tezos,
+        Tron, TronTestnet -> 6
+        Ethereum, EthereumTestnet,
+        EthereumClassic, EthereumClassicTestnet,
+        RSK,
+        BSC, BSCTestnet,
+        Polygon, PolygonTestnet,
+        Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet -> 18
         Stellar, StellarTestnet -> 7
         Solana, SolanaTestnet -> 9
@@ -101,6 +112,7 @@ enum class Blockchain(
         Stellar, StellarTestnet -> StellarAddressService()
         Solana, SolanaTestnet -> SolanaAddressService()
         Tezos -> TezosAddressService()
+        Tron, TronTestnet -> TronAddressService()
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -164,6 +176,8 @@ enum class Blockchain(
         SolanaTestnet -> "https://explorer.solana.com/address/$address/?cluster=devnet"
         XRP -> "https://xrpscan.com/account/$address"
         Tezos -> "https://tezblock.io/account/$address"
+        Tron -> "https://tronscan.org/#/address/$address"
+        TronTestnet -> "https://nile.tronscan.org/#/address/$address"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -179,6 +193,7 @@ enum class Blockchain(
             PolygonTestnet -> "https://faucet.matic.network"
             StellarTestnet -> "https://laboratory.stellar.org/#account-creator?network=test"
             SolanaTestnet -> "https://solfaucet.com/"
+            TronTestnet -> "https://nileex.io/join/getJoinPage"
             else -> null
         }
     }
@@ -195,16 +210,19 @@ enum class Blockchain(
         Binance, BinanceTestnet -> "Binance Asset"
         BSC, BSCTestnet -> "Binance Smart Chain Token"
         Solana, SolanaTestnet -> "Solana Token"
+        Tron, TronTestnet -> "Tron Token"
         else -> fullName
     }
 
     fun isTestnet(): Boolean {
         return when (this) {
-            Unknown, Avalanche, Bitcoin, BitcoinCash, Litecoin, Dogecoin, Ducatus, Ethereum, EthereumClassic, RSK, BSC, Polygon,
-            Cardano, CardanoShelley, XRP, Binance, Stellar, Solana, Tezos, Fantom
+            Unknown, Avalanche, Bitcoin, BitcoinCash, Litecoin, Dogecoin, Ducatus,
+            Ethereum, EthereumClassic, RSK, BSC, Polygon,
+            Cardano, CardanoShelley, XRP, Binance, Stellar, Solana, Tezos, Tron, Fantom
             -> false
-            AvalancheTestnet, BitcoinTestnet, EthereumTestnet, EthereumClassicTestnet, BSCTestnet, PolygonTestnet, BinanceTestnet,
-            BitcoinCashTestnet, StellarTestnet, SolanaTestnet, FantomTestnet
+            AvalancheTestnet, BitcoinTestnet, EthereumTestnet, EthereumClassicTestnet, BSCTestnet,
+            PolygonTestnet, BinanceTestnet,
+            BitcoinCashTestnet, StellarTestnet, SolanaTestnet, TronTestnet, FantomTestnet
             -> true
         }
     }
@@ -222,6 +240,7 @@ enum class Blockchain(
             Polygon, PolygonTestnet -> PolygonTestnet
             Stellar, StellarTestnet -> StellarTestnet
             Solana, SolanaTestnet -> SolanaTestnet
+            Tron, TronTestnet -> TronTestnet
             Litecoin -> null
             Dogecoin -> null
             Ducatus -> null
@@ -250,7 +269,9 @@ enum class Blockchain(
             Litecoin,
             Ducatus,
             RSK,
-            Dogecoin -> listOf(EllipticCurve.Secp256k1)
+            Dogecoin,
+            Tron, TronTestnet
+            -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Cardano,
@@ -349,6 +370,7 @@ enum class Blockchain(
             Cardano, CardanoShelley -> 1815
             Avalanche -> 9000
             BSC -> 9006
+            Tron -> 195
             else -> throw UnsupportedOperationException()
         }
     }
@@ -360,7 +382,8 @@ enum class Blockchain(
         Polygon, PolygonTestnet,
         Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet,
-        Solana, SolanaTestnet -> true
+        Solana, SolanaTestnet,
+        Tron, TronTestnet -> true
         else -> false
     }
 
@@ -406,6 +429,7 @@ enum class Blockchain(
                     EthereumClassicTestnet,
                     PolygonTestnet,
                     FantomTestnet,
+                    TronTestnet
                 )
             } else {
                 listOf(
@@ -423,6 +447,7 @@ enum class Blockchain(
                     Polygon,
                     Dogecoin,
                     Fantom,
+                    Tron
                 )
             }
         }
