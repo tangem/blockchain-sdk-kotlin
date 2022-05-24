@@ -7,7 +7,6 @@ import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressType
 import com.tangem.blockchain.blockchains.ethereum.Chain
-import com.tangem.blockchain.blockchains.ethereum.Chain.EthereumClassicTestnet
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
@@ -386,7 +385,7 @@ enum class Blockchain(
     }
 
     fun canHandleTokens(): Boolean = when (this) {
-        Arbitrum,
+        Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet,
         BSC, BSCTestnet,
         Binance, BinanceTestnet,
