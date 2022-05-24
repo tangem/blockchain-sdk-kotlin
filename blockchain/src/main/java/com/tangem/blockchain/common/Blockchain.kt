@@ -28,6 +28,8 @@ enum class Blockchain(
     val fullName: String,
 ) {
     Unknown("", "", ""),
+    Arbitrum("ARBITRUM-ONE", "ETH", "Arbitrum"),
+    ArbitrumTestnet("ARBITRUM/test", "ETH", "Arbitrum Testnet"),
     Avalanche("AVALANCHE", "AVAX", "Avalanche C-Chain"),
     AvalancheTestnet("AVALANCHE/test", "AVAX", "Avalanche C-Chain Testnet"),
     Binance("BINANCE", "BNB", "BNB Beacon Chain"),
@@ -71,6 +73,7 @@ enum class Blockchain(
         Cardano, CardanoShelley,
         XRP, Tezos,
         Tron, TronTestnet -> 6
+        Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet,
         EthereumClassic, EthereumClassicTestnet,
         RSK,
@@ -101,6 +104,7 @@ enum class Blockchain(
     private fun getAddressService(): AddressService = when (this) {
         Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus -> BitcoinAddressService(this)
         BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService()
+        Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
         BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet -> EthereumAddressService()
@@ -133,6 +137,8 @@ enum class Blockchain(
     }
 
     fun getExploreUrl(address: String, tokenContractAddress: String? = null): String = when (this) {
+        Arbitrum -> "https://arbiscan.io/address/$address"
+        ArbitrumTestnet -> "https://testnet.arbiscan.io/address/$address"
         Avalanche -> "https://snowtrace.io/address/$address"
         AvalancheTestnet -> "https://testnet.snowtrace.io/address/$address"
         Binance -> "https://explorer.binance.org/address/$address"
@@ -217,7 +223,7 @@ enum class Blockchain(
     fun isTestnet(): Boolean {
         return when (this) {
             Unknown, Avalanche, Bitcoin, BitcoinCash, Litecoin, Dogecoin, Ducatus,
-            Ethereum, EthereumClassic, RSK, BSC, Polygon,
+            Ethereum, EthereumClassic, RSK, BSC, Polygon, Arbitrum, ArbitrumTestnet,
             Cardano, CardanoShelley, XRP, Binance, Stellar, Solana, Tezos, Tron, Fantom
             -> false
             AvalancheTestnet, BitcoinTestnet, EthereumTestnet, EthereumClassicTestnet, BSCTestnet,
@@ -230,6 +236,7 @@ enum class Blockchain(
     fun getTestnetVersion(): Blockchain? {
         return when (this) {
             Avalanche, AvalancheTestnet -> AvalancheTestnet
+            Arbitrum, ArbitrumTestnet -> ArbitrumTestnet
             Bitcoin, BitcoinTestnet -> BitcoinTestnet
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashTestnet
             Ethereum, EthereumTestnet -> EthereumTestnet
@@ -257,7 +264,7 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos, XRP -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
-            Bitcoin, BitcoinTestnet,
+            Arbitrum, ArbitrumTestnet, Bitcoin, BitcoinTestnet,
             BitcoinCash, BitcoinCashTestnet,
             Binance, BinanceTestnet,
             Ethereum, EthereumTestnet,
@@ -281,6 +288,8 @@ enum class Blockchain(
 
     fun getChainId(): Int? {
         return when (this) {
+            Arbitrum -> Chain.Arbitrum.id
+            ArbitrumTestnet -> Chain.ArbitrumTestnet.id
             Avalanche -> Chain.Avalanche.id
             AvalancheTestnet -> Chain.AvalancheTestnet.id
             Ethereum -> Chain.Mainnet.id
@@ -369,6 +378,7 @@ enum class Blockchain(
             Tezos -> 1729
             Cardano, CardanoShelley -> 1815
             Avalanche -> 9000
+            Arbitrum -> 9001
             BSC -> 9006
             Tron -> 195
             else -> throw UnsupportedOperationException()
@@ -376,6 +386,7 @@ enum class Blockchain(
     }
 
     fun canHandleTokens(): Boolean = when (this) {
+        Arbitrum,
         Ethereum, EthereumTestnet,
         BSC, BSCTestnet,
         Binance, BinanceTestnet,
@@ -420,6 +431,7 @@ enum class Blockchain(
         fun secp256k1Blockchains(isTestnet: Boolean): List<Blockchain> {
             return if (isTestnet) {
                 listOf(
+                    ArbitrumTestnet,
                     AvalancheTestnet,
                     BitcoinTestnet,
                     BitcoinCashTestnet,
@@ -433,6 +445,7 @@ enum class Blockchain(
                 )
             } else {
                 listOf(
+                    Arbitrum,
                     Avalanche,
                     Bitcoin,
                     BitcoinCash,
