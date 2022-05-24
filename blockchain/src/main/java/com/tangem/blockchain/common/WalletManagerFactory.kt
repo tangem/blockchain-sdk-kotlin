@@ -190,6 +190,45 @@ class WalletManagerFactory(
                     DucatusNetworkService()
                 )
 
+            Blockchain.ArbitrumTestnet -> {
+                val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
+                jsonRpcProviders.add(EthereumJsonRpcProvider.classic(API_ARBITRUM_TESTNET))
+
+                val networkService = EthereumNetworkService(jsonRpcProviders)
+
+                EthereumWalletManager(
+                    wallet,
+                    EthereumTransactionBuilder(publicKey.blockchainKey, blockchain),
+                    networkService,
+                    tokens
+                )
+            }
+
+            Blockchain.Arbitrum -> {
+                val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
+                jsonRpcProviders.add(
+                    EthereumJsonRpcProvider
+                        .classic(API_ARBITRUM)
+                )
+                if (blockchainSdkConfig.infuraProjectId != null) {
+                    jsonRpcProviders.add(
+                        EthereumJsonRpcProvider.infura(
+                            API_ARBITRUM_INFURA,
+                            blockchainSdkConfig.infuraProjectId
+                        )
+                    )
+                }
+                jsonRpcProviders.add(EthereumJsonRpcProvider(API_ARBITRUM_OFFCHAIN))
+
+                val networkService = EthereumNetworkService(jsonRpcProviders)
+
+                EthereumWalletManager(
+                    wallet,
+                    EthereumTransactionBuilder(publicKey.blockchainKey, blockchain),
+                    networkService,
+                    tokens
+                )
+            }
             Blockchain.EthereumClassic -> {
                 val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
                 jsonRpcProviders.add(
