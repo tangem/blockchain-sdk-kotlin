@@ -392,6 +392,8 @@ enum class Blockchain(
         Polygon, PolygonTestnet,
         Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet,
+        EthereumClassic, EthereumClassicTestnet,
+        RSK,
         Solana, SolanaTestnet,
         Tron, TronTestnet -> true
         else -> false
