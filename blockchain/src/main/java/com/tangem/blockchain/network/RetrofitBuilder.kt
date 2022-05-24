@@ -83,3 +83,7 @@ const val API_FANTOM_NETWORK = "https://rpcapi.fantom.network/"
 const val API_FANTOM_ANKR_TOOLS = "http://rpc.ankr.tools/"                      // ftm
 const val API_FANTOM_ULTIMATENODES = "https://ftmrpc.ultimatenodes.io/"
 const val API_FANTOM_TESTNET = "https://rpc.testnet.fantom.network/"
+const val API_ARBITRUM = "https://arb1.arbitrum.io/rpc/"
+const val API_ARBITRUM_INFURA = "https://arbitrum-mainnet.infura.io/v3/"
+const val API_ARBITRUM_OFFCHAIN = "https://node.offchainlabs.com:8547/"
+const val API_ARBITRUM_TESTNET = "https://rinkeby.arbitrum.io/rpc/"
