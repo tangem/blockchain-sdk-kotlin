@@ -7,7 +7,6 @@ import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressType
 import com.tangem.blockchain.blockchains.ethereum.Chain
-import com.tangem.blockchain.blockchains.ethereum.Chain.EthereumClassicTestnet
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
@@ -220,18 +219,7 @@ enum class Blockchain(
         else -> fullName
     }
 
-    fun isTestnet(): Boolean {
-        return when (this) {
-            Unknown, Avalanche, Bitcoin, BitcoinCash, Litecoin, Dogecoin, Ducatus,
-            Ethereum, EthereumClassic, RSK, BSC, Polygon, Arbitrum, ArbitrumTestnet,
-            Cardano, CardanoShelley, XRP, Binance, Stellar, Solana, Tezos, Tron, Fantom
-            -> false
-            AvalancheTestnet, BitcoinTestnet, EthereumTestnet, EthereumClassicTestnet, BSCTestnet,
-            PolygonTestnet, BinanceTestnet,
-            BitcoinCashTestnet, StellarTestnet, SolanaTestnet, TronTestnet, FantomTestnet
-            -> true
-        }
-    }
+    fun isTestnet(): Boolean = this == getTestnetVersion()
 
     fun getTestnetVersion(): Blockchain? {
         return when (this) {
@@ -386,13 +374,15 @@ enum class Blockchain(
     }
 
     fun canHandleTokens(): Boolean = when (this) {
-        Arbitrum,
+        Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet,
         BSC, BSCTestnet,
         Binance, BinanceTestnet,
         Polygon, PolygonTestnet,
         Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet,
+        EthereumClassic, EthereumClassicTestnet,
+        RSK,
         Solana, SolanaTestnet,
         Tron, TronTestnet -> true
         else -> false
