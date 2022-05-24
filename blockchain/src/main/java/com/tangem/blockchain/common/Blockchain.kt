@@ -219,18 +219,7 @@ enum class Blockchain(
         else -> fullName
     }
 
-    fun isTestnet(): Boolean {
-        return when (this) {
-            Unknown, Avalanche, Bitcoin, BitcoinCash, Litecoin, Dogecoin, Ducatus,
-            Ethereum, EthereumClassic, RSK, BSC, Polygon, Arbitrum, ArbitrumTestnet,
-            Cardano, CardanoShelley, XRP, Binance, Stellar, Solana, Tezos, Tron, Fantom
-            -> false
-            AvalancheTestnet, BitcoinTestnet, EthereumTestnet, EthereumClassicTestnet, BSCTestnet,
-            PolygonTestnet, BinanceTestnet,
-            BitcoinCashTestnet, StellarTestnet, SolanaTestnet, TronTestnet, FantomTestnet
-            -> true
-        }
-    }
+    fun isTestnet(): Boolean = this == getTestnetVersion()
 
     fun getTestnetVersion(): Blockchain? {
         return when (this) {
