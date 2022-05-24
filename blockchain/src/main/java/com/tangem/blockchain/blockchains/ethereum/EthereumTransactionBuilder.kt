@@ -66,6 +66,8 @@ enum class Chain(val id: Int) {
     Geth_private_chains(1337),
     Avalanche(43114),
     AvalancheTestnet(43113),
+    Arbitrum(42161),
+    ArbitrumTestnet(421611),
     Polygon(137),
     PolygonTestnet(80001),
     Fantom(250),
