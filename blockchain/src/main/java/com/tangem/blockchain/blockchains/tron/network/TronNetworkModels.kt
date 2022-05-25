@@ -19,7 +19,10 @@ data class TronGetAccountRequest(
 
 @JsonClass(generateAdapter = true)
 data class TronGetAccountResponse(
-    val balance: Long?
+    val balance: Long?,
+    // We use [address] field to distinguish this response from
+    // an empty JSON that we get if account hasn't been activated
+    val address: String?
 )
 
 @JsonClass(generateAdapter = true)
