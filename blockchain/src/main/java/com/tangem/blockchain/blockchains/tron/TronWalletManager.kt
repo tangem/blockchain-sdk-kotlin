@@ -91,7 +91,7 @@ class TronWalletManager(
         val blockchain = wallet.blockchain
         return coroutineScope {
             val maxEnergyDef = async { networkService.getMaxEnergyUse(contractAddress) }
-            val resourceDef = async { networkService.getAccountResource(destination) }
+            val resourceDef = async { networkService.getAccountResource(wallet.address) }
             val destinationExistsDef = async { networkService.checkIfAccountExists(destination) }
             val transactionDataDef = async {
                 signTransactionData(
