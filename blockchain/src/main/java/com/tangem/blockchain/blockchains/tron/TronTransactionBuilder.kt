@@ -8,6 +8,7 @@ import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.extensions.bigIntegerValue
 import com.tangem.blockchain.extensions.decodeBase58
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
@@ -122,7 +123,7 @@ class TronTransactionBuilder(private val blockchain: Blockchain) {
                 val addressData = destination.decodeBase58(checked = true)?.padLeft(32)
                     ?: byteArrayOf()
 
-                val amountData = amount.longValue?.toByteArray()
+                val amountData = amount.bigIntegerValue()?.toByteArray()
                     ?.padLeft(32)
                     ?: byteArrayOf()
 
