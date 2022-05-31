@@ -20,6 +20,7 @@ import com.tangem.common.card.EllipticCurve
 import com.tangem.common.hdWallet.DerivationNode
 import com.tangem.common.hdWallet.DerivationPath
 import com.tangem.common.hdWallet.bip.BIP44
+import org.kethereum.model.EthereumURI
 
 
 enum class Blockchain(
@@ -162,7 +163,7 @@ enum class Blockchain(
             "https://rinkeby.etherscan.io/token/$tokenContractAddress?a=$address"
         }
         EthereumClassic -> "https://blockscout.com/etc/mainnet/address/$address/transactions"
-        EthereumClassicTestnet -> "https://blockscout.com/etc/testnet/address/$address/transactions"
+        EthereumClassicTestnet -> "https://blockscout.com/etc/kotti/address/$address/transactions"
         Fantom -> "https://ftmscan.com/address/$address"
         FantomTestnet -> "https://testnet.ftmscan.com/address/$address"
         RSK -> {
@@ -192,6 +193,7 @@ enum class Blockchain(
             AvalancheTestnet -> "https://faucet.avax-test.network/"
             BitcoinTestnet -> "https://coinfaucet.eu/en/btc-testnet/"
             EthereumTestnet -> "https://faucet.rinkeby.io"
+            EthereumClassicTestnet -> "https://kottifaucet.me"
             BitcoinCashTestnet -> "https://coinfaucet.eu/en/bch-testnet/"
             BinanceTestnet -> "https://docs.binance.org/smart-chain/wallet/binance.html"
             BSCTestnet -> "https://testnet.binance.org/faucet-smart"
