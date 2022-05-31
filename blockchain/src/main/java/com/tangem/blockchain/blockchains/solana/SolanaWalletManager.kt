@@ -96,9 +96,17 @@ class SolanaWalletManager(
         return if (accountCreationRent == null) {
             super.createTransaction(amount, fee, destination)
         } else {
-            val newFee = fee.minus(accountCreationRent)
-            val newAmount = amount.plus(accountCreationRent)
-            super.createTransaction(newAmount, newFee, destination)
+            when (amount.type) {
+                AmountType.Coin -> {
+                    val newFee = fee.minus(accountCreationRent)
+                    val newAmount = amount.plus(accountCreationRent)
+                    super.createTransaction(newAmount, newFee, destination)
+                }
+                is AmountType.Token -> {
+                    super.createTransaction(amount, fee, destination)
+                }
+                AmountType.Reserve -> throw UnsupportedOperation()
+            }
         }
     }
 
@@ -231,21 +239,33 @@ class SolanaWalletManager(
         val amountValue = amount.value.guard {
             return Result.Failure(NullPointerException("Value of amount must be not NULL"))
         }
-        val isExist = networkService.isAccountExist(PublicKey(destination)).successOr { return it }
-        if (isExist) return Result.Success(BigDecimal.ZERO)
+        val destinationPubKey = PublicKey(destination)
 
-        val minRentExempt = networkService.minimalBalanceForRentExemption().successOr {
-            return Result.Failure(FailedToLoadFee)
-        }
+        val accountCreationFee = when (amount.type) {
+            AmountType.Coin -> {
+                val isExist = networkService.isAccountExist(destinationPubKey).successOr { return it }
+                if (isExist) return Result.Success(BigDecimal.ZERO)
+                val minRentExempt = networkService.minimalBalanceForRentExemption().successOr { return it }
 
-        val accountCreationFee = if (amountValue.toLamports().toBigDecimal() >= minRentExempt) {
-            BigDecimal.ZERO
-        } else {
-            when (amount.type) {
-                AmountType.Coin -> networkService.mainAccountCreationFee()
-                is AmountType.Token -> minRentExempt
-                AmountType.Reserve -> return Result.Failure(UnsupportedOperation())
+                if (amountValue.toLamports().toBigDecimal() >= minRentExempt) {
+                    BigDecimal.ZERO
+                } else {
+                    networkService.mainAccountCreationFee()
+                }
             }
+            is AmountType.Token -> {
+                val isExist = networkService.isSplTokenAccountExist(
+                    account = destinationPubKey,
+                    mint = PublicKey(amount.type.token.contractAddress)
+                ).successOr { return it }
+
+                if (isExist) {
+                    BigDecimal.ZERO
+                } else {
+                    networkService.tokenAccountCreationFee().successOr { return it }
+                }
+            }
+            AmountType.Reserve -> return Result.Failure(UnsupportedOperation())
         }
 
         return Result.Success(accountCreationFee)
