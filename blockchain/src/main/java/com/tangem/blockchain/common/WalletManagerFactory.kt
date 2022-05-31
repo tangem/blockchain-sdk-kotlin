@@ -192,7 +192,7 @@ class WalletManagerFactory(
 
             Blockchain.ArbitrumTestnet -> {
                 val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
-                jsonRpcProviders.add(EthereumJsonRpcProvider.classic(API_ARBITRUM_TESTNET))
+                jsonRpcProviders.add(EthereumJsonRpcProvider.classic(API_ARBITRUM_TESTNET, "rpc/"))
 
                 val networkService = EthereumNetworkService(jsonRpcProviders)
 
@@ -208,7 +208,7 @@ class WalletManagerFactory(
                 val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
                 jsonRpcProviders.add(
                     EthereumJsonRpcProvider
-                        .classic(API_ARBITRUM)
+                        .classic(API_ARBITRUM, "rpc/")
                 )
                 if (blockchainSdkConfig.infuraProjectId != null) {
                     jsonRpcProviders.add(
@@ -233,9 +233,8 @@ class WalletManagerFactory(
                 val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
                 jsonRpcProviders.add(
                     EthereumJsonRpcProvider
-                        .classic(API_ETHER_CLUSTER)
+                        .classic(API_ETHER_CLUSTER, "etc/")
                 )
-                jsonRpcProviders.add(EthereumJsonRpcProvider(API_TANGEM_ETHEREUM))
 
                 val blockchairEthNetworkProvider = BlockchairEthNetworkProvider(
                     apiKey = blockchainSdkConfig.blockchairApiKey,
@@ -259,12 +258,18 @@ class WalletManagerFactory(
             }
             Blockchain.EthereumClassicTestnet -> {
                 val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
-                jsonRpcProviders.add(EthereumJsonRpcProvider.classic(API_ETHER_CLUSTER_TESTNET))
+                jsonRpcProviders.add(
+                    EthereumJsonRpcProvider
+                        .classic(API_ETHER_CLUSTER, "kotti/")
+                )
+
+
+                val networkService = EthereumNetworkService(jsonRpcProviders)
 
                 EthereumWalletManager(
                     wallet,
                     EthereumTransactionBuilder(publicKey.blockchainKey, blockchain),
-                    EthereumNetworkService(jsonRpcProviders),
+                    networkService,
                     tokens
                 )
             }
