@@ -232,8 +232,7 @@ class WalletManagerFactory(
             Blockchain.EthereumClassic -> {
                 val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
                 jsonRpcProviders.add(
-                    EthereumJsonRpcProvider
-                        .classic(API_ETHER_CLUSTER, "etc/")
+                    EthereumJsonRpcProvider.classic(API_ETHER_CLUSTER, "etc")
                 )
 
                 val blockchairEthNetworkProvider = BlockchairEthNetworkProvider(
@@ -257,14 +256,9 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.EthereumClassicTestnet -> {
-                val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
-                jsonRpcProviders.add(
-                    EthereumJsonRpcProvider
-                        .classic(API_ETHER_CLUSTER, "kotti/")
-                )
-
-
-                val networkService = EthereumNetworkService(jsonRpcProviders)
+                val networkService = EthereumNetworkService(listOf(
+                    EthereumJsonRpcProvider(API_ETHER_CLUSTER, "kotti")
+                ))
 
                 EthereumWalletManager(
                     wallet,
