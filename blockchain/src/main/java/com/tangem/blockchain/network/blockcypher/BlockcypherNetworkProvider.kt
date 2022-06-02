@@ -181,6 +181,7 @@ class BlockcypherNetworkProvider(
             Blockchain.Litecoin -> "ltc/"
             Blockchain.Ethereum -> "eth/"
             Blockchain.EthereumClassic -> "etc/"
+            Blockchain.EthereumClassicTestnet -> "kotti/"
             Blockchain.Dogecoin -> "doge/"
             else -> throw Exception(
                 "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
