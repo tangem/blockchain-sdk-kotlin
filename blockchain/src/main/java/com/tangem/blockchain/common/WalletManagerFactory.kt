@@ -210,11 +210,11 @@ class WalletManagerFactory(
                     EthereumJsonRpcProvider
                         .classic(API_ARBITRUM, "rpc/")
                 )
-                if (blockchainSdkConfig.infuraProjectId != null) {
+                if (blockchainSdkConfig.infuraArbitrumProjectId != null) {
                     jsonRpcProviders.add(
                         EthereumJsonRpcProvider.infura(
                             API_ARBITRUM_INFURA,
-                            blockchainSdkConfig.infuraProjectId
+                            blockchainSdkConfig.infuraArbitrumProjectId
                         )
                     )
                 }
