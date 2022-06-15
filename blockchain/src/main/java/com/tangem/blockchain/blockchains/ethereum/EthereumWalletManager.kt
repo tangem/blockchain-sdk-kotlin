@@ -64,7 +64,7 @@ class EthereumWalletManager(
             transactionBuilder.buildToSign(transactionData, txCount.toBigInteger())
                 ?: return SimpleResult.Failure(Exception("Not enough data"))
 
-        val signerResponse = signer.sign(transactionToSign.hash,wallet.cardId, wallet.publicKey)
+        val signerResponse = signer.sign(transactionToSign.hash, wallet.publicKey)
         return when (signerResponse) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder
