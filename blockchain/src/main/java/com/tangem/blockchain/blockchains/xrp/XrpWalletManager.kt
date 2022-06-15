@@ -59,7 +59,7 @@ class XrpWalletManager(
             is Result.Failure -> return SimpleResult.Failure(buildResult.error)
         }
 
-        val signerResponse = signer.sign(transactionHash, wallet.cardId, wallet.publicKey)
+        val signerResponse = signer.sign(transactionHash, wallet.publicKey)
         return when (signerResponse) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
