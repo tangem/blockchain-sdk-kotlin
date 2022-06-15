@@ -64,7 +64,6 @@ class WalletManagerFactory(
      * @param derivation: derivation style or derivation path
      */
     fun makeWalletManager(
-        cardId: String,
         blockchain: Blockchain,
         seedKey: ByteArray,
         derivedKey: ExtendedPublicKey,
@@ -80,7 +79,6 @@ class WalletManagerFactory(
 
 
         return makeWalletManager(
-            cardId = cardId,
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(
                 seedKey = seedKey,
@@ -92,14 +90,12 @@ class WalletManagerFactory(
 
     // Wallet manager initializer for twin cards
     fun makeTwinWalletManager(
-        cardId: String,
         walletPublicKey: ByteArray,
         pairPublicKey: ByteArray,
         blockchain: Blockchain = Blockchain.Bitcoin,
         curve: EllipticCurve = EllipticCurve.Secp256k1
     ): WalletManager? {
         return makeWalletManager(
-            cardId = cardId,
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(walletPublicKey, null, null),
             pairPublicKey = pairPublicKey,
@@ -108,13 +104,12 @@ class WalletManagerFactory(
     }
 
     fun makeEthereumWalletManager(
-        cardId: String,
         publicKey: Wallet.PublicKey,
         tokens: List<Token>,
         isTestNet: Boolean = false
     ): WalletManager? {
         val blockchain = if (isTestNet) Blockchain.EthereumTestnet else Blockchain.Ethereum
-        val walletManager = makeWalletManager(cardId, blockchain, publicKey, tokens) ?: return null
+        val walletManager = makeWalletManager(blockchain, publicKey, tokens) ?: return null
 
         val additionalTokens = tokens.filterNot { walletManager.cardTokens.contains(it) }
         walletManager.cardTokens.addAll(additionalTokens)
@@ -129,7 +124,6 @@ class WalletManagerFactory(
         curve: EllipticCurve = EllipticCurve.Secp256k1
     ): WalletManager? {
         return makeWalletManager(
-            cardId = cardId,
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(walletPublicKey, null, null),
             curve = curve
@@ -137,7 +131,6 @@ class WalletManagerFactory(
     }
 
     fun makeWalletManager(
-        cardId: String,
         blockchain: Blockchain,
         publicKey: Wallet.PublicKey,
         tokens: Collection<Token> = emptyList(),
@@ -149,7 +142,7 @@ class WalletManagerFactory(
 
         val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
         val tokens = tokens.toMutableSet()
-        val wallet = Wallet(cardId, blockchain, addresses, publicKey, tokens)
+        val wallet = Wallet(blockchain, addresses, publicKey, tokens)
 
         return when (blockchain) {
             Blockchain.Bitcoin, Blockchain.BitcoinTestnet ->
