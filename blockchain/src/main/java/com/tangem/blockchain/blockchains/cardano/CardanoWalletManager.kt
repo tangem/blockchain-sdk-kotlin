@@ -65,7 +65,7 @@ class CardanoWalletManager(
             transactionData: TransactionData, signer: TransactionSigner
     ): SimpleResult {
         val transactionHash = transactionBuilder.buildToSign(transactionData)
-        val signerResponse = signer.sign(transactionHash,wallet.cardId, wallet.publicKey)
+        val signerResponse = signer.sign(transactionHash, wallet.publicKey)
         return when (signerResponse) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
