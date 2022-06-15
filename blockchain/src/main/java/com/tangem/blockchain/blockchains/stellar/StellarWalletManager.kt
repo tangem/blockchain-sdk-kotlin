@@ -73,7 +73,7 @@ class StellarWalletManager(
             is Result.Success -> buildResult.data
             is Result.Failure -> return SimpleResult.Failure(buildResult.error)
         }
-        val signerResponse = signer.sign(hash, wallet.cardId, wallet.publicKey)
+        val signerResponse = signer.sign(hash, wallet.publicKey)
         return when (signerResponse) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
