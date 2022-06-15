@@ -73,14 +73,15 @@ class Signer(
     private val initialMessage: Message? = null,
 ) : TransactionSigner {
 
-    override suspend fun sign(hashes: List<ByteArray>, cardId: String, publicKey: Wallet.PublicKey): CompletionResult<List<ByteArray>> =
+    override suspend fun sign(hashes: List<ByteArray>, publicKey: Wallet.PublicKey): CompletionResult<List<ByteArray>> =
         suspendCancellableCoroutine { continuation ->
             tangemSdk.sign(
-                hashes.toTypedArray(),
-                publicKey.seedKey,
-                cardId,
-                publicKey.derivationPath,
-                initialMessage,
+                hashes = hashes.toTypedArray(),
+                walletPublicKey = publicKey.seedKey,
+                derivationPath = publicKey.derivationPath,
+                cardId = null,
+                initialMessage = initialMessage,
+                cardBackupStatus = null,
             ) { result ->
                 when (result) {
                     is CompletionResult.Success ->
@@ -91,14 +92,15 @@ class Signer(
             }
         }
 
-    override suspend fun sign(hash: ByteArray, cardId: String, publicKey: Wallet.PublicKey): CompletionResult<ByteArray> =
+    override suspend fun sign(hash: ByteArray, publicKey: Wallet.PublicKey): CompletionResult<ByteArray> =
         suspendCancellableCoroutine { continuation ->
             tangemSdk.sign(
-                hash,
-                publicKey.seedKey,
-                cardId,
-                publicKey.derivationPath,
-                initialMessage,
+                hash = hash,
+                walletPublicKey = publicKey.seedKey,
+                derivationPath = publicKey.derivationPath,
+                initialMessage = initialMessage,
+                cardId = null,
+                backupStatus = null
             ) { result ->
                 when (result) {
                     is CompletionResult.Success ->
