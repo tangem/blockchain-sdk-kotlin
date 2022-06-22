@@ -32,7 +32,20 @@ sealed class BlockchainSdkError(
         object UnsupportedTokenDestinationAddress : Solana(3)
     }
 
+    sealed class Polkadot(
+        subCode: Int,
+        customMessage: String? = null,
+    ) : BlockchainSdkError(
+        ERROR_CODE_POLKADOT + subCode,
+        customMessage ?: (ERROR_CODE_POLKADOT + subCode).toString()
+    ) {
+        object ExistentialDepositError : Polkadot(1, "%s network has a concept of Existential Deposit. If your account drops below %s it will be deactivated and any remaining funds will be destroyed. To avoid that you can reduce the amount by %s.")
+        object ExistentialDepositReduce : Polkadot(2, "Reduce by %s")
+        object ExistentialDepositIgnore : Polkadot(3, "No, send all")
+    }
+
     companion object {
         const val ERROR_CODE_SOLANA = 1000
+        const val ERROR_CODE_POLKADOT = 2000
     }
 }
