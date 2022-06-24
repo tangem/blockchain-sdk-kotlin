@@ -19,7 +19,6 @@ import com.tangem.common.card.EllipticCurve
 import com.tangem.common.hdWallet.DerivationNode
 import com.tangem.common.hdWallet.DerivationPath
 import com.tangem.common.hdWallet.bip.BIP44
-import org.kethereum.model.EthereumURI
 
 
 enum class Blockchain(
@@ -404,6 +403,8 @@ enum class Blockchain(
             return when (chainId) {
                 Chain.Avalanche.id -> Avalanche
                 Chain.AvalancheTestnet.id -> AvalancheTestnet
+                Chain.Arbitrum.id -> Arbitrum
+                Chain.ArbitrumTestnet.id -> ArbitrumTestnet
                 Chain.Mainnet.id -> Ethereum
                 Chain.Rinkeby.id -> EthereumTestnet
                 Chain.EthereumClassicMainnet.id -> EthereumClassic
