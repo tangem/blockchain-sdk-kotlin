@@ -36,6 +36,7 @@ open class BlockchairNetworkProvider(
 
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.ROOT)
     private val decimals = blockchain.decimals()
+    private val transactionHashesCountLimit = 1000
 
     private fun createHost(blockchain: Blockchain): String {
         val api = if (apiKey != null) API_BLOCKCHAIR else API_BLOCKCKAIR_TANGEM
@@ -63,7 +64,7 @@ open class BlockchairNetworkProvider(
                 api.getAddressData(
                     address = address,
                     transactionDetails = true,
-                    limit = 50,
+                    limit = transactionHashesCountLimit,
                     key = apiKey,
                     authorizationToken = authorizationToken
                 )
