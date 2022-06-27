@@ -27,6 +27,7 @@ class BlockcypherNetworkProvider(
         createRetrofitInstance(host).create(BlockcypherApi::class.java)
     }
 
+    private val transactionHashesCountLimit = 1000
     private val limitCap = 2000
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ROOT)
     private val decimals = blockchain.decimals()
@@ -36,7 +37,11 @@ class BlockcypherNetworkProvider(
     suspend fun getInfo(address: String, token: String?): Result<BitcoinAddressInfo> {
         return try {
             val addressData =
-                    retryIO { api.getAddressData(address, token = token) }
+                    retryIO { api.getAddressData(
+                        address = address,
+                        limit = transactionHashesCountLimit,
+                        token = token
+                    )}
 
             val confirmedTransactions =
                     addressData.txrefs?.toBasicTransactionsData(isConfirmed = true) ?: emptyList()
