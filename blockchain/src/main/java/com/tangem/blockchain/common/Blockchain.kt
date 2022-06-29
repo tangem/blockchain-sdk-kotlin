@@ -210,16 +210,6 @@ enum class Blockchain(
         else -> DefaultAddressType
     }
 
-    fun tokenDisplayName(): String = when (this) {
-        Ethereum, EthereumTestnet -> "Ethereum smart contract token"
-        Stellar, StellarTestnet -> "Stellar Asset"
-        Binance, BinanceTestnet -> "Binance Asset"
-        BSC, BSCTestnet -> "Binance Smart Chain Token"
-        Solana, SolanaTestnet -> "Solana Token"
-        Tron, TronTestnet -> "Tron Token"
-        else -> fullName
-    }
-
     fun isTestnet(): Boolean = this == getTestnetVersion()
 
     fun getTestnetVersion(): Blockchain? {
