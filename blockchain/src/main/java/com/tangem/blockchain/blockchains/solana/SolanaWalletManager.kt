@@ -35,6 +35,7 @@ class SolanaWalletManager(
     private val networkService = SolanaNetworkService(jsonRpcProvider)
 
     private val feeRentHolder = mutableMapOf<Amount, BigDecimal>()
+    private val valueConverter = ValueConverter()
 
     override suspend fun update() {
         val accountInfo = networkService.getMainAccountInfo(accountPubK).successOr {
@@ -42,7 +43,7 @@ class SolanaWalletManager(
             wallet.removeAllTokens()
             throw Exception(it.error)
         }
-        wallet.setCoinValue(accountInfo.balance.toSOL())
+        wallet.setCoinValue(valueConverter.toSol(accountInfo.balance))
         updateRecentTransactions()
         addToRecentTransactions(accountInfo.txsInProgress)
 
@@ -79,8 +80,8 @@ class SolanaWalletManager(
         val newUnconfirmedTxData = newTxsInProgress.mapNotNull {
             if (it.instructions.isNotEmpty() && it.instructions[0].programId == Program.Id.system.toBase58()) {
                 val info = it.instructions[0].parsed.info
-                val amount = Amount(info.lamports.toSOL(), wallet.blockchain)
-                val fee = Amount(it.fee.toSOL(), wallet.blockchain)
+                val amount = Amount(valueConverter.toSol(info.lamports), wallet.blockchain)
+                val fee = Amount(valueConverter.toSol(it.fee), wallet.blockchain)
                 TransactionData(amount, fee, info.source, info.destination, null,
                     TransactionStatus.Unconfirmed, hash = it.signature)
             } else {
@@ -96,16 +97,24 @@ class SolanaWalletManager(
         return if (accountCreationRent == null) {
             super.createTransaction(amount, fee, destination)
         } else {
-            val newFee = fee.minus(accountCreationRent)
-            val newAmount = amount.plus(accountCreationRent)
-            super.createTransaction(newAmount, newFee, destination)
+            when (amount.type) {
+                AmountType.Coin -> {
+                    val newFee = fee.minus(accountCreationRent)
+                    val newAmount = amount.plus(accountCreationRent)
+                    super.createTransaction(newAmount, newFee, destination)
+                }
+                is AmountType.Token -> {
+                    super.createTransaction(amount, fee, destination)
+                }
+                AmountType.Reserve -> throw UnsupportedOperation()
+            }
         }
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         return when (transactionData.amount.type) {
             AmountType.Coin -> sendCoin(transactionData, signer)
-            is AmountType.Token -> sendSplToken(transactionData, signer)
+            is AmountType.Token -> sendSplToken(transactionData.amount.type.token, transactionData, signer)
             AmountType.Reserve -> SimpleResult.Failure(UnsupportedOperation())
         }
     }
@@ -137,8 +146,11 @@ class SolanaWalletManager(
         return SimpleResult.Success
     }
 
-    private suspend fun sendSplToken(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val lamports = ValueConverter().toLamports(transactionData.amount.value ?: BigDecimal.ZERO)
+    private suspend fun sendSplToken(
+        token: Token,
+        transactionData: TransactionData,
+        signer: TransactionSigner
+    ): SimpleResult {
         val sourcePubK = PublicKey(transactionData.sourceAddress)
         val destinationPubK = PublicKey(transactionData.destinationAddress)
         val mintPubKey = transactionData.contractAddress.guard {
@@ -169,10 +181,12 @@ class SolanaWalletManager(
             transaction.addInstruction(createATokenInstruction)
         }
 
+        val tokenAmountToSend = valueConverter.toLamports(token, transactionData.amount.value ?: BigDecimal.ZERO)
+
         val sendInstruction = TokenProgram.transfer(
             sourceSplTokenPubK,
             destinationSplTokenInfo.associatedPubK,
-            lamports,
+            tokenAmountToSend,
             accountPubK,
         )
         transaction.addInstruction(sendInstruction)
@@ -206,9 +220,11 @@ class SolanaWalletManager(
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
         feeRentHolder.clear()
         val fee = getNetworkFee().successOr { return it }
-        val accountCreationRent = getAccountCreationRent(amount, destination).successOr { return it }.toSOL()
+        val accountCreationRent = getAccountCreationRent(amount, destination).successOr { return it }.let {
+            valueConverter.toSol(it)
+        }
 
-        var feeAmount = Amount(fee.toSOL(), wallet.blockchain)
+        var feeAmount = Amount(valueConverter.toSol(fee), wallet.blockchain)
         if (accountCreationRent > BigDecimal.ZERO) {
             feeAmount = feeAmount.plus(accountCreationRent)
             feeRentHolder[feeAmount] = accountCreationRent
@@ -231,21 +247,33 @@ class SolanaWalletManager(
         val amountValue = amount.value.guard {
             return Result.Failure(NullPointerException("Value of amount must be not NULL"))
         }
-        val isExist = networkService.isAccountExist(PublicKey(destination)).successOr { return it }
-        if (isExist) return Result.Success(BigDecimal.ZERO)
+        val destinationPubKey = PublicKey(destination)
 
-        val minRentExempt = networkService.minimalBalanceForRentExemption().successOr {
-            return Result.Failure(FailedToLoadFee)
-        }
+        val accountCreationFee = when (amount.type) {
+            AmountType.Coin -> {
+                val isExist = networkService.isAccountExist(destinationPubKey).successOr { return it }
+                if (isExist) return Result.Success(BigDecimal.ZERO)
+                val minRentExempt = networkService.minimalBalanceForRentExemption().successOr { return it }
 
-        val accountCreationFee = if (amountValue.toLamports().toBigDecimal() >= minRentExempt) {
-            BigDecimal.ZERO
-        } else {
-            when (amount.type) {
-                AmountType.Coin -> networkService.mainAccountCreationFee()
-                is AmountType.Token -> minRentExempt
-                AmountType.Reserve -> return Result.Failure(UnsupportedOperation())
+                if (valueConverter.toLamports(amountValue).toBigDecimal() >= minRentExempt) {
+                    BigDecimal.ZERO
+                } else {
+                    networkService.mainAccountCreationFee()
+                }
             }
+            is AmountType.Token -> {
+                val isExist = networkService.isSplTokenAccountExist(
+                    account = destinationPubKey,
+                    mint = PublicKey(amount.type.token.contractAddress)
+                ).successOr { return it }
+
+                if (isExist) {
+                    BigDecimal.ZERO
+                } else {
+                    networkService.tokenAccountCreationFee().successOr { return it }
+                }
+            }
+            AmountType.Reserve -> return Result.Failure(UnsupportedOperation())
         }
 
         return Result.Success(accountCreationFee)
@@ -253,13 +281,13 @@ class SolanaWalletManager(
 
     override suspend fun minimalBalanceForRentExemption(): Result<BigDecimal> {
         return when (val result = networkService.minimalBalanceForRentExemption()) {
-            is Result.Success -> Result.Success(result.data.toSOL())
+            is Result.Success -> Result.Success(valueConverter.toSol(result.data))
             is Result.Failure -> result
         }
     }
 
     override suspend fun rentAmount(): BigDecimal {
-        return networkService.accountRentFeeByEpoch().toSOL()
+        return valueConverter.toSol(networkService.accountRentFeeByEpoch())
     }
 }
 
@@ -267,17 +295,19 @@ interface SolanaValueConverter {
     fun toSol(value: BigDecimal): BigDecimal
     fun toSol(value: Long): BigDecimal
     fun toLamports(value: BigDecimal): Long
+    fun toLamports(token: Token, value: BigDecimal): Long
 }
 
 class ValueConverter : SolanaValueConverter {
     override fun toSol(value: BigDecimal): BigDecimal = value.toSOL()
     override fun toSol(value: Long): BigDecimal = value.toBigDecimal().toSOL()
-    override fun toLamports(value: BigDecimal): Long = value.toLamports()
+    override fun toLamports(value: BigDecimal): Long = value.toLamports(Blockchain.Solana.decimals())
+    override fun toLamports(token: Token, value: BigDecimal): Long = value.toLamports(token.decimals)
 }
 
 private fun Long.toSOL(): BigDecimal = this.toBigDecimal().toSOL()
 private fun BigDecimal.toSOL(): BigDecimal = movePointLeft(Blockchain.Solana.decimals()).toSolanaDecimals()
-private fun BigDecimal.toLamports(): Long = movePointRight(Blockchain.Solana.decimals()).toSolanaDecimals().toLong()
+private fun BigDecimal.toLamports(decimals: Int): Long = movePointRight(decimals).toSolanaDecimals().toLong()
 private fun BigDecimal.toSolanaDecimals(): BigDecimal = this.setScale(Blockchain.Solana.decimals(), RoundingMode.HALF_UP)
 
 private fun <T> Result<T>.toSimpleResult(): SimpleResult {
