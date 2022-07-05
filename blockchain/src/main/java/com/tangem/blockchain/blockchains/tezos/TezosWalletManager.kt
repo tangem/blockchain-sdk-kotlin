@@ -80,7 +80,7 @@ class TezosWalletManager(
 //                }
         val dataToSign = transactionBuilder.buildToSign(forgedContents)
 
-        val signerResponse = signer.sign(dataToSign, wallet.cardId, wallet.publicKey)
+        val signerResponse = signer.sign(dataToSign, wallet.publicKey)
         val signature = when (signerResponse) {
             is CompletionResult.Failure -> return SimpleResult.fromTangemSdkError(signerResponse.error)
             is CompletionResult.Success -> signerResponse.data
