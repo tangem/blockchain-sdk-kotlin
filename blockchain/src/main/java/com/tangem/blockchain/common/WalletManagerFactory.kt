@@ -57,7 +57,6 @@ class WalletManagerFactory(
 
     /**
      * Base wallet manager initializer
-     * @param cardId: Card's cardId
      * @param blockchain: blockchain to create. If null, card native blockchain will be used
      * @param seedKey: Public Key of the wallet
      * @param derivedKey: Derived ExtendedPublicKey by the card
@@ -118,7 +117,6 @@ class WalletManagerFactory(
 
     // Legacy wallet manager initializer
     fun makeWalletManager(
-        cardId: String,
         blockchain: Blockchain,
         walletPublicKey: ByteArray,
         curve: EllipticCurve = EllipticCurve.Secp256k1
@@ -299,7 +297,7 @@ class WalletManagerFactory(
             Blockchain.EthereumTestnet -> {
                 val jsonRpcProvider = EthereumJsonRpcProvider.infura(
                     API_INFURA_TESTNET, blockchainSdkConfig.infuraProjectId
-                        ?: throw Exception("Infura project Id is required")
+                    ?: throw Exception("Infura project Id is required")
                 )
                 EthereumWalletManager(
                     wallet,
