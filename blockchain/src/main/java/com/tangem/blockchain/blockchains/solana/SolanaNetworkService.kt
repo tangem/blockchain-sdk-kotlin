@@ -126,12 +126,19 @@ class SolanaNetworkService(
 
     suspend fun isAccountExist(account: PublicKey): Result<Boolean> = withContext(Dispatchers.IO) {
         val info = accountInfo(account).successOr { return@withContext it }
-        Result.Success(info.isAccountExist)
+        Result.Success(info.accountExist)
+    }
+
+    suspend fun isSplTokenAccountExist(account: PublicKey, mint: PublicKey): Result<Boolean> = withContext(Dispatchers.IO) {
+        val info = splAccountInfo(account, mint).successOr { return@withContext it }
+        Result.Success(info.accountExist)
     }
 
     fun mainAccountCreationFee(): BigDecimal = accountRentFeeByEpoch(1)
 
-    fun accountRentFeeByEpoch(numberOfEpochs: Int = 1): BigDecimal {
+    suspend fun tokenAccountCreationFee(): Result<BigDecimal> = minimalBalanceForRentExemption(BUFFER_LENGTH)
+
+    internal fun accountRentFeeByEpoch(numberOfEpochs: Int = 1): BigDecimal {
         // https://docs.solana.com/developing/programming-model/accounts#calculation-of-rent
         // result in lamports
         val minimumAccountSizeInBytes = BigDecimal(MIN_ACCOUNT_SIZE)
@@ -144,11 +151,9 @@ class SolanaNetworkService(
         return rentFeePerEpoch
     }
 
-    suspend fun tokenAccountCreationFee(): Result<BigDecimal> = minimalBalanceForRentExemption()
-
-    suspend fun minimalBalanceForRentExemption(): Result<BigDecimal> = withContext(Dispatchers.IO) {
+    suspend fun minimalBalanceForRentExemption(dataLength: Long = 0): Result<BigDecimal> = withContext(Dispatchers.IO) {
         try {
-            val rent = provider.api.getMinimumBalanceForRentExemption(0)
+            val rent = provider.api.getMinimumBalanceForRentExemption(dataLength)
             Result.Success(rent.toBigDecimal())
         } catch (ex: RpcException) {
             Result.Failure(Solana.Api(ex))
@@ -182,10 +187,11 @@ class SolanaNetworkService(
         const val MIN_ACCOUNT_SIZE = 128L
         const val RENT_PER_BYTE_EPOCH = 19.055441478439427
         const val RENT_PER_BYTE_EPOCH_DEV_NET = 0.359375
+        const val BUFFER_LENGTH = 165L
     }
 }
 
-private val AccountInfo.isAccountExist
+private val AccountInfo.accountExist
     get() = value != null
 
 private val AccountInfo.requireValue
