@@ -1,16 +1,9 @@
 package com.tangem.blockchain.extensions
 
-import com.tangem.Message
-import com.tangem.TangemSdk
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.Wallet
-import com.tangem.common.CompletionResult
 import com.tangem.common.core.TangemError
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.suspendCancellableCoroutine
 import retrofit2.HttpException
 import java.io.IOException
-import kotlin.coroutines.resume
 
 
 suspend fun <T> retryIO(
@@ -66,50 +59,6 @@ inline fun SimpleResult.successOr(failureClause: (SimpleResult.Failure) -> Nothi
         is SimpleResult.Success -> this
         is SimpleResult.Failure -> failureClause(this)
     }
-}
-
-class Signer(
-    private val tangemSdk: TangemSdk,
-    private val initialMessage: Message? = null,
-) : TransactionSigner {
-
-    override suspend fun sign(hashes: List<ByteArray>, publicKey: Wallet.PublicKey): CompletionResult<List<ByteArray>> =
-        suspendCancellableCoroutine { continuation ->
-            tangemSdk.sign(
-                hashes = hashes.toTypedArray(),
-                walletPublicKey = publicKey.seedKey,
-                derivationPath = publicKey.derivationPath,
-                cardId = null,
-                initialMessage = initialMessage,
-                cardBackupStatus = null,
-            ) { result ->
-                when (result) {
-                    is CompletionResult.Success ->
-                        continuation.resume(CompletionResult.Success(result.data.signatures))
-                    is CompletionResult.Failure ->
-                        continuation.resume(CompletionResult.Failure(result.error))
-                }
-            }
-        }
-
-    override suspend fun sign(hash: ByteArray, publicKey: Wallet.PublicKey): CompletionResult<ByteArray> =
-        suspendCancellableCoroutine { continuation ->
-            tangemSdk.sign(
-                hash = hash,
-                walletPublicKey = publicKey.seedKey,
-                derivationPath = publicKey.derivationPath,
-                initialMessage = initialMessage,
-                cardId = null,
-                backupStatus = null
-            ) { result ->
-                when (result) {
-                    is CompletionResult.Success ->
-                        continuation.resume(CompletionResult.Success(result.data.signature))
-                    is CompletionResult.Failure ->
-                        continuation.resume(CompletionResult.Failure(result.error))
-                }
-            }
-        }
 }
 
 fun Result<*>.isNetworkError(): Boolean {

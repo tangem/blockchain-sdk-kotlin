@@ -8,7 +8,6 @@ import androidx.appcompat.app.AppCompatActivity
 import com.tangem.TangemSdk
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.Signer
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain_demo.databinding.ActivityBlockchainDemoBinding
 import com.tangem.common.CompletionResult
@@ -55,7 +54,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
         setContentView(view)
 
         tangemSdk = TangemSdk.init(this)
-        signer = Signer(tangemSdk)
+        signer = CommonSigner(tangemSdk)
 
         binding.btnScan.setOnClickListener { scan() }
 
@@ -72,7 +71,6 @@ class BlockchainDemoActivity : AppCompatActivity() {
                     try {
                         val wallet = result.data.wallets.first()
                         walletManager = WalletManagerFactory().makeWalletManager(
-                            result.data.cardId,
                             Blockchain.fromId(Blockchain.Litecoin.id),
                             wallet.publicKey,
                             wallet.curve
