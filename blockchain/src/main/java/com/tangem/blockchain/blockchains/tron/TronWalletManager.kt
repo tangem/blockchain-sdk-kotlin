@@ -177,7 +177,7 @@ class TronWalletManager(
         signer: TransactionSigner,
         publicKey: Wallet.PublicKey
     ): Result<ByteArray> {
-        return when (val result = signer.sign(transactionToSign, wallet.cardId, publicKey)) {
+        return when (val result = signer.sign(transactionToSign, publicKey)) {
             is CompletionResult.Success -> {
                 val unmarshalledSignature =  if (publicKey == dummySigner.publicKey) {
                     result.data + ByteArray(1)
