@@ -130,7 +130,7 @@ class SolanaWalletManager(
         transaction.addInstruction(SystemProgram.transfer(from, to, lamports))
         transaction.setRecentBlockHash(recentBlockHash)
 
-        val signResult = signer.sign(transaction.getDataForSign(), wallet.cardId, wallet.publicKey).successOr {
+        val signResult = signer.sign(transaction.getDataForSign(), wallet.publicKey).successOr {
             return SimpleResult.fromTangemSdkError(it.error)
         }
 
@@ -195,7 +195,7 @@ class SolanaWalletManager(
         }
 
         transaction.setRecentBlockHash(recentBlockHash)
-        val signResult = signer.sign(transaction.getDataForSign(), wallet.cardId, wallet.publicKey).successOr {
+        val signResult = signer.sign(transaction.getDataForSign(), wallet.publicKey).successOr {
             return SimpleResult.fromTangemSdkError(it.error)
         }
 
