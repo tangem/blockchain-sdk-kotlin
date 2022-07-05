@@ -79,7 +79,7 @@ class TronNetworkService(
     suspend fun checkIfAccountExists(address: String): Boolean {
         return when (val result = getAccount(address)) {
             is Result.Failure -> false
-            is Result.Success -> result.data.balance != null
+            is Result.Success -> result.data.address != null
         }
     }
 
