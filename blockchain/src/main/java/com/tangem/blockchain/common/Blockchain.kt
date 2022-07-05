@@ -7,7 +7,6 @@ import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressType
 import com.tangem.blockchain.blockchains.ethereum.Chain
-import com.tangem.blockchain.blockchains.ethereum.Chain.EthereumClassicTestnet
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
@@ -20,7 +19,6 @@ import com.tangem.common.card.EllipticCurve
 import com.tangem.common.hdWallet.DerivationNode
 import com.tangem.common.hdWallet.DerivationPath
 import com.tangem.common.hdWallet.bip.BIP44
-import org.kethereum.model.EthereumURI
 
 
 enum class Blockchain(
@@ -212,28 +210,7 @@ enum class Blockchain(
         else -> DefaultAddressType
     }
 
-    fun tokenDisplayName(): String = when (this) {
-        Ethereum, EthereumTestnet -> "Ethereum smart contract token"
-        Stellar, StellarTestnet -> "Stellar Asset"
-        Binance, BinanceTestnet -> "Binance Asset"
-        BSC, BSCTestnet -> "Binance Smart Chain Token"
-        Solana, SolanaTestnet -> "Solana Token"
-        Tron, TronTestnet -> "Tron Token"
-        else -> fullName
-    }
-
-    fun isTestnet(): Boolean {
-        return when (this) {
-            Unknown, Avalanche, Bitcoin, BitcoinCash, Litecoin, Dogecoin, Ducatus,
-            Ethereum, EthereumClassic, RSK, BSC, Polygon, Arbitrum, ArbitrumTestnet,
-            Cardano, CardanoShelley, XRP, Binance, Stellar, Solana, Tezos, Tron, Fantom
-            -> false
-            AvalancheTestnet, BitcoinTestnet, EthereumTestnet, EthereumClassicTestnet, BSCTestnet,
-            PolygonTestnet, BinanceTestnet,
-            BitcoinCashTestnet, StellarTestnet, SolanaTestnet, TronTestnet, FantomTestnet
-            -> true
-        }
-    }
+    fun isTestnet(): Boolean = this == getTestnetVersion()
 
     fun getTestnetVersion(): Blockchain? {
         return when (this) {
@@ -388,13 +365,15 @@ enum class Blockchain(
     }
 
     fun canHandleTokens(): Boolean = when (this) {
-        Arbitrum,
+        Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet,
         BSC, BSCTestnet,
         Binance, BinanceTestnet,
         Polygon, PolygonTestnet,
         Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet,
+        EthereumClassic, EthereumClassicTestnet,
+        RSK,
         Solana, SolanaTestnet,
         Tron, TronTestnet -> true
         else -> false
@@ -414,6 +393,8 @@ enum class Blockchain(
             return when (chainId) {
                 Chain.Avalanche.id -> Avalanche
                 Chain.AvalancheTestnet.id -> AvalancheTestnet
+                Chain.Arbitrum.id -> Arbitrum
+                Chain.ArbitrumTestnet.id -> ArbitrumTestnet
                 Chain.Mainnet.id -> Ethereum
                 Chain.Rinkeby.id -> EthereumTestnet
                 Chain.EthereumClassicMainnet.id -> EthereumClassic
