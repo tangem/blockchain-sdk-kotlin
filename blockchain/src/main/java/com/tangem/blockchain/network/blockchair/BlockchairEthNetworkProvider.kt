@@ -2,10 +2,10 @@ package com.tangem.blockchain.network.blockchair
 
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.isApiKeyNeeded
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.API_BLOCKCHAIR
 import com.tangem.blockchain.network.API_BLOCKCKAIR_TANGEM
-import com.tangem.blockchain.network.blockchair.BlockchairApi.Companion.needRetryWithKey
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.isZero
 import kotlinx.coroutines.async
@@ -132,7 +132,7 @@ class BlockchairEthNetworkProvider(
         return try {
             retryIO { block() }
         } catch (error: HttpException) {
-            if (needRetryWithKey(error, currentApiKey, apiKey)) {
+            if (error.isApiKeyNeeded(currentApiKey, apiKey)) {
                 currentApiKey = apiKey
                 retryIO { block() }
             } else {
