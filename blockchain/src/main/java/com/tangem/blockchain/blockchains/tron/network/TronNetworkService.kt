@@ -66,7 +66,7 @@ class TronNetworkService(
         return when (result) {
             is Result.Failure -> Result.Failure(result.error)
             is Result.Success -> {
-                val maxEnergy = result.data.data.map { it.energyUsageTotal }.maxOrNull() ?: 0
+                val maxEnergy = result.data.data.mapNotNull { it.energyUsageTotal }.maxOrNull() ?: 0
                 Result.Success(maxEnergy)
             }
         }
