@@ -105,7 +105,7 @@ data class TronTriggerSmartContractResponse(
 @JsonClass(generateAdapter = true)
 data class TokenHistoryData(
     @Json(name = "energy_usage_total")
-    val energyUsageTotal: Int
+    val energyUsageTotal: Int?
 )
 
 @JsonClass(generateAdapter = true)
