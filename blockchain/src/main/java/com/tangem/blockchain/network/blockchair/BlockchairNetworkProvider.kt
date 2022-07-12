@@ -8,10 +8,10 @@ import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.isApiKeyNeeded
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.API_BLOCKCHAIR
 import com.tangem.blockchain.network.API_BLOCKCKAIR_TANGEM
-import com.tangem.blockchain.network.blockchair.BlockchairApi.Companion.needRetryWithKey
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.hexToBytes
 import retrofit2.HttpException
@@ -49,7 +49,7 @@ open class BlockchairNetworkProvider(
         return try {
             retryIO { block() }
         } catch (error: HttpException) {
-            if (needRetryWithKey(error, currentApiKey, apiKey)) {
+            if (error.isApiKeyNeeded(currentApiKey, apiKey)) {
                 currentApiKey = apiKey
                 retryIO { block() }
             } else {
