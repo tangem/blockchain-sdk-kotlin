@@ -446,7 +446,9 @@ class WalletManagerFactory(
             }
             Blockchain.Tron, Blockchain.TronTestnet -> {
                 val network = if (blockchain.isTestnet()) TronNetwork.NILE else TronNetwork.MAINNET
-                val rpcProvider = TronJsonRpcNetworkProvider(network)
+                val rpcProvider = TronJsonRpcNetworkProvider(
+                    network = network, tronGridApiKey = blockchainSdkConfig.tronGridApiKey
+                )
                 TronWalletManager(
                     wallet = wallet,
                     transactionBuilder = TronTransactionBuilder(blockchain),
