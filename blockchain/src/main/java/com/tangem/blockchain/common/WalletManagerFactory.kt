@@ -446,7 +446,27 @@ class WalletManagerFactory(
                     networkProvider = rpcProvider
                 )
             }
+            Blockchain.Gnosis -> {
+                val jsonRpcProviders = listOf(
+                    EthereumJsonRpcProvider(API_GNOSIS_CHAIN),
+                    EthereumJsonRpcProvider(API_GNOSIS_POKT),
+                    EthereumJsonRpcProvider(API_GNOSIS_BLAST),
+                    EthereumJsonRpcProvider(API_XDAI_POKT),
+                    EthereumJsonRpcProvider(API_XDAI_BLOCKSCOUT),
+                )
 
+                val networkService = EthereumNetworkService(jsonRpcProviders)
+
+                EthereumWalletManager(
+                    wallet = wallet,
+                    transactionBuilder = EthereumTransactionBuilder(
+                        walletPublicKey = publicKey.blockchainKey,
+                        blockchain = blockchain
+                    ),
+                    networkProvider = networkService,
+                    presetToken = tokens
+                )
+            }
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
         }
     }
