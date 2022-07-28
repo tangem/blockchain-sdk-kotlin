@@ -382,7 +382,7 @@ enum class Blockchain(
         EthereumClassic, EthereumClassicTestnet,
         RSK,
         Solana, SolanaTestnet,
-        Tron, TronTestnet -> true
+        Tron, TronTestnet, Gnosis -> true
         else -> false
     }
 
