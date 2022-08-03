@@ -1,5 +1,7 @@
 package com.tangem.blockchain.extensions
 
+import com.tangem.blockchain.common.BlockchainError
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.common.core.TangemError
 import kotlinx.coroutines.delay
 import retrofit2.HttpException
@@ -29,11 +31,11 @@ suspend fun <T> retryIO(
 
 sealed class Result<out T> {
     data class Success<out T>(val data: T) : Result<T>()
-    data class Failure(val error: Throwable) : Result<Nothing>()
+    data class Failure(val error: BlockchainError) : Result<Nothing>()
 
     companion object {
         fun fromTangemSdkError(sdkError: TangemError): Failure =
-            Failure(Exception("TangemError: code: ${sdkError.code}, message: ${sdkError.customMessage}"))
+            Failure(BlockchainSdkError.WrappedTangemError(sdkError))
     }
 }
 
@@ -46,11 +48,10 @@ inline fun <T> Result<T>.successOr(failureClause: (Result.Failure) -> T): T {
 
 sealed class SimpleResult {
     object Success : SimpleResult()
-    data class Failure(val error: Throwable?) : SimpleResult()
+    data class Failure(val error: BlockchainError) : SimpleResult()
 
     companion object {
-        fun fromTangemSdkError(sdkError: TangemError): Failure =
-            Failure(Exception("TangemError: code: ${sdkError.code}, message: ${sdkError.customMessage}"))
+        fun fromTangemSdkError(sdkError: TangemError): Failure = Failure(BlockchainSdkError.WrappedTangemError(sdkError))
     }
 }
 
