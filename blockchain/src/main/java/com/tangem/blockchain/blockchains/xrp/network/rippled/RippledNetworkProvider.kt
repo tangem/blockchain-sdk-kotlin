@@ -4,6 +4,8 @@ import com.tangem.blockchain.blockchains.xrp.network.XrpFeeResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpInfoResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.toBlockchainCustomError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
@@ -61,7 +63,7 @@ class RippledNetworkProvider(baseUrl: String) : XrpNetworkProvider {
 
             }
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -74,7 +76,7 @@ class RippledNetworkProvider(baseUrl: String) : XrpNetworkProvider {
                     feeData.result!!.feeData!!.priorityFee!!.toBigDecimal().movePointLeft(decimals)
             ))
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -89,11 +91,13 @@ class RippledNetworkProvider(baseUrl: String) : XrpNetworkProvider {
                 if (result.resultMessage == "Held until escalated fee drops.") {
                     SimpleResult.Success
                 } else {
-                    SimpleResult.Failure(Exception(result.resultMessage ?: result.errorException))
+                    SimpleResult.Failure(BlockchainSdkError.CustomError(
+                        result.resultMessage ?: result.errorException ?: "Unknown error message"
+                    ))
                 }
             }
         } catch (exception: Exception) {
-            SimpleResult.Failure(exception)
+            SimpleResult.Failure(exception.toBlockchainCustomError())
         }
     }
 
