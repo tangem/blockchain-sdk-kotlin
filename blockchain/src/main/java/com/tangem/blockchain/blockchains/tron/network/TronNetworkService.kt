@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.tron.network
 
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.extensions.Result
 import kotlinx.coroutines.async
@@ -50,10 +51,8 @@ class TronNetworkService(
                 if (result.data.result) {
                     Result.Success(result.data)
                 } else {
-                    Result.Failure(
-                        Exception(
-                            result.data.errorMessage ?: "error sending transaction"
-                        )
+                    Result.Failure(BlockchainSdkError.CustomError(
+                        result.data.errorMessage ?: "error sending transaction")
                     )
                 }
             }
@@ -98,7 +97,7 @@ class TronNetworkService(
             }
             is Result.Success -> {
                 val hexValue = result.data.constantResult.firstOrNull()?.ifBlank { "0" }
-                    ?: return Result.Failure(Exception("FailedToParseNetworkResponse"))
+                    ?: return Result.Failure(BlockchainSdkError.CustomError("FailedToParseNetworkResponse"))
                 val value = BigInteger(hexValue, 16).toBigDecimal(token.decimals)
                 return Result.Success(token to value)
             }
