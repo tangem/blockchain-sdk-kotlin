@@ -2,12 +2,19 @@ package com.tangem.blockchain.common
 
 import com.tangem.common.core.TangemError
 
+interface BlockchainError : TangemError
 
 sealed class BlockchainSdkError(
-    override val code: Int = 0,
+    override val code: Int,
     override var customMessage: String = code.toString(),
-    override val messageResId: Int? = null
-) : TangemError, Exception() {
+    override val messageResId: Int? = null,
+) : Exception(code.toString()), BlockchainError {
+
+    data class WrappedTangemError(val tangemError: TangemError) : BlockchainSdkError(
+        code = tangemError.code,
+        customMessage = tangemError.customMessage,
+        messageResId = tangemError.messageResId,
+    )
 
     class NPError(forValue: String) : BlockchainSdkError(-1, "$forValue must be not NULL")
     class UnsupportedOperation(message: String = "Unsupported operation") : BlockchainSdkError(0, message)
@@ -16,6 +23,7 @@ sealed class BlockchainSdkError(
     object AccountNotFound : BlockchainSdkError(2, "Account not found")
     class CreateAccountUnderfunded(val minReserve: Amount) : BlockchainSdkError(3)
     object FailedToLoadFee : BlockchainSdkError(4, "Failed to load fee")
+    class CustomError(message: String) : BlockchainSdkError(5, message)
 
     object SignatureCountNotMatched : BlockchainSdkError(100)
 
@@ -35,4 +43,8 @@ sealed class BlockchainSdkError(
     companion object {
         const val ERROR_CODE_SOLANA = 1000
     }
+}
+
+fun Exception.toBlockchainCustomError(): BlockchainSdkError {
+    return BlockchainSdkError.CustomError(this.message ?: this.toString())
 }
