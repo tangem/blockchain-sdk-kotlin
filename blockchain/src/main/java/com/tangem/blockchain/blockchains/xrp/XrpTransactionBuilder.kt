@@ -30,7 +30,7 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
         val destinationTag = if (transactionData.extras is XrpTransactionExtras) {
             val extrasTag = transactionData.extras.destinationTag
             if (xAddressDestinationTag != null && xAddressDestinationTag != extrasTag) {
-                return Result.Failure(Exception("Two distinct destination tags found"))
+                return Result.Failure(BlockchainSdkError.CustomError("Two distinct destination tags found"))
             }
             extrasTag
         } else {

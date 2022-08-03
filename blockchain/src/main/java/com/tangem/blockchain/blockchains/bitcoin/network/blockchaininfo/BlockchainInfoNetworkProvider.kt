@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.toBlockchainCustomError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
@@ -62,7 +63,7 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
                         ))
             }
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -80,7 +81,7 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
                     priorityFeePerKb.toBigDecimal().movePointLeft(decimals)
             ))
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -90,7 +91,7 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
             retryIO { api.sendTransaction(transaction) }
             SimpleResult.Success
         } catch (exception: Exception) {
-            SimpleResult.Failure(exception)
+            SimpleResult.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -114,7 +115,7 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
                 Result.Success(transactions.size)
             }
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -146,7 +147,7 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
                 Result.Success(transactions)
             }
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 }

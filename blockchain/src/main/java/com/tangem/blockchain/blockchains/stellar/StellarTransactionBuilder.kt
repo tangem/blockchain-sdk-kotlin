@@ -32,7 +32,7 @@ class StellarTransactionBuilder(
         val memo = try {
             stellarMemo?.toStellarSdkMemo()
         } catch (exception: Exception) {
-            return Result.Failure(exception)
+            return Result.Failure(exception.toBlockchainCustomError())
         }
 
         val amountType = transactionData.amount.type
@@ -64,18 +64,20 @@ class StellarTransactionBuilder(
                             ).build()
                         }
                 transaction = operation.toTransaction(sourceKeyPair, sequence, fee, timeBounds, memo)
-                        ?: return Result.Failure(Exception("Failed to assemble transaction")) // should not happen
+                        ?: return Result.Failure(BlockchainSdkError.CustomError("Failed to assemble transaction")) // should not happen
 
                 Result.Success(transaction.hash())
 
             }
             is AmountType.Token -> {
                 if (!targetAccountResponse.accountCreated) {
-                    return Result.Failure(Exception("The destination account is not created. To create account send 1+ XLM."))
+                    return Result.Failure(BlockchainSdkError.CustomError(
+                        "The destination account is not created. To create account send 1+ XLM."))
                 }
 
                 if (!targetAccountResponse.trustlineCreated!!) {
-                    return Result.Failure(Exception("The destination account does not have a trustline for the asset being sent."))
+                    return Result.Failure(BlockchainSdkError.CustomError(
+                        "The destination account does not have a trustline for the asset being sent."))
                 }
 
                 val asset = Asset.createNonNativeAsset(
@@ -94,11 +96,11 @@ class StellarTransactionBuilder(
                             .build()
                 }
                 transaction = operation.toTransaction(sourceKeyPair, sequence, fee,timeBounds, memo)
-                        ?: return Result.Failure(Exception("Failed to assemble transaction")) // should not happen
+                        ?: return Result.Failure(BlockchainSdkError.CustomError("Failed to assemble transaction")) // should not happen
 
                 Result.Success(transaction.hash())
             }
-            else -> Result.Failure(Exception("Unknown amount Type"))
+            else -> Result.Failure(BlockchainSdkError.CustomError("Unknown amount Type"))
         }
     }
 

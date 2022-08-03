@@ -49,9 +49,9 @@ class TronWalletManager(
         }
     }
 
-    private fun updateError(error: Throwable?) {
-        Log.e(this::class.java.simpleName, error?.message ?: "")
-        if (error != null) throw error
+    private fun updateError(error: BlockchainError) {
+        Log.e(this::class.java.simpleName, error.customMessage)
+        if (error is BlockchainSdkError) throw error
     }
 
     override suspend fun send(
