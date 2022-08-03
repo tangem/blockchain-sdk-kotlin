@@ -41,7 +41,7 @@ class SolanaWalletManager(
         val accountInfo = networkService.getMainAccountInfo(accountPubK).successOr {
             cardTokens
             wallet.removeAllTokens()
-            throw Exception(it.error)
+            throw (it.error as BlockchainSdkError)
         }
         wallet.setCoinValue(valueConverter.toSol(accountInfo.balance))
         updateRecentTransactions()
@@ -56,7 +56,7 @@ class SolanaWalletManager(
     private suspend fun updateRecentTransactions() {
         val txSignatures = wallet.recentTransactions.mapNotNull { it.hash }
         val signatureStatuses = networkService.getSignatureStatuses(txSignatures).successOr {
-            Log.e(this.javaClass.simpleName, it.error.localizedMessage ?: "Unknown error")
+            Log.e(this.javaClass.simpleName, it.error.customMessage)
             return
         }
 
@@ -245,7 +245,7 @@ class SolanaWalletManager(
 
     private suspend fun getAccountCreationRent(amount: Amount, destination: String): Result<BigDecimal> {
         val amountValue = amount.value.guard {
-            return Result.Failure(NullPointerException("Value of amount must be not NULL"))
+            return Result.Failure(NPError("amountValue"))
         }
         val destinationPubKey = PublicKey(destination)
 
