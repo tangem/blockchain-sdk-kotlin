@@ -98,9 +98,9 @@ class EthereumUtils {
             return TransactionToSign(transaction, hash)
         }
 
-        private fun createErc20TransferData(recepient: String, amount: BigInteger) =
+        private fun createErc20TransferData(recipient: String, amount: BigInteger) =
             tokenTransferSignature.toByteArray() +
-                    recepient.substring(2).hexToBytes().toFixedLengthByteArray(32) +
+                    recipient.substring(2).hexToBytes().toFixedLengthByteArray(32) +
                     amount.toBytesPadded(32)
 
         internal fun createErc20TransferData(recepient: String, amount: Amount) =
