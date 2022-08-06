@@ -6,6 +6,8 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.toBlockchainCustomError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
@@ -71,10 +73,10 @@ class BlockcypherNetworkProvider(
             return if (error.code() == 429 && token == null && !tokens.isNullOrEmpty()) {
                 getInfo(address, getToken())
             } else {
-                Result.Failure(error)
+                Result.Failure(error.toBlockchainCustomError())
             }
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -95,17 +97,17 @@ class BlockcypherNetworkProvider(
             return if (error.code() == 429 && token == null && !tokens.isNullOrEmpty()) {
                 getFee(getToken())
             } else {
-                Result.Failure(error)
+                Result.Failure(error.toBlockchainCustomError())
             }
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         if (tokens.isNullOrEmpty()) {
             return SimpleResult.Failure(
-                    Exception("Send transaction request is unavailable without a token")
+                    BlockchainSdkError.CustomError("Send transaction request is unavailable without a token")
             )
         }
         return try {
@@ -113,8 +115,8 @@ class BlockcypherNetworkProvider(
                 api.sendTransaction(BlockcypherSendBody(transaction), getToken()!!)
             }
             SimpleResult.Success
-        } catch (error: Exception) {
-            SimpleResult.Failure(error)
+        } catch (exception: Exception) {
+            SimpleResult.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -138,10 +140,10 @@ class BlockcypherNetworkProvider(
             return if (error.code() == 429 && token == null && !tokens.isNullOrEmpty()) {
                 getSignatureCount(address, getToken())
             } else {
-                Result.Failure(error)
+                Result.Failure(error.toBlockchainCustomError())
             }
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 

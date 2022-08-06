@@ -92,9 +92,9 @@ open class BitcoinWalletManager(
         }
     }
 
-    private fun updateError(error: Throwable?) {
-        Log.e(this::class.java.simpleName, error?.message ?: "")
-        if (error != null) throw error
+    private fun updateError(error: BlockchainError) {
+        Log.e(this::class.java.simpleName, error.customMessage)
+        (error as? BlockchainSdkError)?.let { throw it }
     }
 
     override suspend fun send(
@@ -150,7 +150,7 @@ open class BitcoinWalletManager(
                 }
             }
         } catch (exception: Exception) {
-            return Result.Failure(exception)
+            return Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
