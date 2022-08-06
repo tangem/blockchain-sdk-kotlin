@@ -7,7 +7,6 @@ import java.math.BigDecimal
 import java.util.*
 
 class Wallet(
-    val cardId: String,
     val blockchain: Blockchain,
     val addresses: Set<Address>,
     val publicKey: PublicKey,
