@@ -42,9 +42,9 @@ class BinanceWalletManager(
         transactionBuilder.sequence = response.sequence
     }
 
-    private fun updateError(error: Throwable?) {
-        Log.e(this::class.java.simpleName, error?.message ?: "")
-        if (error != null) throw error
+    private fun updateError(error: BlockchainError) {
+        Log.e(this::class.java.simpleName, error.customMessage)
+        if (error is BlockchainSdkError) throw error
     }
 
     override suspend fun send(
@@ -54,7 +54,7 @@ class BinanceWalletManager(
         return when (buildTransactionResult) {
             is Result.Failure -> SimpleResult.Failure(buildTransactionResult.error)
             is Result.Success -> {
-                val signerResponse = signer.sign(buildTransactionResult.data,wallet.cardId, wallet.publicKey)
+                val signerResponse = signer.sign(buildTransactionResult.data, wallet.publicKey)
                 when (signerResponse) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
