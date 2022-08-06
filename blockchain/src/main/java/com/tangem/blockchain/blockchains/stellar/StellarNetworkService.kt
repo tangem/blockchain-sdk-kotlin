@@ -39,10 +39,10 @@ class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
                         (response.extras?.resultCodes?.operationsResultCodes?.getOrNull(0)
                                 ?: "")
                 if (trResult == "tx_too_late") trResult = "The system time is invalid"
-                SimpleResult.Failure(Exception(trResult))
+                SimpleResult.Failure(BlockchainSdkError.CustomError(trResult))
             }
-        } catch (error: Exception) {
-            SimpleResult.Failure(error)
+        } catch (exception: Exception) {
+            SimpleResult.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -69,10 +69,10 @@ class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
             if (errorResponse.code == 404) {
                 Result.Success(StellarTargetAccountResponse(accountCreated = false))
             } else {
-                Result.Failure(errorResponse)
+                Result.Failure(errorResponse.toBlockchainCustomError())
             }
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -95,7 +95,9 @@ class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
                 val coinBalance = accountResponse.balances
                         .find { it.asset is AssetTypeNative }
                         ?.balance?.toBigDecimal()
-                        ?: return@coroutineScope Result.Failure(Exception("Stellar Balance not found"))
+                        ?: return@coroutineScope Result.Failure(
+                            BlockchainSdkError.CustomError("Stellar Balance not found")
+                        )
 
                 val tokenBalances = accountResponse.balances.filter { it.asset !is AssetTypeNative }.map {
                     StellarAssetBalance(it.balance.toBigDecimal(), it.assetCode, it.assetIssuer)
@@ -122,11 +124,11 @@ class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
                         )
                 )
             }
-        } catch (error: Exception) {
-            if (error is ErrorResponse && error.code == 404) {
+        } catch (exception: Exception) {
+            if (exception is ErrorResponse && exception.code == 404) {
                 Result.Failure(BlockchainSdkError.AccountNotFound)
             } else {
-                Result.Failure(error)
+                Result.Failure(exception.toBlockchainCustomError())
             }
         }
     }
@@ -150,8 +152,8 @@ class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
                 }
                 Result.Success(operations.filter { it.sourceAccount == accountId }.size)
             }
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
