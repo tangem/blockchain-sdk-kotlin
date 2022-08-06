@@ -7,6 +7,7 @@ import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
 import com.tangem.blockchain.blockchains.cardano.network.api.AdaliteApi
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.toBlockchainCustomError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.encodeBase64NoWrap
@@ -54,7 +55,7 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
                 )
             }
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -70,7 +71,7 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
                 )
                 SimpleResult.Failure(error)
             } else {
-                SimpleResult.Failure(exception)
+                SimpleResult.Failure(exception.toBlockchainCustomError())
             }
         }
     }
