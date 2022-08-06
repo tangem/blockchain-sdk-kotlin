@@ -5,10 +5,7 @@ import com.tangem.blockchain.blockchains.binance.client.domain.broadcast.Transfe
 import com.tangem.blockchain.blockchains.binance.client.encoding.message.MessageType
 import com.tangem.blockchain.blockchains.binance.client.encoding.message.TransactionRequestAssemblerExtSign
 import com.tangem.blockchain.blockchains.binance.client.encoding.message.TransferMessage
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionExtras
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.isAboveZero
 import com.tangem.common.extensions.calculateSha256
@@ -33,9 +30,9 @@ class BinanceTransactionBuilder(
     fun buildToSign(transactionData: TransactionData): Result<ByteArray> {
         val amount = transactionData.amount
 
-        if (!amount.isAboveZero()) return Result.Failure(Exception("Transaction amount is not defined"))
-        val accountNumber = accountNumber ?: return Result.Failure(Exception("No account number"))
-        val sequence = sequence ?: return Result.Failure(Exception("No sequence"))
+        if (!amount.isAboveZero()) return Result.Failure(BlockchainSdkError.CustomError("Transaction amount is not defined"))
+        val accountNumber = accountNumber ?: return Result.Failure(BlockchainSdkError.CustomError("No account number"))
+        val sequence = sequence ?: return Result.Failure(BlockchainSdkError.CustomError("No sequence"))
 
         val transfer = Transfer()
         transfer.coin = if (amount.type is AmountType.Token) {
