@@ -49,21 +49,20 @@ class TezosWalletManager(
         transactionBuilder.counter = response.counter
     }
 
-    private fun updateError(error: Throwable?) {
-        Log.e(this::class.java.simpleName, error?.message ?: "")
-        if (error != null) throw error
+    private fun updateError(error: BlockchainError) {
+        Log.e(this::class.java.simpleName, error.customMessage)
+        if (error is BlockchainSdkError) throw error
     }
 
     override suspend fun send(
         transactionData: TransactionData, signer: TransactionSigner
     ): SimpleResult {
-
-        if (publicKeyRevealed == null) return SimpleResult.Failure(Exception("publicKeyRevealed is null"))
+        if (publicKeyRevealed == null) {
+            return SimpleResult.Failure(BlockchainSdkError.CustomError("publicKeyRevealed is null"))
+        }
 
         val contents =
-            when (val response =
-                transactionBuilder.buildContents(transactionData, publicKeyRevealed!!)
-            ) {
+            when (val response = transactionBuilder.buildContents(transactionData, publicKeyRevealed!!)) {
                 is Result.Failure -> return SimpleResult.Failure(response.error)
                 is Result.Success -> response.data
             }
@@ -80,7 +79,7 @@ class TezosWalletManager(
 //                }
         val dataToSign = transactionBuilder.buildToSign(forgedContents)
 
-        val signerResponse = signer.sign(dataToSign, wallet.cardId, wallet.publicKey)
+        val signerResponse = signer.sign(dataToSign, wallet.publicKey)
         val signature = when (signerResponse) {
             is CompletionResult.Failure -> return SimpleResult.fromTangemSdkError(signerResponse.error)
             is CompletionResult.Success -> signerResponse.data

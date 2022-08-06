@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.tezos.network
 
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.toBlockchainCustomError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
@@ -25,7 +26,7 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
                 )
             )
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -48,7 +49,7 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
                 )
             )
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -59,7 +60,7 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
             }
             Result.Success(forgedContents)
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -74,7 +75,7 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
             retryIO { api.preapplyOperations(listOf(tezosPreapplyBody)) }
             SimpleResult.Success
         } catch (exception: Exception) {
-            SimpleResult.Failure(exception)
+            SimpleResult.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -83,7 +84,7 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
             retryIO { api.sendTransaction(transaction) }
             SimpleResult.Success
         } catch (exception: Exception) {
-            SimpleResult.Failure(exception)
+            SimpleResult.Failure(exception.toBlockchainCustomError())
         }
     }
 }
