@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.tezos
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService.Companion.calculateTezosChecksum
 import com.tangem.blockchain.blockchains.tezos.network.TezosOperationContent
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.bigIntegerValue
@@ -21,10 +22,11 @@ class TezosTransactionBuilder(
     var counter: Long? = null
     val decimals = Blockchain.Tezos.decimals()
 
-    fun buildContents(transactionData: TransactionData,
-                      publicKeyRevealed: Boolean
+    fun buildContents(
+        transactionData: TransactionData,
+        publicKeyRevealed: Boolean,
     ): Result<List<TezosOperationContent>> {
-        if (counter == null) return Result.Failure(Exception("counter is null"))
+        if (counter == null) return Result.Failure(BlockchainSdkError.CustomError("counter is null"))
         var counter = counter!!
 
         val contents = arrayListOf<TezosOperationContent>()

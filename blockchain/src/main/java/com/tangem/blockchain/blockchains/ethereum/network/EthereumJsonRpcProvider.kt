@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
+import com.tangem.blockchain.common.toBlockchainCustomError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.createRetrofitInstance
@@ -63,7 +64,7 @@ class EthereumJsonRpcProvider(baseUrl: String, private val postfixUrl: String = 
             val result = retryIO { api.post(this, postfixUrl) }
             Result.Success(result)
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
