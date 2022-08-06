@@ -6,6 +6,8 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.toBlockchainCustomError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
@@ -27,6 +29,7 @@ class BlockcypherNetworkProvider(
         createRetrofitInstance(host).create(BlockcypherApi::class.java)
     }
 
+    private val transactionHashesCountLimit = 1000
     private val limitCap = 2000
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ROOT)
     private val decimals = blockchain.decimals()
@@ -36,7 +39,11 @@ class BlockcypherNetworkProvider(
     suspend fun getInfo(address: String, token: String?): Result<BitcoinAddressInfo> {
         return try {
             val addressData =
-                    retryIO { api.getAddressData(address, token = token) }
+                    retryIO { api.getAddressData(
+                        address = address,
+                        limit = transactionHashesCountLimit,
+                        token = token
+                    )}
 
             val confirmedTransactions =
                     addressData.txrefs?.toBasicTransactionsData(isConfirmed = true) ?: emptyList()
@@ -66,10 +73,10 @@ class BlockcypherNetworkProvider(
             return if (error.code() == 429 && token == null && !tokens.isNullOrEmpty()) {
                 getInfo(address, getToken())
             } else {
-                Result.Failure(error)
+                Result.Failure(error.toBlockchainCustomError())
             }
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -90,17 +97,17 @@ class BlockcypherNetworkProvider(
             return if (error.code() == 429 && token == null && !tokens.isNullOrEmpty()) {
                 getFee(getToken())
             } else {
-                Result.Failure(error)
+                Result.Failure(error.toBlockchainCustomError())
             }
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         if (tokens.isNullOrEmpty()) {
             return SimpleResult.Failure(
-                    Exception("Send transaction request is unavailable without a token")
+                    BlockchainSdkError.CustomError("Send transaction request is unavailable without a token")
             )
         }
         return try {
@@ -108,8 +115,8 @@ class BlockcypherNetworkProvider(
                 api.sendTransaction(BlockcypherSendBody(transaction), getToken()!!)
             }
             SimpleResult.Success
-        } catch (error: Exception) {
-            SimpleResult.Failure(error)
+        } catch (exception: Exception) {
+            SimpleResult.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -133,10 +140,10 @@ class BlockcypherNetworkProvider(
             return if (error.code() == 429 && token == null && !tokens.isNullOrEmpty()) {
                 getSignatureCount(address, getToken())
             } else {
-                Result.Failure(error)
+                Result.Failure(error.toBlockchainCustomError())
             }
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
