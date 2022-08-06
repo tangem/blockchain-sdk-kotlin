@@ -29,7 +29,6 @@ import org.kethereum.model.ADDRESS_LENGTH_IN_HEX
 
 internal class WalletManagerFactoryTest {
 
-    val cardId = "BB00000000000304"
     val ECDSAPublicKey = "040876BDEC26B89BD2159A668B9AF3D9FE86370F318717C92B8D6C1186FB3648C32A5F9321998CC2D042901C91D40601E79A641E1CBCEBE7A2358BE6054E1B6E5D"
         .hexToBytes()
     val EdDSAPublicKey = "E078212D58B2B9D0EDC9C936830D10081CD38B90C31778C56DFB1171027E294E"
@@ -119,7 +118,6 @@ internal class WalletManagerFactoryTest {
         val card = ReadCommand().deserialize(SessionEnvironment(Config(), UnsafeInMemoryStorage()), responseApdu).card
         val walletManager =
                 WalletManagerFactory().makeTwinWalletManager(
-                        card.cardId,
                         card.wallets.first().publicKey,
                         pairPublicKey.hexToBytes()
                 )
@@ -135,7 +133,6 @@ internal class WalletManagerFactoryTest {
 
         return WalletManagerFactory(BlockchainSdkConfig())
                 .makeWalletManager(
-                    cardId,
                     blockchain,
                     Wallet.PublicKey(publicKey, null, null),
                     curve = curve

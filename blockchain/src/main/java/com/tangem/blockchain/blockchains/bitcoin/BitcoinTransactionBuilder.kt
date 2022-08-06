@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.calculateRipemd160
@@ -35,15 +36,13 @@ open class BitcoinTransactionBuilder(
         Blockchain.Litecoin -> LitecoinMainNetParams()
         Blockchain.Dogecoin -> DogecoinMainNetParams()
         Blockchain.Ducatus -> DucatusMainNetParams()
-        else -> throw Exception(
-            "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
-        )
+        else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
     var unspentOutputs: List<BitcoinUnspentOutput>? = null
 
     open fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
         if (unspentOutputs.isNullOrEmpty()) {
-            return Result.Failure(Exception("Unspent outputs are missing"))
+            return Result.Failure(BlockchainSdkError.CustomError("Unspent outputs are missing"))
         }
 
         val change: BigDecimal = calculateChange(transactionData, unspentOutputs!!)

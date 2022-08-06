@@ -46,9 +46,9 @@ class XrpWalletManager(
         }
     }
 
-    private fun updateError(error: Throwable?) {
-        Log.e(this::class.java.simpleName, error?.message ?: "")
-        if (error != null) throw error
+    private fun updateError(error: BlockchainError) {
+        Log.e(this::class.java.simpleName, error.customMessage)
+        if (error is BlockchainSdkError) throw error
     }
 
     override suspend fun send(
@@ -59,7 +59,7 @@ class XrpWalletManager(
             is Result.Failure -> return SimpleResult.Failure(buildResult.error)
         }
 
-        val signerResponse = signer.sign(transactionHash, wallet.cardId, wallet.publicKey)
+        val signerResponse = signer.sign(transactionHash, wallet.publicKey)
         return when (signerResponse) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)

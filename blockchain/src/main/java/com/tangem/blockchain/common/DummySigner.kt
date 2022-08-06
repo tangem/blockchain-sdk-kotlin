@@ -18,17 +18,15 @@ class DummySigner : TransactionSigner {
 
     override suspend fun sign(
         hashes: List<ByteArray>,
-        cardId: String,
         publicKey: Wallet.PublicKey
     ): CompletionResult<List<ByteArray>> {
         return CompletionResult.Success(
-            hashes.map { (sign(it, cardId, publicKey) as CompletionResult.Success).data }
+            hashes.map { (sign(it, publicKey) as CompletionResult.Success).data }
         )
     }
 
     override suspend fun sign(
         hash: ByteArray,
-        cardId: String,
         publicKey: Wallet.PublicKey
     ): CompletionResult<ByteArray> {
         return CompletionResult.Success(hash.sign(keyPair.privateKey))

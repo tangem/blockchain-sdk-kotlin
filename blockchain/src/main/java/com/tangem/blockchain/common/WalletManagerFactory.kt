@@ -57,14 +57,12 @@ class WalletManagerFactory(
 
     /**
      * Base wallet manager initializer
-     * @param cardId: Card's cardId
      * @param blockchain: blockchain to create. If null, card native blockchain will be used
      * @param seedKey: Public Key of the wallet
      * @param derivedKey: Derived ExtendedPublicKey by the card
      * @param derivation: derivation style or derivation path
      */
     fun makeWalletManager(
-        cardId: String,
         blockchain: Blockchain,
         seedKey: ByteArray,
         derivedKey: ExtendedPublicKey,
@@ -80,7 +78,6 @@ class WalletManagerFactory(
 
 
         return makeWalletManager(
-            cardId = cardId,
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(
                 seedKey = seedKey,
@@ -92,14 +89,12 @@ class WalletManagerFactory(
 
     // Wallet manager initializer for twin cards
     fun makeTwinWalletManager(
-        cardId: String,
         walletPublicKey: ByteArray,
         pairPublicKey: ByteArray,
         blockchain: Blockchain = Blockchain.Bitcoin,
         curve: EllipticCurve = EllipticCurve.Secp256k1
     ): WalletManager? {
         return makeWalletManager(
-            cardId = cardId,
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(walletPublicKey, null, null),
             pairPublicKey = pairPublicKey,
@@ -108,13 +103,12 @@ class WalletManagerFactory(
     }
 
     fun makeEthereumWalletManager(
-        cardId: String,
         publicKey: Wallet.PublicKey,
         tokens: List<Token>,
         isTestNet: Boolean = false
     ): WalletManager? {
         val blockchain = if (isTestNet) Blockchain.EthereumTestnet else Blockchain.Ethereum
-        val walletManager = makeWalletManager(cardId, blockchain, publicKey, tokens) ?: return null
+        val walletManager = makeWalletManager(blockchain, publicKey, tokens) ?: return null
 
         val additionalTokens = tokens.filterNot { walletManager.cardTokens.contains(it) }
         walletManager.cardTokens.addAll(additionalTokens)
@@ -123,13 +117,11 @@ class WalletManagerFactory(
 
     // Legacy wallet manager initializer
     fun makeWalletManager(
-        cardId: String,
         blockchain: Blockchain,
         walletPublicKey: ByteArray,
         curve: EllipticCurve = EllipticCurve.Secp256k1
     ): WalletManager? {
         return makeWalletManager(
-            cardId = cardId,
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(walletPublicKey, null, null),
             curve = curve
@@ -137,7 +129,6 @@ class WalletManagerFactory(
     }
 
     fun makeWalletManager(
-        cardId: String,
         blockchain: Blockchain,
         publicKey: Wallet.PublicKey,
         tokens: Collection<Token> = emptyList(),
@@ -149,7 +140,7 @@ class WalletManagerFactory(
 
         val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
         val tokens = tokens.toMutableSet()
-        val wallet = Wallet(cardId, blockchain, addresses, publicKey, tokens)
+        val wallet = Wallet(blockchain, addresses, publicKey, tokens)
 
         return when (blockchain) {
             Blockchain.Bitcoin, Blockchain.BitcoinTestnet ->
@@ -300,7 +291,7 @@ class WalletManagerFactory(
             Blockchain.EthereumTestnet -> {
                 val jsonRpcProvider = EthereumJsonRpcProvider.infura(
                     API_INFURA_TESTNET, blockchainSdkConfig.infuraProjectId
-                        ?: throw Exception("Infura project Id is required")
+                    ?: throw Exception("Infura project Id is required")
                 )
                 EthereumWalletManager(
                     wallet,
@@ -446,14 +437,36 @@ class WalletManagerFactory(
             }
             Blockchain.Tron, Blockchain.TronTestnet -> {
                 val network = if (blockchain.isTestnet()) TronNetwork.NILE else TronNetwork.MAINNET
-                val rpcProvider = TronJsonRpcNetworkProvider(network)
+                val rpcProvider = TronJsonRpcNetworkProvider(
+                    network = network, tronGridApiKey = blockchainSdkConfig.tronGridApiKey
+                )
                 TronWalletManager(
                     wallet = wallet,
                     transactionBuilder = TronTransactionBuilder(blockchain),
                     networkProvider = rpcProvider
                 )
             }
+            Blockchain.Gnosis -> {
+                val jsonRpcProviders = listOf(
+                    EthereumJsonRpcProvider(API_GNOSIS_CHAIN),
+                    EthereumJsonRpcProvider(API_GNOSIS_POKT),
+                    EthereumJsonRpcProvider(API_GNOSIS_BLAST),
+                    EthereumJsonRpcProvider(API_XDAI_POKT),
+                    EthereumJsonRpcProvider(API_XDAI_BLOCKSCOUT),
+                )
 
+                val networkService = EthereumNetworkService(jsonRpcProviders)
+
+                EthereumWalletManager(
+                    wallet = wallet,
+                    transactionBuilder = EthereumTransactionBuilder(
+                        walletPublicKey = publicKey.blockchainKey,
+                        blockchain = blockchain
+                    ),
+                    networkProvider = networkService,
+                    presetToken = tokens
+                )
+            }
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
         }
     }
