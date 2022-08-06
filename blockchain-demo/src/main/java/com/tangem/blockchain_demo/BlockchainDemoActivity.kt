@@ -142,7 +142,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
             withContext(Dispatchers.Main) {
                 when (feeResult) {
                     is Result.Failure -> {
-                        handleError(feeResult.error?.localizedMessage ?: "Error")
+                        handleError(feeResult.error.customMessage)
                     }
                     is Result.Success -> {
                         binding.btnSend.isEnabled = true
@@ -172,7 +172,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
             withContext(Dispatchers.Main) {
                 when (result) {
                     is SimpleResult.Failure -> {
-                        handleError(result.error?.localizedMessage ?: "Error")
+                        handleError(result.error.customMessage)
                     }
                     is SimpleResult.Success -> {
                         binding.tvFee.text = "Success"

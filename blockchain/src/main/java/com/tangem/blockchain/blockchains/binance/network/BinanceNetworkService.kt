@@ -5,6 +5,8 @@ import com.tangem.blockchain.blockchains.binance.client.BinanceDexApiRestClient
 import com.tangem.blockchain.blockchains.binance.client.BinanceDexEnvironment
 import com.tangem.blockchain.blockchains.binance.client.encoding.message.TransactionRequestAssemblerExtSign
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.toBlockchainCustomError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
@@ -51,7 +53,7 @@ class BinanceNetworkService(isTestNet: Boolean = false) : BinanceNetworkProvider
                         )
                 )
             } else {
-                Result.Failure(exception)
+                Result.Failure(exception.toBlockchainCustomError())
             }
         }
     }
@@ -69,7 +71,7 @@ class BinanceNetworkService(isTestNet: Boolean = false) : BinanceNetworkProvider
             }
             return Result.Success(fee ?: throw Exception("Invalid fee response"))
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -80,10 +82,10 @@ class BinanceNetworkService(isTestNet: Boolean = false) : BinanceNetworkProvider
             if (response.isNotEmpty() && response[0].isOk) {
                 SimpleResult.Success
             } else {
-                SimpleResult.Failure(Exception("transaction failed"))
+                SimpleResult.Failure(BlockchainSdkError.CustomError("transaction failed"))
             }
-        } catch (error: Exception) {
-            SimpleResult.Failure(error)
+        } catch (exception: Exception) {
+            SimpleResult.Failure(exception.toBlockchainCustomError())
         }
     }
 }
