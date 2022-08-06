@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.toBlockchainCustomError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.isApiKeyNeeded
@@ -99,8 +100,8 @@ open class BlockchairNetworkProvider(
                     recentTransactions = transactions
                 )
             )
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
 
     }
@@ -122,8 +123,8 @@ open class BlockchairNetworkProvider(
                     )
                 )
             )
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -133,8 +134,8 @@ open class BlockchairNetworkProvider(
                 api.sendTransaction(BlockchairBody(transaction), apiKey, authorizationToken)
             }
             SimpleResult.Success
-        } catch (error: Exception) {
-            SimpleResult.Failure(error)
+        } catch (exception: Exception) {
+            SimpleResult.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -149,8 +150,8 @@ open class BlockchairNetworkProvider(
             }
             val addressInfo = blockchairAddress.data!!.getValue(address).addressInfo!!
             Result.Success(addressInfo.outputCount!! - addressInfo.unspentOutputCount!!)
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
