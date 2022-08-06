@@ -80,8 +80,8 @@ class BlockchairEthNetworkProvider(
 
                 Result.Success(coinTransactions + tokenTransactions)
             }
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -121,8 +121,8 @@ class BlockchairEthNetworkProvider(
                 ?.getValue(address.toLowerCase(Locale.ROOT))?.tokensInfo?.tokens
                 ?: emptyList()
             Result.Success(tokens)
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
