@@ -65,6 +65,7 @@ enum class Blockchain(
     Tron("TRON", "TRX", "Tron"),
     TronTestnet("TRON/test", "TRX", "Tron Testnet"),
     XRP("XRP", "XRP", "XRP Ledger"),
+    Gnosis("GNO", "xDAI", "Gnosis Chain"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -91,6 +92,11 @@ enum class Blockchain(
         Polygon, PolygonTestnet,
         Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet -> 18
+        Fantom, FantomTestnet,
+        Gnosis -> 18
+        Stellar, StellarTestnet -> 7
+        Solana, SolanaTestnet -> 9
+        Unknown -> 0
     }
 
     fun makeAddresses(
@@ -114,7 +120,7 @@ enum class Blockchain(
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
         BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
-        Fantom, FantomTestnet -> EthereumAddressService()
+        Fantom, FantomTestnet, Gnosis -> EthereumAddressService()
         RSK -> RskAddressService()
         Cardano, CardanoShelley -> CardanoAddressService(this)
         XRP -> XrpAddressService()
@@ -195,6 +201,7 @@ enum class Blockchain(
         Tron -> "https://tronscan.org/#/address/$address"
         TronTestnet -> "https://nile.tronscan.org/#/address/$address"
         XRP -> "https://xrpscan.com/account/$address"
+        Gnosis -> "https://blockscout.com/xdai/mainnet/address/$address"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -223,16 +230,6 @@ enum class Blockchain(
         else -> DefaultAddressType
     }
 
-    fun tokenDisplayName(): String = when (this) {
-        Ethereum, EthereumTestnet -> "Ethereum smart contract token"
-        Stellar, StellarTestnet -> "Stellar Asset"
-        Binance, BinanceTestnet -> "Binance Asset"
-        BSC, BSCTestnet -> "Binance Smart Chain Token"
-        Solana, SolanaTestnet -> "Solana Token"
-        Tron, TronTestnet -> "Tron Token"
-        else -> fullName
-    }
-
     fun isTestnet(): Boolean = this == getTestnetVersion()
 
     fun getTestnetVersion(): Blockchain? {
@@ -259,6 +256,7 @@ enum class Blockchain(
             CardanoShelley -> null
             XRP -> null
             Tezos -> null
+            Gnosis -> null
             Unknown -> null
         }
     }
@@ -280,7 +278,8 @@ enum class Blockchain(
             Ducatus,
             RSK,
             Dogecoin,
-            Tron, TronTestnet
+            Tron, TronTestnet,
+            Gnosis
             -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
@@ -307,6 +306,7 @@ enum class Blockchain(
             BSCTestnet -> Chain.BscTestnet.id
             Polygon -> Chain.Polygon.id
             PolygonTestnet -> Chain.PolygonTestnet.id
+            Gnosis -> Chain.Gnosis.id
             else -> null
         }
     }
@@ -386,6 +386,7 @@ enum class Blockchain(
             Arbitrum -> 9001
             BSC -> 9006
             Tron -> 195
+            Gnosis -> 700
             else -> throw UnsupportedOperationException()
         }
     }
@@ -401,7 +402,7 @@ enum class Blockchain(
         EthereumClassic, EthereumClassicTestnet,
         RSK,
         Solana, SolanaTestnet,
-        Tron, TronTestnet -> true
+        Tron, TronTestnet, Gnosis -> true
         else -> false
     }
 
@@ -419,6 +420,8 @@ enum class Blockchain(
             return when (chainId) {
                 Chain.Avalanche.id -> Avalanche
                 Chain.AvalancheTestnet.id -> AvalancheTestnet
+                Chain.Arbitrum.id -> Arbitrum
+                Chain.ArbitrumTestnet.id -> ArbitrumTestnet
                 Chain.Mainnet.id -> Ethereum
                 Chain.Rinkeby.id -> EthereumTestnet
                 Chain.EthereumClassicMainnet.id -> EthereumClassic

@@ -92,9 +92,9 @@ open class BitcoinWalletManager(
         }
     }
 
-    private fun updateError(error: Throwable?) {
-        Log.e(this::class.java.simpleName, error?.message ?: "")
-        if (error != null) throw error
+    private fun updateError(error: BlockchainError) {
+        Log.e(this::class.java.simpleName, error.customMessage)
+        (error as? BlockchainSdkError)?.let { throw it }
     }
 
     override suspend fun send(
@@ -103,7 +103,7 @@ open class BitcoinWalletManager(
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
             is Result.Success -> {
-                val signerResult = signer.sign(buildTransactionResult.data,wallet.cardId, wallet.publicKey)
+                val signerResult = signer.sign(buildTransactionResult.data, wallet.publicKey)
                 return when (signerResult) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(
@@ -150,7 +150,7 @@ open class BitcoinWalletManager(
                 }
             }
         } catch (exception: Exception) {
-            return Result.Failure(exception)
+            return Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
