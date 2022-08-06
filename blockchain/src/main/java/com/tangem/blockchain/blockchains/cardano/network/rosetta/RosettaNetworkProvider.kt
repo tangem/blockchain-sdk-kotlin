@@ -9,6 +9,7 @@ import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaAc
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaAddressBody
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaNetworkIdentifier
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaSubmitBody
+import com.tangem.blockchain.common.toBlockchainCustomError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
@@ -51,7 +52,7 @@ class RosettaNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
 
                 val coinsMap = coinsDeferred.mapValues { it.value.await().coins!! }
                 val unspentOutputs = coinsMap.flatMap { entry ->
-                    entry.value!!.mapNotNull {
+                    entry.value.mapNotNull {
                         if (it.amount!!.currency!!.symbol == "ADA") {
                             val identifierSplit =
                                 it.coinIdentifier!!.identifier!!.split(":")
@@ -72,7 +73,7 @@ class RosettaNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
                 )
             }
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -88,7 +89,7 @@ class RosettaNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
             )
             SimpleResult.Success
         } catch (exception: Exception) {
-            SimpleResult.Failure(exception)
+            SimpleResult.Failure(exception.toBlockchainCustomError())
         }
     }
 
