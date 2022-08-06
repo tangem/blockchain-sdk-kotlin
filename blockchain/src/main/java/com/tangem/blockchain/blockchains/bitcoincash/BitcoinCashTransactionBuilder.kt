@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.bitcoincash
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.isZero
@@ -21,7 +22,7 @@ class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, blockchain: Bloc
     override fun buildToSign(
             transactionData: TransactionData): Result<List<ByteArray>> {
 
-        if (unspentOutputs.isNullOrEmpty()) return Result.Failure(Exception("Unspent outputs are missing"))
+        if (unspentOutputs.isNullOrEmpty()) return Result.Failure(BlockchainSdkError.CustomError("Unspent outputs are missing"))
 
         val change: BigDecimal = calculateChange(transactionData, unspentOutputs!!)
 
