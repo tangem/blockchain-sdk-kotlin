@@ -5,6 +5,8 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.toBlockchainCustomError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
@@ -48,14 +50,14 @@ open class BitcoreNetworkProvider(val baseUrl: String) : BitcoinNetworkProvider 
                         hasUnconfirmed = balanceData.unconfirmed!! != 0L
                 ))
             }
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
     override suspend fun getFee(): Result<BitcoinFee> {
         // TODO Bitcore is used only in Ducatus and fee is hardcoded there
-        return Result.Failure(Exception("Not yet implemented"))
+        return Result.Failure(BlockchainSdkError.CustomError("Not yet implemented"))
     }
 
 
@@ -65,15 +67,15 @@ open class BitcoreNetworkProvider(val baseUrl: String) : BitcoinNetworkProvider 
             if (response.txid != null) {
                 SimpleResult.Success
             } else {
-                SimpleResult.Failure(Exception("Unknown send transaction error"))
+                SimpleResult.Failure(BlockchainSdkError.CustomError("Unknown send transaction error"))
             }
-        } catch (error: Exception) {
-            SimpleResult.Failure(error)
+        } catch (exception: Exception) {
+            SimpleResult.Failure(exception.toBlockchainCustomError())
         }
     }
 
     override suspend fun getSignatureCount(address: String): Result<Int> {
         // TODO Bitcore is used only in Ducatus and we don't check signature count
-        return Result.Failure(Exception("Not yet implemented"))
+        return Result.Failure(BlockchainSdkError.CustomError("Not yet implemented"))
     }
 }

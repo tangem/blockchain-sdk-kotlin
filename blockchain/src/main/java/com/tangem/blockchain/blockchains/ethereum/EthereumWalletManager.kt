@@ -31,8 +31,8 @@ class EthereumWalletManager(
     override suspend fun update() {
 
         when (val result = networkProvider.getInfo(wallet.address, cardTokens)) {
-            is Result.Failure -> updateError(result.error)
             is Result.Success -> updateWallet(result.data)
+            is Result.Failure -> updateError(result.error)
         }
     }
 
@@ -52,9 +52,9 @@ class EthereumWalletManager(
         }
     }
 
-    private fun updateError(error: Throwable?) {
-        Log.e(this::class.java.simpleName, error?.message ?: "")
-        if (error != null) throw error
+    private fun updateError(error: BlockchainError) {
+        Log.e(this::class.java.simpleName, error.customMessage)
+        if (error is BlockchainSdkError) throw error
     }
 
     override suspend fun send(
@@ -62,9 +62,9 @@ class EthereumWalletManager(
     ): SimpleResult {
         val transactionToSign =
             transactionBuilder.buildToSign(transactionData, txCount.toBigInteger())
-                ?: return SimpleResult.Failure(Exception("Not enough data"))
+                ?: return SimpleResult.Failure(BlockchainSdkError.CustomError("Not enough data"))
 
-        val signerResponse = signer.sign(transactionToSign.hash,wallet.cardId, wallet.publicKey)
+        val signerResponse = signer.sign(transactionToSign.hash, wallet.publicKey)
         return when (signerResponse) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder
@@ -102,8 +102,8 @@ class EthereumWalletManager(
                     .map { value -> Amount(wallet.amounts[AmountType.Coin]!!, value) }
                 Result.Success(fees)
             }
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 

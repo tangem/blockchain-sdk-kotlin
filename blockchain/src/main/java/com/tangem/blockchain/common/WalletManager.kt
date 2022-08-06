@@ -153,13 +153,11 @@ interface TransactionSender {
 interface TransactionSigner {
     suspend fun sign(
         hashes: List<ByteArray>,
-        cardId: String,
         publicKey: Wallet.PublicKey
     ): CompletionResult<List<ByteArray>>
 
     suspend fun sign(
         hash: ByteArray,
-        cardId: String,
         publicKey: Wallet.PublicKey
     ): CompletionResult<ByteArray>
 }

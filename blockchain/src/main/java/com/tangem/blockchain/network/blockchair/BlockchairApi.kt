@@ -1,7 +1,6 @@
 package com.tangem.blockchain.network.blockchair
 
 import com.squareup.moshi.JsonClass
-import retrofit2.HttpException
 import retrofit2.http.*
 
 interface BlockchairApi {
@@ -50,24 +49,6 @@ interface BlockchairApi {
             @Query("erc_20") erc20: Boolean = true,
             @Header("authorizationToken") authorizationToken: String?
     ): BlockchairTokensResponse
-
-
-    companion object {
-        private val blockchairApiLimitErrorCodes = listOf(
-            402, 429, 430, 434, 503 //https://blockchair.com/api/docs#link_M05
-        )
-
-        internal fun needRetryWithKey(
-            error: HttpException, currentApiKey: String?, apiKey: String?
-        ): Boolean {
-            if (blockchairApiLimitErrorCodes.contains(error.code())) {
-                if (currentApiKey == null && apiKey != null) {
-                    return true
-                }
-            }
-            return false
-        }
-    }
 }
 
 @JsonClass(generateAdapter = true)
