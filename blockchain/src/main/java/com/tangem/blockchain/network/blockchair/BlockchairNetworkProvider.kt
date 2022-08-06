@@ -6,12 +6,13 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.toBlockchainCustomError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.isApiKeyNeeded
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.API_BLOCKCHAIR
 import com.tangem.blockchain.network.API_BLOCKCKAIR_TANGEM
-import com.tangem.blockchain.network.blockchair.BlockchairApi.Companion.needRetryWithKey
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.hexToBytes
 import retrofit2.HttpException
@@ -36,6 +37,7 @@ open class BlockchairNetworkProvider(
 
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.ROOT)
     private val decimals = blockchain.decimals()
+    private val transactionHashesCountLimit = 1000
 
     private fun createHost(blockchain: Blockchain): String {
         val api = if (apiKey != null) API_BLOCKCHAIR else API_BLOCKCKAIR_TANGEM
@@ -48,7 +50,7 @@ open class BlockchairNetworkProvider(
         return try {
             retryIO { block() }
         } catch (error: HttpException) {
-            if (needRetryWithKey(error, currentApiKey, apiKey)) {
+            if (error.isApiKeyNeeded(currentApiKey, apiKey)) {
                 currentApiKey = apiKey
                 retryIO { block() }
             } else {
@@ -63,7 +65,7 @@ open class BlockchairNetworkProvider(
                 api.getAddressData(
                     address = address,
                     transactionDetails = true,
-                    limit = 50,
+                    limit = transactionHashesCountLimit,
                     key = apiKey,
                     authorizationToken = authorizationToken
                 )
@@ -98,8 +100,8 @@ open class BlockchairNetworkProvider(
                     recentTransactions = transactions
                 )
             )
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
 
     }
@@ -121,8 +123,8 @@ open class BlockchairNetworkProvider(
                     )
                 )
             )
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -132,8 +134,8 @@ open class BlockchairNetworkProvider(
                 api.sendTransaction(BlockchairBody(transaction), apiKey, authorizationToken)
             }
             SimpleResult.Success
-        } catch (error: Exception) {
-            SimpleResult.Failure(error)
+        } catch (exception: Exception) {
+            SimpleResult.Failure(exception.toBlockchainCustomError())
         }
     }
 
@@ -148,8 +150,8 @@ open class BlockchairNetworkProvider(
             }
             val addressInfo = blockchairAddress.data!!.getValue(address).addressInfo!!
             Result.Success(addressInfo.outputCount!! - addressInfo.unspentOutputCount!!)
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainCustomError())
         }
     }
 
