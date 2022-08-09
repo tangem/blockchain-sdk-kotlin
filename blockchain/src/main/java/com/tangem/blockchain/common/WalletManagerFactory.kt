@@ -450,12 +450,11 @@ class WalletManagerFactory(
                 val jsonRpcProviders = listOf(
                     EthereumJsonRpcProvider(API_GNOSIS_CHAIN),
                     EthereumJsonRpcProvider(API_GNOSIS_POKT),
+                    EthereumJsonRpcProvider(API_GNOSIS_ANKR),
                     EthereumJsonRpcProvider(API_GNOSIS_BLAST),
                     EthereumJsonRpcProvider(API_XDAI_POKT),
                     EthereumJsonRpcProvider(API_XDAI_BLOCKSCOUT),
                 )
-
-                val networkService = EthereumNetworkService(jsonRpcProviders)
 
                 EthereumWalletManager(
                     wallet = wallet,
@@ -463,7 +462,7 @@ class WalletManagerFactory(
                         walletPublicKey = publicKey.blockchainKey,
                         blockchain = blockchain
                     ),
-                    networkProvider = networkService,
+                    networkProvider = EthereumNetworkService(jsonRpcProviders),
                     presetToken = tokens
                 )
             }
