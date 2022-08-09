@@ -13,7 +13,7 @@ import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
-
+import java.math.BigInteger
 
 class EthereumNetworkService(
     jsonRpcProviders: List<EthereumJsonRpcProvider>,
@@ -133,19 +133,13 @@ class EthereumNetworkService(
             ?: Result.Failure(BlockchainSdkError.CustomError("Unsupported feature"))
     }
 
-    override suspend fun getGasPrice(): Result<Long> {
+    override suspend fun getGasPrice(): Result<BigInteger> {
         return try {
             coroutineScope {
-                val gasPriceResponses = multiJsonRpcProvider.providers.map {
-                    async { it.getGasPrice() }
-                }.map { it.await() }
-
-                val gasPrice = gasPriceResponses.filter { it is Result.Success }
-                    .map { it.extractResult().responseToLong() }.maxOrNull()
-                // all responses have failed
-                    ?: return@coroutineScope Result.Failure(
-                        (gasPriceResponses.first() as Result.Failure).error
-                    )
+                val gasPrice = multiJsonRpcProvider.providers
+                    .map { async { it.getGasPrice() } }
+                    .map { it.await() }
+                    .maxOf { it.extractResult().responseToBigInteger() }
 
                 Result.Success(gasPrice)
             }
@@ -155,13 +149,16 @@ class EthereumNetworkService(
 
     }
 
-    override suspend fun getGasLimit(to: String, from: String, data: String?): Result<Long> {
+    override suspend fun getGasLimit(to: String, from: String, data: String?): Result<BigInteger> {
         return try {
-            val gasLimit = multiJsonRpcProvider.performRequest(
-                EthereumJsonRpcProvider::getGasLimit,
-                EthCallObject(to, from, data)
-            ).extractResult().responseToLong()
-            Result.Success(gasLimit)
+            coroutineScope {
+                val gasLimit = multiJsonRpcProvider.providers
+                    .map { async { it.getGasLimit(EthCallObject(to, from, data)) } }
+                    .map { it.await() }
+                    .maxOf { it.extractResult().responseToBigInteger() }
+
+                Result.Success(gasLimit)
+            }
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainCustomError())
         }
@@ -169,9 +166,6 @@ class EthereumNetworkService(
 
     private fun String.responseToBigInteger() =
         this.substring(2).ifBlank { "0" }.toBigInteger(16)
-
-
-    private fun String.responseToLong() = this.responseToBigInteger().toLong()
 
     private fun String.parseAmount(decimals: Int) =
         this.responseToBigInteger().toBigDecimal().movePointLeft(decimals)
