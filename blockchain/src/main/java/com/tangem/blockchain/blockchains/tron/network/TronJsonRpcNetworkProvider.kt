@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.tron.network
 
 import com.tangem.blockchain.blockchains.tron.TronAddressService
-import com.tangem.blockchain.common.toBlockchainCustomError
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.isApiKeyNeeded
 import com.tangem.blockchain.extensions.retryIO
@@ -45,7 +45,7 @@ class TronJsonRpcNetworkProvider(
             }
             Result.Success(response)
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -60,7 +60,7 @@ class TronJsonRpcNetworkProvider(
                 }
             Result.Success(response)
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -69,7 +69,7 @@ class TronJsonRpcNetworkProvider(
             val response = makeRequestUsingKeyOnlyWhenNeeded { api.getNowBlock(currentApiKey) }
             Result.Success(response)
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -81,7 +81,7 @@ class TronJsonRpcNetworkProvider(
                 }
             Result.Success(response)
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -104,7 +104,7 @@ class TronJsonRpcNetworkProvider(
             }
             Result.Success(response)
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -115,7 +115,7 @@ class TronJsonRpcNetworkProvider(
             }
             Result.Success(response)
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -127,7 +127,7 @@ class TronJsonRpcNetworkProvider(
                 }
             Result.Success(response.id)
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 }

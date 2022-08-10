@@ -8,7 +8,8 @@ sealed class BlockchainSdkError(
     override val code: Int,
     override var customMessage: String = code.toString(),
     override val messageResId: Int? = null,
-) : Exception(code.toString()), BlockchainError {
+    val throwable: Throwable? = null
+) : Exception(code.toString(), throwable), BlockchainError {
 
     data class WrappedTangemError(val tangemError: TangemError) : BlockchainSdkError(
         code = tangemError.code,
@@ -25,16 +26,26 @@ sealed class BlockchainSdkError(
     object FailedToLoadFee : BlockchainSdkError(4, "Failed to load fee")
     class CustomError(message: String) : BlockchainSdkError(5, message)
 
+    class WrappedThrowable(throwable: Throwable) : BlockchainSdkError(
+        code = 6,
+        customMessage = throwable.localizedMessage ?: "Unknown exception",
+        messageResId = null,
+        throwable = throwable,
+    )
+
     object SignatureCountNotMatched : BlockchainSdkError(100)
 
     sealed class Solana(
         subCode: Int,
         customMessage: String? = null,
+        throwable: Throwable? = null
     ) : BlockchainSdkError(
-        ERROR_CODE_SOLANA + subCode,
-        customMessage ?: (ERROR_CODE_SOLANA + subCode).toString()
+        code = ERROR_CODE_SOLANA + subCode,
+        customMessage = customMessage ?: (ERROR_CODE_SOLANA + subCode).toString(),
+        messageResId = null,
+        throwable = throwable,
     ) {
-        class Api(ex: Exception) : Solana(0, ex.localizedMessage ?: "Unknown api exception")
+        class Api(ex: Exception) : Solana(0, ex.localizedMessage ?: "Unknown api exception", ex)
         object FailedToCreateAssociatedTokenAddress : Solana(1, "Public key conversion failed")
         object SameSourceAndDestinationAddress : Solana(2, "Same source and destination address")
         object UnsupportedTokenDestinationAddress : Solana(3)
@@ -45,6 +56,6 @@ sealed class BlockchainSdkError(
     }
 }
 
-fun Exception.toBlockchainCustomError(): BlockchainSdkError {
-    return BlockchainSdkError.CustomError(this.message ?: this.toString())
+fun Exception.toBlockchainSdkError(): BlockchainSdkError {
+    return BlockchainSdkError.WrappedThrowable(this)
 }
