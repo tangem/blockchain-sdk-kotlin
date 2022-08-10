@@ -7,7 +7,7 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.toBlockchainCustomError
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
@@ -73,10 +73,10 @@ class BlockcypherNetworkProvider(
             return if (error.code() == 429 && token == null && !tokens.isNullOrEmpty()) {
                 getInfo(address, getToken())
             } else {
-                Result.Failure(error.toBlockchainCustomError())
+                Result.Failure(error.toBlockchainSdkError())
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -97,10 +97,10 @@ class BlockcypherNetworkProvider(
             return if (error.code() == 429 && token == null && !tokens.isNullOrEmpty()) {
                 getFee(getToken())
             } else {
-                Result.Failure(error.toBlockchainCustomError())
+                Result.Failure(error.toBlockchainSdkError())
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -116,7 +116,7 @@ class BlockcypherNetworkProvider(
             }
             SimpleResult.Success
         } catch (exception: Exception) {
-            SimpleResult.Failure(exception.toBlockchainCustomError())
+            SimpleResult.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -140,10 +140,10 @@ class BlockcypherNetworkProvider(
             return if (error.code() == 429 && token == null && !tokens.isNullOrEmpty()) {
                 getSignatureCount(address, getToken())
             } else {
-                Result.Failure(error.toBlockchainCustomError())
+                Result.Failure(error.toBlockchainSdkError())
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
