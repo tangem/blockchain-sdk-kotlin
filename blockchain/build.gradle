@@ -83,16 +83,7 @@ dependencies {
 
     implementation files('libs/ripple-core-0.0.1.jar')
     implementation files('libs/solanaj-0.0.10.jar')
-    implementation files('libs/polkadot/polkaj-api-base-0.3.0.jar')
-    implementation files('libs/polkadot/polkaj-api-http-0.3.0.jar')
-    implementation files('libs/polkadot/polkaj-api-ws-0.3.0.jar')
-    implementation files('libs/polkadot/polkaj-common-types-0.3.0.jar')
-    implementation files('libs/polkadot/polkaj-json-types-0.3.0.jar')
-    implementation files('libs/polkadot/polkaj-scale-0.3.0.jar')
-    implementation files('libs/polkadot/polkaj-scale-types-0.3.0.jar')
-    implementation files('libs/polkadot/polkaj-schnorrkel-0.3.0.jar')
-    implementation files('libs/polkadot/polkaj-ss58-0.3.0.jar')
-    implementation files('libs/polkadot/polkaj-tx-0.3.0.jar')
+    implementation files('libs/polkaj-root-0.1.0.jar')
 
     implementation 'net.i2p.crypto:eddsa:0.3.0'
 
