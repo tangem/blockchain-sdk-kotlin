@@ -150,7 +150,7 @@ open class BitcoinWalletManager(
                 }
             }
         } catch (exception: Exception) {
-            return Result.Failure(exception.toBlockchainCustomError())
+            return Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
