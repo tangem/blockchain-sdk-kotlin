@@ -5,7 +5,7 @@ import com.tangem.blockchain.blockchains.xrp.network.XrpInfoResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.toBlockchainCustomError
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
@@ -63,7 +63,7 @@ class RippledNetworkProvider(baseUrl: String) : XrpNetworkProvider {
 
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -76,7 +76,7 @@ class RippledNetworkProvider(baseUrl: String) : XrpNetworkProvider {
                     feeData.result!!.feeData!!.priorityFee!!.toBigDecimal().movePointLeft(decimals)
             ))
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -97,7 +97,7 @@ class RippledNetworkProvider(baseUrl: String) : XrpNetworkProvider {
                 }
             }
         } catch (exception: Exception) {
-            SimpleResult.Failure(exception.toBlockchainCustomError())
+            SimpleResult.Failure(exception.toBlockchainSdkError())
         }
     }
 
