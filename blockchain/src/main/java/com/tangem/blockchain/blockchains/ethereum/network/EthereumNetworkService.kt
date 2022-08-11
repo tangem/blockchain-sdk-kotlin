@@ -3,7 +3,7 @@ package com.tangem.blockchain.blockchains.ethereum.network
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.Token
-import com.tangem.blockchain.common.toBlockchainCustomError
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
@@ -74,7 +74,7 @@ class EthereumNetworkService(
                 )
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -85,7 +85,7 @@ class EthereumNetworkService(
                 .extractResult()
             SimpleResult.Success
         } catch (exception: Exception) {
-            SimpleResult.Failure(exception.toBlockchainCustomError())
+            SimpleResult.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -101,7 +101,7 @@ class EthereumNetworkService(
         return try {
             Result.Success(getTokensBalanceInternal(address, tokens))
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -144,7 +144,7 @@ class EthereumNetworkService(
                 Result.Success(gasPrice)
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
 
     }
@@ -160,7 +160,7 @@ class EthereumNetworkService(
                 Result.Success(gasLimit)
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -177,7 +177,7 @@ class EthereumNetworkService(
         when (this) {
             is Result.Success -> {
                 this.data.result
-                    ?: throw this.data.error?.toException()?.toBlockchainCustomError()
+                    ?: throw this.data.error?.toException()?.toBlockchainSdkError()
                         ?: BlockchainSdkError.CustomError("Unknown response format")
             }
             is Result.Failure -> {
