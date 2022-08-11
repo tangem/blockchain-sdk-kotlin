@@ -105,7 +105,7 @@ class EthereumWalletManager(
                 Result.Success(fees)
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
