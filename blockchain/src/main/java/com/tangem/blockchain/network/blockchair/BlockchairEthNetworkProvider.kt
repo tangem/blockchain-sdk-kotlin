@@ -81,7 +81,7 @@ class BlockchairEthNetworkProvider(
                 Result.Success(coinTransactions + tokenTransactions)
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -122,7 +122,7 @@ class BlockchairEthNetworkProvider(
                 ?: emptyList()
             Result.Success(tokens)
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
