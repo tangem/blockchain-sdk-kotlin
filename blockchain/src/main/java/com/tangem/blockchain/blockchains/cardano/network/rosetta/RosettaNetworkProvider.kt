@@ -9,7 +9,7 @@ import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaAc
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaAddressBody
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaNetworkIdentifier
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaSubmitBody
-import com.tangem.blockchain.common.toBlockchainCustomError
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
@@ -73,7 +73,7 @@ class RosettaNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
                 )
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -89,7 +89,7 @@ class RosettaNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
             )
             SimpleResult.Success
         } catch (exception: Exception) {
-            SimpleResult.Failure(exception.toBlockchainCustomError())
+            SimpleResult.Failure(exception.toBlockchainSdkError())
         }
     }
 
