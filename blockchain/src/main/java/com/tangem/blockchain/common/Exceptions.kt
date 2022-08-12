@@ -56,6 +56,8 @@ sealed class BlockchainSdkError(
     }
 }
 
-fun Exception.toBlockchainSdkError(): BlockchainSdkError {
-    return BlockchainSdkError.WrappedThrowable(this)
+fun Exception.toBlockchainSdkError(): BlockchainSdkError = if (this is BlockchainSdkError.WrappedThrowable) {
+    this
+} else {
+    BlockchainSdkError.WrappedThrowable(this)
 }
