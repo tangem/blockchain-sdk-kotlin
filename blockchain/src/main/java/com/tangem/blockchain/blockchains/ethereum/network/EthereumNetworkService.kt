@@ -136,10 +136,16 @@ class EthereumNetworkService(
     override suspend fun getGasPrice(): Result<BigInteger> {
         return try {
             coroutineScope {
-                val gasPrice = multiJsonRpcProvider.providers
-                    .map { async { it.getGasPrice() } }
-                    .map { it.await() }
-                    .maxOf { it.extractResult().responseToBigInteger() }
+                val gasPriceResponses = multiJsonRpcProvider.providers.map {
+                    async { it.getGasPrice() }
+                }.map { it.await() }
+
+                val gasPrice = gasPriceResponses.filter { it is Result.Success }
+                        .map { it.extractResult().responseToBigInteger() }.maxOrNull()
+                // all responses have failed
+                        ?: return@coroutineScope Result.Failure(
+                            (gasPriceResponses.first() as Result.Failure).error
+                        )
 
                 Result.Success(gasPrice)
             }
@@ -152,11 +158,10 @@ class EthereumNetworkService(
     override suspend fun getGasLimit(to: String, from: String, data: String?): Result<BigInteger> {
         return try {
             coroutineScope {
-                val gasLimit = multiJsonRpcProvider.providers
-                    .map { async { it.getGasLimit(EthCallObject(to, from, data)) } }
-                    .map { it.await() }
-                    .maxOf { it.extractResult().responseToBigInteger() }
-
+                val gasLimit = multiJsonRpcProvider.performRequest(
+                    EthereumJsonRpcProvider::getGasLimit,
+                    EthCallObject(to, from, data)
+                ).extractResult().responseToBigInteger()
                 Result.Success(gasLimit)
             }
         } catch (exception: Exception) {
