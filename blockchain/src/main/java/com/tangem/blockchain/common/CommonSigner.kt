@@ -17,6 +17,7 @@ open class CommonSigner(
             tangemSdk.sign(
                 hashes = hashes.toTypedArray(),
                 walletPublicKey = publicKey.seedKey,
+                derivationPath = publicKey.derivationPath,
                 cardId = cardId,
                 initialMessage = initialMessage,
             ) { result ->
@@ -32,6 +33,7 @@ open class CommonSigner(
             tangemSdk.sign(
                 hash = hash,
                 walletPublicKey = publicKey.seedKey,
+                derivationPath = publicKey.derivationPath,
                 cardId = cardId,
                 initialMessage = initialMessage,
             ) { result ->
