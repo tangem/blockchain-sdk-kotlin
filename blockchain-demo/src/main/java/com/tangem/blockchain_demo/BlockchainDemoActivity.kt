@@ -64,12 +64,12 @@ class BlockchainDemoActivity : AppCompatActivity() {
     }
 
     private fun getTestedBlockchains(): List<Blockchain> {
-        return listOf(
-            Blockchain.Gnosis,
-            Blockchain.Arbitrum,
-            Blockchain.Fantom,
-        )
-//        return Blockchain.valuesWithoutUnknown()
+//        return listOf(
+//            Blockchain.Gnosis,
+//            Blockchain.Arbitrum,
+//            Blockchain.Fantom,
+//        )
+        return Blockchain.valuesWithoutUnknown()
     }
 
     private fun initBinding() {
