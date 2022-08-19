@@ -3,6 +3,7 @@ package com.tangem.blockchain_demo.model
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain_demo.extensions.derivationStyle
+import com.tangem.blockchain_demo.extensions.getTangemNoteBlockchain
 import com.tangem.common.card.Card
 import com.tangem.common.card.WalletData
 import com.tangem.common.extensions.ByteArrayKey
@@ -18,8 +19,22 @@ data class ScanResponse(
     val walletData: WalletData?,
     val secondTwinPublicKey: String? = null,
     val derivedKeys: Map<KeyWalletPublicKey, ExtendedPublicKeysMap> = mapOf(),
-    val primaryCard: PrimaryCard? = null
-) : CommandResponse
+    val primaryCard: PrimaryCard? = null,
+    val productType: ProductType = ProductType.Wallet
+) : CommandResponse {
+
+    fun getBlockchain(): Blockchain {
+        if (productType == ProductType.Note) return card.getTangemNoteBlockchain()
+                ?: return Blockchain.Unknown
+        val blockchainName: String = walletData?.blockchain ?: return Blockchain.Unknown
+        return Blockchain.fromId(blockchainName)
+    }
+
+}
+
+enum class ProductType {
+    Note, Twins, Wallet
+}
 
 typealias KeyWalletPublicKey = ByteArrayKey
 
