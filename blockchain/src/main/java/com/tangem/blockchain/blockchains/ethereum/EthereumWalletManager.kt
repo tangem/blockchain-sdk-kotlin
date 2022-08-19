@@ -165,8 +165,8 @@ class EthereumWalletManager(
 
     private fun calculateFees(gasPrice: BigInteger, gasLimit: BigInteger): List<BigDecimal> {
         val minFee = gasPrice * gasLimit
-        val normalFee = minFee * BigInteger.valueOf(12) / BigInteger.TEN
-        val priorityFee = minFee * BigInteger.valueOf(15) / BigInteger.TEN
+        val normalFee = gasPrice * BigInteger.valueOf(12) / BigInteger.TEN * gasLimit
+        val priorityFee = gasPrice * BigInteger.valueOf(15) / BigInteger.TEN * gasLimit
 
         val decimals = Blockchain.Ethereum.decimals()
         return listOf(minFee, normalFee, priorityFee)
