@@ -50,7 +50,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
     private var token: Token? = null
 
     private lateinit var selectedWallet: CardWallet
-    private var selectedBlockchain = Blockchain.Arbitrum
+    private var selectedBlockchain = getTestedBlockchains()[0]
     private var selectedFee = BigDecimal.ZERO
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,7 +64,12 @@ class BlockchainDemoActivity : AppCompatActivity() {
     }
 
     private fun getTestedBlockchains(): List<Blockchain> {
-        return Blockchain.valuesWithoutUnknown()
+        return listOf(
+            Blockchain.Gnosis,
+            Blockchain.Arbitrum,
+            Blockchain.Fantom,
+        )
+//        return Blockchain.valuesWithoutUnknown()
     }
 
     private fun initBinding() {
@@ -86,7 +91,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
     }
 
     private fun setupViews() = with(binding) {
-        containerRecipientAddressFee.tilEtRecipientAddress.setText("0x5778C4068E0a64240D7620acE16115Ec37f16cA7")
+        containerRecipientAddressFee.tilEtRecipientAddress.setText("0x98AD765C2ED9aCC40177624c37932e10dA81cf1C")
     }
 
     private fun setupVisibility() = with(binding) {
@@ -106,7 +111,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
             when (result) {
                 is CompletionResult.Success -> {
                     scanResponse = result.data
-                    initWalletsBlockchainContainer(scanResponse.card.wallets)
+                    initWalletsBlockchainContainer()
                 }
                 is CompletionResult.Failure -> {
                     when (result.error) {
@@ -118,7 +123,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
         }
     }
 
-    private fun initWalletsBlockchainContainer(wallets: List<CardWallet>) = with(binding) {
+    private fun initWalletsBlockchainContainer() = with(binding) {
 
         fun initSpBlockchain(wallet: CardWallet) = with(containerSelectWalletWithBlockchain) {
             val supportedBlockchains = getTestedBlockchains()
@@ -154,6 +159,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
             containerScanCard.root.hide()
             containerSelectWalletWithBlockchain.root.show()
 
+            val wallets = scanResponse.card.wallets
             with(containerSelectWalletWithBlockchain) {
                 val walletsAdapter = ArrayAdapter(
                     this@BlockchainDemoActivity,
@@ -177,11 +183,12 @@ class BlockchainDemoActivity : AppCompatActivity() {
     }
 
     private fun loadWallet(onSuccess: () -> Unit, onFailure: (BlockchainSdkError) -> Unit) = with(binding) {
-        walletManager = WalletManagerFactory().makeWalletManager(
-            Blockchain.fromId(selectedBlockchain.id),
-            selectedWallet.publicKey,
-            selectedWallet.curve
+        walletManager = WalletManagerFactory().makeWalletManagerForApp(
+            scanResponse = scanResponse,
+            blockchain = Blockchain.fromId(selectedBlockchain.id),
+            derivationParams = scanResponse.card.derivationParams(null)
         )!!
+        containerSelectWalletWithBlockchain.tvBlockchainAddress.text = walletManager.wallet.address
 
         scope.launch {
             try {
