@@ -101,7 +101,3 @@ class ScanCardAndDerive(
         return blockchains.distinct()
     }
 }
-
-
-
-
