@@ -386,6 +386,13 @@ enum class Blockchain(
 
     fun isEvm(): Boolean = getChainId() != null
 
+    fun isFeeApproximate(amountType: AmountType): Boolean = when (this) {
+        Tron, TronTestnet -> amountType is AmountType.Token
+        Arbitrum, ArbitrumTestnet -> true
+        Fantom, FantomTestnet -> amountType is AmountType.Token
+        else -> false
+    }
+
     companion object {
         private val values = values()
 
