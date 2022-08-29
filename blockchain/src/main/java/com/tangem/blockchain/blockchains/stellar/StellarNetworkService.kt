@@ -42,7 +42,7 @@ class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
                 SimpleResult.Failure(BlockchainSdkError.CustomError(trResult))
             }
         } catch (exception: Exception) {
-            SimpleResult.Failure(exception.toBlockchainCustomError())
+            SimpleResult.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -69,10 +69,10 @@ class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
             if (errorResponse.code == 404) {
                 Result.Success(StellarTargetAccountResponse(accountCreated = false))
             } else {
-                Result.Failure(errorResponse.toBlockchainCustomError())
+                Result.Failure(errorResponse.toBlockchainSdkError())
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -128,7 +128,7 @@ class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
             if (exception is ErrorResponse && exception.code == 404) {
                 Result.Failure(BlockchainSdkError.AccountNotFound)
             } else {
-                Result.Failure(exception.toBlockchainCustomError())
+                Result.Failure(exception.toBlockchainSdkError())
             }
         }
     }
@@ -153,7 +153,7 @@ class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
                 Result.Success(operations.filter { it.sourceAccount == accountId }.size)
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 

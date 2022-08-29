@@ -51,26 +51,29 @@ class EthereumTransactionBuilder(
 
 class TransactionToSign(val transaction: Transaction, val hash: ByteArray)
 
-enum class Chain(val id: Int) {
-    Mainnet(1),
-    Morden(2),
-    Ropsten(3),
-    Rinkeby(4),
-    RskMainnet(30),
-    RskTestnet(31),
-    Kovan(42),
-    BscMainnet(56),
-    EthereumClassicMainnet(61),
-    EthereumClassicTestnet(6),
-    BscTestnet(97),
-    Gnosis(100),
-    Geth_private_chains(1337),
-    Avalanche(43114),
-    AvalancheTestnet(43113),
-    Arbitrum(42161),
-    ArbitrumTestnet(421611),
-    Polygon(137),
-    PolygonTestnet(80001),
-    Fantom(250),
-    FantomTestnet(4002);
+enum class Chain(
+    val id: Int,
+    val blockchain: Blockchain?,
+) {
+    Mainnet(1, Blockchain.Ethereum),
+    Rinkeby(4, Blockchain.EthereumTestnet),
+    Morden(2,  null),
+    Ropsten(3, null),
+    Kovan(42, null),
+    RskMainnet(30, Blockchain.RSK),
+    RskTestnet(31, null),
+    BscMainnet(56, Blockchain.BSC),
+    BscTestnet(97, Blockchain.BSCTestnet),
+    EthereumClassicMainnet(61, Blockchain.EthereumClassic),
+    EthereumClassicTestnet(6, Blockchain.EthereumClassicTestnet),
+    Gnosis(100, Blockchain.Gnosis),
+    Geth_private_chains(1337, null),
+    Avalanche(43114, Blockchain.Avalanche),
+    AvalancheTestnet(43113, Blockchain.AvalancheTestnet),
+    Arbitrum(42161, Blockchain.Arbitrum),
+    ArbitrumTestnet(421611, Blockchain.ArbitrumTestnet),
+    Polygon(137, Blockchain.Polygon),
+    PolygonTestnet(80001, Blockchain.PolygonTestnet),
+    Fantom(250, Blockchain.Fantom),
+    FantomTestnet(4002, Blockchain.FantomTestnet);
 }
