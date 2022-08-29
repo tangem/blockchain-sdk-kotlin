@@ -65,14 +65,28 @@ inline fun SimpleResult.successOr(failureClause: (SimpleResult.Failure) -> Nothi
 fun Result<*>.isNetworkError(): Boolean {
     return when (this) {
         is Result.Success -> false
-        is Result.Failure -> this.error is IOException || this.error is HttpException
+        is Result.Failure -> {
+            when (this.error) {
+                is BlockchainSdkError.WrappedThrowable -> {
+                    this.error.throwable is IOException || this.error.throwable is HttpException
+                }
+                else -> false
+            }
+        }
     }
 }
 
 fun SimpleResult.isNetworkError(): Boolean {
     return when (this) {
         is SimpleResult.Success -> false
-        is SimpleResult.Failure -> this.error is IOException || this.error is HttpException
+        is SimpleResult.Failure -> {
+            when (this.error) {
+                is BlockchainSdkError.WrappedThrowable -> {
+                    this.error.throwable is IOException || this.error.throwable is HttpException
+                }
+                else -> false
+            }
+        }
     }
 }
 

@@ -6,6 +6,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.blockchair.BlockchairToken
 import java.math.BigDecimal
+import java.math.BigInteger
 
 interface EthereumNetworkProvider {
     val host: String
@@ -13,8 +14,8 @@ interface EthereumNetworkProvider {
     suspend fun sendTransaction(transaction: String): SimpleResult
     suspend fun getSignatureCount(address: String): Result<Int>
     suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>>
-    suspend fun getGasPrice(): Result<Long>
-    suspend fun getGasLimit(to: String, from: String, data: String?): Result<Long>
+    suspend fun getGasPrice(): Result<BigInteger>
+    suspend fun getGasLimit(to: String, from: String, data: String?): Result<BigInteger>
     suspend fun getTokensBalance(
         address: String,
         tokens: Set<Token>
