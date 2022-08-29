@@ -12,6 +12,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.kethereum.keccakshortcut.keccak
 import java.math.BigDecimal
+import java.math.BigInteger
+import java.math.MathContext
 import java.math.RoundingMode
 
 class EthereumWalletManager(
@@ -103,7 +105,7 @@ class EthereumWalletManager(
                 Result.Success(fees)
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -138,38 +140,41 @@ class EthereumWalletManager(
         }
     }
 
-    override suspend fun getGasPrice(): Result<Long> {
+    override suspend fun getGasPrice(): Result<BigInteger> {
         return networkProvider.getGasPrice()
     }
 
-    override suspend fun getGasLimit(amount: Amount, destination: String): Result<Long> {
+    override suspend fun getGasLimit(amount: Amount, destination: String): Result<BigInteger> {
         var to = destination
         val from = wallet.address
         var data: String? = null
 
         if (amount.type is AmountType.Token) {
             to = amount.type.token.contractAddress
-            data =
-                "0x" + EthereumUtils.createErc20TransferData(destination, amount).toHexString()
+            data = "0x" + EthereumUtils.createErc20TransferData(destination, amount).toHexString()
         }
 
-        return when (val result =  networkProvider.getGasLimit(to, from, data) ){
+        return when (val result = networkProvider.getGasLimit(to, from, data)) {
             is Result.Failure -> result
             is Result.Success -> {
-                transactionBuilder.gasLimit = result.data.toBigInteger()
+                transactionBuilder.gasLimit = result.data
                 result
             }
         }
     }
 
-    private fun calculateFees(gasPrice: Long, gasLimit: Long): List<BigDecimal> {
-        val minFee = gasPrice.toBigDecimal().multiply(gasLimit.toBigDecimal())
-        val normalFee = minFee.multiply(BigDecimal(1.2)).setScale(0, RoundingMode.HALF_UP)
-        val priorityFee = minFee.multiply(BigDecimal(1.5)).setScale(0, RoundingMode.HALF_UP)
-        return listOf(
-            minFee.movePointLeft(Blockchain.Ethereum.decimals()),
-            normalFee.movePointLeft(Blockchain.Ethereum.decimals()),
-            priorityFee.movePointLeft(Blockchain.Ethereum.decimals())
-        )
+    private fun calculateFees(gasPrice: BigInteger, gasLimit: BigInteger): List<BigDecimal> {
+        val minFee = gasPrice * gasLimit
+        val normalFee = gasPrice * BigInteger.valueOf(12) / BigInteger.TEN * gasLimit
+        val priorityFee = gasPrice * BigInteger.valueOf(15) / BigInteger.TEN * gasLimit
+
+        val decimals = Blockchain.Ethereum.decimals()
+        return listOf(minFee, normalFee, priorityFee)
+            .map {
+                it.toBigDecimal(
+                    scale = decimals,
+                    mathContext = MathContext(decimals, RoundingMode.HALF_EVEN)
+                )
+            }
     }
 }

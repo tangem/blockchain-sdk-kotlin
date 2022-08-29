@@ -32,7 +32,7 @@ class StellarTransactionBuilder(
         val memo = try {
             stellarMemo?.toStellarSdkMemo()
         } catch (exception: Exception) {
-            return Result.Failure(exception.toBlockchainCustomError())
+            return Result.Failure(exception.toBlockchainSdkError())
         }
 
         val amountType = transactionData.amount.type
