@@ -106,7 +106,7 @@ enum class Blockchain(
     ): Set<Address> {
         return if (pairPublicKey != null) {
             (getAddressService() as? MultisigAddressProvider)
-                ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()
+                    ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()
         } else {
             getAddressService().makeAddresses(walletPublicKey, curve)
         }
@@ -143,8 +143,7 @@ enum class Blockchain(
         else -> null
     }
 
-    fun getShareUri(address: String): String = getShareScheme()?.plus(":$address")
-        ?: address
+    fun getShareUri(address: String): String = getShareScheme()?.plus(":$address") ?: address
 
     fun validateShareScheme(scheme: String): Boolean {
         if (this == XRP && (scheme == "ripple" || scheme == "xrpl" || scheme == "xrp")) return true
@@ -279,8 +278,7 @@ enum class Blockchain(
             RSK,
             Dogecoin,
             Tron, TronTestnet,
-            Gnosis
-            -> listOf(EllipticCurve.Secp256k1)
+            Gnosis -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Cardano,
@@ -314,7 +312,7 @@ enum class Blockchain(
     fun derivationPath(style: DerivationStyle?): DerivationPath? {
         if (style == null) return null
         if (!getSupportedCurves().contains(EllipticCurve.Secp256k1) &&
-            !getSupportedCurves().contains(EllipticCurve.Ed25519)
+                !getSupportedCurves().contains(EllipticCurve.Ed25519)
         ) {
             return null
         }
@@ -408,79 +406,36 @@ enum class Blockchain(
 
     fun isEvm(): Boolean = getChainId() != null
 
+    fun isFeeApproximate(amountType: AmountType): Boolean = when (this) {
+        Tron, TronTestnet -> amountType is AmountType.Token
+        Arbitrum, ArbitrumTestnet -> true
+        Fantom, FantomTestnet -> amountType is AmountType.Token
+        else -> false
+    }
+
     companion object {
         private val values = values()
 
-        fun fromCurve(curve: EllipticCurve): List<Blockchain> = values
-            .filter { it.getSupportedCurves().isNotEmpty() && it.getSupportedCurves()[0] == curve }
-
         fun fromId(id: String): Blockchain = values.find { it.id == id } ?: Unknown
 
-        fun fromChainId(chainId: Int): Blockchain? {
-            return when (chainId) {
-                Chain.Avalanche.id -> Avalanche
-                Chain.AvalancheTestnet.id -> AvalancheTestnet
-                Chain.Arbitrum.id -> Arbitrum
-                Chain.ArbitrumTestnet.id -> ArbitrumTestnet
-                Chain.Mainnet.id -> Ethereum
-                Chain.Rinkeby.id -> EthereumTestnet
-                Chain.EthereumClassicMainnet.id -> EthereumClassic
-                Chain.EthereumClassicTestnet.id -> EthereumClassicTestnet
-                Chain.RskMainnet.id -> RSK
-                Chain.BscMainnet.id -> BSC
-                Chain.BscTestnet.id -> BSCTestnet
-                Chain.Polygon.id -> Polygon
-                Chain.PolygonTestnet.id -> PolygonTestnet
-                Chain.Fantom.id -> Fantom
-                Chain.FantomTestnet.id -> FantomTestnet
-                else -> null
-            }
-        }
+        fun fromChainId(chainId: Int): Blockchain? = Chain.values()
+                .find { it.id == chainId }?.blockchain
 
+        fun fromCurve(curve: EllipticCurve): List<Blockchain> = values
+                .filter { it.getSupportedCurves().contains(curve) }
 
-        fun secp256k1Blockchains(isTestnet: Boolean): List<Blockchain> {
-            return if (isTestnet) {
-                listOf(
-                    ArbitrumTestnet,
-                    AvalancheTestnet,
-                    BitcoinTestnet,
-                    BitcoinCashTestnet,
-                    BinanceTestnet,
-                    BSCTestnet,
-                    EthereumTestnet,
-                    EthereumClassicTestnet,
-                    PolygonTestnet,
-                    FantomTestnet,
-                    TronTestnet
-                )
-            } else {
-                listOf(
-                    Arbitrum,
-                    Avalanche,
-                    Bitcoin,
-                    BitcoinCash,
-                    Binance,
-                    BSC,
-                    Litecoin,
-                    XRP,
-                    Tezos,
-                    Ethereum,
-                    EthereumClassic,
-                    RSK,
-                    Polygon,
-                    Dogecoin,
-                    Fantom,
-                    Tron
-                )
-            }
-        }
+        fun secp256k1Blockchains(isTestnet: Boolean): List<Blockchain> = values
+                .filter { it.isTestnet() == isTestnet }
+                .filter { it.getSupportedCurves().contains(EllipticCurve.Secp256k1) }
 
-        fun ed25519OnlyBlockchains(isTestnet: Boolean): List<Blockchain> {
-            return if (isTestnet) {
-                listOf(StellarTestnet, SolanaTestnet)
-            } else {
-                listOf(CardanoShelley, Stellar, Solana)
-            }
-        }
+        fun secp256k1OnlyBlockchains(isTestnet: Boolean): List<Blockchain> = values
+                .filter { it.isTestnet() == isTestnet }
+                .filter { it.getSupportedCurves().size == 1 }
+                .filter { it.getSupportedCurves()[0] == EllipticCurve.Secp256k1 }
+
+        fun ed25519OnlyBlockchains(isTestnet: Boolean): List<Blockchain> = values
+                .filter { it.isTestnet() == isTestnet }
+                .filter { it.getSupportedCurves().size == 1 }
+                .filter { it.getSupportedCurves()[0] == EllipticCurve.Ed25519 }
     }
 }
