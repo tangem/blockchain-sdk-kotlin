@@ -3,7 +3,7 @@ package com.tangem.blockchain.blockchains.ethereum.network
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.Token
-import com.tangem.blockchain.common.toBlockchainCustomError
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
@@ -13,7 +13,7 @@ import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
-
+import java.math.BigInteger
 
 class EthereumNetworkService(
     jsonRpcProviders: List<EthereumJsonRpcProvider>,
@@ -74,7 +74,7 @@ class EthereumNetworkService(
                 )
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -85,7 +85,7 @@ class EthereumNetworkService(
                 .extractResult()
             SimpleResult.Success
         } catch (exception: Exception) {
-            SimpleResult.Failure(exception.toBlockchainCustomError())
+            SimpleResult.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -101,7 +101,7 @@ class EthereumNetworkService(
         return try {
             Result.Success(getTokensBalanceInternal(address, tokens))
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -133,7 +133,7 @@ class EthereumNetworkService(
             ?: Result.Failure(BlockchainSdkError.CustomError("Unsupported feature"))
     }
 
-    override suspend fun getGasPrice(): Result<Long> {
+    override suspend fun getGasPrice(): Result<BigInteger> {
         return try {
             coroutineScope {
                 val gasPriceResponses = multiJsonRpcProvider.providers.map {
@@ -141,37 +141,36 @@ class EthereumNetworkService(
                 }.map { it.await() }
 
                 val gasPrice = gasPriceResponses.filter { it is Result.Success }
-                    .map { it.extractResult().responseToLong() }.maxOrNull()
+                        .map { it.extractResult().responseToBigInteger() }.maxOrNull()
                 // all responses have failed
-                    ?: return@coroutineScope Result.Failure(
-                        (gasPriceResponses.first() as Result.Failure).error
-                    )
+                        ?: return@coroutineScope Result.Failure(
+                            (gasPriceResponses.first() as Result.Failure).error
+                        )
 
                 Result.Success(gasPrice)
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
 
     }
 
-    override suspend fun getGasLimit(to: String, from: String, data: String?): Result<Long> {
+    override suspend fun getGasLimit(to: String, from: String, data: String?): Result<BigInteger> {
         return try {
-            val gasLimit = multiJsonRpcProvider.performRequest(
-                EthereumJsonRpcProvider::getGasLimit,
-                EthCallObject(to, from, data)
-            ).extractResult().responseToLong()
-            Result.Success(gasLimit)
+            coroutineScope {
+                val gasLimit = multiJsonRpcProvider.performRequest(
+                    EthereumJsonRpcProvider::getGasLimit,
+                    EthCallObject(to, from, data)
+                ).extractResult().responseToBigInteger()
+                Result.Success(gasLimit)
+            }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainCustomError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
     private fun String.responseToBigInteger() =
         this.substring(2).ifBlank { "0" }.toBigInteger(16)
-
-
-    private fun String.responseToLong() = this.responseToBigInteger().toLong()
 
     private fun String.parseAmount(decimals: Int) =
         this.responseToBigInteger().toBigDecimal().movePointLeft(decimals)
@@ -183,7 +182,7 @@ class EthereumNetworkService(
         when (this) {
             is Result.Success -> {
                 this.data.result
-                    ?: throw this.data.error?.toException()?.toBlockchainCustomError()
+                    ?: throw this.data.error?.toException()?.toBlockchainSdkError()
                         ?: BlockchainSdkError.CustomError("Unknown response format")
             }
             is Result.Failure -> {
