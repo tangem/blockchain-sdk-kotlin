@@ -62,6 +62,8 @@ enum class Blockchain(
     TronTestnet("TRON/test", "TRX", "Tron Testnet"),
     XRP("XRP", "XRP", "XRP Ledger"),
     Gnosis("GNO", "xDAI", "Gnosis Chain"),
+    Dash("DASH","DASH","Dash"),
+    DashTestNet("DASH/test","DASH","Dash Testnet"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -69,6 +71,7 @@ enum class Blockchain(
         BitcoinCash, BitcoinCashTestnet,
         Binance, BinanceTestnet,
         Litecoin, Ducatus, Dogecoin,
+        Dash, DashTestNet
         -> 8
         Cardano, CardanoShelley,
         XRP, Tezos,
@@ -103,7 +106,7 @@ enum class Blockchain(
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
     private fun getAddressService(): AddressService = when (this) {
-        Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus -> BitcoinAddressService(this)
+        Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus, Dash, DashTestNet -> BitcoinAddressService(this)
         BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService()
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
@@ -185,6 +188,8 @@ enum class Blockchain(
         Tron -> "https://tronscan.org/#/address/$address"
         TronTestnet -> "https://nile.tronscan.org/#/address/$address"
         Gnosis -> "https://blockscout.com/xdai/mainnet/address/$address"
+        Dash -> "http://faucet.test.dash.crowdnode.io/$address"
+        DashTestNet -> "https://blockexplorer.one/dash/\\(network)/$address/\\($address)"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -239,6 +244,8 @@ enum class Blockchain(
             Tezos -> null
             Gnosis -> null
             Unknown -> null
+            Dash -> null
+            DashTestNet -> null
         }
     }
 
@@ -260,7 +267,7 @@ enum class Blockchain(
             RSK,
             Dogecoin,
             Tron, TronTestnet,
-            Gnosis -> listOf(EllipticCurve.Secp256k1)
+            Gnosis, Dash, DashTestNet -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Cardano,
@@ -286,6 +293,8 @@ enum class Blockchain(
             Polygon -> Chain.Polygon.id
             PolygonTestnet -> Chain.PolygonTestnet.id
             Gnosis -> Chain.Gnosis.id
+            Dash -> Chain.Dash.id
+            DashTestNet -> Chain.DashTestnet.id
             else -> null
         }
     }
@@ -345,7 +354,7 @@ enum class Blockchain(
         if (style == DerivationStyle.NEW && this.isEvm()) return ethCoinType
 
         return when (this) {
-            Bitcoin, Ducatus -> 0
+            Bitcoin, Ducatus, Dash -> 0
             Litecoin -> 2
             Dogecoin -> 3
             Ethereum -> ethCoinType
