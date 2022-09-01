@@ -466,6 +466,13 @@ class WalletManagerFactory(
                     presetToken = tokens
                 )
             }
+            Blockchain.Dash, Blockchain.DashTestNet -> {
+                BitcoinWalletManager(
+                    wallet,
+                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain, addresses),
+                    makeBitcoinNetworkService(blockchain)
+                )
+            }
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
         }
     }
