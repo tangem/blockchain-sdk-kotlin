@@ -234,6 +234,7 @@ enum class Blockchain(
             Stellar, StellarTestnet -> StellarTestnet
             Solana, SolanaTestnet -> SolanaTestnet
             Tron, TronTestnet -> TronTestnet
+            Dash, DashTestNet -> DashTestNet
             Litecoin -> null
             Dogecoin -> null
             Ducatus -> null
@@ -244,8 +245,6 @@ enum class Blockchain(
             Tezos -> null
             Gnosis -> null
             Unknown -> null
-            Dash -> null
-            DashTestNet -> null
         }
     }
 
@@ -293,8 +292,6 @@ enum class Blockchain(
             Polygon -> Chain.Polygon.id
             PolygonTestnet -> Chain.PolygonTestnet.id
             Gnosis -> Chain.Gnosis.id
-            Dash -> Chain.Dash.id
-            DashTestNet -> Chain.DashTestnet.id
             else -> null
         }
     }

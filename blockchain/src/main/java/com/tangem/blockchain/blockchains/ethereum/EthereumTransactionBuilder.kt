@@ -67,8 +67,6 @@ enum class Chain(
     EthereumClassicMainnet(61, Blockchain.EthereumClassic),
     EthereumClassicTestnet(6, Blockchain.EthereumClassicTestnet),
     Gnosis(100, Blockchain.Gnosis),
-    Dash(1111, Blockchain.Dash),
-    DashTestnet(2222, Blockchain.DashTestNet),
     Geth_private_chains(1337, null),
     Avalanche(43114, Blockchain.Avalanche),
     AvalancheTestnet(43113, Blockchain.AvalancheTestnet),
