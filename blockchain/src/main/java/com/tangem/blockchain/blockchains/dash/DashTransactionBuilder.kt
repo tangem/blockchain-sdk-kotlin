@@ -1,6 +1,7 @@
-package com.tangem.blockchain.blockchains.bitcoin
+package com.tangem.blockchain.blockchains.dash
 
-import com.tangem.blockchain.blockchains.dash.DashMainNetParams
+import com.tangem.blockchain.blockchains.bitcoin.BitcoinScriptAddress
+import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
@@ -22,7 +23,7 @@ import org.libdohj.params.LitecoinMainNetParams
 import java.math.BigDecimal
 import java.math.BigInteger
 
-open class BitcoinTransactionBuilder(
+open class DashTransactionBuilder(
     private val walletPublicKey: ByteArray, blockchain: Blockchain,
     walletAddresses: Set<com.tangem.blockchain.common.address.Address> = emptySet()
 ) {
@@ -37,7 +38,6 @@ open class BitcoinTransactionBuilder(
         Blockchain.Litecoin -> LitecoinMainNetParams()
         Blockchain.Dogecoin -> DogecoinMainNetParams()
         Blockchain.Ducatus -> DucatusMainNetParams()
-        Blockchain.Dash -> DashMainNetParams()
         else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
     var unspentOutputs: List<BitcoinUnspentOutput>? = null
