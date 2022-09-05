@@ -14,10 +14,11 @@ import org.spongycastle.util.encoders.Hex;
 
 import java.net.URI;
 
+
 public class DashMainNetParams  extends AbstractBitcoinNetParams {
-    public static final int MAINNET_MAJORITY_WINDOW = 1000;
-    public static final int MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED = 950;
-    public static final int MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 750;
+    public static final int MAINNET_MAJORITY_WINDOW = MainNetParams.MAINNET_MAJORITY_WINDOW;
+    public static final int MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED = MainNetParams.MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED;
+    public static final int MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = MainNetParams.MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
 
     public DashMainNetParams() {
         super();
@@ -28,10 +29,10 @@ public class DashMainNetParams  extends AbstractBitcoinNetParams {
         addressHeader = 0;
         p2shHeader = 5;
         segwitAddressHrp = "bc";
-        port = 8333;
-        packetMagic = 0xf9beb4d9L;
-        bip32HeaderP2PKHpub = 0x0488b21e; // The 4 byte header that serializes in base58 to "xpub".
-        bip32HeaderP2PKHpriv = 0x0488ade4; // The 4 byte header that serializes in base58 to "xprv"
+        port = 9999;
+        packetMagic = 0xbf0c6bbd;
+        bip32HeaderP2PKHpub = 0x4c; // The 4 byte header that serializes in base58 to "xpub".
+        bip32HeaderP2PKHpriv = 0x80; // The 4 byte header that serializes in base58 to "xprv"
         bip32HeaderP2WPKHpub = 0x04b24746; // The 4 byte header that serializes in base58 to "zpub".
         bip32HeaderP2WPKHpriv = 0x04b2430c; // The 4 byte header that serializes in base58 to "zprv"
 
@@ -60,14 +61,9 @@ public class DashMainNetParams  extends AbstractBitcoinNetParams {
         checkpoints.put(200000, Sha256Hash.wrap("000000000000034a7dedef4a161fa058a2d67a173a90155f3a2fe6fc132e0ebf"));
 
         dnsSeeds = new String[] {
-                "seed.bitcoin.sipa.be",         // Pieter Wuille
-                "dnsseed.bluematt.me",          // Matt Corallo
-                "dnsseed.bitcoin.dashjr.org",   // Luke Dashjr
-                "seed.bitcoinstats.com",        // Chris Decker
-                "seed.bitcoin.jonasschnelli.ch",// Jonas Schnelli
-                "seed.btc.petertodd.org",       // Peter Todd
-                "seed.bitcoin.sprovoost.nl",    // Sjors Provoost
-                "dnsseed.emzy.de",              // Stephan Oeste
+                "x5.dnsseed.dash.org",
+                "x5.dnsseed.dashdot.io",
+                "dnsseed.masternode.io",
         };
         httpSeeds = new HttpDiscovery.Details[] {
                 // Andreas Schildbach
@@ -123,16 +119,18 @@ public class DashMainNetParams  extends AbstractBitcoinNetParams {
         };
     }
 
-    private static MainNetParams instance;
-    public static synchronized MainNetParams get() {
-        if (instance == null) {
-            instance = new MainNetParams();
-        }
-        return instance;
-    }
-
     @Override
     public String getPaymentProtocolId() {
         return PAYMENT_PROTOCOL_ID_MAINNET;
+    }
+
+
+    private static DashMainNetParams instance;
+
+    public static synchronized DashMainNetParams get() {
+        if (instance == null) {
+            instance = new DashMainNetParams();
+        }
+        return instance;
     }
 }
