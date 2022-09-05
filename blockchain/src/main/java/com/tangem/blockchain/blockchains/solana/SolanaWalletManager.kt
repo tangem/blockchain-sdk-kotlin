@@ -39,7 +39,6 @@ class SolanaWalletManager(
 
     override suspend fun update() {
         val accountInfo = networkService.getMainAccountInfo(accountPubK).successOr {
-            cardTokens
             wallet.removeAllTokens()
             throw (it.error as BlockchainSdkError)
         }
