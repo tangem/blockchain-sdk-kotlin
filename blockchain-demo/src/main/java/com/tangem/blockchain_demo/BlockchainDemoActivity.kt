@@ -91,7 +91,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
     }
 
     private fun setupViews() = with(binding) {
-        containerRecipientAddressFee.tilEtRecipientAddress.setText("0x98AD765C2ED9aCC40177624c37932e10dA81cf1C")
+        containerRecipientAddressFee.tilEtRecipientAddress.setText("")
     }
 
     private fun setupVisibility() = with(binding) {
