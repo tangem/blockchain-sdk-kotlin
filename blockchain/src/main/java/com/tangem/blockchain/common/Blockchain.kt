@@ -20,7 +20,6 @@ import com.tangem.common.card.EllipticCurve
 import com.tangem.common.hdWallet.DerivationNode
 import com.tangem.common.hdWallet.DerivationPath
 import com.tangem.common.hdWallet.bip.BIP44
-import io.emeraldpay.polkaj.ss58.SS58Type
 
 
 enum class Blockchain(
@@ -126,8 +125,7 @@ enum class Blockchain(
         XRP -> XrpAddressService()
         Binance -> BinanceAddressService()
         BinanceTestnet -> BinanceAddressService(true)
-        Polkadot -> PolkadotAddressService(SS58Type.Network.LIVE)
-        PolkadotTestnet -> PolkadotAddressService(SS58Type.Network.SUBSTRATE) // Westend
+        Polkadot, PolkadotTestnet -> PolkadotAddressService(this)
         Stellar, StellarTestnet -> StellarAddressService()
         Solana, SolanaTestnet -> SolanaAddressService()
         Tezos -> TezosAddressService()
@@ -283,7 +281,7 @@ enum class Blockchain(
             Solana, SolanaTestnet,
             Cardano,
             CardanoShelley,
-            Polkadot, PolkadotTestnet-> listOf(EllipticCurve.Ed25519)
+            Polkadot, PolkadotTestnet -> listOf(EllipticCurve.Ed25519)
         }
     }
 

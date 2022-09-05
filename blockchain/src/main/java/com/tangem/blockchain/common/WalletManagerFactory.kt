@@ -25,6 +25,8 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvide
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.blockchains.litecoin.LitecoinNetworkService
 import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
+import com.tangem.blockchain.blockchains.polkadot.PolkadotNetworkService
+import com.tangem.blockchain.blockchains.polkadot.PolkadotWalletManager
 import com.tangem.blockchain.blockchains.solana.SolanaWalletManager
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
 import com.tangem.blockchain.blockchains.stellar.StellarNetworkService
@@ -348,6 +350,14 @@ class WalletManagerFactory(
                     EthereumTransactionBuilder(publicKey.blockchainKey, blockchain),
                     EthereumNetworkService(listOf(jsonRpcProvider)),
                     tokens
+                )
+            }
+            Blockchain.Polkadot, Blockchain.PolkadotTestnet -> {
+                val network = PolkadotNetworkService.network(blockchain)
+                PolkadotWalletManager(
+                    wallet,
+                    network,
+                    PolkadotNetworkService(network),
                 )
             }
             Blockchain.Polygon, Blockchain.PolygonTestnet -> {
