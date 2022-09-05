@@ -1,118 +1,130 @@
 package com.tangem.blockchain.blockchains.polkadot
 
-import android.util.Log
-import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
+import com.tangem.blockchain.blockchains.polkadot.polkaj.extentions.*
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.BlockchainSdkError.*
+import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.extensions.filterWith
 import com.tangem.blockchain.extensions.successOr
-import org.p2p.solanaj.core.PublicKey
-import org.p2p.solanaj.programs.Program
-import org.p2p.solanaj.rpc.types.config.Commitment
+import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.toHexString
+import io.emeraldpay.polkaj.ss58.SS58Type
+import io.emeraldpay.polkaj.tx.ExtrinsicContext
+import io.emeraldpay.polkaj.types.Address
+import io.emeraldpay.polkaj.types.DotAmount
 import java.math.BigDecimal
+import java.util.*
 
 /**
 [REDACTED_AUTHOR]
  */
 class PolkadotWalletManager(
     wallet: Wallet,
-    jsonRpcProvider: RpcClient
+    val network: SS58Type.Network,
+    private val networkService: PolkadotNetworkService
 ) : WalletManager(wallet), TransactionSender {
 
-    override val currentHost: String = jsonRpcProvider.endpoint
+    private lateinit var currentContext: ExtrinsicContext
 
-    private val networkService = PolkadotNetworkService(jsonRpcProvider)
+    private val accountAddress = Address(network, wallet.publicKey.blockchainKey)
+    private val txBuilder = PolkadotTransactionBuilder(network)
 
-    private val feeRentHolder = mutableMapOf<Amount, BigDecimal>()
+    override val currentHost: String = network.url
+
+    override val dustValue: BigDecimal? = network.existentialDeposit
 
     override suspend fun update() {
-        val accountInfo = networkService.getMainAccountInfo(accountPubK).successOr {
-            cardTokens
+        val dotAmount: DotAmount = networkService.getBalance(accountAddress).successOr {
             wallet.removeAllTokens()
-            throw Exception(it.error)
+            throw (it.error as BlockchainSdkError)
         }
-        wallet.setCoinValue(accountInfo.balance.toSOL())
+
+        wallet.setCoinValue(dotAmount.toBigDecimal(network))
         updateRecentTransactions()
-        addToRecentTransactions(accountInfo.txsInProgress)
-
-        cardTokens.forEach { cardToken ->
-            val tokenBalance = accountInfo.tokensByMint[cardToken.contractAddress]?.uiAmount ?: BigDecimal.ZERO
-            wallet.addTokenValue(tokenBalance, cardToken)
-        }
     }
 
-    private suspend fun updateRecentTransactions() {
-//        val txSignatures = wallet.recentTransactions.mapNotNull { it.hash }
-//        val signatureStatuses = networkService.getSignatureStatuses(txSignatures).successOr {
-//            Log.e(this.javaClass.simpleName, it.error.localizedMessage ?: "Unknown error")
-//            return
-//        }
-//
-//        val confirmedTxData = mutableListOf<TransactionData>()
-//        val signaturesStatuses = txSignatures.zip(signatureStatuses.value)
-//        signaturesStatuses.forEach { pair ->
-//            if (pair.second?.confirmationStatus == Commitment.FINALIZED.value) {
-//                val foundRecentTxData = wallet.recentTransactions.firstOrNull { it.hash == pair.first }
-//                foundRecentTxData?.let {
-//                    confirmedTxData.add(it.copy(status = TransactionStatus.Confirmed))
-//                }
-//            }
-//        }
-//        updateRecentTransactions(confirmedTxData)
+    private fun updateRecentTransactions() {
+        val currentTimeInMillis = Calendar.getInstance().timeInMillis
+        val confirmedTxData = wallet.recentTransactions
+                .filter { it.hash != null && it.date != null }
+                .filter {
+                    val txTimeInMillis = it.date?.timeInMillis ?: currentTimeInMillis
+                    currentTimeInMillis - txTimeInMillis > 9999
+                }.map {
+                    it.copy(status = TransactionStatus.Confirmed)
+                }
+
+        updateRecentTransactions(confirmedTxData)
     }
 
-    private fun addToRecentTransactions(txsInProgress: List<TransactionInfo>) {
-//        if (txsInProgress.isEmpty()) return
-//
-//        val newTxsInProgress = txsInProgress.filterWith(wallet.recentTransactions) { a, b -> a.signature != b.hash }
-//        val newUnconfirmedTxData = newTxsInProgress.mapNotNull {
-//            if (it.instructions.isNotEmpty() && it.instructions[0].programId == Program.Id.system.toBase58()) {
-//                val info = it.instructions[0].parsed.info
-//                val amount = Amount(info.lamports.toSOL(), wallet.blockchain)
-//                val fee = Amount(it.fee.toSOL(), wallet.blockchain)
-//                TransactionData(amount, fee, info.source, info.destination, null,
-//                    TransactionStatus.Unconfirmed, hash = it.signature)
-//            } else {
-//                null
-//            }
-//        }
-//        wallet.recentTransactions.addAll(newUnconfirmedTxData)
+    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+        currentContext = networkService.extrinsicContext(accountAddress)
+
+        val signedTransaction = sign(
+            amount = amount,
+            sourceAddress = accountAddress,
+            destinationAddress = Address.from(destination),
+            context = currentContext,
+            signer = DummyPolkadotTransactionSigner()
+        ).successOr { return it }
+
+        val feeDot = networkService.getFee(signedTransaction).successOr { return it }
+        val feeAmount = amount.copy(value = feeDot.toBigDecimal(network))
+
+        return Result.Success(listOf(feeAmount))
     }
 
     override fun createTransaction(amount: Amount, fee: Amount, destination: String): TransactionData {
-        val accountCreationRent = feeRentHolder[fee]
-
-        return if (accountCreationRent == null) {
-            super.createTransaction(amount, fee, destination)
-        } else {
-            when (amount.type) {
-                AmountType.Coin -> {
-                    val newFee = fee.minus(accountCreationRent)
-                    val newAmount = amount.plus(accountCreationRent)
-                    super.createTransaction(newAmount, newFee, destination)
-                }
-                is AmountType.Token -> throw UnsupportedOperation()
-                AmountType.Reserve -> throw UnsupportedOperation()
-            }
+        return when (amount.type) {
+            AmountType.Coin -> super.createTransaction(amount, fee, destination)
+            else -> throw UnsupportedOperation()
         }
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         return when (transactionData.amount.type) {
             AmountType.Coin -> sendCoin(transactionData, signer)
-            is AmountType.Token -> throw UnsupportedOperation()
-            AmountType.Reserve -> SimpleResult.Failure(UnsupportedOperation())
+            else -> SimpleResult.Failure(UnsupportedOperation())
         }
     }
 
     private suspend fun sendCoin(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+        val signedTransaction = sign(
+            amount = transactionData.amount,
+            sourceAddress = accountAddress,
+            destinationAddress = Address.from(transactionData.destinationAddress),
+            context = currentContext,
+            signer = signer
+        ).successOr { return SimpleResult.Failure(it.error) }
+
+        val hash256 = networkService.sendTransaction(signedTransaction).successOr {
+            return SimpleResult.Failure(it.error)
+        }
+
+        transactionData.hash = hash256.bytes.toHexString()
+        transactionData.date = Calendar.getInstance()
+        wallet.addOutgoingTransaction(transactionData)
+
         return SimpleResult.Success
     }
 
+    private suspend fun sign(
+        amount: Amount,
+        sourceAddress: Address,
+        destinationAddress: Address,
+        context: ExtrinsicContext,
+        signer: TransactionSigner,
+    ): Result<ByteArray> {
+        val builtTxForSign = txBuilder.buildForSign(destinationAddress, amount, context)
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+        val signResult = signer.sign(builtTxForSign, wallet.publicKey)
+        return when (signResult) {
+            is CompletionResult.Success -> {
+                val signature = signResult.data
+                val builtForSend = txBuilder.buildForSend(sourceAddress, destinationAddress, amount, context, signature)
+                Result.Success(builtForSend)
+            }
+            is CompletionResult.Failure -> Result.fromTangemSdkError(signResult.error)
+        }
     }
-
 }
