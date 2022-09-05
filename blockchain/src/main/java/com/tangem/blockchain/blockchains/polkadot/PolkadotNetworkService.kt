@@ -1,21 +1,28 @@
 package com.tangem.blockchain.blockchains.polkadot
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.tangem.blockchain.blockchains.polkadot.polkaj.setSignedSignature
+import com.tangem.blockchain.blockchains.polkadot.polkaj.extentions.amountUnits
+import com.tangem.blockchain.blockchains.polkadot.polkaj.extentions.url
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
 import io.emeraldpay.polkaj.api.PolkadotApi
 import io.emeraldpay.polkaj.api.RpcCallAdapter
 import io.emeraldpay.polkaj.api.RpcCoder
 import io.emeraldpay.polkaj.api.StandardCommands
-import io.emeraldpay.polkaj.apihttp.RetrofitAdapter
+import io.emeraldpay.polkaj.apihttp.JavaRetrofitAdapter
 import io.emeraldpay.polkaj.json.jackson.PolkadotModule
+import io.emeraldpay.polkaj.scale.ScaleCodecReader
 import io.emeraldpay.polkaj.scaletypes.AccountInfo
+import io.emeraldpay.polkaj.scaletypes.Metadata
+import io.emeraldpay.polkaj.scaletypes.MetadataReader
+import io.emeraldpay.polkaj.ss58.SS58Type
 import io.emeraldpay.polkaj.tx.AccountRequests
+import io.emeraldpay.polkaj.tx.ExtrinsicContext
 import io.emeraldpay.polkaj.types.Address
+import io.emeraldpay.polkaj.types.ByteData
 import io.emeraldpay.polkaj.types.DotAmount
-import io.emeraldpay.polkaj.types.DotAmountFormatter
 import io.emeraldpay.polkaj.types.Hash256
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -24,57 +31,55 @@ import kotlinx.coroutines.withContext
 [REDACTED_AUTHOR]
  */
 class PolkadotNetworkService(
-    private val rpcCallAdapter: RpcCallAdapter
+    private val network: SS58Type.Network,
 ) {
-    private val client: PolkadotApi = PolkadotApi.Builder().rpcCallAdapter(rpcCallAdapter).build()
+
+    private val polkadotApi: PolkadotApi = PolkadotApi.Builder().rpcCallAdapter(rpcCallAdapter(network.url)).build()
     private val commands = StandardCommands.getInstance()
 
-    suspend fun getBalance(address: Address): Result<DotAmount> {
-        val formatter = DotAmountFormatter.autoFormatter()
-        val total = AccountRequests.totalIssuance().execute(client).get()
-        val balance = AccountRequests.balanceOf(address).execute(client).get()
-        return Result.Success(balance.data.free)
+    suspend fun getBalance(address: Address): Result<DotAmount> = withContext(Dispatchers.IO) {
+        val accountInfo = getAccountInfo(address).successOr { return@withContext it }
+        val dotAmount = accountInfo?.data?.free ?: DotAmount.from(0, network.amountUnits)
+        Result.Success(dotAmount)
     }
 
-    suspend fun accountInfo(address: Address): Result<Any> = withContext(Dispatchers.IO) {
-        val info = AccountRequests.balanceOf(address).execute(client).get()
+    suspend fun getAccountInfo(address: Address): Result.Success<AccountInfo?> = withContext(Dispatchers.IO) {
+        val info = AccountRequests.balanceOf(address).execute(polkadotApi).get()
         Result.Success(info)
     }
 
-    suspend fun getFees(): Result<Any> = withContext(Dispatchers.IO) {
-        client.execute(commands.paymentQueryInfo())
+    suspend fun getFee(builtTransaction: ByteArray): Result<DotAmount> = withContext(Dispatchers.IO) {
+        val queryInfo = polkadotApi.execute(commands.paymentQueryInfo(ByteData(builtTransaction))).get()
 
+        Result.Success(queryInfo.partialFee)
     }
 
-    suspend fun sendTransaction(): Result<Hash256> = withContext(Dispatchers.IO) {
-        val transfer = AccountRequests
-            .transfer()
-            .runtime()
-            .from()
-            .to()
-            .amount()
-            .setSignedSignature()
-            .build()
-
-        val txId = client.execute(commands.authorSubmitExtrinsic(transfer.encodeRequest())).get()
+    suspend fun sendTransaction(builtTransaction: ByteArray): Result<Hash256> = withContext(Dispatchers.IO) {
+        val txId = polkadotApi.execute(commands.authorSubmitExtrinsic(ByteData(builtTransaction))).get()
         Result.Success(txId)
     }
 
-    private suspend fun getTransactionsInProgressInfo(): Result<Any> = withContext(Dispatchers.IO) {
+    suspend fun extrinsicContext(address: Address): ExtrinsicContext = withContext(Dispatchers.IO) {
+        polkadotApi.autoContext(address)
     }
 
     companion object {
+        fun network(blockchain: Blockchain): SS58Type.Network = when (blockchain) {
+            Blockchain.Polkadot -> SS58Type.Network.LIVE
+            Blockchain.PolkadotTestnet -> SS58Type.Network.SUBSTRATE  // Westend
+//                Blockchain.Kusama -> SS58Type.Network.CANARY
+            else -> throw IllegalArgumentException()
+        }
 
-        fun createRpcCallAdapter(blockchain: Blockchain): RpcCallAdapter {
-            val baseUrl = when (blockchain) {
-                Blockchain.Polkadot -> "https://rpc.polkadot.io"
-                Blockchain.PolkadotTestnet -> "https://westend-rpc.polkadot.io"
-//                Blockchain.Kusama -> "https://kusama-rpc.polkadot.io"
-                else -> throw IllegalArgumentException()
-            }
+        private fun rpcCallAdapter(baseUrl: String): RpcCallAdapter {
+            val okHttpClient = BlockchainSdkRetrofitBuilder.okHttpClient
             val rpcCoder = RpcCoder(ObjectMapper().apply { registerModule(PolkadotModule()) })
 
-            return RetrofitAdapter(baseUrl, BlockchainSdkRetrofitBuilder.okHttpClient, rpcCoder)
+            return JavaRetrofitAdapter(baseUrl, okHttpClient, rpcCoder)
         }
     }
+}
+
+internal fun PolkadotApi.autoContext(address: Address): ExtrinsicContext {
+    return ExtrinsicContext.newAutoBuilder(address, this).get().build()
 }
