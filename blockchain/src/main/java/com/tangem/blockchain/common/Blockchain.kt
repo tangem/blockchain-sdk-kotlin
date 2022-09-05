@@ -189,7 +189,7 @@ enum class Blockchain(
         TronTestnet -> "https://nile.tronscan.org/#/address/$address"
         Gnosis -> "https://blockscout.com/xdai/mainnet/address/$address"
         Dash -> "http://faucet.test.dash.crowdnode.io/$address"
-        DashTestNet -> "https://blockexplorer.one/dash/\\(network)/$address/\\($address)"
+        DashTestNet -> "https://blockexplorer.one/dash/$address"
         Unknown -> throw Exception("unsupported blockchain")
     }
 

@@ -509,7 +509,7 @@ class WalletManagerFactory(
             providers.add(BlockcypherNetworkProvider(blockchain, blockcypherTokens))
         }
         return when (blockchain) {
-            Blockchain.Bitcoin, Blockchain.BitcoinTestnet, Blockchain.Dogecoin ->
+            Blockchain.Bitcoin, Blockchain.BitcoinTestnet, Blockchain.Dogecoin, Blockchain.Dash ->
                 BitcoinNetworkService(providers)
             Blockchain.Litecoin -> LitecoinNetworkService(providers)
             else -> {
