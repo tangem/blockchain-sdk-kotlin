@@ -1,4 +1,4 @@
-package com.tangem.blockchain.blockchains.polkadot.polkaj.extentions
+package com.tangem.blockchain.blockchains.polkadot.polkaj.extensions
 
 import io.emeraldpay.polkaj.ss58.SS58Type
 import io.emeraldpay.polkaj.types.DotAmount
