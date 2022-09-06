@@ -34,6 +34,7 @@ class IconsUtil {
             Blockchain.Fantom, Blockchain.FantomTestnet -> "fantom"
             Blockchain.Litecoin -> "litecoin"
             Blockchain.Polkadot, Blockchain.PolkadotTestnet -> "polkadot"
+            Blockchain.Kusama -> "kusama"
             Blockchain.Polygon, Blockchain.PolygonTestnet -> "polygon"
             Blockchain.Solana, Blockchain.SolanaTestnet -> "solana"
             Blockchain.Stellar, Blockchain.StellarTestnet -> "stellar"
