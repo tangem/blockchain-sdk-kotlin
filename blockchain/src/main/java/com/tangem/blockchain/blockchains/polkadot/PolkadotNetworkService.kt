@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.tangem.blockchain.blockchains.polkadot.polkaj.extentions.amountUnits
 import com.tangem.blockchain.blockchains.polkadot.polkaj.extentions.url
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
@@ -13,10 +14,7 @@ import io.emeraldpay.polkaj.api.RpcCoder
 import io.emeraldpay.polkaj.api.StandardCommands
 import io.emeraldpay.polkaj.apihttp.JavaRetrofitAdapter
 import io.emeraldpay.polkaj.json.jackson.PolkadotModule
-import io.emeraldpay.polkaj.scale.ScaleCodecReader
 import io.emeraldpay.polkaj.scaletypes.AccountInfo
-import io.emeraldpay.polkaj.scaletypes.Metadata
-import io.emeraldpay.polkaj.scaletypes.MetadataReader
 import io.emeraldpay.polkaj.ss58.SS58Type
 import io.emeraldpay.polkaj.tx.AccountRequests
 import io.emeraldpay.polkaj.tx.ExtrinsicContext
@@ -39,28 +37,44 @@ class PolkadotNetworkService(
 
     suspend fun getBalance(address: Address): Result<DotAmount> = withContext(Dispatchers.IO) {
         val accountInfo = getAccountInfo(address).successOr { return@withContext it }
+
         val dotAmount = accountInfo?.data?.free ?: DotAmount.from(0, network.amountUnits)
         Result.Success(dotAmount)
     }
 
-    suspend fun getAccountInfo(address: Address): Result.Success<AccountInfo?> = withContext(Dispatchers.IO) {
-        val info = AccountRequests.balanceOf(address).execute(polkadotApi).get()
-        Result.Success(info)
+    suspend fun getAccountInfo(address: Address): Result<AccountInfo?> = withContext(Dispatchers.IO) {
+        try {
+            val info = AccountRequests.balanceOf(address).execute(polkadotApi).get()
+            Result.Success(info)
+        } catch (ex: Exception) {
+            Result.Failure(ex.toBlockchainSdkError())
+        }
     }
 
     suspend fun getFee(builtTransaction: ByteArray): Result<DotAmount> = withContext(Dispatchers.IO) {
-        val queryInfo = polkadotApi.execute(commands.paymentQueryInfo(ByteData(builtTransaction))).get()
-
-        Result.Success(queryInfo.partialFee)
+        try {
+            val queryInfo = polkadotApi.execute(commands.paymentQueryInfo(ByteData(builtTransaction))).get()
+            Result.Success(queryInfo.partialFee)
+        } catch (ex: Exception) {
+            Result.Failure(ex.toBlockchainSdkError())
+        }
     }
 
     suspend fun sendTransaction(builtTransaction: ByteArray): Result<Hash256> = withContext(Dispatchers.IO) {
-        val txId = polkadotApi.execute(commands.authorSubmitExtrinsic(ByteData(builtTransaction))).get()
-        Result.Success(txId)
+        try {
+            val txId = polkadotApi.execute(commands.authorSubmitExtrinsic(ByteData(builtTransaction))).get()
+            Result.Success(txId)
+        } catch (ex: Exception) {
+            Result.Failure(ex.toBlockchainSdkError())
+        }
     }
 
-    suspend fun extrinsicContext(address: Address): ExtrinsicContext = withContext(Dispatchers.IO) {
-        polkadotApi.autoContext(address)
+    suspend fun extrinsicContext(address: Address): Result<ExtrinsicContext> = withContext(Dispatchers.IO) {
+        try {
+            Result.Success(polkadotApi.autoContext(address))
+        } catch (ex: Exception) {
+            Result.Failure(ex.toBlockchainSdkError())
+        }
     }
 
     companion object {
