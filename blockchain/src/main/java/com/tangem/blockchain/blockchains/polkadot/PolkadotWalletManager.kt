@@ -22,7 +22,7 @@ class PolkadotWalletManager(
     wallet: Wallet,
     val network: SS58Type.Network,
     private val networkService: PolkadotNetworkService
-) : WalletManager(wallet), TransactionSender {
+) : WalletManager(wallet), TransactionSender, ExistentialDepositProvider {
 
     private lateinit var currentContext: ExtrinsicContext
 
@@ -31,7 +31,7 @@ class PolkadotWalletManager(
 
     override val currentHost: String = network.url
 
-    override val dustValue: BigDecimal? = network.existentialDeposit
+    override fun getExistentialDeposit(): BigDecimal = network.existentialDeposit
 
     override suspend fun update() {
         val dotAmount: DotAmount = networkService.getBalance(accountAddress).successOr {
@@ -81,6 +81,20 @@ class PolkadotWalletManager(
         }
     }
 
+    override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
+        val errors = super.validateTransaction(amount, fee)
+
+        val totalToSend = fee?.value?.add(amount.value) ?: amount.value ?: BigDecimal.ZERO
+        val balance = wallet.amounts[AmountType.Coin]!!.value ?: BigDecimal.ZERO
+        if (totalToSend == balance) return errors
+
+        val remainBalance = balance.minus(totalToSend)
+        if (remainBalance < getExistentialDeposit()) {
+            errors.add(TransactionError.DustChange)
+        }
+        return errors
+    }
+
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         return when (transactionData.amount.type) {
             AmountType.Coin -> sendCoin(transactionData, signer)
@@ -89,10 +103,23 @@ class PolkadotWalletManager(
     }
 
     private suspend fun sendCoin(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+        val destinationAddress = Address.from(transactionData.destinationAddress)
+        val destinationAccountIsUnderfunded = accountIsUnderfunded(destinationAddress).successOr {
+            return SimpleResult.Failure(it.error)
+        }
+
+        if (destinationAccountIsUnderfunded) {
+            val amountValueToSend = transactionData.amount.value ?: BigDecimal.ZERO
+            if (amountValueToSend < getExistentialDeposit()) {
+                val minReserve = Amount(transactionData.amount, getExistentialDeposit())
+                return SimpleResult.Failure(BlockchainSdkError.CreateAccountUnderfunded(minReserve))
+            }
+        }
+
         val signedTransaction = sign(
             amount = transactionData.amount,
             sourceAddress = accountAddress,
-            destinationAddress = Address.from(transactionData.destinationAddress),
+            destinationAddress = destinationAddress,
             context = currentContext,
             signer = signer
         ).successOr { return SimpleResult.Failure(it.error) }
@@ -126,5 +153,11 @@ class PolkadotWalletManager(
             }
             is CompletionResult.Failure -> Result.fromTangemSdkError(signResult.error)
         }
+    }
+
+    private suspend fun accountIsUnderfunded(address: Address): Result<Boolean> {
+        val destinationBalance = networkService.getBalance(address).successOr { return it }.toBigDecimal(network)
+        val isUnderfunded = destinationBalance == BigDecimal.ZERO || destinationBalance < getExistentialDeposit()
+        return Result.Success(isUnderfunded)
     }
 }
