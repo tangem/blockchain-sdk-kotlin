@@ -53,6 +53,7 @@ enum class Blockchain(
     Litecoin("LTC", "LTC", "Litecoin"),
     Polkadot("Polkadot", "DOT", "Polkadot"),
     PolkadotTestnet("Polkadot", "WND", "Polkadot Westend Testnet"),
+    Kusama("Kusama", "KSM", "Kusama"),
     Polygon("POLYGON", "MATIC", "Polygon"),
     PolygonTestnet("POLYGON/test", "MATIC", "Polygon Testnet"),
     RSK("RSK", "RBTC", "RSK"),
@@ -82,7 +83,7 @@ enum class Blockchain(
         Dogecoin -> 8
         Solana, SolanaTestnet -> 9
         Polkadot -> 10
-        PolkadotTestnet -> 12
+        PolkadotTestnet, Kusama -> 12
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet,
         EthereumClassic, EthereumClassicTestnet,
@@ -91,11 +92,7 @@ enum class Blockchain(
         Polygon, PolygonTestnet,
         Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet -> 18
-        Fantom, FantomTestnet,
         Gnosis -> 18
-        Stellar, StellarTestnet -> 7
-        Solana, SolanaTestnet -> 9
-        Unknown -> 0
     }
 
     fun makeAddresses(
@@ -125,7 +122,7 @@ enum class Blockchain(
         XRP -> XrpAddressService()
         Binance -> BinanceAddressService()
         BinanceTestnet -> BinanceAddressService(true)
-        Polkadot, PolkadotTestnet -> PolkadotAddressService(this)
+        Polkadot, PolkadotTestnet, Kusama -> PolkadotAddressService(this)
         Stellar, StellarTestnet -> StellarAddressService()
         Solana, SolanaTestnet -> SolanaAddressService()
         Tezos -> TezosAddressService()
@@ -181,6 +178,7 @@ enum class Blockchain(
         Litecoin -> "https://blockchair.com/litecoin/address/$address"
         Polkadot -> "https://polkadot.subscan.io/account/$address"
         PolkadotTestnet -> "https://westend.subscan.io/account/$address"
+        Kusama -> "https://kusama.subscan.io/account/$address"
         Polygon -> "https://polygonscan.com/address/$address"
         PolygonTestnet -> "https://explorer-mumbai.maticvigil.com/address/$address"
         RSK -> {
@@ -245,16 +243,7 @@ enum class Blockchain(
             Stellar, StellarTestnet -> StellarTestnet
             Solana, SolanaTestnet -> SolanaTestnet
             Tron, TronTestnet -> TronTestnet
-            Litecoin -> null
-            Dogecoin -> null
-            Ducatus -> null
-            RSK -> null
-            Cardano -> null
-            CardanoShelley -> null
-            XRP -> null
-            Tezos -> null
-            Gnosis -> null
-            Unknown -> null
+            else -> null
         }
     }
 
@@ -281,7 +270,7 @@ enum class Blockchain(
             Solana, SolanaTestnet,
             Cardano,
             CardanoShelley,
-            Polkadot, PolkadotTestnet -> listOf(EllipticCurve.Ed25519)
+            Polkadot, PolkadotTestnet, Kusama -> listOf(EllipticCurve.Ed25519)
         }
     }
 
@@ -372,6 +361,7 @@ enum class Blockchain(
             BitcoinCash -> 145
             Stellar -> 148
             Polkadot -> 354
+            Kusama -> 434
             Solana -> 501
             Binance -> 714
             Polygon -> 966
@@ -398,7 +388,8 @@ enum class Blockchain(
         EthereumClassic, EthereumClassicTestnet,
         RSK,
         Solana, SolanaTestnet,
-        Tron, TronTestnet, Gnosis -> true
+        Tron, TronTestnet,
+        Gnosis -> true
         else -> false
     }
 
