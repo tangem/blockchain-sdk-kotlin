@@ -45,14 +45,28 @@ sealed class BlockchainSdkError(
         messageResId = null,
         throwable = throwable,
     ) {
-        class Api(ex: Exception) : Solana(0, ex.localizedMessage ?: "Unknown api exception", ex)
-        object FailedToCreateAssociatedTokenAddress : Solana(1, "Public key conversion failed")
-        object SameSourceAndDestinationAddress : Solana(2, "Same source and destination address")
-        object UnsupportedTokenDestinationAddress : Solana(3)
+        class Api(ex: Exception) : Solana(1, ex.localizedMessage ?: "Unknown api exception", ex)
+        object FailedToCreateAssociatedTokenAddress : Solana(2, "Public key conversion failed")
+        object SameSourceAndDestinationAddress : Solana(3, "Same source and destination address")
+        object UnsupportedTokenDestinationAddress : Solana(4)
+    }
+
+    sealed class Polkadot(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_POLKADOT + subCode,
+        customMessage = customMessage ?: (ERROR_CODE_POLKADOT + subCode).toString(),
+        messageResId = null,
+        throwable = throwable,
+    ) {
+        class Api(ex: Exception) : Polkadot(1, ex.localizedMessage ?: "Unknown api exception", ex)
     }
 
     companion object {
         const val ERROR_CODE_SOLANA = 1000
+        const val ERROR_CODE_POLKADOT = 2000
     }
 }
 
