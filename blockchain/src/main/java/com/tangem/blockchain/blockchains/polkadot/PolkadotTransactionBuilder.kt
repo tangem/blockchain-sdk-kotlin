@@ -1,5 +1,9 @@
-package com.tangem.blockchain.blockchains.polkadot.polkaj.extentions
+package com.tangem.blockchain.blockchains.polkadot
 
+import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.isKusama
+import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.isPolkadot
+import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.isWestend
+import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.toDot
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionSigner

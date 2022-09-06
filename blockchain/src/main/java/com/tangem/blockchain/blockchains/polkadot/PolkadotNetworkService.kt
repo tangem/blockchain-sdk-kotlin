@@ -1,8 +1,8 @@
 package com.tangem.blockchain.blockchains.polkadot
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.tangem.blockchain.blockchains.polkadot.polkaj.extentions.amountUnits
-import com.tangem.blockchain.blockchains.polkadot.polkaj.extentions.url
+import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.amountUnits
+import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.url
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.extensions.Result
