@@ -45,22 +45,23 @@ sealed class BlockchainSdkError(
         messageResId = null,
         throwable = throwable,
     ) {
-        class Api(ex: Exception) : Solana(0, ex.localizedMessage ?: "Unknown api exception", ex)
-        object FailedToCreateAssociatedTokenAddress : Solana(1, "Public key conversion failed")
-        object SameSourceAndDestinationAddress : Solana(2, "Same source and destination address")
-        object UnsupportedTokenDestinationAddress : Solana(3)
+        class Api(ex: Exception) : Solana(1, ex.localizedMessage ?: "Unknown api exception", ex)
+        object FailedToCreateAssociatedTokenAddress : Solana(2, "Public key conversion failed")
+        object SameSourceAndDestinationAddress : Solana(3, "Same source and destination address")
+        object UnsupportedTokenDestinationAddress : Solana(4)
     }
 
     sealed class Polkadot(
         subCode: Int,
         customMessage: String? = null,
+        throwable: Throwable? = null,
     ) : BlockchainSdkError(
-        ERROR_CODE_POLKADOT + subCode,
-        customMessage ?: (ERROR_CODE_POLKADOT + subCode).toString()
+        code = ERROR_CODE_POLKADOT + subCode,
+        customMessage = customMessage ?: (ERROR_CODE_POLKADOT + subCode).toString(),
+        messageResId = null,
+        throwable = throwable,
     ) {
-        object ExistentialDepositError : Polkadot(1, "%s network has a concept of Existential Deposit. If your account drops below %s it will be deactivated and any remaining funds will be destroyed. To avoid that you can reduce the amount by %s.")
-        object ExistentialDepositReduce : Polkadot(2, "Reduce by %s")
-        object ExistentialDepositIgnore : Polkadot(3, "No, send all")
+        class Api(ex: Exception) : Polkadot(1, ex.localizedMessage ?: "Unknown api exception", ex)
     }
 
     companion object {
