@@ -58,7 +58,7 @@ class PolkadotWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
-        currentContext = networkService.extrinsicContext(accountAddress)
+        currentContext = networkService.extrinsicContext(accountAddress).successOr { return it }
 
         val signedTransaction = sign(
             amount = amount,
