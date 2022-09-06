@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.tangem.blockchain.blockchains.polkadot.polkaj.extentions.amountUnits
 import com.tangem.blockchain.blockchains.polkadot.polkaj.extentions.url
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
@@ -47,7 +47,7 @@ class PolkadotNetworkService(
             val info = AccountRequests.balanceOf(address).execute(polkadotApi).get()
             Result.Success(info)
         } catch (ex: Exception) {
-            Result.Failure(ex.toBlockchainSdkError())
+            Result.Failure(BlockchainSdkError.Polkadot.Api(ex))
         }
     }
 
@@ -56,7 +56,7 @@ class PolkadotNetworkService(
             val queryInfo = polkadotApi.execute(commands.paymentQueryInfo(ByteData(builtTransaction))).get()
             Result.Success(queryInfo.partialFee)
         } catch (ex: Exception) {
-            Result.Failure(ex.toBlockchainSdkError())
+            Result.Failure(BlockchainSdkError.Polkadot.Api(ex))
         }
     }
 
@@ -65,7 +65,7 @@ class PolkadotNetworkService(
             val txId = polkadotApi.execute(commands.authorSubmitExtrinsic(ByteData(builtTransaction))).get()
             Result.Success(txId)
         } catch (ex: Exception) {
-            Result.Failure(ex.toBlockchainSdkError())
+            Result.Failure(BlockchainSdkError.Polkadot.Api(ex))
         }
     }
 
@@ -73,7 +73,7 @@ class PolkadotNetworkService(
         try {
             Result.Success(polkadotApi.autoContext(address))
         } catch (ex: Exception) {
-            Result.Failure(ex.toBlockchainSdkError())
+            Result.Failure(BlockchainSdkError.Polkadot.Api(ex))
         }
     }
 
