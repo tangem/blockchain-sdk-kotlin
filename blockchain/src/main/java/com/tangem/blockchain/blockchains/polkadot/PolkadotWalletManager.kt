@@ -1,6 +1,6 @@
 package com.tangem.blockchain.blockchains.polkadot
 
-import com.tangem.blockchain.blockchains.polkadot.polkaj.extentions.*
+import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.*
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
 import com.tangem.blockchain.extensions.Result
