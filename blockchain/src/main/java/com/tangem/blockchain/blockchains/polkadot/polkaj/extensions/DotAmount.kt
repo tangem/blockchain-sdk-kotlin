@@ -1,4 +1,4 @@
-package com.tangem.blockchain.blockchains.polkadot.polkaj.extentions
+package com.tangem.blockchain.blockchains.polkadot.polkaj.extensions
 
 import io.emeraldpay.polkaj.ss58.SS58Type
 import io.emeraldpay.polkaj.types.DotAmount
@@ -16,6 +16,6 @@ fun DotAmount.toBigDecimal(network: SS58Type.Network): BigDecimal {
     }
 }
 
-fun BigDecimal.toDot(network: SS58Type.Network): DotAmount {
+internal fun BigDecimal.toDot(network: SS58Type.Network): DotAmount {
     return DotAmount.from(this.toDouble(), network.amountUnits)
 }
