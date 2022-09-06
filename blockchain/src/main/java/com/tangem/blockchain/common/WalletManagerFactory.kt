@@ -70,14 +70,10 @@ class WalletManagerFactory(
         derivedKey: ExtendedPublicKey,
         derivation: DerivationParams
     ): WalletManager? {
-
-
-        var derivationPath: DerivationPath? =
-            when (derivation) {
-                is DerivationParams.Custom -> derivation.path
-                is DerivationParams.Default -> blockchain.derivationPath(derivation.style)
-            }
-
+        val derivationPath: DerivationPath? = when (derivation) {
+            is DerivationParams.Custom -> derivation.path
+            is DerivationParams.Default -> blockchain.derivationPath(derivation.style)
+        }
 
         return makeWalletManager(
             blockchain = blockchain,
@@ -114,6 +110,7 @@ class WalletManagerFactory(
 
         val additionalTokens = tokens.filterNot { walletManager.cardTokens.contains(it) }
         walletManager.cardTokens.addAll(additionalTokens)
+
         return walletManager
     }
 
@@ -137,7 +134,6 @@ class WalletManagerFactory(
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1
     ): WalletManager? {
-
         if (checkIfWrongKey(curve, publicKey)) return null
 
         val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
@@ -200,8 +196,7 @@ class WalletManagerFactory(
             Blockchain.Arbitrum -> {
                 val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
                 jsonRpcProviders.add(
-                    EthereumJsonRpcProvider
-                        .classic(API_ARBITRUM, "rpc/")
+                    EthereumJsonRpcProvider.classic(API_ARBITRUM, "rpc/")
                 )
                 if (blockchainSdkConfig.infuraProjectId != null) {
                     jsonRpcProviders.add(
@@ -233,7 +228,7 @@ class WalletManagerFactory(
                     authorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
                 )
                 val blockcypherNetworkProvider =
-                    BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
+                        BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
 
                 val networkService = EthereumNetworkService(
                     jsonRpcProviders,
@@ -264,8 +259,7 @@ class WalletManagerFactory(
                 val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
                 if (blockchainSdkConfig.infuraProjectId != null) {
                     jsonRpcProviders.add(
-                        EthereumJsonRpcProvider
-                            .infura(API_INFURA, blockchainSdkConfig.infuraProjectId)
+                        EthereumJsonRpcProvider.infura(API_INFURA, blockchainSdkConfig.infuraProjectId)
                     )
                 }
                 jsonRpcProviders.add(EthereumJsonRpcProvider(API_TANGEM_ETHEREUM))
@@ -275,7 +269,7 @@ class WalletManagerFactory(
                     authorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
                 )
                 val blockcypherNetworkProvider =
-                    BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
+                        BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
 
                 val networkService = EthereumNetworkService(
                     jsonRpcProviders,
@@ -292,8 +286,8 @@ class WalletManagerFactory(
             }
             Blockchain.EthereumTestnet -> {
                 val jsonRpcProvider = EthereumJsonRpcProvider.infura(
-                    API_INFURA_TESTNET, blockchainSdkConfig.infuraProjectId
-                    ?: throw Exception("Infura project Id is required")
+                    API_INFURA_TESTNET,
+                    blockchainSdkConfig.infuraProjectId ?: throw Exception("Infura project Id is required")
                 )
                 EthereumWalletManager(
                     wallet,
@@ -303,8 +297,7 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.Avalanche, Blockchain.AvalancheTestnet -> {
-                val api =
-                    if (blockchain == Blockchain.Avalanche) API_AVALANCHE else API_AVALANCHE_TESTNET
+                val api = if (blockchain == Blockchain.Avalanche) API_AVALANCHE else API_AVALANCHE_TESTNET
 
                 EthereumWalletManager(
                     wallet,
@@ -352,8 +345,9 @@ class WalletManagerFactory(
                     tokens
                 )
             }
-            Blockchain.Polkadot, Blockchain.PolkadotTestnet -> {
+            Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama -> {
                 val network = PolkadotNetworkService.network(blockchain)
+
                 PolkadotWalletManager(
                     wallet,
                     network,
@@ -431,12 +425,12 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.Tezos -> {
-                val tezosProvider1 = TezosJsonRpcNetworkProvider(API_TEZOS_LETZBAKE)
-                val tezosProvider2 = TezosJsonRpcNetworkProvider(API_TEZOS_BLOCKSCALE)
-                val tezosProvider3 = TezosJsonRpcNetworkProvider(API_TEZOS_SMARTPY)
-                val tezosProvider4 = TezosJsonRpcNetworkProvider(API_TEZOS_ECAD)
-                val providers =
-                    listOf(tezosProvider1, tezosProvider2, tezosProvider3, tezosProvider4)
+                val providers = listOf(
+                    TezosJsonRpcNetworkProvider(API_TEZOS_LETZBAKE),
+                    TezosJsonRpcNetworkProvider(API_TEZOS_BLOCKSCALE),
+                    TezosJsonRpcNetworkProvider(API_TEZOS_SMARTPY),
+                    TezosJsonRpcNetworkProvider(API_TEZOS_ECAD),
+                )
 
                 TezosWalletManager(
                     wallet,
@@ -448,7 +442,8 @@ class WalletManagerFactory(
             Blockchain.Tron, Blockchain.TronTestnet -> {
                 val network = if (blockchain.isTestnet()) TronNetwork.NILE else TronNetwork.MAINNET
                 val rpcProvider = TronJsonRpcNetworkProvider(
-                    network = network, tronGridApiKey = blockchainSdkConfig.tronGridApiKey
+                    network = network,
+                    tronGridApiKey = blockchainSdkConfig.tronGridApiKey
                 )
                 TronWalletManager(
                     wallet = wallet,
@@ -473,7 +468,7 @@ class WalletManagerFactory(
                         blockchain = blockchain
                     ),
                     networkProvider = EthereumNetworkService(jsonRpcProviders),
-                    presetToken = tokens
+                    presetTokens = tokens
                 )
             }
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
