@@ -79,9 +79,9 @@ class PolkadotNetworkService(
 
     companion object {
         fun network(blockchain: Blockchain): SS58Type.Network = when (blockchain) {
-            Blockchain.Polkadot -> SS58Type.Network.LIVE
-            Blockchain.PolkadotTestnet -> SS58Type.Network.SUBSTRATE  // Westend
-//                Blockchain.Kusama -> SS58Type.Network.CANARY
+            Blockchain.Polkadot -> SS58Type.Network.POLKADOT
+            Blockchain.PolkadotTestnet -> SS58Type.Network.WESTEND
+            Blockchain.Kusama -> SS58Type.Network.KUSAMA
             else -> throw IllegalArgumentException()
         }
 
