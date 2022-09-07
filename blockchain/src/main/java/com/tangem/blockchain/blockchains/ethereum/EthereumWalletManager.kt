@@ -20,8 +20,8 @@ class EthereumWalletManager(
     wallet: Wallet,
     private val transactionBuilder: EthereumTransactionBuilder,
     private val networkProvider: EthereumNetworkProvider,
-    presetToken: MutableSet<Token>,
-) : WalletManager(wallet, presetToken),
+    presetTokens: MutableSet<Token>,
+) : WalletManager(wallet, presetTokens),
     TransactionSender, SignatureCountValidator, TokenFinder, EthereumGasLoader {
 
     private var pendingTxCount = -1L
