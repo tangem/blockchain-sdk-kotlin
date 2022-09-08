@@ -14,13 +14,18 @@ interface EthereumApi {
 
 @JsonClass(generateAdapter = true)
 data class EthereumBody(
-        val method: String,
-        val params: List<Any> = listOf(),
-        val jsonrpc: String = "2.0",
-        val id: Int = 67
+    val method: String,
+    val params: List<Any> = listOf(),
+    val jsonrpc: String = "2.0",
+    val id: Int = 67
 )
 
-data class EthCallObject(val to: String, val from: String? = null, val data: String? = null)
+data class EthCallObject(
+    val to: String,
+    val from: String? = null,
+    val value: String? = null,
+    val data: String? = null,
+)
 
 enum class EthereumMethod(val value: String) {
     GET_BALANCE("eth_getBalance"),
