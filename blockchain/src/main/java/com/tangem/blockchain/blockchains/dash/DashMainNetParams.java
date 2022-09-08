@@ -2,121 +2,367 @@ package com.tangem.blockchain.blockchains.dash;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import androidx.annotation.Nullable;
+
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams;
 
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.MessageSerializer;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.net.discovery.HttpDiscovery;
 import org.bitcoinj.params.AbstractBitcoinNetParams;
 import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptOpCodes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
+import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 
-public class DashMainNetParams  extends AbstractBitcoinNetParams {
-    public static final int MAINNET_MAJORITY_WINDOW = MainNetParams.MAINNET_MAJORITY_WINDOW;
-    public static final int MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED = MainNetParams.MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED;
-    public static final int MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = MainNetParams.MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
+public class DashMainNetParams extends AbstractBitcoinNetParams {
+
+    public static final int MAINNET_MAJORITY_WINDOW = 1000;
+    public static final int MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED = 950;
+    public static final int MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 750;
 
     public DashMainNetParams() {
         super();
         interval = INTERVAL;
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = Utils.decodeCompactBits(0x1d00ffffL);
-        dumpedPrivateKeyHeader = 128;
-        addressHeader = 0;
-        p2shHeader = 5;
-        segwitAddressHrp = "bc";
+
+        // 00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        maxTarget = Utils.decodeCompactBits(0x1e0fffffL);
+        dumpedPrivateKeyHeader = 204;
+        addressHeader = 76;
+        p2shHeader = 16;
         port = 9999;
         packetMagic = 0xbf0c6bbd;
-        bip32HeaderP2PKHpub = 0x4c; // The 4 byte header that serializes in base58 to "xpub".
-        bip32HeaderP2PKHpriv = 0x80; // The 4 byte header that serializes in base58 to "xprv"
-        bip32HeaderP2WPKHpub = 0x04b24746; // The 4 byte header that serializes in base58 to "zpub".
-        bip32HeaderP2WPKHpriv = 0x04b2430c; // The 4 byte header that serializes in base58 to "zprv"
+        bip32HeaderP2PKHpub = 0x0488b21e; // The 4 byte header that serializes in base58 to "xpub".
+        bip32HeaderP2PKHpriv = 0x0488ade4; // The 4 byte header that serializes in base58 to "xprv"
+//        dip14HeaderP2PKHpub = 0x0eecefc5; // The 4 byte header that serializes in base58 to "dpmp".
+//        dip14HeaderP2PKHpriv = 0x0eecf02e; // The 4 byte header that serializes in base58 to "dpms"
+
+        genesisBlock.setDifficultyTarget(0x1e0ffff0L);
+        genesisBlock.setTime(1390095618L);
+        genesisBlock.setNonce(28917698);
 
         majorityEnforceBlockUpgrade = MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
         majorityRejectBlockOutdated = MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED;
         majorityWindow = MAINNET_MAJORITY_WINDOW;
 
-        genesisBlock.setDifficultyTarget(0x1d00ffffL);
-        genesisBlock.setTime(1231006505L);
-        genesisBlock.setNonce(2083236893);
         id = ID_MAINNET;
-        subsidyDecreaseBlockCount = 210000;
+        subsidyDecreaseBlockCount = 210240;
         spendableCoinbaseDepth = 100;
-        String genesisHash = genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"),
-                genesisHash);
+//        String genesisHash = genesisBlock.getHashAsString();
+//        checkState(genesisHash.equals("00000ffd590b1485b3caadc19b22e6379c733355108f107a430458cdf3407ab6"),
+//                genesisHash);
+
+        dnsSeeds = new String[] {
+                "dnsseed.dash.org"
+        };
 
         // This contains (at a minimum) the blocks which are not BIP30 compliant. BIP30 changed how duplicate
         // transactions are handled. Duplicated transactions could occur in the case where a coinbase had the same
         // extraNonce and the same outputs but appeared at different heights, and greatly complicated re-org handling.
         // Having these here simplifies block connection logic considerably.
-        checkpoints.put(91722, Sha256Hash.wrap("00000000000271a2dc26e7667f8419f2e15416dc6955e5a6c6cdf3f2574dd08e"));
-        checkpoints.put(91812, Sha256Hash.wrap("00000000000af0aed4792b1acee3d966af36cf5def14935db8de83d6f9306f2f"));
-        checkpoints.put(91842, Sha256Hash.wrap("00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec"));
-        checkpoints.put(91880, Sha256Hash.wrap("00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721"));
-        checkpoints.put(200000, Sha256Hash.wrap("000000000000034a7dedef4a161fa058a2d67a173a90155f3a2fe6fc132e0ebf"));
+        checkpoints.put(  1500, Sha256Hash.wrap("000000aaf0300f59f49bc3e970bad15c11f961fe2347accffff19d96ec9778e3"));
+        checkpoints.put(  4991, Sha256Hash.wrap("000000003b01809551952460744d5dbb8fcbd6cbae3c220267bf7fa43f837367"));
+        checkpoints.put(  9918, Sha256Hash.wrap("00000000213e229f332c0ffbe34defdaa9e74de87f2d8d1f01af8d121c3c170b"));
+        checkpoints.put( 16912, Sha256Hash.wrap("00000000075c0d10371d55a60634da70f197548dbbfa4123e12abfcbc5738af9"));
+        checkpoints.put( 23912, Sha256Hash.wrap("0000000000335eac6703f3b1732ec8b2f89c3ba3a7889e5767b090556bb9a276"));
+        checkpoints.put( 35457, Sha256Hash.wrap("0000000000b0ae211be59b048df14820475ad0dd53b9ff83b010f71a77342d9f"));
+        checkpoints.put( 45479, Sha256Hash.wrap("000000000063d411655d590590e16960f15ceea4257122ac430c6fbe39fbf02d"));
+        checkpoints.put( 55895, Sha256Hash.wrap("0000000000ae4c53a43639a4ca027282f69da9c67ba951768a20415b6439a2d7"));
+        checkpoints.put( 68899, Sha256Hash.wrap("0000000000194ab4d3d9eeb1f2f792f21bb39ff767cb547fe977640f969d77b7"));
+        checkpoints.put( 74619, Sha256Hash.wrap("000000000011d28f38f05d01650a502cc3f4d0e793fbc26e2a2ca71f07dc3842"));
+        checkpoints.put( 75095, Sha256Hash.wrap("0000000000193d12f6ad352a9996ee58ef8bdc4946818a5fec5ce99c11b87f0d"));
+        checkpoints.put( 88805, Sha256Hash.wrap("00000000001392f1652e9bf45cd8bc79dc60fe935277cd11538565b4a94fa85f"));
+        checkpoints.put(107996, Sha256Hash.wrap("00000000000a23840ac16115407488267aa3da2b9bc843e301185b7d17e4dc40"));
+        checkpoints.put(137993, Sha256Hash.wrap("00000000000cf69ce152b1bffdeddc59188d7a80879210d6e5c9503011929c3c"));
+        checkpoints.put(167996, Sha256Hash.wrap("000000000009486020a80f7f2cc065342b0c2fb59af5e090cd813dba68ab0fed"));
+        checkpoints.put(207992, Sha256Hash.wrap("00000000000d85c22be098f74576ef00b7aa00c05777e966aff68a270f1e01a5"));
+        checkpoints.put(312645, Sha256Hash.wrap("0000000000059dcb71ad35a9e40526c44e7aae6c99169a9e7017b7d84b1c2daf"));
+        checkpoints.put(407452, Sha256Hash.wrap("000000000003c6a87e73623b9d70af7cd908ae22fee466063e4ffc20be1d2dbc"));
+        checkpoints.put(523412, Sha256Hash.wrap("000000000000e54f036576a10597e0e42cc22a5159ce572f999c33975e121d4d"));
+        checkpoints.put(523930, Sha256Hash.wrap("0000000000000bccdb11c2b1cfb0ecab452abf267d89b7f46eaf2d54ce6e652c"));
+        checkpoints.put(750000, Sha256Hash.wrap("00000000000000b4181bbbdddbae464ce11fede5d0292fb63fdede1e7c8ab21c"));
+        checkpoints.put(888900, Sha256Hash.wrap("0000000000000026c29d576073ab51ebd1d3c938de02e9a44c7ee9e16f82db28"));
+        checkpoints.put(967800, Sha256Hash.wrap("0000000000000024e26c7df7e46d673724d223cf4ca2b2adc21297cc095600f4"));
+        checkpoints.put(1067570, Sha256Hash.wrap("000000000000001e09926bcf5fa4513d23e870a34f74e38200db99eb3f5b7a70"));
+        checkpoints.put(1167570, Sha256Hash.wrap("000000000000000fb7b1e9b81700283dff0f7d87cf458e5edfdae00c669de661"));
+        checkpoints.put(1364585, Sha256Hash.wrap("00000000000000022f355c52417fca9b73306958f7c0832b3a7bce006ca369ef"));
+        checkpoints.put(1450000, Sha256Hash.wrap("00000000000000105cfae44a995332d8ec256850ea33a1f7b700474e3dad82bc"));
 
-        dnsSeeds = new String[] {
-                "x5.dnsseed.dash.org",
-                "x5.dnsseed.dashdot.io",
-                "dnsseed.masternode.io",
-        };
-        httpSeeds = new HttpDiscovery.Details[] {
-                // Andreas Schildbach
-                new HttpDiscovery.Details(
-                        ECKey.fromPublicOnly(Utils.HEX.decode("0238746c59d46d5408bf8b1d0af5740fe1a6e1703fcb56b2953f0b965c740d256f")),
-                        URI.create("http://httpseed.bitcoin.schildbach.de/peers")
-                ),
-                // Anton Kumaigorodski
-                new HttpDiscovery.Details(
-                        ECKey.fromPublicOnly(Utils.HEX.decode("02c682e83db4efac3c841d6fa544211fb1e4a55061060019b3682fc306f228c558")),
-                        URI.create("http://lightning-wallet.com:8081/peers")
-                )
-        };
+        // Dash does not have a Http Seeder
+        // If an Http Seeder is set up, add it here.  References: HttpDiscovery
+        httpSeeds = null;
 
-        // These are in big-endian format, which is what the SeedPeers code expects.
-        // Updated Apr. 11th 2019
+        // updated with Dash Core 0.17.0.3 seed list
         addrSeeds = new int[] {
-                // seed.bitcoin.sipa.be
-                0x117c7e18, 0x12641955, 0x1870652e, 0x1dfec3b9, 0x4a330834, 0x5b53382d, 0x77abaca3, 0x09e3d36c,
-                0xa0a4e1d4, 0xa275d9c7, 0xa280bc4b, 0xa50d1b76, 0x0a5f84cb, 0xa86cd5bd, 0xb3f427ba, 0xc6fc4cd0,
-                0xc73c19b9, 0xd905d85f, 0xd919f9ad, 0xda3fc312, 0xdc4ca5b9, 0xe38ef05b, 0xedce8e57, 0xf68ad23e,
-                0xfb3b9c59,
-                // dnsseed.bluematt.me
-                0x1061d85f, 0x2d5325b0, 0x3505ef91, 0x4c42b14c, 0x623cce72, 0x067e4428, 0x6b47e32e, 0x6e47e32e,
-                0x87aed35f, 0x96fe3234, 0xac81419f, 0xb6f9bb25, 0xc9ddb4b9, 0xcbd8aca3, 0xd55c09b0, 0xd5640618,
-                0xdaa9144e, 0xdfb99088, 0xe0339650, 0xeb8221af, 0xfcbfd75b,
-                // dnsseed.bitcoin.dashjr.org
-                0x028ea62e, 0x2cf968be, 0x2d9cf023, 0x3bedb812, 0x40373745, 0x40aa9850, 0x42504a28, 0x50b8f655,
-                0x5a86e548, 0x6d79f459, 0x70681b41, 0x74a8cf1f, 0x779233d4, 0x8b2380b2, 0x9dcc342f, 0xa331b5ad,
-                0xa95b4c90, 0xb05ff750, 0x0bfde3d4, 0x0c15c136, 0xd3912552, 0xd56ce69d, 0xd8af5454, 0xfce48068,
-                // seed.bitcoinstats.com
-                0x10c23a35, 0x1168b223, 0x11ae871f, 0x14ddce34, 0x018ce3d5, 0x1b242934, 0x20bcf754, 0x33954d33,
-                0x355609b0, 0x39fd202f, 0x4df35e2f, 0x4f23f22b, 0x5707f862, 0x8602bdce, 0x8e09703e, 0x90009ede,
-                0x9ffb125b, 0xa33c4c90, 0xa9c4ec57, 0xaa2d5097, 0xae52fb94, 0x00ed2636, 0xedf5649f, 0x0f41a6bc,
-                0xfe03cf22,
-                // seed.bitcoin.jonasschnelli.ch
-                0x23159dd8, 0x368fea55, 0x50bd4031, 0x5395de6c, 0x05c6902f, 0x60c09350, 0x66d6d168, 0x70d90337,
-                0x7a549ac3, 0x9012d552, 0x94a60f33, 0xa490ff36, 0xb030d552, 0xb0729450, 0xb12b4c4a, 0x0b7e7e60,
-                0xc4f84b2f, 0xc533f42f, 0xc8f60ec2, 0xc9d1bab9, 0xd329cb74, 0xe4b26ab4, 0xe70e5db0, 0xec072034,
-                // seed.btc.petertodd.org
-                0x10ac1242, 0x131c4a79, 0x1477da47, 0x2899ec63, 0x45660451, 0x4b1b0050, 0x6931d0c2, 0x070ed85f,
-                0x806a9950, 0x80b0d522, 0x810d2bc1, 0x829d3b8b, 0x848bdfb0, 0x87a5e52e, 0x9664bb25, 0xa021a6df,
-                0x0a5f8548, 0x0a66c752, 0xaaf5b64f, 0xabba464a, 0xc5df4165, 0xe8c5efd5, 0xfa08d01f,
-                // seed.bitcoin.sprovoost.nl
-                0x14420418, 0x1efdd990, 0x32ded23a, 0x364e1e54, 0x3981d262, 0x39ae6ed3, 0x5143a699, 0x68f861cb,
-                0x6f229e23, 0x6fe45d8e, 0x77db09b0, 0x7a1cd85f, 0x8dd03b8b, 0x92aec9c3, 0xa2debb23, 0xa47dee50,
-                0xb3566bb4, 0xcb1845b9, 0xcd51c253, 0xd541574d, 0xe0cba936, 0xfb2c26d0,
-                // dnsseed.emzy.de
-                0x16e0d7b9, 0x1719c2b9, 0x1edfd04a, 0x287eff2d, 0x28f54e3e, 0x3574c1bc, 0x36f1b4cf, 0x3932571b,
-                0x3d6f9bbc, 0x4458aa3a, 0x4dd2cf52, 0x05483e97, 0x559caed5, 0x59496251, 0x66d432c6, 0x7501f7c7,
-                0x7775599f, 0x8e0ea28b, 0x8f3d0d9d, 0x902695de, 0xa6ada27b, 0xbb00875b, 0xbc26c979, 0xd1a2c58a,
-                0xf6d33b8b, 0xf9d95947,
+                0xddd53802,
+                0xbe430205,
+                0x3a490205,
+                0x22ed0905,
+                0xf36d4f05,
+                0xe12c6505,
+                0x12cab505,
+                0x48fdbd05,
+                0x09f48b12,
+                0x94819d12,
+                0x2af65117,
+                0x17a3e317,
+                0x4ce8e417,
+                0xe1d5fd17,
+                0x24610a1f,
+                0x6863941f,
+                0xf263941f,
+                0x3204b21f,
+                0x765b5222,
+                0xf2aa5322,
+                0x45336922,
+                0xde367f22,
+                0x4c497f22,
+                0xf2edd122,
+                0xa826d723,
+                0x38e31225,
+                0x15e36125,
+                0x7785c22a,
+                0x2e4de52b,
+                0x1818212d,
+                0x6b40382d,
+                0x689f472d,
+                0xf1274c2d,
+                0x43424d2d,
+                0x472e4f2d,
+                0x2d75552d,
+                0x53a2562d,
+                0x55a2562d,
+                0x9aa2562d,
+                0xbdbd1e2e,
+                0xd5bd1e2e,
+                0xd6bd1e2e,
+                0xfbbd1e2e,
+                0xf228242e,
+                0x1cf1fe2e,
+                0x1476382f,
+                0xe8985b2f,
+                0x6a7b622f,
+                0x5baf1132,
+                0xb70e7432,
+                0xce600f33,
+                0x2a750f33,
+                0xe6b32633,
+                0xd2bf5333,
+                0xd5479033,
+                0xeda99e33,
+                0x3c8dca34,
+                0x60b9a436,
+                0x2bdada36,
+                0x8cbeab3e,
+                0x8ebeab3e,
+                0xce41fb40,
+                0x45f3f442,
+                0xe614ca43,
+                0xd76b3d45,
+                0xd96b3d45,
+                0xf26b3d45,
+                0x4589764a,
+                0xb3d4dc4d,
+                0x0013534e,
+                0xf8885550,
+                0x8bddd350,
+                0xe784f050,
+                0xa50d4751,
+                0xf502ab51,
+                0x53e6ca52,
+                0x1715d352,
+                0xb315d352,
+                0xf015d352,
+                0x6919d352,
+                0x34743454,
+                0xccb3f254,
+                0x5bf81155,
+                0x59a5ce55,
+                0x5aa5ce55,
+                0x23f1d155,
+                0xbef1d155,
+                0x04f2d155,
+                0x62f2d155,
+                0xceaad955,
+                0x2c0d2859,
+                0x36432d59,
+                0x728cbe5d,
+                0xc9eeb05e,
+                0x8d33b75f,
+                0x9233b75f,
+                0x2735b75f,
+                0x22c4d35f,
+                0xe12dd75f,
+                0x786ed75f,
+                0xf55fa067,
+                0xfd5fa067,
+                0x5a18a16b,
+                0x46f73d6c,
+                0xa640c17b,
+                0x081c448a,
+                0xf0c7098b,
+                0xaaaaee8c,
+                0x6b355f8d,
+                0x65cdca8e,
+                0xa78e7e90,
+                0xc278ca90,
+                0x421c8391,
+                0x441c8391,
+                0x741c8391,
+                0x751c8391,
+                0x82a3ef91,
+                0xceafb992,
+                0x91414398,
+                0x4aa2659e,
+                0x1ca8659e,
+                0xcd3347a7,
+                0x3e4f56a7,
+                0x8a3677a8,
+                0xf155eba8,
+                0x315deba8,
+                0xbe68eba8,
+                0x6b7856ac,
+                0x82dad4ad,
+                0xc9e922ae,
+                0xcae922ae,
+                0xcbe922ae,
+                0xdc115eb0,
+                0x914166b0,
+                0xc6397bb0,
+                0xc8397bb0,
+                0xcb397bb0,
+                0xcd397bb0,
+                0x2b88dfb0,
+                0x81793fb2,
+                0x7e5b9db2,
+                0xb05b9db2,
+                0xb35b9db2,
+                0x4dbf44b4,
+                0xe03405b9,
+                0xaa973eb9,
+                0xae973eb9,
+                0xde6840b9,
+                0xdf6840b9,
+                0x3eca52b9,
+                0xec1675b9,
+                0xd43a7ab9,
+                0x781b8db9,
+                0x7b1b8db9,
+                0x613e8db9,
+                0x90d48eb9,
+                0x75aba5b9,
+                0x289eafb9,
+                0x8c3bb1b9,
+                0xa328b9b9,
+                0x7153e4b9,
+                0x9c53e4b9,
+                0x700af3b9,
+                0x730af3b9,
+                0x6af128bc,
+                0x28e67fbc,
+                0xf3ed7fbc,
+                0x1906a9c0,
+                0x58381dc1,
+                0x603b1dc1,
+                0xc3e81ac2,
+                0x884bb6c2,
+                0xdb5f62c3,
+                0x11d2b5c3,
+                0x40d3b5c3,
+                0xe31b39c6,
+                0xad807ac8,
+                0x70c63dca,
+                0xd3f83dca,
+                0x263f81d4,
+                0xce7941d5,
+                0x5f93bdd8,
+                0xb293bdd8,
+                0x5e97bdd8,
+                0xcf97bdd8
         };
+
+
+//        strSporkAddress = "Xgtyuk76vhuFW2iT7UAiHgNdWXCf3J34wh";
+//        minSporkKeys = 1;
+//        budgetPaymentsStartBlock = 328008;
+//        budgetPaymentsCycleBlocks = 16616;
+//        budgetPaymentsWindowBlocks = 100;
+//
+//        DIP0001BlockHeight = 782208;
+//
+//        fulfilledRequestExpireTime = 60*60;
+//        masternodeMinimumConfirmations = 15;
+//        superblockStartBlock = 614820;
+//        superblockCycle = 16616;
+//        nGovernanceMinQuorum = 10;
+//        nGovernanceFilterElements = 20000;
+//
+//        powDGWHeight = 34140;
+//        powKGWHeight = 15200;
+//        powAllowMinimumDifficulty = false;
+//        powNoRetargeting = false;
+//
+//        instantSendConfirmationsRequired = 6;
+//        instantSendKeepLock = 24;
+//
+//        DIP0003BlockHeight = 1028160;
+//        deterministicMasternodesEnabledHeight = 1047200;
+//        deterministicMasternodesEnabled = true;
+//
+//        DIP0008BlockHeight = 1088640;
+//        DIP0024BlockHeight = Integer.MAX_VALUE;
+//
+//        // long living quorum params
+//        addLLMQ(LLMQParameters.LLMQType.LLMQ_50_60);
+//        addLLMQ(LLMQParameters.LLMQType.LLMQ_400_60);
+//        addLLMQ(LLMQParameters.LLMQType.LLMQ_400_85);
+//        addLLMQ(LLMQParameters.LLMQType.LLMQ_100_67);
+//        addLLMQ(LLMQParameters.LLMQType.LLMQ_60_75);
+//        llmqChainLocks = LLMQParameters.LLMQType.LLMQ_400_60;
+//        llmqForInstantSend = LLMQParameters.LLMQType.LLMQ_50_60;
+//        llmqTypePlatform = LLMQParameters.LLMQType.LLMQ_100_67;
+//        llmqTypeDIP0024InstantSend = LLMQParameters.LLMQType.LLMQ_60_75;
+//        llmqTypeMnhf = LLMQParameters.LLMQType.LLMQ_400_85;
+//
+//        BIP34Height = 951;    // 000001f35e70f7c5705f64c6c5cc3dea9449e74d5b5c7cf74dad1bcca14a8012
+//        BIP65Height = 619382; // 00000000000076d8fcea02ec0963de4abfd01e771fec0863f960c2c64fe6f357
+//        BIP66Height = 245817;
+//
+//        coinType = 5;
+    }
+
+    private static DashMainNetParams instance;
+    public static synchronized DashMainNetParams get() {
+        if (instance == null) {
+            instance = new DashMainNetParams();
+        }
+        return instance;
     }
 
     @Override
@@ -124,13 +370,46 @@ public class DashMainNetParams  extends AbstractBitcoinNetParams {
         return PAYMENT_PROTOCOL_ID_MAINNET;
     }
 
+//    @Override
+//    protected void verifyDifficulty(StoredBlock storedPrev, Block nextBlock, BigInteger newTarget) {
+//
+//        long newTargetCompact = calculateNextDifficulty(storedPrev, nextBlock, newTarget);
+//        long receivedTargetCompact = nextBlock.getDifficultyTarget();
+//        int height = storedPrev.getHeight() + 1;
+//
+//        // On mainnet before block 68589: incorrect proof of work (DGW pre-fork)
+//        // see ContextualCheckBlockHeader in src/validation.cpp in Core repo (dashpay/dash)
+//        String msg = "Network provided difficulty bits do not match what was calculated: " +
+//                Long.toHexString(newTargetCompact) + " vs " + Long.toHexString(receivedTargetCompact);
+//        if (height <= 68589) {
+//            double n1 = convertBitsToDouble(receivedTargetCompact);
+//            double n2 = convertBitsToDouble(newTargetCompact);
+//
+//            if (java.lang.Math.abs(n1 - n2) > n1 * 0.5 )
+//                throw new VerificationException(msg);
+//        } else {
+//            if (newTargetCompact != receivedTargetCompact)
+//                throw new VerificationException(msg);
+//        }
+//    }
 
-    private static DashMainNetParams instance;
-
-    public static synchronized DashMainNetParams get() {
-        if (instance == null) {
-            instance = new DashMainNetParams();
-        }
-        return instance;
-    }
+//    static double convertBitsToDouble(long nBits) {
+//        long nShift = (nBits >> 24) & 0xff;
+//
+//        double dDiff =
+//                (double)0x0000ffff / (double)(nBits & 0x00ffffff);
+//
+//        while (nShift < 29)
+//        {
+//            dDiff *= 256.0;
+//            nShift++;
+//        }
+//        while (nShift > 29)
+//        {
+//            dDiff /= 256.0;
+//            nShift--;
+//        }
+//
+//        return dDiff;
+//    }
 }
