@@ -10,6 +10,7 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import org.kethereum.extensions.toHexString
 import org.kethereum.keccakshortcut.keccak
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -147,14 +148,20 @@ class EthereumWalletManager(
     override suspend fun getGasLimit(amount: Amount, destination: String): Result<BigInteger> {
         var to = destination
         val from = wallet.address
+        var value: String? = null
         var data: String? = null
 
-        if (amount.type is AmountType.Token) {
-            to = amount.type.token.contractAddress
-            data = "0x" + EthereumUtils.createErc20TransferData(destination, amount).toHexString()
+        when (amount.type) {
+            is AmountType.Coin -> {
+                value = amount.value?.movePointRight(amount.decimals)?.toBigInteger()?.toHexString()
+            }
+            is AmountType.Token -> {
+                to = amount.type.token.contractAddress
+                data = "0x" + EthereumUtils.createErc20TransferData(destination, amount).toHexString()
+            }
         }
 
-        return when (val result = networkProvider.getGasLimit(to, from, data)) {
+        return when (val result = networkProvider.getGasLimit(to, from, value, data)) {
             is Result.Failure -> result
             is Result.Success -> {
                 transactionBuilder.gasLimit = result.data
