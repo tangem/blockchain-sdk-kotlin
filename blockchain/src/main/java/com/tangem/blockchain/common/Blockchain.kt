@@ -82,7 +82,9 @@ enum class Blockchain(
         Binance, BinanceTestnet,
         Litecoin,
         Ducatus,
-        Dogecoin -> 8
+        Dogecoin,
+        Dash,
+        DashTestNet-> 8
         Solana, SolanaTestnet -> 9
         Polkadot -> 10
         PolkadotTestnet, Kusama -> 12
