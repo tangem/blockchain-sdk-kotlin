@@ -38,8 +38,8 @@ android {
 }
 
 task sourceJar(type: Jar) {
-  from android.sourceSets.main.java.srcDirs
-  classifier "sources"
+    from android.sourceSets.main.java.srcDirs
+    classifier "sources"
 }
 
 dependencies {
@@ -83,6 +83,8 @@ dependencies {
 
     implementation files('libs/ripple-core-0.0.1.jar')
     implementation files('libs/solanaj-0.0.10.jar')
+    implementation files('libs/polkaj-root-0.1.4.jar')
+
     implementation 'net.i2p.crypto:eddsa:0.3.0'
 
     //dependencies for binance
@@ -95,6 +97,10 @@ dependencies {
     implementation 'joda-time:joda-time:2.10.1'
     testImplementation 'junit:junit:4.12'
     implementation 'com.squareup.retrofit2:converter-jackson:2.6.0'
+
+    //dependencies for polkadot
+    implementation 'com.github.multiformats:java-multibase:v1.0.0'
+    implementation 'net.openhft:zero-allocation-hashing:0.11'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.2'
     testImplementation "com.google.truth:truth:1.0.1"
