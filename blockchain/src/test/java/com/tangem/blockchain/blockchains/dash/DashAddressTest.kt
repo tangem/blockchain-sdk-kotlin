@@ -13,15 +13,15 @@ class DashAddressTest {
 
     @Test
     fun makeAddressFromCorrectPublicKey() {
-        val walletPublicKey = "021DCF0C1E183089515DF8C86DACE6DA08DC8E1232EA694388E49C3C66EB79A418".hexToBytes()
-        val expected = "yMfdoASh4QEM3zVpZqgXJ8St38X7VWnzp7"
+        val walletPublicKey = "0441DCD64B5F4A039FC339A16300A833A883B218909F2EBCAF3906651C76842C45E3D67E8D2947E6FEE8B62D3D3B6A4D5F212DA23E478DD69A2C6CCC851F300D80".hexToBytes()
+        val expected = "Xs92pJsKUXRpbwzxDjBjApiwMK6JysNntG"
 
         Truth.assertThat(addressService.makeAddress(walletPublicKey)).isEqualTo(expected)
     }
 
     @Test
     fun validateCorrectAddress() {
-        val address = "yMfdoASh4QEM3zVpZqgXJ8St38X7VWnzp7"
+        val address = "Xs92pJsKUXRpbwzxDjBjApiwMK6JysNntG"
 
         Truth.assertThat(addressService.validate(address)).isTrue()
     }
