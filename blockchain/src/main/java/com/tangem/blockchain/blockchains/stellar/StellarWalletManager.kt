@@ -4,14 +4,15 @@ import android.util.Log
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 
 class StellarWalletManager(
-        wallet: Wallet,
-        private val transactionBuilder: StellarTransactionBuilder,
-        private val networkProvider: StellarNetworkProvider,
-        presetTokens: MutableSet<Token>
+    wallet: Wallet,
+    private val transactionBuilder: StellarTransactionBuilder,
+    private val networkProvider: StellarNetworkProvider,
+    presetTokens: MutableSet<Token>
 ) : WalletManager(wallet, presetTokens), TransactionSender, SignatureCountValidator {
 
     override val currentHost: String
@@ -63,16 +64,11 @@ class StellarWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    override suspend fun send(
-            transactionData: TransactionData, signer: TransactionSigner
-    ): SimpleResult {
-
-        val hash = when (val buildResult =
-                transactionBuilder.buildToSign(transactionData, sequence)
-        ) {
-            is Result.Success -> buildResult.data
-            is Result.Failure -> return SimpleResult.Failure(buildResult.error)
+    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+        val hash = transactionBuilder.buildToSign(transactionData, sequence).successOr {
+            return SimpleResult.Failure(it.error)
         }
+
         val signerResponse = signer.sign(hash, wallet.publicKey)
         return when (signerResponse) {
             is CompletionResult.Success -> {
@@ -90,8 +86,16 @@ class StellarWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+        val feeStats = networkProvider.getFeeStats().successOr { return it }
+
+        val maxChargedFee = feeStats.feeCharged.max.toBigDecimal().movePointLeft(blockchain.decimals())
+        val minChargedFee = feeStats.feeCharged.min.toBigDecimal().movePointLeft(blockchain.decimals())
+        val averageChargedFee = (maxChargedFee - minChargedFee).divide(2.toBigDecimal()) + minChargedFee
+
         return Result.Success(listOf(
-                Amount(baseFee, blockchain)
+            Amount(baseFee, blockchain),
+            Amount(averageChargedFee, blockchain),
+            Amount(maxChargedFee, blockchain),
         ))
     }
 
