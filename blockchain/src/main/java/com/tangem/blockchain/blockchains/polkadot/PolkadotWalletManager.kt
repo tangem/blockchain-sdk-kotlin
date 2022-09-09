@@ -112,7 +112,7 @@ class PolkadotWalletManager(
             val amountValueToSend = transactionData.amount.value ?: BigDecimal.ZERO
             if (amountValueToSend < getExistentialDeposit()) {
                 val minReserve = Amount(transactionData.amount, getExistentialDeposit())
-                return SimpleResult.Failure(BlockchainSdkError.CreateAccountUnderfunded(minReserve))
+                return SimpleResult.Failure(BlockchainSdkError.CreateAccountUnderfunded(wallet.blockchain, minReserve))
             }
         }
 
