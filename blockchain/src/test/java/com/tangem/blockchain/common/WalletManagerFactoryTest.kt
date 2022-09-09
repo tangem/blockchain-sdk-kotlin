@@ -29,10 +29,8 @@ import org.kethereum.model.ADDRESS_LENGTH_IN_HEX
 
 internal class WalletManagerFactoryTest {
 
-    val ECDSAPublicKey = "040876BDEC26B89BD2159A668B9AF3D9FE86370F318717C92B8D6C1186FB3648C32A5F9321998CC2D042901C91D40601E79A641E1CBCEBE7A2358BE6054E1B6E5D"
-        .hexToBytes()
-    val EdDSAPublicKey = "E078212D58B2B9D0EDC9C936830D10081CD38B90C31778C56DFB1171027E294E"
-        .hexToBytes()
+    val ECDSAPublicKey = "040876BDEC26B89BD2159A668B9AF3D9FE86370F318717C92B8D6C1186FB3648C32A5F9321998CC2D042901C91D40601E79A641E1CBCEBE7A2358BE6054E1B6E5D".hexToBytes()
+    val EdDSAPublicKey = "E078212D58B2B9D0EDC9C936830D10081CD38B90C31778C56DFB1171027E294E".hexToBytes()
 
 
     @Test
@@ -118,8 +116,8 @@ internal class WalletManagerFactoryTest {
         val card = ReadCommand().deserialize(SessionEnvironment(Config(), UnsafeInMemoryStorage()), responseApdu).card
         val walletManager =
                 WalletManagerFactory().makeTwinWalletManager(
-                        card.wallets.first().publicKey,
-                        pairPublicKey.hexToBytes()
+                    card.wallets.first().publicKey,
+                    pairPublicKey.hexToBytes()
                 )
 
         Truth.assertThat(walletManager).isInstanceOf(BitcoinWalletManager::class.java)
@@ -131,19 +129,23 @@ internal class WalletManagerFactoryTest {
             EllipticCurve.Ed25519 -> EdDSAPublicKey
         }
 
-        return WalletManagerFactory(BlockchainSdkConfig())
-                .makeWalletManager(
-                    blockchain,
-                    Wallet.PublicKey(publicKey, null, null),
-                    curve = curve
-                )
+        return WalletManagerFactory(BlockchainSdkConfig(
+            blockchairApiKey = "",
+            blockchairAuthorizationToken = "",
+            blockcypherTokens = setOf(),
+            infuraProjectId = "",
+            tronGridApiKey = "",
+        )).makeWalletManager(
+            blockchain,
+            Wallet.PublicKey(publicKey, null, null),
+            curve = curve
+        )
     }
 
     @Test
     fun Test() {
         val ecParams = ECKey.CURVE
-        val privateKey = "AF2B9E5C9FE06DC2122D0FDE2433BCE6E72C6AB58BDCF4A25F5FFC7F556006E1"
-            .hexToBytes().toBigInteger()
+        val privateKey = "AF2B9E5C9FE06DC2122D0FDE2433BCE6E72C6AB58BDCF4A25F5FFC7F556006E1".hexToBytes().toBigInteger()
         val privateKeyParameters = ECPrivateKeyParameters(privateKey, ecParams)
         val publicKeyPoint = privateKeyParameters.parameters.g.multiply(privateKeyParameters.d)
         val publicKeyBytes = publicKeyPoint.getEncoded(false)
