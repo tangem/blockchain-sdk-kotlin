@@ -1,43 +1,8 @@
 package com.tangem.blockchain.blockchains.dash;
 
-import static com.google.common.base.Preconditions.checkState;
-
-import androidx.annotation.Nullable;
-
-import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams;
-
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.MessageSerializer;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.net.discovery.HttpDiscovery;
 import org.bitcoinj.params.AbstractBitcoinNetParams;
-import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.script.ScriptOpCodes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
-
-import java.io.ByteArrayOutputStream;
-import java.math.BigInteger;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 
 
 public class DashMainNetParams extends AbstractBitcoinNetParams {
@@ -60,8 +25,6 @@ public class DashMainNetParams extends AbstractBitcoinNetParams {
         packetMagic = 0xbf0c6bbd;
         bip32HeaderP2PKHpub = 0x0488b21e; // The 4 byte header that serializes in base58 to "xpub".
         bip32HeaderP2PKHpriv = 0x0488ade4; // The 4 byte header that serializes in base58 to "xprv"
-//        dip14HeaderP2PKHpub = 0x0eecefc5; // The 4 byte header that serializes in base58 to "dpmp".
-//        dip14HeaderP2PKHpriv = 0x0eecf02e; // The 4 byte header that serializes in base58 to "dpms"
 
         genesisBlock.setDifficultyTarget(0x1e0ffff0L);
         genesisBlock.setTime(1390095618L);
@@ -74,9 +37,6 @@ public class DashMainNetParams extends AbstractBitcoinNetParams {
         id = ID_MAINNET;
         subsidyDecreaseBlockCount = 210240;
         spendableCoinbaseDepth = 100;
-//        String genesisHash = genesisBlock.getHashAsString();
-//        checkState(genesisHash.equals("00000ffd590b1485b3caadc19b22e6379c733355108f107a430458cdf3407ab6"),
-//                genesisHash);
 
         dnsSeeds = new String[] {
                 "dnsseed.dash.org"
@@ -307,54 +267,6 @@ public class DashMainNetParams extends AbstractBitcoinNetParams {
                 0xcf97bdd8
         };
 
-
-//        strSporkAddress = "Xgtyuk76vhuFW2iT7UAiHgNdWXCf3J34wh";
-//        minSporkKeys = 1;
-//        budgetPaymentsStartBlock = 328008;
-//        budgetPaymentsCycleBlocks = 16616;
-//        budgetPaymentsWindowBlocks = 100;
-//
-//        DIP0001BlockHeight = 782208;
-//
-//        fulfilledRequestExpireTime = 60*60;
-//        masternodeMinimumConfirmations = 15;
-//        superblockStartBlock = 614820;
-//        superblockCycle = 16616;
-//        nGovernanceMinQuorum = 10;
-//        nGovernanceFilterElements = 20000;
-//
-//        powDGWHeight = 34140;
-//        powKGWHeight = 15200;
-//        powAllowMinimumDifficulty = false;
-//        powNoRetargeting = false;
-//
-//        instantSendConfirmationsRequired = 6;
-//        instantSendKeepLock = 24;
-//
-//        DIP0003BlockHeight = 1028160;
-//        deterministicMasternodesEnabledHeight = 1047200;
-//        deterministicMasternodesEnabled = true;
-//
-//        DIP0008BlockHeight = 1088640;
-//        DIP0024BlockHeight = Integer.MAX_VALUE;
-//
-//        // long living quorum params
-//        addLLMQ(LLMQParameters.LLMQType.LLMQ_50_60);
-//        addLLMQ(LLMQParameters.LLMQType.LLMQ_400_60);
-//        addLLMQ(LLMQParameters.LLMQType.LLMQ_400_85);
-//        addLLMQ(LLMQParameters.LLMQType.LLMQ_100_67);
-//        addLLMQ(LLMQParameters.LLMQType.LLMQ_60_75);
-//        llmqChainLocks = LLMQParameters.LLMQType.LLMQ_400_60;
-//        llmqForInstantSend = LLMQParameters.LLMQType.LLMQ_50_60;
-//        llmqTypePlatform = LLMQParameters.LLMQType.LLMQ_100_67;
-//        llmqTypeDIP0024InstantSend = LLMQParameters.LLMQType.LLMQ_60_75;
-//        llmqTypeMnhf = LLMQParameters.LLMQType.LLMQ_400_85;
-//
-//        BIP34Height = 951;    // 000001f35e70f7c5705f64c6c5cc3dea9449e74d5b5c7cf74dad1bcca14a8012
-//        BIP65Height = 619382; // 00000000000076d8fcea02ec0963de4abfd01e771fec0863f960c2c64fe6f357
-//        BIP66Height = 245817;
-//
-//        coinType = 5;
     }
 
     private static DashMainNetParams instance;
@@ -370,46 +282,4 @@ public class DashMainNetParams extends AbstractBitcoinNetParams {
         return PAYMENT_PROTOCOL_ID_MAINNET;
     }
 
-//    @Override
-//    protected void verifyDifficulty(StoredBlock storedPrev, Block nextBlock, BigInteger newTarget) {
-//
-//        long newTargetCompact = calculateNextDifficulty(storedPrev, nextBlock, newTarget);
-//        long receivedTargetCompact = nextBlock.getDifficultyTarget();
-//        int height = storedPrev.getHeight() + 1;
-//
-//        // On mainnet before block 68589: incorrect proof of work (DGW pre-fork)
-//        // see ContextualCheckBlockHeader in src/validation.cpp in Core repo (dashpay/dash)
-//        String msg = "Network provided difficulty bits do not match what was calculated: " +
-//                Long.toHexString(newTargetCompact) + " vs " + Long.toHexString(receivedTargetCompact);
-//        if (height <= 68589) {
-//            double n1 = convertBitsToDouble(receivedTargetCompact);
-//            double n2 = convertBitsToDouble(newTargetCompact);
-//
-//            if (java.lang.Math.abs(n1 - n2) > n1 * 0.5 )
-//                throw new VerificationException(msg);
-//        } else {
-//            if (newTargetCompact != receivedTargetCompact)
-//                throw new VerificationException(msg);
-//        }
-//    }
-
-//    static double convertBitsToDouble(long nBits) {
-//        long nShift = (nBits >> 24) & 0xff;
-//
-//        double dDiff =
-//                (double)0x0000ffff / (double)(nBits & 0x00ffffff);
-//
-//        while (nShift < 29)
-//        {
-//            dDiff *= 256.0;
-//            nShift++;
-//        }
-//        while (nShift > 29)
-//        {
-//            dDiff /= 256.0;
-//            nShift--;
-//        }
-//
-//        return dDiff;
-//    }
 }
