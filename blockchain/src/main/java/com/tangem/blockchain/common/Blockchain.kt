@@ -8,6 +8,7 @@ import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressType
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
@@ -50,6 +51,9 @@ enum class Blockchain(
     Fantom("FTM", "FTM", "Fantom"),
     FantomTestnet("FTM/test", "FTM", "Fantom Testnet"),
     Litecoin("LTC", "LTC", "Litecoin"),
+    Polkadot("Polkadot", "DOT", "Polkadot"),
+    PolkadotTestnet("Polkadot", "WND", "Polkadot Westend Testnet"),
+    Kusama("Kusama", "KSM", "Kusama"),
     Polygon("POLYGON", "MATIC", "Polygon"),
     PolygonTestnet("POLYGON/test", "MATIC", "Polygon Testnet"),
     RSK("RSK", "RBTC", "RSK"),
@@ -67,15 +71,21 @@ enum class Blockchain(
     ;
 
     fun decimals(): Int = when (this) {
+        Unknown -> 0
+        Cardano, CardanoShelley,
+        XRP,
+        Tezos,
+        Tron, TronTestnet -> 6
+        Stellar, StellarTestnet -> 7
         Bitcoin, BitcoinTestnet,
         BitcoinCash, BitcoinCashTestnet,
         Binance, BinanceTestnet,
-        Litecoin, Ducatus, Dogecoin,
-        Dash, DashTestNet
-        -> 8
-        Cardano, CardanoShelley,
-        XRP, Tezos,
-        Tron, TronTestnet -> 6
+        Litecoin,
+        Ducatus,
+        Dogecoin -> 8
+        Solana, SolanaTestnet -> 9
+        Polkadot -> 10
+        PolkadotTestnet, Kusama -> 12
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet,
         EthereumClassic, EthereumClassicTestnet,
@@ -83,11 +93,8 @@ enum class Blockchain(
         BSC, BSCTestnet,
         Polygon, PolygonTestnet,
         Avalanche, AvalancheTestnet,
-        Fantom, FantomTestnet,
+        Fantom, FantomTestnet -> 18
         Gnosis -> 18
-        Stellar, StellarTestnet -> 7
-        Solana, SolanaTestnet -> 9
-        Unknown -> 0
     }
 
     fun makeAddresses(
@@ -117,6 +124,7 @@ enum class Blockchain(
         XRP -> XrpAddressService()
         Binance -> BinanceAddressService()
         BinanceTestnet -> BinanceAddressService(true)
+        Polkadot, PolkadotTestnet, Kusama -> PolkadotAddressService(this)
         Stellar, StellarTestnet -> StellarAddressService()
         Solana, SolanaTestnet -> SolanaAddressService()
         Tezos -> TezosAddressService()
@@ -150,10 +158,11 @@ enum class Blockchain(
         BitcoinTestnet -> "https://www.blockchain.com/btc-testnet/address/$address"
         BitcoinCash -> "https://www.blockchain.com/bch/address/$address"
         BitcoinCashTestnet -> "https://www.blockchain.com/bch-testnet/address/$address"
-        Litecoin -> "https://blockchair.com/litecoin/address/$address"
+        BSC -> "https://bscscan.com/address/$address"
+        BSCTestnet -> "https://testnet.bscscan.com/address/$address"
+        Cardano, CardanoShelley -> "https://explorer.cardano.org/en/address.html?address=$address"
         Dogecoin -> "https://blockchair.com/dogecoin/address/$address"
         Ducatus -> "https://insight.ducatus.io/#/DUC/mainnet/address/$address"
-        Cardano, CardanoShelley -> "https://explorer.cardano.org/en/address.html?address=$address"
         Ethereum -> if (tokenContractAddress == null) {
             "https://etherscan.io/address/$address"
         } else {
@@ -168,6 +177,12 @@ enum class Blockchain(
         EthereumClassicTestnet -> "https://blockscout.com/etc/kotti/address/$address/transactions"
         Fantom -> "https://ftmscan.com/address/$address"
         FantomTestnet -> "https://testnet.ftmscan.com/address/$address"
+        Litecoin -> "https://blockchair.com/litecoin/address/$address"
+        Polkadot -> "https://polkadot.subscan.io/account/$address"
+        PolkadotTestnet -> "https://westend.subscan.io/account/$address"
+        Kusama -> "https://kusama.subscan.io/account/$address"
+        Polygon -> "https://polygonscan.com/address/$address"
+        PolygonTestnet -> "https://explorer-mumbai.maticvigil.com/address/$address"
         RSK -> {
             var url = "https://explorer.rsk.co/address/$address"
             if (tokenContractAddress != null) {
@@ -175,18 +190,14 @@ enum class Blockchain(
             }
             url
         }
-        BSC -> "https://bscscan.com/address/$address"
-        BSCTestnet -> "https://testnet.bscscan.com/address/$address"
-        Polygon -> "https://polygonscan.com/address/$address"
-        PolygonTestnet -> "https://explorer-mumbai.maticvigil.com/address/$address"
         Stellar -> "https://stellar.expert/explorer/public/account/$address"
         StellarTestnet -> "https://stellar.expert/explorer/testnet/account/$address"
         Solana -> "https://explorer.solana.com/address/$address"
         SolanaTestnet -> "https://explorer.solana.com/address/$address/?cluster=devnet"
-        XRP -> "https://xrpscan.com/account/$address"
         Tezos -> "https://tezblock.io/account/$address"
         Tron -> "https://tronscan.org/#/address/$address"
         TronTestnet -> "https://nile.tronscan.org/#/address/$address"
+        XRP -> "https://xrpscan.com/account/$address"
         Gnosis -> "https://blockscout.com/xdai/mainnet/address/$address"
         Dash -> "http://faucet.test.dash.crowdnode.io/$address"
         DashTestNet -> "https://blockexplorer.one/dash/$address"
@@ -204,6 +215,7 @@ enum class Blockchain(
             BSCTestnet -> "https://testnet.binance.org/faucet-smart"
             FantomTestnet -> "https://faucet.fantom.network"
             PolygonTestnet -> "https://faucet.matic.network"
+            PolkadotTestnet -> "https://app.element.io/#/room/#westend_faucet:matrix.org"
             StellarTestnet -> "https://laboratory.stellar.org/#account-creator?network=test"
             SolanaTestnet -> "https://solfaucet.com/"
             TronTestnet -> "https://nileex.io/join/getJoinPage"
@@ -231,20 +243,11 @@ enum class Blockchain(
             BSC, BSCTestnet -> BSCTestnet
             Fantom, FantomTestnet -> FantomTestnet
             Polygon, PolygonTestnet -> PolygonTestnet
+            Polkadot, PolkadotTestnet -> PolkadotTestnet
             Stellar, StellarTestnet -> StellarTestnet
             Solana, SolanaTestnet -> SolanaTestnet
             Tron, TronTestnet -> TronTestnet
-            Dash, DashTestNet -> DashTestNet
-            Litecoin -> null
-            Dogecoin -> null
-            Ducatus -> null
-            RSK -> null
-            Cardano -> null
-            CardanoShelley -> null
-            XRP -> null
-            Tezos -> null
-            Gnosis -> null
-            Unknown -> null
+            else -> null
         }
     }
 
@@ -270,7 +273,8 @@ enum class Blockchain(
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Cardano,
-            CardanoShelley -> listOf(EllipticCurve.Ed25519)
+            CardanoShelley,
+            Polkadot, PolkadotTestnet, Kusama -> listOf(EllipticCurve.Ed25519)
         }
     }
 
@@ -360,6 +364,8 @@ enum class Blockchain(
             XRP -> 144
             BitcoinCash -> 145
             Stellar -> 148
+            Polkadot -> 354
+            Kusama -> 434
             Solana -> 501
             Binance -> 714
             Polygon -> 966
@@ -386,7 +392,8 @@ enum class Blockchain(
         EthereumClassic, EthereumClassicTestnet,
         RSK,
         Solana, SolanaTestnet,
-        Tron, TronTestnet, Gnosis -> true
+        Tron, TronTestnet,
+        Gnosis -> true
         else -> false
     }
 
