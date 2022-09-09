@@ -24,20 +24,22 @@ class IconsUtil {
 
         private fun Blockchain.getPath(): String? = when (this) {
             Blockchain.Avalanche, Blockchain.AvalancheTestnet -> "avalanchec"
+            Blockchain.Binance, Blockchain.BinanceTestnet -> "binance"
             Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> "bitcoin"
             Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet -> "bitcoincash"
-            Blockchain.Litecoin -> "litecoin"
+            Blockchain.BSC, Blockchain.BSCTestnet -> "smartchain"
+            Blockchain.Cardano, Blockchain.CardanoShelley -> "cardano"
             Blockchain.Dogecoin -> "doge"
             Blockchain.Ethereum, Blockchain.EthereumTestnet -> "ethereum"
-            Blockchain.BSC, Blockchain.BSCTestnet -> "smartchain"
-            Blockchain.Polygon, Blockchain.PolygonTestnet -> "polygon"
             Blockchain.Fantom, Blockchain.FantomTestnet -> "fantom"
-            Blockchain.Cardano, Blockchain.CardanoShelley -> "cardano"
-            Blockchain.XRP -> "xrp"
-            Blockchain.Binance, Blockchain.BinanceTestnet -> "binance"
-            Blockchain.Stellar, Blockchain.StellarTestnet -> "stellar"
+            Blockchain.Litecoin -> "litecoin"
+            Blockchain.Polkadot, Blockchain.PolkadotTestnet -> "polkadot"
+            Blockchain.Kusama -> "kusama"
+            Blockchain.Polygon, Blockchain.PolygonTestnet -> "polygon"
             Blockchain.Solana, Blockchain.SolanaTestnet -> "solana"
+            Blockchain.Stellar, Blockchain.StellarTestnet -> "stellar"
             Blockchain.Tezos -> "tezos"
+            Blockchain.XRP -> "xrp"
             else -> null
         }
 
@@ -45,8 +47,8 @@ class IconsUtil {
             val path = token.contractAddress
 
             return when (blockchain) {
-                Blockchain.Ethereum -> Address(path).withERC55Checksum().hex
                 Blockchain.Binance -> path.toUpperCase(Locale.ROOT)
+                Blockchain.Ethereum -> Address(path).withERC55Checksum().hex
                 else -> path
             }
         }
