@@ -22,7 +22,7 @@ sealed class BlockchainSdkError(
 
     class SendException(val blockchain: Blockchain, message: String) : BlockchainSdkError(1, message)
     object AccountNotFound : BlockchainSdkError(2, "Account not found")
-    class CreateAccountUnderfunded(val minReserve: Amount) : BlockchainSdkError(3)
+    class CreateAccountUnderfunded(val blockchain: Blockchain, val minReserve: Amount) : BlockchainSdkError(3)
     object FailedToLoadFee : BlockchainSdkError(4, "Failed to load fee")
     class CustomError(message: String) : BlockchainSdkError(5, message)
 
