@@ -477,11 +477,6 @@ class WalletManagerFactory(
                     BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain, addresses),
                     makeBitcoinNetworkService(blockchain)
                 )
-//                DashWalletManager(
-//                    wallet,
-//                    DashTransactionBuilder(publicKey.blockchainKey, blockchain, addresses),
-//                    makeBitcoinNetworkService(blockchain)
-//                )
             }
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
         }
