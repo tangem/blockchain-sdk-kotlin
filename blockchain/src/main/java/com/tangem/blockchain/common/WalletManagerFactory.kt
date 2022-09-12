@@ -262,7 +262,6 @@ class WalletManagerFactory(
                         EthereumJsonRpcProvider.infura(API_INFURA, blockchainSdkConfig.infuraProjectId)
                     )
                 }
-                jsonRpcProviders.add(EthereumJsonRpcProvider(API_TANGEM_ETHEREUM))
 
                 val blockchairEthNetworkProvider = BlockchairEthNetworkProvider(
                     apiKey = blockchainSdkConfig.blockchairApiKey,
