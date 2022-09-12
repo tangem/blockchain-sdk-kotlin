@@ -66,7 +66,7 @@ enum class Blockchain(
     TronTestnet("TRON/test", "TRX", "Tron Testnet"),
     XRP("XRP", "XRP", "XRP Ledger"),
     Gnosis("GNO", "xDAI", "Gnosis Chain"),
-    Dash("DASH","DASH","Dash"),
+    Dash("DASH", "DASH", "Dash"),
     DashTestNet("DASH/test","DASH","Dash Testnet"),
     ;
 
@@ -201,8 +201,8 @@ enum class Blockchain(
         TronTestnet -> "https://nile.tronscan.org/#/address/$address"
         XRP -> "https://xrpscan.com/account/$address"
         Gnosis -> "https://blockscout.com/xdai/mainnet/address/$address"
-        Dash -> "http://faucet.test.dash.crowdnode.io/$address"
-        DashTestNet -> "https://blockexplorer.one/dash/$address"
+        Dash -> "https://blockexplorer.one/dash/mainnet/address/$address"
+        DashTestNet -> "https://blockexplorer.one/dash/testnet/address/$address"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -249,6 +249,7 @@ enum class Blockchain(
             Stellar, StellarTestnet -> StellarTestnet
             Solana, SolanaTestnet -> SolanaTestnet
             Tron, TronTestnet -> TronTestnet
+            Dash, DashTestNet -> DashTestNet
             else -> null
         }
     }
@@ -357,9 +358,10 @@ enum class Blockchain(
         if (style == DerivationStyle.NEW && this.isEvm()) return ethCoinType
 
         return when (this) {
-            Bitcoin, Ducatus, Dash -> 0
+            Bitcoin, Ducatus -> 0
             Litecoin -> 2
             Dogecoin -> 3
+            Dash -> 5
             Ethereum -> ethCoinType
             EthereumClassic -> 61
             RSK -> 137
