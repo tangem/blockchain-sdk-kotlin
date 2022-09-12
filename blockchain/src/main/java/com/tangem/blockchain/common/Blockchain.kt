@@ -67,7 +67,7 @@ enum class Blockchain(
     XRP("XRP", "XRP", "XRP Ledger"),
     Gnosis("GNO", "xDAI", "Gnosis Chain"),
     Dash("DASH", "DASH", "Dash"),
-    DashTestNet("DASH/test","DASH","Dash Testnet"),
+    DashTestNet("DASH/test", "DASH", "Dash Testnet"),
     ;
 
     fun decimals(): Int = when (this) {
