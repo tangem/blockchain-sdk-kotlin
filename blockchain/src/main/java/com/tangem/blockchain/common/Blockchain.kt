@@ -67,7 +67,6 @@ enum class Blockchain(
     XRP("XRP", "XRP", "XRP Ledger"),
     Gnosis("GNO", "xDAI", "Gnosis Chain"),
     Dash("DASH", "DASH", "Dash"),
-    DashTestNet("DASH/test", "DASH", "Dash Testnet"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -83,8 +82,7 @@ enum class Blockchain(
         Litecoin,
         Ducatus,
         Dogecoin,
-        Dash,
-        DashTestNet-> 8
+        Dash -> 8
         Solana, SolanaTestnet -> 9
         Polkadot -> 10
         PolkadotTestnet, Kusama -> 12
@@ -115,7 +113,7 @@ enum class Blockchain(
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
     private fun getAddressService(): AddressService = when (this) {
-        Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus, Dash, DashTestNet -> BitcoinAddressService(this)
+        Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus, Dash -> BitcoinAddressService(this)
         BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService()
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
@@ -202,7 +200,6 @@ enum class Blockchain(
         XRP -> "https://xrpscan.com/account/$address"
         Gnosis -> "https://blockscout.com/xdai/mainnet/address/$address"
         Dash -> "https://blockexplorer.one/dash/mainnet/address/$address"
-        DashTestNet -> "https://blockexplorer.one/dash/testnet/address/$address"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -249,7 +246,6 @@ enum class Blockchain(
             Stellar, StellarTestnet -> StellarTestnet
             Solana, SolanaTestnet -> SolanaTestnet
             Tron, TronTestnet -> TronTestnet
-            Dash, DashTestNet -> DashTestNet
             else -> null
         }
     }
@@ -272,7 +268,7 @@ enum class Blockchain(
             RSK,
             Dogecoin,
             Tron, TronTestnet,
-            Gnosis, Dash, DashTestNet -> listOf(EllipticCurve.Secp256k1)
+            Gnosis, Dash -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Cardano,
