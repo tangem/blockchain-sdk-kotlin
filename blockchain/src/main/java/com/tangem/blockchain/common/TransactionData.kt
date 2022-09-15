@@ -20,13 +20,14 @@ enum class TransactionStatus { Confirmed, Unconfirmed }
 
 enum class TransactionError { // TODO: add address validation?
     AmountExceedsBalance,
+    AmountLowerMinimalBalance,
     FeeExceedsBalance,
     TotalExceedsBalance,
     InvalidAmountValue,
     InvalidFeeValue,
     DustAmount,
     DustChange,
-    TezosSendAll
+    TezosSendAll,
 }
 
 enum class TransactionDirection { Incoming, Outgoing }
