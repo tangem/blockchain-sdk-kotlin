@@ -66,6 +66,8 @@ enum class Blockchain(
     TronTestnet("TRON/test", "TRX", "Tron Testnet"),
     XRP("XRP", "XRP", "XRP Ledger"),
     Gnosis("GNO", "xDAI", "Gnosis Chain"),
+    Optimism("optimism", "ETH", "Optimism Chain"),
+    OptimismTestnet("optimism", "ETH", "Optimism Testnet"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -87,7 +89,7 @@ enum class Blockchain(
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet,
         EthereumClassic, EthereumClassicTestnet,
-        RSK,
+        RSK, Optimism, OptimismTestnet,
         BSC, BSCTestnet,
         Polygon, PolygonTestnet,
         Avalanche, AvalancheTestnet,
@@ -116,7 +118,7 @@ enum class Blockchain(
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
         BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
-        Fantom, FantomTestnet, Gnosis -> EthereumAddressService()
+        Fantom, FantomTestnet, Gnosis, Optimism, OptimismTestnet -> EthereumAddressService()
         RSK -> RskAddressService()
         Cardano, CardanoShelley -> CardanoAddressService(this)
         XRP -> XrpAddressService()
@@ -197,6 +199,8 @@ enum class Blockchain(
         TronTestnet -> "https://nile.tronscan.org/#/address/$address"
         XRP -> "https://xrpscan.com/account/$address"
         Gnosis -> "https://blockscout.com/xdai/mainnet/address/$address"
+        Optimism -> "https://optimistic.etherscan.io/address/$address"
+        OptimismTestnet -> "https://blockscout.com/optimism/goerli/address/$address"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -243,6 +247,7 @@ enum class Blockchain(
             Stellar, StellarTestnet -> StellarTestnet
             Solana, SolanaTestnet -> SolanaTestnet
             Tron, TronTestnet -> TronTestnet
+            Optimism, OptimismTestnet -> OptimismTestnet
             else -> null
         }
     }
@@ -265,7 +270,8 @@ enum class Blockchain(
             RSK,
             Dogecoin,
             Tron, TronTestnet,
-            Gnosis -> listOf(EllipticCurve.Secp256k1)
+            Gnosis,
+            Optimism, OptimismTestnet -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Cardano,
@@ -292,6 +298,7 @@ enum class Blockchain(
             Polygon -> Chain.Polygon.id
             PolygonTestnet -> Chain.PolygonTestnet.id
             Gnosis -> Chain.Gnosis.id
+            Optimism -> Chain.Optimism.id
             else -> null
         }
     }
@@ -373,6 +380,7 @@ enum class Blockchain(
             BSC -> 9006
             Tron -> 195
             Gnosis -> 700
+            Optimism -> 614
             else -> throw UnsupportedOperationException()
         }
     }
@@ -397,7 +405,7 @@ enum class Blockchain(
 
     fun isFeeApproximate(amountType: AmountType): Boolean = when (this) {
         Tron, TronTestnet -> amountType is AmountType.Token
-        Arbitrum, ArbitrumTestnet -> true
+        Arbitrum, ArbitrumTestnet, Optimism, OptimismTestnet -> true
         Fantom, FantomTestnet -> amountType is AmountType.Token
         else -> false
     }
