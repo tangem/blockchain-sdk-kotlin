@@ -20,7 +20,7 @@ enum class TransactionStatus { Confirmed, Unconfirmed }
 
 enum class TransactionError { // TODO: add address validation?
     AmountExceedsBalance,
-    AmountLowerMinimalBalance,
+    AmountLowerExistentialDeposit,
     FeeExceedsBalance,
     TotalExceedsBalance,
     InvalidAmountValue,
