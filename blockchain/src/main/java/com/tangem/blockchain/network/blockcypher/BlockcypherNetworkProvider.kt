@@ -189,6 +189,7 @@ class BlockcypherNetworkProvider(
             Blockchain.Ethereum -> "eth/"
             Blockchain.EthereumClassic -> "etc/"
             Blockchain.Dogecoin -> "doge/"
+            Blockchain.Dash -> "dash/"
             else -> throw Exception(
                 "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
             )
