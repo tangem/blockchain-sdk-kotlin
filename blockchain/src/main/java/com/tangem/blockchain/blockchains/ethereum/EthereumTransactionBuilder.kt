@@ -75,5 +75,7 @@ enum class Chain(
     Polygon(137, Blockchain.Polygon),
     PolygonTestnet(80001, Blockchain.PolygonTestnet),
     Fantom(250, Blockchain.Fantom),
-    FantomTestnet(4002, Blockchain.FantomTestnet);
+    FantomTestnet(4002, Blockchain.FantomTestnet),
+    Optimism(10, Blockchain.Optimism),
+    OptimismTestnet(420, Blockchain.OptimismTestnet);
 }
