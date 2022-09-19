@@ -93,7 +93,7 @@ enum class Blockchain(
         BSC, BSCTestnet,
         Polygon, PolygonTestnet,
         Avalanche, AvalancheTestnet,
-        Fantom, FantomTestnet -> 18
+        Fantom, FantomTestnet,
         Gnosis -> 18
     }
 
@@ -253,8 +253,10 @@ enum class Blockchain(
     fun getSupportedCurves(): List<EllipticCurve> {
         return when (this) {
             Unknown -> emptyList()
-            Tezos, XRP -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
-            Arbitrum, ArbitrumTestnet, Bitcoin, BitcoinTestnet,
+            Tezos,
+            XRP -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
+            Arbitrum, ArbitrumTestnet,
+            Bitcoin, BitcoinTestnet,
             BitcoinCash, BitcoinCashTestnet,
             Binance, BinanceTestnet,
             Ethereum, EthereumTestnet,
@@ -268,7 +270,8 @@ enum class Blockchain(
             RSK,
             Dogecoin,
             Tron, TronTestnet,
-            Gnosis, Dash -> listOf(EllipticCurve.Secp256k1)
+            Gnosis,
+            Dash -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Cardano,
