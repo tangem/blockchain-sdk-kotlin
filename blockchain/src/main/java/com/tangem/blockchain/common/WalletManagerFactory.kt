@@ -470,7 +470,7 @@ class WalletManagerFactory(
                     presetTokens = tokens
                 )
             }
-            Blockchain.Dash, Blockchain.DashTestNet -> {
+            Blockchain.Dash -> {
                 BitcoinWalletManager(
                     wallet,
                     BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain, addresses),
