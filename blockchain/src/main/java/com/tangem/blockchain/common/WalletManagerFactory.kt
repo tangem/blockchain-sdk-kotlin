@@ -470,6 +470,27 @@ class WalletManagerFactory(
                     presetTokens = tokens
                 )
             }
+            Blockchain.Optimism, Blockchain.OptimismTestnet -> {
+                val jsonRpcProviders = when {
+                    blockchain.isTestnet() -> listOf(EthereumJsonRpcProvider(API_OPTIMISM_TESTNET))
+                    else -> {
+                        listOf(
+                            EthereumJsonRpcProvider(API_OPTIMISM),
+                            EthereumJsonRpcProvider(API_OPTIMISM_BLAST),
+                            EthereumJsonRpcProvider(API_OPTIMISM_ANKR, "optimism/"),
+                        )
+                    }
+                }
+                EthereumWalletManager(
+                    wallet = wallet,
+                    transactionBuilder = EthereumTransactionBuilder(
+                        walletPublicKey = publicKey.blockchainKey,
+                        blockchain = blockchain
+                    ),
+                    networkProvider = EthereumNetworkService(jsonRpcProviders),
+                    presetTokens = tokens
+                )
+            }
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
         }
     }
