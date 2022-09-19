@@ -476,7 +476,6 @@ class WalletManagerFactory(
                     EthereumJsonRpcProvider(API_OPTIMISM),
                     EthereumJsonRpcProvider(API_OPTIMISM_BLAST),
                 )
-
                 EthereumWalletManager(
                     wallet = wallet,
                     transactionBuilder = EthereumTransactionBuilder(
