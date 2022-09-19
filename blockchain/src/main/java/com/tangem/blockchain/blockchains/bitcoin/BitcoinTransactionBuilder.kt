@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
+import com.tangem.blockchain.blockchains.dash.DashMainNetParams
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
@@ -36,6 +37,7 @@ open class BitcoinTransactionBuilder(
         Blockchain.Litecoin -> LitecoinMainNetParams()
         Blockchain.Dogecoin -> DogecoinMainNetParams()
         Blockchain.Ducatus -> DucatusMainNetParams()
+        Blockchain.Dash -> DashMainNetParams()
         else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
     var unspentOutputs: List<BitcoinUnspentOutput>? = null
@@ -206,10 +208,3 @@ internal fun TransactionData.toBitcoinJTransaction(
     }
     return transaction
 }
-
-class BitcoinUnspentOutput(
-    val amount: BigDecimal,
-    val outputIndex: Long,
-    val transactionHash: ByteArray,
-    val outputScript: ByteArray
-)
