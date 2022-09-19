@@ -90,7 +90,7 @@ class PolkadotWalletManager(
 
         val remainBalance = balance.minus(totalToSend)
         if (remainBalance < getExistentialDeposit()) {
-            errors.add(TransactionError.DustChange)
+            errors.add(TransactionError.AmountLowerExistentialDeposit)
         }
         return errors
     }
