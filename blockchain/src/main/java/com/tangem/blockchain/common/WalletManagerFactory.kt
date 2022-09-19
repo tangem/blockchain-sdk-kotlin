@@ -491,6 +491,13 @@ class WalletManagerFactory(
                     presetTokens = tokens
                 )
             }
+            Blockchain.Dash -> {
+                BitcoinWalletManager(
+                    wallet,
+                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain, addresses),
+                    makeBitcoinNetworkService(blockchain)
+                )
+            }
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
         }
     }
@@ -520,7 +527,7 @@ class WalletManagerFactory(
             providers.add(BlockcypherNetworkProvider(blockchain, blockcypherTokens))
         }
         return when (blockchain) {
-            Blockchain.Bitcoin, Blockchain.BitcoinTestnet, Blockchain.Dogecoin ->
+            Blockchain.Bitcoin, Blockchain.BitcoinTestnet, Blockchain.Dogecoin, Blockchain.Dash ->
                 BitcoinNetworkService(providers)
             Blockchain.Litecoin -> LitecoinNetworkService(providers)
             else -> {
