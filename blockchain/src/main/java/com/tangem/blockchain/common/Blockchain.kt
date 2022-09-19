@@ -66,6 +66,7 @@ enum class Blockchain(
     TronTestnet("TRON/test", "TRX", "Tron Testnet"),
     XRP("XRP", "XRP", "XRP Ledger"),
     Gnosis("GNO", "xDAI", "Gnosis Chain"),
+    Dash("DASH", "DASH", "Dash"),
     Optimism("OPTIMISM", "ETH", "Optimistic Ethereum"),
     OptimismTestnet("OPTIMISM", "ETH", "Optimistic Ethereum Testnet"),
     ;
@@ -82,7 +83,8 @@ enum class Blockchain(
         Binance, BinanceTestnet,
         Litecoin,
         Ducatus,
-        Dogecoin -> 8
+        Dogecoin,
+        Dash -> 8
         Solana, SolanaTestnet -> 9
         Polkadot -> 10
         PolkadotTestnet, Kusama -> 12
@@ -90,11 +92,11 @@ enum class Blockchain(
         Ethereum, EthereumTestnet,
         EthereumClassic, EthereumClassicTestnet,
         RSK,
-        Optimism, OptimismTestnet,
         BSC, BSCTestnet,
         Polygon, PolygonTestnet,
         Avalanche, AvalancheTestnet,
-        Fantom, FantomTestnet -> 18
+        Fantom, FantomTestnet,
+        Optimism, OptimismTestnet,
         Gnosis -> 18
     }
 
@@ -114,7 +116,7 @@ enum class Blockchain(
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
     private fun getAddressService(): AddressService = when (this) {
-        Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus -> BitcoinAddressService(this)
+        Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus, Dash -> BitcoinAddressService(this)
         BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService()
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
@@ -200,6 +202,7 @@ enum class Blockchain(
         TronTestnet -> "https://nile.tronscan.org/#/address/$address"
         XRP -> "https://xrpscan.com/account/$address"
         Gnosis -> "https://blockscout.com/xdai/mainnet/address/$address"
+        Dash -> "https://blockexplorer.one/dash/mainnet/address/$address"
         Optimism -> "https://optimistic.etherscan.io/address/$address"
         OptimismTestnet -> "https://blockscout.com/optimism/goerli/address/$address"
         Unknown -> throw Exception("unsupported blockchain")
@@ -257,8 +260,10 @@ enum class Blockchain(
     fun getSupportedCurves(): List<EllipticCurve> {
         return when (this) {
             Unknown -> emptyList()
-            Tezos, XRP -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
-            Arbitrum, ArbitrumTestnet, Bitcoin, BitcoinTestnet,
+            Tezos,
+            XRP -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
+            Arbitrum, ArbitrumTestnet,
+            Bitcoin, BitcoinTestnet,
             BitcoinCash, BitcoinCashTestnet,
             Binance, BinanceTestnet,
             Ethereum, EthereumTestnet,
@@ -273,6 +278,7 @@ enum class Blockchain(
             Dogecoin,
             Tron, TronTestnet,
             Gnosis,
+            Dash,
             Optimism, OptimismTestnet -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
@@ -364,6 +370,7 @@ enum class Blockchain(
             Bitcoin, Ducatus -> 0
             Litecoin -> 2
             Dogecoin -> 3
+            Dash -> 5
             Ethereum -> ethCoinType
             EthereumClassic -> 61
             RSK -> 137
@@ -400,17 +407,18 @@ enum class Blockchain(
         RSK,
         Solana, SolanaTestnet,
         Tron, TronTestnet,
-        Optimism, OptimismTestnet,
-        Gnosis -> true
+        Gnosis,
+        Optimism, OptimismTestnet -> true
         else -> false
     }
 
     fun isEvm(): Boolean = getChainId() != null
 
     fun isFeeApproximate(amountType: AmountType): Boolean = when (this) {
+        Fantom, FantomTestnet,
         Tron, TronTestnet -> amountType is AmountType.Token
-        Arbitrum, ArbitrumTestnet, Optimism, OptimismTestnet -> true
-        Fantom, FantomTestnet -> amountType is AmountType.Token
+        Arbitrum, ArbitrumTestnet,
+        Optimism, OptimismTestnet -> true
         else -> false
     }
 
