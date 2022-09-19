@@ -470,27 +470,17 @@ class WalletManagerFactory(
                     presetTokens = tokens
                 )
             }
-            Blockchain.Optimism -> {
-                val jsonRpcProviders = listOf(
-                    EthereumJsonRpcProvider.classic(API_OPTIMISM_ANKR, "optimism/"),
-                    EthereumJsonRpcProvider(API_OPTIMISM),
-                    EthereumJsonRpcProvider(API_OPTIMISM_BLAST),
-                )
-                EthereumWalletManager(
-                    wallet = wallet,
-                    transactionBuilder = EthereumTransactionBuilder(
-                        walletPublicKey = publicKey.blockchainKey,
-                        blockchain = blockchain
-                    ),
-                    networkProvider = EthereumNetworkService(jsonRpcProviders),
-                    presetTokens = tokens
-                )
-            }
-            Blockchain.OptimismTestnet -> {
-                val jsonRpcProviders = listOf(
-                    EthereumJsonRpcProvider(API_OPTIMISM_TN),
-                )
-
+            Blockchain.Optimism, Blockchain.OptimismTestnet -> {
+                val jsonRpcProviders = when {
+                    blockchain.isTestnet() -> listOf(EthereumJsonRpcProvider(API_OPTIMISM_TESTNET))
+                    else -> {
+                        listOf(
+                            EthereumJsonRpcProvider(API_OPTIMISM),
+                            EthereumJsonRpcProvider(API_OPTIMISM_BLAST),
+                            EthereumJsonRpcProvider(API_OPTIMISM_ANKR, "optimism/"),
+                        )
+                    }
+                }
                 EthereumWalletManager(
                     wallet = wallet,
                     transactionBuilder = EthereumTransactionBuilder(
