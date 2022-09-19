@@ -397,6 +397,7 @@ enum class Blockchain(
         RSK,
         Solana, SolanaTestnet,
         Tron, TronTestnet,
+        Optimism, OptimismTestnet,
         Gnosis -> true
         else -> false
     }

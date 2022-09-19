@@ -472,9 +472,9 @@ class WalletManagerFactory(
             }
             Blockchain.Optimism -> {
                 val jsonRpcProviders = listOf(
+                    EthereumJsonRpcProvider.classic(API_OPTIMISM_ANKR, "optimism/"),
                     EthereumJsonRpcProvider(API_OPTIMISM),
                     EthereumJsonRpcProvider(API_OPTIMISM_BLAST),
-                    EthereumJsonRpcProvider(API_OPTIMISM_ANKR),
                 )
 
                 EthereumWalletManager(
