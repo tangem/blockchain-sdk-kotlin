@@ -77,5 +77,9 @@ enum class Chain(
     Fantom(250, Blockchain.Fantom),
     FantomTestnet(4002, Blockchain.FantomTestnet),
     Optimism(10, Blockchain.Optimism),
-    OptimismTestnet(420, Blockchain.OptimismTestnet);
+    OptimismTestnet(420, Blockchain.OptimismTestnet),
+    EthereumFair(513100, Blockchain.EthereumFair),
+    EthereumPow(10001, Blockchain.EthereumPow),
+    EthereumPowTestnet(10002, Blockchain.EthereumPow),
+    ;
 }
