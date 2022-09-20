@@ -72,5 +72,9 @@ enum class Chain(val id: Int) {
     Polygon(137),
     PolygonTestnet(80001),
     Fantom(250),
-    FantomTestnet(4002);
+    FantomTestnet(4002),
+    EthereumFair(513100),
+    EthereumPow(10001),
+    EthereumPowTestnet(10002),
+    ;
 }

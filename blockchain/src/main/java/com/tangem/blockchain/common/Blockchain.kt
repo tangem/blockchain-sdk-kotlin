@@ -62,6 +62,10 @@ enum class Blockchain(
     TronTestnet("TRON/test", "TRX", "Tron Testnet"),
     XRP("XRP", "XRP", "XRP Ledger"),
     Gnosis("GNO", "xDAI", "Gnosis Chain"),
+    EthereumFair("ETH-Fair", "ETF", "EthereumFair"),
+    EthereumPow("ETH-Pow", "ETHW", "EthereumPoW"),
+    EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW"),
+
     ;
 
     fun decimals(): Int = when (this) {
@@ -81,7 +85,8 @@ enum class Blockchain(
         Polygon, PolygonTestnet,
         Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet,
-        Gnosis -> 18
+        Gnosis, EthereumFair,
+        EthereumPow, EthereumPowTestnet -> 18
         Stellar, StellarTestnet -> 7
         Solana, SolanaTestnet -> 9
         Unknown -> 0
@@ -108,7 +113,8 @@ enum class Blockchain(
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
         BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
-        Fantom, FantomTestnet, Gnosis -> EthereumAddressService()
+        Fantom, FantomTestnet, Gnosis,
+        EthereumFair, EthereumPow, EthereumPowTestnet -> EthereumAddressService()
         RSK -> RskAddressService()
         Cardano, CardanoShelley -> CardanoAddressService(this)
         XRP -> XrpAddressService()
@@ -186,6 +192,9 @@ enum class Blockchain(
         Tron -> "https://tronscan.org/#/address/$address"
         TronTestnet -> "https://nile.tronscan.org/#/address/$address"
         Gnosis -> "https://blockscout.com/xdai/mainnet/address/$address"
+        EthereumFair -> "https://explorer.etherfair.org/address/$address"
+        EthereumPow -> "https://mainnet.ethwscan.com/address/$address"
+        EthereumPowTestnet -> "https://iceberg.ethwscan.com/address/$address"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -203,6 +212,7 @@ enum class Blockchain(
             StellarTestnet -> "https://laboratory.stellar.org/#account-creator?network=test"
             SolanaTestnet -> "https://solfaucet.com/"
             TronTestnet -> "https://nileex.io/join/getJoinPage"
+            EthereumPowTestnet -> "https://faucet.ethwscan.com"
             else -> null
         }
     }
@@ -240,6 +250,8 @@ enum class Blockchain(
             Tezos -> null
             Gnosis -> null
             Unknown -> null
+            EthereumPow, EthereumPowTestnet -> EthereumPowTestnet
+            else -> null
         }
     }
 
@@ -261,8 +273,9 @@ enum class Blockchain(
             RSK,
             Dogecoin,
             Tron, TronTestnet,
-            Gnosis
-            -> listOf(EllipticCurve.Secp256k1)
+            Gnosis,
+            EthereumFair,
+            EthereumPow, EthereumPowTestnet -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Cardano,
@@ -288,6 +301,9 @@ enum class Blockchain(
             Polygon -> Chain.Polygon.id
             PolygonTestnet -> Chain.PolygonTestnet.id
             Gnosis -> Chain.Gnosis.id
+            EthereumFair -> Chain.EthereumFair.id
+            EthereumPow -> Chain.EthereumPow.id
+            EthereumPowTestnet -> Chain.EthereumPowTestnet.id
             else -> null
         }
     }
@@ -351,6 +367,7 @@ enum class Blockchain(
             Litecoin -> 2
             Dogecoin -> 3
             Ethereum -> ethCoinType
+            Ethereum, EthereumPow, EthereumFair -> ethCoinType
             EthereumClassic -> 61
             RSK -> 137
             XRP -> 144
@@ -382,7 +399,10 @@ enum class Blockchain(
         EthereumClassic, EthereumClassicTestnet,
         RSK,
         Solana, SolanaTestnet,
-        Tron, TronTestnet, Gnosis -> true
+        Tron, TronTestnet,
+        Gnosis,
+        EthereumFair,
+        EthereumPow, EthereumPowTestnet -> true
         else -> false
     }
 
@@ -413,6 +433,9 @@ enum class Blockchain(
                 Chain.PolygonTestnet.id -> PolygonTestnet
                 Chain.Fantom.id -> Fantom
                 Chain.FantomTestnet.id -> FantomTestnet
+                Chain.EthereumPow.id -> EthereumPow
+                Chain.EthereumPowTestnet.id -> EthereumPowTestnet
+                Chain.EthereumFair.id -> EthereumFair
                 else -> null
             }
         }
@@ -431,7 +454,8 @@ enum class Blockchain(
                     EthereumClassicTestnet,
                     PolygonTestnet,
                     FantomTestnet,
-                    TronTestnet
+                    TronTestnet,
+                    EthereumPowTestnet
                 )
             } else {
                 listOf(
@@ -450,7 +474,9 @@ enum class Blockchain(
                     Polygon,
                     Dogecoin,
                     Fantom,
-                    Tron
+                    Tron,
+                    EthereumFair,
+                    EthereumPow
                 )
             }
         }
