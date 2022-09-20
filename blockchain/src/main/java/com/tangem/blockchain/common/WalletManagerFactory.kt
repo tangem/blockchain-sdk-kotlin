@@ -470,6 +470,32 @@ class WalletManagerFactory(
                     presetTokens = tokens
                 )
             }
+            Blockchain.EthereumFair -> {
+                val jsonRpcProviders = listOf(EthereumJsonRpcProvider(API_ETH_FAIR_RPC))
+                EthereumWalletManager(
+                    wallet = wallet,
+                    transactionBuilder = EthereumTransactionBuilder(
+                        walletPublicKey = publicKey.blockchainKey,
+                        blockchain = blockchain
+                    ),
+                    networkProvider = EthereumNetworkService(jsonRpcProviders),
+                    presetTokens = tokens
+                )
+            }
+            Blockchain.EthereumPow, Blockchain.EthereumPowTestnet -> {
+                val api = if (blockchain.isTestnet()) API_ETH_POW_TESTNET_RPC else API_ETH_POW_RPC
+                val jsonRpcProviders = listOf(EthereumJsonRpcProvider(api))
+
+                EthereumWalletManager(
+                    wallet = wallet,
+                    transactionBuilder = EthereumTransactionBuilder(
+                        walletPublicKey = publicKey.blockchainKey,
+                        blockchain = blockchain
+                    ),
+                    networkProvider = EthereumNetworkService(jsonRpcProviders),
+                    presetTokens = tokens
+                )
+            }
             Blockchain.Optimism, Blockchain.OptimismTestnet -> {
                 val jsonRpcProviders = when {
                     blockchain.isTestnet() -> listOf(EthereumJsonRpcProvider(API_OPTIMISM_TESTNET))
