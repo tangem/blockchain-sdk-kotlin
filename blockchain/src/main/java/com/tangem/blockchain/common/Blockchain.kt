@@ -69,6 +69,10 @@ enum class Blockchain(
     Dash("DASH", "DASH", "Dash"),
     Optimism("OPTIMISM", "ETH", "Optimistic Ethereum"),
     OptimismTestnet("OPTIMISM", "ETH", "Optimistic Ethereum Testnet"),
+    EthereumFair("ETH-Fair", "ETF", "EthereumFair"),
+    EthereumPow("ETH-Pow", "ETHW", "EthereumPoW"),
+    EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW"),
+
     ;
 
     fun decimals(): Int = when (this) {
@@ -96,8 +100,9 @@ enum class Blockchain(
         Polygon, PolygonTestnet,
         Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet,
+        Gnosis,
         Optimism, OptimismTestnet,
-        Gnosis -> 18
+        EthereumFair, EthereumPow, EthereumPowTestnet -> 18
     }
 
     fun makeAddresses(
@@ -107,7 +112,7 @@ enum class Blockchain(
     ): Set<Address> {
         return if (pairPublicKey != null) {
             (getAddressService() as? MultisigAddressProvider)
-                    ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()
+                ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()
         } else {
             getAddressService().makeAddresses(walletPublicKey, curve)
         }
@@ -121,7 +126,8 @@ enum class Blockchain(
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
         BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
-        Fantom, FantomTestnet, Gnosis, Optimism, OptimismTestnet -> EthereumAddressService()
+        Fantom, FantomTestnet, Gnosis, Optimism, OptimismTestnet,
+        EthereumFair, EthereumPow, EthereumPowTestnet -> EthereumAddressService()
         RSK -> RskAddressService()
         Cardano, CardanoShelley -> CardanoAddressService(this)
         XRP -> XrpAddressService()
@@ -205,6 +211,9 @@ enum class Blockchain(
         Dash -> "https://blockexplorer.one/dash/mainnet/address/$address"
         Optimism -> "https://optimistic.etherscan.io/address/$address"
         OptimismTestnet -> "https://blockscout.com/optimism/goerli/address/$address"
+        EthereumFair -> "https://explorer.etherfair.org/address/$address"
+        EthereumPow -> "https://mainnet.ethwscan.com/address/$address"
+        EthereumPowTestnet -> "https://iceberg.ethwscan.com/address/$address"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -224,6 +233,7 @@ enum class Blockchain(
             SolanaTestnet -> "https://solfaucet.com/"
             TronTestnet -> "https://nileex.io/join/getJoinPage"
             OptimismTestnet -> "https://optimismfaucet.xyz" //another one https://faucet.paradigm.xyz
+            EthereumPowTestnet -> "https://faucet.ethwscan.com"
             else -> null
         }
     }
@@ -253,6 +263,7 @@ enum class Blockchain(
             Solana, SolanaTestnet -> SolanaTestnet
             Tron, TronTestnet -> TronTestnet
             Optimism, OptimismTestnet -> OptimismTestnet
+            EthereumPow, EthereumPowTestnet -> EthereumPowTestnet
             else -> null
         }
     }
@@ -279,7 +290,8 @@ enum class Blockchain(
             Tron, TronTestnet,
             Gnosis,
             Dash,
-            Optimism, OptimismTestnet -> listOf(EllipticCurve.Secp256k1)
+            Optimism, OptimismTestnet,
+            EthereumFair, EthereumPow, EthereumPowTestnet -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Cardano,
@@ -308,6 +320,9 @@ enum class Blockchain(
             Gnosis -> Chain.Gnosis.id
             Optimism -> Chain.Optimism.id
             OptimismTestnet -> Chain.OptimismTestnet.id
+            EthereumFair -> Chain.EthereumFair.id
+            EthereumPow -> Chain.EthereumPow.id
+            EthereumPowTestnet -> Chain.EthereumPowTestnet.id
             else -> null
         }
     }
@@ -315,7 +330,7 @@ enum class Blockchain(
     fun derivationPath(style: DerivationStyle?): DerivationPath? {
         if (style == null) return null
         if (!getSupportedCurves().contains(EllipticCurve.Secp256k1) &&
-                !getSupportedCurves().contains(EllipticCurve.Ed25519)
+            !getSupportedCurves().contains(EllipticCurve.Ed25519)
         ) {
             return null
         }
@@ -371,7 +386,7 @@ enum class Blockchain(
             Litecoin -> 2
             Dogecoin -> 3
             Dash -> 5
-            Ethereum -> ethCoinType
+            Ethereum, EthereumPow, EthereumFair -> ethCoinType
             EthereumClassic -> 61
             RSK -> 137
             XRP -> 144
@@ -408,7 +423,8 @@ enum class Blockchain(
         Solana, SolanaTestnet,
         Tron, TronTestnet,
         Gnosis,
-        Optimism, OptimismTestnet -> true
+        Optimism, OptimismTestnet,
+        EthereumFair, EthereumPow, EthereumPowTestnet -> true
         else -> false
     }
 
@@ -428,23 +444,23 @@ enum class Blockchain(
         fun fromId(id: String): Blockchain = values.find { it.id == id } ?: Unknown
 
         fun fromChainId(chainId: Int): Blockchain? = Chain.values()
-                .find { it.id == chainId }?.blockchain
+            .find { it.id == chainId }?.blockchain
 
         fun fromCurve(curve: EllipticCurve): List<Blockchain> = values
-                .filter { it.getSupportedCurves().contains(curve) }
+            .filter { it.getSupportedCurves().contains(curve) }
 
         fun secp256k1Blockchains(isTestnet: Boolean): List<Blockchain> = values
-                .filter { it.isTestnet() == isTestnet }
-                .filter { it.getSupportedCurves().contains(EllipticCurve.Secp256k1) }
+            .filter { it.isTestnet() == isTestnet }
+            .filter { it.getSupportedCurves().contains(EllipticCurve.Secp256k1) }
 
         fun secp256k1OnlyBlockchains(isTestnet: Boolean): List<Blockchain> = values
-                .filter { it.isTestnet() == isTestnet }
-                .filter { it.getSupportedCurves().size == 1 }
-                .filter { it.getSupportedCurves()[0] == EllipticCurve.Secp256k1 }
+            .filter { it.isTestnet() == isTestnet }
+            .filter { it.getSupportedCurves().size == 1 }
+            .filter { it.getSupportedCurves()[0] == EllipticCurve.Secp256k1 }
 
         fun ed25519OnlyBlockchains(isTestnet: Boolean): List<Blockchain> = values
-                .filter { it.isTestnet() == isTestnet }
-                .filter { it.getSupportedCurves().size == 1 }
-                .filter { it.getSupportedCurves()[0] == EllipticCurve.Ed25519 }
+            .filter { it.isTestnet() == isTestnet }
+            .filter { it.getSupportedCurves().size == 1 }
+            .filter { it.getSupportedCurves()[0] == EllipticCurve.Ed25519 }
     }
 }
