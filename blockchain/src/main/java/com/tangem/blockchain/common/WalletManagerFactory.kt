@@ -218,11 +218,14 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.EthereumClassic -> {
-                val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
-                jsonRpcProviders.add(
-                    EthereumJsonRpcProvider.classic(API_ETHER_CLUSTER, "etc")
+                val jsonRpcProviders = listOf(
+                    EthereumJsonRpcProvider.classic(API_ETH_CLASSIC_CLUSTER, "etc"),
+                    EthereumJsonRpcProvider(API_ETH_CLASSIC_BLOCKSCOUT),
+                    EthereumJsonRpcProvider(API_ETH_CLASSIC_ETCDESKTOP),
+                    EthereumJsonRpcProvider(API_ETH_CLASSIC_MYTOKEN),
+                    EthereumJsonRpcProvider(API_ETH_CLASSIC_BESU),
+                    EthereumJsonRpcProvider(API_ETH_CLASSIC_GETH),
                 )
-
                 val blockchairEthNetworkProvider = BlockchairEthNetworkProvider(
                     apiKey = blockchainSdkConfig.blockchairApiKey,
                     authorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
@@ -245,7 +248,7 @@ class WalletManagerFactory(
             }
             Blockchain.EthereumClassicTestnet -> {
                 val networkService = EthereumNetworkService(listOf(
-                    EthereumJsonRpcProvider(API_ETHER_CLUSTER, "kotti")
+                    EthereumJsonRpcProvider(API_ETH_CLASSIC_CLUSTER, "kotti")
                 ))
 
                 EthereumWalletManager(
