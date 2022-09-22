@@ -470,6 +470,21 @@ class WalletManagerFactory(
                     presetTokens = tokens
                 )
             }
+            Blockchain.SaltPay -> {
+                val jsonRpcProviders = listOf(
+                    EthereumJsonRpcProvider(API_SALTPAY),
+                )
+
+                EthereumWalletManager(
+                    wallet = wallet,
+                    transactionBuilder = EthereumTransactionBuilder(
+                        walletPublicKey = publicKey.blockchainKey,
+                        blockchain = blockchain
+                    ),
+                    networkProvider = EthereumNetworkService(jsonRpcProviders),
+                    presetTokens = tokens
+                )
+            }
             Blockchain.EthereumFair -> {
                 val jsonRpcProviders = listOf(EthereumJsonRpcProvider(API_ETH_FAIR_RPC))
                 EthereumWalletManager(

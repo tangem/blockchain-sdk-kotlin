@@ -72,7 +72,7 @@ enum class Blockchain(
     EthereumFair("ETH-Fair", "ETF", "EthereumFair"),
     EthereumPow("ETH-Pow", "ETHW", "EthereumPoW"),
     EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW"),
-
+    SaltPay("GNO-SP", "xDAI", "SaltPay Gnosis"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -102,7 +102,8 @@ enum class Blockchain(
         Fantom, FantomTestnet,
         Gnosis,
         Optimism, OptimismTestnet,
-        EthereumFair, EthereumPow, EthereumPowTestnet -> 18
+        EthereumFair, EthereumPow, EthereumPowTestnet,
+        SaltPay -> 18
     }
 
     fun makeAddresses(
@@ -127,7 +128,7 @@ enum class Blockchain(
         Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
         BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet, Gnosis, Optimism, OptimismTestnet,
-        EthereumFair, EthereumPow, EthereumPowTestnet -> EthereumAddressService()
+        EthereumFair, EthereumPow, EthereumPowTestnet, SaltPay -> EthereumAddressService()
         RSK -> RskAddressService()
         Cardano, CardanoShelley -> CardanoAddressService(this)
         XRP -> XrpAddressService()
@@ -214,6 +215,7 @@ enum class Blockchain(
         EthereumFair -> "https://explorer.etherfair.org/address/$address"
         EthereumPow -> "https://mainnet.ethwscan.com/address/$address"
         EthereumPowTestnet -> "https://iceberg.ethwscan.com/address/$address"
+        SaltPay -> "https://blockscout.com/xdai/optimism/address/$address"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -291,7 +293,8 @@ enum class Blockchain(
             Gnosis,
             Dash,
             Optimism, OptimismTestnet,
-            EthereumFair, EthereumPow, EthereumPowTestnet -> listOf(EllipticCurve.Secp256k1)
+            EthereumFair, EthereumPow, EthereumPowTestnet,
+            SaltPay -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Cardano,
@@ -323,6 +326,7 @@ enum class Blockchain(
             EthereumFair -> Chain.EthereumFair.id
             EthereumPow -> Chain.EthereumPow.id
             EthereumPowTestnet -> Chain.EthereumPowTestnet.id
+            SaltPay -> Chain.SaltPay.id
             else -> null
         }
     }
@@ -405,6 +409,7 @@ enum class Blockchain(
             BSC -> 9006
             Tron -> 195
             Gnosis -> 700
+            SaltPay -> 700
             Optimism -> 614
             else -> throw UnsupportedOperationException()
         }
@@ -424,7 +429,7 @@ enum class Blockchain(
         Tron, TronTestnet,
         Gnosis,
         Optimism, OptimismTestnet,
-        EthereumFair, EthereumPow, EthereumPowTestnet -> true
+        EthereumFair, EthereumPow, EthereumPowTestnet, SaltPay -> true
         else -> false
     }
 
