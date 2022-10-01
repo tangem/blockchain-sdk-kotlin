@@ -84,6 +84,11 @@ class BlockchainDemoActivity : AppCompatActivity() {
 
     private fun initViews() = with(binding) {
         btnScan.setOnClickListener { scan() }
+        containerSelectWalletWithBlockchain.tvBlockchainAddress.setOnLongClickListener {
+            containerSelectWalletWithBlockchain.tvBlockchainAddress.copyTextToClipboard()
+            showToast("Address was copied")
+            return@setOnLongClickListener true
+        }
         containerRecipientAddressFee.btnPasteRecipientAddres.setOnClickListener {
             containerRecipientAddressFee.tilEtRecipientAddress.setTextFromClipboard()
         }
@@ -98,7 +103,11 @@ class BlockchainDemoActivity : AppCompatActivity() {
         containerScanCard.root.show()
     }
 
-    private fun resetWalletValues() = with(binding) {
+    private fun resetWalletAddress() = with(binding) {
+        containerSelectWalletWithBlockchain.tvBlockchainAddress.text = ""
+    }
+
+    private fun resetRecipientAddressFeeValues() = with(binding) {
         containerRecipientAddressFee.tvBalance.text = ""
         containerRecipientAddressFee.tvFeeMin.text = ""
         containerRecipientAddressFee.tvFeeMax.text = ""
@@ -106,12 +115,22 @@ class BlockchainDemoActivity : AppCompatActivity() {
         containerRecipientAddressFee.tilEtSumToSend.setText("")
     }
 
+    private fun hideRecipientAddressFeeValues() = with(binding) {
+        containerRecipientAddressFee.root.hide()
+    }
+
     private fun scan() {
         tangemSdk.startSessionWithRunnable(ScanCardAndDerive(getTestedBlockchains())) { result ->
             when (result) {
                 is CompletionResult.Success -> {
                     scanResponse = result.data
-                    initWalletsBlockchainContainer()
+                    scope.launch(Dispatchers.Main) {
+                        resetWalletAddress()
+                        hideRecipientAddressFeeValues()
+                        resetRecipientAddressFeeValues()
+                        initWalletsBlockchainContainer()
+                    }
+
                 }
                 is CompletionResult.Failure -> {
                     when (result.error) {
@@ -128,6 +147,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
         fun initSpBlockchain(wallet: CardWallet) = with(containerSelectWalletWithBlockchain) {
             val supportedBlockchains = getTestedBlockchains()
                     .filter { it.getSupportedCurves()[0] == wallet.curve }
+                    .filter { it.isTestnet() == scanResponse.card.isTestCard }
 
             val blockchainsAdapter = ArrayAdapter(
                 this@BlockchainDemoActivity,
@@ -143,8 +163,9 @@ class BlockchainDemoActivity : AppCompatActivity() {
 
         fun initBtnLoadWallet() {
             containerSelectWalletWithBlockchain.btnLoadWallet.setOnClickListener {
-                containerRecipientAddressFee.root.hide()
-                resetWalletValues()
+                resetWalletAddress()
+                hideRecipientAddressFeeValues()
+                resetRecipientAddressFeeValues()
                 loadWallet(
                     onSuccess = {
                         containerRecipientAddressFee.root.show() { content.beginDelayedTransition() }
@@ -154,7 +175,6 @@ class BlockchainDemoActivity : AppCompatActivity() {
                 )
             }
         }
-        scope.launch(Dispatchers.Main) {
             content.beginDelayedTransition()
             containerScanCard.root.hide()
             containerSelectWalletWithBlockchain.root.show()
@@ -179,15 +199,21 @@ class BlockchainDemoActivity : AppCompatActivity() {
                 initSpBlockchain(selectedWallet)
                 initBtnLoadWallet()
             }
-        }
     }
 
     private fun loadWallet(onSuccess: () -> Unit, onFailure: (BlockchainSdkError) -> Unit) = with(binding) {
-        walletManager = WalletManagerFactory().makeWalletManagerForApp(
-            scanResponse = scanResponse,
-            blockchain = Blockchain.fromId(selectedBlockchain.id),
-            derivationParams = scanResponse.card.derivationParams(null)
-        )!!
+        containerSelectWalletWithBlockchain.tvBlockchainAddress.text = ""
+        try {
+            walletManager = WalletManagerFactory().makeWalletManagerForApp(
+                    scanResponse = scanResponse,
+                    blockchain = Blockchain.fromId(selectedBlockchain.id),
+                    derivationParams = scanResponse.card.derivationParams(null)
+            )!!
+        }catch (ex: Exception) {
+            showToast("WalletManager exception: ${ex.localizedMessage ?: "unknown"}")
+            return@with
+        }
+
         containerSelectWalletWithBlockchain.tvBlockchainAddress.text = walletManager.wallet.address
 
         scope.launch {
