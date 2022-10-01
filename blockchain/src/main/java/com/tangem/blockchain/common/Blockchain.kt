@@ -72,7 +72,7 @@ enum class Blockchain(
     EthereumFair("ETH-Fair", "ETF", "EthereumFair"),
     EthereumPow("ETH-Pow", "ETHW", "EthereumPoW"),
     EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW"),
-    SaltPay("GNO-SP", "xDAI", "SaltPay Gnosis"),
+    SaltPay("WXDAI", "WxDAI", "SaltPay"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -408,8 +408,7 @@ enum class Blockchain(
             Arbitrum -> 9001
             BSC -> 9006
             Tron -> 195
-            Gnosis -> 700
-            SaltPay -> 700
+            Gnosis, SaltPay -> 700
             Optimism -> 614
             else -> throw UnsupportedOperationException()
         }
