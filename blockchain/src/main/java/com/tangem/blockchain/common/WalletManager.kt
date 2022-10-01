@@ -13,6 +13,9 @@ abstract class WalletManager(
     val cardTokens: MutableSet<Token> = mutableSetOf(),
 ) {
 
+    var outputsCount: Int? = null
+        internal set
+
     abstract val currentHost: String
 
     open val dustValue: BigDecimal? = null

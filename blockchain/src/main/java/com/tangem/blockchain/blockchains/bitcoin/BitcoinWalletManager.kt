@@ -82,6 +82,8 @@ open class BitcoinWalletManager(
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
         wallet.amounts[AmountType.Coin]?.value = response.balance
         transactionBuilder.unspentOutputs = response.unspentOutputs
+        outputsCount = response.unspentOutputs.size
+
         if (response.recentTransactions.isNotEmpty()) {
             updateRecentTransactionsBasic(response.recentTransactions)
         } else {
