@@ -4,7 +4,9 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
+import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairToken
+import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
@@ -12,8 +14,8 @@ import java.math.BigInteger
 
 class EthereumNetworkService(
     jsonRpcProviders: List<EthereumJsonRpcProvider>,
-//    private val blockcypherNetworkProvider: BlockcypherNetworkProvider? = null,
-//    private val blockchairEthNetworkProvider: BlockchairEthNetworkProvider? = null,
+    private val blockcypherNetworkProvider: BlockcypherNetworkProvider? = null,
+    private val blockchairEthNetworkProvider: BlockchairEthNetworkProvider? = null,
 ) : EthereumNetworkProvider {
 
     private val multiJsonRpcProvider = MultiNetworkProvider(jsonRpcProviders)
@@ -40,9 +42,9 @@ class EthereumNetworkService(
                     multiJsonRpcProvider
                         .performRequest(EthereumJsonRpcProvider::getPendingTxCount, address)
                 }
-//                val transactionsResponseDeferred = async {
-//                    blockchairEthNetworkProvider?.getTransactions(address, tokens)
-//                }
+                val transactionsResponseDeferred = async {
+                    blockchairEthNetworkProvider?.getTransactions(address, tokens)
+                }
 
                 val balance = balanceResponseDeferred.await().extractResult()
                     .parseAmount(decimals)
@@ -53,11 +55,10 @@ class EthereumNetworkService(
 
                 val tokenBalances = getTokensBalanceInternal(address, tokens)
 
-//                val recentTransactions = when (val result = transactionsResponseDeferred.await()) {
-//                    is Result.Success -> result.data
-//                    else -> emptyList()
-//                }
-                val recentTransactions = null
+                val recentTransactions = when (val result = transactionsResponseDeferred.await()) {
+                    is Result.Success -> result.data
+                    else -> emptyList()
+                }
 
                 Result.Success(
                     EthereumInfoResponse(
@@ -116,9 +117,8 @@ class EthereumNetworkService(
     }
 
     override suspend fun getSignatureCount(address: String): Result<Int> {
-//        return blockcypherNetworkProvider?.getSignatureCount(address)
-//            ?: Result.Failure(BlockchainSdkError.CustomError("No signature count provider found"))
-        return Result.Failure(BlockchainSdkError.CustomError("No signature count provider found"))
+        return blockcypherNetworkProvider?.getSignatureCount(address)
+            ?: Result.Failure(BlockchainSdkError.CustomError("No signature count provider found"))
     }
 
     override suspend fun getTokensBalance(
@@ -156,9 +156,8 @@ class EthereumNetworkService(
     }
 
     override suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>> {
-        return Result.Failure(BlockchainSdkError.CustomError("Unsupported feature"))
-//        return blockchairEthNetworkProvider?.findErc20Tokens(address)
-//            ?: Result.Failure(BlockchainSdkError.CustomError("Unsupported feature"))
+        return blockchairEthNetworkProvider?.findErc20Tokens(address)
+            ?: Result.Failure(BlockchainSdkError.CustomError("Unsupported feature"))
     }
 
     override suspend fun getGasPrice(): Result<BigInteger> {
