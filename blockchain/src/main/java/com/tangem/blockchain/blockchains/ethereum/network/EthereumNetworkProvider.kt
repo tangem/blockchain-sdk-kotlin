@@ -17,7 +17,7 @@ interface EthereumNetworkProvider {
     suspend fun getSignatureCount(address: String): Result<Int>
     suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>>
     suspend fun getGasPrice(): Result<BigInteger>
-    suspend fun getGasLimit(to: String, from: String, data: String?): Result<BigInteger>
+    suspend fun getGasLimit(to: String, from: String, value: String?, data: String?): Result<BigInteger>
     suspend fun getTokensBalance(
         address: String,
         tokens: Set<Token>
