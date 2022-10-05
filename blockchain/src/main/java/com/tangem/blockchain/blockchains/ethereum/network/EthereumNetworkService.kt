@@ -182,12 +182,12 @@ class EthereumNetworkService(
 
     }
 
-    override suspend fun getGasLimit(to: String, from: String, data: String?): Result<BigInteger> {
+    override suspend fun getGasLimit(to: String, from: String, value: String?, data: String?): Result<BigInteger> {
         return try {
             coroutineScope {
                 val gasLimit = multiJsonRpcProvider.performRequest(
                     EthereumJsonRpcProvider::getGasLimit,
-                    EthCallObject(to, from, data)
+                    EthCallObject(to, from, value, data)
                 ).extractResult().responseToBigInteger()
                 Result.Success(gasLimit)
             }
