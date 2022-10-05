@@ -10,6 +10,7 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import org.kethereum.extensions.toHexString
 import org.kethereum.keccakshortcut.keccak
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -358,24 +359,20 @@ class EthereumWalletManager(
     override suspend fun getGasLimit(amount: Amount, destination: String): Result<BigInteger> {
         var to = destination
         val from = wallet.address
+        var value: String? = null
         var data: String? = null
 
-//        when (amount.type) {
-//            is AmountType.Coin -> {
-//                value = amount.value?.movePointRight(amount.decimals)?.toBigInteger()?.toHexString()
-//            }
-//            is AmountType.Token -> {
-//                to = amount.type.token.contractAddress
-//                data = "0x" + EthereumUtils.createErc20TransferData(destination, amount).toHexString()
-//            }
-//        }
-
-        if (amount.type is AmountType.Token) {
-            to = amount.type.token.contractAddress
-            data = "0x" + EthereumUtils.createErc20TransferData(destination, amount).toHexString()
+        when (amount.type) {
+            is AmountType.Coin -> {
+                value = amount.value?.movePointRight(amount.decimals)?.toBigInteger()?.toHexString()
+            }
+            is AmountType.Token -> {
+                to = amount.type.token.contractAddress
+                data = "0x" + EthereumUtils.createErc20TransferData(destination, amount).toHexString()
+            }
         }
 
-        return networkProvider.getGasLimit(to, from, data)
+        return networkProvider.getGasLimit(to, from, value, data)
     }
 
     suspend fun getGasLimitToApprove(amount: Amount, spender: String): Result<BigInteger> {
@@ -386,7 +383,7 @@ class EthereumWalletManager(
             val from = wallet.address
             val data = "0x" + EthereumUtils.createErc20ApproveData(spender, amount).toHexString()
 
-            networkProvider.getGasLimit(to, from, data)
+            networkProvider.getGasLimit(to, from, null, data)
         }
     }
 
@@ -398,7 +395,7 @@ class EthereumWalletManager(
         val from = wallet.address
         val data = "0x" + EthereumUtils.createSetSpendLimitData(cardAddress, amount).toHexString()
 
-        return networkProvider.getGasLimit(processorContractAddress, from, data)
+        return networkProvider.getGasLimit(processorContractAddress, from, null, data)
     }
 
     suspend fun getGasLimitToInitOTP(
@@ -410,14 +407,14 @@ class EthereumWalletManager(
         val from = wallet.address
         val data = "0x" + EthereumUtils.createInitOTPData(otp, otpCounter).toHexString()
 
-        return networkProvider.getGasLimit(processorContractAddress, from, data)
+        return networkProvider.getGasLimit(processorContractAddress, from, null, data)
     }
 
     suspend fun getGasLimitToSetWallet(processorContractAddress: String, address: String): Result<BigInteger> {
         val from = wallet.address
         val data = "0x" + EthereumUtils.createSetWalletData(address).toHexString()
 
-        return networkProvider.getGasLimit(processorContractAddress, from, data)
+        return networkProvider.getGasLimit(processorContractAddress, from, null, data)
     }
 
 
