@@ -1,5 +1,6 @@
 package com.tangem.blockchain.extensions
 
+import com.squareup.moshi.JsonDataException
 import com.tangem.blockchain.common.BlockchainError
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.common.core.TangemError
@@ -67,9 +68,7 @@ fun Result<*>.isNetworkError(): Boolean {
         is Result.Success -> false
         is Result.Failure -> {
             when (this.error) {
-                is BlockchainSdkError.WrappedThrowable -> {
-                    this.error.throwable is IOException || this.error.throwable is HttpException
-                }
+                is BlockchainSdkError.WrappedThrowable -> this.error.isNetworkError()
                 else -> false
             }
         }
@@ -81,13 +80,15 @@ fun SimpleResult.isNetworkError(): Boolean {
         is SimpleResult.Success -> false
         is SimpleResult.Failure -> {
             when (this.error) {
-                is BlockchainSdkError.WrappedThrowable -> {
-                    this.error.throwable is IOException || this.error.throwable is HttpException
-                }
+                is BlockchainSdkError.WrappedThrowable -> this.error.isNetworkError()
                 else -> false
             }
         }
     }
+}
+
+private fun BlockchainSdkError.WrappedThrowable.isNetworkError(): Boolean {
+   return throwable is IOException || throwable is HttpException || throwable is JsonDataException
 }
 
 
