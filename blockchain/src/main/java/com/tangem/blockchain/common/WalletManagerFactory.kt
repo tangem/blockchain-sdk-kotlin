@@ -382,12 +382,15 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.Solana, Blockchain.SolanaTestnet -> {
-                val cluster = when (blockchain) {
-                    Blockchain.Solana -> Cluster.MAINNET
-                    else -> Cluster.DEVNET
+                val clients = when (blockchain) {
+                    Blockchain.Solana -> listOf(
+                        RpcClient("https://solana-api.projectserum.com"),
+                        RpcClient("https://rpc.ankr.com/solana"),
+                        RpcClient(Cluster.MAINNET.endpoint),
+                        )
+                    else -> listOf(RpcClient(Cluster.DEVNET.endpoint))
                 }
-                val rpcClient = RpcClient(cluster)
-                SolanaWalletManager(wallet, rpcClient)
+                SolanaWalletManager(wallet, clients)
             }
             Blockchain.Cardano, Blockchain.CardanoShelley -> {
                 val adaliteNetworkProvider = AdaliteNetworkProvider(API_ADALITE)

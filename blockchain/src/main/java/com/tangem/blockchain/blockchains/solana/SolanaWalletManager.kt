@@ -9,6 +9,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.filterWith
 import com.tangem.blockchain.extensions.successOr
+import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.guard
 import org.p2p.solanaj.core.PublicKey
@@ -26,19 +27,24 @@ import java.math.RoundingMode
  */
 class SolanaWalletManager(
     wallet: Wallet,
-    jsonRpcProvider: RpcClient
+    providers: List<RpcClient>
 ) : WalletManager(wallet), TransactionSender, RentProvider {
 
-    override val currentHost: String = jsonRpcProvider.endpoint
-
     private val accountPubK: PublicKey = PublicKey(wallet.address)
-    private val networkService = SolanaNetworkService(jsonRpcProvider)
+    private val networkServices = providers.map { SolanaNetworkService(it) }
+    private val multiNetworkProvider: MultiNetworkProvider<SolanaNetworkService> =
+        MultiNetworkProvider(networkServices)
+
+    override val currentHost: String
+        get() = multiNetworkProvider.currentProvider.host
 
     private val feeRentHolder = mutableMapOf<Amount, BigDecimal>()
     private val valueConverter = ValueConverter()
 
     override suspend fun update() {
-        val accountInfo = networkService.getMainAccountInfo(accountPubK).successOr {
+        val accountInfo = multiNetworkProvider.performRequest {
+            getMainAccountInfo(accountPubK)
+        }.successOr {
             cardTokens
             wallet.removeAllTokens()
             throw (it.error as BlockchainSdkError)
@@ -48,14 +54,17 @@ class SolanaWalletManager(
         addToRecentTransactions(accountInfo.txsInProgress)
 
         cardTokens.forEach { cardToken ->
-            val tokenBalance = accountInfo.tokensByMint[cardToken.contractAddress]?.uiAmount ?: BigDecimal.ZERO
+            val tokenBalance =
+                accountInfo.tokensByMint[cardToken.contractAddress]?.uiAmount ?: BigDecimal.ZERO
             wallet.addTokenValue(tokenBalance, cardToken)
         }
     }
 
     private suspend fun updateRecentTransactions() {
         val txSignatures = wallet.recentTransactions.mapNotNull { it.hash }
-        val signatureStatuses = networkService.getSignatureStatuses(txSignatures).successOr {
+        val signatureStatuses = multiNetworkProvider.performRequest {
+            getSignatureStatuses(txSignatures)
+        }.successOr {
             Log.e(this.javaClass.simpleName, it.error.customMessage)
             return
         }
@@ -64,7 +73,8 @@ class SolanaWalletManager(
         val signaturesStatuses = txSignatures.zip(signatureStatuses.value)
         signaturesStatuses.forEach { pair ->
             if (pair.second?.confirmationStatus == Commitment.FINALIZED.value) {
-                val foundRecentTxData = wallet.recentTransactions.firstOrNull { it.hash == pair.first }
+                val foundRecentTxData =
+                    wallet.recentTransactions.firstOrNull { it.hash == pair.first }
                 foundRecentTxData?.let {
                     confirmedTxData.add(it.copy(status = TransactionStatus.Confirmed))
                 }
@@ -76,14 +86,17 @@ class SolanaWalletManager(
     private fun addToRecentTransactions(txsInProgress: List<TransactionInfo>) {
         if (txsInProgress.isEmpty()) return
 
-        val newTxsInProgress = txsInProgress.filterWith(wallet.recentTransactions) { a, b -> a.signature != b.hash }
+        val newTxsInProgress =
+            txsInProgress.filterWith(wallet.recentTransactions) { a, b -> a.signature != b.hash }
         val newUnconfirmedTxData = newTxsInProgress.mapNotNull {
             if (it.instructions.isNotEmpty() && it.instructions[0].programId == Program.Id.system.toBase58()) {
                 val info = it.instructions[0].parsed.info
                 val amount = Amount(valueConverter.toSol(info.lamports), wallet.blockchain)
                 val fee = Amount(valueConverter.toSol(it.fee), wallet.blockchain)
-                TransactionData(amount, fee, info.source, info.destination, null,
-                    TransactionStatus.Unconfirmed, hash = it.signature)
+                TransactionData(
+                    amount, fee, info.source, info.destination, null,
+                    TransactionStatus.Unconfirmed, hash = it.signature
+                )
             } else {
                 null
             }
@@ -91,7 +104,11 @@ class SolanaWalletManager(
         wallet.recentTransactions.addAll(newUnconfirmedTxData)
     }
 
-    override fun createTransaction(amount: Amount, fee: Amount, destination: String): TransactionData {
+    override fun createTransaction(
+        amount: Amount,
+        fee: Amount,
+        destination: String
+    ): TransactionData {
         val accountCreationRent = feeRentHolder[fee]
 
         return if (accountCreationRent == null) {
@@ -111,16 +128,26 @@ class SolanaWalletManager(
         }
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner
+    ): SimpleResult {
         return when (transactionData.amount.type) {
             AmountType.Coin -> sendCoin(transactionData, signer)
-            is AmountType.Token -> sendSplToken(transactionData.amount.type.token, transactionData, signer)
+            is AmountType.Token -> sendSplToken(
+                transactionData.amount.type.token,
+                transactionData,
+                signer
+            )
             AmountType.Reserve -> SimpleResult.Failure(UnsupportedOperation())
         }
     }
 
-    private suspend fun sendCoin(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val recentBlockHash = networkService.getRecentBlockhash().successOr {
+    private suspend fun sendCoin(
+        transactionData: TransactionData,
+        signer: TransactionSigner
+    ): SimpleResult {
+        val recentBlockHash = multiNetworkProvider.performRequest { getRecentBlockhash()}.successOr {
             return SimpleResult.Failure(it.error)
         }
         val from = PublicKey(transactionData.sourceAddress)
@@ -135,7 +162,9 @@ class SolanaWalletManager(
         }
 
         transaction.addSignedDataSignature(signResult)
-        val result = networkService.sendTransaction(transaction).successOr {
+        val result = multiNetworkProvider.performRequest {
+            sendTransaction(transaction)
+        }.successOr {
             return SimpleResult.Failure(it.error)
         }
 
@@ -163,7 +192,9 @@ class SolanaWalletManager(
         ).guard {
             return SimpleResult.Failure(Solana.FailedToCreateAssociatedTokenAddress)
         }
-        val destinationSplTokenInfo = networkService.splAccountInfo(destinationPubK, mintPubKey).successOr {
+        val destinationSplTokenInfo = multiNetworkProvider.performRequest {
+            splAccountInfo(destinationPubK, mintPubKey)
+        }.successOr {
             return SimpleResult.Failure(it.error)
         }
         if (sourceSplTokenPubK == destinationSplTokenInfo.associatedPubK) {
@@ -172,16 +203,18 @@ class SolanaWalletManager(
 
         val transaction = Transaction(accountPubK)
         if (!destinationSplTokenInfo.accountExist) {
-            val createATokenInstruction = AssociatedTokenProgram.createSplAssociatedTokenAccountInstruction(
-                mintPubKey,
-                destinationSplTokenInfo.associatedPubK,
-                destinationPubK,
-                accountPubK,
-            )
+            val createATokenInstruction =
+                AssociatedTokenProgram.createSplAssociatedTokenAccountInstruction(
+                    mintPubKey,
+                    destinationSplTokenInfo.associatedPubK,
+                    destinationPubK,
+                    accountPubK,
+                )
             transaction.addInstruction(createATokenInstruction)
         }
 
-        val tokenAmountToSend = valueConverter.toLamports(token, transactionData.amount.value ?: BigDecimal.ZERO)
+        val tokenAmountToSend =
+            valueConverter.toLamports(token, transactionData.amount.value ?: BigDecimal.ZERO)
 
         val sendInstruction = TokenProgram.transfer(
             sourceSplTokenPubK,
@@ -190,7 +223,9 @@ class SolanaWalletManager(
             accountPubK,
         )
         transaction.addInstruction(sendInstruction)
-        val recentBlockHash = networkService.getRecentBlockhash().successOr {
+        val recentBlockHash = multiNetworkProvider.performRequest {
+            getRecentBlockhash()
+        }.successOr {
             return SimpleResult.Failure(it.error)
         }
 
@@ -200,7 +235,9 @@ class SolanaWalletManager(
         }
 
         transaction.addSignedDataSignature(signResult)
-        val sendResult = networkService.sendTransaction(transaction).successOr {
+        val sendResult = multiNetworkProvider.performRequest {
+            sendTransaction(transaction)
+        }.successOr {
             return SimpleResult.Failure(it.error)
         }
 
@@ -220,9 +257,10 @@ class SolanaWalletManager(
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
         feeRentHolder.clear()
         val fee = getNetworkFee().successOr { return it }
-        val accountCreationRent = getAccountCreationRent(amount, destination).successOr { return it }.let {
-            valueConverter.toSol(it)
-        }
+        val accountCreationRent =
+            getAccountCreationRent(amount, destination).successOr { return it }.let {
+                valueConverter.toSol(it)
+            }
 
         var feeAmount = Amount(valueConverter.toSol(fee), wallet.blockchain)
         if (accountCreationRent > BigDecimal.ZERO) {
@@ -234,7 +272,7 @@ class SolanaWalletManager(
     }
 
     private suspend fun getNetworkFee(): Result<BigDecimal> {
-        return when (val result = networkService.getFees()) {
+        return when (val result = multiNetworkProvider.performRequest {getFees()}) {
             is Result.Success -> {
                 val feePerSignature = result.data.value.feeCalculator.lamportsPerSignature
                 Result.Success(feePerSignature.toBigDecimal())
@@ -243,7 +281,10 @@ class SolanaWalletManager(
         }
     }
 
-    private suspend fun getAccountCreationRent(amount: Amount, destination: String): Result<BigDecimal> {
+    private suspend fun getAccountCreationRent(
+        amount: Amount,
+        destination: String
+    ): Result<BigDecimal> {
         val amountValue = amount.value.guard {
             return Result.Failure(NPError("amountValue"))
         }
@@ -251,26 +292,34 @@ class SolanaWalletManager(
 
         val accountCreationFee = when (amount.type) {
             AmountType.Coin -> {
-                val isExist = networkService.isAccountExist(destinationPubKey).successOr { return it }
+                val isExist =
+                    multiNetworkProvider.performRequest {
+                        isAccountExist(destinationPubKey)
+                    }.successOr { return it }
                 if (isExist) return Result.Success(BigDecimal.ZERO)
-                val minRentExempt = networkService.minimalBalanceForRentExemption().successOr { return it }
+                val minRentExempt =
+                    multiNetworkProvider.performRequest {
+                        minimalBalanceForRentExemption()
+                    }.successOr { return it }
 
                 if (valueConverter.toLamports(amountValue).toBigDecimal() >= minRentExempt) {
                     BigDecimal.ZERO
                 } else {
-                    networkService.mainAccountCreationFee()
+                    multiNetworkProvider.currentProvider.mainAccountCreationFee()
                 }
             }
             is AmountType.Token -> {
-                val isExist = networkService.isSplTokenAccountExist(
+                val isExist = multiNetworkProvider.performRequest { isSplTokenAccountExist(
                     account = destinationPubKey,
                     mint = PublicKey(amount.type.token.contractAddress)
-                ).successOr { return it }
+                )}.successOr { return it }
 
                 if (isExist) {
                     BigDecimal.ZERO
                 } else {
-                    networkService.tokenAccountCreationFee().successOr { return it }
+                    multiNetworkProvider.performRequest {
+                        tokenAccountCreationFee()
+                    }.successOr { return it }
                 }
             }
             AmountType.Reserve -> return Result.Failure(UnsupportedOperation())
@@ -280,14 +329,16 @@ class SolanaWalletManager(
     }
 
     override suspend fun minimalBalanceForRentExemption(): Result<BigDecimal> {
-        return when (val result = networkService.minimalBalanceForRentExemption()) {
+        return when (val result = multiNetworkProvider.performRequest {
+            minimalBalanceForRentExemption()
+        }) {
             is Result.Success -> Result.Success(valueConverter.toSol(result.data))
             is Result.Failure -> result
         }
     }
 
     override suspend fun rentAmount(): BigDecimal {
-        return valueConverter.toSol(networkService.accountRentFeeByEpoch())
+        return valueConverter.toSol(multiNetworkProvider.currentProvider.accountRentFeeByEpoch())
     }
 }
 
@@ -301,14 +352,22 @@ interface SolanaValueConverter {
 class ValueConverter : SolanaValueConverter {
     override fun toSol(value: BigDecimal): BigDecimal = value.toSOL()
     override fun toSol(value: Long): BigDecimal = value.toBigDecimal().toSOL()
-    override fun toLamports(value: BigDecimal): Long = value.toLamports(Blockchain.Solana.decimals())
-    override fun toLamports(token: Token, value: BigDecimal): Long = value.toLamports(token.decimals)
+    override fun toLamports(value: BigDecimal): Long =
+        value.toLamports(Blockchain.Solana.decimals())
+
+    override fun toLamports(token: Token, value: BigDecimal): Long =
+        value.toLamports(token.decimals)
 }
 
 private fun Long.toSOL(): BigDecimal = this.toBigDecimal().toSOL()
-private fun BigDecimal.toSOL(): BigDecimal = movePointLeft(Blockchain.Solana.decimals()).toSolanaDecimals()
-private fun BigDecimal.toLamports(decimals: Int): Long = movePointRight(decimals).toSolanaDecimals().toLong()
-private fun BigDecimal.toSolanaDecimals(): BigDecimal = this.setScale(Blockchain.Solana.decimals(), RoundingMode.HALF_UP)
+private fun BigDecimal.toSOL(): BigDecimal =
+    movePointLeft(Blockchain.Solana.decimals()).toSolanaDecimals()
+
+private fun BigDecimal.toLamports(decimals: Int): Long =
+    movePointRight(decimals).toSolanaDecimals().toLong()
+
+private fun BigDecimal.toSolanaDecimals(): BigDecimal =
+    this.setScale(Blockchain.Solana.decimals(), RoundingMode.HALF_UP)
 
 private fun <T> Result<T>.toSimpleResult(): SimpleResult {
     return when (this) {
