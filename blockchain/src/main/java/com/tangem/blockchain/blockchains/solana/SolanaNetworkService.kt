@@ -23,6 +23,8 @@ class SolanaNetworkService(
     private val provider: RpcClient
 ) {
 
+    val host = provider.host
+
     suspend fun getMainAccountInfo(
         account: PublicKey
     ): Result<SolanaMainAccountInfo> = withContext(Dispatchers.IO) {
@@ -143,7 +145,7 @@ class SolanaNetworkService(
         // result in lamports
         val minimumAccountSizeInBytes = BigDecimal(MIN_ACCOUNT_SIZE)
 
-        val rentInLamportPerByteEpoch = BigDecimal(determineRentPerByteEpoch(provider.cluster))
+        val rentInLamportPerByteEpoch = BigDecimal(determineRentPerByteEpoch(provider.endpoint))
         val rentFeePerEpoch = minimumAccountSizeInBytes
             .multiply(numberOfEpochs.toBigDecimal())
             .multiply(rentInLamportPerByteEpoch)
@@ -177,10 +179,10 @@ class SolanaNetworkService(
         }
     }
 
-    private fun determineRentPerByteEpoch(cluster: Cluster): Double = when (cluster) {
-        Cluster.MAINNET -> RENT_PER_BYTE_EPOCH
-        Cluster.TESTNET -> RENT_PER_BYTE_EPOCH
-        Cluster.DEVNET -> RENT_PER_BYTE_EPOCH_DEV_NET
+    private fun determineRentPerByteEpoch(endpoint: String): Double = when (endpoint) {
+        Cluster.TESTNET.endpoint -> RENT_PER_BYTE_EPOCH
+        Cluster.DEVNET.endpoint -> RENT_PER_BYTE_EPOCH_DEV_NET
+        else -> RENT_PER_BYTE_EPOCH
     }
 
     companion object {
