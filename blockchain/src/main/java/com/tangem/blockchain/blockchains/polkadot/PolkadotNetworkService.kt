@@ -2,7 +2,6 @@ package com.tangem.blockchain.blockchains.polkadot
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.amountUnits
-import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.url
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.extensions.Result
@@ -30,9 +29,10 @@ import kotlinx.coroutines.withContext
  */
 class PolkadotNetworkService(
     private val network: SS58Type.Network,
+    val host: String
 ) {
 
-    private val polkadotApi: PolkadotApi = PolkadotApi.Builder().rpcCallAdapter(rpcCallAdapter(network.url)).build()
+    private val polkadotApi: PolkadotApi = PolkadotApi.Builder().rpcCallAdapter(rpcCallAdapter(host)).build()
     private val commands = StandardCommands.getInstance()
 
     suspend fun getBalance(address: Address): Result<DotAmount> = withContext(Dispatchers.IO) {
