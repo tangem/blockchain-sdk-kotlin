@@ -1,11 +1,14 @@
 package com.tangem.blockchain.blockchains.polkadot
 
-import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.*
+import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.existentialDeposit
+import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.hosts
+import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.toBigDecimal
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
+import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import io.emeraldpay.polkaj.ss58.SS58Type
@@ -21,7 +24,6 @@ import java.util.*
 class PolkadotWalletManager(
     wallet: Wallet,
     val network: SS58Type.Network,
-    private val networkService: PolkadotNetworkService
 ) : WalletManager(wallet), TransactionSender, ExistentialDepositProvider {
 
     private lateinit var currentContext: ExtrinsicContext
@@ -29,16 +31,22 @@ class PolkadotWalletManager(
     private val accountAddress = Address(network, wallet.publicKey.blockchainKey)
     private val txBuilder = PolkadotTransactionBuilder(network)
 
-    override val currentHost: String = network.url
-
     override fun getExistentialDeposit(): BigDecimal = network.existentialDeposit
 
+    private val networkServices = network.hosts.map { PolkadotNetworkService(network, it) }
+    private val multiNetworkProvider: MultiNetworkProvider<PolkadotNetworkService> =
+        MultiNetworkProvider(networkServices)
+
+    override val currentHost: String
+        get() = multiNetworkProvider.currentProvider.host
+
     override suspend fun update() {
-        val dotAmount: DotAmount = networkService.getBalance(accountAddress).successOr {
+        val dotAmount: DotAmount = multiNetworkProvider.performRequest {
+            getBalance(accountAddress)
+        }.successOr {
             wallet.removeAllTokens()
             throw (it.error as BlockchainSdkError)
         }
-
         wallet.setCoinValue(dotAmount.toBigDecimal(network))
         updateRecentTransactions()
     }
@@ -58,7 +66,9 @@ class PolkadotWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
-        currentContext = networkService.extrinsicContext(accountAddress).successOr { return it }
+        currentContext = multiNetworkProvider.performRequest {
+            extrinsicContext(accountAddress)
+        }.successOr { return it }
 
         val signedTransaction = sign(
             amount = amount,
@@ -68,7 +78,9 @@ class PolkadotWalletManager(
             signer = DummyPolkadotTransactionSigner()
         ).successOr { return it }
 
-        val feeDot = networkService.getFee(signedTransaction).successOr { return it }
+        val feeDot = multiNetworkProvider.performRequest {
+            getFee(signedTransaction)
+        }.successOr { return it }
         val feeAmount = amount.copy(value = feeDot.toBigDecimal(network))
 
         return Result.Success(listOf(feeAmount))
@@ -124,7 +136,9 @@ class PolkadotWalletManager(
             signer = signer
         ).successOr { return SimpleResult.Failure(it.error) }
 
-        val hash256 = networkService.sendTransaction(signedTransaction).successOr {
+        val hash256 = multiNetworkProvider.performRequest {
+            sendTransaction(signedTransaction)
+        }.successOr {
             return SimpleResult.Failure(it.error)
         }
 
@@ -156,8 +170,11 @@ class PolkadotWalletManager(
     }
 
     private suspend fun accountIsUnderfunded(address: Address): Result<Boolean> {
-        val destinationBalance = networkService.getBalance(address).successOr { return it }.toBigDecimal(network)
-        val isUnderfunded = destinationBalance == BigDecimal.ZERO || destinationBalance < getExistentialDeposit()
+        val destinationBalance = multiNetworkProvider.performRequest {
+            getBalance(address)
+        }.successOr { return it }.toBigDecimal(network)
+        val isUnderfunded =
+            destinationBalance == BigDecimal.ZERO || destinationBalance < getExistentialDeposit()
         return Result.Success(isUnderfunded)
     }
 }
