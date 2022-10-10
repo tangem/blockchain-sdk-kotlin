@@ -17,11 +17,21 @@ val SS58Type.Network.existentialDeposit: BigDecimal
         else -> throw UnsupportedOperationException()
     }
 
-val SS58Type.Network.url: String
+val SS58Type.Network.hosts: List<String>
     get() = when (this) {
-        SS58Type.Network.POLKADOT -> "https://rpc.polkadot.io/"
-        SS58Type.Network.WESTEND -> "https://westend-rpc.polkadot.io/"
-        SS58Type.Network.KUSAMA -> "https://kusama-rpc.polkadot.io/"
+        SS58Type.Network.POLKADOT -> listOf(
+            "https://rpc.polkadot.io/",
+            "https://polkadot.api.onfinality.io/public-ws/",
+            "https://polkadot-rpc.dwellir.com/",
+        )
+        SS58Type.Network.WESTEND -> listOf(
+            "https://westend-rpc.polkadot.io/"
+        )
+        SS58Type.Network.KUSAMA -> listOf(
+            "https://kusama-rpc.polkadot.io/",
+            "https://kusama.api.onfinality.io/public-ws/",
+            "https://kusama-rpc.dwellir.com/",
+        )
         else -> throw UnsupportedOperationException()
     }
 
