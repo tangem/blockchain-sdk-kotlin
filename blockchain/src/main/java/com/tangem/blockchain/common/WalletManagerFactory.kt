@@ -353,7 +353,6 @@ class WalletManagerFactory(
                 PolkadotWalletManager(
                     wallet,
                     network,
-                    PolkadotNetworkService(network),
                 )
             }
             Blockchain.Polygon, Blockchain.PolygonTestnet -> {
