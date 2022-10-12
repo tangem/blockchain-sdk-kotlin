@@ -60,7 +60,7 @@ class EthereumUtils {
             nonce: BigInteger?,
             blockchain: Blockchain,
             gasLimit: BigInteger?,
-        ): TransactionToSign? {
+        ): CompiledEthereumTransaction? {
 
             val extras = transactionData.extras as? EthereumTransactionExtras
 
@@ -105,7 +105,7 @@ class EthereumUtils {
             val hash = transaction
                 .encodeRLP(SignatureData(v = chainId.toBigInteger()))
                 .keccak()
-            return TransactionToSign(transaction, hash)
+            return CompiledEthereumTransaction(transaction, hash)
         }
 
         fun buildApproveToSign(
@@ -113,7 +113,7 @@ class EthereumUtils {
             nonce: BigInteger?,
             blockchain: Blockchain,
             gasLimit: BigInteger?,
-        ): TransactionToSign? {
+        ): CompiledEthereumTransaction? {
             if (transactionData.amount.type == AmountType.Coin) return null
 
             val extras = transactionData.extras as? EthereumTransactionExtras
@@ -147,7 +147,7 @@ class EthereumUtils {
                 .encodeRLP(SignatureData(v = chainId.toBigInteger()))
                 .keccak()
 
-            return TransactionToSign(transaction, hash)
+            return CompiledEthereumTransaction(transaction, hash)
         }
 
         fun buildSetSpendLimitToSign(
@@ -158,7 +158,7 @@ class EthereumUtils {
             blockchain: Blockchain,
             gasLimit: BigInteger?,
             nonce: BigInteger?,
-        ): TransactionToSign? {
+        ): CompiledEthereumTransaction? {
             if (transactionFee?.value == null) return null
             val fee = transactionFee.value?.movePointRight(transactionFee.decimals)?.toBigInteger() ?: return null
             val bigIntegerAmount = amount.value?.movePointRight(amount.decimals)?.toBigInteger() ?: return null
@@ -186,7 +186,7 @@ class EthereumUtils {
                 .encodeRLP(SignatureData(v = chainId.toBigInteger()))
                 .keccak()
 
-            return TransactionToSign(transaction, hash)
+            return CompiledEthereumTransaction(transaction, hash)
         }
 
         fun buildInitOTPToSign(
@@ -198,7 +198,7 @@ class EthereumUtils {
             blockchain: Blockchain,
             gasLimit: BigInteger?,
             nonce: BigInteger?,
-        ): TransactionToSign? {
+        ): CompiledEthereumTransaction? {
             if (transactionFee?.value == null) return null
             val fee = transactionFee.value?.movePointRight(transactionFee.decimals)?.toBigInteger() ?: return null
             val nonceValue = nonce ?: return null
@@ -226,7 +226,7 @@ class EthereumUtils {
                 .encodeRLP(SignatureData(v = chainId.toBigInteger()))
                 .keccak()
 
-            return TransactionToSign(transaction, hash)
+            return CompiledEthereumTransaction(transaction, hash)
         }
 
 
@@ -237,7 +237,7 @@ class EthereumUtils {
             blockchain: Blockchain,
             gasLimit: BigInteger?,
             nonce: BigInteger?,
-        ): TransactionToSign? {
+        ): CompiledEthereumTransaction? {
             val fee = transactionFee?.value?.movePointRight(transactionFee.decimals)?.toBigInteger() ?: return null
             val nonceValue = nonce ?: return null
 
@@ -264,7 +264,7 @@ class EthereumUtils {
                 .encodeRLP(SignatureData(v = chainId.toBigInteger()))
                 .keccak()
 
-            return TransactionToSign(transaction, hash)
+            return CompiledEthereumTransaction(transaction, hash)
         }
 
 
@@ -279,7 +279,7 @@ class EthereumUtils {
             blockchain: Blockchain,
             gasLimit: BigInteger?,
             nonce: BigInteger?
-        ): TransactionToSign? {
+        ): CompiledEthereumTransaction? {
             val fee = transactionFee.value?.movePointRight(transactionFee.decimals)?.toBigInteger() ?: return null
             val bigIntegerAmount = amount.value?.movePointRight(amount.decimals)?.toBigInteger() ?: return null
             val nonceValue = nonce ?: return null
@@ -308,7 +308,7 @@ class EthereumUtils {
                 .encodeRLP(SignatureData(v = chainId.toBigInteger()))
                 .keccak()
 
-            return TransactionToSign(transaction, hash)
+            return CompiledEthereumTransaction(transaction, hash)
         }
 
         private fun createErc20TransferData(recipient: String, amount: BigInteger) =
