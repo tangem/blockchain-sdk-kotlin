@@ -13,7 +13,7 @@ val SS58Type.Network.existentialDeposit: BigDecimal
     get() = when (this) {
         SS58Type.Network.POLKADOT -> BigDecimal.ONE
         SS58Type.Network.WESTEND -> 0.01.toBigDecimal()
-        SS58Type.Network.KUSAMA -> 0.0000333333.toBigDecimal()
+        SS58Type.Network.KUSAMA -> 0.000033333333.toBigDecimal()
         else -> throw UnsupportedOperationException()
     }
 
