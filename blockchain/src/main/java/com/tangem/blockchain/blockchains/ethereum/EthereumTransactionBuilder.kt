@@ -10,7 +10,6 @@ import org.kethereum.crypto.impl.ec.canonicalise
 import org.kethereum.extensions.transactions.encodeRLP
 import org.kethereum.model.PublicKey
 import org.kethereum.model.SignatureData
-import org.kethereum.model.Transaction
 import java.math.BigInteger
 
 class EthereumTransactionBuilder(
@@ -19,7 +18,7 @@ class EthereumTransactionBuilder(
 ) {
     private val walletPublicKey: ByteArray = walletPublicKey.toDecompressedPublicKey().sliceArray(1..64)
 
-    fun buildToSign(transactionData: TransactionData, nonce: BigInteger?, gasLimit: BigInteger?): TransactionToSign? {
+    fun buildToSign(transactionData: TransactionData, nonce: BigInteger?, gasLimit: BigInteger?): CompiledEthereumTransaction? {
         return EthereumUtils.buildTransactionToSign(
             transactionData = transactionData,
             nonce = nonce,
@@ -32,7 +31,7 @@ class EthereumTransactionBuilder(
         transactionData: TransactionData,
         nonce: BigInteger?,
         gasLimit: BigInteger?,
-    ): TransactionToSign? {
+    ): CompiledEthereumTransaction? {
         return EthereumUtils.buildApproveToSign(
             transactionData = transactionData,
             nonce = nonce,
@@ -47,7 +46,7 @@ class EthereumTransactionBuilder(
         amount: Amount,
         transactionFee: Amount?,
         gasLimit: BigInteger?, nonce: BigInteger?,
-    ): TransactionToSign? {
+    ): CompiledEthereumTransaction? {
         return EthereumUtils.buildSetSpendLimitToSign(
             processorContractAddress, cardAddress, amount, transactionFee, blockchain, gasLimit, nonce)
     }
@@ -60,7 +59,7 @@ class EthereumTransactionBuilder(
         transactionFee: Amount?,
         gasLimit: BigInteger?,
         nonce: BigInteger?,
-    ): TransactionToSign? {
+    ): CompiledEthereumTransaction? {
         return EthereumUtils.buildInitOTPToSign(
             processorContractAddress, cardAddress, otp, otpCounter, transactionFee, blockchain, gasLimit, nonce)
     }
@@ -71,7 +70,7 @@ class EthereumTransactionBuilder(
         transactionFee: Amount?,
         gasLimit: BigInteger?,
         nonce: BigInteger
-    ): TransactionToSign? {
+    ): CompiledEthereumTransaction? {
         return EthereumUtils.buildSetWalletToSign(
             processorContractAddress, cardAddress, transactionFee, blockchain, gasLimit, nonce)
     }
@@ -86,7 +85,7 @@ class EthereumTransactionBuilder(
         otpCounter: Int,
         gasLimit: BigInteger?,
         nonceValue: BigInteger
-    ): TransactionToSign? {
+    ): CompiledEthereumTransaction? {
         return EthereumUtils.buildProcessToSign(
             processorContractAddress = processorContractAddress,
             processorAddress = processorAddress,
@@ -101,7 +100,7 @@ class EthereumTransactionBuilder(
         )
     }
 
-    fun buildToSend(signature: ByteArray, transactionToSign: TransactionToSign): ByteArray {
+    fun buildToSend(signature: ByteArray, transactionToSign: CompiledEthereumTransaction): ByteArray {
         val r = BigInteger(1, signature.copyOfRange(0, 32))
         val s = BigInteger(1, signature.copyOfRange(32, 64))
 
@@ -119,8 +118,6 @@ class EthereumTransactionBuilder(
         return transactionToSign.transaction.encodeRLP(signatureData)
     }
 }
-
-class TransactionToSign(val transaction: Transaction, val hash: ByteArray)
 
 enum class Chain(
     val id: Int,
