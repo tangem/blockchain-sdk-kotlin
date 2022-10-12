@@ -19,20 +19,28 @@ import java.math.RoundingMode
 
 class EthereumWalletManager(
     wallet: Wallet,
-    private val transactionBuilder: EthereumTransactionBuilder,
+    val transactionBuilder: EthereumTransactionBuilder,
     private val networkProvider: EthereumNetworkProvider,
     presetTokens: MutableSet<Token>,
 ) : WalletManager(wallet, presetTokens),
     TransactionSender, SignatureCountValidator, TokenFinder, EthereumGasLoader {
 
-    private var pendingTxCount = -1L
-    private var txCount = -1L
-    private var gasLimit: BigInteger? = null
-    private var gasLimitToApprove: BigInteger? = null
-    private var gasLimitToSetSpendLimit: BigInteger? = null
-    private var gasLimitToInitOTP: BigInteger? = null
-    private var gasLimitToSetWallet: BigInteger? = null
-    private var gasPrice: BigInteger? = null
+    var pendingTxCount = -1L
+        private set
+    var txCount = -1L
+        private set
+    var gasLimit: BigInteger? = null
+        private set
+    var gasLimitToApprove: BigInteger? = null
+        private set
+    var gasLimitToSetSpendLimit: BigInteger? = null
+        private set
+    var gasLimitToInitOTP: BigInteger? = null
+        private set
+    var gasLimitToSetWallet: BigInteger? = null
+        private set
+    var gasPrice: BigInteger? = null
+        private set
 
     override val currentHost: String
         get() = networkProvider.host
@@ -65,7 +73,7 @@ class EthereumWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    suspend fun sendRaw(transactionToSign: TransactionToSign, signature: ByteArray): SimpleResult {
+    suspend fun sendRaw(transactionToSign: CompiledEthereumTransaction, signature: ByteArray): SimpleResult {
         val transactionToSend = transactionBuilder.buildToSend(signature, transactionToSign)
         return networkProvider.sendTransaction("0x" + transactionToSend.toHexString())
     }
@@ -99,7 +107,7 @@ class EthereumWalletManager(
     }
 
     suspend fun signAndSend(
-        transactionToSign: TransactionToSign,
+        transactionToSign: CompiledEthereumTransaction,
         signer: TransactionSigner,
     ): SimpleResult {
         return when (val signerResponse = signer.sign(transactionToSign.hash, wallet.publicKey)) {
