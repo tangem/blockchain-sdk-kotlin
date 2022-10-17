@@ -4,6 +4,7 @@ import com.google.common.truth.Truth
 import com.tangem.blockchain.common.*
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
+import org.kethereum.DEFAULT_GAS_LIMIT
 
 class EthereumTransactionTest {
 
@@ -39,7 +40,7 @@ class EthereumTransactionTest {
                 .hexToBytes()
 
         // act
-        val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce)
+        val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce, DEFAULT_GAS_LIMIT)
         val signedTransaction = transactionBuilder.buildToSend(signature, transactionToSign!!)
 
         // assert
@@ -84,7 +85,7 @@ class EthereumTransactionTest {
                 .hexToBytes()
 
         // act
-        val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce)
+        val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce, DEFAULT_GAS_LIMIT)
         val signedTransaction = transactionBuilder.buildToSend(signature, transactionToSign!!)
 
         // assert
