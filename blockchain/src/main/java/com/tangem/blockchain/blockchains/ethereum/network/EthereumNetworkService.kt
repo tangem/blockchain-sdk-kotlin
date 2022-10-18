@@ -1,9 +1,6 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.Token
-import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
@@ -78,6 +75,25 @@ class EthereumNetworkService(
         }
     }
 
+    override suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<Amount> {
+        return try {
+            Result.Success(
+                Amount(
+                    token, multiJsonRpcProvider.performRequest(
+                    EthereumJsonRpcProvider::getTokenAllowance,
+                    EthereumTokenAllowanceRequestData(
+                        ownerAddress,
+                        token.contractAddress,
+                        spenderAddress
+                    )
+                ).extractResult().parseAmount(token.decimals)
+                )
+            )
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
             multiJsonRpcProvider
@@ -86,6 +102,17 @@ class EthereumNetworkService(
             SimpleResult.Success
         } catch (exception: Exception) {
             SimpleResult.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    suspend fun sendRawTransaction(transaction: String): Result<String> {
+        return try {
+            val tx_id = multiJsonRpcProvider
+                .performRequest(EthereumJsonRpcProvider::sendTransaction, transaction)
+                .extractResult()
+            Result.Success(tx_id)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -141,11 +168,11 @@ class EthereumNetworkService(
                 }.map { it.await() }
 
                 val gasPrice = gasPriceResponses.filter { it is Result.Success }
-                        .map { it.extractResult().responseToBigInteger() }.maxOrNull()
+                    .map { it.extractResult().responseToBigInteger() }.maxOrNull()
                 // all responses have failed
-                        ?: return@coroutineScope Result.Failure(
-                            (gasPriceResponses.first() as Result.Failure).error
-                        )
+                    ?: return@coroutineScope Result.Failure(
+                        (gasPriceResponses.first() as Result.Failure).error
+                    )
 
                 Result.Success(gasPrice)
             }
@@ -185,6 +212,7 @@ class EthereumNetworkService(
                     ?: throw this.data.error?.toException()?.toBlockchainSdkError()
                         ?: BlockchainSdkError.CustomError("Unknown response format")
             }
+
             is Result.Failure -> {
                 throw (this.error as? BlockchainSdkError)
                     ?: BlockchainSdkError.CustomError("Unknown error format")
