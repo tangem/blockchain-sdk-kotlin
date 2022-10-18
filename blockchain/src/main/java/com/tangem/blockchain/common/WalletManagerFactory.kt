@@ -231,7 +231,7 @@ class WalletManagerFactory(
                     authorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
                 )
                 val blockcypherNetworkProvider =
-                        BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
+                    BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
 
                 val networkService = EthereumNetworkService(
                     jsonRpcProviders,
@@ -270,8 +270,8 @@ class WalletManagerFactory(
                     apiKey = blockchainSdkConfig.blockchairApiKey,
                     authorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
                 )
-                val blockcypherNetworkProvider =
-                        BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
+                val blockcypherNetworkProvider = 
+                    BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
 
                 val networkService = EthereumNetworkService(
                     jsonRpcProviders,
@@ -475,10 +475,12 @@ class WalletManagerFactory(
                     presetTokens = tokens
                 )
             }
-            Blockchain.SaltPay -> {
-                val jsonRpcProviders = listOf(
-                    EthereumJsonRpcProvider(API_SALTPAY),
-                )
+            Blockchain.SaltPay, Blockchain.SaltPayTestnet -> {
+                val jsonRpcProviders = if (blockchain.isTestnet()) {
+                    listOf(EthereumJsonRpcProvider(API_SALTPAY_TESTNET))
+                } else {
+                    listOf(EthereumJsonRpcProvider(API_SALTPAY))
+                }
 
                 EthereumWalletManager(
                     wallet = wallet,
