@@ -145,6 +145,7 @@ abstract class WalletManager(
                 }
         )
     }
+    companion object
 }
 
 interface TransactionSender {
