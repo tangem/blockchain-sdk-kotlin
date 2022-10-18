@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
+import org.kethereum.DEFAULT_GAS_LIMIT
 
 class PolygonTransactionTest {
 
@@ -41,7 +42,7 @@ class PolygonTransactionTest {
             .hexToBytes()
 
         // act
-        val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce)
+        val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce, DEFAULT_GAS_LIMIT)
         val signedTransaction = transactionBuilder.buildToSend(signature, transactionToSign!!)
 
         // assert
@@ -86,7 +87,7 @@ class PolygonTransactionTest {
             .hexToBytes()
 
         // act
-        val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce)
+        val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce, DEFAULT_GAS_LIMIT)
         val signedTransaction = transactionBuilder.buildToSend(signature, transactionToSign!!)
 
         // assert
