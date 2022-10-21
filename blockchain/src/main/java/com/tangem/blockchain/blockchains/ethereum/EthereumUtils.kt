@@ -28,6 +28,7 @@ class EthereumUtils {
         private val initOTPSignature = "initOTP(bytes16,uint16)".toByteArray().toKeccak().copyOf(4) // 0x0ac81ec3
         private val setWalletSignature = "setWallet(address)".toByteArray().toKeccak().copyOf(4) // 0xdeaa59df
         private val processSignature = "process(address,uint256,bytes16,uint16)".toByteArray().toKeccak().copyOf(4)// 0x960cab120
+        private val tokenTransferFromSignature = "transferFrom(address,address,uint256)".toByteArray().toKeccak().copyOf(4)
 
         private const val HEX_PREFIX = "0x"
 
@@ -311,6 +312,57 @@ class EthereumUtils {
             return CompiledEthereumTransaction(transaction, hash)
         }
 
+        fun buildTransferFromToSign(
+            transactionData: TransactionData,
+            nonce: BigInteger?,
+            blockchain: Blockchain,
+            gasLimit: BigInteger?,
+        ): CompiledEthereumTransaction? {
+
+            val extras = transactionData.extras as? EthereumTransactionExtras
+
+            val nonceValue = extras?.nonce ?: nonce ?: return null
+
+            val amount: BigDecimal = transactionData.amount.value ?: return null
+            val transactionFee: BigDecimal = transactionData.fee?.value ?: return null
+
+            val fee = transactionFee.movePointRight(transactionData.fee.decimals).toBigInteger()
+            val bigIntegerAmount =
+                amount.movePointRight(transactionData.amount.decimals).toBigInteger()
+
+            val to: Address
+            val value: BigInteger
+            val input: ByteArray //data for smart contract
+
+            if (transactionData.amount.type == AmountType.Coin) { //coin transfer
+                return null
+            } else { //token transfer from
+                to = Address(transactionData.contractAddress
+                    ?: throw Exception("Contract address is not specified!"))
+                value = BigInteger.ZERO
+                input =
+                    createErc20TransferFromData(transactionData.sourceAddress, transactionData.destinationAddress, bigIntegerAmount)
+            }
+
+            val gasLimitToUse = extras?.gasLimit ?: gasLimit ?: return null
+
+            val transaction = createTransactionWithDefaults(
+                from = Address(transactionData.destinationAddress),
+                to = to,
+                value = value,
+                gasPrice = fee.divide(gasLimitToUse),
+                gasLimit = extras?.gasLimit ?: gasLimitToUse,
+                nonce = nonceValue,
+                input = extras?.data ?: input
+            )
+            val chainId = blockchain.getChainId()
+                ?: throw Exception("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
+            val hash = transaction
+                .encodeRLP(SignatureData(v = chainId.toBigInteger()))
+                .keccak()
+            return CompiledEthereumTransaction(transaction, hash)
+        }
+
         private fun createErc20TransferData(recipient: String, amount: BigInteger) =
             tokenTransferSignature.toByteArray() +
                 recipient.substring(2).hexToBytes().toFixedLengthByteArray(32) +
@@ -352,6 +404,17 @@ class EthereumUtils {
             setWalletSignature +
                 address.substring(2).hexToBytes().toFixedLengthByteArray(32)
 
+
+        internal fun createErc20TransferFromData(source: String, destination: String, amount: Amount) =
+            createErc20TransferFromData(
+                source, destination, amount.value!!.movePointRight(amount.decimals).toBigInteger()
+            )
+
+        private fun createErc20TransferFromData(source: String, destination: String, amount: BigInteger) =
+            tokenTransferFromSignature +
+                source.substring(2).hexToBytes().toFixedLengthByteArray(32) +
+                destination.substring(2).hexToBytes().toFixedLengthByteArray(32) +
+                amount.toBytesPadded(32)
 
         fun createProcessData(
             cardAddress: String,
