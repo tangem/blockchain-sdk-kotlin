@@ -31,25 +31,20 @@ class EthereumNetworkService(
         return try {
             coroutineScope {
                 val balanceResponseDeferred = async {
-                    multiJsonRpcProvider
-                        .performRequest(EthereumJsonRpcProvider::getBalance, address)
+                    multiJsonRpcProvider.performRequest(EthereumJsonRpcProvider::getBalance, address)
                 }
                 val txCountResponseDeferred = async {
-                    multiJsonRpcProvider
-                        .performRequest(EthereumJsonRpcProvider::getTxCount, address)
+                    multiJsonRpcProvider.performRequest(EthereumJsonRpcProvider::getTxCount, address)
                 }
                 val pendingTxCountResponseDeferred = async {
-                    multiJsonRpcProvider
-                        .performRequest(EthereumJsonRpcProvider::getPendingTxCount, address)
+                    multiJsonRpcProvider.performRequest(EthereumJsonRpcProvider::getPendingTxCount, address)
                 }
                 val transactionsResponseDeferred = async {
                     blockchairEthNetworkProvider?.getTransactions(address, tokens)
                 }
 
-                val balance = balanceResponseDeferred.await().extractResult()
-                    .parseAmount(decimals)
-                val txCount = txCountResponseDeferred.await().extractResult()
-                    .responseToBigInteger().toLong()
+                val balance = balanceResponseDeferred.await().extractResult().parseAmount(decimals)
+                val txCount = txCountResponseDeferred.await().extractResult().responseToBigInteger().toLong()
                 val pendingTxCount = pendingTxCountResponseDeferred.await().extractResult()
                     .responseToBigInteger().toLong()
 
@@ -77,18 +72,13 @@ class EthereumNetworkService(
 
     override suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<Amount> {
         return try {
-            Result.Success(
-                Amount(
-                    token, multiJsonRpcProvider.performRequest(
-                    EthereumJsonRpcProvider::getTokenAllowance,
-                    EthereumTokenAllowanceRequestData(
-                        ownerAddress,
-                        token.contractAddress,
-                        spenderAddress
-                    )
-                ).extractResult().parseAmount(token.decimals)
-                )
-            )
+            val requestData = EthereumTokenAllowanceRequestData(ownerAddress, token.contractAddress, spenderAddress)
+            val amountValue = multiJsonRpcProvider.performRequest(
+                request = EthereumJsonRpcProvider::getTokenAllowance,
+                data = requestData
+            ).extractResult().parseAmount(token.decimals)
+
+            Result.Success(Amount(token, amountValue))
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
