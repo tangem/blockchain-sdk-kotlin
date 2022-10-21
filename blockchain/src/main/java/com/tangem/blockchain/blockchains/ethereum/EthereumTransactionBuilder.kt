@@ -100,6 +100,15 @@ class EthereumTransactionBuilder(
         )
     }
 
+    fun buildTransferFromToSign(transactionData: TransactionData, nonce: BigInteger?, gasLimit: BigInteger?): CompiledEthereumTransaction? {
+        return EthereumUtils.buildTransferFromToSign(
+            transactionData = transactionData,
+            nonce = nonce,
+            blockchain = blockchain,
+            gasLimit = gasLimit
+        )
+    }
+
     fun buildToSend(signature: ByteArray, transactionToSign: CompiledEthereumTransaction): ByteArray {
         val r = BigInteger(1, signature.copyOfRange(0, 32))
         val s = BigInteger(1, signature.copyOfRange(32, 64))
