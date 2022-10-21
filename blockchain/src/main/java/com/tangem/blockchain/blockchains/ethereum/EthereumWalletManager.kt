@@ -16,6 +16,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.MathContext
 import java.math.RoundingMode
+import java.util.*
 
 class EthereumWalletManager(
     wallet: Wallet,
@@ -38,6 +39,8 @@ class EthereumWalletManager(
     var gasLimitToInitOTP: BigInteger? = null
         private set
     var gasLimitToSetWallet: BigInteger? = null
+        private set
+    var gasLimitToTransferFrom: BigInteger? = null
         private set
     var gasPrice: BigInteger? = null
         private set
@@ -134,7 +137,7 @@ class EthereumWalletManager(
     }
 
     suspend fun getAllowance(spender: String, token: Token): Result<Amount> {
-        return networkProvider.getAllowance(wallet.address, token, spender);
+        return networkProvider.getAllowance(spender, token, wallet.address)
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
@@ -310,6 +313,33 @@ class EthereumWalletManager(
         }
     }
 
+    suspend fun getFeeToTransferFrom(amount: Amount, source: String): Result<List<Amount>> {
+        return try {
+            coroutineScope {
+                val gasLimitResponsesDeferred =
+                    async { getGasLimitToTransferFrom(amount, source, wallet.address) }
+                val gasPriceResponsesDeferred = async { getGasPrice() }
+
+                val gLimit = when (val gasLimitResult = gasLimitResponsesDeferred.await()) {
+                    is Result.Failure -> return@coroutineScope Result.Failure(gasLimitResult.error)
+                    is Result.Success -> gasLimitResult.data
+                }
+                val gPrice = when (val gasPriceResult = gasPriceResponsesDeferred.await()) {
+                    is Result.Failure -> return@coroutineScope Result.Failure(gasPriceResult.error)
+                    is Result.Success -> gasPriceResult.data
+                }
+
+                gasLimitToTransferFrom = gLimit
+                gasPrice = gPrice
+                val fees = calculateFees(gLimit, gPrice)
+                    .map { value -> Amount(wallet.amounts[AmountType.Coin]!!, value) }
+                Result.Success(fees)
+            }
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
     suspend fun setSpendLimit(
         processorContractAddress: String,
         cardAddress: String,
@@ -327,6 +357,27 @@ class EthereumWalletManager(
         ) ?: return SimpleResult.Failure(BlockchainSdkError.CustomError("Not enough data"))
 
         return signAndSend(transactionToSign, signer)
+    }
+
+    suspend fun transferFrom(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+        val transactionToSign = transactionBuilder.buildTransferFromToSign(
+            transactionData,
+            txCount.toBigInteger(),
+            gasLimitToTransferFrom
+        ) ?: return SimpleResult.Failure(BlockchainSdkError.CustomError("Not enough data"))
+
+        return signAndSend(transactionToSign, signer)
+    }
+
+    open fun createTransferFromTransaction(amount: Amount, fee: Amount, source: String): TransactionData {
+        val contractAddress = if (amount.type is AmountType.Token) {
+            amount.type.token.contractAddress
+        } else {
+            null
+        }
+        return TransactionData(amount, fee,
+            source, wallet.address, contractAddress,
+            TransactionStatus.Unconfirmed, Calendar.getInstance(), null)
     }
 
     override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
@@ -425,6 +476,17 @@ class EthereumWalletManager(
         return networkProvider.getGasLimit(processorContractAddress, from, null, data)
     }
 
+    suspend fun getGasLimitToTransferFrom(amount: Amount, source: String, destination: String): Result<BigInteger> {
+        return if (amount.type !is AmountType.Token) {
+            Result.Failure(BlockchainSdkError.CustomError("Only token can be transferred!!!"))
+        } else {
+            val to = amount.type.token.contractAddress
+            val from = wallet.address
+            val data = "0x" + EthereumUtils.createErc20TransferFromData(source, destination, amount).toHexString()
+
+            networkProvider.getGasLimit(to, from, null, data)
+        }
+    }
 
     private fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): List<BigDecimal> {
         val minFee = gasPrice * gasLimit
