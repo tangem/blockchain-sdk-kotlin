@@ -144,10 +144,10 @@ enum class Blockchain(
     }
 
     fun getShareScheme(): String? = when (this) {
-        Bitcoin -> "bitcoin"
-        Ethereum -> "ethereum"
+        Bitcoin, BitcoinTestnet -> "bitcoin"
+        Ethereum, EthereumTestnet -> "ethereum"
         Litecoin -> "litecoin"
-        Binance -> "bnb"
+        Binance, BinanceTestnet -> "bnb"
         else -> null
     }
 
