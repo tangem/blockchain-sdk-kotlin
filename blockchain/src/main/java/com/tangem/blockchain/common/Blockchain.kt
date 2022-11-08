@@ -160,7 +160,7 @@ enum class Blockchain(
 
     fun getExploreUrl(address: String, tokenContractAddress: String? = null): String = when (this) {
         Arbitrum -> "https://arbiscan.io/address/$address"
-        ArbitrumTestnet -> "https://testnet.arbiscan.io/address/$address"
+        ArbitrumTestnet -> "https://goerli-rollup-explorer.arbitrum.io/address/$address"
         Avalanche -> "https://snowtrace.io/address/$address"
         AvalancheTestnet -> "https://testnet.snowtrace.io/address/$address"
         Binance -> "https://explorer.binance.org/address/$address"
@@ -180,9 +180,9 @@ enum class Blockchain(
             "https://etherscan.io/token/$tokenContractAddress?a=$address"
         }
         EthereumTestnet -> if (tokenContractAddress == null) {
-            "https://rinkeby.etherscan.io/address/$address"
+            "https://goerli.etherscan.io/address/$address"
         } else {
-            "https://rinkeby.etherscan.io/token/$tokenContractAddress?a=$address"
+            "https://goerli.etherscan.io/token/$tokenContractAddress?a=$address"
         }
         EthereumClassic -> "https://blockscout.com/etc/mainnet/address/$address/transactions"
         EthereumClassicTestnet -> "https://blockscout.com/etc/kotti/address/$address/transactions"
@@ -225,7 +225,7 @@ enum class Blockchain(
         return when (this) {
             AvalancheTestnet -> "https://faucet.avax-test.network/"
             BitcoinTestnet -> "https://coinfaucet.eu/en/btc-testnet/"
-            EthereumTestnet -> "https://faucet.rinkeby.io"
+            EthereumTestnet -> "https://goerlifaucet.com/"
             EthereumClassicTestnet -> "https://kottifaucet.me"
             BitcoinCashTestnet -> "https://coinfaucet.eu/en/bch-testnet/"
             BinanceTestnet -> "https://docs.binance.org/smart-chain/wallet/binance.html"
@@ -314,7 +314,7 @@ enum class Blockchain(
             Avalanche -> Chain.Avalanche.id
             AvalancheTestnet -> Chain.AvalancheTestnet.id
             Ethereum -> Chain.Mainnet.id
-            EthereumTestnet -> Chain.Rinkeby.id
+            EthereumTestnet -> Chain.Goerli.id
             EthereumClassic -> Chain.EthereumClassicMainnet.id
             EthereumClassicTestnet -> Chain.EthereumClassicTestnet.id
             Fantom -> Chain.Fantom.id
