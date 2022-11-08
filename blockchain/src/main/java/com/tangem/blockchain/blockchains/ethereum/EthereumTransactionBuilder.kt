@@ -133,7 +133,7 @@ enum class Chain(
     val blockchain: Blockchain?,
 ) {
     Mainnet(1, Blockchain.Ethereum),
-    Rinkeby(4, Blockchain.EthereumTestnet),
+    Goerli(5, Blockchain.EthereumTestnet),
     Morden(2, null),
     Ropsten(3, null),
     Kovan(42, null),
@@ -150,7 +150,7 @@ enum class Chain(
     Avalanche(43114, Blockchain.Avalanche),
     AvalancheTestnet(43113, Blockchain.AvalancheTestnet),
     Arbitrum(42161, Blockchain.Arbitrum),
-    ArbitrumTestnet(421611, Blockchain.ArbitrumTestnet),
+    ArbitrumTestnet(421613, Blockchain.ArbitrumTestnet),
     Polygon(137, Blockchain.Polygon),
     PolygonTestnet(80001, Blockchain.PolygonTestnet),
     Fantom(250, Blockchain.Fantom),
