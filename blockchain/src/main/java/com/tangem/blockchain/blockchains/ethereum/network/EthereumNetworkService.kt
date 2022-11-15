@@ -186,6 +186,18 @@ class EthereumNetworkService(
         }
     }
 
+    override suspend fun callContractForFee(data: ContractCallData): Result<BigInteger> {
+        return try {
+            Result.Success(
+                multiJsonRpcProvider.performRequest(EthereumJsonRpcProvider::call, data)
+                    .extractResult().responseToBigInteger()
+            )
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+
+    }
+
     private fun String.responseToBigInteger() =
         this.substring(2).ifBlank { "0" }.toBigInteger(16)
 
