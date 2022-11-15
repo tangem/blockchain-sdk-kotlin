@@ -35,6 +35,10 @@ class EthereumJsonRpcProvider(baseUrl: String, private val postfixUrl: String = 
             EthBlockParam.LATEST.value
         ).post()
 
+    suspend fun call(data: Any): Result<EthereumResponse> {
+        return createEthereumBody(EthereumMethod.CALL, data, EthBlockParam.LATEST.value).post()
+    }
+
     suspend fun callProcess(
         contractAddress: String,
         amount: BigDecimal,
