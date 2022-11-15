@@ -25,6 +25,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvide
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.blockchains.litecoin.LitecoinNetworkService
 import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
+import com.tangem.blockchain.blockchains.optimism.OptimismWalletManager
 import com.tangem.blockchain.blockchains.polkadot.PolkadotNetworkService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotWalletManager
 import com.tangem.blockchain.blockchains.solana.SolanaWalletManager
@@ -529,7 +530,7 @@ class WalletManagerFactory(
                         )
                     }
                 }
-                EthereumWalletManager(
+                OptimismWalletManager(
                     wallet = wallet,
                     transactionBuilder = EthereumTransactionBuilder(
                         walletPublicKey = publicKey.blockchainKey,
