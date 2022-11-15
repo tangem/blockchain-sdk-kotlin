@@ -22,6 +22,8 @@ interface EthereumNetworkProvider {
         address: String,
         tokens: Set<Token>
     ): Result<Map<Token, BigDecimal>>
+
+    suspend fun callContractForFee(data: ContractCallData): Result<BigInteger>
 }
 
 data class EthereumInfoResponse(
