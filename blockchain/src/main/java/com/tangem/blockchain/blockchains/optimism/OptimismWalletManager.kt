@@ -11,6 +11,8 @@ import com.tangem.blockchain.extensions.successOr
 import org.kethereum.model.Address
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.math.MathContext
+import java.math.RoundingMode
 
 
 class OptimismWalletManager(
@@ -84,10 +86,11 @@ class OptimismWalletManager(
             val fee: BigInteger = networkProvider.callContractForFee(contractCallData).successOr {
                 return Result.Failure(BlockchainSdkError.FailedToLoadFee)
             }
+            val feeIndexed = (fee.toBigDecimal().movePointLeft(wallet.blockchain.decimals()) *
+                    BigDecimal.valueOf(OPTIMISM_FEE_MULTIPLIER))
             val amount = Amount(
                 blockchain = wallet.blockchain,
-                value = fee.toBigDecimal().movePointLeft(wallet.blockchain.decimals())
-                        * BigDecimal.valueOf(1.1)
+                value = feeIndexed
             )
             Result.Success(amount)
         } catch (error: Throwable) {
@@ -95,7 +98,23 @@ class OptimismWalletManager(
         }
     }
 
+    override fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): List<BigDecimal> {
+        val minFee = (gasPrice * gasLimit)
+        val normalFee = minFee * BigInteger.valueOf(12) / BigInteger.TEN
+        val priorityFee = minFee * BigInteger.valueOf(15) / BigInteger.TEN
+
+        val decimals = Blockchain.Ethereum.decimals()
+        return listOf(minFee, normalFee, priorityFee)
+            .map {
+                it.toBigDecimal(
+                    scale = decimals,
+                    mathContext = MathContext(decimals, RoundingMode.HALF_EVEN)
+                )
+            }
+    }
+
     companion object {
         private const val OPTIMISM_FEE_CONTRACT_ADDRESS = "0x420000000000000000000000000000000000000F"
+        private const val OPTIMISM_FEE_MULTIPLIER = 1.1
     }
 }
