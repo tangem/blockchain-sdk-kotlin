@@ -10,37 +10,42 @@ import org.kethereum.model.Transaction
 import org.kethereum.model.createEmptyTransaction
 import java.math.BigInteger
 
-public val FourByteDecimals: ByteArray = byteArrayOf(49, 60, -27, 103)
 
-public val FourByteGasPrice: ByteArray = byteArrayOf(-2, 23, 59, -105)
+/**
+ * Generated from contract ABI by https://github.com/komputing/kethabi
+ */
 
-public val FourByteGetL1Fee: ByteArray = byteArrayOf(73, -108, -114, 14)
+internal val FourByteDecimals: ByteArray = byteArrayOf(49, 60, -27, 103)
 
-public val FourByteGetL1GasUsed: ByteArray = byteArrayOf(-34, 38, -60, -95)
+internal val FourByteGasPrice: ByteArray = byteArrayOf(-2, 23, 59, -105)
 
-public val FourByteL1BaseFee: ByteArray = byteArrayOf(81, -101, 75, -45)
+internal val FourByteGetL1Fee: ByteArray = byteArrayOf(73, -108, -114, 14)
 
-public val FourByteOverhead: ByteArray = byteArrayOf(12, 24, -63, 98)
+internal val FourByteGetL1GasUsed: ByteArray = byteArrayOf(-34, 38, -60, -95)
 
-public val FourByteOwner: ByteArray = byteArrayOf(-115, -91, -53, 91)
+internal val FourByteL1BaseFee: ByteArray = byteArrayOf(81, -101, 75, -45)
 
-public val FourByteRenounceOwnership: ByteArray = byteArrayOf(113, 80, 24, -90)
+internal val FourByteOverhead: ByteArray = byteArrayOf(12, 24, -63, 98)
 
-public val FourByteScalar: ByteArray = byteArrayOf(-12, 94, 101, -40)
+internal val FourByteOwner: ByteArray = byteArrayOf(-115, -91, -53, 91)
 
-public val FourByteSetDecimals: ByteArray = byteArrayOf(-116, -120, -123, -56)
+internal val FourByteRenounceOwnership: ByteArray = byteArrayOf(113, 80, 24, -90)
 
-public val FourByteSetGasPrice: ByteArray = byteArrayOf(-65, 31, -28, 32)
+internal val FourByteScalar: ByteArray = byteArrayOf(-12, 94, 101, -40)
 
-public val FourByteSetL1BaseFee: ByteArray = byteArrayOf(-66, -34, 57, -75)
+internal val FourByteSetDecimals: ByteArray = byteArrayOf(-116, -120, -123, -56)
 
-public val FourByteSetOverhead: ByteArray = byteArrayOf(53, 119, -81, -59)
+internal val FourByteSetGasPrice: ByteArray = byteArrayOf(-65, 31, -28, 32)
 
-public val FourByteSetScalar: ByteArray = byteArrayOf(112, 70, 85, -105)
+internal val FourByteSetL1BaseFee: ByteArray = byteArrayOf(-66, -34, 57, -75)
 
-public val FourByteTransferOwnership: ByteArray = byteArrayOf(-14, -3, -29, -117)
+internal val FourByteSetOverhead: ByteArray = byteArrayOf(53, 119, -81, -59)
 
-public class optimism_gas_l1TransactionGenerator(
+internal val FourByteSetScalar: ByteArray = byteArrayOf(112, 70, 85, -105)
+
+internal val FourByteTransferOwnership: ByteArray = byteArrayOf(-14, -3, -29, -117)
+
+internal class optimism_gas_l1TransactionGenerator(
     address: Address
 ) {
     private val tx: Transaction = createEmptyTransaction().apply { to = address }
@@ -388,7 +393,7 @@ public class optimism_gas_l1TransactionGenerator(
 //    }
 //}
 
-public class optimism_gas_l1TransactionDecoder() {
+internal class optimism_gas_l1TransactionDecoder() {
     public fun isDecimals(tx: Transaction): Boolean =
         tx.input.sliceArray(0..3).contentEquals(FourByteDecimals)
 
