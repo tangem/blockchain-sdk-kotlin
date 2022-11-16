@@ -10,7 +10,8 @@ data class ContractCallData(
     companion object {
         fun from(transaction: Transaction): ContractCallData {
             return ContractCallData(
-                to = transaction.to!!.hex, data = HEX_PREFIX + transaction.input.toHexString()
+                to = transaction.to!!.hex,
+                data = HEX_PREFIX + transaction.input.toHexString()
             )
         }
         private const val HEX_PREFIX = "0x"
