@@ -500,10 +500,11 @@ open class EthereumWalletManager(
         }
     }
 
-    private fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): List<BigDecimal> {
+    protected open fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): List<BigDecimal> {
         val minFee = gasPrice * gasLimit
-        val normalFee = minFee * BigInteger.valueOf(12) / BigInteger.TEN
-        val priorityFee = minFee * BigInteger.valueOf(15) / BigInteger.TEN
+        //By dividing by ten before last multiplication here we can lose some digits
+        val normalFee = gasPrice * BigInteger.valueOf(12) / BigInteger.TEN * gasLimit
+        val priorityFee = gasPrice * BigInteger.valueOf(15) / BigInteger.TEN * gasLimit
 
         val decimals = Blockchain.Ethereum.decimals()
         return listOf(minFee, normalFee, priorityFee)
