@@ -18,10 +18,10 @@ import java.math.MathContext
 import java.math.RoundingMode
 import java.util.*
 
-class EthereumWalletManager(
+open class EthereumWalletManager(
     wallet: Wallet,
     val transactionBuilder: EthereumTransactionBuilder,
-    private val networkProvider: EthereumNetworkProvider,
+    protected val networkProvider: EthereumNetworkProvider,
     presetTokens: MutableSet<Token>,
 ) : WalletManager(wallet, presetTokens),
     TransactionSender, SignatureCountValidator, TokenFinder, EthereumGasLoader {
@@ -85,17 +85,13 @@ class EthereumWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner
     ): SimpleResult {
-        val transactionToSign = transactionBuilder.buildToSign(
-            transactionData,
-            txCount.toBigInteger(),
-            gasLimit
-        ) ?: return SimpleResult.Failure(BlockchainSdkError.CustomError("Not enough data"))
-
-        val signerResponse = signer.sign(transactionToSign.hash, wallet.publicKey)
-        return when (signerResponse) {
-            is CompletionResult.Success -> {
+        return when (val signResponse = sign(transactionData, signer)) {
+            is Result.Success -> {
                 val transactionToSend = transactionBuilder
-                    .buildToSend(signerResponse.data, transactionToSign)
+                    .buildToSend(
+                        signature = signResponse.data.first,
+                        transactionToSign = signResponse.data.second
+                    )
                 val sendResult = networkProvider
                     .sendTransaction("0x" + transactionToSend.toHexString())
 
@@ -105,7 +101,23 @@ class EthereumWalletManager(
                 }
                 sendResult
             }
-            is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResponse.error)
+            is Result.Failure -> SimpleResult.fromTangemSdkError(signResponse.error)
+        }
+    }
+
+    open suspend fun sign(
+        transactionData: TransactionData,
+        signer: TransactionSigner
+    ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
+        val transactionToSign = transactionBuilder.buildToSign(
+            transactionData,
+            txCount.toBigInteger(),
+            gasLimit
+        ) ?: return Result.Failure(BlockchainSdkError.CustomError("Not enough data"))
+
+        return when (val signResponse = signer.sign(transactionToSign.hash, wallet.publicKey)) {
+            is CompletionResult.Success -> Result.Success(signResponse.data to transactionToSign)
+            is CompletionResult.Failure -> Result.fromTangemSdkError(signResponse.error)
         }
     }
 
@@ -488,8 +500,9 @@ class EthereumWalletManager(
         }
     }
 
-    private fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): List<BigDecimal> {
+    protected open fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): List<BigDecimal> {
         val minFee = gasPrice * gasLimit
+        //By dividing by ten before last multiplication here we can lose some digits
         val normalFee = gasPrice * BigInteger.valueOf(12) / BigInteger.TEN * gasLimit
         val priorityFee = gasPrice * BigInteger.valueOf(15) / BigInteger.TEN * gasLimit
 
