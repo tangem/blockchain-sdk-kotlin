@@ -26,8 +26,8 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.blockchains.litecoin.LitecoinNetworkService
 import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
 import com.tangem.blockchain.blockchains.optimism.OptimismWalletManager
-import com.tangem.blockchain.blockchains.polkadot.PolkadotNetworkService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotWalletManager
+import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkService
 import com.tangem.blockchain.blockchains.solana.SolanaWalletManager
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
 import com.tangem.blockchain.blockchains.stellar.StellarNetworkService
