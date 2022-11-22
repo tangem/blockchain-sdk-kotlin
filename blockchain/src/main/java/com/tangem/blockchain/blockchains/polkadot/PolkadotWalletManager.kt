@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.polkadot
 
+import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkService
 import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.existentialDeposit
 import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.hosts
 import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.toBigDecimal
@@ -78,10 +79,10 @@ class PolkadotWalletManager(
             signer = DummyPolkadotTransactionSigner()
         ).successOr { return it }
 
-        val feeDot = multiNetworkProvider.performRequest {
+        val fee = multiNetworkProvider.performRequest {
             getFee(signedTransaction)
         }.successOr { return it }
-        val feeAmount = amount.copy(value = feeDot.toBigDecimal(network))
+        val feeAmount = amount.copy(value = fee)
 
         return Result.Success(listOf(feeAmount))
     }
