@@ -1,4 +1,4 @@
-package com.tangem.blockchain.blockchains.polkadot
+package com.tangem.blockchain.blockchains.polkadot.network
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.amountUnits
@@ -23,6 +23,7 @@ import io.emeraldpay.polkaj.types.DotAmount
 import io.emeraldpay.polkaj.types.Hash256
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.math.BigDecimal
 
 /**
 [REDACTED_AUTHOR]
@@ -33,6 +34,7 @@ class PolkadotNetworkService(
 ) {
 
     private val polkadotApi: PolkadotApi = PolkadotApi.Builder().rpcCallAdapter(rpcCallAdapter(host)).build()
+    private val polkadotProvider: PolkadotJsonRpcProvider = PolkadotJsonRpcProvider(host)
     private val commands = StandardCommands.getInstance()
 
     suspend fun getBalance(address: Address): Result<DotAmount> = withContext(Dispatchers.IO) {
@@ -51,10 +53,13 @@ class PolkadotNetworkService(
         }
     }
 
-    suspend fun getFee(builtTransaction: ByteArray): Result<DotAmount> = withContext(Dispatchers.IO) {
+    suspend fun getFee(builtTransaction: ByteArray): Result<BigDecimal> = withContext(Dispatchers.IO) {
         try {
-            val queryInfo = polkadotApi.execute(commands.paymentQueryInfo(ByteData(builtTransaction))).get()
-            Result.Success(queryInfo.partialFee)
+            val fee = polkadotProvider.getFee(
+                transaction = builtTransaction,
+                decimals = network.amountUnits.main.decimals
+            )
+            Result.Success(fee)
         } catch (ex: Exception) {
             Result.Failure(BlockchainSdkError.Polkadot.Api(ex))
         }
