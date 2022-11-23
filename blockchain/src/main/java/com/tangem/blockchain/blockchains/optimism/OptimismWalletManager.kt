@@ -37,11 +37,13 @@ class OptimismWalletManager(
             type = amount.type,
             blockchain =  blockchain
         )
+
         val transactionData = TransactionData(
             amount = preparedAmount,
             fee = preparedAmount,
             sourceAddress = wallet.address,
             destinationAddress = destination,
+            contractAddress = (amount.type as? AmountType.Token)?.token?.contractAddress
         )
 
         val transaction = transactionBuilder.buildToSign(
