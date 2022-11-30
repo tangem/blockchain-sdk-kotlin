@@ -67,7 +67,7 @@ dependencies {
     implementation "com.madgag.spongycastle:core:1.58.0.0"
     implementation "com.madgag.spongycastle:prov:1.58.0.0"
 
-    ext.kethereum_version = '0.81.2'
+    ext.kethereum_version = '0.85.7'
     implementation "com.github.walleth.kethereum:extensions_kotlin:$kethereum_version"
     implementation "com.github.walleth.kethereum:extensions_transactions:$kethereum_version"
     implementation "com.github.walleth.kethereum:erc55:$kethereum_version"
@@ -80,6 +80,7 @@ dependencies {
     implementation "com.github.walleth.kethereum:rlp:$kethereum_version"
     implementation "com.github.walleth.kethereum:abi:$kethereum_version"
     implementation "com.github.walleth.kethereum:types:$kethereum_version"
+    implementation "com.github.walleth.kethereum:erc712:$kethereum_version"
 
     implementation 'co.nstant.in:cbor:0.8'
 
