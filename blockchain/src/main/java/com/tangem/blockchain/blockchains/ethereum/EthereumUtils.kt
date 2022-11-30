@@ -9,15 +9,18 @@ import com.tangem.common.extensions.toByteArray
 import org.kethereum.crypto.api.ec.ECDSASignature
 import org.kethereum.crypto.determineRecId
 import org.kethereum.crypto.impl.ec.canonicalise
+import org.kethereum.eip712.MoshiAdapter
 import org.kethereum.extensions.toBytesPadded
 import org.kethereum.extensions.toFixedLengthByteArray
-import org.kethereum.extensions.transactions.encodeRLP
+import org.kethereum.extensions.transactions.encode
 import org.kethereum.extensions.transactions.tokenTransferSignature
 import org.kethereum.keccakshortcut.keccak
 import org.kethereum.model.Address
 import org.kethereum.model.PublicKey
 import org.kethereum.model.SignatureData
 import org.kethereum.model.createTransactionWithDefaults
+import pm.gnosis.eip712.EIP712JsonParser
+import pm.gnosis.eip712.typedDataHash
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -104,7 +107,7 @@ class EthereumUtils {
             val chainId = blockchain.getChainId()
                 ?: throw Exception("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
             val hash = transaction
-                .encodeRLP(SignatureData(v = chainId.toBigInteger()))
+                .encode(SignatureData(v = chainId.toBigInteger()))
                 .keccak()
             return CompiledEthereumTransaction(transaction, hash)
         }
@@ -145,7 +148,7 @@ class EthereumUtils {
                 ?: throw Exception("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
 
             val hash = transaction
-                .encodeRLP(SignatureData(v = chainId.toBigInteger()))
+                .encode(SignatureData(v = chainId.toBigInteger()))
                 .keccak()
 
             return CompiledEthereumTransaction(transaction, hash)
@@ -184,7 +187,7 @@ class EthereumUtils {
                 ?: throw Exception("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
 
             val hash = transaction
-                .encodeRLP(SignatureData(v = chainId.toBigInteger()))
+                .encode(SignatureData(v = chainId.toBigInteger()))
                 .keccak()
 
             return CompiledEthereumTransaction(transaction, hash)
@@ -224,7 +227,7 @@ class EthereumUtils {
                 ?: throw Exception("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
 
             val hash = transaction
-                .encodeRLP(SignatureData(v = chainId.toBigInteger()))
+                .encode(SignatureData(v = chainId.toBigInteger()))
                 .keccak()
 
             return CompiledEthereumTransaction(transaction, hash)
@@ -262,7 +265,7 @@ class EthereumUtils {
                 ?: throw Exception("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
 
             val hash = transaction
-                .encodeRLP(SignatureData(v = chainId.toBigInteger()))
+                .encode(SignatureData(v = chainId.toBigInteger()))
                 .keccak()
 
             return CompiledEthereumTransaction(transaction, hash)
@@ -306,7 +309,7 @@ class EthereumUtils {
                 ?: throw Exception("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
 
             val hash = transaction
-                .encodeRLP(SignatureData(v = chainId.toBigInteger()))
+                .encode(SignatureData(v = chainId.toBigInteger()))
                 .keccak()
 
             return CompiledEthereumTransaction(transaction, hash)
@@ -358,7 +361,7 @@ class EthereumUtils {
             val chainId = blockchain.getChainId()
                 ?: throw Exception("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
             val hash = transaction
-                .encodeRLP(SignatureData(v = chainId.toBigInteger()))
+                .encode(SignatureData(v = chainId.toBigInteger()))
                 .keccak()
             return CompiledEthereumTransaction(transaction, hash)
         }
@@ -428,6 +431,11 @@ class EthereumUtils {
             val sequenceBytes = BigInteger.valueOf(sequence.toLong()).toBytesPadded(32)
 
             return processSignature + cardAddressBytes + amountBytes + otpBytes + sequenceBytes
+        }
+
+        fun makeTypedDataHash(rawMessage: String): ByteArray {
+           val messageParsed =  EIP712JsonParser(MoshiAdapter()).parseMessage(rawMessage)
+           return typedDataHash(messageParsed.message, messageParsed.domain)
         }
     }
 }
