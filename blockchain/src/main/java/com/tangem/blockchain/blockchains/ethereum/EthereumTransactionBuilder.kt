@@ -7,7 +7,7 @@ import com.tangem.common.extensions.toDecompressedPublicKey
 import org.kethereum.crypto.api.ec.ECDSASignature
 import org.kethereum.crypto.determineRecId
 import org.kethereum.crypto.impl.ec.canonicalise
-import org.kethereum.extensions.transactions.encodeRLP
+import org.kethereum.extensions.transactions.encode
 import org.kethereum.model.PublicKey
 import org.kethereum.model.SignatureData
 import java.math.BigInteger
@@ -124,7 +124,7 @@ class EthereumTransactionBuilder(
         val v = (recId + 27 + 8 + (chainId * 2)).toBigInteger()
         val signatureData = SignatureData(ecdsaSignature.r, ecdsaSignature.s, v)
 
-        return transactionToSign.transaction.encodeRLP(signatureData)
+        return transactionToSign.transaction.encode(signatureData)
     }
 }
 
