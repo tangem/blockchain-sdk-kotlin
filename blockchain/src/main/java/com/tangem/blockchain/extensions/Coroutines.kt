@@ -99,6 +99,5 @@ private fun Result.Success<*>.isError(): Boolean {
 }
 
 private fun BlockchainSdkError.WrappedThrowable.isNetworkError(): Boolean {
-   return throwable is IOException || throwable is HttpException || throwable is JsonDataException
+   return cause is IOException || cause is HttpException || cause is JsonDataException
 }
-
