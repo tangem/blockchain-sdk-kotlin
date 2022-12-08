@@ -6,12 +6,11 @@ apply from: '../upload.gradle'
 apply plugin: 'com.squareup.wire'
 
 android {
-    compileSdkVersion 30
-
+    compileSdkVersion 31
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 30
+        targetSdkVersion 31
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
@@ -23,6 +22,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
         sourceCompatibility = 1.8
         targetCompatibility = 1.8
@@ -32,6 +32,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = '1.8'
     }
@@ -43,9 +44,8 @@ task sourceJar(type: Jar) {
 }
 
 dependencies {
-
-    implementation 'com.tangem.tangem-sdk-kotlin:core:develop-159'
-    implementation 'com.tangem.tangem-sdk-kotlin:android:develop-159'
+    implementation 'com.tangem.tangem-sdk-kotlin:core:develop-171'
+    implementation 'com.tangem.tangem-sdk-kotlin:android:develop-171'
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$versions.kotlin"
     implementation 'androidx.appcompat:appcompat:1.3.1'
