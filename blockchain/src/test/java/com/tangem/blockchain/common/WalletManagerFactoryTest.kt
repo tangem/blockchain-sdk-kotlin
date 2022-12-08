@@ -17,7 +17,7 @@ import com.tangem.common.core.Config
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
-import com.tangem.common.services.secure.UnsafeInMemoryStorage
+import com.tangem.common.services.InMemoryStorage
 import com.tangem.operations.read.ReadCommand
 import org.bitcoinj.core.ECKey
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters
@@ -113,7 +113,7 @@ internal class WalletManagerFactoryTest {
         val pairPublicKey = "04752A727E14BBA5BD73B6714D72500F61FFD11026AD1196D2E1C54577CBEEAC3D11FC68A64700F8D533F4E311964EA8FB3AA26C588295F2133868D69C3E628693"
 
         val responseApdu = ResponseApdu(data.hexToBytes())
-        val card = ReadCommand().deserialize(SessionEnvironment(Config(), UnsafeInMemoryStorage()), responseApdu).card
+        val card = ReadCommand().deserialize(SessionEnvironment(Config(), InMemoryStorage()), responseApdu).card
         val walletManager =
                 WalletManagerFactory().makeTwinWalletManager(
                     card.wallets.first().publicKey,
