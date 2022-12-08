@@ -2,14 +2,14 @@ package com.tangem.blockchain.common
 
 import com.tangem.common.core.TangemError
 
-interface BlockchainError : TangemError
+abstract class BlockchainError(code: Int) : TangemError(code)
 
 sealed class BlockchainSdkError(
-    override val code: Int,
+    code: Int,
     override var customMessage: String = code.toString(),
     override val messageResId: Int? = null,
-    val throwable: Throwable? = null
-) : Exception(code.toString(), throwable), BlockchainError {
+    override val cause: Throwable? = null,
+) : BlockchainError(code) {
 
     data class WrappedTangemError(val tangemError: TangemError) : BlockchainSdkError(
         code = tangemError.code,
@@ -30,7 +30,7 @@ sealed class BlockchainSdkError(
         code = 6,
         customMessage = throwable.localizedMessage ?: "Unknown exception",
         messageResId = null,
-        throwable = throwable,
+        cause = throwable,
     )
 
     object SignatureCountNotMatched : BlockchainSdkError(100)
@@ -43,7 +43,7 @@ sealed class BlockchainSdkError(
         code = ERROR_CODE_SOLANA + subCode,
         customMessage = customMessage ?: (ERROR_CODE_SOLANA + subCode).toString(),
         messageResId = null,
-        throwable = throwable,
+        cause = throwable,
     ) {
         class Api(ex: Exception) : Solana(1, ex.localizedMessage ?: "Unknown api exception", ex)
         object FailedToCreateAssociatedTokenAddress : Solana(2, "Public key conversion failed")
@@ -59,7 +59,7 @@ sealed class BlockchainSdkError(
         code = ERROR_CODE_POLKADOT + subCode,
         customMessage = customMessage ?: (ERROR_CODE_POLKADOT + subCode).toString(),
         messageResId = null,
-        throwable = throwable,
+        cause = throwable,
     ) {
         class Api(ex: Exception) : Polkadot(1, ex.localizedMessage ?: "Unknown api exception", ex)
     }
