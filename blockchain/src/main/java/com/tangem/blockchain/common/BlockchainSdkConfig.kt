@@ -6,4 +6,5 @@ data class BlockchainSdkConfig (
     val blockcypherTokens: Set<String>? = null,
     val infuraProjectId: String? = null,
     val tronGridApiKey: String? = null,
+    val saltPayAuthToken: String? = null
 )

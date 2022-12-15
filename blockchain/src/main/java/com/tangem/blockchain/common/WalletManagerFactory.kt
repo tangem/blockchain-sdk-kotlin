@@ -478,6 +478,7 @@ class WalletManagerFactory(
             Blockchain.SaltPay -> {
                 val jsonRpcProviders = listOf(EthereumJsonRpcProvider(
                     baseUrl = API_SALTPAY,
+                    authToken = blockchainSdkConfig.saltPayAuthToken,
                 ))
                 EthereumWalletManager(
                     wallet = wallet,
