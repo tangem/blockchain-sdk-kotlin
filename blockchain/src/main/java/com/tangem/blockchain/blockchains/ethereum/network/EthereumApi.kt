@@ -1,15 +1,16 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.squareup.moshi.JsonClass
-import retrofit2.http.Body
-import retrofit2.http.Headers
-import retrofit2.http.POST
-import retrofit2.http.Url
+import retrofit2.http.*
 
 interface EthereumApi {
     @Headers("Content-Type: application/json")
     @POST()
-    suspend fun post(@Body body: EthereumBody?, @Url infuraProjectId: String): EthereumResponse
+    suspend fun post(
+        @Body body: EthereumBody?,
+        @Url infuraProjectId: String,
+        @Header("Authorization") token: String? = null
+    ): EthereumResponse
 }
 
 @JsonClass(generateAdapter = true)
