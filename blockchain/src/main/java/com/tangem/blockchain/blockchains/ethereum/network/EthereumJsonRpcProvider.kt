@@ -8,7 +8,11 @@ import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
 
-class EthereumJsonRpcProvider(baseUrl: String, private val postfixUrl: String = "") {
+class EthereumJsonRpcProvider(
+    baseUrl: String,
+    private val postfixUrl: String = "",
+    private val authToken: String? = null,
+) {
 
     val host: String = baseUrl
 
@@ -115,7 +119,7 @@ class EthereumJsonRpcProvider(baseUrl: String, private val postfixUrl: String = 
 
     private suspend fun EthereumBody.post(): Result<EthereumResponse> {
         return try {
-            val result = retryIO { api.post(this, postfixUrl) }
+            val result = retryIO { api.post(this, postfixUrl, authToken) }
             Result.Success(result)
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
