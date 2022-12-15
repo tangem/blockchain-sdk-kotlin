@@ -271,8 +271,7 @@ class WalletManagerFactory(
                     apiKey = blockchainSdkConfig.blockchairApiKey,
                     authorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
                 )
-                val blockcypherNetworkProvider = 
-                    BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
+                val blockcypherNetworkProvider = BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
 
                 val networkService = EthereumNetworkService(
                     jsonRpcProviders,
@@ -391,7 +390,7 @@ class WalletManagerFactory(
                         RpcClient("https://solana-api.projectserum.com"),
                         RpcClient("https://rpc.ankr.com/solana"),
                         RpcClient(Cluster.MAINNET.endpoint),
-                        )
+                    )
                     else -> listOf(RpcClient(Cluster.DEVNET.endpoint))
                 }
                 SolanaWalletManager(wallet, clients)
@@ -476,13 +475,10 @@ class WalletManagerFactory(
                     presetTokens = tokens
                 )
             }
-            Blockchain.SaltPay, Blockchain.SaltPayTestnet -> {
-                val jsonRpcProviders = if (blockchain.isTestnet()) {
-                    listOf(EthereumJsonRpcProvider(API_SALTPAY_TESTNET))
-                } else {
-                    listOf(EthereumJsonRpcProvider(API_SALTPAY))
-                }
-
+            Blockchain.SaltPay -> {
+                val jsonRpcProviders = listOf(EthereumJsonRpcProvider(
+                    baseUrl = API_SALTPAY,
+                ))
                 EthereumWalletManager(
                     wallet = wallet,
                     transactionBuilder = EthereumTransactionBuilder(
