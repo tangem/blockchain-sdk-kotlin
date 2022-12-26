@@ -160,6 +160,7 @@ open class BlockchairNetworkProvider(
             Blockchain.Bitcoin -> "bitcoin/"
             Blockchain.BitcoinTestnet -> "bitcoin/testnet/"
             Blockchain.BitcoinCash -> "bitcoin-cash/"
+            Blockchain.BitcoinCashTestnet -> "bitcoin-cash/testnet/"
             Blockchain.Litecoin -> "litecoin/"
             Blockchain.Dogecoin -> "dogecoin/"
             Blockchain.Dash -> "dash/"
