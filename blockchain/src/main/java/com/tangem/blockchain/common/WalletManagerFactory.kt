@@ -8,7 +8,6 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
 import com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo.BlockchainInfoNetworkProvider
-import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashNetworkService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashWalletManager
 import com.tangem.blockchain.blockchains.cardano.CardanoTransactionBuilder
@@ -46,7 +45,6 @@ import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
 import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledNetworkProvider
 import com.tangem.blockchain.network.*
-import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairNetworkProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import com.tangem.common.card.EllipticCurve
@@ -160,12 +158,8 @@ class WalletManagerFactory(
                 BitcoinCashWalletManager(
                     wallet,
                     BitcoinCashTransactionBuilder(publicKey.blockchainKey, blockchain),
-                    BitcoinCashNetworkService(
-                        blockchairApiKey = blockchainSdkConfig.blockchairApiKey,
-                        blockchairAuthorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
-                    )
+                    makeBitcoinNetworkService(Blockchain.BitcoinCash),
                 )
-
             Blockchain.Dogecoin ->
                 DogecoinWalletManager(
                     wallet,
@@ -227,17 +221,12 @@ class WalletManagerFactory(
                     EthereumJsonRpcProvider(API_ETH_CLASSIC_BESU),
                     EthereumJsonRpcProvider(API_ETH_CLASSIC_GETH),
                 )
-                val blockchairEthNetworkProvider = BlockchairEthNetworkProvider(
-                    apiKey = blockchainSdkConfig.blockchairApiKey,
-                    authorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
-                )
                 val blockcypherNetworkProvider =
                     BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
 
                 val networkService = EthereumNetworkService(
                     jsonRpcProviders,
                     blockcypherNetworkProvider,
-                    blockchairEthNetworkProvider
                 )
 
                 EthereumWalletManager(
@@ -267,17 +256,12 @@ class WalletManagerFactory(
                     )
                 }
 
-                val blockchairEthNetworkProvider = BlockchairEthNetworkProvider(
-                    apiKey = blockchainSdkConfig.blockchairApiKey,
-                    authorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
-                )
-                val blockcypherNetworkProvider = 
+                val blockcypherNetworkProvider =
                     BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
 
                 val networkService = EthereumNetworkService(
                     jsonRpcProviders,
                     blockcypherNetworkProvider,
-                    blockchairEthNetworkProvider
                 )
 
                 EthereumWalletManager(
@@ -391,7 +375,7 @@ class WalletManagerFactory(
                         RpcClient("https://solana-api.projectserum.com"),
                         RpcClient("https://rpc.ankr.com/solana"),
                         RpcClient(Cluster.MAINNET.endpoint),
-                        )
+                    )
                     else -> listOf(RpcClient(Cluster.DEVNET.endpoint))
                 }
                 SolanaWalletManager(wallet, clients)
@@ -563,21 +547,25 @@ class WalletManagerFactory(
 
         if (blockchain == Blockchain.Bitcoin) providers.add(BlockchainInfoNetworkProvider())
 
-        providers.add(
-            BlockchairNetworkProvider(
-                blockchain = blockchain,
-                apiKey = blockchainSdkConfig.blockchairApiKey,
-                authorizationToken = blockchainSdkConfig.blockchairAuthorizationToken
-            )
-        )
+        blockchainSdkConfig.blockchairCredentials?.let { blockchairCredentials ->
+            blockchairCredentials.apiKey.forEach { apiKey ->
+                providers.add(
+                    BlockchairNetworkProvider(
+                        blockchain = blockchain,
+                        apiKey = apiKey,
+                        authorizationToken = blockchairCredentials.authToken,
+                    )
+                )
+            }
+        }
 
         val blockcypherTokens = blockchainSdkConfig.blockcypherTokens
         if (!blockcypherTokens.isNullOrEmpty()) {
             providers.add(BlockcypherNetworkProvider(blockchain, blockcypherTokens))
         }
         return when (blockchain) {
-            Blockchain.Bitcoin, Blockchain.BitcoinTestnet, Blockchain.Dogecoin, Blockchain.Dash ->
-                BitcoinNetworkService(providers)
+            Blockchain.Bitcoin, Blockchain.BitcoinTestnet, Blockchain.Dogecoin, Blockchain.Dash,
+            Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet -> BitcoinNetworkService(providers)
             Blockchain.Litecoin -> LitecoinNetworkService(providers)
             else -> {
                 throw Exception(
