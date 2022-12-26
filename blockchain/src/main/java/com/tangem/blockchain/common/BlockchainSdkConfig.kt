@@ -10,7 +10,7 @@ data class BlockchainSdkConfig(
 
 data class BlockchairCredentials(
     val apiKey: List<String>,
-    val authToken: String,
+    val authToken: String?,
 )
 
 data class QuickNodeBscCredentials(
