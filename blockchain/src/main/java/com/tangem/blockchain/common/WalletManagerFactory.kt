@@ -322,16 +322,18 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.BSC, Blockchain.BSCTestnet -> {
-                val apiList = mutableListOf<String>()
+                val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
                 if (blockchain == Blockchain.BSC) {
-                    apiList.add(API_BSC)
+                    jsonRpcProviders.add(EthereumJsonRpcProvider(API_BSC))
                     blockchainSdkConfig.bscQuickNodeCredentials?.let {
-                        apiList.add("https://${it.subdomain}.bsc.discover.quiknode.pro/${it.apiKey}")
+                        if (it.isNotEmpty()) {
+                            val baseUrl = "https://${it.subdomain}.bsc.discover.quiknode.pro/"
+                            jsonRpcProviders.add(EthereumJsonRpcProvider(baseUrl, it.apiKey))
+                        }
                     }
                 } else {
-                    apiList.add(API_BSC_TESTNET)
+                    jsonRpcProviders.add(EthereumJsonRpcProvider(API_BSC_TESTNET))
                 }
-                val jsonRpcProviders = apiList.map { EthereumJsonRpcProvider(it) }
 
                 EthereumWalletManager(
                     wallet,
