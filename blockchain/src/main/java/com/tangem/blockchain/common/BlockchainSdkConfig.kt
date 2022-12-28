@@ -3,7 +3,8 @@ package com.tangem.blockchain.common
 data class BlockchainSdkConfig(
     val blockchairCredentials: BlockchairCredentials? = null,
     val blockcypherTokens: Set<String>? = null,
-    val quickNodeBscCredentials: QuickNodeBscCredentials? = null,
+    val bscQuickNodeCredentials: QuickNodeCredentials? = null,
+    val quickNodeCredentials: QuickNodeCredentials? = null,
     val infuraProjectId: String? = null,
     val tronGridApiKey: String? = null,
 )
@@ -13,7 +14,7 @@ data class BlockchairCredentials(
     val authToken: String?,
 )
 
-data class QuickNodeBscCredentials(
+data class QuickNodeCredentials(
     val apiKey: String,
     val subdomain: String,
 )
