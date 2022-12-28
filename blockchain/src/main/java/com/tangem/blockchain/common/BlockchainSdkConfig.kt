@@ -17,4 +17,6 @@ data class BlockchairCredentials(
 data class QuickNodeCredentials(
     val apiKey: String,
     val subdomain: String,
-)
+) {
+    fun isNotEmpty(): Boolean = apiKey.isNotEmpty() && subdomain.isNotEmpty()
+}
