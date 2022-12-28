@@ -325,8 +325,8 @@ class WalletManagerFactory(
                 val apiList = mutableListOf<String>()
                 if (blockchain == Blockchain.BSC) {
                     apiList.add(API_BSC)
-                    blockchainSdkConfig.quickNodeBscCredentials?.let {
-                        apiList.add("https://${it.subdomain}.bsc.discover.quiknode.pro${it.apiKey}")
+                    blockchainSdkConfig.bscQuickNodeCredentials?.let {
+                        apiList.add("https://${it.subdomain}.bsc.discover.quiknode.pro/${it.apiKey}")
                     }
                 } else {
                     apiList.add(API_BSC_TESTNET)
