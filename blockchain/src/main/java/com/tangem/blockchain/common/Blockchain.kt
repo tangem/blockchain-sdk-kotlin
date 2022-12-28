@@ -171,7 +171,7 @@ enum class Blockchain(
         BitcoinCashTestnet -> "https://www.blockchain.com/bch-testnet/address/$address"
         BSC -> "https://bscscan.com/address/$address"
         BSCTestnet -> "https://testnet.bscscan.com/address/$address"
-        Cardano, CardanoShelley -> "https://explorer.cardano.org/en/address.html?address=$address"
+        Cardano, CardanoShelley -> "https://www.blockchair.com/cardano/address/$address"
         Dogecoin -> "https://blockchair.com/dogecoin/address/$address"
         Ducatus -> "https://insight.ducatus.io/#/DUC/mainnet/address/$address"
         Ethereum -> if (tokenContractAddress == null) {
