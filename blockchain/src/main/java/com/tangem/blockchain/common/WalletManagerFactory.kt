@@ -567,9 +567,9 @@ class WalletManagerFactory(
             }
         }
 
-        val blockcypherTokens = blockchainSdkConfig.blockcypherTokens
-        if (!blockcypherTokens.isNullOrEmpty()) {
-            providers.add(BlockcypherNetworkProvider(blockchain, blockcypherTokens))
+        if (blockchain != Blockchain.BitcoinCash && blockchain != Blockchain.BitcoinCashTestnet
+            && !blockchainSdkConfig.blockcypherTokens.isNullOrEmpty()) {
+            providers.add(BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens))
         }
         return when (blockchain) {
             Blockchain.Bitcoin, Blockchain.BitcoinTestnet, Blockchain.Dogecoin, Blockchain.Dash,
