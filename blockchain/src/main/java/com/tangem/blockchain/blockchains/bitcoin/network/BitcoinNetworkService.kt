@@ -52,6 +52,6 @@ open class BitcoinNetworkService(providers: List<BitcoinNetworkProvider>) : Bitc
         multiProvider.performRequest(BitcoinNetworkProvider::getSignatureCount, address)
 
     private fun List<BigDecimal>.average(): BigDecimal =
-        this.reduce { acc, number -> acc + number }.divide(this.size.toBigDecimal())
+        this.reduce { acc, number -> acc + number }.divide(this.size.toBigDecimal(), RoundingMode.HALF_UP)
             .setScale(Blockchain.Bitcoin.decimals(), RoundingMode.HALF_UP)
 }
