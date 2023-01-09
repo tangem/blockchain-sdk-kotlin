@@ -130,8 +130,7 @@ internal class WalletManagerFactoryTest {
         }
 
         return WalletManagerFactory(BlockchainSdkConfig(
-            blockchairApiKey = "",
-            blockchairAuthorizationToken = "",
+            blockchairCredentials = BlockchairCredentials(listOf("anyKey"), "anyToken"),
             blockcypherTokens = setOf(),
             infuraProjectId = "",
             tronGridApiKey = "",
