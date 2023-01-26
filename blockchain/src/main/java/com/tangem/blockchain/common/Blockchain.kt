@@ -215,7 +215,7 @@ enum class Blockchain(
         EthereumFair -> "https://explorer.etherfair.org/address/$address"
         EthereumPow -> "https://mainnet.ethwscan.com/address/$address"
         EthereumPowTestnet -> "https://iceberg.ethwscan.com/address/$address"
-        SaltPay -> "https://blockscout.com/xdai/optimism/address/$address"
+        SaltPay -> "https://blockscout.bicoccachain.net/address/$address"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -390,7 +390,7 @@ enum class Blockchain(
             Litecoin -> 2
             Dogecoin -> 3
             Dash -> 5
-            Ethereum, EthereumPow, EthereumFair -> ethCoinType
+            Ethereum, EthereumPow, EthereumFair, SaltPay -> ethCoinType
             EthereumClassic -> 61
             RSK -> 137
             XRP -> 144
@@ -408,7 +408,7 @@ enum class Blockchain(
             Arbitrum -> 9001
             BSC -> 9006
             Tron -> 195
-            Gnosis, SaltPay -> 700
+            Gnosis -> 700
             Optimism -> 614
             else -> throw UnsupportedOperationException()
         }
