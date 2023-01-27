@@ -380,8 +380,21 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.Solana, Blockchain.SolanaTestnet -> {
+                val quickNodeCredentials = blockchainSdkConfig.quickNodeCredentials
+                val quickNodeClient =
+                    if (quickNodeCredentials != null && quickNodeCredentials.isNotEmpty()) {
+                        RpcClient(
+                            RpcClient.quickNodeEndpoint(
+                                apiKey = quickNodeCredentials.apiKey,
+                                subdomain = quickNodeCredentials.subdomain
+                            )
+                        )
+                    } else {
+                        null
+                    }
                 val clients = when (blockchain) {
-                    Blockchain.Solana -> listOf(
+                    Blockchain.Solana -> listOfNotNull(
+                        quickNodeClient,
                         RpcClient("https://solana-api.projectserum.com"),
                         RpcClient("https://rpc.ankr.com/solana"),
                         RpcClient(Cluster.MAINNET.endpoint),
