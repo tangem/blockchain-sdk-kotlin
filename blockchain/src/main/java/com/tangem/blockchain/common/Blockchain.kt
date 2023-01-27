@@ -157,66 +157,81 @@ enum class Blockchain(
         return scheme == getShareScheme()
     }
 
-    fun getExploreUrl(address: String, tokenContractAddress: String? = null): String = when (this) {
-        Arbitrum -> "https://arbiscan.io/address/$address"
-        ArbitrumTestnet -> "https://goerli-rollup-explorer.arbitrum.io/address/$address"
-        Avalanche -> "https://snowtrace.io/address/$address"
-        AvalancheTestnet -> "https://testnet.snowtrace.io/address/$address"
-        Binance -> "https://explorer.binance.org/address/$address"
-        BinanceTestnet -> "https://testnet-explorer.binance.org/address/$address"
-        Bitcoin -> "https://www.blockchair.com/bitcoin/address/$address"
-        BitcoinTestnet -> "https://www.blockchair.com/bitcoin/testnet/address/$address"
-        BitcoinCash -> "https://www.blockchair.com/bitcoin-cash/address/$address"
-        BitcoinCashTestnet -> "https://www.blockchain.com/bch-testnet/address/$address"
-        BSC -> "https://bscscan.com/address/$address"
-        BSCTestnet -> "https://testnet.bscscan.com/address/$address"
-        Cardano, CardanoShelley -> "https://www.blockchair.com/cardano/address/$address"
-        Dogecoin -> "https://blockchair.com/dogecoin/address/$address"
-        Ducatus -> "https://insight.ducatus.io/#/DUC/mainnet/address/$address"
-        Ethereum -> if (tokenContractAddress == null) {
-            "https://etherscan.io/address/$address"
-        } else {
-            "https://etherscan.io/token/$tokenContractAddress?a=$address"
-        }
-        EthereumTestnet -> if (tokenContractAddress == null) {
-            "https://goerli.etherscan.io/address/$address"
-        } else {
-            "https://goerli.etherscan.io/token/$tokenContractAddress?a=$address"
-        }
-        EthereumClassic -> "https://blockscout.com/etc/mainnet/address/$address/transactions"
-        EthereumClassicTestnet -> "https://blockscout.com/etc/kotti/address/$address/transactions"
-        Fantom -> "https://ftmscan.com/address/$address"
-        FantomTestnet -> "https://testnet.ftmscan.com/address/$address"
-        Litecoin -> "https://blockchair.com/litecoin/address/$address"
-        Polkadot -> "https://polkadot.subscan.io/account/$address"
-        PolkadotTestnet -> "https://westend.subscan.io/account/$address"
-        Kusama -> "https://kusama.subscan.io/account/$address"
-        Polygon -> "https://polygonscan.com/address/$address"
-        PolygonTestnet -> "https://explorer-mumbai.maticvigil.com/address/$address"
-        RSK -> {
-            var url = "https://explorer.rsk.co/address/$address"
-            if (tokenContractAddress != null) {
-                url += "?__tab=tokens"
-            }
-            url
-        }
-        Stellar -> "https://stellar.expert/explorer/public/account/$address"
-        StellarTestnet -> "https://stellar.expert/explorer/testnet/account/$address"
-        Solana -> "https://explorer.solana.com/address/$address"
-        SolanaTestnet -> "https://explorer.solana.com/address/$address/?cluster=devnet"
-        Tezos -> "https://tezblock.io/account/$address"
-        Tron -> "https://tronscan.org/#/address/$address"
-        TronTestnet -> "https://nile.tronscan.org/#/address/$address"
-        XRP -> "https://xrpscan.com/account/$address"
-        Gnosis -> "https://blockscout.com/xdai/mainnet/address/$address"
-        Dash -> "https://blockexplorer.one/dash/mainnet/address/$address"
-        Optimism -> "https://optimistic.etherscan.io/address/$address"
-        OptimismTestnet -> "https://blockscout.com/optimism/goerli/address/$address"
-        EthereumFair -> "https://explorer.etherfair.org/address/$address"
-        EthereumPow -> "https://mainnet.ethwscan.com/address/$address"
-        EthereumPowTestnet -> "https://iceberg.ethwscan.com/address/$address"
-        SaltPay -> "https://blockscout.bicoccachain.net/address/$address"
+    private fun getBaseExploreUrl(): String = when(this) {
+        Arbitrum -> "https://arbiscan.io/"
+        ArbitrumTestnet -> "https://goerli-rollup-explorer.arbitrum.io/"
+        Avalanche -> "https://snowtrace.io/"
+        AvalancheTestnet -> "https://testnet.snowtrace.io/"
+        Binance -> "https://explorer.binance.org/"
+        BinanceTestnet -> "https://testnet-explorer.binance.org/"
+        Bitcoin -> "https://www.blockchair.com/bitcoin/"
+        BitcoinTestnet -> "https://www.blockchair.com/bitcoin/testnet/"
+        BitcoinCash -> "https://www.blockchair.com/bitcoin-cash/"
+        BitcoinCashTestnet -> "https://www.blockchain.com/bch-testnet/"
+        BSC -> "https://bscscan.com/"
+        BSCTestnet -> "https://testnet.bscscan.com/"
+        Cardano, CardanoShelley -> "https://www.blockchair.com/cardano/"
+        Dogecoin -> "https://blockchair.com/dogecoin/"
+        Ducatus -> "https://insight.ducatus.io/#/DUC/mainnet/"
+        Ethereum -> "https://etherscan.io/"
+        EthereumTestnet -> "https://goerli.etherscan.io/"
+        EthereumClassic -> "https://blockscout.com/etc/mainnet/"
+        EthereumClassicTestnet -> "https://blockscout.com/etc/kotti/"
+        Fantom -> "https://ftmscan.com/"
+        FantomTestnet -> "https://testnet.ftmscan.com/"
+        Litecoin -> "https://blockchair.com/litecoin/"
+        Polkadot -> "https://polkadot.subscan.io/"
+        PolkadotTestnet -> "https://westend.subscan.io/"
+        Kusama -> "https://kusama.subscan.io/"
+        Polygon -> "https://polygonscan.com/"
+        PolygonTestnet -> "https://explorer-mumbai.maticvigil.com/"
+        RSK -> "https://explorer.rsk.co/"
+        Stellar -> "https://stellar.expert/explorer/public/"
+        StellarTestnet -> "https://stellar.expert/explorer/testnet/"
+        Solana -> "https://explorer.solana.com/"
+        SolanaTestnet -> "https://explorer.solana.com/"
+        Tezos -> "https://tezblock.io/"
+        Tron -> "https://tronscan.org/#/"
+        TronTestnet -> "https://nile.tronscan.org/#/"
+        XRP -> "https://xrpscan.com/"
+        Gnosis -> "https://blockscout.com/xdai/mainnet/"
+        Dash -> "https://blockexplorer.one/dash/mainnet/"
+        Optimism -> "https://optimistic.etherscan.io/"
+        OptimismTestnet -> "https://blockscout.com/optimism/goerli/"
+        EthereumFair -> "https://explorer.etherfair.org/"
+        EthereumPow -> "https://mainnet.ethwscan.com/"
+        EthereumPowTestnet -> "https://iceberg.ethwscan.com/"
+        SaltPay -> "https://blockscout.com/xdai/optimism/"
         Unknown -> throw Exception("unsupported blockchain")
+    }
+
+    fun getExploreUrl(address: String, tokenContractAddress: String? = null): String {
+        val path = "address/$address"
+        val baseUrl = getBaseExploreUrl()
+        val fullUrl = baseUrl + path
+        return when (this) {
+            Ethereum, EthereumTestnet -> if (tokenContractAddress == null) {
+                fullUrl
+            } else {
+                "$baseUrl$tokenContractAddress?a=$address"
+            }
+            EthereumClassic, EthereumClassicTestnet -> "$fullUrl/transactions"
+            RSK -> if (tokenContractAddress != null) {
+                "$fullUrl?__tab=tokens"
+            } else {
+                fullUrl
+            }
+            SolanaTestnet -> "$fullUrl/?cluster=devnet"
+            else -> fullUrl
+        }
+    }
+
+    fun getExploreTxUrl(transaction: String): String {
+        val url = getBaseExploreUrl() + "tx/$transaction"
+        return when (this) {
+            SolanaTestnet -> "$url/?cluster=devnet"
+            else -> url
+        }
     }
 
     fun getTestnetTopUpUrl(): String? {
