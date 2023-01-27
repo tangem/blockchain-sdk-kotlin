@@ -17,5 +17,9 @@ class RpcClient(val host: String) : RpcClient(host, null) {
             com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient(Cluster.DEVNET.endpoint)
         fun testNet(): com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient =
             com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient(Cluster.TESTNET.endpoint)
+
+        fun quickNodeEndpoint(apiKey: String, subdomain: String): String {
+            return "https://$subdomain.solana-mainnet.discover.quiknode.pro/$apiKey"
+        }
     }
 }
