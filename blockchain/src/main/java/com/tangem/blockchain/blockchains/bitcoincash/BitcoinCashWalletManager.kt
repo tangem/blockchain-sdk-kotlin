@@ -5,9 +5,10 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.Wallet
 
 class BitcoinCashWalletManager(
-        wallet: Wallet,
-        transactionBuilder: BitcoinCashTransactionBuilder,
-        networkProvider: BitcoinNetworkProvider
+    wallet: Wallet,
+    transactionBuilder: BitcoinCashTransactionBuilder,
+    networkProvider: BitcoinNetworkProvider
 ) : BitcoinWalletManager(wallet, transactionBuilder, networkProvider) {
-    override val minimalFeePerKb = DEFAULT_MINIMAL_FEE_PER_KB.toBigDecimal()
+
+    override val minimalFee = 0.00001.toBigDecimal()
 }
