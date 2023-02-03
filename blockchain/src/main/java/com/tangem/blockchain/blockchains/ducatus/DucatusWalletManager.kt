@@ -8,10 +8,13 @@ import com.tangem.blockchain.extensions.Result
 import java.math.BigDecimal
 
 class DucatusWalletManager(
-        wallet: Wallet,
-        transactionBuilder: BitcoinTransactionBuilder,
-        networkProvider: BitcoinNetworkProvider
+    wallet: Wallet,
+    transactionBuilder: BitcoinTransactionBuilder,
+    networkProvider: BitcoinNetworkProvider
 ) : BitcoinWalletManager(wallet, transactionBuilder, networkProvider), TransactionSender {
+
+    override val minimalFeePerKb = 0.0001.toBigDecimal()
+    override val minimalFee = 0.00001.toBigDecimal()
 
     override fun updateRecentTransactionsBasic(transactions: List<BasicTransactionData>) {
         if (transactions.isEmpty()) {
@@ -24,7 +27,7 @@ class DucatusWalletManager(
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
         val feeValue = BigDecimal.ONE.movePointLeft(blockchain.decimals())
         val sizeResult = transactionBuilder.getEstimateSize(
-                TransactionData(amount, Amount(amount, feeValue), wallet.address, destination)
+            TransactionData(amount, Amount(amount, feeValue), wallet.address, destination)
         )
         return when (sizeResult) {
             is Result.Failure -> sizeResult
@@ -34,9 +37,9 @@ class DucatusWalletManager(
                 val normalFee = BigDecimal.valueOf(0.00000144).multiply(transactionSize)
                 val priorityFee = BigDecimal.valueOf(0.00000350).multiply(transactionSize)
                 val fees = listOf(
-                        Amount(minFee, blockchain),
-                        Amount(normalFee, blockchain),
-                        Amount(priorityFee, blockchain)
+                    Amount(minFee, blockchain),
+                    Amount(normalFee, blockchain),
+                    Amount(priorityFee, blockchain)
                 )
                 Result.Success(fees)
             }
