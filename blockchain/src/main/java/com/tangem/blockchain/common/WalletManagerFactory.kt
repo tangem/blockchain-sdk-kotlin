@@ -27,8 +27,8 @@ import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
 import com.tangem.blockchain.blockchains.optimism.OptimismWalletManager
 import com.tangem.blockchain.blockchains.polkadot.PolkadotWalletManager
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkService
+import com.tangem.blockchain.blockchains.solana.SolanaRpcClientBuilder
 import com.tangem.blockchain.blockchains.solana.SolanaWalletManager
-import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
 import com.tangem.blockchain.blockchains.stellar.StellarNetworkService
 import com.tangem.blockchain.blockchains.stellar.StellarTransactionBuilder
 import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
@@ -44,16 +44,62 @@ import com.tangem.blockchain.blockchains.xrp.XrpTransactionBuilder
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
 import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledNetworkProvider
-import com.tangem.blockchain.network.*
+import com.tangem.blockchain.network.API_ADALITE
+import com.tangem.blockchain.network.API_ARBITRUM
+import com.tangem.blockchain.network.API_ARBITRUM_INFURA
+import com.tangem.blockchain.network.API_ARBITRUM_OFFCHAIN
+import com.tangem.blockchain.network.API_ARBITRUM_TESTNET
+import com.tangem.blockchain.network.API_AVALANCHE
+import com.tangem.blockchain.network.API_AVALANCHE_TESTNET
+import com.tangem.blockchain.network.API_BSC
+import com.tangem.blockchain.network.API_BSC_TESTNET
+import com.tangem.blockchain.network.API_ETH_CLASSIC_BESU
+import com.tangem.blockchain.network.API_ETH_CLASSIC_BLOCKSCOUT
+import com.tangem.blockchain.network.API_ETH_CLASSIC_CLUSTER
+import com.tangem.blockchain.network.API_ETH_CLASSIC_ETCDESKTOP
+import com.tangem.blockchain.network.API_ETH_CLASSIC_GETH
+import com.tangem.blockchain.network.API_ETH_CLASSIC_MYTOKEN
+import com.tangem.blockchain.network.API_ETH_FAIR_RPC
+import com.tangem.blockchain.network.API_ETH_POW_RPC
+import com.tangem.blockchain.network.API_ETH_POW_TESTNET_RPC
+import com.tangem.blockchain.network.API_FANTOM_ANKR_TOOLS
+import com.tangem.blockchain.network.API_FANTOM_NETWORK
+import com.tangem.blockchain.network.API_FANTOM_TESTNET
+import com.tangem.blockchain.network.API_FANTOM_TOOLS
+import com.tangem.blockchain.network.API_FANTOM_ULTIMATENODES
+import com.tangem.blockchain.network.API_GNOSIS_ANKR
+import com.tangem.blockchain.network.API_GNOSIS_BLAST
+import com.tangem.blockchain.network.API_GNOSIS_CHAIN
+import com.tangem.blockchain.network.API_GNOSIS_POKT
+import com.tangem.blockchain.network.API_INFURA
+import com.tangem.blockchain.network.API_INFURA_TESTNET
+import com.tangem.blockchain.network.API_OPTIMISM
+import com.tangem.blockchain.network.API_OPTIMISM_ANKR
+import com.tangem.blockchain.network.API_OPTIMISM_BLAST
+import com.tangem.blockchain.network.API_OPTIMISM_TESTNET
+import com.tangem.blockchain.network.API_POLYGON
+import com.tangem.blockchain.network.API_POLYGON_MATICVIGIL
+import com.tangem.blockchain.network.API_POLYGON_TESTNET
+import com.tangem.blockchain.network.API_RIPPLE
+import com.tangem.blockchain.network.API_RIPPLE_RESERVE
+import com.tangem.blockchain.network.API_RSK
+import com.tangem.blockchain.network.API_SALTPAY
+import com.tangem.blockchain.network.API_TANGEM_ROSETTA
+import com.tangem.blockchain.network.API_TEZOS_BLOCKSCALE
+import com.tangem.blockchain.network.API_TEZOS_ECAD
+import com.tangem.blockchain.network.API_TEZOS_LETZBAKE
+import com.tangem.blockchain.network.API_TEZOS_SMARTPY
+import com.tangem.blockchain.network.API_XDAI_BLOCKSCOUT
+import com.tangem.blockchain.network.API_XDAI_POKT
+import com.tangem.blockchain.network.API_XRP_LEDGER_FOUNDATION
 import com.tangem.blockchain.network.blockchair.BlockchairNetworkProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.hdWallet.DerivationPath
 import com.tangem.common.hdWallet.ExtendedPublicKey
-import org.p2p.solanaj.rpc.Cluster
 
 class WalletManagerFactory(
-    private val blockchainSdkConfig: BlockchainSdkConfig = BlockchainSdkConfig()
+    private val config: BlockchainSdkConfig = BlockchainSdkConfig()
 ) {
 
     /**
@@ -193,11 +239,11 @@ class WalletManagerFactory(
                 jsonRpcProviders.add(
                     EthereumJsonRpcProvider.classic(API_ARBITRUM, "rpc/")
                 )
-                if (blockchainSdkConfig.infuraProjectId != null) {
+                if (config.infuraProjectId != null) {
                     jsonRpcProviders.add(
                         EthereumJsonRpcProvider.infura(
                             API_ARBITRUM_INFURA,
-                            blockchainSdkConfig.infuraProjectId
+                            config.infuraProjectId
                         )
                     )
                 }
@@ -222,7 +268,7 @@ class WalletManagerFactory(
                     EthereumJsonRpcProvider(API_ETH_CLASSIC_GETH),
                 )
                 val blockcypherNetworkProvider =
-                    BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
+                    BlockcypherNetworkProvider(blockchain, config.blockcypherTokens)
 
                 val networkService = EthereumNetworkService(
                     jsonRpcProviders,
@@ -250,14 +296,14 @@ class WalletManagerFactory(
             }
             Blockchain.Ethereum -> {
                 val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
-                if (blockchainSdkConfig.infuraProjectId != null) {
+                if (config.infuraProjectId != null) {
                     jsonRpcProviders.add(
-                        EthereumJsonRpcProvider.infura(API_INFURA, blockchainSdkConfig.infuraProjectId)
+                        EthereumJsonRpcProvider.infura(API_INFURA, config.infuraProjectId)
                     )
                 }
 
                 val blockcypherNetworkProvider =
-                    BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens)
+                    BlockcypherNetworkProvider(blockchain, config.blockcypherTokens)
 
                 val networkService = EthereumNetworkService(
                     jsonRpcProviders,
@@ -274,7 +320,7 @@ class WalletManagerFactory(
             Blockchain.EthereumTestnet -> {
                 val jsonRpcProvider = EthereumJsonRpcProvider.infura(
                     API_INFURA_TESTNET,
-                    blockchainSdkConfig.infuraProjectId ?: throw Exception("Infura project Id is required")
+                    config.infuraProjectId ?: throw Exception("Infura project Id is required")
                 )
                 EthereumWalletManager(
                     wallet,
@@ -325,7 +371,7 @@ class WalletManagerFactory(
                 val jsonRpcProviders = mutableListOf<EthereumJsonRpcProvider>()
                 if (blockchain == Blockchain.BSC) {
                     jsonRpcProviders.add(EthereumJsonRpcProvider(API_BSC))
-                    blockchainSdkConfig.bscQuickNodeCredentials?.let {
+                    config.quickNodeBscCredentials?.let {
                         if (it.isNotEmpty()) {
                             val baseUrl = "https://${it.subdomain}.bsc.discover.quiknode.pro/"
                             jsonRpcProviders.add(EthereumJsonRpcProvider(baseUrl, it.apiKey))
@@ -380,14 +426,7 @@ class WalletManagerFactory(
                 )
             }
             Blockchain.Solana, Blockchain.SolanaTestnet -> {
-                val clients = when (blockchain) {
-                    Blockchain.Solana -> listOf(
-                        RpcClient("https://solana-api.projectserum.com"),
-                        RpcClient("https://rpc.ankr.com/solana"),
-                        RpcClient(Cluster.MAINNET.endpoint),
-                    )
-                    else -> listOf(RpcClient(Cluster.DEVNET.endpoint))
-                }
+                val clients = SolanaRpcClientBuilder().build(blockchain.isTestnet(), config)
                 SolanaWalletManager(wallet, clients)
             }
             Blockchain.Cardano, Blockchain.CardanoShelley -> {
@@ -442,7 +481,7 @@ class WalletManagerFactory(
                 val network = if (blockchain.isTestnet()) TronNetwork.NILE else TronNetwork.MAINNET
                 val rpcProvider = TronJsonRpcNetworkProvider(
                     network = network,
-                    tronGridApiKey = blockchainSdkConfig.tronGridApiKey
+                    tronGridApiKey = config.tronGridApiKey
                 )
                 TronWalletManager(
                     wallet = wallet,
@@ -473,7 +512,7 @@ class WalletManagerFactory(
             Blockchain.SaltPay -> {
                 val jsonRpcProviders = listOf(EthereumJsonRpcProvider(
                     baseUrl = API_SALTPAY,
-                    authToken = blockchainSdkConfig.saltPayAuthToken,
+                    authToken = config.saltPayAuthToken,
                 ))
                 EthereumWalletManager(
                     wallet = wallet,
@@ -555,7 +594,7 @@ class WalletManagerFactory(
 
         if (blockchain == Blockchain.Bitcoin) providers.add(BlockchainInfoNetworkProvider())
 
-        blockchainSdkConfig.blockchairCredentials?.let { blockchairCredentials ->
+        config.blockchairCredentials?.let { blockchairCredentials ->
             blockchairCredentials.apiKey.forEach { apiKey ->
                 providers.add(
                     BlockchairNetworkProvider(
@@ -568,8 +607,8 @@ class WalletManagerFactory(
         }
 
         if (blockchain != Blockchain.BitcoinCash && blockchain != Blockchain.BitcoinCashTestnet
-            && !blockchainSdkConfig.blockcypherTokens.isNullOrEmpty()) {
-            providers.add(BlockcypherNetworkProvider(blockchain, blockchainSdkConfig.blockcypherTokens))
+            && !config.blockcypherTokens.isNullOrEmpty()) {
+            providers.add(BlockcypherNetworkProvider(blockchain, config.blockcypherTokens))
         }
         return when (blockchain) {
             Blockchain.Bitcoin, Blockchain.BitcoinTestnet, Blockchain.Dogecoin, Blockchain.Dash,
