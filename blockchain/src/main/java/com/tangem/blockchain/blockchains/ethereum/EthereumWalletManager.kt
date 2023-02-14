@@ -3,7 +3,21 @@ package com.tangem.blockchain.blockchains.ethereum
 import android.util.Log
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainError
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.SignatureCountValidator
+import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.TokenFinder
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionSender
+import com.tangem.blockchain.common.TransactionSigner
+import com.tangem.blockchain.common.TransactionStatus
+import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
@@ -16,7 +30,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.MathContext
 import java.math.RoundingMode
-import java.util.*
+import java.util.Calendar
 
 open class EthereumWalletManager(
     wallet: Wallet,
@@ -83,7 +97,7 @@ open class EthereumWalletManager(
 
     override suspend fun send(
         transactionData: TransactionData,
-        signer: TransactionSigner
+        signer: TransactionSigner,
     ): SimpleResult {
         return when (val signResponse = sign(transactionData, signer)) {
             is Result.Success -> {
@@ -107,7 +121,7 @@ open class EthereumWalletManager(
 
     open suspend fun sign(
         transactionData: TransactionData,
-        signer: TransactionSigner
+        signer: TransactionSigner,
     ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
         val transactionToSign = transactionBuilder.buildToSign(
             transactionData,
@@ -207,7 +221,11 @@ open class EthereumWalletManager(
         }
     }
 
-    suspend fun getFeeToInitOTP(processorContractAddress: String, otp: ByteArray, otpCounter: Int): Result<List<Amount>> {
+    suspend fun getFeeToInitOTP(
+        processorContractAddress: String,
+        otp: ByteArray,
+        otpCounter: Int,
+    ): Result<List<Amount>> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred =
@@ -382,14 +400,15 @@ open class EthereumWalletManager(
     }
 
     open fun createTransferFromTransaction(amount: Amount, fee: Amount, source: String): TransactionData {
-        val contractAddress = if (amount.type is AmountType.Token) {
-            amount.type.token.contractAddress
-        } else {
-            null
-        }
-        return TransactionData(amount, fee,
-            source, wallet.address, contractAddress,
-            TransactionStatus.Unconfirmed, Calendar.getInstance(), null)
+        return TransactionData(
+            amount = amount,
+            fee = fee,
+            sourceAddress = source,
+            destinationAddress = wallet.address,
+            status = TransactionStatus.Unconfirmed,
+            date = Calendar.getInstance(),
+            hash = null,
+        )
     }
 
     override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
@@ -473,7 +492,7 @@ open class EthereumWalletManager(
         processorContractAddress: String,
         cardAddress: String,
         otp: ByteArray,
-        otpCounter: Int
+        otpCounter: Int,
     ): Result<BigInteger> {
         val from = wallet.address
         val data = "0x" + EthereumUtils.createInitOTPData(otp, otpCounter).toHexString()
