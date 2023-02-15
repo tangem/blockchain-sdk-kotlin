@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.ethereum
 import android.util.Log
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
+import com.tangem.blockchain.blockchains.ethereum.network.TransactionHistoryProvider
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
@@ -38,7 +39,8 @@ open class EthereumWalletManager(
     protected val networkProvider: EthereumNetworkProvider,
     presetTokens: MutableSet<Token>,
 ) : WalletManager(wallet, presetTokens),
-    TransactionSender, SignatureCountValidator, TokenFinder, EthereumGasLoader {
+    TransactionSender, TransactionHistoryProvider,
+    SignatureCountValidator, TokenFinder, EthereumGasLoader {
 
     var pendingTxCount = -1L
         private set
@@ -534,4 +536,10 @@ open class EthereumWalletManager(
                 )
             }
     }
+
+    override suspend fun getTransactionHistory(
+        address: String,
+        blockchain: Blockchain,
+        tokens: Set<Token>,
+    ): Result<List<TransactionData>> = networkProvider.getTransactionHistory(address, blockchain, tokens)
 }
