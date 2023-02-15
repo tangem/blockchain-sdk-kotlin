@@ -1,15 +1,19 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.squareup.moshi.JsonClass
+import com.tangem.blockchain.common.GetBlockCredentials
+import com.tangem.blockchain.common.NowNodeCredentials
 import retrofit2.http.*
 
 interface EthereumApi {
     @Headers("Content-Type: application/json")
-    @POST()
+    @POST
     suspend fun post(
         @Body body: EthereumBody?,
         @Url infuraProjectId: String,
-        @Header("Authorization") token: String? = null
+        @Header("Authorization") token: String? = null,
+        @Header(NowNodeCredentials.headerApiKey) nowNodesApiKey: String? = null,
+        @Header(GetBlockCredentials.headerApiKey) getBlockApiKey: String? = null
     ): EthereumResponse
 }
 
