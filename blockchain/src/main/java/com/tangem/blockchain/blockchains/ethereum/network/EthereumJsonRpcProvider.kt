@@ -12,6 +12,8 @@ class EthereumJsonRpcProvider(
     baseUrl: String,
     private val postfixUrl: String = "",
     private val authToken: String? = null,
+    private val nowNodesApiKey: String? = null,
+    private val getBlockApiKey: String? = null,
 ) {
 
     val host: String = baseUrl
@@ -119,19 +121,19 @@ class EthereumJsonRpcProvider(
 
     private suspend fun EthereumBody.post(): Result<EthereumResponse> {
         return try {
-            val result = retryIO { api.post(this, postfixUrl, authToken) }
+            val result = retryIO {
+                api.post(
+                    body = this,
+                    infuraProjectId = postfixUrl,
+                    token = authToken,
+                    nowNodesApiKey = nowNodesApiKey,
+                    getBlockApiKey = getBlockApiKey
+                )
+            }
             Result.Success(result)
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
-    }
-
-    companion object {
-        fun infura(baseUrl: String, infuraProjectId: String) =
-            EthereumJsonRpcProvider(baseUrl + "v3/", infuraProjectId)
-
-        fun classic(baseUrl: String, postfixUrl: String) =
-            EthereumJsonRpcProvider(baseUrl, postfixUrl)
     }
 }
 
