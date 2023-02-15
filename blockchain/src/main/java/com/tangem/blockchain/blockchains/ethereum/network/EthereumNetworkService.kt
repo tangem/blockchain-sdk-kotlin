@@ -1,21 +1,34 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionStatus
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairToken
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
+import com.tangem.blockchain.network.blockscout.BlockscoutNetworkProvider
+import com.tangem.blockchain.network.blockscout.BlockscoutTransaction
+import com.tangem.common.extensions.guard
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.util.Calendar
 
 class EthereumNetworkService(
     jsonRpcProviders: List<EthereumJsonRpcProvider>,
     private val blockcypherNetworkProvider: BlockcypherNetworkProvider? = null,
     private val blockchairEthNetworkProvider: BlockchairEthNetworkProvider? = null,
+    private val blockscoutNetworkProvider: BlockscoutNetworkProvider? = null,
 ) : EthereumNetworkProvider {
 
     private val multiJsonRpcProvider = MultiNetworkProvider(jsonRpcProviders)
@@ -169,7 +182,6 @@ class EthereumNetworkService(
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
-
     }
 
     override suspend fun getGasLimit(to: String, from: String, value: String?, data: String?): Result<BigInteger> {
@@ -188,24 +200,50 @@ class EthereumNetworkService(
 
     override suspend fun callContractForFee(data: ContractCallData): Result<BigInteger> {
         return try {
-            Result.Success(
-                multiJsonRpcProvider.performRequest(EthereumJsonRpcProvider::call, data)
-                    .extractResult().responseToBigInteger()
-            )
+            val result = multiJsonRpcProvider.performRequest(EthereumJsonRpcProvider::call, data)
+                .extractResult().responseToBigInteger()
+            Result.Success(result)
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
-
     }
 
-    private fun String.responseToBigInteger() =
-        this.substring(2).ifBlank { "0" }.toBigInteger(16)
+    override suspend fun getTransactionHistory(
+        address: String,
+        blockchain: Blockchain,
+        tokens: Set<Token>,
+    ): Result<List<TransactionData>> {
+        val provider = blockscoutNetworkProvider.guard {
+            return Result.Failure(BlockchainSdkError.UnsupportedOperation())
+        }
 
-    private fun String.parseAmount(decimals: Int) =
-        this.responseToBigInteger().toBigDecimal().movePointLeft(decimals)
+        val txList = provider.getTransactionsList(address).successOr { return it }
+        val txTokenList = provider.getTokenTransactionsList(address).successOr { return it }
 
-    private fun EthereumError.toException() =
-        Exception("Code: ${this.code}, ${this.message}")
+        val transactionDataList = (txList + txTokenList).mapNotNull { tx ->
+            val txValue = BigDecimal(tx.value).movePointLeft(decimals)
+            if (tx.contractAddress.isEmpty()) {
+                tx.toUntypedTransactionData(blockchain).copy(
+                    amount = Amount(txValue, blockchain)
+                )
+            } else {
+                val foundToken = tokens.firstOrNull { it.contractAddress == tx.contractAddress }
+                    ?: return@mapNotNull null
+
+                tx.toUntypedTransactionData(blockchain).copy(
+                    amount = Amount(foundToken, txValue)
+                )
+            }
+        }
+
+        return Result.Success(transactionDataList)
+    }
+
+    private fun String.responseToBigInteger() = this.substring(2).ifBlank { "0" }.toBigInteger(16)
+
+    private fun String.parseAmount(decimals: Int) = this.responseToBigInteger().toBigDecimal().movePointLeft(decimals)
+
+    private fun EthereumError.toException() = Exception("Code: ${this.code}, ${this.message}")
 
     private fun Result<EthereumResponse>.extractResult(): String =
         when (this) {
@@ -220,4 +258,22 @@ class EthereumNetworkService(
                     ?: BlockchainSdkError.CustomError("Unknown error format")
             }
         }
+
+    private fun BlockscoutTransaction.toUntypedTransactionData(blockchain: Blockchain): TransactionData {
+        val fee = BigDecimal(gasPrice).multiply(BigDecimal(gasUsed)).movePointLeft(blockchain.decimals())
+        val feeAmount = Amount(fee, blockchain, AmountType.Coin)
+        val status = if (confirmations.toInt() > 0) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed
+        val date = Calendar.getInstance().apply { timeInMillis = timeStamp.toLong() * 1000 }
+
+        return TransactionData(
+            amount = Amount(null, Blockchain.Unknown),
+            fee = feeAmount,
+            sourceAddress = from,
+            destinationAddress = to,
+            status = status,
+            date = date,
+            hash = hash,
+            extras = null,
+        )
+    }
 }
