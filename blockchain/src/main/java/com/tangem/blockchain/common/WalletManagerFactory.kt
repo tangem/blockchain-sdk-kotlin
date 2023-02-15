@@ -82,8 +82,8 @@ import com.tangem.blockchain.network.API_POLYGON_MATICVIGIL
 import com.tangem.blockchain.network.API_POLYGON_TESTNET
 import com.tangem.blockchain.network.API_RIPPLE
 import com.tangem.blockchain.network.API_RIPPLE_RESERVE
+import com.tangem.blockchain.network.API_RPC_BICOCCACHAIN
 import com.tangem.blockchain.network.API_RSK
-import com.tangem.blockchain.network.API_SALTPAY
 import com.tangem.blockchain.network.API_TANGEM_ROSETTA
 import com.tangem.blockchain.network.API_TEZOS_BLOCKSCALE
 import com.tangem.blockchain.network.API_TEZOS_ECAD
@@ -94,12 +94,13 @@ import com.tangem.blockchain.network.API_XDAI_POKT
 import com.tangem.blockchain.network.API_XRP_LEDGER_FOUNDATION
 import com.tangem.blockchain.network.blockchair.BlockchairNetworkProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
+import com.tangem.blockchain.network.blockscout.BlockscoutNetworkProvider
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.hdWallet.DerivationPath
 import com.tangem.common.hdWallet.ExtendedPublicKey
 
 class WalletManagerFactory(
-    private val config: BlockchainSdkConfig = BlockchainSdkConfig()
+    private val config: BlockchainSdkConfig = BlockchainSdkConfig(),
 ) {
 
     /**
@@ -113,7 +114,7 @@ class WalletManagerFactory(
         blockchain: Blockchain,
         seedKey: ByteArray,
         derivedKey: ExtendedPublicKey,
-        derivation: DerivationParams
+        derivation: DerivationParams,
     ): WalletManager? {
         val derivationPath: DerivationPath? = when (derivation) {
             is DerivationParams.Custom -> derivation.path
@@ -135,7 +136,7 @@ class WalletManagerFactory(
         walletPublicKey: ByteArray,
         pairPublicKey: ByteArray,
         blockchain: Blockchain = Blockchain.Bitcoin,
-        curve: EllipticCurve = EllipticCurve.Secp256k1
+        curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
         return makeWalletManager(
             blockchain = blockchain,
@@ -148,7 +149,7 @@ class WalletManagerFactory(
     fun makeEthereumWalletManager(
         publicKey: Wallet.PublicKey,
         tokens: List<Token>,
-        isTestNet: Boolean = false
+        isTestNet: Boolean = false,
     ): WalletManager? {
         val blockchain = if (isTestNet) Blockchain.EthereumTestnet else Blockchain.Ethereum
         val walletManager = makeWalletManager(blockchain, publicKey, tokens) ?: return null
@@ -163,7 +164,7 @@ class WalletManagerFactory(
     fun makeWalletManager(
         blockchain: Blockchain,
         walletPublicKey: ByteArray,
-        curve: EllipticCurve = EllipticCurve.Secp256k1
+        curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
         return makeWalletManager(
             blockchain = blockchain,
@@ -177,7 +178,7 @@ class WalletManagerFactory(
         publicKey: Wallet.PublicKey,
         tokens: Collection<Token> = emptyList(),
         pairPublicKey: ByteArray? = null,
-        curve: EllipticCurve = EllipticCurve.Secp256k1
+        curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
         if (checkIfWrongKey(curve, publicKey)) return null
 
@@ -402,7 +403,6 @@ class WalletManagerFactory(
                         EthereumJsonRpcProvider(API_POLYGON),
                         EthereumJsonRpcProvider(API_POLYGON_MATICVIGIL),
                     )
-
                 } else {
                     listOf(EthereumJsonRpcProvider(API_POLYGON_TESTNET))
                 }
@@ -511,16 +511,20 @@ class WalletManagerFactory(
             }
             Blockchain.SaltPay -> {
                 val jsonRpcProviders = listOf(EthereumJsonRpcProvider(
-                    baseUrl = API_SALTPAY,
+                    baseUrl = API_RPC_BICOCCACHAIN,
                     authToken = config.saltPayAuthToken,
                 ))
+
                 EthereumWalletManager(
                     wallet = wallet,
                     transactionBuilder = EthereumTransactionBuilder(
                         walletPublicKey = publicKey.blockchainKey,
                         blockchain = blockchain
                     ),
-                    networkProvider = EthereumNetworkService(jsonRpcProviders),
+                    networkProvider = EthereumNetworkService(
+                        jsonRpcProviders = jsonRpcProviders,
+                        blockscoutNetworkProvider = BlockscoutNetworkProvider(config.blockscoutCredentials),
+                    ),
                     presetTokens = tokens
                 )
             }
@@ -607,12 +611,14 @@ class WalletManagerFactory(
         }
 
         if (blockchain != Blockchain.BitcoinCash && blockchain != Blockchain.BitcoinCashTestnet
-            && !config.blockcypherTokens.isNullOrEmpty()) {
+            && !config.blockcypherTokens.isNullOrEmpty()
+        ) {
             providers.add(BlockcypherNetworkProvider(blockchain, config.blockcypherTokens))
         }
         return when (blockchain) {
             Blockchain.Bitcoin, Blockchain.BitcoinTestnet, Blockchain.Dogecoin, Blockchain.Dash,
-            Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet -> BitcoinNetworkService(providers)
+            Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet,
+            -> BitcoinNetworkService(providers)
             Blockchain.Litecoin -> LitecoinNetworkService(providers)
             else -> {
                 throw Exception(
