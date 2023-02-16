@@ -21,4 +21,6 @@ interface TronNetworkProvider {
     suspend fun getTokenTransactionHistory(contractAddress: String): Result<TronTokenHistoryResponse>
 
     suspend fun getTransactionInfoById(id: String): Result<String>
+
+    suspend fun getChainParameters() : Result<TronChainParametersResponse>
 }

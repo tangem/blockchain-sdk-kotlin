@@ -86,9 +86,34 @@ class TronNetworkService(
         return rpcNetworkProvider.getAccount(address)
     }
 
+    suspend fun getChainParameters(): Result<TronChainParameters> {
+        return when (val result = rpcNetworkProvider.getChainParameters()) {
+            is Result.Failure -> Result.Failure(result.error)
+            is Result.Success -> {
+                val energyFee = result.data.chainParameters
+                    .firstOrNull { it.key == KEY_SUN_ENERGY_FEE }
+                    ?.value
+                val energyMaxFactor = result.data.chainParameters
+                    .firstOrNull { it.key == KEY_MAX_FACTOR }
+                    ?.value
+
+                if (energyFee != null && energyMaxFactor != null) {
+                    Result.Success(
+                        TronChainParameters(
+                            sunPerEnergyUnit = energyFee,
+                            dynamicEnergyMaxFactor = energyMaxFactor,
+                        )
+                    )
+                } else {
+                    Result.Failure(BlockchainSdkError.CustomError("Can not get necessary chain parameters"))
+                }
+            }
+        }
+    }
+
     private suspend fun getTokenBalance(
         address: String,
-        token: Token
+        token: Token,
     ): Result<Pair<Token, BigDecimal>> {
         val result = rpcNetworkProvider.run { getTokenBalance(address, token.contractAddress) }
         when (result) {
@@ -109,3 +134,6 @@ class TronNetworkService(
         return rpcNetworkProvider.getTransactionInfoById(id)
     }
 }
+
+private const val KEY_SUN_ENERGY_FEE = "getEnergyFee"
+private const val KEY_MAX_FACTOR = "getDynamicEnergyMaxFactor"
