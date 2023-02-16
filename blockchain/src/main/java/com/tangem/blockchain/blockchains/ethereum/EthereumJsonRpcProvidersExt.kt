@@ -73,10 +73,16 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             getNowNodesProvider(baseUrl = API_BSC_NOWNODES, config = config),
             getGetBlockProvider(baseUrl = API_BSC_GETBLOCK, config = config),
             EthereumJsonRpcProvider(baseUrl = API_BSC),
-            config.quickNodeBscCredentials?.let {
-                EthereumJsonRpcProvider(
-                    baseUrl = String.format(BSC_QUICKNODE_BASE_URL, it.subdomain, it.apiKey)
-                )
+            config.quickNodeBscCredentials?.let { credentials ->
+                if (credentials.subdomain.isNotBlank() && credentials.apiKey.isNotBlank()) {
+                    EthereumJsonRpcProvider(
+                        baseUrl = String.format(
+                            BSC_QUICKNODE_BASE_URL, credentials.subdomain, credentials.apiKey
+                        )
+                    )
+                } else {
+                    null
+                }
             }
         )
         Blockchain.BSCTestnet -> listOf(
