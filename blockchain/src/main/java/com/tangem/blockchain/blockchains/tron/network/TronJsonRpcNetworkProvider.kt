@@ -130,4 +130,13 @@ class TronJsonRpcNetworkProvider(
             Result.Failure(exception.toBlockchainSdkError())
         }
     }
+
+    override suspend fun getChainParameters(): Result<TronChainParametersResponse> {
+        return try {
+            val response = makeRequestUsingKeyOnlyWhenNeeded { api.getChainParameters() }
+            Result.Success(response)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
 }

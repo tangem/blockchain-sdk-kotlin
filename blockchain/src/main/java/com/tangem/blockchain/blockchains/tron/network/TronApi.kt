@@ -54,5 +54,8 @@ interface TronApi {
         @Body requestBody: TronTransactionInfoRequest,
     ): TronTransactionInfoResponse
 
+    @Headers("Content-Type: application/json", "Accept: application/json")
+    @GET("/wallet/getchainparameters")
+    suspend fun getChainParameters(): TronChainParametersResponse
 
 }
