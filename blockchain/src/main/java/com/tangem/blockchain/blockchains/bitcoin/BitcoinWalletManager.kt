@@ -19,8 +19,9 @@ open class BitcoinWalletManager(
 ) : WalletManager(wallet), TransactionSender, SignatureCountValidator {
 
     protected val blockchain = wallet.blockchain
-    open val minimalFeePerKb = 0.0001.toBigDecimal()
-    open val minimalFee = 0.00001.toBigDecimal()
+
+    open val minimalFeePerKb = DEFAULT_MINIMAL_FEE_PER_KB.toBigDecimal()
+    open val minimalFee = 0.000001.toBigDecimal()
 
     override val currentHost: String
         get() = networkProvider.host
