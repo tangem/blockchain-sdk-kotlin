@@ -12,6 +12,7 @@ import com.tangem.common.extensions.calculateSha256
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
+import kotlin.math.ceil
 
 class TronWalletManager(
     wallet: Wallet,
@@ -90,6 +91,7 @@ class TronWalletManager(
 
         val blockchain = wallet.blockchain
         return coroutineScope {
+            val chainParametersDef = async { networkService.getChainParameters() }
             val maxEnergyDef = async { networkService.getMaxEnergyUse(contractAddress) }
             val resourceDef = async { networkService.getAccountResource(wallet.address) }
             val destinationExistsDef = async { networkService.checkIfAccountExists(destination) }
@@ -110,6 +112,10 @@ class TronWalletManager(
                 )
             }
 
+            val chainParameters = when (val chainParametersResult = chainParametersDef.await()) {
+                is Result.Failure -> return@coroutineScope Result.Failure(chainParametersResult.error)
+                is Result.Success -> chainParametersResult.data
+            }
             val maxEnergyUse = when (val maxEnergyResult = maxEnergyDef.await()) {
                 is Result.Failure -> return@coroutineScope Result.Failure(maxEnergyResult.error)
                 is Result.Success -> maxEnergyResult.data
@@ -124,11 +130,16 @@ class TronWalletManager(
             }
 
             val sunPerBandwidthPoint = 1000
+
+            val dynamicEnergyMaxFactor =
+                chainParameters.dynamicEnergyMaxFactor.toDouble() / ENERGY_FACTOR_PRECISION
+
             val additionalDataSize = 64
             val transactionSizeFee =
                 sunPerBandwidthPoint * (transactionData.size + additionalDataSize)
-            val sunPerEnergyUnit = 280
-            val maxEnergyFee = maxEnergyUse * sunPerEnergyUnit
+            val sunPerEnergyUnit = chainParameters.sunPerEnergyUnit
+            val maxEnergyFee =
+                ceil((maxEnergyUse * sunPerEnergyUnit).toDouble() * (1 + dynamicEnergyMaxFactor)).toLong()
             val totalFee = transactionSizeFee + maxEnergyFee
             val remainingBandwidthInSun =
                 (resource.freeNetLimit - (resource.freeNetUsed ?: 0)) * sunPerBandwidthPoint
@@ -192,3 +203,8 @@ class TronWalletManager(
         }
     }
 }
+
+/**
+ * Value taken from [TIP-491](https://github.com/tronprotocol/tips/issues/491)
+ */
+private const val ENERGY_FACTOR_PRECISION = 10_000
