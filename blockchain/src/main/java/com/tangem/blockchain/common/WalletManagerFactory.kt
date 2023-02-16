@@ -5,9 +5,8 @@ import com.tangem.blockchain.blockchains.binance.BinanceWalletManager
 import com.tangem.blockchain.blockchains.binance.network.BinanceNetworkService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.bitcoin.getBitcoinNetworkProviders
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
-import com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo.BlockchainInfoNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashWalletManager
 import com.tangem.blockchain.blockchains.cardano.CardanoTransactionBuilder
@@ -15,7 +14,6 @@ import com.tangem.blockchain.blockchains.cardano.CardanoWalletManager
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkService
 import com.tangem.blockchain.blockchains.cardano.network.adalite.AdaliteNetworkProvider
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.RosettaNetworkProvider
-import com.tangem.blockchain.blockchains.dogecoin.DogecoinWalletManager
 import com.tangem.blockchain.blockchains.ducatus.DucatusWalletManager
 import com.tangem.blockchain.blockchains.ducatus.network.DucatusNetworkService
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
@@ -45,7 +43,6 @@ import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
 import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledNetworkProvider
 import com.tangem.blockchain.network.*
-import com.tangem.blockchain.network.blockchair.BlockchairNetworkProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.hdWallet.DerivationPath
@@ -98,20 +95,6 @@ class WalletManagerFactory(
         )
     }
 
-    fun makeEthereumWalletManager(
-        publicKey: Wallet.PublicKey,
-        tokens: List<Token>,
-        isTestNet: Boolean = false
-    ): WalletManager? {
-        val blockchain = if (isTestNet) Blockchain.EthereumTestnet else Blockchain.Ethereum
-        val walletManager = makeWalletManager(blockchain, publicKey, tokens) ?: return null
-
-        val additionalTokens = tokens.filterNot { walletManager.cardTokens.contains(it) }
-        walletManager.cardTokens.addAll(additionalTokens)
-
-        return walletManager
-    }
-
     // Legacy wallet manager initializer
     fun makeWalletManager(
         blockchain: Blockchain,
@@ -139,131 +122,53 @@ class WalletManagerFactory(
         val wallet = Wallet(blockchain, addresses, publicKey, tokens)
 
         return when (blockchain) {
-            Blockchain.Bitcoin, Blockchain.BitcoinTestnet ->
-                BitcoinWalletManager(
-                    wallet,
-                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain, addresses),
-                    makeBitcoinNetworkService(blockchain)
-                )
-
-            Blockchain.Litecoin ->
-                LitecoinWalletManager(
-                    wallet,
-                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain, addresses),
-                    makeBitcoinNetworkService(blockchain)
-                )
-
-            Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet ->
-                BitcoinCashWalletManager(
-                    wallet,
-                    BitcoinCashTransactionBuilder(publicKey.blockchainKey, blockchain),
-                    makeBitcoinNetworkService(Blockchain.BitcoinCash),
-                )
-            Blockchain.Dogecoin ->
-                DogecoinWalletManager(
-                    wallet,
-                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain),
-                    makeBitcoinNetworkService(blockchain)
-                )
-
-            Blockchain.Ducatus ->
-                DucatusWalletManager(
-                    wallet,
-                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain),
-                    DucatusNetworkService()
-                )
-
-            Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama -> {
-                val network = PolkadotNetworkService.network(blockchain)
-
-                PolkadotWalletManager(
-                    wallet,
-                    network,
-                )
-            }
-            Blockchain.Stellar, Blockchain.StellarTestnet -> {
-                val isTestnet = blockchain == Blockchain.StellarTestnet
-                val networkService = StellarNetworkService(isTestnet)
-
-                StellarWalletManager(
-                    wallet,
-                    StellarTransactionBuilder(networkService, publicKey.blockchainKey),
-                    networkService,
-                    tokens
-                )
-            }
-            Blockchain.Solana, Blockchain.SolanaTestnet -> {
-                val clients = SolanaRpcClientBuilder().build(blockchain.isTestnet(), config)
-                SolanaWalletManager(wallet, clients)
-            }
-            Blockchain.Cardano, Blockchain.CardanoShelley -> {
-                val adaliteNetworkProvider = AdaliteNetworkProvider(API_ADALITE)
-                val rosettaNetworkProvider = RosettaNetworkProvider(API_TANGEM_ROSETTA)
-                val providers = listOf(adaliteNetworkProvider, rosettaNetworkProvider)
-
-                CardanoWalletManager(
-                    wallet,
-                    CardanoTransactionBuilder(publicKey.blockchainKey),
-                    CardanoNetworkService(providers)
-                )
-            }
-            Blockchain.XRP -> {
-                val rippledProvider1 = RippledNetworkProvider(API_XRP_LEDGER_FOUNDATION)
-                val rippledProvider2 = RippledNetworkProvider(API_RIPPLE)
-                val rippledProvider3 = RippledNetworkProvider(API_RIPPLE_RESERVE)
-                val providers = listOf(rippledProvider1, rippledProvider2, rippledProvider3)
-                val networkService = XrpNetworkService(providers)
-
-                XrpWalletManager(
-                    wallet,
-                    XrpTransactionBuilder(networkService, publicKey.blockchainKey),
-                    networkService
-                )
-            }
-            Blockchain.Binance, Blockchain.BinanceTestnet -> {
-                val isTestNet = blockchain == Blockchain.BinanceTestnet
-                BinanceWalletManager(
-                    wallet,
-                    BinanceTransactionBuilder(publicKey.blockchainKey, isTestNet),
-                    BinanceNetworkService(isTestNet),
-                    tokens
-                )
-            }
-            Blockchain.Tezos -> {
-                val providers = listOf(
-                    TezosJsonRpcNetworkProvider(API_TEZOS_LETZBAKE),
-                    TezosJsonRpcNetworkProvider(API_TEZOS_BLOCKSCALE),
-                    TezosJsonRpcNetworkProvider(API_TEZOS_SMARTPY),
-                    TezosJsonRpcNetworkProvider(API_TEZOS_ECAD),
-                )
-
-                TezosWalletManager(
-                    wallet,
-                    TezosTransactionBuilder(publicKey.blockchainKey, curve),
-                    TezosNetworkService(providers),
-                    curve
-                )
-            }
-            Blockchain.Tron, Blockchain.TronTestnet -> {
-                val network = if (blockchain.isTestnet()) TronNetwork.NILE else TronNetwork.MAINNET
-                val rpcProvider = TronJsonRpcNetworkProvider(
-                    network = network,
-                    tronGridApiKey = config.tronGridApiKey
-                )
-                TronWalletManager(
-                    wallet = wallet,
-                    transactionBuilder = TronTransactionBuilder(blockchain),
-                    networkProvider = rpcProvider
-                )
-            }
+            // region BTC-like blockchains
+            Blockchain.Bitcoin,
+            Blockchain.BitcoinTestnet,
+            Blockchain.Dogecoin,
             Blockchain.Dash -> {
                 BitcoinWalletManager(
-                    wallet,
-                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain, addresses),
-                    makeBitcoinNetworkService(blockchain)
+                    wallet = wallet,
+                    transactionBuilder = BitcoinTransactionBuilder(
+                        walletPublicKey = publicKey.blockchainKey,
+                        blockchain = blockchain,
+                        walletAddresses = addresses
+                    ),
+                    networkProvider = BitcoinNetworkService(
+                        providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
+                    )
                 )
             }
 
+            Blockchain.Litecoin -> {
+                LitecoinWalletManager(
+                    wallet = wallet,
+                    transactionBuilder = BitcoinTransactionBuilder(
+                        walletPublicKey = publicKey.blockchainKey,
+                        blockchain = blockchain,
+                        walletAddresses = addresses
+                    ),
+                    networkProvider = LitecoinNetworkService(
+                        providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
+                    )
+                )
+            }
+
+            Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet -> {
+                BitcoinCashWalletManager(
+                    wallet = wallet,
+                    transactionBuilder = BitcoinCashTransactionBuilder(
+                        walletPublicKey = publicKey.blockchainKey,
+                        blockchain = blockchain
+                    ),
+                    networkProvider = BitcoinNetworkService(
+                        providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
+                    )
+                )
+            }
+            // endregion
+
+            // region ETH-like blockchains
             Blockchain.Ethereum, Blockchain.EthereumClassic -> {
                 EthereumWalletManager(
                     wallet = wallet,
@@ -326,6 +231,106 @@ class WalletManagerFactory(
                     presetTokens = tokens
                 )
             }
+            // endregion
+
+            Blockchain.Solana, Blockchain.SolanaTestnet -> {
+                val clients = SolanaRpcClientBuilder().build(blockchain.isTestnet(), config)
+                SolanaWalletManager(wallet, clients)
+            }
+
+            Blockchain.Ducatus -> {
+                DucatusWalletManager(
+                    wallet,
+                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain),
+                    DucatusNetworkService()
+                )
+            }
+
+            Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama -> {
+                val network = PolkadotNetworkService.network(blockchain)
+
+                PolkadotWalletManager(
+                    wallet,
+                    network,
+                )
+            }
+
+            Blockchain.Stellar, Blockchain.StellarTestnet -> {
+                val isTestnet = blockchain == Blockchain.StellarTestnet
+                val networkService = StellarNetworkService(isTestnet)
+
+                StellarWalletManager(
+                    wallet,
+                    StellarTransactionBuilder(networkService, publicKey.blockchainKey),
+                    networkService,
+                    tokens
+                )
+            }
+
+            Blockchain.Cardano, Blockchain.CardanoShelley -> {
+                val adaliteNetworkProvider = AdaliteNetworkProvider(API_ADALITE)
+                val rosettaNetworkProvider = RosettaNetworkProvider(API_TANGEM_ROSETTA)
+                val providers = listOf(adaliteNetworkProvider, rosettaNetworkProvider)
+
+                CardanoWalletManager(
+                    wallet,
+                    CardanoTransactionBuilder(publicKey.blockchainKey),
+                    CardanoNetworkService(providers)
+                )
+            }
+
+            Blockchain.XRP -> {
+                val rippledProvider1 = RippledNetworkProvider(API_XRP_LEDGER_FOUNDATION)
+                val rippledProvider2 = RippledNetworkProvider(API_RIPPLE)
+                val rippledProvider3 = RippledNetworkProvider(API_RIPPLE_RESERVE)
+                val providers = listOf(rippledProvider1, rippledProvider2, rippledProvider3)
+                val networkService = XrpNetworkService(providers)
+
+                XrpWalletManager(
+                    wallet,
+                    XrpTransactionBuilder(networkService, publicKey.blockchainKey),
+                    networkService
+                )
+            }
+
+            Blockchain.Binance, Blockchain.BinanceTestnet -> {
+                val isTestNet = blockchain == Blockchain.BinanceTestnet
+                BinanceWalletManager(
+                    wallet,
+                    BinanceTransactionBuilder(publicKey.blockchainKey, isTestNet),
+                    BinanceNetworkService(isTestNet),
+                    tokens
+                )
+            }
+
+            Blockchain.Tezos -> {
+                val providers = listOf(
+                    TezosJsonRpcNetworkProvider(API_TEZOS_LETZBAKE),
+                    TezosJsonRpcNetworkProvider(API_TEZOS_BLOCKSCALE),
+                    TezosJsonRpcNetworkProvider(API_TEZOS_SMARTPY),
+                    TezosJsonRpcNetworkProvider(API_TEZOS_ECAD),
+                )
+
+                TezosWalletManager(
+                    wallet,
+                    TezosTransactionBuilder(publicKey.blockchainKey, curve),
+                    TezosNetworkService(providers),
+                    curve
+                )
+            }
+
+            Blockchain.Tron, Blockchain.TronTestnet -> {
+                val network = if (blockchain.isTestnet()) TronNetwork.NILE else TronNetwork.MAINNET
+                val rpcProvider = TronJsonRpcNetworkProvider(
+                    network = network,
+                    tronGridApiKey = config.tronGridApiKey
+                )
+                TronWalletManager(
+                    wallet = wallet,
+                    transactionBuilder = TronTransactionBuilder(blockchain),
+                    networkProvider = rpcProvider
+                )
+            }
 
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
         }
@@ -335,39 +340,6 @@ class WalletManagerFactory(
         return when (curve) {
             EllipticCurve.Ed25519 -> publicKey.seedKey.size > 32 || publicKey.blockchainKey.size > 32
             else -> false
-        }
-    }
-
-    private fun makeBitcoinNetworkService(blockchain: Blockchain): BitcoinNetworkService {
-        val providers = mutableListOf<BitcoinNetworkProvider>()
-
-        if (blockchain == Blockchain.Bitcoin) providers.add(BlockchainInfoNetworkProvider())
-
-        config.blockchairCredentials?.let { blockchairCredentials ->
-            blockchairCredentials.apiKey.forEach { apiKey ->
-                providers.add(
-                    BlockchairNetworkProvider(
-                        blockchain = blockchain,
-                        apiKey = apiKey,
-                        authorizationToken = blockchairCredentials.authToken,
-                    )
-                )
-            }
-        }
-
-        if (blockchain != Blockchain.BitcoinCash && blockchain != Blockchain.BitcoinCashTestnet
-            && !config.blockcypherTokens.isNullOrEmpty()) {
-            providers.add(BlockcypherNetworkProvider(blockchain, config.blockcypherTokens))
-        }
-        return when (blockchain) {
-            Blockchain.Bitcoin, Blockchain.BitcoinTestnet, Blockchain.Dogecoin, Blockchain.Dash,
-            Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet -> BitcoinNetworkService(providers)
-            Blockchain.Litecoin -> LitecoinNetworkService(providers)
-            else -> {
-                throw Exception(
-                    blockchain.name + " blockchain is not supported by BitcoinNetworkService"
-                )
-            }
         }
     }
 }
