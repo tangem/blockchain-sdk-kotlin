@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -13,17 +14,17 @@ import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.API_BLOCKCHAIN_INFO
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.hexToBytes
+import com.tangem.common.extensions.ifNotNullOr
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import java.util.*
-
+import java.util.Calendar
 
 class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
     override val host: String = API_BLOCKCHAIN_INFO
 
     private val api =
-            createRetrofitInstance(API_BLOCKCHAIN_INFO).create(BlockchainInfoApi::class.java)
+        createRetrofitInstance(API_BLOCKCHAIN_INFO).create(BlockchainInfoApi::class.java)
 
     private val decimals = Blockchain.Bitcoin.decimals()
     private val responseTransactionCap = 50
@@ -39,28 +40,28 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
 
                 val transactions = addressData.transactions!!.map {
                     BasicTransactionData(
-                            balanceDif = it.balanceDif!!.toBigDecimal().movePointLeft(decimals),
-                            hash = it.hash!!,
-                            isConfirmed = it.blockHeight != 0L,
-                            date = Calendar.getInstance().apply { this.timeInMillis = it.time!! * 1000 }
+                        balanceDif = it.balanceDif!!.toBigDecimal().movePointLeft(decimals),
+                        hash = it.hash!!,
+                        isConfirmed = it.blockHeight != 0L,
+                        date = Calendar.getInstance().apply { this.timeInMillis = it.time!! * 1000 }
                     )
                 }
 
                 val unspentOutputs = unspents.unspentOutputs!!.map {
                     BitcoinUnspentOutput(
-                            amount = it.amount!!.toBigDecimal().movePointLeft(decimals),
-                            outputIndex = it.outputIndex!!.toLong(),
-                            transactionHash = it.hash!!.hexToBytes(),
-                            outputScript = it.outputScript!!.hexToBytes())
+                        amount = it.amount!!.toBigDecimal().movePointLeft(decimals),
+                        outputIndex = it.outputIndex!!.toLong(),
+                        transactionHash = it.hash!!.hexToBytes(),
+                        outputScript = it.outputScript!!.hexToBytes())
                 }
 
                 Result.Success(
-                        BitcoinAddressInfo(
-                                balance = addressData.finalBalance?.toBigDecimal()?.movePointLeft(decimals)
-                                        ?: 0.toBigDecimal(),
-                                unspentOutputs = unspentOutputs,
-                                recentTransactions = transactions
-                        ))
+                    BitcoinAddressInfo(
+                        balance = addressData.finalBalance?.toBigDecimal()?.movePointLeft(decimals)
+                            ?: 0.toBigDecimal(),
+                        unspentOutputs = unspentOutputs,
+                        recentTransactions = transactions
+                    ))
             }
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
@@ -70,21 +71,24 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
     override suspend fun getFee(): Result<BitcoinFee> {
         return try {
             val feeData = retryIO { api.getFees() }
+            ifNotNullOr(feeData.regularFeePerByte, feeData.priorityFeePerByte,
+                { regular, priority ->
+                    val minimalFeePerKb = regular * 1024
+                    val normalFeePerKb = (regular + priority) / 2 * 1024
+                    val priorityFeePerKb = priority * 1024
 
-            val minimalFeePerKb = feeData.regularFeePerByte!! * 1024
-            val normalFeePerKb = feeData.regularFeePerByte * 1024 * 12 / 10 // 1.2 ratio
-            val priorityFeePerKb = feeData.priorityFeePerByte!! * 1024
-
-            Result.Success(BitcoinFee(
-                    minimalFeePerKb.toBigDecimal().movePointLeft(decimals),
-                    normalFeePerKb.toBigDecimal().movePointLeft(decimals),
-                    priorityFeePerKb.toBigDecimal().movePointLeft(decimals)
-            ))
+                    Result.Success(BitcoinFee(
+                        minimalFeePerKb.toBigDecimal().movePointLeft(decimals),
+                        normalFeePerKb.toBigDecimal().movePointLeft(decimals),
+                        priorityFeePerKb.toBigDecimal().movePointLeft(decimals)
+                    ))
+                }, {
+                    Result.Failure(BlockchainSdkError.FailedToLoadFee)
+                })
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
     }
-
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
@@ -120,28 +124,28 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
     }
 
     private suspend fun getRemainingTransactions(
-            address: String,
-            transactionsTotal: Int
+        address: String,
+        transactionsTotal: Int,
     ): Result<List<BlockchainInfoTransaction>> {
         return try {
             coroutineScope {
                 var transactionsRequestedCount = responseTransactionCap
 
                 val offsetAddressDeferredList: MutableList<Deferred<BlockchainInfoAddress>> =
-                        mutableListOf()
+                    mutableListOf()
 
                 while (transactionsRequestedCount < transactionsTotal) {
                     val offsetAddressDeferred =
-                            retryIO {
-                                async {
-                                    api.getAddressData(address, transactionsRequestedCount)
-                                }
+                        retryIO {
+                            async {
+                                api.getAddressData(address, transactionsRequestedCount)
                             }
+                        }
                     offsetAddressDeferredList.add(offsetAddressDeferred)
                     transactionsRequestedCount += responseTransactionCap
                 }
                 val offsetAddressDataList =
-                        offsetAddressDeferredList.map { it.await() }
+                    offsetAddressDeferredList.map { it.await() }
                 val transactions = offsetAddressDataList.flatMap { it.transactions!! }
 
                 Result.Success(transactions)
