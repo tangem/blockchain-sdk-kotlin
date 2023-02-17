@@ -1,16 +1,16 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.blockchair.BlockchairToken
 import java.math.BigDecimal
 import java.math.BigInteger
 
-interface EthereumNetworkProvider: TransactionHistoryProvider {
+interface EthereumNetworkProvider : TransactionHistoryProvider {
     val host: String
     suspend fun getInfo(address: String, tokens: Set<Token>): Result<EthereumInfoResponse>
     suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<Amount>
@@ -25,14 +25,6 @@ interface EthereumNetworkProvider: TransactionHistoryProvider {
     ): Result<Map<Token, BigDecimal>>
 
     suspend fun callContractForFee(data: ContractCallData): Result<BigInteger>
-}
-
-interface TransactionHistoryProvider {
-    suspend fun getTransactionHistory(
-        address: String,
-        blockchain: Blockchain,
-        tokens: Set<Token>,
-    ): Result<List<TransactionData>>
 }
 
 class EthereumInfoResponse(
