@@ -3,7 +3,6 @@ package com.tangem.blockchain.blockchains.ethereum
 import android.util.Log
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
-import com.tangem.blockchain.blockchains.ethereum.network.TransactionHistoryProvider
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
@@ -13,6 +12,7 @@ import com.tangem.blockchain.common.SignatureCountValidator
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.TokenFinder
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionHistoryProvider
 import com.tangem.blockchain.common.TransactionSender
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.TransactionStatus
@@ -39,8 +39,11 @@ open class EthereumWalletManager(
     protected val networkProvider: EthereumNetworkProvider,
     presetTokens: MutableSet<Token>,
 ) : WalletManager(wallet, presetTokens),
-    TransactionSender, TransactionHistoryProvider,
-    SignatureCountValidator, TokenFinder, EthereumGasLoader {
+    TransactionSender,
+    TransactionHistoryProvider,
+    SignatureCountValidator,
+    TokenFinder,
+    EthereumGasLoader {
 
     var pendingTxCount = -1L
         private set
@@ -321,7 +324,8 @@ open class EthereumWalletManager(
     suspend fun getFeeToSetSpendLimit(processorContractAddress: String, amount: Amount): Result<List<Amount>> {
         return try {
             coroutineScope {
-                val gasLimitResponsesDeferred = async { getGasLimitToSetSpendLimit(processorContractAddress, wallet.address, amount) }
+                val gasLimitResponsesDeferred =
+                    async { getGasLimitToSetSpendLimit(processorContractAddress, wallet.address, amount) }
                 val gasPriceResponsesDeferred = async { getGasPrice() }
 
                 val gLimit = when (val gasLimitResult = gasLimitResponsesDeferred.await()) {
