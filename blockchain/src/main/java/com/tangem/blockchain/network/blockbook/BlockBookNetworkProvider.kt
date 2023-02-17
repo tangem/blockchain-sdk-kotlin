@@ -25,7 +25,7 @@ class BlockBookNetworkProvider(
     val blockchain: Blockchain
 ) : BitcoinNetworkProvider {
 
-    override val host: String = "Property isn't supported"
+    override val host: String = config.host
 
     private val api: BlockBookApi = BlockBookApi(config, blockchain)
 
@@ -58,22 +58,21 @@ class BlockBookNetworkProvider(
         return try {
             val getFeeResponse = withContext(Dispatchers.IO) { api.getFee() }
             val feeRatePerKb = getFeeResponse.result.feerate
-                .times(1024)
                 .toBigDecimal()
+                .multiply(BigDecimal(BIT_IN_KB_AMOUNT))
                 .movePointLeft(blockchain.decimals())
 
-            Result.Success(
-                BitcoinFee(
-                    minimalPerKb = (BigDecimal.valueOf(0.8) * feeRatePerKb)
-                        .setScale(blockchain.decimals(), RoundingMode.DOWN),
-                    normalPerKb = feeRatePerKb.setScale(
-                        blockchain.decimals(),
-                        RoundingMode.DOWN
-                    ),
-                    priorityPerKb = (BigDecimal.valueOf(1.2) * feeRatePerKb)
-                        .setScale(blockchain.decimals(), RoundingMode.DOWN),
-                )
-            )
+            val minimalPerKb = BigDecimal(MIN_FEE_COEFFICIENT)
+                .times(feeRatePerKb)
+                .setScale(blockchain.decimals(), RoundingMode.DOWN)
+
+            val normalPerKb = feeRatePerKb.setScale(blockchain.decimals(), RoundingMode.DOWN)
+
+            val priorityPerKb = BigDecimal(MAX_FEE_COEFFICIENT)
+                .times(feeRatePerKb)
+                .setScale(blockchain.decimals(), RoundingMode.DOWN)
+
+            Result.Success(BitcoinFee(minimalPerKb, normalPerKb, priorityPerKb))
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
@@ -135,5 +134,11 @@ class BlockBookNetworkProvider(
                     isConfirmed = true
                 )
             }
+    }
+
+    private companion object {
+        const val BIT_IN_KB_AMOUNT = 1024
+        const val MIN_FEE_COEFFICIENT = 0.8
+        const val MAX_FEE_COEFFICIENT = 1.2
     }
 }
