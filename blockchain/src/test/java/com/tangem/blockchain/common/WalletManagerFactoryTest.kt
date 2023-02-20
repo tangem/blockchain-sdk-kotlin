@@ -129,15 +129,20 @@ internal class WalletManagerFactoryTest {
             EllipticCurve.Ed25519 -> EdDSAPublicKey
         }
 
-        return WalletManagerFactory(BlockchainSdkConfig(
-            blockchairCredentials = BlockchairCredentials(listOf("anyKey"), "anyToken"),
-            blockcypherTokens = setOf(),
-            infuraProjectId = "",
-            tronGridApiKey = "",
-        )).makeWalletManager(
-            blockchain,
-            Wallet.PublicKey(publicKey, null, null),
-            curve = curve
+        return WalletManagerFactory(
+            BlockchainSdkConfig(
+                blockchairCredentials = BlockchairCredentials(
+                    apiKey = listOf("anyKey"),
+                    authToken = "anyToken"
+                ),
+                blockcypherTokens = setOf(),
+                infuraProjectId = "infuraProjectId",
+                nowNodeCredentials = NowNodeCredentials(apiKey = "nowNodeCredentials"),
+                getBlockCredentials = GetBlockCredentials(apiKey = "getBlockCredentials"),
+                tronGridApiKey = "",
+            )
+        ).makeWalletManager(
+            blockchain, Wallet.PublicKey(publicKey, null, null), curve = curve
         )
     }
 
