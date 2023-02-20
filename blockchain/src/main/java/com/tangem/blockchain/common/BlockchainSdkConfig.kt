@@ -3,6 +3,7 @@ package com.tangem.blockchain.common
 data class BlockchainSdkConfig(
     val blockchairCredentials: BlockchairCredentials? = null,
     val blockcypherTokens: Set<String>? = null,
+    val blockscoutCredentials: BlockscoutCredentials? = null,
     val quickNodeBscCredentials: QuickNodeCredentials? = null,
     val quickNodeSolanaCredentials: QuickNodeCredentials? = null,
     val nowNodeCredentials: NowNodeCredentials? = null,
@@ -15,6 +16,11 @@ data class BlockchainSdkConfig(
 data class BlockchairCredentials(
     val apiKey: List<String>,
     val authToken: String?,
+)
+
+data class BlockscoutCredentials(
+    val userName: String,
+    val password: String,
 )
 
 data class QuickNodeCredentials(
