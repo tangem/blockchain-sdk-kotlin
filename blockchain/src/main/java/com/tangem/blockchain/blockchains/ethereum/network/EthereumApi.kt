@@ -13,7 +13,7 @@ interface EthereumApi {
         @Url infuraProjectId: String,
         @Header("Authorization") token: String? = null,
         @Header(NowNodeCredentials.headerApiKey) nowNodesApiKey: String? = null,
-        @Header(GetBlockCredentials.headerApiKey) getBlockApiKey: String? = null
+        @Query(GetBlockCredentials.paramName) getBlockApiKey: String? = null
     ): EthereumResponse
 }
 
