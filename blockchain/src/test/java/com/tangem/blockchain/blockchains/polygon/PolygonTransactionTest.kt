@@ -3,7 +3,11 @@ package com.tangem.blockchain.blockchains.polygon
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.TransactionData
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 import org.kethereum.DEFAULT_GAS_LIMIT
@@ -78,7 +82,6 @@ class PolygonTransactionTest {
             destinationAddress = destinationAddress,
             amount = amountToSend,
             fee = fee,
-            contractAddress = contractAddress
         )
 
         val expectedHashToSign = "3964E9A149904C6A84E06396968E7C0448937C9DEE270AAC9B6622BA7B6CB246"
