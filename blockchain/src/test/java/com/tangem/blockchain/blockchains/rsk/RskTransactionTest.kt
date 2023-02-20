@@ -3,7 +3,11 @@ package com.tangem.blockchain.blockchains.rsk
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.TransactionData
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 import org.kethereum.DEFAULT_GAS_LIMIT
@@ -78,7 +82,6 @@ class RskTransactionTest {
                 destinationAddress = destinationAddress,
                 amount = amountToSend,
                 fee = fee,
-                contractAddress = contractAddress
         )
 
         val expectedHashToSign = "92BC71B08CA63D69502BFF60E16282A603CFCD987A3C1C36062CD602D66C376B"
