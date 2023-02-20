@@ -32,7 +32,7 @@ interface TronApi {
     ): TronBroadcastResponse
 
     @Headers("Content-Type: application/json", "Accept: application/json")
-    @POST("/wallet/triggersmartcontract")
+    @POST("/wallet/triggerconstantcontract")
     suspend fun getTokenBalance(
         @Header("TRON-PRO-API-KEY") apiKey: String?,
         @Body requestBody: TronTriggerSmartContractRequest,
