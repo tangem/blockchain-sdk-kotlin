@@ -1,7 +1,11 @@
 package com.tangem.blockchain.blockchains.ethereum
 
 import com.google.common.truth.Truth
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.TransactionData
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 import org.kethereum.DEFAULT_GAS_LIMIT
@@ -76,7 +80,6 @@ class EthereumTransactionTest {
                 destinationAddress = destinationAddress,
                 amount = amountToSend,
                 fee = fee,
-                contractAddress = contractAddress
         )
 
         val expectedHashToSign = "2F47B058A0C4A91EC6E26372FA926ACB899235D7A639565B4FC82C7A9356D6C5"
