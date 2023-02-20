@@ -5,7 +5,13 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.network.ContractCallData
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionSigner
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import org.kethereum.model.Address
@@ -13,7 +19,6 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.MathContext
 import java.math.RoundingMode
-
 
 class OptimismWalletManager(
     wallet: Wallet,
@@ -43,7 +48,6 @@ class OptimismWalletManager(
             fee = preparedAmount,
             sourceAddress = wallet.address,
             destinationAddress = destination,
-            contractAddress = (amount.type as? AmountType.Token)?.token?.contractAddress
         )
 
         val transaction = transactionBuilder.buildToSign(
