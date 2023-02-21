@@ -6,7 +6,8 @@ import com.tangem.blockchain.extensions.isAboveZero
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.isZero
 import java.math.BigDecimal
-import java.util.*
+import java.util.Calendar
+import java.util.EnumSet
 
 abstract class WalletManager(
     var wallet: Wallet,
@@ -24,20 +25,20 @@ abstract class WalletManager(
 
     protected open fun updateRecentTransactionsBasic(transactions: List<BasicTransactionData>) {
         val (confirmedTransactions, unconfirmedTransactions) =
-                transactions.partition { it.isConfirmed }
+            transactions.partition { it.isConfirmed }
 
         wallet.recentTransactions.forEach { recent ->
             if (confirmedTransactions.find { confirmed ->
-                        confirmed.hash.equals(recent.hash, true)
-                    } != null
+                    confirmed.hash.equals(recent.hash, true)
+                } != null
             ) {
                 recent.status = TransactionStatus.Confirmed
             }
         }
         unconfirmedTransactions.forEach { unconfirmed ->
             if (wallet.recentTransactions.find { recent ->
-                        recent.hash.equals(unconfirmed.hash, true)
-                    } == null
+                    recent.hash.equals(unconfirmed.hash, true)
+                } == null
             ) {
                 wallet.recentTransactions.add(unconfirmed.toTransactionData())
             }
@@ -46,20 +47,20 @@ abstract class WalletManager(
 
     protected fun updateRecentTransactions(transactions: List<TransactionData>) {
         val (confirmedTransactions, unconfirmedTransactions) =
-                transactions.partition { it.status == TransactionStatus.Confirmed }
+            transactions.partition { it.status == TransactionStatus.Confirmed }
 
         wallet.recentTransactions.forEach { recent ->
             if (confirmedTransactions.find { confirmed ->
-                        confirmed.hash.equals(recent.hash, true)
-                    } != null
+                    confirmed.hash.equals(recent.hash, true)
+                } != null
             ) {
                 recent.status = TransactionStatus.Confirmed
             }
         }
         unconfirmedTransactions.forEach { unconfirmed ->
             if (wallet.recentTransactions.find { recent ->
-                        recent.hash.equals(unconfirmed.hash, true)
-                    } == null
+                    recent.hash.equals(unconfirmed.hash, true)
+                } == null
             ) {
                 wallet.recentTransactions.add(unconfirmed)
             }
@@ -67,14 +68,15 @@ abstract class WalletManager(
     }
 
     open fun createTransaction(amount: Amount, fee: Amount, destination: String): TransactionData {
-        val contractAddress = if (amount.type is AmountType.Token) {
-            amount.type.token.contractAddress
-        } else {
-            null
-        }
-        return TransactionData(amount, fee,
-                wallet.address, destination, contractAddress,
-                TransactionStatus.Unconfirmed, Calendar.getInstance(), null)
+        return TransactionData(
+            amount = amount,
+            fee = fee,
+            sourceAddress = wallet.address,
+            destinationAddress = destination,
+            status = TransactionStatus.Unconfirmed,
+            date = Calendar.getInstance(),
+            hash = null,
+        )
     }
 
     // TODO: add decimals and currency checks?
@@ -132,37 +134,37 @@ abstract class WalletManager(
     private fun BasicTransactionData.toTransactionData(): TransactionData {
         val isIncoming = this.balanceDif.signum() > 0
         return TransactionData(
-                amount = Amount(wallet.amounts[AmountType.Coin]!!, this.balanceDif.abs()),
-                fee = null,
-                sourceAddress = if (isIncoming) "unknown" else wallet.address,
-                destinationAddress = if (isIncoming) wallet.address else "unknown",
-                hash = this.hash,
-                date = this.date,
-                status = if (this.isConfirmed) {
-                    TransactionStatus.Confirmed
-                } else {
-                    TransactionStatus.Unconfirmed
-                }
+            amount = Amount(wallet.amounts[AmountType.Coin]!!, this.balanceDif.abs()),
+            fee = null,
+            sourceAddress = if (isIncoming) "unknown" else wallet.address,
+            destinationAddress = if (isIncoming) wallet.address else "unknown",
+            hash = this.hash,
+            date = this.date,
+            status = if (this.isConfirmed) {
+                TransactionStatus.Confirmed
+            } else {
+                TransactionStatus.Unconfirmed
+            }
         )
     }
+
     companion object
 }
 
 interface TransactionSender {
     suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult
     suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>>
-
 }
 
 interface TransactionSigner {
     suspend fun sign(
         hashes: List<ByteArray>,
-        publicKey: Wallet.PublicKey
+        publicKey: Wallet.PublicKey,
     ): CompletionResult<List<ByteArray>>
 
     suspend fun sign(
         hash: ByteArray,
-        publicKey: Wallet.PublicKey
+        publicKey: Wallet.PublicKey,
     ): CompletionResult<ByteArray>
 }
 
@@ -171,5 +173,5 @@ interface SignatureCountValidator {
 }
 
 interface TokenFinder {
-    suspend fun findTokens() : Result<List<Token>>
+    suspend fun findTokens(): Result<List<Token>>
 }
