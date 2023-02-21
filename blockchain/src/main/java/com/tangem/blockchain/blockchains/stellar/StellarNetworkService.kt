@@ -1,6 +1,13 @@
 package com.tangem.blockchain.blockchains.stellar
 
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionStatus
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.API_STELLAR
@@ -9,7 +16,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import org.stellar.sdk.*
+import org.stellar.sdk.AssetTypeCreditAlphaNum
+import org.stellar.sdk.AssetTypeNative
+import org.stellar.sdk.Network
+import org.stellar.sdk.Server
+import org.stellar.sdk.Transaction
 import org.stellar.sdk.requests.ErrorResponse
 import org.stellar.sdk.requests.RequestBuilder
 import org.stellar.sdk.responses.FeeStatsResponse
@@ -18,7 +29,8 @@ import org.stellar.sdk.responses.operations.OperationResponse
 import org.stellar.sdk.responses.operations.PaymentOperationResponse
 import java.net.URISyntaxException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 
 class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
     override val host: String = if (isTestnet) API_STELLAR_TESTNET else API_STELLAR
@@ -51,7 +63,7 @@ class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
 
     override suspend fun checkTargetAccount(
         address: String,
-        token: Token?
+        token: Token?,
     ): Result<StellarTargetAccountResponse> {
         return try {
             val account = stellarServer.accounts().account(address)
@@ -60,8 +72,8 @@ class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
                 Result.Success(StellarTargetAccountResponse(accountCreated = true))
             } else { // token transaction
                 val tokenBalance = account.balances
-                        .filter { it.assetCode == token.symbol }
-                        .find { it.assetIssuer == token.contractAddress } // null if trustline not created
+                    .filter { it.assetCode == token.symbol }
+                    .find { it.assetIssuer == token.contractAddress } // null if trustline not created
                 Result.Success(
                     StellarTargetAccountResponse(
                         accountCreated = true,
@@ -94,10 +106,10 @@ class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
 
                 val accountResponse = accountResponseDeferred.await()
                 val coinBalance = accountResponse.balances
-                        .find { it.asset is AssetTypeNative }?.balance?.toBigDecimal()
-                        ?: return@coroutineScope Result.Failure(
-                            BlockchainSdkError.CustomError("Stellar Balance not found")
-                        )
+                    .find { it.asset is AssetTypeNative }?.balance?.toBigDecimal()
+                    ?: return@coroutineScope Result.Failure(
+                        BlockchainSdkError.CustomError("Stellar Balance not found")
+                    )
 
                 val tokenBalances = accountResponse.balances.filter { it.asset !is AssetTypeNative }.map {
                     StellarAssetBalance(it.balance.toBigDecimal(), it.assetCode, it.assetIssuer)
@@ -143,9 +155,9 @@ class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
         return try {
             coroutineScope {
                 var operationsPage = stellarServer.operations().forAccount(accountId)
-                        .limit(recordsLimitCap)
-                        .includeFailed(true)
-                        .execute()
+                    .limit(recordsLimitCap)
+                    .includeFailed(true)
+                    .execute()
                 val operations = operationsPage.records
 
                 while (operationsPage.records.size == recordsLimitCap) {
@@ -172,8 +184,7 @@ class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
     }
 
     private fun PaymentOperationResponse.toTransactionData(): TransactionData {
-        val asset = asset
-        val amount = when (asset) {
+        val amount = when (val asset = asset) {
             is AssetTypeNative -> Amount(amount.toBigDecimal(), blockchain)
             is AssetTypeCreditAlphaNum -> Amount(
                 currencySymbol = asset.code,
@@ -183,14 +194,11 @@ class StellarNetworkService(isTestnet: Boolean) : StellarNetworkProvider {
             )
             else -> throw Exception("Unknown asset type")
         }
-        val issuer = (asset as? AssetTypeCreditAlphaNum)?.issuer
-
         return TransactionData(
             amount = amount,
             fee = null,
             sourceAddress = from,
             destinationAddress = to,
-            contractAddress = issuer,
             status = TransactionStatus.Confirmed,
             date = Calendar.getInstance().apply { time = dateFormat.parse(createdAt)!! },
             hash = transactionHash
