@@ -2,44 +2,67 @@ package com.tangem.blockchain.network
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import com.tangem.blockchain.BuildConfig
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import java.util.concurrent.TimeUnit
+
+fun createRetrofitInstance(
+    baseUrl: String,
+    headerInterceptors: List<Interceptor> = emptyList(),
+): Retrofit =
+    Retrofit.Builder()
+        .baseUrl(baseUrl)
+        .addConverterFactory(MoshiConverterFactory.create(moshi))
+        .client(BlockchainSdkRetrofitBuilder.build(headerInterceptors))
+        .build()
 
 object BlockchainSdkRetrofitBuilder {
 
-    var enableNetworkLogging: Boolean = false
+    var interceptors: List<Interceptor> = emptyList()
+    var timeoutConfig: TimeoutConfig? = null
 
-    internal val okHttpClient: OkHttpClient by lazy {
-        OkHttpClient.Builder().apply {
-            if (BuildConfig.DEBUG || enableNetworkLogging) addInterceptor(createHttpLoggingInterceptor())
-        }.build()
+    internal fun build(internalInterceptors: List<Interceptor> = emptyList()): OkHttpClient {
+        val builder = OkHttpClient.Builder()
+        (interceptors + internalInterceptors).forEach { builder.addInterceptor(it) }
+        timeoutConfig?.let {
+            builder.callTimeout(it.call.time, it.call.unit)
+            builder.connectTimeout(it.connect.time, it.connect.unit)
+            builder.readTimeout(it.read.time, it.read.unit)
+            builder.writeTimeout(it.write.time, it.write.unit)
+        }
+
+        return builder.build()
     }
-
-    private fun createHttpLoggingInterceptor(): HttpLoggingInterceptor {
-        val logging = HttpLoggingInterceptor()
-        logging.level = HttpLoggingInterceptor.Level.BODY
-        return logging
-    }
-
-
 }
 
+data class TimeoutConfig(
+    val call: Timeout,
+    val connect: Timeout,
+    val read: Timeout,
+    val write: Timeout,
+) {
+    companion object {
+        fun default(): TimeoutConfig = TimeoutConfig(
+            call = Timeout(10),
+            connect = Timeout(20),
+            read = Timeout(20),
+            write = Timeout(20),
+        )
+    }
+}
+
+data class Timeout(
+    val time: Long,
+    val unit: TimeUnit = TimeUnit.SECONDS,
+)
 
 private val moshi: Moshi by lazy {
     Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
         .build()
 }
-
-fun createRetrofitInstance(baseUrl: String): Retrofit =
-        Retrofit.Builder()
-                .baseUrl(baseUrl)
-                .addConverterFactory(MoshiConverterFactory.create(moshi))
-                .client(BlockchainSdkRetrofitBuilder.okHttpClient)
-                .build()
 
 const val API_TANGEM = "https://verify.tangem.com/"
 const val API_COINMARKETCAP = "https://pro-api.coinmarketcap.com/"
@@ -163,5 +186,6 @@ const val API_OPTIMISM_TESTNET = "https://goerli.optimism.io/"
 //endregion
 
 //region SALTPAY API
-const val API_SALTPAY = "https://rpc.bicoccachain.net/"
+const val API_RPC_BICOCCACHAIN = "https://rpc.bicoccachain.net/"
+const val API_BLOCKSCOUT_BICOCCACHAIN = "https://blockscout.bicoccachain.net/"
 //endregion
