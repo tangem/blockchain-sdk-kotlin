@@ -91,7 +91,7 @@ class PolkadotNetworkService(
         }
 
         private fun rpcCallAdapter(baseUrl: String): RpcCallAdapter {
-            val okHttpClient = BlockchainSdkRetrofitBuilder.okHttpClient
+            val okHttpClient = BlockchainSdkRetrofitBuilder.build()
             val rpcCoder = RpcCoder(ObjectMapper().apply { registerModule(PolkadotModule()) })
 
             return JavaRetrofitAdapter(baseUrl, okHttpClient, rpcCoder)
