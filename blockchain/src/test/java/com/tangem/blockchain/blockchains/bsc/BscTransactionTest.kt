@@ -3,7 +3,11 @@ package com.tangem.blockchain.blockchains.bsc
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.TransactionData
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 import org.kethereum.DEFAULT_GAS_LIMIT
@@ -78,7 +82,6 @@ class BscTransactionTest {
             destinationAddress = destinationAddress,
             amount = amountToSend,
             fee = fee,
-            contractAddress = contractAddress
         )
 
         val expectedHashToSign = "95DB218B4288E60DA2807FC42EFBB2BFEF0A19607EC1D701AF54704DC5A253F6"
