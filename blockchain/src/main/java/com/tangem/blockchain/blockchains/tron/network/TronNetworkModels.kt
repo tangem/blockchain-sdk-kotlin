@@ -11,6 +11,11 @@ data class TronAccountInfo(
     val confirmedTransactionIds: List<String>
 )
 
+data class TronChainParameters(
+    val sunPerEnergyUnit: Long,
+    val dynamicEnergyMaxFactor: Long,
+)
+
 @JsonClass(generateAdapter = true)
 data class TronGetAccountRequest(
     val address: String,
@@ -39,6 +44,18 @@ data class TronTransactionInfoRequest(
 @JsonClass(generateAdapter = true)
 data class TronTransactionInfoResponse(
     val id: String
+)
+
+@JsonClass(generateAdapter = true)
+data class TronChainParametersResponse(
+    @Json(name = "chainParameter")
+    val chainParameters: List<TronChainParameter>,
+)
+
+@JsonClass(generateAdapter = true)
+data class TronChainParameter(
+    val key: String,
+    val value: Long? = null,
 )
 
 @JsonClass(generateAdapter = true)
