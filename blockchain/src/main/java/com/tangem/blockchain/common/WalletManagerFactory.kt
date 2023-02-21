@@ -44,12 +44,13 @@ import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
 import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledNetworkProvider
 import com.tangem.blockchain.network.*
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
+import com.tangem.blockchain.network.blockscout.BlockscoutNetworkProvider
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.hdWallet.DerivationPath
 import com.tangem.common.hdWallet.ExtendedPublicKey
 
 class WalletManagerFactory(
-    private val config: BlockchainSdkConfig = BlockchainSdkConfig()
+    private val config: BlockchainSdkConfig = BlockchainSdkConfig(),
 ) {
 
     /**
@@ -63,7 +64,7 @@ class WalletManagerFactory(
         blockchain: Blockchain,
         seedKey: ByteArray,
         derivedKey: ExtendedPublicKey,
-        derivation: DerivationParams
+        derivation: DerivationParams,
     ): WalletManager? {
         val derivationPath: DerivationPath? = when (derivation) {
             is DerivationParams.Custom -> derivation.path
@@ -85,7 +86,7 @@ class WalletManagerFactory(
         walletPublicKey: ByteArray,
         pairPublicKey: ByteArray,
         blockchain: Blockchain = Blockchain.Bitcoin,
-        curve: EllipticCurve = EllipticCurve.Secp256k1
+        curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
         return makeWalletManager(
             blockchain = blockchain,
@@ -99,7 +100,7 @@ class WalletManagerFactory(
     fun makeWalletManager(
         blockchain: Blockchain,
         walletPublicKey: ByteArray,
-        curve: EllipticCurve = EllipticCurve.Secp256k1
+        curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
         return makeWalletManager(
             blockchain = blockchain,
@@ -113,7 +114,7 @@ class WalletManagerFactory(
         publicKey: Wallet.PublicKey,
         tokens: Collection<Token> = emptyList(),
         pairPublicKey: ByteArray? = null,
-        curve: EllipticCurve = EllipticCurve.Secp256k1
+        curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
         if (checkIfWrongKey(curve, publicKey)) return null
 
@@ -126,7 +127,8 @@ class WalletManagerFactory(
             Blockchain.Bitcoin,
             Blockchain.BitcoinTestnet,
             Blockchain.Dogecoin,
-            Blockchain.Dash -> {
+            Blockchain.Dash,
+            -> {
                 BitcoinWalletManager(
                     wallet = wallet,
                     transactionBuilder = BitcoinTransactionBuilder(
@@ -204,7 +206,7 @@ class WalletManagerFactory(
             Blockchain.EthereumFair,
             Blockchain.EthereumPow,
             Blockchain.EthereumPowTestnet,
-            Blockchain.SaltPay -> {
+            -> {
                 EthereumWalletManager(
                     wallet = wallet,
                     transactionBuilder = EthereumTransactionBuilder(
@@ -213,6 +215,21 @@ class WalletManagerFactory(
                     ),
                     networkProvider = EthereumNetworkService(
                         jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(config)
+                    ),
+                    presetTokens = tokens
+                )
+            }
+
+            Blockchain.SaltPay -> {
+                EthereumWalletManager(
+                    wallet = wallet,
+                    transactionBuilder = EthereumTransactionBuilder(
+                        walletPublicKey = publicKey.blockchainKey,
+                        blockchain = blockchain
+                    ),
+                    networkProvider = EthereumNetworkService(
+                        jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(config),
+                        blockscoutNetworkProvider = BlockscoutNetworkProvider(config.blockscoutCredentials),
                     ),
                     presetTokens = tokens
                 )

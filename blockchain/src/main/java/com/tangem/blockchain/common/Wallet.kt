@@ -4,7 +4,8 @@ import com.tangem.blockchain.common.address.Address
 import com.tangem.common.extensions.calculateHashCode
 import com.tangem.common.hdWallet.DerivationPath
 import java.math.BigDecimal
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 
 class Wallet(
     val blockchain: Blockchain,
@@ -12,7 +13,10 @@ class Wallet(
     val publicKey: PublicKey,
     tokens: Set<Token>
 ) {
-    val recentTransactions: MutableList<TransactionData> = mutableListOf() //we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
+    //we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
+    val recentTransactions: MutableList<TransactionData> = mutableListOf()
+    // transactions from history provider
+    val historyTransactions: MutableList<TransactionData> = mutableListOf()
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
     val address = addresses.find { it.type == blockchain.defaultAddressType() }?.value
         ?: throw Exception("Addresses must contain default address")
