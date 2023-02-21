@@ -2,10 +2,10 @@ package com.tangem.blockchain.network.blockscout
 
 import com.tangem.blockchain.common.BlockscoutCredentials
 import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.extensions.BasicAuthInterceptor
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.API_BLOCKSCOUT_BICOCCACHAIN
-import com.tangem.blockchain.network.BasicAuthInterceptor
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.services.retryIO
 

@@ -3,12 +3,72 @@ package com.tangem.blockchain.blockchains.ethereum
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
-import com.tangem.blockchain.network.*
+import com.tangem.blockchain.network.API_ARBITRUM
+import com.tangem.blockchain.network.API_ARBITRUM_INFURA
+import com.tangem.blockchain.network.API_ARBITRUM_OFFCHAIN
+import com.tangem.blockchain.network.API_ARBITRUM_TESTNET
+import com.tangem.blockchain.network.API_AVALANCHE
+import com.tangem.blockchain.network.API_AVALANCHE_GETBLOCK
+import com.tangem.blockchain.network.API_AVALANCHE_NOWNODES
+import com.tangem.blockchain.network.API_AVALANCHE_TESTNET
+import com.tangem.blockchain.network.API_BSC
+import com.tangem.blockchain.network.API_BSC_GETBLOCK
+import com.tangem.blockchain.network.API_BSC_NOWNODES
+import com.tangem.blockchain.network.API_BSC_TESTNET
+import com.tangem.blockchain.network.API_ETH
+import com.tangem.blockchain.network.API_ETH_CLASSIC_BESU
+import com.tangem.blockchain.network.API_ETH_CLASSIC_BLOCKSCOUT
+import com.tangem.blockchain.network.API_ETH_CLASSIC_CLUSTER
+import com.tangem.blockchain.network.API_ETH_CLASSIC_CLUSTER_TESTNET
+import com.tangem.blockchain.network.API_ETH_CLASSIC_ETCDESKTOP
+import com.tangem.blockchain.network.API_ETH_CLASSIC_GETBLOCK
+import com.tangem.blockchain.network.API_ETH_CLASSIC_GETH
+import com.tangem.blockchain.network.API_ETH_CLASSIC_MYTOKEN
+import com.tangem.blockchain.network.API_ETH_FAIR_RPC
+import com.tangem.blockchain.network.API_ETH_GETBLOCK
+import com.tangem.blockchain.network.API_ETH_NOWNODES
+import com.tangem.blockchain.network.API_ETH_NOWNODES_TESTNET
+import com.tangem.blockchain.network.API_ETH_POW
+import com.tangem.blockchain.network.API_ETH_POW_NOWNODES
+import com.tangem.blockchain.network.API_ETH_POW_TESTNET
+import com.tangem.blockchain.network.API_ETH_TESTNET
+import com.tangem.blockchain.network.API_FANTOM_ANKR_TOOLS
+import com.tangem.blockchain.network.API_FANTOM_GETBLOCK
+import com.tangem.blockchain.network.API_FANTOM_NETWORK
+import com.tangem.blockchain.network.API_FANTOM_NOWNODES
+import com.tangem.blockchain.network.API_FANTOM_TESTNET
+import com.tangem.blockchain.network.API_FANTOM_TOOLS
+import com.tangem.blockchain.network.API_FANTOM_ULTIMATENODES
+import com.tangem.blockchain.network.API_GNOSIS_ANKR
+import com.tangem.blockchain.network.API_GNOSIS_BLAST
+import com.tangem.blockchain.network.API_GNOSIS_CHAIN
+import com.tangem.blockchain.network.API_GNOSIS_GETBLOCK
+import com.tangem.blockchain.network.API_GNOSIS_POKT
+import com.tangem.blockchain.network.API_OPTIMISM
+import com.tangem.blockchain.network.API_OPTIMISM_ANKR
+import com.tangem.blockchain.network.API_OPTIMISM_BLAST
+import com.tangem.blockchain.network.API_OPTIMISM_GETBLOCK
+import com.tangem.blockchain.network.API_OPTIMISM_NOWNODES
+import com.tangem.blockchain.network.API_OPTIMISM_TESTNET
+import com.tangem.blockchain.network.API_POLYGON
+import com.tangem.blockchain.network.API_POLYGON_BWARELABS
+import com.tangem.blockchain.network.API_POLYGON_CHAINSTACKLABS
+import com.tangem.blockchain.network.API_POLYGON_GETBLOCK
+import com.tangem.blockchain.network.API_POLYGON_MATIC
+import com.tangem.blockchain.network.API_POLYGON_MATICVIGIL
+import com.tangem.blockchain.network.API_POLYGON_NOWNODES
+import com.tangem.blockchain.network.API_POLYGON_QUICKNODE
+import com.tangem.blockchain.network.API_POLYGON_TESTNET
+import com.tangem.blockchain.network.API_RPC_BICOCCACHAIN
+import com.tangem.blockchain.network.API_RSK
+import com.tangem.blockchain.network.API_RSK_GETBLOCK
+import com.tangem.blockchain.network.API_XDAI_BLOCKSCOUT
+import com.tangem.blockchain.network.API_XDAI_POKT
 
 private const val BSC_QUICKNODE_BASE_URL = "https://%1\$s.bsc.discover.quiknode.pro/%2\$s/"
 
 internal fun Blockchain.getEthereumJsonRpcProviders(
-    config: BlockchainSdkConfig
+    config: BlockchainSdkConfig,
 ): List<EthereumJsonRpcProvider> {
     return when (this) {
         Blockchain.Arbitrum -> listOfNotNull(
@@ -131,7 +191,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = API_ETH_POW_TESTNET)
         )
         Blockchain.SaltPay -> listOf(
-            EthereumJsonRpcProvider(baseUrl = API_SALTPAY)
+            EthereumJsonRpcProvider(baseUrl = API_RPC_BICOCCACHAIN)
         )
         else -> throw IllegalStateException("$this isn't supported")
     }
@@ -139,7 +199,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
 
 private fun getNowNodesProvider(
     baseUrl: String,
-    config: BlockchainSdkConfig
+    config: BlockchainSdkConfig,
 ): EthereumJsonRpcProvider? {
     return config.nowNodeCredentials?.apiKey?.let { nowNodesApiKey ->
         EthereumJsonRpcProvider(baseUrl = baseUrl, postfixUrl = nowNodesApiKey)
@@ -148,7 +208,7 @@ private fun getNowNodesProvider(
 
 private fun getGetBlockProvider(
     baseUrl: String,
-    config: BlockchainSdkConfig
+    config: BlockchainSdkConfig,
 ): EthereumJsonRpcProvider? {
     return config.getBlockCredentials?.apiKey?.let { apiKey ->
         EthereumJsonRpcProvider(baseUrl = baseUrl, getBlockApiKey = apiKey)
@@ -157,7 +217,7 @@ private fun getGetBlockProvider(
 
 private fun getInfuraProvider(
     baseUrl: String,
-    config: BlockchainSdkConfig
+    config: BlockchainSdkConfig,
 ): EthereumJsonRpcProvider? {
     return config.infuraProjectId?.let { infuraProjectId ->
         EthereumJsonRpcProvider(baseUrl = baseUrl, postfixUrl = infuraProjectId)
