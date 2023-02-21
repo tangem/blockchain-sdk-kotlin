@@ -43,5 +43,6 @@ data class GetBlockCredentials(
 ) {
     companion object {
         const val headerApiKey = "x-api-key"
+        const val paramName = "api_key"
     }
 }
