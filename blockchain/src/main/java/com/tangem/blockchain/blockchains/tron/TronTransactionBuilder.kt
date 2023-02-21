@@ -151,7 +151,7 @@ class TronTransactionBuilder(private val blockchain: Blockchain) {
     }
 
     companion object {
-        const val SMART_CONTRACT_FEE_LIMIT = 40_000_000L
+        const val SMART_CONTRACT_FEE_LIMIT = 100_000_000L
     }
 
 }
