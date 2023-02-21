@@ -3,8 +3,22 @@ package com.tangem.blockchain.blockchains.solana
 import android.util.Log
 import com.tangem.blockchain.blockchains.solana.solanaj.core.Transaction
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
-import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.BlockchainSdkError.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.BlockchainSdkError.NPError
+import com.tangem.blockchain.common.BlockchainSdkError.Solana
+import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
+import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionSender
+import com.tangem.blockchain.common.TransactionSigner
+import com.tangem.blockchain.common.TransactionStatus
+import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.minus
+import com.tangem.blockchain.common.plus
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.filterWith
@@ -93,7 +107,7 @@ class SolanaWalletManager(
                 val amount = Amount(valueConverter.toSol(info.lamports), wallet.blockchain)
                 val fee = Amount(valueConverter.toSol(it.fee), wallet.blockchain)
                 TransactionData(
-                    amount, fee, info.source, info.destination, null,
+                    amount, fee, info.source, info.destination,
                     TransactionStatus.Unconfirmed, hash = it.signature
                 )
             } else {
