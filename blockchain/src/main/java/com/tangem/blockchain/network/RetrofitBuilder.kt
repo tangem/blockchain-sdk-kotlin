@@ -2,10 +2,8 @@ package com.tangem.blockchain.network
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import okhttp3.Credentials
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
-import okhttp3.Response
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
@@ -59,21 +57,6 @@ data class Timeout(
     val time: Long,
     val unit: TimeUnit = TimeUnit.SECONDS,
 )
-
-class BasicAuthInterceptor(
-    private val username: String,
-    private val password: String,
-) : Interceptor {
-
-    override fun intercept(chain: Interceptor.Chain): Response {
-        val request = chain.request()
-            .newBuilder()
-            .addHeader("Authorization", Credentials.basic(username, password))
-            .build()
-
-        return chain.proceed(request)
-    }
-}
 
 private val moshi: Moshi by lazy {
     Moshi.Builder()
