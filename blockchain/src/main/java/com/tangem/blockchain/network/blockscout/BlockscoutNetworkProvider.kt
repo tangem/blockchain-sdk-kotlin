@@ -5,7 +5,6 @@ import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.BasicAuthInterceptor
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
-import com.tangem.blockchain.network.API_BLOCKSCOUT_BICOCCACHAIN
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.services.retryIO
 
@@ -20,7 +19,7 @@ class BlockscoutNetworkProvider(
     private fun createApi(credentials: BlockscoutCredentials?): BlockscoutApi {
         val authInterceptor = credentials?.let { BasicAuthInterceptor(it.userName, it.password) }
         return createRetrofitInstance(
-            baseUrl = API_BLOCKSCOUT_BICOCCACHAIN,
+            baseUrl = "https://blockscout.bicoccachain.net/",
             headerInterceptors = listOfNotNull(authInterceptor)
         ).create(BlockscoutApi::class.java)
     }

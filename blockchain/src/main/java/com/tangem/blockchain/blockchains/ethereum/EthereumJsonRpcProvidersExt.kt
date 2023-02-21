@@ -3,142 +3,93 @@ package com.tangem.blockchain.blockchains.ethereum
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
-import com.tangem.blockchain.network.API_ARBITRUM
-import com.tangem.blockchain.network.API_ARBITRUM_INFURA
-import com.tangem.blockchain.network.API_ARBITRUM_OFFCHAIN
-import com.tangem.blockchain.network.API_ARBITRUM_TESTNET
-import com.tangem.blockchain.network.API_AVALANCHE
-import com.tangem.blockchain.network.API_AVALANCHE_GETBLOCK
-import com.tangem.blockchain.network.API_AVALANCHE_NOWNODES
-import com.tangem.blockchain.network.API_AVALANCHE_TESTNET
-import com.tangem.blockchain.network.API_BSC
-import com.tangem.blockchain.network.API_BSC_GETBLOCK
-import com.tangem.blockchain.network.API_BSC_NOWNODES
-import com.tangem.blockchain.network.API_BSC_TESTNET
-import com.tangem.blockchain.network.API_ETH
-import com.tangem.blockchain.network.API_ETH_CLASSIC_BESU
-import com.tangem.blockchain.network.API_ETH_CLASSIC_BLOCKSCOUT
-import com.tangem.blockchain.network.API_ETH_CLASSIC_CLUSTER
-import com.tangem.blockchain.network.API_ETH_CLASSIC_CLUSTER_TESTNET
-import com.tangem.blockchain.network.API_ETH_CLASSIC_ETCDESKTOP
-import com.tangem.blockchain.network.API_ETH_CLASSIC_GETBLOCK
-import com.tangem.blockchain.network.API_ETH_CLASSIC_GETH
-import com.tangem.blockchain.network.API_ETH_CLASSIC_MYTOKEN
-import com.tangem.blockchain.network.API_ETH_FAIR_RPC
-import com.tangem.blockchain.network.API_ETH_GETBLOCK
-import com.tangem.blockchain.network.API_ETH_NOWNODES
-import com.tangem.blockchain.network.API_ETH_NOWNODES_TESTNET
-import com.tangem.blockchain.network.API_ETH_POW
-import com.tangem.blockchain.network.API_ETH_POW_NOWNODES
-import com.tangem.blockchain.network.API_ETH_POW_TESTNET
-import com.tangem.blockchain.network.API_ETH_TESTNET
-import com.tangem.blockchain.network.API_FANTOM_ANKR_TOOLS
-import com.tangem.blockchain.network.API_FANTOM_GETBLOCK
-import com.tangem.blockchain.network.API_FANTOM_NETWORK
-import com.tangem.blockchain.network.API_FANTOM_NOWNODES
-import com.tangem.blockchain.network.API_FANTOM_TESTNET
-import com.tangem.blockchain.network.API_FANTOM_TOOLS
-import com.tangem.blockchain.network.API_FANTOM_ULTIMATENODES
-import com.tangem.blockchain.network.API_GNOSIS_ANKR
-import com.tangem.blockchain.network.API_GNOSIS_BLAST
-import com.tangem.blockchain.network.API_GNOSIS_CHAIN
-import com.tangem.blockchain.network.API_GNOSIS_GETBLOCK
-import com.tangem.blockchain.network.API_GNOSIS_POKT
-import com.tangem.blockchain.network.API_OPTIMISM
-import com.tangem.blockchain.network.API_OPTIMISM_ANKR
-import com.tangem.blockchain.network.API_OPTIMISM_BLAST
-import com.tangem.blockchain.network.API_OPTIMISM_GETBLOCK
-import com.tangem.blockchain.network.API_OPTIMISM_NOWNODES
-import com.tangem.blockchain.network.API_OPTIMISM_TESTNET
-import com.tangem.blockchain.network.API_POLYGON
-import com.tangem.blockchain.network.API_POLYGON_BWARELABS
-import com.tangem.blockchain.network.API_POLYGON_CHAINSTACKLABS
-import com.tangem.blockchain.network.API_POLYGON_GETBLOCK
-import com.tangem.blockchain.network.API_POLYGON_MATIC
-import com.tangem.blockchain.network.API_POLYGON_MATICVIGIL
-import com.tangem.blockchain.network.API_POLYGON_NOWNODES
-import com.tangem.blockchain.network.API_POLYGON_QUICKNODE
-import com.tangem.blockchain.network.API_POLYGON_TESTNET
-import com.tangem.blockchain.network.API_RPC_BICOCCACHAIN
-import com.tangem.blockchain.network.API_RSK
-import com.tangem.blockchain.network.API_RSK_GETBLOCK
-import com.tangem.blockchain.network.API_XDAI_BLOCKSCOUT
-import com.tangem.blockchain.network.API_XDAI_POKT
 
-private const val BSC_QUICKNODE_BASE_URL = "https://%1\$s.bsc.discover.quiknode.pro/%2\$s/"
+private const val AVALANCHE_POSTFIX = "ext/bc/C/rpc"
 
 internal fun Blockchain.getEthereumJsonRpcProviders(
     config: BlockchainSdkConfig,
 ): List<EthereumJsonRpcProvider> {
-    return when (this) {
+    val providers = when (this) {
         Blockchain.Arbitrum -> listOfNotNull(
-            EthereumJsonRpcProvider(baseUrl = API_ARBITRUM),
-            getInfuraProvider(baseUrl = API_ARBITRUM_INFURA, config = config),
-            EthereumJsonRpcProvider(baseUrl = API_ARBITRUM_OFFCHAIN)
+            EthereumJsonRpcProvider(baseUrl = "https://arb1.arbitrum.io/rpc/"),
+            getInfuraProvider(baseUrl = "https://arbitrum-mainnet.infura.io/v3/", config = config),
+            EthereumJsonRpcProvider(baseUrl = "https://node.offchainlabs.com:8547/")
         )
         Blockchain.ArbitrumTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = API_ARBITRUM_TESTNET)
+            EthereumJsonRpcProvider(baseUrl = "https://goerli-rollup.arbitrum.io/rpc/")
         )
         Blockchain.Avalanche -> listOfNotNull(
-            // special for Avalanche
-            config.nowNodeCredentials?.apiKey?.let { nowNodesApiKey ->
+            // postfix is required because the AVALANCHE API needs url without a last slash !!!
+            config.nowNodeCredentials?.apiKey.letNotBlank { nowNodesApiKey ->
                 EthereumJsonRpcProvider(
-                    baseUrl = API_AVALANCHE_NOWNODES,
-                    nowNodesApiKey = nowNodesApiKey
+                    baseUrl = "https://avax.nownodes.io/",
+                    postfixUrl = AVALANCHE_POSTFIX,
+                    nowNodesApiKey = nowNodesApiKey // special for Avalanche
                 )
             },
-            getGetBlockProvider(baseUrl = API_AVALANCHE_GETBLOCK, config = config),
-            EthereumJsonRpcProvider(baseUrl = API_AVALANCHE)
+            config.getBlockCredentials?.apiKey.letNotBlank { getBlockApiKey ->
+                EthereumJsonRpcProvider(
+                    baseUrl = "https://avax.getblock.io/mainnet/",
+                    postfixUrl = AVALANCHE_POSTFIX,
+                    getBlockApiKey = getBlockApiKey
+                )
+            },
+            EthereumJsonRpcProvider(
+                baseUrl = "https://api.avax.network/",
+                postfixUrl = AVALANCHE_POSTFIX
+            )
         )
         Blockchain.AvalancheTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = API_AVALANCHE_TESTNET)
+            EthereumJsonRpcProvider(
+                baseUrl = "https://api.avax-test.network/",
+                postfixUrl = AVALANCHE_POSTFIX
+            )
         )
         Blockchain.Ethereum -> listOfNotNull(
-            getNowNodesProvider(API_ETH_NOWNODES, config),
-            getGetBlockProvider(API_ETH_GETBLOCK, config),
-            getInfuraProvider(API_ETH, config)
+            getNowNodesProvider(baseUrl = "https://eth.nownodes.io/", config = config),
+            getGetBlockProvider(baseUrl = "https://eth.getblock.io/mainnet/", config = config),
+            getInfuraProvider(baseUrl = "https://mainnet.infura.io/v3/", config = config)
         )
         Blockchain.EthereumTestnet -> listOfNotNull(
-            getNowNodesProvider(baseUrl = API_ETH_NOWNODES_TESTNET, config = config),
-            getInfuraProvider(baseUrl = API_ETH_TESTNET, config = config)
+            getNowNodesProvider(baseUrl = "https://eth-goerli.nownodes.io/", config = config),
+            getInfuraProvider(baseUrl = "https://goerli.infura.io/v3/", config = config)
         )
         Blockchain.EthereumClassic -> listOfNotNull(
-            getGetBlockProvider(baseUrl = API_ETH_CLASSIC_GETBLOCK, config = config),
-            EthereumJsonRpcProvider(baseUrl = API_ETH_CLASSIC_CLUSTER),
-            EthereumJsonRpcProvider(baseUrl = API_ETH_CLASSIC_ETCDESKTOP),
-            EthereumJsonRpcProvider(baseUrl = API_ETH_CLASSIC_BLOCKSCOUT),
-            EthereumJsonRpcProvider(baseUrl = API_ETH_CLASSIC_MYTOKEN),
-            EthereumJsonRpcProvider(baseUrl = API_ETH_CLASSIC_BESU),
-            EthereumJsonRpcProvider(baseUrl = API_ETH_CLASSIC_GETH),
+            getGetBlockProvider(baseUrl = "https://etc.getblock.io/mainnet/", config = config),
+            EthereumJsonRpcProvider(baseUrl = "https://www.ethercluster.com/etc/"),
+            EthereumJsonRpcProvider(baseUrl = "https://etc.etcdesktop.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://blockscout.com/etc/mainnet/api/eth-rpc/"),
+            EthereumJsonRpcProvider(baseUrl = "https://etc.mytokenpocket.vip/"),
+            EthereumJsonRpcProvider(baseUrl = "https://besu.etc-network.info/"),
+            EthereumJsonRpcProvider(baseUrl = "https://geth.etc-network.info/"),
         )
         Blockchain.EthereumClassicTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = API_ETH_CLASSIC_CLUSTER_TESTNET)
+            EthereumJsonRpcProvider(baseUrl = "https://www.ethercluster.com/kotti/")
         )
         Blockchain.Fantom -> listOfNotNull(
-            getNowNodesProvider(baseUrl = API_FANTOM_NOWNODES, config = config),
-            getGetBlockProvider(baseUrl = API_FANTOM_GETBLOCK, config = config),
-            EthereumJsonRpcProvider(baseUrl = API_FANTOM_TOOLS),
-            EthereumJsonRpcProvider(baseUrl = API_FANTOM_NETWORK),
-            EthereumJsonRpcProvider(baseUrl = API_FANTOM_ANKR_TOOLS),
-            EthereumJsonRpcProvider(baseUrl = API_FANTOM_ULTIMATENODES),
+            getNowNodesProvider(baseUrl = "https://ftm.nownodes.io/", config = config),
+            getGetBlockProvider(baseUrl = "https://ftm.getblock.io/mainnet/", config = config),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.ftm.tools/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpcapi.fantom.network/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/", postfixUrl = "fantom"),
+            EthereumJsonRpcProvider(baseUrl = "https://ftmrpc.ultimatenodes.io/"),
         )
         Blockchain.FantomTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = API_FANTOM_TESTNET),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.testnet.fantom.network/"),
         )
         Blockchain.RSK -> listOfNotNull(
-            getGetBlockProvider(baseUrl = API_RSK_GETBLOCK, config = config),
-            EthereumJsonRpcProvider(baseUrl = API_RSK)
+            getGetBlockProvider(baseUrl = "https://rsk.getblock.io/mainnet/", config = config),
+            EthereumJsonRpcProvider(baseUrl = "https://public-node.rsk.co/")
         )
         Blockchain.BSC -> listOfNotNull(
-            getNowNodesProvider(baseUrl = API_BSC_NOWNODES, config = config),
-            getGetBlockProvider(baseUrl = API_BSC_GETBLOCK, config = config),
-            EthereumJsonRpcProvider(baseUrl = API_BSC),
+            getNowNodesProvider(baseUrl = "https://bsc.nownodes.io/", config = config),
+            getGetBlockProvider(baseUrl = "https://bsc.getblock.io/mainnet/", config = config),
+            EthereumJsonRpcProvider(baseUrl = "https://bsc-dataseed.binance.org/"),
             config.quickNodeBscCredentials?.let { credentials ->
                 if (credentials.subdomain.isNotBlank() && credentials.apiKey.isNotBlank()) {
                     EthereumJsonRpcProvider(
-                        baseUrl = String.format(
-                            BSC_QUICKNODE_BASE_URL, credentials.subdomain, credentials.apiKey
-                        )
+                        baseUrl = "https://${credentials.subdomain}.bsc.discover.quiknode.pro/" +
+                            "${credentials.apiKey}/"
                     )
                 } else {
                     null
@@ -146,62 +97,65 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             }
         )
         Blockchain.BSCTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = API_BSC_TESTNET)
+            EthereumJsonRpcProvider(baseUrl = "https://data-seed-prebsc-1-s1.binance.org:8545/")
         )
         Blockchain.Polygon -> listOfNotNull(
-            getNowNodesProvider(baseUrl = API_POLYGON_NOWNODES, config = config),
-            getGetBlockProvider(baseUrl = API_POLYGON_GETBLOCK, config = config),
-            EthereumJsonRpcProvider(baseUrl = API_POLYGON),
-            EthereumJsonRpcProvider(baseUrl = API_POLYGON_MATIC),
-            EthereumJsonRpcProvider(baseUrl = API_POLYGON_CHAINSTACKLABS),
-            EthereumJsonRpcProvider(baseUrl = API_POLYGON_MATICVIGIL),
-            EthereumJsonRpcProvider(baseUrl = API_POLYGON_QUICKNODE),
-            EthereumJsonRpcProvider(baseUrl = API_POLYGON_BWARELABS),
+            getNowNodesProvider(baseUrl = "https://matic.nownodes.io/", config = config),
+            getGetBlockProvider(baseUrl = "https://matic.getblock.io/mainnet/", config = config),
+            EthereumJsonRpcProvider(baseUrl = "https://polygon-rpc.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc-mainnet.matic.network/"),
+            EthereumJsonRpcProvider(baseUrl = "https://matic-mainnet.chainstacklabs.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc-mainnet.maticvigil.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc-mainnet.matic.quiknode.pro/"),
+            EthereumJsonRpcProvider(baseUrl = "https://matic-mainnet-full-rpc.bwarelabs.com/"),
         )
         Blockchain.PolygonTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = API_POLYGON_TESTNET)
+            EthereumJsonRpcProvider(baseUrl = "https://rpc-mumbai.maticvigil.com/")
         )
         Blockchain.Gnosis -> listOfNotNull(
-            getGetBlockProvider(baseUrl = API_GNOSIS_GETBLOCK, config = config),
-            EthereumJsonRpcProvider(baseUrl = API_GNOSIS_CHAIN),
-            EthereumJsonRpcProvider(baseUrl = API_GNOSIS_POKT),
-            EthereumJsonRpcProvider(baseUrl = API_GNOSIS_ANKR),
-            EthereumJsonRpcProvider(baseUrl = API_GNOSIS_BLAST),
-            EthereumJsonRpcProvider(baseUrl = API_XDAI_POKT),
-            EthereumJsonRpcProvider(baseUrl = API_XDAI_BLOCKSCOUT),
+            getGetBlockProvider(baseUrl = "https://gno.getblock.io/mainnet/", config = config),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.gnosischain.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://gnosischain-rpc.gateway.pokt.network/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/gnosis/"),
+            EthereumJsonRpcProvider(baseUrl = "https://gnosis-mainnet.public.blastapi.io/"),
+            EthereumJsonRpcProvider(baseUrl = "https://xdai-rpc.gateway.pokt.network/"),
+            EthereumJsonRpcProvider(baseUrl = "https://xdai-archive.blockscout.com/"),
         )
         Blockchain.Optimism -> listOfNotNull(
-            getNowNodesProvider(baseUrl = API_OPTIMISM_NOWNODES, config = config),
-            getGetBlockProvider(baseUrl = API_OPTIMISM_GETBLOCK, config = config),
-            EthereumJsonRpcProvider(baseUrl = API_OPTIMISM),
-            EthereumJsonRpcProvider(baseUrl = API_OPTIMISM_BLAST),
-            EthereumJsonRpcProvider(baseUrl = API_OPTIMISM_ANKR),
+            getNowNodesProvider(baseUrl = "https://optimism.nownodes.io/", config = config),
+            EthereumJsonRpcProvider(baseUrl = "https://mainnet.optimism.io/"),
+            EthereumJsonRpcProvider(baseUrl = "https://optimism-mainnet.public.blastapi.io/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/optimism/"),
         )
         Blockchain.OptimismTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = API_OPTIMISM_TESTNET),
+            EthereumJsonRpcProvider(baseUrl = "https://goerli.optimism.io/"),
         )
         Blockchain.EthereumFair -> listOf(
-            EthereumJsonRpcProvider(baseUrl = API_ETH_FAIR_RPC)
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.etherfair.org/")
         )
         Blockchain.EthereumPow -> listOfNotNull(
-            getNowNodesProvider(baseUrl = API_ETH_POW_NOWNODES, config = config),
-            EthereumJsonRpcProvider(baseUrl = API_ETH_POW)
+            getNowNodesProvider(baseUrl = "https://ethw.nownodes.io/", config = config),
+            EthereumJsonRpcProvider(baseUrl = "https://mainnet.ethereumpow.org/")
         )
         Blockchain.EthereumPowTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = API_ETH_POW_TESTNET)
+            EthereumJsonRpcProvider(baseUrl = "https://iceberg.ethereumpow.org/")
         )
         Blockchain.SaltPay -> listOf(
-            EthereumJsonRpcProvider(baseUrl = API_RPC_BICOCCACHAIN)
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.bicoccachain.net/")
         )
         else -> throw IllegalStateException("$this isn't supported")
     }
+
+    if (providers.isEmpty()) throw IllegalStateException("Provider list of $this is null or empty")
+
+    return providers
 }
 
 private fun getNowNodesProvider(
     baseUrl: String,
     config: BlockchainSdkConfig,
 ): EthereumJsonRpcProvider? {
-    return config.nowNodeCredentials?.apiKey?.let { nowNodesApiKey ->
+    return config.nowNodeCredentials?.apiKey.letNotBlank { nowNodesApiKey ->
         EthereumJsonRpcProvider(baseUrl = baseUrl, postfixUrl = nowNodesApiKey)
     }
 }
@@ -210,8 +164,8 @@ private fun getGetBlockProvider(
     baseUrl: String,
     config: BlockchainSdkConfig,
 ): EthereumJsonRpcProvider? {
-    return config.getBlockCredentials?.apiKey?.let { apiKey ->
-        EthereumJsonRpcProvider(baseUrl = baseUrl, getBlockApiKey = apiKey)
+    return config.getBlockCredentials?.apiKey.letNotBlank { getBlockApiKey ->
+        EthereumJsonRpcProvider(baseUrl = baseUrl, getBlockApiKey = getBlockApiKey)
     }
 }
 
@@ -219,7 +173,13 @@ private fun getInfuraProvider(
     baseUrl: String,
     config: BlockchainSdkConfig,
 ): EthereumJsonRpcProvider? {
-    return config.infuraProjectId?.let { infuraProjectId ->
+    return config.infuraProjectId.letNotBlank { infuraProjectId ->
         EthereumJsonRpcProvider(baseUrl = baseUrl, postfixUrl = infuraProjectId)
     }
+}
+
+private inline fun <R> String?.letNotBlank(block: (String) -> R): R? {
+    if (isNullOrBlank()) return null
+
+    return block(this)
 }
