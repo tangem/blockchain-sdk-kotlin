@@ -1,13 +1,6 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.Token
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionStatus
-import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -22,7 +15,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 import java.math.BigInteger
-import java.util.Calendar
+import java.util.*
 
 class EthereumNetworkService(
     jsonRpcProviders: List<EthereumJsonRpcProvider>,
@@ -194,7 +187,9 @@ class EthereumNetworkService(
                 Result.Success(gasLimit)
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainSdkError())
+            if (exception.message?.contains("gas required exceeds allowance", true) == true) {
+                Result.Failure(Exception("Not enough funds for the transaction. Please top up your account.").toBlockchainSdkError())
+            } else Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
