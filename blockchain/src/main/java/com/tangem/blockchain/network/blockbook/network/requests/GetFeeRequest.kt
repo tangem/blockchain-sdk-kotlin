@@ -7,11 +7,14 @@ class GetFeeRequest private constructor(
     val params: List<Int>
 ) {
     companion object {
-        val FEE = GetFeeRequest(
-            jsonrpc = "2.0",
-            id = "id",
-            method = "estimatesmartfee",
-            params = listOf(1000)
-        )
+
+        fun getFee(param: Int): GetFeeRequest {
+            return GetFeeRequest(
+                jsonrpc = "2.0",
+                id = "id",
+                method = "estimatesmartfee",
+                params = listOf(param)
+            )
+        }
     }
 }
