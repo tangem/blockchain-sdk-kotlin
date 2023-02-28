@@ -1,6 +1,13 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionStatus
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -15,7 +22,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 import java.math.BigInteger
-import java.util.*
+import java.util.Calendar
 
 class EthereumNetworkService(
     jsonRpcProviders: List<EthereumJsonRpcProvider>,
