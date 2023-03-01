@@ -4,8 +4,6 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo.BlockchainInfoNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
-import com.tangem.blockchain.network.blockbook.BlockBookNetworkProvider
-import com.tangem.blockchain.network.blockbook.config.BlockBookConfig
 import com.tangem.blockchain.network.blockchair.BlockchairNetworkProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 
@@ -15,22 +13,25 @@ internal fun Blockchain.getBitcoinNetworkProviders(
 ): List<BitcoinNetworkProvider> {
     return when (this) {
         Blockchain.Bitcoin -> listOfNotNull(
-            getNowNodesProvider(blockchain, config),
-            getGetBlockProvider(blockchain, config),
+            // FIXME("will be included in version 4.2")
+            // getNowNodesProvider(blockchain, config),
+            // getGetBlockProvider(blockchain, config),
             BlockchainInfoNetworkProvider(),
             *getBlockchairProviders(blockchain, config),
             getBlockcypherProvider(blockchain, config)
         )
         Blockchain.BitcoinTestnet -> listOfNotNull(
-            getNowNodesProvider(blockchain, config),
+            // FIXME("will be included in version 4.2")
+            // getNowNodesProvider(blockchain, config),
             *getBlockchairProviders(blockchain, config),
             getBlockcypherProvider(blockchain, config)
         )
         Blockchain.Litecoin,
         Blockchain.Dogecoin,
         Blockchain.Dash -> listOfNotNull(
-            getNowNodesProvider(blockchain, config),
-            getGetBlockProvider(blockchain, config),
+            // FIXME("will be included in version 4.2")
+            // getNowNodesProvider(blockchain, config),
+            // getGetBlockProvider(blockchain, config),
             *getBlockchairProviders(blockchain, config),
             getBlockcypherProvider(blockchain, config)
         )
@@ -41,29 +42,30 @@ internal fun Blockchain.getBitcoinNetworkProviders(
     }
 }
 
-private fun getNowNodesProvider(
-    blockchain: Blockchain,
-    config: BlockchainSdkConfig
-): BitcoinNetworkProvider? {
-    return config.nowNodeCredentials?.let { credentials ->
-        BlockBookNetworkProvider(
-            config = BlockBookConfig.NowNodes(nowNodesCredentials = credentials),
-            blockchain = blockchain
-        )
-    }
-}
-
-private fun getGetBlockProvider(
-    blockchain: Blockchain,
-    config: BlockchainSdkConfig
-): BitcoinNetworkProvider? {
-    return config.getBlockCredentials?.let { credentials ->
-        BlockBookNetworkProvider(
-            config = BlockBookConfig.GetBlock(getBlockCredentials = credentials),
-            blockchain = blockchain
-        )
-    }
-}
+// FIXME("will be included in version 4.2")
+// private fun getNowNodesProvider(
+//     blockchain: Blockchain,
+//     config: BlockchainSdkConfig
+// ): BitcoinNetworkProvider? {
+//     return config.nowNodeCredentials?.let { credentials ->
+//         BlockBookNetworkProvider(
+//             config = BlockBookConfig.NowNodes(nowNodesCredentials = credentials),
+//             blockchain = blockchain
+//         )
+//     }
+// }
+//
+// private fun getGetBlockProvider(
+//     blockchain: Blockchain,
+//     config: BlockchainSdkConfig
+// ): BitcoinNetworkProvider? {
+//     return config.getBlockCredentials?.let { credentials ->
+//         BlockBookNetworkProvider(
+//             config = BlockBookConfig.GetBlock(getBlockCredentials = credentials),
+//             blockchain = blockchain
+//         )
+//     }
+// }
 
 private fun getBlockchairProviders(
     blockchain: Blockchain,
