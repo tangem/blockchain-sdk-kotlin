@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -56,23 +57,13 @@ class BlockBookNetworkProvider(
 
     override suspend fun getFee(): Result<BitcoinFee> {
         return try {
-            val getFeeResponse = withContext(Dispatchers.IO) { api.getFee() }
-            val feeRatePerKb = getFeeResponse.result.feerate
-                .toBigDecimal()
-                .multiply(BigDecimal(BIT_IN_KB_AMOUNT))
-                .movePointLeft(blockchain.decimals())
+            val minimalPerKb = getFeePerKb(param = MINIMAL_FEE_BLOCK_AMOUNT)
+            val normalPerKb = getFeePerKb(param = NORMAL_FEE_BLOCK_AMOUNT)
+            val priorityPerKb = getFeePerKb(param = PRIORITY_FEE_BLOCK_AMOUNT)
 
-            val minimalPerKb = BigDecimal(MIN_FEE_COEFFICIENT)
-                .times(feeRatePerKb)
-                .setScale(blockchain.decimals(), RoundingMode.DOWN)
-
-            val normalPerKb = feeRatePerKb.setScale(blockchain.decimals(), RoundingMode.DOWN)
-
-            val priorityPerKb = BigDecimal(MAX_FEE_COEFFICIENT)
-                .times(feeRatePerKb)
-                .setScale(blockchain.decimals(), RoundingMode.DOWN)
-
-            Result.Success(BitcoinFee(minimalPerKb, normalPerKb, priorityPerKb))
+            Result.Success(
+                BitcoinFee(minimalPerKb, normalPerKb, priorityPerKb)
+            )
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
@@ -136,9 +127,19 @@ class BlockBookNetworkProvider(
             }
     }
 
+    private suspend fun getFeePerKb(param: Int): BigDecimal {
+        val getFeeResponse = withContext(Dispatchers.IO) { api.getFee(param) }
+
+        if (getFeeResponse.result.feerate <= 0) throw BlockchainSdkError.FailedToLoadFee
+
+        return getFeeResponse.result.feerate
+            .toBigDecimal()
+            .setScale(blockchain.decimals(), RoundingMode.UP)
+    }
+
     private companion object {
-        const val BIT_IN_KB_AMOUNT = 1024
-        const val MIN_FEE_COEFFICIENT = 0.8
-        const val MAX_FEE_COEFFICIENT = 1.2
+        const val MINIMAL_FEE_BLOCK_AMOUNT = 10
+        const val NORMAL_FEE_BLOCK_AMOUNT = 5
+        const val PRIORITY_FEE_BLOCK_AMOUNT = 1
     }
 }
