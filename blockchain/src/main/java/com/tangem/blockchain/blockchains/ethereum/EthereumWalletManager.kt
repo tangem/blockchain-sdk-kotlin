@@ -471,6 +471,16 @@ open class EthereumWalletManager(
         return networkProvider.getGasLimit(to, from, value, data)
     }
 
+    override suspend fun getGasLimit(amount: Amount, destination: String, data: String): Result<BigInteger> {
+        val from = wallet.address
+        val value = if (amount.type is AmountType.Coin) {
+            amount.value?.movePointRight(amount.decimals)?.toBigInteger()?.toHexString()
+        } else {
+            null
+        }
+        return networkProvider.getGasLimit(destination, from, value, data)
+    }
+
     suspend fun getGasLimitToApprove(amount: Amount, spender: String): Result<BigInteger> {
         return if (amount.type !is AmountType.Token) {
             Result.Failure(BlockchainSdkError.CustomError("Only token can be approved!!!"))
