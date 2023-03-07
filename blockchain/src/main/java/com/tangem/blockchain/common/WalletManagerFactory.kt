@@ -14,6 +14,7 @@ import com.tangem.blockchain.blockchains.cardano.CardanoWalletManager
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkService
 import com.tangem.blockchain.blockchains.cardano.network.adalite.AdaliteNetworkProvider
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.RosettaNetworkProvider
+import com.tangem.blockchain.blockchains.dogecoin.DogecoinWalletManager
 import com.tangem.blockchain.blockchains.ducatus.DucatusWalletManager
 import com.tangem.blockchain.blockchains.ducatus.network.DucatusNetworkService
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
@@ -42,7 +43,15 @@ import com.tangem.blockchain.blockchains.xrp.XrpTransactionBuilder
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
 import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledNetworkProvider
-import com.tangem.blockchain.network.*
+import com.tangem.blockchain.network.API_ADALITE
+import com.tangem.blockchain.network.API_RIPPLE
+import com.tangem.blockchain.network.API_RIPPLE_RESERVE
+import com.tangem.blockchain.network.API_TANGEM_ROSETTA
+import com.tangem.blockchain.network.API_TEZOS_BLOCKSCALE
+import com.tangem.blockchain.network.API_TEZOS_ECAD
+import com.tangem.blockchain.network.API_TEZOS_LETZBAKE
+import com.tangem.blockchain.network.API_TEZOS_SMARTPY
+import com.tangem.blockchain.network.API_XRP_LEDGER_FOUNDATION
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import com.tangem.blockchain.network.blockscout.BlockscoutNetworkProvider
 import com.tangem.common.card.EllipticCurve
@@ -119,17 +128,30 @@ class WalletManagerFactory(
         if (checkIfWrongKey(curve, publicKey)) return null
 
         val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
-        val tokens = tokens.toMutableSet()
-        val wallet = Wallet(blockchain, addresses, publicKey, tokens)
+        val mutableTokens = tokens.toMutableSet()
+        val wallet = Wallet(blockchain, addresses, publicKey, mutableTokens)
 
         return when (blockchain) {
             // region BTC-like blockchains
             Blockchain.Bitcoin,
             Blockchain.BitcoinTestnet,
-            Blockchain.Dogecoin,
             Blockchain.Dash,
             -> {
                 BitcoinWalletManager(
+                    wallet = wallet,
+                    transactionBuilder = BitcoinTransactionBuilder(
+                        walletPublicKey = publicKey.blockchainKey,
+                        blockchain = blockchain,
+                        walletAddresses = addresses
+                    ),
+                    networkProvider = BitcoinNetworkService(
+                        providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
+                    )
+                )
+            }
+
+            Blockchain.Dogecoin -> {
+                DogecoinWalletManager(
                     wallet = wallet,
                     transactionBuilder = BitcoinTransactionBuilder(
                         walletPublicKey = publicKey.blockchainKey,
@@ -185,7 +207,7 @@ class WalletManagerFactory(
                             tokens = config.blockcypherTokens
                         )
                     ),
-                    presetTokens = tokens
+                    presetTokens = mutableTokens
                 )
             }
 
@@ -216,7 +238,7 @@ class WalletManagerFactory(
                     networkProvider = EthereumNetworkService(
                         jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(config)
                     ),
-                    presetTokens = tokens
+                    presetTokens = mutableTokens
                 )
             }
 
@@ -231,7 +253,7 @@ class WalletManagerFactory(
                         jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(config),
                         blockscoutNetworkProvider = BlockscoutNetworkProvider(config.blockscoutCredentials),
                     ),
-                    presetTokens = tokens
+                    presetTokens = mutableTokens
                 )
             }
 
@@ -245,7 +267,7 @@ class WalletManagerFactory(
                     networkProvider = EthereumNetworkService(
                         jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(config),
                     ),
-                    presetTokens = tokens
+                    presetTokens = mutableTokens
                 )
             }
             // endregion
@@ -280,7 +302,7 @@ class WalletManagerFactory(
                     wallet,
                     StellarTransactionBuilder(networkService, publicKey.blockchainKey),
                     networkService,
-                    tokens
+                    mutableTokens
                 )
             }
 
@@ -316,7 +338,7 @@ class WalletManagerFactory(
                     wallet,
                     BinanceTransactionBuilder(publicKey.blockchainKey, isTestNet),
                     BinanceNetworkService(isTestNet),
-                    tokens
+                    mutableTokens
                 )
             }
 
