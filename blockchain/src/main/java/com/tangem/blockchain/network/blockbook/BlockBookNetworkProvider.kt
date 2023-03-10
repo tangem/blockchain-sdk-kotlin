@@ -19,7 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.util.*
+import java.util.Calendar
 
 class BlockBookNetworkProvider(
     val config: BlockBookConfig,
@@ -138,8 +138,8 @@ class BlockBookNetworkProvider(
     }
 
     private companion object {
-        const val MINIMAL_FEE_BLOCK_AMOUNT = 10
-        const val NORMAL_FEE_BLOCK_AMOUNT = 5
+        const val MINIMAL_FEE_BLOCK_AMOUNT = 8
+        const val NORMAL_FEE_BLOCK_AMOUNT = 4
         const val PRIORITY_FEE_BLOCK_AMOUNT = 1
     }
 }
