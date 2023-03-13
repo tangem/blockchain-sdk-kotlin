@@ -8,6 +8,7 @@ import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressType
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
@@ -73,6 +74,7 @@ enum class Blockchain(
     EthereumPow("ETH-Pow", "ETHW", "EthereumPoW"),
     EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW"),
     SaltPay("WXDAI", "WxDAI", "SaltPay"),
+    Kaspa("KAS", "KAS", "Kaspa"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -88,7 +90,8 @@ enum class Blockchain(
         Litecoin,
         Ducatus,
         Dogecoin,
-        Dash -> 8
+        Dash,
+        Kaspa -> 8
         Solana, SolanaTestnet -> 9
         Polkadot -> 10
         PolkadotTestnet, Kusama -> 12
@@ -139,6 +142,7 @@ enum class Blockchain(
         Solana, SolanaTestnet -> SolanaAddressService()
         Tezos -> TezosAddressService()
         Tron, TronTestnet -> TronAddressService()
+        Kaspa -> KaspaAddressService()
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -202,6 +206,7 @@ enum class Blockchain(
         EthereumPow -> "https://mainnet.ethwscan.com/"
         EthereumPowTestnet -> "https://iceberg.ethwscan.com/"
         SaltPay -> "https://blockscout.com/xdai/optimism/"
+        Kaspa -> "https://explorer.kaspa.org/"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -222,6 +227,7 @@ enum class Blockchain(
                 fullUrl
             }
             SolanaTestnet -> "$fullUrl/?cluster=devnet"
+            Kaspa -> "$baseUrl/addresses/$address"
             else -> fullUrl
         }
     }
@@ -309,7 +315,8 @@ enum class Blockchain(
             Dash,
             Optimism, OptimismTestnet,
             EthereumFair, EthereumPow, EthereumPowTestnet,
-            SaltPay -> listOf(EllipticCurve.Secp256k1)
+            SaltPay,
+            Kaspa -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Cardano,
