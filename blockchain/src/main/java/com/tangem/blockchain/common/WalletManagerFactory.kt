@@ -21,6 +21,8 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.getEthereumJsonRpcProviders
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
+import com.tangem.blockchain.blockchains.kaspa.KaspaTransactionBuilder
+import com.tangem.blockchain.blockchains.kaspa.KaspaWalletManager
 import com.tangem.blockchain.blockchains.litecoin.LitecoinNetworkService
 import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
 import com.tangem.blockchain.blockchains.optimism.OptimismWalletManager
@@ -33,6 +35,8 @@ import com.tangem.blockchain.blockchains.stellar.StellarTransactionBuilder
 import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
 import com.tangem.blockchain.blockchains.tezos.TezosTransactionBuilder
 import com.tangem.blockchain.blockchains.tezos.TezosWalletManager
+import com.tangem.blockchain.blockchains.kaspa.network.KaspaRestApiNetworkProvider
+import com.tangem.blockchain.blockchains.tezos.network.KaspaNetworkService
 import com.tangem.blockchain.blockchains.tezos.network.TezosJsonRpcNetworkProvider
 import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkService
 import com.tangem.blockchain.blockchains.tron.TronTransactionBuilder
@@ -368,6 +372,14 @@ class WalletManagerFactory(
                     wallet = wallet,
                     transactionBuilder = TronTransactionBuilder(blockchain),
                     networkProvider = rpcProvider
+                )
+            }
+
+            Blockchain.Kaspa -> {
+                KaspaWalletManager(
+                    wallet,
+                    KaspaTransactionBuilder(),
+                    KaspaNetworkService()
                 )
             }
 
