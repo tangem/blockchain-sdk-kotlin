@@ -15,12 +15,15 @@ import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
-import com.tangem.blockchain.common.address.*
+import com.tangem.blockchain.common.address.Address
+import com.tangem.blockchain.common.address.AddressService
+import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.DefaultAddressType
+import com.tangem.blockchain.common.address.MultisigAddressProvider
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.hdWallet.DerivationNode
 import com.tangem.common.hdWallet.DerivationPath
 import com.tangem.common.hdWallet.bip.BIP44
-
 
 enum class Blockchain(
     val id: String,
@@ -80,7 +83,8 @@ enum class Blockchain(
         Cardano, CardanoShelley,
         XRP,
         Tezos,
-        Tron, TronTestnet -> 6
+        Tron, TronTestnet,
+        -> 6
         Stellar, StellarTestnet -> 7
         Bitcoin, BitcoinTestnet,
         BitcoinCash, BitcoinCashTestnet,
@@ -88,7 +92,8 @@ enum class Blockchain(
         Litecoin,
         Ducatus,
         Dogecoin,
-        Dash -> 8
+        Dash,
+        -> 8
         Solana, SolanaTestnet -> 9
         Polkadot -> 10
         PolkadotTestnet, Kusama -> 12
@@ -103,7 +108,8 @@ enum class Blockchain(
         Gnosis,
         Optimism, OptimismTestnet,
         EthereumFair, EthereumPow, EthereumPowTestnet,
-        SaltPay -> 18
+        SaltPay,
+        -> 18
     }
 
     fun makeAddresses(
@@ -128,7 +134,8 @@ enum class Blockchain(
         Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
         BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet, Gnosis, Optimism, OptimismTestnet,
-        EthereumFair, EthereumPow, EthereumPowTestnet, SaltPay -> EthereumAddressService()
+        EthereumFair, EthereumPow, EthereumPowTestnet, SaltPay,
+        -> EthereumAddressService()
         RSK -> RskAddressService()
         Cardano, CardanoShelley -> CardanoAddressService(this)
         XRP -> XrpAddressService()
@@ -157,7 +164,7 @@ enum class Blockchain(
         return scheme == getShareScheme()
     }
 
-    private fun getBaseExploreUrl(): String = when(this) {
+    private fun getBaseExploreUrl(): String = when (this) {
         Arbitrum -> "https://arbiscan.io/"
         ArbitrumTestnet -> "https://goerli-rollup-explorer.arbitrum.io/"
         Avalanche -> "https://snowtrace.io/"
@@ -190,7 +197,7 @@ enum class Blockchain(
         StellarTestnet -> "https://stellar.expert/explorer/testnet/"
         Solana -> "https://explorer.solana.com/"
         SolanaTestnet -> "https://explorer.solana.com/"
-        Tezos -> "https://tezblock.io/"
+        Tezos -> "https://tzkt.io/"
         Tron -> "https://tronscan.org/#/"
         TronTestnet -> "https://nile.tronscan.org/#/"
         XRP -> "https://xrpscan.com/"
@@ -222,6 +229,8 @@ enum class Blockchain(
                 fullUrl
             }
             SolanaTestnet -> "$fullUrl/?cluster=devnet"
+            XRP -> "${baseUrl}account/$address"
+            Tezos -> "$baseUrl$address"
             else -> fullUrl
         }
     }
@@ -289,7 +298,8 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
-            XRP -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
+            XRP,
+            -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
             Arbitrum, ArbitrumTestnet,
             Bitcoin, BitcoinTestnet,
             BitcoinCash, BitcoinCashTestnet,
@@ -309,12 +319,14 @@ enum class Blockchain(
             Dash,
             Optimism, OptimismTestnet,
             EthereumFair, EthereumPow, EthereumPowTestnet,
-            SaltPay -> listOf(EllipticCurve.Secp256k1)
+            SaltPay,
+            -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Cardano,
             CardanoShelley,
-            Polkadot, PolkadotTestnet, Kusama -> listOf(EllipticCurve.Ed25519)
+            Polkadot, PolkadotTestnet, Kusama,
+            -> listOf(EllipticCurve.Ed25519)
         }
     }
 
@@ -444,7 +456,8 @@ enum class Blockchain(
         Gnosis,
         Optimism, OptimismTestnet,
         EthereumFair, EthereumPow, EthereumPowTestnet,
-        SaltPay -> true
+        SaltPay,
+        -> true
         else -> false
     }
 
@@ -452,9 +465,11 @@ enum class Blockchain(
 
     fun isFeeApproximate(amountType: AmountType): Boolean = when (this) {
         Fantom, FantomTestnet,
-        Tron, TronTestnet -> amountType is AmountType.Token
+        Tron, TronTestnet,
+        -> amountType is AmountType.Token
         Arbitrum, ArbitrumTestnet,
-        Optimism, OptimismTestnet -> true
+        Optimism, OptimismTestnet,
+        -> true
         else -> false
     }
 
