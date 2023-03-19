@@ -21,15 +21,7 @@ import static org.bitcoinj.core.Utils.uint64ToByteStreamLE;
 
 import com.tangem.blockchain.blockchains.cardano.crypto.Blake2b;
 
-// logic from https://github.com/pokkst/bitcoincashj
 public class KaspaTransaction extends Transaction {
-//    private ArrayList<TransactionInput> inputs;
-//    private ArrayList<TransactionOutput> outputs;
-
-//    private long version;
-//    private long lockTime;
-
-//    public final byte SIGHASH_FORK_ID = 0x40;
     private final byte[] TRANSACTION_SIGNING_DOMAIN = "TransactionSigningHash".getBytes(StandardCharsets.UTF_8);
     private final byte[] TRANSACTION_SIGNING_ECDSA_DOMAIN_HASH =
             Sha256Hash.of("TransactionSigningHashECDSA".getBytes(StandardCharsets.UTF_8)).getBytes();
