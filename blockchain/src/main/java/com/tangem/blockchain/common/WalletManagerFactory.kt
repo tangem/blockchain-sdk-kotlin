@@ -35,8 +35,7 @@ import com.tangem.blockchain.blockchains.stellar.StellarTransactionBuilder
 import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
 import com.tangem.blockchain.blockchains.tezos.TezosTransactionBuilder
 import com.tangem.blockchain.blockchains.tezos.TezosWalletManager
-import com.tangem.blockchain.blockchains.kaspa.network.KaspaRestApiNetworkProvider
-import com.tangem.blockchain.blockchains.tezos.network.KaspaNetworkService
+import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkService
 import com.tangem.blockchain.blockchains.tezos.network.TezosJsonRpcNetworkProvider
 import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkService
 import com.tangem.blockchain.blockchains.tron.TronTransactionBuilder
