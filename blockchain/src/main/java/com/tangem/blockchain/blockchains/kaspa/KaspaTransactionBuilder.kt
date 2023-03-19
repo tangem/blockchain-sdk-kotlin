@@ -17,35 +17,41 @@ import com.tangem.common.extensions.toHexString
 import org.bitcoinj.core.*
 import org.bitcoinj.core.Transaction.SigHash
 import org.bitcoinj.params.MainNetParams
-import org.bitcoinj.script.Script
 import org.bitcoinj.script.ScriptBuilder
 import org.bitcoinj.script.ScriptOpCodes.OP_CODESEPARATOR
+import org.bitcoinj.script.ScriptOpCodes.OP_EQUAL
+import org.bitcoinj.script.ScriptOpCodes.OP_HASH256
 import java.math.BigDecimal
 import java.math.BigInteger
 
-class KaspaTransactionBuilder() {
+class KaspaTransactionBuilder {
     private lateinit var transaction: KaspaTransaction
     private var networkParameters = MainNetParams()
     var unspentOutputs: List<KaspaUnspentOutput>? = null
 
-    fun buildToSign(
-            transactionData: TransactionData): Result<List<ByteArray>> {
+    fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
+        if (unspentOutputs.isNullOrEmpty()) return Result.Failure(
+            BlockchainSdkError.CustomError("Unspent outputs are missing")
+        )
 
-        if (unspentOutputs.isNullOrEmpty()) return Result.Failure(BlockchainSdkError.CustomError("Unspent outputs are missing"))
+        val unspentsToSpend = getUnspentsToSpend()
 
-        val change: BigDecimal = calculateChange(transactionData, unspentOutputs!!)
+        val change: BigDecimal = calculateChange(transactionData, unspentsToSpend)
+        if (change < BigDecimal.ZERO) { // unspentsToSpend not enough to cover transaction amount
+            val maxAmount = transactionData.amount.value!! + change
+            return Result.Failure(BlockchainSdkError.Kaspa.UtxoAmountError(maxAmount))
+        }
 
-        transaction = transactionData.toKaspaTransaction(networkParameters, unspentOutputs!!, change)
+        transaction = transactionData.toKaspaTransaction(networkParameters, unspentsToSpend, change)
 
         val hashesForSign: MutableList<ByteArray> = MutableList(transaction.inputs.size) { byteArrayOf() }
         for (input in transaction.inputs) {
             val index = input.index
-            val value = Coin.parseCoin(unspentOutputs!![index].amount.toString())
-            hashesForSign[index] = getTransaction().hashForSignatureWitness(
+            hashesForSign[index] = transaction.hashForSignatureWitness(
                     index,
                     input.scriptBytes,
-                    value,
-                    Transaction.SigHash.ALL,
+                    input.value,
+                    SigHash.ALL,
                     false
             )
         }
@@ -74,7 +80,7 @@ class KaspaTransactionBuilder() {
         )
     }
 
-    fun extractSignature(index: Int, signatures: ByteArray): ByteArray {
+    private fun extractSignature(index: Int, signatures: ByteArray): ByteArray {
         val r = BigInteger(1, signatures.copyOfRange(index * 64, 32 + index * 64))
         val s = BigInteger(1, signatures.copyOfRange(32 + index * 64, 64 + index * 64))
         val canonicalS = ECKey.ECDSASignature(r, s).toCanonicalised().s
@@ -83,8 +89,6 @@ class KaspaTransactionBuilder() {
             Utils.bigIntegerToBytes(r, 32) + Utils.bigIntegerToBytes(canonicalS, 32)
         return canonicalSignature + SigHash.ALL.value.toByte()
     }
-
-    private fun getTransaction() = transaction as KaspaTransaction
 
     private fun calculateChange(
         transactionData: TransactionData,
@@ -95,7 +99,17 @@ class KaspaTransactionBuilder() {
             ?: 0.toBigDecimal()))
     }
 
-    fun getUnspentsCount() = unspentOutputs?.size ?: 0 // TODO: limit with 84?
+    fun getUnspentsToSpendCount(): Int {
+        val count = unspentOutputs?.size ?: 0
+        return if (count < MAX_INPUT_COUNT) count else MAX_INPUT_COUNT
+    }
+
+    private fun getUnspentsToSpend() =
+        unspentOutputs!!.sortedByDescending { it.amount }.slice(0 until getUnspentsToSpendCount())
+
+    companion object {
+        const val MAX_INPUT_COUNT = 84 // Kaspa rejects transactions with more inputs
+    }
 }
 
 internal fun TransactionData.toKaspaTransaction(
@@ -109,7 +123,17 @@ internal fun TransactionData.toKaspaTransaction(
     )
     transaction.setVersion(0)
     for (utxo in unspentOutputs) {
-        transaction.addInput(Sha256Hash.wrap(utxo.transactionHash), utxo.outputIndex, Script(utxo.outputScript))
+        transaction.addInput(
+            TransactionInput(
+                networkParameters,
+                null,
+                utxo.outputScript, //TODO
+                TransactionOutPoint(networkParameters, utxo.outputIndex, Sha256Hash.wrap(utxo.transactionHash)),
+                Coin.parseCoin(utxo.amount.toPlainString())
+            )
+        )
+        // transaction.addInput(Sha256Hash.wrap(utxo.transactionHash), utxo.outputIndex, Script(utxo.outputScript))
+    // TODO remove
     }
     for (input in transaction.inputs) {
         input.sequenceNumber = 0
@@ -125,8 +149,12 @@ internal fun TransactionData.toKaspaTransaction(
             ScriptBuilder.createP2PKOutputScript(destinationAddressDecoded.hash)
         KaspaAddressType.P2PK_ECDSA ->
             ScriptBuilder().data(destinationAddressDecoded.hash).op(OP_CODESEPARATOR).build()
-        KaspaAddressType.P2SH ->
-            ScriptBuilder.createP2SHOutputScript(destinationAddressDecoded.hash) // TODO: throw exception
+        KaspaAddressType.P2SH -> {
+            // known P2SH addresses won't throw
+            if (destinationAddressDecoded.hash.size != 32) throw Exception("Invalid hash length in P2SH address")
+            ScriptBuilder().op(OP_HASH256).data(destinationAddressDecoded.hash).op(OP_EQUAL).build()
+        }
+        null -> throw Exception("Null script type") // should never happen
     }
 
     transaction.addOutput(
