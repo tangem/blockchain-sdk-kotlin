@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressType
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressType
+import com.tangem.blockchain.blockchains.ergo.ErgoAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
@@ -76,6 +77,8 @@ enum class Blockchain(
     EthereumPow("ETH-Pow", "ETHW", "EthereumPoW"),
     EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW"),
     SaltPay("WXDAI", "WxDAI", "SaltPay"),
+    Ergo("ERGO", "ERG", "Ergo"),
+    ErgoTestnet("ERGO/test", "ERG", "Ergo"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -94,7 +97,7 @@ enum class Blockchain(
         Dogecoin,
         Dash,
         -> 8
-        Solana, SolanaTestnet -> 9
+        Solana, SolanaTestnet, Ergo, ErgoTestnet -> 9
         Polkadot -> 10
         PolkadotTestnet, Kusama -> 12
         Arbitrum, ArbitrumTestnet,
@@ -146,6 +149,7 @@ enum class Blockchain(
         Solana, SolanaTestnet -> SolanaAddressService()
         Tezos -> TezosAddressService()
         Tron, TronTestnet -> TronAddressService()
+        Ergo, ErgoTestnet -> ErgoAddressService(this.isTestnet())
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -209,6 +213,8 @@ enum class Blockchain(
         EthereumPow -> "https://mainnet.ethwscan.com/"
         EthereumPowTestnet -> "https://iceberg.ethwscan.com/"
         SaltPay -> "https://blockscout.com/xdai/optimism/"
+        Ergo -> "https://explorer.ergoplatform.com/"
+        ErgoTestnet -> "https://testnet.ergoplatform.com/"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -260,6 +266,7 @@ enum class Blockchain(
             TronTestnet -> "https://nileex.io/join/getJoinPage"
             OptimismTestnet -> "https://optimismfaucet.xyz" //another one https://faucet.paradigm.xyz
             EthereumPowTestnet -> "https://faucet.ethwscan.com"
+            ErgoTestnet -> "https://testnet.ergofaucet.org"
             else -> null
         }
     }
@@ -290,6 +297,7 @@ enum class Blockchain(
             Tron, TronTestnet -> TronTestnet
             Optimism, OptimismTestnet -> OptimismTestnet
             EthereumPow, EthereumPowTestnet -> EthereumPowTestnet
+            Ergo, ErgoTestnet -> ErgoTestnet
             else -> null
         }
     }
@@ -319,7 +327,7 @@ enum class Blockchain(
             Dash,
             Optimism, OptimismTestnet,
             EthereumFair, EthereumPow, EthereumPowTestnet,
-            SaltPay,
+            SaltPay, Ergo, ErgoTestnet,
             -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
@@ -437,6 +445,7 @@ enum class Blockchain(
             Tron -> 195
             Gnosis -> 700
             Optimism -> 614
+            Ergo -> 429
             else -> throw UnsupportedOperationException()
         }
     }
@@ -456,7 +465,7 @@ enum class Blockchain(
         Gnosis,
         Optimism, OptimismTestnet,
         EthereumFair, EthereumPow, EthereumPowTestnet,
-        SaltPay,
+        SaltPay, Ergo, ErgoTestnet,
         -> true
         else -> false
     }
