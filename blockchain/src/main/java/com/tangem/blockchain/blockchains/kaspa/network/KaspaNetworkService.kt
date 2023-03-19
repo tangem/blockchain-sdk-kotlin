@@ -1,9 +1,5 @@
-package com.tangem.blockchain.blockchains.tezos.network
+package com.tangem.blockchain.blockchains.kaspa.network
 
-import com.tangem.blockchain.blockchains.kaspa.network.KaspaRestApiNetworkProvider
-import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.API_KASPA
-import com.tangem.blockchain.network.MultiNetworkProvider
 
-class KaspaNetworkService() : KaspaRestApiNetworkProvider(API_KASPA)
+class KaspaNetworkService : KaspaRestApiNetworkProvider(API_KASPA)
