@@ -190,6 +190,20 @@ class WalletManagerFactory(
                     )
                 )
             }
+
+            Blockchain.Ravencoin, Blockchain.RavencoinTestnet -> {
+                BitcoinWalletManager(
+                    wallet = wallet,
+                    transactionBuilder = BitcoinTransactionBuilder(
+                        walletPublicKey = publicKey.blockchainKey,
+                        blockchain = blockchain,
+                        walletAddresses = addresses
+                    ),
+                    networkProvider = BitcoinNetworkService(
+                        providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
+                    )
+                )
+            }
             // endregion
 
             // region ETH-like blockchains
