@@ -3,8 +3,13 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 import com.tangem.blockchain.blockchains.dash.DashMainNetParams
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
+import com.tangem.blockchain.blockchains.ravencoin.RavencoinMainNetParams
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.address.*
+import com.tangem.blockchain.common.address.Address
+import com.tangem.blockchain.common.address.AddressService
+import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.DefaultAddressType
+import com.tangem.blockchain.common.address.MultisigAddressProvider
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
@@ -20,7 +25,6 @@ import org.bitcoinj.script.ScriptBuilder
 import org.libdohj.params.DogecoinMainNetParams
 import org.libdohj.params.LitecoinMainNetParams
 
-
 open class BitcoinAddressService(
         private val blockchain: Blockchain
 ) : AddressService(), MultisigAddressProvider {
@@ -32,6 +36,7 @@ open class BitcoinAddressService(
         Blockchain.Dogecoin -> DogecoinMainNetParams()
         Blockchain.Ducatus -> DucatusMainNetParams()
         Blockchain.Dash -> DashMainNetParams()
+        Blockchain.Ravencoin -> RavencoinMainNetParams()
         else -> throw Exception(
                 "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
         )
