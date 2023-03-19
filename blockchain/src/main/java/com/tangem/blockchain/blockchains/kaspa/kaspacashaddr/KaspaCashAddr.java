@@ -5,10 +5,7 @@ import java.util.Arrays;
 
 
 /**
- * Copyright (c) 2018 Tobias Brandt
- *
- * Distributed under the MIT software license, see the accompanying file LICENSE
- * or http://www.opensource.org/licenses/mit-license.php.
+ * Based on BitcoinCash CashAddr
  */
 
 
@@ -47,13 +44,13 @@ public class KaspaCashAddr {
         return prefixString + SEPARATOR + cashAddress;
     }
 
-    public static KaspaAddressDecodedParts decodeCashAddress(String bitcoinCashAddress) {
-        if (!isValidCashAddress(bitcoinCashAddress)) {
-            throw new RuntimeException("Address wasn't valid: " + bitcoinCashAddress);
+    public static KaspaAddressDecodedParts decodeCashAddress(String kaspaAddress) {
+        if (!isValidCashAddress(kaspaAddress)) {
+            throw new RuntimeException("Address wasn't valid: " + kaspaAddress);
         }
 
         KaspaAddressDecodedParts decoded = new KaspaAddressDecodedParts();
-        String[] addressParts = bitcoinCashAddress.split(SEPARATOR);
+        String[] addressParts = kaspaAddress.split(SEPARATOR);
         if (addressParts.length == 2) {
             decoded.setPrefix(addressParts[0]);
         } else {
@@ -84,27 +81,27 @@ public class KaspaCashAddr {
 
 
 
-    public static boolean isValidCashAddress(String bitcoinCashAddress ) {
+    public static boolean isValidCashAddress(String kaspaAddress) {
         try {
-            if (!isSingleCase(bitcoinCashAddress))
+            if (!isSingleCase(kaspaAddress))
                 return false;
 
-            bitcoinCashAddress = bitcoinCashAddress.toLowerCase();
+            kaspaAddress = kaspaAddress.toLowerCase();
             String prefix;
 
-            if (bitcoinCashAddress.contains(SEPARATOR)) {
-                String[] split = bitcoinCashAddress.split(SEPARATOR);
+            if (kaspaAddress.contains(SEPARATOR)) {
+                String[] split = kaspaAddress.split(SEPARATOR);
                 prefix = split[0];
                 if (!prefix.equals(MAIN_NET_PREFIX)) {return false;} //for now we use main net only
-                bitcoinCashAddress = split[1];
+                kaspaAddress = split[1];
             } else {
                 prefix = MAIN_NET_PREFIX;
             }
-            if (!bitcoinCashAddress.startsWith("q")) {return false;} //for now we use P2PKH addresses only
+            if (!kaspaAddress.startsWith("q") && !kaspaAddress.startsWith("p")) { return false; } // P2PK adn P2SH
 
             byte[] checksumData =  concatenateByteArrays(
                     concatenateByteArrays(getPrefixBytes(prefix ), new byte[] { 0x00 }),
-                    KaspaBase32.decode(bitcoinCashAddress));
+                    KaspaBase32.decode(kaspaAddress));
 
             byte[] calculateChecksumBytesPolymod = calculateChecksumBytesPolymod(checksumData);
             return new BigInteger(calculateChecksumBytesPolymod).compareTo(BigInteger.ZERO) == 0;
@@ -115,11 +112,11 @@ public class KaspaCashAddr {
 
 
 
-    private static boolean isSingleCase(String bitcoinCashAddress) {
-        if (bitcoinCashAddress.equals(bitcoinCashAddress.toLowerCase())) {
+    private static boolean isSingleCase(String kaspaAddress) {
+        if (kaspaAddress.equals(kaspaAddress.toLowerCase())) {
             return true;
         }
-        if (bitcoinCashAddress.equals(bitcoinCashAddress.toUpperCase())) {
+        if (kaspaAddress.equals(kaspaAddress.toUpperCase())) {
             return true;
         }
 
