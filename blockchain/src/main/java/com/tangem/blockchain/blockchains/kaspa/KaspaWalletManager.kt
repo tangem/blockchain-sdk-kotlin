@@ -84,7 +84,7 @@ class KaspaWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
-        val unspentOutputCount = transactionBuilder.getUnspentsCount()
+        val unspentOutputCount = transactionBuilder.getUnspentsToSpendCount()
 
         return if (unspentOutputCount == 0) {
             Result.Failure(Exception("No unspent outputs found").toBlockchainSdkError()) // shouldn't happen
