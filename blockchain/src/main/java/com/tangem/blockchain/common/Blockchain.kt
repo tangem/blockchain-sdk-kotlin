@@ -76,6 +76,8 @@ enum class Blockchain(
     EthereumPow("ETH-Pow", "ETHW", "EthereumPoW"),
     EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW"),
     SaltPay("WXDAI", "WxDAI", "SaltPay"),
+    Ravencoin("RVN", "RVN", "Ravencoin"),
+    RavencoinTestnet("RVN/test", "RVN", "Ravencoin Testnet"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -93,6 +95,7 @@ enum class Blockchain(
         Ducatus,
         Dogecoin,
         Dash,
+        Ravencoin, RavencoinTestnet,
         -> 8
         Solana, SolanaTestnet -> 9
         Polkadot -> 10
@@ -128,7 +131,8 @@ enum class Blockchain(
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
     private fun getAddressService(): AddressService = when (this) {
-        Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus, Dash -> BitcoinAddressService(this)
+        Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus, Dash,
+        Ravencoin, RavencoinTestnet -> BitcoinAddressService(this)
         BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService()
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
@@ -209,6 +213,8 @@ enum class Blockchain(
         EthereumPow -> "https://mainnet.ethwscan.com/"
         EthereumPowTestnet -> "https://iceberg.ethwscan.com/"
         SaltPay -> "https://blockscout.com/xdai/optimism/"
+        Ravencoin -> "https://ravencoin.network/"
+        RavencoinTestnet -> "https://testnet.ravencoin.network/"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -260,6 +266,7 @@ enum class Blockchain(
             TronTestnet -> "https://nileex.io/join/getJoinPage"
             OptimismTestnet -> "https://optimismfaucet.xyz" //another one https://faucet.paradigm.xyz
             EthereumPowTestnet -> "https://faucet.ethwscan.com"
+            RavencoinTestnet -> "https://testnet.ravencoin.network" //TODO
             else -> null
         }
     }
@@ -290,6 +297,7 @@ enum class Blockchain(
             Tron, TronTestnet -> TronTestnet
             Optimism, OptimismTestnet -> OptimismTestnet
             EthereumPow, EthereumPowTestnet -> EthereumPowTestnet
+            Ravencoin, RavencoinTestnet -> RavencoinTestnet
             else -> null
         }
     }
@@ -320,6 +328,7 @@ enum class Blockchain(
             Optimism, OptimismTestnet,
             EthereumFair, EthereumPow, EthereumPowTestnet,
             SaltPay,
+            Ravencoin, RavencoinTestnet,
             -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
@@ -437,6 +446,7 @@ enum class Blockchain(
             Tron -> 195
             Gnosis -> 700
             Optimism -> 614
+            Ravencoin -> 175
             else -> throw UnsupportedOperationException()
         }
     }
