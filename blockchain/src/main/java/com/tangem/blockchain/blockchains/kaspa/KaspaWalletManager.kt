@@ -36,6 +36,7 @@ class KaspaWalletManager(
         get() = networkProvider.host
 
     private val blockchain = wallet.blockchain
+    override val dustValue: BigDecimal = FEE_PER_UNSPENT_OUTPUT.toBigDecimal()
 
     override suspend fun update() {
         when (val response = networkProvider.getInfo(wallet.address)) {
