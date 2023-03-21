@@ -21,6 +21,7 @@ import static org.bitcoinj.core.Utils.uint64ToByteStreamLE;
 
 import com.tangem.blockchain.blockchains.cardano.crypto.Blake2b;
 
+// based on BitcoinCashTransaction
 public class KaspaTransaction extends Transaction {
     private final byte[] TRANSACTION_SIGNING_DOMAIN = "TransactionSigningHash".getBytes(StandardCharsets.UTF_8);
     private final byte[] TRANSACTION_SIGNING_ECDSA_DOMAIN_HASH =
@@ -31,15 +32,15 @@ public class KaspaTransaction extends Transaction {
         super(params);
     }
 
+    // hash for signature is calculated for every transaction input
     public synchronized byte[] hashForSignatureWitness(
-            int inputIndex,
-            byte[] connectedScript,
-            Coin prevValue,
-            SigHash type,
-            boolean anyoneCanPay)
-    {
+            int inputIndex, // index of the input
+            byte[] connectedScript, // script of the output this input is spending
+            Coin prevValue, // value of the output this input is spending
+            SigHash type, // sighash type https://en.bitcoin.it/wiki/BIP_0143
+            boolean anyoneCanPay // parameter for sighash type
+    ) {
         byte sigHashType = (byte) TransactionSignature.calcSigHashValue(type, anyoneCanPay);
-//        sigHashType |= SIGHASH_FORK_ID;
 
         ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(length == UNKNOWN_LENGTH ? 256 : length + 4);
         try {
