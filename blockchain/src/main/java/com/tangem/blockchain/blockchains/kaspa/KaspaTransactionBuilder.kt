@@ -39,7 +39,7 @@ class KaspaTransactionBuilder {
         val change: BigDecimal = calculateChange(transactionData, unspentsToSpend)
         if (change < BigDecimal.ZERO) { // unspentsToSpend not enough to cover transaction amount
             val maxAmount = transactionData.amount.value!! + change
-            return Result.Failure(BlockchainSdkError.Kaspa.UtxoAmountError(maxAmount))
+            return Result.Failure(BlockchainSdkError.Kaspa.UtxoAmountError(MAX_INPUT_COUNT, maxAmount))
         }
 
         transaction = transactionData.toKaspaTransaction(networkParameters, unspentsToSpend, change)
