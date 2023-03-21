@@ -127,13 +127,11 @@ internal fun TransactionData.toKaspaTransaction(
             TransactionInput(
                 networkParameters,
                 null,
-                utxo.outputScript, //TODO
+                utxo.outputScript,
                 TransactionOutPoint(networkParameters, utxo.outputIndex, Sha256Hash.wrap(utxo.transactionHash)),
                 Coin.parseCoin(utxo.amount.toPlainString())
             )
         )
-        // transaction.addInput(Sha256Hash.wrap(utxo.transactionHash), utxo.outputIndex, Script(utxo.outputScript))
-    // TODO remove
     }
     for (input in transaction.inputs) {
         input.sequenceNumber = 0
