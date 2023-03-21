@@ -121,7 +121,7 @@ internal fun TransactionData.toKaspaTransaction(
     val transaction = KaspaTransaction(
         networkParameters
     )
-    transaction.setVersion(0)
+    transaction.setVersion(0) // the only Kaspa transaction version we know of yet
     for (utxo in unspentOutputs) {
         transaction.addInput(
             TransactionInput(
