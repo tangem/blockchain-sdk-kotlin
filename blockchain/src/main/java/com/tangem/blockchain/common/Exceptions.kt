@@ -70,8 +70,8 @@ sealed class BlockchainSdkError(
         customMessage: String? = null,
         throwable: Throwable? = null,
     ) : BlockchainSdkError(
-        code = ERROR_CODE_POLKADOT + subCode,
-        customMessage = customMessage ?: (ERROR_CODE_POLKADOT + subCode).toString(),
+        code = ERROR_CODE_KASPA + subCode,
+        customMessage = customMessage ?: (ERROR_CODE_KASPA + subCode).toString(),
         messageResId = null,
         cause = throwable,
     ) {
@@ -83,7 +83,7 @@ sealed class BlockchainSdkError(
     companion object {
         const val ERROR_CODE_SOLANA = 1000
         const val ERROR_CODE_POLKADOT = 2000
-        const val ERROR_CODE_KASPA = 2000
+        const val ERROR_CODE_KASPA = 3000
     }
 }
 
