@@ -75,8 +75,9 @@ sealed class BlockchainSdkError(
         messageResId = null,
         cause = throwable,
     ) {
-        class UtxoAmountError(val maxAmount: BigDecimal) : Kaspa(
-            2, "Too many UTXO needed. Send ${maxAmount.toPlainString()} or less"
+        class UtxoAmountError(val maxOutputs: Int, val maxAmount: BigDecimal) : Kaspa(
+            2, "Due to Kaspa limitations only $maxOutputs UTXOs can fit in a single transaction. This means you can " +
+                "only send ${maxAmount.toPlainString()}. You need to reduce the amount"
         )
     }
 
