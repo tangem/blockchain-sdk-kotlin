@@ -10,11 +10,9 @@ import java.util.Arrays;
 
 
 public class KaspaCashAddr {
-
     public static final String CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
 
     private static final char[] CHARS = CHARSET.toCharArray();
-
 
     public static final String SEPARATOR = ":";
 
@@ -24,20 +22,20 @@ public class KaspaCashAddr {
 
     public static final String ASSUMED_DEFAULT_PREFIX = MAIN_NET_PREFIX;
 
-    private static final BigInteger[] POLYMOD_GENERATORS = new BigInteger[] { new BigInteger("98f2bc8e61", 16),
+    private static final BigInteger[] POLYMOD_GENERATORS = new BigInteger[]{new BigInteger("98f2bc8e61", 16),
             new BigInteger("79b76d99e2", 16), new BigInteger("f33e5fb3c4", 16), new BigInteger("ae2eabe2a8", 16),
-            new BigInteger("1e4f43e470", 16) };
+            new BigInteger("1e4f43e470", 16)};
 
     private static final BigInteger POLYMOD_AND_CONSTANT = new BigInteger("07ffffffff", 16);
 
     public static String toCashAddress(KaspaAddressType addressType, byte[] hash) {
-        String prefixString =  MAIN_NET_PREFIX;
+        String prefixString = MAIN_NET_PREFIX;
         byte[] prefixBytes = getPrefixBytes(prefixString);
-        byte[] payloadBytes = concatenateByteArrays(new byte[] { addressType.getVersionByte() }, hash);
+        byte[] payloadBytes = concatenateByteArrays(new byte[]{addressType.getVersionByte()}, hash);
         payloadBytes = convertBits(payloadBytes, 8, 5, false);
         byte[] allChecksumInput = concatenateByteArrays(
-                concatenateByteArrays(concatenateByteArrays(prefixBytes, new byte[] { 0 }), payloadBytes),
-                new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 });
+                concatenateByteArrays(concatenateByteArrays(prefixBytes, new byte[]{0}), payloadBytes),
+                new byte[]{0, 0, 0, 0, 0, 0, 0, 0});
         byte[] checksumBytes = calculateChecksumBytesPolymod(allChecksumInput);
         checksumBytes = convertBits(checksumBytes, 8, 5, true);
         String cashAddress = KaspaBase32.encode(concatenateByteArrays(payloadBytes, checksumBytes));
@@ -79,8 +77,6 @@ public class KaspaCashAddr {
         throw new RuntimeException("Unknown version byte: " + versionByte);
     }
 
-
-
     public static boolean isValidCashAddress(String kaspaAddress) {
         try {
             if (!isSingleCase(kaspaAddress))
@@ -92,15 +88,19 @@ public class KaspaCashAddr {
             if (kaspaAddress.contains(SEPARATOR)) {
                 String[] split = kaspaAddress.split(SEPARATOR);
                 prefix = split[0];
-                if (!prefix.equals(MAIN_NET_PREFIX)) {return false;} //for now we use main net only
+                if (!prefix.equals(MAIN_NET_PREFIX)) {
+                    return false;
+                } //for now we use main net only
                 kaspaAddress = split[1];
             } else {
                 prefix = MAIN_NET_PREFIX;
             }
-            if (!kaspaAddress.startsWith("q") && !kaspaAddress.startsWith("p")) { return false; } // P2PK adn P2SH
+            if (!kaspaAddress.startsWith("q") && !kaspaAddress.startsWith("p")) {
+                return false;
+            } // P2PK adn P2SH
 
-            byte[] checksumData =  concatenateByteArrays(
-                    concatenateByteArrays(getPrefixBytes(prefix ), new byte[] { 0x00 }),
+            byte[] checksumData = concatenateByteArrays(
+                    concatenateByteArrays(getPrefixBytes(prefix), new byte[]{0x00}),
                     KaspaBase32.decode(kaspaAddress));
 
             byte[] calculateChecksumBytesPolymod = calculateChecksumBytesPolymod(checksumData);
@@ -109,8 +109,6 @@ public class KaspaCashAddr {
             return false;
         }
     }
-
-
 
     private static boolean isSingleCase(String kaspaAddress) {
         if (kaspaAddress.equals(kaspaAddress.toLowerCase())) {
@@ -126,7 +124,7 @@ public class KaspaCashAddr {
     /**
      * @param checksumInput
      * @return Returns a 40 bits checksum in form of 5 8-bit arrays. This still has
-     *         to me mapped to 5-bit array representation
+     * to me mapped to 5-bit array representation
      */
     private static byte[] calculateChecksumBytesPolymod(byte[] checksumInput) {
         BigInteger c = BigInteger.ONE;
@@ -162,7 +160,7 @@ public class KaspaCashAddr {
 
     }
 
-    private static byte[] getPrefixBytes(String prefixString ) {
+    private static byte[] getPrefixBytes(String prefixString) {
         byte[] prefixBytes = new byte[prefixString.length()];
 
         char[] charArray = prefixString.toCharArray();
@@ -212,11 +210,6 @@ public class KaspaCashAddr {
                 throw new RuntimeException("Strict mode was used but input couldn't be converted without padding");
             }
         }
-
         return result;
     }
-
-
-
-
 }
