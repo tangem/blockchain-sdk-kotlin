@@ -16,6 +16,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.logging.HttpLoggingInterceptor
 import ru.gildor.coroutines.okhttp.await
+import java.io.IOException
 
 @OptIn(ExperimentalStdlibApi::class)
 internal class BlockBookApi(
@@ -75,7 +76,7 @@ internal class BlockBookApi(
         if (response.isSuccessful && responseBody != null) {
             return
         } else {
-            throw IllegalStateException("Response is null")
+            throw IOException("Response is null")
         }
     }
 
@@ -95,10 +96,9 @@ internal class BlockBookApi(
     private inline fun <reified T> Response.unpack(): T {
         val responseBody = body?.string()
         return if (isSuccessful && responseBody != null) {
-            moshi.adapter<T>().fromJson(responseBody)
-                ?: throw IllegalStateException("Response is null")
+            moshi.adapter<T>().fromJson(responseBody) ?: throw IOException("Response is null")
         } else {
-            throw IllegalStateException("Response is null")
+            throw IOException("Response is null")
         }
     }
 
