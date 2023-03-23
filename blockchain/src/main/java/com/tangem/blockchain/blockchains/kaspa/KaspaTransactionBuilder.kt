@@ -105,7 +105,7 @@ class KaspaTransactionBuilder {
     }
 
     private fun getUnspentsToSpend() =
-        unspentOutputs!!.sortedByDescending { it.amount }.slice(0 until getUnspentsToSpendCount())
+        unspentOutputs!!.sortedByDescending { it.amount }.take(getUnspentsToSpendCount())
 
     companion object {
         const val MAX_INPUT_COUNT = 84 // Kaspa rejects transactions with more inputs
