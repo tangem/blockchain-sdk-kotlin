@@ -14,8 +14,8 @@ open class KaspaRestApiNetworkProvider(baseUrl: String) : KaspaNetworkProvider {
 
     override val host: String = baseUrl
 
-    private val api: KaspaRestApi by lazy {
-        createRetrofitInstance(baseUrl).create(KaspaRestApi::class.java)
+    private val api: KaspaApi by lazy {
+        createRetrofitInstance(baseUrl).create(KaspaApi::class.java)
     }
     private val decimals = Blockchain.Kaspa.decimals()
 
