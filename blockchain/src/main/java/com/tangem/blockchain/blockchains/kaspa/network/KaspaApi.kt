@@ -3,7 +3,7 @@ package com.tangem.blockchain.blockchains.kaspa.network
 import com.squareup.moshi.JsonClass
 import retrofit2.http.*
 
-interface KaspaRestApi {
+interface KaspaApi {
     @GET("addresses/{address}/balance")
     suspend fun getBalance(@Path("address") address: String): KaspaBalanceResponse
 
