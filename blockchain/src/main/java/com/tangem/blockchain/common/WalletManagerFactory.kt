@@ -23,6 +23,7 @@ import com.tangem.blockchain.blockchains.ethereum.getEthereumJsonRpcProviders
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.blockchains.kaspa.KaspaTransactionBuilder
 import com.tangem.blockchain.blockchains.kaspa.KaspaWalletManager
+import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkProvider
 import com.tangem.blockchain.blockchains.litecoin.LitecoinNetworkService
 import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
 import com.tangem.blockchain.blockchains.optimism.OptimismWalletManager
@@ -36,6 +37,7 @@ import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
 import com.tangem.blockchain.blockchains.tezos.TezosTransactionBuilder
 import com.tangem.blockchain.blockchains.tezos.TezosWalletManager
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkService
+import com.tangem.blockchain.blockchains.kaspa.network.KaspaRestApiNetworkProvider
 import com.tangem.blockchain.blockchains.tezos.network.TezosJsonRpcNetworkProvider
 import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkService
 import com.tangem.blockchain.blockchains.tron.TronTransactionBuilder
@@ -47,6 +49,7 @@ import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
 import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledNetworkProvider
 import com.tangem.blockchain.network.API_ADALITE
+import com.tangem.blockchain.network.API_KASPA
 import com.tangem.blockchain.network.API_RIPPLE
 import com.tangem.blockchain.network.API_RIPPLE_RESERVE
 import com.tangem.blockchain.network.API_TANGEM_ROSETTA
@@ -375,10 +378,20 @@ class WalletManagerFactory(
             }
 
             Blockchain.Kaspa -> {
+                val providers: List<KaspaNetworkProvider> = buildList {
+                    add(KaspaRestApiNetworkProvider(API_KASPA))
+
+                    config.kaspaSecondaryApiUrl
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { url ->
+                            add(KaspaRestApiNetworkProvider("$url/"))
+                        }
+                }
+
                 KaspaWalletManager(
-                    wallet,
-                    KaspaTransactionBuilder(),
-                    KaspaNetworkService()
+                    wallet = wallet,
+                    transactionBuilder = KaspaTransactionBuilder(),
+                    networkProvider = KaspaNetworkService(providers)
                 )
             }
 
