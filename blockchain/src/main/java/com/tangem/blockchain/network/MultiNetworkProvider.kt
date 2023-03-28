@@ -23,7 +23,7 @@ class MultiNetworkProvider<P>(val providers: List<P>) {
     suspend fun <R> performRequest(request: suspend P.() -> Result<R>): Result<R> =
         NoDataRequest(request).perform()
 
-    private suspend fun <T> Request<P, T>.perform() : T {
+    private suspend fun <T> Request<P, T>.perform(): T {
         var result: T? = null
 
         repeat(providers.size) {
@@ -42,7 +42,7 @@ class MultiNetworkProvider<P>(val providers: List<P>) {
 
     private class DefaultRequest<P, D, R>(
         val request: suspend P.(D) -> Result<R>,
-        val data: D
+        val data: D,
     ) : Request<P, Result<R>>() {
 
         override suspend fun performWith(provider: P): Result<R> {
@@ -53,7 +53,7 @@ class MultiNetworkProvider<P>(val providers: List<P>) {
 
     private class SimpleRequest<P, D>(
         val request: suspend P.(D) -> SimpleResult,
-        val data: D
+        val data: D,
     ) : Request<P, SimpleResult>() {
 
         override suspend fun performWith(provider: P): SimpleResult {
@@ -63,7 +63,7 @@ class MultiNetworkProvider<P>(val providers: List<P>) {
     }
 
     private class NoDataRequest<P, R>(
-        val request: suspend P.() -> Result<R>
+        val request: suspend P.() -> Result<R>,
     ) : Request<P, Result<R>>() {
 
         override suspend fun performWith(provider: P): Result<R> {
