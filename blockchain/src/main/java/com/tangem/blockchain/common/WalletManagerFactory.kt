@@ -17,6 +17,8 @@ import com.tangem.blockchain.blockchains.cardano.network.rosetta.RosettaNetworkP
 import com.tangem.blockchain.blockchains.dogecoin.DogecoinWalletManager
 import com.tangem.blockchain.blockchains.ducatus.DucatusWalletManager
 import com.tangem.blockchain.blockchains.ducatus.network.DucatusNetworkService
+import com.tangem.blockchain.blockchains.ergo.ErgoWalletManager
+import com.tangem.blockchain.blockchains.ergo.network.api.ErgoApiNetworkProvider
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.getEthereumJsonRpcProviders
@@ -393,6 +395,15 @@ class WalletManagerFactory(
                     transactionBuilder = KaspaTransactionBuilder(),
                     networkProvider = KaspaNetworkService(providers)
                 )
+            }
+
+            Blockchain.Ergo, Blockchain.ErgoTestnet -> {
+                val baseUrl = if (blockchain.isTestnet()) {
+                    "https://api-testnet.ergoplatform.com/api/v1/"
+                } else {
+                    "https://api.ergoplatform.com/api/v1/"
+                }
+                ErgoWalletManager(wallet = wallet, networkProvider = ErgoApiNetworkProvider(baseUrl))
             }
 
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
