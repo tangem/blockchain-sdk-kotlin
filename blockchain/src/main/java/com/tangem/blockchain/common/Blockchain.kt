@@ -444,7 +444,25 @@ enum class Blockchain(
             Tron -> 195
             Gnosis -> 700
             Optimism -> 614
-            else -> throw UnsupportedOperationException()
+            Kaspa -> 111111
+            ArbitrumTestnet,
+            AvalancheTestnet,
+            BinanceTestnet,
+            BSCTestnet,
+            BitcoinTestnet,
+            BitcoinCashTestnet,
+            EthereumTestnet,
+            EthereumClassicTestnet,
+            FantomTestnet,
+            PolkadotTestnet,
+            PolygonTestnet,
+            StellarTestnet,
+            SolanaTestnet,
+            TronTestnet,
+            OptimismTestnet,
+            EthereumPowTestnet,
+            Unknown,
+            -> throw UnsupportedOperationException("Coin type not provided for: ${this.fullName}")
         }
     }
 
