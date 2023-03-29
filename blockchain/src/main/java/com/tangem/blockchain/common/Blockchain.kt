@@ -8,6 +8,7 @@ import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressType
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
@@ -76,6 +77,7 @@ enum class Blockchain(
     EthereumPow("ETH-Pow", "ETHW", "EthereumPoW"),
     EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW"),
     SaltPay("WXDAI", "WxDAI", "SaltPay"),
+    Kaspa("KAS", "KAS", "Kaspa"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -93,6 +95,7 @@ enum class Blockchain(
         Ducatus,
         Dogecoin,
         Dash,
+        Kaspa
         -> 8
         Solana, SolanaTestnet -> 9
         Polkadot -> 10
@@ -146,6 +149,7 @@ enum class Blockchain(
         Solana, SolanaTestnet -> SolanaAddressService()
         Tezos -> TezosAddressService()
         Tron, TronTestnet -> TronAddressService()
+        Kaspa -> KaspaAddressService()
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -209,6 +213,7 @@ enum class Blockchain(
         EthereumPow -> "https://mainnet.ethwscan.com/"
         EthereumPowTestnet -> "https://iceberg.ethwscan.com/"
         SaltPay -> "https://blockscout.com/xdai/optimism/"
+        Kaspa -> "https://explorer.kaspa.org/"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -231,6 +236,7 @@ enum class Blockchain(
             SolanaTestnet -> "$fullUrl/?cluster=devnet"
             XRP -> "${baseUrl}account/$address"
             Tezos -> "$baseUrl$address"
+            Kaspa -> "$baseUrl/addresses/$address"
             else -> fullUrl
         }
     }
@@ -320,6 +326,7 @@ enum class Blockchain(
             Optimism, OptimismTestnet,
             EthereumFair, EthereumPow, EthereumPowTestnet,
             SaltPay,
+            Kaspa
             -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
@@ -437,7 +444,25 @@ enum class Blockchain(
             Tron -> 195
             Gnosis -> 700
             Optimism -> 614
-            else -> throw UnsupportedOperationException()
+            Kaspa -> 111111
+            ArbitrumTestnet,
+            AvalancheTestnet,
+            BinanceTestnet,
+            BSCTestnet,
+            BitcoinTestnet,
+            BitcoinCashTestnet,
+            EthereumTestnet,
+            EthereumClassicTestnet,
+            FantomTestnet,
+            PolkadotTestnet,
+            PolygonTestnet,
+            StellarTestnet,
+            SolanaTestnet,
+            TronTestnet,
+            OptimismTestnet,
+            EthereumPowTestnet,
+            Unknown,
+            -> throw UnsupportedOperationException("Coin type not provided for: ${this.fullName}")
         }
     }
 
