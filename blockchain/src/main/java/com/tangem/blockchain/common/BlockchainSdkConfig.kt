@@ -10,7 +10,8 @@ data class BlockchainSdkConfig(
     val getBlockCredentials: GetBlockCredentials? = null,
     val infuraProjectId: String? = null,
     val tronGridApiKey: String? = null,
-    val saltPayAuthToken: String? = null
+    val saltPayAuthToken: String? = null,
+    val kaspaSecondaryApiUrl: String? = null,
 )
 
 data class BlockchairCredentials(
