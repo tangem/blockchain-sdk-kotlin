@@ -25,3 +25,9 @@ fun String.decodeBech32(): ByteArray? {
 fun String.hexToBigDecimal(): BigDecimal? {
     return removePrefix("0x").toBigIntegerOrNull(16)?.toBigDecimal()
 }
+
+inline fun <R> String?.letNotBlank(block: (String) -> R): R? {
+    if (isNullOrBlank()) return null
+
+    return block(this)
+}
