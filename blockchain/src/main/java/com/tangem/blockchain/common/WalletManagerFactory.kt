@@ -24,6 +24,8 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.blockchains.kaspa.KaspaTransactionBuilder
 import com.tangem.blockchain.blockchains.kaspa.KaspaWalletManager
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkProvider
+import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkService
+import com.tangem.blockchain.blockchains.kaspa.network.KaspaRestApiNetworkProvider
 import com.tangem.blockchain.blockchains.litecoin.LitecoinNetworkService
 import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
 import com.tangem.blockchain.blockchains.optimism.OptimismWalletManager
@@ -36,10 +38,10 @@ import com.tangem.blockchain.blockchains.stellar.StellarTransactionBuilder
 import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
 import com.tangem.blockchain.blockchains.tezos.TezosTransactionBuilder
 import com.tangem.blockchain.blockchains.tezos.TezosWalletManager
-import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkService
-import com.tangem.blockchain.blockchains.kaspa.network.KaspaRestApiNetworkProvider
 import com.tangem.blockchain.blockchains.tezos.network.TezosJsonRpcNetworkProvider
 import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkService
+import com.tangem.blockchain.blockchains.ton.TonJsonRpcClientBuilder
+import com.tangem.blockchain.blockchains.ton.TonWalletManager
 import com.tangem.blockchain.blockchains.tron.TronTransactionBuilder
 import com.tangem.blockchain.blockchains.tron.TronWalletManager
 import com.tangem.blockchain.blockchains.tron.network.TronJsonRpcNetworkProvider
@@ -392,6 +394,12 @@ class WalletManagerFactory(
                     wallet = wallet,
                     transactionBuilder = KaspaTransactionBuilder(),
                     networkProvider = KaspaNetworkService(providers)
+                )
+            }
+            Blockchain.TON, Blockchain.TONTestnet -> {
+                TonWalletManager(
+                    wallet = wallet,
+                    networkProviders = TonJsonRpcClientBuilder().build(blockchain.isTestnet(), config),
                 )
             }
 
