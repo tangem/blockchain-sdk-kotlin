@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.ethereum
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.extensions.letNotBlank
 
 private const val AVALANCHE_POSTFIX = "ext/bc/C/rpc"
 
@@ -176,10 +177,4 @@ private fun getInfuraProvider(
     return config.infuraProjectId.letNotBlank { infuraProjectId ->
         EthereumJsonRpcProvider(baseUrl = baseUrl, postfixUrl = infuraProjectId)
     }
-}
-
-private inline fun <R> String?.letNotBlank(block: (String) -> R): R? {
-    if (isNullOrBlank()) return null
-
-    return block(this)
 }
