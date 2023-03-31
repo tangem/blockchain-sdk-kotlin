@@ -95,7 +95,7 @@ enum class Blockchain(
         Ducatus,
         Dogecoin,
         Dash,
-        Kaspa
+        Kaspa,
         -> 8
         Solana, SolanaTestnet -> 9
         Polkadot -> 10
@@ -234,7 +234,7 @@ enum class Blockchain(
                 fullUrl
             }
             SolanaTestnet -> "$fullUrl/?cluster=devnet"
-            XRP -> "${baseUrl}account/$address"
+            XRP, Stellar, StellarTestnet -> "${baseUrl}account/$address"
             Tezos -> "$baseUrl$address"
             Kaspa -> "$baseUrl/addresses/$address"
             else -> fullUrl
@@ -326,7 +326,7 @@ enum class Blockchain(
             Optimism, OptimismTestnet,
             EthereumFair, EthereumPow, EthereumPowTestnet,
             SaltPay,
-            Kaspa
+            Kaspa,
             -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
