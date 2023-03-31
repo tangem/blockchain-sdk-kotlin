@@ -9,7 +9,7 @@ import kotlin.coroutines.resume
 open class CommonSigner(
     private val tangemSdk: TangemSdk,
     var cardId: String? = null,
-    var initialMessage: Message? = null
+    var initialMessage: Message? = null,
 ) : TransactionSigner {
 
     override suspend fun sign(hashes: List<ByteArray>, publicKey: Wallet.PublicKey): CompletionResult<List<ByteArray>> =
@@ -22,8 +22,14 @@ open class CommonSigner(
                 initialMessage = initialMessage,
             ) { result ->
                 when (result) {
-                    is CompletionResult.Success -> continuation.resume(CompletionResult.Success(result.data.signatures))
-                    is CompletionResult.Failure -> continuation.resume(CompletionResult.Failure(result.error))
+                    is CompletionResult.Success ->
+                        if (continuation.isActive) {
+                            continuation.resume(CompletionResult.Success(result.data.signatures))
+                        }
+                    is CompletionResult.Failure ->
+                        if (continuation.isActive) {
+                            continuation.resume(CompletionResult.Failure(result.error))
+                        }
                 }
             }
         }
@@ -38,8 +44,14 @@ open class CommonSigner(
                 initialMessage = initialMessage,
             ) { result ->
                 when (result) {
-                    is CompletionResult.Success -> continuation.resume(CompletionResult.Success(result.data.signature))
-                    is CompletionResult.Failure -> continuation.resume(CompletionResult.Failure(result.error))
+                    is CompletionResult.Success ->
+                        if (continuation.isActive) {
+                            continuation.resume(CompletionResult.Success(result.data.signature))
+                        }
+                    is CompletionResult.Failure ->
+                        if (continuation.isActive) {
+                            continuation.resume(CompletionResult.Failure(result.error))
+                        }
                 }
             }
         }
