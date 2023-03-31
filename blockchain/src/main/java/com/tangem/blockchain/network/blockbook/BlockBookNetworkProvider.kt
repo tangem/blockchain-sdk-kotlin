@@ -23,7 +23,7 @@ import java.util.Calendar
 
 class BlockBookNetworkProvider(
     val config: BlockBookConfig,
-    val blockchain: Blockchain
+    val blockchain: Blockchain,
 ) : BitcoinNetworkProvider {
 
     override val host: String = config.host
@@ -42,10 +42,10 @@ class BlockBookNetworkProvider(
                     unspentOutputs = createUnspentOutputs(
                         getUtxoResponseItems = getUtxoResponseItems,
                         transactions = getAddressResponse.transactions.orEmpty(),
-                        address = address
                     ),
                     recentTransactions = createRecentTransactions(
-                        transactions = getAddressResponse.transactions.orEmpty()
+                        transactions = getAddressResponse.transactions.orEmpty(),
+                        address = address,
                     ),
                     hasUnconfirmed = getAddressResponse.unconfirmedTxs != 0
                 )
@@ -90,10 +90,9 @@ class BlockBookNetworkProvider(
     private fun createUnspentOutputs(
         getUtxoResponseItems: List<GetUtxoResponseItem>,
         transactions: List<GetAddressResponse.Transaction>,
-        address: String
     ): List<BitcoinUnspentOutput> {
         val outputScript = transactions.firstNotNullOfOrNull { transaction ->
-            transaction.vout.firstOrNull { it.addresses.contains(address) }?.hex
+            transaction.vout.lastOrNull()?.hex
         } ?: return emptyList()
 
         return getUtxoResponseItems.mapNotNull {
@@ -104,25 +103,43 @@ class BlockBookNetworkProvider(
                 amount = amount,
                 outputIndex = it.vout.toLong(),
                 transactionHash = it.txid.hexToBytes(),
-                outputScript = outputScript.hexToBytes()
+                outputScript = outputScript.hexToBytes(),
             )
         }
     }
 
     private fun createRecentTransactions(
         transactions: List<GetAddressResponse.Transaction>,
+        address: String,
     ): List<BasicTransactionData> {
         return transactions
             .filter { it.confirmations == 0 }
-            .mapNotNull {
+            .mapNotNull { transaction ->
+                var balanceDif = transaction
+                    .vout.firstOrNull()
+                    ?.value?.toBigDecimalOrNull()
+                    ?.movePointLeft(blockchain.decimals())
+                    ?: return@mapNotNull null
+
+                balanceDif = if (transaction.vin.any { it.addresses.contains(address) } &&
+                    transaction.vout.any { !it.addresses.contains(address) }
+                ) {
+                    balanceDif.negate()
+                } else if (transaction.vout.any { it.addresses.contains(address) } &&
+                    transaction.vin.any { !it.addresses.contains(address) }
+                ) {
+                    balanceDif.abs()
+                } else {
+                    return@mapNotNull null
+                }
+
                 BasicTransactionData(
-                    balanceDif = it.value.toBigDecimalOrNull()?.movePointLeft(blockchain.decimals())
-                        ?: return@mapNotNull null,
-                    hash = it.txid,
+                    balanceDif = balanceDif,
+                    hash = transaction.txid,
                     date = Calendar.getInstance().apply {
-                        timeInMillis = (it.blockTime * 1000).toLong()
+                        timeInMillis = transaction.blockTime.toLong()
                     },
-                    isConfirmed = true
+                    isConfirmed = false,
                 )
             }
     }
