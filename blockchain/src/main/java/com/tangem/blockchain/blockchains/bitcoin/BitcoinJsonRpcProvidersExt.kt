@@ -11,7 +11,7 @@ import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 
 internal fun Blockchain.getBitcoinNetworkProviders(
     blockchain: Blockchain,
-    config: BlockchainSdkConfig
+    config: BlockchainSdkConfig,
 ): List<BitcoinNetworkProvider> {
     return when (this) {
         Blockchain.Bitcoin -> listOfNotNull(
@@ -28,7 +28,8 @@ internal fun Blockchain.getBitcoinNetworkProviders(
         )
         Blockchain.Litecoin,
         Blockchain.Dogecoin,
-        Blockchain.Dash -> listOfNotNull(
+        Blockchain.Dash,
+        -> listOfNotNull(
             getNowNodesProvider(blockchain, config),
             getGetBlockProvider(blockchain, config),
             *getBlockchairProviders(blockchain, config),
@@ -43,31 +44,35 @@ internal fun Blockchain.getBitcoinNetworkProviders(
 
 private fun getNowNodesProvider(
     blockchain: Blockchain,
-    config: BlockchainSdkConfig
+    config: BlockchainSdkConfig,
 ): BitcoinNetworkProvider? {
-    return config.nowNodeCredentials?.let { credentials ->
+    return if (config.nowNodeCredentials != null && config.nowNodeCredentials.apiKey.isNotBlank()) {
         BlockBookNetworkProvider(
-            config = BlockBookConfig.NowNodes(nowNodesCredentials = credentials),
+            config = BlockBookConfig.NowNodes(nowNodesCredentials = config.nowNodeCredentials),
             blockchain = blockchain
         )
+    } else {
+        null
     }
 }
 
 private fun getGetBlockProvider(
     blockchain: Blockchain,
-    config: BlockchainSdkConfig
+    config: BlockchainSdkConfig,
 ): BitcoinNetworkProvider? {
-    return config.getBlockCredentials?.let { credentials ->
+    return if (config.getBlockCredentials != null && config.getBlockCredentials.apiKey.isNotBlank()) {
         BlockBookNetworkProvider(
-            config = BlockBookConfig.GetBlock(getBlockCredentials = credentials),
+            config = BlockBookConfig.GetBlock(getBlockCredentials = config.getBlockCredentials),
             blockchain = blockchain
         )
+    } else {
+        null
     }
 }
 
 private fun getBlockchairProviders(
     blockchain: Blockchain,
-    config: BlockchainSdkConfig
+    config: BlockchainSdkConfig,
 ): Array<BitcoinNetworkProvider> {
     return config.blockchairCredentials?.let { blockchairCredentials ->
         blockchairCredentials.apiKey.map { apiKey ->
@@ -82,7 +87,7 @@ private fun getBlockchairProviders(
 
 private fun getBlockcypherProvider(
     blockchain: Blockchain,
-    config: BlockchainSdkConfig
+    config: BlockchainSdkConfig,
 ): BitcoinNetworkProvider? {
     return config.blockcypherTokens?.let {
         BlockcypherNetworkProvider(blockchain = blockchain, tokens = config.blockcypherTokens)
