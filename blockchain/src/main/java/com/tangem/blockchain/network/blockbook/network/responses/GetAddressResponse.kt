@@ -13,8 +13,15 @@ data class GetAddressResponse(
         val confirmations: Int,
         val blockTime: Int,
         val value: String,
+        val vin: List<Vin>,
     ) {
 
-        data class Vout(val hex: String, val addresses: List<String>)
+        data class Vin(val addresses: List<String>)
+
+        data class Vout(
+            val addresses: List<String>,
+            val hex: String,
+            val value: String,
+        )
     }
 }
