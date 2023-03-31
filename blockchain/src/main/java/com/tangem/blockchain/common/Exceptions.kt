@@ -1,6 +1,7 @@
 package com.tangem.blockchain.common
 
 import com.tangem.common.core.TangemError
+import java.math.BigDecimal
 
 abstract class BlockchainError(code: Int) : TangemError(code)
 
@@ -64,9 +65,27 @@ sealed class BlockchainSdkError(
         class Api(ex: Exception) : Polkadot(1, ex.localizedMessage ?: "Unknown api exception", ex)
     }
 
+    sealed class Kaspa(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_KASPA + subCode,
+        customMessage = customMessage ?: (ERROR_CODE_KASPA + subCode).toString(),
+        messageResId = null,
+        cause = throwable,
+    ) {
+        class UtxoAmountError(val maxOutputs: Int, val maxAmount: BigDecimal) : Kaspa(
+            2,
+            "Due to Kaspa limitations only $maxOutputs UTXOs can fit in a single transaction. This means you can only" +
+                " send ${maxAmount.toPlainString()}. You need to reduce the amount"
+        )
+    }
+
     companion object {
         const val ERROR_CODE_SOLANA = 1000
         const val ERROR_CODE_POLKADOT = 2000
+        const val ERROR_CODE_KASPA = 3000
     }
 }
 
