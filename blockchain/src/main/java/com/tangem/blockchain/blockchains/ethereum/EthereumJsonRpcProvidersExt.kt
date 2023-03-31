@@ -141,7 +141,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = "https://iceberg.ethereumpow.org/")
         )
         Blockchain.SaltPay -> listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://rpc.bicoccachain.net/")
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.bicoccachain.net/", authToken = config.saltPayAuthToken)
         )
         else -> throw IllegalStateException("$this isn't supported")
     }
