@@ -2,8 +2,20 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 import android.util.Log
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.BasicTransactionData
+import com.tangem.blockchain.common.BlockchainError
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.SignatureCountValidator
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionSender
+import com.tangem.blockchain.common.TransactionSigner
+import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
@@ -13,9 +25,9 @@ import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 
 open class BitcoinWalletManager(
-        wallet: Wallet,
-        protected val transactionBuilder: BitcoinTransactionBuilder,
-        private val networkProvider: BitcoinNetworkProvider
+    wallet: Wallet,
+    protected val transactionBuilder: BitcoinTransactionBuilder,
+    private val networkProvider: BitcoinNetworkProvider,
 ) : WalletManager(wallet), TransactionSender, SignatureCountValidator {
 
     protected val blockchain = wallet.blockchain
@@ -30,7 +42,7 @@ open class BitcoinWalletManager(
         coroutineScope {
             val addressInfos = mutableListOf<BitcoinAddressInfo>()
             val responsesDeferred =
-                    wallet.addresses.map { async { networkProvider.getInfo(it.value) } }
+                wallet.addresses.map { async { networkProvider.getInfo(it.value) } }
 
             responsesDeferred.forEach {
                 when (val response = it.await()) {
@@ -70,10 +82,10 @@ open class BitcoinWalletManager(
         }
         val finalTransactions = transactionsByHash.map {
             BasicTransactionData(
-                    balanceDif = it.value.sumOf { transaction -> transaction.balanceDif },
-                    hash = it.value[0].hash,
-                    date = it.value[0].date,
-                    isConfirmed = it.value[0].isConfirmed
+                balanceDif = it.value.sumOf { transaction -> transaction.balanceDif },
+                hash = it.value[0].hash,
+                date = it.value[0].date,
+                isConfirmed = it.value[0].isConfirmed
             )
         }
         return BitcoinAddressInfo(balance, unspentOutputs, finalTransactions, hasUnconfirmed)
@@ -100,9 +112,7 @@ open class BitcoinWalletManager(
         (error as? BlockchainSdkError)?.let { throw it }
     }
 
-    override suspend fun send(
-            transactionData: TransactionData, signer: TransactionSigner
-    ): SimpleResult {
+    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
             is Result.Success -> {
@@ -110,7 +120,7 @@ open class BitcoinWalletManager(
                 return when (signerResult) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(
-                                signerResult.data.reduce { acc, bytes -> acc + bytes }
+                            signerResult.data.reduce { acc, bytes -> acc + bytes }
                         )
                         val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())
 
@@ -128,14 +138,21 @@ open class BitcoinWalletManager(
 
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
         try {
-            when (val feeResult = networkProvider.getFee()) {
+            when (val feeResult = getBitcoinFeePerKb()) {
                 is Result.Failure -> return feeResult
                 is Result.Success -> {
                     val feeValue = BigDecimal.ONE.movePointLeft(blockchain.decimals())
                     amount.value = amount.value!! - feeValue
+
                     val sizeResult = transactionBuilder.getEstimateSize(
-                            TransactionData(amount, Amount(amount, feeValue), wallet.address, destination)
+                        TransactionData(
+                            amount = amount,
+                            fee = Amount(amount, feeValue),
+                            sourceAddress = wallet.address,
+                            destinationAddress = destination
+                        )
                     )
+
                     return when (sizeResult) {
                         is Result.Failure -> sizeResult
                         is Result.Success -> {
@@ -143,9 +160,10 @@ open class BitcoinWalletManager(
                             val minFee = feeResult.data.minimalPerKb.calculateFee(transactionSize)
                             val normalFee = feeResult.data.normalPerKb.calculateFee(transactionSize)
                             val priorityFee = feeResult.data.priorityPerKb.calculateFee(transactionSize)
-                            val fees = listOf(Amount(minFee, blockchain),
-                                    Amount(normalFee, blockchain),
-                                    Amount(priorityFee, blockchain)
+                            val fees = listOf(
+                                Amount(minFee, blockchain),
+                                Amount(normalFee, blockchain),
+                                Amount(priorityFee, blockchain)
                             )
                             Result.Success(fees)
                         }
@@ -168,15 +186,21 @@ open class BitcoinWalletManager(
         }
     }
 
-    private fun BigDecimal.calculateFee(transactionSize: BigDecimal): BigDecimal {
-        val feePerKb = maxOf(this, minimalFeePerKb)
-        val bytesInKb = BigDecimal(1024)
-        val calculatedFee = feePerKb.divide(bytesInKb).multiply(transactionSize)
-                .setScale(8, BigDecimal.ROUND_DOWN)
+    protected open suspend fun getBitcoinFeePerKb(): Result<BitcoinFee> = networkProvider.getFee()
+
+    protected open fun BigDecimal.calculateFee(transactionSize: BigDecimal): BigDecimal {
+        val feePerKb = maxOf(a = this, b = minimalFeePerKb)
+        val calculatedFee = feePerKb
+            .divide(BigDecimal(BYTES_IN_KB))
+            .multiply(transactionSize)
+            .setScale(blockchain.decimals(), BigDecimal.ROUND_DOWN)
+
         return maxOf(calculatedFee, minimalFee)
     }
 
     companion object {
         const val DEFAULT_MINIMAL_FEE_PER_KB = 0.00001024
+
+        private const val BYTES_IN_KB = 1024
     }
 }

@@ -12,8 +12,11 @@ import com.tangem.blockchain.network.blockbook.network.responses.GetAddressRespo
 import com.tangem.blockchain.network.blockbook.network.responses.GetFeeResponse
 import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponseItem
 import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.logging.HttpLoggingInterceptor
 import ru.gildor.coroutines.okhttp.await
+import java.io.IOException
 
 @OptIn(ExperimentalStdlibApi::class)
 internal class BlockBookApi(
@@ -23,6 +26,7 @@ internal class BlockBookApi(
 
     private val client = OkHttpClient.Builder()
         .addHeaders(headers = mapOf(config.credentials))
+        .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
         .build()
 
     private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
@@ -40,11 +44,16 @@ internal class BlockBookApi(
             .unpack()
     }
 
-    suspend fun getFee(): GetFeeResponse {
+    suspend fun getFee(param: Int): GetFeeResponse {
         return client
             .newCall(
                 request = Request.Builder()
-                    .post(moshi.adapter<GetFeeRequest>().toJson(GetFeeRequest.FEE).toRequestBody())
+                    .post(
+                        moshi
+                            .adapter<GetFeeRequest>()
+                            .toJson(GetFeeRequest.getFee(param))
+                            .toRequestBody(APPLICATION_JSON_MEDIA_TYPE.toMediaTypeOrNull())
+                    )
                     .url(config.getRequestBaseUrl(BlockBookRequest.GET_FEE, blockchain))
                     .build()
             )
@@ -67,7 +76,7 @@ internal class BlockBookApi(
         if (response.isSuccessful && responseBody != null) {
             return
         } else {
-            throw IllegalStateException("Response is null")
+            throw IOException("Response is null")
         }
     }
 
@@ -87,10 +96,13 @@ internal class BlockBookApi(
     private inline fun <reified T> Response.unpack(): T {
         val responseBody = body?.string()
         return if (isSuccessful && responseBody != null) {
-            moshi.adapter<T>().fromJson(responseBody)
-                ?: throw IllegalStateException("Response is null")
+            moshi.adapter<T>().fromJson(responseBody) ?: throw IOException("Response is null")
         } else {
-            throw IllegalStateException("Response is null")
+            throw IOException("Response is null")
         }
+    }
+
+    private companion object {
+        const val APPLICATION_JSON_MEDIA_TYPE = "application/json"
     }
 }
