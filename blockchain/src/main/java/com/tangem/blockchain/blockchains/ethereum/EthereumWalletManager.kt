@@ -21,6 +21,7 @@ import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
@@ -219,6 +220,32 @@ open class EthereumWalletManager(
 
                 val fees = calculateFees(gLimit, gPrice)
                     .map { value -> Amount(wallet.amounts[AmountType.Coin]!!, value) }
+                Result.Success(fees)
+            }
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    open suspend fun getFee(amount: Amount, destination: String, data: String): Result<List<Amount>> {
+        return try {
+            coroutineScope {
+                val gasLimitResponsesDeferred =
+                    async { getGasLimit(amount, destination, data) }
+                val gasPriceResponsesDeferred = async { getGasPrice() }
+
+                val gLimit = gasLimitResponsesDeferred.await().successOr {
+                    return@coroutineScope Result.Failure(it.error)
+                }
+                val gPrice = gasPriceResponsesDeferred.await().successOr {
+                    return@coroutineScope Result.Failure(it.error)
+                }
+
+                gasLimit = gLimit
+                gasPrice = gPrice
+                val fees = calculateFees(gLimit, gPrice).map { value ->
+                    Amount(wallet.amounts[AmountType.Coin]!!, value)
+                }
                 Result.Success(fees)
             }
         } catch (exception: Exception) {
@@ -466,9 +493,22 @@ open class EthereumWalletManager(
                 to = amount.type.token.contractAddress
                 data = "0x" + EthereumUtils.createErc20TransferData(destination, amount).toHexString()
             }
+            else -> {
+                /*no-op*/
+            }
         }
 
         return networkProvider.getGasLimit(to, from, value, data)
+    }
+
+    override suspend fun getGasLimit(amount: Amount, destination: String, data: String): Result<BigInteger> {
+        val from = wallet.address
+        val value = if (amount.type is AmountType.Coin) {
+            amount.value?.movePointRight(amount.decimals)?.toBigInteger()?.toHexString()
+        } else {
+            null
+        }
+        return networkProvider.getGasLimit(destination, from, value, data)
     }
 
     suspend fun getGasLimitToApprove(amount: Amount, spender: String): Result<BigInteger> {
