@@ -194,7 +194,9 @@ class EthereumNetworkService(
                 Result.Success(gasLimit)
             }
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainSdkError())
+            if (exception.message?.contains("gas required exceeds allowance", true) == true) {
+                Result.Failure(Exception("Not enough funds for the transaction. Please top up your account.").toBlockchainSdkError())
+            } else Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
