@@ -6,6 +6,7 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 
 fun createRetrofitInstance(
@@ -58,8 +59,9 @@ data class Timeout(
     val unit: TimeUnit = TimeUnit.SECONDS,
 )
 
-private val moshi: Moshi by lazy {
+internal val moshi: Moshi by lazy {
     Moshi.Builder()
+        .add(BigDecimal::class.java, BigDecimalAdapter)
         .add(KotlinJsonAdapterFactory())
         .build()
 }
