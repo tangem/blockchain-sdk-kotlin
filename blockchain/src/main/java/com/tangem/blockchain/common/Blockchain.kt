@@ -21,10 +21,13 @@ import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.address.DefaultAddressType
 import com.tangem.blockchain.common.address.MultisigAddressProvider
+import com.tangem.blockchain.common.address.TrustWalletAddressService
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.hdWallet.DerivationNode
 import com.tangem.common.hdWallet.DerivationPath
 import com.tangem.common.hdWallet.bip.BIP44
+import wallet.core.jni.CoinType
+import wallet.core.jni.PublicKeyType
 
 enum class Blockchain(
     val id: String,
@@ -78,6 +81,8 @@ enum class Blockchain(
     EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW"),
     SaltPay("WXDAI", "WxDAI", "SaltPay"),
     Kaspa("KAS", "KAS", "Kaspa"),
+    TON("The-Open-Network", "TON", "TheOpenNetwork"),
+    TONTestnet("The-Open-Network/test", "TON", "TheOpenNetwork Testnet"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -97,7 +102,9 @@ enum class Blockchain(
         Dash,
         Kaspa,
         -> 8
-        Solana, SolanaTestnet -> 9
+        Solana, SolanaTestnet,
+        TON, TONTestnet,
+        -> 9
         Polkadot -> 10
         PolkadotTestnet, Kusama -> 12
         Arbitrum, ArbitrumTestnet,
@@ -148,6 +155,7 @@ enum class Blockchain(
         Stellar, StellarTestnet -> StellarAddressService()
         Solana, SolanaTestnet -> SolanaAddressService()
         Tezos -> TezosAddressService()
+        TON, TONTestnet -> TrustWalletAddressService(coinType = CoinType.TON, publicKeyType = PublicKeyType.ED25519)
         Tron, TronTestnet -> TronAddressService()
         Kaspa -> KaspaAddressService()
         Unknown -> throw Exception("unsupported blockchain")
@@ -202,6 +210,8 @@ enum class Blockchain(
         Solana -> "https://explorer.solana.com/"
         SolanaTestnet -> "https://explorer.solana.com/"
         Tezos -> "https://tzkt.io/"
+        TON -> "https://tonscan.org/"
+        TONTestnet -> "https://testnet.tonscan.org/"
         Tron -> "https://tronscan.org/#/"
         TronTestnet -> "https://nile.tronscan.org/#/"
         XRP -> "https://xrpscan.com/"
@@ -296,6 +306,7 @@ enum class Blockchain(
             Tron, TronTestnet -> TronTestnet
             Optimism, OptimismTestnet -> OptimismTestnet
             EthereumPow, EthereumPowTestnet -> EthereumPowTestnet
+            TON, TONTestnet -> TONTestnet
             else -> null
         }
     }
@@ -333,6 +344,7 @@ enum class Blockchain(
             Cardano,
             CardanoShelley,
             Polkadot, PolkadotTestnet, Kusama,
+            TON, TONTestnet,
             -> listOf(EllipticCurve.Ed25519)
         }
     }
@@ -444,6 +456,7 @@ enum class Blockchain(
             Tron -> 195
             Gnosis -> 700
             Optimism -> 614
+            TON -> 607
             Kaspa -> 111111
             ArbitrumTestnet,
             AvalancheTestnet,
@@ -458,6 +471,7 @@ enum class Blockchain(
             PolygonTestnet,
             StellarTestnet,
             SolanaTestnet,
+            TONTestnet,
             TronTestnet,
             OptimismTestnet,
             EthereumPowTestnet,
@@ -494,6 +508,7 @@ enum class Blockchain(
         -> amountType is AmountType.Token
         Arbitrum, ArbitrumTestnet,
         Optimism, OptimismTestnet,
+        TON, TONTestnet,
         -> true
         else -> false
     }
