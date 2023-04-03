@@ -82,10 +82,24 @@ sealed class BlockchainSdkError(
         )
     }
 
+    sealed class Ton(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_TON + subCode,
+        customMessage = customMessage ?: "${ERROR_CODE_TON + subCode}",
+        messageResId = null,
+        cause = throwable,
+    ) {
+        class Api(code: Int, message: String) : Ton(subCode = code, customMessage = message)
+    }
+
     companion object {
         const val ERROR_CODE_SOLANA = 1000
         const val ERROR_CODE_POLKADOT = 2000
         const val ERROR_CODE_KASPA = 3000
+        const val ERROR_CODE_TON = 4000
     }
 }
 
