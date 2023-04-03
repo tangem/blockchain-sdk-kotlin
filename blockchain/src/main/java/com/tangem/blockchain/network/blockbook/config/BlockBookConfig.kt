@@ -1,6 +1,7 @@
 package com.tangem.blockchain.network.blockbook.config
 
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.GetBlockCredentials
 import com.tangem.blockchain.common.NowNodeCredentials
 
@@ -28,7 +29,7 @@ sealed class BlockBookConfig(val credentials: BlockBookCredentials) {
     }
 
     class GetBlock(getBlockCredentials: GetBlockCredentials) : BlockBookConfig(
-        credentials = GetBlockCredentials.headerApiKey to getBlockCredentials.apiKey
+        credentials = BlockchainSdkConfig.X_API_KEY_HEADER to getBlockCredentials.apiKey
     ) {
         override val host: String = "getblock.io"
 
