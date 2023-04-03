@@ -53,7 +53,7 @@ class SolanaRpcClientBuilder {
     private fun getBlock(cred: GetBlockCredentials): RpcClient {
         return RpcClient(
             host = "https://sol.getblock.io/mainnet",
-            httpInterceptors = createInterceptor(GetBlockCredentials.headerApiKey, cred.apiKey),
+            httpInterceptors = createInterceptor(BlockchainSdkConfig.X_API_KEY_HEADER, cred.apiKey),
         )
     }
 
