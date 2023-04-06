@@ -4,6 +4,7 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.ton.network.TonJsonRpcNetworkProvider
 import com.tangem.blockchain.blockchains.ton.network.TonNetworkService
 import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AnySignerWrapper
 import com.tangem.blockchain.common.BlockchainError
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
@@ -11,13 +12,10 @@ import com.tangem.blockchain.common.TransactionSender
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.WalletCoreSigner
 import com.tangem.blockchain.common.WalletManager
-import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
-import wallet.core.java.AnySigner
 import wallet.core.jni.CoinType
 import wallet.core.jni.PublicKeyType
 import wallet.core.jni.proto.TheOpenNetwork
@@ -79,17 +77,17 @@ class TonWalletManager(
     }
 
     private fun buildTransaction(input: TheOpenNetwork.SigningInput, signer: TransactionSigner?): Result<String> {
-        return try {
-            val output: TheOpenNetwork.SigningOutput = if (signer != null) {
-                val coreSigner = WalletCoreSigner(signer, wallet.publicKey, PublicKeyType.ED25519)
-                AnySigner.signExternally(input, CoinType.TON, TheOpenNetwork.SigningOutput.parser(), coreSigner)
-            } else {
-                AnySigner.sign(input, CoinType.TON, TheOpenNetwork.SigningOutput.parser())
-            }
-
-            Result.Success(txBuilder.buildForSend(output))
-        } catch (e: Exception) {
-            Result.Failure(e.toBlockchainSdkError())
+        val outputResult: Result<TheOpenNetwork.SigningOutput> = AnySignerWrapper().sign(
+            walletPublicKey = wallet.publicKey,
+            publicKeyType = PublicKeyType.ED25519,
+            input = input,
+            coin = CoinType.TON,
+            parser = TheOpenNetwork.SigningOutput.parser(),
+            signer = signer,
+        )
+        return when (outputResult) {
+            is Result.Failure -> outputResult
+            is Result.Success -> Result.Success(txBuilder.buildForSend(outputResult.data))
         }
     }
 }
