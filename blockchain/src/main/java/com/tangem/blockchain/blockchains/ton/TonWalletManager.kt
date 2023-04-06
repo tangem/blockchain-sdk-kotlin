@@ -12,7 +12,6 @@ import com.tangem.blockchain.common.TransactionSender
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.WalletCoreSigner
 import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -79,10 +78,12 @@ class TonWalletManager(
 
     private fun buildTransaction(input: TheOpenNetwork.SigningInput, signer: TransactionSigner?): Result<String> {
         val outputResult: Result<TheOpenNetwork.SigningOutput> = AnySignerWrapper().sign(
+            walletPublicKey = wallet.publicKey,
+            publicKeyType = PublicKeyType.ED25519,
             input = input,
             coin = CoinType.TON,
             parser = TheOpenNetwork.SigningOutput.parser(),
-            signer = if (signer != null) WalletCoreSigner(signer, wallet.publicKey, PublicKeyType.ED25519) else null,
+            signer = signer,
         )
         return when (outputResult) {
             is Result.Failure -> outputResult
