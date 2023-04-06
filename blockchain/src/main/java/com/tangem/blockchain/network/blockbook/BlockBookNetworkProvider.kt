@@ -42,6 +42,7 @@ class BlockBookNetworkProvider(
                     unspentOutputs = createUnspentOutputs(
                         getUtxoResponseItems = getUtxoResponseItems,
                         transactions = getAddressResponse.transactions.orEmpty(),
+                        address = address
                     ),
                     recentTransactions = createRecentTransactions(
                         transactions = getAddressResponse.transactions.orEmpty(),
@@ -90,9 +91,10 @@ class BlockBookNetworkProvider(
     private fun createUnspentOutputs(
         getUtxoResponseItems: List<GetUtxoResponseItem>,
         transactions: List<GetAddressResponse.Transaction>,
+        address: String,
     ): List<BitcoinUnspentOutput> {
         val outputScript = transactions.firstNotNullOfOrNull { transaction ->
-            transaction.vout.lastOrNull()?.hex
+            transaction.vout.firstOrNull { it.addresses.contains(address) }?.hex
         } ?: return emptyList()
 
         return getUtxoResponseItems.mapNotNull {
