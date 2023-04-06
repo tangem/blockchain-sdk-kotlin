@@ -1,6 +1,7 @@
 package com.tangem.blockchain.common
 
 import com.tangem.common.CompletionResult
+import com.tangem.common.core.TangemError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.runBlocking
@@ -14,6 +15,9 @@ class WalletCoreSigner(
     private val publicKeyType: PublicKeyType,
 ) : Signer {
 
+    internal var error: TangemError? = null
+        private set
+
     override fun getPublicKey(): PublicKey {
         return PublicKey(publicKey.blockchainKey, publicKeyType)
     }
@@ -24,7 +28,10 @@ class WalletCoreSigner(
         }
         return when (signResult) {
             is CompletionResult.Success -> signResult.data
-            is CompletionResult.Failure -> ByteArray(0)
+            is CompletionResult.Failure -> {
+                error = signResult.error
+                ByteArray(0)
+            }
         }
     }
 }
