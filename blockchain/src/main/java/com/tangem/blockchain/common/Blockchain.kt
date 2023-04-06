@@ -81,8 +81,8 @@ enum class Blockchain(
     EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW Testnet"),
     SaltPay("WXDAI", "WxDAI", "SaltPay"),
     Kaspa("KAS", "KAS", "Kaspa"),
-    TON("The-Open-Network", "TON", "Toncoin"),
-    TONTestnet("The-Open-Network/test", "TON", "Toncoin Testnet"),
+    TON("The-Open-Network", "TON", "Ton"),
+    TONTestnet("The-Open-Network/test", "TON", "Ton Testnet"),
     ;
 
     fun decimals(): Int = when (this) {
