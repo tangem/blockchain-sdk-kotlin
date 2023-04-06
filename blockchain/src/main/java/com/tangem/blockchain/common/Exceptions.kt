@@ -93,6 +93,11 @@ sealed class BlockchainSdkError(
         cause = throwable,
     ) {
         class Api(code: Int, message: String) : Ton(subCode = code, customMessage = message)
+        class Sign(throwable: Throwable?) : Ton(
+            subCode = 2,
+            customMessage = "Exception while signing transaction",
+            throwable = throwable,
+        )
     }
 
     companion object {
