@@ -57,7 +57,7 @@ class AnySignerWrapper {
                 publicKey = walletPublicKey,
             )
             val result = AnySigner.signExternally(input, coin, parser, walletCoreSigner)
-            // We need to check this error field in WalletCoreSigner. Because thrown exception from JNI can not be
+            // We need to check this error field from WalletCoreSigner. Because thrown exception from JNI can not be
             // handled.
             val tangemError = walletCoreSigner.error
 
