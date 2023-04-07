@@ -13,15 +13,25 @@ class TonTransactionBuilder {
     private val modeTransactionConstant: Int =
         TheOpenNetwork.SendMode.PAY_FEES_SEPARATELY_VALUE.or(TheOpenNetwork.SendMode.IGNORE_ACTION_PHASE_ERRORS_VALUE)
 
-    fun buildForSign(sequenceNumber: Int, amount: Amount, destination: String): TheOpenNetwork.SigningInput {
-        return input(sequenceNumber, amount, destination)
+    fun buildForSign(
+        sequenceNumber: Int,
+        amount: Amount,
+        destination: String,
+        extras: TonTransactionExtras? = null,
+    ): TheOpenNetwork.SigningInput {
+        return input(sequenceNumber, amount, destination, extras?.memo.orEmpty())
     }
 
     fun buildForSend(output: TheOpenNetwork.SigningOutput): String {
         return output.encoded
     }
 
-    private fun input(sequenceNumber: Int, amount: Amount, destination: String): TheOpenNetwork.SigningInput {
+    private fun input(
+        sequenceNumber: Int,
+        amount: Amount,
+        destination: String,
+        comment: String,
+    ): TheOpenNetwork.SigningInput {
         val transfer = TheOpenNetwork.Transfer
             .newBuilder()
             .setWalletVersion(TheOpenNetwork.WalletVersion.WALLET_V4_R2)
@@ -30,6 +40,7 @@ class TonTransactionBuilder {
             .setSequenceNumber(sequenceNumber)
             .setMode(modeTransactionConstant)
             .setBounceBehavior(TheOpenNetwork.BounceBehavior.NON_BOUNCEABLE)
+            .setComment(comment)
 
         return TheOpenNetwork.SigningInput
             .newBuilder()
