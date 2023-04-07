@@ -40,7 +40,12 @@ class TonWalletManager(
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val input = txBuilder.buildForSign(sequenceNumber, transactionData.amount, transactionData.destinationAddress)
+        val input = txBuilder.buildForSign(
+            sequenceNumber = sequenceNumber,
+            amount = transactionData.amount,
+            destination = transactionData.destinationAddress,
+            extras = (transactionData.extras as? TonTransactionExtras)
+        )
         val message = buildTransaction(input, signer).successOr { return SimpleResult.fromTangemSdkError(it.error) }
 
         return when (val sendResult = networkService.send(message)) {
