@@ -5,12 +5,18 @@ import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.isZero
 import com.tangem.common.extensions.toCompressedPublicKey
-import org.bitcoinj.core.*
+import org.bitcoinj.core.Coin
+import org.bitcoinj.core.ECKey
+import org.bitcoinj.core.NetworkParameters
+import org.bitcoinj.core.Sha256Hash
+import org.bitcoinj.core.Transaction
+import org.bitcoinj.core.TransactionWitness
 import org.bitcoinj.crypto.TransactionSignature
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.params.TestNet3Params
@@ -21,10 +27,12 @@ import org.libdohj.params.DogecoinMainNetParams
 import org.libdohj.params.LitecoinMainNetParams
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.util.Collections
+import org.bitcoinj.core.Address as BitcoinJAddress
 
 open class BitcoinTransactionBuilder(
     private val walletPublicKey: ByteArray, blockchain: Blockchain,
-    walletAddresses: Set<com.tangem.blockchain.common.address.Address> = emptySet()
+    walletAddresses: Set<Address> = emptySet(),
 ) {
     private val walletScripts =
         walletAddresses.filterIsInstance<BitcoinScriptAddress>().map { it.script }
@@ -50,6 +58,8 @@ open class BitcoinTransactionBuilder(
         val change: BigDecimal = calculateChange(transactionData, unspentOutputs!!)
         transaction =
             transactionData.toBitcoinJTransaction(networkParameters, unspentOutputs!!, change)
+                .sortInputsBip69()
+                .sortOutputsBip69()
 
         val hashesToSign = MutableList(transaction.inputs.size) { byteArrayOf() }
         for (input in transaction.inputs) {
@@ -90,7 +100,7 @@ open class BitcoinTransactionBuilder(
 
     open fun buildToSend(signatures: ByteArray): ByteArray {
 //        witnessSize = 0
-
+        transaction = transaction.sortInputsBip69().sortOutputsBip69()
         for (index in transaction.inputs.indices) {
             val scriptPubKey = Script(transaction.inputs[index].scriptBytes) // output script
             val signature = extractSignature(index, signatures)
@@ -152,7 +162,7 @@ open class BitcoinTransactionBuilder(
 
     fun calculateChange(
         transactionData: TransactionData,
-        unspentOutputs: List<BitcoinUnspentOutput>
+        unspentOutputs: List<BitcoinUnspentOutput>,
     ): BigDecimal {
         val fullAmount = unspentOutputs.map { it.amount }.reduce { acc, number -> acc + number }
         return fullAmount - (transactionData.amount.value!! + (transactionData.fee?.value
@@ -183,7 +193,7 @@ open class BitcoinTransactionBuilder(
 internal fun TransactionData.toBitcoinJTransaction(
     networkParameters: NetworkParameters?,
     unspentOutputs: List<BitcoinUnspentOutput>,
-    change: BigDecimal
+    change: BigDecimal,
 ): Transaction {
     val transaction = Transaction(networkParameters)
     for (utxo in unspentOutputs) {
@@ -195,12 +205,12 @@ internal fun TransactionData.toBitcoinJTransaction(
     }
     transaction.addOutput(
         Coin.parseCoin(this.amount.value!!.toPlainString()),
-        Address.fromString(networkParameters, this.destinationAddress)
+        BitcoinJAddress.fromString(networkParameters, this.destinationAddress)
     )
     if (!change.isZero()) {
         transaction.addOutput(
             Coin.parseCoin(change.toPlainString()),
-            Address.fromString(
+            BitcoinJAddress.fromString(
                 networkParameters,
                 this.sourceAddress
             )
@@ -209,3 +219,22 @@ internal fun TransactionData.toBitcoinJTransaction(
     return transaction
 }
 
+internal fun Transaction.sortInputsBip69(): Transaction {
+    val mutableInputs = this.inputs.toMutableList()
+    Collections.sort(mutableInputs, Bip69Comparators.inputComparator)
+    this.clearInputs()
+    mutableInputs.forEach {
+        this.addInput(it)
+    }
+    return this
+}
+
+internal fun Transaction.sortOutputsBip69(): Transaction {
+    val mutableOutputs = this.outputs.toMutableList()
+    Collections.sort(mutableOutputs, Bip69Comparators.outputComparator)
+    this.clearOutputs()
+    mutableOutputs.forEach {
+        this.addOutput(it)
+    }
+    return this
+}
