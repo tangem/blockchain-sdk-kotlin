@@ -144,6 +144,13 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         Blockchain.SaltPay -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://rpc.bicoccachain.net/", authToken = config.saltPayAuthToken)
         )
+        Blockchain.Kava -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://evm.kava.io"),
+            EthereumJsonRpcProvider(baseUrl = "https://evm2.kava.io"),
+        )
+        Blockchain.KavaTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://evm.testnet.kava.io"),
+        )
         else -> throw IllegalStateException("$this isn't supported")
     }
 
