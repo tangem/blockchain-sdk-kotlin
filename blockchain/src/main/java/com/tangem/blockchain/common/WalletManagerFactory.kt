@@ -236,6 +236,7 @@ class WalletManagerFactory(
             Blockchain.EthereumFair,
             Blockchain.EthereumPow,
             Blockchain.EthereumPowTestnet,
+            Blockchain.Kava, Blockchain.KavaTestnet,
             -> {
                 EthereumWalletManager(
                     wallet = wallet,
