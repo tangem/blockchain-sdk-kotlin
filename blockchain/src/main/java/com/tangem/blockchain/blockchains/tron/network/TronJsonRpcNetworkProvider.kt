@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.tron.network
 
 import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.extensions.AddHeaderInterceptor
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.isApiKeyNeeded
 import com.tangem.blockchain.extensions.retryIO
@@ -11,17 +12,22 @@ import retrofit2.HttpException
 
 class TronJsonRpcNetworkProvider(
     override val network: TronNetwork,
-    private val tronGridApiKey: String?
-    ) : TronNetworkProvider {
+    private val tronGridApiKey: String?,
+) : TronNetworkProvider {
 
     private var currentApiKey: String? = null
 
     private val api: TronApi by lazy {
-        createRetrofitInstance(network.url).create(TronApi::class.java)
+        val headerInterceptors = if (network is TronNetwork.TronGrid && !network.apiKey.isNullOrEmpty()) {
+            listOf(AddHeaderInterceptor(mapOf(TRON_GRID_API_HEADER_NAME to network.apiKey)))
+        } else {
+            emptyList()
+        }
+        createRetrofitInstance(network.url, headerInterceptors).create(TronApi::class.java)
     }
 
     private suspend fun <T> makeRequestUsingKeyOnlyWhenNeeded(
-        block: suspend () -> T
+        block: suspend () -> T,
     ): T {
         return try {
             retryIO { block() }
@@ -86,18 +92,17 @@ class TronJsonRpcNetworkProvider(
     }
 
     override suspend fun getTokenBalance(
-        address: String,
-        contractAddress: String
+        tokenBalanceRequestData: TokenBalanceRequestData,
     ): Result<TronTriggerSmartContractResponse> {
         return try {
             val response = makeRequestUsingKeyOnlyWhenNeeded {
                 api.getTokenBalance(
                     apiKey = currentApiKey,
                     requestBody = TronTriggerSmartContractRequest(
-                        ownerAddress = address,
-                        contractAddress = contractAddress,
+                        ownerAddress = tokenBalanceRequestData.address,
+                        contractAddress = tokenBalanceRequestData.contractAddress,
                         functionSelector = "balanceOf(address)",
-                        parameter = TronAddressService.toHexForm(address, 64) ?: "",
+                        parameter = TronAddressService.toHexForm(tokenBalanceRequestData.address, 64) ?: "",
                         visible = true
                     ),
                 )
@@ -138,5 +143,9 @@ class TronJsonRpcNetworkProvider(
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
+    }
+
+    companion object {
+        const val TRON_GRID_API_HEADER_NAME = "TRON-PRO-API-KEY"
     }
 }
