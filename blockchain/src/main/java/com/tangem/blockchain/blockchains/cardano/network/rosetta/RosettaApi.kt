@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.cardano.network.rosetta
 
-import com.squareup.moshi.Json
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.*
 import retrofit2.http.Body
 import retrofit2.http.POST
