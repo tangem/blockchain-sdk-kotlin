@@ -14,13 +14,12 @@ interface TronNetworkProvider {
     suspend fun broadcastHex(data: ByteArray): Result<TronBroadcastResponse>
 
     suspend fun getTokenBalance(
-        address: String,
-        contractAddress: String,
+        tokenBalanceRequestData: TokenBalanceRequestData,
     ): Result<TronTriggerSmartContractResponse>
 
     suspend fun getTokenTransactionHistory(contractAddress: String): Result<TronTokenHistoryResponse>
 
     suspend fun getTransactionInfoById(id: String): Result<String>
 
-    suspend fun getChainParameters() : Result<TronChainParametersResponse>
+    suspend fun getChainParameters(): Result<TronChainParametersResponse>
 }
