@@ -12,6 +12,7 @@ import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashWalletManager
 import com.tangem.blockchain.blockchains.cardano.CardanoTransactionBuilder
 import com.tangem.blockchain.blockchains.cardano.CardanoWalletManager
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkService
+import com.tangem.blockchain.blockchains.cardano.network.RosettaNetwork
 import com.tangem.blockchain.blockchains.cardano.network.adalite.AdaliteNetworkProvider
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.RosettaNetworkProvider
 import com.tangem.blockchain.blockchains.dogecoin.DogecoinWalletManager
@@ -50,11 +51,11 @@ import com.tangem.blockchain.blockchains.xrp.XrpTransactionBuilder
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
 import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledNetworkProvider
+import com.tangem.blockchain.extensions.letNotBlank
 import com.tangem.blockchain.network.API_ADALITE
 import com.tangem.blockchain.network.API_KASPA
 import com.tangem.blockchain.network.API_RIPPLE
 import com.tangem.blockchain.network.API_RIPPLE_RESERVE
-import com.tangem.blockchain.network.API_TANGEM_ROSETTA
 import com.tangem.blockchain.network.API_TEZOS_BLOCKSCALE
 import com.tangem.blockchain.network.API_TEZOS_ECAD
 import com.tangem.blockchain.network.API_TEZOS_LETZBAKE
@@ -315,9 +316,17 @@ class WalletManagerFactory(
             }
 
             Blockchain.Cardano, Blockchain.CardanoShelley -> {
-                val adaliteNetworkProvider = AdaliteNetworkProvider(API_ADALITE)
-                val rosettaNetworkProvider = RosettaNetworkProvider(API_TANGEM_ROSETTA)
-                val providers = listOf(adaliteNetworkProvider, rosettaNetworkProvider)
+                val providers = buildList {
+                    add(AdaliteNetworkProvider(API_ADALITE))
+                    add(RosettaNetworkProvider(RosettaNetwork.RosettaTangem))
+                    config.getBlockCredentials?.apiKey.letNotBlank {
+                        RosettaNetworkProvider(
+                            RosettaNetwork.RosettaGetblock(
+                                config.getBlockCredentials?.apiKey ?: ""
+                            )
+                        )
+                    }
+                }
 
                 CardanoWalletManager(
                     wallet,
