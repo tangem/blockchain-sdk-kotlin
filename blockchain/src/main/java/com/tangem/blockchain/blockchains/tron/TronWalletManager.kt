@@ -17,12 +17,11 @@ import kotlin.math.ceil
 class TronWalletManager(
     wallet: Wallet,
     private val transactionBuilder: TronTransactionBuilder,
-    networkProvider: TronJsonRpcNetworkProvider,
+    private val networkService: TronNetworkService,
 ) : WalletManager(wallet), TransactionSender {
 
-    override val currentHost: String = networkProvider.network.url
+    override val currentHost: String = networkService.host
 
-    private val networkService = TronNetworkService(networkProvider, wallet.blockchain)
     private val dummySigner = DummySigner()
 
     override suspend fun update() {
@@ -43,7 +42,7 @@ class TronWalletManager(
         wallet.amounts[AmountType.Coin]?.value = response.balance
         response.tokenBalances.forEach { wallet.addTokenValue(it.value, it.key) }
 
-        wallet.recentTransactions.forEach() {
+        wallet.recentTransactions.forEach {
             if (response.confirmedTransactionIds.contains(it.hash)) {
                 it.status = TransactionStatus.Confirmed
             }
@@ -66,10 +65,10 @@ class TronWalletManager(
             signer = signer,
             publicKey = wallet.publicKey
         )
-        when (signResult) {
-            is Result.Failure -> return SimpleResult.Failure(signResult.error)
+        return when (signResult) {
+            is Result.Failure -> SimpleResult.Failure(signResult.error)
             is Result.Success -> {
-                return when (val sendResult = networkService.broadcastHex(signResult.data)) {
+                when (val sendResult = networkService.broadcastHex(signResult.data)) {
                     is Result.Failure -> SimpleResult.Failure(sendResult.error)
                     is Result.Success -> {
                         wallet.addOutgoingTransaction(
