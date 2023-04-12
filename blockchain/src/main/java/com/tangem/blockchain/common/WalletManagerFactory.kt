@@ -33,6 +33,7 @@ import com.tangem.blockchain.blockchains.polkadot.PolkadotWalletManager
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkService
 import com.tangem.blockchain.blockchains.solana.SolanaRpcClientBuilder
 import com.tangem.blockchain.blockchains.solana.SolanaWalletManager
+import com.tangem.blockchain.blockchains.stellar.StellarNetwork
 import com.tangem.blockchain.blockchains.stellar.StellarNetworkService
 import com.tangem.blockchain.blockchains.stellar.StellarTransactionBuilder
 import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
@@ -50,6 +51,7 @@ import com.tangem.blockchain.blockchains.xrp.XrpTransactionBuilder
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
 import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledNetworkProvider
+import com.tangem.blockchain.extensions.letNotBlank
 import com.tangem.blockchain.network.API_ADALITE
 import com.tangem.blockchain.network.API_KASPA
 import com.tangem.blockchain.network.API_RIPPLE
@@ -304,7 +306,20 @@ class WalletManagerFactory(
 
             Blockchain.Stellar, Blockchain.StellarTestnet -> {
                 val isTestnet = blockchain == Blockchain.StellarTestnet
-                val networkService = StellarNetworkService(isTestnet)
+                val hosts = if (isTestnet) {
+                    buildList {
+                        config.nowNodeCredentials?.apiKey.letNotBlank {
+                            add(StellarNetwork.Nownodes(it))
+                        }
+                        config.getBlockCredentials?.apiKey.letNotBlank {
+                            add(StellarNetwork.Getblock(it))
+                        }
+                        add(StellarNetwork.Horizon)
+                    }
+                } else {
+                    listOf<StellarNetwork>(StellarNetwork.HorizonTestnet)
+                }
+                val networkService = StellarNetworkService(hosts, isTestnet)
 
                 StellarWalletManager(
                     wallet,
