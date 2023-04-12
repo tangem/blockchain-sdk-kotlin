@@ -253,7 +253,7 @@ enum class Blockchain(
             SolanaTestnet -> "$fullUrl/?cluster=devnet"
             XRP, Stellar, StellarTestnet -> "${baseUrl}account/$address"
             Tezos -> "$baseUrl$address"
-            Kaspa -> "$baseUrl/addresses/$address"
+            Kaspa -> "${baseUrl}addresses/$address"
             else -> fullUrl
         }
     }
