@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.tron.network
 
 import com.tangem.blockchain.blockchains.tron.TronAddressService
+import com.tangem.blockchain.common.NowNodeCredentials
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.AddHeaderInterceptor
 import com.tangem.blockchain.extensions.Result
@@ -18,11 +19,24 @@ class TronJsonRpcNetworkProvider(
     private var currentApiKey: String? = null
 
     private val api: TronApi by lazy {
-        val headerInterceptors = if (network is TronNetwork.TronGrid && !network.apiKey.isNullOrEmpty()) {
-            listOf(AddHeaderInterceptor(mapOf(TRON_GRID_API_HEADER_NAME to network.apiKey)))
-        } else {
-            emptyList()
+        val headerInterceptors = when (network) {
+            is TronNetwork.TronGrid -> {
+                if (!network.apiKey.isNullOrEmpty()) {
+                    listOf(AddHeaderInterceptor(mapOf(TRON_GRID_API_HEADER_NAME to network.apiKey)))
+                } else {
+                    emptyList()
+                }
+            }
+            is TronNetwork.NowNodes -> {
+                if (network.apiKey.isNotEmpty()) {
+                    listOf(AddHeaderInterceptor(mapOf(NowNodeCredentials.headerApiKey to network.apiKey)))
+                } else {
+                    emptyList()
+                }
+            }
+            else -> emptyList()
         }
+
         createRetrofitInstance(network.url, headerInterceptors).create(TronApi::class.java)
     }
 
