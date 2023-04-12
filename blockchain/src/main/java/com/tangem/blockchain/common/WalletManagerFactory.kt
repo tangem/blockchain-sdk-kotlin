@@ -308,7 +308,7 @@ class WalletManagerFactory(
 
             Blockchain.Stellar, Blockchain.StellarTestnet -> {
                 val isTestnet = blockchain == Blockchain.StellarTestnet
-                val hosts = if (isTestnet) {
+                val hosts = if (!isTestnet) {
                     buildList {
                         config.nowNodeCredentials?.apiKey.letNotBlank {
                             add(StellarNetwork.Nownodes(it))
@@ -333,15 +333,17 @@ class WalletManagerFactory(
 
             Blockchain.Cardano, Blockchain.CardanoShelley -> {
                 val providers = buildList {
-                    add(AdaliteNetworkProvider(API_ADALITE))
-                    add(RosettaNetworkProvider(RosettaNetwork.RosettaTangem))
                     config.getBlockCredentials?.apiKey.letNotBlank {
-                        RosettaNetworkProvider(
-                            RosettaNetwork.RosettaGetblock(
-                                config.getBlockCredentials?.apiKey ?: ""
+                        add(
+                            RosettaNetworkProvider(
+                                RosettaNetwork.RosettaGetblock(
+                                    config.getBlockCredentials?.apiKey ?: ""
+                                )
                             )
                         )
                     }
+                    add(AdaliteNetworkProvider(API_ADALITE))
+                    add(RosettaNetworkProvider(RosettaNetwork.RosettaTangem))
                 }
 
                 CardanoWalletManager(
@@ -397,9 +399,6 @@ class WalletManagerFactory(
                         config.nowNodeCredentials?.apiKey.letNotBlank {
                             add(TronNetwork.NowNodes(it))
                         }
-                        config.nowNodeCredentials?.apiKey.letNotBlank {
-                            add(TronNetwork.NowNodes(it))
-                        }
                         config.getBlockCredentials?.apiKey.letNotBlank {
                             add(TronNetwork.GetBlock(it))
                         }
@@ -412,10 +411,7 @@ class WalletManagerFactory(
                     listOf<TronNetwork>(TronNetwork.Nile)
                 }
                 val rpcProviders = networks.map {
-                    TronJsonRpcNetworkProvider(
-                        network = it,
-                        tronGridApiKey = config.tronGridApiKey
-                    )
+                    TronJsonRpcNetworkProvider(network = it)
                 }
                 TronWalletManager(
                     wallet = wallet,
