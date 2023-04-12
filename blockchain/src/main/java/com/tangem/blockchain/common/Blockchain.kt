@@ -60,6 +60,8 @@ enum class Blockchain(
     Litecoin("LTC", "LTC", "Litecoin"),
     Polkadot("Polkadot", "DOT", "Polkadot"),
     PolkadotTestnet("Polkadot", "WND", "Polkadot Westend Testnet"),
+    Kava("KAVA", "KAVA", "Kava EVM"),
+    KavaTestnet("KAVA/test", "KAVA", "Kava EVM Testnet"),
     Kusama("Kusama", "KSM", "Kusama"),
     Polygon("POLYGON", "MATIC", "Polygon"),
     PolygonTestnet("POLYGON/test", "MATIC", "Polygon Testnet"),
@@ -118,7 +120,7 @@ enum class Blockchain(
         Gnosis,
         Optimism, OptimismTestnet,
         EthereumFair, EthereumPow, EthereumPowTestnet,
-        SaltPay,
+        SaltPay, Kava, KavaTestnet,
         -> 18
     }
 
@@ -145,6 +147,7 @@ enum class Blockchain(
         BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet, Gnosis, Optimism, OptimismTestnet,
         EthereumFair, EthereumPow, EthereumPowTestnet, SaltPay,
+        Kava, KavaTestnet,
         -> EthereumAddressService()
         RSK -> RskAddressService()
         Cardano, CardanoShelley -> CardanoAddressService(this)
@@ -224,6 +227,8 @@ enum class Blockchain(
         EthereumPowTestnet -> "https://iceberg.ethwscan.com/"
         SaltPay -> "https://blockscout.com/xdai/optimism/"
         Kaspa -> "https://explorer.kaspa.org/"
+        Kava -> "https://explorer.kava.io/"
+        KavaTestnet -> "https://explorer.testnet.kava.io/"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -237,7 +242,9 @@ enum class Blockchain(
             } else {
                 "$baseUrl$tokenContractAddress?a=$address"
             }
-            EthereumClassic, EthereumClassicTestnet -> "$fullUrl/transactions"
+            EthereumClassic, EthereumClassicTestnet,
+            Kava, KavaTestnet,
+            -> "$fullUrl/transactions"
             RSK -> if (tokenContractAddress != null) {
                 "$fullUrl?__tab=tokens"
             } else {
@@ -276,6 +283,7 @@ enum class Blockchain(
             TronTestnet -> "https://nileex.io/join/getJoinPage"
             OptimismTestnet -> "https://optimismfaucet.xyz" //another one https://faucet.paradigm.xyz
             EthereumPowTestnet -> "https://faucet.ethwscan.com"
+            KavaTestnet -> "https://faucet.kava.io"
             else -> null
         }
     }
@@ -307,6 +315,7 @@ enum class Blockchain(
             Optimism, OptimismTestnet -> OptimismTestnet
             EthereumPow, EthereumPowTestnet -> EthereumPowTestnet
             TON, TONTestnet -> TONTestnet
+            Kava, KavaTestnet -> KavaTestnet
             else -> null
         }
     }
@@ -322,6 +331,7 @@ enum class Blockchain(
             BitcoinCash, BitcoinCashTestnet,
             Binance, BinanceTestnet,
             Ethereum, EthereumTestnet,
+            Kava, KavaTestnet,
             EthereumClassic, EthereumClassicTestnet,
             Polygon, PolygonTestnet,
             Avalanche, AvalancheTestnet,
@@ -373,6 +383,8 @@ enum class Blockchain(
             EthereumPow -> Chain.EthereumPow.id
             EthereumPowTestnet -> Chain.EthereumPowTestnet.id
             SaltPay -> Chain.SaltPay.id
+            Kava -> Chain.Kava.id
+            KavaTestnet -> Chain.KavaTestnet.id
             else -> null
         }
     }
@@ -444,6 +456,7 @@ enum class Blockchain(
             Stellar -> 148
             Polkadot -> 354
             Kusama -> 434
+            Kava -> 459
             Solana -> 501
             Binance -> 714
             Polygon -> 966
@@ -475,6 +488,7 @@ enum class Blockchain(
             TronTestnet,
             OptimismTestnet,
             EthereumPowTestnet,
+            KavaTestnet,
             Unknown,
             -> throw UnsupportedOperationException("Coin type not provided for: ${this.fullName}")
         }
@@ -495,7 +509,7 @@ enum class Blockchain(
         Gnosis,
         Optimism, OptimismTestnet,
         EthereumFair, EthereumPow, EthereumPowTestnet,
-        SaltPay,
+        SaltPay, Kava, KavaTestnet
         -> true
         else -> false
     }
