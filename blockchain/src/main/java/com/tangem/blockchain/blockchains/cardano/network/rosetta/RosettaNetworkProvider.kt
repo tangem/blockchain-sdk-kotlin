@@ -5,6 +5,7 @@ import co.nstant.`in`.cbor.CborEncoder
 import com.tangem.blockchain.blockchains.cardano.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
+import com.tangem.blockchain.blockchains.cardano.network.RosettaNetwork
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaAccountIdentifier
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaAddressBody
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaNetworkIdentifier
@@ -20,12 +21,12 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.io.ByteArrayOutputStream
 
-class RosettaNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
+class RosettaNetworkProvider(rosettaNetwork: RosettaNetwork) : CardanoNetworkProvider {
 
-    override val host: String = baseUrl
+    override val host: String = rosettaNetwork.url
 
     private val api: RosettaApi by lazy {
-        createRetrofitInstance(baseUrl).create(RosettaApi::class.java)
+        createRetrofitInstance(rosettaNetwork.url).create(RosettaApi::class.java)
     }
 
     private val networkIdentifier = RosettaNetworkIdentifier("cardano", "mainnet")
