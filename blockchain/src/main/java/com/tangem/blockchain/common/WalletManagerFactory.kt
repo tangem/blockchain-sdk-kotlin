@@ -48,6 +48,7 @@ import com.tangem.blockchain.blockchains.tron.TronTransactionBuilder
 import com.tangem.blockchain.blockchains.tron.TronWalletManager
 import com.tangem.blockchain.blockchains.tron.network.TronJsonRpcNetworkProvider
 import com.tangem.blockchain.blockchains.tron.network.TronNetwork
+import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
 import com.tangem.blockchain.blockchains.xrp.XrpTransactionBuilder
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
@@ -391,15 +392,35 @@ class WalletManagerFactory(
             }
 
             Blockchain.Tron, Blockchain.TronTestnet -> {
-                val network = if (blockchain.isTestnet()) TronNetwork.NILE else TronNetwork.MAINNET
-                val rpcProvider = TronJsonRpcNetworkProvider(
-                    network = network,
-                    tronGridApiKey = config.tronGridApiKey
-                )
+                val networks = if (!blockchain.isTestnet()) {
+                    buildList {
+                        config.nowNodeCredentials?.apiKey.letNotBlank {
+                            add(TronNetwork.NowNodes(it))
+                        }
+                        config.nowNodeCredentials?.apiKey.letNotBlank {
+                            add(TronNetwork.NowNodes(it))
+                        }
+                        config.getBlockCredentials?.apiKey.letNotBlank {
+                            add(TronNetwork.GetBlock(it))
+                        }
+                        add(TronNetwork.TronGrid(null))
+                        config.tronGridApiKey.letNotBlank {
+                            add(TronNetwork.TronGrid(it))
+                        }
+                    }
+                } else {
+                    listOf<TronNetwork>(TronNetwork.Nile)
+                }
+                val rpcProviders = networks.map {
+                    TronJsonRpcNetworkProvider(
+                        network = it,
+                        tronGridApiKey = config.tronGridApiKey
+                    )
+                }
                 TronWalletManager(
                     wallet = wallet,
                     transactionBuilder = TronTransactionBuilder(blockchain),
-                    networkProvider = rpcProvider
+                    networkService = TronNetworkService(rpcProviders, wallet.blockchain)
                 )
             }
 
