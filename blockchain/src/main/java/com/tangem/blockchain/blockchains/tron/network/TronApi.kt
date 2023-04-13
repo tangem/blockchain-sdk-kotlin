@@ -29,14 +29,6 @@ interface TronApi {
     suspend fun getTokenBalance(@Body requestBody: TronTriggerSmartContractRequest): TronTriggerSmartContractResponse
 
     @Headers("Content-Type: application/json", "Accept: application/json")
-    @GET("v1/contracts/{contractAddress}/transactions")
-    suspend fun getTokenTransactionHistory(
-        @Path("contractAddress") contractAddress: String,
-        @Query("only_confirmed") onlyConfirmed: Boolean = true,
-        @Query("limit") limit: Int = 50,
-    ): TronTokenHistoryResponse
-
-    @Headers("Content-Type: application/json", "Accept: application/json")
     @POST("walletsolidity/gettransactioninfobyid")
     suspend fun getTransactionInfoById(@Body requestBody: TronTransactionInfoRequest): TronTransactionInfoResponse
 
