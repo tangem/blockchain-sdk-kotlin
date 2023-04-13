@@ -17,7 +17,11 @@ interface TronNetworkProvider {
         tokenBalanceRequestData: TokenBalanceRequestData,
     ): Result<TronTriggerSmartContractResponse>
 
-    suspend fun getTokenTransactionHistory(contractAddress: String): Result<TronTokenHistoryResponse>
+    suspend fun contractEnergyUsage(
+        address: String,
+        contractAddress: String,
+        parameter: String,
+    ): Result<TronTriggerSmartContractResponse>
 
     suspend fun getTransactionInfoById(id: String): Result<String>
 
