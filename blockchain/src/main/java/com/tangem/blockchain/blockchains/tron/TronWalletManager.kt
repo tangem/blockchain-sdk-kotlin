@@ -1,18 +1,30 @@
 package com.tangem.blockchain.blockchains.tron
 
 import android.util.Log
+import com.google.common.primitives.Ints
 import com.tangem.blockchain.blockchains.tron.network.TronAccountInfo
-import com.tangem.blockchain.blockchains.tron.network.TronJsonRpcNetworkProvider
 import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.BlockchainError
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.DummySigner
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionSender
+import com.tangem.blockchain.common.TransactionSigner
+import com.tangem.blockchain.common.TransactionStatus
+import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.bigIntegerValue
+import com.tangem.blockchain.extensions.decodeBase58
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.calculateSha256
+import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
-import kotlin.math.ceil
 
 class TronWalletManager(
     wallet: Wallet,
@@ -56,7 +68,7 @@ class TronWalletManager(
 
     override suspend fun send(
         transactionData: TransactionData,
-        signer: TransactionSigner
+        signer: TransactionSigner,
     ): SimpleResult {
         val signResult = signTransactionData(
             amount = transactionData.amount,
@@ -82,18 +94,10 @@ class TronWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
-        val contractAddress = if (amount.type is AmountType.Token) {
-            amount.type.token.contractAddress
-        } else {
-            null
-        }
-
         val blockchain = wallet.blockchain
         return coroutineScope {
-            val chainParametersDef = async { networkService.getChainParameters() }
-            val maxEnergyDef = async { networkService.getMaxEnergyUse(contractAddress) }
-            val resourceDef = async { networkService.getAccountResource(wallet.address) }
             val destinationExistsDef = async { networkService.checkIfAccountExists(destination) }
+            val resourceDef = async { networkService.getAccountResource(wallet.address) }
             val transactionDataDef = async {
                 signTransactionData(
                     amount, wallet.address, destination, dummySigner, dummySigner.publicKey
@@ -111,13 +115,9 @@ class TronWalletManager(
                 )
             }
 
-            val chainParameters = when (val chainParametersResult = chainParametersDef.await()) {
-                is Result.Failure -> return@coroutineScope Result.Failure(chainParametersResult.error)
-                is Result.Success -> chainParametersResult.data
-            }
-            val maxEnergyUse = when (val maxEnergyResult = maxEnergyDef.await()) {
-                is Result.Failure -> return@coroutineScope Result.Failure(maxEnergyResult.error)
-                is Result.Success -> maxEnergyResult.data
+            val energyFee = when (val energyFeeResult = getEnergyFee(amount, destination)) {
+                is Result.Failure -> return@coroutineScope Result.Failure(energyFeeResult.error)
+                is Result.Success -> energyFeeResult.data
             }
             val resource = when (val resourceResult = resourceDef.await()) {
                 is Result.Failure -> return@coroutineScope Result.Failure(resourceResult.error)
@@ -129,26 +129,14 @@ class TronWalletManager(
             }
 
             val sunPerBandwidthPoint = 1000
-
-            val dynamicEnergyMaxFactor =
-                chainParameters.dynamicEnergyMaxFactor.toDouble() / ENERGY_FACTOR_PRECISION
-
             val additionalDataSize = 64
-            val transactionSizeFee =
-                sunPerBandwidthPoint * (transactionData.size + additionalDataSize)
-            val sunPerEnergyUnit = chainParameters.sunPerEnergyUnit
-            val maxEnergyFee =
-                ceil((maxEnergyUse * sunPerEnergyUnit).toDouble() * (1 + dynamicEnergyMaxFactor)).toLong()
-            val totalFee = transactionSizeFee + maxEnergyFee
-            val remainingBandwidthInSun =
-                (resource.freeNetLimit - (resource.freeNetUsed ?: 0)) * sunPerBandwidthPoint
+            val remainingBandwidthInSun = (resource.freeNetLimit - (resource.freeNetUsed ?: 0)) * sunPerBandwidthPoint
+            val transactionSizeFee = sunPerBandwidthPoint * (transactionData.size + additionalDataSize)
+            val consumedBandwidthFee = if (transactionSizeFee <= remainingBandwidthInSun) 0 else transactionSizeFee
+            val totalFee = consumedBandwidthFee + energyFee
 
-            if (totalFee <= remainingBandwidthInSun) {
-                return@coroutineScope Result.Success(listOf(Amount(blockchain)))
-            } else {
-                val value = BigDecimal(totalFee).movePointLeft(blockchain.decimals())
-                return@coroutineScope Result.Success(listOf(Amount(value, blockchain)))
-            }
+            val value = BigDecimal(totalFee).movePointLeft(blockchain.decimals())
+            Result.Success(listOf(Amount(value, blockchain)))
         }
     }
 
@@ -157,7 +145,7 @@ class TronWalletManager(
         source: String,
         destination: String,
         signer: TransactionSigner,
-        publicKey: Wallet.PublicKey
+        publicKey: Wallet.PublicKey,
     ): Result<ByteArray> {
 
         return when (val result = networkService.getNowBlock()) {
@@ -185,11 +173,11 @@ class TronWalletManager(
     private suspend fun sign(
         transactionToSign: ByteArray,
         signer: TransactionSigner,
-        publicKey: Wallet.PublicKey
+        publicKey: Wallet.PublicKey,
     ): Result<ByteArray> {
         return when (val result = signer.sign(transactionToSign, publicKey)) {
             is CompletionResult.Success -> {
-                val unmarshalledSignature =  if (publicKey == dummySigner.publicKey) {
+                val unmarshalledSignature = if (publicKey == dummySigner.publicKey) {
                     result.data + ByteArray(1)
                 } else {
                     transactionBuilder.unmarshalSignature(result.data, transactionToSign, publicKey)
@@ -201,9 +189,67 @@ class TronWalletManager(
             }
         }
     }
+
+    private suspend fun getEnergyFee(amount: Amount, destination: String): Result<Int> {
+        val token = when (amount.type) {
+            AmountType.Coin -> return Result.Success(0)
+            AmountType.Reserve -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+            is AmountType.Token -> amount.type.token
+        }
+        val addressData = destination.decodeBase58(checked = true)
+            ?.padLeft(BYTE_ARRAY_SIZE)
+            ?: byteArrayOf()
+
+        val amountData = amount.bigIntegerValue()
+            ?.toByteArray()
+            ?.padLeft(BYTE_ARRAY_SIZE)
+            ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+
+        val parameter = (addressData + amountData).toHexString()
+
+        return coroutineScope {
+            val energyUseDef = async {
+                networkService.getMaxEnergyUse(
+                    address = wallet.address,
+                    contractAddress = token.contractAddress,
+                    parameter = parameter,
+                )
+            }
+            val chainParametersDef = async { networkService.getChainParameters() }
+
+            val energyUse = when (val energyUseResult = energyUseDef.await()) {
+                is Result.Failure -> return@coroutineScope Result.Failure(energyUseResult.error)
+                is Result.Success -> energyUseResult.data
+            }
+            val chainParameters = when (val chainParametersResult = chainParametersDef.await()) {
+                is Result.Failure -> return@coroutineScope Result.Failure(chainParametersResult.error)
+                is Result.Success -> chainParametersResult.data
+            }
+
+            // Contract's energy fee changes every maintenance period (6 hours) and since we don't know what period
+            // the transaction is going to be executed in we increase the fee just in case by 20%
+            val sunPerEnergyUnit = chainParameters.sunPerEnergyUnit
+            val energyFee = (energyUse * sunPerEnergyUnit).toDouble()
+            val dynamicEnergyIncreaseFactor =
+                chainParameters.dynamicIncreaseFactor.toDouble() / ENERGY_FACTOR_PRECISION
+            val conservativeEnergyFee = (energyFee * (1 + dynamicEnergyIncreaseFactor)).toInt()
+
+            Result.Success(conservativeEnergyFee)
+        }
+    }
+
+    /**
+     * Creates new ByteArray with given [length] and copy content of initial ByteArray content to new one.
+     */
+    private fun ByteArray.padLeft(length: Int): ByteArray {
+        val paddingSize = Ints.max(length - this.size, 0)
+        return ByteArray(paddingSize) + this
+    }
 }
 
 /**
  * Value taken from [TIP-491](https://github.com/tronprotocol/tips/issues/491)
  */
 private const val ENERGY_FACTOR_PRECISION = 10_000
+
+private const val BYTE_ARRAY_SIZE = 32
