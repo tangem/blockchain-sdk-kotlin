@@ -67,14 +67,13 @@ class TronNetworkService(
         }
     }
 
-    suspend fun getMaxEnergyUse(contractAddress: String?): Result<Int> {
-        if (contractAddress == null) return Result.Success(0) // for non-token transactions
+    suspend fun getMaxEnergyUse(address: String, contractAddress: String, parameter: String): Result<Int> {
         val result =
-            multiProvider.performRequest(TronJsonRpcNetworkProvider::getTokenTransactionHistory, contractAddress)
+            multiProvider.performRequest { contractEnergyUsage(address, contractAddress, parameter) }
         return when (result) {
             is Result.Failure -> Result.Failure(result.error)
             is Result.Success -> {
-                val maxEnergy = result.data.data.mapNotNull { it.energyUsageTotal }.maxOrNull() ?: 0
+                val maxEnergy = result.data.energyUsed
                 Result.Success(maxEnergy)
             }
         }
@@ -105,12 +104,16 @@ class TronNetworkService(
                 val energyMaxFactor = result.data.chainParameters
                     .firstOrNull { it.key == KEY_MAX_FACTOR }
                     ?.value
+                val increaseFactor = result.data.chainParameters
+                    .firstOrNull { it.key == KEY_INCREASE_FACTOR }
+                    ?.value
 
-                if (energyFee != null && energyMaxFactor != null) {
+                if (energyFee != null && energyMaxFactor != null && increaseFactor != null) {
                     Result.Success(
                         TronChainParameters(
                             sunPerEnergyUnit = energyFee,
                             dynamicEnergyMaxFactor = energyMaxFactor,
+                            dynamicIncreaseFactor = increaseFactor,
                         )
                     )
                 } else {
@@ -147,3 +150,4 @@ class TronNetworkService(
 
 private const val KEY_SUN_ENERGY_FEE = "getEnergyFee"
 private const val KEY_MAX_FACTOR = "getDynamicEnergyMaxFactor"
+private const val KEY_INCREASE_FACTOR = "getDynamicEnergyIncreaseFactor"
