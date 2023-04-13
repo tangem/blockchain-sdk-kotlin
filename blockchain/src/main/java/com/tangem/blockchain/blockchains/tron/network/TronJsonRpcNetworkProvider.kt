@@ -87,9 +87,21 @@ class TronJsonRpcNetworkProvider(override val network: TronNetwork) : TronNetwor
         }
     }
 
-    override suspend fun getTokenTransactionHistory(contractAddress: String): Result<TronTokenHistoryResponse> {
+    override suspend fun contractEnergyUsage(
+        address: String,
+        contractAddress: String,
+        parameter: String,
+    ): Result<TronTriggerSmartContractResponse> {
         return try {
-            val response = api.getTokenTransactionHistory(contractAddress)
+            val response = api.getTokenBalance(
+                    requestBody = TronTriggerSmartContractRequest(
+                        ownerAddress = address,
+                        contractAddress = contractAddress,
+                        functionSelector = "transfer(address,uint256)",
+                        parameter = parameter,
+                        visible = true
+                    ),
+                )
             Result.Success(response)
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
