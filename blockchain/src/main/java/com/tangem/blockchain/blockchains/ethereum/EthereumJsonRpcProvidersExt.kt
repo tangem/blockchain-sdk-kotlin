@@ -79,6 +79,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = "https://rpc.testnet.fantom.network/"),
         )
         Blockchain.RSK -> listOfNotNull(
+            getNowNodesProvider(baseUrl = "https://rsk.nownodes.io/", config = config),
             getGetBlockProvider(baseUrl = "https://rsk.getblock.io/mainnet/", config = config),
             EthereumJsonRpcProvider(baseUrl = "https://public-node.rsk.co/")
         )
