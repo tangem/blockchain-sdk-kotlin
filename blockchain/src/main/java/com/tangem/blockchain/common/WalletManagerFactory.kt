@@ -66,8 +66,8 @@ import com.tangem.blockchain.network.API_XRP_LEDGER_FOUNDATION
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import com.tangem.blockchain.network.blockscout.BlockscoutNetworkProvider
 import com.tangem.common.card.EllipticCurve
-import com.tangem.common.hdWallet.DerivationPath
-import com.tangem.common.hdWallet.ExtendedPublicKey
+import com.tangem.crypto.hdWallet.DerivationPath
+import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 
 class WalletManagerFactory(
     private val config: BlockchainSdkConfig = BlockchainSdkConfig(),
