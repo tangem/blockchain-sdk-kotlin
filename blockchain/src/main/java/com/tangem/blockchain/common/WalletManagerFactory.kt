@@ -334,13 +334,7 @@ class WalletManagerFactory(
             Blockchain.Cardano, Blockchain.CardanoShelley -> {
                 val providers = buildList {
                     config.getBlockCredentials?.apiKey.letNotBlank {
-                        add(
-                            RosettaNetworkProvider(
-                                RosettaNetwork.RosettaGetblock(
-                                    config.getBlockCredentials?.apiKey ?: ""
-                                )
-                            )
-                        )
+                        add(RosettaNetworkProvider(RosettaNetwork.RosettaGetblock(it)))
                     }
                     add(AdaliteNetworkProvider(API_ADALITE))
                     add(RosettaNetworkProvider(RosettaNetwork.RosettaTangem))
