@@ -5,13 +5,13 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 
 interface RosettaApi {
-    @POST("/account/balance")
+    @POST("account/balance")
     suspend fun getBalances(@Body body: RosettaAddressBody): RosettaBalanceResponse
 
-    @POST("/account/coins")
+    @POST("account/coins")
     suspend fun getCoins(@Body body: RosettaAddressBody): RosettaCoinsResponse
 
-    @POST("/construction/submit")
+    @POST("construction/submit")
     suspend fun submitTransaction(@Body body: RosettaSubmitBody): RosettaSubmitResponse
 
 //    @POST("/construction/preprocess")
