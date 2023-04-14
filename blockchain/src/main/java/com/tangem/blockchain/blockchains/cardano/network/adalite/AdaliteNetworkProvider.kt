@@ -4,7 +4,6 @@ import com.squareup.moshi.Json
 import com.tangem.blockchain.blockchains.cardano.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
-import com.tangem.blockchain.blockchains.cardano.network.api.AdaliteApi
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
