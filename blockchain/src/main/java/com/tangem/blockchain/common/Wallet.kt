@@ -2,7 +2,7 @@ package com.tangem.blockchain.common
 
 import com.tangem.blockchain.common.address.Address
 import com.tangem.common.extensions.calculateHashCode
-import com.tangem.common.hdWallet.DerivationPath
+import com.tangem.crypto.hdWallet.DerivationPath
 import java.math.BigDecimal
 import java.util.Calendar
 import java.util.Locale
@@ -11,7 +11,7 @@ class Wallet(
     val blockchain: Blockchain,
     val addresses: Set<Address>,
     val publicKey: PublicKey,
-    tokens: Set<Token>
+    tokens: Set<Token>,
 ) {
     //we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
     val recentTransactions: MutableList<TransactionData> = mutableListOf()
@@ -100,7 +100,7 @@ class Wallet(
     data class PublicKey(
         val seedKey: ByteArray,
         val derivedKey: ByteArray?,
-        val derivationPath: DerivationPath?
+        val derivationPath: DerivationPath?,
     ) {
         val blockchainKey: ByteArray = derivedKey ?: seedKey
 
