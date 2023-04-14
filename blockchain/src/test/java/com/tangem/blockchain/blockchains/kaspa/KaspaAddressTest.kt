@@ -55,4 +55,50 @@ class KaspaAddressTest {
 
         Truth.assertThat(addressService.getPublicKey(address)).isEqualTo(expected)
     }
+
+    @Test
+    fun testKaspaAddressGeneration() {
+        // https://github.com/kaspanet/kaspad/pull/2202/files
+        // https://github.com/kaspanet/kaspad/blob/dev/util/address_test.go
+        val address = "kaspa:qyp0r5mcq4rd5grj3652ra09u5dcgwqq9ntuswp247nama5quyj40eq03sc2dkx"
+        val publicKey = byteArrayOf(
+            // region Bytes
+            0x02.toByte(),
+            0xf1.toByte(),
+            0xd3.toByte(),
+            0x78.toByte(),
+            0x05.toByte(),
+            0x46.toByte(),
+            0xda.toByte(),
+            0x20.toByte(),
+            0x72.toByte(),
+            0x8e.toByte(),
+            0xa8.toByte(),
+            0xa1.toByte(),
+            0xf5.toByte(),
+            0xe5.toByte(),
+            0xe5.toByte(),
+            0x1b.toByte(),
+            0x84.toByte(),
+            0x38.toByte(),
+            0x00.toByte(),
+            0x2c.toByte(),
+            0xd7.toByte(),
+            0xc8.toByte(),
+            0x38.toByte(),
+            0x2a.toByte(),
+            0xaf.toByte(),
+            0xa7.toByte(),
+            0xdd.toByte(),
+            0xf6.toByte(),
+            0x80.toByte(),
+            0xe1.toByte(),
+            0x25.toByte(),
+            0x57.toByte(),
+            0xe4.toByte(),
+            // endregion Bytes
+        )
+
+        Truth.assertThat(addressService.makeAddress(publicKey)).isEqualTo(address)
+    }
 }
