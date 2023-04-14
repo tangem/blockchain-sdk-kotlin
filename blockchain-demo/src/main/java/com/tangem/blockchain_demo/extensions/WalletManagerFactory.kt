@@ -1,6 +1,10 @@
 package com.tangem.blockchain_demo.extensions
 
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.DerivationParams
+import com.tangem.blockchain.common.DerivationStyle
+import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.WalletManagerFactory
 import com.tangem.blockchain_demo.model.BlockchainNetwork
 import com.tangem.blockchain_demo.model.ScanResponse
 import com.tangem.common.card.Card
@@ -8,7 +12,7 @@ import com.tangem.common.card.CardWallet
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toMapKey
-import com.tangem.common.hdWallet.DerivationPath
+import com.tangem.crypto.hdWallet.DerivationPath
 
 /**
 [REDACTED_AUTHOR]
@@ -16,7 +20,7 @@ import com.tangem.common.hdWallet.DerivationPath
 fun WalletManagerFactory.makeWalletManagerForApp(
     scanResponse: ScanResponse,
     blockchain: Blockchain,
-    derivationParams: DerivationParams?
+    derivationParams: DerivationParams?,
 ): WalletManager? {
     val card = scanResponse.card
     if (card.isTestCard && blockchain.getTestnetVersion() == null) return null
@@ -44,7 +48,7 @@ fun WalletManagerFactory.makeWalletManagerForApp(
                 is DerivationParams.Custom -> derivationParams.path
             }
             val derivedKey = derivedKeys?.get(derivationPath)
-                    ?: return null
+                ?: return null
 
             makeWalletManager(
                 blockchain = environmentBlockchain,
@@ -64,7 +68,7 @@ fun WalletManagerFactory.makeWalletManagerForApp(
 }
 
 fun WalletManagerFactory.makeWalletManagerForApp(
-    scanResponse: ScanResponse, blockchainNetwork: BlockchainNetwork
+    scanResponse: ScanResponse, blockchainNetwork: BlockchainNetwork,
 ): WalletManager? {
     return makeWalletManagerForApp(
         scanResponse,
@@ -86,7 +90,6 @@ private fun getDerivationParams(derivationPath: String?, card: Card): Derivation
         DerivationParams.Default(DerivationStyle.NEW)
     }
 }
-
 
 fun WalletManagerFactory.makeWalletManagersForApp(
     scanResponse: ScanResponse, blockchains: List<BlockchainNetwork>,
