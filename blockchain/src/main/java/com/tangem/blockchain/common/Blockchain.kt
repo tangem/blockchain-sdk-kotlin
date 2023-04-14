@@ -23,9 +23,9 @@ import com.tangem.blockchain.common.address.DefaultAddressType
 import com.tangem.blockchain.common.address.MultisigAddressProvider
 import com.tangem.blockchain.common.address.TrustWalletAddressService
 import com.tangem.common.card.EllipticCurve
-import com.tangem.common.hdWallet.DerivationNode
-import com.tangem.common.hdWallet.DerivationPath
-import com.tangem.common.hdWallet.bip.BIP44
+import com.tangem.crypto.hdWallet.BIP44
+import com.tangem.crypto.hdWallet.DerivationNode
+import com.tangem.crypto.hdWallet.DerivationPath
 import wallet.core.jni.CoinType
 import wallet.core.jni.PublicKeyType
 
@@ -509,7 +509,7 @@ enum class Blockchain(
         Gnosis,
         Optimism, OptimismTestnet,
         EthereumFair, EthereumPow, EthereumPowTestnet,
-        SaltPay, Kava, KavaTestnet
+        SaltPay, Kava, KavaTestnet,
         -> true
         else -> false
     }
