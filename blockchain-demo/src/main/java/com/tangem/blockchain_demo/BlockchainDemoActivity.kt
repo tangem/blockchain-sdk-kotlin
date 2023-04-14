@@ -18,7 +18,7 @@ import com.tangem.common.card.CardWallet
 import com.tangem.common.core.TangemError
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.toHexString
-import com.tangem.tangem_sdk_new.extensions.init
+import com.tangem.sdk.extensions.init
 import kotlinx.coroutines.*
 import java.io.PrintWriter
 import java.io.StringWriter
