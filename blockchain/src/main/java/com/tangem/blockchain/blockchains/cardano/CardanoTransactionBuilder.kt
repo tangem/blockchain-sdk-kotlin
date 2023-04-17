@@ -20,7 +20,11 @@ class CardanoTransactionBuilder(private val walletPublicKey: ByteArray) {
         transactionMap.put(0.toDataItem(), createInputsDataItem())
         transactionMap.put(1.toDataItem(), createOutputsDataItem(transactionData))
         transactionMap.put(2, transactionData.fee!!.longValue!!)
-        transactionMap.put(3, 90000000) // ttl
+        // Transaction validity time. Currently we are using absolute values.
+        // At 16 April 2023 was 90007700 slot number.
+        // We need to rework this logic to use relative validity time. TODO: https://tangem.atlassian.net/browse/AND-3431
+        // This can be constructed using absolute ttl slot from `/metadata` endpoint.
+        transactionMap.put(3, 190000000) // ttl
 
         val unsignedTransaction = transactionMap.end().build()
         transactionBody = unsignedTransaction[0]
