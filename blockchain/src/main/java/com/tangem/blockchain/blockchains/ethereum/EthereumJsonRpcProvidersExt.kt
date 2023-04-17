@@ -47,9 +47,9 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             )
         )
         Blockchain.Ethereum -> listOfNotNull(
+            getInfuraProvider(baseUrl = "https://mainnet.infura.io/v3/", config = config),
             getNowNodesProvider(baseUrl = "https://eth.nownodes.io/", config = config),
-            getGetBlockProvider(baseUrl = "https://eth.getblock.io/mainnet/", config = config),
-            getInfuraProvider(baseUrl = "https://mainnet.infura.io/v3/", config = config)
+            getGetBlockProvider(baseUrl = "https://eth.getblock.io/mainnet/", config = config)
         )
         Blockchain.EthereumTestnet -> listOfNotNull(
             getNowNodesProvider(baseUrl = "https://eth-goerli.nownodes.io/", config = config),
