@@ -5,7 +5,6 @@ import com.tangem.blockchain.blockchains.cardano.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -17,6 +16,7 @@ import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import retrofit2.HttpException
+import java.io.IOException
 
 class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
 
@@ -65,12 +65,11 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
             SimpleResult.Success
         } catch (exception: Exception) {
             if (exception is HttpException && exception.code() == 400) {
-                val error = BlockchainSdkError.SendException(
-                    Blockchain.Cardano,
-                    "Failed to send transaction ${transaction.toHexString()}\nwith an error: " +
+                val error = IOException(
+                    "${Blockchain.Cardano}. Failed to send transaction ${transaction.toHexString()}\nwith an error: " +
                         "\n${exception.response()?.errorBody()?.string()}"
                 )
-                SimpleResult.Failure(error)
+                SimpleResult.Failure(error.toBlockchainSdkError())
             } else {
                 SimpleResult.Failure(exception.toBlockchainSdkError())
             }
