@@ -32,6 +32,7 @@ import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
 import com.tangem.blockchain.blockchains.optimism.OptimismWalletManager
 import com.tangem.blockchain.blockchains.polkadot.PolkadotWalletManager
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkService
+import com.tangem.blockchain.blockchains.ravencoin.RavencoinWalletManager
 import com.tangem.blockchain.blockchains.solana.SolanaRpcClientBuilder
 import com.tangem.blockchain.blockchains.solana.SolanaWalletManager
 import com.tangem.blockchain.blockchains.stellar.StellarNetwork
@@ -195,6 +196,19 @@ class WalletManagerFactory(
                     transactionBuilder = BitcoinCashTransactionBuilder(
                         walletPublicKey = publicKey.blockchainKey,
                         blockchain = blockchain
+                    ),
+                    networkProvider = BitcoinNetworkService(
+                        providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
+                    )
+                )
+            }
+            Blockchain.Ravencoin, Blockchain.RavencoinTestnet -> {
+                RavencoinWalletManager(
+                    wallet = wallet,
+                    transactionBuilder = BitcoinTransactionBuilder(
+                        walletPublicKey = publicKey.blockchainKey,
+                        blockchain = blockchain,
+                        walletAddresses = addresses,
                     ),
                     networkProvider = BitcoinNetworkService(
                         providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
