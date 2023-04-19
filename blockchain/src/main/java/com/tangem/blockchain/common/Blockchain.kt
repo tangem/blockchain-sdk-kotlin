@@ -85,6 +85,8 @@ enum class Blockchain(
     Kaspa("KAS", "KAS", "Kaspa"),
     TON("The-Open-Network", "TON", "Ton"),
     TONTestnet("The-Open-Network/test", "TON", "Ton Testnet"),
+    Ravencoin("ravencoin", "RVN", "Ravencoin"),
+    RavencoinTestnet("ravencoin/test", "RVN", "Ravencoin Testnet"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -103,6 +105,7 @@ enum class Blockchain(
         Dogecoin,
         Dash,
         Kaspa,
+        Ravencoin, RavencoinTestnet,
         -> 8
         Solana, SolanaTestnet,
         TON, TONTestnet,
@@ -140,7 +143,8 @@ enum class Blockchain(
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
     private fun getAddressService(): AddressService = when (this) {
-        Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus, Dash -> BitcoinAddressService(this)
+        Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus, Dash,
+        Ravencoin, RavencoinTestnet -> BitcoinAddressService(this)
         BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService()
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
@@ -229,6 +233,8 @@ enum class Blockchain(
         Kaspa -> "https://explorer.kaspa.org/"
         Kava -> "https://explorer.kava.io/"
         KavaTestnet -> "https://explorer.testnet.kava.io/"
+        Ravencoin -> "https://ravencoin.network/"
+        RavencoinTestnet -> "https://testnet.ravencoin.network/"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -316,6 +322,7 @@ enum class Blockchain(
             EthereumPow, EthereumPowTestnet -> EthereumPowTestnet
             TON, TONTestnet -> TONTestnet
             Kava, KavaTestnet -> KavaTestnet
+            Ravencoin, RavencoinTestnet -> RavencoinTestnet
             else -> null
         }
     }
@@ -348,6 +355,7 @@ enum class Blockchain(
             EthereumFair, EthereumPow, EthereumPowTestnet,
             SaltPay,
             Kaspa,
+            Ravencoin, RavencoinTestnet,
             -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
@@ -471,6 +479,7 @@ enum class Blockchain(
             Optimism -> 614
             TON -> 607
             Kaspa -> 111111
+            Ravencoin -> 175
             ArbitrumTestnet,
             AvalancheTestnet,
             BinanceTestnet,
@@ -489,6 +498,7 @@ enum class Blockchain(
             OptimismTestnet,
             EthereumPowTestnet,
             KavaTestnet,
+            RavencoinTestnet,
             Unknown,
             -> throw UnsupportedOperationException("Coin type not provided for: ${this.fullName}")
         }
