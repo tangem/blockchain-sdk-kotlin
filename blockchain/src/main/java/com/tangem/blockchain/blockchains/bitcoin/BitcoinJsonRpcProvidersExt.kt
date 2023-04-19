@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo.BlockchainInfoNetworkProvider
+import com.tangem.blockchain.blockchains.ravencoin.network.RavencoinNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.network.blockbook.BlockBookNetworkProvider
@@ -38,6 +39,14 @@ internal fun Blockchain.getBitcoinNetworkProviders(
         Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet -> listOfNotNull(
             *getBlockchairProviders(blockchain, config),
         )
+        Blockchain.Ravencoin, Blockchain.RavencoinTestnet -> if (blockchain.isTestnet()) {
+            listOf("https://testnet.ravencoin.network/api/")
+        } else {
+            listOf(
+                "https://api.ravencoin.org/api/",
+                "https://ravencoin.network/api/",
+            )
+        }.map(::RavencoinNetworkProvider)
         else -> throw IllegalStateException("$this isn't supported")
     }
 }
