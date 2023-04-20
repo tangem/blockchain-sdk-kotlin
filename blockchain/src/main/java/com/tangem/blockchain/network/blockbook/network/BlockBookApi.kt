@@ -19,10 +19,7 @@ import ru.gildor.coroutines.okhttp.await
 import java.io.IOException
 
 @OptIn(ExperimentalStdlibApi::class)
-internal class BlockBookApi(
-    private val config: BlockBookConfig,
-    private val blockchain: Blockchain
-) {
+internal class BlockBookApi(private val config: BlockBookConfig, private val blockchain: Blockchain) {
 
     private val client = OkHttpClient.Builder()
         .addHeaders(headers = mapOf(config.credentials))
@@ -66,8 +63,8 @@ internal class BlockBookApi(
         val response = client
             .newCall(
                 request = Request.Builder()
-                    .get()
-                    .url("$requestBaseUrl/sendtx/$txHex")
+                    .post(txHex.toRequestBody(TEXT_PLAIN_MEDIA_TYPE.toMediaTypeOrNull()))
+                    .url("$requestBaseUrl/sendtx/")
                     .build()
             )
             .await()
@@ -104,5 +101,6 @@ internal class BlockBookApi(
 
     private companion object {
         const val APPLICATION_JSON_MEDIA_TYPE = "application/json"
+        const val TEXT_PLAIN_MEDIA_TYPE = "text/plain"
     }
 }
