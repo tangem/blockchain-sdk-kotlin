@@ -75,7 +75,7 @@ class BlockBookNetworkProvider(
             withContext(Dispatchers.IO) { api.sendTransaction(transaction) }
             SimpleResult.Success
         } catch (e: Exception) {
-            SimpleResult.fromTangemSdkError(e.toBlockchainSdkError())
+            SimpleResult.Failure(e.toBlockchainSdkError())
         }
     }
 
