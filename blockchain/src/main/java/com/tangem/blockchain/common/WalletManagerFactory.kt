@@ -404,15 +404,15 @@ class WalletManagerFactory(
             Blockchain.Tron, Blockchain.TronTestnet -> {
                 val networks = if (!blockchain.isTestnet()) {
                     buildList {
+                        add(TronNetwork.TronGrid(null))
+                        config.tronGridApiKey.letNotBlank {
+                            add(TronNetwork.TronGrid(it))
+                        }
                         config.nowNodeCredentials?.apiKey.letNotBlank {
                             add(TronNetwork.NowNodes(it))
                         }
                         config.getBlockCredentials?.apiKey.letNotBlank {
                             add(TronNetwork.GetBlock(it))
-                        }
-                        add(TronNetwork.TronGrid(null))
-                        config.tronGridApiKey.letNotBlank {
-                            add(TronNetwork.TronGrid(it))
                         }
                     }
                 } else {
