@@ -21,6 +21,10 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         )
         Blockchain.Avalanche -> listOfNotNull(
             // postfix is required because the AVALANCHE API needs url without a last slash !!!
+            EthereumJsonRpcProvider(
+                baseUrl = "https://api.avax.network/",
+                postfixUrl = AVALANCHE_POSTFIX
+            ),
             config.nowNodeCredentials?.apiKey.letNotBlank { nowNodesApiKey ->
                 EthereumJsonRpcProvider(
                     baseUrl = "https://avax.nownodes.io/",
@@ -35,10 +39,6 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
                     getBlockApiKey = getBlockApiKey
                 )
             },
-            EthereumJsonRpcProvider(
-                baseUrl = "https://api.avax.network/",
-                postfixUrl = AVALANCHE_POSTFIX
-            )
         )
         Blockchain.AvalancheTestnet -> listOf(
             EthereumJsonRpcProvider(
@@ -72,21 +72,23 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             getGetBlockProvider(baseUrl = "https://ftm.getblock.io/mainnet/", config = config),
             EthereumJsonRpcProvider(baseUrl = "https://rpc.ftm.tools/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpcapi.fantom.network/"),
+            EthereumJsonRpcProvider(baseUrl = "https://fantom-mainnet.public.blastapi.io/"),
+            EthereumJsonRpcProvider(baseUrl = "https://fantom-rpc.gateway.pokt.network/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/", postfixUrl = "fantom"),
-            EthereumJsonRpcProvider(baseUrl = "https://ftmrpc.ultimatenodes.io/"),
         )
         Blockchain.FantomTestnet -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://rpc.testnet.fantom.network/"),
         )
         Blockchain.RSK -> listOfNotNull(
+            EthereumJsonRpcProvider(baseUrl = "https://public-node.rsk.co/"),
             getNowNodesProvider(baseUrl = "https://rsk.nownodes.io/", config = config),
             getGetBlockProvider(baseUrl = "https://rsk.getblock.io/mainnet/", config = config),
-            EthereumJsonRpcProvider(baseUrl = "https://public-node.rsk.co/")
         )
+        // https://docs.fantom.foundation/api/public-api-endpoints
         Blockchain.BSC -> listOfNotNull(
+            EthereumJsonRpcProvider(baseUrl = "https://bsc-dataseed.binance.org/"),
             getNowNodesProvider(baseUrl = "https://bsc.nownodes.io/", config = config),
             getGetBlockProvider(baseUrl = "https://bsc.getblock.io/mainnet/", config = config),
-            EthereumJsonRpcProvider(baseUrl = "https://bsc-dataseed.binance.org/"),
             config.quickNodeBscCredentials?.let { credentials ->
                 if (credentials.subdomain.isNotBlank() && credentials.apiKey.isNotBlank()) {
                     EthereumJsonRpcProvider(
@@ -101,15 +103,14 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         Blockchain.BSCTestnet -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://data-seed-prebsc-1-s1.binance.org:8545/")
         )
+        // https://wiki.polygon.technology/docs/operate/network-rpc-endpoints
         Blockchain.Polygon -> listOfNotNull(
+            EthereumJsonRpcProvider(baseUrl = "https://polygon-rpc.com/"),
             getNowNodesProvider(baseUrl = "https://matic.nownodes.io/", config = config),
             getGetBlockProvider(baseUrl = "https://matic.getblock.io/mainnet/", config = config),
-            EthereumJsonRpcProvider(baseUrl = "https://polygon-rpc.com/"),
-            EthereumJsonRpcProvider(baseUrl = "https://rpc-mainnet.matic.network/"),
             EthereumJsonRpcProvider(baseUrl = "https://matic-mainnet.chainstacklabs.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpc-mainnet.maticvigil.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpc-mainnet.matic.quiknode.pro/"),
-            EthereumJsonRpcProvider(baseUrl = "https://matic-mainnet-full-rpc.bwarelabs.com/"),
         )
         Blockchain.PolygonTestnet -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://rpc-mumbai.maticvigil.com/")
@@ -118,14 +119,13 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             getGetBlockProvider(baseUrl = "https://gno.getblock.io/mainnet/", config = config),
             EthereumJsonRpcProvider(baseUrl = "https://rpc.gnosischain.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://gnosischain-rpc.gateway.pokt.network/"),
-            EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/gnosis/"),
             EthereumJsonRpcProvider(baseUrl = "https://gnosis-mainnet.public.blastapi.io/"),
             EthereumJsonRpcProvider(baseUrl = "https://xdai-rpc.gateway.pokt.network/"),
-            EthereumJsonRpcProvider(baseUrl = "https://xdai-archive.blockscout.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/gnosis/"),
         )
         Blockchain.Optimism -> listOfNotNull(
-            getNowNodesProvider(baseUrl = "https://optimism.nownodes.io/", config = config),
             EthereumJsonRpcProvider(baseUrl = "https://mainnet.optimism.io/"),
+            getNowNodesProvider(baseUrl = "https://optimism.nownodes.io/", config = config),
             EthereumJsonRpcProvider(baseUrl = "https://optimism-mainnet.public.blastapi.io/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/optimism/"),
         )
