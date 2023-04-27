@@ -43,11 +43,12 @@ class RavencoinNetworkProvider(
     override suspend fun getFee(): Result<BitcoinFee> {
         val feeResponse = api.getFee(numberOfBlocks = FEE_NUMBER_OF_BLOCKS)
         val feePerKb = feeResponse["$FEE_NUMBER_OF_BLOCKS"] ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-        val normalRate = feePerKb * BigDecimal.valueOf(1.2)
+        val minimalRate = feePerKb * BigDecimal.valueOf(1.1)
+        val normalRate = feePerKb * BigDecimal.valueOf(1.3)
         val priorityRate = feePerKb * BigDecimal.valueOf(1.5)
         return Result.Success(
             BitcoinFee(
-                minimalPerKb = feePerKb,
+                minimalPerKb = minimalRate,
                 normalPerKb = normalRate,
                 priorityPerKb = priorityRate,
             )
