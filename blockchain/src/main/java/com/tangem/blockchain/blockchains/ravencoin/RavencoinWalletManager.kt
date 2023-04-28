@@ -13,5 +13,6 @@ class RavencoinWalletManager(
 ) : BitcoinWalletManager(wallet, transactionBuilder, networkProvider) {
 
     // https://github.com/raven-community/ravencore-lib/blob/master/docs/transaction.md
-    override val minimalFeePerKb: BigDecimal = ("0.0001").toBigDecimal()
+    override val minimalFeePerKb: BigDecimal = BigDecimal(10_000).movePointLeft(wallet.blockchain.decimals())
+    override val dustValue: BigDecimal = BigDecimal(642).movePointLeft(wallet.blockchain.decimals())
 }
