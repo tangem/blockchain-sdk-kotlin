@@ -233,7 +233,7 @@ enum class Blockchain(
         Kaspa -> "https://explorer.kaspa.org/"
         Kava -> "https://explorer.kava.io/"
         KavaTestnet -> "https://explorer.testnet.kava.io/"
-        Ravencoin -> "https://ravencoin.network/"
+        Ravencoin -> "https://api.ravencoin.org/"
         RavencoinTestnet -> "https://testnet.ravencoin.network/"
         Unknown -> throw Exception("unsupported blockchain")
     }
