@@ -89,6 +89,7 @@ class TonWalletManager(
             coin = CoinType.TON,
             parser = TheOpenNetwork.SigningOutput.parser(),
             signer = signer,
+            curve = wallet.blockchain.getSupportedCurves().first(),
         )
         return when (outputResult) {
             is Result.Failure -> outputResult

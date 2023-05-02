@@ -15,6 +15,9 @@ import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkService
 import com.tangem.blockchain.blockchains.cardano.network.RosettaNetwork
 import com.tangem.blockchain.blockchains.cardano.network.adalite.AdaliteNetworkProvider
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.RosettaNetworkProvider
+import com.tangem.blockchain.blockchains.cosmos.CosmosWalletManager
+import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
+import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
 import com.tangem.blockchain.blockchains.dogecoin.DogecoinWalletManager
 import com.tangem.blockchain.blockchains.ducatus.DucatusWalletManager
 import com.tangem.blockchain.blockchains.ducatus.network.DucatusNetworkService
@@ -451,7 +454,29 @@ class WalletManagerFactory(
                     networkProviders = TonJsonRpcClientBuilder().build(blockchain.isTestnet(), config),
                 )
             }
+            Blockchain.Cosmos, Blockchain.CosmosTestnet -> {
+                val testnet = blockchain.isTestnet()
+                val providers = buildList {
+                    if (testnet) {
+                        add("https://rest.seed-01.theta-testnet.polypore.xyz")
+                    } else {
+                        config.nowNodeCredentials?.apiKey.letNotBlank { add("https://atom.nownodes.io/$it/") }
+                        config.getBlockCredentials?.apiKey.letNotBlank { add("https://atom.getblock.io/$it/") }
 
+                        add("https://cosmos-mainnet-rpc.allthatnode.com:1317/")
+                        // This is a REST proxy combining the servers below (and others)
+                        add("https://rest.cosmos.directory/cosmoshub/")
+                        add("https://cosmoshub-api.lavenderfive.com/")
+                        add("https://rest-cosmoshub.ecostake.com/")
+                        add("https://lcd.cosmos.dragonstake.io/")
+                    }
+                }.map(::CosmosRestProvider)
+                CosmosWalletManager(
+                    wallet = wallet,
+                    networkProviders = providers,
+                    cosmosChain = CosmosChain.Cosmos(testnet)
+                )
+            }
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
         }
     }
