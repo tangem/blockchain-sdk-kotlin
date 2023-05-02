@@ -4,6 +4,7 @@ import com.google.protobuf.MessageLite
 import com.google.protobuf.Parser
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.CompletionResult
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.core.TangemError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,6 +23,7 @@ class AnySignerWrapper {
         input: MessageLite,
         coin: CoinType,
         parser: Parser<T>,
+        curve: EllipticCurve,
         signer: TransactionSigner? = null,
     ): Result<T> {
         return if (signer != null) {
@@ -32,6 +34,7 @@ class AnySignerWrapper {
                 coin = coin,
                 parser = parser,
                 signer = signer,
+                curve = curve,
             )
         } else {
             signWithoutCard(
@@ -49,12 +52,14 @@ class AnySignerWrapper {
         coin: CoinType,
         parser: Parser<T>,
         signer: TransactionSigner,
+        curve: EllipticCurve,
     ): Result<T> {
         return try {
             val walletCoreSigner = WalletCoreSigner(
                 sdkSigner = signer,
                 publicKeyType = publicKeyType,
                 publicKey = walletPublicKey,
+                curve = curve,
             )
             val result = AnySigner.signExternally(input, coin, parser, walletCoreSigner)
             // We need to check this error field from WalletCoreSigner. Because thrown exception from JNI can not be
@@ -85,6 +90,7 @@ private class WalletCoreSigner(
     private val sdkSigner: TransactionSigner,
     private val publicKey: Wallet.PublicKey,
     private val publicKeyType: PublicKeyType,
+    private val curve: EllipticCurve,
 ) : Signer {
 
     var error: TangemError? = null
@@ -99,7 +105,13 @@ private class WalletCoreSigner(
             sdkSigner.sign(data ?: ByteArray(0), publicKey)
         }
         return when (signResult) {
-            is CompletionResult.Success -> signResult.data
+            is CompletionResult.Success -> {
+                if (curve == EllipticCurve.Secp256k1) {
+                    UnmarshalHelper().unmarshalSignature(signResult.data, data ?: ByteArray(0), publicKey)
+                } else {
+                    signResult.data
+                }
+            }
             is CompletionResult.Failure -> {
                 error = signResult.error
                 ByteArray(0)
