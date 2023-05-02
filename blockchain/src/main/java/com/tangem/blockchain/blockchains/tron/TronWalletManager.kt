@@ -13,6 +13,7 @@ import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.TransactionSender
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.TransactionStatus
+import com.tangem.blockchain.common.UnmarshalHelper
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.extensions.Result
@@ -180,7 +181,7 @@ class TronWalletManager(
                 val unmarshalledSignature = if (publicKey == dummySigner.publicKey) {
                     result.data + ByteArray(1)
                 } else {
-                    transactionBuilder.unmarshalSignature(result.data, transactionToSign, publicKey)
+                    UnmarshalHelper().unmarshalSignature(result.data, transactionToSign, publicKey)
                 }
                 Result.Success(unmarshalledSignature)
             }
