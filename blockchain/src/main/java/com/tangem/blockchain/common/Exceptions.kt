@@ -21,7 +21,7 @@ sealed class BlockchainSdkError(
     class NPError(forValue: String) : BlockchainSdkError(-1, "$forValue must be not NULL")
     class UnsupportedOperation(message: String = "Unsupported operation") : BlockchainSdkError(0, message)
 
-    class SendException(val blockchain: Blockchain, message: String) : BlockchainSdkError(1, message)
+    object FailedToSendException : BlockchainSdkError(1, "Failed to send transaction")
     object AccountNotFound : BlockchainSdkError(2, "Account not found")
     class CreateAccountUnderfunded(val blockchain: Blockchain, val minReserve: Amount) : BlockchainSdkError(3)
     object FailedToLoadFee : BlockchainSdkError(4, "Failed to load fee")
@@ -100,11 +100,25 @@ sealed class BlockchainSdkError(
         )
     }
 
+    sealed class Cosmos(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ): BlockchainSdkError(
+        code = ERROR_CODE_COSMOS + subCode,
+        customMessage = customMessage ?: "${ERROR_CODE_COSMOS + subCode}",
+        messageResId = null,
+        cause = throwable,
+    ) {
+        class Api(code: Int, message: String) : Cosmos(subCode = code, customMessage = message)
+    }
+
     companion object {
         const val ERROR_CODE_SOLANA = 1000
         const val ERROR_CODE_POLKADOT = 2000
         const val ERROR_CODE_KASPA = 3000
         const val ERROR_CODE_TON = 4000
+        const val ERROR_CODE_COSMOS = 5000
     }
 }
 
