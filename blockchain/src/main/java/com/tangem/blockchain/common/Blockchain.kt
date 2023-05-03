@@ -26,8 +26,6 @@ import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.BIP44
 import com.tangem.crypto.hdWallet.DerivationNode
 import com.tangem.crypto.hdWallet.DerivationPath
-import wallet.core.jni.CoinType
-import wallet.core.jni.PublicKeyType
 
 enum class Blockchain(
     val id: String,
@@ -49,6 +47,8 @@ enum class Blockchain(
     BitcoinCashTestnet("BCH/test", "BCH", "Bitcoin Cash Testnet"),
     Cardano("CARDANO", "ADA", "Cardano"),
     CardanoShelley("CARDANO-S", "ADA", "Cardano"),
+    Cosmos("cosmos", "ATOM", "Cosmos"),
+    CosmosTestnet("cosmos/test", "ATOM", "Cosmos Testnet"),
     Dogecoin("DOGE", "DOGE", "Dogecoin"),
     Ducatus("DUC", "DUC", "Ducatus"),
     Ethereum("ETH", "ETH", "Ethereum"),
@@ -95,6 +95,7 @@ enum class Blockchain(
         XRP,
         Tezos,
         Tron, TronTestnet,
+        Cosmos, CosmosTestnet,
         -> 6
         Stellar, StellarTestnet -> 7
         Bitcoin, BitcoinTestnet,
@@ -162,7 +163,7 @@ enum class Blockchain(
         Stellar, StellarTestnet -> StellarAddressService()
         Solana, SolanaTestnet -> SolanaAddressService()
         Tezos -> TezosAddressService()
-        TON, TONTestnet -> TrustWalletAddressService(coinType = CoinType.TON, publicKeyType = PublicKeyType.ED25519)
+        TON, TONTestnet, Cosmos, CosmosTestnet -> TrustWalletAddressService(blockchain = this)
         Tron, TronTestnet -> TronAddressService()
         Kaspa -> KaspaAddressService()
         Unknown -> throw Exception("unsupported blockchain")
@@ -235,6 +236,8 @@ enum class Blockchain(
         KavaTestnet -> "https://explorer.testnet.kava.io/"
         Ravencoin -> "https://api.ravencoin.org/"
         RavencoinTestnet -> "https://testnet.ravencoin.network/"
+        CosmosTestnet -> "https://explorer.theta-testnet.polypore.xyz/accounts/"
+        Cosmos -> "https://www.mintscan.io/cosmos/account/"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -260,6 +263,8 @@ enum class Blockchain(
             XRP, Stellar, StellarTestnet -> "${baseUrl}account/$address"
             Tezos -> "$baseUrl$address"
             Kaspa -> "${baseUrl}addresses/$address"
+            Cosmos -> "${baseUrl}$address"
+            CosmosTestnet -> "${baseUrl}$address"
             else -> fullUrl
         }
     }
@@ -290,6 +295,7 @@ enum class Blockchain(
             OptimismTestnet -> "https://optimismfaucet.xyz" //another one https://faucet.paradigm.xyz
             EthereumPowTestnet -> "https://faucet.ethwscan.com"
             KavaTestnet -> "https://faucet.kava.io"
+            CosmosTestnet -> "https://discord.com/channels/669268347736686612/953697793476821092"
             else -> null
         }
     }
@@ -323,6 +329,7 @@ enum class Blockchain(
             TON, TONTestnet -> TONTestnet
             Kava, KavaTestnet -> KavaTestnet
             Ravencoin, RavencoinTestnet -> RavencoinTestnet
+            Cosmos, CosmosTestnet -> CosmosTestnet
             else -> null
         }
     }
@@ -356,6 +363,7 @@ enum class Blockchain(
             SaltPay,
             Kaspa,
             Ravencoin, RavencoinTestnet,
+            Cosmos, CosmosTestnet,
             -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
@@ -480,6 +488,7 @@ enum class Blockchain(
             TON -> 607
             Kaspa -> 111111
             Ravencoin -> 175
+            Cosmos -> 118
             ArbitrumTestnet,
             AvalancheTestnet,
             BinanceTestnet,
@@ -499,6 +508,7 @@ enum class Blockchain(
             EthereumPowTestnet,
             KavaTestnet,
             RavencoinTestnet,
+            CosmosTestnet,
             Unknown,
             -> throw UnsupportedOperationException("Coin type not provided for: ${this.fullName}")
         }
