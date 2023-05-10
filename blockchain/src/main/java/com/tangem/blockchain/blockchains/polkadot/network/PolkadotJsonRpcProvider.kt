@@ -20,10 +20,7 @@ class PolkadotJsonRpcProvider(baseUrl: String) {
             PolkadotMethod.GET_FEE.method,
             listOf("0x" + transaction.toHexString()),
         ).post()
-        return response
-            .extractResult()[FEE]
-            ?.toBigDecimal()?.movePointLeft(decimals)
-            ?: BigDecimal.ZERO
+        return response.extractResult().getFee(decimals)
     }
 
 
@@ -36,7 +33,7 @@ class PolkadotJsonRpcProvider(baseUrl: String) {
         }
     }
 
-    private fun Result<PolkadotResponse>.extractResult(): Map<String, String> =
+    private fun Result<PolkadotResponse>.extractResult(): Map<String, Any> =
         when (this) {
             is Result.Success -> {
                 this.data.result
@@ -49,6 +46,11 @@ class PolkadotJsonRpcProvider(baseUrl: String) {
                     ?: BlockchainSdkError.CustomError("Unknown error format")
             }
         }
+
+    private fun Map<String, Any>.getFee(decimals: Int): BigDecimal {
+        val feeString = this[FEE] as? String
+        return feeString?.toBigDecimal()?.movePointLeft(decimals) ?: BigDecimal.ZERO
+    }
 
     private fun PolkadotError.toException() =
         Exception("Code: ${this.code}, ${this.message}")
