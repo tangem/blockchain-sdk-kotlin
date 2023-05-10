@@ -22,7 +22,7 @@ data class PolkadotResponse(
     val id: Int? = null,
 
     @Json(name = "result")
-    val result: Map<String, String>? = null,
+    val result: Map<String, Any>? = null,
 
     @Json(name = "error")
     val error: PolkadotError? = null
