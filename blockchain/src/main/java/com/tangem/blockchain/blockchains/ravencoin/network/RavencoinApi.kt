@@ -17,7 +17,7 @@ interface RavencoinApi {
     suspend fun getWalletInfo(@Path("address") address: String, ): RavencoinWalletInfoResponse
 
     @Headers(USER_AGENT_HEADER)
-    @GET("addr/{address}/utxo")
+    @GET("addrs/{address}/utxo")
     suspend fun getUTXO(@Path("address") address: String) : List<RavencoinWalletUTXOResponse>
 
     @Headers(USER_AGENT_HEADER)
