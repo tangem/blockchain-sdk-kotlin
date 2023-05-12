@@ -35,22 +35,25 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
                 val addressesData = addressesDeferred.map { it.await() }
                 val unspents = unspentsDeferred.await()
 
-                val cardanoUnspents = unspents.data!!.map {
-                    CardanoUnspentOutput(
-                        it.address!!,
-                        it.amountData!!.amount!!,
-                        it.outputIndex!!.toLong(),
-                        it.hash!!.hexToBytes()
-                    )
-                }
+                val cardanoUnspents = unspents.data
+                    // we need to ignore unspents with tokens (until we start supporting tokens)
+                    .filter { it.amountData.tokens.isEmpty() }
+                    .map {
+                        CardanoUnspentOutput(
+                            address = it.address,
+                            amount = it.amountData.amount,
+                            outputIndex = it.outputIndex.toLong(),
+                            transactionHash = it.hash.hexToBytes()
+                        )
+                    }
                 val recentTransactionsHashes = addressesData
                     .flatMap { it.data!!.transactions!!.mapNotNull { it.hash } }
 
                 Result.Success(
                     CardanoAddressResponse(
-                        addressesData.map { it.data!!.balanceData!!.amount!! }.sum(),
-                        cardanoUnspents,
-                        recentTransactionsHashes
+                        balance = cardanoUnspents.sumOf { it.amount },
+                        unspentOutputs = cardanoUnspents,
+                        recentTransactionsHashes = recentTransactionsHashes
                     )
                 )
             }
@@ -79,5 +82,5 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
 
 data class AdaliteSendBody(
     @Json(name = "signedTx")
-    val signedTransaction: String
+    val signedTransaction: String,
 )
