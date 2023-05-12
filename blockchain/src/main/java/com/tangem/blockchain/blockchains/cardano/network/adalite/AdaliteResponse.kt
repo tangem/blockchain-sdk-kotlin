@@ -21,28 +21,38 @@ data class AdaliteAddressData(
 @JsonClass(generateAdapter = true)
 data class AdaliteBalance(
         @Json(name = "getCoin")
-        var amount: Long? = null
+        var amount: Long,
+        @Json(name = "getTokens")
+        val tokens: List<AdaliteToken>
+)
+
+@JsonClass(generateAdapter = true)
+data class AdaliteToken(
+        @Json(name = "assetName")
+        val assetName: String? = null,
+        @Json(name = "quantity")
+        val quantity: Long? = null,
 )
 
 @JsonClass(generateAdapter = true)
 data class AdaliteUnspents(
         @Json(name = "Right")
-        var data: List<AdaliteUtxo>?
+        var data: List<AdaliteUtxo>
 )
 
 @JsonClass(generateAdapter = true)
 data class AdaliteUtxo(
         @Json(name = "cuAddress")
-        var address: String? = null,
+        var address: String,
 
         @Json(name = "cuId")
-        var hash: String? = null,
+        var hash: String,
 
         @Json(name = "cuOutIndex")
-        var outputIndex: Int? = null,
+        var outputIndex: Int,
 
         @Json(name = "cuCoins")
-        var amountData: AdaliteBalance? = null
+        var amountData: AdaliteBalance
 )
 
 @JsonClass(generateAdapter = true)
