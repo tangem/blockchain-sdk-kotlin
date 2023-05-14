@@ -93,7 +93,7 @@ class StellarWalletManager(
         val averageChargedFee = (maxChargedFee - minChargedFee).divide(2.toBigDecimal()) + minChargedFee
 
         return Result.Success(listOf(
-            Amount(baseFee, blockchain),
+            Amount(minChargedFee, blockchain),
             Amount(averageChargedFee, blockchain),
             Amount(maxChargedFee, blockchain),
         ))
