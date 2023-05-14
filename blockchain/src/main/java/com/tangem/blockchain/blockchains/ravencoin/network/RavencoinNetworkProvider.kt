@@ -85,7 +85,7 @@ class RavencoinNetworkProvider(
             },
             recentTransactions = transactions
                 .filter { it.confirmations == 0L || it.blockHeight == -1L }
-                .map { txInfo -> mapToBasicTransactionData(txInfo, walletInfo.address) },
+                .mapNotNull { txInfo -> mapToBasicTransactionData(txInfo, walletInfo.address) },
             hasUnconfirmed = walletInfo.unconfirmedTxApperances != 0L,
         )
     }
@@ -93,7 +93,7 @@ class RavencoinNetworkProvider(
     private fun mapToBasicTransactionData(
         transaction: RavencoinTransactionInfo,
         walletAddress: String,
-    ): BasicTransactionData {
+    ): BasicTransactionData? {
         val isIncoming = transaction.vin.all { it.address != walletAddress }
         val hash = transaction.txid
         val timestamp = transaction.time * 1000
@@ -116,11 +116,19 @@ class RavencoinNetworkProvider(
                 .negate()
         }
 
+        val otherAddress = transaction.vout
+            .firstOrNull { vout -> vout.scriptPubKey.addresses.any { it != walletAddress } }
+            ?.scriptPubKey
+            ?.addresses
+            ?.firstOrNull() ?: return null
+
         return BasicTransactionData(
             balanceDif = balanceDiff,
             hash = hash,
             date = Calendar.getInstance().apply { this.timeInMillis = timestamp },
             isConfirmed = transaction.confirmations != 0L,
+            destination = if (isIncoming) walletAddress else otherAddress,
+            source = if (isIncoming) otherAddress else walletAddress
         )
     }
 }
