@@ -30,8 +30,16 @@ data class RosettaCurrency(
 data class RosettaCoin(
         @Json(name = "coin_identifier")
         val coinIdentifier: RosettaCoinIdentifier? = null,
-        val amount: RosettaAmount? = null
+        val amount: RosettaAmount? = null,
+        @Json(name = "metadata")
+        val metadata: RosettaMetadata? = null
 )
+
+@JsonClass(generateAdapter = true)
+data class RosettaMetadata(
+        val metadata: Map<String, List<Any>>? = null
+)
+
 
 @JsonClass(generateAdapter = true)
 data class RosettaCoinIdentifier(
