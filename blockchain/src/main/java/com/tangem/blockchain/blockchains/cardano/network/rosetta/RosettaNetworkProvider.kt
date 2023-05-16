@@ -40,21 +40,16 @@ class RosettaNetworkProvider(rosettaNetwork: RosettaNetwork) : CardanoNetworkPro
             coroutineScope {
                 val addressBodies = addresses
                     .map { RosettaAddressBody(networkIdentifier, RosettaAccountIdentifier(it)) }
-                val balancesDeferred =
-                    addressBodies.map { retryIO { async { api.getBalances(it) } } }
                 val coinsDeferred = addressBodies.map {
                     it.accountIdentifier.address!! to retryIO { async { api.getCoins(it) } }
                 }.toMap()
 
-                val balances = balancesDeferred.map { it.await() }
-                val balance = balances.map {
-                    it.balances!!.find { it.currency!!.symbol == "ADA" }!!.value!!
-                }.sum()
-
                 val coinsMap = coinsDeferred.mapValues { it.value.await().coins!! }
                 val unspentOutputs = coinsMap.flatMap { entry ->
                     entry.value.mapNotNull {
-                        if (it.amount!!.currency!!.symbol == "ADA") {
+                        if (it.amount!!.currency!!.symbol == "ADA"
+                            && it.metadata == null // filter tokens while we don't support them
+                        ) {
                             val identifierSplit =
                                 it.coinIdentifier!!.identifier!!.split(":")
                             CardanoUnspentOutput(
@@ -68,6 +63,7 @@ class RosettaNetworkProvider(rosettaNetwork: RosettaNetwork) : CardanoNetworkPro
                         }
                     }
                 }
+                val balance = unspentOutputs.sumOf { it.amount }
 
                 Result.Success(
                     CardanoAddressResponse(balance, unspentOutputs, emptyList())
