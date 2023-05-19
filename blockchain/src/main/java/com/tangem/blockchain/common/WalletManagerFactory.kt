@@ -58,15 +58,7 @@ import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
 import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledNetworkProvider
 import com.tangem.blockchain.extensions.letNotBlank
-import com.tangem.blockchain.network.API_ADALITE
-import com.tangem.blockchain.network.API_KASPA
-import com.tangem.blockchain.network.API_RIPPLE
-import com.tangem.blockchain.network.API_RIPPLE_RESERVE
-import com.tangem.blockchain.network.API_TEZOS_BLOCKSCALE
-import com.tangem.blockchain.network.API_TEZOS_ECAD
-import com.tangem.blockchain.network.API_TEZOS_LETZBAKE
-import com.tangem.blockchain.network.API_TEZOS_SMARTPY
-import com.tangem.blockchain.network.API_XRP_LEDGER_FOUNDATION
+import com.tangem.blockchain.network.*
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import com.tangem.blockchain.network.blockscout.BlockscoutNetworkProvider
 import com.tangem.common.card.EllipticCurve
@@ -257,6 +249,7 @@ class WalletManagerFactory(
             Blockchain.EthereumPow,
             Blockchain.EthereumPowTestnet,
             Blockchain.Kava, Blockchain.KavaTestnet,
+            Blockchain.Cronos,
             -> {
                 EthereumWalletManager(
                     wallet = wallet,
