@@ -152,6 +152,14 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         Blockchain.KavaTestnet -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://evm.testnet.kava.io"),
         )
+        Blockchain.Cronos -> listOfNotNull(
+            EthereumJsonRpcProvider(baseUrl = "https://evm.cronos.org/"),
+            EthereumJsonRpcProvider(baseUrl = "https://evm-cronos.crypto.org/"),
+            getGetBlockProvider(baseUrl = "https://cro.getblock.io/mainnet/", config = config),
+            EthereumJsonRpcProvider(baseUrl = "https://node.croswap.com/rpc/"),
+            EthereumJsonRpcProvider(baseUrl = "https://cronos.blockpi.network/v1/rpc/public/"),
+            EthereumJsonRpcProvider(baseUrl = "https://cronos-evm.publicnode.com/"),
+        )
         else -> throw IllegalStateException("$this isn't supported")
     }
 

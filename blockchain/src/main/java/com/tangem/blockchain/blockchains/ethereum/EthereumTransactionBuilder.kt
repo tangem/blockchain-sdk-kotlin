@@ -161,4 +161,5 @@ enum class Chain(
     EthereumPowTestnet(10002, Blockchain.EthereumPow),
     Kava(2222, Blockchain.Kava),
     KavaTestnet(2221, Blockchain.KavaTestnet),
+    Cronos(25, Blockchain.Cronos),
 }
