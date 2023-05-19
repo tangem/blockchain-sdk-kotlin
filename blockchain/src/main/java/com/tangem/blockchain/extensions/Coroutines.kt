@@ -74,6 +74,8 @@ fun Result<*>.isNetworkError(): Boolean {
                 is BlockchainSdkError.WrappedThrowable -> this.error.isNetworkError()
                 is BlockchainSdkError.Solana.Api -> true
                 is BlockchainSdkError.Polkadot.Api -> true
+                is BlockchainSdkError.Ton.Api -> true
+                is BlockchainSdkError.Cosmos.Api -> true
                 else -> false
             }
         }
@@ -88,6 +90,8 @@ fun SimpleResult.isNetworkError(): Boolean {
                 is BlockchainSdkError.WrappedThrowable -> this.error.isNetworkError()
                 is BlockchainSdkError.Solana.Api -> true
                 is BlockchainSdkError.Polkadot.Api -> true
+                is BlockchainSdkError.Ton.Api -> true
+                is BlockchainSdkError.Cosmos.Api -> true
                 else -> false
             }
         }
