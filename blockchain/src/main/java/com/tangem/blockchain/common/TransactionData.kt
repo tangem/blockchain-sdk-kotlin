@@ -37,6 +37,8 @@ data class BasicTransactionData(
     val hash: String,
     val date: Calendar?,
     val isConfirmed: Boolean,
+    val destination: String = "unknown",
+    val source: String = "unknown",
 )
 
 interface TransactionExtras
