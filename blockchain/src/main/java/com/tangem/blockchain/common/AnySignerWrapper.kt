@@ -6,6 +6,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.common.CompletionResult
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.core.TangemError
+import com.tangem.common.extensions.toCompressedPublicKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.runBlocking
@@ -68,7 +69,7 @@ class AnySignerWrapper {
 
             if (tangemError != null) Result.fromTangemSdkError(tangemError) else Result.Success(result)
         } catch (e: Exception) {
-            Result.Failure(BlockchainSdkError.Ton.Sign(e))
+            Result.Failure(BlockchainSdkError.WalletCoreException(e.message, e))
         }
     }
 
@@ -81,7 +82,7 @@ class AnySignerWrapper {
             val result = AnySigner.sign(input, coin, parser)
             Result.Success(result)
         } catch (e: Exception) {
-            Result.Failure(BlockchainSdkError.Ton.Sign(e))
+            Result.Failure(BlockchainSdkError.WalletCoreException(e.message, e))
         }
     }
 }
@@ -96,7 +97,10 @@ private class WalletCoreSigner(
     var error: TangemError? = null
 
     override fun getPublicKey(): PublicKey {
-        return PublicKey(publicKey.blockchainKey, publicKeyType)
+        return PublicKey(
+            compressIfNeeded(publicKey.blockchainKey),
+            publicKeyType,
+        )
     }
 
     override fun sign(data: ByteArray?): ByteArray {
@@ -117,5 +121,9 @@ private class WalletCoreSigner(
                 ByteArray(0)
             }
         }
+    }
+
+    private fun compressIfNeeded(data: ByteArray): ByteArray {
+        return if (curve == EllipticCurve.Secp256k1) data.toCompressedPublicKey() else data
     }
 }

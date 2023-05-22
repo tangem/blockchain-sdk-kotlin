@@ -93,18 +93,13 @@ sealed class BlockchainSdkError(
         cause = throwable,
     ) {
         class Api(code: Int, message: String) : Ton(subCode = code, customMessage = message)
-        class Sign(throwable: Throwable?) : Ton(
-            subCode = 2,
-            customMessage = "Exception while signing transaction",
-            throwable = throwable,
-        )
     }
 
     sealed class Cosmos(
         subCode: Int,
         customMessage: String? = null,
         throwable: Throwable? = null,
-    ): BlockchainSdkError(
+    ) : BlockchainSdkError(
         code = ERROR_CODE_COSMOS + subCode,
         customMessage = customMessage ?: "${ERROR_CODE_COSMOS + subCode}",
         messageResId = null,
@@ -113,12 +108,23 @@ sealed class BlockchainSdkError(
         class Api(code: Int, message: String) : Cosmos(subCode = code, customMessage = message)
     }
 
+    class WalletCoreException(
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_WALLET_CORE,
+        customMessage = "Exception while signing transaction. $customMessage",
+        messageResId = null,
+        cause = throwable,
+    )
+
     companion object {
         const val ERROR_CODE_SOLANA = 1000
         const val ERROR_CODE_POLKADOT = 2000
         const val ERROR_CODE_KASPA = 3000
         const val ERROR_CODE_TON = 4000
         const val ERROR_CODE_COSMOS = 5000
+        const val ERROR_CODE_WALLET_CORE = 6000
     }
 }
 
