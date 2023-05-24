@@ -13,8 +13,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
     val providers = when (this) {
         Blockchain.Arbitrum -> listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://arb1.arbitrum.io/rpc/"),
-            getInfuraProvider(baseUrl = "https://arbitrum-mainnet.infura.io/v3/", config = config),
-            EthereumJsonRpcProvider(baseUrl = "https://node.offchainlabs.com:8547/")
+            getInfuraProvider(baseUrl = "https://arbitrum-mainnet.infura.io/v3/", config = config)
         )
         Blockchain.ArbitrumTestnet -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://goerli-rollup.arbitrum.io/rpc/")
