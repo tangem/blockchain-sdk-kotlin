@@ -14,6 +14,8 @@ abstract class WalletManager(
     val cardTokens: MutableSet<Token> = mutableSetOf(),
 ) {
 
+    open val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Unspecified
+
     var outputsCount: Int? = null
         internal set
 
