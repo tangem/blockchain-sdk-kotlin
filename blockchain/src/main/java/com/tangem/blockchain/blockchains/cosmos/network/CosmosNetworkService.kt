@@ -3,10 +3,13 @@ package com.tangem.blockchain.blockchains.cosmos.network
 import com.tangem.blockchain.blockchains.cosmos.CosmosAccountInfo
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 
@@ -19,7 +22,7 @@ class CosmosNetworkService(
 
     val host: String get() = multiJsonRpcProvider.currentProvider.host
 
-    suspend fun getAccountInfo(address: String): Result<CosmosAccountInfo> {
+    suspend fun getAccountInfo(address: String, tokens: Set<Token>, unconfirmedTxsHashes: List<String>): Result<CosmosAccountInfo> {
         return coroutineScope {
             val accountResult = multiJsonRpcProvider.performRequest(CosmosRestProvider::accounts, address)
             val balancesResult = multiJsonRpcProvider.performRequest(CosmosRestProvider::balances, address)
@@ -32,16 +35,29 @@ class CosmosNetworkService(
                 is Result.Failure -> return@coroutineScope Result.Failure(BlockchainSdkError.AccountNotFound)
                 is Result.Success -> balancesResult.data
             }
+            val confirmedTxHashes = getConfirmedTxsHashes(unconfirmedTxsHashes)
 
-            val accountNumber = accounts?.account?.accountNumber?.toLongOrNull()
-            val sequenceNumber = accounts?.account?.sequence?.toLongOrNull() ?: 0L
-            val amount = parseBalance(balances)
+            val accountNumber = accounts?.account?.accountNumber
+            val sequenceNumber = accounts?.account?.sequence ?: 0L
+            val amount = parseBalance(
+                balances,
+                cosmosChain.smallestDenomination,
+                cosmosChain.blockchain.decimals(),
+            )
+            val tokenAmounts = tokens.mapNotNull { token ->
+                val denomination =
+                    cosmosChain.tokenDenominationByContractAddress[token.contractAddress] ?: return@mapNotNull null
+                val balance = parseBalance(balances, denomination, token.decimals)
+                token to balance
+            }.toMap()
 
             Result.Success(
                 CosmosAccountInfo(
                     accountNumber = accountNumber,
                     sequenceNumber = sequenceNumber,
                     amount = amount,
+                    tokenBalances = tokenAmounts,
+                    confirmedTransactionHashes = confirmedTxHashes,
                 )
             )
         }
@@ -57,23 +73,30 @@ class CosmosNetworkService(
         return try {
             val txResult = multiJsonRpcProvider.performRequest(CosmosRestProvider::txs, requestBody)
             val txInfo = txResult.successOr { return it }.txInfo
-            val height = txInfo.height.toLongOrNull() ?: 0
-            if (height <= 0) Result.Failure(BlockchainSdkError.FailedToSendException) else Result.Success(txInfo.txhash)
+            Result.Success(txInfo.txhash)
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
     }
 
-    private fun parseBalance(balanceResponse: CosmosBalanceResponse): Amount {
-        val blockchain = cosmosChain.blockchain
-        val balanceAmountString = balanceResponse.balances
-            .firstOrNull { it.denom == cosmosChain.smallestDenomination }?.amount
-            ?: return Amount(blockchain = blockchain)
+    private suspend fun getConfirmedTxsHashes(unconfirmedTxsHashes: List<String>): List<String> {
+        return coroutineScope {
+            unconfirmedTxsHashes.map { hash ->
+                async { multiJsonRpcProvider.performRequest(CosmosRestProvider::checkTransactionStatus, hash) }
+            }
+        }
+            .awaitAll()
+            // Ignore failed requests
+            .mapNotNull { (it as? Result.Success<CosmosTxResponse>)?.data?.txInfo?.txhash }
+    }
 
-        val balanceAmount = balanceAmountString.toLongOrNull() ?: throw BlockchainSdkError.AccountNotFound
+    private fun parseBalance(balanceResponse: CosmosBalanceResponse, denomination: String, decimals: Int): Amount {
+        val balanceAmount = balanceResponse.balances.firstOrNull { it.denom == denomination }?.amount
+            ?: return Amount(blockchain = cosmosChain.blockchain)
+
         return Amount(
-            blockchain = blockchain,
-            value = BigDecimal.valueOf(balanceAmount).movePointLeft(blockchain.decimals()),
+            blockchain = cosmosChain.blockchain,
+            value = BigDecimal.valueOf(balanceAmount).movePointLeft(decimals),
         )
     }
 }
