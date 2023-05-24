@@ -16,12 +16,7 @@ import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
-import com.tangem.blockchain.common.address.Address
-import com.tangem.blockchain.common.address.AddressService
-import com.tangem.blockchain.common.address.AddressType
-import com.tangem.blockchain.common.address.DefaultAddressType
-import com.tangem.blockchain.common.address.MultisigAddressProvider
-import com.tangem.blockchain.common.address.TrustWalletAddressService
+import com.tangem.blockchain.common.address.*
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.BIP44
 import com.tangem.crypto.hdWallet.DerivationNode
@@ -87,6 +82,8 @@ enum class Blockchain(
     TONTestnet("The-Open-Network/test", "TON", "Ton Testnet"),
     Ravencoin("ravencoin", "RVN", "Ravencoin"),
     RavencoinTestnet("ravencoin/test", "RVN", "Ravencoin Testnet"),
+    TerraV1("terra", "LUNC", "Terra Classic"),
+    TerraV2("terra-2", "LUNA", "Terra"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -96,6 +93,7 @@ enum class Blockchain(
         Tezos,
         Tron, TronTestnet,
         Cosmos, CosmosTestnet,
+        TerraV1, TerraV2,
         -> 6
         Stellar, StellarTestnet -> 7
         Bitcoin, BitcoinTestnet,
@@ -163,7 +161,7 @@ enum class Blockchain(
         Stellar, StellarTestnet -> StellarAddressService()
         Solana, SolanaTestnet -> SolanaAddressService()
         Tezos -> TezosAddressService()
-        TON, TONTestnet, Cosmos, CosmosTestnet -> TrustWalletAddressService(blockchain = this)
+        TON, TONTestnet, Cosmos, CosmosTestnet, TerraV1, TerraV2 -> TrustWalletAddressService(blockchain = this)
         Tron, TronTestnet -> TronAddressService()
         Kaspa -> KaspaAddressService()
         Unknown -> throw Exception("unsupported blockchain")
@@ -238,6 +236,8 @@ enum class Blockchain(
         RavencoinTestnet -> "https://testnet.ravencoin.network/"
         CosmosTestnet -> "https://explorer.theta-testnet.polypore.xyz/accounts/"
         Cosmos -> "https://www.mintscan.io/cosmos/account/"
+        TerraV1 -> "https://finder.terra.money/classic/"
+        TerraV2 -> "https://terrasco.pe/mainnet/"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -364,6 +364,7 @@ enum class Blockchain(
             Kaspa,
             Ravencoin, RavencoinTestnet,
             Cosmos, CosmosTestnet,
+            TerraV1, TerraV2,
             -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
@@ -489,6 +490,7 @@ enum class Blockchain(
             Kaspa -> 111111
             Ravencoin -> 175
             Cosmos -> 118
+            TerraV1, TerraV2 -> 330
             ArbitrumTestnet,
             AvalancheTestnet,
             BinanceTestnet,
@@ -530,6 +532,7 @@ enum class Blockchain(
         Optimism, OptimismTestnet,
         EthereumFair, EthereumPow, EthereumPowTestnet,
         SaltPay, Kava, KavaTestnet,
+        TerraV1,
         -> true
         else -> false
     }
