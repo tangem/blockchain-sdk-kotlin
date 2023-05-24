@@ -64,7 +64,6 @@ import com.tangem.blockchain.network.API_RIPPLE
 import com.tangem.blockchain.network.API_RIPPLE_RESERVE
 import com.tangem.blockchain.network.API_TEZOS_BLOCKSCALE
 import com.tangem.blockchain.network.API_TEZOS_ECAD
-import com.tangem.blockchain.network.API_TEZOS_LETZBAKE
 import com.tangem.blockchain.network.API_TEZOS_SMARTPY
 import com.tangem.blockchain.network.API_XRP_LEDGER_FOUNDATION
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
