@@ -390,7 +390,6 @@ class WalletManagerFactory(
 
             Blockchain.Tezos -> {
                 val providers = listOf(
-                    TezosJsonRpcNetworkProvider(API_TEZOS_LETZBAKE),
                     TezosJsonRpcNetworkProvider(API_TEZOS_BLOCKSCALE),
                     TezosJsonRpcNetworkProvider(API_TEZOS_SMARTPY),
                     TezosJsonRpcNetworkProvider(API_TEZOS_ECAD),
