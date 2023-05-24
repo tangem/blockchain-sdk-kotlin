@@ -477,6 +477,28 @@ class WalletManagerFactory(
                     cosmosChain = CosmosChain.Cosmos(testnet)
                 )
             }
+            Blockchain.TerraV1 -> {
+                val providers = buildList {
+                    config.nowNodeCredentials?.apiKey.letNotBlank { add("https://terra.nownodes.io/$it/") }
+                    add("https://terra-classic-lcd.publicnode.com/")
+                }.map(::CosmosRestProvider)
+                CosmosWalletManager(
+                    wallet = wallet,
+                    networkProviders = providers,
+                    cosmosChain = CosmosChain.TerraV1
+                )
+            }
+            Blockchain.TerraV2 -> {
+                val providers = buildList {
+                    config.getBlockCredentials?.apiKey.letNotBlank { add("https://luna.getblock.io/$it/mainnet/") }
+                    add("https://phoenix-lcd.terra.dev/")
+                }.map(::CosmosRestProvider)
+                CosmosWalletManager(
+                    wallet = wallet,
+                    networkProviders = providers,
+                    cosmosChain = CosmosChain.TerraV2
+                )
+            }
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
         }
     }
