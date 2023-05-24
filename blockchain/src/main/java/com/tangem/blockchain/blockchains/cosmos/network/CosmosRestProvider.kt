@@ -18,15 +18,10 @@ class CosmosRestProvider(
     private val sendRequestAdapter = moshi.adapter(CosmosSendTransactionRequest::class.java)
 
     suspend fun accounts(address: String): Result<CosmosAccountResponse?> {
-        return when (val accountsResult = parseAccountsResponse(api.getAccounts(address))) {
-            is Result.Success -> accountsResult
-            is Result.Failure -> {
-                if (accountsResult.error is BlockchainSdkError.Cosmos.Api && accountsResult.error.code == EMPTY_ACCOUNT) {
-                    Result.Success(null)
-                } else {
-                    accountsResult
-                }
-            }
+        return try {
+            parseAccountsResponse(api.getAccounts(address))
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
         }
     }
 
@@ -59,6 +54,15 @@ class CosmosRestProvider(
         }
     }
 
+    suspend fun checkTransactionStatus(txHash: String): Result<CosmosTxResponse> {
+        return try {
+            val response = api.getTransactionStatus(txHash)
+            Result.Success(response)
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
     private fun parseAccountsResponse(response: Response<CosmosAccountResponse>): Result<CosmosAccountResponse?> {
         if (response.isSuccessful) return Result.Success(response.body())
         val errorBody = response.errorBody()?.string()
@@ -70,10 +74,10 @@ class CosmosRestProvider(
             null
         }
 
-        return if (cosmosError != null) {
-            Result.Failure(BlockchainSdkError.Cosmos.Api(cosmosError.code, cosmosError.message))
-        } else {
-            Result.Failure(BlockchainSdkError.AccountNotFound)
+        return when {
+            cosmosError != null && cosmosError.code == EMPTY_ACCOUNT -> Result.Success(null)
+            cosmosError != null -> Result.Failure(BlockchainSdkError.Cosmos.Api(cosmosError.code, cosmosError.message))
+            else -> Result.Failure(BlockchainSdkError.Cosmos.Api(-1, errorBody.orEmpty()))
         }
     }
 }
