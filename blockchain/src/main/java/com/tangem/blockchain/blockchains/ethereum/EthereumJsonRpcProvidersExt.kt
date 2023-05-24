@@ -61,8 +61,8 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = "https://etc.etcdesktop.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://blockscout.com/etc/mainnet/api/eth-rpc/"),
             EthereumJsonRpcProvider(baseUrl = "https://etc.mytokenpocket.vip/"),
-            EthereumJsonRpcProvider(baseUrl = "https://besu.etc-network.info/"),
-            EthereumJsonRpcProvider(baseUrl = "https://geth.etc-network.info/"),
+            EthereumJsonRpcProvider(baseUrl = "https://besu-de.etc-network.info/"),
+            EthereumJsonRpcProvider(baseUrl = "https://geth-at.etc-network.info/"),
         )
         Blockchain.EthereumClassicTestnet -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://www.ethercluster.com/kotti/")
