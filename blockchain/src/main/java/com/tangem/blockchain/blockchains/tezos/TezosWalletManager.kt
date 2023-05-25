@@ -45,7 +45,7 @@ class TezosWalletManager(
         if (response.balance != wallet.amounts[AmountType.Coin]?.value) {
             wallet.recentTransactions.clear()
         }
-        wallet.amounts[AmountType.Coin]?.value = response.balance
+        wallet.changeAmountValue(AmountType.Coin, response.balance)
         transactionBuilder.counter = response.counter
     }
 
