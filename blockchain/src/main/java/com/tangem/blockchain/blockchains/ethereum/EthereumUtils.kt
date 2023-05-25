@@ -19,7 +19,6 @@ import org.kethereum.model.Address
 import org.kethereum.model.PublicKey
 import org.kethereum.model.SignatureData
 import org.kethereum.model.createTransactionWithDefaults
-import pm.gnosis.eip712.EIP712JsonParser
 import pm.gnosis.eip712.typedDataHash
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -170,7 +169,7 @@ class EthereumUtils {
 
             val to = Address(processorContractAddress)
             val value = BigInteger.ZERO
-            val input: ByteArray = createSetSpendLimitData(cardAddress, bigIntegerAmount);
+            val input: ByteArray = createSetSpendLimitData(cardAddress, bigIntegerAmount)
 
             val gasLimitToUse = gasLimit ?: return null
 
@@ -209,7 +208,7 @@ class EthereumUtils {
 
             val to = Address(processorContractAddress)
             val value = BigInteger.ZERO
-            val input: ByteArray = createInitOTPData(otp, otpCounter);
+            val input: ByteArray = createInitOTPData(otp, otpCounter)
 
             val gasLimitToUse = gasLimit ?: return null
 
@@ -247,7 +246,7 @@ class EthereumUtils {
 
             val to = Address(processorContractAddress)
             val value = BigInteger.ZERO
-            val input: ByteArray = createSetWalletData(cardAddress);
+            val input: ByteArray = createSetWalletData(cardAddress)
 
             val gasLimitToUse = gasLimit ?: return null
 
@@ -293,7 +292,7 @@ class EthereumUtils {
 
             val gasLimitToUse = gasLimit ?: return null
 
-            val input: ByteArray = createProcessData(cardAddress, bigIntegerAmount, otp, otpCounter.and(0xFFFF));
+            val input: ByteArray = createProcessData(cardAddress, bigIntegerAmount, otp, otpCounter.and(0xFFFF))
 
             val transaction = createTransactionWithDefaults(
                 from = Address(processorAddress),
@@ -434,7 +433,7 @@ class EthereumUtils {
         }
 
         fun makeTypedDataHash(rawMessage: String): ByteArray {
-           val messageParsed =  EIP712JsonParser(MoshiAdapter()).parseMessage(rawMessage)
+            val messageParsed = TangemEIP712JsonParser(MoshiAdapter()).parseMessage(rawMessage)
            return typedDataHash(messageParsed.message, messageParsed.domain)
         }
     }
