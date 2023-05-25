@@ -17,8 +17,6 @@ import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
-import com.tangem.blockchain.common.minus
-import com.tangem.blockchain.common.plus
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.filterWith
