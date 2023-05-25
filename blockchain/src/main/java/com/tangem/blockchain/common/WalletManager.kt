@@ -153,8 +153,11 @@ abstract class WalletManager(
 }
 
 interface TransactionSender {
+
     suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult
+
     suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>>
+
 }
 
 interface TransactionSigner {

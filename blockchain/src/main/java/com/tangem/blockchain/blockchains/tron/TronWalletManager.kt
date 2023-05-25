@@ -52,7 +52,7 @@ class TronWalletManager(
     private fun updateWallet(response: TronAccountInfo) {
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
 
-        wallet.amounts[AmountType.Coin]?.value = response.balance
+        wallet.changeAmountValue(AmountType.Coin, response.balance)
         response.tokenBalances.forEach { wallet.addTokenValue(it.value, it.key) }
 
         wallet.recentTransactions.forEach {

@@ -93,7 +93,8 @@ open class BitcoinWalletManager(
 
     private fun updateWallet(response: BitcoinAddressInfo) {
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
-        wallet.amounts[AmountType.Coin]?.value = response.balance
+
+        wallet.changeAmountValue(AmountType.Coin, response.balance)
         transactionBuilder.unspentOutputs = response.unspentOutputs
         outputsCount = response.unspentOutputs.size
 
@@ -142,12 +143,13 @@ open class BitcoinWalletManager(
                 is Result.Failure -> return feeResult
                 is Result.Success -> {
                     val feeValue = BigDecimal.ONE.movePointLeft(blockchain.decimals())
-                    amount.value = amount.value!! - feeValue
+
+                    val newAmount =  amount.copy(value = amount.value!! - feeValue)
 
                     val sizeResult = transactionBuilder.getEstimateSize(
                         TransactionData(
-                            amount = amount,
-                            fee = Amount(amount, feeValue),
+                            amount = newAmount,
+                            fee = Amount(newAmount, feeValue),
                             sourceAddress = wallet.address,
                             destinationAddress = destination
                         )
