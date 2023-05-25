@@ -1,10 +1,11 @@
 package com.tangem.blockchain.common
 
 import java.math.BigDecimal
+import com.tangem.blockchain.common.Token as BlockchainToken
 
 data class Amount(
     val currencySymbol: String,
-    var value: BigDecimal? = null,
+    val value: BigDecimal? = null,
     val decimals: Int,
     val type: AmountType = AmountType.Coin
 ) {
@@ -14,7 +15,7 @@ data class Amount(
         type: AmountType = AmountType.Coin
     ) : this(blockchain.currency, value, blockchain.decimals(), type)
 
-    constructor(token: Token, value: BigDecimal? = null) :
+    constructor(token: BlockchainToken, value: BigDecimal? = null) :
         this(token.symbol, value, token.decimals, AmountType.Token(token))
 
     constructor(amount: Amount, value: BigDecimal) :
@@ -36,5 +37,5 @@ operator fun Amount.minus(extract: BigDecimal): Amount =
 sealed class AmountType {
     object Coin : AmountType()
     object Reserve : AmountType()
-    data class Token(val token: com.tangem.blockchain.common.Token) : AmountType()
+    data class Token(val token: BlockchainToken) : AmountType()
 }
