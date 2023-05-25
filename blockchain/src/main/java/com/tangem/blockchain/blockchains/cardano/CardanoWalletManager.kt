@@ -12,9 +12,9 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 class CardanoWalletManager(
-        wallet: Wallet,
-        private val transactionBuilder: CardanoTransactionBuilder,
-        private val networkProvider: CardanoNetworkProvider
+    wallet: Wallet,
+    private val transactionBuilder: CardanoTransactionBuilder,
+    private val networkProvider: CardanoNetworkProvider,
 ) : WalletManager(wallet), TransactionSender {
 
     override val dustValue: BigDecimal = BigDecimal.ONE
@@ -31,24 +31,28 @@ class CardanoWalletManager(
     }
 
     private fun updateWallet(response: CardanoAddressResponse) {
-        Log.d(this::class.java.simpleName, "Balance is ${response.balance.toString()}")
-        wallet.amounts[AmountType.Coin]?.value =
-                response.balance.toBigDecimal().movePointLeft(blockchain.decimals())
+        Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
+
+        wallet.changeAmountValue(
+            amountType = AmountType.Coin,
+            newValue = response.balance.toBigDecimal().movePointLeft(blockchain.decimals())
+        )
+
         transactionBuilder.unspentOutputs = response.unspentOutputs
 
         wallet.recentTransactions.forEach { recentTransaction ->
             if (response.recentTransactionsHashes.isEmpty()) { // case for Rosetta API, it lacks recent transactions
                 if (response.unspentOutputs.isEmpty() ||
-                        response.unspentOutputs.find {
-                            it.transactionHash.toHexString()
-                                    .equals(recentTransaction.hash, ignoreCase = true)
-                        } != null
+                    response.unspentOutputs.find {
+                        it.transactionHash.toHexString()
+                            .equals(recentTransaction.hash, ignoreCase = true)
+                    } != null
                 ) {
                     recentTransaction.status = TransactionStatus.Confirmed
                 }
             } else { // case for APIs with recent transactions
                 if (response.recentTransactionsHashes
-                                .find { it.equals(recentTransaction.hash, true) } != null
+                        .find { it.equals(recentTransaction.hash, true) } != null
                 ) {
                     recentTransaction.status = TransactionStatus.Confirmed
                 }
@@ -62,7 +66,7 @@ class CardanoWalletManager(
     }
 
     override suspend fun send(
-            transactionData: TransactionData, signer: TransactionSigner
+        transactionData: TransactionData, signer: TransactionSigner,
     ): SimpleResult {
         val transactionHash = transactionBuilder.buildToSign(transactionData)
         val signerResponse = signer.sign(transactionHash, wallet.publicKey)
@@ -85,7 +89,7 @@ class CardanoWalletManager(
         val a = 0.155381
         val b = 0.000044
         val size = transactionBuilder.getEstimateSize(
-                TransactionData(amount, null, wallet.address, destination)
+            TransactionData(amount, null, wallet.address, destination)
         )
         val fee = (a + b * size).toBigDecimal().setScale(blockchain.decimals(), RoundingMode.UP)
         return Result.Success(listOf(Amount(amount, fee)))
