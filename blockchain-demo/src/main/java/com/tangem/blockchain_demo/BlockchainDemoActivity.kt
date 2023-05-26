@@ -266,9 +266,9 @@ class BlockchainDemoActivity : AppCompatActivity() {
                     is Result.Success -> {
 //                        btnSend.isEnabled = true
                         when(val fees = feeResult.data) {
-                            is TransactionFee.NormalFee -> {
-                                containerRecipientAddressFee.tvFeeAverage.text = fees.normalFee.value.toString()
-                                selectedFee = fees.normalFee.value ?: BigDecimal(0)
+                            is TransactionFee.Single -> {
+                                containerRecipientAddressFee.tvFeeAverage.text = fees.fee.value.toString()
+                                selectedFee = fees.fee.value ?: BigDecimal(0)
                             }
                             is TransactionFee.SetOfThree -> {
                                 containerRecipientAddressFee.tvFeeMin.text = fees.minFee.value?.stripZeroPlainString()
