@@ -17,6 +17,7 @@ import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.filterWith
@@ -265,7 +266,7 @@ class SolanaWalletManager(
      * to open an account. Later, when creating a transaction, this amount will be deducted from fee and added
      * to the amount of the main transfer
      */
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         feeRentHolder.clear()
         val fee = getNetworkFee().successOr { return it }
         val accountCreationRent =
@@ -279,7 +280,7 @@ class SolanaWalletManager(
             feeRentHolder[feeAmount] = accountCreationRent
         }
 
-        return Result.Success(listOf(feeAmount))
+        return Result.Success(TransactionFee.NormalFee(feeAmount))
     }
 
     private suspend fun getNetworkFee(): Result<BigDecimal> {
