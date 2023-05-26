@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.tezos.network.TezosInfoResponse
 import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkProvider
 import com.tangem.blockchain.blockchains.tezos.network.TezosTransactionData
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.toCanonicalECDSASignature
@@ -104,7 +105,7 @@ class TezosWalletManager(
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         var fee: BigDecimal = BigDecimal.valueOf(TezosConstants.TRANSACTION_FEE)
         var error: Result.Failure? = null
 
@@ -131,7 +132,8 @@ class TezosWalletManager(
                 }
             }
         }
-        return if (error == null) Result.Success(listOf(Amount(fee, blockchain))) else error!!
+
+        return if (error == null) Result.Success(TransactionFee.NormalFee(Amount(fee, blockchain))) else error!!
     }
 
     override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
