@@ -13,6 +13,7 @@ import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -57,13 +58,13 @@ class TonWalletManager(
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val input = txBuilder.buildForSign(sequenceNumber, amount, destination)
         val message = buildTransaction(input, null).successOr { return it }
 
         return when (val feeResult = networkService.getFee(wallet.address, message)) {
             is Result.Failure -> feeResult
-            is Result.Success -> Result.Success(listOf(feeResult.data))
+            is Result.Success -> Result.Success(TransactionFee.NormalFee(feeResult.data))
         }
     }
 
