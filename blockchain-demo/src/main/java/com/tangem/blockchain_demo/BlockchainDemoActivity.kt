@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.tangem.TangemSdk
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain_demo.cardSdk.ScanCardAndDerive
 import com.tangem.blockchain_demo.databinding.ActivityBlockchainDemoBinding
@@ -264,15 +265,17 @@ class BlockchainDemoActivity : AppCompatActivity() {
                 when (feeResult) {
                     is Result.Success -> {
 //                        btnSend.isEnabled = true
-                        val fees = feeResult.data
-                        if (fees.size == 1) {
-                            containerRecipientAddressFee.tvFeeAverage.text = fees[0].value.toString()
-                            selectedFee = fees[0].value ?: BigDecimal(0)
-                        } else {
-                            containerRecipientAddressFee.tvFeeMin.text = fees[0].value?.stripZeroPlainString()
-                            containerRecipientAddressFee.tvFeeAverage.text = fees[1].value?.stripZeroPlainString()
-                            containerRecipientAddressFee.tvFeeMax.text = fees[2].value?.stripZeroPlainString()
-                            selectedFee = fees[1].value ?: BigDecimal(0)
+                        when(val fees = feeResult.data) {
+                            is TransactionFee.NormalFee -> {
+                                containerRecipientAddressFee.tvFeeAverage.text = fees.normalFee.value.toString()
+                                selectedFee = fees.normalFee.value ?: BigDecimal(0)
+                            }
+                            is TransactionFee.SetOfThree -> {
+                                containerRecipientAddressFee.tvFeeMin.text = fees.minFee.value?.stripZeroPlainString()
+                                containerRecipientAddressFee.tvFeeAverage.text = fees.normalFee.value?.stripZeroPlainString()
+                                containerRecipientAddressFee.tvFeeMax.text = fees.priorityFee.value?.stripZeroPlainString()
+                                selectedFee = fees.normalFee.value ?: BigDecimal(0)
+                            }
                         }
                     }
                     is Result.Failure -> handleError(feeResult.error)
