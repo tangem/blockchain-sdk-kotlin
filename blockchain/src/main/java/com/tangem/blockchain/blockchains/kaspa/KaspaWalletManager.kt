@@ -4,28 +4,12 @@ import com.tangem.blockchain.common.Wallet
 import android.util.Log
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaInfoResponse
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkProvider
-import com.tangem.blockchain.blockchains.tezos.TezosAddressService.Companion.calculateTezosChecksum
-import com.tangem.blockchain.blockchains.tezos.TezosConstants
-import com.tangem.blockchain.blockchains.tezos.TezosTransactionBuilder
-import com.tangem.blockchain.blockchains.tezos.network.TezosInfoResponse
-import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkProvider
-import com.tangem.blockchain.blockchains.tezos.network.TezosTransactionData
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.extensions.toCanonicalECDSASignature
 import com.tangem.common.CompletionResult
-import com.tangem.common.card.EllipticCurve
-import com.tangem.common.extensions.hexToBytes
-import com.tangem.common.extensions.isZero
-import com.tangem.common.extensions.toHexString
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import org.bitcoinj.core.Base58
-import org.bitcoinj.core.Utils
 import java.math.BigDecimal
-import java.util.*
 
 class KaspaWalletManager(
     wallet: Wallet,
@@ -92,7 +76,7 @@ class KaspaWalletManager(
             Result.Failure(Exception("No unspent outputs found").toBlockchainSdkError()) // shouldn't happen
         } else {
             val fee = FEE_PER_UNSPENT_OUTPUT.toBigDecimal().multiply(unspentOutputCount.toBigDecimal())
-            Result.Success(TransactionFee.NormalFee(Amount(fee, blockchain)))
+            Result.Success(TransactionFee.Single(Amount(fee, blockchain)))
         }
     }
 

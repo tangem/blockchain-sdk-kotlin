@@ -133,7 +133,7 @@ class TezosWalletManager(
             }
         }
 
-        return if (error == null) Result.Success(TransactionFee.NormalFee(Amount(fee, blockchain))) else error!!
+        return if (error == null) Result.Success(TransactionFee.Single(Amount(fee, blockchain))) else error!!
     }
 
     override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {

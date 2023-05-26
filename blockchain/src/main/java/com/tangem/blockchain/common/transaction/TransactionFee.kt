@@ -10,8 +10,8 @@ sealed class TransactionFee {
         val priorityFee: Amount,
     ) : TransactionFee()
 
-    data class NormalFee(
-        val normalFee: Amount
+    data class Single(
+        val fee: Amount
     ) : TransactionFee()
 
 }
