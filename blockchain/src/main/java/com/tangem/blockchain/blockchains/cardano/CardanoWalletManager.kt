@@ -4,6 +4,7 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
@@ -85,13 +86,19 @@ class CardanoWalletManager(
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
-        val a = 0.155381
-        val b = 0.000044
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val size = transactionBuilder.getEstimateSize(
             TransactionData(amount, null, wallet.address, destination)
         )
-        val fee = (a + b * size).toBigDecimal().setScale(blockchain.decimals(), RoundingMode.UP)
-        return Result.Success(listOf(Amount(amount, fee)))
+        val fee = (MINIMAL_FEE + COST_OF_KB * size).toBigDecimal().setScale(blockchain.decimals(), RoundingMode.UP)
+        return Result.Success(TransactionFee.NormalFee(Amount(amount, fee)))
     }
+
+    companion object {
+
+        private const val MINIMAL_FEE = 0.155381
+        private const val COST_OF_KB = 0.000044
+
+    }
+
 }
