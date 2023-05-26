@@ -64,7 +64,7 @@ class TonWalletManager(
 
         return when (val feeResult = networkService.getFee(wallet.address, message)) {
             is Result.Failure -> feeResult
-            is Result.Success -> Result.Success(TransactionFee.NormalFee(feeResult.data))
+            is Result.Success -> Result.Success(TransactionFee.Single(feeResult.data))
         }
     }
 
