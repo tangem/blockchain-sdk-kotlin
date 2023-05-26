@@ -19,6 +19,7 @@ import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -172,11 +173,10 @@ open class EthereumWalletManager(
         return networkProvider.getAllowance(spender, token, wallet.address)
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee.SetOfThree> {
         return try {
             coroutineScope {
-                val gasLimitResponsesDeferred =
-                    async { getGasLimit(amount, destination) }
+                val gasLimitResponsesDeferred = async { getGasLimit(amount, destination) }
                 val gasPriceResponsesDeferred = async { getGasPrice() }
 
                 val gLimit = when (val gasLimitResult = gasLimitResponsesDeferred.await()) {
@@ -190,9 +190,7 @@ open class EthereumWalletManager(
 
                 gasLimit = gLimit
                 gasPrice = gPrice
-                val fees = calculateFees(gLimit, gPrice).map { value ->
-                    Amount(wallet.amounts[AmountType.Coin]!!, value)
-                }
+                val fees = calculateFees(gLimit, gPrice)
                 Result.Success(fees)
             }
         } catch (exception: Exception) {
@@ -200,7 +198,7 @@ open class EthereumWalletManager(
         }
     }
 
-    suspend fun getFeeToApprove(amount: Amount, spender: String): Result<List<Amount>> {
+    suspend fun getFeeToApprove(amount: Amount, spender: String): Result<TransactionFee> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred =
@@ -219,7 +217,7 @@ open class EthereumWalletManager(
                 gasPrice = gPrice
 
                 val fees = calculateFees(gLimit, gPrice)
-                    .map { value -> Amount(wallet.amounts[AmountType.Coin]!!, value) }
+
                 Result.Success(fees)
             }
         } catch (exception: Exception) {
@@ -227,7 +225,7 @@ open class EthereumWalletManager(
         }
     }
 
-    open suspend fun getFee(amount: Amount, destination: String, data: String): Result<List<Amount>> {
+    open suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee.SetOfThree> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred =
@@ -243,9 +241,9 @@ open class EthereumWalletManager(
 
                 gasLimit = gLimit
                 gasPrice = gPrice
-                val fees = calculateFees(gLimit, gPrice).map { value ->
-                    Amount(wallet.amounts[AmountType.Coin]!!, value)
-                }
+
+                val fees = calculateFees(gLimit, gPrice)
+
                 Result.Success(fees)
             }
         } catch (exception: Exception) {
@@ -257,7 +255,7 @@ open class EthereumWalletManager(
         processorContractAddress: String,
         otp: ByteArray,
         otpCounter: Int,
-    ): Result<List<Amount>> {
+    ): Result<TransactionFee> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred =
@@ -276,7 +274,7 @@ open class EthereumWalletManager(
                 gasPrice = gPrice
 
                 val fees = calculateFees(gLimit, gPrice)
-                    .map { value -> Amount(wallet.amounts[AmountType.Coin]!!, value) }
+
                 Result.Success(fees)
             }
         } catch (exception: Exception) {
@@ -321,7 +319,7 @@ open class EthereumWalletManager(
         return signAndSend(transactionToSign, signer)
     }
 
-    suspend fun getFeeToSetWallet(processorContractAddress: String): Result<List<Amount>> {
+    suspend fun getFeeToSetWallet(processorContractAddress: String): Result<TransactionFee> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred =
@@ -340,7 +338,7 @@ open class EthereumWalletManager(
                 gasPrice = gPrice
 
                 val fees = calculateFees(gLimit, gPrice)
-                    .map { value -> Amount(wallet.amounts[AmountType.Coin]!!, value) }
+
                 Result.Success(fees)
             }
         } catch (exception: Exception) {
@@ -348,7 +346,7 @@ open class EthereumWalletManager(
         }
     }
 
-    suspend fun getFeeToSetSpendLimit(processorContractAddress: String, amount: Amount): Result<List<Amount>> {
+    suspend fun getFeeToSetSpendLimit(processorContractAddress: String, amount: Amount): Result<TransactionFee> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred =
@@ -366,9 +364,8 @@ open class EthereumWalletManager(
                 gasLimitToSetSpendLimit = gLimit
                 gasPrice = gPrice
 
-                val fees = calculateFees(gLimit, gPrice).map { value ->
-                    Amount(wallet.amounts[AmountType.Coin]!!, value)
-                }
+                val fees = calculateFees(gLimit, gPrice)
+
                 Result.Success(fees)
             }
         } catch (exception: Exception) {
@@ -376,7 +373,7 @@ open class EthereumWalletManager(
         }
     }
 
-    suspend fun getFeeToTransferFrom(amount: Amount, source: String): Result<List<Amount>> {
+    suspend fun getFeeToTransferFrom(amount: Amount, source: String): Result<TransactionFee> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred =
@@ -395,7 +392,7 @@ open class EthereumWalletManager(
                 gasLimitToTransferFrom = gLimit
                 gasPrice = gPrice
                 val fees = calculateFees(gLimit, gPrice)
-                    .map { value -> Amount(wallet.amounts[AmountType.Coin]!!, value) }
+
                 Result.Success(fees)
             }
         } catch (exception: Exception) {
@@ -565,20 +562,25 @@ open class EthereumWalletManager(
         }
     }
 
-    protected open fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): List<BigDecimal> {
+    protected open fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): TransactionFee.SetOfThree {
         val minFee = gasPrice * gasLimit
         //By dividing by ten before last multiplication here we can lose some digits
         val normalFee = gasPrice * BigInteger.valueOf(12) / BigInteger.TEN * gasLimit
         val priorityFee = gasPrice * BigInteger.valueOf(15) / BigInteger.TEN * gasLimit
 
-        val decimals = Blockchain.Ethereum.decimals()
-        return listOf(minFee, normalFee, priorityFee)
-            .map {
-                it.toBigDecimal(
-                    scale = decimals,
-                    mathContext = MathContext(decimals, RoundingMode.HALF_EVEN)
-                )
-            }
+        return TransactionFee.SetOfThree(
+            minFee = createFee(minFee),
+            normalFee = createFee(normalFee),
+            priorityFee = createFee(priorityFee)
+        )
+
+    }
+
+    protected fun createFee(bigDecimal: BigInteger) : Amount {
+        return Amount(wallet.amounts[AmountType.Coin]!!, bigDecimal.toBigDecimal(
+            scale = Blockchain.Ethereum.decimals(),
+            mathContext = MathContext(Blockchain.Ethereum.decimals(), RoundingMode.HALF_EVEN)
+        ))
     }
 
     override suspend fun getTransactionHistory(
