@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.stellar
 
 import android.util.Log
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -85,17 +86,17 @@ class StellarWalletManager(
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val feeStats = networkProvider.getFeeStats().successOr { return it }
 
         val maxChargedFee = feeStats.feeCharged.max.toBigDecimal().movePointLeft(blockchain.decimals())
         val minChargedFee = feeStats.feeCharged.min.toBigDecimal().movePointLeft(blockchain.decimals())
         val averageChargedFee = (maxChargedFee - minChargedFee).divide(2.toBigDecimal()) + minChargedFee
 
-        return Result.Success(listOf(
-            Amount(minChargedFee, blockchain),
-            Amount(averageChargedFee, blockchain),
-            Amount(maxChargedFee, blockchain),
+        return Result.Success(TransactionFee.SetOfThree(
+            minFee = Amount(minChargedFee, blockchain),
+            normalFee = Amount(averageChargedFee, blockchain),
+            priorityFee = Amount(maxChargedFee, blockchain),
         ))
     }
 
