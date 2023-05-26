@@ -12,6 +12,7 @@ import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.extensions.hexToBytes
@@ -33,7 +34,7 @@ class OptimismWalletManager(
 
     private var lastLayer1FeeAmount: Amount? = null
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee.SetOfThree> {
         lastLayer1FeeAmount = null
 
         val blockchain = wallet.blockchain
@@ -66,7 +67,11 @@ class OptimismWalletManager(
         lastLayer1FeeAmount = lastLayer1Fee
 
         //https://community.optimism.io/docs/developers/build/transaction-fees/#displaying-fees-to-users
-        val updatedFees = layer2fee.map { it.copy(value = it.value!! + lastLayer1Fee.value!!) }
+        val updatedFees = layer2fee.copy(
+            minFee = layer2fee.minFee + lastLayer1Fee.value!!,
+            normalFee = layer2fee.normalFee + lastLayer1Fee.value,
+            priorityFee = layer2fee.priorityFee + lastLayer1Fee.value,
+        )
 
         return Result.Success(updatedFees)
     }
@@ -86,7 +91,7 @@ class OptimismWalletManager(
         return super.sign(updatedTransactionData, signer)
     }
 
-    override suspend fun getFee(amount: Amount, destination: String, data: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee.SetOfThree> {
         lastLayer1FeeAmount = null
 
         val blockchain = wallet.blockchain
@@ -123,7 +128,12 @@ class OptimismWalletManager(
         lastLayer1FeeAmount = lastLayer1Fee
 
         //https://community.optimism.io/docs/developers/build/transaction-fees/#displaying-fees-to-users
-        val updatedFees = layer2fee.map { it.copy(value = it.value!! + lastLayer1Fee.value!!) }
+
+        val updatedFees = layer2fee.copy(
+            minFee = layer2fee.minFee + lastLayer1Fee.value!!,
+            normalFee = layer2fee.normalFee + lastLayer1Fee.value,
+            priorityFee = layer2fee.priorityFee + lastLayer1Fee.value,
+        )
 
         return Result.Success(updatedFees)
     }
@@ -150,19 +160,18 @@ class OptimismWalletManager(
         }
     }
 
-    override fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): List<BigDecimal> {
+
+    // TODO think about merge this method with parent's one
+    override fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): TransactionFee.SetOfThree {
         val minFee = (gasPrice * gasLimit)
         val normalFee = minFee * BigInteger.valueOf(12) / BigInteger.TEN
         val priorityFee = minFee * BigInteger.valueOf(15) / BigInteger.TEN
 
-        val decimals = Blockchain.Ethereum.decimals()
-        return listOf(minFee, normalFee, priorityFee)
-            .map {
-                it.toBigDecimal(
-                    scale = decimals,
-                    mathContext = MathContext(decimals, RoundingMode.HALF_EVEN)
-                )
-            }
+        return TransactionFee.SetOfThree(
+            minFee = createFee(minFee),
+            normalFee = createFee(normalFee),
+            priorityFee = createFee(priorityFee)
+        )
     }
 
     companion object {
