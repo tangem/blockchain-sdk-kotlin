@@ -67,7 +67,7 @@ class PolkadotWalletManager(
         updateRecentTransactions(confirmedTxData)
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee.NormalFee> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee.Single> {
         currentContext = multiNetworkProvider.performRequest {
             extrinsicContext(accountAddress)
         }.successOr { return it }
@@ -85,7 +85,7 @@ class PolkadotWalletManager(
         }.successOr { return it }
         val feeAmount = amount.copy(value = fee)
 
-        return Result.Success(TransactionFee.NormalFee(feeAmount))
+        return Result.Success(TransactionFee.Single(feeAmount))
     }
 
     override fun createTransaction(amount: Amount, fee: Amount, destination: String): TransactionData {
