@@ -16,6 +16,7 @@ import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
@@ -137,7 +138,7 @@ open class BitcoinWalletManager(
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         try {
             when (val feeResult = getBitcoinFeePerKb()) {
                 is Result.Failure -> return feeResult
@@ -162,10 +163,10 @@ open class BitcoinWalletManager(
                             val minFee = feeResult.data.minimalPerKb.calculateFee(transactionSize)
                             val normalFee = feeResult.data.normalPerKb.calculateFee(transactionSize)
                             val priorityFee = feeResult.data.priorityPerKb.calculateFee(transactionSize)
-                            val fees = listOf(
-                                Amount(minFee, blockchain),
-                                Amount(normalFee, blockchain),
-                                Amount(priorityFee, blockchain)
+                            val fees = TransactionFee.SetOfThree(
+                                minFee = Amount(minFee, blockchain),
+                                normalFee = Amount(normalFee, blockchain),
+                                priorityFee = Amount(priorityFee, blockchain)
                             )
                             Result.Success(fees)
                         }
