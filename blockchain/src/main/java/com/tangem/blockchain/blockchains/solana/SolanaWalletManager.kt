@@ -280,7 +280,7 @@ class SolanaWalletManager(
             feeRentHolder[feeAmount] = accountCreationRent
         }
 
-        return Result.Success(TransactionFee.NormalFee(feeAmount))
+        return Result.Success(TransactionFee.Single(feeAmount))
     }
 
     private suspend fun getNetworkFee(): Result<BigDecimal> {

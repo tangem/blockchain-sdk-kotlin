@@ -108,7 +108,7 @@ class TronWalletManager(
 
             if (!destinationExistsDef.await() && amount.type == AmountType.Coin) {
                 return@coroutineScope Result.Success(
-                    TransactionFee.NormalFee(
+                    TransactionFee.Single(
                         Amount(
                             BigDecimal.valueOf(1.1),
                             blockchain
@@ -138,7 +138,7 @@ class TronWalletManager(
             val totalFee = consumedBandwidthFee + energyFee
 
             val value = BigDecimal(totalFee).movePointLeft(blockchain.decimals())
-            Result.Success(TransactionFee.NormalFee(Amount(value, blockchain)))
+            Result.Success(TransactionFee.Single(Amount(value, blockchain)))
         }
     }
 
