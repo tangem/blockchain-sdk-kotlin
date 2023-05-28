@@ -9,14 +9,13 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.isZero
 import com.tangem.common.extensions.toCompressedPublicKey
 import org.bitcoinj.core.*
-import org.bitcoinj.core.LegacyAddress.fromPubKeyHash
+import org.bitcoinj.core.LegacyAddress
 import org.bitcoinj.crypto.TransactionSignature
 import org.bitcoinj.script.Script
-import org.bitcoinj.script.ScriptBuilder
 import java.math.BigDecimal
 import java.math.BigInteger
 
-class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, blockchain: Blockchain)
+class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, private val blockchain: Blockchain)
     : BitcoinTransactionBuilder(walletPublicKey.toCompressedPublicKey(), blockchain) {
 
     override fun buildToSign(
@@ -26,7 +25,7 @@ class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, blockchain: Bloc
 
         val change: BigDecimal = calculateChange(transactionData, unspentOutputs!!)
 
-        transaction = transactionData.toBitcoinCashTransaction(networkParameters, unspentOutputs!!, change)
+        transaction = transactionData.toBitcoinCashTransaction(networkParameters, unspentOutputs!!, change, blockchain)
 
         val hashesForSign: MutableList<ByteArray> = MutableList(transaction.inputs.size) { byteArrayOf() }
         for (input in transaction.inputs) {
@@ -54,18 +53,25 @@ class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, blockchain: Bloc
     private fun getTransaction() = transaction as BitcoinCashTransaction
 }
 
-internal fun TransactionData.toBitcoinCashTransaction(networkParameters: NetworkParameters?,
-                                                      unspentOutputs: List<BitcoinUnspentOutput>,
-                                                      change: BigDecimal): BitcoinCashTransaction {
+internal fun TransactionData.toBitcoinCashTransaction(
+    networkParameters: NetworkParameters?,
+    unspentOutputs: List<BitcoinUnspentOutput>,
+    change: BigDecimal,
+    blockchain: Blockchain
+): BitcoinCashTransaction {
     val transaction = BitcoinCashTransaction(networkParameters)
     for (utxo in unspentOutputs) {
         transaction.addInput(Sha256Hash.wrap(utxo.transactionHash), utxo.outputIndex, Script(utxo.outputScript))
     }
-    val addressService = BitcoinCashAddressService()
+    val addressService = BitcoinCashAddressService(blockchain)
     val sourceLegacyAddress =
-            fromPubKeyHash(networkParameters, addressService.getPublicKeyHash(this.sourceAddress))
-    val destinationLegacyAddress =
-            fromPubKeyHash(networkParameters, addressService.getPublicKeyHash(this.destinationAddress))
+        LegacyAddress.fromPubKeyHash(networkParameters, addressService.getPublicKeyHash(this.sourceAddress))
+
+    val destinationLegacyAddress = if (addressService.validateCashAddrAddress(this.destinationAddress)) {
+        LegacyAddress.fromPubKeyHash(networkParameters, addressService.getPublicKeyHash(this.destinationAddress))
+    } else {
+        LegacyAddress.fromBase58(networkParameters, this.destinationAddress)
+    }
 
     transaction.addOutput(
             Coin.parseCoin(this.amount.value!!.toPlainString()),
