@@ -41,10 +41,8 @@ open class BitcoinAddressService(
         )
     }
 
-    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-        val ecPublicKey = ECKey.fromPublicOnly(walletPublicKey)
-        return LegacyAddress.fromKey(networkParameters, ecPublicKey).toBase58()
-    }
+    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?) =
+        makeLegacyAddress(walletPublicKey).value
 
     override fun validate(address: String): Boolean {
         return validateLegacyAddress(address) || validateSegwitAddress(address)
@@ -61,8 +59,11 @@ open class BitcoinAddressService(
         }
     }
 
-    private fun makeLegacyAddress(walletPublicKey: ByteArray) =
-            Address(makeAddress(walletPublicKey), BitcoinAddressType.Legacy)
+    internal fun makeLegacyAddress(walletPublicKey: ByteArray): Address {
+        val ecPublicKey = ECKey.fromPublicOnly(walletPublicKey)
+        val address = LegacyAddress.fromKey(networkParameters, ecPublicKey).toBase58()
+        return Address(address, BitcoinAddressType.Legacy)
+    }
 
     private fun makeSegwitAddress(walletPublicKey: ByteArray): Address {
         val compressedPublicKey = ECKey.fromPublicOnly(walletPublicKey.toCompressedPublicKey())
@@ -80,7 +81,7 @@ open class BitcoinAddressService(
         }
     }
 
-    private fun validateLegacyAddress(address: String): Boolean {
+    internal fun validateLegacyAddress(address: String): Boolean {
         return try {
             LegacyAddress.fromBase58(networkParameters, address)
             true
