@@ -26,9 +26,18 @@ public class CashAddr {
 
     private static final BigInteger POLYMOD_AND_CONSTANT = new BigInteger("07ffffffff", 16);
 
-    public static String toCashAddress(BitcoinCashAddressType addressType, byte[] hash) {
-        String prefixString =  MAIN_NET_PREFIX;
-        byte[] prefixBytes = getPrefixBytes(prefixString);
+    String networkPrefix;
+
+    public CashAddr(boolean isTestNet) {
+        if (isTestNet) {
+            networkPrefix = TEST_NET_PREFIX;
+        } else {
+            networkPrefix = MAIN_NET_PREFIX;
+        }
+    }
+
+    public String toCashAddress(BitcoinCashAddressType addressType, byte[] hash) {
+        byte[] prefixBytes = getPrefixBytes(networkPrefix);
         byte[] payloadBytes = concatenateByteArrays(new byte[] { addressType.getVersionByte() }, hash);
         payloadBytes = convertBits(payloadBytes, 8, 5, false);
         byte[] allChecksumInput = concatenateByteArrays(
@@ -37,10 +46,10 @@ public class CashAddr {
         byte[] checksumBytes = calculateChecksumBytesPolymod(allChecksumInput);
         checksumBytes = convertBits(checksumBytes, 8, 5, true);
         String cashAddress = BitcoinCashBase32.encode(concatenateByteArrays(payloadBytes, checksumBytes));
-        return prefixString + SEPARATOR + cashAddress;
+        return networkPrefix + SEPARATOR + cashAddress;
     }
 
-    public static BitcoinCashAddressDecodedParts decodeCashAddress(String bitcoinCashAddress) {
+    public BitcoinCashAddressDecodedParts decodeCashAddress(String bitcoinCashAddress) {
         if (!isValidCashAddress(bitcoinCashAddress)) {
             throw new RuntimeException("Address wasn't valid: " + bitcoinCashAddress);
         }
@@ -50,7 +59,7 @@ public class CashAddr {
         if (addressParts.length == 2) {
             decoded.setPrefix(addressParts[0]);
         } else {
-            decoded.setPrefix(MAIN_NET_PREFIX);
+            decoded.setPrefix(networkPrefix);
         }
 
         byte[] addressData = BitcoinCashBase32.decode(addressParts[addressParts.length - 1]);
@@ -77,7 +86,7 @@ public class CashAddr {
 
 
 
-    public static boolean isValidCashAddress(String bitcoinCashAddress ) {
+    public boolean isValidCashAddress(String bitcoinCashAddress ) {
         try {
             if (!isSingleCase(bitcoinCashAddress))
                 return false;
@@ -88,10 +97,10 @@ public class CashAddr {
             if (bitcoinCashAddress.contains(SEPARATOR)) {
                 String[] split = bitcoinCashAddress.split(SEPARATOR);
                 prefix = split[0];
-                if (!prefix.equals(MAIN_NET_PREFIX)) {return false;} //for now we use main net only
+                if (!prefix.equals(networkPrefix)) {return false;}
                 bitcoinCashAddress = split[1];
             } else {
-                prefix = MAIN_NET_PREFIX;
+                prefix = networkPrefix;
             }
             if (!bitcoinCashAddress.startsWith("q")) {return false;} //for now we use P2PKH addresses only
 
