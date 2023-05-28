@@ -51,10 +51,10 @@
         android:layout_height="wrap_content"
         android:text="Load wallet"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_blockchain_address" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_blockchain_addresses" />
 
     <TextView
-        android:id="@+id/tv_blockchain_address"
+        android:id="@+id/tv_blockchain_addresses"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
@@ -66,7 +66,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Blockchain address"
+        android:text="Blockchain addresses"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/sp_select_blockchain" />
