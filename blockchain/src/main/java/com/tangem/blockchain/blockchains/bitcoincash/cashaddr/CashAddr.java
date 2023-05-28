@@ -14,18 +14,11 @@ import java.util.Arrays;
 
 public class CashAddr {
 
-    public static final String CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
-
-    private static final char[] CHARS = CHARSET.toCharArray();
-
-
     public static final String SEPARATOR = ":";
 
     public static final String MAIN_NET_PREFIX = "bitcoincash";
 
     public static final String TEST_NET_PREFIX = "bchtest";
-
-    public static final String ASSUMED_DEFAULT_PREFIX = MAIN_NET_PREFIX;
 
     private static final BigInteger[] POLYMOD_GENERATORS = new BigInteger[] { new BigInteger("98f2bc8e61", 16),
             new BigInteger("79b76d99e2", 16), new BigInteger("f33e5fb3c4", 16), new BigInteger("ae2eabe2a8", 16),
@@ -62,7 +55,7 @@ public class CashAddr {
 
         byte[] addressData = BitcoinCashBase32.decode(addressParts[addressParts.length - 1]);
         addressData = Arrays.copyOfRange(addressData, 0, addressData.length - 8);
-        addressData = BitcoinCashBitArrayConverter.convertBits(addressData, 5, 8, true);
+        addressData = convertBits(addressData, 5, 8, true);
         byte versionByte = addressData[0];
         byte[] hash = Arrays.copyOfRange(addressData, 1, addressData.length);
 
