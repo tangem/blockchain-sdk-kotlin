@@ -550,6 +550,11 @@ enum class Blockchain(
         else -> false
     }
 
+    fun tokenTransactionFeePaidInNetworkCurrency(): Boolean = when(this) {
+        TerraV1 -> true
+        else -> false
+    }
+
     companion object {
         private val values = values()
 
