@@ -84,6 +84,7 @@ enum class Blockchain(
     RavencoinTestnet("ravencoin/test", "RVN", "Ravencoin Testnet"),
     TerraV1("terra", "LUNC", "Terra Classic"),
     TerraV2("terra-2", "LUNA", "Terra"),
+    Cronos("cronos", "CRO", "Cronos"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -122,7 +123,7 @@ enum class Blockchain(
         Gnosis,
         Optimism, OptimismTestnet,
         EthereumFair, EthereumPow, EthereumPowTestnet,
-        SaltPay, Kava, KavaTestnet,
+        SaltPay, Kava, KavaTestnet, Cronos,
         -> 18
     }
 
@@ -150,7 +151,7 @@ enum class Blockchain(
         BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet, Gnosis, Optimism, OptimismTestnet,
         EthereumFair, EthereumPow, EthereumPowTestnet, SaltPay,
-        Kava, KavaTestnet,
+        Kava, KavaTestnet, Cronos,
         -> EthereumAddressService()
         RSK -> RskAddressService()
         Cardano, CardanoShelley -> CardanoAddressService(this)
@@ -238,6 +239,7 @@ enum class Blockchain(
         Cosmos -> "https://www.mintscan.io/cosmos/account/"
         TerraV1 -> "https://finder.terra.money/classic/"
         TerraV2 -> "https://terrasco.pe/mainnet/"
+        Cronos -> "https://cronoscan.com/"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -365,6 +367,7 @@ enum class Blockchain(
             Ravencoin, RavencoinTestnet,
             Cosmos, CosmosTestnet,
             TerraV1, TerraV2,
+            Cronos,
             -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
@@ -402,6 +405,7 @@ enum class Blockchain(
             SaltPay -> Chain.SaltPay.id
             Kava -> Chain.Kava.id
             KavaTestnet -> Chain.KavaTestnet.id
+            Cronos -> Chain.Cronos.id
             else -> null
         }
     }
@@ -491,6 +495,7 @@ enum class Blockchain(
             Ravencoin -> 175
             Cosmos -> 118
             TerraV1, TerraV2 -> 330
+            Cronos -> 10000025
             ArbitrumTestnet,
             AvalancheTestnet,
             BinanceTestnet,
@@ -547,6 +552,11 @@ enum class Blockchain(
         Optimism, OptimismTestnet,
         TON, TONTestnet,
         -> true
+        else -> false
+    }
+
+    fun tokenTransactionFeePaidInNetworkCurrency(): Boolean = when(this) {
+        TerraV1 -> true
         else -> false
     }
 
