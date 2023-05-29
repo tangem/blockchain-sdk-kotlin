@@ -267,14 +267,14 @@ class BlockchainDemoActivity : AppCompatActivity() {
 //                        btnSend.isEnabled = true
                         when(val fees = feeResult.data) {
                             is TransactionFee.Single -> {
-                                containerRecipientAddressFee.tvFeeAverage.text = fees.fee.value.toString()
-                                selectedFee = fees.fee.value ?: BigDecimal(0)
+                                containerRecipientAddressFee.tvFeeAverage.text = fees.value.value.toString()
+                                selectedFee = fees.value.value ?: BigDecimal(0)
                             }
-                            is TransactionFee.SetOfThree -> {
-                                containerRecipientAddressFee.tvFeeMin.text = fees.minFee.value?.stripZeroPlainString()
-                                containerRecipientAddressFee.tvFeeAverage.text = fees.normalFee.value?.stripZeroPlainString()
-                                containerRecipientAddressFee.tvFeeMax.text = fees.priorityFee.value?.stripZeroPlainString()
-                                selectedFee = fees.normalFee.value ?: BigDecimal(0)
+                            is TransactionFee.Choosable -> {
+                                containerRecipientAddressFee.tvFeeMin.text = fees.minimum.value?.stripZeroPlainString()
+                                containerRecipientAddressFee.tvFeeAverage.text = fees.normal.value?.stripZeroPlainString()
+                                containerRecipientAddressFee.tvFeeMax.text = fees.priority.value?.stripZeroPlainString()
+                                selectedFee = fees.normal.value ?: BigDecimal(0)
                             }
                         }
                     }
