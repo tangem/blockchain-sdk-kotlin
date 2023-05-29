@@ -10,5 +10,7 @@ internal val Blockchain.trustWalletCoinType: CoinType
     get() = when (this) {
         Blockchain.Cosmos, Blockchain.CosmosTestnet -> CoinType.COSMOS
         Blockchain.TON, Blockchain.TONTestnet -> CoinType.TON
+        Blockchain.TerraV1 -> CoinType.TERRA
+        Blockchain.TerraV2 -> CoinType.TERRAV2
         else -> throw IllegalStateException()
     }

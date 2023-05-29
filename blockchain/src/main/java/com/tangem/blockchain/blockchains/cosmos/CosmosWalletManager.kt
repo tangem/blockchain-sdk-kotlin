@@ -4,21 +4,13 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosNetworkService
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AnySignerWrapper
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionSender
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.TransactionStatus
-import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
-import wallet.core.jni.CoinType
 import wallet.core.jni.PublicKeyType
 import wallet.core.jni.proto.Cosmos
+import java.math.BigDecimal
 import java.math.RoundingMode
 
 class CosmosWalletManager(
@@ -31,17 +23,18 @@ class CosmosWalletManager(
     private var accountNumber: Long? = null
     private var sequenceNumber: Long = 0L
     private val txBuilder: CosmosTransactionBuilder = CosmosTransactionBuilder(cosmosChain = cosmosChain)
-    private var gas: Long? = null
+    private var gas: BigDecimal? = null
 
     override val currentHost: String
         get() = networkService.host
 
+    override val allowsFeeSelection: FeeSelectionState = cosmosChain.allowsFeeSelection
     override suspend fun update() {
-        when (val accountResult = networkService.getAccountInfo(wallet.address)) {
-            is Result.Failure -> {
-                Log.e(this::class.java.simpleName, accountResult.error.message, accountResult.error)
-                wallet.amounts.clear()
-            }
+        val unconfirmedTxHashes = wallet.recentTransactions
+            .filter { it.status == TransactionStatus.Unconfirmed }
+            .mapNotNull { it.hash }
+        when (val accountResult = networkService.getAccountInfo(wallet.address, cardTokens, unconfirmedTxHashes)) {
+            is Result.Failure -> updateError(accountResult.error)
             is Result.Success -> updateWallet(accountResult.data)
         }
     }
@@ -55,17 +48,22 @@ class CosmosWalletManager(
             accountNumber = accNumber,
             sequenceNumber = sequenceNumber,
             feeAmount = transactionData.fee,
-            gas = gas,
+            gas = gas?.toLong(),
             extras = transactionData.extras as? CosmosTransactionExtras,
         )
 
-        val message = buildTransaction(input, signer).successOr { return SimpleResult.Failure(it.error) }
+        val message = buildTransaction(input, signer).successOr {
+            return SimpleResult.Failure(it.error)
+        }
         return when (val sendResult = networkService.send(message)) {
             is Result.Failure -> SimpleResult.Failure(sendResult.error)
             is Result.Success -> {
-                transactionData.hash = sendResult.data
-                transactionData.status = TransactionStatus.Confirmed
-                wallet.recentTransactions.add(transactionData)
+                val transaction = transactionData.copy(
+                    hash = sendResult.data,
+                    status = TransactionStatus.Unconfirmed,
+                    sourceAddress = wallet.address,
+                )
+                wallet.recentTransactions.add(transaction)
                 SimpleResult.Success
             }
         }
@@ -87,26 +85,39 @@ class CosmosWalletManager(
         return when (val estimateGasResult = networkService.estimateGas(message)) {
             is Result.Failure -> estimateGasResult
             is Result.Success -> Result.Success(
-                cosmosChain.gasPrices.map { gasPrice ->
-                    val cosmosGasMultiplier = 2
-                    val gas = estimateGasResult.data * cosmosGasMultiplier
+                cosmosChain.gasPrices(amount.type).map { gasPrice ->
+                    val estimatedGas = estimateGasResult.data
+                    val gasMultiplier = cosmosChain.gasMultiplier
+                    val feeMultiplier = cosmosChain.feeMultiplier
+                    val gas = BigDecimal(estimatedGas) * gasMultiplier
                     this.gas = gas
-                    val value = (gas * gasPrice)
-                        .toBigDecimal()
+                    var feeValue = (gas * gasPrice * feeMultiplier)
                         .movePointLeft(wallet.blockchain.decimals())
                         .setScale(wallet.blockchain.decimals(), RoundingMode.DOWN)
-                    Amount(value = value, blockchain = wallet.blockchain)
+                    tax(amount)?.let { feeValue += it }
+                    Amount(value = feeValue, blockchain = wallet.blockchain)
                 }
             )
         }
     }
 
     private fun updateWallet(cosmosAccountInfo: CosmosAccountInfo) {
-        // Transactions are confirmed instantaneously
-        wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
+        wallet.recentTransactions.forEach {
+            if (cosmosAccountInfo.confirmedTransactionHashes.contains(it.hash)) it.status = TransactionStatus.Confirmed
+        }
         wallet.setAmount(cosmosAccountInfo.amount)
         accountNumber = cosmosAccountInfo.accountNumber
         sequenceNumber = cosmosAccountInfo.sequenceNumber
+        cosmosAccountInfo.tokenBalances.forEach { entry ->
+            val value = requireNotNull(entry.value.value)
+            val token = entry.key
+            wallet.addTokenValue(value = value, token = token)
+        }
+    }
+
+    private fun updateError(error: BlockchainError) {
+        Log.e(this::class.java.simpleName, error.customMessage)
+        if (error is BlockchainSdkError) throw error
     }
 
     private fun buildTransaction(input: Cosmos.SigningInput, signer: TransactionSigner?): Result<String> {
@@ -114,7 +125,7 @@ class CosmosWalletManager(
             walletPublicKey = wallet.publicKey,
             publicKeyType = PublicKeyType.SECP256K1,
             input = input,
-            coin = CoinType.COSMOS,
+            coin = cosmosChain.coin,
             parser = Cosmos.SigningOutput.parser(),
             signer = signer,
             curve = wallet.blockchain.getSupportedCurves().first(),
@@ -122,6 +133,18 @@ class CosmosWalletManager(
         return when (outputResult) {
             is Result.Failure -> outputResult
             is Result.Success -> Result.Success(txBuilder.buildForSend(outputResult.data))
+        }
+    }
+
+    private fun tax(amount: Amount): BigDecimal? {
+        return when (amount.type) {
+            is AmountType.Token -> {
+                val taxPercent =
+                    cosmosChain.taxPercentByContractAddress[amount.type.token.contractAddress] ?: return null
+                val amountValue = requireNotNull(amount.value) { "Amount must not be null" }
+                return amountValue * taxPercent
+            }
+            else -> null
         }
     }
 }
