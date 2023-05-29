@@ -93,10 +93,10 @@ class StellarWalletManager(
         val minChargedFee = feeStats.feeCharged.min.toBigDecimal().movePointLeft(blockchain.decimals())
         val averageChargedFee = (maxChargedFee - minChargedFee).divide(2.toBigDecimal()) + minChargedFee
 
-        return Result.Success(TransactionFee.SetOfThree(
-            minFee = Amount(minChargedFee, blockchain),
-            normalFee = Amount(averageChargedFee, blockchain),
-            priorityFee = Amount(maxChargedFee, blockchain),
+        return Result.Success(TransactionFee.Choosable(
+            minimum = Amount(minChargedFee, blockchain),
+            normal = Amount(averageChargedFee, blockchain),
+            priority = Amount(maxChargedFee, blockchain),
         ))
     }
 
