@@ -10,6 +10,7 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import wallet.core.jni.PublicKeyType
 import wallet.core.jni.proto.Cosmos
+import java.math.BigDecimal
 import java.math.RoundingMode
 
 class CosmosWalletManager(
@@ -22,7 +23,7 @@ class CosmosWalletManager(
     private var accountNumber: Long? = null
     private var sequenceNumber: Long = 0L
     private val txBuilder: CosmosTransactionBuilder = CosmosTransactionBuilder(cosmosChain = cosmosChain)
-    private var gas: Long? = null
+    private var gas: BigDecimal? = null
 
     override val currentHost: String
         get() = networkService.host
@@ -47,7 +48,7 @@ class CosmosWalletManager(
             accountNumber = accNumber,
             sequenceNumber = sequenceNumber,
             feeAmount = transactionData.fee,
-            gas = gas,
+            gas = gas?.toLong(),
             extras = transactionData.extras as? CosmosTransactionExtras,
         )
 
@@ -88,16 +89,13 @@ class CosmosWalletManager(
                     val estimatedGas = estimateGasResult.data
                     val gasMultiplier = cosmosChain.gasMultiplier
                     val feeMultiplier = cosmosChain.feeMultiplier
-                    val gas = estimatedGas * gasMultiplier
+                    val gas = BigDecimal(estimatedGas) * gasMultiplier
                     this.gas = gas
-                    var feeValueInSmallestDenomination = gas * gasPrice * feeMultiplier
-                    tax(amount)?.let { feeValueInSmallestDenomination += it }
-
-                    val value = (feeValueInSmallestDenomination)
-                        .toBigDecimal()
+                    var feeValue = (gas * gasPrice * feeMultiplier)
                         .movePointLeft(wallet.blockchain.decimals())
                         .setScale(wallet.blockchain.decimals(), RoundingMode.DOWN)
-                    Amount(value = value, blockchain = wallet.blockchain)
+                    tax(amount)?.let { feeValue += it }
+                    Amount(value = feeValue, blockchain = wallet.blockchain)
                 }
             )
         }
@@ -138,13 +136,13 @@ class CosmosWalletManager(
         }
     }
 
-    private fun tax(amount: Amount): Long? {
+    private fun tax(amount: Amount): BigDecimal? {
         return when (amount.type) {
             is AmountType.Token -> {
                 val taxPercent =
                     cosmosChain.taxPercentByContractAddress[amount.type.token.contractAddress] ?: return null
-                val amountInSmallestDenomination = requireNotNull(amount.longValue) { "Amount must not be null" }
-                return amountInSmallestDenomination * taxPercent.toLong() / 100
+                val amountValue = requireNotNull(amount.value) { "Amount must not be null" }
+                return amountValue * taxPercent
             }
             else -> null
         }
