@@ -4,14 +4,14 @@ import com.tangem.blockchain.common.Amount
 
 sealed class TransactionFee {
 
-    data class SetOfThree(
-        val minFee: Amount,
-        val normalFee: Amount,
-        val priorityFee: Amount,
+    data class Choosable(
+        val minimum: Amount,
+        val normal: Amount,
+        val priority: Amount,
     ) : TransactionFee()
 
     data class Single(
-        val fee: Amount
+        val value: Amount
     ) : TransactionFee()
 
 }
