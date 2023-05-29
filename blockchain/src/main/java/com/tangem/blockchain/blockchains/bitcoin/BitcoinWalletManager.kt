@@ -163,10 +163,10 @@ open class BitcoinWalletManager(
                             val minFee = feeResult.data.minimalPerKb.calculateFee(transactionSize)
                             val normalFee = feeResult.data.normalPerKb.calculateFee(transactionSize)
                             val priorityFee = feeResult.data.priorityPerKb.calculateFee(transactionSize)
-                            val fees = TransactionFee.SetOfThree(
-                                minFee = Amount(minFee, blockchain),
-                                normalFee = Amount(normalFee, blockchain),
-                                priorityFee = Amount(priorityFee, blockchain)
+                            val fees = TransactionFee.Choosable(
+                                minimum = Amount(minFee, blockchain),
+                                normal = Amount(normalFee, blockchain),
+                                priority = Amount(priorityFee, blockchain)
                             )
                             Result.Success(fees)
                         }

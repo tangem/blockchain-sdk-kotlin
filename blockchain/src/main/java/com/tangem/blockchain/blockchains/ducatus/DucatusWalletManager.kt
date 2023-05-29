@@ -25,7 +25,7 @@ class DucatusWalletManager(
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee.SetOfThree> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee.Choosable> {
         val feeValue = BigDecimal.ONE.movePointLeft(blockchain.decimals())
         val sizeResult = transactionBuilder.getEstimateSize(
             TransactionData(amount, Amount(amount, feeValue), wallet.address, destination)
@@ -37,10 +37,10 @@ class DucatusWalletManager(
                 val minFee = BigDecimal.valueOf(0.00000089).multiply(transactionSize)
                 val normalFee = BigDecimal.valueOf(0.00000144).multiply(transactionSize)
                 val priorityFee = BigDecimal.valueOf(0.00000350).multiply(transactionSize)
-                val fees = TransactionFee.SetOfThree(
-                    minFee = Amount(minFee, blockchain),
-                    normalFee = Amount(normalFee, blockchain),
-                    priorityFee = Amount(priorityFee, blockchain)
+                val fees = TransactionFee.Choosable(
+                    minimum = Amount(minFee, blockchain),
+                    normal = Amount(normalFee, blockchain),
+                    priority = Amount(priorityFee, blockchain)
                 )
                 Result.Success(fees)
             }
