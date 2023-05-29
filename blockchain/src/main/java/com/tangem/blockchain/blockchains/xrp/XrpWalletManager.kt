@@ -79,10 +79,10 @@ class XrpWalletManager(
         return when (val result = networkProvider.getFee()) {
             is Result.Failure -> result
             is Result.Success -> Result.Success(
-                TransactionFee.SetOfThree(
-                    minFee = Amount(result.data.minimalFee, blockchain),
-                    normalFee = Amount(result.data.normalFee, blockchain),
-                    priorityFee = Amount(result.data.priorityFee, blockchain)
+                TransactionFee.Choosable(
+                    minimum = Amount(result.data.minimalFee, blockchain),
+                    normal = Amount(result.data.normalFee, blockchain),
+                    priority = Amount(result.data.priorityFee, blockchain)
                 )
             )
         }
