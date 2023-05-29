@@ -13,8 +13,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
     val providers = when (this) {
         Blockchain.Arbitrum -> listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://arb1.arbitrum.io/rpc/"),
-            getInfuraProvider(baseUrl = "https://arbitrum-mainnet.infura.io/v3/", config = config),
-            EthereumJsonRpcProvider(baseUrl = "https://node.offchainlabs.com:8547/")
+            getInfuraProvider(baseUrl = "https://arbitrum-mainnet.infura.io/v3/", config = config)
         )
         Blockchain.ArbitrumTestnet -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://goerli-rollup.arbitrum.io/rpc/")
@@ -61,8 +60,8 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = "https://etc.etcdesktop.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://blockscout.com/etc/mainnet/api/eth-rpc/"),
             EthereumJsonRpcProvider(baseUrl = "https://etc.mytokenpocket.vip/"),
-            EthereumJsonRpcProvider(baseUrl = "https://besu.etc-network.info/"),
-            EthereumJsonRpcProvider(baseUrl = "https://geth.etc-network.info/"),
+            EthereumJsonRpcProvider(baseUrl = "https://besu-de.etc-network.info/"),
+            EthereumJsonRpcProvider(baseUrl = "https://geth-at.etc-network.info/"),
         )
         Blockchain.EthereumClassicTestnet -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://www.ethercluster.com/kotti/")
@@ -151,6 +150,14 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         )
         Blockchain.KavaTestnet -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://evm.testnet.kava.io"),
+        )
+        Blockchain.Cronos -> listOfNotNull(
+            EthereumJsonRpcProvider(baseUrl = "https://evm.cronos.org/"),
+            EthereumJsonRpcProvider(baseUrl = "https://evm-cronos.crypto.org/"),
+            getGetBlockProvider(baseUrl = "https://cro.getblock.io/mainnet/", config = config),
+            EthereumJsonRpcProvider(baseUrl = "https://node.croswap.com/rpc/"),
+            EthereumJsonRpcProvider(baseUrl = "https://cronos.blockpi.network/v1/rpc/public/"),
+            EthereumJsonRpcProvider(baseUrl = "https://cronos-evm.publicnode.com/"),
         )
         else -> throw IllegalStateException("$this isn't supported")
     }
