@@ -173,7 +173,7 @@ open class EthereumWalletManager(
         return networkProvider.getAllowance(spender, token, wallet.address)
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee.SetOfThree> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async { getGasLimit(amount, destination) }
@@ -225,7 +225,7 @@ open class EthereumWalletManager(
         }
     }
 
-    open suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee.SetOfThree> {
+    open suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred =
@@ -562,16 +562,16 @@ open class EthereumWalletManager(
         }
     }
 
-    protected open fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): TransactionFee.SetOfThree {
+    protected open fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): TransactionFee.Choosable {
         val minFee = gasPrice * gasLimit
         //By dividing by ten before last multiplication here we can lose some digits
         val normalFee = gasPrice * BigInteger.valueOf(12) / BigInteger.TEN * gasLimit
         val priorityFee = gasPrice * BigInteger.valueOf(15) / BigInteger.TEN * gasLimit
 
-        return TransactionFee.SetOfThree(
-            minFee = createFee(minFee),
-            normalFee = createFee(normalFee),
-            priorityFee = createFee(priorityFee)
+        return TransactionFee.Choosable(
+            minimum = createFee(minFee),
+            normal = createFee(normalFee),
+            priority = createFee(priorityFee)
         )
 
     }
