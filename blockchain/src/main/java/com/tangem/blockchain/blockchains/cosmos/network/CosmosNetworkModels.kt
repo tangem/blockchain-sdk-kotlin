@@ -10,8 +10,8 @@ data class CosmosAccountResponse(
 
 @JsonClass(generateAdapter = true)
 data class CosmosAccount(
-    @Json(name = "account_number") val accountNumber: String,
-    @Json(name = "sequence") val sequence: String,
+    @Json(name = "account_number") val accountNumber: Long,
+    @Json(name = "sequence") val sequence: Long,
 )
 
 @JsonClass(generateAdapter = true)
@@ -22,7 +22,7 @@ data class CosmosBalanceResponse(
 @JsonClass(generateAdapter = true)
 data class CosmosBalance(
     @Json(name = "denom") val denom: String,
-    @Json(name = "amount") val amount: String,
+    @Json(name = "amount") val amount: Long,
 )
 
 @JsonClass(generateAdapter = true)
@@ -48,7 +48,7 @@ data class CosmosTxResponse(
 
 @JsonClass(generateAdapter = true)
 data class CosmosTxInfo(
-    @Json(name = "height") val height: String,
+    @Json(name = "height") val height: Long,
     @Json(name = "txhash") val txhash: String,
 )
 
