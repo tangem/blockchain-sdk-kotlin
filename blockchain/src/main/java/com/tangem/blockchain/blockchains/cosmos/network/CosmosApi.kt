@@ -19,4 +19,7 @@ interface CosmosApi {
 
     @POST("cosmos/tx/v1beta1/txs")
     suspend fun txs(@Body simulateRequest: CosmosSendTransactionRequest): CosmosTxResponse
+
+    @GET("cosmos/tx/v1beta1/txs/{hash}")
+    suspend fun getTransactionStatus(@Path("hash") hash: String): CosmosTxResponse
 }
