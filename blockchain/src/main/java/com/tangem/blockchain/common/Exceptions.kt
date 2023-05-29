@@ -33,6 +33,7 @@ sealed class BlockchainSdkError(
         messageResId = null,
         cause = throwable,
     )
+    object FailedToBuildTx : BlockchainSdkError(7, "Failed to build transaction")
 
     object SignatureCountNotMatched : BlockchainSdkError(100)
 

@@ -58,14 +58,7 @@ import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
 import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledNetworkProvider
 import com.tangem.blockchain.extensions.letNotBlank
-import com.tangem.blockchain.network.API_ADALITE
-import com.tangem.blockchain.network.API_KASPA
-import com.tangem.blockchain.network.API_RIPPLE
-import com.tangem.blockchain.network.API_RIPPLE_RESERVE
-import com.tangem.blockchain.network.API_TEZOS_BLOCKSCALE
-import com.tangem.blockchain.network.API_TEZOS_ECAD
-import com.tangem.blockchain.network.API_TEZOS_SMARTPY
-import com.tangem.blockchain.network.API_XRP_LEDGER_FOUNDATION
+import com.tangem.blockchain.network.*
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import com.tangem.blockchain.network.blockscout.BlockscoutNetworkProvider
 import com.tangem.common.card.EllipticCurve
@@ -256,6 +249,7 @@ class WalletManagerFactory(
             Blockchain.EthereumPow,
             Blockchain.EthereumPowTestnet,
             Blockchain.Kava, Blockchain.KavaTestnet,
+            Blockchain.Cronos,
             -> {
                 EthereumWalletManager(
                     wallet = wallet,
@@ -473,6 +467,28 @@ class WalletManagerFactory(
                     wallet = wallet,
                     networkProviders = providers,
                     cosmosChain = CosmosChain.Cosmos(testnet)
+                )
+            }
+            Blockchain.TerraV1 -> {
+                val providers = buildList {
+                    config.nowNodeCredentials?.apiKey.letNotBlank { add("https://terra.nownodes.io/$it/") }
+                    add("https://terra-classic-lcd.publicnode.com/")
+                }.map(::CosmosRestProvider)
+                CosmosWalletManager(
+                    wallet = wallet,
+                    networkProviders = providers,
+                    cosmosChain = CosmosChain.TerraV1
+                )
+            }
+            Blockchain.TerraV2 -> {
+                val providers = buildList {
+                    config.getBlockCredentials?.apiKey.letNotBlank { add("https://luna.getblock.io/$it/mainnet/") }
+                    add("https://phoenix-lcd.terra.dev/")
+                }.map(::CosmosRestProvider)
+                CosmosWalletManager(
+                    wallet = wallet,
+                    networkProviders = providers,
+                    cosmosChain = CosmosChain.TerraV2
                 )
             }
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
