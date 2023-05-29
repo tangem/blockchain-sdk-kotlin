@@ -103,7 +103,7 @@ class CosmosWalletManager(
 
 
                 if (amounts.size == 3) {
-                    return Result.Success(TransactionFee.SetOfThree(amounts[0], amounts[1], amounts[2]))
+                    return Result.Success(TransactionFee.Choosable(amounts[0], amounts[1], amounts[2]))
                 } else {
                     return Result.Success(TransactionFee.Single(amounts[0]))
                 }
