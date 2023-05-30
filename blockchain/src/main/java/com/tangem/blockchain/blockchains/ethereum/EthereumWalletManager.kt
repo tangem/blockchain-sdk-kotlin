@@ -53,15 +53,15 @@ open class EthereumWalletManager(
         private set
     var gasLimit: BigInteger? = null
         private set
-    var gasLimitToApprove: BigInteger? = null
+    var gasLimitToApprove: BigInteger? = null // applies only to gnosis
         private set
-    var gasLimitToSetSpendLimit: BigInteger? = null
+    var gasLimitToSetSpendLimit: BigInteger? = null // applies only to gnosis
         private set
-    var gasLimitToInitOTP: BigInteger? = null
+    var gasLimitToInitOTP: BigInteger? = null // applies only to gnosis
         private set
-    var gasLimitToSetWallet: BigInteger? = null
+    var gasLimitToSetWallet: BigInteger? = null // applies only to gnosis
         private set
-    var gasLimitToTransferFrom: BigInteger? = null
+    var gasLimitToTransferFrom: BigInteger? = null // applies only to gnosis
         private set
     var gasPrice: BigInteger? = null
         private set
@@ -97,6 +97,7 @@ open class EthereumWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
+    // applies only to gnosis
     suspend fun sendRaw(transactionToSign: CompiledEthereumTransaction, signature: ByteArray): SimpleResult {
         val transactionToSend = transactionBuilder.buildToSend(signature, transactionToSign)
         return networkProvider.sendTransaction("0x" + transactionToSend.toHexString())
@@ -156,6 +157,7 @@ open class EthereumWalletManager(
         }
     }
 
+    // applies only to gnosis
     suspend fun approve(
         transactionData: TransactionData,
         signer: TransactionSigner,
@@ -169,6 +171,7 @@ open class EthereumWalletManager(
         return signAndSend(transactionToSign, signer)
     }
 
+    // applies only to gnosis
     suspend fun getAllowance(spender: String, token: Token): Result<Amount> {
         return networkProvider.getAllowance(spender, token, wallet.address)
     }
@@ -198,6 +201,7 @@ open class EthereumWalletManager(
         }
     }
 
+    // applies only to gnosis
     suspend fun getFeeToApprove(amount: Amount, spender: String): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
@@ -228,8 +232,7 @@ open class EthereumWalletManager(
     open suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
-                val gasLimitResponsesDeferred =
-                    async { getGasLimit(amount, destination, data) }
+                val gasLimitResponsesDeferred = async { getGasLimit(amount, destination, data) }
                 val gasPriceResponsesDeferred = async { getGasPrice() }
 
                 val gLimit = gasLimitResponsesDeferred.await().successOr {
@@ -251,6 +254,7 @@ open class EthereumWalletManager(
         }
     }
 
+    // applies only to gnosis
     suspend fun getFeeToInitOTP(
         processorContractAddress: String,
         otp: ByteArray,
@@ -282,6 +286,7 @@ open class EthereumWalletManager(
         }
     }
 
+    // applies only to gnosis
     suspend fun initOTP(
         processorContractAddress: String,
         cardAddress: String,
@@ -302,6 +307,7 @@ open class EthereumWalletManager(
         return signAndSend(transactionToSign, signer)
     }
 
+    // applies only to gnosis
     suspend fun setWallet(
         processorContractAddress: String,
         cardAddress: String,
@@ -319,6 +325,7 @@ open class EthereumWalletManager(
         return signAndSend(transactionToSign, signer)
     }
 
+    // applies only to gnosis
     suspend fun getFeeToSetWallet(processorContractAddress: String): Result<TransactionFee> {
         return try {
             coroutineScope {
@@ -346,6 +353,7 @@ open class EthereumWalletManager(
         }
     }
 
+    // applied only to gnosis
     suspend fun getFeeToSetSpendLimit(
         processorContractAddress: String,
         amount: Amount
@@ -376,6 +384,7 @@ open class EthereumWalletManager(
         }
     }
 
+    // applies only to gnosis
     suspend fun getFeeToTransferFrom(amount: Amount, source: String): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
@@ -403,6 +412,7 @@ open class EthereumWalletManager(
         }
     }
 
+    // // applies only to gnosis
     suspend fun setSpendLimit(
         processorContractAddress: String,
         cardAddress: String,
@@ -422,6 +432,7 @@ open class EthereumWalletManager(
         return signAndSend(transactionToSign, signer)
     }
 
+    // applies only to gnosis
     suspend fun transferFrom(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         val transactionToSign = transactionBuilder.buildTransferFromToSign(
             transactionData,
@@ -432,6 +443,7 @@ open class EthereumWalletManager(
         return signAndSend(transactionToSign, signer)
     }
 
+    // applies only to gnosis
     open fun createTransferFromTransaction(amount: Amount, fee: Amount, source: String): TransactionData {
         return TransactionData(
             amount = amount,
@@ -511,6 +523,7 @@ open class EthereumWalletManager(
         return networkProvider.getGasLimit(destination, from, value, data)
     }
 
+    // applies only to gnosis
     suspend fun getGasLimitToApprove(amount: Amount, spender: String): Result<BigInteger> {
         return if (amount.type !is AmountType.Token) {
             Result.Failure(BlockchainSdkError.CustomError("Only token can be approved!!!"))
@@ -523,6 +536,7 @@ open class EthereumWalletManager(
         }
     }
 
+    // applies only to gnosis
     suspend fun getGasLimitToSetSpendLimit(
         processorContractAddress: String,
         cardAddress: String,
@@ -534,6 +548,7 @@ open class EthereumWalletManager(
         return networkProvider.getGasLimit(processorContractAddress, from, null, data)
     }
 
+    // applies only to gnosis
     suspend fun getGasLimitToInitOTP(
         processorContractAddress: String,
         cardAddress: String,
@@ -546,6 +561,7 @@ open class EthereumWalletManager(
         return networkProvider.getGasLimit(processorContractAddress, from, null, data)
     }
 
+    // applies only to gnosis
     suspend fun getGasLimitToSetWallet(processorContractAddress: String, address: String): Result<BigInteger> {
         val from = wallet.address
         val data = "0x" + EthereumUtils.createSetWalletData(address).toHexString()
@@ -553,6 +569,7 @@ open class EthereumWalletManager(
         return networkProvider.getGasLimit(processorContractAddress, from, null, data)
     }
 
+    // applies only to gnosis
     suspend fun getGasLimitToTransferFrom(amount: Amount, source: String, destination: String): Result<BigInteger> {
         return if (amount.type !is AmountType.Token) {
             Result.Failure(BlockchainSdkError.CustomError("Only token can be transferred!!!"))
@@ -600,4 +617,5 @@ open class EthereumWalletManager(
 
         return result
     }
+    
 }
