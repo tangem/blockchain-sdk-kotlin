@@ -53,16 +53,6 @@ open class EthereumWalletManager(
         private set
     var gasLimit: BigInteger? = null
         private set
-    var gasLimitToApprove: BigInteger? = null // applies only to gnosis
-        private set
-    var gasLimitToSetSpendLimit: BigInteger? = null // applies only to gnosis
-        private set
-    var gasLimitToInitOTP: BigInteger? = null // applies only to gnosis
-        private set
-    var gasLimitToSetWallet: BigInteger? = null // applies only to gnosis
-        private set
-    var gasLimitToTransferFrom: BigInteger? = null // applies only to gnosis
-        private set
     var gasPrice: BigInteger? = null
         private set
 
@@ -307,7 +297,18 @@ open class EthereumWalletManager(
 
     // temp region to hold gnosis staff until remove
     // region gnosis
-    
+
+    var gasLimitToApprove: BigInteger? = null // applies only to gnosis
+        private set
+    var gasLimitToSetSpendLimit: BigInteger? = null // applies only to gnosis
+        private set
+    var gasLimitToInitOTP: BigInteger? = null // applies only to gnosis
+        private set
+    var gasLimitToSetWallet: BigInteger? = null // applies only to gnosis
+        private set
+    var gasLimitToTransferFrom: BigInteger? = null // applies only to gnosis
+        private set
+
     // applies only to gnosis
     suspend fun sendRaw(transactionToSign: CompiledEthereumTransaction, signature: ByteArray): SimpleResult {
         val transactionToSend = transactionBuilder.buildToSend(signature, transactionToSign)
