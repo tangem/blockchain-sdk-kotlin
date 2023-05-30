@@ -551,6 +551,7 @@ enum class Blockchain(
         Arbitrum, ArbitrumTestnet,
         Optimism, OptimismTestnet,
         TON, TONTestnet,
+        Cronos,
         -> true
         else -> false
     }
