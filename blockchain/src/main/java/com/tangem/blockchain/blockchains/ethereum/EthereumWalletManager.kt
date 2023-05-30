@@ -573,11 +573,11 @@ open class EthereumWalletManager(
             normal = createFee(normalFee),
             priority = createFee(priorityFee)
         )
-
     }
 
     protected fun createFee(bigDecimal: BigInteger) : Amount {
-        return Amount(wallet.amounts[AmountType.Coin]!!, bigDecimal.toBigDecimal(
+        val amount = requireNotNull(wallet.amounts[AmountType.Coin]) { "Amount must not be null" }
+        return Amount(amount, bigDecimal.toBigDecimal(
             scale = Blockchain.Ethereum.decimals(),
             mathContext = MathContext(Blockchain.Ethereum.decimals(), RoundingMode.HALF_EVEN)
         ))
