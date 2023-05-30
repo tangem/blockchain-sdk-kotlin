@@ -198,7 +198,7 @@ open class EthereumWalletManager(
         }
     }
 
-    suspend fun getFeeToApprove(amount: Amount, spender: String): Result<TransactionFee> {
+    suspend fun getFeeToApprove(amount: Amount, spender: String): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred =
@@ -255,7 +255,7 @@ open class EthereumWalletManager(
         processorContractAddress: String,
         otp: ByteArray,
         otpCounter: Int,
-    ): Result<TransactionFee> {
+    ): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred =
@@ -346,7 +346,10 @@ open class EthereumWalletManager(
         }
     }
 
-    suspend fun getFeeToSetSpendLimit(processorContractAddress: String, amount: Amount): Result<TransactionFee> {
+    suspend fun getFeeToSetSpendLimit(
+        processorContractAddress: String,
+        amount: Amount
+    ): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred =
@@ -373,7 +376,7 @@ open class EthereumWalletManager(
         }
     }
 
-    suspend fun getFeeToTransferFrom(amount: Amount, source: String): Result<TransactionFee> {
+    suspend fun getFeeToTransferFrom(amount: Amount, source: String): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred =
