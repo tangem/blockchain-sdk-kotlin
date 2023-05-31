@@ -82,13 +82,19 @@ class CardanoWalletManager(
                 }
                 sendResult
             }
+
             is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResponse.error)
         }
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val size = transactionBuilder.getEstimateSize(
-            TransactionData(amount, null, wallet.address, destination)
+            TransactionData(
+                amount = amount,
+                fee = null,
+                sourceAddress = wallet.address,
+                destinationAddress = destination
+            )
         )
         val fee = (MINIMAL_FEE + COST_OF_KB * size).toBigDecimal().setScale(blockchain.decimals(), RoundingMode.UP)
         return Result.Success(TransactionFee.Single(Amount(amount, fee)))
@@ -98,7 +104,5 @@ class CardanoWalletManager(
 
         private const val MINIMAL_FEE = 0.155381
         private const val COST_OF_KB = 0.000044
-
     }
-
 }
