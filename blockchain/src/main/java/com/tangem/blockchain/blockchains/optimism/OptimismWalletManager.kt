@@ -65,7 +65,7 @@ class OptimismWalletManager(
 
         //https://community.optimism.io/docs/developers/build/transaction-fees/#displaying-fees-to-users
         val updatedFees = layer2fee.copy(
-            minimum = layer2fee.minimum + lastLayer1Fee.value!!,
+            minimum = layer2fee.minimum + requireNotNull(lastLayer1Fee.value),
             normal = layer2fee.normal + lastLayer1Fee.value,
             priority = layer2fee.priority + lastLayer1Fee.value,
         )
@@ -127,7 +127,7 @@ class OptimismWalletManager(
         //https://community.optimism.io/docs/developers/build/transaction-fees/#displaying-fees-to-users
 
         val updatedFees = layer2fee.copy(
-            minimum = layer2fee.minimum + lastLayer1Fee.value!!,
+            minimum = layer2fee.minimum + requireNotNull(lastLayer1Fee.value),
             normal = layer2fee.normal + lastLayer1Fee.value,
             priority = layer2fee.priority + lastLayer1Fee.value,
         )
