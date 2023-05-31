@@ -11,7 +11,7 @@ sealed class TransactionFee {
     ) : TransactionFee()
 
     data class Single(
-        val value: Amount
+        val normal: Amount
     ) : TransactionFee()
 
 }
