@@ -107,6 +107,7 @@ open class EthereumWalletManager(
                 }
                 sendResult
             }
+
             is Result.Failure -> SimpleResult.fromTangemSdkError(signResponse.error)
         }
     }
@@ -137,39 +138,33 @@ open class EthereumWalletManager(
                 val sendResult = networkProvider.sendTransaction("0x" + transactionToSend.toHexString())
                 sendResult
             }
+
             is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResponse.error)
         }
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee.Choosable> {
-        return try {
-            coroutineScope {
-                val gasLimitResponsesDeferred = async { getGasLimit(amount, destination) }
-                val gasPriceResponsesDeferred = async { getGasPrice() }
-
-                val gLimit = when (val gasLimitResult = gasLimitResponsesDeferred.await()) {
-                    is Result.Failure -> return@coroutineScope Result.Failure(gasLimitResult.error)
-                    is Result.Success -> gasLimitResult.data
-                }
-                val gPrice = when (val gasPriceResult = gasPriceResponsesDeferred.await()) {
-                    is Result.Failure -> return@coroutineScope Result.Failure(gasPriceResult.error)
-                    is Result.Success -> gasPriceResult.data
-                }
-
-                gasLimit = gLimit
-                gasPrice = gPrice
-                val fees = calculateFees(gLimit, gPrice)
-                Result.Success(fees)
-            }
-        } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainSdkError())
-        }
+        return getFeeInternal(amount, destination, null)
     }
 
     open suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee.Choosable> {
+        return getFeeInternal(amount, destination, data)
+    }
+
+    private suspend fun getFeeInternal(
+        amount: Amount,
+        destination: String,
+        data: String? = null,
+    ): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
-                val gasLimitResponsesDeferred = async { getGasLimit(amount, destination, data) }
+                val gasLimitResponsesDeferred = async {
+                    if (data != null) {
+                        getGasLimit(amount, destination, data)
+                    } else {
+                        getGasLimit(amount, destination)
+                    }
+                }
                 val gasPriceResponsesDeferred = async { getGasPrice() }
 
                 val gLimit = gasLimitResponsesDeferred.await().successOr {
@@ -198,6 +193,7 @@ open class EthereumWalletManager(
             } else {
                 SimpleResult.Failure(BlockchainSdkError.SignatureCountNotMatched)
             }
+
             is Result.Failure -> SimpleResult.Failure(result.error)
         }
     }
@@ -227,35 +223,42 @@ open class EthereumWalletManager(
     }
 
     override suspend fun getGasLimit(amount: Amount, destination: String): Result<BigInteger> {
-        var to = destination
+        return getGasLimitInternal(amount, destination, null)
+    }
+
+    override suspend fun getGasLimit(amount: Amount, destination: String, data: String): Result<BigInteger> {
+        return getGasLimitInternal(amount, destination, data)
+    }
+
+    private suspend fun getGasLimitInternal(
+        amount: Amount,
+        destination: String,
+        data: String? = null,
+    ): Result<BigInteger> {
+
         val from = wallet.address
+        var to = destination
         var value: String? = null
-        var data: String? = null
+        var finalData = data
 
         when (amount.type) {
             is AmountType.Coin -> {
                 value = amount.value?.movePointRight(amount.decimals)?.toBigInteger()?.toHexString()
             }
+
             is AmountType.Token -> {
-                to = amount.type.token.contractAddress
-                data = "0x" + EthereumUtils.createErc20TransferData(destination, amount).toHexString()
+                if (finalData == null) {
+                    to = amount.type.token.contractAddress
+                    finalData = "0x" + EthereumUtils.createErc20TransferData(destination, amount).toHexString()
+                }
             }
+
             else -> {
                 /*no-op*/
             }
         }
 
-        return networkProvider.getGasLimit(to, from, value, data)
-    }
-
-    override suspend fun getGasLimit(amount: Amount, destination: String, data: String): Result<BigInteger> {
-        val from = wallet.address
-        val value = if (amount.type is AmountType.Coin) {
-            amount.value?.movePointRight(amount.decimals)?.toBigInteger()?.toHexString()
-        } else {
-            null
-        }
-        return networkProvider.getGasLimit(destination, from, value, data)
+        return networkProvider.getGasLimit(to, from, value, finalData)
     }
 
     protected open fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): TransactionFee.Choosable {
@@ -271,12 +274,14 @@ open class EthereumWalletManager(
         )
     }
 
-    protected fun createFee(bigDecimal: BigInteger) : Amount {
+    protected fun createFee(bigDecimal: BigInteger): Amount {
         val amount = requireNotNull(wallet.amounts[AmountType.Coin]) { "Amount must not be null" }
-        return Amount(amount, bigDecimal.toBigDecimal(
-            scale = Blockchain.Ethereum.decimals(),
-            mathContext = MathContext(Blockchain.Ethereum.decimals(), RoundingMode.HALF_EVEN)
-        ))
+        return Amount(
+            amount, bigDecimal.toBigDecimal(
+                scale = Blockchain.Ethereum.decimals(),
+                mathContext = MathContext(Blockchain.Ethereum.decimals(), RoundingMode.HALF_EVEN)
+            )
+        )
     }
 
     override suspend fun getTransactionHistory(
@@ -293,7 +298,6 @@ open class EthereumWalletManager(
 
         return result
     }
-
 
     // temp region to hold gnosis staff until remove
     // region gnosis
@@ -464,7 +468,7 @@ open class EthereumWalletManager(
     // applied only to gnosis
     suspend fun getFeeToSetSpendLimit(
         processorContractAddress: String,
-        amount: Amount
+        amount: Amount,
     ): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
