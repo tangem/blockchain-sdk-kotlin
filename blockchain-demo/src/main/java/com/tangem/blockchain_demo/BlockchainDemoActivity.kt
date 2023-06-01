@@ -264,11 +264,10 @@ class BlockchainDemoActivity : AppCompatActivity() {
             withContext(Dispatchers.Main) {
                 when (feeResult) {
                     is Result.Success -> {
-//                        btnSend.isEnabled = true
                         when(val fees = feeResult.data) {
                             is TransactionFee.Single -> {
-                                containerRecipientAddressFee.tvFeeAverage.text = fees.value.value.toString()
-                                selectedFee = fees.value.value ?: BigDecimal(0)
+                                containerRecipientAddressFee.tvFeeAverage.text = fees.normal.value.toString()
+                                selectedFee = fees.normal.value ?: BigDecimal(0)
                             }
                             is TransactionFee.Choosable -> {
                                 containerRecipientAddressFee.tvFeeMin.text = fees.minimum.value?.stripZeroPlainString()
