@@ -4,7 +4,7 @@ import java.math.BigInteger
 
 interface FeeExtras
 
-class EthereumFeeExtras(
+data class EthereumFeeExtras(
     val gasLimit: BigInteger,
     val gasPrice: BigInteger,
 ) : FeeExtras
