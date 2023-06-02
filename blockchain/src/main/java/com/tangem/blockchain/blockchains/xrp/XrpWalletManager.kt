@@ -4,6 +4,7 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.xrp.network.XrpInfoResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -80,9 +81,9 @@ class XrpWalletManager(
             is Result.Failure -> result
             is Result.Success -> Result.Success(
                 TransactionFee.Choosable(
-                    minimum = Amount(result.data.minimalFee, blockchain),
-                    normal = Amount(result.data.normalFee, blockchain),
-                    priority = Amount(result.data.priorityFee, blockchain)
+                    minimum = Fee(Amount(result.data.minimalFee, blockchain)),
+                    normal = Fee(Amount(result.data.normalFee, blockchain)),
+                    priority = Fee(Amount(result.data.priorityFee, blockchain))
                 )
             )
         }
