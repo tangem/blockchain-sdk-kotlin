@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import java.math.BigDecimal
@@ -38,9 +39,9 @@ class DucatusWalletManager(
                 val normalFee = BigDecimal.valueOf(0.00000144).multiply(transactionSize)
                 val priorityFee = BigDecimal.valueOf(0.00000350).multiply(transactionSize)
                 val fees = TransactionFee.Choosable(
-                    minimum = Amount(minFee, blockchain),
-                    normal = Amount(normalFee, blockchain),
-                    priority = Amount(priorityFee, blockchain)
+                    minimum = Fee(Amount(minFee, blockchain)),
+                    normal = Fee(Amount(normalFee, blockchain)),
+                    priority = Fee(Amount(priorityFee, blockchain))
                 )
                 Result.Success(fees)
             }
