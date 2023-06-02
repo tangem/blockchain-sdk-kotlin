@@ -21,9 +21,9 @@ internal class EthereumFeeCalculatorTest {
             feesCalculator.calculateFeesNewStyle(amountParams = Amount(Blockchain.Ethereum), gasLimit, gasPrice)
 
 
-        assert((oldFees.minimum.value!! - newFees.minimum.value!!) < BigDecimal("1E-18"))
-        assert((oldFees.normal.value!! - newFees.normal.value!!) < BigDecimal("1E-18"))
-        assert((oldFees.priority.value!! - newFees.priority.value!!) < BigDecimal("1E-18"))
+        assert((oldFees.minimum.amount.value!! - newFees.minimum.amount.value!!) < BigDecimal("1E-18"))
+        assert((oldFees.normal.amount.value!! - newFees.normal.amount.value!!) < BigDecimal("1E-18"))
+        assert((oldFees.priority.amount.value!! - newFees.priority.amount.value!!) < BigDecimal("1E-18"))
     }
 
     @Test
@@ -38,9 +38,9 @@ internal class EthereumFeeCalculatorTest {
             feesCalculator.calculateFeesNewStyle(amountParams = Amount(Blockchain.Ethereum), gasLimit, gasPrice)
 
 
-        assert((oldFees.minimum.value!! - newFees.minimum.value!!) < BigDecimal("1E-18"))
-        assert((oldFees.normal.value!! - newFees.normal.value!!) < BigDecimal("1E-18"))
-        assert((oldFees.priority.value!! - newFees.priority.value!!) < BigDecimal("1E-18"))
+        assert((oldFees.minimum.amount.value!! - newFees.minimum.amount.value!!) < BigDecimal("1E-18"))
+        assert((oldFees.normal.amount.value!! - newFees.normal.amount.value!!) < BigDecimal("1E-18"))
+        assert((oldFees.priority.amount.value!! - newFees.priority.amount.value!!) < BigDecimal("1E-18"))
     }
 
     @Test
@@ -55,9 +55,9 @@ internal class EthereumFeeCalculatorTest {
             feesCalculator.calculateFeesNewStyle(amountParams = Amount(Blockchain.Ethereum), gasLimit, gasPrice)
 
 
-        assert((oldFees.minimum.value!! - newFees.minimum.value!!) < BigDecimal("1E-18"))
-        assert((oldFees.normal.value!! - newFees.normal.value!!) < BigDecimal("1E-18"))
-        assert((oldFees.priority.value!! - newFees.priority.value!!) < BigDecimal("1E-18"))
+        assert((oldFees.minimum.amount.value!! - newFees.minimum.amount.value!!) < BigDecimal("1E-18"))
+        assert((oldFees.normal.amount.value!! - newFees.normal.amount.value!!) < BigDecimal("1E-18"))
+        assert((oldFees.priority.amount.value!! - newFees.priority.amount.value!!) < BigDecimal("1E-18"))
     }
 
 
