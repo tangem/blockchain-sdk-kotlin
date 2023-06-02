@@ -19,6 +19,7 @@ import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -563,10 +564,10 @@ open class EthereumWalletManager(
     }
 
     // applies only to gnosis
-    open fun createTransferFromTransaction(amount: Amount, fee: Amount, source: String): TransactionData {
+    open fun createTransferFromTransaction(amount: Amount, feeAmount: Amount, source: String): TransactionData {
         return TransactionData(
             amount = amount,
-            fee = fee,
+            fee = Fee(feeAmount),
             sourceAddress = source,
             destinationAddress = wallet.address,
             status = TransactionStatus.Unconfirmed,
