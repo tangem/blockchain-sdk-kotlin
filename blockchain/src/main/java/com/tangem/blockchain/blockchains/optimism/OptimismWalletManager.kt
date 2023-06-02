@@ -55,7 +55,7 @@ class OptimismWalletManager(
         val transaction = transactionBuilder.buildToSign(
             transactionData = transactionData,
             nonce = BigInteger.ONE,
-            gasLimit = gasLimit
+            gasLimit = layer2fee.gasLimit
         )?.hash ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
         val lastLayer1Fee = getLayer1Fee(transaction).successOr {
@@ -101,9 +101,8 @@ class OptimismWalletManager(
             blockchain = blockchain
         )
 
-        // TODO(remove using states [gasPrice] [gasLimit], return from fee method gasPrice and gasLimit too)
-        val gasPriceL2 = gasPrice
-        val gasLimitL2 = gasLimit
+        val gasPriceL2 = layer2fee.gasPrice
+        val gasLimitL2 = layer2fee.gasLimit
         val value = preparedAmount.value?.movePointRight(preparedAmount.decimals)?.toBigInteger() ?: BigInteger.ZERO
         val chainId =
             requireNotNull(blockchain.getChainId()) { "${blockchain.fullName} blockchain is not supported by Optimism Wallet Manager" }
@@ -155,20 +154,6 @@ class OptimismWalletManager(
         } catch (error: Throwable) {
             Result.Failure(BlockchainSdkError.WrappedThrowable(error))
         }
-    }
-
-
-    // TODO think about merge this method with parent's one
-    override fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): TransactionFee.Choosable {
-        val minFee = (gasPrice * gasLimit)
-        val normalFee = minFee * BigInteger.valueOf(12) / BigInteger.TEN
-        val priorityFee = minFee * BigInteger.valueOf(15) / BigInteger.TEN
-
-        return TransactionFee.Choosable(
-            minimum = createFee(minFee),
-            normal = createFee(normalFee),
-            priority = createFee(priorityFee)
-        )
     }
 
     companion object {
