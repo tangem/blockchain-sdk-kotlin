@@ -151,7 +151,7 @@ open class BitcoinWalletManager(
                     val sizeResult = transactionBuilder.getEstimateSize(
                         TransactionData(
                             amount = newAmount,
-                            fee = Amount(newAmount, feeValue),
+                            fee = Fee(Amount(newAmount, feeValue)),
                             sourceAddress = wallet.address,
                             destinationAddress = destination
                         )
