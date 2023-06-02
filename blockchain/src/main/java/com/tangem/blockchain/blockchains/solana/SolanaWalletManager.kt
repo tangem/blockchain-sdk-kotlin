@@ -17,6 +17,7 @@ import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -280,7 +281,7 @@ class SolanaWalletManager(
             feeRentHolder[feeAmount] = accountCreationRent
         }
 
-        return Result.Success(TransactionFee.Single(feeAmount))
+        return Result.Success(TransactionFee.Single(Fee(feeAmount)))
     }
 
     private suspend fun getNetworkFee(): Result<BigDecimal> {
