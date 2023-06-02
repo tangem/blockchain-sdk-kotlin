@@ -4,6 +4,7 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -97,7 +98,7 @@ class CardanoWalletManager(
             )
         )
         val fee = (MINIMAL_FEE + COST_OF_KB * size).toBigDecimal().setScale(blockchain.decimals(), RoundingMode.UP)
-        return Result.Success(TransactionFee.Single(Amount(amount, fee)))
+        return Result.Success(TransactionFee.Single(Fee(Amount(amount, fee))))
     }
 
     companion object {
