@@ -158,7 +158,7 @@ enum class Chain(
     OptimismTestnet(420, Blockchain.OptimismTestnet),
     EthereumFair(513100, Blockchain.EthereumFair),
     EthereumPow(10001, Blockchain.EthereumPow),
-    EthereumPowTestnet(10002, Blockchain.EthereumPow),
+    EthereumPowTestnet(10002, Blockchain.EthereumPowTestnet),
     Kava(2222, Blockchain.Kava),
     KavaTestnet(2221, Blockchain.KavaTestnet),
     Cronos(25, Blockchain.Cronos),
