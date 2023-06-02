@@ -528,6 +528,7 @@ enum class Blockchain(
             Binance, BinanceTestnet,
             Solana, SolanaTestnet,
             Tron, TronTestnet,
+            TerraV1,
             -> true
             else -> false
         }
