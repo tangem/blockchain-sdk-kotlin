@@ -70,9 +70,9 @@ class EthereumUtils {
             val nonceValue = extras?.nonce ?: nonce ?: return null
 
             val amount: BigDecimal = transactionData.amount.value ?: return null
-            val transactionFee: BigDecimal = transactionData.fee?.value ?: return null
+            val transactionFee: BigDecimal = transactionData.fee?.amount?.value ?: return null
 
-            val fee = transactionFee.movePointRight(transactionData.fee.decimals).toBigInteger()
+            val fee = transactionFee.movePointRight(transactionData.fee.amount.decimals).toBigInteger()
             val bigIntegerAmount =
                 amount.movePointRight(transactionData.amount.decimals).toBigInteger()
 
@@ -122,9 +122,9 @@ class EthereumUtils {
             val extras = transactionData.extras as? EthereumTransactionExtras
             val nonceValue = extras?.nonce ?: nonce ?: return null
             val amount: BigDecimal = transactionData.amount.value ?: return null
-            val transactionFee: BigDecimal = transactionData.fee?.value ?: return null
+            val transactionFee: BigDecimal = transactionData.fee?.amount?.value ?: return null
 
-            val fee = transactionFee.movePointRight(transactionData.fee.decimals).toBigInteger()
+            val fee = transactionFee.movePointRight(transactionData.fee.amount.decimals).toBigInteger()
             val bigIntegerAmount = amount.movePointRight(transactionData.amount.decimals).toBigInteger()
 
             val to = Address(transactionData.contractAddress
@@ -326,9 +326,9 @@ class EthereumUtils {
             val nonceValue = extras?.nonce ?: nonce ?: return null
 
             val amount: BigDecimal = transactionData.amount.value ?: return null
-            val transactionFee: BigDecimal = transactionData.fee?.value ?: return null
+            val transactionFee: BigDecimal = transactionData.fee?.amount?.value ?: return null
 
-            val fee = transactionFee.movePointRight(transactionData.fee.decimals).toBigInteger()
+            val fee = transactionFee.movePointRight(transactionData.fee.amount.decimals).toBigInteger()
             val bigIntegerAmount =
                 amount.movePointRight(transactionData.amount.decimals).toBigInteger()
 

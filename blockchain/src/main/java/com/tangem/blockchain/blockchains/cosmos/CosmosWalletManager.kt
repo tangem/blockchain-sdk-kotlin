@@ -49,7 +49,7 @@ class CosmosWalletManager(
             destination = transactionData.destinationAddress,
             accountNumber = accNumber,
             sequenceNumber = sequenceNumber,
-            feeAmount = transactionData.fee,
+            feeAmount = transactionData.fee?.amount,
             gas = gas?.toLong(),
             extras = transactionData.extras as? CosmosTransactionExtras,
         )
