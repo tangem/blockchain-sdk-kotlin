@@ -52,7 +52,7 @@ class SolanaWalletManager(
     override val currentHost: String
         get() = multiNetworkProvider.currentProvider.host
 
-    private val feeRentHolder = mutableMapOf<Amount, BigDecimal>()
+    private val feeRentHolder = mutableMapOf<Fee, BigDecimal>()
     private val valueConverter = ValueConverter()
 
     override suspend fun update() {
@@ -105,9 +105,9 @@ class SolanaWalletManager(
             if (it.instructions.isNotEmpty() && it.instructions[0].programId == Program.Id.system.toBase58()) {
                 val info = it.instructions[0].parsed.info
                 val amount = Amount(valueConverter.toSol(info.lamports), wallet.blockchain)
-                val fee = Amount(valueConverter.toSol(it.fee), wallet.blockchain)
+                val feeAmount = Amount(valueConverter.toSol(it.fee), wallet.blockchain)
                 TransactionData(
-                    amount, fee, info.source, info.destination,
+                    amount, Fee(feeAmount), info.source, info.destination,
                     TransactionStatus.Unconfirmed, hash = it.signature
                 )
             } else {
@@ -119,7 +119,7 @@ class SolanaWalletManager(
 
     override fun createTransaction(
         amount: Amount,
-        fee: Amount,
+        fee: Fee,
         destination: String
     ): TransactionData {
         val accountCreationRent = feeRentHolder[fee]
@@ -129,7 +129,7 @@ class SolanaWalletManager(
         } else {
             when (amount.type) {
                 AmountType.Coin -> {
-                    val newFee = fee.minus(accountCreationRent)
+                    val newFee = fee.copy(amount = fee.amount.minus(accountCreationRent))
                     val newAmount = amount.plus(accountCreationRent)
                     super.createTransaction(newAmount, newFee, destination)
                 }
@@ -275,13 +275,13 @@ class SolanaWalletManager(
                 valueConverter.toSol(it)
             }
 
-        var feeAmount = Amount(valueConverter.toSol(fee), wallet.blockchain)
+        var feeAmount = Fee(Amount(valueConverter.toSol(fee), wallet.blockchain))
         if (accountCreationRent > BigDecimal.ZERO) {
-            feeAmount = feeAmount.plus(accountCreationRent)
+            feeAmount = feeAmount.copy(amount = feeAmount.amount + accountCreationRent)
             feeRentHolder[feeAmount] = accountCreationRent
         }
 
-        return Result.Success(TransactionFee.Single(Fee(feeAmount)))
+        return Result.Success(TransactionFee.Single(feeAmount))
     }
 
     private suspend fun getNetworkFee(): Result<BigDecimal> {

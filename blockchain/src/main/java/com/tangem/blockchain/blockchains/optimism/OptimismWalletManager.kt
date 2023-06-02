@@ -52,7 +52,7 @@ class OptimismWalletManager(
 
         val transactionData = TransactionData(
             amount = preparedAmount,
-            fee = preparedAmount,
+            fee = Fee(preparedAmount), // value is not important for dummy transactions
             sourceAddress = wallet.address,
             destinationAddress = destination,
         )
@@ -85,10 +85,10 @@ class OptimismWalletManager(
         //We need to subtract layer 1 fee, because it is deducted automatically
         // and should not be included into transaction for signing
         //https://help.optimism.io/hc/en-us/articles/4411895794715
-        val calculatedTransactionFee = (transactionData.fee?.value ?: BigDecimal.ZERO) -
+        val calculatedTransactionFee = (transactionData.fee?.amount?.value ?: BigDecimal.ZERO) -
             (lastLayer1FeeAmount?.value ?: BigDecimal.ZERO)
         val updatedTransactionData = transactionData.copy(
-            fee = Amount(value = calculatedTransactionFee, blockchain = wallet.blockchain)
+            fee = Fee(Amount(value = calculatedTransactionFee, blockchain = wallet.blockchain))
         )
         return super.sign(updatedTransactionData, signer)
     }

@@ -89,7 +89,7 @@ class PolkadotWalletManager(
         return Result.Success(TransactionFee.Single(Fee(feeAmount)))
     }
 
-    override fun createTransaction(amount: Amount, fee: Amount, destination: String): TransactionData {
+    override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData {
         return when (amount.type) {
             AmountType.Coin -> super.createTransaction(amount, fee, destination)
             else -> throw UnsupportedOperation()
