@@ -8,6 +8,7 @@ import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -267,9 +268,10 @@ class EthereumNetworkService(
         val status = if (confirmations.toInt() > 0) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed
         val date = Calendar.getInstance().apply { timeInMillis = timeStamp.toLong() * 1000 }
 
+
         return TransactionData(
             amount = Amount(null, Blockchain.Unknown),
-            fee = feeAmount,
+            fee = Fee(feeAmount), // TODO add limits?
             sourceAddress = from,
             destinationAddress = to,
             status = status,
