@@ -6,6 +6,7 @@ import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 import org.kethereum.DEFAULT_GAS_LIMIT
@@ -30,7 +31,7 @@ class EthereumTransactionTest {
         val transactionBuilder = EthereumTransactionBuilder(walletPublicKey, blockchain)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Amount(amountToSend, feeValue)
+        val fee = Fee(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
                 sourceAddress = walletAddress,
                 destinationAddress = destinationAddress,
@@ -74,7 +75,7 @@ class EthereumTransactionTest {
         val transactionBuilder = EthereumTransactionBuilder(walletPublicKey, blockchain)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Token(token))
-        val fee = Amount(feeValue, blockchain, AmountType.Coin)
+        val fee = Fee(Amount(feeValue, blockchain, AmountType.Coin))
         val transactionData = TransactionData(
                 sourceAddress = walletAddress,
                 destinationAddress = destinationAddress,
