@@ -16,6 +16,7 @@ import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -164,9 +165,9 @@ open class BitcoinWalletManager(
                             val normalFee = feeResult.data.normalPerKb.calculateFee(transactionSize)
                             val priorityFee = feeResult.data.priorityPerKb.calculateFee(transactionSize)
                             val fees = TransactionFee.Choosable(
-                                minimum = Amount(minFee, blockchain),
-                                normal = Amount(normalFee, blockchain),
-                                priority = Amount(priorityFee, blockchain)
+                                minimum = Fee(Amount(minFee, blockchain)),
+                                normal = Fee(Amount(normalFee, blockchain)),
+                                priority = Fee(Amount(priorityFee, blockchain))
                             )
                             Result.Success(fees)
                         }
