@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosNetworkService
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -101,9 +102,12 @@ class CosmosWalletManager(
 
 
                 return if (amounts.size == 3) {
-                    Result.Success(TransactionFee.Choosable(amounts[0], amounts[1], amounts[2]))
+                    Result.Success(TransactionFee.Choosable(
+                        minimum = Fee(amounts[0]),
+                        normal = Fee(amounts[1]),
+                        priority = Fee(amounts[2])))
                 } else {
-                    Result.Success(TransactionFee.Single(amounts[0]))
+                    Result.Success(TransactionFee.Single(Fee(amounts[0])))
                 }
 
             }
