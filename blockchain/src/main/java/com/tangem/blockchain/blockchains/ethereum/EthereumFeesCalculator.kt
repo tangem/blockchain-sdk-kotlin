@@ -2,7 +2,8 @@ package com.tangem.blockchain.blockchains.ethereum
 
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.transaction.EthereumAdditionalDataProviderImpl
+import com.tangem.blockchain.common.transaction.EthereumFeeExtras
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -23,10 +24,27 @@ class EthereumFeesCalculator {
         val priorityFee = gasPrice * BigInteger.valueOf(15) / BigInteger.TEN * gasLimit
 
         return TransactionFee.Choosable(
-            minimum = createFee(amountParams, minFee),
-            normal = createFee(amountParams, normalFee),
-            priority = createFee(amountParams, priorityFee),
-            additionalData = EthereumAdditionalDataProviderImpl(gasPrice, gasLimit)
+            minimum = Fee(
+                amount = createFee(amountParams, minFee),
+                extras = EthereumFeeExtras(
+                    gasLimit = gasLimit,
+                    gasPrice = gasPrice
+                )
+            ),
+            normal = Fee(
+                amount = createFee(amountParams, normalFee),
+                extras = EthereumFeeExtras(
+                    gasLimit = gasLimit,
+                    gasPrice = gasPrice
+                )
+            ),
+            priority = Fee(
+                amount = createFee(amountParams, priorityFee),
+                extras = EthereumFeeExtras(
+                    gasLimit = gasLimit,
+                    gasPrice = gasPrice
+                )
+            )
         )
     }
 
@@ -47,10 +65,27 @@ class EthereumFeesCalculator {
         val priorityFeeBigInt = priorityFee.toBigInteger()
 
         return TransactionFee.Choosable(
-            minimum = createFee(amountParams, minimalFeeBigInt),
-            normal = createFee(amountParams, normalFeeBigInt),
-            priority = createFee(amountParams, priorityFeeBigInt),
-            additionalData = EthereumAdditionalDataProviderImpl(gasPrice, gasLimit)
+            minimum = Fee(
+                amount = createFee(amountParams, minimalFeeBigInt),
+                extras = EthereumFeeExtras(
+                    gasLimit = gasLimit,
+                    gasPrice = gasPrice
+                )
+            ),
+            normal = Fee(
+                amount = createFee(amountParams, normalFeeBigInt),
+                extras = EthereumFeeExtras(
+                    gasLimit = gasLimit,
+                    gasPrice = gasPrice
+                )
+            ),
+            priority = Fee(
+                amount = createFee(amountParams, priorityFeeBigInt),
+                extras = EthereumFeeExtras(
+                    gasLimit = gasLimit,
+                    gasPrice = gasPrice
+                )
+            )
         )
     }
 
@@ -72,6 +107,5 @@ class EthereumFeesCalculator {
 
         val priorityMultiplier: BigDecimal =
             BigDecimal.valueOf(15).divide(BigDecimal.TEN, Blockchain.Ethereum.decimals(), RoundingMode.HALF_UP)
-
     }
 }
