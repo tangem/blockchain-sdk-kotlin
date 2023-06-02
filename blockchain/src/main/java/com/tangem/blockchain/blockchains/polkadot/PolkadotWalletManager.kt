@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.hosts
 import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.toBigDecimal
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -85,7 +86,7 @@ class PolkadotWalletManager(
         }.successOr { return it }
         val feeAmount = amount.copy(value = fee)
 
-        return Result.Success(TransactionFee.Single(feeAmount))
+        return Result.Success(TransactionFee.Single(Fee(feeAmount)))
     }
 
     override fun createTransaction(amount: Amount, fee: Amount, destination: String): TransactionData {

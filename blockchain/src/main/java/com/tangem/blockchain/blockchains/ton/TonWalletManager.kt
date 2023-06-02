@@ -13,6 +13,7 @@ import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -64,7 +65,7 @@ class TonWalletManager(
 
         return when (val feeResult = networkService.getFee(wallet.address, message)) {
             is Result.Failure -> feeResult
-            is Result.Success -> Result.Success(TransactionFee.Single(feeResult.data))
+            is Result.Success -> Result.Success(TransactionFee.Single(Fee(feeResult.data)))
         }
     }
 
