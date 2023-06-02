@@ -1,11 +1,12 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.common.transaction.Fee
 import java.math.BigDecimal
 import java.util.Calendar
 
 data class TransactionData(
     val amount: Amount,
-    val fee: Amount?,
+    val fee: Fee?,
     val sourceAddress: String,
     val destinationAddress: String,
     var status: TransactionStatus = TransactionStatus.Unconfirmed,
