@@ -31,8 +31,6 @@ import org.kethereum.extensions.toHexString
 import org.kethereum.keccakshortcut.keccak
 import java.math.BigDecimal
 import java.math.BigInteger
-import java.math.MathContext
-import java.math.RoundingMode
 import java.util.Calendar
 
 open class EthereumWalletManager(
@@ -46,6 +44,9 @@ open class EthereumWalletManager(
     SignatureCountValidator,
     TokenFinder,
     EthereumGasLoader {
+
+    // move to constructor later
+    private val feesCalculator = EthereumFeesCalculator()
 
     var pendingTxCount = -1L
         private set
@@ -177,13 +178,21 @@ open class EthereumWalletManager(
                 gasLimit = gLimit
                 gasPrice = gPrice
 
-                val fees = calculateFees(gLimit, gPrice)
+                val fees = feesCalculator.calculateFeesNewStyle(
+                    amountParams = getAmountParams(),
+                    gasLimit = gLimit,
+                    gasPrice = gPrice
+                )
 
                 Result.Success(fees)
             }
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
+    }
+
+    private fun getAmountParams(): Amount {
+        return requireNotNull(wallet.amounts[AmountType.Coin]) { "Amount must not be null" }
     }
 
     override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
@@ -261,29 +270,6 @@ open class EthereumWalletManager(
         return networkProvider.getGasLimit(to, from, value, finalData)
     }
 
-    protected open fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): TransactionFee.Choosable {
-        val minFee = gasPrice * gasLimit
-        //By dividing by ten before last multiplication here we can lose some digits
-        val normalFee = gasPrice * BigInteger.valueOf(12) / BigInteger.TEN * gasLimit
-        val priorityFee = gasPrice * BigInteger.valueOf(15) / BigInteger.TEN * gasLimit
-
-        return TransactionFee.Choosable(
-            minimum = createFee(minFee),
-            normal = createFee(normalFee),
-            priority = createFee(priorityFee)
-        )
-    }
-
-    protected fun createFee(bigDecimal: BigInteger): Amount {
-        val amount = requireNotNull(wallet.amounts[AmountType.Coin]) { "Amount must not be null" }
-        return Amount(
-            amount, bigDecimal.toBigDecimal(
-                scale = Blockchain.Ethereum.decimals(),
-                mathContext = MathContext(Blockchain.Ethereum.decimals(), RoundingMode.HALF_EVEN)
-            )
-        )
-    }
-
     override suspend fun getTransactionHistory(
         address: String,
         blockchain: Blockchain,
@@ -357,7 +343,11 @@ open class EthereumWalletManager(
                 gasLimitToApprove = gLimit
                 gasPrice = gPrice
 
-                val fees = calculateFees(gLimit, gPrice)
+                val fees = feesCalculator.calculateFeesNewStyle(
+                    amountParams = getAmountParams(),
+                    gasLimit = gLimit,
+                    gasPrice = gPrice
+                )
 
                 Result.Success(fees)
             }
@@ -389,7 +379,11 @@ open class EthereumWalletManager(
                 gasLimitToInitOTP = gLimit
                 gasPrice = gPrice
 
-                val fees = calculateFees(gLimit, gPrice)
+                val fees = feesCalculator.calculateFeesNewStyle(
+                    amountParams = getAmountParams(),
+                    gasLimit = gLimit,
+                    gasPrice = gPrice
+                )
 
                 Result.Success(fees)
             }
@@ -456,7 +450,11 @@ open class EthereumWalletManager(
                 gasLimitToSetWallet = gLimit
                 gasPrice = gPrice
 
-                val fees = calculateFees(gLimit, gPrice)
+                val fees = feesCalculator.calculateFeesNewStyle(
+                    amountParams = getAmountParams(),
+                    gasLimit = gLimit,
+                    gasPrice = gPrice
+                )
 
                 Result.Success(fees)
             }
@@ -487,7 +485,11 @@ open class EthereumWalletManager(
                 gasLimitToSetSpendLimit = gLimit
                 gasPrice = gPrice
 
-                val fees = calculateFees(gLimit, gPrice)
+                val fees = feesCalculator.calculateFeesNewStyle(
+                    amountParams = getAmountParams(),
+                    gasLimit = gLimit,
+                    gasPrice = gPrice
+                )
 
                 Result.Success(fees)
             }
@@ -515,7 +517,12 @@ open class EthereumWalletManager(
 
                 gasLimitToTransferFrom = gLimit
                 gasPrice = gPrice
-                val fees = calculateFees(gLimit, gPrice)
+
+                val fees = feesCalculator.calculateFeesNewStyle(
+                    amountParams = getAmountParams(),
+                    gasLimit = gLimit,
+                    gasPrice = gPrice
+                )
 
                 Result.Success(fees)
             }
