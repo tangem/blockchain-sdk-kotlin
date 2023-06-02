@@ -538,11 +538,11 @@ enum class Blockchain(
     fun isFeeApproximate(amountType: AmountType): Boolean = when (this) {
         Fantom, FantomTestnet,
         Tron, TronTestnet,
+        Cronos,
         -> amountType is AmountType.Token
         Arbitrum, ArbitrumTestnet,
         Optimism, OptimismTestnet,
         TON, TONTestnet,
-        Cronos,
         -> true
         else -> false
     }
