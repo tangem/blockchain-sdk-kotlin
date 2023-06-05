@@ -13,7 +13,7 @@ import java.math.RoundingMode
 class EthereumFeesCalculator {
 
     @Deprecated("use calculateFeesNewStyle instead of this")
-    internal fun calculateFeesOldStyle(
+    internal fun calculateFeesUsingOldMethod(
         amountParams: Amount,
         gasLimit: BigInteger,
         gasPrice: BigInteger,
@@ -48,7 +48,7 @@ class EthereumFeesCalculator {
         )
     }
 
-    internal fun calculateFeesNewStyle(
+    internal fun calculateFees(
         amountParams: Amount,
         gasLimit: BigInteger,
         gasPrice: BigInteger,
