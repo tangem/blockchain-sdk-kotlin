@@ -175,7 +175,7 @@ open class EthereumWalletManager(
 
                 gasPrice = gPrice
 
-                val fees = feesCalculator.calculateFeesNewStyle(
+                val fees = feesCalculator.calculateFees(
                     amountParams = getAmountParams(),
                     gasLimit = gLimit,
                     gasPrice = gPrice
@@ -340,7 +340,7 @@ open class EthereumWalletManager(
                 gasLimitToApprove = gLimit
                 gasPrice = gPrice
 
-                val fees = feesCalculator.calculateFeesNewStyle(
+                val fees = feesCalculator.calculateFees(
                     amountParams = getAmountParams(),
                     gasLimit = gLimit,
                     gasPrice = gPrice
@@ -376,7 +376,7 @@ open class EthereumWalletManager(
                 gasLimitToInitOTP = gLimit
                 gasPrice = gPrice
 
-                val fees = feesCalculator.calculateFeesNewStyle(
+                val fees = feesCalculator.calculateFees(
                     amountParams = getAmountParams(),
                     gasLimit = gLimit,
                     gasPrice = gPrice
@@ -447,7 +447,7 @@ open class EthereumWalletManager(
                 gasLimitToSetWallet = gLimit
                 gasPrice = gPrice
 
-                val fees = feesCalculator.calculateFeesNewStyle(
+                val fees = feesCalculator.calculateFees(
                     amountParams = getAmountParams(),
                     gasLimit = gLimit,
                     gasPrice = gPrice
@@ -482,7 +482,7 @@ open class EthereumWalletManager(
                 gasLimitToSetSpendLimit = gLimit
                 gasPrice = gPrice
 
-                val fees = feesCalculator.calculateFeesNewStyle(
+                val fees = feesCalculator.calculateFees(
                     amountParams = getAmountParams(),
                     gasLimit = gLimit,
                     gasPrice = gPrice
@@ -515,7 +515,7 @@ open class EthereumWalletManager(
                 gasLimitToTransferFrom = gLimit
                 gasPrice = gPrice
 
-                val fees = feesCalculator.calculateFeesNewStyle(
+                val fees = feesCalculator.calculateFees(
                     amountParams = getAmountParams(),
                     gasLimit = gLimit,
                     gasPrice = gPrice
