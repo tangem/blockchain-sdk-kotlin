@@ -59,8 +59,7 @@ class OptimismWalletManager(
 
         val transaction = transactionBuilder.buildToSign(
             transactionData = transactionData,
-            nonce = BigInteger.ONE,
-            gasLimit = layer2GasLimit
+            nonce = BigInteger.ONE
         )?.hash ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
         val lastLayer1Fee = getLayer1Fee(transaction).successOr {
