@@ -41,9 +41,6 @@ class OptimismWalletManager(
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         }
 
-        // we can choose any of the elements [minimum, normal, priority] because gasLimit's are the same
-        val layer2GasLimit = (layer2fee.minimum.extras as? EthereumFeeExtras)?.gasLimit
-
         val preparedAmount = Amount(
             value = BigDecimal.valueOf(0.1),
             type = amount.type,
