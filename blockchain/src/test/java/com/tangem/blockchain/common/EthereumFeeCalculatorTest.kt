@@ -14,11 +14,11 @@ internal class EthereumFeeCalculatorTest {
         val gasLimit = BigInteger.valueOf(21000)
         val gasPrice = BigInteger.valueOf(12323534123121231)
 
-        val oldFees = feesCalculator.calculateFeesOldStyle(
+        val oldFees = feesCalculator.calculateFeesUsingOldMethod(
             amountParams = Amount(Blockchain.Ethereum), gasLimit = gasLimit, gasPrice
         )
         val newFees =
-            feesCalculator.calculateFeesNewStyle(amountParams = Amount(Blockchain.Ethereum), gasLimit, gasPrice)
+            feesCalculator.calculateFees(amountParams = Amount(Blockchain.Ethereum), gasLimit, gasPrice)
 
 
         assert((oldFees.minimum.amount.value!! - newFees.minimum.amount.value!!) < BigDecimal("1E-18"))
@@ -31,11 +31,11 @@ internal class EthereumFeeCalculatorTest {
         val gasLimit = BigInteger.valueOf(21000)
         val gasPrice = BigInteger.valueOf(213923412000)
 
-        val oldFees = feesCalculator.calculateFeesOldStyle(
+        val oldFees = feesCalculator.calculateFeesUsingOldMethod(
             amountParams = Amount(Blockchain.Ethereum), gasLimit = gasLimit, gasPrice
         )
         val newFees =
-            feesCalculator.calculateFeesNewStyle(amountParams = Amount(Blockchain.Ethereum), gasLimit, gasPrice)
+            feesCalculator.calculateFees(amountParams = Amount(Blockchain.Ethereum), gasLimit, gasPrice)
 
 
         assert((oldFees.minimum.amount.value!! - newFees.minimum.amount.value!!) < BigDecimal("1E-18"))
@@ -48,11 +48,11 @@ internal class EthereumFeeCalculatorTest {
         val gasLimit = BigInteger.valueOf(22000)
         val gasPrice = BigInteger.valueOf(2139812310000)
 
-        val oldFees = feesCalculator.calculateFeesOldStyle(
+        val oldFees = feesCalculator.calculateFeesUsingOldMethod(
             amountParams = Amount(Blockchain.Ethereum), gasLimit = gasLimit, gasPrice
         )
         val newFees =
-            feesCalculator.calculateFeesNewStyle(amountParams = Amount(Blockchain.Ethereum), gasLimit, gasPrice)
+            feesCalculator.calculateFees(amountParams = Amount(Blockchain.Ethereum), gasLimit, gasPrice)
 
 
         assert((oldFees.minimum.amount.value!! - newFees.minimum.amount.value!!) < BigDecimal("1E-18"))
