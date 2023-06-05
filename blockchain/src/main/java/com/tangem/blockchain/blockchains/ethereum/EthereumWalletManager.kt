@@ -53,8 +53,6 @@ open class EthereumWalletManager(
         private set
     var txCount = -1L
         private set
-    var gasLimit: BigInteger? = null
-        private set
     var gasPrice: BigInteger? = null
         private set
 
@@ -120,8 +118,7 @@ open class EthereumWalletManager(
     ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
         val transactionToSign = transactionBuilder.buildToSign(
             transactionData,
-            txCount.toBigInteger(),
-            gasLimit
+            txCount.toBigInteger()
         ) ?: return Result.Failure(BlockchainSdkError.CustomError("Not enough data"))
 
         return when (val signResponse = signer.sign(transactionToSign.hash, wallet.publicKey)) {
@@ -176,7 +173,6 @@ open class EthereumWalletManager(
                     return@coroutineScope Result.Failure(it.error)
                 }
 
-                gasLimit = gLimit
                 gasPrice = gPrice
 
                 val fees = feesCalculator.calculateFeesNewStyle(
