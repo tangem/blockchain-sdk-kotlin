@@ -370,7 +370,7 @@ class WalletManagerFactory(
                         config.nowNodeCredentials?.apiKey?.letNotBlank { apiKey ->
                             add(
                                 RippledNetworkProvider(
-                                    baseUrl = "https://xrp.nownodes.io",
+                                    baseUrl = "https://xrp.nownodes.io/",
                                     apiKeyHeader = NowNodeCredentials.headerApiKey to apiKey
                                 )
                             )
@@ -378,7 +378,7 @@ class WalletManagerFactory(
                         config.getBlockCredentials?.apiKey?.letNotBlank { apiKey ->
                             add(
                                 RippledNetworkProvider(
-                                    baseUrl = "https://xrp.getblock.io/mainnet",
+                                    baseUrl = "https://xrp.getblock.io/mainnet/",
                                     apiKeyHeader = GetBlockCredentials.paramName to apiKey
                                 )
                             )
