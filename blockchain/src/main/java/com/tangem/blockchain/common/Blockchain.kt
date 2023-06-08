@@ -521,25 +521,17 @@ enum class Blockchain(
         }
     }
 
-    fun canHandleTokens(): Boolean = when (this) {
-        Arbitrum, ArbitrumTestnet,
-        Ethereum, EthereumTestnet,
-        BSC, BSCTestnet,
-        Binance, BinanceTestnet,
-        Polygon, PolygonTestnet,
-        Avalanche, AvalancheTestnet,
-        Fantom, FantomTestnet,
-        EthereumClassic, EthereumClassicTestnet,
-        RSK,
-        Solana, SolanaTestnet,
-        Tron, TronTestnet,
-        Gnosis,
-        Optimism, OptimismTestnet,
-        EthereumFair, EthereumPow, EthereumPowTestnet,
-        SaltPay, Kava, KavaTestnet,
-        TerraV1,
-        -> true
-        else -> false
+    fun canHandleTokens(): Boolean {
+        if (isEvm()) return true
+
+        return when (this) {
+            Binance, BinanceTestnet,
+            Solana, SolanaTestnet,
+            Tron, TronTestnet,
+            TerraV1,
+            -> true
+            else -> false
+        }
     }
 
     fun isEvm(): Boolean = getChainId() != null
@@ -547,6 +539,7 @@ enum class Blockchain(
     fun isFeeApproximate(amountType: AmountType): Boolean = when (this) {
         Fantom, FantomTestnet,
         Tron, TronTestnet,
+        Cronos,
         -> amountType is AmountType.Token
         Arbitrum, ArbitrumTestnet,
         Optimism, OptimismTestnet,

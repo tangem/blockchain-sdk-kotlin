@@ -58,7 +58,12 @@ import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
 import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledNetworkProvider
 import com.tangem.blockchain.extensions.letNotBlank
-import com.tangem.blockchain.network.*
+import com.tangem.blockchain.network.API_ADALITE
+import com.tangem.blockchain.network.API_KASPA
+import com.tangem.blockchain.network.API_TEZOS_BLOCKSCALE
+import com.tangem.blockchain.network.API_TEZOS_ECAD
+import com.tangem.blockchain.network.API_TEZOS_SMARTPY
+import com.tangem.blockchain.network.API_XRP_LEDGER_FOUNDATION
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import com.tangem.blockchain.network.blockscout.BlockscoutNetworkProvider
 import com.tangem.common.card.EllipticCurve
@@ -197,6 +202,7 @@ class WalletManagerFactory(
                     )
                 )
             }
+
             Blockchain.Ravencoin, Blockchain.RavencoinTestnet -> {
                 RavencoinWalletManager(
                     wallet = wallet,
@@ -320,11 +326,11 @@ class WalletManagerFactory(
                 val isTestnet = blockchain == Blockchain.StellarTestnet
                 val hosts = if (!isTestnet) {
                     buildList {
-                        config.nowNodeCredentials?.apiKey.letNotBlank {
-                            add(StellarNetwork.Nownodes(it))
-                        }
                         config.getBlockCredentials?.apiKey.letNotBlank {
                             add(StellarNetwork.Getblock(it))
+                        }
+                        config.nowNodeCredentials?.apiKey.letNotBlank {
+                            add(StellarNetwork.Nownodes(it))
                         }
                         add(StellarNetwork.Horizon)
                     }
@@ -358,16 +364,32 @@ class WalletManagerFactory(
             }
 
             Blockchain.XRP -> {
-                val rippledProvider1 = RippledNetworkProvider(API_XRP_LEDGER_FOUNDATION)
-                val rippledProvider2 = RippledNetworkProvider(API_RIPPLE)
-                val rippledProvider3 = RippledNetworkProvider(API_RIPPLE_RESERVE)
-                val providers = listOf(rippledProvider1, rippledProvider2, rippledProvider3)
-                val networkService = XrpNetworkService(providers)
+                val networkService = XrpNetworkService(
+                    providers = buildList {
+                        add(RippledNetworkProvider(baseUrl = API_XRP_LEDGER_FOUNDATION))
+                        config.nowNodeCredentials?.apiKey?.letNotBlank { apiKey ->
+                            add(
+                                RippledNetworkProvider(
+                                    baseUrl = "https://xrp.nownodes.io/",
+                                    apiKeyHeader = NowNodeCredentials.headerApiKey to apiKey
+                                )
+                            )
+                        }
+                        config.getBlockCredentials?.apiKey?.letNotBlank { apiKey ->
+                            add(
+                                RippledNetworkProvider(
+                                    baseUrl = "https://xrp.getblock.io/mainnet/",
+                                    apiKeyHeader = GetBlockCredentials.paramName to apiKey
+                                )
+                            )
+                        }
+                    }
+                )
 
                 XrpWalletManager(
-                    wallet,
-                    XrpTransactionBuilder(networkService, publicKey.blockchainKey),
-                    networkService
+                    wallet = wallet,
+                    transactionBuilder = XrpTransactionBuilder(networkService, publicKey.blockchainKey),
+                    networkProvider = networkService
                 )
             }
 
@@ -440,12 +462,14 @@ class WalletManagerFactory(
                     networkProvider = KaspaNetworkService(providers)
                 )
             }
+
             Blockchain.TON, Blockchain.TONTestnet -> {
                 TonWalletManager(
                     wallet = wallet,
                     networkProviders = TonJsonRpcClientBuilder().build(blockchain.isTestnet(), config),
                 )
             }
+
             Blockchain.Cosmos, Blockchain.CosmosTestnet -> {
                 val testnet = blockchain.isTestnet()
                 val providers = buildList {
@@ -469,6 +493,7 @@ class WalletManagerFactory(
                     cosmosChain = CosmosChain.Cosmos(testnet)
                 )
             }
+
             Blockchain.TerraV1 -> {
                 val providers = buildList {
                     config.nowNodeCredentials?.apiKey.letNotBlank { add("https://terra.nownodes.io/$it/") }
@@ -480,6 +505,7 @@ class WalletManagerFactory(
                     cosmosChain = CosmosChain.TerraV1
                 )
             }
+
             Blockchain.TerraV2 -> {
                 val providers = buildList {
                     config.getBlockCredentials?.apiKey.letNotBlank { add("https://luna.getblock.io/$it/mainnet/") }
@@ -491,6 +517,7 @@ class WalletManagerFactory(
                     cosmosChain = CosmosChain.TerraV2
                 )
             }
+
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
         }
     }
