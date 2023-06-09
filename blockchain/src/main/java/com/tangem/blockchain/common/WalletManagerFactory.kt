@@ -270,21 +270,6 @@ class WalletManagerFactory(
                 )
             }
 
-            Blockchain.SaltPay -> {
-                EthereumWalletManager(
-                    wallet = wallet,
-                    transactionBuilder = EthereumTransactionBuilder(
-                        walletPublicKey = publicKey.blockchainKey,
-                        blockchain = blockchain
-                    ),
-                    networkProvider = EthereumNetworkService(
-                        jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(config),
-                        blockscoutNetworkProvider = BlockscoutNetworkProvider(config.blockscoutCredentials),
-                    ),
-                    presetTokens = mutableTokens
-                )
-            }
-
             Blockchain.Optimism, Blockchain.OptimismTestnet -> {
                 OptimismWalletManager(
                     wallet = wallet,
