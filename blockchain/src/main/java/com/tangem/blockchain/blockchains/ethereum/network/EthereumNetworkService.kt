@@ -28,7 +28,6 @@ class EthereumNetworkService(
     jsonRpcProviders: List<EthereumJsonRpcProvider>,
     private val blockcypherNetworkProvider: BlockcypherNetworkProvider? = null,
     private val blockchairEthNetworkProvider: BlockchairEthNetworkProvider? = null,
-    private val blockscoutNetworkProvider: BlockscoutNetworkProvider? = null,
 ) : EthereumNetworkProvider {
 
     private val multiJsonRpcProvider = MultiNetworkProvider(jsonRpcProviders)
@@ -208,37 +207,6 @@ class EthereumNetworkService(
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
-    }
-
-    override suspend fun getTransactionHistory(
-        address: String,
-        blockchain: Blockchain,
-        tokens: Set<Token>,
-    ): Result<List<TransactionData>> {
-        val provider = blockscoutNetworkProvider.guard {
-            return Result.Failure(BlockchainSdkError.UnsupportedOperation())
-        }
-
-        val txList = provider.getTransactionsList(address).successOr { return it }
-        val txTokenList = provider.getTokenTransactionsList(address).successOr { return it }
-
-        val transactionDataList = (txList + txTokenList).mapNotNull { tx ->
-            val txValue = BigDecimal(tx.value).movePointLeft(decimals)
-            if (tx.contractAddress.isEmpty()) {
-                tx.toUntypedTransactionData(blockchain).copy(
-                    amount = Amount(txValue, blockchain)
-                )
-            } else {
-                val foundToken = tokens.firstOrNull { it.contractAddress == tx.contractAddress }
-                    ?: return@mapNotNull null
-
-                tx.toUntypedTransactionData(blockchain).copy(
-                    amount = Amount(foundToken, txValue)
-                )
-            }
-        }.sortedByDescending { it.date?.timeInMillis ?: 0 }
-
-        return Result.Success(transactionDataList)
     }
 
     private fun String.responseToBigInteger() = this.substring(2).ifBlank { "0" }.toBigInteger(16)
