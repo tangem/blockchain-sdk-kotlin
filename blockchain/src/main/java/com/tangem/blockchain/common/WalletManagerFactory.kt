@@ -326,13 +326,9 @@ class WalletManagerFactory(
                 val isTestnet = blockchain == Blockchain.StellarTestnet
                 val hosts = if (!isTestnet) {
                     buildList {
-                        config.getBlockCredentials?.apiKey.letNotBlank {
-                            add(StellarNetwork.Getblock(it))
-                        }
-                        config.nowNodeCredentials?.apiKey.letNotBlank {
-                            add(StellarNetwork.Nownodes(it))
-                        }
                         add(StellarNetwork.Horizon)
+                        config.nowNodeCredentials?.apiKey.letNotBlank { add(StellarNetwork.Nownodes(it)) }
+                        config.getBlockCredentials?.apiKey.letNotBlank { add(StellarNetwork.Getblock(it)) }
                     }
                 } else {
                     listOf<StellarNetwork>(StellarNetwork.HorizonTestnet)
