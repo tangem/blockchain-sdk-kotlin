@@ -36,9 +36,11 @@ internal fun Blockchain.getBitcoinNetworkProviders(
             *getBlockchairProviders(blockchain, config),
             getBlockcypherProvider(blockchain, config)
         )
-        Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet -> listOfNotNull(
+        Blockchain.BitcoinCash -> listOfNotNull(
             *getBlockchairProviders(blockchain, config),
         )
+        // TODO: we don't have BCH testnet providers now. Maybe remove it completely?
+        Blockchain.BitcoinCashTestnet -> throw IllegalStateException("No providers for $this")
         Blockchain.Ravencoin, Blockchain.RavencoinTestnet -> if (blockchain.isTestnet()) {
             listOf("https://testnet.ravencoin.network/api/")
         } else {
