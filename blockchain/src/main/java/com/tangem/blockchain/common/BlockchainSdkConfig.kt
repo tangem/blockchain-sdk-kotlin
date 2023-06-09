@@ -3,7 +3,6 @@ package com.tangem.blockchain.common
 data class BlockchainSdkConfig(
     val blockchairCredentials: BlockchairCredentials? = null,
     val blockcypherTokens: Set<String>? = null,
-    val blockscoutCredentials: BlockscoutCredentials? = null,
     val quickNodeBscCredentials: QuickNodeCredentials? = null,
     val quickNodeSolanaCredentials: QuickNodeCredentials? = null,
     val nowNodeCredentials: NowNodeCredentials? = null,
@@ -11,7 +10,6 @@ data class BlockchainSdkConfig(
     val tonCenterCredentials: TonCenterCredentials? = null,
     val infuraProjectId: String? = null,
     val tronGridApiKey: String? = null,
-    val saltPayAuthToken: String? = null,
     val kaspaSecondaryApiUrl: String? = null,
 ) {
     companion object {
