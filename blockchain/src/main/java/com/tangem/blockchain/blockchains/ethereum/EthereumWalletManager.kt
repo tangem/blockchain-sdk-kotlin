@@ -12,7 +12,6 @@ import com.tangem.blockchain.common.SignatureCountValidator
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.TokenFinder
 import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionHistoryProvider
 import com.tangem.blockchain.common.TransactionSender
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.TransactionStatus
@@ -41,7 +40,6 @@ open class EthereumWalletManager(
     presetTokens: MutableSet<Token>,
 ) : WalletManager(wallet, presetTokens),
     TransactionSender,
-    TransactionHistoryProvider,
     SignatureCountValidator,
     TokenFinder,
     EthereumGasLoader {
@@ -579,20 +577,5 @@ open class EthereumWalletManager(
                     mathContext = MathContext(decimals, RoundingMode.HALF_EVEN)
                 )
             }
-    }
-
-    override suspend fun getTransactionHistory(
-        address: String,
-        blockchain: Blockchain,
-        tokens: Set<Token>,
-    ): Result<List<TransactionData>> {
-        val result = networkProvider.getTransactionHistory(address, blockchain, tokens)
-        wallet.historyTransactions.clear()
-
-        if (result is Result.Success) {
-            wallet.historyTransactions.addAll(result.data)
-        }
-
-        return result
     }
 }
