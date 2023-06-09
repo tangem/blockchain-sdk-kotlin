@@ -91,7 +91,7 @@ open class BitcoinWalletManager(
         return BitcoinAddressInfo(balance, unspentOutputs, finalTransactions, hasUnconfirmed)
     }
 
-    private fun updateWallet(response: BitcoinAddressInfo) {
+    internal fun updateWallet(response: BitcoinAddressInfo) {
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
         wallet.amounts[AmountType.Coin]?.value = response.balance
         transactionBuilder.unspentOutputs = response.unspentOutputs
@@ -107,7 +107,7 @@ open class BitcoinWalletManager(
         }
     }
 
-    private fun updateError(error: BlockchainError) {
+    internal fun updateError(error: BlockchainError) {
         Log.e(this::class.java.simpleName, error.customMessage)
         (error as? BlockchainSdkError)?.let { throw it }
     }
