@@ -144,7 +144,7 @@ enum class Blockchain(
     private fun getAddressService(): AddressService = when (this) {
         Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus, Dash,
         Ravencoin, RavencoinTestnet -> BitcoinAddressService(this)
-        BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService()
+        BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
         BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
@@ -301,7 +301,7 @@ enum class Blockchain(
     }
 
     fun defaultAddressType(): AddressType = when (this) {
-        Bitcoin, BitcoinTestnet, Litecoin -> BitcoinAddressType.Segwit
+        Bitcoin, BitcoinTestnet, Litecoin, BitcoinCash, BitcoinCashTestnet -> BitcoinAddressType.Segwit
         CardanoShelley -> CardanoAddressType.Shelley
         else -> DefaultAddressType
     }
