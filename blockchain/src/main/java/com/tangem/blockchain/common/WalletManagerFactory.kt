@@ -379,7 +379,7 @@ class WalletManagerFactory(
                             add(
                                 RippledNetworkProvider(
                                     baseUrl = "https://xrp.getblock.io/mainnet/",
-                                    apiKeyHeader = GetBlockCredentials.paramName to apiKey
+                                    apiKeyHeader = GetBlockCredentials.HEADER_PARAM_NAME to apiKey
                                 )
                             )
                         }
