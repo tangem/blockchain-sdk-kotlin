@@ -100,14 +100,19 @@ class CosmosWalletManager(
                     Amount(value = feeValue, blockchain = wallet.blockchain)
                 }
 
-
-                return if (amounts.size == 3) {
-                    Result.Success(TransactionFee.Choosable(
-                        minimum = Fee.CommonFee(amounts[0]),
-                        normal = Fee.CommonFee(amounts[1]),
-                        priority = Fee.CommonFee(amounts[2])))
-                } else {
-                    Result.Success(TransactionFee.Single(Fee.CommonFee(amounts[0])))
+                return when (amounts.size) {
+                    1 -> {
+                        Result.Success(TransactionFee.Single(Fee.CommonFee(amounts[0])))
+                    }
+                    3 -> {
+                        Result.Success(TransactionFee.Choosable(
+                            minimum = Fee.CommonFee(amounts[0]),
+                            normal = Fee.CommonFee(amounts[1]),
+                            priority = Fee.CommonFee(amounts[2])))
+                    }
+                    else -> {
+                        Result.Failure(BlockchainSdkError.CustomError("Illegal amounts size"))
+                    }
                 }
 
             }
