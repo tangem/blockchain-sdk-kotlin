@@ -135,7 +135,7 @@ class CardanoTransactionBuilder(private val walletPublicKey: ByteArray) {
 
         val dummyTransactionData = transactionData.copy(
                 amount = dummyAmount,
-                fee = Fee(dummyFee)
+                fee = Fee.CommonFee(dummyFee)
         )
         buildToSign(dummyTransactionData)
         return buildToSend(ByteArray(64)).size
