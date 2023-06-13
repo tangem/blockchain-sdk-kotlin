@@ -103,11 +103,11 @@ class CosmosWalletManager(
 
                 return if (amounts.size == 3) {
                     Result.Success(TransactionFee.Choosable(
-                        minimum = Fee(amounts[0]),
-                        normal = Fee(amounts[1]),
-                        priority = Fee(amounts[2])))
+                        minimum = Fee.CommonFee(amounts[0]),
+                        normal = Fee.CommonFee(amounts[1]),
+                        priority = Fee.CommonFee(amounts[2])))
                 } else {
-                    Result.Success(TransactionFee.Single(Fee(amounts[0])))
+                    Result.Success(TransactionFee.Single(Fee.CommonFee(amounts[0])))
                 }
 
             }
