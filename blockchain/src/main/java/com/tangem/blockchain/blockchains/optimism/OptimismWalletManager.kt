@@ -64,19 +64,21 @@ class OptimismWalletManager(
 
         //https://community.optimism.io/docs/developers/build/transaction-fees/#displaying-fees-to-users
 
+        val lastLayer1FeeValue = requireNotNull(lastLayer1Fee.value) { "Fee must not bee null" }
+
         val updatedFees = layer2fee.copy(
             minimum = Fee.EthereumFee(
-                amount = (layer2fee.minimum as Fee.EthereumFee).amount + requireNotNull(lastLayer1Fee.value),
+                amount = (layer2fee.minimum as Fee.EthereumFee).amount + lastLayer1FeeValue,
                 gasLimit = layer2fee.minimum.gasLimit,
                 gasPrice = layer2fee.minimum.gasPrice
             ),
             normal = Fee.EthereumFee(
-                amount = (layer2fee.normal as Fee.EthereumFee).amount + requireNotNull(lastLayer1Fee.value),
+                amount = (layer2fee.normal as Fee.EthereumFee).amount + lastLayer1FeeValue,
                 gasLimit = layer2fee.normal.gasLimit,
                 gasPrice = layer2fee.normal.gasPrice,
             ),
             priority = Fee.EthereumFee(
-                amount = (layer2fee.priority as Fee.EthereumFee).amount + requireNotNull(lastLayer1Fee.value),
+                amount = (layer2fee.priority as Fee.EthereumFee).amount + lastLayer1FeeValue,
                 gasLimit = layer2fee.priority.gasLimit,
                 gasPrice = layer2fee.priority.gasPrice,
             )
@@ -139,20 +141,20 @@ class OptimismWalletManager(
 
         //https://community.optimism.io/docs/developers/build/transaction-fees/#displaying-fees-to-users
 
-        // TODO test this
+        val lastLayer1FeeValue = requireNotNull(lastLayer1Fee.value) { "Fee must not bee null" }
         val updatedFees = layer2fee.copy(
             minimum = Fee.EthereumFee(
-                amount = layer2fee.minimum.amount + requireNotNull(lastLayer1Fee.value),
+                amount = layer2fee.minimum.amount + lastLayer1FeeValue,
                 gasLimit = layer2fee.minimum.gasLimit,
                 gasPrice = layer2fee.minimum.gasPrice
             ),
             normal = Fee.EthereumFee(
-                amount = (layer2fee.normal as Fee.EthereumFee).amount + requireNotNull(lastLayer1Fee.value),
+                amount = (layer2fee.normal as Fee.EthereumFee).amount + lastLayer1FeeValue,
                 gasLimit = layer2fee.normal.gasLimit,
                 gasPrice = layer2fee.normal.gasPrice,
             ),
             priority = Fee.EthereumFee(
-                amount = (layer2fee.priority as Fee.EthereumFee).amount + requireNotNull(lastLayer1Fee.value),
+                amount = (layer2fee.priority as Fee.EthereumFee).amount + lastLayer1FeeValue,
                 gasLimit = layer2fee.priority.gasLimit,
                 gasPrice = layer2fee.priority.gasPrice,
             )
