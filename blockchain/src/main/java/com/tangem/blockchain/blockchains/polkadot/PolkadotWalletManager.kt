@@ -86,7 +86,7 @@ class PolkadotWalletManager(
         }.successOr { return it }
         val feeAmount = amount.copy(value = fee)
 
-        return Result.Success(TransactionFee.Single(Fee(feeAmount)))
+        return Result.Success(TransactionFee.Single(Fee.CommonFee(feeAmount)))
     }
 
     override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData {
