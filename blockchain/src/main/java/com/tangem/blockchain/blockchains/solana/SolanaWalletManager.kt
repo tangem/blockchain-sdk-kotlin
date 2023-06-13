@@ -107,7 +107,7 @@ class SolanaWalletManager(
                 val amount = Amount(valueConverter.toSol(info.lamports), wallet.blockchain)
                 val feeAmount = Amount(valueConverter.toSol(it.fee), wallet.blockchain)
                 TransactionData(
-                    amount, Fee(feeAmount), info.source, info.destination,
+                    amount, Fee.CommonFee(feeAmount), info.source, info.destination,
                     TransactionStatus.Unconfirmed, hash = it.signature
                 )
             } else {
@@ -129,7 +129,7 @@ class SolanaWalletManager(
         } else {
             when (amount.type) {
                 AmountType.Coin -> {
-                    val newFee = fee.copy(amount = fee.amount.minus(accountCreationRent))
+                    val newFee = Fee.CommonFee(fee.amount.minus(accountCreationRent))
                     val newAmount = amount.plus(accountCreationRent)
                     super.createTransaction(newAmount, newFee, destination)
                 }
@@ -275,7 +275,7 @@ class SolanaWalletManager(
                 valueConverter.toSol(it)
             }
 
-        var feeAmount = Fee(Amount(valueConverter.toSol(fee), wallet.blockchain))
+        var feeAmount = Fee.CommonFee(Amount(valueConverter.toSol(fee), wallet.blockchain))
         if (accountCreationRent > BigDecimal.ZERO) {
             feeAmount = feeAmount.copy(amount = feeAmount.amount + accountCreationRent)
             feeRentHolder[feeAmount] = accountCreationRent

@@ -271,7 +271,7 @@ class EthereumNetworkService(
 
         return TransactionData(
             amount = Amount(null, Blockchain.Unknown),
-            fee = Fee(feeAmount), // TODO add limits?
+            fee = Fee.CommonFee(feeAmount),
             sourceAddress = from,
             destinationAddress = to,
             status = status,
