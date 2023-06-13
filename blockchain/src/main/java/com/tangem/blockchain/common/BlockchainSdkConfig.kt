@@ -11,11 +11,7 @@ data class BlockchainSdkConfig(
     val infuraProjectId: String? = null,
     val tronGridApiKey: String? = null,
     val kaspaSecondaryApiUrl: String? = null,
-) {
-    companion object {
-        const val X_API_KEY_HEADER = "x-api-key"
-    }
-}
+)
 
 data class BlockchairCredentials(
     val apiKey: List<String>,
@@ -27,12 +23,7 @@ data class BlockscoutCredentials(
     val password: String,
 )
 
-data class QuickNodeCredentials(
-    val apiKey: String,
-    val subdomain: String,
-) {
-    fun isNotEmpty(): Boolean = apiKey.isNotEmpty() && subdomain.isNotEmpty()
-}
+data class QuickNodeCredentials(val apiKey: String, val subdomain: String)
 
 data class NowNodeCredentials(
     val apiKey: String,
@@ -46,7 +37,8 @@ data class GetBlockCredentials(
     val apiKey: String,
 ) {
     companion object {
-        const val paramName = "api_key"
+        const val HEADER_PARAM_NAME = "x-api-key"
+        const val QUERY_PARAM_NAME = "api_key"
     }
 }
 
