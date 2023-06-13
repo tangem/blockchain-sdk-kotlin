@@ -311,13 +311,9 @@ class WalletManagerFactory(
                 val isTestnet = blockchain == Blockchain.StellarTestnet
                 val hosts = if (!isTestnet) {
                     buildList {
-                        config.getBlockCredentials?.apiKey.letNotBlank {
-                            add(StellarNetwork.Getblock(it))
-                        }
-                        config.nowNodeCredentials?.apiKey.letNotBlank {
-                            add(StellarNetwork.Nownodes(it))
-                        }
                         add(StellarNetwork.Horizon)
+                        config.nowNodeCredentials?.apiKey.letNotBlank { add(StellarNetwork.Nownodes(it)) }
+                        config.getBlockCredentials?.apiKey.letNotBlank { add(StellarNetwork.Getblock(it)) }
                     }
                 } else {
                     listOf<StellarNetwork>(StellarNetwork.HorizonTestnet)
@@ -364,7 +360,7 @@ class WalletManagerFactory(
                             add(
                                 RippledNetworkProvider(
                                     baseUrl = "https://xrp.getblock.io/mainnet/",
-                                    apiKeyHeader = GetBlockCredentials.paramName to apiKey
+                                    apiKeyHeader = GetBlockCredentials.HEADER_PARAM_NAME to apiKey
                                 )
                             )
                         }
