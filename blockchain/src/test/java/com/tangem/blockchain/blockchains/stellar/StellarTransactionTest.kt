@@ -31,7 +31,7 @@ class StellarTransactionTest {
         val transactionBuilder = StellarTransactionBuilder(StellarNetworkServiceMock(), walletPublicKey)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Fee(Amount(amountToSend, feeValue))
+        val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
                 sourceAddress = walletAddress,
                 destinationAddress = destinationAddress,
@@ -78,7 +78,7 @@ class StellarTransactionTest {
         val transactionBuilder = StellarTransactionBuilder(StellarNetworkServiceMock(), walletPublicKey)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Token(token))
-        val fee = Fee(Amount(feeValue, blockchain, AmountType.Coin))
+        val fee = Fee.Common(Amount(feeValue, blockchain, AmountType.Coin))
         val transactionData = TransactionData(
                 sourceAddress = walletAddress,
                 destinationAddress = destinationAddress,

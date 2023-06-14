@@ -10,6 +10,7 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 import org.kethereum.DEFAULT_GAS_LIMIT
+import org.kethereum.DEFAULT_GAS_PRICE
 
 class EthereumTransactionTest {
 
@@ -31,7 +32,7 @@ class EthereumTransactionTest {
         val transactionBuilder = EthereumTransactionBuilder(walletPublicKey, blockchain)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Fee(Amount(amountToSend, feeValue))
+        val fee = Fee.Ethereum(Amount(amountToSend, feeValue), DEFAULT_GAS_LIMIT, DEFAULT_GAS_PRICE)
         val transactionData = TransactionData(
                 sourceAddress = walletAddress,
                 destinationAddress = destinationAddress,
@@ -45,7 +46,7 @@ class EthereumTransactionTest {
                 .hexToBytes()
 
         // act
-        val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce, DEFAULT_GAS_LIMIT)
+        val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce)
         val signedTransaction = transactionBuilder.buildToSend(signature, transactionToSign!!)
 
         // assert
@@ -75,7 +76,7 @@ class EthereumTransactionTest {
         val transactionBuilder = EthereumTransactionBuilder(walletPublicKey, blockchain)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Token(token))
-        val fee = Fee(Amount(feeValue, blockchain, AmountType.Coin))
+        val fee = Fee.Ethereum(Amount(feeValue, blockchain, AmountType.Coin), DEFAULT_GAS_LIMIT, DEFAULT_GAS_PRICE)
         val transactionData = TransactionData(
                 sourceAddress = walletAddress,
                 destinationAddress = destinationAddress,
@@ -89,7 +90,7 @@ class EthereumTransactionTest {
                 .hexToBytes()
 
         // act
-        val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce, DEFAULT_GAS_LIMIT)
+        val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce)
         val signedTransaction = transactionBuilder.buildToSend(signature, transactionToSign!!)
 
         // assert
