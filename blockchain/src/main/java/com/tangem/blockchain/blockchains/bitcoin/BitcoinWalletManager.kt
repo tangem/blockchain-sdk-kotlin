@@ -151,7 +151,7 @@ open class BitcoinWalletManager(
                     val sizeResult = transactionBuilder.getEstimateSize(
                         TransactionData(
                             amount = newAmount,
-                            fee = Fee.CommonFee(Amount(newAmount, feeValue)),
+                            fee = Fee.Common(Amount(newAmount, feeValue)),
                             sourceAddress = wallet.address,
                             destinationAddress = destination
                         )
@@ -165,9 +165,9 @@ open class BitcoinWalletManager(
                             val normalFee = feeResult.data.normalPerKb.calculateFee(transactionSize)
                             val priorityFee = feeResult.data.priorityPerKb.calculateFee(transactionSize)
                             val fees = TransactionFee.Choosable(
-                                minimum = Fee.CommonFee(Amount(minFee, blockchain)),
-                                normal = Fee.CommonFee(Amount(normalFee, blockchain)),
-                                priority = Fee.CommonFee(Amount(priorityFee, blockchain))
+                                minimum = Fee.Common(Amount(minFee, blockchain)),
+                                normal = Fee.Common(Amount(normalFee, blockchain)),
+                                priority = Fee.Common(Amount(priorityFee, blockchain))
                             )
                             Result.Success(fees)
                         }
