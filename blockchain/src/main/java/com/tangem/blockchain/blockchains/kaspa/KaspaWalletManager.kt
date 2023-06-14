@@ -77,7 +77,7 @@ class KaspaWalletManager(
             Result.Failure(Exception("No unspent outputs found").toBlockchainSdkError()) // shouldn't happen
         } else {
             val fee = FEE_PER_UNSPENT_OUTPUT.toBigDecimal().multiply(unspentOutputCount.toBigDecimal())
-            Result.Success(TransactionFee.Single(Fee.CommonFee(Amount(fee, blockchain))))
+            Result.Success(TransactionFee.Single(Fee.Common(Amount(fee, blockchain))))
         }
     }
 
