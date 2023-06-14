@@ -70,7 +70,7 @@ class BinanceWalletManager(
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         return when (val result = networkProvider.getFee()) {
-            is Result.Success -> Result.Success(TransactionFee.Single(Fee.CommonFee(Amount(result.data, blockchain))))
+            is Result.Success -> Result.Success(TransactionFee.Single(Fee.Common(Amount(result.data, blockchain))))
             is Result.Failure -> result
         }
     }
