@@ -81,9 +81,9 @@ class XrpWalletManager(
             is Result.Failure -> result
             is Result.Success -> Result.Success(
                 TransactionFee.Choosable(
-                    minimum = Fee.CommonFee(Amount(result.data.minimalFee, blockchain)),
-                    normal = Fee.CommonFee(Amount(result.data.normalFee, blockchain)),
-                    priority = Fee.CommonFee(Amount(result.data.priorityFee, blockchain))
+                    minimum = Fee.Common(Amount(result.data.minimalFee, blockchain)),
+                    normal = Fee.Common(Amount(result.data.normalFee, blockchain)),
+                    priority = Fee.Common(Amount(result.data.priorityFee, blockchain))
                 )
             )
         }
