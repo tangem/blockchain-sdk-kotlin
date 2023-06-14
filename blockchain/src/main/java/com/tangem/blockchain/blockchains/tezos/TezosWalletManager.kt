@@ -135,7 +135,7 @@ class TezosWalletManager(
         }
 
         return if (error == null) {
-            Result.Success(TransactionFee.Single(Fee.CommonFee(Amount(fee, blockchain))))
+            Result.Success(TransactionFee.Single(Fee.Common(Amount(fee, blockchain))))
         } else {
             error!!
         }
