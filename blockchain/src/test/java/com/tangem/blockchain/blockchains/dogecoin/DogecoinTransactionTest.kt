@@ -40,7 +40,7 @@ class DogecoinTransactionTest {
             BitcoinTransactionTest.prepareTwoUnspentOutputs(listOf(address), networkParameters)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Fee(Amount(amountToSend, feeValue))
+        val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
             sourceAddress = address,
             destinationAddress = destinationAddress,
