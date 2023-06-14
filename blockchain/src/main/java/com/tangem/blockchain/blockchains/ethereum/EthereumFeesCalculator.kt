@@ -23,17 +23,17 @@ class EthereumFeesCalculator {
         val priorityFee = gasPrice * BigInteger.valueOf(15) / BigInteger.TEN * gasLimit
 
         return TransactionFee.Choosable(
-            minimum = Fee.EthereumFee(
+            minimum = Fee.Ethereum(
                 amount = createFee(amountParams, minFee),
                 gasLimit = gasLimit,
                 gasPrice = gasPrice
             ),
-            normal = Fee.EthereumFee(
+            normal = Fee.Ethereum(
                 amount = createFee(amountParams, normalFee),
                 gasLimit = gasLimit,
                 gasPrice = gasPrice
             ),
-            priority = Fee.EthereumFee(
+            priority = Fee.Ethereum(
                 amount = createFee(amountParams, priorityFee),
                 gasLimit = gasLimit,
                 gasPrice = gasPrice
@@ -58,17 +58,17 @@ class EthereumFeesCalculator {
         val priorityFeeBigInt = priorityFee.toBigInteger()
 
         return TransactionFee.Choosable(
-            minimum = Fee.EthereumFee(
+            minimum = Fee.Ethereum(
                 amount = createFee(amountParams, minimalFeeBigInt),
                 gasLimit = gasLimit,
                 gasPrice = gasPrice
             ),
-            normal = Fee.EthereumFee(
+            normal = Fee.Ethereum(
                 amount = createFee(amountParams, normalFeeBigInt),
                 gasLimit = gasLimit,
                 gasPrice = gasPrice
             ),
-            priority = Fee.EthereumFee(
+            priority = Fee.Ethereum(
                 amount = createFee(amountParams, priorityFeeBigInt),
                 gasLimit = gasLimit,
                 gasPrice = gasPrice

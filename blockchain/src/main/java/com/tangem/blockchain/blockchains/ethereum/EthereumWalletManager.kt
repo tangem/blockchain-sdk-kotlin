@@ -563,7 +563,7 @@ open class EthereumWalletManager(
     open fun createTransferFromTransaction(amount: Amount, feeAmount: Amount, source: String): TransactionData {
         return TransactionData(
             amount = amount,
-            fee = Fee.CommonFee(feeAmount),
+            fee = Fee.Common(feeAmount),
             sourceAddress = source,
             destinationAddress = wallet.address,
             status = TransactionStatus.Unconfirmed,

@@ -92,7 +92,7 @@ class EthereumUtils {
                     createErc20TransferData(transactionData.destinationAddress, bigIntegerAmount)
             }
 
-            val gasLimitToUse = (transactionData.fee as Fee.EthereumFee).gasLimit
+            val gasLimitToUse = (transactionData.fee as Fee.Ethereum).gasLimit
 
             val transaction = createTransactionWithDefaults(
                 from = Address(transactionData.sourceAddress),
