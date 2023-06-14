@@ -98,7 +98,7 @@ class CardanoWalletManager(
             )
         )
         val fee = (MINIMAL_FEE + COST_OF_KB * size).toBigDecimal().setScale(blockchain.decimals(), RoundingMode.UP)
-        return Result.Success(TransactionFee.Single(Fee.CommonFee(Amount(amount, fee))))
+        return Result.Success(TransactionFee.Single(Fee.Common(Amount(amount, fee))))
     }
 
     companion object {
