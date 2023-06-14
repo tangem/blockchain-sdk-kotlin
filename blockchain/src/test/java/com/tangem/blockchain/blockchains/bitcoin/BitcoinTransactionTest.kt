@@ -35,7 +35,7 @@ class BitcoinTransactionTest {
                 prepareTwoUnspentOutputs(listOf(legacyAddress, segwitAddress), networkParameters)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Fee(Amount(amountToSend, feeValue))
+        val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
                 sourceAddress = segwitAddress,
                 destinationAddress = destinationAddress,
@@ -82,7 +82,7 @@ class BitcoinTransactionTest {
                 prepareTwoUnspentOutputs(listOf(legacyAddress, segwitAddress), networkParameters)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Fee(Amount(amountToSend, feeValue))
+        val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
                 sourceAddress = segwitAddress,
                 destinationAddress = destinationAddress,
