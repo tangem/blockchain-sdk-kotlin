@@ -31,7 +31,10 @@ import com.tangem.blockchain.blockchains.kaspa.network.KaspaRestApiNetworkProvid
 import com.tangem.blockchain.blockchains.litecoin.LitecoinNetworkService
 import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
 import com.tangem.blockchain.blockchains.optimism.OptimismWalletManager
+import com.tangem.blockchain.blockchains.polkadot.PolkadotTransactionBuilder
 import com.tangem.blockchain.blockchains.polkadot.PolkadotWalletManager
+import com.tangem.blockchain.blockchains.polkadot.extensions.getPolkadotHosts
+import com.tangem.blockchain.blockchains.polkadot.network.PolkadotCombinedProvider
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkService
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinWalletManager
 import com.tangem.blockchain.blockchains.solana.SolanaRpcClientBuilder
@@ -282,12 +285,15 @@ class WalletManagerFactory(
                 SolanaWalletManager(wallet, clients)
             }
 
-            Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama -> {
+            Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama, Blockchain.AlephZero -> {
                 val network = PolkadotNetworkService.network(blockchain)
 
                 PolkadotWalletManager(
-                    wallet,
-                    network,
+                    wallet = wallet,
+                    transactionBuilder = PolkadotTransactionBuilder(blockchain),
+                    networkProvider = PolkadotNetworkService(
+                        blockchain.getPolkadotHosts().map { PolkadotCombinedProvider(blockchain.decimals(), it) }
+                    )
                 )
             }
 
