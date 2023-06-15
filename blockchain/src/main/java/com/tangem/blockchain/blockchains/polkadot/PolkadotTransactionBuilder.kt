@@ -1,13 +1,6 @@
 package com.tangem.blockchain.blockchains.polkadot
 
-import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.isKusama
-import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.isPolkadot
-import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.isWestend
-import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.toDot
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.*
 import com.tangem.common.CompletionResult
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
@@ -19,10 +12,8 @@ import io.emeraldpay.polkaj.scaletypes.EraWriter
 import io.emeraldpay.polkaj.scaletypes.Extrinsic
 import io.emeraldpay.polkaj.scaletypes.MultiAddress
 import io.emeraldpay.polkaj.scaletypes.MultiAddressWriter
-import io.emeraldpay.polkaj.ss58.SS58Type
 import io.emeraldpay.polkaj.tx.ExtrinsicContext
 import io.emeraldpay.polkaj.types.Address
-import io.emeraldpay.polkaj.types.DotAmount
 import io.emeraldpay.polkaj.types.Hash512
 import java.io.ByteArrayOutputStream
 import java.math.BigInteger
@@ -30,26 +21,27 @@ import java.math.BigInteger
 /**
 [REDACTED_AUTHOR]
  */
-class PolkadotTransactionBuilder(
-    private val network: SS58Type.Network,
-) {
+class PolkadotTransactionBuilder(blockchain: Blockchain) {
 
-    private val balanceTransferCallIndex: ByteArray = when {
-        network.isPolkadot() -> "0500".hexToBytes()
-        network.isWestend() -> "0400".hexToBytes()
-        network.isKusama() -> "0400".hexToBytes()
-        else -> throw BlockchainSdkError.UnsupportedOperation()
+    private val decimals = blockchain.decimals()
+
+    private val balanceTransferCallIndex: ByteArray = when (blockchain) {
+        Blockchain.Polkadot, Blockchain.AlephZero -> "0500".hexToBytes()
+        Blockchain.PolkadotTestnet, Blockchain.Kusama -> "0400".hexToBytes()
+        else -> throw Exception(
+            "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
+        )
     }
 
     fun buildForSign(
-        destinationAddress: Address,
+        destinationAddress: String,
         amount: Amount,
         context: ExtrinsicContext,
     ): ByteArray {
         val buffer = ByteArrayOutputStream()
         val codecWriter = ScaleCodecWriter(buffer)
 
-        encodeCall(codecWriter, amount, destinationAddress)
+        encodeCall(codecWriter, amount, Address.from(destinationAddress))
         encodeEraNonceTip(codecWriter, context)
 
         codecWriter.writeUint32(context.runtimeVersion)
@@ -65,8 +57,8 @@ class PolkadotTransactionBuilder(
     }
 
     fun buildForSend(
-        sourceAddress: Address,
-        destinationAddress: Address,
+        sourceAddress: String,
+        destinationAddress: String,
         amount: Amount,
         context: ExtrinsicContext,
         signedPayload: ByteArray
@@ -76,7 +68,7 @@ class PolkadotTransactionBuilder(
 
         val type = Extrinsic.TYPE_BIT_SIGNED + (Extrinsic.TYPE_UNMASK_VERSION and 4)
         codecWriter.writeByte(type)
-        codecWriter.write(MultiAddressWriter(), sourceAddress.toUnionAddress())
+        codecWriter.write(MultiAddressWriter(), Address.from(sourceAddress).toUnionAddress())
 
         val hash512 = Hash512(signedPayload)
         val signature = Extrinsic.ED25519Signature(hash512)
@@ -84,7 +76,7 @@ class PolkadotTransactionBuilder(
         codecWriter.writeByteArray(signature.value.bytes)
 
         encodeEraNonceTip(codecWriter, context)
-        encodeCall(codecWriter, amount, destinationAddress)
+        encodeCall(codecWriter, amount, Address.from(destinationAddress))
 
         val prefixBuffer = ByteArrayOutputStream()
         ScaleCodecWriter(prefixBuffer).write(ScaleCodecWriter.COMPACT_UINT, txBuffer.size())
@@ -97,7 +89,7 @@ class PolkadotTransactionBuilder(
         codecWriter.writeByteArray(balanceTransferCallIndex)
         codecWriter.write(MultiAddressWriter(), destinationAddress.toUnionAddress())
 
-        val amountToSend = (amount.value?.toDot(network) ?: DotAmount.ZERO).value
+        val amountToSend = amount.value?.movePointRight(decimals)?.toBigInteger() ?: BigInteger.ZERO
         codecWriter.write(ScaleCodecWriter.COMPACT_BIGINT, amountToSend)
     }
 
