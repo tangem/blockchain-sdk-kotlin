@@ -1,13 +1,6 @@
 package com.tangem.blockchain.blockchains.stellar
 
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.Token
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionStatus
-import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -17,18 +10,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
-import org.stellar.sdk.AssetTypeCreditAlphaNum
-import org.stellar.sdk.AssetTypeNative
-import org.stellar.sdk.Network
-import org.stellar.sdk.Server
-import org.stellar.sdk.Transaction
+import org.stellar.sdk.*
 import org.stellar.sdk.requests.ErrorResponse
 import org.stellar.sdk.requests.RequestBuilder
-import org.stellar.sdk.responses.AccountResponse
-import org.stellar.sdk.responses.FeeStatsResponse
-import org.stellar.sdk.responses.LedgerResponse
-import org.stellar.sdk.responses.Page
-import org.stellar.sdk.responses.RootResponse
+import org.stellar.sdk.responses.*
 import org.stellar.sdk.responses.operations.CreateAccountOperationResponse
 import org.stellar.sdk.responses.operations.OperationResponse
 import org.stellar.sdk.responses.operations.PaymentOperationResponse
@@ -59,7 +44,7 @@ class StellarNetworkService(hosts: List<StellarNetwork>, isTestnet: Boolean) : S
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
             val response = stellarMultiProvider.performRequest(
-                Server::submitTransaction, Transaction.fromEnvelopeXdr(transaction, network)
+                Server::submitTransaction, Transaction.fromEnvelopeXdr(transaction, network) as Transaction
             ).successOr {
                 return SimpleResult.Failure(it.error)
             }
@@ -93,8 +78,8 @@ class StellarNetworkService(hosts: List<StellarNetwork>, isTestnet: Boolean) : S
                 Result.Success(StellarTargetAccountResponse(accountCreated = true))
             } else { // token transaction
                 val tokenBalance = account.balances
-                    .filter { it.assetCode == token.symbol }
-                    .find { it.assetIssuer == token.contractAddress } // null if trustline not created
+                    .filter { it.assetCode.get() == token.symbol }
+                    .find { it.assetIssuer.get() == token.contractAddress } // null if trustline not created
                 Result.Success(
                     StellarTargetAccountResponse(
                         accountCreated = true,
@@ -138,13 +123,13 @@ class StellarNetworkService(hosts: List<StellarNetwork>, isTestnet: Boolean) : S
 
                 val accountResponse = accountResponseDeferred.await()
                 val coinBalance = accountResponse.balances
-                    .find { it.asset is AssetTypeNative }?.balance?.toBigDecimal()
+                    .find { it.asset.get() is AssetTypeNative }?.balance?.toBigDecimal()
                     ?: return@coroutineScope Result.Failure(
                         BlockchainSdkError.CustomError("Stellar Balance not found")
                     )
 
-                val tokenBalances = accountResponse.balances.filter { it.asset !is AssetTypeNative }.map {
-                    StellarAssetBalance(it.balance.toBigDecimal(), it.assetCode, it.assetIssuer)
+                val tokenBalances = accountResponse.balances.filter { it.asset.get() !is AssetTypeNative }.map {
+                    StellarAssetBalance(it.balance.toBigDecimal(), it.assetCode.get(), it.assetIssuer.get())
                 }
 
                 val ledgerResponse = ledgerResponseDeferred.await()
