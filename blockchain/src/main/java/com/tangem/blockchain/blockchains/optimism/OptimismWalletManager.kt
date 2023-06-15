@@ -6,12 +6,12 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.network.ContractCallData
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
 import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.extensions.hexToBytes
@@ -21,8 +21,6 @@ import org.kethereum.model.SignatureData
 import org.kethereum.model.createTransactionWithDefaults
 import java.math.BigDecimal
 import java.math.BigInteger
-import java.math.MathContext
-import java.math.RoundingMode
 
 class OptimismWalletManager(
     wallet: Wallet,
@@ -33,7 +31,7 @@ class OptimismWalletManager(
 
     private var lastLayer1FeeAmount: Amount? = null
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee.Choosable> {
         lastLayer1FeeAmount = null
 
         val blockchain = wallet.blockchain
@@ -66,7 +64,11 @@ class OptimismWalletManager(
         lastLayer1FeeAmount = lastLayer1Fee
 
         //https://community.optimism.io/docs/developers/build/transaction-fees/#displaying-fees-to-users
-        val updatedFees = layer2fee.map { it.copy(value = it.value!! + lastLayer1Fee.value!!) }
+        val updatedFees = layer2fee.copy(
+            minimum = layer2fee.minimum + requireNotNull(lastLayer1Fee.value),
+            normal = layer2fee.normal + lastLayer1Fee.value,
+            priority = layer2fee.priority + lastLayer1Fee.value,
+        )
 
         return Result.Success(updatedFees)
     }
@@ -86,7 +88,7 @@ class OptimismWalletManager(
         return super.sign(updatedTransactionData, signer)
     }
 
-    override suspend fun getFee(amount: Amount, destination: String, data: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee.Choosable> {
         lastLayer1FeeAmount = null
 
         val blockchain = wallet.blockchain
@@ -123,7 +125,12 @@ class OptimismWalletManager(
         lastLayer1FeeAmount = lastLayer1Fee
 
         //https://community.optimism.io/docs/developers/build/transaction-fees/#displaying-fees-to-users
-        val updatedFees = layer2fee.map { it.copy(value = it.value!! + lastLayer1Fee.value!!) }
+
+        val updatedFees = layer2fee.copy(
+            minimum = layer2fee.minimum + requireNotNull(lastLayer1Fee.value),
+            normal = layer2fee.normal + lastLayer1Fee.value,
+            priority = layer2fee.priority + lastLayer1Fee.value,
+        )
 
         return Result.Success(updatedFees)
     }
@@ -150,19 +157,18 @@ class OptimismWalletManager(
         }
     }
 
-    override fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): List<BigDecimal> {
+
+    // TODO think about merge this method with parent's one
+    override fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): TransactionFee.Choosable {
         val minFee = (gasPrice * gasLimit)
         val normalFee = minFee * BigInteger.valueOf(12) / BigInteger.TEN
         val priorityFee = minFee * BigInteger.valueOf(15) / BigInteger.TEN
 
-        val decimals = Blockchain.Ethereum.decimals()
-        return listOf(minFee, normalFee, priorityFee)
-            .map {
-                it.toBigDecimal(
-                    scale = decimals,
-                    mathContext = MathContext(decimals, RoundingMode.HALF_EVEN)
-                )
-            }
+        return TransactionFee.Choosable(
+            minimum = createFee(minFee),
+            normal = createFee(normalFee),
+            priority = createFee(priorityFee)
+        )
     }
 
     companion object {

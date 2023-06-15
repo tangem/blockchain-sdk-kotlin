@@ -4,27 +4,12 @@ import com.tangem.blockchain.common.Wallet
 import android.util.Log
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaInfoResponse
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkProvider
-import com.tangem.blockchain.blockchains.tezos.TezosAddressService.Companion.calculateTezosChecksum
-import com.tangem.blockchain.blockchains.tezos.TezosConstants
-import com.tangem.blockchain.blockchains.tezos.TezosTransactionBuilder
-import com.tangem.blockchain.blockchains.tezos.network.TezosInfoResponse
-import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkProvider
-import com.tangem.blockchain.blockchains.tezos.network.TezosTransactionData
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.extensions.toCanonicalECDSASignature
 import com.tangem.common.CompletionResult
-import com.tangem.common.card.EllipticCurve
-import com.tangem.common.extensions.hexToBytes
-import com.tangem.common.extensions.isZero
-import com.tangem.common.extensions.toHexString
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import org.bitcoinj.core.Base58
-import org.bitcoinj.core.Utils
 import java.math.BigDecimal
-import java.util.*
 
 class KaspaWalletManager(
     wallet: Wallet,
@@ -50,7 +35,7 @@ class KaspaWalletManager(
         if (response.balance != wallet.amounts[AmountType.Coin]?.value) {
             wallet.recentTransactions.clear()
         }
-        wallet.amounts[AmountType.Coin]?.value = response.balance
+        wallet.changeAmountValue(AmountType.Coin, response.balance)
         transactionBuilder.unspentOutputs = response.unspentOutputs
     }
 
@@ -60,7 +45,7 @@ class KaspaWalletManager(
     }
 
     override suspend fun send(
-        transactionData: TransactionData, signer: TransactionSigner
+        transactionData: TransactionData, signer: TransactionSigner,
     ): SimpleResult {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
@@ -84,14 +69,14 @@ class KaspaWalletManager(
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val unspentOutputCount = transactionBuilder.getUnspentsToSpendCount()
 
         return if (unspentOutputCount == 0) {
             Result.Failure(Exception("No unspent outputs found").toBlockchainSdkError()) // shouldn't happen
         } else {
             val fee = FEE_PER_UNSPENT_OUTPUT.toBigDecimal().multiply(unspentOutputCount.toBigDecimal())
-            Result.Success(listOf(Amount(fee, blockchain)))
+            Result.Success(TransactionFee.Single(Amount(fee, blockchain)))
         }
     }
 
