@@ -16,6 +16,7 @@ import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.UnmarshalHelper
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.bigIntegerValue
@@ -52,7 +53,7 @@ class TronWalletManager(
     private fun updateWallet(response: TronAccountInfo) {
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
 
-        wallet.amounts[AmountType.Coin]?.value = response.balance
+        wallet.changeAmountValue(AmountType.Coin, response.balance)
         response.tokenBalances.forEach { wallet.addTokenValue(it.value, it.key) }
 
         wallet.recentTransactions.forEach {
@@ -94,7 +95,7 @@ class TronWalletManager(
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val blockchain = wallet.blockchain
         return coroutineScope {
             val destinationExistsDef = async { networkService.checkIfAccountExists(destination) }
@@ -107,7 +108,7 @@ class TronWalletManager(
 
             if (!destinationExistsDef.await() && amount.type == AmountType.Coin) {
                 return@coroutineScope Result.Success(
-                    listOf(
+                    TransactionFee.Single(
                         Amount(
                             BigDecimal.valueOf(1.1),
                             blockchain
@@ -137,7 +138,7 @@ class TronWalletManager(
             val totalFee = consumedBandwidthFee + energyFee
 
             val value = BigDecimal(totalFee).movePointLeft(blockchain.decimals())
-            Result.Success(listOf(Amount(value, blockchain)))
+            Result.Success(TransactionFee.Single(Amount(value, blockchain)))
         }
     }
 
