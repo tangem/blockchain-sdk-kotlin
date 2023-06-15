@@ -83,6 +83,7 @@ enum class Blockchain(
     TerraV1("terra", "LUNC", "Terra Classic"),
     TerraV2("terra-2", "LUNA", "Terra"),
     Cronos("cronos", "CRO", "Cronos"),
+    AlephZero("aleph-zero", "AZERO", "Aleph Zero")
     ;
 
     fun decimals(): Int = when (this) {
@@ -108,7 +109,7 @@ enum class Blockchain(
         TON, TONTestnet,
         -> 9
         Polkadot -> 10
-        PolkadotTestnet, Kusama -> 12
+        PolkadotTestnet, Kusama, AlephZero -> 12
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet,
         EthereumClassic, EthereumClassicTestnet,
@@ -168,7 +169,7 @@ enum class Blockchain(
             XRP -> XrpAddressService()
             Binance -> BinanceAddressService()
             BinanceTestnet -> BinanceAddressService(true)
-            Polkadot, PolkadotTestnet, Kusama -> PolkadotAddressService(this)
+            Polkadot, PolkadotTestnet, Kusama, AlephZero -> PolkadotAddressService(this)
             Stellar, StellarTestnet -> StellarAddressService()
             Solana, SolanaTestnet -> SolanaAddressService()
             Tezos -> TezosAddressService()
@@ -249,6 +250,7 @@ enum class Blockchain(
         TerraV1 -> "https://finder.terra.money/classic/"
         TerraV2 -> "https://terrasco.pe/mainnet/"
         Cronos -> "https://cronoscan.com/"
+        AlephZero -> "https://alephzero.subscan.io/"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -380,7 +382,7 @@ enum class Blockchain(
             Solana, SolanaTestnet,
             Cardano,
             CardanoShelley,
-            Polkadot, PolkadotTestnet, Kusama,
+            Polkadot, PolkadotTestnet, Kusama, AlephZero,
             TON, TONTestnet,
             -> listOf(EllipticCurve.Ed25519)
         }
@@ -502,6 +504,7 @@ enum class Blockchain(
             Cosmos -> 118
             TerraV1, TerraV2 -> 330
             Cronos -> 10000025
+            AlephZero -> 643
             ArbitrumTestnet,
             AvalancheTestnet,
             BinanceTestnet,
