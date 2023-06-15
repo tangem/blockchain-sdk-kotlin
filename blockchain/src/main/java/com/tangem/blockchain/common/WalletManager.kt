@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.isAboveZero
@@ -154,8 +155,10 @@ abstract class WalletManager(
 }
 
 interface TransactionSender {
+
     suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult
-    suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>>
+
+    suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee>
 }
 
 interface TransactionSigner {
