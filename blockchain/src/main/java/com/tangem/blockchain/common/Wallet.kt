@@ -1,6 +1,7 @@
 package com.tangem.blockchain.common
 
 import com.tangem.blockchain.common.address.Address
+import com.tangem.blockchain.common.address.AddressType
 import com.tangem.common.extensions.calculateHashCode
 import com.tangem.crypto.hdWallet.DerivationPath
 import java.math.BigDecimal
@@ -18,7 +19,7 @@ class Wallet(
     // transactions from history provider
     val historyTransactions: MutableList<TransactionData> = mutableListOf()
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
-    val address = addresses.find { it.type == blockchain.defaultAddressType() }?.value
+    val address = addresses.find { it.type == AddressType.Default }?.value
         ?: throw Exception("Addresses must contain default address")
 
     init {
