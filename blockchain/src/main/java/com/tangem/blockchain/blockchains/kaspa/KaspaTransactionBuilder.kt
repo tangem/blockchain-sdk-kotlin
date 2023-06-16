@@ -26,7 +26,7 @@ import java.math.BigInteger
 
 class KaspaTransactionBuilder {
     private lateinit var transaction: KaspaTransaction
-    private var networkParameters = MainNetParams()
+    private var networkParameters = KaspaMainNetParams()
     var unspentOutputs: List<KaspaUnspentOutput>? = null
 
     fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
