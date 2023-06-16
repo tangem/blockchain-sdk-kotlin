@@ -9,6 +9,7 @@ import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.address.DefaultAddressType
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
@@ -36,7 +37,7 @@ class DucatusTransactionTest {
                 BitcoinTransactionTest.prepareTwoUnspentOutputs(listOf(address), networkParameters)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Amount(amountToSend, feeValue)
+        val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
                 sourceAddress = address,
                 destinationAddress = destinationAddress,

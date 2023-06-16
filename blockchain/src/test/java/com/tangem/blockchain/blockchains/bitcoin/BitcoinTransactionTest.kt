@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.hexToBytes
 import org.bitcoinj.core.Address
@@ -34,7 +35,7 @@ class BitcoinTransactionTest {
                 prepareTwoUnspentOutputs(listOf(legacyAddress, segwitAddress), networkParameters)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Amount(amountToSend, feeValue)
+        val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
                 sourceAddress = segwitAddress,
                 destinationAddress = destinationAddress,
@@ -81,7 +82,7 @@ class BitcoinTransactionTest {
                 prepareTwoUnspentOutputs(listOf(legacyAddress, segwitAddress), networkParameters)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Amount(amountToSend, feeValue)
+        val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
                 sourceAddress = segwitAddress,
                 destinationAddress = destinationAddress,
