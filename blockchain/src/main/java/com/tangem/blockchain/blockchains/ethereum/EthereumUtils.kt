@@ -135,8 +135,8 @@ class EthereumUtils {
                 PublicKey(walletPublicKey)
             )
             val chainId = blockchain.getChainId()
-                ?: throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
-            val v = (recId + 27 + 8 + (chainId * 2)).toBigInteger()
+                ?: error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
+            val v = (recId + 27 + 8 + (chainId * 2)).toBigInteger() // EIP-155
             val signatureData = SignatureData(ecdsaSignature.r, ecdsaSignature.s, v)
 
             return transactionToSign.transaction.encode(signatureData)
