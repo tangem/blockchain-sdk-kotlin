@@ -16,6 +16,7 @@ import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.UnmarshalHelper
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -109,9 +110,11 @@ class TronWalletManager(
             if (!destinationExistsDef.await() && amount.type == AmountType.Coin) {
                 return@coroutineScope Result.Success(
                     TransactionFee.Single(
-                        Amount(
-                            BigDecimal.valueOf(1.1),
-                            blockchain
+                        Fee.Common(
+                            amount = Amount(
+                                BigDecimal.valueOf(1.1),
+                                blockchain
+                            )
                         )
                     )
                 )
@@ -138,7 +141,7 @@ class TronWalletManager(
             val totalFee = consumedBandwidthFee + energyFee
 
             val value = BigDecimal(totalFee).movePointLeft(blockchain.decimals())
-            Result.Success(TransactionFee.Single(Amount(value, blockchain)))
+            Result.Success(TransactionFee.Single(Fee.Common(Amount(value, blockchain))))
         }
     }
 
@@ -154,6 +157,7 @@ class TronWalletManager(
             is Result.Failure -> {
                 Result.Failure(result.error)
             }
+
             is Result.Success -> {
                 val transactionToSign = transactionBuilder.buildForSign(
                     amount, source, destination, result.data
@@ -186,6 +190,7 @@ class TronWalletManager(
                 }
                 Result.Success(unmarshalledSignature)
             }
+
             is CompletionResult.Failure -> {
                 Result.fromTangemSdkError(result.error)
             }

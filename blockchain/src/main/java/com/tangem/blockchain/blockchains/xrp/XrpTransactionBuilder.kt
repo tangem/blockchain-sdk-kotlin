@@ -49,7 +49,7 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
         payment.putTranslated(AccountID.Destination, destinationAddress)
         payment.putTranslated(XrpAmount.Amount, transactionData.amount.bigIntegerValue().toString())
         payment.putTranslated(UInt32.Sequence, sequence)
-        payment.putTranslated(XrpAmount.Fee, transactionData.fee!!.bigIntegerValue().toString())
+        payment.putTranslated(XrpAmount.Fee, transactionData.fee!!.amount.bigIntegerValue().toString())
         if (destinationTag != null) {
             payment.putTranslated(UInt32.DestinationTag, destinationTag)
         }
