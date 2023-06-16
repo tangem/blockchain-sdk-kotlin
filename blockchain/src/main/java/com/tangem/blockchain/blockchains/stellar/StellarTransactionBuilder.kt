@@ -23,7 +23,7 @@ class StellarTransactionBuilder(
     suspend fun buildToSign(transactionData: TransactionData, sequence: Long): Result<ByteArray> {
 
         val amount = transactionData.amount
-        val fee = transactionData.fee!!.longValue!!.toInt()
+        val fee = requireNotNull(transactionData.fee?.amount?.longValue).toInt()
         val destinationKeyPair = KeyPair.fromAccountId(transactionData.destinationAddress)
         val sourceKeyPair = KeyPair.fromAccountId(transactionData.sourceAddress)
         val timeBounds = getTimeBounds(transactionData)

@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.tezos.network.TezosInfoResponse
 import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkProvider
 import com.tangem.blockchain.blockchains.tezos.network.TezosTransactionData
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -133,7 +134,11 @@ class TezosWalletManager(
             }
         }
 
-        return if (error == null) Result.Success(TransactionFee.Single(Amount(fee, blockchain))) else error!!
+        return if (error == null) {
+            Result.Success(TransactionFee.Single(Fee.Common(Amount(fee, blockchain))))
+        } else {
+            error!!
+        }
     }
 
     override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {

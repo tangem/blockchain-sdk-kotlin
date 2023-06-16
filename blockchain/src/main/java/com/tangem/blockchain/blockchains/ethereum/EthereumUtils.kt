@@ -4,6 +4,7 @@ import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
 import org.kethereum.crypto.api.ec.ECDSASignature
@@ -61,8 +62,7 @@ class EthereumUtils {
         fun buildTransactionToSign(
             transactionData: TransactionData,
             nonce: BigInteger?,
-            blockchain: Blockchain,
-            gasLimit: BigInteger?,
+            blockchain: Blockchain
         ): CompiledEthereumTransaction? {
 
             val extras = transactionData.extras as? EthereumTransactionExtras
@@ -70,9 +70,9 @@ class EthereumUtils {
             val nonceValue = extras?.nonce ?: nonce ?: return null
 
             val amount: BigDecimal = transactionData.amount.value ?: return null
-            val transactionFee: BigDecimal = transactionData.fee?.value ?: return null
+            val transactionFee: BigDecimal = transactionData.fee?.amount?.value ?: return null
 
-            val fee = transactionFee.movePointRight(transactionData.fee.decimals).toBigInteger()
+            val fee = transactionFee.movePointRight(transactionData.fee.amount.decimals).toBigInteger()
             val bigIntegerAmount =
                 amount.movePointRight(transactionData.amount.decimals).toBigInteger()
 
@@ -92,7 +92,7 @@ class EthereumUtils {
                     createErc20TransferData(transactionData.destinationAddress, bigIntegerAmount)
             }
 
-            val gasLimitToUse = extras?.gasLimit ?: gasLimit ?: return null
+            val gasLimitToUse = (transactionData.fee as Fee.Ethereum).gasLimit
 
             val transaction = createTransactionWithDefaults(
                 from = Address(transactionData.sourceAddress),
@@ -122,9 +122,9 @@ class EthereumUtils {
             val extras = transactionData.extras as? EthereumTransactionExtras
             val nonceValue = extras?.nonce ?: nonce ?: return null
             val amount: BigDecimal = transactionData.amount.value ?: return null
-            val transactionFee: BigDecimal = transactionData.fee?.value ?: return null
+            val transactionFee: BigDecimal = transactionData.fee?.amount?.value ?: return null
 
-            val fee = transactionFee.movePointRight(transactionData.fee.decimals).toBigInteger()
+            val fee = transactionFee.movePointRight(transactionData.fee.amount.decimals).toBigInteger()
             val bigIntegerAmount = amount.movePointRight(transactionData.amount.decimals).toBigInteger()
 
             val to = Address(transactionData.contractAddress
@@ -326,9 +326,9 @@ class EthereumUtils {
             val nonceValue = extras?.nonce ?: nonce ?: return null
 
             val amount: BigDecimal = transactionData.amount.value ?: return null
-            val transactionFee: BigDecimal = transactionData.fee?.value ?: return null
+            val transactionFee: BigDecimal = transactionData.fee?.amount?.value ?: return null
 
-            val fee = transactionFee.movePointRight(transactionData.fee.decimals).toBigInteger()
+            val fee = transactionFee.movePointRight(transactionData.fee.amount.decimals).toBigInteger()
             val bigIntegerAmount =
                 amount.movePointRight(transactionData.amount.decimals).toBigInteger()
 
