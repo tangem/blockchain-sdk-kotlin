@@ -20,11 +20,10 @@ internal object LitecoinWalletManagerAssembly : WalletManagerAssembly<LitecoinWa
                     walletAddresses = addresses
                 ),
                 networkProvider = LitecoinNetworkService(
-                    providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config)
+                    providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config),
                 ),
                 transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(input.config)
             )
         }
     }
-
 }

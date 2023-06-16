@@ -29,7 +29,10 @@ class TonWalletManager(
 
     private var sequenceNumber: Int = 0
     private val txBuilder = TonTransactionBuilder()
-    private val networkService = TonNetworkService(jsonRpcProviders = networkProviders, blockchain = wallet.blockchain)
+    private val networkService = TonNetworkService(
+        jsonRpcProviders = networkProviders,
+        blockchain = wallet.blockchain
+    )
 
     override val currentHost: String
         get() = networkService.host

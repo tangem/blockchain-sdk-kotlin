@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
+import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.retryIO
@@ -9,14 +10,12 @@ import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
 
 class EthereumJsonRpcProvider(
-    baseUrl: String,
+    override val baseUrl: String,
     private val postfixUrl: String = "",
     private val authToken: String? = null,
     private val nowNodesApiKey: String? = null,
     private val getBlockApiKey: String? = null,
-) {
-
-    val host: String = baseUrl
+): NetworkProvider {
 
     private val api = createRetrofitInstance(baseUrl).create(EthereumApi::class.java)
 
