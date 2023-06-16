@@ -5,6 +5,7 @@ import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
@@ -32,7 +33,7 @@ class CardanoTransactionTest {
                 prepareTwoUnspentOutputs(listOf(byronAddress, shelleyAddress))
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Amount(amountToSend, feeValue)
+        val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
                 sourceAddress = shelleyAddress,
                 destinationAddress = byronDestinationAddress,

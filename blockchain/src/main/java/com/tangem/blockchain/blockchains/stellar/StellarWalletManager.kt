@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.stellar
 
 import android.util.Log
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -94,9 +95,9 @@ class StellarWalletManager(
         val averageChargedFee = (maxChargedFee - minChargedFee).divide(2.toBigDecimal()) + minChargedFee
 
         return Result.Success(TransactionFee.Choosable(
-            minimum = Amount(minChargedFee, blockchain),
-            normal = Amount(averageChargedFee, blockchain),
-            priority = Amount(maxChargedFee, blockchain),
+            minimum = Fee.Common(Amount(minChargedFee, blockchain)),
+            normal = Fee.Common(Amount(averageChargedFee, blockchain)),
+            priority = Fee.Common(Amount(maxChargedFee, blockchain))
         ))
     }
 
