@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.solana
 import com.tangem.blockchain.blockchains.solana.solanaj.core.Transaction
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
 import com.tangem.blockchain.common.BlockchainSdkError.Solana
+import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.extensions.guard
@@ -12,7 +13,12 @@ import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.rpc.Cluster
 import org.p2p.solanaj.rpc.RpcException
-import org.p2p.solanaj.rpc.types.*
+import org.p2p.solanaj.rpc.types.AccountInfo
+import org.p2p.solanaj.rpc.types.FeesInfo
+import org.p2p.solanaj.rpc.types.SignatureStatuses
+import org.p2p.solanaj.rpc.types.TokenAccountInfo
+import org.p2p.solanaj.rpc.types.TokenResultObjects
+import org.p2p.solanaj.rpc.types.TransactionResult
 import org.p2p.solanaj.rpc.types.config.Commitment
 import java.math.BigDecimal
 
@@ -21,9 +27,9 @@ import java.math.BigDecimal
  */
 class SolanaNetworkService(
     private val provider: RpcClient
-) {
+): NetworkProvider {
 
-    val host = provider.host
+    override val baseUrl: String = provider.host
 
     suspend fun getMainAccountInfo(
         account: PublicKey

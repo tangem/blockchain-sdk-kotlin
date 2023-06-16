@@ -5,7 +5,16 @@ import com.tangem.blockchain.blockchains.tezos.TezosAddressService.Companion.cal
 import com.tangem.blockchain.blockchains.tezos.network.TezosInfoResponse
 import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkProvider
 import com.tangem.blockchain.blockchains.tezos.network.TezosTransactionData
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.BlockchainError
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionError
+import com.tangem.blockchain.common.TransactionSender
+import com.tangem.blockchain.common.TransactionSigner
+import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -20,7 +29,7 @@ import kotlinx.coroutines.coroutineScope
 import org.bitcoinj.core.Base58
 import org.bitcoinj.core.Utils
 import java.math.BigDecimal
-import java.util.*
+import java.util.EnumSet
 
 class TezosWalletManager(
     wallet: Wallet,
@@ -30,7 +39,7 @@ class TezosWalletManager(
 ) : WalletManager(wallet), TransactionSender {
 
     override val currentHost: String
-        get() = networkProvider.host
+        get() = networkProvider.baseUrl
 
     private val blockchain = wallet.blockchain
     private var publicKeyRevealed: Boolean? = null
