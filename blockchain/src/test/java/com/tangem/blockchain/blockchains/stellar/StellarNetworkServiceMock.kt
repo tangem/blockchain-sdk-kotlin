@@ -11,7 +11,7 @@ class StellarNetworkServiceMock(
         )
 ) : StellarNetworkProvider {
 
-    override val host: String
+    override val baseUrl: String
         get() = TODO("Not yet implemented")
 
     override suspend fun getInfo(accountId: String): Result<StellarResponse> {

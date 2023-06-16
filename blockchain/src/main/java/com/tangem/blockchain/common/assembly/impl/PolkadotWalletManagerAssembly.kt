@@ -15,10 +15,9 @@ internal object PolkadotWalletManagerAssembly : WalletManagerAssembly<PolkadotWa
             wallet = input.wallet,
             transactionBuilder = PolkadotTransactionBuilder(input.wallet.blockchain),
             networkProvider = PolkadotNetworkService(
-                input.wallet.blockchain.getPolkadotHosts()
-                    .map { PolkadotCombinedProvider(input.wallet.blockchain.decimals(), it) }
-            )
+                providers = input.wallet.blockchain.getPolkadotHosts()
+                    .map { PolkadotCombinedProvider(input.wallet.blockchain.decimals(), it) },
+            ),
         )
     }
-
 }

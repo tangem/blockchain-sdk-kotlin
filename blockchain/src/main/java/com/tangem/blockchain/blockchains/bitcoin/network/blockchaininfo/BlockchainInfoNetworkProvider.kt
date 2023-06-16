@@ -21,7 +21,7 @@ import kotlinx.coroutines.coroutineScope
 import java.util.Calendar
 
 class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
-    override val host: String = API_BLOCKCHAIN_INFO
+    override val baseUrl: String = API_BLOCKCHAIN_INFO
 
     private val api =
         createRetrofitInstance(API_BLOCKCHAIN_INFO).create(BlockchainInfoApi::class.java)

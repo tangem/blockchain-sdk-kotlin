@@ -41,8 +41,8 @@ import java.math.RoundingMode
  */
 class SolanaWalletManager(
     wallet: Wallet,
-    providers: List<RpcClient>
-) : WalletManager(wallet), TransactionSender, RentProvider {
+    providers: List<RpcClient>,
+    ) : WalletManager(wallet), TransactionSender, RentProvider {
 
     private val accountPubK: PublicKey = PublicKey(wallet.address)
     private val networkServices = providers.map { SolanaNetworkService(it) }
@@ -50,7 +50,7 @@ class SolanaWalletManager(
         MultiNetworkProvider(networkServices)
 
     override val currentHost: String
-        get() = multiNetworkProvider.currentProvider.host
+        get() = multiNetworkProvider.currentProvider.baseUrl
 
     private val feeRentHolder = mutableMapOf<Fee, BigDecimal>()
     private val valueConverter = ValueConverter()

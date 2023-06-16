@@ -20,7 +20,7 @@ import java.io.IOException
 
 class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
 
-    override val host: String = baseUrl
+    override val baseUrl: String = baseUrl
 
     private val api: AdaliteApi by lazy {
         createRetrofitInstance(baseUrl).create(AdaliteApi::class.java)
