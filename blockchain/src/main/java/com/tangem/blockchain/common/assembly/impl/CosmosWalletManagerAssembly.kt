@@ -2,10 +2,10 @@ package com.tangem.blockchain.common.assembly.impl
 
 import com.tangem.blockchain.blockchains.cosmos.CosmosWalletManager
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
-import com.tangem.blockchain.extensions.letNotBlank
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
-import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
+import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
+import com.tangem.blockchain.extensions.letNotBlank
 
 internal object CosmosWalletManagerAssembly : WalletManagerAssembly<CosmosWalletManager>() {
 
@@ -31,8 +31,8 @@ internal object CosmosWalletManagerAssembly : WalletManagerAssembly<CosmosWallet
             return CosmosWalletManager(
                 wallet = input.wallet,
                 networkProviders = providers,
-                cosmosChain = CosmosChain.Cosmos(testnet)
-            )
+                cosmosChain = CosmosChain.Cosmos(testnet),
+                )
         }
     }
 
