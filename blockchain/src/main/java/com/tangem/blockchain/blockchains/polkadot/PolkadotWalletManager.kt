@@ -1,8 +1,18 @@
 package com.tangem.blockchain.blockchains.polkadot
 
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkProvider
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionError
+import com.tangem.blockchain.common.TransactionSender
+import com.tangem.blockchain.common.TransactionSigner
+import com.tangem.blockchain.common.TransactionStatus
+import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -11,7 +21,8 @@ import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import io.emeraldpay.polkaj.tx.ExtrinsicContext
 import java.math.BigDecimal
-import java.util.*
+import java.util.Calendar
+import java.util.EnumSet
 
 /**
 [REDACTED_AUTHOR]
@@ -37,7 +48,7 @@ class PolkadotWalletManager(
     private val txBuilder = PolkadotTransactionBuilder(wallet.blockchain)
 
     override val currentHost: String
-        get() = networkProvider.host
+        get() = networkProvider.baseUrl
 
     override suspend fun update() {
         val amount = networkProvider.getBalance(wallet.address).successOr {

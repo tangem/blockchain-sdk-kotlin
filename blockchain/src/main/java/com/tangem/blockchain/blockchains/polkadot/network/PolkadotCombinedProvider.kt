@@ -27,11 +27,11 @@ import java.math.BigDecimal
  */
 class PolkadotCombinedProvider(
     private val decimals: Int,
-    override val host: String,
+    override val baseUrl: String,
 ) : PolkadotNetworkProvider {
 
-    private val polkadotApi: PolkadotApi = PolkadotApi.Builder().rpcCallAdapter(rpcCallAdapter(host)).build()
-    private val polkadotProvider: PolkadotJsonRpcProvider = PolkadotJsonRpcProvider(host)
+    private val polkadotApi: PolkadotApi = PolkadotApi.Builder().rpcCallAdapter(rpcCallAdapter(baseUrl)).build()
+    private val polkadotProvider: PolkadotJsonRpcProvider = PolkadotJsonRpcProvider(baseUrl)
     private val commands = StandardCommands.getInstance()
 
     override suspend fun getBalance(address: String): Result<BigDecimal> = withContext(Dispatchers.IO) {

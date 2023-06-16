@@ -23,10 +23,9 @@ internal object EthereumWalletManagerAssembly : WalletManagerAssembly<EthereumWa
                     blockcypherNetworkProvider = BlockcypherNetworkProvider(
                         blockchain = blockchain,
                         tokens = input.config.blockcypherTokens
-                    )
+                    ),
                 )
             )
         }
     }
-
 }

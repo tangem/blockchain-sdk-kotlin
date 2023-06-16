@@ -17,7 +17,7 @@ class TonNetworkService(
 
     private val multiJsonRpcProvider = MultiNetworkProvider(jsonRpcProviders)
 
-    val host: String get() = multiJsonRpcProvider.currentProvider.host
+    val host: String get() = multiJsonRpcProvider.currentProvider.baseUrl
 
     suspend fun getWalletInformation(address: String): Result<TonWalletInfo> {
         return try {

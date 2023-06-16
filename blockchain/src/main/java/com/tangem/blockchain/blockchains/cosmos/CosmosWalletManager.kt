@@ -21,7 +21,10 @@ class CosmosWalletManager(
     private val cosmosChain: CosmosChain,
 ) : WalletManager(wallet), TransactionSender {
 
-    private val networkService: CosmosNetworkService = CosmosNetworkService(networkProviders, cosmosChain)
+    private val networkService: CosmosNetworkService = CosmosNetworkService(
+        providers = networkProviders,
+        cosmosChain = cosmosChain,
+    )
     private var accountNumber: Long? = null
     private var sequenceNumber: Long = 0L
     private val txBuilder: CosmosTransactionBuilder = CosmosTransactionBuilder(cosmosChain = cosmosChain)

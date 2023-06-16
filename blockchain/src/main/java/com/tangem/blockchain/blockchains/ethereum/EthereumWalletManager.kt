@@ -49,7 +49,7 @@ open class EthereumWalletManager(
         private set
 
     override val currentHost: String
-        get() = networkProvider.host
+        get() = networkProvider.baseUrl
 
     override suspend fun update() {
         when (val result = networkProvider.getInfo(wallet.address, cardTokens)) {
