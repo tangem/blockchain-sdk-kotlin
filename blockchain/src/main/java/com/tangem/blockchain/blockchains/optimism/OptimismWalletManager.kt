@@ -11,6 +11,7 @@ import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
@@ -38,7 +39,6 @@ class OptimismWalletManager(
         val layer2fee = super.getFee(amount, destination).successOr {
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         }
-
         val preparedAmount = Amount(
             value = BigDecimal.valueOf(0.1),
             type = amount.type,
@@ -47,15 +47,14 @@ class OptimismWalletManager(
 
         val transactionData = TransactionData(
             amount = preparedAmount,
-            fee = preparedAmount,
+            fee = Fee.Common(preparedAmount), // value is not important for dummy transactions
             sourceAddress = wallet.address,
             destinationAddress = destination,
         )
 
         val transaction = transactionBuilder.buildToSign(
             transactionData = transactionData,
-            nonce = BigInteger.ONE,
-            gasLimit = gasLimit
+            nonce = BigInteger.ONE
         )?.hash ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
         val lastLayer1Fee = getLayer1Fee(transaction).successOr {
@@ -64,10 +63,25 @@ class OptimismWalletManager(
         lastLayer1FeeAmount = lastLayer1Fee
 
         //https://community.optimism.io/docs/developers/build/transaction-fees/#displaying-fees-to-users
+
+        val lastLayer1FeeValue = requireNotNull(lastLayer1Fee.value) { "Fee must not bee null" }
+
         val updatedFees = layer2fee.copy(
-            minimum = layer2fee.minimum + requireNotNull(lastLayer1Fee.value),
-            normal = layer2fee.normal + lastLayer1Fee.value,
-            priority = layer2fee.priority + lastLayer1Fee.value,
+            minimum = Fee.Ethereum(
+                amount = (layer2fee.minimum as Fee.Ethereum).amount + lastLayer1FeeValue,
+                gasLimit = layer2fee.minimum.gasLimit,
+                gasPrice = layer2fee.minimum.gasPrice
+            ),
+            normal = Fee.Ethereum(
+                amount = (layer2fee.normal as Fee.Ethereum).amount + lastLayer1FeeValue,
+                gasLimit = layer2fee.normal.gasLimit,
+                gasPrice = layer2fee.normal.gasPrice,
+            ),
+            priority = Fee.Ethereum(
+                amount = (layer2fee.priority as Fee.Ethereum).amount + lastLayer1FeeValue,
+                gasLimit = layer2fee.priority.gasLimit,
+                gasPrice = layer2fee.priority.gasPrice,
+            )
         )
 
         return Result.Success(updatedFees)
@@ -80,10 +94,10 @@ class OptimismWalletManager(
         //We need to subtract layer 1 fee, because it is deducted automatically
         // and should not be included into transaction for signing
         //https://help.optimism.io/hc/en-us/articles/4411895794715
-        val calculatedTransactionFee = (transactionData.fee?.value ?: BigDecimal.ZERO) -
+        val calculatedTransactionFee = (transactionData.fee?.amount?.value ?: BigDecimal.ZERO) -
             (lastLayer1FeeAmount?.value ?: BigDecimal.ZERO)
         val updatedTransactionData = transactionData.copy(
-            fee = Amount(value = calculatedTransactionFee, blockchain = wallet.blockchain)
+            fee = Fee.Common(Amount(value = calculatedTransactionFee, blockchain = wallet.blockchain))
         )
         return super.sign(updatedTransactionData, signer)
     }
@@ -96,14 +110,15 @@ class OptimismWalletManager(
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         }
 
+        val extras = layer2fee.minimum as Fee.Ethereum
+
         val preparedAmount = Amount(
             value = BigDecimal.valueOf(0.1),
             blockchain = blockchain
         )
 
-        // TODO(remove using states [gasPrice] [gasLimit], return from fee method gasPrice and gasLimit too)
-        val gasPriceL2 = gasPrice
-        val gasLimitL2 = gasLimit
+        val gasPriceL2 = extras.gasPrice
+        val gasLimitL2 = extras.gasLimit
         val value = preparedAmount.value?.movePointRight(preparedAmount.decimals)?.toBigInteger() ?: BigInteger.ZERO
         val chainId =
             requireNotNull(blockchain.getChainId()) { "${blockchain.fullName} blockchain is not supported by Optimism Wallet Manager" }
@@ -114,7 +129,7 @@ class OptimismWalletManager(
             to = Address(destination),
             value = value,
             gasPrice = gasPriceL2,
-            gasLimit = gasLimitL2 ?: BigInteger.ZERO,
+            gasLimit = gasLimitL2,
             nonce = BigInteger.ONE,
             input = data.removePrefix(HEX_PREFIX).hexToBytes()
         ).encode(SignatureData(v = chainId.toBigInteger()))
@@ -126,10 +141,23 @@ class OptimismWalletManager(
 
         //https://community.optimism.io/docs/developers/build/transaction-fees/#displaying-fees-to-users
 
+        val lastLayer1FeeValue = requireNotNull(lastLayer1Fee.value) { "Fee must not bee null" }
         val updatedFees = layer2fee.copy(
-            minimum = layer2fee.minimum + requireNotNull(lastLayer1Fee.value),
-            normal = layer2fee.normal + lastLayer1Fee.value,
-            priority = layer2fee.priority + lastLayer1Fee.value,
+            minimum = Fee.Ethereum(
+                amount = layer2fee.minimum.amount + lastLayer1FeeValue,
+                gasLimit = layer2fee.minimum.gasLimit,
+                gasPrice = layer2fee.minimum.gasPrice
+            ),
+            normal = Fee.Ethereum(
+                amount = (layer2fee.normal as Fee.Ethereum).amount + lastLayer1FeeValue,
+                gasLimit = layer2fee.normal.gasLimit,
+                gasPrice = layer2fee.normal.gasPrice,
+            ),
+            priority = Fee.Ethereum(
+                amount = (layer2fee.priority as Fee.Ethereum).amount + lastLayer1FeeValue,
+                gasLimit = layer2fee.priority.gasLimit,
+                gasPrice = layer2fee.priority.gasPrice,
+            )
         )
 
         return Result.Success(updatedFees)
@@ -155,20 +183,6 @@ class OptimismWalletManager(
         } catch (error: Throwable) {
             Result.Failure(BlockchainSdkError.WrappedThrowable(error))
         }
-    }
-
-
-    // TODO think about merge this method with parent's one
-    override fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): TransactionFee.Choosable {
-        val minFee = (gasPrice * gasLimit)
-        val normalFee = minFee * BigInteger.valueOf(12) / BigInteger.TEN
-        val priorityFee = minFee * BigInteger.valueOf(15) / BigInteger.TEN
-
-        return TransactionFee.Choosable(
-            minimum = createFee(minFee),
-            normal = createFee(normalFee),
-            priority = createFee(priorityFee)
-        )
     }
 
     companion object {
