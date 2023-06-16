@@ -18,10 +18,9 @@ internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<Ethere
                     blockchain = blockchain
                 ),
                 networkProvider = EthereumNetworkService(
-                    jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(input.config)
+                    jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(input.config),
                 )
             )
         }
     }
-
 }
