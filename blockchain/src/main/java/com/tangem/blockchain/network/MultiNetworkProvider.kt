@@ -2,12 +2,15 @@ package com.tangem.blockchain.network
 
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.CycleListIterator
+import com.tangem.blockchain.common.ExceptionHandler
+import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.extensions.isNetworkError
 import java.io.IOException
 
-class MultiNetworkProvider<P>(val providers: List<P>) {
+class MultiNetworkProvider<P : NetworkProvider>(
+    val providers: List<P>,
+) {
     init {
         if (providers.isEmpty()) throw Exception("Empty providers list")
     }
@@ -33,15 +36,25 @@ class MultiNetworkProvider<P>(val providers: List<P>) {
     suspend fun <R> performRequest(request: suspend P.() -> R): Result<R> =
         NoDataRequestWithIOException(request).perform()
 
-    private suspend fun <T> Request<P, T>.perform(): T {
-        var result: T? = null
+    private suspend fun <T: Any> Request<P, T>.perform(): T {
+        lateinit var finalResult: T
 
         repeat(providers.size) {
             if (this.lastProvider == currentProvider) currentProvider = providerIterator.next()
-            result = this.performWith(currentProvider)
-            if (!result!!.isResultNetworkError()) return result!!
+            val result = this.performWith(currentProvider)
+            if (!isResultNetworkError(result)) {
+                return result
+            } else {
+                val message = "Switchable publisher caught error: ${getErrorMessage(result)}."
+                ExceptionHandler.handleApiSwitch(
+                    currentHost = currentProvider.baseUrl,
+                    nextHost = providerIterator.peekNext().baseUrl,
+                    message = message,
+                )
+            }
+            finalResult = result
         }
-        return result!!
+        return finalResult
     }
 
     private abstract class Request<P, T> {
@@ -111,11 +124,19 @@ class MultiNetworkProvider<P>(val providers: List<P>) {
         }
     }
 
-    private fun Any.isResultNetworkError(): Boolean {
-        return when (this) {
-            is Result<*> -> this.isNetworkError()
-            is SimpleResult -> this.isNetworkError()
+    private fun <T>isResultNetworkError(result: T): Boolean {
+        return when (result) {
+            is Result<*> -> ResultChecker.isNetworkError(result = result)
+            is SimpleResult -> ResultChecker.isNetworkError(result = result)
             else -> throw Exception("Invalid result type")
+        }
+    }
+
+    private fun <T>getErrorMessage(result: T): String? {
+        return when (result) {
+            is Result<*> -> ResultChecker.getErrorMessageIfAvailable(result = result)
+            is SimpleResult -> ResultChecker.getErrorMessageIfAvailable(result = result)
+            else -> null
         }
     }
 }
