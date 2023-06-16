@@ -18,10 +18,10 @@ import java.util.Calendar
 private const val FEE_NUMBER_OF_BLOCKS = 10
 
 class RavencoinNetworkProvider(
-    override val host: String,
+    override val baseUrl: String,
 ) : BitcoinNetworkProvider {
 
-    private val api: RavencoinApi = createRetrofitInstance(host).create()
+    private val api: RavencoinApi = createRetrofitInstance(baseUrl).create()
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         return try {

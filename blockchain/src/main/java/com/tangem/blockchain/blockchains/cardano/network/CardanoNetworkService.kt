@@ -7,8 +7,8 @@ import com.tangem.blockchain.network.MultiNetworkProvider
 class CardanoNetworkService(providers: List<CardanoNetworkProvider>) : CardanoNetworkProvider {
 
     private val multiProvider = MultiNetworkProvider(providers)
-    override val host: String
-        get() = multiProvider.currentProvider.host
+    override val baseUrl: String
+        get() = multiProvider.currentProvider.baseUrl
 
     override suspend fun getInfo(addresses: Set<String>): Result<CardanoAddressResponse> =
         multiProvider.performRequest(CardanoNetworkProvider::getInfo, addresses)
