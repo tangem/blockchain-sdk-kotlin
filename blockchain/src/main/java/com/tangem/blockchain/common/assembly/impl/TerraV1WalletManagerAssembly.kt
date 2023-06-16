@@ -18,8 +18,7 @@ internal object TerraV1WalletManagerAssembly : WalletManagerAssembly<CosmosWalle
         return CosmosWalletManager(
             wallet = input.wallet,
             networkProviders = providers,
-            cosmosChain = CosmosChain.TerraV1
+            cosmosChain = CosmosChain.TerraV1,
         )
     }
-
 }

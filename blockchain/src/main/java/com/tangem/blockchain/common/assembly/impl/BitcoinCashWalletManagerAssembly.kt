@@ -19,7 +19,7 @@ internal object BitcoinCashWalletManagerAssembly : WalletManagerAssembly<Bitcoin
                     blockchain = blockchain
                 ),
                 networkProvider = BitcoinNetworkService(
-                    providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config)
+                    providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config),
                 ),
                 transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(input.config)
             )
