@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosNetworkService
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -48,7 +49,7 @@ class CosmosWalletManager(
             destination = transactionData.destinationAddress,
             accountNumber = accNumber,
             sequenceNumber = sequenceNumber,
-            feeAmount = transactionData.fee,
+            feeAmount = transactionData.fee?.amount,
             gas = gas?.toLong(),
             extras = transactionData.extras as? CosmosTransactionExtras,
         )
@@ -99,11 +100,19 @@ class CosmosWalletManager(
                     Amount(value = feeValue, blockchain = wallet.blockchain)
                 }
 
-
-                return if (amounts.size == 3) {
-                    Result.Success(TransactionFee.Choosable(amounts[0], amounts[1], amounts[2]))
-                } else {
-                    Result.Success(TransactionFee.Single(amounts[0]))
+                return when (amounts.size) {
+                    1 -> {
+                        Result.Success(TransactionFee.Single(Fee.Common(amounts[0])))
+                    }
+                    3 -> {
+                        Result.Success(TransactionFee.Choosable(
+                            minimum = Fee.Common(amounts[0]),
+                            normal = Fee.Common(amounts[1]),
+                            priority = Fee.Common(amounts[2])))
+                    }
+                    else -> {
+                        Result.Failure(BlockchainSdkError.CustomError("Illegal amounts size"))
+                    }
                 }
 
             }

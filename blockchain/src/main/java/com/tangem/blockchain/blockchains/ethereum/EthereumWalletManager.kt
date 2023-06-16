@@ -19,6 +19,7 @@ import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -31,8 +32,6 @@ import org.kethereum.extensions.toHexString
 import org.kethereum.keccakshortcut.keccak
 import java.math.BigDecimal
 import java.math.BigInteger
-import java.math.MathContext
-import java.math.RoundingMode
 import java.util.Calendar
 
 open class EthereumWalletManager(
@@ -47,21 +46,12 @@ open class EthereumWalletManager(
     TokenFinder,
     EthereumGasLoader {
 
+    // move to constructor later
+    private val feesCalculator = EthereumFeesCalculator()
+
     var pendingTxCount = -1L
         private set
     var txCount = -1L
-        private set
-    var gasLimit: BigInteger? = null
-        private set
-    var gasLimitToApprove: BigInteger? = null
-        private set
-    var gasLimitToSetSpendLimit: BigInteger? = null
-        private set
-    var gasLimitToInitOTP: BigInteger? = null
-        private set
-    var gasLimitToSetWallet: BigInteger? = null
-        private set
-    var gasLimitToTransferFrom: BigInteger? = null
         private set
     var gasPrice: BigInteger? = null
         private set
@@ -97,11 +87,6 @@ open class EthereumWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    suspend fun sendRaw(transactionToSign: CompiledEthereumTransaction, signature: ByteArray): SimpleResult {
-        val transactionToSend = transactionBuilder.buildToSend(signature, transactionToSign)
-        return networkProvider.sendTransaction("0x" + transactionToSend.toHexString())
-    }
-
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
@@ -122,6 +107,7 @@ open class EthereumWalletManager(
                 }
                 sendResult
             }
+
             is Result.Failure -> SimpleResult.fromTangemSdkError(signResponse.error)
         }
     }
@@ -132,8 +118,7 @@ open class EthereumWalletManager(
     ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
         val transactionToSign = transactionBuilder.buildToSign(
             transactionData,
-            txCount.toBigInteger(),
-            gasLimit
+            txCount.toBigInteger()
         ) ?: return Result.Failure(BlockchainSdkError.CustomError("Not enough data"))
 
         return when (val signResponse = signer.sign(transactionToSign.hash, wallet.publicKey)) {
@@ -152,84 +137,33 @@ open class EthereumWalletManager(
                 val sendResult = networkProvider.sendTransaction("0x" + transactionToSend.toHexString())
                 sendResult
             }
+
             is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResponse.error)
         }
     }
 
-    suspend fun approve(
-        transactionData: TransactionData,
-        signer: TransactionSigner,
-    ): SimpleResult {
-        val transactionToSign = transactionBuilder.buildApproveToSign(
-            transactionData,
-            txCount.toBigInteger(),
-            gasLimitToApprove
-        ) ?: return SimpleResult.Failure(BlockchainSdkError.CustomError("Not enough data"))
-
-        return signAndSend(transactionToSign, signer)
-    }
-
-    suspend fun getAllowance(spender: String, token: Token): Result<Amount> {
-        return networkProvider.getAllowance(spender, token, wallet.address)
-    }
-
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee.Choosable> {
-        return try {
-            coroutineScope {
-                val gasLimitResponsesDeferred = async { getGasLimit(amount, destination) }
-                val gasPriceResponsesDeferred = async { getGasPrice() }
-
-                val gLimit = when (val gasLimitResult = gasLimitResponsesDeferred.await()) {
-                    is Result.Failure -> return@coroutineScope Result.Failure(gasLimitResult.error)
-                    is Result.Success -> gasLimitResult.data
-                }
-                val gPrice = when (val gasPriceResult = gasPriceResponsesDeferred.await()) {
-                    is Result.Failure -> return@coroutineScope Result.Failure(gasPriceResult.error)
-                    is Result.Success -> gasPriceResult.data
-                }
-
-                gasLimit = gLimit
-                gasPrice = gPrice
-                val fees = calculateFees(gLimit, gPrice)
-                Result.Success(fees)
-            }
-        } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainSdkError())
-        }
-    }
-
-    suspend fun getFeeToApprove(amount: Amount, spender: String): Result<TransactionFee> {
-        return try {
-            coroutineScope {
-                val gasLimitResponsesDeferred =
-                    async { getGasLimitToApprove(amount, spender) }
-                val gasPriceResponsesDeferred = async { getGasPrice() }
-
-                val gLimit = when (val gasLimitResult = gasLimitResponsesDeferred.await()) {
-                    is Result.Failure -> return@coroutineScope Result.Failure(gasLimitResult.error)
-                    is Result.Success -> gasLimitResult.data
-                }
-                val gPrice = when (val gasPriceResult = gasPriceResponsesDeferred.await()) {
-                    is Result.Failure -> return@coroutineScope Result.Failure(gasPriceResult.error)
-                    is Result.Success -> gasPriceResult.data
-                }
-                gasLimitToApprove = gLimit
-                gasPrice = gPrice
-
-                val fees = calculateFees(gLimit, gPrice)
-
-                Result.Success(fees)
-            }
-        } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainSdkError())
-        }
+        return getFeeInternal(amount, destination, null)
     }
 
     open suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee.Choosable> {
+        return getFeeInternal(amount, destination, data)
+    }
+
+    private suspend fun getFeeInternal(
+        amount: Amount,
+        destination: String,
+        data: String? = null,
+    ): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
-                val gasLimitResponsesDeferred =
-                    async { getGasLimit(amount, destination, data) }
+                val gasLimitResponsesDeferred = async {
+                    if (data != null) {
+                        getGasLimit(amount, destination, data)
+                    } else {
+                        getGasLimit(amount, destination)
+                    }
+                }
                 val gasPriceResponsesDeferred = async { getGasPrice() }
 
                 val gLimit = gasLimitResponsesDeferred.await().successOr {
@@ -239,10 +173,13 @@ open class EthereumWalletManager(
                     return@coroutineScope Result.Failure(it.error)
                 }
 
-                gasLimit = gLimit
                 gasPrice = gPrice
 
-                val fees = calculateFees(gLimit, gPrice)
+                val fees = feesCalculator.calculateFees(
+                    amountParams = getAmountParams(),
+                    gasLimit = gLimit,
+                    gasPrice = gPrice
+                )
 
                 Result.Success(fees)
             }
@@ -251,194 +188,8 @@ open class EthereumWalletManager(
         }
     }
 
-    suspend fun getFeeToInitOTP(
-        processorContractAddress: String,
-        otp: ByteArray,
-        otpCounter: Int,
-    ): Result<TransactionFee> {
-        return try {
-            coroutineScope {
-                val gasLimitResponsesDeferred =
-                    async { getGasLimitToInitOTP(processorContractAddress, wallet.address, otp, otpCounter) }
-                val gasPriceResponsesDeferred = async { getGasPrice() }
-
-                val gLimit = when (val gasLimitResult = gasLimitResponsesDeferred.await()) {
-                    is Result.Failure -> return@coroutineScope Result.Failure(gasLimitResult.error)
-                    is Result.Success -> gasLimitResult.data
-                }
-                val gPrice = when (val gasPriceResult = gasPriceResponsesDeferred.await()) {
-                    is Result.Failure -> return@coroutineScope Result.Failure(gasPriceResult.error)
-                    is Result.Success -> gasPriceResult.data
-                }
-                gasLimitToInitOTP = gLimit
-                gasPrice = gPrice
-
-                val fees = calculateFees(gLimit, gPrice)
-
-                Result.Success(fees)
-            }
-        } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainSdkError())
-        }
-    }
-
-    suspend fun initOTP(
-        processorContractAddress: String,
-        cardAddress: String,
-        otp: ByteArray, otpCounter: Int,
-        transactionFee: Amount?,
-        signer: TransactionSigner,
-    ): SimpleResult {
-        val transactionToSign = transactionBuilder.buildInitOTPToSign(
-            processorContractAddress,
-            cardAddress,
-            otp,
-            otpCounter,
-            transactionFee,
-            gasLimitToInitOTP,
-            txCount.toBigInteger(),
-        ) ?: return SimpleResult.Failure(BlockchainSdkError.CustomError("Not enough data"))
-
-        return signAndSend(transactionToSign, signer)
-    }
-
-    suspend fun setWallet(
-        processorContractAddress: String,
-        cardAddress: String,
-        transactionFee: Amount?,
-        signer: TransactionSigner,
-    ): SimpleResult {
-        val transactionToSign = transactionBuilder.buildSetWalletToSign(
-            processorContractAddress,
-            cardAddress,
-            transactionFee,
-            gasLimitToSetWallet,
-            txCount.toBigInteger(),
-        ) ?: return SimpleResult.Failure(BlockchainSdkError.CustomError("Not enough data"))
-
-        return signAndSend(transactionToSign, signer)
-    }
-
-    suspend fun getFeeToSetWallet(processorContractAddress: String): Result<TransactionFee> {
-        return try {
-            coroutineScope {
-                val gasLimitResponsesDeferred =
-                    async { getGasLimitToSetWallet(processorContractAddress, wallet.address) }
-                val gasPriceResponsesDeferred = async { getGasPrice() }
-
-                val gLimit = when (val gasLimitResult = gasLimitResponsesDeferred.await()) {
-                    is Result.Failure -> return@coroutineScope Result.Failure(gasLimitResult.error)
-                    is Result.Success -> gasLimitResult.data
-                }
-                val gPrice = when (val gasPriceResult = gasPriceResponsesDeferred.await()) {
-                    is Result.Failure -> return@coroutineScope Result.Failure(gasPriceResult.error)
-                    is Result.Success -> gasPriceResult.data
-                }
-                gasLimitToSetWallet = gLimit
-                gasPrice = gPrice
-
-                val fees = calculateFees(gLimit, gPrice)
-
-                Result.Success(fees)
-            }
-        } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainSdkError())
-        }
-    }
-
-    suspend fun getFeeToSetSpendLimit(processorContractAddress: String, amount: Amount): Result<TransactionFee> {
-        return try {
-            coroutineScope {
-                val gasLimitResponsesDeferred =
-                    async { getGasLimitToSetSpendLimit(processorContractAddress, wallet.address, amount) }
-                val gasPriceResponsesDeferred = async { getGasPrice() }
-
-                val gLimit = when (val gasLimitResult = gasLimitResponsesDeferred.await()) {
-                    is Result.Failure -> return@coroutineScope Result.Failure(gasLimitResult.error)
-                    is Result.Success -> gasLimitResult.data
-                }
-                val gPrice = when (val gasPriceResult = gasPriceResponsesDeferred.await()) {
-                    is Result.Failure -> return@coroutineScope Result.Failure(gasPriceResult.error)
-                    is Result.Success -> gasPriceResult.data
-                }
-                gasLimitToSetSpendLimit = gLimit
-                gasPrice = gPrice
-
-                val fees = calculateFees(gLimit, gPrice)
-
-                Result.Success(fees)
-            }
-        } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainSdkError())
-        }
-    }
-
-    suspend fun getFeeToTransferFrom(amount: Amount, source: String): Result<TransactionFee> {
-        return try {
-            coroutineScope {
-                val gasLimitResponsesDeferred =
-                    async { getGasLimitToTransferFrom(amount, source, wallet.address) }
-                val gasPriceResponsesDeferred = async { getGasPrice() }
-
-                val gLimit = when (val gasLimitResult = gasLimitResponsesDeferred.await()) {
-                    is Result.Failure -> return@coroutineScope Result.Failure(gasLimitResult.error)
-                    is Result.Success -> gasLimitResult.data
-                }
-                val gPrice = when (val gasPriceResult = gasPriceResponsesDeferred.await()) {
-                    is Result.Failure -> return@coroutineScope Result.Failure(gasPriceResult.error)
-                    is Result.Success -> gasPriceResult.data
-                }
-
-                gasLimitToTransferFrom = gLimit
-                gasPrice = gPrice
-                val fees = calculateFees(gLimit, gPrice)
-
-                Result.Success(fees)
-            }
-        } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainSdkError())
-        }
-    }
-
-    suspend fun setSpendLimit(
-        processorContractAddress: String,
-        cardAddress: String,
-        amount: Amount,
-        transactionFee: Amount?,
-        signer: TransactionSigner,
-    ): SimpleResult {
-        val transactionToSign = transactionBuilder.buildSetSpendLimitToSign(
-            processorContractAddress,
-            cardAddress,
-            amount,
-            transactionFee,
-            gasLimitToSetSpendLimit,
-            txCount.toBigInteger(),
-        ) ?: return SimpleResult.Failure(BlockchainSdkError.CustomError("Not enough data"))
-
-        return signAndSend(transactionToSign, signer)
-    }
-
-    suspend fun transferFrom(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val transactionToSign = transactionBuilder.buildTransferFromToSign(
-            transactionData,
-            txCount.toBigInteger(),
-            gasLimitToTransferFrom
-        ) ?: return SimpleResult.Failure(BlockchainSdkError.CustomError("Not enough data"))
-
-        return signAndSend(transactionToSign, signer)
-    }
-
-    open fun createTransferFromTransaction(amount: Amount, fee: Amount, source: String): TransactionData {
-        return TransactionData(
-            amount = amount,
-            fee = fee,
-            sourceAddress = source,
-            destinationAddress = wallet.address,
-            status = TransactionStatus.Unconfirmed,
-            date = Calendar.getInstance(),
-            hash = null,
-        )
+    private fun getAmountParams(): Amount {
+        return requireNotNull(wallet.amounts[AmountType.Coin]) { "Amount must not be null" }
     }
 
     override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
@@ -448,6 +199,7 @@ open class EthereumWalletManager(
             } else {
                 SimpleResult.Failure(BlockchainSdkError.SignatureCountNotMatched)
             }
+
             is Result.Failure -> SimpleResult.Failure(result.error)
         }
     }
@@ -477,110 +229,42 @@ open class EthereumWalletManager(
     }
 
     override suspend fun getGasLimit(amount: Amount, destination: String): Result<BigInteger> {
-        var to = destination
+        return getGasLimitInternal(amount, destination, null)
+    }
+
+    override suspend fun getGasLimit(amount: Amount, destination: String, data: String): Result<BigInteger> {
+        return getGasLimitInternal(amount, destination, data)
+    }
+
+    private suspend fun getGasLimitInternal(
+        amount: Amount,
+        destination: String,
+        data: String? = null,
+    ): Result<BigInteger> {
+
         val from = wallet.address
+        var to = destination
         var value: String? = null
-        var data: String? = null
+        var finalData = data
 
         when (amount.type) {
             is AmountType.Coin -> {
                 value = amount.value?.movePointRight(amount.decimals)?.toBigInteger()?.toHexString()
             }
+
             is AmountType.Token -> {
-                to = amount.type.token.contractAddress
-                data = "0x" + EthereumUtils.createErc20TransferData(destination, amount).toHexString()
+                if (finalData == null) {
+                    to = amount.type.token.contractAddress
+                    finalData = "0x" + EthereumUtils.createErc20TransferData(destination, amount).toHexString()
+                }
             }
+
             else -> {
                 /*no-op*/
             }
         }
 
-        return networkProvider.getGasLimit(to, from, value, data)
-    }
-
-    override suspend fun getGasLimit(amount: Amount, destination: String, data: String): Result<BigInteger> {
-        val from = wallet.address
-        val value = if (amount.type is AmountType.Coin) {
-            amount.value?.movePointRight(amount.decimals)?.toBigInteger()?.toHexString()
-        } else {
-            null
-        }
-        return networkProvider.getGasLimit(destination, from, value, data)
-    }
-
-    suspend fun getGasLimitToApprove(amount: Amount, spender: String): Result<BigInteger> {
-        return if (amount.type !is AmountType.Token) {
-            Result.Failure(BlockchainSdkError.CustomError("Only token can be approved!!!"))
-        } else {
-            val to = amount.type.token.contractAddress
-            val from = wallet.address
-            val data = "0x" + EthereumUtils.createErc20ApproveData(spender, amount).toHexString()
-
-            networkProvider.getGasLimit(to, from, null, data)
-        }
-    }
-
-    suspend fun getGasLimitToSetSpendLimit(
-        processorContractAddress: String,
-        cardAddress: String,
-        amount: Amount,
-    ): Result<BigInteger> {
-        val from = wallet.address
-        val data = "0x" + EthereumUtils.createSetSpendLimitData(cardAddress, amount).toHexString()
-
-        return networkProvider.getGasLimit(processorContractAddress, from, null, data)
-    }
-
-    suspend fun getGasLimitToInitOTP(
-        processorContractAddress: String,
-        cardAddress: String,
-        otp: ByteArray,
-        otpCounter: Int,
-    ): Result<BigInteger> {
-        val from = wallet.address
-        val data = "0x" + EthereumUtils.createInitOTPData(otp, otpCounter).toHexString()
-
-        return networkProvider.getGasLimit(processorContractAddress, from, null, data)
-    }
-
-    suspend fun getGasLimitToSetWallet(processorContractAddress: String, address: String): Result<BigInteger> {
-        val from = wallet.address
-        val data = "0x" + EthereumUtils.createSetWalletData(address).toHexString()
-
-        return networkProvider.getGasLimit(processorContractAddress, from, null, data)
-    }
-
-    suspend fun getGasLimitToTransferFrom(amount: Amount, source: String, destination: String): Result<BigInteger> {
-        return if (amount.type !is AmountType.Token) {
-            Result.Failure(BlockchainSdkError.CustomError("Only token can be transferred!!!"))
-        } else {
-            val to = amount.type.token.contractAddress
-            val from = wallet.address
-            val data = "0x" + EthereumUtils.createErc20TransferFromData(source, destination, amount).toHexString()
-
-            networkProvider.getGasLimit(to, from, null, data)
-        }
-    }
-
-    protected open fun calculateFees(gasLimit: BigInteger, gasPrice: BigInteger): TransactionFee.Choosable {
-        val minFee = gasPrice * gasLimit
-        //By dividing by ten before last multiplication here we can lose some digits
-        val normalFee = gasPrice * BigInteger.valueOf(12) / BigInteger.TEN * gasLimit
-        val priorityFee = gasPrice * BigInteger.valueOf(15) / BigInteger.TEN * gasLimit
-
-        return TransactionFee.Choosable(
-            minimum = createFee(minFee),
-            normal = createFee(normalFee),
-            priority = createFee(priorityFee)
-        )
-    }
-
-    protected fun createFee(bigDecimal: BigInteger) : Amount {
-        val amount = requireNotNull(wallet.amounts[AmountType.Coin]) { "Amount must not be null" }
-        return Amount(amount, bigDecimal.toBigDecimal(
-            scale = Blockchain.Ethereum.decimals(),
-            mathContext = MathContext(Blockchain.Ethereum.decimals(), RoundingMode.HALF_EVEN)
-        ))
+        return networkProvider.getGasLimit(to, from, value, finalData)
     }
 
     override suspend fun getTransactionHistory(
@@ -597,4 +281,356 @@ open class EthereumWalletManager(
 
         return result
     }
+
+    // temp region to hold gnosis staff until remove
+    // region gnosis
+
+    var gasLimitToApprove: BigInteger? = null // applies only to gnosis
+        private set
+    var gasLimitToSetSpendLimit: BigInteger? = null // applies only to gnosis
+        private set
+    var gasLimitToInitOTP: BigInteger? = null // applies only to gnosis
+        private set
+    var gasLimitToSetWallet: BigInteger? = null // applies only to gnosis
+        private set
+    var gasLimitToTransferFrom: BigInteger? = null // applies only to gnosis
+        private set
+
+    // applies only to gnosis
+    suspend fun sendRaw(transactionToSign: CompiledEthereumTransaction, signature: ByteArray): SimpleResult {
+        val transactionToSend = transactionBuilder.buildToSend(signature, transactionToSign)
+        return networkProvider.sendTransaction("0x" + transactionToSend.toHexString())
+    }
+
+    // applies only to gnosis
+    suspend fun approve(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): SimpleResult {
+        val transactionToSign = transactionBuilder.buildApproveToSign(
+            transactionData,
+            txCount.toBigInteger(),
+            gasLimitToApprove
+        ) ?: return SimpleResult.Failure(BlockchainSdkError.CustomError("Not enough data"))
+
+        return signAndSend(transactionToSign, signer)
+    }
+
+    // applies only to gnosis
+    suspend fun getAllowance(spender: String, token: Token): Result<Amount> {
+        return networkProvider.getAllowance(spender, token, wallet.address)
+    }
+
+    // applies only to gnosis
+    suspend fun getFeeToApprove(amount: Amount, spender: String): Result<TransactionFee.Choosable> {
+        return try {
+            coroutineScope {
+                val gasLimitResponsesDeferred =
+                    async { getGasLimitToApprove(amount, spender) }
+                val gasPriceResponsesDeferred = async { getGasPrice() }
+
+                val gLimit = when (val gasLimitResult = gasLimitResponsesDeferred.await()) {
+                    is Result.Failure -> return@coroutineScope Result.Failure(gasLimitResult.error)
+                    is Result.Success -> gasLimitResult.data
+                }
+                val gPrice = when (val gasPriceResult = gasPriceResponsesDeferred.await()) {
+                    is Result.Failure -> return@coroutineScope Result.Failure(gasPriceResult.error)
+                    is Result.Success -> gasPriceResult.data
+                }
+                gasLimitToApprove = gLimit
+                gasPrice = gPrice
+
+                val fees = feesCalculator.calculateFees(
+                    amountParams = getAmountParams(),
+                    gasLimit = gLimit,
+                    gasPrice = gPrice
+                )
+
+                Result.Success(fees)
+            }
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    // applies only to gnosis
+    suspend fun getFeeToInitOTP(
+        processorContractAddress: String,
+        otp: ByteArray,
+        otpCounter: Int,
+    ): Result<TransactionFee.Choosable> {
+        return try {
+            coroutineScope {
+                val gasLimitResponsesDeferred =
+                    async { getGasLimitToInitOTP(processorContractAddress, wallet.address, otp, otpCounter) }
+                val gasPriceResponsesDeferred = async { getGasPrice() }
+
+                val gLimit = when (val gasLimitResult = gasLimitResponsesDeferred.await()) {
+                    is Result.Failure -> return@coroutineScope Result.Failure(gasLimitResult.error)
+                    is Result.Success -> gasLimitResult.data
+                }
+                val gPrice = when (val gasPriceResult = gasPriceResponsesDeferred.await()) {
+                    is Result.Failure -> return@coroutineScope Result.Failure(gasPriceResult.error)
+                    is Result.Success -> gasPriceResult.data
+                }
+                gasLimitToInitOTP = gLimit
+                gasPrice = gPrice
+
+                val fees = feesCalculator.calculateFees(
+                    amountParams = getAmountParams(),
+                    gasLimit = gLimit,
+                    gasPrice = gPrice
+                )
+
+                Result.Success(fees)
+            }
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    // applies only to gnosis
+    suspend fun initOTP(
+        processorContractAddress: String,
+        cardAddress: String,
+        otp: ByteArray, otpCounter: Int,
+        transactionFee: Amount?,
+        signer: TransactionSigner,
+    ): SimpleResult {
+        val transactionToSign = transactionBuilder.buildInitOTPToSign(
+            processorContractAddress,
+            cardAddress,
+            otp,
+            otpCounter,
+            transactionFee,
+            gasLimitToInitOTP,
+            txCount.toBigInteger(),
+        ) ?: return SimpleResult.Failure(BlockchainSdkError.CustomError("Not enough data"))
+
+        return signAndSend(transactionToSign, signer)
+    }
+
+    // applies only to gnosis
+    suspend fun setWallet(
+        processorContractAddress: String,
+        cardAddress: String,
+        transactionFee: Amount?,
+        signer: TransactionSigner,
+    ): SimpleResult {
+        val transactionToSign = transactionBuilder.buildSetWalletToSign(
+            processorContractAddress,
+            cardAddress,
+            transactionFee,
+            gasLimitToSetWallet,
+            txCount.toBigInteger(),
+        ) ?: return SimpleResult.Failure(BlockchainSdkError.CustomError("Not enough data"))
+
+        return signAndSend(transactionToSign, signer)
+    }
+
+    // applies only to gnosis
+    suspend fun getFeeToSetWallet(processorContractAddress: String): Result<TransactionFee> {
+        return try {
+            coroutineScope {
+                val gasLimitResponsesDeferred =
+                    async { getGasLimitToSetWallet(processorContractAddress, wallet.address) }
+                val gasPriceResponsesDeferred = async { getGasPrice() }
+
+                val gLimit = when (val gasLimitResult = gasLimitResponsesDeferred.await()) {
+                    is Result.Failure -> return@coroutineScope Result.Failure(gasLimitResult.error)
+                    is Result.Success -> gasLimitResult.data
+                }
+                val gPrice = when (val gasPriceResult = gasPriceResponsesDeferred.await()) {
+                    is Result.Failure -> return@coroutineScope Result.Failure(gasPriceResult.error)
+                    is Result.Success -> gasPriceResult.data
+                }
+                gasLimitToSetWallet = gLimit
+                gasPrice = gPrice
+
+                val fees = feesCalculator.calculateFees(
+                    amountParams = getAmountParams(),
+                    gasLimit = gLimit,
+                    gasPrice = gPrice
+                )
+
+                Result.Success(fees)
+            }
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    // applied only to gnosis
+    suspend fun getFeeToSetSpendLimit(
+        processorContractAddress: String,
+        amount: Amount,
+    ): Result<TransactionFee.Choosable> {
+        return try {
+            coroutineScope {
+                val gasLimitResponsesDeferred =
+                    async { getGasLimitToSetSpendLimit(processorContractAddress, wallet.address, amount) }
+                val gasPriceResponsesDeferred = async { getGasPrice() }
+
+                val gLimit = when (val gasLimitResult = gasLimitResponsesDeferred.await()) {
+                    is Result.Failure -> return@coroutineScope Result.Failure(gasLimitResult.error)
+                    is Result.Success -> gasLimitResult.data
+                }
+                val gPrice = when (val gasPriceResult = gasPriceResponsesDeferred.await()) {
+                    is Result.Failure -> return@coroutineScope Result.Failure(gasPriceResult.error)
+                    is Result.Success -> gasPriceResult.data
+                }
+                gasLimitToSetSpendLimit = gLimit
+                gasPrice = gPrice
+
+                val fees = feesCalculator.calculateFees(
+                    amountParams = getAmountParams(),
+                    gasLimit = gLimit,
+                    gasPrice = gPrice
+                )
+
+                Result.Success(fees)
+            }
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    // applies only to gnosis
+    suspend fun getFeeToTransferFrom(amount: Amount, source: String): Result<TransactionFee.Choosable> {
+        return try {
+            coroutineScope {
+                val gasLimitResponsesDeferred =
+                    async { getGasLimitToTransferFrom(amount, source, wallet.address) }
+                val gasPriceResponsesDeferred = async { getGasPrice() }
+
+                val gLimit = when (val gasLimitResult = gasLimitResponsesDeferred.await()) {
+                    is Result.Failure -> return@coroutineScope Result.Failure(gasLimitResult.error)
+                    is Result.Success -> gasLimitResult.data
+                }
+                val gPrice = when (val gasPriceResult = gasPriceResponsesDeferred.await()) {
+                    is Result.Failure -> return@coroutineScope Result.Failure(gasPriceResult.error)
+                    is Result.Success -> gasPriceResult.data
+                }
+
+                gasLimitToTransferFrom = gLimit
+                gasPrice = gPrice
+
+                val fees = feesCalculator.calculateFees(
+                    amountParams = getAmountParams(),
+                    gasLimit = gLimit,
+                    gasPrice = gPrice
+                )
+
+                Result.Success(fees)
+            }
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    // // applies only to gnosis
+    suspend fun setSpendLimit(
+        processorContractAddress: String,
+        cardAddress: String,
+        amount: Amount,
+        transactionFee: Amount?,
+        signer: TransactionSigner,
+    ): SimpleResult {
+        val transactionToSign = transactionBuilder.buildSetSpendLimitToSign(
+            processorContractAddress,
+            cardAddress,
+            amount,
+            transactionFee,
+            gasLimitToSetSpendLimit,
+            txCount.toBigInteger(),
+        ) ?: return SimpleResult.Failure(BlockchainSdkError.CustomError("Not enough data"))
+
+        return signAndSend(transactionToSign, signer)
+    }
+
+    // applies only to gnosis
+    suspend fun transferFrom(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+        val transactionToSign = transactionBuilder.buildTransferFromToSign(
+            transactionData,
+            txCount.toBigInteger(),
+            gasLimitToTransferFrom
+        ) ?: return SimpleResult.Failure(BlockchainSdkError.CustomError("Not enough data"))
+
+        return signAndSend(transactionToSign, signer)
+    }
+
+    // applies only to gnosis
+    open fun createTransferFromTransaction(amount: Amount, feeAmount: Amount, source: String): TransactionData {
+        return TransactionData(
+            amount = amount,
+            fee = Fee.Common(feeAmount),
+            sourceAddress = source,
+            destinationAddress = wallet.address,
+            status = TransactionStatus.Unconfirmed,
+            date = Calendar.getInstance(),
+            hash = null,
+        )
+    }
+
+    // applies only to gnosis
+    suspend fun getGasLimitToApprove(amount: Amount, spender: String): Result<BigInteger> {
+        return if (amount.type !is AmountType.Token) {
+            Result.Failure(BlockchainSdkError.CustomError("Only token can be approved!!!"))
+        } else {
+            val to = amount.type.token.contractAddress
+            val from = wallet.address
+            val data = "0x" + EthereumUtils.createErc20ApproveData(spender, amount).toHexString()
+
+            networkProvider.getGasLimit(to, from, null, data)
+        }
+    }
+
+    // applies only to gnosis
+    suspend fun getGasLimitToSetSpendLimit(
+        processorContractAddress: String,
+        cardAddress: String,
+        amount: Amount,
+    ): Result<BigInteger> {
+        val from = wallet.address
+        val data = "0x" + EthereumUtils.createSetSpendLimitData(cardAddress, amount).toHexString()
+
+        return networkProvider.getGasLimit(processorContractAddress, from, null, data)
+    }
+
+    // applies only to gnosis
+    suspend fun getGasLimitToInitOTP(
+        processorContractAddress: String,
+        cardAddress: String,
+        otp: ByteArray,
+        otpCounter: Int,
+    ): Result<BigInteger> {
+        val from = wallet.address
+        val data = "0x" + EthereumUtils.createInitOTPData(otp, otpCounter).toHexString()
+
+        return networkProvider.getGasLimit(processorContractAddress, from, null, data)
+    }
+
+    // applies only to gnosis
+    suspend fun getGasLimitToSetWallet(processorContractAddress: String, address: String): Result<BigInteger> {
+        val from = wallet.address
+        val data = "0x" + EthereumUtils.createSetWalletData(address).toHexString()
+
+        return networkProvider.getGasLimit(processorContractAddress, from, null, data)
+    }
+
+    // applies only to gnosis
+    suspend fun getGasLimitToTransferFrom(amount: Amount, source: String, destination: String): Result<BigInteger> {
+        return if (amount.type !is AmountType.Token) {
+            Result.Failure(BlockchainSdkError.CustomError("Only token can be transferred!!!"))
+        } else {
+            val to = amount.type.token.contractAddress
+            val from = wallet.address
+            val data = "0x" + EthereumUtils.createErc20TransferFromData(source, destination, amount).toHexString()
+
+            networkProvider.getGasLimit(to, from, null, data)
+        }
+    }
+
+    // endregion
+
 }
