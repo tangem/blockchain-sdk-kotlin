@@ -19,7 +19,7 @@ class RippledNetworkProvider(
     apiKeyHeader: Pair<String, String>? = null,
 ) : XrpNetworkProvider {
 
-    override val host: String = baseUrl
+    override val baseUrl: String = baseUrl
 
     private val api: RippledApi by lazy {
         createRetrofitInstance(
