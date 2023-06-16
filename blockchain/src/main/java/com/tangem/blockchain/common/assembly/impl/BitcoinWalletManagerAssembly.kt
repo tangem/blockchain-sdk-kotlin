@@ -19,7 +19,7 @@ internal object BitcoinWalletManagerAssembly : WalletManagerAssembly<BitcoinWall
                     walletAddresses = addresses
                 ),
                 networkProvider = BitcoinNetworkService(
-                    providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config)
+                    providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config),
                 )
             )
         }
