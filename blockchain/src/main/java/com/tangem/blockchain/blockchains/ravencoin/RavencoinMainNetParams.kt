@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.ravencoin
 
+import org.bitcoinj.core.Block
 import org.bitcoinj.core.Utils
 import org.bitcoinj.params.AbstractBitcoinNetParams
 
