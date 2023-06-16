@@ -1,17 +1,15 @@
 package com.tangem.blockchain.common.transaction
 
-import com.tangem.blockchain.common.Amount
 
 sealed class TransactionFee {
 
     data class Choosable(
-        val minimum: Amount,
-        val normal: Amount,
-        val priority: Amount,
+        val minimum: Fee,
+        val normal: Fee,
+        val priority: Fee,
     ) : TransactionFee()
 
     data class Single(
-        val normal: Amount
+        val normal: Fee,
     ) : TransactionFee()
-
 }
