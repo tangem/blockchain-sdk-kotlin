@@ -33,7 +33,7 @@ internal object XRPWalletManagerAssembly : WalletManagerAssembly<XrpWalletManage
                         )
                     )
                 }
-            }
+            },
         )
 
         return XrpWalletManager(
@@ -42,5 +42,4 @@ internal object XRPWalletManagerAssembly : WalletManagerAssembly<XrpWalletManage
             networkProvider = networkService
         )
     }
-
 }

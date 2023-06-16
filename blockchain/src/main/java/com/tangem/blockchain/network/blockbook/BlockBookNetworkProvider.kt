@@ -26,7 +26,7 @@ class BlockBookNetworkProvider(
     val blockchain: Blockchain,
 ) : BitcoinNetworkProvider {
 
-    override val host: String = config.host
+    override val baseUrl: String = config.host
 
     private val api: BlockBookApi = BlockBookApi(config, blockchain)
 
