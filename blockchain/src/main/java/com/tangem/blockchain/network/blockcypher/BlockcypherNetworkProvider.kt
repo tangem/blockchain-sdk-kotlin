@@ -16,17 +16,18 @@ import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.hexToBytes
 import retrofit2.HttpException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 
 class BlockcypherNetworkProvider(
         blockchain: Blockchain,
         private val tokens: Set<String>?
 ) : BitcoinNetworkProvider {
 
-    override val host: String = getBaseUrl(blockchain)
+    override val baseUrl: String = getBaseUrl(blockchain)
 
     private val api: BlockcypherApi by lazy {
-        createRetrofitInstance(host).create(BlockcypherApi::class.java)
+        createRetrofitInstance(baseUrl).create(BlockcypherApi::class.java)
     }
 
     private val transactionHashesCountLimit = 1000

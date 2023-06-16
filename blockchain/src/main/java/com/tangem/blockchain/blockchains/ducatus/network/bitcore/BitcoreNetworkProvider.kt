@@ -2,7 +2,6 @@ package com.tangem.blockchain.blockchains.ducatus.network.bitcore
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
@@ -17,9 +16,7 @@ import kotlinx.coroutines.coroutineScope
 
 // Now it supports only Ducatus, due to Ducatus Api strange behaviour. Transactions aren't checked.
 // Don't have too much time to spend on this stillborn coin.
-abstract class BitcoreNetworkProvider(val baseUrl: String) : BitcoinNetworkProvider {
-
-    override val host: String = baseUrl
+abstract class BitcoreNetworkProvider(final override val baseUrl: String) : BitcoinNetworkProvider {
 
     private val api = createRetrofitInstance(baseUrl).create(BitcoreApi::class.java)
 

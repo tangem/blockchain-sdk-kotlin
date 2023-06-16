@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.cosmos.network
 
 import android.util.Log
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.createRetrofitInstance
@@ -9,11 +10,9 @@ import com.tangem.blockchain.network.moshi
 import retrofit2.Response
 import retrofit2.create
 
-class CosmosRestProvider(
-    val host: String,
-) {
+class CosmosRestProvider(override val baseUrl: String): NetworkProvider {
 
-    private val api = createRetrofitInstance(host).create<CosmosApi>()
+    private val api = createRetrofitInstance(baseUrl).create<CosmosApi>()
     private val errorAdapter = moshi.adapter(CosmosErrorResponse::class.java)
     private val sendRequestAdapter = moshi.adapter(CosmosSendTransactionRequest::class.java)
 
