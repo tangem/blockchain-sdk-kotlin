@@ -8,11 +8,11 @@ import org.stellar.sdk.xdr.DecoratedSignature
 import org.stellar.sdk.xdr.Signature
 import org.stellar.sdk.xdr.SignatureHint
 import java.math.BigInteger
-import java.util.*
+import java.util.Calendar
 
 class StellarTransactionBuilder(
-        private val networkProvider: StellarNetworkProvider,
-        private val publicKey: ByteArray,
+    private val networkProvider: StellarNetworkProvider,
+    private val publicKey: ByteArray,
 ) {
 
     val network: Network = Network.PUBLIC
@@ -38,7 +38,7 @@ class StellarTransactionBuilder(
         val amountType = transactionData.amount.type
         val token = if (amountType is AmountType.Token) amountType.token else null
         val targetAccountResponse = when (val result =
-                networkProvider.checkTargetAccount(transactionData.destinationAddress, token)
+            networkProvider.checkTargetAccount(transactionData.destinationAddress, token)
         ) {
             is Result.Success -> result.data
             is Result.Failure -> return result
@@ -47,59 +47,73 @@ class StellarTransactionBuilder(
         return when (amount.type) {
             is AmountType.Coin -> {
                 val operation =
-                        if (targetAccountResponse.accountCreated) {
-                            PaymentOperation.Builder(
-                                    destinationKeyPair.accountId,
-                                    AssetTypeNative(),
-                                    amount.value.toString()
-                            ).build()
-                        } else {
-                            if (amount.value!! < minReserve) {
-                                val minAmount = Amount(minReserve, blockchain)
-                                return Result.Failure(BlockchainSdkError.CreateAccountUnderfunded(
+                    if (targetAccountResponse.accountCreated) {
+                        PaymentOperation.Builder(
+                            destinationKeyPair.accountId,
+                            AssetTypeNative(),
+                            amount.value.toString()
+                        ).build()
+                    } else {
+                        if (amount.value!! < minReserve) {
+                            val minAmount = Amount(minReserve, blockchain)
+                            return Result.Failure(
+                                BlockchainSdkError.CreateAccountUnderfunded(
                                     blockchain = blockchain,
                                     minReserve = minAmount
-                                ))
-                            }
-                            CreateAccountOperation.Builder(
-                                    destinationKeyPair.accountId,
-                                    amount.value.toString()
-                            ).build()
+                                )
+                            )
                         }
+                        CreateAccountOperation.Builder(
+                            destinationKeyPair.accountId,
+                            amount.value.toString()
+                        ).build()
+                    }
                 transaction = operation.toTransaction(sourceKeyPair, sequence, fee, timeBounds, memo)
-                        ?: return Result.Failure(BlockchainSdkError.CustomError("Failed to assemble transaction")) // should not happen
+                    ?: return Result.Failure(BlockchainSdkError.CustomError("Failed to assemble transaction")) // should not happen
 
                 Result.Success(transaction.hash())
-
             }
             is AmountType.Token -> {
                 if (!targetAccountResponse.accountCreated) {
-                    return Result.Failure(BlockchainSdkError.CustomError(
-                        "The destination account is not created. To create account send 1+ XLM."))
+                    return Result.Failure(
+                        BlockchainSdkError.CustomError(
+                            "The destination account is not created. To create account send 1+ XLM."
+                        )
+                    )
                 }
 
                 if (!targetAccountResponse.trustlineCreated!!) {
-                    return Result.Failure(BlockchainSdkError.CustomError(
-                        "The destination account does not have a trustline for the asset being sent."))
+                    return Result.Failure(
+                        BlockchainSdkError.CustomError(
+                            "The destination account does not have a trustline for the asset being sent."
+                        )
+                    )
                 }
 
-                val asset = Asset.createNonNativeAsset(
-                        amount.currencySymbol,
-                        amount.type.token.contractAddress
-                )
+                val asset = Asset.create(
+                    "native",
+
+                    )
                 val operation: Operation = if (amount.value != null) {
                     PaymentOperation.Builder(
-                            destinationKeyPair.accountId,
-                            asset,
-                            amount.value!!.toPlainString())
-                            .build()
+                        destinationKeyPair.accountId,
+                        Asset.create(null, amount.currencySymbol, amount.type.token.contractAddress),
+                        amount.value!!.toPlainString()
+                    )
+                        .build()
                 } else {
-                    ChangeTrustOperation.Builder(asset, "900000000000.0000000")
-                            .setSourceAccount(sourceKeyPair.accountId)
-                            .build()
+                    ChangeTrustOperation.Builder(
+                        ChangeTrustAsset.createNonNativeAsset(
+                            amount.currencySymbol,
+                            amount.type.token.contractAddress
+                        ),
+                        CHANGE_TRUST_OPERATION_LIMIT
+                    )
+                        .setSourceAccount(sourceKeyPair.accountId)
+                        .build()
                 }
-                transaction = operation.toTransaction(sourceKeyPair, sequence, fee,timeBounds, memo)
-                        ?: return Result.Failure(BlockchainSdkError.CustomError("Failed to assemble transaction")) // should not happen
+                transaction = operation.toTransaction(sourceKeyPair, sequence, fee, timeBounds, memo)
+                    ?: return Result.Failure(BlockchainSdkError.CustomError("Failed to assemble transaction")) // should not happen
 
                 Result.Success(transaction.hash())
             }
@@ -115,24 +129,24 @@ class StellarTransactionBuilder(
     }
 
     private fun Operation.toTransaction(
-            sourceKeyPair: KeyPair,
-            sequence: Long,
-            fee: Int,
-            timeBounds: TimeBounds,
-            memo: Memo?
+        sourceKeyPair: KeyPair,
+        sequence: Long,
+        fee: Int,
+        timeBounds: TimeBounds,
+        memo: Memo?,
     ): Transaction? {
 
         val accountID = AccountID()
         accountID.accountID = sourceKeyPair.xdrPublicKey
 
-        val transactionBuilder = Transaction.Builder(
-                Account(sourceKeyPair.accountId, sequence),
-                network
+        val transactionBuilder = TransactionBuilder(
+            Account(sourceKeyPair.accountId, sequence),
+            network
         )
         transactionBuilder
-                .addOperation(this)
-                .addTimeBounds(timeBounds)
-                .setOperationFee(fee)
+            .addOperation(this)
+            .addTimeBounds(timeBounds)
+            .setBaseFee(fee)
 
         if (memo != null) transactionBuilder.addMemo(memo)
 
@@ -145,11 +159,15 @@ class StellarTransactionBuilder(
             this.hint = SignatureHint().apply { signatureHint = hint }
             this.signature = Signature().apply { this.signature = signature }
         }
-        transaction.signatures.add(decoratedSignature)
+        transaction.addSignature(decoratedSignature)
         return transaction.toEnvelopeXdrBase64()
     }
 
-    fun getTransactionHash() = transaction.hash()
+    fun getTransactionHash(): ByteArray = transaction.hash()
+
+    private companion object {
+        const val CHANGE_TRUST_OPERATION_LIMIT = "900000000000.0000000"
+    }
 }
 
 data class StellarTransactionExtras(val memo: StellarMemo) : TransactionExtras
