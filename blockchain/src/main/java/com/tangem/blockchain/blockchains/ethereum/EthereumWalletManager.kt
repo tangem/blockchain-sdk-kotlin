@@ -41,7 +41,6 @@ open class EthereumWalletManager(
     presetTokens: MutableSet<Token>,
 ) : WalletManager(wallet, presetTokens),
     TransactionSender,
-    TransactionHistoryProvider,
     SignatureCountValidator,
     TokenFinder,
     EthereumGasLoader {
@@ -265,21 +264,6 @@ open class EthereumWalletManager(
         }
 
         return networkProvider.getGasLimit(to, from, value, finalData)
-    }
-
-    override suspend fun getTransactionHistory(
-        address: String,
-        blockchain: Blockchain,
-        tokens: Set<Token>,
-    ): Result<List<TransactionData>> {
-        val result = networkProvider.getTransactionHistory(address, blockchain, tokens)
-        wallet.historyTransactions.clear()
-
-        if (result is Result.Success) {
-            wallet.historyTransactions.addAll(result.data)
-        }
-
-        return result
     }
 
     // temp region to hold gnosis staff until remove
