@@ -76,7 +76,6 @@ enum class Blockchain(
     EthereumFair("ETH-Fair", "ETF", "EthereumFair"),
     EthereumPow("ETH-Pow", "ETHW", "EthereumPoW"),
     EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW Testnet"),
-    SaltPay("WXDAI", "WxDAI", "SaltPay"),
     Kaspa("KAS", "KAS", "Kaspa"),
     TON("The-Open-Network", "TON", "Ton"),
     TONTestnet("The-Open-Network/test", "TON", "Ton Testnet"),
@@ -123,7 +122,7 @@ enum class Blockchain(
         Gnosis,
         Optimism, OptimismTestnet,
         EthereumFair, EthereumPow, EthereumPowTestnet,
-        SaltPay, Kava, KavaTestnet, Cronos,
+        Kava, KavaTestnet, Cronos,
         -> 18
     }
 
@@ -145,12 +144,12 @@ enum class Blockchain(
     private fun getAddressService(): AddressService = when (this) {
         Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus, Dash,
         Ravencoin, RavencoinTestnet -> BitcoinAddressService(this)
-        BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService()
+        BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
         BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
         Fantom, FantomTestnet, Gnosis, Optimism, OptimismTestnet,
-        EthereumFair, EthereumPow, EthereumPowTestnet, SaltPay,
+        EthereumFair, EthereumPow, EthereumPowTestnet,
         Kava, KavaTestnet, Cronos,
         -> EthereumAddressService()
         RSK -> RskAddressService()
@@ -229,7 +228,6 @@ enum class Blockchain(
         EthereumFair -> "https://explorer.etherfair.org/"
         EthereumPow -> "https://mainnet.ethwscan.com/"
         EthereumPowTestnet -> "https://iceberg.ethwscan.com/"
-        SaltPay -> "https://blockscout.com/xdai/optimism/"
         Kaspa -> "https://explorer.kaspa.org/"
         Kava -> "https://explorer.kava.io/"
         KavaTestnet -> "https://explorer.testnet.kava.io/"
@@ -303,7 +301,7 @@ enum class Blockchain(
     }
 
     fun defaultAddressType(): AddressType = when (this) {
-        Bitcoin, BitcoinTestnet, Litecoin -> BitcoinAddressType.Segwit
+        Bitcoin, BitcoinTestnet, Litecoin, BitcoinCash, BitcoinCashTestnet -> BitcoinAddressType.Segwit
         CardanoShelley -> CardanoAddressType.Shelley
         else -> DefaultAddressType
     }
@@ -362,7 +360,6 @@ enum class Blockchain(
             Dash,
             Optimism, OptimismTestnet,
             EthereumFair, EthereumPow, EthereumPowTestnet,
-            SaltPay,
             Kaspa,
             Ravencoin, RavencoinTestnet,
             Cosmos, CosmosTestnet,
@@ -402,7 +399,6 @@ enum class Blockchain(
             EthereumFair -> Chain.EthereumFair.id
             EthereumPow -> Chain.EthereumPow.id
             EthereumPowTestnet -> Chain.EthereumPowTestnet.id
-            SaltPay -> Chain.SaltPay.id
             Kava -> Chain.Kava.id
             KavaTestnet -> Chain.KavaTestnet.id
             Cronos -> Chain.Cronos.id
@@ -469,7 +465,7 @@ enum class Blockchain(
             Litecoin -> 2
             Dogecoin -> 3
             Dash -> 5
-            Ethereum, EthereumPow, EthereumFair, SaltPay -> ethCoinType
+            Ethereum, EthereumPow, EthereumFair -> ethCoinType
             EthereumClassic -> 61
             RSK -> 137
             XRP -> 144
@@ -521,25 +517,17 @@ enum class Blockchain(
         }
     }
 
-    fun canHandleTokens(): Boolean = when (this) {
-        Arbitrum, ArbitrumTestnet,
-        Ethereum, EthereumTestnet,
-        BSC, BSCTestnet,
-        Binance, BinanceTestnet,
-        Polygon, PolygonTestnet,
-        Avalanche, AvalancheTestnet,
-        Fantom, FantomTestnet,
-        EthereumClassic, EthereumClassicTestnet,
-        RSK,
-        Solana, SolanaTestnet,
-        Tron, TronTestnet,
-        Gnosis,
-        Optimism, OptimismTestnet,
-        EthereumFair, EthereumPow, EthereumPowTestnet,
-        SaltPay, Kava, KavaTestnet,
-        TerraV1,
-        -> true
-        else -> false
+    fun canHandleTokens(): Boolean {
+        if (isEvm()) return true
+
+        return when (this) {
+            Binance, BinanceTestnet,
+            Solana, SolanaTestnet,
+            Tron, TronTestnet,
+            TerraV1,
+            -> true
+            else -> false
+        }
     }
 
     fun isEvm(): Boolean = getChainId() != null
@@ -547,6 +535,7 @@ enum class Blockchain(
     fun isFeeApproximate(amountType: AmountType): Boolean = when (this) {
         Fantom, FantomTestnet,
         Tron, TronTestnet,
+        Cronos,
         -> amountType is AmountType.Token
         Arbitrum, ArbitrumTestnet,
         Optimism, OptimismTestnet,
