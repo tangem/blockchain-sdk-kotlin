@@ -14,7 +14,7 @@ class BitcoinCashTransactionTest {
 
     private val blockchain = Blockchain.BitcoinCash
     private val networkParameters = MainNetParams()
-    private val addressService = BitcoinCashAddressService()
+    private val addressService = BitcoinCashAddressService(Blockchain.BitcoinCash)
 
     @Test
     fun buildCorrectTransaction() {
