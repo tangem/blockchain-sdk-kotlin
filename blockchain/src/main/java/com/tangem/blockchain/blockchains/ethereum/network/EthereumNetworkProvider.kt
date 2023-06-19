@@ -10,7 +10,7 @@ import com.tangem.blockchain.network.blockchair.BlockchairToken
 import java.math.BigDecimal
 import java.math.BigInteger
 
-interface EthereumNetworkProvider : TransactionHistoryProvider {
+interface EthereumNetworkProvider {
     val host: String
     suspend fun getInfo(address: String, tokens: Set<Token>): Result<EthereumInfoResponse>
     suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<Amount>
