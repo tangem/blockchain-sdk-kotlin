@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.ton
 import com.tangem.blockchain.blockchains.ton.network.TonApi
 import com.tangem.blockchain.blockchains.ton.network.TonJsonRpcNetworkProvider
 import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.GetBlockCredentials
 import com.tangem.blockchain.extensions.AddHeaderInterceptor
 import com.tangem.blockchain.extensions.letNotBlank
 import com.tangem.blockchain.network.createRetrofitInstance
@@ -29,7 +30,7 @@ class TonJsonRpcClientBuilder {
         val url = if (isTestNet) "https://testnet.toncenter.com/api/v2/" else "https://toncenter.com/api/v2/"
         val tonApi = createRetrofitInstance(
             baseUrl = url,
-            headerInterceptors = listOf(AddHeaderInterceptor(mapOf(BlockchainSdkConfig.X_API_KEY_HEADER to apiKey)))
+            headerInterceptors = listOf(AddHeaderInterceptor(mapOf(GetBlockCredentials.HEADER_PARAM_NAME to apiKey)))
         ).create(TonApi::class.java)
         return TonJsonRpcNetworkProvider(host = url, api = tonApi)
     }
