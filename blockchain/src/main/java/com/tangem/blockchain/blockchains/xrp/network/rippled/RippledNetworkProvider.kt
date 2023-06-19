@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.extensions.AddHeaderInterceptor
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
@@ -13,12 +14,26 @@ import com.tangem.blockchain.network.createRetrofitInstance
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
-class RippledNetworkProvider(baseUrl: String) : XrpNetworkProvider {
+class RippledNetworkProvider(
+    baseUrl: String,
+    apiKeyHeader: Pair<String, String>? = null,
+) : XrpNetworkProvider {
 
     override val host: String = baseUrl
 
     private val api: RippledApi by lazy {
-        createRetrofitInstance(baseUrl).create(RippledApi::class.java)
+        createRetrofitInstance(
+            baseUrl = baseUrl,
+            headerInterceptors = listOf(
+                AddHeaderInterceptor(
+                    headers = buildMap {
+                        put("Content-Type", "application/json")
+                        put("User-Agent", "Never-mind")
+                        apiKeyHeader?.let { put(key = it.first, value = it.second) }
+                    },
+                )
+            )
+        ).create(RippledApi::class.java)
     }
     private val decimals = Blockchain.XRP.decimals()
 
@@ -38,27 +53,31 @@ class RippledNetworkProvider(baseUrl: String) : XrpNetworkProvider {
                 val serverState = stateDeferred.await()
 
                 val reserveBase = serverState.result!!.state!!.validatedLedger!!.reserveBase!!
-                        .toBigDecimal().movePointLeft(decimals)
+                    .toBigDecimal().movePointLeft(decimals)
 
                 if (accountData.result!!.errorCode == 19) {
-                    Result.Success(XrpInfoResponse(
+                    Result.Success(
+                        XrpInfoResponse(
                             reserveBase = reserveBase,
                             accountFound = false
-                    ))
+                        )
+                    )
                 } else {
                     val confirmedBalance =
-                            accountData.result!!.accountData!!.balance!!.toBigDecimal()
-                                    .movePointLeft(decimals)
+                        accountData.result!!.accountData!!.balance!!.toBigDecimal()
+                            .movePointLeft(decimals)
                     val unconfirmedBalance =
-                            unconfirmedData.result!!.accountData!!.balance!!.toBigDecimal()
-                                    .movePointLeft(decimals)
+                        unconfirmedData.result!!.accountData!!.balance!!.toBigDecimal()
+                            .movePointLeft(decimals)
 
-                    Result.Success(XrpInfoResponse(
+                    Result.Success(
+                        XrpInfoResponse(
                             balance = confirmedBalance,
                             sequence = accountData.result!!.accountData!!.sequence!!,
                             hasUnconfirmed = confirmedBalance != unconfirmedBalance,
                             reserveBase = reserveBase
-                    ))
+                        )
+                    )
                 }
 
             }
@@ -70,11 +89,13 @@ class RippledNetworkProvider(baseUrl: String) : XrpNetworkProvider {
     override suspend fun getFee(): Result<XrpFeeResponse> {
         return try {
             val feeData = retryIO { api.getFee() }
-            Result.Success(XrpFeeResponse(
+            Result.Success(
+                XrpFeeResponse(
                     feeData.result!!.feeData!!.minimalFee!!.toBigDecimal().movePointLeft(decimals),
                     feeData.result!!.feeData!!.normalFee!!.toBigDecimal().movePointLeft(decimals),
                     feeData.result!!.feeData!!.priorityFee!!.toBigDecimal().movePointLeft(decimals)
-            ))
+                )
+            )
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
@@ -91,9 +112,11 @@ class RippledNetworkProvider(baseUrl: String) : XrpNetworkProvider {
                 if (result.resultMessage == "Held until escalated fee drops.") {
                     SimpleResult.Success
                 } else {
-                    SimpleResult.Failure(BlockchainSdkError.CustomError(
-                        result.resultMessage ?: result.errorException ?: "Unknown error message"
-                    ))
+                    SimpleResult.Failure(
+                        BlockchainSdkError.CustomError(
+                            result.resultMessage ?: result.errorException ?: "Unknown error message"
+                        )
+                    )
                 }
             }
         } catch (exception: Exception) {
@@ -111,7 +134,6 @@ class RippledNetworkProvider(baseUrl: String) : XrpNetworkProvider {
         }
     }
 }
-
 
 private fun makeAccountBody(address: String, validated: Boolean): RippledBody {
     val params = HashMap<String, String>()

@@ -141,9 +141,6 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         Blockchain.EthereumPowTestnet -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://iceberg.ethereumpow.org/")
         )
-        Blockchain.SaltPay -> listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://rpc.bicoccachain.net/", authToken = config.saltPayAuthToken)
-        )
         Blockchain.Kava -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://evm.kava.io"),
             EthereumJsonRpcProvider(baseUrl = "https://evm2.kava.io"),

@@ -29,9 +29,6 @@ private val tangemNoteBatches = mapOf(
     "AB12" to Blockchain.Ethereum,
 )
 
-val Card.isSaltPay: Boolean
-    get() = false //TODO fix when we know which cards are SaltPay cards
-
 val Card.useOldStyleDerivation: Boolean
     get() = batchId == "AC01" || batchId == "AC02" || batchId == "CB95"
 
@@ -47,8 +44,7 @@ val Card.derivationStyle: DerivationStyle?
 val Card.isTestCard: Boolean
     get() = batchId == TEST_CARD_BATCH && cardId.startsWith(TEST_CARD_ID_STARTS_WITH)
 
-fun Card.getTangemNoteBlockchain(): Blockchain? =
-        tangemNoteBatches[batchId] ?: if (isSaltPay) Blockchain.Gnosis else null
+fun Card.getTangemNoteBlockchain(): Blockchain? = tangemNoteBatches[batchId]
 
 fun Card.isTangemTwins(): Boolean = when {
     firstCardSeries.map { cardId.startsWith(it) }.contains(true) -> {
