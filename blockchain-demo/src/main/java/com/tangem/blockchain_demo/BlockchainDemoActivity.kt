@@ -85,8 +85,8 @@ class BlockchainDemoActivity : AppCompatActivity() {
 
     private fun initViews() = with(binding) {
         btnScan.setOnClickListener { scan() }
-        containerSelectWalletWithBlockchain.tvBlockchainAddress.setOnLongClickListener {
-            containerSelectWalletWithBlockchain.tvBlockchainAddress.copyTextToClipboard()
+        containerSelectWalletWithBlockchain.tvBlockchainAddresses.setOnLongClickListener {
+            containerSelectWalletWithBlockchain.tvBlockchainAddresses.copyTextToClipboard()
             showToast("Address was copied")
             return@setOnLongClickListener true
         }
@@ -105,7 +105,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
     }
 
     private fun resetWalletAddress() = with(binding) {
-        containerSelectWalletWithBlockchain.tvBlockchainAddress.text = ""
+        containerSelectWalletWithBlockchain.tvBlockchainAddresses.text = ""
     }
 
     private fun resetRecipientAddressFeeValues() = with(binding) {
@@ -203,7 +203,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
     }
 
     private fun loadWallet(onSuccess: () -> Unit, onFailure: (BlockchainSdkError) -> Unit) = with(binding) {
-        containerSelectWalletWithBlockchain.tvBlockchainAddress.text = ""
+        containerSelectWalletWithBlockchain.tvBlockchainAddresses.text = ""
         try {
             walletManager = WalletManagerFactory().makeWalletManagerForApp(
                     scanResponse = scanResponse,
@@ -215,7 +215,8 @@ class BlockchainDemoActivity : AppCompatActivity() {
             return@with
         }
 
-        containerSelectWalletWithBlockchain.tvBlockchainAddress.text = walletManager.wallet.address
+        containerSelectWalletWithBlockchain.tvBlockchainAddresses.text =
+            walletManager.wallet.addresses.joinToString(separator = " ") { it.value }
 
         scope.launch {
             try {
