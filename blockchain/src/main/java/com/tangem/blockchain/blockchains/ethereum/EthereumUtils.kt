@@ -406,12 +406,6 @@ class EthereumUtils {
             setWalletSignature +
                 address.substring(2).hexToBytes().toFixedLengthByteArray(32)
 
-
-        internal fun createErc20TransferFromData(source: String, destination: String, amount: Amount) =
-            createErc20TransferFromData(
-                source, destination, amount.value!!.movePointRight(amount.decimals).toBigInteger()
-            )
-
         private fun createErc20TransferFromData(source: String, destination: String, amount: BigInteger) =
             tokenTransferFromSignature +
                 source.substring(2).hexToBytes().toFixedLengthByteArray(32) +
