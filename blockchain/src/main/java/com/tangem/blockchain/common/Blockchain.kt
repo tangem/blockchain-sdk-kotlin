@@ -414,7 +414,7 @@ enum class Blockchain(
                 DerivationPath(
                     path = listOf(
                         DerivationNode.Hardened(BIP44.purpose),
-                        DerivationNode.Hardened(coinType(style)),
+                        DerivationNode.Hardened(CoinTypeProvider.coinType(this, style)),
                         DerivationNode.Hardened(0)
                     )
                 )
@@ -424,7 +424,7 @@ enum class Blockchain(
                 DerivationPath(
                     path = listOf(
                         DerivationNode.Hardened(1852),
-                        DerivationNode.Hardened(coinType(style)),
+                        DerivationNode.Hardened(CoinTypeProvider.coinType(this, style)),
                         DerivationNode.Hardened(0),
                         DerivationNode.NonHardened(0),
                         DerivationNode.NonHardened(0)
@@ -434,78 +434,13 @@ enum class Blockchain(
             else -> {
                 // Standard BIP44
                 val bip44 = BIP44(
-                    coinType = coinType(style),
+                    coinType = CoinTypeProvider.coinType(this, style),
                     account = 0,
                     change = BIP44.Chain.External,
                     addressIndex = 0
                 )
                 bip44.buildPath()
             }
-        }
-    }
-
-    //    https://github.com/satoshilabs/slips/blob/master/slip-0044.md
-    fun coinType(style: DerivationStyle): Long {
-        if (isTestnet()) return 1
-
-        val ethCoinType = 60L
-
-        if (style == DerivationStyle.NEW && this.isEvm()) return ethCoinType
-
-        return when (this) {
-            Bitcoin, Ducatus -> 0
-            Litecoin -> 2
-            Dogecoin -> 3
-            Dash -> 5
-            Ethereum, EthereumPow, EthereumFair -> ethCoinType
-            EthereumClassic -> 61
-            RSK -> 137
-            XRP -> 144
-            BitcoinCash -> 145
-            Stellar -> 148
-            Polkadot -> 354
-            Kusama -> 434
-            Kava -> 459
-            Solana -> 501
-            Binance -> 714
-            Polygon -> 966
-            Fantom -> 1007
-            Tezos -> 1729
-            Cardano, CardanoShelley -> 1815
-            Avalanche -> 9000
-            Arbitrum -> 9001
-            BSC -> 9006
-            Tron -> 195
-            Gnosis -> 700
-            Optimism -> 614
-            TON -> 607
-            Kaspa -> 111111
-            Ravencoin -> 175
-            Cosmos -> 118
-            TerraV1, TerraV2 -> 330
-            Cronos -> 10000025
-            ArbitrumTestnet,
-            AvalancheTestnet,
-            BinanceTestnet,
-            BSCTestnet,
-            BitcoinTestnet,
-            BitcoinCashTestnet,
-            EthereumTestnet,
-            EthereumClassicTestnet,
-            FantomTestnet,
-            PolkadotTestnet,
-            PolygonTestnet,
-            StellarTestnet,
-            SolanaTestnet,
-            TONTestnet,
-            TronTestnet,
-            OptimismTestnet,
-            EthereumPowTestnet,
-            KavaTestnet,
-            RavencoinTestnet,
-            CosmosTestnet,
-            Unknown,
-            -> throw UnsupportedOperationException("Coin type not provided for: ${this.fullName}")
         }
     }
 
