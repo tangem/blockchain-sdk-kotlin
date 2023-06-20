@@ -2,10 +2,8 @@ package com.tangem.blockchain.common
 
 import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
-import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressType
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
-import com.tangem.blockchain.blockchains.cardano.CardanoAddressType
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
@@ -298,12 +296,6 @@ enum class Blockchain(
             CosmosTestnet -> "https://discord.com/channels/669268347736686612/953697793476821092"
             else -> null
         }
-    }
-
-    fun defaultAddressType(): AddressType = when (this) {
-        Bitcoin, BitcoinTestnet, Litecoin, BitcoinCash, BitcoinCashTestnet -> BitcoinAddressType.Segwit
-        CardanoShelley -> CardanoAddressType.Shelley
-        else -> DefaultAddressType
     }
 
     fun isTestnet(): Boolean = this == getTestnetVersion()
