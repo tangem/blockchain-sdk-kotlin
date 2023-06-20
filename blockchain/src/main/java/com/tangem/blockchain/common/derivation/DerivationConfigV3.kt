@@ -4,6 +4,19 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.crypto.hdWallet.DerivationPath
 
+/// Documentation:
+/// Types:
+/// - `Stellar`, `Solana`, `TON`. According to `SEP0005`
+/// https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0005.md
+/// - `Polkadot`, `Kusama` used to all nodes in the path is hardened
+/// https://wiki.polkadot.network/docs/learn-account-advanced#derivation-paths
+/// - `Cardano`. According to  `CIP1852`
+/// https://cips.cardano.org/cips/cip1852/
+/// - `Bitcoin`, `Litecoin`. Default address is `SegWit`. According to `BIP-84`
+/// https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
+/// - `EVM-like` without `Ethereum classic` with `Ethereum` coinType(60).
+/// - `All else`. According to `BIP44`
+/// https://github.com/satoshilabs/slips/blob/master/slip-0044.md
 object DerivationConfigV3 : DerivationConfig() {
 
     override fun derivations(blockchain: Blockchain): Map<AddressType, DerivationPath> {
