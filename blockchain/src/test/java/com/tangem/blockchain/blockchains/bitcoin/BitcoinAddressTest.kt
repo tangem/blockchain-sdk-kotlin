@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.address.AddressType
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
@@ -18,8 +19,8 @@ class BitcoinAddressTest {
         val expectedSegwitAddress = "bc1qtdsvnsf7cfu8l3w7qahwwhhxfrdzmdhsgdzky2"
 
         val addresses = addressService.makeAddresses(walletPublicKey)
-        val legacyAddress = addresses.find { it.type == BitcoinAddressType.Legacy }
-        val segwitAddress = addresses.find { it.type == BitcoinAddressType.Segwit }
+        val legacyAddress = addresses.find { it.type == AddressType.Legacy }
+        val segwitAddress = addresses.find { it.type == AddressType.Default }
 
         Truth.assertThat(addresses.size).isEqualTo(expectedSize)
         Truth.assertThat(legacyAddress!!.value).isEqualTo(expectedLegacyAddress)
@@ -39,8 +40,8 @@ class BitcoinAddressTest {
         val addresses = addressService.makeMultisigAddresses(walletPublicKey1, walletPublicKey2)
         val addressesReverseOrder =
                 addressService.makeMultisigAddresses(walletPublicKey2, walletPublicKey1)
-        val legacyAddress = addresses.find { it.type == BitcoinAddressType.Legacy }
-        val segwitAddress = addresses.find { it.type == BitcoinAddressType.Segwit }
+        val legacyAddress = addresses.find { it.type == AddressType.Legacy }
+        val segwitAddress = addresses.find { it.type == AddressType.Default }
 
         Truth.assertThat(addresses.size).isEqualTo(expectedSize)
         Truth.assertThat(addresses.map { it.value })
