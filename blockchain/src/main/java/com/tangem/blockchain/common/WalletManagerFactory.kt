@@ -285,9 +285,12 @@ class WalletManagerFactory(
                 SolanaWalletManager(wallet, clients)
             }
 
-            Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama, Blockchain.AlephZero -> {
-                val network = PolkadotNetworkService.network(blockchain)
-
+            Blockchain.Polkadot,
+            Blockchain.PolkadotTestnet,
+            Blockchain.Kusama,
+            Blockchain.AlephZero,
+            Blockchain.AlephZeroTestnet
+            -> {
                 PolkadotWalletManager(
                     wallet = wallet,
                     transactionBuilder = PolkadotTransactionBuilder(blockchain),
