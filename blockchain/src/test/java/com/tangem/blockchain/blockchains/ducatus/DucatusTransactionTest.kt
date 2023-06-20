@@ -8,7 +8,7 @@ import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.address.DefaultAddressType
+import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.hexToBytes
@@ -31,7 +31,7 @@ class DucatusTransactionTest {
         val destinationAddress = "M6tZXSEVGErPo8TnmpPv8Zvp69uSmLwJmF"
 
         val addresses = BitcoinAddressService(blockchain).makeAddresses(walletPublicKey)
-        val address = addresses.find { it.type == DefaultAddressType }!!.value
+        val address = addresses.find { it.type == AddressType.Default }!!.value
         val transactionBuilder = BitcoinTransactionBuilder(walletPublicKey, blockchain, addresses)
         transactionBuilder.unspentOutputs =
                 BitcoinTransactionTest.prepareTwoUnspentOutputs(listOf(address), networkParameters)
