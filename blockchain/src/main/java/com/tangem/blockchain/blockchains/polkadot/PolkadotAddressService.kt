@@ -28,8 +28,8 @@ class PolkadotAddressService(
 
     override fun validate(address: String): Boolean {
         return try {
-            Address.from(address)
-            true
+            val polkadotAddress = Address.from(address)
+            polkadotAddress.network == ss58Network
         } catch (ex: Exception) {
             false
         }
