@@ -322,7 +322,25 @@ enum class Blockchain(
             Kava, KavaTestnet -> KavaTestnet
             Ravencoin, RavencoinTestnet -> RavencoinTestnet
             Cosmos, CosmosTestnet -> CosmosTestnet
-            else -> null
+            Unknown,
+            Cardano,
+            CardanoShelley,
+            Dogecoin,
+            Ducatus,
+            Litecoin,
+            Kusama,
+            RSK,
+            Tezos,
+            XRP,
+            Gnosis,
+            Dash,
+            EthereumFair,
+            Kaspa,
+            TerraV1,
+            TerraV2,
+            Cronos -> {
+                null // there is no testnet for given network
+            }
         }
     }
 
