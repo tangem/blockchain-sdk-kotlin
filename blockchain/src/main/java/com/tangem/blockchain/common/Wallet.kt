@@ -16,8 +16,6 @@ class Wallet(
 ) {
     //we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
     val recentTransactions: MutableList<TransactionData> = mutableListOf()
-    // transactions from history provider
-    val historyTransactions: MutableList<TransactionData> = mutableListOf()
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
     val address = addresses.find { it.type == AddressType.Default }?.value
         ?: throw Exception("Addresses must contain default address")
