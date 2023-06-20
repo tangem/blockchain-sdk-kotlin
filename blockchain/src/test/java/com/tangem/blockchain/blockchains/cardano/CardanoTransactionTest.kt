@@ -5,6 +5,7 @@ import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
@@ -25,8 +26,8 @@ class CardanoTransactionTest {
         val byronDestinationAddress = "Ae2tdPwUPEYyDf8J4KQNr1ZPw26iyn9JU9dHWTAxNEaNbi8VDNDTBmjQuXj"
 
         val addresses = CardanoAddressService(blockchain).makeAddresses(walletPublicKey)
-        val byronAddress = addresses.find { it.type == CardanoAddressType.Byron }!!.value
-        val shelleyAddress = addresses.find { it.type == CardanoAddressType.Shelley }!!.value
+        val byronAddress = addresses.find { it.type == AddressType.Legacy }!!.value
+        val shelleyAddress = addresses.find { it.type == AddressType.Default }!!.value
 
         val transactionBuilder = CardanoTransactionBuilder(walletPublicKey)
         transactionBuilder.unspentOutputs =
