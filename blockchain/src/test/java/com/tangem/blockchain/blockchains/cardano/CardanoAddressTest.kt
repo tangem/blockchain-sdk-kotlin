@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.cardano
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.address.AddressType
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
@@ -19,8 +20,8 @@ class CardanoAddressTest {
         val expectedShelleyAddress = "addr1vyfgrxddyvyaqhr4jprr655s8ehzna9nehanx3fmu9280cgxxg2zc"
 
         val addresses = addressService.makeAddresses(walletPublicKey)
-        val byronAddress = addresses.find { it.type == CardanoAddressType.Byron }
-        val shelleyAddress = addresses.find { it.type == CardanoAddressType.Shelley }
+        val byronAddress = addresses.find { it.type == AddressType.Legacy }
+        val shelleyAddress = addresses.find { it.type == AddressType.Default }
 
         Truth.assertThat(addresses.size).isEqualTo(expectedSize)
         Truth.assertThat(byronAddress!!.value).isEqualTo(expectedByronAddress)
