@@ -26,7 +26,7 @@ class PolkadotWalletManager(
         Blockchain.Polkadot -> BigDecimal.ONE
         Blockchain.PolkadotTestnet -> 0.01.toBigDecimal()
         Blockchain.Kusama -> 0.000033333333.toBigDecimal()
-        Blockchain.AlephZero -> 0.0000000005.toBigDecimal()
+        Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> 0.0000000005.toBigDecimal()
         else -> throw IllegalStateException("${wallet.blockchain} isn't supported")
     }
 
