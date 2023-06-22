@@ -1,0 +1,17 @@
+package com.tangem.blockchain.common.assembly
+
+import com.tangem.blockchain.blockchains.solana.SolanaRpcClientBuilder
+import com.tangem.blockchain.blockchains.solana.SolanaWalletManager
+
+object SolanaWalletManagerAssembly : WalletManagerAssembly<SolanaWalletManager>() {
+
+    override fun make(input: WalletManagerAssemblyInput): SolanaWalletManager {
+        with(input.wallet) {
+            val clients = SolanaRpcClientBuilder()
+                .build(isTestnet = blockchain.isTestnet(), config = input.config)
+
+            return SolanaWalletManager(this, clients)
+        }
+    }
+
+}
