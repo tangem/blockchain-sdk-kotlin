@@ -4,7 +4,7 @@ package com.tangem.blockchain.common
 object CoinTypeProvider {
 
     //    https://github.com/satoshilabs/slips/blob/master/slip-0044.md
-    fun coinType(blockchain: Blockchain, style: DerivationStyle): Long {
+    fun getCoinType(blockchain: Blockchain, style: DerivationStyle): Long {
         if (blockchain.isTestnet()) return 1
 
         val ethCoinType = 60L

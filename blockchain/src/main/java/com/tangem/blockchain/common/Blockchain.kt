@@ -432,7 +432,7 @@ enum class Blockchain(
                 DerivationPath(
                     path = listOf(
                         DerivationNode.Hardened(BIP44.purpose),
-                        DerivationNode.Hardened(CoinTypeProvider.coinType(this, style)),
+                        DerivationNode.Hardened(CoinTypeProvider.getCoinType(this, style)),
                         DerivationNode.Hardened(0)
                     )
                 )
@@ -442,7 +442,7 @@ enum class Blockchain(
                 DerivationPath(
                     path = listOf(
                         DerivationNode.Hardened(1852),
-                        DerivationNode.Hardened(CoinTypeProvider.coinType(this, style)),
+                        DerivationNode.Hardened(CoinTypeProvider.getCoinType(this, style)),
                         DerivationNode.Hardened(0),
                         DerivationNode.NonHardened(0),
                         DerivationNode.NonHardened(0)
@@ -452,7 +452,7 @@ enum class Blockchain(
             else -> {
                 // Standard BIP44
                 val bip44 = BIP44(
-                    coinType = CoinTypeProvider.coinType(this, style),
+                    coinType = CoinTypeProvider.getCoinType(this, style),
                     account = 0,
                     change = BIP44.Chain.External,
                     addressIndex = 0
