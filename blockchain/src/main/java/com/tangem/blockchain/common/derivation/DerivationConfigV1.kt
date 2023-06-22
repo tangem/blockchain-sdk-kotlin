@@ -4,14 +4,18 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.crypto.hdWallet.DerivationPath
 
-/// Documentation:
-/// Types:
-/// - `Stellar`, `Solana`. According to `SEP0005`
-/// https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0005.md
-/// - `Cardano`. According to  `CIP1852`
-/// https://cips.cardano.org/cips/cip1852/
-/// - `All else`. According to `BIP44`
-/// https://github.com/satoshilabs/slips/blob/master/slip-0044.md
+/**
+ * Derivation config for legacy cards (twin, notes, ac01/ac02)
+ *
+ * Types:
+ * - `Stellar`, `Solana`. According to `SEP0005`
+ * https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0005.md
+ * - `Cardano`. According to  `CIP1852`
+ * https://cips.cardano.org/cips/cip1852/
+ * - `All else`. According to `BIP44`
+ * https://github.com/satoshilabs/slips/blob/master/slip-0044.md
+ */
+
 object DerivationConfigV1 : DerivationConfig() {
 
     override fun derivations(blockchain: Blockchain): Map<AddressType, DerivationPath> {
