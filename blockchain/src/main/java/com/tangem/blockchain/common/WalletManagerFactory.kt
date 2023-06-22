@@ -1,6 +1,7 @@
 package com.tangem.blockchain.common
 
-import com.tangem.blockchain.common.assembly.*
+import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
+import com.tangem.blockchain.common.assembly.impl.*
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
@@ -202,12 +203,14 @@ class WalletManagerFactory(
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
         }
 
-        return assembly.make(WalletManagerAssemblyInput(
+        return assembly.make(
+            WalletManagerAssemblyInput(
             wallet = wallet,
             config = config,
             presetTokens = mutableTokens,
             curve = curve
-        ))
+        )
+        )
     }
 
     private fun checkIfWrongKey(curve: EllipticCurve, publicKey: Wallet.PublicKey): Boolean {
