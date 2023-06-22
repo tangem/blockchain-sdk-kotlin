@@ -1,10 +1,12 @@
-package com.tangem.blockchain.common.assembly
+package com.tangem.blockchain.common.assembly.impl
 
 import com.tangem.blockchain.blockchains.kaspa.KaspaTransactionBuilder
 import com.tangem.blockchain.blockchains.kaspa.KaspaWalletManager
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkProvider
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkService
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaRestApiNetworkProvider
+import com.tangem.blockchain.common.assembly.WalletManagerAssembly
+import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.network.API_KASPA
 
 object KaspaWalletManagerAssembly : WalletManagerAssembly<KaspaWalletManager>() {
