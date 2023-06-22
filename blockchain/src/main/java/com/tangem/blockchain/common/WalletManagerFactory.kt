@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.impl.*
 import com.tangem.common.card.EllipticCurve
@@ -83,12 +84,24 @@ class WalletManagerFactory(
         val mutableTokens = tokens.toMutableSet()
         val wallet = Wallet(blockchain, addresses, publicKey, mutableTokens)
 
-        val assembly = when (blockchain) {
+        return getAssembly(blockchain).make(
+            input = WalletManagerAssemblyInput(
+                wallet = wallet,
+                config = config,
+                presetTokens = mutableTokens,
+                curve = curve
+            )
+        )
+    }
+
+    private fun getAssembly(blockchain: Blockchain): WalletManagerAssembly<WalletManager> {
+        return when (blockchain) {
             // region BTC-like blockchains
 
             Blockchain.Bitcoin,
             Blockchain.BitcoinTestnet,
-            Blockchain.Dash -> {
+            Blockchain.Dash,
+            -> {
                 BitcoinWalletManagerAssembly
             }
 
@@ -134,7 +147,8 @@ class WalletManagerFactory(
             Blockchain.EthereumPow,
             Blockchain.EthereumPowTestnet,
             Blockchain.Kava, Blockchain.KavaTestnet,
-            Blockchain.Cronos -> {
+            Blockchain.Cronos,
+            -> {
                 EthereumLikeWalletManagerAssembly
             }
 
@@ -202,15 +216,6 @@ class WalletManagerFactory(
 
             Blockchain.Unknown -> throw Exception("unsupported blockchain")
         }
-
-        return assembly.make(
-            WalletManagerAssemblyInput(
-            wallet = wallet,
-            config = config,
-            presetTokens = mutableTokens,
-            curve = curve
-        )
-        )
     }
 
     private fun checkIfWrongKey(curve: EllipticCurve, publicKey: Wallet.PublicKey): Boolean {
@@ -219,6 +224,4 @@ class WalletManagerFactory(
             else -> false
         }
     }
-
-
 }
