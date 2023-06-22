@@ -1,10 +1,12 @@
-package com.tangem.blockchain.common.assembly
+package com.tangem.blockchain.common.assembly.impl
 
 import com.tangem.blockchain.blockchains.tron.TronTransactionBuilder
 import com.tangem.blockchain.blockchains.tron.TronWalletManager
 import com.tangem.blockchain.blockchains.tron.network.TronJsonRpcNetworkProvider
 import com.tangem.blockchain.blockchains.tron.network.TronNetwork
 import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
+import com.tangem.blockchain.common.assembly.WalletManagerAssembly
+import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.extensions.letNotBlank
 
 object TronWalletManagerAssembly : WalletManagerAssembly<TronWalletManager>() {
