@@ -1,9 +1,11 @@
-package com.tangem.blockchain.common.assembly
+package com.tangem.blockchain.common.assembly.impl
 
 import com.tangem.blockchain.blockchains.stellar.StellarNetwork
 import com.tangem.blockchain.blockchains.stellar.StellarNetworkService
 import com.tangem.blockchain.blockchains.stellar.StellarTransactionBuilder
 import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
+import com.tangem.blockchain.common.assembly.WalletManagerAssembly
+import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.extensions.letNotBlank
 
 object StellarWalletManagerAssembly : WalletManagerAssembly<StellarWalletManager>() {
