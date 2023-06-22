@@ -1,4 +1,4 @@
-package com.tangem.blockchain.common.assembly
+package com.tangem.blockchain.common.assembly.impl
 
 import com.tangem.blockchain.blockchains.cardano.CardanoTransactionBuilder
 import com.tangem.blockchain.blockchains.cardano.CardanoWalletManager
@@ -6,6 +6,8 @@ import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkService
 import com.tangem.blockchain.blockchains.cardano.network.RosettaNetwork
 import com.tangem.blockchain.blockchains.cardano.network.adalite.AdaliteNetworkProvider
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.RosettaNetworkProvider
+import com.tangem.blockchain.common.assembly.WalletManagerAssembly
+import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.extensions.letNotBlank
 import com.tangem.blockchain.network.API_ADALITE
 
