@@ -1,9 +1,11 @@
-package com.tangem.blockchain.common.assembly
+package com.tangem.blockchain.common.assembly.impl
 
 import com.tangem.blockchain.blockchains.cosmos.CosmosWalletManager
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.extensions.letNotBlank
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
+import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
+import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 
 object CosmosWalletManagerAssembly : WalletManagerAssembly<CosmosWalletManager>() {
 
