@@ -52,8 +52,6 @@ open class EthereumWalletManager(
         private set
     var txCount = -1L
         private set
-    var gasPrice: BigInteger? = null
-        private set
 
     override val currentHost: String
         get() = networkProvider.host
@@ -171,8 +169,6 @@ open class EthereumWalletManager(
                 val gPrice = gasPriceResponsesDeferred.await().successOr {
                     return@coroutineScope Result.Failure(it.error)
                 }
-
-                gasPrice = gPrice
 
                 val fees = feesCalculator.calculateFees(
                     amountParams = getAmountParams(),
