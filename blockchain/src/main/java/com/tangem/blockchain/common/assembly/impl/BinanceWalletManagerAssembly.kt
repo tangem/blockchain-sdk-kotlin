@@ -1,9 +1,11 @@
-package com.tangem.blockchain.common.assembly
+package com.tangem.blockchain.common.assembly.impl
 
 import com.tangem.blockchain.blockchains.binance.BinanceTransactionBuilder
 import com.tangem.blockchain.blockchains.binance.BinanceWalletManager
 import com.tangem.blockchain.blockchains.binance.network.BinanceNetworkService
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.assembly.WalletManagerAssembly
+import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 
 object BinanceWalletManagerAssembly : WalletManagerAssembly<BinanceWalletManager>() {
 
