@@ -1,7 +1,9 @@
-package com.tangem.blockchain.common.assembly
+package com.tangem.blockchain.common.assembly.impl
 
 import com.tangem.blockchain.blockchains.polkadot.PolkadotWalletManager
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkService
+import com.tangem.blockchain.common.assembly.WalletManagerAssembly
+import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 
 object PolkadotWalletManagerAssembly : WalletManagerAssembly<PolkadotWalletManager>() {
 
