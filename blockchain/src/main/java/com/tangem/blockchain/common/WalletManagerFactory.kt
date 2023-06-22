@@ -6,6 +6,7 @@ import com.tangem.blockchain.common.assembly.impl.*
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
+import java.lang.IllegalStateException
 
 class WalletManagerFactory(
     private val config: BlockchainSdkConfig = BlockchainSdkConfig()
@@ -214,7 +215,9 @@ class WalletManagerFactory(
                 TerraV2WalletManagerAssembly
             }
 
-            Blockchain.Unknown -> throw Exception("unsupported blockchain")
+            Blockchain.Unknown -> {
+                throw IllegalStateException("Unsupported blockchain")
+            }
         }
     }
 
