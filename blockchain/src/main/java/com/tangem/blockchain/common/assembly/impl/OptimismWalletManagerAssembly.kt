@@ -1,16 +1,17 @@
-package com.tangem.blockchain.common.assembly
+package com.tangem.blockchain.common.assembly.impl
 
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
-import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.getEthereumJsonRpcProviders
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
-import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
+import com.tangem.blockchain.blockchains.optimism.OptimismWalletManager
+import com.tangem.blockchain.common.assembly.WalletManagerAssembly
+import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 
-object EthereumWalletManagerAssembly : WalletManagerAssembly<EthereumWalletManager>() {
+object OptimismWalletManagerAssembly : WalletManagerAssembly<OptimismWalletManager>() {
 
-    override fun make(input: WalletManagerAssemblyInput): EthereumWalletManager {
+    override fun make(input: WalletManagerAssemblyInput): OptimismWalletManager {
         with(input.wallet) {
-            return EthereumWalletManager(
+            return OptimismWalletManager(
                 wallet = this,
                 transactionBuilder = EthereumTransactionBuilder(
                     walletPublicKey = publicKey.blockchainKey,
@@ -18,10 +19,6 @@ object EthereumWalletManagerAssembly : WalletManagerAssembly<EthereumWalletManag
                 ),
                 networkProvider = EthereumNetworkService(
                     jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(input.config),
-                    blockcypherNetworkProvider = BlockcypherNetworkProvider(
-                        blockchain = blockchain,
-                        tokens = input.config.blockcypherTokens
-                    )
                 ),
                 presetTokens = input.presetTokens
             )
