@@ -8,9 +8,7 @@ import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import java.lang.IllegalStateException
 
-class WalletManagerFactory(
-    private val config: BlockchainSdkConfig = BlockchainSdkConfig()
-) {
+class WalletManagerFactory(private val config: BlockchainSdkConfig) {
 
     /**
      * Base wallet manager initializer
@@ -60,7 +58,7 @@ class WalletManagerFactory(
     /**
      * Legacy wallet manager initializer
      */
-    fun makeWalletManager(
+    fun makeLegacyWalletManager(
         blockchain: Blockchain,
         walletPublicKey: ByteArray,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
@@ -72,10 +70,10 @@ class WalletManagerFactory(
         )
     }
 
-    fun makeWalletManager(
+    private fun makeWalletManager(
         blockchain: Blockchain,
         publicKey: Wallet.PublicKey,
-        tokens: Collection<Token> = emptyList(),
+        tokens: Collection<Token> = emptyList(), // TODO, probably unusable
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
