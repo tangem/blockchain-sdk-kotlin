@@ -19,8 +19,7 @@ object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<EthereumWalletM
                 ),
                 networkProvider = EthereumNetworkService(
                     jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(input.config)
-                ),
-                presetTokens = input.presetTokens
+                )
             )
         }
     }
