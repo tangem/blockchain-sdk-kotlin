@@ -34,7 +34,7 @@ fun WalletManagerFactory.makeWalletManagerForApp(
     val seedKey = wallet.extendedPublicKey
     return when {
         scanResponse.card.isTangemTwins() && scanResponse.secondTwinPublicKey != null -> {
-            makeTwinWalletManager(
+            createTwinWalletManager(
                 walletPublicKey = wallet.publicKey,
                 pairPublicKey = scanResponse.secondTwinPublicKey.hexToBytes(),
                 blockchain = environmentBlockchain,
@@ -50,7 +50,7 @@ fun WalletManagerFactory.makeWalletManagerForApp(
             val derivedKey = derivedKeys?.get(derivationPath)
                 ?: return null
 
-            makeWalletManager(
+            createWalletManager(
                 blockchain = environmentBlockchain,
                 seedKey = wallet.publicKey,
                 derivedKey = derivedKey,
@@ -58,7 +58,7 @@ fun WalletManagerFactory.makeWalletManagerForApp(
             )
         }
         else -> {
-            makeLegacyWalletManager(
+            createLegacyWalletManager(
                 blockchain = environmentBlockchain,
                 walletPublicKey = wallet.publicKey,
                 curve = wallet.curve
