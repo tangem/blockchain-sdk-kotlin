@@ -115,7 +115,7 @@ internal class WalletManagerFactoryTest {
         val responseApdu = ResponseApdu(data.hexToBytes())
         val card = ReadCommand().deserialize(SessionEnvironment(Config(), InMemoryStorage()), responseApdu).card
         val walletManager =
-                WalletManagerFactory().makeTwinWalletManager(
+                WalletManagerFactory().createTwinWalletManager(
                     card.wallets.first().publicKey,
                     pairPublicKey.hexToBytes()
                 )
@@ -141,7 +141,7 @@ internal class WalletManagerFactoryTest {
                 getBlockCredentials = GetBlockCredentials(apiKey = "getBlockCredentials"),
                 tronGridApiKey = "",
             )
-        ).makeWalletManager(
+        ).createWalletManager(
             blockchain, Wallet.PublicKey(publicKey, null, null), curve = curve
         )
     }
