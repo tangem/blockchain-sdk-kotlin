@@ -19,8 +19,7 @@ object OptimismWalletManagerAssembly : WalletManagerAssembly<OptimismWalletManag
                 ),
                 networkProvider = EthereumNetworkService(
                     jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(input.config),
-                ),
-                presetTokens = input.presetTokens
+                )
             )
         }
     }
