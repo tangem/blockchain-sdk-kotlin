@@ -24,8 +24,7 @@ object EthereumWalletManagerAssembly : WalletManagerAssembly<EthereumWalletManag
                         blockchain = blockchain,
                         tokens = input.config.blockcypherTokens
                     )
-                ),
-                presetTokens = input.presetTokens
+                )
             )
         }
     }
