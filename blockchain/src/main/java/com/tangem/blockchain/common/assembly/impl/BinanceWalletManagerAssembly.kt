@@ -15,8 +15,7 @@ object BinanceWalletManagerAssembly : WalletManagerAssembly<BinanceWalletManager
             return BinanceWalletManager(
                 this,
                 BinanceTransactionBuilder(publicKey.blockchainKey, isTestNet),
-                BinanceNetworkService(isTestNet),
-                input.presetTokens
+                BinanceNetworkService(isTestNet)
             )
         }
     }
