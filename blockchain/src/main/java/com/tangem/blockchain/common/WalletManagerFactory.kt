@@ -12,12 +12,12 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
 
     /**
      * Base wallet manager initializer
-     * @param blockchain: blockchain to create. If null, card native blockchain will be used
-     * @param seedKey: Public Key of the wallet
+     * @param blockchain: blockchain to create
+     * @param seedKey: Public key of the wallet
      * @param derivedKey: Derived ExtendedPublicKey by the card
      * @param derivation: derivation style or derivation path
      */
-    fun makeWalletManager(
+    fun createWalletManager(
         blockchain: Blockchain,
         seedKey: ByteArray,
         derivedKey: ExtendedPublicKey,
@@ -28,7 +28,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
             is DerivationParams.Default -> blockchain.derivationPath(derivation.style)
         }
 
-        return makeWalletManager(
+        return createWalletManager(
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(
                 seedKey = seedKey,
@@ -40,14 +40,18 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
 
     /**
      * Creates manager initializer for twin cards
+     * @param walletPublicKey: Public Key of the wallet
+     * @param pairPublicKey: Derived ExtendedPublicKey by the card
+     * @param blockchain: blockchain to create.
+     * @param curve: Card curve
      */
-    fun makeTwinWalletManager(
+    fun createTwinWalletManager(
         walletPublicKey: ByteArray,
         pairPublicKey: ByteArray,
         blockchain: Blockchain = Blockchain.Bitcoin,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
-        return makeWalletManager(
+        return createWalletManager(
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(walletPublicKey, null, null),
             pairPublicKey = pairPublicKey,
@@ -57,20 +61,23 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
 
     /**
      * Legacy wallet manager initializer
+     * @param blockchain: Blockhain to create.
+     * @param walletPublicKey Wallet's publicKey
+     * @param curve: card curve
      */
-    fun makeLegacyWalletManager(
+    fun createLegacyWalletManager(
         blockchain: Blockchain,
         walletPublicKey: ByteArray,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
-        return makeWalletManager(
+        return createWalletManager(
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(walletPublicKey, null, null),
             curve = curve
         )
     }
 
-    private fun makeWalletManager(
+    private fun createWalletManager(
         blockchain: Blockchain,
         publicKey: Wallet.PublicKey,
         tokens: Collection<Token> = emptyList(), // TODO, probably unusable
