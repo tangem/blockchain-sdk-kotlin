@@ -19,8 +19,6 @@ import com.tangem.blockchain.blockchains.cosmos.CosmosWalletManager
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
 import com.tangem.blockchain.blockchains.dogecoin.DogecoinWalletManager
-import com.tangem.blockchain.blockchains.ducatus.DucatusWalletManager
-import com.tangem.blockchain.blockchains.ducatus.network.DucatusNetworkService
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.getEthereumJsonRpcProviders
@@ -58,14 +56,8 @@ import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
 import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledNetworkProvider
 import com.tangem.blockchain.extensions.letNotBlank
-import com.tangem.blockchain.network.API_ADALITE
-import com.tangem.blockchain.network.API_KASPA
-import com.tangem.blockchain.network.API_TEZOS_BLOCKSCALE
-import com.tangem.blockchain.network.API_TEZOS_ECAD
-import com.tangem.blockchain.network.API_TEZOS_SMARTPY
-import com.tangem.blockchain.network.API_XRP_LEDGER_FOUNDATION
+import com.tangem.blockchain.network.*
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
-import com.tangem.blockchain.network.blockscout.BlockscoutNetworkProvider
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
@@ -288,14 +280,6 @@ class WalletManagerFactory(
             Blockchain.Solana, Blockchain.SolanaTestnet -> {
                 val clients = SolanaRpcClientBuilder().build(blockchain.isTestnet(), config)
                 SolanaWalletManager(wallet, clients)
-            }
-
-            Blockchain.Ducatus -> {
-                DucatusWalletManager(
-                    wallet,
-                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain),
-                    DucatusNetworkService()
-                )
             }
 
             Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama -> {
