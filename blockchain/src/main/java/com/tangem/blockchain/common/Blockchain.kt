@@ -45,7 +45,6 @@ enum class Blockchain(
     Cosmos("cosmos", "ATOM", "Cosmos"),
     CosmosTestnet("cosmos/test", "ATOM", "Cosmos Testnet"),
     Dogecoin("DOGE", "DOGE", "Dogecoin"),
-    Ducatus("DUC", "DUC", "Ducatus"),
     Ethereum("ETH", "ETH", "Ethereum"),
     EthereumTestnet("ETH/test", "ETH", "Ethereum Testnet"),
     EthereumClassic("ETC", "ETC", "Ethereum Classic"),
@@ -100,7 +99,6 @@ enum class Blockchain(
         BitcoinCash, BitcoinCashTestnet,
         Binance, BinanceTestnet,
         Litecoin,
-        Ducatus,
         Dogecoin,
         Dash,
         Kaspa,
@@ -122,7 +120,8 @@ enum class Blockchain(
         Gnosis,
         Optimism, OptimismTestnet,
         EthereumFair, EthereumPow, EthereumPowTestnet,
-        Kava, KavaTestnet, Cronos,
+        Kava, KavaTestnet,
+        Cronos,
         -> 18
     }
 
@@ -139,32 +138,43 @@ enum class Blockchain(
         }
     }
 
-    fun validateAddress(address: String): Boolean = getAddressService().validate(address)
-
-    private fun getAddressService(): AddressService = when (this) {
-        Bitcoin, BitcoinTestnet, Litecoin, Dogecoin, Ducatus, Dash,
-        Ravencoin, RavencoinTestnet -> BitcoinAddressService(this)
-        BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
-        Arbitrum, ArbitrumTestnet,
-        Ethereum, EthereumTestnet, EthereumClassic, EthereumClassicTestnet,
-        BSC, BSCTestnet, Polygon, PolygonTestnet, Avalanche, AvalancheTestnet,
-        Fantom, FantomTestnet, Gnosis, Optimism, OptimismTestnet,
-        EthereumFair, EthereumPow, EthereumPowTestnet,
-        Kava, KavaTestnet, Cronos,
-        -> EthereumAddressService()
-        RSK -> RskAddressService()
-        Cardano, CardanoShelley -> CardanoAddressService(this)
-        XRP -> XrpAddressService()
-        Binance -> BinanceAddressService()
-        BinanceTestnet -> BinanceAddressService(true)
-        Polkadot, PolkadotTestnet, Kusama -> PolkadotAddressService(this)
-        Stellar, StellarTestnet -> StellarAddressService()
-        Solana, SolanaTestnet -> SolanaAddressService()
-        Tezos -> TezosAddressService()
-        TON, TONTestnet, Cosmos, CosmosTestnet, TerraV1, TerraV2 -> TrustWalletAddressService(blockchain = this)
-        Tron, TronTestnet -> TronAddressService()
-        Kaspa -> KaspaAddressService()
-        Unknown -> throw Exception("unsupported blockchain")
+    private fun getAddressService(): AddressService {
+        return when (this) {
+            Bitcoin, BitcoinTestnet,
+            Litecoin,
+            Dogecoin,
+            Dash,
+            Ravencoin, RavencoinTestnet,
+            -> BitcoinAddressService(this)
+            BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
+            Arbitrum, ArbitrumTestnet,
+            Ethereum, EthereumTestnet,
+            EthereumClassic, EthereumClassicTestnet,
+            BSC, BSCTestnet,
+            Polygon, PolygonTestnet,
+            Avalanche, AvalancheTestnet,
+            Fantom, FantomTestnet,
+            Gnosis,
+            Optimism, OptimismTestnet,
+            EthereumFair,
+            EthereumPow, EthereumPowTestnet,
+            Kava, KavaTestnet,
+            Cronos,
+            -> EthereumAddressService()
+            RSK -> RskAddressService()
+            Cardano, CardanoShelley -> CardanoAddressService(this)
+            XRP -> XrpAddressService()
+            Binance -> BinanceAddressService()
+            BinanceTestnet -> BinanceAddressService(true)
+            Polkadot, PolkadotTestnet, Kusama -> PolkadotAddressService(this)
+            Stellar, StellarTestnet -> StellarAddressService()
+            Solana, SolanaTestnet -> SolanaAddressService()
+            Tezos -> TezosAddressService()
+            TON, TONTestnet, Cosmos, CosmosTestnet, TerraV1, TerraV2 -> TrustWalletAddressService(blockchain = this)
+            Tron, TronTestnet -> TronAddressService()
+            Kaspa -> KaspaAddressService()
+            Unknown -> throw Exception("unsupported blockchain")
+        }
     }
 
     fun getShareScheme(): String? = when (this) {
@@ -197,7 +207,6 @@ enum class Blockchain(
         BSCTestnet -> "https://testnet.bscscan.com/"
         Cardano, CardanoShelley -> "https://www.blockchair.com/cardano/"
         Dogecoin -> "https://blockchair.com/dogecoin/"
-        Ducatus -> "https://insight.ducatus.io/#/DUC/mainnet/"
         Ethereum -> "https://etherscan.io/"
         EthereumTestnet -> "https://goerli.etherscan.io/"
         EthereumClassic -> "https://blockscout.com/etc/mainnet/"
@@ -352,7 +361,6 @@ enum class Blockchain(
             BSC, BSCTestnet,
             Fantom, FantomTestnet,
             Litecoin,
-            Ducatus,
             RSK,
             Dogecoin,
             Tron, TronTestnet,
@@ -461,7 +469,7 @@ enum class Blockchain(
         if (style == DerivationStyle.NEW && this.isEvm()) return ethCoinType
 
         return when (this) {
-            Bitcoin, Ducatus -> 0
+            Bitcoin -> 0
             Litecoin -> 2
             Dogecoin -> 3
             Dash -> 5
@@ -544,7 +552,7 @@ enum class Blockchain(
         else -> false
     }
 
-    fun tokenTransactionFeePaidInNetworkCurrency(): Boolean = when(this) {
+    fun tokenTransactionFeePaidInNetworkCurrency(): Boolean = when (this) {
         TerraV1 -> true
         else -> false
     }
