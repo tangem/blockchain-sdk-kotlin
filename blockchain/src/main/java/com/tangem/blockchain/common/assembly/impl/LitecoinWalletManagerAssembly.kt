@@ -7,7 +7,7 @@ import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 
-object LitecoinWalletManagerAssembly : WalletManagerAssembly<LitecoinWalletManager>() {
+internal object LitecoinWalletManagerAssembly : WalletManagerAssembly<LitecoinWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): LitecoinWalletManager {
         with(input.wallet) {
