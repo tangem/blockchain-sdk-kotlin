@@ -9,7 +9,7 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.network.API_KASPA
 
-object KaspaWalletManagerAssembly : WalletManagerAssembly<KaspaWalletManager>() {
+internal object KaspaWalletManagerAssembly : WalletManagerAssembly<KaspaWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): KaspaWalletManager {
         val providers: List<KaspaNetworkProvider> = buildList {
