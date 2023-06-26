@@ -10,7 +10,7 @@ import com.tangem.blockchain.network.API_TEZOS_BLOCKSCALE
 import com.tangem.blockchain.network.API_TEZOS_ECAD
 import com.tangem.blockchain.network.API_TEZOS_SMARTPY
 
-object TezosWalletManagerAssembly : WalletManagerAssembly<TezosWalletManager>() {
+internal object TezosWalletManagerAssembly : WalletManagerAssembly<TezosWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): TezosWalletManager {
         with(input.wallet) {

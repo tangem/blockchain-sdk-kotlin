@@ -11,7 +11,7 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.extensions.letNotBlank
 import com.tangem.blockchain.network.API_XRP_LEDGER_FOUNDATION
 
-object XRPWalletManagerAssembly : WalletManagerAssembly<XrpWalletManager>() {
+internal object XRPWalletManagerAssembly : WalletManagerAssembly<XrpWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): XrpWalletManager {
         val networkService = XrpNetworkService(
