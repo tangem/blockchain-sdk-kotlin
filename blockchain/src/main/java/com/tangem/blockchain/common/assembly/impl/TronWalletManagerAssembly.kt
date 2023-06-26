@@ -9,7 +9,7 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.extensions.letNotBlank
 
-object TronWalletManagerAssembly : WalletManagerAssembly<TronWalletManager>() {
+internal object TronWalletManagerAssembly : WalletManagerAssembly<TronWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): TronWalletManager {
         with(input.wallet) {
