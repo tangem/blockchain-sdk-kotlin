@@ -7,7 +7,7 @@ import com.tangem.blockchain.blockchains.ravencoin.RavencoinWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 
-object RavencoinWalletManagerAssembly : WalletManagerAssembly<RavencoinWalletManager>() {
+internal object RavencoinWalletManagerAssembly : WalletManagerAssembly<RavencoinWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): RavencoinWalletManager {
         with(input.wallet) {

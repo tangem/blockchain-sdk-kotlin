@@ -6,7 +6,7 @@ import com.tangem.blockchain.blockchains.ducatus.network.DucatusNetworkService
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 
-object DucatusWalletManagerAssembly : WalletManagerAssembly<DucatusWalletManager>() {
+internal object DucatusWalletManagerAssembly : WalletManagerAssembly<DucatusWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): DucatusWalletManager {
         with(input.wallet) {

@@ -8,7 +8,7 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.extensions.letNotBlank
 
-object StellarWalletManagerAssembly : WalletManagerAssembly<StellarWalletManager>() {
+internal object StellarWalletManagerAssembly : WalletManagerAssembly<StellarWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): StellarWalletManager {
         with(input.wallet) {

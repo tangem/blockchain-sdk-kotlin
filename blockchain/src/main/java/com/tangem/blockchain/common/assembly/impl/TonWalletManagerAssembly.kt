@@ -5,7 +5,7 @@ import com.tangem.blockchain.blockchains.ton.TonWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 
-object TonWalletManagerAssembly : WalletManagerAssembly<TonWalletManager>() {
+internal object TonWalletManagerAssembly : WalletManagerAssembly<TonWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): TonWalletManager {
         return TonWalletManager(
