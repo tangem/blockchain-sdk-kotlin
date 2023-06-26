@@ -7,7 +7,7 @@ import com.tangem.blockchain.blockchains.dogecoin.DogecoinWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 
-object DogecoinWalletManagerAssembly : WalletManagerAssembly<DogecoinWalletManager>() {
+internal object DogecoinWalletManagerAssembly : WalletManagerAssembly<DogecoinWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): DogecoinWalletManager {
         with(input.wallet) {

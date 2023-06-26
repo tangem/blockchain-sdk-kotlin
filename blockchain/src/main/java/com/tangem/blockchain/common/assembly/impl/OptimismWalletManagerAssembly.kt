@@ -7,7 +7,7 @@ import com.tangem.blockchain.blockchains.optimism.OptimismWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 
-object OptimismWalletManagerAssembly : WalletManagerAssembly<OptimismWalletManager>() {
+internal object OptimismWalletManagerAssembly : WalletManagerAssembly<OptimismWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): OptimismWalletManager {
         with(input.wallet) {

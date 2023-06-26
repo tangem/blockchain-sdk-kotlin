@@ -5,7 +5,7 @@ import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkService
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 
-object PolkadotWalletManagerAssembly : WalletManagerAssembly<PolkadotWalletManager>() {
+internal object PolkadotWalletManagerAssembly : WalletManagerAssembly<PolkadotWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): PolkadotWalletManager {
         return PolkadotWalletManager(
