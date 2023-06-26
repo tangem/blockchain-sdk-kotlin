@@ -4,12 +4,6 @@ import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.common.extensions.toDecompressedPublicKey
-import org.kethereum.crypto.api.ec.ECDSASignature
-import org.kethereum.crypto.determineRecId
-import org.kethereum.crypto.impl.ec.canonicalise
-import org.kethereum.extensions.transactions.encode
-import org.kethereum.model.PublicKey
-import org.kethereum.model.SignatureData
 import java.math.BigInteger
 
 class EthereumTransactionBuilder(
@@ -110,21 +104,7 @@ class EthereumTransactionBuilder(
     }
 
     fun buildToSend(signature: ByteArray, transactionToSign: CompiledEthereumTransaction): ByteArray {
-        val r = BigInteger(1, signature.copyOfRange(0, 32))
-        val s = BigInteger(1, signature.copyOfRange(32, 64))
-
-        val ecdsaSignature = ECDSASignature(r, s).canonicalise()
-
-        val recId = ecdsaSignature.determineRecId(
-            transactionToSign.hash,
-            PublicKey(walletPublicKey)
-        )
-        val chainId = blockchain.getChainId()
-            ?: throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
-        val v = (recId + 27 + 8 + (chainId * 2)).toBigInteger()
-        val signatureData = SignatureData(ecdsaSignature.r, ecdsaSignature.s, v)
-
-        return transactionToSign.transaction.encode(signatureData)
+        return EthereumUtils.prepareTransactionToSend(signature, transactionToSign, walletPublicKey, blockchain)
     }
 }
 
