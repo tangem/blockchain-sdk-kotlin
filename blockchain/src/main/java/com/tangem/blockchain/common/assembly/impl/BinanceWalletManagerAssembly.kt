@@ -7,7 +7,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 
-object BinanceWalletManagerAssembly : WalletManagerAssembly<BinanceWalletManager>() {
+internal object BinanceWalletManagerAssembly : WalletManagerAssembly<BinanceWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): BinanceWalletManager {
         with(input.wallet) {
