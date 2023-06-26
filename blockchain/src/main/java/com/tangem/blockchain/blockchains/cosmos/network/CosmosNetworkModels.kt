@@ -50,6 +50,7 @@ data class CosmosTxResponse(
 data class CosmosTxInfo(
     @Json(name = "height") val height: Long,
     @Json(name = "txhash") val txhash: String,
+    @Json(name = "code") val code: Int,
 )
 
 @JsonClass(generateAdapter = true)
