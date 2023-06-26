@@ -11,7 +11,7 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.extensions.letNotBlank
 import com.tangem.blockchain.network.API_ADALITE
 
-object CardanoWalletManagerAssembly : WalletManagerAssembly<CardanoWalletManager>() {
+internal object CardanoWalletManagerAssembly : WalletManagerAssembly<CardanoWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): CardanoWalletManager {
         with(input.wallet) {
