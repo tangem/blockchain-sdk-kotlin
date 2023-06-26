@@ -7,7 +7,7 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.extensions.letNotBlank
 
-object TerraV1WalletManagerAssembly : WalletManagerAssembly<CosmosWalletManager>() {
+internal object TerraV1WalletManagerAssembly : WalletManagerAssembly<CosmosWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): CosmosWalletManager {
         val providers = buildList {
