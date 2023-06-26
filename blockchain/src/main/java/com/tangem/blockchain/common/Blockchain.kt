@@ -138,6 +138,8 @@ enum class Blockchain(
         }
     }
 
+    fun validateAddress(address: String): Boolean = getAddressService().validate(address)
+
     private fun getAddressService(): AddressService {
         return when (this) {
             Bitcoin, BitcoinTestnet,
