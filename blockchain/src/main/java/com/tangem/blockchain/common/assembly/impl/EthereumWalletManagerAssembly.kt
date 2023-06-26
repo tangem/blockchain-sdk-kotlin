@@ -8,7 +8,7 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 
-object EthereumWalletManagerAssembly : WalletManagerAssembly<EthereumWalletManager>() {
+internal object EthereumWalletManagerAssembly : WalletManagerAssembly<EthereumWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): EthereumWalletManager {
         with(input.wallet) {
