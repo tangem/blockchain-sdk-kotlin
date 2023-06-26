@@ -5,7 +5,7 @@ import com.tangem.blockchain.blockchains.solana.SolanaWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 
-object SolanaWalletManagerAssembly : WalletManagerAssembly<SolanaWalletManager>() {
+internal object SolanaWalletManagerAssembly : WalletManagerAssembly<SolanaWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): SolanaWalletManager {
         with(input.wallet) {

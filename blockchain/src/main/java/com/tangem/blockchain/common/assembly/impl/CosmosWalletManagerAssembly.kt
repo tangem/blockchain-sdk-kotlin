@@ -7,7 +7,7 @@ import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 
-object CosmosWalletManagerAssembly : WalletManagerAssembly<CosmosWalletManager>() {
+internal object CosmosWalletManagerAssembly : WalletManagerAssembly<CosmosWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): CosmosWalletManager {
         with(input.wallet) {
