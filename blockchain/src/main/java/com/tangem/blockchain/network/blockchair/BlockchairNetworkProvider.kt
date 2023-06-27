@@ -19,13 +19,12 @@ import retrofit2.HttpException
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
+import java.util.*
 
 open class BlockchairNetworkProvider(
     blockchain: Blockchain,
     private val apiKey: String? = null,
-    private val authorizationToken: String? = null,
+    private val authorizationToken: String? = null
 ) : BitcoinNetworkProvider {
 
     override val host: String = createHost(blockchain)
@@ -46,7 +45,7 @@ open class BlockchairNetworkProvider(
     }
 
     private suspend fun <T> makeRequestUsingKeyOnlyWhenNeeded(
-        block: suspend () -> T,
+        block: suspend () -> T
     ): T {
         return try {
             retryIO { block() }
@@ -76,20 +75,14 @@ open class BlockchairNetworkProvider(
             val addressInfo = addressData.addressInfo!!
             val script = addressInfo.script!!.hexToBytes()
 
-            val unspentOutputs = addressData.unspentOutputs!!
-                .filter {
-                    // Unspents with blockId lower than or equal 1 is not currently available
-                    // This unspents related to transaction in Mempool and are pending. We should ignore this unspents
-                    (it.block ?: 0) > 1
-                }
-                .map {
-                    BitcoinUnspentOutput(
-                        amount = it.amount!!.toBigDecimal().movePointLeft(decimals),
-                        outputIndex = it.index!!.toLong(),
-                        transactionHash = it.transactionHash!!.hexToBytes(),
-                        outputScript = script
-                    )
-                }
+            val unspentOutputs = addressData.unspentOutputs!!.map {
+                BitcoinUnspentOutput(
+                    amount = it.amount!!.toBigDecimal().movePointLeft(decimals),
+                    outputIndex = it.index!!.toLong(),
+                    transactionHash = it.transactionHash!!.hexToBytes(),
+                    outputScript = script
+                )
+            }
 
             val transactions = addressData.transactions!!.map {
                 BasicTransactionData(
@@ -110,6 +103,7 @@ open class BlockchairNetworkProvider(
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
+
     }
 
     override suspend fun getFee(): Result<BitcoinFee> {
