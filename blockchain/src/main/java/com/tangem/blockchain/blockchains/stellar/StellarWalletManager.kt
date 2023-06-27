@@ -14,8 +14,7 @@ class StellarWalletManager(
     wallet: Wallet,
     private val transactionBuilder: StellarTransactionBuilder,
     private val networkProvider: StellarNetworkProvider,
-    presetTokens: MutableSet<Token>
-) : WalletManager(wallet, presetTokens), TransactionSender, SignatureCountValidator {
+) : WalletManager(wallet), TransactionSender, SignatureCountValidator {
 
     override val currentHost: String
         get() = networkProvider.host
