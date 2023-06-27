@@ -205,7 +205,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
     private fun loadWallet(onSuccess: () -> Unit, onFailure: (BlockchainSdkError) -> Unit) = with(binding) {
         containerSelectWalletWithBlockchain.tvBlockchainAddresses.text = ""
         try {
-            walletManager = WalletManagerFactory().makeWalletManagerForApp(
+            walletManager = WalletManagerFactory(BlockchainSdkConfig()).makeWalletManagerForApp(
                     scanResponse = scanResponse,
                     blockchain = Blockchain.fromId(selectedBlockchain.id),
                     derivationParams = scanResponse.card.derivationParams(null)
