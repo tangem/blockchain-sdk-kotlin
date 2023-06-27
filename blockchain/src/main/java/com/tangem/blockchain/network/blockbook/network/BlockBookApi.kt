@@ -87,11 +87,7 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
                     .build()
             )
             .await()
-            .unpack<List<GetUtxoResponseItem>>()
-            .filter {
-                // filter unconfirmed UTXOs, to not block sending tx
-                it.confirmations > 0
-            }
+            .unpack()
     }
 
     private inline fun <reified T> Response.unpack(): T {
