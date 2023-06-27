@@ -73,9 +73,7 @@ class CosmosNetworkService(
         return try {
             val txResult = multiJsonRpcProvider.performRequest(CosmosRestProvider::txs, requestBody)
             val txInfo = txResult.successOr { return it }.txInfo
-
-            if (txInfo.code == 0) Result.Success(txInfo.txhash)
-            else Result.Failure(BlockchainSdkError.FailedToSendException)
+            Result.Success(txInfo.txhash)
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
