@@ -24,8 +24,7 @@ internal object EthereumWalletManagerAssembly : WalletManagerAssembly<EthereumWa
                         blockchain = blockchain,
                         tokens = input.config.blockcypherTokens
                     )
-                ),
-                presetTokens = input.presetTokens
+                )
             )
         }
     }

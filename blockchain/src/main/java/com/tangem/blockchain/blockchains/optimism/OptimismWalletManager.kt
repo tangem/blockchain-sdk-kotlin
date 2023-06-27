@@ -27,8 +27,7 @@ class OptimismWalletManager(
     wallet: Wallet,
     transactionBuilder: EthereumTransactionBuilder,
     networkProvider: EthereumNetworkProvider,
-    presetTokens: MutableSet<Token>,
-) : EthereumWalletManager(wallet, transactionBuilder, networkProvider, presetTokens) {
+) : EthereumWalletManager(wallet, transactionBuilder, networkProvider) {
 
     private var lastLayer1FeeAmount: Amount? = null
 
