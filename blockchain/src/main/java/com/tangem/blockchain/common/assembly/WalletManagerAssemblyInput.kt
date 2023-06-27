@@ -11,6 +11,5 @@ import com.tangem.common.card.EllipticCurve
 internal class WalletManagerAssemblyInput(
     val wallet: Wallet,
     val config: BlockchainSdkConfig,
-    val presetTokens: MutableSet<Token>,
     val curve: EllipticCurve
 )

@@ -27,8 +27,7 @@ internal object StellarWalletManagerAssembly : WalletManagerAssembly<StellarWall
             return StellarWalletManager(
                 this,
                 StellarTransactionBuilder(networkService, publicKey.blockchainKey),
-                networkService,
-                input.presetTokens
+                networkService
             )
         }
     }
