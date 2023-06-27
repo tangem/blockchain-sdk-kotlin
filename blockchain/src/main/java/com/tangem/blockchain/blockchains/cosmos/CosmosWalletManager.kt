@@ -97,6 +97,7 @@ class CosmosWalletManager(
                         .movePointLeft(wallet.blockchain.decimals())
                         .setScale(wallet.blockchain.decimals(), RoundingMode.DOWN)
                     tax(amount)?.let { feeValue += it }
+                    cosmosChain.getExtraFee(amount)?.let { feeValue += it }
                     Amount(value = feeValue, blockchain = wallet.blockchain)
                 }
 
