@@ -80,21 +80,18 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
     private fun createWalletManager(
         blockchain: Blockchain,
         publicKey: Wallet.PublicKey,
-        tokens: Collection<Token> = emptyList(), // TODO, probably unusable
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
         if (checkIfWrongKey(curve, publicKey)) return null
 
         val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
-        val mutableTokens = tokens.toMutableSet()
-        val wallet = Wallet(blockchain, addresses, publicKey, mutableTokens)
+        val wallet = Wallet(blockchain, addresses, publicKey, setOf())
 
         return getAssembly(blockchain).make(
             input = WalletManagerAssemblyInput(
                 wallet = wallet,
                 config = config,
-                presetTokens = mutableTokens,
                 curve = curve
             )
         )
