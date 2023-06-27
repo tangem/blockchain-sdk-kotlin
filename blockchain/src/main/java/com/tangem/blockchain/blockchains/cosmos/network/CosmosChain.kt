@@ -1,7 +1,6 @@
 package com.tangem.blockchain.blockchains.cosmos.network
 
 import androidx.annotation.VisibleForTesting
-import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.FeeSelectionState
@@ -13,7 +12,6 @@ sealed interface CosmosChain {
     val blockchain: Blockchain
     val chainId: String
     fun gasPrices(amountType: AmountType): List<BigDecimal>
-    fun getExtraFee(amount: Amount): BigDecimal? = null
 
     // Often times the value specified in Keplr is not enough:
     // >>> out of gas in location: WriteFlat; gasWanted: 76012, gasUsed: 76391: out of gas
@@ -64,17 +62,9 @@ sealed interface CosmosChain {
         override val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Forbids
         override val tokenDenominationByContractAddress: Map<String, String> = mapOf("uusd" to "uusd")
         override val taxPercentByContractAddress: Map<String, BigDecimal> = mapOf("uusd" to BigDecimal("0.2"))
-
-        // Stability or "spread" fee. Applied to both main currency and tokens
-        // https://classic-docs.terra.money/docs/learn/fees.html#spread-fee
-        private val minimumSpreadFeePercentage = BigDecimal("0.005") // 0.5%
         override fun gasPrices(amountType: AmountType): List<BigDecimal> = when (amountType) {
             AmountType.Coin -> listOf(BigDecimal(28.325))
             else -> listOf(BigDecimal(1.0))
-        }
-
-        override fun getExtraFee(amount: Amount): BigDecimal? {
-            return amount.value?.times(minimumSpreadFeePercentage)
         }
     }
 
