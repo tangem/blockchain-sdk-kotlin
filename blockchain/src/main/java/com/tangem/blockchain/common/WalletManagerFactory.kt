@@ -165,10 +165,6 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
                 SolanaWalletManagerAssembly
             }
 
-            Blockchain.Ducatus -> {
-                DucatusWalletManagerAssembly
-            }
-
             Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama -> {
                 PolkadotWalletManagerAssembly
             }
