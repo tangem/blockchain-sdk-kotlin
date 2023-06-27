@@ -14,8 +14,7 @@ class BinanceWalletManager(
         wallet: Wallet,
         private val transactionBuilder: BinanceTransactionBuilder,
         private val networkProvider: BinanceNetworkProvider,
-        presetTokens: MutableSet<Token>
-) : WalletManager(wallet, presetTokens), TransactionSender {
+) : WalletManager(wallet), TransactionSender {
 
     private val blockchain = wallet.blockchain
 
