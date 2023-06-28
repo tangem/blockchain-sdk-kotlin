@@ -2,7 +2,7 @@ package com.tangem.blockchain.common.txhistory
 
 import com.tangem.blockchain.extensions.Result
 
-internal object DefaultTxHistoryProvider : TransactionHistoryProvider {
+internal object DefaultTransactionHistoryProvider : TransactionHistoryProvider {
     override suspend fun getTransactionHistoryState(address: String): TransactionHistoryState =
         TransactionHistoryState.NotImplemented
 
