@@ -1,6 +1,7 @@
 package com.tangem.blockchain.common
 
-import com.tangem.blockchain.common.txhistory.*
+import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
+import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.isAboveZero
@@ -13,8 +14,8 @@ import java.util.EnumSet
 abstract class WalletManager(
     var wallet: Wallet,
     val cardTokens: MutableSet<Token> = mutableSetOf(),
-    txHistoryProvider: TransactionHistoryProvider = DefaultTxHistoryProvider,
-) : TransactionHistoryProvider by txHistoryProvider {
+    transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
+) : TransactionHistoryProvider by transactionHistoryProvider {
 
     open val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Unspecified
 
