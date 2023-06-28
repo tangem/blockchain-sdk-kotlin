@@ -7,15 +7,10 @@ import java.math.BigDecimal
 /**
 [REDACTED_AUTHOR]
  */
-fun DotAmount.toBigDecimal(network: SS58Type.Network): BigDecimal {
-    val decimals = network.amountUnits.main.decimals
+fun DotAmount.toBigDecimal(decimals: Int): BigDecimal {
     return if (decimals == 0) {
         value.toBigDecimal()
     } else {
         value.toBigDecimal().movePointLeft(decimals)
     }
-}
-
-internal fun BigDecimal.toDot(network: SS58Type.Network): DotAmount {
-    return DotAmount.from(this.toDouble(), network.amountUnits)
 }

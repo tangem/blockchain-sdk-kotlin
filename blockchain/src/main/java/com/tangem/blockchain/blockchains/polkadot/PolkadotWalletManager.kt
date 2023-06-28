@@ -1,21 +1,13 @@
 package com.tangem.blockchain.blockchains.polkadot
 
-import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkService
-import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.existentialDeposit
-import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.hosts
-import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.toBigDecimal
+import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
-import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.common.CompletionResult
-import com.tangem.common.extensions.toHexString
-import io.emeraldpay.polkaj.ss58.SS58Type
 import io.emeraldpay.polkaj.tx.ExtrinsicContext
-import io.emeraldpay.polkaj.types.Address
-import io.emeraldpay.polkaj.types.DotAmount
 import java.math.BigDecimal
 import java.util.*
 
@@ -24,31 +16,33 @@ import java.util.*
  */
 class PolkadotWalletManager(
     wallet: Wallet,
-    val network: SS58Type.Network,
+    private val transactionBuilder: PolkadotTransactionBuilder,
+    private val networkProvider: PolkadotNetworkProvider,
 ) : WalletManager(wallet), TransactionSender, ExistentialDepositProvider {
 
     private lateinit var currentContext: ExtrinsicContext
 
-    private val accountAddress = Address(network, wallet.publicKey.blockchainKey)
-    private val txBuilder = PolkadotTransactionBuilder(network)
+    private val existentialDeposit: BigDecimal = when (wallet.blockchain) {
+        Blockchain.Polkadot -> BigDecimal.ONE
+        Blockchain.PolkadotTestnet -> 0.01.toBigDecimal()
+        Blockchain.Kusama -> 0.000033333333.toBigDecimal()
+        Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> 0.0000000005.toBigDecimal()
+        else -> throw IllegalStateException("${wallet.blockchain} isn't supported")
+    }
 
-    override fun getExistentialDeposit(): BigDecimal = network.existentialDeposit
+    override fun getExistentialDeposit() = existentialDeposit
 
-    private val networkServices = network.hosts.map { PolkadotNetworkService(network, it) }
-    private val multiNetworkProvider: MultiNetworkProvider<PolkadotNetworkService> =
-        MultiNetworkProvider(networkServices)
+    private val txBuilder = PolkadotTransactionBuilder(wallet.blockchain)
 
     override val currentHost: String
-        get() = multiNetworkProvider.currentProvider.host
+        get() = networkProvider.host
 
     override suspend fun update() {
-        val dotAmount: DotAmount = multiNetworkProvider.performRequest {
-            getBalance(accountAddress)
-        }.successOr {
+        val amount = networkProvider.getBalance(wallet.address).successOr {
             wallet.removeAllTokens()
             throw (it.error as BlockchainSdkError)
         }
-        wallet.setCoinValue(dotAmount.toBigDecimal(network))
+        wallet.setCoinValue(amount)
         updateRecentTransactions()
     }
 
@@ -67,21 +61,17 @@ class PolkadotWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
-        currentContext = multiNetworkProvider.performRequest {
-            extrinsicContext(accountAddress)
-        }.successOr { return it }
+        currentContext = networkProvider.extrinsicContext(wallet.address).successOr { return it }
 
         val signedTransaction = sign(
             amount = amount,
-            sourceAddress = accountAddress,
-            destinationAddress = Address.from(destination),
+            sourceAddress = wallet.address,
+            destinationAddress = destination,
             context = currentContext,
             signer = DummyPolkadotTransactionSigner()
         ).successOr { return it }
 
-        val fee = multiNetworkProvider.performRequest {
-            getFee(signedTransaction)
-        }.successOr { return it }
+        val fee = networkProvider.getFee(signedTransaction).successOr { return it }
         val feeAmount = amount.copy(value = fee)
 
         return Result.Success(listOf(feeAmount))
@@ -102,7 +92,7 @@ class PolkadotWalletManager(
         if (totalToSend == balance) return errors
 
         val remainBalance = balance.minus(totalToSend)
-        if (remainBalance < getExistentialDeposit()) {
+        if (remainBalance < existentialDeposit) {
             errors.add(TransactionError.AmountLowerExistentialDeposit)
         }
         return errors
@@ -116,34 +106,32 @@ class PolkadotWalletManager(
     }
 
     private suspend fun sendCoin(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val destinationAddress = Address.from(transactionData.destinationAddress)
-        val destinationAccountIsUnderfunded = accountIsUnderfunded(destinationAddress).successOr {
+        val destinationAddress = transactionData.destinationAddress
+        val isDestinationAccountIsUnderfunded = isAccountUnderfunded(destinationAddress).successOr {
             return SimpleResult.Failure(it.error)
         }
 
-        if (destinationAccountIsUnderfunded) {
+        if (isDestinationAccountIsUnderfunded) {
             val amountValueToSend = transactionData.amount.value ?: BigDecimal.ZERO
-            if (amountValueToSend < getExistentialDeposit()) {
-                val minReserve = Amount(transactionData.amount, getExistentialDeposit())
+            if (amountValueToSend < existentialDeposit) {
+                val minReserve = Amount(transactionData.amount, existentialDeposit)
                 return SimpleResult.Failure(BlockchainSdkError.CreateAccountUnderfunded(wallet.blockchain, minReserve))
             }
         }
 
         val signedTransaction = sign(
             amount = transactionData.amount,
-            sourceAddress = accountAddress,
+            sourceAddress = wallet.address,
             destinationAddress = destinationAddress,
             context = currentContext,
             signer = signer
         ).successOr { return SimpleResult.Failure(it.error) }
 
-        val hash256 = multiNetworkProvider.performRequest {
-            sendTransaction(signedTransaction)
-        }.successOr {
+        val txHash = networkProvider.sendTransaction(signedTransaction).successOr {
             return SimpleResult.Failure(it.error)
         }
 
-        transactionData.hash = hash256.bytes.toHexString()
+        transactionData.hash = txHash
         transactionData.date = Calendar.getInstance()
         wallet.addOutgoingTransaction(transactionData)
 
@@ -152,8 +140,8 @@ class PolkadotWalletManager(
 
     private suspend fun sign(
         amount: Amount,
-        sourceAddress: Address,
-        destinationAddress: Address,
+        sourceAddress: String,
+        destinationAddress: String,
         context: ExtrinsicContext,
         signer: TransactionSigner,
     ): Result<ByteArray> {
@@ -170,12 +158,10 @@ class PolkadotWalletManager(
         }
     }
 
-    private suspend fun accountIsUnderfunded(address: Address): Result<Boolean> {
-        val destinationBalance = multiNetworkProvider.performRequest {
-            getBalance(address)
-        }.successOr { return it }.toBigDecimal(network)
+    private suspend fun isAccountUnderfunded(address: String): Result<Boolean> {
+        val destinationBalance = networkProvider.getBalance(address).successOr { return it }
         val isUnderfunded =
-            destinationBalance == BigDecimal.ZERO || destinationBalance < getExistentialDeposit()
+            destinationBalance == BigDecimal.ZERO || destinationBalance < existentialDeposit
         return Result.Success(isUnderfunded)
     }
 }
