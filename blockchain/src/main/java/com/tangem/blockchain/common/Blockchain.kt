@@ -83,6 +83,8 @@ enum class Blockchain(
     TerraV1("terra", "LUNC", "Terra Classic"),
     TerraV2("terra-2", "LUNA", "Terra"),
     Cronos("cronos", "CRO", "Cronos"),
+    AlephZero("aleph-zero", "AZERO", "Aleph Zero"),
+    AlephZeroTestnet("aleph-zero/test", "TZERO", "Aleph Zero Testnet"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -108,7 +110,7 @@ enum class Blockchain(
         TON, TONTestnet,
         -> 9
         Polkadot -> 10
-        PolkadotTestnet, Kusama -> 12
+        PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet -> 12
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet,
         EthereumClassic, EthereumClassicTestnet,
@@ -168,7 +170,7 @@ enum class Blockchain(
             XRP -> XrpAddressService()
             Binance -> BinanceAddressService()
             BinanceTestnet -> BinanceAddressService(true)
-            Polkadot, PolkadotTestnet, Kusama -> PolkadotAddressService(this)
+            Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet -> PolkadotAddressService(this)
             Stellar, StellarTestnet -> StellarAddressService()
             Solana, SolanaTestnet -> SolanaAddressService()
             Tezos -> TezosAddressService()
@@ -249,6 +251,8 @@ enum class Blockchain(
         TerraV1 -> "https://finder.terra.money/classic/"
         TerraV2 -> "https://terrasco.pe/mainnet/"
         Cronos -> "https://cronoscan.com/"
+        AlephZero -> "https://alephzero.subscan.io/"
+        AlephZeroTestnet -> throw Exception("unsupported blockchain")
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -307,6 +311,7 @@ enum class Blockchain(
             EthereumPowTestnet -> "https://faucet.ethwscan.com"
             KavaTestnet -> "https://faucet.kava.io"
             CosmosTestnet -> "https://discord.com/channels/669268347736686612/953697793476821092"
+            AlephZeroTestnet -> "https://faucet.test.azero.dev/"
             else -> null
         }
     }
@@ -341,6 +346,7 @@ enum class Blockchain(
             Kava, KavaTestnet -> KavaTestnet
             Ravencoin, RavencoinTestnet -> RavencoinTestnet
             Cosmos, CosmosTestnet -> CosmosTestnet
+            AlephZero, AlephZeroTestnet -> AlephZeroTestnet
             else -> null
         }
     }
@@ -380,7 +386,7 @@ enum class Blockchain(
             Solana, SolanaTestnet,
             Cardano,
             CardanoShelley,
-            Polkadot, PolkadotTestnet, Kusama,
+            Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
             TON, TONTestnet,
             -> listOf(EllipticCurve.Ed25519)
         }
@@ -502,6 +508,7 @@ enum class Blockchain(
             Cosmos -> 118
             TerraV1, TerraV2 -> 330
             Cronos -> 10000025
+            AlephZero -> 643
             ArbitrumTestnet,
             AvalancheTestnet,
             BinanceTestnet,
@@ -522,6 +529,7 @@ enum class Blockchain(
             KavaTestnet,
             RavencoinTestnet,
             CosmosTestnet,
+            AlephZeroTestnet,
             Unknown,
             -> throw UnsupportedOperationException("Coin type not provided for: ${this.fullName}")
         }
