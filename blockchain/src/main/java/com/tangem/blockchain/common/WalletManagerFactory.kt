@@ -248,6 +248,7 @@ class WalletManagerFactory(
             Blockchain.EthereumPowTestnet,
             Blockchain.Kava, Blockchain.KavaTestnet,
             Blockchain.Cronos,
+            Blockchain.Telos, Blockchain.TelosTestnet,
             -> {
                 EthereumWalletManager(
                     wallet = wallet,
