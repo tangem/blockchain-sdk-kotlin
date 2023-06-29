@@ -80,13 +80,12 @@ class EthereumJsonRpcProvider(
 
     suspend fun getGasPrice() = createEthereumBody(EthereumMethod.GAS_PRICE).post()
 
-
     private fun createEthereumBody(method: EthereumMethod, vararg params: Any) =
         EthereumBody(method.value, params.toList())
 
     private fun createTokenBalanceCallObject(
         address: String,
-        contractAddress: String
+        contractAddress: String,
     ) = EthCallObject(
         to = contractAddress,
         data = "0x70a08231000000000000000000000000" + address.substring(2)
@@ -95,7 +94,7 @@ class EthereumJsonRpcProvider(
     private fun createTokenAllowanceCallObject(
         ownerAddress: String,
         contractAddress: String,
-        spenderAddress: String
+        spenderAddress: String,
     ) = EthCallObject(
         to = contractAddress,
         //5c9b5c6313a3746a1246d07bbedc0292da99f8e2000000000000000000000000e4c4693526e4e3a26f36311d3f80a193b2bae906
@@ -108,7 +107,7 @@ class EthereumJsonRpcProvider(
         decimals: Int,
         cardAddress: String,
         otp: ByteArray,
-        otpCounter: Int
+        otpCounter: Int,
     ): EthCallObject {
         val data: String = "0x" + EthereumUtils.createProcessData(
             cardAddress,
@@ -139,17 +138,17 @@ class EthereumJsonRpcProvider(
 
 data class EthereumTokenBalanceRequestData(
     val address: String,
-    val contractAddress: String
+    val contractAddress: String,
 )
 
 data class EthereumTokenAllowanceRequestData(
     val ownerAddress: String,
     val contractAddress: String,
-    val spenderAddress: String
+    val spenderAddress: String,
 )
 
 data class EthereumGasLimitRequestData(
     val to: String,
     val from: String,
-    val data: String?
+    val data: String?,
 )

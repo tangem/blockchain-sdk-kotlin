@@ -142,11 +142,11 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = "https://iceberg.ethereumpow.org/")
         )
         Blockchain.Kava -> listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://evm.kava.io"),
-            EthereumJsonRpcProvider(baseUrl = "https://evm2.kava.io"),
+            EthereumJsonRpcProvider(baseUrl = "https://evm.kava.io/"),
+            EthereumJsonRpcProvider(baseUrl = "https://evm2.kava.io/"),
         )
         Blockchain.KavaTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://evm.testnet.kava.io"),
+            EthereumJsonRpcProvider(baseUrl = "https://evm.testnet.kava.io/"),
         )
         Blockchain.Cronos -> listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://evm.cronos.org/"),
@@ -155,6 +155,14 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = "https://node.croswap.com/rpc/"),
             EthereumJsonRpcProvider(baseUrl = "https://cronos.blockpi.network/v1/rpc/public/"),
             EthereumJsonRpcProvider(baseUrl = "https://cronos-evm.publicnode.com/"),
+        )
+        Blockchain.Telos -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://mainnet.telos.net", postfixUrl = "evm"),
+            EthereumJsonRpcProvider(baseUrl = "https://api.kainosbp.com", postfixUrl = "evm"),
+            EthereumJsonRpcProvider(baseUrl = "https://telos-evm.rpc.thirdweb.com/")
+        )
+        Blockchain.TelosTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://telos-evm-testnet.rpc.thirdweb.com/"),
         )
         else -> throw IllegalStateException("$this isn't supported")
     }
