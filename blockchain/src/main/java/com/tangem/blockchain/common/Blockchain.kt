@@ -76,6 +76,8 @@ enum class Blockchain(
     EthereumPow("ETH-Pow", "ETHW", "EthereumPoW"),
     EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW Testnet"),
     Kaspa("KAS", "KAS", "Kaspa"),
+    Telos("TELOS", "TLOS", "Telos"),
+    TelosTestnet("TELOS/test", "TLOS", "Telos Testnet"),
     TON("The-Open-Network", "TON", "Ton"),
     TONTestnet("The-Open-Network/test", "TON", "Ton Testnet"),
     Ravencoin("ravencoin", "RVN", "Ravencoin"),
@@ -124,6 +126,7 @@ enum class Blockchain(
         EthereumFair, EthereumPow, EthereumPowTestnet,
         Kava, KavaTestnet,
         Cronos,
+        Telos, TelosTestnet,
         -> 18
     }
 
@@ -164,6 +167,7 @@ enum class Blockchain(
             EthereumPow, EthereumPowTestnet,
             Kava, KavaTestnet,
             Cronos,
+            Telos, TelosTestnet,
             -> EthereumAddressService()
             RSK -> RskAddressService()
             Cardano, CardanoShelley -> CardanoAddressService(this)
@@ -229,6 +233,8 @@ enum class Blockchain(
         Solana -> "https://explorer.solana.com/"
         SolanaTestnet -> "https://explorer.solana.com/"
         Tezos -> "https://tzkt.io/"
+        Telos -> "https://teloscan.io/"
+        TelosTestnet -> "https://testnet.teloscan.io/"
         TON -> "https://tonscan.org/"
         TONTestnet -> "https://testnet.tonscan.org/"
         Tron -> "https://tronscan.org/#/"
@@ -310,6 +316,7 @@ enum class Blockchain(
             OptimismTestnet -> "https://optimismfaucet.xyz" //another one https://faucet.paradigm.xyz
             EthereumPowTestnet -> "https://faucet.ethwscan.com"
             KavaTestnet -> "https://faucet.kava.io"
+            TelosTestnet -> "https://app.telos.net/testnet/developers"
             CosmosTestnet -> "https://discord.com/channels/669268347736686612/953697793476821092"
             AlephZeroTestnet -> "https://faucet.test.azero.dev/"
             else -> null
@@ -344,6 +351,7 @@ enum class Blockchain(
             EthereumPow, EthereumPowTestnet -> EthereumPowTestnet
             TON, TONTestnet -> TONTestnet
             Kava, KavaTestnet -> KavaTestnet
+            Telos, TelosTestnet -> TelosTestnet
             Ravencoin, RavencoinTestnet -> RavencoinTestnet
             Cosmos, CosmosTestnet -> CosmosTestnet
             AlephZero, AlephZeroTestnet -> AlephZeroTestnet
@@ -363,6 +371,7 @@ enum class Blockchain(
             Binance, BinanceTestnet,
             Ethereum, EthereumTestnet,
             Kava, KavaTestnet,
+            Telos, TelosTestnet,
             EthereumClassic, EthereumClassicTestnet,
             Polygon, PolygonTestnet,
             Avalanche, AvalancheTestnet,
@@ -417,6 +426,8 @@ enum class Blockchain(
             EthereumPowTestnet -> Chain.EthereumPowTestnet.id
             Kava -> Chain.Kava.id
             KavaTestnet -> Chain.KavaTestnet.id
+            Telos -> Chain.Telos.id
+            TelosTestnet -> Chain.TelosTestnet.id
             Cronos -> Chain.Cronos.id
             else -> null
         }
@@ -490,6 +501,7 @@ enum class Blockchain(
             Polkadot -> 354
             Kusama -> 434
             Kava -> 459
+            Telos -> 424
             Solana -> 501
             Binance -> 714
             Polygon -> 966
@@ -527,6 +539,7 @@ enum class Blockchain(
             OptimismTestnet,
             EthereumPowTestnet,
             KavaTestnet,
+            TelosTestnet,
             RavencoinTestnet,
             CosmosTestnet,
             AlephZeroTestnet,
