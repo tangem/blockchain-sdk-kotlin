@@ -11,7 +11,8 @@ import org.kethereum.model.Address
 import org.kethereum.model.PublicKey
 import java.util.*
 
-class RskAddressService : AddressService() {
+class RskAddressService : AddressService {
+
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String =
             PublicKey(
                 walletPublicKey.toDecompressedPublicKey().sliceArray(1..64)

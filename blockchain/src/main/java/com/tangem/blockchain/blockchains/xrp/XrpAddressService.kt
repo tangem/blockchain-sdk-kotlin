@@ -9,7 +9,7 @@ import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
 import org.kethereum.extensions.toBigInteger
 
-class XrpAddressService : AddressService() {
+class XrpAddressService : AddressService {
 
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         val canonicalPublicKey = canonizePublicKey(walletPublicKey)
