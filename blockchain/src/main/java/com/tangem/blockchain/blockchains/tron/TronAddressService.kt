@@ -9,7 +9,7 @@ import com.tangem.common.extensions.toByteArray
 import com.tangem.common.extensions.toDecompressedPublicKey
 import com.tangem.common.extensions.toHexString
 
-class TronAddressService : AddressService() {
+class TronAddressService : AddressService {
 
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         val decompressedPublicKey = walletPublicKey.toDecompressedPublicKey()
