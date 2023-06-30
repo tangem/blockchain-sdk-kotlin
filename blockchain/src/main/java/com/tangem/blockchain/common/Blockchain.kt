@@ -128,11 +128,15 @@ enum class Blockchain(
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): Set<Address> {
+        val addressService = getAddressService()
+
         return if (pairPublicKey != null) {
-            (getAddressService() as? MultisigAddressProvider)
+            (addressService as? MultisigAddressProvider)
                 ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()
+        } else if (addressService is MultipleAddressProvider) {
+            addressService.makeAddresses(walletPublicKey, curve)
         } else {
-            getAddressService().makeAddresses(walletPublicKey, curve)
+            setOf(Address(addressService.makeAddress(walletPublicKey, curve)))
         }
     }
 
@@ -348,7 +352,8 @@ enum class Blockchain(
             Kaspa,
             TerraV1,
             TerraV2,
-            Cronos -> {
+            Cronos,
+            -> {
                 null // there is no testnet for given network
             }
         }

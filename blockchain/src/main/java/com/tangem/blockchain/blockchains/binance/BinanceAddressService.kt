@@ -8,7 +8,8 @@ import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
 import org.bitcoinj.core.Bech32
 
-class BinanceAddressService(private val testNet: Boolean = false) : AddressService() {
+class BinanceAddressService(private val testNet: Boolean = false) : AddressService {
+
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         val publicKeyHash = walletPublicKey.toCompressedPublicKey().calculateSha256().calculateRipemd160()
         return if (testNet) {

@@ -104,8 +104,8 @@ class Wallet(
 
     data class PublicKey(
         val seedKey: ByteArray,
-        val derivedKey: ByteArray?,
-        val derivationPath: DerivationPath?,
+        val derivedKey: ByteArray?, // вынести в derivation
+        val derivationPath: DerivationPath?, // вынести в derivation
     ) {
         val blockchainKey: ByteArray = derivedKey ?: seedKey
 

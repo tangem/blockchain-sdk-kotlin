@@ -23,8 +23,8 @@ import org.libdohj.params.LitecoinMainNetParams
 
 
 open class BitcoinAddressService(
-        private val blockchain: Blockchain
-) : AddressService(), MultisigAddressProvider {
+    private val blockchain: Blockchain
+) : MultisigAddressProvider, MultipleAddressProvider {
 
     private val networkParameters: NetworkParameters = when (blockchain) {
         Blockchain.Bitcoin -> MainNetParams()
