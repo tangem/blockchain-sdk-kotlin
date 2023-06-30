@@ -77,7 +77,9 @@ class StellarNetworkService(hosts: List<StellarNetwork>, isTestnet: Boolean) : S
             if (token == null) { // xlm transaction
                 Result.Success(StellarTargetAccountResponse(accountCreated = true))
             } else { // token transaction
+                // tokenBalance can be null if trustline not created
                 val tokenBalance = account.balances
+                    .filter { it.assetCode.isPresent() && it.assetIssuer.isPresent() }
                     .filter { it.assetCode.get() == token.symbol }
                     .find { it.assetIssuer.get() == token.contractAddress } // null if trustline not created
                 Result.Success(
@@ -123,14 +125,18 @@ class StellarNetworkService(hosts: List<StellarNetwork>, isTestnet: Boolean) : S
 
                 val accountResponse = accountResponseDeferred.await()
                 val coinBalance = accountResponse.balances
-                    .find { it.asset.get() is AssetTypeNative }?.balance?.toBigDecimal()
+                    .find { it.asset.isPresent() && it.asset.get() is AssetTypeNative }
+                    ?.balance?.toBigDecimal()
                     ?: return@coroutineScope Result.Failure(
                         BlockchainSdkError.CustomError("Stellar Balance not found")
                     )
 
-                val tokenBalances = accountResponse.balances.filter { it.asset.get() !is AssetTypeNative }.map {
-                    StellarAssetBalance(it.balance.toBigDecimal(), it.assetCode.get(), it.assetIssuer.get())
-                }
+                val tokenBalances = accountResponse.balances
+                    .filter { it.asset.isPresent() && it.assetCode.isPresent() && it.assetIssuer.isPresent() }
+                    .filter { it.asset.get() !is AssetTypeNative }
+                    .map {
+                        StellarAssetBalance(it.balance.toBigDecimal(), it.assetCode.get(), it.assetIssuer.get())
+                    }
 
                 val ledgerResponse = ledgerResponseDeferred.await()
                 val baseFee = ledgerResponse.baseFeeInStroops.toBigDecimal().movePointLeft(decimals)
