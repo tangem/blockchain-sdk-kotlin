@@ -7,19 +7,22 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.MultipleAddressProvider
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
 
-class BitcoinCashAddressService(blockchain: Blockchain) : AddressService() {
+class BitcoinCashAddressService(blockchain: Blockchain) : MultipleAddressProvider {
 
     private val cashAddr = when (blockchain) {
         Blockchain.BitcoinCash -> CashAddr(false)
         Blockchain.BitcoinCashTestnet -> CashAddr(true)
         else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
+
     private val bitcoinAddressService = BitcoinAddressService(Blockchain.Bitcoin)
+
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?) =
         makeCashAddrAddress(walletPublicKey).value
 
