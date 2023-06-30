@@ -12,6 +12,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.MultipleAddressProvider
 import com.tangem.blockchain.extensions.*
 import com.tangem.common.card.EllipticCurve
 import java.io.ByteArrayInputStream
@@ -19,7 +20,7 @@ import java.io.ByteArrayOutputStream
 import java.util.zip.CRC32
 
 
-class CardanoAddressService(private val blockchain: Blockchain) : AddressService() {
+class CardanoAddressService(private val blockchain: Blockchain) : MultipleAddressProvider {
     private val shelleyHeaderByte: Byte = 97
 
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {

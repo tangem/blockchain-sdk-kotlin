@@ -11,7 +11,7 @@ import io.emeraldpay.polkaj.types.Address
  */
 class PolkadotAddressService(
     private val blockchain: Blockchain
-) : AddressService() {
+) : AddressService {
 
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         return Address(PolkadotNetworkService.network(blockchain), walletPublicKey).toString()
