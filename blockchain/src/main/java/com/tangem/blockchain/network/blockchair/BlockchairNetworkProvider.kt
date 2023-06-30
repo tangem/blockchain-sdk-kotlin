@@ -102,7 +102,9 @@ open class BlockchairNetworkProvider(
 
             Result.Success(
                 BitcoinAddressInfo(
-                    balance = addressInfo.balance!!.toBigDecimal().movePointLeft(decimals),
+                    balance = unspentOutputs
+                        .map { it.amount }
+                        .reduce { acc, number -> acc + number },
                     unspentOutputs = unspentOutputs,
                     recentTransactions = transactions
                 )
