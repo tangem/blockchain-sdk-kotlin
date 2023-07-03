@@ -12,7 +12,7 @@ object CoinTypeProvider {
         if (style == DerivationStyle.NEW && blockchain.isEvm()) return ethCoinType
 
         return when (blockchain) {
-            Blockchain.Bitcoin,
+            Blockchain.Bitcoin -> 0
             Blockchain.Litecoin -> 2
             Blockchain.Dogecoin -> 3
             Blockchain.Dash -> 5
