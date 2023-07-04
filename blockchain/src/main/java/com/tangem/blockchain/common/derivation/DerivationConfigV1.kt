@@ -43,7 +43,7 @@ object DerivationConfigV1 : DerivationConfig() {
             }
 
             Blockchain.Cardano -> {
-               emptyMap()
+                emptyMap()
             }
 
             Blockchain.CardanoShelley -> {
@@ -160,6 +160,12 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.RavencoinTestnet,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
+            }
+            Blockchain.Telos,
+            Blockchain.TelosTestnet,
+            Blockchain.AlephZero,
+            Blockchain.AlephZeroTestnet -> {
+                TODO()
             }
         }
     }
