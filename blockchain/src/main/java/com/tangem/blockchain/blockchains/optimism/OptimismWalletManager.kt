@@ -16,6 +16,7 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.extensions.hexToBytes
+import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.extensions.transactions.encode
 import org.kethereum.model.Address
 import org.kethereum.model.SignatureData
@@ -38,6 +39,8 @@ class OptimismWalletManager(
         val layer2fee = super.getFee(amount, destination).successOr {
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         }
+
+        // amount and fee value is not important for dummy transactions
         val preparedAmount = Amount(
             value = BigDecimal.valueOf(0.1),
             type = amount.type,
@@ -46,7 +49,7 @@ class OptimismWalletManager(
 
         val transactionData = TransactionData(
             amount = preparedAmount,
-            fee = Fee.Common(preparedAmount), // value is not important for dummy transactions
+            fee = Fee.Ethereum(preparedAmount, DEFAULT_GAS_LIMIT, BigInteger.ONE),
             sourceAddress = wallet.address,
             destinationAddress = destination,
         )
