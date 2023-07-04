@@ -151,6 +151,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
             Blockchain.EthereumPowTestnet,
             Blockchain.Kava, Blockchain.KavaTestnet,
             Blockchain.Cronos,
+            Blockchain.Telos, Blockchain.TelosTestnet
             -> {
                 EthereumLikeWalletManagerAssembly
             }
@@ -165,7 +166,8 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
                 SolanaWalletManagerAssembly
             }
 
-            Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama -> {
+            Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama,
+            Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> {
                 PolkadotWalletManagerAssembly
             }
 
