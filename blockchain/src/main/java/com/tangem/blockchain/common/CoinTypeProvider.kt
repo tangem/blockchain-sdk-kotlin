@@ -43,6 +43,8 @@ object CoinTypeProvider {
             Blockchain.Cosmos -> 118
             Blockchain.TerraV1, Blockchain.TerraV2 -> 330
             Blockchain.Cronos -> 10000025
+            Blockchain.AlephZero -> 643
+            Blockchain.Telos -> 424
             Blockchain.ArbitrumTestnet,
             Blockchain.AvalancheTestnet,
             Blockchain.BinanceTestnet,
@@ -63,6 +65,8 @@ object CoinTypeProvider {
             Blockchain.KavaTestnet,
             Blockchain.RavencoinTestnet,
             Blockchain.CosmosTestnet,
+            Blockchain.AlephZeroTestnet,
+            Blockchain.TelosTestnet,
             Blockchain.Unknown,
             -> throw UnsupportedOperationException("Coin type not provided for: ${blockchain.fullName}")
         }
