@@ -48,8 +48,10 @@ data class TimeoutConfig(
         fun default(): TimeoutConfig = TimeoutConfig(
             call = Timeout(10),
             connect = Timeout(20),
-            read = Timeout(20),
-            write = Timeout(20),
+            // increased timeouts to receive response for user with a lot inputs
+            // part of task https://tangem.atlassian.net/browse/AND-3866
+            read = Timeout(90),
+            write = Timeout(90),
         )
     }
 }
