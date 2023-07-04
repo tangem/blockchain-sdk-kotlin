@@ -138,6 +138,12 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.RavencoinTestnet -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
+            Blockchain.Telos,
+            Blockchain.TelosTestnet,
+            Blockchain.AlephZero,
+            Blockchain.AlephZeroTestnet -> {
+                TODO()
+            }
         }
     }
 }

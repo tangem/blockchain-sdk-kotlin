@@ -5,21 +5,18 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainError
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.SignatureCountValidator
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.TokenFinder
 import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionHistoryProvider
 import com.tangem.blockchain.common.TransactionSender
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.toBlockchainSdkError
-import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -32,7 +29,6 @@ import org.kethereum.extensions.toHexString
 import org.kethereum.keccakshortcut.keccak
 import java.math.BigDecimal
 import java.math.BigInteger
-import java.util.Calendar
 
 open class EthereumWalletManager(
     wallet: Wallet,

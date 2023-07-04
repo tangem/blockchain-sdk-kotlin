@@ -1,29 +1,21 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.Token
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairToken
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
-import com.tangem.blockchain.network.blockscout.BlockscoutNetworkProvider
-import com.tangem.blockchain.network.blockscout.BlockscoutTransaction
-import com.tangem.common.extensions.guard
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 import java.math.BigInteger
-import java.util.Calendar
 
 class EthereumNetworkService(
     jsonRpcProviders: List<EthereumJsonRpcProvider>,
@@ -230,22 +222,4 @@ class EthereumNetworkService(
             }
         }
 
-    private fun BlockscoutTransaction.toUntypedTransactionData(blockchain: Blockchain): TransactionData {
-        val fee = BigDecimal(gasPrice).multiply(BigDecimal(gasUsed)).movePointLeft(blockchain.decimals())
-        val feeAmount = Amount(fee, blockchain, AmountType.Coin)
-        val status = if (confirmations.toInt() > 0) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed
-        val date = Calendar.getInstance().apply { timeInMillis = timeStamp.toLong() * 1000 }
-
-
-        return TransactionData(
-            amount = Amount(null, Blockchain.Unknown),
-            fee = Fee.Common(feeAmount),
-            sourceAddress = from,
-            destinationAddress = to,
-            status = status,
-            date = date,
-            hash = hash,
-            extras = null,
-        )
-    }
 }
