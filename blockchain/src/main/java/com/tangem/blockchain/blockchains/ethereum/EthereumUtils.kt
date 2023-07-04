@@ -9,6 +9,7 @@ import com.tangem.blockchain.common.*
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
 import com.tangem.common.extensions.toDecompressedPublicKey
+import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.crypto.api.ec.ECDSASignature
 import org.kethereum.crypto.determineRecId
 import org.kethereum.crypto.impl.ec.canonicalise
@@ -94,14 +95,15 @@ class EthereumUtils {
                     createErc20TransferData(transactionData.destinationAddress, bigIntegerAmount)
             }
 
-            val gasLimitToUse = (transactionData.fee as Fee.Ethereum).gasLimit
+            val gasLimitToUse =
+                extras?.gasLimit ?: (transactionData.fee as? Fee.Ethereum)?.gasLimit ?: DEFAULT_GAS_LIMIT
 
             val transaction = createTransactionWithDefaults(
                 from = Address(transactionData.sourceAddress),
                 to = to,
                 value = value,
                 gasPrice = fee.divide(gasLimitToUse),
-                gasLimit = extras?.gasLimit ?: gasLimitToUse,
+                gasLimit = gasLimitToUse,
                 nonce = nonceValue,
                 input = extras?.data ?: input
             )
