@@ -100,11 +100,14 @@ open class BlockchairNetworkProvider(
                 )
             }
 
+            val balance = if (unspentOutputs.isEmpty()) {
+                BigDecimal.ZERO
+            } else {
+                unspentOutputs.map { it.amount }.reduce { acc, number -> acc + number }
+            }
             Result.Success(
                 BitcoinAddressInfo(
-                    balance = unspentOutputs
-                        .map { it.amount }
-                        .reduce { acc, number -> acc + number },
+                    balance = balance,
                     unspentOutputs = unspentOutputs,
                     recentTransactions = transactions
                 )
