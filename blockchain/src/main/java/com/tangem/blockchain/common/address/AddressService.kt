@@ -46,4 +46,5 @@ interface MultisigAddressProvider {
         pairPublicKey: ByteArray,
         curve: EllipticCurve? = null,
     ): Set<Address>
+
 }

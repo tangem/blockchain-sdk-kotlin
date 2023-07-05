@@ -104,30 +104,35 @@ class Wallet(
 
     data class PublicKey(
         val seedKey: ByteArray,
-        val derivedKey: ByteArray?, // вынести в derivation
-        val derivationPath: DerivationPath?, // вынести в derivation
+        val derivation: Derivation?
     ) {
-        val blockchainKey: ByteArray = derivedKey ?: seedKey
+        val blockchainKey: ByteArray = derivation?.derivedKey ?: seedKey
 
         override fun equals(other: Any?): Boolean {
             val other = other as? PublicKey ?: return false
 
             if (!seedKey.contentEquals(other.seedKey)) return false
-            if (!derivedKey.contentEquals(other.derivedKey)) return false
+            if (!derivation?.derivedKey.contentEquals(other.derivation?.derivedKey)) return false
 
             return when {
-                derivationPath == null && other.derivationPath == null -> true
-                derivationPath == null -> false
-                else -> derivationPath == other.derivationPath
+                derivation?.derivationPath == null && other.derivation?.derivationPath == null -> true
+                derivation?.derivationPath == null -> false
+                else -> derivation.derivationPath == other.derivation?.derivationPath
             }
         }
 
         override fun hashCode(): Int {
             return calculateHashCode(
                 seedKey.contentHashCode(),
-                derivedKey?.contentHashCode() ?: 0,
-                derivationPath?.hashCode() ?: 0
+                derivation?.derivedKey?.contentHashCode() ?: 0,
+                derivation?.derivationPath?.hashCode() ?: 0
             )
         }
     }
+
+    class Derivation(
+        val derivedKey: ByteArray,
+        val derivationPath: DerivationPath
+    )
+
 }
