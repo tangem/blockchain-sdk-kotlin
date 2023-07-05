@@ -5,7 +5,6 @@ import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.BitcoinCashAddress
 import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.CashAddr
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.Address
-import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.address.MultipleAddressProvider
 import com.tangem.common.card.EllipticCurve
@@ -46,4 +45,5 @@ class BitcoinCashAddressService(blockchain: Blockchain) : MultipleAddressProvide
     fun getPublicKeyHash(address: String): ByteArray {
         return cashAddr.decodeCashAddress(address).hash
     }
+
 }
