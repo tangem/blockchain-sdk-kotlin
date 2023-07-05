@@ -9,12 +9,12 @@ import com.tangem.crypto.sign
 
 class DummySigner : TransactionSigner {
 
-    val keyPair: KeyPair = Secp256k1.generateKeyPair()
+    private val keyPair: KeyPair = Secp256k1.generateKeyPair()
 
     val publicKey = Wallet.PublicKey(
-        keyPair.publicKey.toCompressedPublicKey(), null, null
+        seedKey = keyPair.publicKey.toCompressedPublicKey(),
+        derivation = null
     )
-
 
     override suspend fun sign(
         hashes: List<ByteArray>,
@@ -31,4 +31,5 @@ class DummySigner : TransactionSigner {
     ): CompletionResult<ByteArray> {
         return CompletionResult.Success(hash.sign(keyPair.privateKey))
     }
+
 }
