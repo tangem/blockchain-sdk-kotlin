@@ -466,6 +466,17 @@ enum class Blockchain(
                     )
                 )
             }
+            AlephZero, AlephZeroTestnet -> {
+                DerivationPath(
+                    path = listOf(
+                        DerivationNode.Hardened(BIP44.purpose),
+                        DerivationNode.Hardened(coinType(style)),
+                        DerivationNode.Hardened(0),
+                        DerivationNode.Hardened(0),
+                        DerivationNode.Hardened(0)
+                    )
+                )
+            }
             else -> {
                 // Standard BIP44
                 val bip44 = BIP44(
