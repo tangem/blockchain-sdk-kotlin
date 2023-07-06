@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.binance.network.BinanceNetworkService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.getBitcoinNetworkProviders
+import com.tangem.blockchain.blockchains.bitcoin.getBitcoinTransactionHistoryProvider
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashWalletManager
@@ -142,7 +143,7 @@ class WalletManagerFactory(
             // region BTC-like blockchains
             Blockchain.Bitcoin,
             Blockchain.BitcoinTestnet,
-            Blockchain.Dash,
+            Blockchain.Dash
             -> {
                 BitcoinWalletManager(
                     wallet = wallet,
@@ -153,7 +154,8 @@ class WalletManagerFactory(
                     ),
                     networkProvider = BitcoinNetworkService(
                         providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
-                    )
+                    ),
+                    transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(config)
                 )
             }
 
@@ -167,7 +169,8 @@ class WalletManagerFactory(
                     ),
                     networkProvider = BitcoinNetworkService(
                         providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
-                    )
+                    ),
+                    transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(config)
                 )
             }
 
@@ -181,7 +184,8 @@ class WalletManagerFactory(
                     ),
                     networkProvider = LitecoinNetworkService(
                         providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
-                    )
+                    ),
+                    transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(config)
                 )
             }
 
@@ -194,7 +198,8 @@ class WalletManagerFactory(
                     ),
                     networkProvider = BitcoinNetworkService(
                         providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
-                    )
+                    ),
+                    transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(config)
                 )
             }
 
@@ -208,7 +213,8 @@ class WalletManagerFactory(
                     ),
                     networkProvider = BitcoinNetworkService(
                         providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
-                    )
+                    ),
+                    transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(config)
                 )
             }
             // endregion

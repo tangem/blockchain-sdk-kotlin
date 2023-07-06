@@ -4,13 +4,15 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 import java.math.BigDecimal
 
 class RavencoinWalletManager(
     wallet: Wallet,
     transactionBuilder: BitcoinTransactionBuilder,
-    networkProvider: BitcoinNetworkProvider
-) : BitcoinWalletManager(wallet, transactionBuilder, networkProvider) {
+    networkProvider: BitcoinNetworkProvider,
+    transactionHistoryProvider: TransactionHistoryProvider,
+) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider) {
 
     // https://github.com/raven-community/ravencore-lib/blob/master/docs/transaction.md
     override val minimalFeePerKb: BigDecimal = BigDecimal(10_000).movePointLeft(wallet.blockchain.decimals())
