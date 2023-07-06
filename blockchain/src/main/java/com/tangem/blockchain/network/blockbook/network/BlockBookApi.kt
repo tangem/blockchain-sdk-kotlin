@@ -41,6 +41,20 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
             .unpack()
     }
 
+    suspend fun getTransactions(address: String, page: Int, pageSize: Int): List<GetAddressResponse.Transaction>? {
+        val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.GET_ADDRESS, blockchain)
+        val response: GetAddressResponse = client
+            .newCall(
+                request = Request.Builder()
+                    .get()
+                    .url("$requestBaseUrl/address/$address?details=txs&page=$page&pageSize=$pageSize")
+                    .build()
+            )
+            .await()
+            .unpack()
+        return response.transactions
+    }
+
     suspend fun getFee(param: Int): GetFeeResponse {
         return client
             .newCall(
