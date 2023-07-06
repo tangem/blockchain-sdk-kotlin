@@ -4,18 +4,9 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.BasicTransactionData
-import com.tangem.blockchain.common.BlockchainError
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.SignatureCountValidator
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionSender
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.WalletManager
-import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
+import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
@@ -26,9 +17,12 @@ import java.math.BigDecimal
 
 open class BitcoinWalletManager(
     wallet: Wallet,
+    transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     protected val transactionBuilder: BitcoinTransactionBuilder,
     private val networkProvider: BitcoinNetworkProvider,
-) : WalletManager(wallet), TransactionSender, SignatureCountValidator {
+) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider),
+    TransactionSender,
+    SignatureCountValidator {
 
     protected val blockchain = wallet.blockchain
 
