@@ -80,14 +80,14 @@ class OptimismWalletManager(
                 gasPrice = minimumFee.gasPrice
             ),
             normal = Fee.Ethereum(
-                amount = (layer2fee.normal as Fee.Ethereum).amount + lastLayer1FeeValue,
-                gasLimit = layer2fee.normal.gasLimit,
-                gasPrice = layer2fee.normal.gasPrice,
+                amount = normalFee.amount + lastLayer1FeeValue,
+                gasLimit = normalFee.gasLimit,
+                gasPrice = normalFee.gasPrice,
             ),
             priority = Fee.Ethereum(
-                amount = (layer2fee.priority as Fee.Ethereum).amount + lastLayer1FeeValue,
-                gasLimit = layer2fee.priority.gasLimit,
-                gasPrice = layer2fee.priority.gasPrice,
+                amount = priorityFee.amount + lastLayer1FeeValue,
+                gasLimit = priorityFee.gasLimit,
+                gasPrice = priorityFee.gasPrice,
             )
         )
 
