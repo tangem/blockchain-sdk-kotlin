@@ -3,15 +3,22 @@ package com.tangem.blockchain.blockchains.ducatus
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.BasicTransactionData
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionSender
+import com.tangem.blockchain.common.TransactionStatus
+import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
 import java.math.BigDecimal
 
 class DucatusWalletManager(
     wallet: Wallet,
     transactionBuilder: BitcoinTransactionBuilder,
-    networkProvider: BitcoinNetworkProvider
-) : BitcoinWalletManager(wallet, transactionBuilder, networkProvider), TransactionSender {
+    networkProvider: BitcoinNetworkProvider,
+    transactionHistoryProvider: TransactionHistoryProvider,
+) : BitcoinWalletManager(wallet,transactionHistoryProvider, transactionBuilder, networkProvider), TransactionSender {
 
     override val minimalFeePerKb = 0.0001.toBigDecimal()
     override val minimalFee = 0.00001.toBigDecimal()
