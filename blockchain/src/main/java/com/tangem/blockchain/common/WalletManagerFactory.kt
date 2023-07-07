@@ -219,6 +219,15 @@ class WalletManagerFactory(
                     transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(config)
                 )
             }
+
+            Blockchain.Ducatus -> {
+                DucatusWalletManager(
+                    wallet,
+                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain),
+                    DucatusNetworkService(),
+                    transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(config)
+                )
+            }
             // endregion
 
             // region ETH-like blockchains
@@ -292,14 +301,6 @@ class WalletManagerFactory(
             Blockchain.Solana, Blockchain.SolanaTestnet -> {
                 val clients = SolanaRpcClientBuilder().build(blockchain.isTestnet(), config)
                 SolanaWalletManager(wallet, clients)
-            }
-
-            Blockchain.Ducatus -> {
-                DucatusWalletManager(
-                    wallet,
-                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain),
-                    DucatusNetworkService()
-                )
             }
 
             Blockchain.Polkadot,
