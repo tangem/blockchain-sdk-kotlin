@@ -18,7 +18,8 @@ internal fun Blockchain.getPolkadotHosts(): List<String> {
             "https://kusama-rpc.dwellir.com/",
         )
         Blockchain.AlephZero -> listOf(
-            "https://rpc.azero.dev/"
+            "https://rpc.azero.dev/",
+            "https://aleph-zero-rpc.dwellir.com/",
         )
         Blockchain.AlephZeroTestnet -> listOf(
             "https://rpc.test.azero.dev"
