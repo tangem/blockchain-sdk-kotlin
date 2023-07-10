@@ -11,7 +11,7 @@ import java.lang.IllegalStateException
 
 class WalletManagerFactory(private val config: BlockchainSdkConfig) {
 
-    // TODO refactoring make wallet hold address instead of addresskeypair in next task
+    // TODO refactoring, make wallet hold address instead of addresskeypair in next task
     fun createWalletManager(
         blockchain: Blockchain,
         publicKeys: Map<AddressType, Wallet.PublicKey>,

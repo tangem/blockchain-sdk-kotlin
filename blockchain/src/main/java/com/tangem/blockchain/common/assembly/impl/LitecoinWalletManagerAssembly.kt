@@ -17,7 +17,7 @@ internal object LitecoinWalletManagerAssembly : WalletManagerAssembly<LitecoinWa
                     walletPublicKey = publicKey.blockchainKey,
                     blockchain = blockchain,
                     walletAddresses = emptyList()
-                    // TODO refactoring make wallet hold address instead of addresskeypair in next task
+                    // TODO refactoring, make wallet hold address instead of addresskeypair in next task
                 ),
                 networkProvider = LitecoinNetworkService(
                     providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config)
