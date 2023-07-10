@@ -9,9 +9,7 @@ import wallet.core.jni.CoinType
 import wallet.core.jni.PublicKey
 import wallet.core.jni.PublicKeyType
 
-class TrustWalletAddressService(
-    blockchain: Blockchain
-) : AddressService {
+class TrustWalletAddressService(blockchain: Blockchain) : AddressService {
 
     private val coinType: CoinType = blockchain.trustWalletCoinType
 

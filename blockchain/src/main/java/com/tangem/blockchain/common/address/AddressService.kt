@@ -3,6 +3,7 @@ package com.tangem.blockchain.common.address
 import com.tangem.blockchain.common.Wallet
 import com.tangem.common.card.EllipticCurve
 
+// TODO refactoring remove old style
 interface AddressService : AddressProvider {
 
     // address making, old style
@@ -11,7 +12,7 @@ interface AddressService : AddressProvider {
     fun validate(address: String): Boolean
 
     override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): AddressPublicKeyPair {
-        //TODO() check publicKey.blockchainKey
+        // TODO refactoring, check publicKey.blockchainKey
         val address = makeAddress(publicKey.blockchainKey)
 
         return AddressPublicKeyPair(address, publicKey, addressType)
@@ -26,18 +27,6 @@ interface AddressService : AddressProvider {
 
 }
 
-interface AddressProvider {
-    fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): AddressPublicKeyPair
-}
-
-
-@Deprecated("Use AddressProvider.makeAddress instead of this")
-interface MultipleAddressProvider : AddressService {
-
-    fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve? = EllipticCurve.Secp256k1): Set<Address> {
-        return setOf(PlainAddress(makeAddress(walletPublicKey, curve)))
-    }
-}
 
 interface MultisigAddressProvider {
 
