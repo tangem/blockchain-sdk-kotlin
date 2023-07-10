@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
-
 import com.tangem.blockchain.blockchains.dash.DashMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinTestNetParams
@@ -21,9 +20,8 @@ import org.bitcoinj.script.ScriptBuilder
 import org.libdohj.params.DogecoinMainNetParams
 import org.libdohj.params.LitecoinMainNetParams
 
-
 open class BitcoinAddressService(
-    private val blockchain: Blockchain
+    private val blockchain: Blockchain,
 ) : MultisigAddressProvider, MultipleAddressProvider {
 
     private val networkParameters: NetworkParameters = when (blockchain) {
@@ -35,7 +33,7 @@ open class BitcoinAddressService(
         Blockchain.Ravencoin -> RavencoinMainNetParams()
         Blockchain.RavencoinTestnet -> RavencoinTestNetParams()
         else -> throw Exception(
-                "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
+            "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
         )
     }
 
@@ -60,13 +58,13 @@ open class BitcoinAddressService(
     internal fun makeLegacyAddress(walletPublicKey: ByteArray): Address {
         val ecPublicKey = ECKey.fromPublicOnly(walletPublicKey)
         val address = LegacyAddress.fromKey(networkParameters, ecPublicKey).toBase58()
-        return Address(address, AddressType.Legacy)
+        return PlainAddress(address, AddressType.Legacy)
     }
 
     private fun makeSegwitAddress(walletPublicKey: ByteArray): Address {
         val compressedPublicKey = ECKey.fromPublicOnly(walletPublicKey.toCompressedPublicKey())
         val address = SegwitAddress.fromKey(networkParameters, compressedPublicKey).toBech32()
-        return Address(address, AddressType.Default)
+        return PlainAddress(address, AddressType.Default)
     }
 
     private fun validateSegwitAddress(address: String): Boolean {
@@ -88,10 +86,10 @@ open class BitcoinAddressService(
     }
 
     override fun makeMultisigAddresses(
-            walletPublicKey: ByteArray, pairPublicKey: ByteArray, curve: EllipticCurve?
+        walletPublicKey: ByteArray, pairPublicKey: ByteArray, curve: EllipticCurve?,
     ): Set<Address> = make1of2MultisigAddresses(walletPublicKey, pairPublicKey)
 
-    fun make1of2MultisigAddresses(publicKey1: ByteArray, publicKey2: ByteArray): Set<Address> {
+    private fun make1of2MultisigAddresses(publicKey1: ByteArray, publicKey2: ByteArray): Set<Address> {
         val script = create1of2MultisigOutputScript(publicKey1, publicKey2)
         val legacyAddress = makeLegacyScriptAddress(script)
         val segwitAddress = makeSegwitScriptAddress(script)
@@ -100,8 +98,8 @@ open class BitcoinAddressService(
 
     private fun create1of2MultisigOutputScript(publicKey1: ByteArray, publicKey2: ByteArray): Script {
         val publicKeys = mutableListOf(
-                publicKey1.toCompressedPublicKey(),
-                publicKey2.toCompressedPublicKey()
+            publicKey1.toCompressedPublicKey(),
+            publicKey2.toCompressedPublicKey()
         )
         val publicEcKeys = publicKeys.map { ECKey.fromPublicOnly(it) }
         return ScriptBuilder.createRedeemScript(1, publicEcKeys)
@@ -120,9 +118,8 @@ open class BitcoinAddressService(
     }
 }
 
-
-class BitcoinScriptAddress(
-        val script: Script,
-        value: String,
-        type: AddressType = AddressType.Default
+data class BitcoinScriptAddress(
+    val script: Script,
+    override val value: String,
+    override val type: AddressType = AddressType.Default,
 ) : Address(value, type)
