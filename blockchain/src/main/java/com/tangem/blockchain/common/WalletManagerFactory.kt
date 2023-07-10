@@ -10,8 +10,7 @@ import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import java.lang.IllegalStateException
 
 class WalletManagerFactory(private val config: BlockchainSdkConfig) {
-
-    // It'll be moved in Assembly in next task
+// [REDACTED_TODO_COMMENT]
     fun createWalletManager(
         blockchain: Blockchain,
         publicKeys: Map<AddressType, Wallet.PublicKey>,
