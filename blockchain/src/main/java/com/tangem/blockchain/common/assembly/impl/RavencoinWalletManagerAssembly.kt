@@ -17,7 +17,7 @@ internal object RavencoinWalletManagerAssembly : WalletManagerAssembly<Ravencoin
                     walletPublicKey = publicKey.blockchainKey,
                     blockchain = blockchain,
                     walletAddresses = emptyList()
-                    // TODO refactoring make wallet hold address instead of addresskeypair in next task
+                    // TODO refactoring, make wallet hold address instead of addresskeypair in next task
                 ),
                 networkProvider = BitcoinNetworkService(
                     providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config)
