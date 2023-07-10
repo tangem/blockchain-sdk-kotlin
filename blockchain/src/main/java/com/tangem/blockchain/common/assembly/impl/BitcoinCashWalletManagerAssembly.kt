@@ -15,7 +15,9 @@ internal object BitcoinCashWalletManagerAssembly : WalletManagerAssembly<Bitcoin
                 wallet = this,
                 transactionBuilder = BitcoinCashTransactionBuilder(
                     walletPublicKey = publicKey.blockchainKey,
-                    blockchain = blockchain
+                    blockchain = blockchain,
+                    walletAddresses = emptyList()
+// [REDACTED_TODO_COMMENT]
                 ),
                 networkProvider = BitcoinNetworkService(
                     providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config)
