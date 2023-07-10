@@ -16,7 +16,7 @@ internal object DogecoinWalletManagerAssembly : WalletManagerAssembly<DogecoinWa
                 transactionBuilder = BitcoinTransactionBuilder(
                     walletPublicKey = publicKey.blockchainKey,
                     blockchain = blockchain,
-                    walletAddresses = emptyList()
+                    walletAddresses = emptySet()
 // [REDACTED_TODO_COMMENT]
                 ),
                 networkProvider = BitcoinNetworkService(

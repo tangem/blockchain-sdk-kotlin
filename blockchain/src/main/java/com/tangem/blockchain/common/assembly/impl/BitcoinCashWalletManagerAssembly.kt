@@ -16,7 +16,7 @@ internal object BitcoinCashWalletManagerAssembly : WalletManagerAssembly<Bitcoin
                 transactionBuilder = BitcoinCashTransactionBuilder(
                     walletPublicKey = publicKey.blockchainKey,
                     blockchain = blockchain,
-                    walletAddresses = emptyList()
+                    walletAddresses = emptySet()
 // [REDACTED_TODO_COMMENT]
                 ),
                 networkProvider = BitcoinNetworkService(
