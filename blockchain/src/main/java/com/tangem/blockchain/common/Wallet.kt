@@ -27,7 +27,7 @@ class Wallet(
 
     var address = defaultAddress.value
 
-    @Deprecated("Use primary constructor")
+    @Deprecated("Try to use primary constructor instead of this")
     constructor(blockchain: Blockchain, addresses: Set<Address>, publicKey: PublicKey) : this(
         blockchain = blockchain,
         walletAddresses = addresses.associate { address ->
