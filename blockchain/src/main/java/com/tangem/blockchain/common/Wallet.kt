@@ -1,6 +1,7 @@
 package com.tangem.blockchain.common
 
 import com.tangem.blockchain.common.address.Address
+import com.tangem.blockchain.common.address.AddressPublicKeyPair
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.common.extensions.calculateHashCode
 import com.tangem.crypto.hdWallet.DerivationPath
@@ -10,15 +11,32 @@ import java.util.Locale
 
 class Wallet(
     val blockchain: Blockchain,
-    val addresses: Set<Address>,
-    val publicKey: PublicKey,
+    val walletAddresses: Map<AddressType, AddressPublicKeyPair>,
     tokens: Set<Token>,
 ) {
     //we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
     val recentTransactions: MutableList<TransactionData> = mutableListOf()
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
-    val address = addresses.find { it.type == AddressType.Default }?.value
-        ?: throw Exception("Addresses must contain default address")
+
+    val addresses: List<AddressPublicKeyPair>
+        get() = walletAddresses.map { it.value }
+
+    private val defaultAddress = walletAddresses[AddressType.Default]!!
+
+    val publicKey = defaultAddress.publicKey
+
+    var address = defaultAddress.value
+
+    @Deprecated("Use primary constructor")
+    constructor(blockchain: Blockchain, addresses: Set<Address>, publicKey: PublicKey) : this(
+        blockchain = blockchain,
+        walletAddresses = addresses.associate { address ->
+            address.type to AddressPublicKeyPair(address.value, publicKey, address.type)
+        }.toMutableMap(),
+        tokens = emptySet()
+    ) {
+        require(walletAddresses.containsKey(AddressType.Default)) { "Addresses have to contain the default address" }
+    }
 
     init {
         setAmount(Amount(null, blockchain, AmountType.Coin))
