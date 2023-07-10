@@ -24,8 +24,9 @@ import java.math.BigDecimal
 import java.math.BigInteger
 
 open class BitcoinTransactionBuilder(
-    private val walletPublicKey: ByteArray, blockchain: Blockchain,
-    walletAddresses: Set<com.tangem.blockchain.common.address.Address> = emptySet()
+    private val walletPublicKey: ByteArray,
+    blockchain: Blockchain,
+    walletAddresses: List<Address>
 ) {
     private val walletScripts =
         walletAddresses.filterIsInstance<BitcoinScriptAddress>().map { it.script }

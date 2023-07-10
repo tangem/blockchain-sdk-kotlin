@@ -21,7 +21,7 @@ interface AddressService : AddressProvider {
     // remove "newStyle" later
     // made this way because return type is not signature part
     fun makeAddressNewStyle(walletPublicKey: ByteArray, curve: EllipticCurve? = EllipticCurve.Secp256k1): Address {
-        return Address(makeAddress(walletPublicKey, curve))
+        return PlainAddress(makeAddress(walletPublicKey, curve))
     }
 
 }
@@ -35,7 +35,7 @@ interface AddressProvider {
 interface MultipleAddressProvider : AddressService {
 
     fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve? = EllipticCurve.Secp256k1): Set<Address> {
-        return setOf(Address(makeAddress(walletPublicKey, curve)))
+        return setOf(PlainAddress(makeAddress(walletPublicKey, curve)))
     }
 }
 

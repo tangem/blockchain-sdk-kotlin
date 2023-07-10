@@ -9,16 +9,12 @@ import co.nstant.`in`.cbor.model.UnsignedInteger
 import com.tangem.blockchain.blockchains.binance.client.encoding.Bech32
 import com.tangem.blockchain.blockchains.binance.client.encoding.Crypto
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.address.Address
-import com.tangem.blockchain.common.address.AddressService
-import com.tangem.blockchain.common.address.AddressType
-import com.tangem.blockchain.common.address.MultipleAddressProvider
+import com.tangem.blockchain.common.address.*
 import com.tangem.blockchain.extensions.*
 import com.tangem.common.card.EllipticCurve
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.CRC32
-
 
 class CardanoAddressService(private val blockchain: Blockchain) : MultipleAddressProvider {
     private val shelleyHeaderByte: Byte = 97
@@ -42,14 +38,13 @@ class CardanoAddressService(private val blockchain: Blockchain) : MultipleAddres
     override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?): Set<Address> {
         return if (blockchain == Blockchain.CardanoShelley) {
             setOf(
-                    Address(makeByronAddress(walletPublicKey), AddressType.Legacy),
-                    Address(makeShelleyAddress(walletPublicKey), AddressType.Default)
+                PlainAddress(makeByronAddress(walletPublicKey), AddressType.Legacy),
+                PlainAddress(makeShelleyAddress(walletPublicKey), AddressType.Default)
             )
         } else {
-            setOf(Address(makeAddress(walletPublicKey)))
+            setOf(PlainAddress(makeAddress(walletPublicKey)))
         }
     }
-
 
     private fun makeByronAddress(walletPublicKey: ByteArray): String {
         val extendedPublicKey = extendPublicKey(walletPublicKey)
@@ -69,7 +64,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : MultipleAddres
 
         val addressBytes = byteArrayOf(shelleyHeaderByte) + publicKeyHash
         val convertedAddressBytes =
-                Crypto.convertBits(addressBytes, 0, addressBytes.size, 8, 5, true)
+            Crypto.convertBits(addressBytes, 0, addressBytes.size, 8, 5, true)
 
         return Bech32.encode(BECH32_HRP, convertedAddressBytes)
     }
@@ -81,7 +76,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : MultipleAddres
         return try {
             val bais = ByteArrayInputStream(decoded)
             val addressList =
-                    (CborDecoder(bais).decode()[0] as Array).dataItems
+                (CborDecoder(bais).decode()[0] as Array).dataItems
             val addressItemBytes = (addressList[0] as ByteString).bytes
             val checksum = (addressList[1] as UnsignedInteger).value.toLong()
 
@@ -97,7 +92,8 @@ class CardanoAddressService(private val blockchain: Blockchain) : MultipleAddres
 
     private fun makePubKeyWithAttributes(extendedPublicKey: ByteArray): ByteArray {
         val pubKeyWithAttributes = ByteArrayOutputStream()
-        CborEncoder(pubKeyWithAttributes).encode(CborBuilder()
+        CborEncoder(pubKeyWithAttributes).encode(
+            CborBuilder()
                 .addArray()
                 .add(0)
                 .addArray()
@@ -107,20 +103,23 @@ class CardanoAddressService(private val blockchain: Blockchain) : MultipleAddres
                 .addMap()
                 .end()
                 .end()
-                .build())
+                .build()
+        )
         return pubKeyWithAttributes.toByteArray()
     }
 
     private fun makeHashWithAttributes(blakeHash: ByteArray): ByteArray {
         val hashWithAttributes = ByteArrayOutputStream()
-        CborEncoder(hashWithAttributes).encode(CborBuilder()
+        CborEncoder(hashWithAttributes).encode(
+            CborBuilder()
                 .addArray()
                 .add(blakeHash)
                 .addMap() //additional attributes
                 .end()
                 .add(0) //address type
                 .end()
-                .build())
+                .build()
+        )
         return hashWithAttributes.toByteArray()
     }
 
@@ -132,12 +131,14 @@ class CardanoAddressService(private val blockchain: Blockchain) : MultipleAddres
 
         //addr + checksum
         val address = ByteArrayOutputStream()
-        CborEncoder(address).encode(CborBuilder()
+        CborEncoder(address).encode(
+            CborBuilder()
                 .addArray()
                 .add(addressItem)
                 .add(checksum)
                 .end()
-                .build())
+                .build()
+        )
 
         return address.toByteArray().encodeBase58()
     }

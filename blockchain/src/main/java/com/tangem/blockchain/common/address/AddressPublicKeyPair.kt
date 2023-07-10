@@ -3,7 +3,7 @@ package com.tangem.blockchain.common.address
 import com.tangem.blockchain.common.Wallet
 
 data class AddressPublicKeyPair(
-    val value: String,
+    override val value: String,
     val publicKey: Wallet.PublicKey,
-    val type: AddressType
-)
+    override val type: AddressType
+) : Address(value, type)

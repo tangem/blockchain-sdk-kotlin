@@ -15,8 +15,11 @@ import org.bitcoinj.script.Script
 import java.math.BigDecimal
 import java.math.BigInteger
 
-class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, private val blockchain: Blockchain)
-    : BitcoinTransactionBuilder(walletPublicKey.toCompressedPublicKey(), blockchain) {
+class BitcoinCashTransactionBuilder(
+    walletPublicKey: ByteArray,
+    private val blockchain: Blockchain,
+    walletAddresses: List<Address>
+) : BitcoinTransactionBuilder(walletPublicKey.toCompressedPublicKey(), blockchain, walletAddresses) {
 
     override fun buildToSign(
             transactionData: TransactionData): Result<List<ByteArray>> {

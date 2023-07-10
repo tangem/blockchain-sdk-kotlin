@@ -136,13 +136,13 @@ enum class Blockchain(
         } else if (addressService is MultipleAddressProvider) {
             addressService.makeAddresses(walletPublicKey, curve)
         } else {
-            setOf(Address(addressService.makeAddress(walletPublicKey, curve)))
+            setOf(PlainAddress(addressService.makeAddress(walletPublicKey, curve)))
         }
     }
 
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
-    private fun getAddressService(): AddressService {
+    internal fun getAddressService(): AddressService {
         return when (this) {
             Bitcoin, BitcoinTestnet,
             Litecoin,
