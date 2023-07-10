@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.isZero
 import com.tangem.common.extensions.toCompressedPublicKey
@@ -18,7 +19,7 @@ import java.math.BigInteger
 class BitcoinCashTransactionBuilder(
     walletPublicKey: ByteArray,
     private val blockchain: Blockchain,
-    walletAddresses: List<Address>
+    walletAddresses: Set<Address> = emptySet()
 ) : BitcoinTransactionBuilder(walletPublicKey.toCompressedPublicKey(), blockchain, walletAddresses) {
 
     override fun buildToSign(
