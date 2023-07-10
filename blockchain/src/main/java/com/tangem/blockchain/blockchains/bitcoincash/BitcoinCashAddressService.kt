@@ -7,6 +7,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.address.MultipleAddressProvider
+import com.tangem.blockchain.common.address.PlainAddress
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
@@ -37,7 +38,7 @@ class BitcoinCashAddressService(blockchain: Blockchain) : MultipleAddressProvide
     private fun makeCashAddrAddress(walletPublicKey: ByteArray): Address {
         val publicKeyHash = walletPublicKey.toCompressedPublicKey().calculateSha256().calculateRipemd160()
         val address = cashAddr.toCashAddress(BitcoinCashAddressType.P2PKH, publicKeyHash)
-        return Address(address, AddressType.Default)
+        return PlainAddress(address, AddressType.Default)
     }
 
     fun validateCashAddrAddress(address: String) = cashAddr.isValidCashAddress(address)
