@@ -16,7 +16,7 @@ internal object BitcoinWalletManagerAssembly : WalletManagerAssembly<BitcoinWall
                 transactionBuilder = BitcoinTransactionBuilder(
                     walletPublicKey = publicKey.blockchainKey,
                     blockchain = blockchain,
-                    walletAddresses = emptyList()
+                    walletAddresses = emptySet()
                     // TODO refactoring, make wallet hold address instead of addresskeypair in next task
                 ),
                 networkProvider = BitcoinNetworkService(
