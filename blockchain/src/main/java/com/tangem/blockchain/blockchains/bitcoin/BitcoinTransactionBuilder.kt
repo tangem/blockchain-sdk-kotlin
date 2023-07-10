@@ -26,7 +26,7 @@ import java.math.BigInteger
 open class BitcoinTransactionBuilder(
     private val walletPublicKey: ByteArray,
     blockchain: Blockchain,
-    walletAddresses: List<Address>
+    walletAddresses: Set<com.tangem.blockchain.common.address.Address>
 ) {
     private val walletScripts =
         walletAddresses.filterIsInstance<BitcoinScriptAddress>().map { it.script }
