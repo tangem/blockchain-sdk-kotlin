@@ -20,8 +20,6 @@ import com.tangem.blockchain.blockchains.cosmos.CosmosWalletManager
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
 import com.tangem.blockchain.blockchains.dogecoin.DogecoinWalletManager
-import com.tangem.blockchain.blockchains.ducatus.DucatusWalletManager
-import com.tangem.blockchain.blockchains.ducatus.network.DucatusNetworkService
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.getEthereumJsonRpcProviders
@@ -216,15 +214,6 @@ class WalletManagerFactory(
                     networkProvider = BitcoinNetworkService(
                         providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
                     ),
-                    transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(config)
-                )
-            }
-
-            Blockchain.Ducatus -> {
-                DucatusWalletManager(
-                    wallet,
-                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain),
-                    DucatusNetworkService(),
                     transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(config)
                 )
             }
