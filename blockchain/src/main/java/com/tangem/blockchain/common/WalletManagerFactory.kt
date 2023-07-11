@@ -20,8 +20,6 @@ import com.tangem.blockchain.blockchains.cosmos.CosmosWalletManager
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
 import com.tangem.blockchain.blockchains.dogecoin.DogecoinWalletManager
-import com.tangem.blockchain.blockchains.ducatus.DucatusWalletManager
-import com.tangem.blockchain.blockchains.ducatus.network.DucatusNetworkService
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.getEthereumJsonRpcProviders
@@ -292,14 +290,6 @@ class WalletManagerFactory(
             Blockchain.Solana, Blockchain.SolanaTestnet -> {
                 val clients = SolanaRpcClientBuilder().build(blockchain.isTestnet(), config)
                 SolanaWalletManager(wallet, clients)
-            }
-
-            Blockchain.Ducatus -> {
-                DucatusWalletManager(
-                    wallet,
-                    BitcoinTransactionBuilder(publicKey.blockchainKey, blockchain),
-                    DucatusNetworkService()
-                )
             }
 
             Blockchain.Polkadot,
