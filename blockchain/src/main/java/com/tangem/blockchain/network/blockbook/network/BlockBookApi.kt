@@ -4,7 +4,8 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapter
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.extensions.addHeaders
+import com.tangem.blockchain.extensions.AddHeaderInterceptor
+import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
 import com.tangem.blockchain.network.blockbook.config.BlockBookConfig
 import com.tangem.blockchain.network.blockbook.config.BlockBookRequest
 import com.tangem.blockchain.network.blockbook.network.requests.GetFeeRequest
@@ -14,17 +15,15 @@ import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponse
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.logging.HttpLoggingInterceptor
 import ru.gildor.coroutines.okhttp.await
 import java.io.IOException
 
 @OptIn(ExperimentalStdlibApi::class)
 internal class BlockBookApi(private val config: BlockBookConfig, private val blockchain: Blockchain) {
 
-    private val client = OkHttpClient.Builder()
-        .addHeaders(headers = mapOf(config.credentials))
-        .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
-        .build()
+    private val client = BlockchainSdkRetrofitBuilder.build(
+        internalInterceptors = listOf(AddHeaderInterceptor(mapOf(config.credentials)))
+    )
 
     private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
 
@@ -39,6 +38,20 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
             )
             .await()
             .unpack()
+    }
+
+    suspend fun getTransactions(address: String, page: Int, pageSize: Int): List<GetAddressResponse.Transaction>? {
+        val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.GET_ADDRESS, blockchain)
+        val response: GetAddressResponse = client
+            .newCall(
+                request = Request.Builder()
+                    .get()
+                    .url("$requestBaseUrl/address/$address?details=txs&page=$page&pageSize=$pageSize")
+                    .build()
+            )
+            .await()
+            .unpack()
+        return response.transactions
     }
 
     suspend fun getFee(param: Int): GetFeeResponse {

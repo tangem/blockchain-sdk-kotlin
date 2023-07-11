@@ -18,6 +18,8 @@ import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
+import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
@@ -28,9 +30,12 @@ import java.math.BigDecimal
 
 open class BitcoinWalletManager(
     wallet: Wallet,
+    transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     protected val transactionBuilder: BitcoinTransactionBuilder,
     private val networkProvider: BitcoinNetworkProvider,
-) : WalletManager(wallet), TransactionSender, SignatureCountValidator {
+) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider),
+    TransactionSender,
+    SignatureCountValidator {
 
     protected val blockchain = wallet.blockchain
 
