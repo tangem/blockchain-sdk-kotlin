@@ -8,7 +8,7 @@ sealed interface TransactionHistoryState {
     }
 
     sealed interface Failed : TransactionHistoryState {
-        object FetchError : Failed
+        data class FetchError(val exception: Exception) : Failed
     }
 
     object NotImplemented : TransactionHistoryState
