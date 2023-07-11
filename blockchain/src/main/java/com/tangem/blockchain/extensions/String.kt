@@ -26,6 +26,9 @@ fun String.hexToBigDecimal(): BigDecimal? {
     return removePrefix("0x").toBigIntegerOrNull(16)?.toBigDecimal()
 }
 
+fun String?.toBigDecimalOrDefault(default: BigDecimal = BigDecimal.ZERO): BigDecimal =
+    this?.toBigDecimalOrNull() ?: default
+
 inline fun <R> String?.letNotBlank(block: (String) -> R): R? {
     if (isNullOrBlank()) return null
 
