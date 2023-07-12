@@ -5,6 +5,8 @@ import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosNetworkService
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -47,7 +49,7 @@ class CosmosWalletManager(
             destination = transactionData.destinationAddress,
             accountNumber = accNumber,
             sequenceNumber = sequenceNumber,
-            feeAmount = transactionData.fee,
+            feeAmount = transactionData.fee?.amount,
             gas = gas?.toLong(),
             extras = transactionData.extras as? CosmosTransactionExtras,
         )
@@ -69,7 +71,7 @@ class CosmosWalletManager(
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val accNumber = accountNumber ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         val input = txBuilder.buildForSign(
             amount = amount,
@@ -84,8 +86,8 @@ class CosmosWalletManager(
         val message = buildTransaction(input, null).successOr { return it }
         return when (val estimateGasResult = networkService.estimateGas(message)) {
             is Result.Failure -> estimateGasResult
-            is Result.Success -> Result.Success(
-                cosmosChain.gasPrices(amount.type).map { gasPrice ->
+            is Result.Success -> {
+                val amounts = cosmosChain.gasPrices(amount.type).map { gasPrice ->
                     val estimatedGas = estimateGasResult.data
                     val gasMultiplier = cosmosChain.gasMultiplier
                     val feeMultiplier = cosmosChain.feeMultiplier
@@ -98,7 +100,23 @@ class CosmosWalletManager(
                     cosmosChain.getExtraFee(amount)?.let { feeValue += it }
                     Amount(value = feeValue, blockchain = wallet.blockchain)
                 }
-            )
+
+                return when (amounts.size) {
+                    1 -> {
+                        Result.Success(TransactionFee.Single(Fee.Common(amounts[0])))
+                    }
+                    3 -> {
+                        Result.Success(TransactionFee.Choosable(
+                            minimum = Fee.Common(amounts[0]),
+                            normal = Fee.Common(amounts[1]),
+                            priority = Fee.Common(amounts[2])))
+                    }
+                    else -> {
+                        Result.Failure(BlockchainSdkError.CustomError("Illegal amounts size"))
+                    }
+                }
+
+            }
         }
     }
 
