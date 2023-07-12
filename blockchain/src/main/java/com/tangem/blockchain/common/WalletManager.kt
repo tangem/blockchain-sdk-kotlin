@@ -1,5 +1,7 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
@@ -72,7 +74,7 @@ abstract class WalletManager(
         }
     }
 
-    open fun createTransaction(amount: Amount, fee: Amount, destination: String): TransactionData {
+    open fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData {
         return TransactionData(
             amount = amount,
             fee = fee,
@@ -157,8 +159,10 @@ abstract class WalletManager(
 }
 
 interface TransactionSender {
+
     suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult
-    suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>>
+
+    suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee>
 }
 
 interface TransactionSigner {

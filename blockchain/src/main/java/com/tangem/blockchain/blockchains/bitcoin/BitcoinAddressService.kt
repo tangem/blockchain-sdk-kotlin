@@ -60,13 +60,13 @@ open class BitcoinAddressService(
     internal fun makeLegacyAddress(walletPublicKey: ByteArray): Address {
         val ecPublicKey = ECKey.fromPublicOnly(walletPublicKey)
         val address = LegacyAddress.fromKey(networkParameters, ecPublicKey).toBase58()
-        return Address(address, BitcoinAddressType.Legacy)
+        return Address(address, AddressType.Legacy)
     }
 
     private fun makeSegwitAddress(walletPublicKey: ByteArray): Address {
         val compressedPublicKey = ECKey.fromPublicOnly(walletPublicKey.toCompressedPublicKey())
         val address = SegwitAddress.fromKey(networkParameters, compressedPublicKey).toBech32()
-        return Address(address, BitcoinAddressType.Segwit)
+        return Address(address, AddressType.Default)
     }
 
     private fun validateSegwitAddress(address: String): Boolean {
@@ -110,28 +110,19 @@ open class BitcoinAddressService(
     private fun makeLegacyScriptAddress(script: Script): BitcoinScriptAddress {
         val scriptHash = script.program.calculateSha256().calculateRipemd160()
         val address = LegacyAddress.fromScriptHash(networkParameters, scriptHash)
-        return BitcoinScriptAddress(script, address.toBase58(), BitcoinAddressType.Legacy)
+        return BitcoinScriptAddress(script, address.toBase58(), AddressType.Legacy)
     }
 
     private fun makeSegwitScriptAddress(script: Script): BitcoinScriptAddress {
         val scriptHash = script.program.calculateSha256()
         val address = SegwitAddress.fromHash(networkParameters, scriptHash)
-        return BitcoinScriptAddress(script, address.toBech32(), BitcoinAddressType.Segwit)
+        return BitcoinScriptAddress(script, address.toBech32(), AddressType.Default)
     }
 }
 
-sealed class BitcoinAddressType : AddressType {
-    object Legacy : AddressType {
-        override val displayNameRes = 1 //TODO: change to string resource
-    }
-
-    object Segwit : AddressType {
-        override val displayNameRes = 2 //TODO: change to string resource
-    }
-}
 
 class BitcoinScriptAddress(
         val script: Script,
         value: String,
-        type: AddressType = DefaultAddressType
+        type: AddressType = AddressType.Default
 ) : Address(value, type)

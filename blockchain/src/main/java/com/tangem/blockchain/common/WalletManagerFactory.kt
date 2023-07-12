@@ -1,83 +1,23 @@
 package com.tangem.blockchain.common
 
-import com.tangem.blockchain.blockchains.binance.BinanceTransactionBuilder
-import com.tangem.blockchain.blockchains.binance.BinanceWalletManager
-import com.tangem.blockchain.blockchains.binance.network.BinanceNetworkService
-import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
-import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
-import com.tangem.blockchain.blockchains.bitcoin.getBitcoinNetworkProviders
-import com.tangem.blockchain.blockchains.bitcoin.getBitcoinTransactionHistoryProvider
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
-import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashTransactionBuilder
-import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashWalletManager
-import com.tangem.blockchain.blockchains.cardano.CardanoTransactionBuilder
-import com.tangem.blockchain.blockchains.cardano.CardanoWalletManager
-import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkService
-import com.tangem.blockchain.blockchains.cardano.network.RosettaNetwork
-import com.tangem.blockchain.blockchains.cardano.network.adalite.AdaliteNetworkProvider
-import com.tangem.blockchain.blockchains.cardano.network.rosetta.RosettaNetworkProvider
-import com.tangem.blockchain.blockchains.cosmos.CosmosWalletManager
-import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
-import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
-import com.tangem.blockchain.blockchains.dogecoin.DogecoinWalletManager
-import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
-import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
-import com.tangem.blockchain.blockchains.ethereum.getEthereumJsonRpcProviders
-import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
-import com.tangem.blockchain.blockchains.kaspa.KaspaTransactionBuilder
-import com.tangem.blockchain.blockchains.kaspa.KaspaWalletManager
-import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkProvider
-import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkService
-import com.tangem.blockchain.blockchains.kaspa.network.KaspaRestApiNetworkProvider
-import com.tangem.blockchain.blockchains.litecoin.LitecoinNetworkService
-import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
-import com.tangem.blockchain.blockchains.optimism.OptimismWalletManager
-import com.tangem.blockchain.blockchains.polkadot.PolkadotTransactionBuilder
-import com.tangem.blockchain.blockchains.polkadot.PolkadotWalletManager
-import com.tangem.blockchain.blockchains.polkadot.extensions.getPolkadotHosts
-import com.tangem.blockchain.blockchains.polkadot.network.PolkadotCombinedProvider
-import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkService
-import com.tangem.blockchain.blockchains.ravencoin.RavencoinWalletManager
-import com.tangem.blockchain.blockchains.solana.SolanaRpcClientBuilder
-import com.tangem.blockchain.blockchains.solana.SolanaWalletManager
-import com.tangem.blockchain.blockchains.stellar.StellarNetwork
-import com.tangem.blockchain.blockchains.stellar.StellarNetworkService
-import com.tangem.blockchain.blockchains.stellar.StellarTransactionBuilder
-import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
-import com.tangem.blockchain.blockchains.tezos.TezosTransactionBuilder
-import com.tangem.blockchain.blockchains.tezos.TezosWalletManager
-import com.tangem.blockchain.blockchains.tezos.network.TezosJsonRpcNetworkProvider
-import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkService
-import com.tangem.blockchain.blockchains.ton.TonJsonRpcClientBuilder
-import com.tangem.blockchain.blockchains.ton.TonWalletManager
-import com.tangem.blockchain.blockchains.tron.TronTransactionBuilder
-import com.tangem.blockchain.blockchains.tron.TronWalletManager
-import com.tangem.blockchain.blockchains.tron.network.TronJsonRpcNetworkProvider
-import com.tangem.blockchain.blockchains.tron.network.TronNetwork
-import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
-import com.tangem.blockchain.blockchains.xrp.XrpTransactionBuilder
-import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
-import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
-import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledNetworkProvider
-import com.tangem.blockchain.extensions.letNotBlank
-import com.tangem.blockchain.network.*
-import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
+import com.tangem.blockchain.common.assembly.WalletManagerAssembly
+import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
+import com.tangem.blockchain.common.assembly.impl.*
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
+import java.lang.IllegalStateException
 
-class WalletManagerFactory(
-    private val config: BlockchainSdkConfig = BlockchainSdkConfig(),
-) {
+class WalletManagerFactory(private val config: BlockchainSdkConfig) {
 
     /**
      * Base wallet manager initializer
-     * @param blockchain: blockchain to create. If null, card native blockchain will be used
-     * @param seedKey: Public Key of the wallet
+     * @param blockchain: blockchain to create
+     * @param seedKey: Public key of the wallet
      * @param derivedKey: Derived ExtendedPublicKey by the card
      * @param derivation: derivation style or derivation path
      */
-    fun makeWalletManager(
+    fun createWalletManager(
         blockchain: Blockchain,
         seedKey: ByteArray,
         derivedKey: ExtendedPublicKey,
@@ -88,7 +28,7 @@ class WalletManagerFactory(
             is DerivationParams.Default -> blockchain.derivationPath(derivation.style)
         }
 
-        return makeWalletManager(
+        return createWalletManager(
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(
                 seedKey = seedKey,
@@ -98,14 +38,20 @@ class WalletManagerFactory(
         )
     }
 
-    // Wallet manager initializer for twin cards
-    fun makeTwinWalletManager(
+    /**
+     * Creates manager initializer for twin cards
+     * @param walletPublicKey: Public Key of the wallet
+     * @param pairPublicKey: Derived ExtendedPublicKey by the card
+     * @param blockchain: blockchain to create.
+     * @param curve: Card curve
+     */
+    fun createTwinWalletManager(
         walletPublicKey: ByteArray,
         pairPublicKey: ByteArray,
         blockchain: Blockchain = Blockchain.Bitcoin,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
-        return makeWalletManager(
+        return createWalletManager(
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(walletPublicKey, null, null),
             pairPublicKey = pairPublicKey,
@@ -113,129 +59,77 @@ class WalletManagerFactory(
         )
     }
 
-    // Legacy wallet manager initializer
-    fun makeWalletManager(
+    /**
+     * Legacy wallet manager initializer
+     * @param blockchain: Blockhain to create.
+     * @param walletPublicKey Wallet's publicKey
+     * @param curve: card curve
+     */
+    fun createLegacyWalletManager(
         blockchain: Blockchain,
         walletPublicKey: ByteArray,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
-        return makeWalletManager(
+        return createWalletManager(
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(walletPublicKey, null, null),
             curve = curve
         )
     }
 
-    fun makeWalletManager(
+    private fun createWalletManager(
         blockchain: Blockchain,
         publicKey: Wallet.PublicKey,
-        tokens: Collection<Token> = emptyList(),
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
         if (checkIfWrongKey(curve, publicKey)) return null
 
         val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
-        val mutableTokens = tokens.toMutableSet()
-        val wallet = Wallet(blockchain, addresses, publicKey, mutableTokens)
+        val wallet = Wallet(blockchain, addresses, publicKey, setOf())
 
+        return getAssembly(blockchain).make(
+            input = WalletManagerAssemblyInput(
+                wallet = wallet,
+                config = config,
+                curve = curve
+            )
+        )
+    }
+
+    private fun getAssembly(blockchain: Blockchain): WalletManagerAssembly<WalletManager> {
         return when (blockchain) {
             // region BTC-like blockchains
+
             Blockchain.Bitcoin,
             Blockchain.BitcoinTestnet,
-            Blockchain.Dash
+            Blockchain.Dash,
             -> {
-                BitcoinWalletManager(
-                    wallet = wallet,
-                    transactionBuilder = BitcoinTransactionBuilder(
-                        walletPublicKey = publicKey.blockchainKey,
-                        blockchain = blockchain,
-                        walletAddresses = addresses
-                    ),
-                    networkProvider = BitcoinNetworkService(
-                        providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
-                    ),
-                    transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(config)
-                )
+                BitcoinWalletManagerAssembly
             }
 
             Blockchain.Dogecoin -> {
-                DogecoinWalletManager(
-                    wallet = wallet,
-                    transactionBuilder = BitcoinTransactionBuilder(
-                        walletPublicKey = publicKey.blockchainKey,
-                        blockchain = blockchain,
-                        walletAddresses = addresses
-                    ),
-                    networkProvider = BitcoinNetworkService(
-                        providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
-                    ),
-                    transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(config)
-                )
+                DogecoinWalletManagerAssembly
             }
 
             Blockchain.Litecoin -> {
-                LitecoinWalletManager(
-                    wallet = wallet,
-                    transactionBuilder = BitcoinTransactionBuilder(
-                        walletPublicKey = publicKey.blockchainKey,
-                        blockchain = blockchain,
-                        walletAddresses = addresses
-                    ),
-                    networkProvider = LitecoinNetworkService(
-                        providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
-                    ),
-                    transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(config)
-                )
+                LitecoinWalletManagerAssembly
             }
 
             Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet -> {
-                BitcoinCashWalletManager(
-                    wallet = wallet,
-                    transactionBuilder = BitcoinCashTransactionBuilder(
-                        walletPublicKey = publicKey.blockchainKey,
-                        blockchain = blockchain
-                    ),
-                    networkProvider = BitcoinNetworkService(
-                        providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
-                    ),
-                    transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(config)
-                )
+                BitcoinCashWalletManagerAssembly
             }
 
             Blockchain.Ravencoin, Blockchain.RavencoinTestnet -> {
-                RavencoinWalletManager(
-                    wallet = wallet,
-                    transactionBuilder = BitcoinTransactionBuilder(
-                        walletPublicKey = publicKey.blockchainKey,
-                        blockchain = blockchain,
-                        walletAddresses = addresses,
-                    ),
-                    networkProvider = BitcoinNetworkService(
-                        providers = blockchain.getBitcoinNetworkProviders(blockchain, config)
-                    ),
-                    transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(config)
-                )
+                RavencoinWalletManagerAssembly
             }
+
             // endregion
 
             // region ETH-like blockchains
+
             Blockchain.Ethereum, Blockchain.EthereumClassic -> {
-                EthereumWalletManager(
-                    wallet = wallet,
-                    transactionBuilder = EthereumTransactionBuilder(
-                        walletPublicKey = publicKey.blockchainKey,
-                        blockchain = blockchain
-                    ),
-                    networkProvider = EthereumNetworkService(
-                        jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(config),
-                        blockcypherNetworkProvider = BlockcypherNetworkProvider(
-                            blockchain = blockchain,
-                            tokens = config.blockcypherTokens
-                        )
-                    ),
-                    presetTokens = mutableTokens
-                )
+                EthereumWalletManagerAssembly
             }
 
             Blockchain.Arbitrum,
@@ -257,249 +151,73 @@ class WalletManagerFactory(
             Blockchain.EthereumPowTestnet,
             Blockchain.Kava, Blockchain.KavaTestnet,
             Blockchain.Cronos,
-            Blockchain.Telos, Blockchain.TelosTestnet,
+            Blockchain.Telos, Blockchain.TelosTestnet
             -> {
-                EthereumWalletManager(
-                    wallet = wallet,
-                    transactionBuilder = EthereumTransactionBuilder(
-                        walletPublicKey = publicKey.blockchainKey,
-                        blockchain = blockchain
-                    ),
-                    networkProvider = EthereumNetworkService(
-                        jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(config)
-                    ),
-                    presetTokens = mutableTokens
-                )
+                EthereumLikeWalletManagerAssembly
             }
 
             Blockchain.Optimism, Blockchain.OptimismTestnet -> {
-                OptimismWalletManager(
-                    wallet = wallet,
-                    transactionBuilder = EthereumTransactionBuilder(
-                        walletPublicKey = publicKey.blockchainKey,
-                        blockchain = blockchain
-                    ),
-                    networkProvider = EthereumNetworkService(
-                        jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(config),
-                    ),
-                    presetTokens = mutableTokens
-                )
+                OptimismWalletManagerAssembly
             }
+
             // endregion
 
             Blockchain.Solana, Blockchain.SolanaTestnet -> {
-                val clients = SolanaRpcClientBuilder().build(blockchain.isTestnet(), config)
-                SolanaWalletManager(wallet, clients)
+                SolanaWalletManagerAssembly
             }
 
-            Blockchain.Polkadot,
-            Blockchain.PolkadotTestnet,
-            Blockchain.Kusama,
-            Blockchain.AlephZero,
-            Blockchain.AlephZeroTestnet
-            -> {
-                PolkadotWalletManager(
-                    wallet = wallet,
-                    transactionBuilder = PolkadotTransactionBuilder(blockchain),
-                    networkProvider = PolkadotNetworkService(
-                        blockchain.getPolkadotHosts().map { PolkadotCombinedProvider(blockchain.decimals(), it) }
-                    )
-                )
+            Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama,
+            Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> {
+                PolkadotWalletManagerAssembly
             }
 
             Blockchain.Stellar, Blockchain.StellarTestnet -> {
-                val isTestnet = blockchain == Blockchain.StellarTestnet
-                val hosts = if (!isTestnet) {
-                    buildList {
-                        add(StellarNetwork.Horizon)
-                        config.nowNodeCredentials?.apiKey.letNotBlank { add(StellarNetwork.Nownodes(it)) }
-                        config.getBlockCredentials?.apiKey.letNotBlank { add(StellarNetwork.Getblock(it)) }
-                    }
-                } else {
-                    listOf<StellarNetwork>(StellarNetwork.HorizonTestnet)
-                }
-                val networkService = StellarNetworkService(hosts, isTestnet)
-
-                StellarWalletManager(
-                    wallet,
-                    StellarTransactionBuilder(networkService, publicKey.blockchainKey),
-                    networkService,
-                    mutableTokens
-                )
+                StellarWalletManagerAssembly
             }
 
             Blockchain.Cardano, Blockchain.CardanoShelley -> {
-                val providers = buildList {
-                    config.getBlockCredentials?.apiKey.letNotBlank {
-                        add(RosettaNetworkProvider(RosettaNetwork.RosettaGetblock(it)))
-                    }
-                    add(AdaliteNetworkProvider(API_ADALITE))
-                    add(RosettaNetworkProvider(RosettaNetwork.RosettaTangem))
-                }
-
-                CardanoWalletManager(
-                    wallet,
-                    CardanoTransactionBuilder(publicKey.blockchainKey),
-                    CardanoNetworkService(providers)
-                )
+                CardanoWalletManagerAssembly
             }
 
             Blockchain.XRP -> {
-                val networkService = XrpNetworkService(
-                    providers = buildList {
-                        add(RippledNetworkProvider(baseUrl = API_XRP_LEDGER_FOUNDATION))
-                        config.nowNodeCredentials?.apiKey?.letNotBlank { apiKey ->
-                            add(
-                                RippledNetworkProvider(
-                                    baseUrl = "https://xrp.nownodes.io/",
-                                    apiKeyHeader = NowNodeCredentials.headerApiKey to apiKey
-                                )
-                            )
-                        }
-                        config.getBlockCredentials?.apiKey?.letNotBlank { apiKey ->
-                            add(
-                                RippledNetworkProvider(
-                                    baseUrl = "https://xrp.getblock.io/mainnet/",
-                                    apiKeyHeader = GetBlockCredentials.HEADER_PARAM_NAME to apiKey
-                                )
-                            )
-                        }
-                    }
-                )
-
-                XrpWalletManager(
-                    wallet = wallet,
-                    transactionBuilder = XrpTransactionBuilder(networkService, publicKey.blockchainKey),
-                    networkProvider = networkService
-                )
+                XRPWalletManagerAssembly
             }
 
             Blockchain.Binance, Blockchain.BinanceTestnet -> {
-                val isTestNet = blockchain == Blockchain.BinanceTestnet
-                BinanceWalletManager(
-                    wallet,
-                    BinanceTransactionBuilder(publicKey.blockchainKey, isTestNet),
-                    BinanceNetworkService(isTestNet),
-                    mutableTokens
-                )
+                BinanceWalletManagerAssembly
             }
 
             Blockchain.Tezos -> {
-                val providers = listOf(
-                    TezosJsonRpcNetworkProvider(API_TEZOS_BLOCKSCALE),
-                    TezosJsonRpcNetworkProvider(API_TEZOS_SMARTPY),
-                    TezosJsonRpcNetworkProvider(API_TEZOS_ECAD),
-                )
-
-                TezosWalletManager(
-                    wallet,
-                    TezosTransactionBuilder(publicKey.blockchainKey, curve),
-                    TezosNetworkService(providers),
-                    curve
-                )
+                TezosWalletManagerAssembly
             }
 
             Blockchain.Tron, Blockchain.TronTestnet -> {
-                val networks = if (!blockchain.isTestnet()) {
-                    buildList {
-                        add(TronNetwork.TronGrid(null))
-                        config.tronGridApiKey.letNotBlank {
-                            add(TronNetwork.TronGrid(it))
-                        }
-                        config.nowNodeCredentials?.apiKey.letNotBlank {
-                            add(TronNetwork.NowNodes(it))
-                        }
-                        config.getBlockCredentials?.apiKey.letNotBlank {
-                            add(TronNetwork.GetBlock(it))
-                        }
-                    }
-                } else {
-                    listOf<TronNetwork>(TronNetwork.Nile)
-                }
-                val rpcProviders = networks.map {
-                    TronJsonRpcNetworkProvider(network = it)
-                }
-                TronWalletManager(
-                    wallet = wallet,
-                    transactionBuilder = TronTransactionBuilder(blockchain),
-                    networkService = TronNetworkService(rpcProviders, wallet.blockchain)
-                )
+                TronWalletManagerAssembly
             }
 
             Blockchain.Kaspa -> {
-                val providers: List<KaspaNetworkProvider> = buildList {
-                    add(KaspaRestApiNetworkProvider(API_KASPA))
-
-                    config.kaspaSecondaryApiUrl
-                        ?.takeIf { it.isNotBlank() }
-                        ?.let { url ->
-                            add(KaspaRestApiNetworkProvider("$url/"))
-                        }
-                }
-
-                KaspaWalletManager(
-                    wallet = wallet,
-                    transactionBuilder = KaspaTransactionBuilder(),
-                    networkProvider = KaspaNetworkService(providers)
-                )
+                KaspaWalletManagerAssembly
             }
 
             Blockchain.TON, Blockchain.TONTestnet -> {
-                TonWalletManager(
-                    wallet = wallet,
-                    networkProviders = TonJsonRpcClientBuilder().build(blockchain.isTestnet(), config),
-                )
+                TonWalletManagerAssembly
             }
 
             Blockchain.Cosmos, Blockchain.CosmosTestnet -> {
-                val testnet = blockchain.isTestnet()
-                val providers = buildList {
-                    if (testnet) {
-                        add("https://rest.seed-01.theta-testnet.polypore.xyz")
-                    } else {
-                        config.nowNodeCredentials?.apiKey.letNotBlank { add("https://atom.nownodes.io/$it/") }
-                        config.getBlockCredentials?.apiKey.letNotBlank { add("https://atom.getblock.io/$it/") }
-
-                        add("https://cosmos-mainnet-rpc.allthatnode.com:1317/")
-                        // This is a REST proxy combining the servers below (and others)
-                        add("https://rest.cosmos.directory/cosmoshub/")
-                        add("https://cosmoshub-api.lavenderfive.com/")
-                        add("https://rest-cosmoshub.ecostake.com/")
-                        add("https://lcd.cosmos.dragonstake.io/")
-                    }
-                }.map(::CosmosRestProvider)
-                CosmosWalletManager(
-                    wallet = wallet,
-                    networkProviders = providers,
-                    cosmosChain = CosmosChain.Cosmos(testnet)
-                )
+                CosmosWalletManagerAssembly
             }
 
             Blockchain.TerraV1 -> {
-                val providers = buildList {
-                    config.nowNodeCredentials?.apiKey.letNotBlank { add("https://terra.nownodes.io/$it/") }
-                    add("https://terra-classic-lcd.publicnode.com/")
-                }.map(::CosmosRestProvider)
-                CosmosWalletManager(
-                    wallet = wallet,
-                    networkProviders = providers,
-                    cosmosChain = CosmosChain.TerraV1
-                )
+                TerraV1WalletManagerAssembly
             }
 
             Blockchain.TerraV2 -> {
-                val providers = buildList {
-                    config.getBlockCredentials?.apiKey.letNotBlank { add("https://luna.getblock.io/$it/mainnet/") }
-                    add("https://phoenix-lcd.terra.dev/")
-                }.map(::CosmosRestProvider)
-                CosmosWalletManager(
-                    wallet = wallet,
-                    networkProviders = providers,
-                    cosmosChain = CosmosChain.TerraV2
-                )
+                TerraV2WalletManagerAssembly
             }
 
-            Blockchain.Unknown -> throw Exception("unsupported blockchain")
+            Blockchain.Unknown -> {
+                throw IllegalStateException("Unsupported blockchain")
+            }
         }
     }
 
