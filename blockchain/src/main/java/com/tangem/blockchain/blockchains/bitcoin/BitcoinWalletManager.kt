@@ -4,7 +4,20 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.BasicTransactionData
+import com.tangem.blockchain.common.BlockchainError
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.SignatureCountValidator
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionSender
+import com.tangem.blockchain.common.TransactionSigner
+import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
@@ -87,7 +100,8 @@ open class BitcoinWalletManager(
 
     internal fun updateWallet(response: BitcoinAddressInfo) {
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
-        wallet.amounts[AmountType.Coin]?.value = response.balance
+
+        wallet.changeAmountValue(AmountType.Coin, response.balance)
         transactionBuilder.unspentOutputs = response.unspentOutputs
         outputsCount = response.unspentOutputs.size
 
@@ -130,18 +144,19 @@ open class BitcoinWalletManager(
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         try {
             when (val feeResult = getBitcoinFeePerKb()) {
                 is Result.Failure -> return feeResult
                 is Result.Success -> {
                     val feeValue = BigDecimal.ONE.movePointLeft(blockchain.decimals())
-                    amount.value = amount.value!! - feeValue
+
+                    val newAmount =  amount.copy(value = amount.value!! - feeValue)
 
                     val sizeResult = transactionBuilder.getEstimateSize(
                         TransactionData(
-                            amount = amount,
-                            fee = Amount(amount, feeValue),
+                            amount = newAmount,
+                            fee = Fee.Common(Amount(newAmount, feeValue)),
                             sourceAddress = wallet.address,
                             destinationAddress = destination
                         )
@@ -154,10 +169,10 @@ open class BitcoinWalletManager(
                             val minFee = feeResult.data.minimalPerKb.calculateFee(transactionSize)
                             val normalFee = feeResult.data.normalPerKb.calculateFee(transactionSize)
                             val priorityFee = feeResult.data.priorityPerKb.calculateFee(transactionSize)
-                            val fees = listOf(
-                                Amount(minFee, blockchain),
-                                Amount(normalFee, blockchain),
-                                Amount(priorityFee, blockchain)
+                            val fees = TransactionFee.Choosable(
+                                minimum = Fee.Common(Amount(minFee, blockchain)),
+                                normal = Fee.Common(Amount(normalFee, blockchain)),
+                                priority = Fee.Common(Amount(priorityFee, blockchain))
                             )
                             Result.Success(fees)
                         }

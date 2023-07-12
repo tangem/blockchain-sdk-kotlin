@@ -3,6 +3,8 @@ package com.tangem.blockchain.blockchains.polkadot
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
+import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -60,7 +62,7 @@ class PolkadotWalletManager(
         updateRecentTransactions(confirmedTxData)
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         currentContext = networkProvider.extrinsicContext(wallet.address).successOr { return it }
 
         val signedTransaction = sign(
@@ -74,10 +76,10 @@ class PolkadotWalletManager(
         val fee = networkProvider.getFee(signedTransaction).successOr { return it }
         val feeAmount = amount.copy(value = fee)
 
-        return Result.Success(listOf(feeAmount))
+        return Result.Success(TransactionFee.Single(Fee.Common(feeAmount)))
     }
 
-    override fun createTransaction(amount: Amount, fee: Amount, destination: String): TransactionData {
+    override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData {
         return when (amount.type) {
             AmountType.Coin -> super.createTransaction(amount, fee, destination)
             else -> throw UnsupportedOperation()

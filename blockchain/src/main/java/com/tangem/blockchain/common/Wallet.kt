@@ -1,6 +1,7 @@
 package com.tangem.blockchain.common
 
 import com.tangem.blockchain.common.address.Address
+import com.tangem.blockchain.common.address.AddressType
 import com.tangem.common.extensions.calculateHashCode
 import com.tangem.crypto.hdWallet.DerivationPath
 import java.math.BigDecimal
@@ -16,7 +17,7 @@ class Wallet(
     //we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
     val recentTransactions: MutableList<TransactionData> = mutableListOf()
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
-    val address = addresses.find { it.type == blockchain.defaultAddressType() }?.value
+    val address = addresses.find { it.type == AddressType.Default }?.value
         ?: throw Exception("Addresses must contain default address")
 
     init {
@@ -26,6 +27,12 @@ class Wallet(
 
     fun setAmount(amount: Amount) {
         amounts[amount.type] = amount
+    }
+
+    fun changeAmountValue(amountType: AmountType, newValue: BigDecimal?) {
+        amounts[amountType]?.let {
+            amounts[amountType] = it.copy(value = newValue)
+        }
     }
 
     fun setCoinValue(value: BigDecimal) =
