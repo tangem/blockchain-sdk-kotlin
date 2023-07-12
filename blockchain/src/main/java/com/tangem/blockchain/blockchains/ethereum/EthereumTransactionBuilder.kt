@@ -12,12 +12,11 @@ class EthereumTransactionBuilder(
 ) {
     private val walletPublicKey: ByteArray = walletPublicKey.toDecompressedPublicKey().sliceArray(1..64)
 
-    fun buildToSign(transactionData: TransactionData, nonce: BigInteger?, gasLimit: BigInteger?): CompiledEthereumTransaction? {
+    fun buildToSign(transactionData: TransactionData, nonce: BigInteger?): CompiledEthereumTransaction? {
         return EthereumUtils.buildTransactionToSign(
             transactionData = transactionData,
             nonce = nonce,
-            blockchain = blockchain,
-            gasLimit = gasLimit
+            blockchain = blockchain
         )
     }
 
