@@ -4,15 +4,17 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.xrp.network.XrpInfoResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 
 class XrpWalletManager(
-        wallet: Wallet,
-        private val transactionBuilder: XrpTransactionBuilder,
-        private val networkProvider: XrpNetworkProvider
+    wallet: Wallet,
+    private val transactionBuilder: XrpTransactionBuilder,
+    private val networkProvider: XrpNetworkProvider,
 ) : WalletManager(wallet), TransactionSender {
 
     override val currentHost: String
@@ -52,15 +54,14 @@ class XrpWalletManager(
     }
 
     override suspend fun send(
-            transactionData: TransactionData, signer: TransactionSigner
+        transactionData: TransactionData, signer: TransactionSigner,
     ): SimpleResult {
         val transactionHash = when (val buildResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Success -> buildResult.data
             is Result.Failure -> return SimpleResult.Failure(buildResult.error)
         }
 
-        val signerResponse = signer.sign(transactionHash, wallet.publicKey)
-        return when (signerResponse) {
+        return when (val signerResponse = signer.sign(transactionHash, wallet.publicKey)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
                 val sendResult = networkProvider.sendTransaction(transactionToSend)
@@ -75,14 +76,16 @@ class XrpWalletManager(
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         return when (val result = networkProvider.getFee()) {
             is Result.Failure -> result
-            is Result.Success -> Result.Success(listOf(
-                    Amount(result.data.minimalFee, blockchain),
-                    Amount(result.data.normalFee, blockchain),
-                    Amount(result.data.priorityFee, blockchain)
-            ))
+            is Result.Success -> Result.Success(
+                TransactionFee.Choosable(
+                    minimum = Fee.Common(Amount(result.data.minimalFee, blockchain)),
+                    normal = Fee.Common(Amount(result.data.normalFee, blockchain)),
+                    priority = Fee.Common(Amount(result.data.priorityFee, blockchain))
+                )
+            )
         }
     }
 }

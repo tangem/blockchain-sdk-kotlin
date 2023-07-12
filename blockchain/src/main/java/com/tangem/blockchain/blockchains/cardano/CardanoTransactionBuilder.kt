@@ -5,6 +5,7 @@ import co.nstant.`in`.cbor.CborEncoder
 import co.nstant.`in`.cbor.model.DataItem
 import com.tangem.blockchain.blockchains.cardano.crypto.Blake2b
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.common.extensions.hexToBytes
 import java.io.ByteArrayOutputStream
 import java.math.BigDecimal
@@ -19,7 +20,7 @@ class CardanoTransactionBuilder(private val walletPublicKey: ByteArray) {
 
         transactionMap.put(0.toDataItem(), createInputsDataItem())
         transactionMap.put(1.toDataItem(), createOutputsDataItem(transactionData))
-        transactionMap.put(2, transactionData.fee!!.longValue!!)
+        transactionMap.put(2, transactionData.fee!!.amount.longValue!!)
         // Transaction validity time. Currently we are using absolute values.
         // At 16 April 2023 was 90007700 slot number.
         // We need to rework this logic to use relative validity time. TODO: [REDACTED_JIRA]
@@ -76,7 +77,7 @@ class CardanoTransactionBuilder(private val walletPublicKey: ByteArray) {
 
     private fun createOutputsDataItem(transactionData: TransactionData): DataItem? {
         val amount = transactionData.amount.longValue!!
-        val change = calculateChange(amount, transactionData.fee!!.longValue!!)
+        val change = calculateChange(amount, transactionData.fee!!.amount.longValue!!)
 
         val sourceBytes = CardanoAddressService.decode(transactionData.sourceAddress)
         val destinationBytes = CardanoAddressService.decode(transactionData.destinationAddress)
@@ -134,7 +135,7 @@ class CardanoTransactionBuilder(private val walletPublicKey: ByteArray) {
 
         val dummyTransactionData = transactionData.copy(
                 amount = dummyAmount,
-                fee = dummyFee
+                fee = Fee.Common(dummyFee)
         )
         buildToSign(dummyTransactionData)
         return buildToSend(ByteArray(64)).size

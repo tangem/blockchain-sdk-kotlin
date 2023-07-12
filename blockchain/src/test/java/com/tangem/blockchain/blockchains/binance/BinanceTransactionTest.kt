@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.binance
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
@@ -29,7 +30,7 @@ class BinanceTransactionTest {
 
         val walletAddress = BinanceAddressService().makeAddress(walletPublicKey)
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Amount(amountToSend, feeValue)
+        val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
                 sourceAddress = walletAddress,
                 destinationAddress = destinationAddress,
@@ -75,7 +76,7 @@ class BinanceTransactionTest {
 
         val walletAddress = BinanceAddressService().makeAddress(walletPublicKey)
         val amountToSend = Amount(sendValue, blockchain, AmountType.Token(token))
-        val fee = Amount(feeValue, blockchain, AmountType.Coin)
+        val fee = Fee.Common(Amount(feeValue, blockchain, AmountType.Coin))
         val transactionData = TransactionData(
                 sourceAddress = walletAddress,
                 destinationAddress = destinationAddress,
