@@ -8,7 +8,7 @@ data class BlockcypherAddress(
         @Json(name = "address")
         val address: String? = null,
 
-        @Json(name = "final_balance")
+        @Json(name = "balance")
         val balance: Long? = null,
 
         @Json(name = "txrefs")
