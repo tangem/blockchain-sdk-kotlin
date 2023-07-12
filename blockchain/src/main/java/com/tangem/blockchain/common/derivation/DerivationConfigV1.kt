@@ -5,7 +5,7 @@ import com.tangem.blockchain.common.address.AddressType
 import com.tangem.crypto.hdWallet.DerivationPath
 
 /**
- * Derivation config for legacy cards (twin, notes, ac01/ac02)
+ * Derivation config for ac01/ac02 cards
  *
  * Types:
  * - `Stellar`, `Solana`. According to `SEP0005`
