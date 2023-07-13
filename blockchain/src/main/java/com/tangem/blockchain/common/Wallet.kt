@@ -21,7 +21,10 @@ class Wallet(
     val addresses: List<AddressPublicKeyPair>
         get() = walletAddresses.map { it.value }
 
-    private val defaultAddress = walletAddresses[AddressType.Default]!!
+    private val defaultAddress = requireNotNull(
+        value = walletAddresses[AddressType.Default],
+        lazyMessage = { "Wallet must contain default address" }
+    )
 
     val publicKey = defaultAddress.publicKey
 
@@ -122,7 +125,7 @@ class Wallet(
 
     data class PublicKey(
         val seedKey: ByteArray,
-        val derivation: Derivation?
+        val derivation: Derivation?,
     ) {
         val blockchainKey: ByteArray = derivation?.derivedKey ?: seedKey
 
@@ -150,7 +153,6 @@ class Wallet(
 
     class Derivation(
         val derivedKey: ByteArray,
-        val derivationPath: DerivationPath
+        val derivationPath: DerivationPath,
     )
-
 }
