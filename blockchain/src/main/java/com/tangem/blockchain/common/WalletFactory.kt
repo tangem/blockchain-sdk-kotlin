@@ -12,6 +12,10 @@ class WalletFactory(private val addressProvider: AddressProvider) {
             addressProvider.makeAddress(publicKey, addressType)
         }
 
-        return Wallet(blockchain, addresses, emptySet())
+        return Wallet(
+            blockchain = blockchain,
+            walletAddresses = addresses,
+            tokens = emptySet()
+        )
     }
 }
