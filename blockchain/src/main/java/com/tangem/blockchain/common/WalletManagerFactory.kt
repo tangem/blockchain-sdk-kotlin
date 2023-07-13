@@ -124,6 +124,10 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
                 RavencoinWalletManagerAssembly
             }
 
+            Blockchain.Ducatus -> {
+                DucatusWalletManagerAssembly
+            }
+
             // endregion
 
             // region ETH-like blockchains
