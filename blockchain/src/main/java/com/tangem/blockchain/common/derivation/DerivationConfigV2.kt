@@ -142,8 +142,9 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.Telos,
             Blockchain.TelosTestnet,
             Blockchain.AlephZero,
-            Blockchain.AlephZeroTestnet -> {
-                TODO()
+            Blockchain.AlephZeroTestnet,
+            Blockchain.Ducatus -> {
+                TODO() // TODO refactoring
             }
         }
     }
