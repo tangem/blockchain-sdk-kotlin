@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 
 import com.tangem.blockchain.blockchains.dash.DashMainNetParams
+import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinTestNetParams
 import com.tangem.blockchain.common.Blockchain
@@ -31,6 +32,7 @@ open class BitcoinAddressService(
         Blockchain.BitcoinTestnet -> TestNet3Params()
         Blockchain.Litecoin -> LitecoinMainNetParams()
         Blockchain.Dogecoin -> DogecoinMainNetParams()
+        Blockchain.Ducatus -> DucatusMainNetParams()
         Blockchain.Dash -> DashMainNetParams()
         Blockchain.Ravencoin -> RavencoinMainNetParams()
         Blockchain.RavencoinTestnet -> RavencoinTestNetParams()
@@ -71,6 +73,7 @@ open class BitcoinAddressService(
 
     private fun validateSegwitAddress(address: String): Boolean {
         return try {
+            if (blockchain == Blockchain.Ducatus) return false
             SegwitAddress.fromBech32(networkParameters, address)
             true
         } catch (e: Exception) {
