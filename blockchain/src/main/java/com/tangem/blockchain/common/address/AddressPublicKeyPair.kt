@@ -6,6 +6,4 @@ data class AddressPublicKeyPair(
     override val value: String,
     val publicKey: Wallet.PublicKey,
     override val type: AddressType
-) : Address(value, type) {
-    fun make() : String  = ""
-}
+) : Address(value, type)
