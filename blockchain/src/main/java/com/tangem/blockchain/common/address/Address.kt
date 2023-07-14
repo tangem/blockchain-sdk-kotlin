@@ -1,8 +1,8 @@
 package com.tangem.blockchain.common.address
 
-open class Address(
-        val value: String,
-        val type: AddressType = AddressType.Default
+abstract class Address(
+    open val value: String,
+    open val type: AddressType
 )
 
 

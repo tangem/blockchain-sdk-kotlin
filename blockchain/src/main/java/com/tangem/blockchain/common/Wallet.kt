@@ -1,6 +1,7 @@
 package com.tangem.blockchain.common
 
 import com.tangem.blockchain.common.address.Address
+import com.tangem.blockchain.common.address.AddressPublicKeyPair
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.common.extensions.calculateHashCode
 import com.tangem.crypto.hdWallet.DerivationPath
@@ -10,15 +11,35 @@ import java.util.Locale
 
 class Wallet(
     val blockchain: Blockchain,
-    val addresses: Set<Address>,
-    val publicKey: PublicKey,
+    val walletAddresses: Map<AddressType, AddressPublicKeyPair>,
     tokens: Set<Token>,
 ) {
     //we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
     val recentTransactions: MutableList<TransactionData> = mutableListOf()
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
-    val address = addresses.find { it.type == AddressType.Default }?.value
-        ?: throw Exception("Addresses must contain default address")
+
+    val addresses: List<AddressPublicKeyPair>
+        get() = walletAddresses.map { it.value }
+
+    private val defaultAddress = requireNotNull(
+        value = walletAddresses[AddressType.Default],
+        lazyMessage = { "Wallet must contain default address" }
+    )
+
+    val publicKey = defaultAddress.publicKey
+
+    var address = defaultAddress.value
+
+    @Deprecated("Try to use primary constructor instead of this")
+    constructor(blockchain: Blockchain, addresses: Set<Address>, publicKey: PublicKey) : this(
+        blockchain = blockchain,
+        walletAddresses = addresses.associate { address ->
+            address.type to AddressPublicKeyPair(address.value, publicKey, address.type)
+        }.toMutableMap(),
+        tokens = emptySet()
+    ) {
+        require(walletAddresses.containsKey(AddressType.Default)) { "Addresses have to contain the default address" }
+    }
 
     init {
         setAmount(Amount(null, blockchain, AmountType.Coin))
@@ -104,30 +125,34 @@ class Wallet(
 
     data class PublicKey(
         val seedKey: ByteArray,
-        val derivedKey: ByteArray?, // вынести в derivation
-        val derivationPath: DerivationPath?, // вынести в derivation
+        val derivation: Derivation?,
     ) {
-        val blockchainKey: ByteArray = derivedKey ?: seedKey
+        val blockchainKey: ByteArray = derivation?.derivedKey ?: seedKey
 
         override fun equals(other: Any?): Boolean {
             val other = other as? PublicKey ?: return false
 
             if (!seedKey.contentEquals(other.seedKey)) return false
-            if (!derivedKey.contentEquals(other.derivedKey)) return false
+            if (!derivation?.derivedKey.contentEquals(other.derivation?.derivedKey)) return false
 
             return when {
-                derivationPath == null && other.derivationPath == null -> true
-                derivationPath == null -> false
-                else -> derivationPath == other.derivationPath
+                derivation?.derivationPath == null && other.derivation?.derivationPath == null -> true
+                derivation?.derivationPath == null -> false
+                else -> derivation.derivationPath == other.derivation?.derivationPath
             }
         }
 
         override fun hashCode(): Int {
             return calculateHashCode(
                 seedKey.contentHashCode(),
-                derivedKey?.contentHashCode() ?: 0,
-                derivationPath?.hashCode() ?: 0
+                derivation?.derivedKey?.contentHashCode() ?: 0,
+                derivation?.derivationPath?.hashCode() ?: 0
             )
         }
     }
+
+    class Derivation(
+        val derivedKey: ByteArray,
+        val derivationPath: DerivationPath,
+    )
 }
