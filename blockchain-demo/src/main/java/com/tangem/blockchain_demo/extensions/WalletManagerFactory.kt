@@ -54,7 +54,7 @@ fun WalletManagerFactory.makeWalletManagerForApp(
                 blockchain = environmentBlockchain,
                 seedKey = wallet.publicKey,
                 derivedKey = derivedKey,
-                derivation = derivationParams
+                derivationParams = derivationParams
             )
         }
         else -> {

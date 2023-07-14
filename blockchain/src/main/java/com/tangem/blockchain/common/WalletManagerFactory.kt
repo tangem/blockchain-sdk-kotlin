@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.impl.*
@@ -10,30 +11,61 @@ import java.lang.IllegalStateException
 
 class WalletManagerFactory(private val config: BlockchainSdkConfig) {
 
+    // TODO refactoring, make wallet hold address instead of addresskeypair in next task
+    fun createWalletManager(
+        blockchain: Blockchain,
+        publicKeys: Map<AddressType, Wallet.PublicKey>,
+        curve: EllipticCurve = EllipticCurve.Secp256k1,
+    ): WalletManager {
+        val walletFactory = WalletFactory(blockchain.getAddressService())
+        val wallet = walletFactory.makeWallet(blockchain = blockchain, publicKeys = publicKeys)
+
+        val input = WalletManagerAssemblyInput(
+            wallet = wallet,
+            config = config,
+            curve = curve
+        )
+
+        return getAssembly(blockchain).make(input)
+    }
+
     /**
      * Base wallet manager initializer
      * @param blockchain: blockchain to create
      * @param seedKey: Public key of the wallet
      * @param derivedKey: Derived ExtendedPublicKey by the card
-     * @param derivation: derivation style or derivation path
+     * @param derivationParams: derivation style or derivation path
      */
     fun createWalletManager(
         blockchain: Blockchain,
         seedKey: ByteArray,
         derivedKey: ExtendedPublicKey,
-        derivation: DerivationParams,
+        derivationParams: DerivationParams,
     ): WalletManager? {
-        val derivationPath: DerivationPath? = when (derivation) {
-            is DerivationParams.Custom -> derivation.path
-            is DerivationParams.Default -> blockchain.derivationPath(derivation.style)
+
+        val derivation: Wallet.Derivation? = when (derivationParams) {
+            is DerivationParams.Custom -> {
+                Wallet.Derivation(
+                    derivedKey = derivedKey.publicKey,
+                    derivationPath = derivationParams.path
+                )
+            }
+            is DerivationParams.Default -> {
+                val path = blockchain.derivationPath(derivationParams.style)
+                path?.let {
+                    Wallet.Derivation (
+                        derivedKey = derivedKey.publicKey,
+                        derivationPath = it
+                    )
+                }
+            }
         }
 
         return createWalletManager(
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(
                 seedKey = seedKey,
-                derivedKey = derivedKey.publicKey,
-                derivationPath = derivationPath
+                derivation = derivation
             )
         )
     }
@@ -53,7 +85,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
     ): WalletManager? {
         return createWalletManager(
             blockchain = blockchain,
-            publicKey = Wallet.PublicKey(walletPublicKey, null, null),
+            publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivation = null),
             pairPublicKey = pairPublicKey,
             curve = curve
         )
@@ -72,7 +104,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
     ): WalletManager? {
         return createWalletManager(
             blockchain = blockchain,
-            publicKey = Wallet.PublicKey(walletPublicKey, null, null),
+            publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivation = null),
             curve = curve
         )
     }
@@ -86,7 +118,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
         if (checkIfWrongKey(curve, publicKey)) return null
 
         val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
-        val wallet = Wallet(blockchain, addresses, publicKey, setOf())
+        val wallet = Wallet(blockchain, addresses, publicKey)
 
         return getAssembly(blockchain).make(
             input = WalletManagerAssemblyInput(
