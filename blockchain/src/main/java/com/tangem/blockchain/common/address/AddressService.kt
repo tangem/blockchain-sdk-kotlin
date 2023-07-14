@@ -2,7 +2,7 @@ package com.tangem.blockchain.common.address
 
 import com.tangem.blockchain.common.Wallet
 import com.tangem.common.card.EllipticCurve
-
+// [REDACTED_TODO_COMMENT]
 interface AddressService : AddressProvider {
 
     // address making, old style
@@ -21,23 +21,11 @@ interface AddressService : AddressProvider {
     // remove "newStyle" later
     // made this way because return type is not signature part
     fun makeAddressNewStyle(walletPublicKey: ByteArray, curve: EllipticCurve? = EllipticCurve.Secp256k1): Address {
-        return Address(makeAddress(walletPublicKey, curve))
+        return PlainAddress(makeAddress(walletPublicKey, curve))
     }
 
 }
 
-interface AddressProvider {
-    fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): AddressPublicKeyPair
-}
-
-
-@Deprecated("Use AddressProvider.makeAddress instead of this")
-interface MultipleAddressProvider : AddressService {
-
-    fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve? = EllipticCurve.Secp256k1): Set<Address> {
-        return setOf(Address(makeAddress(walletPublicKey, curve)))
-    }
-}
 
 interface MultisigAddressProvider {
 
@@ -46,4 +34,5 @@ interface MultisigAddressProvider {
         pairPublicKey: ByteArray,
         curve: EllipticCurve? = null,
     ): Set<Address>
+
 }
