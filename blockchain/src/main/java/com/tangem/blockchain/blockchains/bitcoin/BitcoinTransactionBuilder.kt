@@ -22,10 +22,13 @@ import org.libdohj.params.DogecoinMainNetParams
 import org.libdohj.params.LitecoinMainNetParams
 import java.math.BigDecimal
 import java.math.BigInteger
+import com.tangem.blockchain.common.address.Address as Address
+import org.bitcoinj.core.Address as BitcoinJAddress
 
 open class BitcoinTransactionBuilder(
-    private val walletPublicKey: ByteArray, blockchain: Blockchain,
-    walletAddresses: Set<com.tangem.blockchain.common.address.Address> = emptySet()
+    private val walletPublicKey: ByteArray,
+    blockchain: Blockchain,
+    walletAddresses: Set<Address>
 ) {
     private val walletScripts =
         walletAddresses.filterIsInstance<BitcoinScriptAddress>().map { it.script }
@@ -197,12 +200,12 @@ internal fun TransactionData.toBitcoinJTransaction(
     }
     transaction.addOutput(
         Coin.parseCoin(this.amount.value!!.toPlainString()),
-        Address.fromString(networkParameters, this.destinationAddress)
+        BitcoinJAddress.fromString(networkParameters, this.destinationAddress)
     )
     if (!change.isZero()) {
         transaction.addOutput(
             Coin.parseCoin(change.toPlainString()),
-            Address.fromString(
+            BitcoinJAddress.fromString(
                 networkParameters,
                 this.sourceAddress
             )
