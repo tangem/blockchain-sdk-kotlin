@@ -43,6 +43,7 @@ enum class Blockchain(
     Cosmos("cosmos", "ATOM", "Cosmos"),
     CosmosTestnet("cosmos/test", "ATOM", "Cosmos Testnet"),
     Dogecoin("DOGE", "DOGE", "Dogecoin"),
+    Ducatus("DUC", "DUC", "Ducatus"),
     Ethereum("ETH", "ETH", "Ethereum"),
     EthereumTestnet("ETH/test", "ETH", "Ethereum Testnet"),
     EthereumClassic("ETC", "ETC", "Ethereum Classic"),
@@ -74,6 +75,8 @@ enum class Blockchain(
     EthereumPow("ETH-Pow", "ETHW", "EthereumPoW"),
     EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW Testnet"),
     Kaspa("KAS", "KAS", "Kaspa"),
+    Telos("TELOS", "TLOS", "Telos"),
+    TelosTestnet("TELOS/test", "TLOS", "Telos Testnet"),
     TON("The-Open-Network", "TON", "Ton"),
     TONTestnet("The-Open-Network/test", "TON", "Ton Testnet"),
     Ravencoin("ravencoin", "RVN", "Ravencoin"),
@@ -81,6 +84,8 @@ enum class Blockchain(
     TerraV1("terra", "LUNC", "Terra Classic"),
     TerraV2("terra-2", "LUNA", "Terra"),
     Cronos("cronos", "CRO", "Cronos"),
+    AlephZero("aleph-zero", "AZERO", "Aleph Zero"),
+    AlephZeroTestnet("aleph-zero/test", "TZERO", "Aleph Zero Testnet"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -97,6 +102,7 @@ enum class Blockchain(
         BitcoinCash, BitcoinCashTestnet,
         Binance, BinanceTestnet,
         Litecoin,
+        Ducatus,
         Dogecoin,
         Dash,
         Kaspa,
@@ -106,7 +112,7 @@ enum class Blockchain(
         TON, TONTestnet,
         -> 9
         Polkadot -> 10
-        PolkadotTestnet, Kusama -> 12
+        PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet -> 12
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet,
         EthereumClassic, EthereumClassicTestnet,
@@ -120,6 +126,7 @@ enum class Blockchain(
         EthereumFair, EthereumPow, EthereumPowTestnet,
         Kava, KavaTestnet,
         Cronos,
+        Telos, TelosTestnet,
         -> 18
     }
 
@@ -147,6 +154,7 @@ enum class Blockchain(
             Bitcoin, BitcoinTestnet,
             Litecoin,
             Dogecoin,
+            Ducatus,
             Dash,
             Ravencoin, RavencoinTestnet,
             -> BitcoinAddressService(this)
@@ -164,13 +172,14 @@ enum class Blockchain(
             EthereumPow, EthereumPowTestnet,
             Kava, KavaTestnet,
             Cronos,
+            Telos, TelosTestnet,
             -> EthereumAddressService()
             RSK -> RskAddressService()
             Cardano, CardanoShelley -> CardanoAddressService(this)
             XRP -> XrpAddressService()
             Binance -> BinanceAddressService()
             BinanceTestnet -> BinanceAddressService(true)
-            Polkadot, PolkadotTestnet, Kusama -> PolkadotAddressService(this)
+            Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet -> PolkadotAddressService(this)
             Stellar, StellarTestnet -> StellarAddressService()
             Solana, SolanaTestnet -> SolanaAddressService()
             Tezos -> TezosAddressService()
@@ -211,6 +220,7 @@ enum class Blockchain(
         BSCTestnet -> "https://testnet.bscscan.com/"
         Cardano, CardanoShelley -> "https://www.blockchair.com/cardano/"
         Dogecoin -> "https://blockchair.com/dogecoin/"
+        Ducatus -> "https://insight.ducatus.io/#/DUC/mainnet/"
         Ethereum -> "https://etherscan.io/"
         EthereumTestnet -> "https://goerli.etherscan.io/"
         EthereumClassic -> "https://blockscout.com/etc/mainnet/"
@@ -229,6 +239,8 @@ enum class Blockchain(
         Solana -> "https://explorer.solana.com/"
         SolanaTestnet -> "https://explorer.solana.com/"
         Tezos -> "https://tzkt.io/"
+        Telos -> "https://teloscan.io/"
+        TelosTestnet -> "https://testnet.teloscan.io/"
         TON -> "https://tonscan.org/"
         TONTestnet -> "https://testnet.tonscan.org/"
         Tron -> "https://tronscan.org/#/"
@@ -251,6 +263,8 @@ enum class Blockchain(
         TerraV1 -> "https://finder.terra.money/classic/"
         TerraV2 -> "https://terrasco.pe/mainnet/"
         Cronos -> "https://cronoscan.com/"
+        AlephZero -> "https://alephzero.subscan.io/"
+        AlephZeroTestnet -> throw Exception("unsupported blockchain")
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -308,7 +322,9 @@ enum class Blockchain(
             OptimismTestnet -> "https://optimismfaucet.xyz" //another one https://faucet.paradigm.xyz
             EthereumPowTestnet -> "https://faucet.ethwscan.com"
             KavaTestnet -> "https://faucet.kava.io"
+            TelosTestnet -> "https://app.telos.net/testnet/developers"
             CosmosTestnet -> "https://discord.com/channels/669268347736686612/953697793476821092"
+            AlephZeroTestnet -> "https://faucet.test.azero.dev/"
             else -> null
         }
     }
@@ -335,8 +351,10 @@ enum class Blockchain(
             EthereumPow, EthereumPowTestnet -> EthereumPowTestnet
             TON, TONTestnet -> TONTestnet
             Kava, KavaTestnet -> KavaTestnet
+            Telos, TelosTestnet -> TelosTestnet
             Ravencoin, RavencoinTestnet -> RavencoinTestnet
             Cosmos, CosmosTestnet -> CosmosTestnet
+            AlephZero, AlephZeroTestnet -> AlephZeroTestnet
             Unknown,
             Cardano,
             CardanoShelley,
@@ -353,6 +371,7 @@ enum class Blockchain(
             TerraV1,
             TerraV2,
             Cronos,
+            Ducatus
             -> {
                 null // there is no testnet for given network
             }
@@ -371,12 +390,14 @@ enum class Blockchain(
             Binance, BinanceTestnet,
             Ethereum, EthereumTestnet,
             Kava, KavaTestnet,
+            Telos, TelosTestnet,
             EthereumClassic, EthereumClassicTestnet,
             Polygon, PolygonTestnet,
             Avalanche, AvalancheTestnet,
             BSC, BSCTestnet,
             Fantom, FantomTestnet,
             Litecoin,
+            Ducatus,
             RSK,
             Dogecoin,
             Tron, TronTestnet,
@@ -394,7 +415,7 @@ enum class Blockchain(
             Solana, SolanaTestnet,
             Cardano,
             CardanoShelley,
-            Polkadot, PolkadotTestnet, Kusama,
+            Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
             TON, TONTestnet,
             -> listOf(EllipticCurve.Ed25519)
         }
@@ -425,6 +446,8 @@ enum class Blockchain(
             EthereumPowTestnet -> Chain.EthereumPowTestnet.id
             Kava -> Chain.Kava.id
             KavaTestnet -> Chain.KavaTestnet.id
+            Telos -> Chain.Telos.id
+            TelosTestnet -> Chain.TelosTestnet.id
             Cronos -> Chain.Cronos.id
             else -> null
         }
@@ -460,6 +483,17 @@ enum class Blockchain(
                         DerivationNode.Hardened(0),
                         DerivationNode.NonHardened(0),
                         DerivationNode.NonHardened(0)
+                    )
+                )
+            }
+            AlephZero, AlephZeroTestnet -> {
+                DerivationPath(
+                    path = listOf(
+                        DerivationNode.Hardened(BIP44.purpose),
+                        DerivationNode.Hardened(CoinTypeProvider.getCoinType(this, style)),
+                        DerivationNode.Hardened(0),
+                        DerivationNode.Hardened(0),
+                        DerivationNode.Hardened(0)
                     )
                 )
             }

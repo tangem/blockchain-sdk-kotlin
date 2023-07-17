@@ -100,9 +100,17 @@ open class BlockchairNetworkProvider(
                 )
             }
 
+            var balance = BigDecimal.ZERO
+            // confirmed balance calculation
+            transactions.map {
+                if (it.isConfirmed) {
+                    balance = balance.plus(it.balanceDif)
+                }
+            }
+
             Result.Success(
                 BitcoinAddressInfo(
-                    balance = addressInfo.balance!!.toBigDecimal().movePointLeft(decimals),
+                    balance = balance,
                     unspentOutputs = unspentOutputs,
                     recentTransactions = transactions
                 )

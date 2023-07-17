@@ -5,7 +5,7 @@ import com.tangem.blockchain.common.address.AddressType
 import com.tangem.crypto.hdWallet.DerivationPath
 
 /**
- * Derivation config for legacy cards (twin, notes, ac01/ac02)
+ * Derivation config for ac01/ac02 cards
  *
  * Types:
  * - `Stellar`, `Solana`. According to `SEP0005`
@@ -43,7 +43,7 @@ object DerivationConfigV1 : DerivationConfig() {
             }
 
             Blockchain.Cardano -> {
-               emptyMap()
+                emptyMap()
             }
 
             Blockchain.CardanoShelley -> {
@@ -62,9 +62,11 @@ object DerivationConfigV1 : DerivationConfig() {
 
             Blockchain.Ethereum,
             Blockchain.EthereumPow,
-            Blockchain.EthereumFair,
-            Blockchain.EthereumClassic,
+            Blockchain.EthereumFair
             -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
+            }
+            Blockchain.EthereumClassic -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))
             }
             Blockchain.RSK -> {
@@ -75,6 +77,9 @@ object DerivationConfigV1 : DerivationConfig() {
             }
             Blockchain.XRP -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/144'/0'/0/0"))
+            }
+            Blockchain.Ducatus -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/0'/0'/0/0"))
             }
             Blockchain.Tezos -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1729'/0'/0/0"))
@@ -99,6 +104,9 @@ object DerivationConfigV1 : DerivationConfig() {
             }
             Blockchain.Kusama -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/434'/0'/0/0"))
+            }
+            Blockchain.AlephZero -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/643'/0'/0'/0'"))
             }
             Blockchain.Tron -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/195'/0'/0/0"))
@@ -136,6 +144,9 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Cronos -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/10000025'/0'/0/0"))
             }
+            Blockchain.Telos -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/977'/0'/0/0"))
+            }
 
             Blockchain.Unknown,
             Blockchain.ArbitrumTestnet,
@@ -158,6 +169,8 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.EthereumPowTestnet,
             Blockchain.TONTestnet,
             Blockchain.RavencoinTestnet,
+            Blockchain.TelosTestnet,
+            Blockchain.AlephZeroTestnet,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
