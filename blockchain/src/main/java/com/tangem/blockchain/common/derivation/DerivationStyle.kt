@@ -29,8 +29,8 @@ enum class DerivationStyle {
 
     fun getConfig() : DerivationConfig {
         return when(this) {
-            LEGACY, V1 -> DerivationConfigV2
-            NEW, V2 -> DerivationConfigV1
+            LEGACY, V1 -> DerivationConfigV1
+            NEW, V2 -> DerivationConfigV2
             V3 -> DerivationConfigV3
         }
     }
