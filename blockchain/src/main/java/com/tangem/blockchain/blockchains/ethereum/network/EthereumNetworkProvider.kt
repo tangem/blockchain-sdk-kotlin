@@ -3,7 +3,6 @@ package com.tangem.blockchain.blockchains.ethereum.network
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.blockchair.BlockchairToken

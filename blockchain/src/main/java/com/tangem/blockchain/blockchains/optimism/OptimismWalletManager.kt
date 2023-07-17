@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.optimism
 
 import com.tangem.blockchain.blockchains.ethereum.CompiledEthereumTransaction
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
+import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.network.ContractCallData
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
@@ -16,6 +17,7 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.extensions.hexToBytes
+import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.extensions.transactions.encode
 import org.kethereum.model.Address
 import org.kethereum.model.SignatureData
@@ -38,6 +40,12 @@ class OptimismWalletManager(
         val layer2fee = super.getFee(amount, destination).successOr {
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         }
+
+        val minimumFee = (layer2fee.minimum as Fee.Ethereum)
+        val normalFee = (layer2fee.normal as Fee.Ethereum)
+        val priorityFee = (layer2fee.priority as Fee.Ethereum)
+
+        // amount and fee value is not important for dummy transactions
         val preparedAmount = Amount(
             value = BigDecimal.valueOf(0.1),
             type = amount.type,
@@ -46,7 +54,7 @@ class OptimismWalletManager(
 
         val transactionData = TransactionData(
             amount = preparedAmount,
-            fee = Fee.Common(preparedAmount), // value is not important for dummy transactions
+            fee = Fee.Ethereum(preparedAmount, normalFee.gasLimit, BigInteger.ONE),
             sourceAddress = wallet.address,
             destinationAddress = destination,
         )
@@ -67,19 +75,19 @@ class OptimismWalletManager(
 
         val updatedFees = layer2fee.copy(
             minimum = Fee.Ethereum(
-                amount = (layer2fee.minimum as Fee.Ethereum).amount + lastLayer1FeeValue,
-                gasLimit = layer2fee.minimum.gasLimit,
-                gasPrice = layer2fee.minimum.gasPrice
+                amount = minimumFee.amount + lastLayer1FeeValue,
+                gasLimit = minimumFee.gasLimit,
+                gasPrice = minimumFee.gasPrice
             ),
             normal = Fee.Ethereum(
-                amount = (layer2fee.normal as Fee.Ethereum).amount + lastLayer1FeeValue,
-                gasLimit = layer2fee.normal.gasLimit,
-                gasPrice = layer2fee.normal.gasPrice,
+                amount = normalFee.amount + lastLayer1FeeValue,
+                gasLimit = normalFee.gasLimit,
+                gasPrice = normalFee.gasPrice,
             ),
             priority = Fee.Ethereum(
-                amount = (layer2fee.priority as Fee.Ethereum).amount + lastLayer1FeeValue,
-                gasLimit = layer2fee.priority.gasLimit,
-                gasPrice = layer2fee.priority.gasPrice,
+                amount = priorityFee.amount + lastLayer1FeeValue,
+                gasLimit = priorityFee.gasLimit,
+                gasPrice = priorityFee.gasPrice,
             )
         )
 
@@ -95,8 +103,18 @@ class OptimismWalletManager(
         //https://help.optimism.io/hc/en-us/articles/4411895794715
         val calculatedTransactionFee = (transactionData.fee?.amount?.value ?: BigDecimal.ZERO) -
             (lastLayer1FeeAmount?.value ?: BigDecimal.ZERO)
+
+        val gasLimit = (transactionData.extras as? EthereumTransactionExtras)?.gasLimit
+            ?: (transactionData.fee as? Fee.Ethereum)?.gasLimit
+            ?: DEFAULT_GAS_LIMIT
+
+
         val updatedTransactionData = transactionData.copy(
-            fee = Fee.Common(Amount(value = calculatedTransactionFee, blockchain = wallet.blockchain))
+            fee = Fee.Ethereum(
+                amount = Amount(value = calculatedTransactionFee, blockchain = wallet.blockchain),
+                gasLimit = gasLimit,
+                gasPrice = BigInteger.ONE
+            )
         )
         return super.sign(updatedTransactionData, signer)
     }

@@ -94,7 +94,7 @@ class BlockBookNetworkProvider(
         address: String,
     ): List<BitcoinUnspentOutput> {
         val outputScript = transactions.firstNotNullOfOrNull { transaction ->
-            transaction.vout.firstOrNull { it.addresses.contains(address) }?.hex
+            transaction.vout?.firstOrNull { it.addresses.contains(address) }?.hex
         } ?: return emptyList()
 
         return getUtxoResponseItems.mapNotNull {
@@ -118,17 +118,17 @@ class BlockBookNetworkProvider(
             .filter { it.confirmations == 0 }
             .mapNotNull { transaction ->
                 var balanceDif = transaction
-                    .vout.firstOrNull()
+                    .vout?.firstOrNull()
                     ?.value?.toBigDecimalOrNull()
                     ?.movePointLeft(blockchain.decimals())
                     ?: return@mapNotNull null
 
-                balanceDif = if (transaction.vin.any { it.addresses.contains(address) } &&
+                balanceDif = if (transaction.vin?.any { it.addresses.contains(address) } == true &&
                     transaction.vout.any { !it.addresses.contains(address) }
                 ) {
                     balanceDif.negate()
                 } else if (transaction.vout.any { it.addresses.contains(address) } &&
-                    transaction.vin.any { !it.addresses.contains(address) }
+                    transaction.vin?.any { !it.addresses.contains(address) } == true
                 ) {
                     balanceDif.abs()
                 } else {

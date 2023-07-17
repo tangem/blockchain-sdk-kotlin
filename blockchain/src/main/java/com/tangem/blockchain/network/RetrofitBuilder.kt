@@ -48,8 +48,10 @@ data class TimeoutConfig(
         fun default(): TimeoutConfig = TimeoutConfig(
             call = Timeout(10),
             connect = Timeout(20),
-            read = Timeout(20),
-            write = Timeout(20),
+            // increased timeouts to receive response for user with a lot inputs
+            // part of task https://tangem.atlassian.net/browse/AND-3866
+            read = Timeout(90),
+            write = Timeout(90),
         )
     }
 }
@@ -84,5 +86,6 @@ const val API_BLOCKCHAIR = "https://api.blockchair.com/"
 const val API_TEZOS_BLOCKSCALE = "https://rpc.tzbeta.net/"
 const val API_TEZOS_SMARTPY = "https://mainnet.smartpy.io/"
 const val API_TEZOS_ECAD = "https://api.tez.ie/rpc/mainnet/"
+const val API_DUCATUS = "https://ducapi.rocknblock.io/"
 const val API_BITCOINFEES_EARN = "https://bitcoinfees.earn.com/"
 const val API_KASPA = "https://api.kaspa.org/"
