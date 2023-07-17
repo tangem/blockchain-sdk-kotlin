@@ -5,7 +5,7 @@ import com.tangem.blockchain.common.address.AddressType
 import com.tangem.crypto.hdWallet.DerivationPath
 
 /**
- * Derivation config for actual wallet cards
+ * Derivation config for Wallet v1 (except ac01/ac02)
  *
  * Types:
  * - `Stellar`, `Solana`. According to `SEP0005`
@@ -73,7 +73,8 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.Gnosis,
             Blockchain.Optimism,
             Blockchain.Kava,
-            Blockchain.Cronos -> {
+            Blockchain.Cronos,
+            Blockchain.Telos -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             }
             Blockchain.Binance -> {
@@ -81,6 +82,9 @@ object DerivationConfigV2 : DerivationConfig() {
             }
             Blockchain.XRP -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/144'/0'/0/0"))
+            }
+            Blockchain.Ducatus -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/0'/0'/0/0"))
             }
             Blockchain.Tezos -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1729'/0'/0/0"))
@@ -93,6 +97,9 @@ object DerivationConfigV2 : DerivationConfig() {
             }
             Blockchain.Kusama -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/434'/0'/0/0"))
+            }
+            Blockchain.AlephZero -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/643'/0'/0'/0'"))
             }
             Blockchain.Tron -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/195'/0'/0/0"))
@@ -136,7 +143,9 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.OptimismTestnet,
             Blockchain.EthereumPowTestnet,
             Blockchain.TONTestnet,
-            Blockchain.RavencoinTestnet -> {
+            Blockchain.RavencoinTestnet,
+            Blockchain.TelosTestnet,
+            Blockchain.AlephZeroTestnet -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
         }

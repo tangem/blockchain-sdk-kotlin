@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import com.tangem.blockchain.blockchains.dash.DashMainNetParams
+import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinTestNetParams
 import com.tangem.blockchain.common.Blockchain
@@ -40,6 +41,7 @@ open class BitcoinTransactionBuilder(
         Blockchain.BitcoinTestnet, Blockchain.BitcoinCashTestnet -> TestNet3Params()
         Blockchain.Litecoin -> LitecoinMainNetParams()
         Blockchain.Dogecoin -> DogecoinMainNetParams()
+        Blockchain.Ducatus -> DucatusMainNetParams()
         Blockchain.Dash -> DashMainNetParams()
         Blockchain.Ravencoin -> RavencoinMainNetParams()
         Blockchain.RavencoinTestnet -> RavencoinTestNetParams()
