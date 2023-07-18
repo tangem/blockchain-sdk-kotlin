@@ -11,7 +11,7 @@ internal object TerraV1WalletManagerAssembly : WalletManagerAssembly<CosmosWalle
 
     override fun make(input: WalletManagerAssemblyInput): CosmosWalletManager {
         val providers = buildList {
-            input.config.nowNodeCredentials?.apiKey.letNotBlank { add("https://terra.nownodes.io/$it/") }
+            input.config.nowNodeCredentials?.apiKey.letNotBlank { add("https://lunc.nownodes.io/$it/") }
             add("https://terra-classic-lcd.publicnode.com/")
         }.map(::CosmosRestProvider)
 
