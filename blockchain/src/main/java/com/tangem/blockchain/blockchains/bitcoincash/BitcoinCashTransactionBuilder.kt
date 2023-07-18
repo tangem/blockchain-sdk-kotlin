@@ -19,7 +19,7 @@ import java.math.BigInteger
 class BitcoinCashTransactionBuilder(
     walletPublicKey: ByteArray,
     private val blockchain: Blockchain,
-    walletAddresses: Set<Address> = emptySet()
+    walletAddresses: List<Address>
 ) : BitcoinTransactionBuilder(walletPublicKey.toCompressedPublicKey(), blockchain, walletAddresses) {
 
     override fun buildToSign(
