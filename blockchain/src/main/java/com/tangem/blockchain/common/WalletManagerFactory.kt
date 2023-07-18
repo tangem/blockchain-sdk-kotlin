@@ -11,29 +11,15 @@ import java.lang.IllegalStateException
 
 class WalletManagerFactory(private val config: BlockchainSdkConfig) {
 
-    // TODO refactoring, make wallet hold address instead of addresskeypair in next task
     fun createWalletManager(
         blockchain: Blockchain,
         publicKeys: Map<AddressType, Wallet.PublicKey>,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
-        //  let walletFactory = WalletFactory(blockchain: blockchain)
-        //         let wallet = try walletFactory.makeWallet(publicKeys: publicKeys)
-        //         return try makeWalletManager(from: blockchain, wallet: wallet)
-
         val walletFactory = WalletFactory(blockchain)
         val wallet = walletFactory.makeWallet(publicKeys = publicKeys)
 
         return createWalletManager(blockchain, wallet)
-
-
-        // val input = WalletManagerAssemblyInput(
-        //     wallet = wallet,
-        //     config = config,
-        //     curve = curve
-        // )
-        //
-        // return getAssembly(blockchain).make(input)
     }
 
     /**
