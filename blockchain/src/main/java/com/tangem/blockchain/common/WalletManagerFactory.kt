@@ -126,7 +126,8 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
             input = WalletManagerAssemblyInput(
                 wallet = wallet,
                 config = config,
-                curve = curve
+                curve = curve,
+                pairPublicKey = pairPublicKey
             )
         )
     }

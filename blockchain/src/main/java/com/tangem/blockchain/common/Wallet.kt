@@ -18,8 +18,8 @@ class Wallet(
     val recentTransactions: MutableList<TransactionData> = mutableListOf()
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
 
-    val addresses: List<Address> // TODO sort
-        get() = walletAddresses.map { it.value }
+    val addresses: List<Address>
+        get() = walletAddresses.map { it.value }.sortedBy { it.type.priority }
 
     private val defaultAddress = requireNotNull(
         value = walletAddresses[AddressType.Default],
