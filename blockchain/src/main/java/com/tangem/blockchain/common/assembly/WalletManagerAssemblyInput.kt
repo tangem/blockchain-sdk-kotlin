@@ -8,6 +8,7 @@ import com.tangem.common.card.EllipticCurve
 /**
  * Data needed for WalletManager creation
  */
+// TODO refactoring enrich this class
 internal class WalletManagerAssemblyInput(
     val wallet: Wallet,
     val config: BlockchainSdkConfig,
