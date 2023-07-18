@@ -2,9 +2,9 @@ package com.tangem.blockchain_demo.extensions
 
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.DerivationParams
-import com.tangem.blockchain.common.DerivationStyle
 import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.WalletManagerFactory
+import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.blockchain_demo.model.BlockchainNetwork
 import com.tangem.blockchain_demo.model.ScanResponse
 import com.tangem.common.card.Card
