@@ -1,6 +1,5 @@
 package com.tangem.blockchain.common.derivation
-// [REDACTED_TODO_COMMENT]
-// semantic collision with com.tangem.blockchain.common.DerivationStyle
+
 enum class DerivationStyle {
 
     @Deprecated("Will be removed after refactoring")
