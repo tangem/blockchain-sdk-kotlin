@@ -2,6 +2,7 @@ package com.tangem.blockchain.common
 
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.common.address.*
+import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.BIP44
 import com.tangem.crypto.hdWallet.DerivationNode
@@ -401,6 +402,7 @@ enum class Blockchain(
         }
     }
 
+    // TODO refactoring remove this method
     fun derivationPath(style: DerivationStyle?): DerivationPath? {
         if (style == null) return null
         if (!getSupportedCurves().contains(EllipticCurve.Secp256k1) &&
