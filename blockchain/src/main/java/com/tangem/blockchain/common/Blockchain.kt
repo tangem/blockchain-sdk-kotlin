@@ -1,19 +1,6 @@
 package com.tangem.blockchain.common
 
-import com.tangem.blockchain.blockchains.binance.BinanceAddressService
-import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
-import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
-import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
-import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
-import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
-import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
-import com.tangem.blockchain.blockchains.rsk.RskAddressService
-import com.tangem.blockchain.blockchains.solana.SolanaAddressService
-import com.tangem.blockchain.blockchains.stellar.StellarAddressService
-import com.tangem.blockchain.blockchains.tezos.TezosAddressService
-import com.tangem.blockchain.blockchains.tron.TronAddressService
-import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.*
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.BIP44
@@ -130,28 +117,9 @@ enum class Blockchain(
         -> 18
     }
 
-    fun makeAddresses(
-        walletPublicKey: ByteArray,
-        pairPublicKey: ByteArray? = null,
-        curve: EllipticCurve = EllipticCurve.Secp256k1,
-    ): Set<Address> {
-        // val addressService = getAddressService()
-
-        TODO()
-        // return if (pairPublicKey != null) {
-        //     (addressService as? MultisigAddressProvider)
-        //         ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()
-        // } else if (addressService is MultipleAddressProvider) {
-        //     addressService.makeAddresses(walletPublicKey, curve)
-        // } else {
-        //     setOf(PlainAddress(addressService.makeAddress(walletPublicKey, curve)))
-        // }
-    }
-
     fun derivationPaths(style: com.tangem.blockchain.common.derivation.DerivationStyle): Map<AddressType,
     DerivationPath> {
         val curves = getSupportedCurves()
-
 
         if (!(curves.contains(EllipticCurve.Secp256k1) && curves.contains(EllipticCurve.Ed25519))) {
             return emptyMap()
