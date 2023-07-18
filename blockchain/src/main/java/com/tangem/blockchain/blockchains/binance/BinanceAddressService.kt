@@ -1,7 +1,10 @@
 package com.tangem.blockchain.blockchains.binance
 
 import com.tangem.blockchain.blockchains.binance.client.encoding.Crypto
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.AddressService
+import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.PlainAddress
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
@@ -10,17 +13,21 @@ import org.bitcoinj.core.Bech32
 
 class BinanceAddressService(private val testNet: Boolean = false) : AddressService {
 
-    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-        val publicKeyHash = walletPublicKey.toCompressedPublicKey().calculateSha256().calculateRipemd160()
-        return if (testNet) {
-            Bech32.encode("tbnb", Crypto.convertBits(publicKeyHash, 0,
-                    publicKeyHash.size, 8, 5, false)
-            )
-        } else {
-            Bech32.encode("bnb", Crypto.convertBits(publicKeyHash, 0,
-                    publicKeyHash.size, 8, 5, false)
-            )
-        }
+    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+        val publicKeyHash = publicKey.blockchainKey.toCompressedPublicKey().calculateSha256().calculateRipemd160()
+
+        val hrp = if (testNet) "tbnb" else "bnb"
+
+        val address = Bech32.encode(
+            hrp,
+            Crypto.convertBits(publicKeyHash, 0, publicKeyHash.size, 8, 5, false)
+        )
+
+        return PlainAddress(
+            value = address,
+            type = addressType,
+            publicKey = publicKey
+        )
     }
 
     override fun validate(address: String): Boolean {
