@@ -1,6 +1,9 @@
 package com.tangem.blockchain.blockchains.rsk
 
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.AddressService
+import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.PlainAddress
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.toDecompressedPublicKey
 import com.tangem.common.extensions.toHexString
@@ -13,10 +16,13 @@ import java.util.*
 
 class RskAddressService : AddressService {
 
-    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String =
-            PublicKey(
-                walletPublicKey.toDecompressedPublicKey().sliceArray(1..64)
-            ).toAddress().withChecksum().hex
+    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+        val checksumAddress = PublicKey(
+            publicKey.blockchainKey.toDecompressedPublicKey().sliceArray(1..64)
+        ).toAddress().withChecksum().hex
+
+        return PlainAddress(value = checksumAddress, type = addressType, publicKey = publicKey)
+    }
 
     override fun validate(address: String): Boolean = Address(address).hasValidChecksumOrNoChecksum()
 
