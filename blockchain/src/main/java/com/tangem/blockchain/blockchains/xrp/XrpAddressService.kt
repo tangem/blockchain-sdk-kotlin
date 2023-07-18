@@ -2,8 +2,10 @@ package com.tangem.blockchain.blockchains.xrp
 
 import com.ripple.encodings.addresses.Addresses
 import com.ripple.encodings.base58.B58
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.AddressService
-import com.tangem.common.card.EllipticCurve
+import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.PlainAddress
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
@@ -11,10 +13,15 @@ import org.kethereum.extensions.toBigInteger
 
 class XrpAddressService : AddressService {
 
-    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-        val canonicalPublicKey = canonizePublicKey(walletPublicKey)
+    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+        val canonicalPublicKey = canonizePublicKey(publicKey.blockchainKey)
         val publicKeyHash = canonicalPublicKey.calculateSha256().calculateRipemd160()
-        return Addresses.encodeAccountID(publicKeyHash)
+
+        return PlainAddress(
+            value = Addresses.encodeAccountID(publicKeyHash),
+            type = addressType,
+            publicKey = publicKey
+        )
     }
 
     override fun validate(address: String): Boolean {

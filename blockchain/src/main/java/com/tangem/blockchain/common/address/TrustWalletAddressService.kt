@@ -1,6 +1,7 @@
 package com.tangem.blockchain.common.address
 
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.extensions.trustWalletCoinType
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.toCompressedPublicKey
@@ -9,13 +10,20 @@ import wallet.core.jni.CoinType
 import wallet.core.jni.PublicKey
 import wallet.core.jni.PublicKeyType
 
+// TODO refactoring naming collision — walletcore in ios
 class TrustWalletAddressService(blockchain: Blockchain) : AddressService {
 
     private val coinType: CoinType = blockchain.trustWalletCoinType
 
-    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-        val publicKey = PublicKey(compressIfNeeded(walletPublicKey), coinType.publicKeyType())
-        return AnyAddress(publicKey, coinType).description()
+    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+        val pk = PublicKey(compressIfNeeded(publicKey.blockchainKey), coinType.publicKeyType())
+        val address = AnyAddress(pk, coinType).description()
+
+        return PlainAddress(
+            value = address,
+            type = AddressType.Default,
+            publicKey = publicKey
+        )
     }
 
     override fun validate(address: String): Boolean {

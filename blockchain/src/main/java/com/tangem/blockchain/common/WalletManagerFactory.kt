@@ -16,17 +16,24 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
         blockchain: Blockchain,
         publicKeys: Map<AddressType, Wallet.PublicKey>,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
-    ): WalletManager {
-        val walletFactory = WalletFactory(blockchain.getAddressService())
-        val wallet = walletFactory.makeWallet(blockchain = blockchain, publicKeys = publicKeys)
+    ): WalletManager? {
+        //  let walletFactory = WalletFactory(blockchain: blockchain)
+        //         let wallet = try walletFactory.makeWallet(publicKeys: publicKeys)
+        //         return try makeWalletManager(from: blockchain, wallet: wallet)
 
-        val input = WalletManagerAssemblyInput(
-            wallet = wallet,
-            config = config,
-            curve = curve
-        )
+        val walletFactory = WalletFactory(blockchain)
+        val wallet = walletFactory.makeWallet(publicKeys = publicKeys)
 
-        return getAssembly(blockchain).make(input)
+        return createWalletManager(blockchain, wallet)
+
+
+        // val input = WalletManagerAssemblyInput(
+        //     wallet = wallet,
+        //     config = config,
+        //     curve = curve
+        // )
+        //
+        // return getAssembly(blockchain).make(input)
     }
 
     /**
@@ -61,12 +68,14 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
             }
         }
 
+        val publicKey = Wallet.PublicKey(seedKey = seedKey, derivation = derivation)
+
+        val walletFactory = WalletFactory(blockchain)
+        val wallet = walletFactory.makeWallet(publicKey)
+
         return createWalletManager(
             blockchain = blockchain,
-            publicKey = Wallet.PublicKey(
-                seedKey = seedKey,
-                derivation = derivation
-            )
+            wallet = wallet
         )
     }
 
@@ -83,9 +92,14 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
         blockchain: Blockchain = Blockchain.Bitcoin,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
+        val publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivation = null)
+
+        val walletFactory = WalletFactory(blockchain)
+        val wallet = walletFactory.makeWallet(publicKey, pairPublicKey)
+
         return createWalletManager(
             blockchain = blockchain,
-            publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivation = null),
+            wallet = wallet,
             pairPublicKey = pairPublicKey,
             curve = curve
         )
@@ -102,23 +116,25 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
         walletPublicKey: ByteArray,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
+        val publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivation = null)
+
+        val walletFactory = WalletFactory(blockchain)
+        val wallet = walletFactory.makeWallet(publicKey)
+
         return createWalletManager(
             blockchain = blockchain,
-            publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivation = null),
+            wallet = wallet,
             curve = curve
         )
     }
 
     private fun createWalletManager(
         blockchain: Blockchain,
-        publicKey: Wallet.PublicKey,
+        wallet: Wallet,
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
-        if (checkIfWrongKey(curve, publicKey)) return null
-
-        val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
-        val wallet = Wallet(blockchain, addresses, publicKey)
+        if (checkIfWrongKey(curve, wallet.publicKey)) return null
 
         return getAssembly(blockchain).make(
             input = WalletManagerAssemblyInput(

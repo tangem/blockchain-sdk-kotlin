@@ -1,8 +1,8 @@
 package com.tangem.blockchain.common
 
 import com.tangem.blockchain.common.address.Address
-import com.tangem.blockchain.common.address.AddressPublicKeyPair
 import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.PlainAddress
 import com.tangem.common.extensions.calculateHashCode
 import com.tangem.crypto.hdWallet.DerivationPath
 import java.math.BigDecimal
@@ -11,14 +11,14 @@ import java.util.Locale
 
 class Wallet(
     val blockchain: Blockchain,
-    val walletAddresses: Map<AddressType, AddressPublicKeyPair>,
+    val walletAddresses: Map<AddressType, Address>,
     tokens: Set<Token>,
 ) {
     //we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
     val recentTransactions: MutableList<TransactionData> = mutableListOf()
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
 
-    val addresses: List<AddressPublicKeyPair>
+    val addresses: List<Address> // TODO sort
         get() = walletAddresses.map { it.value }
 
     private val defaultAddress = requireNotNull(
@@ -34,7 +34,7 @@ class Wallet(
     constructor(blockchain: Blockchain, addresses: Set<Address>, publicKey: PublicKey) : this(
         blockchain = blockchain,
         walletAddresses = addresses.associate { address ->
-            address.type to AddressPublicKeyPair(address.value, publicKey, address.type)
+            address.type to PlainAddress(address.value, address.type, publicKey)
         }.toMutableMap(),
         tokens = emptySet()
     ) {

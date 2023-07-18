@@ -2,7 +2,10 @@ package com.tangem.blockchain.blockchains.polkadot
 
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotCombinedProvider
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.AddressService
+import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.PlainAddress
 import com.tangem.common.card.EllipticCurve
 import io.emeraldpay.polkaj.ss58.SS58Type
 import io.emeraldpay.polkaj.types.Address
@@ -22,8 +25,12 @@ class PolkadotAddressService(
         else -> throw IllegalStateException("$blockchain isn't supported")
     }
 
-    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-        return Address(ss58Network, walletPublicKey).toString()
+    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+        return PlainAddress(
+            value = Address(ss58Network, publicKey.blockchainKey).toString(),
+            type = AddressType.Default,
+            publicKey = publicKey
+        )
     }
 
     override fun validate(address: String): Boolean {

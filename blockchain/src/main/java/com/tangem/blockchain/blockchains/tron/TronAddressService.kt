@@ -2,7 +2,10 @@ package com.tangem.blockchain.blockchains.tron
 
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.Companion.toKeccak
 import com.tangem.blockchain.blockchains.tron.libs.Base58Check
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.AddressService
+import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.PlainAddress
 import com.tangem.blockchain.extensions.decodeBase58
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.toByteArray
@@ -11,13 +14,17 @@ import com.tangem.common.extensions.toHexString
 
 class TronAddressService : AddressService {
 
-    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-        val decompressedPublicKey = walletPublicKey.toDecompressedPublicKey()
+    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+        val decompressedPublicKey = publicKey.blockchainKey.toDecompressedPublicKey()
         val data = decompressedPublicKey.drop(1).toByteArray()
         val hash = data.toKeccak()
 
         val addressData = PREFIX.toByteArray(1) + hash.takeLast(ADDRESS_LENGTH-1).toByteArray()
-        return Base58Check.bytesToBase58(addressData)
+        return PlainAddress(
+            value = Base58Check.bytesToBase58(addressData),
+            type = addressType,
+            publicKey = publicKey
+        )
     }
 
     override fun validate(address: String): Boolean {
