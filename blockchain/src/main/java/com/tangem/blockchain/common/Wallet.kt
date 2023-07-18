@@ -11,8 +11,7 @@ import java.util.Locale
 
 class Wallet(
     val blockchain: Blockchain,
-    val walletAddresses: Map<AddressType, Address>,
-    tokens: Set<Token>,
+    val walletAddresses: Map<AddressType, Address>
 ) {
     //we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
     val recentTransactions: MutableList<TransactionData> = mutableListOf()
@@ -36,14 +35,12 @@ class Wallet(
         walletAddresses = addresses.associate { address ->
             address.type to PlainAddress(address.value, address.type, publicKey)
         }.toMutableMap(),
-        tokens = emptySet()
     ) {
         require(walletAddresses.containsKey(AddressType.Default)) { "Addresses have to contain the default address" }
     }
 
     init {
         setAmount(Amount(null, blockchain, AmountType.Coin))
-        tokens.forEach { setAmount(Amount(it)) }
     }
 
     fun setAmount(amount: Amount) {
