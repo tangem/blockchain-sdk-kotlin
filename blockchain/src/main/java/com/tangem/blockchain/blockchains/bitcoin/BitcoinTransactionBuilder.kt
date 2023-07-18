@@ -29,10 +29,11 @@ import org.bitcoinj.core.Address as BitcoinJAddress
 open class BitcoinTransactionBuilder(
     private val walletPublicKey: ByteArray,
     blockchain: Blockchain,
-    walletAddresses: Set<Address>
+    walletAddresses: List<Address>
 ) {
     private val walletScripts =
         walletAddresses.filterIsInstance<BitcoinScriptAddress>().map { it.script }
+
     protected lateinit var transaction: Transaction
     private var transactionSizeWithoutWitness = 0
 

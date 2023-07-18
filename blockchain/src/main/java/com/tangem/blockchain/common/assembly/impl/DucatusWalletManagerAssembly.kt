@@ -16,7 +16,7 @@ internal object DucatusWalletManagerAssembly : WalletManagerAssembly<DucatusWall
                 transactionBuilder = BitcoinTransactionBuilder(
                     walletPublicKey = wallet.publicKey.blockchainKey,
                     blockchain = wallet.blockchain,
-                    walletAddresses = emptySet()
+                    walletAddresses = wallet.addresses
                 ),
                 networkProvider = DucatusNetworkService(),
                 transactionHistoryProvider = wallet.blockchain.getBitcoinTransactionHistoryProvider(input.config)
