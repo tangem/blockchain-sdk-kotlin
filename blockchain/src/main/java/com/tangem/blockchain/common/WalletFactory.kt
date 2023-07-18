@@ -24,8 +24,7 @@ class WalletFactory(private val blockchain: Blockchain) {
 
         return Wallet(
             blockchain = blockchain,
-            walletAddresses = addresses,
-            tokens = emptySet()
+            walletAddresses = addresses
         )
     }
 
@@ -41,8 +40,7 @@ class WalletFactory(private val blockchain: Blockchain) {
 
         return Wallet(
             blockchain = blockchain,
-            walletAddresses = addressMap,
-            emptySet()
+            walletAddresses = addressMap
         )
     }
 
@@ -56,8 +54,7 @@ class WalletFactory(private val blockchain: Blockchain) {
 
         return Wallet(
             blockchain = blockchain,
-            walletAddresses = addresses,
-            tokens = emptySet()
+            walletAddresses = addresses
         )
     }
 }
