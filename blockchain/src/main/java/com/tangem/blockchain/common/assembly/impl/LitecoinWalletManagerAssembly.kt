@@ -17,8 +17,7 @@ internal object LitecoinWalletManagerAssembly : WalletManagerAssembly<LitecoinWa
                 transactionBuilder = BitcoinTransactionBuilder(
                     walletPublicKey = publicKey.blockchainKey,
                     blockchain = blockchain,
-                    walletAddresses = emptySet()
-// [REDACTED_TODO_COMMENT]
+                    walletAddresses = input.wallet.addresses
                 ),
                 networkProvider = LitecoinNetworkService(
                     providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config)
