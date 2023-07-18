@@ -1,6 +1,9 @@
 package com.tangem.blockchain.blockchains.solana
 
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.AddressService
+import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.PlainAddress
 import com.tangem.common.card.EllipticCurve
 import org.p2p.solanaj.core.PublicKey
 
@@ -9,8 +12,12 @@ import org.p2p.solanaj.core.PublicKey
  */
 class SolanaAddressService : AddressService {
 
-    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-        return PublicKey(walletPublicKey).toBase58()
+    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+        return PlainAddress(
+            value = PublicKey(publicKey.blockchainKey).toBase58(),
+            type = addressType,
+            publicKey = publicKey
+        )
     }
 
     override fun validate(address: String): Boolean {
