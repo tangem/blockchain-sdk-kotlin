@@ -135,59 +135,39 @@ enum class Blockchain(
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): Set<Address> {
-        val addressService = getAddressService()
+        // val addressService = getAddressService()
 
-        return if (pairPublicKey != null) {
-            (addressService as? MultisigAddressProvider)
-                ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()
-        } else if (addressService is MultipleAddressProvider) {
-            addressService.makeAddresses(walletPublicKey, curve)
+        TODO()
+        // return if (pairPublicKey != null) {
+        //     (addressService as? MultisigAddressProvider)
+        //         ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()
+        // } else if (addressService is MultipleAddressProvider) {
+        //     addressService.makeAddresses(walletPublicKey, curve)
+        // } else {
+        //     setOf(PlainAddress(addressService.makeAddress(walletPublicKey, curve)))
+        // }
+    }
+
+    fun derivationPaths(style: com.tangem.blockchain.common.derivation.DerivationStyle): Map<AddressType,
+    DerivationPath> {
+        val curves = getSupportedCurves()
+
+
+        if (!(curves.contains(EllipticCurve.Secp256k1) && curves.contains(EllipticCurve.Ed25519))) {
+            return emptyMap()
+        }
+
+        return if (isTestnet()) {
+            style.provider().derivations(this)
+                .mapValues { BIP44(coinType = 1).buildPath() }
         } else {
-            setOf(PlainAddress(addressService.makeAddress(walletPublicKey, curve)))
+            style.provider().derivations(this)
         }
     }
 
-    fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
-    internal fun getAddressService(): AddressService {
-        return when (this) {
-            Bitcoin, BitcoinTestnet,
-            Litecoin,
-            Dogecoin,
-            Ducatus,
-            Dash,
-            Ravencoin, RavencoinTestnet,
-            -> BitcoinAddressService(this)
-            BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
-            Arbitrum, ArbitrumTestnet,
-            Ethereum, EthereumTestnet,
-            EthereumClassic, EthereumClassicTestnet,
-            BSC, BSCTestnet,
-            Polygon, PolygonTestnet,
-            Avalanche, AvalancheTestnet,
-            Fantom, FantomTestnet,
-            Gnosis,
-            Optimism, OptimismTestnet,
-            EthereumFair,
-            EthereumPow, EthereumPowTestnet,
-            Kava, KavaTestnet,
-            Cronos,
-            Telos, TelosTestnet,
-            -> EthereumAddressService()
-            RSK -> RskAddressService()
-            Cardano, CardanoShelley -> CardanoAddressService(this)
-            XRP -> XrpAddressService()
-            Binance -> BinanceAddressService()
-            BinanceTestnet -> BinanceAddressService(true)
-            Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet -> PolkadotAddressService(this)
-            Stellar, StellarTestnet -> StellarAddressService()
-            Solana, SolanaTestnet -> SolanaAddressService()
-            Tezos -> TezosAddressService()
-            TON, TONTestnet, Cosmos, CosmosTestnet, TerraV1, TerraV2 -> TrustWalletAddressService(blockchain = this)
-            Tron, TronTestnet -> TronAddressService()
-            Kaspa -> KaspaAddressService()
-            Unknown -> throw Exception("unsupported blockchain")
-        }
+    fun validateAddress(address: String): Boolean {
+        return AddressServiceFactory(this).makeAddressService().validate(address)
     }
 
     fun getShareScheme(): String? = when (this) {

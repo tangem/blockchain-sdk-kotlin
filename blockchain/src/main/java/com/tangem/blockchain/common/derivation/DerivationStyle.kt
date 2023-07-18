@@ -1,6 +1,7 @@
 package com.tangem.blockchain.common.derivation
 
-
+// TODO refactoring
+// semantic collision with com.tangem.blockchain.common.DerivationStyle
 enum class DerivationStyle {
 
     @Deprecated("Will be removed after refactoring")
@@ -27,7 +28,7 @@ enum class DerivationStyle {
      */
     V3;
 
-    fun getConfig() : DerivationConfig {
+    fun provider() : DerivationConfig {
         return when(this) {
             LEGACY, V1 -> DerivationConfigV1
             NEW, V2 -> DerivationConfigV2
