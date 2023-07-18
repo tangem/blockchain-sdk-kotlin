@@ -488,7 +488,7 @@ class WalletManagerFactory(
 
             Blockchain.TerraV1 -> {
                 val providers = buildList {
-                    config.nowNodeCredentials?.apiKey.letNotBlank { add("https://terra.nownodes.io/$it/") }
+                    config.nowNodeCredentials?.apiKey.letNotBlank { add("https://lunc.nownodes.io/$it/") }
                     add("https://terra-classic-lcd.publicnode.com/")
                 }.map(::CosmosRestProvider)
                 CosmosWalletManager(
