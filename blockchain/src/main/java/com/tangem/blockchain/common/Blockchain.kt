@@ -121,7 +121,7 @@ enum class Blockchain(
     fun derivationPaths(style: DerivationStyle): Map<AddressType, DerivationPath> {
         val curves = getSupportedCurves()
 
-        if (!(curves.contains(EllipticCurve.Secp256k1) && curves.contains(EllipticCurve.Ed25519))) {
+        if (!curves.contains(EllipticCurve.Secp256k1) && !curves.contains(EllipticCurve.Ed25519)) {
             return emptyMap()
         }
 
@@ -403,59 +403,8 @@ enum class Blockchain(
 
     // TODO refactoring remove this method
     fun derivationPath(style: DerivationStyle?): DerivationPath? {
-        if (style == null) return null
-        if (!getSupportedCurves().contains(EllipticCurve.Secp256k1) &&
-            !getSupportedCurves().contains(EllipticCurve.Ed25519)
-        ) {
-            return null
-        }
-
-        return when (this) {
-            Stellar, StellarTestnet, Solana, SolanaTestnet -> {
-                //Path according to sep-0005. https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0005.md
-                // Solana path consistent with TrustWallet:
-                // https://github.com/trustwallet/wallet-core/blob/456f22d6a8ce8a66ccc73e3b42bcfec5a6afe53a/registry.json#L1013
-                DerivationPath(
-                    path = listOf(
-                        DerivationNode.Hardened(BIP44.purpose),
-                        DerivationNode.Hardened(CoinTypeProvider.getCoinType(this, style)),
-                        DerivationNode.Hardened(0)
-                    )
-                )
-            }
-            CardanoShelley -> { //We use shelley for all new cards with HD wallets feature
-                //Path according to CIP-1852. https://cips.cardano.org/cips/cip1852/
-                DerivationPath(
-                    path = listOf(
-                        DerivationNode.Hardened(1852),
-                        DerivationNode.Hardened(CoinTypeProvider.getCoinType(this, style)),
-                        DerivationNode.Hardened(0),
-                        DerivationNode.NonHardened(0),
-                        DerivationNode.NonHardened(0)
-                    )
-                )
-            }
-            AlephZero, AlephZeroTestnet -> {
-                DerivationPath(
-                    path = listOf(
-                        DerivationNode.Hardened(BIP44.purpose),
-                        DerivationNode.Hardened(CoinTypeProvider.getCoinType(this, style)),
-                        DerivationNode.Hardened(0),
-                        DerivationNode.Hardened(0),
-                        DerivationNode.Hardened(0)
-                    )
-                )
-            }
-            else -> {
-                // Standard BIP44
-                val bip44 = BIP44(
-                    coinType = CoinTypeProvider.getCoinType(this, style),
-                    account = 0,
-                    change = BIP44.Chain.External,
-                    addressIndex = 0
-                )
-                bip44.buildPath()
-            }
+        return style?.let {
+            derivationPaths(it)[AddressType.Default]
         }
     }
 
