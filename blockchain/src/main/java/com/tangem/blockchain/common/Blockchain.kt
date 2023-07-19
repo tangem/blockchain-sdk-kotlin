@@ -118,8 +118,7 @@ enum class Blockchain(
         -> 18
     }
 
-    fun derivationPaths(style: com.tangem.blockchain.common.derivation.DerivationStyle): Map<AddressType,
-    DerivationPath> {
+    fun derivationPaths(style: DerivationStyle): Map<AddressType, DerivationPath> {
         val curves = getSupportedCurves()
 
         if (!(curves.contains(EllipticCurve.Secp256k1) && curves.contains(EllipticCurve.Ed25519))) {
