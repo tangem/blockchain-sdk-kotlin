@@ -43,6 +43,7 @@ open class BitcoinAddressService(
     val legacy = BitcoinLegacyAddressService(blockchain, networkParameters)
     val bech32 = BitcoinBech32AddressService(blockchain, networkParameters)
 
+    // TODO refactoring look at default address type, probably return legacy address
     override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
         val address = when (addressType) {
             AddressType.Legacy -> legacy.makeAddressOldStyle(publicKey.blockchainKey).value
