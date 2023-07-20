@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.stellar
 
 import com.google.common.truth.Truth
+import com.tangem.blockchain.makeAddressWithDefaultType
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
@@ -14,7 +15,7 @@ class StellarAddressTest {
                 .hexToBytes()
         val expected = "GDWFHB6YWOF5T34AXW6HRUGX4HCT6CHCNFBWZGOVWPBN6SZM44YBFUDZ"
 
-        Truth.assertThat(addressService.makeAddress(walletPublicKey)).isEqualTo(expected)
+        Truth.assertThat(addressService.makeAddressWithDefaultType(walletPublicKey)).isEqualTo(expected)
     }
 
     @Test

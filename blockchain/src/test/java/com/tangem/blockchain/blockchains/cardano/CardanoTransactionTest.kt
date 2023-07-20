@@ -7,12 +7,15 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.wrapInObject
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
 class CardanoTransactionTest {
 
     val blockchain = Blockchain.CardanoShelley
+
+    val addressService = CardanoAddressService(blockchain)
 
     @Test
     fun buildCorrectTransaction() {
@@ -25,18 +28,16 @@ class CardanoTransactionTest {
         val feeValue = "0.01".toBigDecimal()
         val byronDestinationAddress = "Ae2tdPwUPEYyDf8J4KQNr1ZPw26iyn9JU9dHWTAxNEaNbi8VDNDTBmjQuXj"
 
-        val addresses = CardanoAddressService(blockchain).makeAddresses(walletPublicKey)
-        val byronAddress = addresses.find { it.type == AddressType.Legacy }!!.value
-        val shelleyAddress = addresses.find { it.type == AddressType.Default }!!.value
+        val byronAddress = addressService.makeAddress(walletPublicKey.wrapInObject(), AddressType.Legacy)
+        val shelleyAddress = addressService.makeAddress(walletPublicKey.wrapInObject(), AddressType.Default)
 
         val transactionBuilder = CardanoTransactionBuilder(walletPublicKey)
-        transactionBuilder.unspentOutputs =
-                prepareTwoUnspentOutputs(listOf(byronAddress, shelleyAddress))
+        transactionBuilder.unspentOutputs = prepareTwoUnspentOutputs(listOf(byronAddress.value, shelleyAddress.value))
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
         val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
-                sourceAddress = shelleyAddress,
+                sourceAddress = shelleyAddress.value,
                 destinationAddress = byronDestinationAddress,
                 amount = amountToSend,
                 fee = fee

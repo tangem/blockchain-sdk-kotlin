@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.kaspa
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.kaspa.kaspacashaddr.KaspaCashAddr
+import com.tangem.blockchain.makeAddressWithDefaultType
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
@@ -15,7 +16,7 @@ class KaspaAddressTest {
             "04586190332C39188029D0DA9B2DBA0605ED3E3FFCEF9C270D64FDCB8C0BA48A601E4FA5CD60AFB067B7C554284BEEE67CEAE6AB0634975E288507BD051904935F".hexToBytes()
         val expected = "kaspa:qyp4scvsxvkrjxyq98gd4xedhgrqtmf78l7wl8p8p4j0mjuvpwjg5cqhy97n472"
 
-        Truth.assertThat(addressService.makeAddress(walletPublicKey))
+        Truth.assertThat(addressService.makeAddressWithDefaultType(walletPublicKey))
             .isEqualTo(expected)
     }
 
@@ -99,6 +100,6 @@ class KaspaAddressTest {
             // endregion Bytes
         )
 
-        Truth.assertThat(addressService.makeAddress(publicKey)).isEqualTo(address)
+        Truth.assertThat(addressService.makeAddressWithDefaultType(publicKey)).isEqualTo(address)
     }
 }
