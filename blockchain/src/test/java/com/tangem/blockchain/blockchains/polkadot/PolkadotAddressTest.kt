@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.polkadot
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.makeAddressWithDefaultType
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
@@ -20,11 +21,11 @@ class PolkadotAddressTest {
     @Test
     fun makeAddressFromCorrectPublicKey() {
         val walletPublicKey = "3F05253ACDDB17A527BA6E9DBD73E7B06FFCF7CE072041052BEF31B6ECBD7CE2".hexToBytes()
-        Truth.assertThat(polkadotAddressService.makeAddress(walletPublicKey)).isEqualTo(polkadotAddress)
-        Truth.assertThat(kusamaAddressService.makeAddress(walletPublicKey)).isEqualTo(kusamaAddress)
-        Truth.assertThat(polkadotTestnetAddressService.makeAddress(walletPublicKey)).isEqualTo(substrateAddress)
-        Truth.assertThat(alephZeroAddressService.makeAddress(walletPublicKey)).isEqualTo(substrateAddress)
-        Truth.assertThat(alephZeroTestnetAddressService.makeAddress(walletPublicKey)).isEqualTo(substrateAddress)
+        Truth.assertThat(polkadotAddressService.makeAddressWithDefaultType(walletPublicKey)).isEqualTo(polkadotAddress)
+        Truth.assertThat(kusamaAddressService.makeAddressWithDefaultType(walletPublicKey)).isEqualTo(kusamaAddress)
+        Truth.assertThat(polkadotTestnetAddressService.makeAddressWithDefaultType(walletPublicKey)).isEqualTo(substrateAddress)
+        Truth.assertThat(alephZeroAddressService.makeAddressWithDefaultType(walletPublicKey)).isEqualTo(substrateAddress)
+        Truth.assertThat(alephZeroTestnetAddressService.makeAddressWithDefaultType(walletPublicKey)).isEqualTo(substrateAddress)
     }
 
     @Test
