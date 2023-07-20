@@ -28,26 +28,11 @@ class BitcoinCashAddressService(blockchain: Blockchain) : AddressService {
     private val legacyService = BitcoinAddressService(Blockchain.Bitcoin).legacy
 
     override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
-        return if (addressType == AddressType.Default) {
-            makeCashAddrAddress(publicKey)
-        } else {
-            val address = legacyService.makeAddressOldStyle(publicKey.blockchainKey.toCompressedPublicKey()).value
-            PlainAddress(
-                value = address,
-                type = AddressType.Legacy,
-                publicKey = publicKey
-            )
+        return when(addressType) {
+            AddressType.Default -> makeCashAddrAddress(publicKey)
+            AddressType.Legacy -> makeLegacyAddress(publicKey)
         }
     }
-
-    // override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?) =
-    //     makeCashAddrAddress(walletPublicKey).value
-
-    // override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?) =
-    //     setOf(
-    //         bitcoinAddressService.makeLegacyAddress(walletPublicKey.toCompressedPublicKey()),
-    //         makeCashAddrAddress(walletPublicKey)
-    //     )
 
     override fun validate(address: String) =
         validateCashAddrAddress(address) || legacyService.validate(address)
@@ -56,6 +41,15 @@ class BitcoinCashAddressService(blockchain: Blockchain) : AddressService {
         val publicKeyHash = publicKey.blockchainKey.toCompressedPublicKey().calculateSha256().calculateRipemd160()
         val address = cashAddr.toCashAddress(BitcoinCashAddressType.P2PKH, publicKeyHash)
         return PlainAddress(address, AddressType.Default, publicKey)
+    }
+
+    private fun makeLegacyAddress(publicKey: Wallet.PublicKey) : PlainAddress {
+        val address = legacyService.makeAddressOldStyle(publicKey.blockchainKey.toCompressedPublicKey()).value
+        return PlainAddress(
+            value = address,
+            type = AddressType.Legacy,
+            publicKey = publicKey
+        )
     }
 
     fun validateCashAddrAddress(address: String) = cashAddr.isValidCashAddress(address)
