@@ -14,7 +14,7 @@ import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.AddressService
-import com.tangem.blockchain.common.address.TrustWalletAddressService
+import com.tangem.blockchain.common.address.WalletCoreAddressService
 import java.lang.IllegalStateException
 
 class AddressServiceFactory(private val blockchain: Blockchain) {
@@ -27,13 +27,17 @@ class AddressServiceFactory(private val blockchain: Blockchain) {
             Blockchain.Dogecoin,
             Blockchain.Ducatus,
             Blockchain.Dash,
-            Blockchain.Ravencoin, Blockchain.RavencoinTestnet, -> {
+            Blockchain.Ravencoin, Blockchain.RavencoinTestnet,
+            -> {
                 BitcoinAddressService(blockchain)
             }
+
             Blockchain.BitcoinCash,
-            Blockchain.BitcoinCashTestnet -> {
+            Blockchain.BitcoinCashTestnet,
+            -> {
                 BitcoinCashAddressService(blockchain)
             }
+
             Blockchain.Arbitrum,
             Blockchain.ArbitrumTestnet,
             Blockchain.Ethereum,
@@ -58,57 +62,76 @@ class AddressServiceFactory(private val blockchain: Blockchain) {
             Blockchain.KavaTestnet,
             Blockchain.Cronos,
             Blockchain.Telos,
-            Blockchain.TelosTestnet -> {
+            Blockchain.TelosTestnet,
+            -> {
                 EthereumAddressService()
             }
+
             Blockchain.RSK -> {
                 RskAddressService()
             }
+
             Blockchain.Cardano, Blockchain.CardanoShelley -> {
                 CardanoAddressService(blockchain)
             }
+
             Blockchain.XRP -> {
                 XrpAddressService()
             }
+
             Blockchain.Binance -> {
                 BinanceAddressService()
             }
+
             Blockchain.BinanceTestnet -> {
                 BinanceAddressService(true)
             }
+
             Blockchain.Polkadot,
             Blockchain.PolkadotTestnet,
             Blockchain.Kusama,
             Blockchain.AlephZero,
-            Blockchain.AlephZeroTestnet -> {
+            Blockchain.AlephZeroTestnet,
+            -> {
                 PolkadotAddressService(blockchain)
             }
+
             Blockchain.Stellar,
-            Blockchain.StellarTestnet -> {
+            Blockchain.StellarTestnet,
+            -> {
                 StellarAddressService()
             }
+
             Blockchain.Solana,
-            Blockchain.SolanaTestnet -> {
+            Blockchain.SolanaTestnet,
+            -> {
                 SolanaAddressService()
             }
+
             Blockchain.Tezos -> {
                 TezosAddressService()
             }
+
             Blockchain.TON,
             Blockchain.TONTestnet,
             Blockchain.Cosmos,
             Blockchain.CosmosTestnet,
             Blockchain.TerraV1,
-            Blockchain.TerraV2 -> {
-                TrustWalletAddressService(blockchain)
+            Blockchain.TerraV2,
+            -> {
+                WalletCoreAddressService(blockchain)
             }
+
             Blockchain.Tron,
-            Blockchain.TronTestnet -> {
+            Blockchain.TronTestnet,
+            -> {
                 TronAddressService()
             }
+
             Blockchain.Kaspa -> {
                 KaspaAddressService()
             }
+
             Blockchain.Unknown -> {
                 throw IllegalStateException("Unsupported blockchain")
             }

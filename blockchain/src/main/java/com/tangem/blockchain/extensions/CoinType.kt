@@ -4,9 +4,9 @@ import com.tangem.blockchain.common.Blockchain
 import wallet.core.jni.CoinType
 
 /**
- * Converts tangem Blockchain object to TrustWallet CoinType
+ * Converts tangem Blockchain object to WalletCore CoinType
  */
-internal val Blockchain.trustWalletCoinType: CoinType
+internal val Blockchain.walletCoreWalletType: CoinType
     get() = when (this) {
         Blockchain.Cosmos, Blockchain.CosmosTestnet -> CoinType.COSMOS
         Blockchain.TON, Blockchain.TONTestnet -> CoinType.TON
