@@ -6,6 +6,7 @@ import org.kethereum.model.Address
 import java.util.*
 
 class IconsUtil {
+
     companion object {
         private const val BASE_URL = "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains"
 
