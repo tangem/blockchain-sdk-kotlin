@@ -11,6 +11,7 @@ import com.tangem.blockchain.blockchains.kaspa.network.KaspaUnspentOutput
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.makeAddressWithDefaultType
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
@@ -32,7 +33,7 @@ class KaspaTransactionTest {
         val feeValue = "0.0003".toBigDecimal()
         val destinationAddress = "kaspa:qpsqw2aamda868dlgqczeczd28d5nc3rlrj3t87vu9q58l2tugpjs2psdm4fv"
 
-        val sourceAddress = addressService.makeAddress(walletPublicKey)
+        val sourceAddress = addressService.makeAddressWithDefaultType(walletPublicKey)
 
         val transactionBuilder = KaspaTransactionBuilder()
         transactionBuilder.unspentOutputs = listOf(
@@ -145,7 +146,7 @@ class KaspaTransactionTest {
         val feeValue = "0.0001".toBigDecimal()
         val destinationAddress = "kaspa:pqurku73qluhxrmvyj799yeyptpmsflpnc8pha80z6zjh6efwg3v2rrepjm5r"
 
-        val sourceAddress = addressService.makeAddress(walletPublicKey)
+        val sourceAddress = addressService.makeAddressWithDefaultType(walletPublicKey)
 
         val transactionBuilder = KaspaTransactionBuilder()
         transactionBuilder.unspentOutputs = listOf(
