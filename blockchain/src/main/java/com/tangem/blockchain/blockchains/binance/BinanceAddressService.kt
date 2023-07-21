@@ -13,7 +13,11 @@ import org.bitcoinj.core.Bech32
 
 class BinanceAddressService(private val testNet: Boolean = false) : AddressService {
 
-    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve,
+    ): PlainAddress {
         val publicKeyHash = publicKey.blockchainKey.toCompressedPublicKey().calculateSha256().calculateRipemd160()
 
         val hrp = if (testNet) "tbnb" else "bnb"
