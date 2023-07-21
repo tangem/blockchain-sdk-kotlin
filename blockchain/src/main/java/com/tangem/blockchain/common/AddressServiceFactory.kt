@@ -14,8 +14,8 @@ import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.AddressService
-import com.tangem.blockchain.common.address.TrustWalletAddressService
 import com.tangem.common.card.EllipticCurve
+import com.tangem.blockchain.common.address.WalletCoreAddressService
 import java.lang.IllegalStateException
 
 class AddressServiceFactory(
@@ -123,7 +123,7 @@ class AddressServiceFactory(
             Blockchain.TerraV1,
             Blockchain.TerraV2,
             -> {
-                TrustWalletAddressService(blockchain)
+                WalletCoreAddressService(blockchain)
             }
 
             Blockchain.Tron,
