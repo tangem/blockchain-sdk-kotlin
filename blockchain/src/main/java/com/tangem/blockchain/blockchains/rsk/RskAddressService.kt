@@ -21,28 +21,32 @@ class RskAddressService : AddressService {
             publicKey.blockchainKey.toDecompressedPublicKey().sliceArray(1..64)
         ).toAddress().withChecksum().hex
 
-        return PlainAddress(value = checksumAddress, type = addressType, publicKey = publicKey)
+        return PlainAddress(
+            value = checksumAddress,
+            type = addressType,
+            publicKey = publicKey
+        )
     }
 
     override fun validate(address: String): Boolean = Address(address).hasValidChecksumOrNoChecksum()
 
     private fun Address.withChecksum(): Address { // it's like ERC55 but with chainId
         return ("30$hex").toLowerCase(Locale.ROOT).toByteArray().keccak().toHexString()
-                .let { hexHash ->
-                    Address(cleanHex.mapIndexed { index, hexChar ->
-                        when {
-                            hexChar in '0'..'9' -> hexChar
-                            hexHash[index] in '0'..'7' -> hexChar.toLowerCase()
-                            else -> hexChar.toUpperCase()
-                        }
-                    }.joinToString(""))
-                }
+            .let { hexHash ->
+                Address(cleanHex.mapIndexed { index, hexChar ->
+                    when {
+                        hexChar in '0'..'9' -> hexChar
+                        hexHash[index] in '0'..'7' -> hexChar.toLowerCase()
+                        else -> hexChar.toUpperCase()
+                    }
+                }.joinToString(""))
+            }
     }
 
     private fun Address.hasValidChecksumOrNoChecksum(): Boolean {
         return isValid() &&
-                (withChecksum().hex == hex ||
-                        cleanHex.toLowerCase() == cleanHex ||
-                        cleanHex.toUpperCase() == cleanHex)
+            (withChecksum().hex == hex ||
+                cleanHex.toLowerCase() == cleanHex ||
+                cleanHex.toUpperCase() == cleanHex)
     }
 }
