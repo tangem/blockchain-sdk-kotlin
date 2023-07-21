@@ -5,7 +5,11 @@ import com.tangem.common.card.EllipticCurve
 
 interface AddressProvider {
 
-    fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress
+    fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve
+    ): PlainAddress
 
 }
 
@@ -13,11 +17,12 @@ interface AddressProvider {
 fun AddressProvider.makeAddressOldStyle(
     walletPublicKey: ByteArray,
     addressType: AddressType = AddressType.Default,
-    curve: EllipticCurve? = EllipticCurve.Secp256k1
+    curve: EllipticCurve = EllipticCurve.Secp256k1
 ): PlainAddress {
     return makeAddress(
         publicKey = Wallet.PublicKey(walletPublicKey, null),
-        addressType = addressType
+        addressType = addressType,
+        curve = curve
     )
 }
 
