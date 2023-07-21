@@ -440,6 +440,20 @@ enum class Blockchain(
         else -> false
     }
 
+    fun getPrimaryCurve(): EllipticCurve? {
+        return when {
+            getSupportedCurves().contains(EllipticCurve.Secp256k1) -> {
+                EllipticCurve.Secp256k1
+            }
+            getSupportedCurves().contains(EllipticCurve.Ed25519) -> {
+                EllipticCurve.Ed25519
+            }
+            else -> {
+                null
+            }
+        }
+    }
+
     companion object {
         private val values = values()
 
@@ -464,5 +478,10 @@ enum class Blockchain(
             .filter { it.isTestnet() == isTestnet }
             .filter { it.getSupportedCurves().size == 1 }
             .filter { it.getSupportedCurves()[0] == EllipticCurve.Ed25519 }
+
+        fun valuesWithoutUnknown(): List<Blockchain> {
+            return Blockchain.values().toMutableList().apply { remove(Unknown) }.toList()
+        }
+
     }
 }
