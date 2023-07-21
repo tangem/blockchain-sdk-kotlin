@@ -92,14 +92,14 @@ internal class WalletManagerFactoryTest {
         Truth.assertThat(walletManager).isInstanceOf(LitecoinWalletManager::class.java)
     }
 
-    // @Test
-    // fun createTezosWalletManager() {
-    //     val secpWalletManager = makeWalletManager(Blockchain.Tezos, EllipticCurve.Secp256k1)
-    //     val edWalletManager = makeWalletManager(Blockchain.Tezos, EllipticCurve.Ed25519)
-    //
-    //     Truth.assertThat(secpWalletManager).isInstanceOf(TezosWalletManager::class.java)
-    //     Truth.assertThat(edWalletManager).isInstanceOf(TezosWalletManager::class.java)
-    // }
+    @Test
+    fun createTezosWalletManager() {
+        val secpWalletManager = makeWalletManager(Blockchain.Tezos, EllipticCurve.Secp256k1)
+        val edWalletManager = makeWalletManager(Blockchain.Tezos, EllipticCurve.Ed25519)
+
+        Truth.assertThat(secpWalletManager).isInstanceOf(TezosWalletManager::class.java)
+        Truth.assertThat(edWalletManager).isInstanceOf(TezosWalletManager::class.java)
+    }
 
     @Test
     fun createDucatusWalletManager() {
