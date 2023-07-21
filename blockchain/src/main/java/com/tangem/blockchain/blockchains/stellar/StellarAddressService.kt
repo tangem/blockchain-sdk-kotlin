@@ -9,11 +9,6 @@ import org.stellar.sdk.KeyPair
 
 class StellarAddressService: AddressService {
 
-    // override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-    //     val kp = KeyPair.fromPublicKey(walletPublicKey)
-    //     return kp.accountId
-    // }
-
     override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
         val kp = KeyPair.fromPublicKey(publicKey.blockchainKey)
         return PlainAddress(
