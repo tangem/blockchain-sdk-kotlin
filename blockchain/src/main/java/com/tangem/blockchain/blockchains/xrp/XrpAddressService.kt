@@ -29,7 +29,7 @@ class XrpAddressService : AddressService {
             address.startsWith("r") -> try {
                 Addresses.decodeAccountID(address)
                 true
-            } catch (excpetion: Exception) {
+            } catch (exception: Exception) {
                 false
             }
             address.startsWith("X") -> decodeXAddress(address) != null

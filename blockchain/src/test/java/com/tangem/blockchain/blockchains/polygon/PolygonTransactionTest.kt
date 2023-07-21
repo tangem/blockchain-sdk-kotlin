@@ -9,6 +9,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.makeAddressWithDefaultType
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 import org.kethereum.DEFAULT_GAS_LIMIT
@@ -30,7 +31,7 @@ class PolygonTransactionTest {
         val destinationAddress = "0x7655b9b19ffab8b897f836857dae22a1e7f8d735"
         val nonce = 15.toBigInteger()
 
-        val walletAddress = EthereumAddressService().makeAddress(walletPublicKey)
+        val walletAddress = EthereumAddressService().makeAddressWithDefaultType(walletPublicKey)
         val transactionBuilder = EthereumTransactionBuilder(walletPublicKey, blockchain)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
@@ -74,7 +75,7 @@ class PolygonTransactionTest {
             decimals = 6
         )
 
-        val walletAddress = EthereumAddressService().makeAddress(walletPublicKey)
+        val walletAddress = EthereumAddressService().makeAddressWithDefaultType(walletPublicKey)
         val transactionBuilder = EthereumTransactionBuilder(walletPublicKey, blockchain)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Token(token))
