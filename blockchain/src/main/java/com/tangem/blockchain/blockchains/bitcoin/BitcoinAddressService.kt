@@ -44,7 +44,11 @@ open class BitcoinAddressService(
     val bech32 = BitcoinBech32AddressService(blockchain, networkParameters)
 
     // TODO refactoring look at default address type, probably return legacy address
-    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve,
+    ): PlainAddress {
         val address = when (addressType) {
             AddressType.Legacy -> legacy.makeAddressOldStyle(publicKey.blockchainKey).value
             AddressType.Default -> bech32.makeAddressOldStyle(publicKey.blockchainKey).value
@@ -74,7 +78,7 @@ open class BitcoinAddressService(
 
     override fun makeAddresses(
         publicKey: Wallet.PublicKey,
-        pairPublicKey: ByteArray
+        pairPublicKey: ByteArray,
     ): List<BitcoinScriptAddress> {
 
         val script = create1of2MultisigOutputScript(publicKey.blockchainKey, pairPublicKey)
@@ -106,12 +110,11 @@ open class BitcoinAddressService(
         val publicEcKeys = publicKeys.map { ECKey.fromPublicOnly(it) }
         return ScriptBuilder.createRedeemScript(1, publicEcKeys)
     }
-
 }
 
 data class BitcoinScriptAddress(
     val script: Script,
     override val value: String,
     override val type: AddressType = AddressType.Default,
-    override val publicKey: Wallet.PublicKey
+    override val publicKey: Wallet.PublicKey,
 ) : Address(value, type, publicKey)

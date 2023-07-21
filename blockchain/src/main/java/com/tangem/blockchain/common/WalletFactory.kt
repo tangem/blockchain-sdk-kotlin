@@ -1,7 +1,7 @@
 package com.tangem.blockchain.common
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinScriptAddressesProvider
-import com.tangem.blockchain.common.address.Address
+import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.address.PlainAddress
 import com.tangem.blockchain.common.derivation.DerivationStyle
@@ -10,20 +10,18 @@ import java.lang.IllegalStateException
 
 class WalletFactory(
     private val blockchain: Blockchain,
-    private val ellipticCurve: EllipticCurve,
+    private val addressService: AddressService
 ) {
 
-    private val addressProvider = AddressServiceFactory(blockchain, ellipticCurve).makeAddressService()
-
     @Throws(Exception::class)
-    fun makeWallet(publicKey: Wallet.PublicKey): Wallet {
+    fun makeWallet(publicKey: Wallet.PublicKey, curve: EllipticCurve): Wallet {
         // Temporary for get count on addresses
         val addressTypes: Array<AddressType> = blockchain.derivationPaths(DerivationStyle.V2).keys.toTypedArray()
 
         val addresses: MutableMap<AddressType, PlainAddress> = mutableMapOf()
 
         for (addressType in addressTypes) {
-            addresses[addressType] = addressProvider.makeAddress(publicKey, addressType)
+            addresses[addressType] = addressService.makeAddress(publicKey, addressType, curve)
         }
 
         return Wallet(
@@ -34,8 +32,8 @@ class WalletFactory(
 
     /// With multisig script public key
     fun makeWallet(publicKey: Wallet.PublicKey, pairPublicKey: ByteArray): Wallet {
-        val addressProvider = addressProvider as? BitcoinScriptAddressesProvider
-            ?: throw IllegalStateException("$addressProvider must be BitcoinScriptAddressesProvider")
+        val addressProvider = addressService as? BitcoinScriptAddressesProvider
+            ?: throw IllegalStateException("$addressService must be BitcoinScriptAddressesProvider")
 
         val addresses = addressProvider.makeAddresses(publicKey, pairPublicKey)
 
@@ -48,11 +46,11 @@ class WalletFactory(
     }
 
     // with different public keys
-    fun makeWallet(publicKeys: Map<AddressType, Wallet.PublicKey>): Wallet {
+    fun makeWallet(publicKeys: Map<AddressType, Wallet.PublicKey>, curve: EllipticCurve): Wallet {
         require(publicKeys.containsKey(AddressType.Default)) { "PublicKeys have to contain default publicKey" }
 
         val addresses = publicKeys.mapValues { (addressType, publicKey) ->
-            addressProvider.makeAddress(publicKey, addressType)
+            addressService.makeAddress(publicKey, addressType, curve)
         }
 
         return Wallet(

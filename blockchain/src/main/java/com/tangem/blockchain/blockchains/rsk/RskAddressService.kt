@@ -16,7 +16,11 @@ import java.util.*
 
 class RskAddressService : AddressService {
 
-    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve,
+    ): PlainAddress {
         val checksumAddress = PublicKey(
             publicKey.blockchainKey.toDecompressedPublicKey().sliceArray(1..64)
         ).toAddress().withChecksum().hex

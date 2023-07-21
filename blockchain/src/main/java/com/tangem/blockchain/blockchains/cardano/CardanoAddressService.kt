@@ -21,9 +21,13 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
 
     private val shelleyHeaderByte: Byte = 97
 
-    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve,
+    ): PlainAddress {
         val address = when (addressType) {
-            AddressType.Default ->  makeShelleyAddress(publicKey.blockchainKey)
+            AddressType.Default -> makeShelleyAddress(publicKey.blockchainKey)
             AddressType.Legacy -> makeByronAddress(publicKey.blockchainKey)
         }
 

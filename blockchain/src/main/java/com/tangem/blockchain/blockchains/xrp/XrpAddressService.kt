@@ -6,6 +6,7 @@ import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.address.PlainAddress
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
@@ -13,7 +14,11 @@ import org.kethereum.extensions.toBigInteger
 
 class XrpAddressService : AddressService {
 
-    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve,
+    ): PlainAddress {
         val canonicalPublicKey = canonizePublicKey(publicKey.blockchainKey)
         val publicKeyHash = canonicalPublicKey.calculateSha256().calculateRipemd160()
 
@@ -32,6 +37,7 @@ class XrpAddressService : AddressService {
             } catch (exception: Exception) {
                 false
             }
+
             address.startsWith("X") -> decodeXAddress(address) != null
             else -> false
         }
@@ -74,6 +80,7 @@ class XrpAddressService : AddressService {
                     1.toByte() -> {
                         tag = tagBytes.reversedArray().toBigInteger().toLong()
                     }
+
                     else -> return null
                 }
                 return XrpTaggedAddress(classicAddress, tag)
@@ -85,6 +92,6 @@ class XrpAddressService : AddressService {
 }
 
 data class XrpTaggedAddress(
-        val address: String,
-        val destinationTag: Long?
+    val address: String,
+    val destinationTag: Long?,
 )
