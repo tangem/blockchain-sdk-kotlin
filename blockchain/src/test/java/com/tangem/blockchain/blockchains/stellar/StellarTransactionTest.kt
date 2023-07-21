@@ -4,6 +4,7 @@ import com.google.common.truth.Truth
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.makeAddressWithDefaultType
 import com.tangem.common.extensions.hexToBytes
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -25,7 +26,7 @@ class StellarTransactionTest {
         val sequence = 123118694988529223L
         val instant = 1612201818L
 
-        val walletAddress = StellarAddressService().makeAddress(walletPublicKey)
+        val walletAddress = StellarAddressService().makeAddressWithDefaultType(walletPublicKey)
         val calendar = Calendar.Builder().setInstant(instant).build()
         val transactionBuilder = StellarTransactionBuilder(StellarNetworkServiceMock(), walletPublicKey)
 
@@ -75,7 +76,7 @@ class StellarTransactionTest {
             decimals = 0
         )
 
-        val walletAddress = StellarAddressService().makeAddress(walletPublicKey)
+        val walletAddress = StellarAddressService().makeAddressWithDefaultType(walletPublicKey)
         val calendar = Calendar.Builder().setInstant(instant).build()
         val transactionBuilder = StellarTransactionBuilder(StellarNetworkServiceMock(), walletPublicKey)
 

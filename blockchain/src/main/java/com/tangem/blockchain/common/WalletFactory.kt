@@ -5,11 +5,15 @@ import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.address.PlainAddress
 import com.tangem.blockchain.common.derivation.DerivationStyle
+import com.tangem.common.card.EllipticCurve
 import java.lang.IllegalStateException
 
-class WalletFactory(private val blockchain: Blockchain) {
+class WalletFactory(
+    private val blockchain: Blockchain,
+    private val ellipticCurve: EllipticCurve,
+) {
 
-    private val addressProvider = AddressServiceFactory(blockchain).makeAddressService()
+    private val addressProvider = AddressServiceFactory(blockchain, ellipticCurve).makeAddressService()
 
     @Throws(Exception::class)
     fun makeWallet(publicKey: Wallet.PublicKey): Wallet {
@@ -28,9 +32,8 @@ class WalletFactory(private val blockchain: Blockchain) {
         )
     }
 
-
     /// With multisig script public key
-    fun makeWallet(publicKey: Wallet.PublicKey, pairPublicKey: ByteArray) : Wallet {
+    fun makeWallet(publicKey: Wallet.PublicKey, pairPublicKey: ByteArray): Wallet {
         val addressProvider = addressProvider as? BitcoinScriptAddressesProvider
             ?: throw IllegalStateException("$addressProvider must be BitcoinScriptAddressesProvider")
 
