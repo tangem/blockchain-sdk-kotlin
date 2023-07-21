@@ -85,6 +85,7 @@ enum class Blockchain(
         Cosmos, CosmosTestnet,
         TerraV1, TerraV2,
         -> 6
+
         Stellar, StellarTestnet -> 7
         Bitcoin, BitcoinTestnet,
         BitcoinCash, BitcoinCashTestnet,
@@ -96,9 +97,11 @@ enum class Blockchain(
         Kaspa,
         Ravencoin, RavencoinTestnet,
         -> 8
+
         Solana, SolanaTestnet,
         TON, TONTestnet,
         -> 9
+
         Polkadot -> 10
         PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet -> 12
         Arbitrum, ArbitrumTestnet,
@@ -125,12 +128,7 @@ enum class Blockchain(
             return emptyMap()
         }
 
-        return if (isTestnet()) {
-            style.provider().derivations(this)
-                .mapValues { BIP44(coinType = 1).buildPath() }
-        } else {
-            style.provider().derivations(this)
-        }
+        return style.provider().derivations(this)
     }
 
     fun validateAddress(address: String): Boolean {
@@ -225,14 +223,17 @@ enum class Blockchain(
             } else {
                 "$baseUrl$tokenContractAddress?a=$address"
             }
+
             EthereumClassic, EthereumClassicTestnet,
             Kava, KavaTestnet,
             -> "$fullUrl/transactions"
+
             RSK -> if (tokenContractAddress != null) {
                 "$fullUrl?__tab=tokens"
             } else {
                 fullUrl
             }
+
             SolanaTestnet -> "$fullUrl/?cluster=devnet"
             XRP, Stellar, StellarTestnet -> "${baseUrl}account/$address"
             Tezos -> "$baseUrl$address"
@@ -318,7 +319,7 @@ enum class Blockchain(
             TerraV1,
             TerraV2,
             Cronos,
-            Ducatus
+            Ducatus,
             -> {
                 null // there is no testnet for given network
             }
@@ -331,6 +332,7 @@ enum class Blockchain(
             Tezos,
             XRP,
             -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
+
             Arbitrum, ArbitrumTestnet,
             Bitcoin, BitcoinTestnet,
             BitcoinCash, BitcoinCashTestnet,
@@ -358,6 +360,7 @@ enum class Blockchain(
             TerraV1, TerraV2,
             Cronos,
             -> listOf(EllipticCurve.Secp256k1)
+
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Cardano,
@@ -416,6 +419,7 @@ enum class Blockchain(
             Tron, TronTestnet,
             TerraV1,
             -> true
+
             else -> false
         }
     }
@@ -427,10 +431,12 @@ enum class Blockchain(
         Tron, TronTestnet,
         Cronos,
         -> amountType is AmountType.Token
+
         Arbitrum, ArbitrumTestnet,
         Optimism, OptimismTestnet,
         TON, TONTestnet,
         -> true
+
         else -> false
     }
 
@@ -444,9 +450,11 @@ enum class Blockchain(
             getSupportedCurves().contains(EllipticCurve.Secp256k1) -> {
                 EllipticCurve.Secp256k1
             }
+
             getSupportedCurves().contains(EllipticCurve.Ed25519) -> {
                 EllipticCurve.Ed25519
             }
+
             else -> {
                 null
             }
@@ -481,6 +489,5 @@ enum class Blockchain(
         fun valuesWithoutUnknown(): List<Blockchain> {
             return Blockchain.values().toMutableList().apply { remove(Unknown) }.toList()
         }
-
     }
 }
