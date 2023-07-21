@@ -27,7 +27,7 @@ class BitcoinCashAddressService(blockchain: Blockchain) : AddressService {
 
     private val legacyService = BitcoinAddressService(Blockchain.Bitcoin).legacy
 
-    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType, curve: EllipticCurve): PlainAddress {
         return when(addressType) {
             AddressType.Default -> makeCashAddrAddress(publicKey)
             AddressType.Legacy -> makeLegacyAddress(publicKey)

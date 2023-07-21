@@ -134,7 +134,7 @@ enum class Blockchain(
     }
 
     fun validateAddress(address: String): Boolean {
-        return AddressServiceFactory(this, EllipticCurve.Secp256k1).makeAddressService().validate(address)
+        return AddressServiceFactory(this).makeAddressService().validate(address)
     }
 
     fun getShareScheme(): String? = when (this) {
