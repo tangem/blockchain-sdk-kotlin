@@ -1,13 +1,14 @@
 package com.tangem.blockchain.blockchains.tezos
 
 import com.google.common.truth.Truth
+import com.tangem.blockchain.makeAddressWithDefaultType
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
 class TezosAddressTest {
 
-    private val addressService = TezosAddressService()
+    private val addressService = TezosAddressService(EllipticCurve.Ed25519)
 
     @Test
     fun makeAddressFromCorrectPublicKey() {
@@ -15,7 +16,7 @@ class TezosAddressTest {
                 .hexToBytes()
         val expected = "tz1hhRdWDAvGsgEioZ9GAp4bUVQkd9ng2MMR"
 
-        Truth.assertThat(addressService.makeAddress(walletPublicKey, EllipticCurve.Ed25519)).isEqualTo(expected)
+        Truth.assertThat(addressService.makeAddressWithDefaultType(walletPublicKey)).isEqualTo(expected)
     }
 
     @Test

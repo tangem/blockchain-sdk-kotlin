@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.tron
 
 import com.google.common.truth.Truth
+import com.tangem.blockchain.makeAddressWithDefaultType
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
@@ -13,7 +14,7 @@ class TronAddressTest {
             .hexToBytes()
         val expected = "TDpBe64DqirkKWj6HWuR1pWgmnhw2wDacE"
 
-        Truth.assertThat(addressService.makeAddress(walletPublicKey)).isEqualTo(expected)
+        Truth.assertThat(addressService.makeAddressWithDefaultType(walletPublicKey)).isEqualTo(expected)
     }
 
     @Test
@@ -22,7 +23,7 @@ class TronAddressTest {
             .hexToBytes()
         val expected = "TF2cog7GWQ4abn2UGP87xqZW7uy1KPfvMa"
 
-        Truth.assertThat(addressService.makeAddress(walletPublicKey)).isEqualTo(expected)
+        Truth.assertThat(addressService.makeAddressWithDefaultType(walletPublicKey)).isEqualTo(expected)
     }
 
     @Test

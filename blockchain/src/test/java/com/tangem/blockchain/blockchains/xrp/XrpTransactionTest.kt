@@ -7,6 +7,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.makeAddressWithDefaultType
 import com.tangem.common.extensions.hexToBytes
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -27,7 +28,7 @@ class XrpTransactionTest {
         val sequence = 1406L
         val destinationAddress = "X7gd8rw2UJP3HSS9oxkDc3cYVgpJy4cR9R5TEjF9XoZYJ1p"
 
-        val walletAddress = XrpAddressService().makeAddress(walletPublicKey)
+        val walletAddress = XrpAddressService().makeAddressWithDefaultType(walletPublicKey)
         val transactionBuilder = XrpTransactionBuilder(XrpNetworkProviderMock(), walletPublicKey)
         transactionBuilder.sequence = sequence
 
@@ -67,7 +68,7 @@ class XrpTransactionTest {
         val sequence = 1406L
         val destinationAddress = "rnruxxLTbJUMNtFNBJ7X2xSiy1KE7ajUuH"
 
-        val walletAddress = XrpAddressService().makeAddress(walletPublicKey)
+        val walletAddress = XrpAddressService().makeAddressWithDefaultType(walletPublicKey)
         val transactionBuilder = XrpTransactionBuilder(XrpNetworkProviderMock(), walletPublicKey)
         transactionBuilder.sequence = sequence
 

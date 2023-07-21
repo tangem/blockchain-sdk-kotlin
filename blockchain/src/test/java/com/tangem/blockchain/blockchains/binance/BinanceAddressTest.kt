@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.binance
 
 import com.google.common.truth.Truth
+import com.tangem.blockchain.makeAddressWithDefaultType
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
@@ -14,7 +15,9 @@ class BinanceAddressTest {
                 .hexToBytes()
         val expected = "bnb1m9wu5ncxk8mqhm3nfmxa552728wkty700rzhvu"
 
-        Truth.assertThat(addressService.makeAddress(walletPublicKey)).isEqualTo(expected)
+        val address = addressService.makeAddressWithDefaultType(walletPublicKey)
+
+        Truth.assertThat(address).isEqualTo(expected)
     }
 
     @Test
@@ -23,4 +26,5 @@ class BinanceAddressTest {
 
         Truth.assertThat(addressService.validate(address)).isTrue()
     }
+
 }

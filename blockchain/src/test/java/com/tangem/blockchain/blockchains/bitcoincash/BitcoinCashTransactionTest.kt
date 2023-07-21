@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionTest
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.makeAddressWithDefaultType
 import com.tangem.common.extensions.hexToBytes
 import org.bitcoinj.core.LegacyAddress
 import org.bitcoinj.params.MainNetParams
@@ -27,12 +28,12 @@ class BitcoinCashTransactionTest {
         val feeValue = "0.01".toBigDecimal()
         val destinationAddress = "bitcoincash:qrcuqadqrzp2uztjl9wn5sthepkg22majyxw4gmv6p"
 
-        val address = addressService.makeAddress(walletPublicKey)
+        val address = addressService.makeAddressWithDefaultType(walletPublicKey)
         val legacyAddress = LegacyAddress
                 .fromPubKeyHash(networkParameters, addressService.getPublicKeyHash(address))
                 .toBase58()
 
-        val transactionBuilder = BitcoinCashTransactionBuilder(walletPublicKey, blockchain)
+        val transactionBuilder = BitcoinCashTransactionBuilder(walletPublicKey, blockchain, emptyList())
         transactionBuilder.unspentOutputs = BitcoinTransactionTest
             .prepareTwoUnspentOutputs(listOf(legacyAddress), networkParameters)
 

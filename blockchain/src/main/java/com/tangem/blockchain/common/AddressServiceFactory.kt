@@ -14,10 +14,14 @@ import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.AddressService
+import com.tangem.common.card.EllipticCurve
 import com.tangem.blockchain.common.address.WalletCoreAddressService
 import java.lang.IllegalStateException
 
-class AddressServiceFactory(private val blockchain: Blockchain) {
+class AddressServiceFactory(
+    private val blockchain: Blockchain,
+    private val ellipticCurve: EllipticCurve,
+) {
 
     fun makeAddressService(): AddressService {
         return when (blockchain) {
@@ -80,11 +84,11 @@ class AddressServiceFactory(private val blockchain: Blockchain) {
             }
 
             Blockchain.Binance -> {
-                BinanceAddressService()
+                BinanceAddressService(false)
             }
 
             Blockchain.BinanceTestnet -> {
-                BinanceAddressService(true)
+                BinanceAddressService(testNet = true)
             }
 
             Blockchain.Polkadot,
@@ -109,7 +113,7 @@ class AddressServiceFactory(private val blockchain: Blockchain) {
             }
 
             Blockchain.Tezos -> {
-                TezosAddressService()
+                TezosAddressService(ellipticCurve)
             }
 
             Blockchain.TON,

@@ -8,6 +8,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.makeAddressWithDefaultType
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
@@ -27,7 +28,7 @@ class TezosTransactionTest {
         val counter = 1561L
         val isPublicKeyRevealed = false
 
-        val walletAddress = TezosAddressService().makeAddress(walletPublicKey, EllipticCurve.Ed25519)
+        val walletAddress = TezosAddressService(EllipticCurve.Ed25519).makeAddressWithDefaultType(walletPublicKey)
         val transactionBuilder = TezosTransactionBuilder(walletPublicKey, EllipticCurve.Ed25519)
         transactionBuilder.counter = counter
 
