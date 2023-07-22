@@ -154,7 +154,8 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
             Blockchain.EthereumPowTestnet,
             Blockchain.Kava, Blockchain.KavaTestnet,
             Blockchain.Cronos,
-            Blockchain.Telos, Blockchain.TelosTestnet
+            Blockchain.Telos, Blockchain.TelosTestnet,
+            Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet
             -> {
                 EthereumLikeWalletManagerAssembly
             }
