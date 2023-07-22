@@ -16,7 +16,7 @@ object CoinTypeProvider {
             Blockchain.Litecoin -> 2
             Blockchain.Dogecoin -> 3
             Blockchain.Dash -> 5
-            Blockchain.Ethereum, Blockchain.EthereumPow, Blockchain.EthereumFair -> ethCoinType
+            Blockchain.Ethereum, Blockchain.EthereumPow, Blockchain.EthereumFair, Blockchain.OctaSpace -> ethCoinType
             Blockchain.EthereumClassic -> 61
             Blockchain.RSK -> 137
             Blockchain.XRP -> 144
@@ -67,6 +67,7 @@ object CoinTypeProvider {
             Blockchain.CosmosTestnet,
             Blockchain.AlephZeroTestnet,
             Blockchain.TelosTestnet,
+            Blockchain.OctaSpaceTestnet,
             Blockchain.Unknown,
             -> throw UnsupportedOperationException("Coin type not provided for: ${blockchain.fullName}")
         }

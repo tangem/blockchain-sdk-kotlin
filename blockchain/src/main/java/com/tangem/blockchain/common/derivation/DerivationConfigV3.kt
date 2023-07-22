@@ -70,7 +70,9 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.Optimism,
             Blockchain.Kava,
             Blockchain.Cronos,
-            Blockchain.Telos -> {
+            Blockchain.Telos,
+            Blockchain.OctaSpace,
+            -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             }
             Blockchain.EthereumClassic -> {
@@ -144,7 +146,9 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.TONTestnet,
             Blockchain.RavencoinTestnet,
             Blockchain.TelosTestnet,
-            Blockchain.AlephZeroTestnet -> {
+            Blockchain.AlephZeroTestnet,
+            Blockchain.OctaSpaceTestnet,
+            -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
         }

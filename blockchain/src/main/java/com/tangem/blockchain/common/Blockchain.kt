@@ -14,7 +14,10 @@ import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
-import com.tangem.blockchain.common.address.*
+import com.tangem.blockchain.common.address.Address
+import com.tangem.blockchain.common.address.AddressService
+import com.tangem.blockchain.common.address.MultisigAddressProvider
+import com.tangem.blockchain.common.address.TrustWalletAddressService
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.BIP44
 import com.tangem.crypto.hdWallet.DerivationNode
@@ -86,6 +89,8 @@ enum class Blockchain(
     Cronos("cronos", "CRO", "Cronos"),
     AlephZero("aleph-zero", "AZERO", "Aleph Zero"),
     AlephZeroTestnet("aleph-zero/test", "TZERO", "Aleph Zero Testnet"),
+    OctaSpace("octaspace", "OCTA", "OctaSpace"),
+    OctaSpaceTestnet("octaspace/test", "OCTA", "OctaSpace Testnet"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -127,6 +132,7 @@ enum class Blockchain(
         Kava, KavaTestnet,
         Cronos,
         Telos, TelosTestnet,
+        OctaSpace, OctaSpaceTestnet
         -> 18
     }
 
@@ -169,6 +175,7 @@ enum class Blockchain(
             Kava, KavaTestnet,
             Cronos,
             Telos, TelosTestnet,
+            OctaSpace, OctaSpaceTestnet
             -> EthereumAddressService()
             RSK -> RskAddressService()
             Cardano, CardanoShelley -> CardanoAddressService(this)
@@ -261,6 +268,8 @@ enum class Blockchain(
         Cronos -> "https://cronoscan.com/"
         AlephZero -> "https://alephzero.subscan.io/"
         AlephZeroTestnet -> throw Exception("unsupported blockchain")
+        OctaSpace -> "https://explorer.octa.space/"
+        OctaSpaceTestnet -> throw Exception("unsupported blockchain")
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -351,6 +360,7 @@ enum class Blockchain(
             Ravencoin, RavencoinTestnet -> RavencoinTestnet
             Cosmos, CosmosTestnet -> CosmosTestnet
             AlephZero, AlephZeroTestnet -> AlephZeroTestnet
+            OctaSpace, OctaSpaceTestnet -> OctaSpaceTestnet
             else -> null
         }
     }
@@ -387,6 +397,7 @@ enum class Blockchain(
             Cosmos, CosmosTestnet,
             TerraV1, TerraV2,
             Cronos,
+            OctaSpace, OctaSpaceTestnet
             -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
@@ -426,6 +437,8 @@ enum class Blockchain(
             Telos -> Chain.Telos.id
             TelosTestnet -> Chain.TelosTestnet.id
             Cronos -> Chain.Cronos.id
+            OctaSpace -> Chain.OctaSpace.id
+            OctaSpaceTestnet -> Chain.OctaSpaceTestnet.id
             else -> null
         }
     }
