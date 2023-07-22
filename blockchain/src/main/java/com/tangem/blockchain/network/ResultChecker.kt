@@ -8,7 +8,7 @@ import com.tangem.blockchain.extensions.SimpleResult
 import retrofit2.HttpException
 import java.io.IOException
 
-internal object ResultChecker {
+object ResultChecker {
 
     fun isNetworkError(result: Result<*>): Boolean {
         return when (result) {
