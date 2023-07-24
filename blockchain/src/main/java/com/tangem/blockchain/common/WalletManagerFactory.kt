@@ -262,7 +262,9 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
 
     private fun checkIfWrongKey(curve: EllipticCurve, publicKey: Wallet.PublicKey): Boolean {
         return when (curve) {
-            EllipticCurve.Ed25519 -> publicKey.seedKey.size > 32 || publicKey.blockchainKey.size > 32
+            EllipticCurve.Ed25519 -> {
+                publicKey.seedKey.size > 32 || publicKey.blockchainKey.size > 32
+            }
             else -> false
         }
     }

@@ -1,18 +1,14 @@
 package com.tangem.blockchain.blockchains.bitcoincash
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
-import com.tangem.blockchain.blockchains.bitcoin.BitcoinLegacyAddressService
-import com.tangem.blockchain.blockchains.bitcoin.BitcoinScriptAddress
 import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.BitcoinCashAddressType
 import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.CashAddr
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.*
-import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
-import org.bitcoinj.params.MainNetParams
 import java.lang.IllegalStateException
 
 class BitcoinCashAddressService(blockchain: Blockchain) : AddressService {
