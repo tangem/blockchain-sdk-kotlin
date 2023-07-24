@@ -42,10 +42,6 @@ object DerivationConfigV2 : DerivationConfig() {
                 mapOf(AddressType.Default to DerivationPath("m/44'/501'/0'"))
             }
 
-            Blockchain.Cardano -> {
-                emptyMap()
-            }
-
             Blockchain.CardanoShelley -> {
                 mapOf(
                     AddressType.Default to DerivationPath("m/1852'/1815'/0'/0/0"),
