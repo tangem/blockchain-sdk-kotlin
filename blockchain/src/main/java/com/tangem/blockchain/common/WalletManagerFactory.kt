@@ -219,7 +219,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
                 StellarWalletManagerAssembly
             }
 
-            Blockchain.Cardano, Blockchain.CardanoShelley -> {
+            Blockchain.CardanoShelley -> {
                 CardanoWalletManagerAssembly
             }
 
