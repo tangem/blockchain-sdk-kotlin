@@ -13,6 +13,8 @@ import org.kethereum.extensions.toBigInteger
 
 class XrpAddressService : AddressService {
 
+    // TODO check implementation, should support both curves
+    // [REDACTED_JIRA]
     override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
         val canonicalPublicKey = canonizePublicKey(publicKey.blockchainKey)
         val publicKeyHash = canonicalPublicKey.calculateSha256().calculateRipemd160()
