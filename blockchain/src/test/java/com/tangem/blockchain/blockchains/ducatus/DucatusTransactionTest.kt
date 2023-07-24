@@ -13,6 +13,7 @@ import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.makeAddressWithDefaultType
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
@@ -33,7 +34,8 @@ class DucatusTransactionTest {
         val destinationAddress = "M6tZXSEVGErPo8TnmpPv8Zvp69uSmLwJmF"
 
         val address = BitcoinAddressService(blockchain)
-            .makeAddress(Wallet.PublicKey(walletPublicKey, null), AddressType.Legacy)
+            .makeAddress(publicKey = Wallet.PublicKey(walletPublicKey, null), addressType = AddressType.Legacy,
+                curve = EllipticCurve.Secp256k1)
 
         val transactionBuilder = BitcoinTransactionBuilder(walletPublicKey, blockchain, listOf(address) )
         transactionBuilder.unspentOutputs =
