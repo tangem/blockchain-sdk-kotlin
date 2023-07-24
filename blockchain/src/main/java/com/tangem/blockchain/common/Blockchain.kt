@@ -38,7 +38,6 @@ enum class Blockchain(
     BitcoinTestnet("BTC/test", "BTC", "Bitcoin Testnet"),
     BitcoinCash("BCH", "BCH", "Bitcoin Cash"),
     BitcoinCashTestnet("BCH/test", "BCH", "Bitcoin Cash Testnet"),
-    Cardano("CARDANO", "ADA", "Cardano"),
     CardanoShelley("CARDANO-S", "ADA", "Cardano"),
     Cosmos("cosmos", "ATOM", "Cosmos"),
     CosmosTestnet("cosmos/test", "ATOM", "Cosmos Testnet"),
@@ -92,7 +91,7 @@ enum class Blockchain(
 
     fun decimals(): Int = when (this) {
         Unknown -> 0
-        Cardano, CardanoShelley,
+        CardanoShelley,
         XRP,
         Tezos,
         Tron, TronTestnet,
@@ -220,7 +219,7 @@ enum class Blockchain(
         BitcoinCashTestnet -> "https://www.blockchain.com/bch-testnet/"
         BSC -> "https://bscscan.com/"
         BSCTestnet -> "https://testnet.bscscan.com/"
-        Cardano, CardanoShelley -> "https://www.blockchair.com/cardano/"
+        CardanoShelley -> "https://www.blockchair.com/cardano/"
         Dogecoin -> "https://blockchair.com/dogecoin/"
         Ducatus -> "https://insight.ducatus.io/#/DUC/mainnet/"
         Ethereum -> "https://etherscan.io/"
@@ -364,7 +363,6 @@ enum class Blockchain(
             AlephZero, AlephZeroTestnet -> AlephZeroTestnet
             OctaSpace, OctaSpaceTestnet -> OctaSpaceTestnet
             Unknown,
-            Cardano,
             CardanoShelley,
             Dogecoin,
             Litecoin,
@@ -424,7 +422,6 @@ enum class Blockchain(
 
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
-            Cardano,
             CardanoShelley,
             Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
             TON, TONTestnet,

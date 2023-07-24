@@ -76,7 +76,7 @@ class AddressServiceFactory(
                 RskAddressService()
             }
 
-            Blockchain.Cardano, Blockchain.CardanoShelley -> {
+            Blockchain.CardanoShelley -> {
                 CardanoAddressService(blockchain)
             }
 
