@@ -6,6 +6,7 @@ import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.wrapInObject
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import org.bitcoinj.core.Address
 import org.bitcoinj.core.NetworkParameters
@@ -31,11 +32,11 @@ class BitcoinTransactionTest {
 
 
         val legacyAddress = BitcoinAddressService(blockchain).makeAddress(
-            walletPublicKey.wrapInObject(), AddressType.Legacy
+            walletPublicKey.wrapInObject(), AddressType.Legacy, EllipticCurve.Secp256k1
         )
 
         val segwitAddress = BitcoinAddressService(blockchain).makeAddress(
-            walletPublicKey.wrapInObject(), AddressType.Default
+            walletPublicKey.wrapInObject(), AddressType.Default, EllipticCurve.Secp256k1
         )
 
         val transactionBuilder = BitcoinTransactionBuilder(walletPublicKey, blockchain, listOf(legacyAddress, segwitAddress))

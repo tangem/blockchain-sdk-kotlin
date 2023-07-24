@@ -5,6 +5,7 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
@@ -32,7 +33,11 @@ class BinanceTransactionTest {
         transactionBuilder.sequence = sequence
 
         val walletAddress =
-            BinanceAddressService().makeAddress(Wallet.PublicKey(walletPublicKey, null), AddressType.Default).value
+            BinanceAddressService().makeAddress(
+                publicKey = Wallet.PublicKey(walletPublicKey, null),
+                addressType = AddressType.Default,
+                curve = EllipticCurve.Secp256k1
+            ).value
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
         val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
@@ -81,7 +86,11 @@ class BinanceTransactionTest {
         transactionBuilder.accountNumber = accountNumber
         transactionBuilder.sequence = sequence
 
-        val walletAddress = BinanceAddressService().makeAddress(Wallet.PublicKey(walletPublicKey, null), AddressType.Default).value
+        val walletAddress = BinanceAddressService().makeAddress(
+            publicKey = Wallet.PublicKey(walletPublicKey, null),
+            addressType = AddressType.Default,
+            curve = EllipticCurve.Secp256k1
+        ).value
         val amountToSend = Amount(sendValue, blockchain, AmountType.Token(token))
         val fee = Fee.Common(Amount(feeValue, blockchain, AmountType.Coin))
         val transactionData = TransactionData(

@@ -4,6 +4,7 @@ import com.google.common.truth.Truth
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.wrapInObject
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
@@ -19,8 +20,16 @@ class BitcoinAddressTest {
         val expectedLegacyAddress = "1D3vYSjCvzrsVVK5bNaPTjU3NxcN7NNXMN"
         val expectedSegwitAddress = "bc1qtdsvnsf7cfu8l3w7qahwwhhxfrdzmdhsgdzky2"
 
-        val legacyAddress = addressService.makeAddress(walletPublicKey.wrapInObject(), AddressType.Legacy)
-        val segwitAddress = addressService.makeAddress(walletPublicKey.wrapInObject(), AddressType.Default)
+        val legacyAddress = addressService.makeAddress(
+            publicKey = walletPublicKey.wrapInObject(),
+            addressType = AddressType.Legacy,
+            curve = EllipticCurve.Secp256k1
+        )
+        val segwitAddress = addressService.makeAddress(
+            walletPublicKey.wrapInObject(),
+            AddressType.Default,
+            EllipticCurve.Secp256k1
+        )
 
         // Truth.assertThat(addresses.size).isEqualTo(expectedSize)
         Truth.assertThat(legacyAddress.value).isEqualTo(expectedLegacyAddress)
