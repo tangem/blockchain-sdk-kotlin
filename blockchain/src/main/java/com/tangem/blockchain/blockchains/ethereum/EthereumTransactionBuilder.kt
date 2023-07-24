@@ -142,4 +142,6 @@ enum class Chain(
     Telos(40, Blockchain.Telos),
     TelosTestnet(41, Blockchain.TelosTestnet),
     Cronos(25, Blockchain.Cronos),
+    OctaSpace(800001, Blockchain.OctaSpace),
+    OctaSpaceTestnet(800002, Blockchain.OctaSpaceTestnet),
 }
