@@ -29,7 +29,7 @@ class IconsUtil {
             Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> "bitcoin"
             Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet -> "bitcoincash"
             Blockchain.BSC, Blockchain.BSCTestnet -> "smartchain"
-            Blockchain.Cardano, Blockchain.CardanoShelley -> "cardano"
+            Blockchain.CardanoShelley -> "cardano"
             Blockchain.Dogecoin -> "doge"
             Blockchain.Ethereum, Blockchain.EthereumTestnet -> "ethereum"
             Blockchain.Fantom, Blockchain.FantomTestnet -> "fantom"
