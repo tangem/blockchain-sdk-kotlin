@@ -7,6 +7,7 @@ import com.tangem.blockchain.blockchains.ravencoin.RavencoinTestNetParams
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.address.BitcoinScriptAddress
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
