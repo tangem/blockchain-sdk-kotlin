@@ -60,17 +60,6 @@ open class BitcoinAddressService(
         return legacy.validate(address) || bech32.validate(address)
     }
 
-    // override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?): Set<Address> {
-    //     return when (blockchain) {
-    //         Blockchain.Bitcoin, Blockchain.BitcoinTestnet, Blockchain.Litecoin -> {
-    //             setOf(makeLegacyAddress(walletPublicKey), makeSegwitAddress(walletPublicKey))
-    //         }
-    //         else -> {
-    //             super.makeAddresses(walletPublicKey, curve)
-    //         }
-    //     }
-    // }
-
     override fun makeAddresses(
         publicKey: Wallet.PublicKey,
         pairPublicKey: ByteArray
@@ -107,10 +96,3 @@ open class BitcoinAddressService(
     }
 
 }
-
-data class BitcoinScriptAddress(
-    val script: Script,
-    override val value: String,
-    override val type: AddressType = AddressType.Default,
-    override val publicKey: Wallet.PublicKey
-) : Address(value, type, publicKey)
