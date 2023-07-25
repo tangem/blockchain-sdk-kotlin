@@ -14,7 +14,7 @@ import org.junit.Test
 
 class CardanoTransactionTest {
 
-    val blockchain = Blockchain.CardanoShelley
+    val blockchain = Blockchain.Cardano
 
     val addressService = CardanoAddressService(blockchain)
 
