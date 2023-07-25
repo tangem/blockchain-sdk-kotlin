@@ -46,17 +46,6 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
         }
     }
 
-    // override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?): Set<Address> {
-    //     return if (blockchain == Blockchain.CardanoShelley) {
-    //         setOf(
-    //             PlainAddress(makeByronAddress(walletPublicKey), AddressType.Legacy),
-    //             PlainAddress(makeShelleyAddress(walletPublicKey), AddressType.Default)
-    //         )
-    //     } else {
-    //         setOf(PlainAddress(makeAddress(walletPublicKey)))
-    //     }
-    // }
-
     private fun makeByronAddress(walletPublicKey: ByteArray): String {
         val extendedPublicKey = extendPublicKey(walletPublicKey)
 

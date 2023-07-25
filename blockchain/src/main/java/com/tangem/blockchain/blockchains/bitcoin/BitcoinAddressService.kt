@@ -8,13 +8,9 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.*
 import com.tangem.common.card.EllipticCurve
-import com.tangem.common.extensions.calculateRipemd160
-import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
 import org.bitcoinj.core.ECKey
-import org.bitcoinj.core.LegacyAddress
 import org.bitcoinj.core.NetworkParameters
-import org.bitcoinj.core.SegwitAddress
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.params.TestNet3Params
 import org.bitcoinj.script.Script
@@ -64,17 +60,6 @@ open class BitcoinAddressService(
         return legacy.validate(address) || bech32.validate(address)
     }
 
-    // override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?): Set<Address> {
-    //     return when (blockchain) {
-    //         Blockchain.Bitcoin, Blockchain.BitcoinTestnet, Blockchain.Litecoin -> {
-    //             setOf(makeLegacyAddress(walletPublicKey), makeSegwitAddress(walletPublicKey))
-    //         }
-    //         else -> {
-    //             super.makeAddresses(walletPublicKey, curve)
-    //         }
-    //     }
-    // }
-
     override fun makeAddresses(
         publicKey: Wallet.PublicKey,
         pairPublicKey: ByteArray,
@@ -110,10 +95,3 @@ open class BitcoinAddressService(
         return ScriptBuilder.createRedeemScript(1, publicEcKeys)
     }
 }
-
-data class BitcoinScriptAddress(
-    val script: Script,
-    override val value: String,
-    override val type: AddressType = AddressType.Default,
-    override val publicKey: Wallet.PublicKey,
-) : Address(value, type, publicKey)
