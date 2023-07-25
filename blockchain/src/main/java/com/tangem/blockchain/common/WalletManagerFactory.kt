@@ -5,7 +5,6 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.impl.*
 import com.tangem.common.card.EllipticCurve
-import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import java.lang.IllegalStateException
 
@@ -16,8 +15,10 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
         publicKeys: Map<AddressType, Wallet.PublicKey>,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
-        val walletFactory = WalletFactory(blockchain, curve)
-        val wallet = walletFactory.makeWallet(publicKeys = publicKeys)
+        val addressService = AddressServiceFactory(blockchain).makeAddressService()
+
+        val walletFactory = WalletFactory(blockchain, addressService)
+        val wallet = walletFactory.makeWallet(publicKeys = publicKeys, curve = curve)
 
         return createWalletManager(blockchain, wallet)
     }
@@ -55,9 +56,11 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
         }
 
         val publicKey = Wallet.PublicKey(seedKey = seedKey, derivation = derivation)
+        val addressService = AddressServiceFactory(blockchain)
+            .makeAddressService()
 
-        val walletFactory = WalletFactory(blockchain, EllipticCurve.Secp256k1)
-        val wallet = walletFactory.makeWallet(publicKey)
+        val walletFactory = WalletFactory(blockchain, addressService)
+        val wallet = walletFactory.makeWallet(publicKey, EllipticCurve.Secp256k1)
 
         return createWalletManager(
             blockchain = blockchain,
@@ -79,8 +82,9 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
         val publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivation = null)
+        val addressService = AddressServiceFactory(blockchain).makeAddressService()
 
-        val walletFactory = WalletFactory(blockchain, curve)
+        val walletFactory = WalletFactory(blockchain, addressService)
         val wallet = walletFactory.makeWallet(publicKey, pairPublicKey)
 
         return createWalletManager(
@@ -103,9 +107,10 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
         val publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivation = null)
+        val addressService = AddressServiceFactory(blockchain).makeAddressService()
 
-        val walletFactory = WalletFactory(blockchain, curve)
-        val wallet = walletFactory.makeWallet(publicKey)
+        val walletFactory = WalletFactory(blockchain, addressService)
+        val wallet = walletFactory.makeWallet(publicKey, curve)
 
         return createWalletManager(
             blockchain = blockchain,

@@ -14,12 +14,16 @@ import com.tangem.common.extensions.toHexString
 
 class TronAddressService : AddressService {
 
-    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve,
+    ): PlainAddress {
         val decompressedPublicKey = publicKey.blockchainKey.toDecompressedPublicKey()
         val data = decompressedPublicKey.drop(1).toByteArray()
         val hash = data.toKeccak()
 
-        val addressData = PREFIX.toByteArray(1) + hash.takeLast(ADDRESS_LENGTH-1).toByteArray()
+        val addressData = PREFIX.toByteArray(1) + hash.takeLast(ADDRESS_LENGTH - 1).toByteArray()
         return PlainAddress(
             value = Base58Check.bytesToBase58(addressData),
             type = addressType,
@@ -30,7 +34,7 @@ class TronAddressService : AddressService {
     override fun validate(address: String): Boolean {
         val decoded = address.decodeBase58(checked = true) ?: return false
         return decoded.count() == ADDRESS_LENGTH &&
-                decoded.toHexString().startsWith(PREFIX.toByteArray(1).toHexString())
+            decoded.toHexString().startsWith(PREFIX.toByteArray(1).toHexString())
     }
 
     companion object {

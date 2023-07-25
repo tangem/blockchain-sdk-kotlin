@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.CashAddr
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.*
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
@@ -23,7 +24,7 @@ class BitcoinCashAddressService(blockchain: Blockchain) : AddressService {
 
     private val legacyService = BitcoinAddressService(Blockchain.Bitcoin).legacy
 
-    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType, curve: EllipticCurve): PlainAddress {
         return when(addressType) {
             AddressType.Default -> makeCashAddrAddress(publicKey)
             AddressType.Legacy -> makeLegacyAddress(publicKey)

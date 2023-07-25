@@ -19,8 +19,7 @@ import com.tangem.blockchain.common.address.WalletCoreAddressService
 import java.lang.IllegalStateException
 
 class AddressServiceFactory(
-    private val blockchain: Blockchain,
-    private val ellipticCurve: EllipticCurve,
+    private val blockchain: Blockchain
 ) {
 
     fun makeAddressService(): AddressService {
@@ -113,7 +112,7 @@ class AddressServiceFactory(
             }
 
             Blockchain.Tezos -> {
-                TezosAddressService(ellipticCurve)
+                TezosAddressService()
             }
 
             Blockchain.TON,

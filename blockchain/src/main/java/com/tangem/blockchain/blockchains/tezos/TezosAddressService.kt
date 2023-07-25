@@ -11,12 +11,16 @@ import com.tangem.common.extensions.toCompressedPublicKey
 import org.bitcoinj.core.Base58
 import org.spongycastle.jcajce.provider.digest.Blake2b
 
-class TezosAddressService(private val ellipticCurve: EllipticCurve) : AddressService {
+class TezosAddressService() : AddressService {
 
-    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve,
+    ): PlainAddress {
         val publicKeyHash = Blake2b.Blake2b160().digest(publicKey.blockchainKey.toCompressedPublicKey())
 
-        val prefix = TezosConstants.getAddressPrefix(ellipticCurve)
+        val prefix = TezosConstants.getAddressPrefix(curve)
         val prefixedHash = prefix.hexToBytes() + publicKeyHash
         val checksum = prefixedHash.calculateTezosChecksum()
 
@@ -45,6 +49,6 @@ class TezosAddressService(private val ellipticCurve: EllipticCurve) : AddressSer
 
     companion object {
         fun ByteArray.calculateTezosChecksum() =
-                this.calculateSha256().calculateSha256().copyOfRange(0, 4)
+            this.calculateSha256().calculateSha256().copyOfRange(0, 4)
     }
 }

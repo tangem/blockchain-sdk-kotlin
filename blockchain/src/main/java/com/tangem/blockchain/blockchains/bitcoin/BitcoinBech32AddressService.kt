@@ -7,6 +7,7 @@ import com.tangem.blockchain.common.address.AddressProvider
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.address.AddressValidator
 import com.tangem.blockchain.common.address.PlainAddress
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
 import org.bitcoinj.core.ECKey
@@ -30,7 +31,11 @@ class BitcoinBech32AddressService(
         return validateSegwitAddress(address)
     }
 
-    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve,
+    ): PlainAddress {
         val compressedPublicKey = ECKey.fromPublicOnly(publicKey.blockchainKey.toCompressedPublicKey())
         val address = SegwitAddress.fromKey(networkParameters, compressedPublicKey).toBech32()
         return PlainAddress(address, addressType, publicKey)
@@ -45,5 +50,4 @@ class BitcoinBech32AddressService(
             false
         }
     }
-
 }
