@@ -20,11 +20,10 @@ internal object DogecoinWalletManagerAssembly : WalletManagerAssembly<DogecoinWa
                     walletAddresses = input.wallet.addresses
                 ),
                 networkProvider = BitcoinNetworkService(
-                    providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config)
+                    providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config),
                 ),
                 transactionHistoryProvider = blockchain.getBitcoinTransactionHistoryProvider(input.config)
             )
         }
     }
-
 }

@@ -9,12 +9,11 @@ import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 import java.math.RoundingMode
 
-
 open class BitcoinNetworkService(providers: List<BitcoinNetworkProvider>) : BitcoinNetworkProvider {
 
     private val multiProvider = MultiNetworkProvider(providers)
-    override val host: String
-        get() = multiProvider.currentProvider.host
+    override val baseUrl: String
+        get() = multiProvider.currentProvider.baseUrl
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> =
         multiProvider.performRequest(BitcoinNetworkProvider::getInfo, address)

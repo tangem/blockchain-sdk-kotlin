@@ -1,11 +1,23 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.blockchains.binance.BinanceAddressService
+import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
+import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
+import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.common.address.*
 import com.tangem.blockchain.common.derivation.DerivationStyle
+import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
+import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
+import com.tangem.blockchain.blockchains.rsk.RskAddressService
+import com.tangem.blockchain.blockchains.solana.SolanaAddressService
+import com.tangem.blockchain.blockchains.stellar.StellarAddressService
+import com.tangem.blockchain.blockchains.tezos.TezosAddressService
+import com.tangem.blockchain.blockchains.tron.TronAddressService
+import com.tangem.blockchain.blockchains.xrp.XrpAddressService
+import com.tangem.blockchain.common.address.AddressService
 import com.tangem.common.card.EllipticCurve
-import com.tangem.crypto.hdWallet.BIP44
-import com.tangem.crypto.hdWallet.DerivationNode
 import com.tangem.crypto.hdWallet.DerivationPath
 
 enum class Blockchain(
@@ -74,6 +86,8 @@ enum class Blockchain(
     Cronos("cronos", "CRO", "Cronos"),
     AlephZero("aleph-zero", "AZERO", "Aleph Zero"),
     AlephZeroTestnet("aleph-zero/test", "TZERO", "Aleph Zero Testnet"),
+    OctaSpace("octaspace", "OCTA", "OctaSpace"),
+    OctaSpaceTestnet("octaspace/test", "OCTA", "OctaSpace Testnet"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -118,6 +132,7 @@ enum class Blockchain(
         Kava, KavaTestnet,
         Cronos,
         Telos, TelosTestnet,
+        OctaSpace, OctaSpaceTestnet
         -> 18
     }
 
@@ -133,6 +148,48 @@ enum class Blockchain(
 
     fun validateAddress(address: String): Boolean {
         return AddressServiceFactory(this).makeAddressService().validate(address)
+    }
+
+    private fun getAddressService(): AddressService {
+        return when (this) {
+            Bitcoin, BitcoinTestnet,
+            Litecoin,
+            Dogecoin,
+            Ducatus,
+            Dash,
+            Ravencoin, RavencoinTestnet,
+            -> BitcoinAddressService(this)
+            BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
+            Arbitrum, ArbitrumTestnet,
+            Ethereum, EthereumTestnet,
+            EthereumClassic, EthereumClassicTestnet,
+            BSC, BSCTestnet,
+            Polygon, PolygonTestnet,
+            Avalanche, AvalancheTestnet,
+            Fantom, FantomTestnet,
+            Gnosis,
+            Optimism, OptimismTestnet,
+            EthereumFair,
+            EthereumPow, EthereumPowTestnet,
+            Kava, KavaTestnet,
+            Cronos,
+            Telos, TelosTestnet,
+            OctaSpace, OctaSpaceTestnet
+            -> EthereumAddressService()
+            RSK -> RskAddressService()
+            Cardano, CardanoShelley -> CardanoAddressService(this)
+            XRP -> XrpAddressService()
+            Binance -> BinanceAddressService()
+            BinanceTestnet -> BinanceAddressService(true)
+            Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet -> PolkadotAddressService(this)
+            Stellar, StellarTestnet -> StellarAddressService()
+            Solana, SolanaTestnet -> SolanaAddressService()
+            Tezos -> TezosAddressService()
+            TON, TONTestnet, Cosmos, CosmosTestnet, TerraV1, TerraV2 -> WalletCoreAddressService(blockchain = this)
+            Tron, TronTestnet -> TronAddressService()
+            Kaspa -> KaspaAddressService()
+            Unknown -> throw Exception("unsupported blockchain")
+        }
     }
 
     fun getShareScheme(): String? = when (this) {
@@ -210,6 +267,8 @@ enum class Blockchain(
         Cronos -> "https://cronoscan.com/"
         AlephZero -> "https://alephzero.subscan.io/"
         AlephZeroTestnet -> throw Exception("unsupported blockchain")
+        OctaSpace -> "https://explorer.octa.space/"
+        OctaSpaceTestnet -> throw Exception("unsupported blockchain")
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -303,6 +362,7 @@ enum class Blockchain(
             Ravencoin, RavencoinTestnet -> RavencoinTestnet
             Cosmos, CosmosTestnet -> CosmosTestnet
             AlephZero, AlephZeroTestnet -> AlephZeroTestnet
+            OctaSpace, OctaSpaceTestnet -> OctaSpaceTestnet
             Unknown,
             Cardano,
             CardanoShelley,
@@ -359,6 +419,7 @@ enum class Blockchain(
             Cosmos, CosmosTestnet,
             TerraV1, TerraV2,
             Cronos,
+            OctaSpace, OctaSpaceTestnet
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -399,6 +460,8 @@ enum class Blockchain(
             Telos -> Chain.Telos.id
             TelosTestnet -> Chain.TelosTestnet.id
             Cronos -> Chain.Cronos.id
+            OctaSpace -> Chain.OctaSpace.id
+            OctaSpaceTestnet -> Chain.OctaSpaceTestnet.id
             else -> null
         }
     }

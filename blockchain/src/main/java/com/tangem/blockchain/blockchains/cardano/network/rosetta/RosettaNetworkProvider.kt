@@ -23,7 +23,7 @@ import java.io.ByteArrayOutputStream
 
 class RosettaNetworkProvider(rosettaNetwork: RosettaNetwork) : CardanoNetworkProvider {
 
-    override val host: String = rosettaNetwork.url
+    override val baseUrl: String = rosettaNetwork.url
 
     private val api: RosettaApi by lazy {
         createRetrofitInstance(rosettaNetwork.url).create(RosettaApi::class.java)

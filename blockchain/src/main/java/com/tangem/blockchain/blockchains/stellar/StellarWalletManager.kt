@@ -17,7 +17,7 @@ class StellarWalletManager(
 ) : WalletManager(wallet), TransactionSender, SignatureCountValidator {
 
     override val currentHost: String
-        get() = networkProvider.host
+        get() = networkProvider.baseUrl
 
     private val blockchain = wallet.blockchain
 
