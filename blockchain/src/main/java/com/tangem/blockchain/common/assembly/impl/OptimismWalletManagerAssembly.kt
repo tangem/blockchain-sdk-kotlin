@@ -23,5 +23,4 @@ internal object OptimismWalletManagerAssembly : WalletManagerAssembly<OptimismWa
             )
         }
     }
-
 }
