@@ -127,7 +127,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
     ): WalletManager? {
         if (checkIfWrongKey(curve, wallet.publicKey)) return null
 
-        return getAssembly(blockchain, curve).make(
+        return getAssembly(blockchain).make(
             input = WalletManagerAssemblyInput(
                 wallet = wallet,
                 config = config,
@@ -137,7 +137,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
         )
     }
 
-    private fun getAssembly(blockchain: Blockchain, ellipticCurve: EllipticCurve): WalletManagerAssembly<WalletManager> {
+    private fun getAssembly(blockchain: Blockchain): WalletManagerAssembly<WalletManager> {
         return when (blockchain) {
             // region BTC-like blockchains
 
