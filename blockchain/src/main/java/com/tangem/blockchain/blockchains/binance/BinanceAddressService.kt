@@ -20,10 +20,10 @@ class BinanceAddressService(private val testNet: Boolean = false) : AddressServi
     ): PlainAddress {
         val publicKeyHash = publicKey.blockchainKey.toCompressedPublicKey().calculateSha256().calculateRipemd160()
 
-        val hrp = if (testNet) "tbnb" else "bnb"
+        val humanReadablePart = if (testNet) "tbnb" else "bnb"
 
         val address = Bech32.encode(
-            hrp,
+            humanReadablePart,
             Crypto.convertBits(publicKeyHash, 0, publicKeyHash.size, 8, 5, false)
         )
 
