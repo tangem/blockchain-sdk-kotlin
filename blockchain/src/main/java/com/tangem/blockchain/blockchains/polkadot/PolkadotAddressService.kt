@@ -14,7 +14,7 @@ import io.emeraldpay.polkaj.types.Address
 [REDACTED_AUTHOR]
  */
 class PolkadotAddressService(
-    blockchain: Blockchain
+    blockchain: Blockchain,
 ) : AddressService {
 
     private val ss58Network = when (blockchain) {
@@ -25,7 +25,11 @@ class PolkadotAddressService(
         else -> throw IllegalStateException("$blockchain isn't supported")
     }
 
-    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve,
+    ): PlainAddress {
         return PlainAddress(
             value = Address(ss58Network, publicKey.blockchainKey).toString(),
             type = AddressType.Default,

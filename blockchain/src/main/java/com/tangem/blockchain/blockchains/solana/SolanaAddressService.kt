@@ -12,7 +12,11 @@ import org.p2p.solanaj.core.PublicKey
  */
 class SolanaAddressService : AddressService {
 
-    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve,
+    ): PlainAddress {
         return PlainAddress(
             value = PublicKey(publicKey.blockchainKey).toBase58(),
             type = addressType,

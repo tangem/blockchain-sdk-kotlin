@@ -7,6 +7,7 @@ import com.tangem.blockchain.common.address.AddressProvider
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.address.AddressValidator
 import com.tangem.blockchain.common.address.PlainAddress
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import org.bitcoinj.core.ECKey
@@ -29,7 +30,11 @@ class BitcoinLegacyAddressService(
         return validateLegacyAddress(address)
     }
 
-    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve,
+    ): PlainAddress {
         val ecPublicKey = ECKey.fromPublicOnly(publicKey.blockchainKey)
         val address = LegacyAddress.fromKey(networkParameters, ecPublicKey).toBase58()
         return PlainAddress(address, addressType, publicKey)
@@ -43,5 +48,4 @@ class BitcoinLegacyAddressService(
             false
         }
     }
-
 }
