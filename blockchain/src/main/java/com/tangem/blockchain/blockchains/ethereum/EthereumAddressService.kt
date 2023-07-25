@@ -14,7 +14,11 @@ import org.kethereum.model.PublicKey
 
 class EthereumAddressService : AddressService {
 
-    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve
+    ): PlainAddress {
         val address = PublicKey(
             publicKey.blockchainKey.toDecompressedPublicKey().sliceArray(1..64)
         ).toAddress().withERC55Checksum().hex
@@ -27,5 +31,4 @@ class EthereumAddressService : AddressService {
     }
 
     override fun validate(address: String): Boolean = Address(address).hasValidERC55ChecksumOrNoChecksum()
-
 }
