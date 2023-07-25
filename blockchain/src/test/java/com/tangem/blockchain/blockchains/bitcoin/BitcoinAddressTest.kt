@@ -16,7 +16,6 @@ class BitcoinAddressTest {
     fun makeAddressesFromCorrectPublicKey() {
         val walletPublicKey = "04752A727E14BBA5BD73B6714D72500F61FFD11026AD1196D2E1C54577CBEEAC3D11FC68A64700F8D533F4E311964EA8FB3AA26C588295F2133868D69C3E628693"
                 .hexToBytes()
-        val expectedSize = 2
         val expectedLegacyAddress = "1D3vYSjCvzrsVVK5bNaPTjU3NxcN7NNXMN"
         val expectedSegwitAddress = "bc1qtdsvnsf7cfu8l3w7qahwwhhxfrdzmdhsgdzky2"
 
@@ -31,7 +30,6 @@ class BitcoinAddressTest {
             EllipticCurve.Secp256k1
         )
 
-        // Truth.assertThat(addresses.size).isEqualTo(expectedSize)
         Truth.assertThat(legacyAddress.value).isEqualTo(expectedLegacyAddress)
         Truth.assertThat(segwitAddress.value).isEqualTo(expectedSegwitAddress)
     }
