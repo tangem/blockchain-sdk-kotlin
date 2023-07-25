@@ -8,13 +8,9 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.*
 import com.tangem.common.card.EllipticCurve
-import com.tangem.common.extensions.calculateRipemd160
-import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
 import org.bitcoinj.core.ECKey
-import org.bitcoinj.core.LegacyAddress
 import org.bitcoinj.core.NetworkParameters
-import org.bitcoinj.core.SegwitAddress
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.params.TestNet3Params
 import org.bitcoinj.script.Script
@@ -43,8 +39,11 @@ open class BitcoinAddressService(
     val legacy = BitcoinLegacyAddressService(blockchain, networkParameters)
     val bech32 = BitcoinBech32AddressService(blockchain, networkParameters)
 
-    // TODO refactoring look at default address type, probably return legacy address
-    override fun makeAddress(publicKey: Wallet.PublicKey, addressType: AddressType): PlainAddress {
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve,
+    ): PlainAddress {
         val address = when (addressType) {
             AddressType.Legacy -> legacy.makeAddressOldStyle(publicKey.blockchainKey).value
             AddressType.Default -> bech32.makeAddressOldStyle(publicKey.blockchainKey).value
@@ -63,7 +62,7 @@ open class BitcoinAddressService(
 
     override fun makeAddresses(
         publicKey: Wallet.PublicKey,
-        pairPublicKey: ByteArray
+        pairPublicKey: ByteArray,
     ): List<BitcoinScriptAddress> {
 
         val script = create1of2MultisigOutputScript(publicKey.blockchainKey, pairPublicKey)
@@ -95,5 +94,4 @@ open class BitcoinAddressService(
         val publicEcKeys = publicKeys.map { ECKey.fromPublicOnly(it) }
         return ScriptBuilder.createRedeemScript(1, publicEcKeys)
     }
-
 }
