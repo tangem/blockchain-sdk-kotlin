@@ -69,7 +69,7 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
         } catch (exception: Exception) {
             if (exception is HttpException && exception.code() == 400) {
                 val error = IOException(
-                    "${Blockchain.CardanoShelley}. Failed to send transaction ${transaction.toHexString()}\nwith an error: " +
+                    "${Blockchain.Cardano}. Failed to send transaction ${transaction.toHexString()}\nwith an error: " +
                         "\n${exception.response()?.errorBody()?.string()}"
                 )
                 SimpleResult.Failure(error.toBlockchainSdkError())
