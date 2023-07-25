@@ -66,6 +66,8 @@ class AddressServiceFactory(
             Blockchain.Cronos,
             Blockchain.Telos,
             Blockchain.TelosTestnet,
+            Blockchain.OctaSpace,
+            Blockchain.OctaSpaceTestnet
             -> {
                 EthereumAddressService()
             }

@@ -12,7 +12,7 @@ internal object SolanaWalletManagerAssembly : WalletManagerAssembly<SolanaWallet
             val clients = SolanaRpcClientBuilder()
                 .build(isTestnet = blockchain.isTestnet(), config = input.config)
 
-            return SolanaWalletManager(this, clients)
+            return SolanaWalletManager(wallet = this, providers = clients)
         }
     }
 

@@ -18,7 +18,7 @@ class TronNetworkService(
 
     private val multiProvider = MultiNetworkProvider(rpcNetworkProviders)
     val host: String
-        get() = multiProvider.currentProvider.network.url
+        get() = multiProvider.currentProvider.baseUrl
 
     suspend fun getAccountInfo(
         address: String, tokens: Collection<Token>, transactionIds: List<String>,
