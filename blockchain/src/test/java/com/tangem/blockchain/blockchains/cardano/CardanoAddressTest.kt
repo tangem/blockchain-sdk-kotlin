@@ -10,7 +10,7 @@ import org.junit.Test
 
 class CardanoAddressTest {
 
-    private val addressService = CardanoAddressService(Blockchain.CardanoShelley)
+    private val addressService = CardanoAddressService(Blockchain.Cardano)
 
     @Test
     fun makeAddressesFromCorrectPublicKey() {

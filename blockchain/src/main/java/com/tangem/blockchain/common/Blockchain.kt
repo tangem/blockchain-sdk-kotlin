@@ -18,6 +18,7 @@ import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.common.card.EllipticCurve
+import com.tangem.crypto.hdWallet.BIP44
 import com.tangem.crypto.hdWallet.DerivationPath
 
 enum class Blockchain(
@@ -38,7 +39,7 @@ enum class Blockchain(
     BitcoinTestnet("BTC/test", "BTC", "Bitcoin Testnet"),
     BitcoinCash("BCH", "BCH", "Bitcoin Cash"),
     BitcoinCashTestnet("BCH/test", "BCH", "Bitcoin Cash Testnet"),
-    CardanoShelley("CARDANO-S", "ADA", "Cardano"),
+    Cardano("CARDANO-S", "ADA", "Cardano"),
     Cosmos("cosmos", "ATOM", "Cosmos"),
     CosmosTestnet("cosmos/test", "ATOM", "Cosmos Testnet"),
     Dogecoin("DOGE", "DOGE", "Dogecoin"),
@@ -91,7 +92,7 @@ enum class Blockchain(
 
     fun decimals(): Int = when (this) {
         Unknown -> 0
-        CardanoShelley,
+        Cardano,
         XRP,
         Tezos,
         Tron, TronTestnet,
@@ -176,7 +177,7 @@ enum class Blockchain(
             OctaSpace, OctaSpaceTestnet
             -> EthereumAddressService()
             RSK -> RskAddressService()
-            Cardano, CardanoShelley -> CardanoAddressService(this)
+            Cardano -> CardanoAddressService(this)
             XRP -> XrpAddressService()
             Binance -> BinanceAddressService()
             BinanceTestnet -> BinanceAddressService(true)
@@ -219,7 +220,7 @@ enum class Blockchain(
         BitcoinCashTestnet -> "https://www.blockchain.com/bch-testnet/"
         BSC -> "https://bscscan.com/"
         BSCTestnet -> "https://testnet.bscscan.com/"
-        CardanoShelley -> "https://www.blockchair.com/cardano/"
+        Cardano -> "https://www.blockchair.com/cardano/"
         Dogecoin -> "https://blockchair.com/dogecoin/"
         Ducatus -> "https://insight.ducatus.io/#/DUC/mainnet/"
         Ethereum -> "https://etherscan.io/"
@@ -363,7 +364,7 @@ enum class Blockchain(
             AlephZero, AlephZeroTestnet -> AlephZeroTestnet
             OctaSpace, OctaSpaceTestnet -> OctaSpaceTestnet
             Unknown,
-            CardanoShelley,
+            Cardano,
             Dogecoin,
             Litecoin,
             Kusama,
@@ -422,7 +423,7 @@ enum class Blockchain(
 
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
-            CardanoShelley,
+            Cardano,
             Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
             TON, TONTestnet,
             -> listOf(EllipticCurve.Ed25519)
