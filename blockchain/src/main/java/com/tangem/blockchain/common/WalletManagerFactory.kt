@@ -6,9 +6,8 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.impl.*
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
-import java.lang.IllegalStateException
 
-class WalletManagerFactory(private val config: BlockchainSdkConfig) {
+class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainSdkConfig()) {
 
     fun createWalletManager(
         blockchain: Blockchain,
@@ -195,7 +194,8 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
             Blockchain.EthereumPowTestnet,
             Blockchain.Kava, Blockchain.KavaTestnet,
             Blockchain.Cronos,
-            Blockchain.Telos, Blockchain.TelosTestnet
+            Blockchain.Telos, Blockchain.TelosTestnet,
+            Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet
             -> {
                 EthereumLikeWalletManagerAssembly
             }

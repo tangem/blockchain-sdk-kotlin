@@ -7,7 +7,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.moshi
 
 class TonJsonRpcNetworkProvider(
-    override val host: String,
+    override val baseUrl: String,
     private val api: TonApi,
 ) : TonNetworkProvider {
 

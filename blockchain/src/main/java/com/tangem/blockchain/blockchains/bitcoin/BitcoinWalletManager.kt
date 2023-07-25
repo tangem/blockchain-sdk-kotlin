@@ -43,7 +43,7 @@ open class BitcoinWalletManager(
     open val minimalFee = 0.000001.toBigDecimal()
 
     override val currentHost: String
-        get() = networkProvider.host
+        get() = networkProvider.baseUrl
 
     override suspend fun update() {
         coroutineScope {

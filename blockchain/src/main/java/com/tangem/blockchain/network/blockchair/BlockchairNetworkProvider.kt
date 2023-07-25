@@ -28,10 +28,10 @@ open class BlockchairNetworkProvider(
     private val authorizationToken: String? = null,
 ) : BitcoinNetworkProvider {
 
-    override val host: String = createHost(blockchain)
+    override val baseUrl: String = createHost(blockchain)
 
     private val api: BlockchairApi by lazy {
-        createRetrofitInstance(host).create(BlockchairApi::class.java)
+        createRetrofitInstance(baseUrl).create(BlockchairApi::class.java)
     }
 
     private var currentApiKey: String? = null
