@@ -139,6 +139,7 @@ enum class Blockchain(
     fun derivationPaths(style: DerivationStyle): Map<AddressType, DerivationPath> {
         val curves = getSupportedCurves()
 
+        // add BLS later
         if (!curves.contains(EllipticCurve.Secp256k1) && !curves.contains(EllipticCurve.Ed25519)) {
             return emptyMap()
         }
