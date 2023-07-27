@@ -14,7 +14,6 @@ import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.AddressService
-import com.tangem.common.card.EllipticCurve
 import com.tangem.blockchain.common.address.WalletCoreAddressService
 import java.lang.IllegalStateException
 
@@ -76,7 +75,7 @@ class AddressServiceFactory(
                 RskAddressService()
             }
 
-            Blockchain.Cardano, Blockchain.CardanoShelley -> {
+            Blockchain.Cardano -> {
                 CardanoAddressService(blockchain)
             }
 
