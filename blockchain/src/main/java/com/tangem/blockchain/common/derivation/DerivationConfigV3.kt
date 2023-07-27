@@ -42,11 +42,6 @@ object DerivationConfigV3 : DerivationConfig() {
             }
 
             Blockchain.Cardano -> {
-                //"DerivationConfigV3 supports only shelley address"
-                emptyMap()
-            }
-
-            Blockchain.CardanoShelley -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1815'/0'/0/0"))
             }
 
