@@ -39,7 +39,7 @@ class TonTransactionBuilder {
             .setAmount(amount.longValue ?: 0L)
             .setSequenceNumber(sequenceNumber)
             .setMode(modeTransactionConstant)
-            .setBounceBehavior(TheOpenNetwork.BounceBehavior.NON_BOUNCEABLE)
+            .setBounceable(false)
             .setComment(comment)
 
         return TheOpenNetwork.SigningInput
