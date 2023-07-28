@@ -9,7 +9,7 @@ android {
     compileSdkVersion 33
 
     defaultConfig {
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 33
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -40,7 +40,7 @@ android {
 
 task sourceJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
-    classifier "sources"
+    archiveClassifier.set("sources")
 }
 
 dependencies {
@@ -89,7 +89,8 @@ dependencies {
     implementation files('libs/ripple-core-0.0.1.jar')
     implementation files('libs/solanaj-0.0.10.jar')
     implementation files('libs/polkaj-root-0.1.5.jar')
-    implementation("com.tangem:wallet-core:3.1.10@aar") {
+    implementation "com.tangem:wallet-core:3.2.4@aar"
+    implementation("com.tangem:wallet-core-proto:3.2.4") {
         exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
     }
 
