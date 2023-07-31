@@ -27,16 +27,18 @@ class CosmosTransactionTest {
         val transactionBuilder = CosmosTransactionBuilder(CosmosChain.Cosmos(true))
 
         val pseudoRandomBytes = byteArrayOf(
-            24, 104, 112, -7, 100, -64, 95, 12, -105, -67, 127, -37, -74, 61, 17, -30, -56, -90, 61, -15, 26, 24, 94, -29, -91, -7, -54, -17, -120, -3, 2, -49
+            24, 104, 112, -7, 100, -64, 95, 12, -105, -67, 127, -37, -74, 61, 17, -30,
+            -56, -90, 61, -15, 26, 24, 94, -29, -91, -7, -54, -17, -120, -3, 2, -49
         )
 
         val seedKey = byteArrayOf(
-            2, -30, -43, 25, 85, 93, 103, -26, 0, -37, 27, -102, 51, 106,
-            41, -109, 82, -21, -26, -73, -71, -28, 127, 110, 110, -99, 89, 94, -7, 85, 25, -20, -90
+            2, -30, -43, 25, 85, 93, 103, -26, 0, -37, 27, -102, 51, 106, 41, -109, 82,
+            -21, -26, -73, -71, -28, 127, 110, 110, -99, 89, 94, -7, 85, 25, -20, -90
         )
 
         val derivedKey = byteArrayOf(
-            2, -40, -68, 33, -71, -109, 85, -40, 123, 22, -61, -40, 47, 23, -112, -48, 74, -84, -43, 87, -75, 56, -93, -89, 33, 57, -21, -12, -31, 71, 111, 49, 26
+            2, -40, -68, 33, -71, -109, 85, -40, 123, 22, -61, -40, 47, 23, -112, -48, 74,
+            -84, -43, 87, -75, 56, -93, -89, 33, 57, -21, -12, -31, 71, 111, 49, 26
         )
 
         val input = transactionBuilder.buildForSign(
@@ -64,10 +66,10 @@ class CosmosTransactionTest {
             signer = null
         )
 
-        assertEquals(
-            message.successOr { "" },
-            "{\"mode\":\"BROADCAST_MODE_SYNC\",\"tx_bytes\":\"CpABCo0BChwvY29zbW9zLmJhbmsudjFiZXRhMS5Nc2dTZW5kEm0KLWNvc21vczF0cWtzbjhqNGtqMGZlZWQyc2dsaGZ1anA1YW1rbmR5YWM0ejhqeRItY29zbW9zMXo1NnY4d3F2Z21obTNobW5mZmFweHVqdmQ0dzRya3c2Y3hyOHh5Gg0KBXVhdG9tEgQ1MDAwElQKUApGCh8vY29zbW9zLmNyeXB0by5zZWNwMjU2azEuUHViS2V5EiMKIQMNVLUV+7OcpvLZLd0m80ON/U+gpU1uj+GME8zarWeDohIECgIIARgHEgAaQHSfcPEKcVYjnQla00uI/EGD6eB6gxmHW2688G3sbqk9V+8SZEOoPqrM36pynuO2emI2+1YU0O6c2bkaXXUVi2E=\"}"
-            )
+        val expected = "{\"mode\":\"BROADCAST_MODE_SYNC\",\"tx_bytes\":\"CpABCo0BChwvY29zbW9zLmJhbmsudjFiZXRhMS5Nc2dTZW5kEm0KLWNvc21vczF0cWtzbjhqNGtqMGZlZWQyc2dsaGZ1anA1YW1rbmR5YWM0ejhqeRItY29zbW9zMXo1NnY4d3F2Z21obTNobW5mZmFweHVqdmQ0dzRya3c2Y3hyOHh5Gg0KBXVhdG9tEgQ1MDAwElQKUApGCh8vY29zbW9zLmNyeXB0by5zZWNwMjU2azEuUHViS2V5EiMKIQMNVLUV+7OcpvLZLd0m80ON/U+gpU1uj+GME8zarWeDohIECgIIARgHEgAaQHSfcPEKcVYjnQla00uI/EGD6eB6gxmHW2688G3sbqk9V+8SZEOoPqrM36pynuO2emI2+1YU0O6c2bkaXXUVi2E=\"}"
+        val actual = message.successOr { "" }
+
+        assertEquals(expected, actual)
     }
 
     @Test
