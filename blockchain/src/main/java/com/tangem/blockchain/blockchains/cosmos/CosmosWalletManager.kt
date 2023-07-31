@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.cosmos
 
 import android.util.Log
+import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosNetworkService
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
@@ -10,8 +11,7 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
-import wallet.core.jni.PublicKeyType
-import wallet.core.jni.proto.Cosmos
+import com.tangem.crypto.CryptoUtils
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -55,9 +55,15 @@ class CosmosWalletManager(
             feeAmount = transactionData.fee?.amount,
             gas = gas?.toLong(),
             extras = transactionData.extras as? CosmosTransactionExtras,
+            randomByteString = ByteString.copyFrom(CryptoUtils.generateRandomBytes(length = 32))
         )
 
-        val message = buildTransaction(input, signer).successOr {
+        val message = txBuilder.buildToSend(
+            publicKey = wallet.publicKey,
+            input = input,
+            curve = wallet.blockchain.getSupportedCurves().first(),
+            signer = signer
+        ).successOr {
             return SimpleResult.Failure(it.error)
         }
         return when (val sendResult = networkService.send(message)) {
@@ -76,6 +82,7 @@ class CosmosWalletManager(
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val accNumber = accountNumber ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+
         val input = txBuilder.buildForSign(
             amount = amount,
             source = wallet.address,
@@ -85,8 +92,14 @@ class CosmosWalletManager(
             feeAmount = null,
             gas = null,
             extras = null,
+            randomByteString = ByteString.copyFrom(CryptoUtils.generateRandomBytes(length = 32))
         )
-        val message = buildTransaction(input, null).successOr { return it }
+        val message = txBuilder.buildToSend(
+            publicKey = wallet.publicKey,
+            input = input,
+            curve = wallet.blockchain.getSupportedCurves().first(),
+            signer = null
+        ).successOr { return it }
         return when (val estimateGasResult = networkService.estimateGas(message)) {
             is Result.Failure -> estimateGasResult
             is Result.Success -> {
@@ -108,17 +121,21 @@ class CosmosWalletManager(
                     1 -> {
                         Result.Success(TransactionFee.Single(Fee.Common(amounts[0])))
                     }
+
                     3 -> {
-                        Result.Success(TransactionFee.Choosable(
-                            minimum = Fee.Common(amounts[0]),
-                            normal = Fee.Common(amounts[1]),
-                            priority = Fee.Common(amounts[2])))
+                        Result.Success(
+                            TransactionFee.Choosable(
+                                minimum = Fee.Common(amounts[0]),
+                                normal = Fee.Common(amounts[1]),
+                                priority = Fee.Common(amounts[2])
+                            )
+                        )
                     }
+
                     else -> {
                         Result.Failure(BlockchainSdkError.CustomError("Illegal amounts size"))
                     }
                 }
-
             }
         }
     }
@@ -142,22 +159,6 @@ class CosmosWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    private fun buildTransaction(input: Cosmos.SigningInput, signer: TransactionSigner?): Result<String> {
-        val outputResult: Result<Cosmos.SigningOutput> = AnySignerWrapper().sign(
-            walletPublicKey = wallet.publicKey,
-            publicKeyType = PublicKeyType.SECP256K1,
-            input = input,
-            coin = cosmosChain.coin,
-            parser = Cosmos.SigningOutput.parser(),
-            signer = signer,
-            curve = wallet.blockchain.getSupportedCurves().first(),
-        )
-        return when (outputResult) {
-            is Result.Failure -> outputResult
-            is Result.Success -> Result.Success(txBuilder.buildForSend(outputResult.data))
-        }
-    }
-
     private fun tax(amount: Amount): BigDecimal? {
         return when (amount.type) {
             is AmountType.Token -> {
@@ -166,6 +167,7 @@ class CosmosWalletManager(
                 val amountValue = requireNotNull(amount.value) { "Amount must not be null" }
                 return amountValue * taxPercent
             }
+
             else -> null
         }
     }
