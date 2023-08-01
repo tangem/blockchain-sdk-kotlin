@@ -173,6 +173,8 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.TelosTestnet,
             Blockchain.AlephZeroTestnet,
             Blockchain.OctaSpaceTestnet,
+            Blockchain.Chia,
+            Blockchain.ChiaTestnet,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
