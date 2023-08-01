@@ -1,0 +1,53 @@
+apply plugin: 'maven-publish'
+
+afterEvaluate {
+    publishing {
+
+        publications {
+            bar(MavenPublication) {
+                groupId = "$project.artifactGroupId"
+                artifactId = "$project.artifactId"
+                version = "$project.artifactVersion"
+
+                from components.release
+                artifact(sourceJar)
+            }
+        }
+
+        // publications {
+        //   maven(MavenPublication) {
+        //     groupId = "$project.artifactGroupId"
+        //     artifactId = "$project.artifactId"
+        //     version = "$project.artifactVersion"
+        //
+        //     from components.release
+        //     artifact(sourceJar)
+        //
+        //     pom.withXml {
+        //       Node pomNode = asNode()
+        //       pomNode.dependencies.'*'.findAll() {
+        //         it.groupId.text() == project.artifactGroupId
+        //       }.each() {
+        //         it.parent().remove(it)
+        //       }
+        //       pomNode.dependencies.'*'.findAll() {
+        //         it.scope.text() == 'runtime'
+        //       }.each {
+        //         it.scope*.value = 'compile'
+        //       }
+        //     }
+        //   }
+        // }
+
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/tangem/blockchain-sdk-kotlin")
+                credentials {
+                    username = "$githubUser"
+                    password = "$githubPass"
+                }
+            }
+        }
+    }
+}
