@@ -61,7 +61,7 @@ internal class CosmosTransactionBuilder(
             throw IllegalStateException("something went wrong")
         }
 
-        Log.e("output.dataHash", output.dataHash.toString())
+        Log.e("output.dataHash", output.dataHash.toByteArray().map { it }.toString())
         return output.dataHash.toByteArray()
     }
 
