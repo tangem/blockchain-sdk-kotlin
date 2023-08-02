@@ -11,6 +11,7 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
+import com.tangem.common.CompletionResult
 import com.tangem.crypto.CryptoUtils
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -27,7 +28,12 @@ class CosmosWalletManager(
     )
     private var accountNumber: Long? = null
     private var sequenceNumber: Long = 0L
-    private val txBuilder: CosmosTransactionBuilder = CosmosTransactionBuilder(cosmosChain = cosmosChain)
+
+    private val txBuilder: CosmosTransactionBuilder = CosmosTransactionBuilder(
+        cosmosChain = cosmosChain,
+        publicKey = wallet.publicKey
+    )
+
     private var gas: BigDecimal? = null
 
     override val currentHost: String
@@ -46,7 +52,7 @@ class CosmosWalletManager(
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         val accNumber = accountNumber ?: return SimpleResult.Failure(BlockchainSdkError.AccountNotFound)
-        val input = txBuilder.buildForSign(
+        val hash = txBuilder.buildForSign(
             amount = transactionData.amount,
             source = wallet.address,
             destination = transactionData.destinationAddress,
@@ -55,17 +61,23 @@ class CosmosWalletManager(
             feeAmount = transactionData.fee?.amount,
             gas = gas?.toLong(),
             extras = transactionData.extras as? CosmosTransactionExtras,
-            randomByteString = ByteString.copyFrom(CryptoUtils.generateRandomBytes(length = 32))
         )
 
-        val message = txBuilder.buildToSend(
-            publicKey = wallet.publicKey,
-            input = input,
-            curve = wallet.blockchain.getSupportedCurves().first(),
-            signer = signer
-        ).successOr {
-            return SimpleResult.Failure(it.error)
-        }
+        val signature = signer.sign(hash, wallet.publicKey)
+
+        val message = txBuilder.buildForSend(
+            amount = transactionData.amount,
+            source = wallet.address,
+            destination = transactionData.destinationAddress,
+            accountNumber = accNumber,
+            sequenceNumber = sequenceNumber,
+            feeAmount = transactionData.fee?.amount,
+            gas = gas?.toLong(),
+            extras = transactionData.extras as? CosmosTransactionExtras,
+            signature = (signature as CompletionResult.Success).data
+        )
+
+
         return when (val sendResult = networkService.send(message)) {
             is Result.Failure -> SimpleResult.Failure(sendResult.error)
             is Result.Success -> {
@@ -83,7 +95,7 @@ class CosmosWalletManager(
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val accNumber = accountNumber ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
-        val input = txBuilder.buildForSign(
+        val input = txBuilder.buildForSend(
             amount = amount,
             source = wallet.address,
             destination = destination,
@@ -92,15 +104,10 @@ class CosmosWalletManager(
             feeAmount = null,
             gas = null,
             extras = null,
-            randomByteString = ByteString.copyFrom(CryptoUtils.generateRandomBytes(length = 32))
+            signature = CryptoUtils.generateRandomBytes(length = 64)
         )
-        val message = txBuilder.buildToSend(
-            publicKey = wallet.publicKey,
-            input = input,
-            curve = wallet.blockchain.getSupportedCurves().first(),
-            signer = null
-        ).successOr { return it }
-        return when (val estimateGasResult = networkService.estimateGas(message)) {
+     
+        return when (val estimateGasResult = networkService.estimateGas(input)) {
             is Result.Failure -> estimateGasResult
             is Result.Success -> {
                 val amounts = cosmosChain.gasPrices(amount.type).map { gasPrice ->
