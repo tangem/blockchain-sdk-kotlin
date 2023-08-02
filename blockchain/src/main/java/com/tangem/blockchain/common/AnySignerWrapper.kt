@@ -15,6 +15,8 @@ import wallet.core.java.Signer
 import wallet.core.jni.CoinType
 import wallet.core.jni.PublicKey
 import wallet.core.jni.PublicKeyType
+import wallet.core.jni.TransactionCompiler
+import wallet.core.jni.proto.Cosmos
 
 class AnySignerWrapper {
 
