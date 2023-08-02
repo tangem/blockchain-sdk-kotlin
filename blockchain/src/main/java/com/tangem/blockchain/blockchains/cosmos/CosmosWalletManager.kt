@@ -50,8 +50,10 @@ class CosmosWalletManager(
         }
     }
 
+    // TODO think about split base "send" method to "sign" and "send" to satisfy SRP
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         val accNumber = accountNumber ?: return SimpleResult.Failure(BlockchainSdkError.AccountNotFound)
+
         val hash = txBuilder.buildForSign(
             amount = transactionData.amount,
             source = wallet.address,
@@ -63,21 +65,34 @@ class CosmosWalletManager(
             extras = transactionData.extras as? CosmosTransactionExtras,
         )
 
-        val signature = signer.sign(hash, wallet.publicKey)
+        val message = when (val signature = signer.sign(hash, wallet.publicKey)) {
+            is CompletionResult.Success -> {
+                val builtForSend = txBuilder.buildForSend(
+                    amount = transactionData.amount,
+                    source = wallet.address,
+                    destination = transactionData.destinationAddress,
+                    accountNumber = accNumber,
+                    sequenceNumber = sequenceNumber,
+                    feeAmount = transactionData.fee?.amount,
+                    gas = gas?.toLong(),
+                    extras = transactionData.extras as? CosmosTransactionExtras,
+                    signature = signature.data
+                )
+                builtForSend
+            }
 
-        val message = txBuilder.buildForSend(
-            amount = transactionData.amount,
-            source = wallet.address,
-            destination = transactionData.destinationAddress,
-            accountNumber = accNumber,
-            sequenceNumber = sequenceNumber,
-            feeAmount = transactionData.fee?.amount,
-            gas = gas?.toLong(),
-            extras = transactionData.extras as? CosmosTransactionExtras,
-            signature = (signature as CompletionResult.Success).data
-        )
+            is CompletionResult.Failure -> {
+                return SimpleResult.fromTangemSdkError(signature.error)
+            }
+        }
 
+        return sendToNetwork(transactionData, message)
+    }
 
+    private suspend fun sendToNetwork(
+        transactionData: TransactionData,
+        message: String,
+    ): SimpleResult {
         return when (val sendResult = networkService.send(message)) {
             is Result.Failure -> SimpleResult.Failure(sendResult.error)
             is Result.Success -> {
@@ -104,9 +119,9 @@ class CosmosWalletManager(
             feeAmount = null,
             gas = null,
             extras = null,
-            signature = CryptoUtils.generateRandomBytes(length = 64)
+            signature = CryptoUtils.generateRandomBytes(length = 64) // signature is not necessary for fee calculation
         )
-     
+
         return when (val estimateGasResult = networkService.estimateGas(input)) {
             is Result.Failure -> estimateGasResult
             is Result.Success -> {
