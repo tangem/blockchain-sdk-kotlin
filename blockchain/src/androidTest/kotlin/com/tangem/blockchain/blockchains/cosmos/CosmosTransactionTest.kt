@@ -1,21 +1,12 @@
 package com.tangem.blockchain.blockchains.cosmos
 
-import com.google.protobuf.ByteString
-import com.tangem.blockchain.blockchains.cosmos.CosmosTransactionBuilder
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Wallet
-import com.tangem.common.extensions.hexToBytes
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import wallet.core.jni.*
-import wallet.core.jni.CoinType.COSMOS
-import wallet.core.jni.proto.Cosmos
-import wallet.core.jni.proto.Cosmos.SigningOutput
-import wallet.core.jni.proto.Cosmos.SigningMode
-import wallet.core.java.AnySigner
 import java.math.BigDecimal
 
 class CosmosTransactionTest {
