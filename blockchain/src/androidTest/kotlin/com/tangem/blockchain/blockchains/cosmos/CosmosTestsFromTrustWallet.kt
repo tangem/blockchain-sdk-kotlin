@@ -10,7 +10,7 @@ import wallet.core.jni.proto.Cosmos
 import wallet.core.java.AnySigner
 
 
-class CosmosOriginalTest {
+class CosmosTestsFromTrustWallet {
 
     init {
         System.loadLibrary("TrustWalletCore")
