@@ -39,6 +39,16 @@ internal class CosmosTransactionBuilder(
                 gas = gas,
                 extras = extras
             )
+
+        Log.e("params:", "publicKey = $publicKey,\n" +
+            "amount = $amount,\n" +
+            "source = $source,\n" +
+            "destination = $destination,\n" +
+            "accountNumber = $accountNumber,\n" +
+            "sequenceNumber = $sequenceNumber,\n" +
+            "feeAmount = $feeAmount,\n" +
+            "gas = $gas,\n" +
+            "extras = $extras")
         val txInputData = input.toByteArray()
         Log.e("input", input.toString())
 
@@ -66,6 +76,17 @@ internal class CosmosTransactionBuilder(
         extras: CosmosTransactionExtras?,
         signature: ByteArray,
     ): String {
+        Log.e("params:", "publicKey = $publicKey,\n" +
+            "amount = $amount,\n" +
+            "source = $source,\n" +
+            "destination = $destination,\n" +
+            "accountNumber = $accountNumber,\n" +
+            "sequenceNumber = $sequenceNumber,\n" +
+            "feeAmount = $feeAmount,\n" +
+            "gas = $gas,\n" +
+            "extras = $extras\n" +
+            "signature = ${signature.map { it }}")
+
         val input = makeInput(
             publicKey = publicKey,
             amount = amount,
@@ -101,6 +122,7 @@ internal class CosmosTransactionBuilder(
             throw IllegalStateException("something went wrong")
         }
 
+        Log.e("output.serialized", output.serialized)
         return output.serialized
     }
 
