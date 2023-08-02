@@ -67,7 +67,7 @@ class CosmosWalletManager(
 
         val message = when (val signature = signer.sign(hash, wallet.publicKey)) {
             is CompletionResult.Success -> {
-                val builtForSend = txBuilder.buildForSend(
+                txBuilder.buildForSend(
                     amount = transactionData.amount,
                     source = wallet.address,
                     destination = transactionData.destinationAddress,
@@ -78,7 +78,6 @@ class CosmosWalletManager(
                     extras = transactionData.extras as? CosmosTransactionExtras,
                     signature = signature.data
                 )
-                builtForSend
             }
 
             is CompletionResult.Failure -> {
