@@ -1,10 +1,10 @@
-import androidx.test.runner.AndroidJUnit4
+package com.tangem.blockchain.blockchains.cosmos
+
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.TrustWalletAddressService
 import com.tangem.common.extensions.hexToBytes
 import junit.framework.TestCase.assertEquals
 import org.junit.Test;
-import org.junit.runner.RunWith
 
 class CosmosAddressTest {
 
