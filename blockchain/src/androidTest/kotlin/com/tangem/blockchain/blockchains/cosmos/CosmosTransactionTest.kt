@@ -1,5 +1,6 @@
+package com.tangem.blockchain.blockchains.cosmos
+
 import com.google.protobuf.ByteString
-import com.tangem.blockchain.blockchains.cosmos.CosmosTransactionBuilder
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
