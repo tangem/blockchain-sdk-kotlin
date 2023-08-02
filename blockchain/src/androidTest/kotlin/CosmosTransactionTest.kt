@@ -4,9 +4,8 @@ import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.extensions.successOr
-import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import wallet.core.jni.*
@@ -39,35 +38,46 @@ class CosmosTransactionTest {
 
     private val publicKey = Wallet.PublicKey(seedKey, derivedKey, null)
 
+    private val transactionBuilder = CosmosTransactionBuilder(
+        cosmosChain = CosmosChain.Cosmos(true),
+        publicKey = publicKey
+    )
+
     @Test
-    fun testTransaction() {
-        val transactionBuilder = CosmosTransactionBuilder(
-            cosmosChain = CosmosChain.Cosmos(true),
-            publicKey = publicKey
+    fun testBuildForSign() {
+        val actual = transactionBuilder.buildForSign(
+            amount = Amount(
+                currencySymbol = "ATOM",
+                value = "0.05".toBigDecimal(),
+                decimals = 6,
+                type = AmountType.Coin
+
+            ),
+            source = "cosmos1tqksn8j4kj0feed2sglhfujp5amkndyac4z8jy",
+            destination = "cosmos1z56v8wqvgmhm3hmnffapxujvd4w4rkw6cxr8xy",
+            accountNumber = 726521,
+            sequenceNumber = 17,
+            feeAmount = Amount(
+                currencySymbol = "ATOM",
+                value = BigDecimal.valueOf(0.002717),
+                decimals = 6,
+                type = AmountType.Coin
+            ),
+            gas = 108700,
+            extras = null
         )
 
-        // val input = transactionBuilder.buildForSign(
-        //     amount = Amount(
-        //         currencySymbol = "ATOM",
-        //         value = "0.05".toBigDecimal(),
-        //         decimals = 6,
-        //         type = AmountType.Coin
-        //
-        //     ),
-        //     source = "cosmos1tqksn8j4kj0feed2sglhfujp5amkndyac4z8jy",
-        //     destination = "cosmos1z56v8wqvgmhm3hmnffapxujvd4w4rkw6cxr8xy",
-        //     accountNumber = 726521,
-        //     sequenceNumber = 15,
-        //     feeAmount = Amount(
-        //         currencySymbol = "ATOM",
-        //         value = BigDecimal.valueOf(0.002717),
-        //         decimals = 6,
-        //         type = AmountType.Coin
-        //     ),
-        //     gas = 108700,
-        //     extras = null,
-        // )
 
+        val expected = byteArrayOf(
+            45, 2, 116, -20, -35, -15, -125, 119, 12, 92, 28, -100, -95, -28, 104, 119, 99,
+            -72, -53, 70, -83, -123, -102, -89, -61, -103, 34, -19, 52, 101, 63, -20
+        )
+
+        assertArrayEquals(actual, expected)
+    }
+
+    @Test
+    fun testBuildForSend() {
         val message = transactionBuilder.buildForSend(
             amount = Amount(
                 currencySymbol = "ATOM",
