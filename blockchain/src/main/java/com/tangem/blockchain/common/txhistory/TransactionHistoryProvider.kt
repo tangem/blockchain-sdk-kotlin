@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common.txhistory
 
+import com.tangem.blockchain.common.PaginationWrapper
 import com.tangem.blockchain.extensions.Result
 
 interface TransactionHistoryProvider {
@@ -10,5 +11,5 @@ interface TransactionHistoryProvider {
         address: String,
         page: Int,
         pageSize: Int,
-    ): Result<List<TransactionHistoryItem>>
+    ): Result<PaginationWrapper<TransactionHistoryItem>>
 }
