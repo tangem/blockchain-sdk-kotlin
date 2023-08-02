@@ -5,6 +5,7 @@ import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.PaginationWrapper
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionDirection
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionType
@@ -43,12 +44,19 @@ internal class BitcoinTransactionHistoryProvider(
         address: String,
         page: Int,
         pageSize: Int,
-    ): Result<List<TransactionHistoryItem>> {
+    ): Result<PaginationWrapper<TransactionHistoryItem>> {
         return try {
-            val transactions =
+            val response =
                 withContext(Dispatchers.IO) { blockBookApi.getTransactions(address, page, pageSize) }
-            val txs = transactions?.map { tx -> tx.toTransactionHistoryItem(address) }
-            Result.Success(txs ?: emptyList())
+            val txs = response.transactions?.map { tx -> tx.toTransactionHistoryItem(address) } ?: emptyList()
+            Result.Success(
+                PaginationWrapper(
+                    page = response.page,
+                    totalPages = response.totalPages,
+                    itemsOnPage = response.itemsOnPage,
+                    items = txs
+                )
+            )
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
