@@ -9,6 +9,9 @@ data class GetAddressResponse(
     @Json(name = "unconfirmedTxs") val unconfirmedTxs: Int,
     @Json(name = "txs") val txs: Int,
     @Json(name = "transactions") val transactions: List<Transaction>?,
+    @Json(name = "page") val page: Int,
+    @Json(name = "totalPages") val totalPages: Int,
+    @Json(name = "itemsOnPage") val itemsOnPage: Int,
 ) {
 
     @JsonClass(generateAdapter = true)
