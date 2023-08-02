@@ -4,6 +4,7 @@ import android.util.Log
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.common.*
+import com.tangem.common.core.TangemError
 import wallet.core.jni.DataVector
 import wallet.core.jni.TransactionCompiler
 import wallet.core.jni.proto.Common
@@ -40,28 +41,14 @@ internal class CosmosTransactionBuilder(
                 extras = extras
             )
 
-        Log.e("params:", "publicKey = $publicKey,\n" +
-            "amount = $amount,\n" +
-            "source = $source,\n" +
-            "destination = $destination,\n" +
-            "accountNumber = $accountNumber,\n" +
-            "sequenceNumber = $sequenceNumber,\n" +
-            "feeAmount = $feeAmount,\n" +
-            "gas = $gas,\n" +
-            "extras = $extras")
         val txInputData = input.toByteArray()
-        Log.e("input", input.toString())
-
         val preImageHashes = TransactionCompiler.preImageHashes(cosmosChain.coin, txInputData)
-        Log.e("preImageHashes", preImageHashes.decodeToString())
-
         val output = PreSigningOutput.parseFrom(preImageHashes)
 
         if (output.error != Common.SigningError.OK) {
-            throw IllegalStateException("something went wrong")
+            throw BlockchainSdkError.CustomError("Error while parse preImageHashes")
         }
 
-        Log.e("output.dataHash", output.dataHash.toByteArray().map { it }.toString())
         return output.dataHash.toByteArray()
     }
 
@@ -76,17 +63,6 @@ internal class CosmosTransactionBuilder(
         extras: CosmosTransactionExtras?,
         signature: ByteArray,
     ): String {
-        Log.e("params:", "publicKey = $publicKey,\n" +
-            "amount = $amount,\n" +
-            "source = $source,\n" +
-            "destination = $destination,\n" +
-            "accountNumber = $accountNumber,\n" +
-            "sequenceNumber = $sequenceNumber,\n" +
-            "feeAmount = $feeAmount,\n" +
-            "gas = $gas,\n" +
-            "extras = $extras\n" +
-            "signature = ${signature.map { it }}")
-
         val input = makeInput(
             publicKey = publicKey,
             amount = amount,
@@ -100,7 +76,6 @@ internal class CosmosTransactionBuilder(
         )
 
         val txInputData = input.toByteArray()
-        Log.e("txInputData", txInputData.toString())
 
         val publicKeys = DataVector()
         publicKeys.add(publicKey.blockchainKey)
@@ -112,8 +87,7 @@ internal class CosmosTransactionBuilder(
             cosmosChain.coin, txInputData, signatures, publicKeys
         )
 
-        Log.e("compileWithSignatures", compileWithSignatures.decodeToString().dropWhile { it != '{' })
-
+        // transaction compiled with signatures may contain garbage bytes before json, we need drop them
         val output = SigningOutput.newBuilder()
             .setSerialized(compileWithSignatures.decodeToString().dropWhile { it != '{' })
             .build()
@@ -122,7 +96,6 @@ internal class CosmosTransactionBuilder(
             throw IllegalStateException("something went wrong")
         }
 
-        Log.e("output.serialized", output.serialized)
         return output.serialized
     }
 
