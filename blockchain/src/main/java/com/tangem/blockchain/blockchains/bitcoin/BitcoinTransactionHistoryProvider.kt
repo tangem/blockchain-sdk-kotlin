@@ -1,11 +1,7 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import android.util.Log
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.TransactionStatus
-import com.tangem.blockchain.common.toBlockchainSdkError
-import com.tangem.blockchain.common.PaginationWrapper
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionDirection
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionType
@@ -18,6 +14,7 @@ import com.tangem.blockchain.network.blockbook.network.responses.GetAddressRespo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
+import java.util.concurrent.TimeUnit
 
 private const val EMPTY_ADDRESS = "empty address"
 
@@ -66,7 +63,7 @@ internal class BitcoinTransactionHistoryProvider(
         val isIncoming = vin?.any { !it.addresses.contains(walletAddress) } ?: false
         return TransactionHistoryItem(
             txHash = txid,
-            timestamp = blockTime.toLong(),
+            timestamp = TimeUnit.SECONDS.toMillis(blockTime.toLong()),
             direction = extractTransactionDirection(
                 isIncoming = isIncoming,
                 tx = this,
