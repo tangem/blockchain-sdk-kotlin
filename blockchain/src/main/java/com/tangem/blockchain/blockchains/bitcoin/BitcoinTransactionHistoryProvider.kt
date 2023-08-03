@@ -1,10 +1,7 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import android.util.Log
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.TransactionStatus
-import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionDirection
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionType
@@ -17,6 +14,7 @@ import com.tangem.blockchain.network.blockbook.network.responses.GetAddressRespo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
+import java.util.concurrent.TimeUnit
 
 private const val EMPTY_ADDRESS = "empty address"
 
@@ -43,12 +41,19 @@ internal class BitcoinTransactionHistoryProvider(
         address: String,
         page: Int,
         pageSize: Int,
-    ): Result<List<TransactionHistoryItem>> {
+    ): Result<PaginationWrapper<TransactionHistoryItem>> {
         return try {
-            val transactions =
+            val response =
                 withContext(Dispatchers.IO) { blockBookApi.getTransactions(address, page, pageSize) }
-            val txs = transactions?.map { tx -> tx.toTransactionHistoryItem(address) }
-            Result.Success(txs ?: emptyList())
+            val txs = response.transactions?.map { tx -> tx.toTransactionHistoryItem(address) } ?: emptyList()
+            Result.Success(
+                PaginationWrapper(
+                    page = response.page,
+                    totalPages = response.totalPages,
+                    itemsOnPage = response.itemsOnPage,
+                    items = txs
+                )
+            )
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
@@ -58,7 +63,7 @@ internal class BitcoinTransactionHistoryProvider(
         val isIncoming = vin?.any { !it.addresses.contains(walletAddress) } ?: false
         return TransactionHistoryItem(
             txHash = txid,
-            timestamp = blockTime.toLong(),
+            timestamp = TimeUnit.SECONDS.toMillis(blockTime.toLong()),
             direction = extractTransactionDirection(
                 isIncoming = isIncoming,
                 tx = this,
