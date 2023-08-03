@@ -1,14 +1,20 @@
 package com.tangem.blockchain.blockchains.cosmos
 
+import android.util.Log
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.extensions.Result
-import com.tangem.common.card.EllipticCurve
-import wallet.core.jni.PublicKeyType
+import com.tangem.common.core.TangemError
+import wallet.core.jni.DataVector
+import wallet.core.jni.TransactionCompiler
+import wallet.core.jni.proto.Common
 import wallet.core.jni.proto.Cosmos
+import wallet.core.jni.proto.Cosmos.SigningOutput
+import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
+import java.lang.IllegalStateException
 
 internal class CosmosTransactionBuilder(
+    private val publicKey: Wallet.PublicKey,
     private val cosmosChain: CosmosChain,
 ) {
 
@@ -21,8 +27,89 @@ internal class CosmosTransactionBuilder(
         feeAmount: Amount?,
         gas: Long?,
         extras: CosmosTransactionExtras?,
-        randomByteString: ByteString
-    ) : Cosmos.SigningInput {
+    ): ByteArray {
+        val input =
+            makeInput(
+                publicKey = publicKey,
+                amount = amount,
+                source = source,
+                destination = destination,
+                accountNumber = accountNumber,
+                sequenceNumber = sequenceNumber,
+                feeAmount = feeAmount,
+                gas = gas,
+                extras = extras
+            )
+
+        val txInputData = input.toByteArray()
+        val preImageHashes = TransactionCompiler.preImageHashes(cosmosChain.coin, txInputData)
+        val output = PreSigningOutput.parseFrom(preImageHashes)
+
+        if (output.error != Common.SigningError.OK) {
+            throw BlockchainSdkError.CustomError("Error while parse preImageHashes")
+        }
+
+        return output.dataHash.toByteArray()
+    }
+
+    fun buildForSend(
+        amount: Amount,
+        source: String,
+        destination: String,
+        accountNumber: Long,
+        sequenceNumber: Long,
+        feeAmount: Amount?,
+        gas: Long?,
+        extras: CosmosTransactionExtras?,
+        signature: ByteArray,
+    ): String {
+        val input = makeInput(
+            publicKey = publicKey,
+            amount = amount,
+            source = source,
+            destination = destination,
+            accountNumber = accountNumber,
+            sequenceNumber = sequenceNumber,
+            feeAmount = feeAmount,
+            gas = gas,
+            extras = extras
+        )
+
+        val txInputData = input.toByteArray()
+
+        val publicKeys = DataVector()
+        publicKeys.add(publicKey.blockchainKey)
+
+        val signatures = DataVector()
+        signatures.add(signature)
+
+        val compileWithSignatures = TransactionCompiler.compileWithSignatures(
+            cosmosChain.coin, txInputData, signatures, publicKeys
+        )
+
+        // transaction compiled with signatures may contain garbage bytes before json, we need drop them
+        val output = SigningOutput.newBuilder()
+            .setSerialized(compileWithSignatures.decodeToString().dropWhile { it != '{' })
+            .build()
+
+        if (output.error != Common.SigningError.OK) {
+            throw IllegalStateException("something went wrong")
+        }
+
+        return output.serialized
+    }
+
+    private fun makeInput(
+        publicKey: Wallet.PublicKey,
+        amount: Amount,
+        source: String,
+        destination: String,
+        accountNumber: Long,
+        sequenceNumber: Long,
+        feeAmount: Amount?,
+        gas: Long?,
+        extras: CosmosTransactionExtras?,
+    ): Cosmos.SigningInput {
         val decimalValue = (amount.type as? AmountType.Token)?.token?.decimals ?: cosmosChain.blockchain.decimals()
         val amountInSmallestDenomination = amount.value?.movePointRight(decimalValue)?.toLong() ?: 0
         val denomination = denomination(amount)
@@ -57,37 +144,15 @@ internal class CosmosTransactionBuilder(
             .setChainId(cosmosChain.chainId)
             .setMemo(extras?.memo ?: "")
             .setSequence(sequenceNumber)
+            .setPublicKey(ByteString.copyFrom(publicKey.blockchainKey))
             .addMessages(message)
-            .setPrivateKey(randomByteString)
+            .setPrivateKey(ByteString.copyFrom(ByteArray(32) { 1 }))
 
         if (fee != null) {
             input.setFee(fee)
         }
 
         return input.build()
-    }
-
-    fun buildToSend(
-        publicKey: Wallet.PublicKey,
-        input: Cosmos.SigningInput,
-        curve: EllipticCurve,
-        signer: TransactionSigner?,
-    ): Result<String> {
-
-        val outputResult: Result<Cosmos.SigningOutput> = AnySignerWrapper().sign(
-            walletPublicKey = publicKey,
-            publicKeyType = PublicKeyType.SECP256K1,
-            input = input,
-            coin = cosmosChain.coin,
-            parser = Cosmos.SigningOutput.parser(),
-            signer = signer,
-            curve = curve
-        )
-
-        return when (outputResult) {
-            is Result.Failure -> outputResult
-            is Result.Success -> Result.Success(outputResult.data.serialized)
-        }
     }
 
     private fun denomination(amount: Amount): String {
@@ -97,6 +162,7 @@ internal class CosmosTransactionBuilder(
                 cosmosChain.tokenDenominationByContractAddress[amount.type.token.contractAddress]
                     ?: throw BlockchainSdkError.FailedToBuildTx
             }
+
             AmountType.Reserve -> throw BlockchainSdkError.FailedToBuildTx
         }
     }
