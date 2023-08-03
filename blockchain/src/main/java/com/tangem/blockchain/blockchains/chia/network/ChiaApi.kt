@@ -23,6 +23,7 @@ data class ChiaPuzzleHashBody(
 
 @JsonClass(generateAdapter = true)
 data class ChiaFeeEstimateBody(
+    @Json(name = "cost")
     val cost: Long,
 
     @Json(name = "target_times")
@@ -45,18 +46,21 @@ data class ChiaSpendBundle(
 )
 
 @JsonClass(generateAdapter = true)
-data class ChiaCoinSpend(
+class ChiaCoinSpend(
+    @Json(name = "coin")
     val coin: ChiaCoin,
 
     @Json(name = "puzzle_reveal")
     val puzzleReveal: String,
 
+    @Json(name = "solution")
     var solution: String
 )
 
 @JsonClass(generateAdapter = true)
 data class ChiaCoin(
     // Has to be encoded as a number in JSON, therefore Long is used. It's enough to encode ~1/3 of Chia total supply.
+    @Json(name = "amount")
     val amount: Long,
 
     @Json(name = "parent_coin_info")
