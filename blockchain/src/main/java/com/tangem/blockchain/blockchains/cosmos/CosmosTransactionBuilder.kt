@@ -2,10 +2,10 @@ package com.tangem.blockchain.blockchains.cosmos
 
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.crypto.CryptoUtils
+import com.tangem.blockchain.common.*
+import com.tangem.blockchain.extensions.Result
+import com.tangem.common.card.EllipticCurve
+import wallet.core.jni.PublicKeyType
 import wallet.core.jni.proto.Cosmos
 
 internal class CosmosTransactionBuilder(
@@ -21,6 +21,7 @@ internal class CosmosTransactionBuilder(
         feeAmount: Amount?,
         gas: Long?,
         extras: CosmosTransactionExtras?,
+        randomByteString: ByteString
     ) : Cosmos.SigningInput {
         val decimalValue = (amount.type as? AmountType.Token)?.token?.decimals ?: cosmosChain.blockchain.decimals()
         val amountInSmallestDenomination = amount.value?.movePointRight(decimalValue)?.toLong() ?: 0
@@ -57,11 +58,7 @@ internal class CosmosTransactionBuilder(
             .setMemo(extras?.memo ?: "")
             .setSequence(sequenceNumber)
             .addMessages(message)
-            .setPrivateKey(
-                ByteString.copyFrom(
-                    CryptoUtils.generateRandomBytes(length = 32)
-                )
-            )
+            .setPrivateKey(randomByteString)
 
         if (fee != null) {
             input.setFee(fee)
@@ -70,8 +67,27 @@ internal class CosmosTransactionBuilder(
         return input.build()
     }
 
-    fun buildForSend(output: Cosmos.SigningOutput): String {
-        return output.serialized
+    fun buildToSend(
+        publicKey: Wallet.PublicKey,
+        input: Cosmos.SigningInput,
+        curve: EllipticCurve,
+        signer: TransactionSigner?,
+    ): Result<String> {
+
+        val outputResult: Result<Cosmos.SigningOutput> = AnySignerWrapper().sign(
+            walletPublicKey = publicKey,
+            publicKeyType = PublicKeyType.SECP256K1,
+            input = input,
+            coin = cosmosChain.coin,
+            parser = Cosmos.SigningOutput.parser(),
+            signer = signer,
+            curve = curve
+        )
+
+        return when (outputResult) {
+            is Result.Failure -> outputResult
+            is Result.Success -> Result.Success(outputResult.data.serialized)
+        }
     }
 
     private fun denomination(amount: Amount): String {
