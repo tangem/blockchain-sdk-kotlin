@@ -7,8 +7,8 @@ import java.math.BigDecimal
 
 class PolkadotNetworkService(providers: List<PolkadotNetworkProvider>) : PolkadotNetworkProvider {
     private val multiProvider = MultiNetworkProvider(providers)
-    override val host: String
-        get() = multiProvider.currentProvider.host
+    override val baseUrl: String
+        get() = multiProvider.currentProvider.baseUrl
 
     override suspend fun getBalance(address: String): Result<BigDecimal> =
         multiProvider.performRequest(PolkadotNetworkProvider::getBalance, address)

@@ -1,15 +1,23 @@
 package com.tangem.blockchain.common
 
-class CycleListIterator<E>(val elements: List<E>) : Iterator<E> {
+internal class CycleListIterator<E>(private val elements: List<E>) : Iterator<E> {
 
-    private var providerIterator = elements.iterator()
+    private var currentIndex = 0
 
     override fun next() : E {
-        return if (providerIterator.hasNext()) {
-            providerIterator.next()
+        currentIndex = getNextIndex()
+        return elements[currentIndex]
+    }
+
+    fun peekNext(): E {
+        return elements[getNextIndex()]
+    }
+
+    private fun getNextIndex(): Int {
+        return if (currentIndex < elements.lastIndex) {
+            currentIndex ++
         } else {
-            providerIterator = elements.iterator()
-            providerIterator.next()
+            0
         }
     }
 

@@ -2,15 +2,15 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
-apply from: '../upload.gradle'
+apply from: '../upload-github.gradle'
 apply plugin: 'com.squareup.wire'
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 33
 
     defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion 31
+        minSdkVersion 23
+        targetSdkVersion 33
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
@@ -40,14 +40,13 @@ android {
 
 task sourceJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
-    classifier "sources"
+    archiveClassifier.set("sources")
 }
 
 dependencies {
-    implementation 'com.tangem.tangem-sdk-kotlin:core:develop-213'
-    implementation 'com.tangem.tangem-sdk-kotlin:android:develop-213'
+    implementation 'com.tangem.tangem-sdk-kotlin:core:develop-252'
+    implementation 'com.tangem.tangem-sdk-kotlin:android:develop-252'
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$versions.kotlin"
     implementation 'androidx.appcompat:appcompat:1.3.1'
     implementation 'androidx.core:core-ktx:1.6.0'
 
@@ -90,7 +89,8 @@ dependencies {
     implementation files('libs/ripple-core-0.0.1.jar')
     implementation files('libs/solanaj-0.0.10.jar')
     implementation files('libs/polkaj-root-0.1.5.jar')
-    implementation("com.tangem:wallet-core:3.1.10@aar") {
+    implementation "com.tangem:wallet-core:3.2.4@aar"
+    implementation("com.tangem:wallet-core-proto:3.2.4") {
         exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
     }
 
@@ -116,7 +116,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.2'
     testImplementation "com.google.truth:truth:1.0.1"
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
     implementation 'org.slf4j:slf4j-log4j12:1.7.26'
 }
