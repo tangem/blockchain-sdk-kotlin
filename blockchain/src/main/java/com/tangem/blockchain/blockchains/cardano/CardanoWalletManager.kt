@@ -3,7 +3,18 @@ package com.tangem.blockchain.blockchains.cardano
 import android.util.Log
 import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.BlockchainError
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionSender
+import com.tangem.blockchain.common.TransactionSigner
+import com.tangem.blockchain.common.TransactionStatus
+import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
@@ -12,16 +23,16 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 class CardanoWalletManager(
-        wallet: Wallet,
-        private val transactionBuilder: CardanoTransactionBuilder,
-        private val networkProvider: CardanoNetworkProvider
+    wallet: Wallet,
+    private val transactionBuilder: CardanoTransactionBuilder,
+    private val networkProvider: CardanoNetworkProvider,
 ) : WalletManager(wallet), TransactionSender {
 
     override val dustValue: BigDecimal = BigDecimal.ONE
     private val blockchain = wallet.blockchain
 
     override val currentHost: String
-        get() = networkProvider.host
+        get() = networkProvider.baseUrl
 
     override suspend fun update() {
         when (val response = networkProvider.getInfo(wallet.addresses.map { it.value }.toSet())) {
@@ -31,24 +42,28 @@ class CardanoWalletManager(
     }
 
     private fun updateWallet(response: CardanoAddressResponse) {
-        Log.d(this::class.java.simpleName, "Balance is ${response.balance.toString()}")
-        wallet.amounts[AmountType.Coin]?.value =
-                response.balance.toBigDecimal().movePointLeft(blockchain.decimals())
+        Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
+
+        wallet.changeAmountValue(
+            amountType = AmountType.Coin,
+            newValue = response.balance.toBigDecimal().movePointLeft(blockchain.decimals())
+        )
+
         transactionBuilder.unspentOutputs = response.unspentOutputs
 
         wallet.recentTransactions.forEach { recentTransaction ->
             if (response.recentTransactionsHashes.isEmpty()) { // case for Rosetta API, it lacks recent transactions
                 if (response.unspentOutputs.isEmpty() ||
-                        response.unspentOutputs.find {
-                            it.transactionHash.toHexString()
-                                    .equals(recentTransaction.hash, ignoreCase = true)
-                        } != null
+                    response.unspentOutputs.find {
+                        it.transactionHash.toHexString()
+                            .equals(recentTransaction.hash, ignoreCase = true)
+                    } != null
                 ) {
                     recentTransaction.status = TransactionStatus.Confirmed
                 }
             } else { // case for APIs with recent transactions
                 if (response.recentTransactionsHashes
-                                .find { it.equals(recentTransaction.hash, true) } != null
+                        .find { it.equals(recentTransaction.hash, true) } != null
                 ) {
                     recentTransaction.status = TransactionStatus.Confirmed
                 }
@@ -62,7 +77,7 @@ class CardanoWalletManager(
     }
 
     override suspend fun send(
-            transactionData: TransactionData, signer: TransactionSigner
+        transactionData: TransactionData, signer: TransactionSigner,
     ): SimpleResult {
         val transactionHash = transactionBuilder.buildToSign(transactionData)
         val signerResponse = signer.sign(transactionHash, wallet.publicKey)
@@ -77,17 +92,27 @@ class CardanoWalletManager(
                 }
                 sendResult
             }
+
             is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResponse.error)
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
-        val a = 0.155381
-        val b = 0.000044
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val size = transactionBuilder.getEstimateSize(
-                TransactionData(amount, null, wallet.address, destination)
+            TransactionData(
+                amount = amount,
+                fee = null,
+                sourceAddress = wallet.address,
+                destinationAddress = destination
+            )
         )
-        val fee = (a + b * size).toBigDecimal().setScale(blockchain.decimals(), RoundingMode.UP)
-        return Result.Success(listOf(Amount(amount, fee)))
+        val fee = (MINIMAL_FEE + COST_OF_KB * size).toBigDecimal().setScale(blockchain.decimals(), RoundingMode.UP)
+        return Result.Success(TransactionFee.Single(Fee.Common(Amount(amount, fee))))
+    }
+
+    companion object {
+
+        private const val MINIMAL_FEE = 0.155381
+        private const val COST_OF_KB = 0.000044
     }
 }

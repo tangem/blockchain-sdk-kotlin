@@ -12,7 +12,7 @@ import kotlinx.coroutines.coroutineScope
 
 open class KaspaRestApiNetworkProvider(baseUrl: String) : KaspaNetworkProvider {
 
-    override val host: String = baseUrl
+    override val baseUrl: String = baseUrl
 
     private val api: KaspaApi by lazy {
         createRetrofitInstance(baseUrl).create(KaspaApi::class.java)

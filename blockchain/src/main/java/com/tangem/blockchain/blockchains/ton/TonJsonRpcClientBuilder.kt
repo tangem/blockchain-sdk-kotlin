@@ -32,18 +32,18 @@ class TonJsonRpcClientBuilder {
             baseUrl = url,
             headerInterceptors = listOf(AddHeaderInterceptor(mapOf(GetBlockCredentials.HEADER_PARAM_NAME to apiKey)))
         ).create(TonApi::class.java)
-        return TonJsonRpcNetworkProvider(host = url, api = tonApi)
+        return TonJsonRpcNetworkProvider(baseUrl = url, api = tonApi)
     }
 
     private fun createGetBlockJsonRpcProvider(apiKey: String): TonJsonRpcNetworkProvider {
         val url = "https://ton.getblock.io/"
         val tonApi = createRetrofitInstance("$url${apiKey}/mainnet/").create(TonApi::class.java)
-        return TonJsonRpcNetworkProvider(host = url, api = tonApi)
+        return TonJsonRpcNetworkProvider(baseUrl = url, api = tonApi)
     }
 
     private fun createNowNodeJsonRpcProvider(apiKey: String): TonJsonRpcNetworkProvider {
         val url = "https://ton.nownodes.io/"
         val tonApi = createRetrofitInstance("$url${apiKey}/").create(TonApi::class.java)
-        return TonJsonRpcNetworkProvider(host = url, api = tonApi)
+        return TonJsonRpcNetworkProvider(baseUrl = url, api = tonApi)
     }
 }

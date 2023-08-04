@@ -9,7 +9,7 @@ import com.tangem.blockchain.network.createRetrofitInstance
 
 class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
 
-    override val host: String = baseUrl
+    override val baseUrl: String = baseUrl
 
     private val api: TezosApi by lazy {
         createRetrofitInstance(baseUrl).create(TezosApi::class.java)

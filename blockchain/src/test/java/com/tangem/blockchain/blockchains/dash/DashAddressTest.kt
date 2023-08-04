@@ -2,7 +2,6 @@ package com.tangem.blockchain.blockchains.dash
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
-import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
