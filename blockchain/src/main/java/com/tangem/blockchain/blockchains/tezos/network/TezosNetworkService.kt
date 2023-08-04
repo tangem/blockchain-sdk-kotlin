@@ -7,8 +7,8 @@ import com.tangem.blockchain.network.MultiNetworkProvider
 class TezosNetworkService(providers: List<TezosNetworkProvider>) : TezosNetworkProvider {
 
     private val multiProvider = MultiNetworkProvider(providers)
-    override val host: String
-        get() = multiProvider.currentProvider.host
+    override val baseUrl: String
+        get() = multiProvider.currentProvider.baseUrl
 
     override suspend fun getInfo(address: String): Result<TezosInfoResponse> =
         multiProvider.performRequest(TezosNetworkProvider::getInfo, address)
