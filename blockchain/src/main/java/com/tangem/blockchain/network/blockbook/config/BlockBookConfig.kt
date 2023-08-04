@@ -6,22 +6,27 @@ import com.tangem.blockchain.common.NowNodeCredentials
 
 sealed class BlockBookConfig(val credentials: BlockBookCredentials) {
 
-    abstract val host: String
+    abstract val baseHost: String
+
+    fun getHost(blockchain: Blockchain): String {
+        return "https://${blockchain.currency.lowercase()}.$baseHost"
+    }
 
     abstract fun getRequestBaseUrl(request: BlockBookRequest, blockchain: Blockchain): String
 
     class NowNodes(nowNodesCredentials: NowNodeCredentials) : BlockBookConfig(
         credentials = NowNodeCredentials.headerApiKey to nowNodesCredentials.apiKey
     ) {
-        override val host: String = "nownodes.io"
+        override val baseHost: String = "nownodes.io"
 
         override fun getRequestBaseUrl(request: BlockBookRequest, blockchain: Blockchain): String {
-            val currencySymbolPrefix = blockchain.currency.lowercase()
+
             return when (request) {
-                BlockBookRequest.GET_FEE -> "https://$currencySymbolPrefix.$host"
+                BlockBookRequest.GET_FEE -> getHost(blockchain)
                 else -> {
+                    val currencySymbolPrefix = blockchain.currency.lowercase()
                     val testnetSuffix = if (blockchain.isTestnet()) "-testnet" else ""
-                    return "https://${currencySymbolPrefix}book$testnetSuffix.$host/api/v2"
+                    return "https://${currencySymbolPrefix}book$testnetSuffix.$baseHost/api/v2"
                 }
             }
         }
@@ -30,13 +35,15 @@ sealed class BlockBookConfig(val credentials: BlockBookCredentials) {
     class GetBlock(getBlockCredentials: GetBlockCredentials) : BlockBookConfig(
         credentials = GetBlockCredentials.HEADER_PARAM_NAME to getBlockCredentials.apiKey
     ) {
-        override val host: String = "getblock.io"
+        override val baseHost: String = "getblock.io"
 
         override fun getRequestBaseUrl(request: BlockBookRequest, blockchain: Blockchain): String {
-            val currencySymbolPrefix = blockchain.currency.lowercase()
             return when (request) {
-                BlockBookRequest.GET_FEE -> "https://$currencySymbolPrefix.$host/mainnet"
-                else -> "https://$currencySymbolPrefix.$host/mainnet/blockbook/api/v2"
+                BlockBookRequest.GET_FEE -> "{${getHost(blockchain)}}/mainnet"
+                else -> {
+                    val currencySymbolPrefix = blockchain.currency.lowercase()
+                    "https://$currencySymbolPrefix.$baseHost/mainnet/blockbook/api/v2"
+                }
             }
         }
     }
