@@ -17,8 +17,8 @@ import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.TransactionStatus
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
-import com.tangem.blockchain.common.minus
-import com.tangem.blockchain.common.plus
+import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.filterWith
@@ -41,8 +41,8 @@ import java.math.RoundingMode
  */
 class SolanaWalletManager(
     wallet: Wallet,
-    providers: List<RpcClient>
-) : WalletManager(wallet), TransactionSender, RentProvider {
+    providers: List<RpcClient>,
+    ) : WalletManager(wallet), TransactionSender, RentProvider {
 
     private val accountPubK: PublicKey = PublicKey(wallet.address)
     private val networkServices = providers.map { SolanaNetworkService(it) }
@@ -50,9 +50,9 @@ class SolanaWalletManager(
         MultiNetworkProvider(networkServices)
 
     override val currentHost: String
-        get() = multiNetworkProvider.currentProvider.host
+        get() = multiNetworkProvider.currentProvider.baseUrl
 
-    private val feeRentHolder = mutableMapOf<Amount, BigDecimal>()
+    private val feeRentHolder = mutableMapOf<Fee, BigDecimal>()
     private val valueConverter = ValueConverter()
 
     override suspend fun update() {
@@ -105,9 +105,9 @@ class SolanaWalletManager(
             if (it.instructions.isNotEmpty() && it.instructions[0].programId == Program.Id.system.toBase58()) {
                 val info = it.instructions[0].parsed.info
                 val amount = Amount(valueConverter.toSol(info.lamports), wallet.blockchain)
-                val fee = Amount(valueConverter.toSol(it.fee), wallet.blockchain)
+                val feeAmount = Amount(valueConverter.toSol(it.fee), wallet.blockchain)
                 TransactionData(
-                    amount, fee, info.source, info.destination,
+                    amount, Fee.Common(feeAmount), info.source, info.destination,
                     TransactionStatus.Unconfirmed, hash = it.signature
                 )
             } else {
@@ -119,7 +119,7 @@ class SolanaWalletManager(
 
     override fun createTransaction(
         amount: Amount,
-        fee: Amount,
+        fee: Fee,
         destination: String
     ): TransactionData {
         val accountCreationRent = feeRentHolder[fee]
@@ -129,7 +129,7 @@ class SolanaWalletManager(
         } else {
             when (amount.type) {
                 AmountType.Coin -> {
-                    val newFee = fee.minus(accountCreationRent)
+                    val newFee = Fee.Common(fee.amount.minus(accountCreationRent))
                     val newAmount = amount.plus(accountCreationRent)
                     super.createTransaction(newAmount, newFee, destination)
                 }
@@ -267,7 +267,7 @@ class SolanaWalletManager(
      * to open an account. Later, when creating a transaction, this amount will be deducted from fee and added
      * to the amount of the main transfer
      */
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         feeRentHolder.clear()
         val fee = getNetworkFee().successOr { return it }
         val accountCreationRent =
@@ -275,13 +275,13 @@ class SolanaWalletManager(
                 valueConverter.toSol(it)
             }
 
-        var feeAmount = Amount(valueConverter.toSol(fee), wallet.blockchain)
+        var feeAmount = Fee.Common(Amount(valueConverter.toSol(fee), wallet.blockchain))
         if (accountCreationRent > BigDecimal.ZERO) {
-            feeAmount = feeAmount.plus(accountCreationRent)
+            feeAmount = feeAmount.copy(amount = feeAmount.amount + accountCreationRent)
             feeRentHolder[feeAmount] = accountCreationRent
         }
 
-        return Result.Success(listOf(feeAmount))
+        return Result.Success(TransactionFee.Single(feeAmount))
     }
 
     private suspend fun getNetworkFee(): Result<BigDecimal> {
