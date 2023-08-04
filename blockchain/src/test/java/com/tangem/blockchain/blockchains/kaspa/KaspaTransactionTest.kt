@@ -9,6 +9,7 @@ import com.tangem.blockchain.blockchains.kaspa.network.KaspaTransactionBody
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaTransactionData
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaUnspentOutput
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
@@ -56,7 +57,7 @@ class KaspaTransactionTest {
         )
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Amount(amountToSend, feeValue)
+        val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
                 sourceAddress = sourceAddress,
                 destinationAddress = destinationAddress,
@@ -157,7 +158,7 @@ class KaspaTransactionTest {
         )
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Amount(amountToSend, feeValue)
+        val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
             sourceAddress = sourceAddress,
             destinationAddress = destinationAddress,
