@@ -20,7 +20,7 @@ class CosmosNetworkService(
 
     private val multiJsonRpcProvider = MultiNetworkProvider(providers)
 
-    val host: String get() = multiJsonRpcProvider.currentProvider.host
+    val host: String get() = multiJsonRpcProvider.currentProvider.baseUrl
 
     suspend fun getAccountInfo(address: String, tokens: Set<Token>, unconfirmedTxsHashes: List<String>): Result<CosmosAccountInfo> {
         return coroutineScope {

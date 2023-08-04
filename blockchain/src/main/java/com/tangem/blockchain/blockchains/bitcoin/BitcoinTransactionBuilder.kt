@@ -159,7 +159,7 @@ open class BitcoinTransactionBuilder(
         unspentOutputs: List<BitcoinUnspentOutput>
     ): BigDecimal {
         val fullAmount = unspentOutputs.map { it.amount }.reduce { acc, number -> acc + number }
-        return fullAmount - (transactionData.amount.value!! + (transactionData.fee?.value
+        return fullAmount - (transactionData.amount.value!! + (transactionData.fee?.amount?.value
             ?: 0.toBigDecimal()))
     }
 

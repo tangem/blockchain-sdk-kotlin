@@ -6,9 +6,7 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
 import com.tangem.blockchain.extensions.Result
 
-class LitecoinNetworkService(
-    providers: List<BitcoinNetworkProvider>
-) : BitcoinNetworkService(providers) {
+class LitecoinNetworkService(providers: List<BitcoinNetworkProvider>) : BitcoinNetworkService(providers) {
 
     override suspend fun getFee(): Result<BitcoinFee> {
         val result = super.getFee()
