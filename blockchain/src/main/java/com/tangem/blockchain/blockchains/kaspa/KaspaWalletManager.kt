@@ -13,6 +13,8 @@ import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
@@ -25,7 +27,7 @@ class KaspaWalletManager(
 ) : WalletManager(wallet), TransactionSender {
 
     override val currentHost: String
-        get() = networkProvider.host
+        get() = networkProvider.baseUrl
 
     private val blockchain = wallet.blockchain
     override val dustValue: BigDecimal = FEE_PER_UNSPENT_OUTPUT.toBigDecimal()
@@ -42,7 +44,7 @@ class KaspaWalletManager(
         if (response.balance != wallet.amounts[AmountType.Coin]?.value) {
             wallet.recentTransactions.clear()
         }
-        wallet.amounts[AmountType.Coin]?.value = response.balance
+        wallet.changeAmountValue(AmountType.Coin, response.balance)
         transactionBuilder.unspentOutputs = response.unspentOutputs
     }
 
@@ -52,7 +54,7 @@ class KaspaWalletManager(
     }
 
     override suspend fun send(
-        transactionData: TransactionData, signer: TransactionSigner
+        transactionData: TransactionData, signer: TransactionSigner,
     ): SimpleResult {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
@@ -76,14 +78,14 @@ class KaspaWalletManager(
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val unspentOutputCount = transactionBuilder.getUnspentsToSpendCount()
 
         return if (unspentOutputCount == 0) {
             Result.Failure(Exception("No unspent outputs found").toBlockchainSdkError()) // shouldn't happen
         } else {
             val fee = FEE_PER_UNSPENT_OUTPUT.toBigDecimal().multiply(unspentOutputCount.toBigDecimal())
-            Result.Success(listOf(Amount(fee, blockchain)))
+            Result.Success(TransactionFee.Single(Fee.Common(Amount(fee, blockchain))))
         }
     }
 

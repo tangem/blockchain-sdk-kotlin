@@ -1,11 +1,11 @@
 package com.tangem.blockchain.blockchains.tezos.network
 
+import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import java.math.BigDecimal
 
-interface TezosNetworkProvider {
-    val host: String
+interface TezosNetworkProvider: NetworkProvider {
     suspend fun getInfo(address: String): Result<TezosInfoResponse>
     suspend fun isPublicKeyRevealed(address: String): Result<Boolean>
     suspend fun getHeader(): Result<TezosHeader>

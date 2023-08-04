@@ -12,12 +12,11 @@ class EthereumTransactionBuilder(
 ) {
     private val walletPublicKey: ByteArray = walletPublicKey.toDecompressedPublicKey().sliceArray(1..64)
 
-    fun buildToSign(transactionData: TransactionData, nonce: BigInteger?, gasLimit: BigInteger?): CompiledEthereumTransaction? {
+    fun buildToSign(transactionData: TransactionData, nonce: BigInteger?): CompiledEthereumTransaction? {
         return EthereumUtils.buildTransactionToSign(
             transactionData = transactionData,
             nonce = nonce,
-            blockchain = blockchain,
-            gasLimit = gasLimit
+            blockchain = blockchain
         )
     }
 
@@ -143,4 +142,6 @@ enum class Chain(
     Telos(40, Blockchain.Telos),
     TelosTestnet(41, Blockchain.TelosTestnet),
     Cronos(25, Blockchain.Cronos),
+    OctaSpace(800001, Blockchain.OctaSpace),
+    OctaSpaceTestnet(800002, Blockchain.OctaSpaceTestnet),
 }

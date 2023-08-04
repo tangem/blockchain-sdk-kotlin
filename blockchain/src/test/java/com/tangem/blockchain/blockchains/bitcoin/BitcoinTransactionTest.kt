@@ -2,6 +2,8 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.hexToBytes
 import org.bitcoinj.core.Address
@@ -27,14 +29,14 @@ class BitcoinTransactionTest {
         val destinationAddress = "34gJYef7yHBmRhnmKzrXKJddWMzCuFkbBY"
 
         val addresses = BitcoinAddressService(blockchain).makeAddresses(walletPublicKey)
-        val legacyAddress = addresses.find { it.type == BitcoinAddressType.Legacy }!!.value
-        val segwitAddress = addresses.find { it.type == BitcoinAddressType.Segwit }!!.value
+        val legacyAddress = addresses.find { it.type == AddressType.Legacy }!!.value
+        val segwitAddress = addresses.find { it.type == AddressType.Default }!!.value
         val transactionBuilder = BitcoinTransactionBuilder(walletPublicKey, blockchain, addresses)
         transactionBuilder.unspentOutputs =
                 prepareTwoUnspentOutputs(listOf(legacyAddress, segwitAddress), networkParameters)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Amount(amountToSend, feeValue)
+        val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
                 sourceAddress = segwitAddress,
                 destinationAddress = destinationAddress,
@@ -74,14 +76,14 @@ class BitcoinTransactionTest {
 
         val addresses = BitcoinAddressService(blockchain)
                 .makeMultisigAddresses(walletPublicKey, pairPublicKey)
-        val legacyAddress = addresses.find { it.type == BitcoinAddressType.Legacy }!!.value
-        val segwitAddress = addresses.find { it.type == BitcoinAddressType.Segwit }!!.value
+        val legacyAddress = addresses.find { it.type == AddressType.Legacy }!!.value
+        val segwitAddress = addresses.find { it.type == AddressType.Default }!!.value
         val transactionBuilder = BitcoinTransactionBuilder(walletPublicKey, blockchain, addresses)
         transactionBuilder.unspentOutputs =
                 prepareTwoUnspentOutputs(listOf(legacyAddress, segwitAddress), networkParameters)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Amount(amountToSend, feeValue)
+        val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
                 sourceAddress = segwitAddress,
                 destinationAddress = destinationAddress,
