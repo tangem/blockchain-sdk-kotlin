@@ -9,10 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import okhttp3.HttpUrl
 import org.stellar.sdk.*
 import org.stellar.sdk.requests.ErrorResponse
-import org.stellar.sdk.requests.RequestBuilder
 import org.stellar.sdk.responses.*
 import org.stellar.sdk.responses.operations.CreateAccountOperationResponse
 import org.stellar.sdk.responses.operations.OperationResponse
@@ -22,9 +20,12 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
-private const val RECORD_LIMIT = 200
+internal const val RECORD_LIMIT = 200
 
-class StellarNetworkService(hosts: List<StellarNetwork>, isTestnet: Boolean) : StellarNetworkProvider {
+class StellarNetworkService(
+    hosts: List<StellarNetwork>,
+    isTestnet: Boolean,
+) : StellarNetworkProvider {
 
     private val blockchain = Blockchain.Stellar
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ROOT)
@@ -32,19 +33,21 @@ class StellarNetworkService(hosts: List<StellarNetwork>, isTestnet: Boolean) : S
 
     val network: Network = if (isTestnet) Network.TESTNET else Network.PUBLIC
     private val stellarMultiProvider = MultiNetworkProvider(
-        hosts.map {
-            Server(it.url)
-        }
+        providers = hosts.map {
+            StellarWrapperNetworkProvider(
+                server = Server(it.url),
+                url = it.url
+            )
+        },
     )
 
-    // using reflect api to get serverUri for currentProvider cause lib doesn't provide this
-    override val host: String =
-        (stellarMultiProvider.currentProvider.getPrivateProperty("serverURI") as? HttpUrl)?.host ?: ""
+    override val baseUrl: String = stellarMultiProvider.currentProvider.baseUrl
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
             val response = stellarMultiProvider.performRequest(
-                Server::submitTransaction, Transaction.fromEnvelopeXdr(transaction, network) as Transaction
+                request = StellarWrapperNetworkProvider::submitTransaction,
+                data = Transaction.fromEnvelopeXdr(transaction, network) as Transaction
             ).successOr {
                 return SimpleResult.Failure(it.error)
             }
@@ -70,9 +73,10 @@ class StellarNetworkService(hosts: List<StellarNetwork>, isTestnet: Boolean) : S
     ): Result<StellarTargetAccountResponse> {
         return try {
 
-            val account = stellarMultiProvider.performRequest(Server::accountCall, address).successOr {
-                return Result.Failure(it.error)
-            }
+            val account = stellarMultiProvider.performRequest(StellarWrapperNetworkProvider::accountCall, address)
+                .successOr {
+                    return Result.Failure(it.error)
+                }
 
             if (token == null) { // xlm transaction
                 Result.Success(StellarTargetAccountResponse(accountCreated = true))
@@ -104,21 +108,21 @@ class StellarNetworkService(hosts: List<StellarNetwork>, isTestnet: Boolean) : S
         return try {
             coroutineScope {
                 val accountResponseDeferred = async(Dispatchers.IO) {
-                    stellarMultiProvider.performRequest(Server::accountCall, accountId).successOr {
+                    stellarMultiProvider.performRequest(StellarWrapperNetworkProvider::accountCall, accountId).successOr {
                         throw it.error
                     }
                 }
                 val ledgerResponseDeferred = async(Dispatchers.IO) {
-                    val latestLedger = stellarMultiProvider.performRequest(Server::rootCall).successOr {
+                    val latestLedger = stellarMultiProvider.performRequest(StellarWrapperNetworkProvider::rootCall).successOr {
                         throw it.error
                     }.historyLatestLedger
 
-                    stellarMultiProvider.performRequest(Server::ledgerCall, latestLedger.toLong()).successOr {
+                    stellarMultiProvider.performRequest(StellarWrapperNetworkProvider::ledgerCall, latestLedger.toLong()).successOr {
                         throw it.error
                     }
                 }
                 val paymentsResponseDeferred = async(Dispatchers.IO) {
-                    stellarMultiProvider.performRequest(Server::paymentsCall, accountId).successOr {
+                    stellarMultiProvider.performRequest(StellarWrapperNetworkProvider::paymentsCall, accountId).successOr {
                         throw it.error
                     }
                 }
@@ -166,13 +170,13 @@ class StellarNetworkService(hosts: List<StellarNetwork>, isTestnet: Boolean) : S
     }
 
     override suspend fun getFeeStats(): Result<FeeStatsResponse> = withContext(Dispatchers.IO) {
-        stellarMultiProvider.performRequest(Server::feeCall)
+        stellarMultiProvider.performRequest(StellarWrapperNetworkProvider::feeCall)
     }
 
     override suspend fun getSignatureCount(accountId: String): Result<Int> {
         return try {
             coroutineScope {
-                var operationsPage = stellarMultiProvider.performRequest(Server::operationsLimit, accountId).successOr {
+                var operationsPage = stellarMultiProvider.performRequest(StellarWrapperNetworkProvider::operationsLimit, accountId).successOr {
                     throw it.error
                 }
                 val operations = operationsPage.records
@@ -240,34 +244,4 @@ fun <T : Any> T.getPrivateProperty(variableName: String): Any? {
         field.isAccessible = true
         return@let field.get(this)
     }
-}
-
-/** Necessary extensions for Server, without it not able to use performRequest
- * of MultiNetworkProvider to call lambda
- */
-fun Server.accountCall(data: String): AccountResponse {
-    return this.accounts().account(data)
-}
-
-fun Server.rootCall(): RootResponse {
-    return this.root()
-}
-
-fun Server.ledgerCall(ledgerSeq: Long): LedgerResponse {
-    return this.ledgers().ledger(ledgerSeq)
-}
-
-fun Server.paymentsCall(accountId: String): Page<OperationResponse> {
-    return this.payments().forAccount(accountId).order(RequestBuilder.Order.DESC).execute()
-}
-
-fun Server.feeCall(): FeeStatsResponse {
-    return this.feeStats().execute()
-}
-
-fun Server.operationsLimit(accountId: String): Page<OperationResponse> {
-    return this.operations().forAccount(accountId)
-        .limit(RECORD_LIMIT)
-        .includeFailed(true)
-        .execute()
 }

@@ -10,6 +10,8 @@ import com.tangem.common.extensions.toHexString
 
 class TronJsonRpcNetworkProvider(override val network: TronNetwork) : TronNetworkProvider {
 
+    override val baseUrl: String = network.url
+
     private val api: TronApi by lazy {
         val headerInterceptors = when (network) {
             is TronNetwork.TronGrid -> {

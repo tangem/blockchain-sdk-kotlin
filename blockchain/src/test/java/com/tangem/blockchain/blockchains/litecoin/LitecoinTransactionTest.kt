@@ -2,13 +2,14 @@ package com.tangem.blockchain.blockchains.litecoin
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
-import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressType
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionTest
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
@@ -31,13 +32,13 @@ class LitecoinTransactionTest {
         val destinationAddress = "ltc1qd3s8qjxp00k9rkqmfd8z8qq5xnwt4cxn5y5lem"
 
         val addresses = BitcoinAddressService(blockchain).makeAddresses(walletPublicKey)
-        val address = addresses.find { it.type == BitcoinAddressType.Legacy }!!.value
+        val address = addresses.find { it.type == AddressType.Legacy }!!.value
         val transactionBuilder = BitcoinTransactionBuilder(walletPublicKey, blockchain, addresses)
         transactionBuilder.unspentOutputs =
                 BitcoinTransactionTest.prepareTwoUnspentOutputs(listOf(address), networkParameters)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Amount(amountToSend, feeValue)
+        val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
                 sourceAddress = address,
                 destinationAddress = destinationAddress,

@@ -1,15 +1,18 @@
 package com.tangem.blockchain.blockchains.cosmos
 
 import android.util.Log
+import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosNetworkService
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
-import wallet.core.jni.PublicKeyType
-import wallet.core.jni.proto.Cosmos
+import com.tangem.common.CompletionResult
+import com.tangem.crypto.CryptoUtils
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -19,10 +22,18 @@ class CosmosWalletManager(
     private val cosmosChain: CosmosChain,
 ) : WalletManager(wallet), TransactionSender {
 
-    private val networkService: CosmosNetworkService = CosmosNetworkService(networkProviders, cosmosChain)
+    private val networkService: CosmosNetworkService = CosmosNetworkService(
+        providers = networkProviders,
+        cosmosChain = cosmosChain,
+    )
     private var accountNumber: Long? = null
     private var sequenceNumber: Long = 0L
-    private val txBuilder: CosmosTransactionBuilder = CosmosTransactionBuilder(cosmosChain = cosmosChain)
+
+    private val txBuilder: CosmosTransactionBuilder = CosmosTransactionBuilder(
+        cosmosChain = cosmosChain,
+        publicKey = wallet.publicKey
+    )
+
     private var gas: BigDecimal? = null
 
     override val currentHost: String
@@ -39,22 +50,48 @@ class CosmosWalletManager(
         }
     }
 
+    // TODO think about split base "send" method to "sign" and "send" to satisfy SRP
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         val accNumber = accountNumber ?: return SimpleResult.Failure(BlockchainSdkError.AccountNotFound)
-        val input = txBuilder.buildForSign(
+
+        val hash = txBuilder.buildForSign(
             amount = transactionData.amount,
             source = wallet.address,
             destination = transactionData.destinationAddress,
             accountNumber = accNumber,
             sequenceNumber = sequenceNumber,
-            feeAmount = transactionData.fee,
+            feeAmount = transactionData.fee?.amount,
             gas = gas?.toLong(),
             extras = transactionData.extras as? CosmosTransactionExtras,
         )
 
-        val message = buildTransaction(input, signer).successOr {
-            return SimpleResult.Failure(it.error)
+        val message = when (val signature = signer.sign(hash, wallet.publicKey)) {
+            is CompletionResult.Success -> {
+                txBuilder.buildForSend(
+                    amount = transactionData.amount,
+                    source = wallet.address,
+                    destination = transactionData.destinationAddress,
+                    accountNumber = accNumber,
+                    sequenceNumber = sequenceNumber,
+                    feeAmount = transactionData.fee?.amount,
+                    gas = gas?.toLong(),
+                    extras = transactionData.extras as? CosmosTransactionExtras,
+                    signature = signature.data
+                )
+            }
+
+            is CompletionResult.Failure -> {
+                return SimpleResult.fromTangemSdkError(signature.error)
+            }
         }
+
+        return sendToNetwork(transactionData, message)
+    }
+
+    private suspend fun sendToNetwork(
+        transactionData: TransactionData,
+        message: String,
+    ): SimpleResult {
         return when (val sendResult = networkService.send(message)) {
             is Result.Failure -> SimpleResult.Failure(sendResult.error)
             is Result.Success -> {
@@ -69,9 +106,10 @@ class CosmosWalletManager(
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val accNumber = accountNumber ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-        val input = txBuilder.buildForSign(
+
+        val input = txBuilder.buildForSend(
             amount = amount,
             source = wallet.address,
             destination = destination,
@@ -80,12 +118,13 @@ class CosmosWalletManager(
             feeAmount = null,
             gas = null,
             extras = null,
+            signature = CryptoUtils.generateRandomBytes(length = 64) // signature is not necessary for fee calculation
         )
-        val message = buildTransaction(input, null).successOr { return it }
-        return when (val estimateGasResult = networkService.estimateGas(message)) {
+
+        return when (val estimateGasResult = networkService.estimateGas(input)) {
             is Result.Failure -> estimateGasResult
-            is Result.Success -> Result.Success(
-                cosmosChain.gasPrices(amount.type).map { gasPrice ->
+            is Result.Success -> {
+                val amounts = cosmosChain.gasPrices(amount.type).map { gasPrice ->
                     val estimatedGas = estimateGasResult.data
                     val gasMultiplier = cosmosChain.gasMultiplier
                     val feeMultiplier = cosmosChain.feeMultiplier
@@ -98,7 +137,27 @@ class CosmosWalletManager(
                     cosmosChain.getExtraFee(amount)?.let { feeValue += it }
                     Amount(value = feeValue, blockchain = wallet.blockchain)
                 }
-            )
+
+                return when (amounts.size) {
+                    1 -> {
+                        Result.Success(TransactionFee.Single(Fee.Common(amounts[0])))
+                    }
+
+                    3 -> {
+                        Result.Success(
+                            TransactionFee.Choosable(
+                                minimum = Fee.Common(amounts[0]),
+                                normal = Fee.Common(amounts[1]),
+                                priority = Fee.Common(amounts[2])
+                            )
+                        )
+                    }
+
+                    else -> {
+                        Result.Failure(BlockchainSdkError.CustomError("Illegal amounts size"))
+                    }
+                }
+            }
         }
     }
 
@@ -121,22 +180,6 @@ class CosmosWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    private fun buildTransaction(input: Cosmos.SigningInput, signer: TransactionSigner?): Result<String> {
-        val outputResult: Result<Cosmos.SigningOutput> = AnySignerWrapper().sign(
-            walletPublicKey = wallet.publicKey,
-            publicKeyType = PublicKeyType.SECP256K1,
-            input = input,
-            coin = cosmosChain.coin,
-            parser = Cosmos.SigningOutput.parser(),
-            signer = signer,
-            curve = wallet.blockchain.getSupportedCurves().first(),
-        )
-        return when (outputResult) {
-            is Result.Failure -> outputResult
-            is Result.Success -> Result.Success(txBuilder.buildForSend(outputResult.data))
-        }
-    }
-
     private fun tax(amount: Amount): BigDecimal? {
         return when (amount.type) {
             is AmountType.Token -> {
@@ -145,6 +188,7 @@ class CosmosWalletManager(
                 val amountValue = requireNotNull(amount.value) { "Amount must not be null" }
                 return amountValue * taxPercent
             }
+
             else -> null
         }
     }
