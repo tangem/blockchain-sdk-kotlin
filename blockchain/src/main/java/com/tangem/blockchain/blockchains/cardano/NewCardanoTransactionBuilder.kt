@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.cardano
 
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
 import wallet.core.java.AnySigner
 import wallet.core.jni.CoinType
@@ -31,7 +32,7 @@ class NewCardanoTransactionBuilder {
         val preSigningOutput = wallet.core.jni.proto.TransactionCompiler.PreSigningOutput.parseFrom(preImageHashes)
 
         if (preSigningOutput.error != Common.SigningError.OK) {
-            throw IllegalStateException("something went wrong")
+            throw BlockchainSdkError.FailedToBuildTx
         }
 
         return preSigningOutput.dataHash.toByteArray()
@@ -62,25 +63,21 @@ class NewCardanoTransactionBuilder {
 
         val output = Cardano.SigningOutput.parseFrom(compileWithSignatures)
 
-        if (output.error != Common.SigningError.OK) {
-            throw IllegalStateException("something went wrong") // TODO
-        }
-
-        if (output.encoded.isEmpty) {
-            throw IllegalStateException("something went wrong") // TODO
+        if (output.error != Common.SigningError.OK || output.encoded.isEmpty) {
+            throw BlockchainSdkError.FailedToBuildTx
         }
 
         return output.encoded.toByteArray()
     }
 
     fun estimatedFee(transaction: TransactionData): BigDecimal {
-        var input = buildCardanoSigningInput(transaction)
+        val input = buildCardanoSigningInput(transaction)
         val plan = AnySigner.plan(input, coinType, Cardano.TransactionPlan.parser())
 
         return BigDecimal(plan.fee)
     }
 
-    fun buildCardanoSigningInput(transaction: TransactionData): Cardano.SigningInput {
+    private fun buildCardanoSigningInput(transaction: TransactionData): Cardano.SigningInput {
         val utxos = outputs.map { output ->
             Cardano.TxInput.newBuilder()
                 .setOutPoint(
@@ -107,14 +104,14 @@ class NewCardanoTransactionBuilder {
             .build()
 
         if (outputs.isEmpty()) {
-            throw IllegalStateException("something went wrong") // TODO
+            throw BlockchainSdkError.CustomError("Outputs are empty")
         }
 
         val minChange = decimalValue.toBigInteger().toLong()
         val acceptableChangeRange = 1L..minChange
 
         if (acceptableChangeRange.contains(input.plan.change)) {
-            throw IllegalStateException("something went wrong") // TODO
+            throw BlockchainSdkError.CustomError("Outputs are empty")
         }
 
         return input
