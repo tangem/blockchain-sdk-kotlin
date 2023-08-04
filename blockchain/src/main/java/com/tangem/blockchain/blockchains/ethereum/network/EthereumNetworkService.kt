@@ -23,8 +23,8 @@ class EthereumNetworkService(
 ) : EthereumNetworkProvider {
 
     private val multiJsonRpcProvider = MultiNetworkProvider(jsonRpcProviders)
-    override val host
-        get() = multiJsonRpcProvider.currentProvider.host
+    override val baseUrl
+        get() = multiJsonRpcProvider.currentProvider.baseUrl
 
     private val decimals = Blockchain.Ethereum.decimals()
 

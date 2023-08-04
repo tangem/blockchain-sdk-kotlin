@@ -5,7 +5,18 @@ import com.tangem.blockchain.blockchains.tezos.TezosAddressService.Companion.cal
 import com.tangem.blockchain.blockchains.tezos.network.TezosInfoResponse
 import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkProvider
 import com.tangem.blockchain.blockchains.tezos.network.TezosTransactionData
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.BlockchainError
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionError
+import com.tangem.blockchain.common.TransactionSender
+import com.tangem.blockchain.common.TransactionSigner
+import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.toCanonicalECDSASignature
@@ -18,7 +29,7 @@ import kotlinx.coroutines.coroutineScope
 import org.bitcoinj.core.Base58
 import org.bitcoinj.core.Utils
 import java.math.BigDecimal
-import java.util.*
+import java.util.EnumSet
 
 class TezosWalletManager(
     wallet: Wallet,
@@ -28,7 +39,7 @@ class TezosWalletManager(
 ) : WalletManager(wallet), TransactionSender {
 
     override val currentHost: String
-        get() = networkProvider.host
+        get() = networkProvider.baseUrl
 
     private val blockchain = wallet.blockchain
     private var publicKeyRevealed: Boolean? = null
@@ -45,7 +56,7 @@ class TezosWalletManager(
         if (response.balance != wallet.amounts[AmountType.Coin]?.value) {
             wallet.recentTransactions.clear()
         }
-        wallet.amounts[AmountType.Coin]?.value = response.balance
+        wallet.changeAmountValue(AmountType.Coin, response.balance)
         transactionBuilder.counter = response.counter
     }
 
@@ -104,7 +115,7 @@ class TezosWalletManager(
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         var fee: BigDecimal = BigDecimal.valueOf(TezosConstants.TRANSACTION_FEE)
         var error: Result.Failure? = null
 
@@ -131,7 +142,12 @@ class TezosWalletManager(
                 }
             }
         }
-        return if (error == null) Result.Success(listOf(Amount(fee, blockchain))) else error!!
+
+        return if (error == null) {
+            Result.Success(TransactionFee.Single(Fee.Common(Amount(fee, blockchain))))
+        } else {
+            error!!
+        }
     }
 
     override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {

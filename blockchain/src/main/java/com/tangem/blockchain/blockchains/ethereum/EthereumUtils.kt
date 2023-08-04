@@ -1,9 +1,15 @@
 package com.tangem.blockchain.blockchains.ethereum
 
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.*
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
 import com.tangem.common.extensions.toDecompressedPublicKey
+import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.crypto.api.ec.ECDSASignature
 import org.kethereum.crypto.determineRecId
 import org.kethereum.crypto.impl.ec.canonicalise
@@ -59,8 +65,7 @@ class EthereumUtils {
         fun buildTransactionToSign(
             transactionData: TransactionData,
             nonce: BigInteger?,
-            blockchain: Blockchain,
-            gasLimit: BigInteger?,
+            blockchain: Blockchain
         ): CompiledEthereumTransaction? {
 
             val extras = transactionData.extras as? EthereumTransactionExtras
@@ -68,9 +73,9 @@ class EthereumUtils {
             val nonceValue = extras?.nonce ?: nonce ?: return null
 
             val amount: BigDecimal = transactionData.amount.value ?: return null
-            val transactionFee: BigDecimal = transactionData.fee?.value ?: return null
+            val transactionFee: BigDecimal = transactionData.fee?.amount?.value ?: return null
 
-            val fee = transactionFee.movePointRight(transactionData.fee.decimals).toBigInteger()
+            val fee = transactionFee.movePointRight(transactionData.fee.amount.decimals).toBigInteger()
             val bigIntegerAmount =
                 amount.movePointRight(transactionData.amount.decimals).toBigInteger()
 
@@ -90,14 +95,15 @@ class EthereumUtils {
                     createErc20TransferData(transactionData.destinationAddress, bigIntegerAmount)
             }
 
-            val gasLimitToUse = extras?.gasLimit ?: gasLimit ?: return null
+            val gasLimitToUse =
+                extras?.gasLimit ?: (transactionData.fee as? Fee.Ethereum)?.gasLimit ?: DEFAULT_GAS_LIMIT
 
             val transaction = createTransactionWithDefaults(
                 from = Address(transactionData.sourceAddress),
                 to = to,
                 value = value,
                 gasPrice = fee.divide(gasLimitToUse),
-                gasLimit = extras?.gasLimit ?: gasLimitToUse,
+                gasLimit = gasLimitToUse,
                 nonce = nonceValue,
                 input = extras?.data ?: input
             )
@@ -153,9 +159,9 @@ class EthereumUtils {
             val extras = transactionData.extras as? EthereumTransactionExtras
             val nonceValue = extras?.nonce ?: nonce ?: return null
             val amount: BigDecimal = transactionData.amount.value ?: return null
-            val transactionFee: BigDecimal = transactionData.fee?.value ?: return null
+            val transactionFee: BigDecimal = transactionData.fee?.amount?.value ?: return null
 
-            val fee = transactionFee.movePointRight(transactionData.fee.decimals).toBigInteger()
+            val fee = transactionFee.movePointRight(transactionData.fee.amount.decimals).toBigInteger()
             val bigIntegerAmount = amount.movePointRight(transactionData.amount.decimals).toBigInteger()
 
             val to = Address(transactionData.contractAddress
@@ -357,9 +363,9 @@ class EthereumUtils {
             val nonceValue = extras?.nonce ?: nonce ?: return null
 
             val amount: BigDecimal = transactionData.amount.value ?: return null
-            val transactionFee: BigDecimal = transactionData.fee?.value ?: return null
+            val transactionFee: BigDecimal = transactionData.fee?.amount?.value ?: return null
 
-            val fee = transactionFee.movePointRight(transactionData.fee.decimals).toBigInteger()
+            val fee = transactionFee.movePointRight(transactionData.fee.amount.decimals).toBigInteger()
             val bigIntegerAmount =
                 amount.movePointRight(transactionData.amount.decimals).toBigInteger()
 
@@ -436,12 +442,6 @@ class EthereumUtils {
         fun createSetWalletData(address: String) =
             setWalletSignature +
                 address.substring(2).hexToBytes().toFixedLengthByteArray(32)
-
-
-        internal fun createErc20TransferFromData(source: String, destination: String, amount: Amount) =
-            createErc20TransferFromData(
-                source, destination, amount.value!!.movePointRight(amount.decimals).toBigInteger()
-            )
 
         private fun createErc20TransferFromData(source: String, destination: String, amount: BigInteger) =
             tokenTransferFromSignature +
