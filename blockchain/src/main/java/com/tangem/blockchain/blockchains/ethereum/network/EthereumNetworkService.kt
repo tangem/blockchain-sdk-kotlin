@@ -161,8 +161,10 @@ class EthereumNetworkService(
                     async { it.getGasPrice() }
                 }.map { it.await() }
 
-                val gasPrice = gasPriceResponses.filter { it is Result.Success }
-                    .map { it.extractResult().responseToBigInteger() }.maxOrNull()
+                val gasPrice = gasPriceResponses
+                    .map { result -> result.checkBodyForErrors() }
+                    .mapNotNull { (it as? Result.Success)?.data?.responseToBigInteger() }
+                    .maxOrNull()
                 // all responses have failed
                     ?: return@coroutineScope Result.Failure(
                         (gasPriceResponses.first() as Result.Failure).error
@@ -221,4 +223,18 @@ class EthereumNetworkService(
             }
         }
 
+    private fun Result<EthereumResponse>.checkBodyForErrors(): Result<String> =
+        when (this) {
+            is Result.Success -> {
+                if (this.data.result != null) {
+                    Result.Success(this.data.result)
+                } else {
+                    Result.Failure(
+                        this.data.error?.toException()?.toBlockchainSdkError()
+                            ?: BlockchainSdkError.CustomError("Unknown response format")
+                    )
+                }
+            }
+            is Result.Failure -> this
+        }
 }
