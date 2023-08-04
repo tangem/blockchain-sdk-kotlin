@@ -2,7 +2,6 @@ package com.tangem.blockchain.blockchains.ducatus.network.bitcore
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
@@ -17,9 +16,7 @@ import kotlinx.coroutines.coroutineScope
 
 // Now it supports only Ducatus, due to Ducatus Api strange behaviour. Transactions aren't checked.
 // Don't have too much time to spend on this stillborn coin.
-open class BitcoreNetworkProvider(val baseUrl: String) : BitcoinNetworkProvider {
-
-    override val host: String = baseUrl
+abstract class BitcoreNetworkProvider(final override val baseUrl: String) : BitcoinNetworkProvider {
 
     private val api = createRetrofitInstance(baseUrl).create(BitcoreApi::class.java)
 
@@ -36,30 +33,27 @@ open class BitcoreNetworkProvider(val baseUrl: String) : BitcoinNetworkProvider 
 
                 val unspentOutputs = unspents.map {
                     BitcoinUnspentOutput(
-                            amount = it.amount!!.toBigDecimal().movePointLeft(decimals),
-                            outputIndex = it.index!!.toLong(),
-                            transactionHash = it.transactionHash!!.hexToBytes(),
-                            outputScript = it.script!!.hexToBytes()
+                        amount = it.amount!!.toBigDecimal().movePointLeft(decimals),
+                        outputIndex = it.index!!.toLong(),
+                        transactionHash = it.transactionHash!!.hexToBytes(),
+                        outputScript = it.script!!.hexToBytes()
                     )
                 }
 
-                Result.Success(BitcoinAddressInfo(
-                        balance = balanceData.confirmed!!.toBigDecimal().movePointLeft(decimals), // only confirmed balance is returned right
+                Result.Success(
+                    BitcoinAddressInfo(
+                        balance = balanceData.confirmed!!.toBigDecimal()
+                            .movePointLeft(decimals), // only confirmed balance is returned right
                         unspentOutputs = unspentOutputs,
                         recentTransactions = emptyList(),
                         hasUnconfirmed = balanceData.unconfirmed!! != 0L
-                ))
+                    )
+                )
             }
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
     }
-
-    override suspend fun getFee(): Result<BitcoinFee> {
-        // TODO Bitcore is used only in Ducatus and fee is hardcoded there
-        return Result.Failure(BlockchainSdkError.CustomError("Not yet implemented"))
-    }
-
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
@@ -72,10 +66,5 @@ open class BitcoreNetworkProvider(val baseUrl: String) : BitcoinNetworkProvider 
         } catch (exception: Exception) {
             SimpleResult.Failure(exception.toBlockchainSdkError())
         }
-    }
-
-    override suspend fun getSignatureCount(address: String): Result<Int> {
-        // TODO Bitcore is used only in Ducatus and we don't check signature count
-        return Result.Failure(BlockchainSdkError.CustomError("Not yet implemented"))
     }
 }
