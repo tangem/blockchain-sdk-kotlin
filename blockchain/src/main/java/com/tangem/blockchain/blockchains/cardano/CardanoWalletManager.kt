@@ -23,7 +23,7 @@ import java.math.BigDecimal
 
 class CardanoWalletManager(
     wallet: Wallet,
-    private val transactionBuilder: NewCardanoTransactionBuilder,
+    private val transactionBuilder: CardanoTransactionBuilder,
     private val networkProvider: CardanoNetworkProvider,
 ) : WalletManager(wallet), TransactionSender {
 
