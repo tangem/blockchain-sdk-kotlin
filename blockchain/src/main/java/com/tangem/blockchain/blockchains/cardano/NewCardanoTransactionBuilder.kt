@@ -10,7 +10,6 @@ import wallet.core.jni.DataVector
 import wallet.core.jni.TransactionCompiler
 import wallet.core.jni.proto.Cardano
 import wallet.core.jni.proto.Common
-import java.lang.IllegalStateException
 import java.math.BigDecimal
 
 // You can decode your CBOR transaction here: https://cbor.me
@@ -24,7 +23,7 @@ class NewCardanoTransactionBuilder {
         this.outputs = outputs
     }
 
-    fun buildForSign(transaction: TransactionData): ByteArray {
+    internal fun buildForSign(transaction: TransactionData): ByteArray {
         val input = buildCardanoSigningInput(transaction)
         val txInputData = input.toByteArray()
 
@@ -38,12 +37,12 @@ class NewCardanoTransactionBuilder {
         return preSigningOutput.dataHash.toByteArray()
     }
 
-    fun buildForSend(transaction: TransactionData, signature: SignatureInfo): ByteArray {
+    internal fun buildForSend(transaction: TransactionData, signatureInfo: SignatureInfo): ByteArray {
         val input = buildCardanoSigningInput(transaction)
         val txInputData = input.toByteArray()
 
         val signatures = DataVector()
-        signatures.add(signature.signature)
+        signatures.add(signatureInfo.signature)
 
         val publicKeys = DataVector()
 
@@ -51,7 +50,7 @@ class NewCardanoTransactionBuilder {
         // Calculated as: chainCode + secondPubKey + chainCode
         // The number of bytes in a Cardano public key (two ed25519 public key + chain code).
         // We should add dummy chain code in publicKey
-        val publicKey = signature.publicKey + ByteArray(32 * 3)
+        val publicKey = signatureInfo.publicKey + ByteArray(32 * 3)
         publicKeys.add(publicKey)
 
         val compileWithSignatures = TransactionCompiler.compileWithSignatures(
@@ -111,7 +110,7 @@ class NewCardanoTransactionBuilder {
         val acceptableChangeRange = 1L..minChange
 
         if (acceptableChangeRange.contains(input.plan.change)) {
-            throw BlockchainSdkError.CustomError("Outputs are empty")
+            throw BlockchainSdkError.FailedToBuildTx
         }
 
         return input
