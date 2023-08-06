@@ -15,7 +15,7 @@ class CardanoTransactionTest {
         System.loadLibrary("TrustWalletCore")
     }
 
-    private val transactionBuilder = NewCardanoTransactionBuilder()
+    private val transactionBuilder = CardanoTransactionBuilder()
 
     @Before
     fun prepare() {
@@ -38,7 +38,6 @@ class CardanoTransactionTest {
             listOf(unspentOutput1, unspentOutput2)
         )
     }
-
 
     @Test
     fun testBuildForSign() {
@@ -101,7 +100,5 @@ class CardanoTransactionTest {
 
         assertArrayEquals(result, expected)
     }
-
-
 
 }
