@@ -1,6 +1,6 @@
 package com.tangem.blockchain.common.assembly.impl
 
-import com.tangem.blockchain.blockchains.cardano.NewCardanoTransactionBuilder
+import com.tangem.blockchain.blockchains.cardano.CardanoTransactionBuilder
 import com.tangem.blockchain.blockchains.cardano.CardanoWalletManager
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkService
 import com.tangem.blockchain.blockchains.cardano.network.RosettaNetwork
@@ -25,7 +25,7 @@ internal object CardanoWalletManagerAssembly : WalletManagerAssembly<CardanoWall
 
             return CardanoWalletManager(
                 this,
-                NewCardanoTransactionBuilder(),
+                CardanoTransactionBuilder(),
                 CardanoNetworkService(providers)
             )
         }
