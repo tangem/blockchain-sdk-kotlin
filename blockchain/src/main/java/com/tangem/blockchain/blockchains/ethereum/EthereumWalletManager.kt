@@ -41,7 +41,7 @@ open class EthereumWalletManager(
     EthereumGasLoader {
 
     // move to constructor later
-    private val feesCalculator = EthereumFeesCalculator()
+    protected val feesCalculator = EthereumFeesCalculator()
 
     var pendingTxCount = -1L
         private set
@@ -134,19 +134,19 @@ open class EthereumWalletManager(
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee.Choosable> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         return getFeeInternal(amount, destination, null)
     }
 
-    open suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee.Choosable> {
+    open suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee> {
         return getFeeInternal(amount, destination, data)
     }
 
-    private suspend fun getFeeInternal(
+    protected open suspend fun getFeeInternal(
         amount: Amount,
         destination: String,
         data: String? = null,
-    ): Result<TransactionFee.Choosable> {
+    ): Result<TransactionFee> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async {
@@ -178,7 +178,7 @@ open class EthereumWalletManager(
         }
     }
 
-    private fun getAmountParams(): Amount {
+    protected fun getAmountParams(): Amount {
         return requireNotNull(wallet.amounts[AmountType.Coin]) { "Amount must not be null" }
     }
 
@@ -256,5 +256,4 @@ open class EthereumWalletManager(
 
         return networkProvider.getGasLimit(to, from, value, finalData)
     }
-
 }
