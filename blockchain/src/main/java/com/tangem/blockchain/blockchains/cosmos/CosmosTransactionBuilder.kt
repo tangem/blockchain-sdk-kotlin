@@ -84,7 +84,7 @@ internal class CosmosTransactionBuilder(
         publicKeys.add(publicKey.blockchainKey.toCompressedPublicKey())
 
         val signatures = DataVector()
-        signatures.add(signature.dropLast(1).toByteArray())
+        signatures.add(signature)
 
         val compileWithSignatures = TransactionCompiler.compileWithSignatures(
             cosmosChain.coin, txInputData, signatures, publicKeys
