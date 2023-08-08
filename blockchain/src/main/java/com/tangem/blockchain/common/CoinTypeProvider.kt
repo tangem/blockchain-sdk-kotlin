@@ -68,6 +68,8 @@ object CoinTypeProvider {
             Blockchain.AlephZeroTestnet,
             Blockchain.TelosTestnet,
             Blockchain.OctaSpaceTestnet,
+            Blockchain.Chia,
+            Blockchain.ChiaTestnet,
             Blockchain.Unknown,
             -> throw UnsupportedOperationException("Coin type not provided for: ${blockchain.fullName}")
         }
