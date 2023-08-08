@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
+import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
@@ -91,6 +92,8 @@ enum class Blockchain(
     AlephZeroTestnet("aleph-zero/test", "TZERO", "Aleph Zero Testnet"),
     OctaSpace("octaspace", "OCTA", "OctaSpace"),
     OctaSpaceTestnet("octaspace/test", "OCTA", "OctaSpace Testnet"),
+    Chia("chia", "XCH", "Chia Network"),
+    ChiaTestnet("chia/test", "TXCH", "Chia Network Testnet"),
     ;
 
     fun decimals(): Int = when (this) {
@@ -117,7 +120,9 @@ enum class Blockchain(
         TON, TONTestnet,
         -> 9
         Polkadot -> 10
-        PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet -> 12
+        PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
+        Chia, ChiaTestnet,
+        -> 12
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet,
         EthereumClassic, EthereumClassicTestnet,
@@ -189,6 +194,7 @@ enum class Blockchain(
             TON, TONTestnet, Cosmos, CosmosTestnet, TerraV1, TerraV2 -> TrustWalletAddressService(blockchain = this)
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
+            Chia, ChiaTestnet -> ChiaAddressService(this)
             Unknown -> throw Exception("unsupported blockchain")
         }
     }
@@ -270,6 +276,8 @@ enum class Blockchain(
         AlephZeroTestnet -> throw Exception("unsupported blockchain")
         OctaSpace -> "https://explorer.octa.space/"
         OctaSpaceTestnet -> throw Exception("unsupported blockchain")
+        Chia -> "https://xchscan.com/"
+        ChiaTestnet -> "https://testnet10.spacescan.io/"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -330,6 +338,7 @@ enum class Blockchain(
             TelosTestnet -> "https://app.telos.net/testnet/developers"
             CosmosTestnet -> "https://discord.com/channels/669268347736686612/953697793476821092"
             AlephZeroTestnet -> "https://faucet.test.azero.dev/"
+            ChiaTestnet -> "https://xchdev.com/#!faucet.md"
             else -> null
         }
     }
@@ -361,6 +370,7 @@ enum class Blockchain(
             Cosmos, CosmosTestnet -> CosmosTestnet
             AlephZero, AlephZeroTestnet -> AlephZeroTestnet
             OctaSpace, OctaSpaceTestnet -> OctaSpaceTestnet
+            Chia, ChiaTestnet -> ChiaTestnet
             else -> null
         }
     }
@@ -406,6 +416,8 @@ enum class Blockchain(
             Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
             TON, TONTestnet,
             -> listOf(EllipticCurve.Ed25519)
+            Chia, ChiaTestnet,
+            -> listOf(EllipticCurve.Bls12381G2Aug)
         }
     }
 
