@@ -10,6 +10,7 @@ import wallet.core.jni.DataVector
 import wallet.core.jni.TransactionCompiler
 import wallet.core.jni.proto.Cardano
 import wallet.core.jni.proto.Common
+import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
 import java.math.BigDecimal
 
 // You can decode your CBOR transaction here: https://cbor.me
@@ -28,7 +29,7 @@ class CardanoTransactionBuilder {
         val txInputData = input.toByteArray()
 
         val preImageHashes = TransactionCompiler.preImageHashes(coinType, txInputData)
-        val preSigningOutput = wallet.core.jni.proto.TransactionCompiler.PreSigningOutput.parseFrom(preImageHashes)
+        val preSigningOutput = PreSigningOutput.parseFrom(preImageHashes)
 
         if (preSigningOutput.error != Common.SigningError.OK) {
             throw BlockchainSdkError.FailedToBuildTx
