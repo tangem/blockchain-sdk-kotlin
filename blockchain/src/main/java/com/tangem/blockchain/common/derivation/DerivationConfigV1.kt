@@ -43,16 +43,11 @@ object DerivationConfigV1 : DerivationConfig() {
             }
 
             Blockchain.Cardano -> {
-                emptyMap()
-            }
-
-            Blockchain.CardanoShelley -> {
                 mapOf(
                     AddressType.Default to DerivationPath("m/1852'/1815'/0'/0/0"),
                     AddressType.Legacy to DerivationPath("m/1852'/1815'/0'/0/0")
                 )
             }
-
             Blockchain.BitcoinCash -> {
                 mapOf(
                     AddressType.Legacy to DerivationPath("m/44'/145'/0'/0/0"),
