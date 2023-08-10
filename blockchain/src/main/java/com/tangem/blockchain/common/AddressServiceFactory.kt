@@ -2,11 +2,16 @@ package com.tangem.blockchain.common
 
 import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
+import com.tangem.blockchain.blockchains.bitcoin.BitcoinLegacyAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
+import com.tangem.blockchain.blockchains.dash.DashMainNetParams
+import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
+import com.tangem.blockchain.blockchains.ravencoin.RavencoinMainNetParams
+import com.tangem.blockchain.blockchains.ravencoin.RavencoinTestNetParams
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
@@ -15,6 +20,7 @@ import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.WalletCoreAddressService
+import org.libdohj.params.DogecoinMainNetParams
 import java.lang.IllegalStateException
 
 class AddressServiceFactory(
@@ -25,13 +31,27 @@ class AddressServiceFactory(
         return when (blockchain) {
             Blockchain.Bitcoin,
             Blockchain.BitcoinTestnet,
-            Blockchain.Litecoin,
-            Blockchain.Dogecoin,
-            Blockchain.Ducatus,
-            Blockchain.Dash,
-            Blockchain.Ravencoin, Blockchain.RavencoinTestnet,
+            Blockchain.Litecoin
             -> {
                 BitcoinAddressService(blockchain)
+            }
+
+            Blockchain.Dash -> {
+                BitcoinLegacyAddressService(blockchain, DashMainNetParams())
+            }
+
+            Blockchain.Dogecoin -> {
+                BitcoinLegacyAddressService(blockchain, DogecoinMainNetParams())
+            }
+
+            Blockchain.Ducatus -> {
+                BitcoinLegacyAddressService(blockchain, DucatusMainNetParams())
+            }
+            Blockchain.Ravencoin -> {
+                BitcoinLegacyAddressService(blockchain, RavencoinMainNetParams())
+            }
+            Blockchain.RavencoinTestnet -> {
+                BitcoinLegacyAddressService(blockchain, RavencoinTestNetParams())
             }
 
             Blockchain.BitcoinCash,
