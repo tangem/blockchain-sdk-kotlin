@@ -89,8 +89,8 @@ dependencies {
     implementation files('libs/ripple-core-0.0.1.jar')
     implementation files('libs/solanaj-0.0.10.jar')
     implementation files('libs/polkaj-root-0.1.5.jar')
-    implementation "com.tangem:wallet-core:3.2.4@aar"
-    implementation("com.tangem:wallet-core-proto:3.2.4") {
+    implementation "com.tangem:wallet-core:3.2.4-tangem3@aar"
+    implementation("com.tangem:wallet-core-proto:3.2.4-tangem3") {
         exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
     }
 
