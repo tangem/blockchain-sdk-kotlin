@@ -2,11 +2,7 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.address.Address
-import com.tangem.blockchain.common.address.AddressProvider
-import com.tangem.blockchain.common.address.AddressType
-import com.tangem.blockchain.common.address.AddressValidator
-import com.tangem.blockchain.common.address.PlainAddress
+import com.tangem.blockchain.common.address.*
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
@@ -18,7 +14,7 @@ import org.bitcoinj.script.Script
 class BitcoinLegacyAddressService(
     val blockchain: Blockchain,
     val networkParameters: NetworkParameters,
-) : BitcoinScriptAddressProvider, AddressValidator, AddressProvider {
+) : BitcoinScriptAddressProvider, AddressService {
 
     override fun makeScriptAddress(script: Script): String {
         val scriptHash = script.program.calculateSha256().calculateRipemd160()
