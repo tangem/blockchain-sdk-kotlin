@@ -30,7 +30,7 @@ object CoinTypeProvider {
             Blockchain.Polygon -> 966
             Blockchain.Fantom -> 1007
             Blockchain.Tezos -> 1729
-            Blockchain.Cardano, Blockchain.CardanoShelley -> 1815
+            Blockchain.Cardano -> 1815
             Blockchain.Avalanche -> 9000
             Blockchain.Arbitrum -> 9001
             Blockchain.BSC -> 9006
