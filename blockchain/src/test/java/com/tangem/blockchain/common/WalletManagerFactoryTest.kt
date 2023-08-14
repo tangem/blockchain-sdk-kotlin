@@ -146,6 +146,7 @@ internal class WalletManagerFactoryTest {
                 nowNodeCredentials = NowNodeCredentials(apiKey = "nowNodeCredentials"),
                 getBlockCredentials = GetBlockCredentials(apiKey = "getBlockCredentials"),
                 tronGridApiKey = "",
+                chiaFireAcademyApiKey = ""
             )
         ).createLegacyWalletManager(
             blockchain, publicKey, curve

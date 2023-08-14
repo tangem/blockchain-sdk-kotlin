@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinLegacyAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
+import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.dash.DashMainNetParams
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
@@ -154,6 +155,10 @@ class AddressServiceFactory(
 
             Blockchain.Kaspa -> {
                 KaspaAddressService()
+            }
+
+            Blockchain.Chia, Blockchain.ChiaTestnet -> {
+                ChiaAddressService(blockchain)
             }
 
             Blockchain.Unknown -> {

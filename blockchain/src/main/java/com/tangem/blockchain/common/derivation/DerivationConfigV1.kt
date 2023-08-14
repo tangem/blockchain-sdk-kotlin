@@ -48,7 +48,6 @@ object DerivationConfigV1 : DerivationConfig() {
                     AddressType.Legacy to DerivationPath("m/1852'/1815'/0'/0/0")
                 )
             }
-
             Blockchain.BitcoinCash -> {
                 mapOf(
                     AddressType.Legacy to DerivationPath("m/44'/145'/0'/0/0"),
@@ -169,6 +168,8 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.TelosTestnet,
             Blockchain.AlephZeroTestnet,
             Blockchain.OctaSpaceTestnet,
+            Blockchain.Chia,
+            Blockchain.ChiaTestnet,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
