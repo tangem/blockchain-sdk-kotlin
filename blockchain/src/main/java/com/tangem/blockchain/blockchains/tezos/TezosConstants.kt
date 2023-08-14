@@ -27,7 +27,9 @@ class TezosConstants {
         const val ALLOCATION_FEE = 0.06425
 
         fun getAddressPrefix(curve: EllipticCurve) = when (curve) {
-            EllipticCurve.Ed25519 -> TZ1_PREFIX
+            EllipticCurve.Ed25519,
+            EllipticCurve.Ed25519Slip0010,
+            -> TZ1_PREFIX
             EllipticCurve.Secp256k1 -> TZ2_PREFIX
             // added as unsupported for now, need to research
             EllipticCurve.Secp256r1,
@@ -39,7 +41,9 @@ class TezosConstants {
         }
 
         fun getPublicKeyPrefix(curve: EllipticCurve) = when (curve) {
-            EllipticCurve.Ed25519 -> EDPK_PREFIX
+            EllipticCurve.Ed25519,
+            EllipticCurve.Ed25519Slip0010,
+            -> EDPK_PREFIX
             EllipticCurve.Secp256k1 -> SPPK_PREFIX
             // added as unsupported for now, need to research
             EllipticCurve.Secp256r1,
@@ -51,7 +55,9 @@ class TezosConstants {
         }
 
         fun getSignaturePrefix(curve: EllipticCurve) = when (curve) {
-            EllipticCurve.Ed25519 -> EDSIG_PREFIX
+            EllipticCurve.Ed25519,
+            EllipticCurve.Ed25519Slip0010,
+            -> EDSIG_PREFIX
             EllipticCurve.Secp256k1 -> SPSIG_PREFIX
             // added as unsupported for now, need to research
             EllipticCurve.Secp256r1,
