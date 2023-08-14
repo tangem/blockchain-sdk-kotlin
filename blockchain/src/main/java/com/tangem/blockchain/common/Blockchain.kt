@@ -104,6 +104,7 @@ enum class Blockchain(
         Cosmos, CosmosTestnet,
         TerraV1, TerraV2,
         -> 6
+
         Stellar, StellarTestnet -> 7
         Bitcoin, BitcoinTestnet,
         BitcoinCash, BitcoinCashTestnet,
@@ -115,13 +116,16 @@ enum class Blockchain(
         Kaspa,
         Ravencoin, RavencoinTestnet,
         -> 8
+
         Solana, SolanaTestnet,
         TON, TONTestnet,
         -> 9
+
         Polkadot -> 10
         PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
         Chia, ChiaTestnet,
         -> 12
+
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet,
         EthereumClassic, EthereumClassicTestnet,
@@ -136,7 +140,7 @@ enum class Blockchain(
         Kava, KavaTestnet,
         Cronos,
         Telos, TelosTestnet,
-        OctaSpace, OctaSpaceTestnet
+        OctaSpace, OctaSpaceTestnet,
         -> 18
     }
 
@@ -164,6 +168,7 @@ enum class Blockchain(
             Dash,
             Ravencoin, RavencoinTestnet,
             -> BitcoinAddressService(this)
+
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
             Arbitrum, ArbitrumTestnet,
             Ethereum, EthereumTestnet,
@@ -179,8 +184,9 @@ enum class Blockchain(
             Kava, KavaTestnet,
             Cronos,
             Telos, TelosTestnet,
-            OctaSpace, OctaSpaceTestnet
+            OctaSpace, OctaSpaceTestnet,
             -> EthereumAddressService()
+
             RSK -> RskAddressService()
             Cardano -> CardanoAddressService(this)
             XRP -> XrpAddressService()
@@ -290,14 +296,17 @@ enum class Blockchain(
             } else {
                 "$baseUrl$tokenContractAddress?a=$address"
             }
+
             EthereumClassic, EthereumClassicTestnet,
             Kava, KavaTestnet,
             -> "$fullUrl/transactions"
+
             RSK -> if (tokenContractAddress != null) {
                 "$fullUrl?__tab=tokens"
             } else {
                 fullUrl
             }
+
             SolanaTestnet -> "$fullUrl/?cluster=devnet"
             XRP, Stellar, StellarTestnet -> "${baseUrl}account/$address"
             Tezos -> "$baseUrl$address"
@@ -378,6 +387,7 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
+            -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519Slip0010)
             XRP,
             -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
             Arbitrum, ArbitrumTestnet,
@@ -406,14 +416,15 @@ enum class Blockchain(
             Cosmos, CosmosTestnet,
             TerraV1, TerraV2,
             Cronos,
-            OctaSpace, OctaSpaceTestnet
+            OctaSpace, OctaSpaceTestnet,
             -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Cardano,
             Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
             TON, TONTestnet,
-            -> listOf(EllipticCurve.Ed25519)
+            -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
+            Cardano -> listOf(EllipticCurve.Ed25519) //todo until cardano support in wallet 2
             Chia, ChiaTestnet,
             -> listOf(EllipticCurve.Bls12381G2Aug)
         }
@@ -453,10 +464,12 @@ enum class Blockchain(
         }
     }
 
+    @Deprecated("Don't use! Refactor this to use [DerivationConfig]")
     fun derivationPath(style: DerivationStyle?): DerivationPath? {
         if (style == null) return null
         if (!getSupportedCurves().contains(EllipticCurve.Secp256k1) &&
-            !getSupportedCurves().contains(EllipticCurve.Ed25519)
+            !getSupportedCurves().contains(EllipticCurve.Ed25519) &&
+            !getSupportedCurves().contains(EllipticCurve.Ed25519Slip0010)
         ) {
             return null
         }
@@ -474,6 +487,20 @@ enum class Blockchain(
                     )
                 )
             }
+
+            Cardano -> { //We use shelley for all new cards with HD wallets feature
+                //Path according to CIP-1852. https://cips.cardano.org/cips/cip1852/
+                DerivationPath(
+                    path = listOf(
+                        DerivationNode.Hardened(1852),
+                        DerivationNode.Hardened(CoinTypeProvider.getCoinType(this, style)),
+                        DerivationNode.Hardened(0),
+                        DerivationNode.NonHardened(0),
+                        DerivationNode.NonHardened(0)
+                    )
+                )
+            }
+
             AlephZero, AlephZeroTestnet -> {
                 DerivationPath(
                     path = listOf(
@@ -485,6 +512,7 @@ enum class Blockchain(
                     )
                 )
             }
+
             else -> {
                 // Standard BIP44
                 val bip44 = BIP44(
@@ -507,6 +535,7 @@ enum class Blockchain(
             Tron, TronTestnet,
             TerraV1,
             -> true
+
             else -> false
         }
     }
@@ -518,10 +547,12 @@ enum class Blockchain(
         Tron, TronTestnet,
         Cronos,
         -> amountType is AmountType.Token
+
         Arbitrum, ArbitrumTestnet,
         Optimism, OptimismTestnet,
         TON, TONTestnet,
         -> true
+
         else -> false
     }
 
