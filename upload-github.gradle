@@ -11,6 +11,20 @@ afterEvaluate {
 
                 from components.release
                 artifact(sourceJar)
+
+                pom.withXml {
+                    Node pomNode = asNode()
+                    pomNode.dependencies.'*'.findAll() {
+                        it.groupId.text() == project.artifactGroupId
+                    }.each() {
+                        it.parent().remove(it)
+                    }
+                    pomNode.dependencies.'*'.findAll() {
+                        it.scope.text() == 'runtime'
+                    }.each {
+                        it.scope*.value = 'compile'
+                    }
+                }
             }
         }
 
