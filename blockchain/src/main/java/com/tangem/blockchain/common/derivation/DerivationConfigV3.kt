@@ -83,7 +83,7 @@ object DerivationConfigV3 : DerivationConfig() {
                 mapOf(AddressType.Default to DerivationPath("m/44'/0'/0'/0/0"))
             }
             Blockchain.Tezos -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/1729'/0'/0/0"))
+                mapOf(AddressType.Default to DerivationPath("m/44'/1729'/0'/0'"))
             }
             Blockchain.Dogecoin -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/3'/0'/0/0"))
