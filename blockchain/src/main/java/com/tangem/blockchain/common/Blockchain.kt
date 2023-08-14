@@ -42,8 +42,7 @@ enum class Blockchain(
     BitcoinTestnet("BTC/test", "BTC", "Bitcoin Testnet"),
     BitcoinCash("BCH", "BCH", "Bitcoin Cash"),
     BitcoinCashTestnet("BCH/test", "BCH", "Bitcoin Cash Testnet"),
-    Cardano("CARDANO", "ADA", "Cardano"),
-    CardanoShelley("CARDANO-S", "ADA", "Cardano"),
+    Cardano("CARDANO-S", "ADA", "Cardano"),
     Cosmos("cosmos", "ATOM", "Cosmos"),
     CosmosTestnet("cosmos/test", "ATOM", "Cosmos Testnet"),
     Dogecoin("DOGE", "DOGE", "Dogecoin"),
@@ -98,7 +97,7 @@ enum class Blockchain(
 
     fun decimals(): Int = when (this) {
         Unknown -> 0
-        Cardano, CardanoShelley,
+        Cardano,
         XRP,
         Tezos,
         Tron, TronTestnet,
@@ -189,7 +188,7 @@ enum class Blockchain(
             -> EthereumAddressService()
 
             RSK -> RskAddressService()
-            Cardano, CardanoShelley -> CardanoAddressService(this)
+            Cardano -> CardanoAddressService(this)
             XRP -> XrpAddressService()
             Binance -> BinanceAddressService()
             BinanceTestnet -> BinanceAddressService(true)
@@ -233,7 +232,7 @@ enum class Blockchain(
         BitcoinCashTestnet -> "https://www.blockchain.com/bch-testnet/"
         BSC -> "https://bscscan.com/"
         BSCTestnet -> "https://testnet.bscscan.com/"
-        Cardano, CardanoShelley -> "https://www.blockchair.com/cardano/"
+        Cardano -> "https://www.blockchair.com/cardano/"
         Dogecoin -> "https://blockchair.com/dogecoin/"
         Ducatus -> "https://insight.ducatus.io/#/DUC/mainnet/"
         Ethereum -> "https://etherscan.io/"
@@ -421,7 +420,7 @@ enum class Blockchain(
             -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
-            CardanoShelley,
+            Cardano,
             Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
             TON, TONTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
@@ -489,7 +488,7 @@ enum class Blockchain(
                 )
             }
 
-            CardanoShelley -> { //We use shelley for all new cards with HD wallets feature
+            Cardano -> { //We use shelley for all new cards with HD wallets feature
                 //Path according to CIP-1852. https://cips.cardano.org/cips/cip1852/
                 DerivationPath(
                     path = listOf(
