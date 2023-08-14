@@ -259,6 +259,10 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
                 TerraV2WalletManagerAssembly
             }
 
+            Blockchain.Chia, Blockchain.ChiaTestnet -> {
+                ChiaWalletManagerAssembly
+            }
+
             Blockchain.Unknown -> {
                 throw IllegalStateException("Unsupported blockchain")
             }
