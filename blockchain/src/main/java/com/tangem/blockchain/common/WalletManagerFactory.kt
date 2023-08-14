@@ -179,7 +179,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
                 StellarWalletManagerAssembly
             }
 
-            Blockchain.Cardano, Blockchain.CardanoShelley -> {
+            Blockchain.Cardano -> {
                 CardanoWalletManagerAssembly
             }
 
@@ -217,6 +217,10 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
 
             Blockchain.TerraV2 -> {
                 TerraV2WalletManagerAssembly
+            }
+
+            Blockchain.Chia, Blockchain.ChiaTestnet -> {
+                ChiaWalletManagerAssembly
             }
 
             Blockchain.Unknown -> {
