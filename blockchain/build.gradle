@@ -89,9 +89,9 @@ dependencies {
     implementation files('libs/ripple-core-0.0.1.jar')
     implementation files('libs/solanaj-0.0.10.jar')
     implementation files('libs/polkaj-root-0.1.5.jar')
-    implementation "com.tangem:wallet-core:3.2.4@aar"
-    implementation("com.tangem:blst-android:0.0.2@aar")
-    implementation("com.tangem:wallet-core-proto:3.2.4") {
+    implementation "com.tangem:blst-android:0.0.2@aar"
+    implementation "com.tangem:wallet-core:3.2.4-tangem3@aar"
+    implementation("com.tangem:wallet-core-proto:3.2.4-tangem3") {
         exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
     }
 
@@ -113,7 +113,7 @@ dependencies {
     implementation 'net.openhft:zero-allocation-hashing:0.11'
 
     // used only for bech32m in Chia for now, remove when bitcoinj is updated up to version with bech32m encoidng
-    implementation "org.chiachat:kbls:1.0.3" 
+    implementation "org.chiachat:kbls:1.0.3"
 
     implementation("ru.gildor.coroutines:kotlin-coroutines-okhttp:1.0")
 
