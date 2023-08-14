@@ -4,11 +4,14 @@ import Bech32
 import com.tangem.blockchain.blockchains.binance.client.encoding.Crypto
 import com.tangem.blockchain.blockchains.chia.clvm.Program
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.AddressService
+import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.PlainAddress
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 
-class ChiaAddressService(blockchain: Blockchain) : AddressService() {
+class ChiaAddressService(blockchain: Blockchain) : AddressService {
 
     private val humanReadablePart = when (blockchain) {
         Blockchain.Chia -> "xch"
@@ -16,13 +19,23 @@ class ChiaAddressService(blockchain: Blockchain) : AddressService() {
         else -> throw IllegalStateException("$blockchain isn't supported")
     }
 
-    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-        val puzzle = getPuzzle(walletPublicKey)
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve
+    ): PlainAddress {
+        val puzzle = getPuzzle(publicKey.blockchainKey)
         val puzzleHash = Program.deserialize(puzzle).hash()
 
-        return Bech32.encode(
+        val address = Bech32.encode(
             humanReadablePart = humanReadablePart,
             dataIn = puzzleHash.toUByteArray()
+        )
+
+        return PlainAddress(
+            value = address,
+            type = addressType,
+            publicKey = publicKey
         )
     }
 
