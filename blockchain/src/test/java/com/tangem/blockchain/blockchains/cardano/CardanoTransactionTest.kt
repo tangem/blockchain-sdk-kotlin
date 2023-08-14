@@ -12,7 +12,7 @@ import org.junit.Test
 
 class CardanoTransactionTest {
 
-    val blockchain = Blockchain.CardanoShelley
+    val blockchain = Blockchain.Cardano
 
     @Test
     fun buildCorrectTransaction() {
