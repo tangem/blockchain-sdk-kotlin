@@ -1,9 +1,5 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
-import com.tangem.blockchain.blockchains.dash.DashMainNetParams
-import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
-import com.tangem.blockchain.blockchains.ravencoin.RavencoinMainNetParams
-import com.tangem.blockchain.blockchains.ravencoin.RavencoinTestNetParams
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.*
@@ -15,7 +11,6 @@ import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.params.TestNet3Params
 import org.bitcoinj.script.Script
 import org.bitcoinj.script.ScriptBuilder
-import org.libdohj.params.DogecoinMainNetParams
 import org.libdohj.params.LitecoinMainNetParams
 
 open class BitcoinAddressService(
@@ -26,18 +21,13 @@ open class BitcoinAddressService(
         Blockchain.Bitcoin -> MainNetParams()
         Blockchain.BitcoinTestnet -> TestNet3Params()
         Blockchain.Litecoin -> LitecoinMainNetParams()
-        Blockchain.Dogecoin -> DogecoinMainNetParams()
-        Blockchain.Ducatus -> DucatusMainNetParams()
-        Blockchain.Dash -> DashMainNetParams()
-        Blockchain.Ravencoin -> RavencoinMainNetParams()
-        Blockchain.RavencoinTestnet -> RavencoinTestNetParams()
         else -> throw IllegalStateException(
             "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
         )
     }
 
     val legacy = BitcoinLegacyAddressService(blockchain, networkParameters)
-    val bech32 = BitcoinBech32AddressService(blockchain, networkParameters)
+    private val bech32 = BitcoinBech32AddressService(blockchain, networkParameters)
 
     override fun makeAddress(
         publicKey: Wallet.PublicKey,
