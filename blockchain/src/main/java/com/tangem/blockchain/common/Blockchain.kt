@@ -19,6 +19,7 @@ import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.MultisigAddressProvider
 import com.tangem.blockchain.common.address.TrustWalletAddressService
+import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.BIP44
 import com.tangem.crypto.hdWallet.DerivationNode
@@ -388,8 +389,10 @@ enum class Blockchain(
             Unknown -> emptyList()
             Tezos,
             -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519Slip0010)
+
             XRP,
             -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
+
             Arbitrum, ArbitrumTestnet,
             Bitcoin, BitcoinTestnet,
             BitcoinCash, BitcoinCashTestnet,
@@ -418,11 +421,13 @@ enum class Blockchain(
             Cronos,
             OctaSpace, OctaSpaceTestnet,
             -> listOf(EllipticCurve.Secp256k1)
+
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
             TON, TONTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
+
             Cardano -> listOf(EllipticCurve.Ed25519) //todo until cardano support in wallet 2
             Chia, ChiaTestnet,
             -> listOf(EllipticCurve.Bls12381G2Aug)
@@ -464,7 +469,7 @@ enum class Blockchain(
     }
 
     @Deprecated("Don't use! Refactor this to use [DerivationConfig]")
-    fun derivationPath(style: DerivationStyle?): DerivationPath? {
+    fun derivationPathOldStyle(style: DerivationStyle?): DerivationPath? {
         if (style == null) return null
         if (!getSupportedCurves().contains(EllipticCurve.Secp256k1) &&
             !getSupportedCurves().contains(EllipticCurve.Ed25519) &&
@@ -586,7 +591,10 @@ enum class Blockchain(
             .filter { it.getSupportedCurves()[0] == EllipticCurve.Ed25519 }
 
         fun ed25519Blockchains(isTestnet: Boolean): List<Blockchain> = values
-            .filter { it.isTestnet() == isTestnet }
-            .filter { it.getSupportedCurves().contains(EllipticCurve.Ed25519) }
+            .filter {
+                it.isTestnet() == isTestnet && it.getSupportedCurves().contains(EllipticCurve.Ed25519)
+            }
+            
     }
+    
 }
