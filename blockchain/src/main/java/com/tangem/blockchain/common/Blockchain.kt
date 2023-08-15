@@ -389,8 +389,10 @@ enum class Blockchain(
             Unknown -> emptyList()
             Tezos,
             -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519Slip0010)
+
             XRP,
             -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
+
             Arbitrum, ArbitrumTestnet,
             Bitcoin, BitcoinTestnet,
             BitcoinCash, BitcoinCashTestnet,
@@ -419,12 +421,14 @@ enum class Blockchain(
             Cronos,
             OctaSpace, OctaSpaceTestnet,
             -> listOf(EllipticCurve.Secp256k1)
+
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Cardano,
             Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
             TON, TONTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
+
             Cardano -> listOf(EllipticCurve.Ed25519) //todo until cardano support in wallet 2
             Chia, ChiaTestnet,
             -> listOf(EllipticCurve.Bls12381G2Aug)
@@ -586,5 +590,11 @@ enum class Blockchain(
             .filter { it.isTestnet() == isTestnet }
             .filter { it.getSupportedCurves().size == 1 }
             .filter { it.getSupportedCurves()[0] == EllipticCurve.Ed25519 }
+
+        fun ed25519Blockchains(isTestnet: Boolean): List<Blockchain> = values
+            .filter {
+                it.isTestnet() == isTestnet && it.getSupportedCurves().contains(EllipticCurve.Ed25519)
+            }
     }
+    
 }
