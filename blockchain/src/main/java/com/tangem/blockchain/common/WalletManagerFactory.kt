@@ -24,7 +24,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
     ): WalletManager? {
         val derivationPath: DerivationPath? = when (derivation) {
             is DerivationParams.Custom -> derivation.path
-            is DerivationParams.Default -> blockchain.derivationPathOldStyle(derivation.style)
+            is DerivationParams.Default -> blockchain.derivationPath(derivation.style)
         }
 
         return createWalletManager(
