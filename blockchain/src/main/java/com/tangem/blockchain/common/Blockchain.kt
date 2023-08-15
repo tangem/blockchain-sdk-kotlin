@@ -424,7 +424,6 @@ enum class Blockchain(
 
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
-            Cardano,
             Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
             TON, TONTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
@@ -595,6 +594,7 @@ enum class Blockchain(
             .filter {
                 it.isTestnet() == isTestnet && it.getSupportedCurves().contains(EllipticCurve.Ed25519)
             }
+            
     }
     
 }
