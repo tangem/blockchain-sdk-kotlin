@@ -420,7 +420,6 @@ enum class Blockchain(
             -> listOf(EllipticCurve.Secp256k1)
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
-            Cardano,
             Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
             TON, TONTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
@@ -585,5 +584,9 @@ enum class Blockchain(
             .filter { it.isTestnet() == isTestnet }
             .filter { it.getSupportedCurves().size == 1 }
             .filter { it.getSupportedCurves()[0] == EllipticCurve.Ed25519 }
+
+        fun ed25519Blockchains(isTestnet: Boolean): List<Blockchain> = values
+            .filter { it.isTestnet() == isTestnet }
+            .filter { it.getSupportedCurves().contains(EllipticCurve.Ed25519) }
     }
 }
