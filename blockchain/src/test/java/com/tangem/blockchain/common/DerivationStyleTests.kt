@@ -13,27 +13,27 @@ internal class DerivationStyleTests {
         val new = DerivationStyle.NEW
 
         val fantom = Blockchain.Fantom
-        Truth.assertThat(fantom.derivationPathOldStyle(legacy)!!.rawPath)
+        Truth.assertThat(fantom.derivationPath(legacy)!!.rawPath)
             .isEqualTo("m/44'/1007'/0'/0/0")
-        Truth.assertThat(fantom.derivationPathOldStyle(new)!!.rawPath)
+        Truth.assertThat(fantom.derivationPath(new)!!.rawPath)
             .isEqualTo("m/44'/60'/0'/0/0")
 
         val eth = Blockchain.Ethereum
-        Truth.assertThat(eth.derivationPathOldStyle(legacy)!!.rawPath)
+        Truth.assertThat(eth.derivationPath(legacy)!!.rawPath)
             .isEqualTo("m/44'/60'/0'/0/0")
-        Truth.assertThat(eth.derivationPathOldStyle(new)!!.rawPath)
+        Truth.assertThat(eth.derivationPath(new)!!.rawPath)
             .isEqualTo("m/44'/60'/0'/0/0")
 
         val ethTestnet = Blockchain.EthereumTestnet
-        Truth.assertThat(ethTestnet.derivationPathOldStyle(legacy)!!.rawPath)
+        Truth.assertThat(ethTestnet.derivationPath(legacy)!!.rawPath)
             .isEqualTo("m/44'/1'/0'/0/0")
-        Truth.assertThat(ethTestnet.derivationPathOldStyle(new)!!.rawPath)
+        Truth.assertThat(ethTestnet.derivationPath(new)!!.rawPath)
             .isEqualTo("m/44'/1'/0'/0/0")
 
         val xrp = Blockchain.XRP
-        Truth.assertThat(xrp.derivationPathOldStyle(legacy)!!.rawPath)
+        Truth.assertThat(xrp.derivationPath(legacy)!!.rawPath)
             .isEqualTo("m/44'/144'/0'/0/0")
-        Truth.assertThat(xrp.derivationPathOldStyle(new)!!.rawPath)
+        Truth.assertThat(xrp.derivationPath(new)!!.rawPath)
             .isEqualTo("m/44'/144'/0'/0/0")
     }
 
