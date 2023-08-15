@@ -11,7 +11,7 @@ import com.tangem.blockchain.network.moshi
 [REDACTED_AUTHOR]
  */
 class NearJsonRpcNetworkProvider(
-    override val host: String,
+    override val baseUrl: String,
     private val api: NearApi,
 ) : NearNetworkProvider {
 
