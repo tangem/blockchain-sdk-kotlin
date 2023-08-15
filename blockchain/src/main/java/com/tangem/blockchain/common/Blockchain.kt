@@ -466,7 +466,7 @@ enum class Blockchain(
     }
 
     @Deprecated("Don't use! Refactor this to use [DerivationConfig]")
-    fun derivationPath(style: DerivationStyle?): DerivationPath? {
+    fun derivationPathOldStyle(style: DerivationStyle?): DerivationPath? {
         if (style == null) return null
         if (!getSupportedCurves().contains(EllipticCurve.Secp256k1) &&
             !getSupportedCurves().contains(EllipticCurve.Ed25519) &&
