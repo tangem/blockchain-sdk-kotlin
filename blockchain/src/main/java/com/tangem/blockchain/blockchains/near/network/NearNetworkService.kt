@@ -17,7 +17,7 @@ class NearNetworkService(
     private val blockchain: Blockchain,
 ) {
 
-    val host: String get() = multiJsonRpcProvider.currentProvider.host
+    val host: String get() = multiJsonRpcProvider.currentProvider.baseUrl
 
     suspend fun getAccount(address: String): Result<NearWalletInfo> {
         val accountResult = multiJsonRpcProvider.performRequest(NearNetworkProvider::getAccount, address)
