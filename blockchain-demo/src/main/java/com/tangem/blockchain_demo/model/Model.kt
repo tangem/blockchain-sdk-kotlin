@@ -45,7 +45,7 @@ data class BlockchainNetwork(
 ) {
     constructor(blockchain: Blockchain, card: Card) : this(
         blockchain = blockchain,
-        derivationPath = if (card.settings.isHDWalletAllowed) blockchain.derivationPath(card.derivationStyle)?.rawPath else null,
+        derivationPath = if (card.settings.isHDWalletAllowed) blockchain.derivationPathOldStyle(card.derivationStyle)?.rawPath else null,
         tokens = emptyList()
     )
 }
