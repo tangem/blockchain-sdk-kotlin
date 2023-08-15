@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.common.derivation.DerivationStyle
 
 object CoinTypeProvider {
 
