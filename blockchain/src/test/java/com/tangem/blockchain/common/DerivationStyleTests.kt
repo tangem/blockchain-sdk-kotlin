@@ -1,6 +1,7 @@
 package com.tangem.blockchain.common
 
 import com.google.common.truth.Truth
+import com.tangem.blockchain.common.derivation.DerivationStyle
 import org.junit.Test
 
 internal class DerivationStyleTests {
