@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.cardano
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.CardanoAddressConfig
 import com.tangem.blockchain.common.TransactionData
 import wallet.core.java.AnySigner
 import wallet.core.jni.CoinType
@@ -50,8 +51,12 @@ class CardanoTransactionBuilder {
         // WalletCore used here `.ed25519Cardano` curve with 128 bytes publicKey.
         // Calculated as: chainCode + secondPubKey + chainCode
         // The number of bytes in a Cardano public key (two ed25519 public key + chain code).
-        // We should add dummy chain code in publicKey
-        val publicKey = signatureInfo.publicKey + ByteArray(32 * 3)
+        // We should add dummy chain code in publicKey if we use old 32 byte key to get 128 bytes in total
+        val publicKey = if (CardanoAddressConfig.useExtendedAddressation) {
+            signatureInfo.publicKey
+        } else {
+            signatureInfo.publicKey + ByteArray(32 * 3)
+        }
         publicKeys.add(publicKey)
 
         val compileWithSignatures = TransactionCompiler.compileWithSignatures(

@@ -5,12 +5,13 @@ import com.tangem.blockchain.extensions.trustWalletCoinType
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.toCompressedPublicKey
 import wallet.core.jni.AnyAddress
+import wallet.core.jni.Cardano
 import wallet.core.jni.CoinType
 import wallet.core.jni.PublicKey
 import wallet.core.jni.PublicKeyType
 
 class TrustWalletAddressService(
-    blockchain: Blockchain,
+    private val blockchain: Blockchain,
 ) : AddressService() {
 
     private val coinType: CoinType = blockchain.trustWalletCoinType
@@ -27,6 +28,20 @@ class TrustWalletAddressService(
             null
         }
         return anyAddress != null
+    }
+
+    override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?): Set<Address> {
+        return if (blockchain == Blockchain.Cardano) {
+            setOf(
+                Address(makeAddress(walletPublicKey), AddressType.Default),
+                Address(
+                    value = Cardano.getByronAddress(PublicKey(walletPublicKey, coinType.publicKeyType())),
+                    type = AddressType.Legacy
+                )
+            )
+        } else {
+            super.makeAddresses(walletPublicKey, curve)
+        }
     }
 
     private fun compressIfNeeded(data: ByteArray): ByteArray {
