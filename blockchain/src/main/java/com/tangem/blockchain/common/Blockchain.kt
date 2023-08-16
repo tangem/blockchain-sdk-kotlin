@@ -189,7 +189,13 @@ enum class Blockchain(
             -> EthereumAddressService()
 
             RSK -> RskAddressService()
-            Cardano -> CardanoAddressService(this)
+            Cardano -> {
+                if (CardanoAddressConfig.useExtendedAddressation) {
+                    TrustWalletAddressService(Cardano)
+                } else {
+                    CardanoAddressService(this)
+                }
+            }
             XRP -> XrpAddressService()
             Binance -> BinanceAddressService()
             BinanceTestnet -> BinanceAddressService(true)
