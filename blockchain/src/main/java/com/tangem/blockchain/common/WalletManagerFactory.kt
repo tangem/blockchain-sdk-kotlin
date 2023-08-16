@@ -154,14 +154,17 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
             Blockchain.EthereumPowTestnet,
             Blockchain.Kava, Blockchain.KavaTestnet,
             Blockchain.Cronos,
-            Blockchain.Telos, Blockchain.TelosTestnet,
-            Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet
+            Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet,
             -> {
                 EthereumLikeWalletManagerAssembly
             }
 
             Blockchain.Optimism, Blockchain.OptimismTestnet -> {
                 OptimismWalletManagerAssembly
+            }
+
+            Blockchain.Telos, Blockchain.TelosTestnet -> {
+                TelosWalletManagerAssembly
             }
 
             // endregion
@@ -171,7 +174,8 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
             }
 
             Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama,
-            Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> {
+            Blockchain.AlephZero, Blockchain.AlephZeroTestnet,
+            -> {
                 PolkadotWalletManagerAssembly
             }
 
@@ -179,7 +183,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
                 StellarWalletManagerAssembly
             }
 
-            Blockchain.Cardano, Blockchain.CardanoShelley -> {
+            Blockchain.Cardano -> {
                 CardanoWalletManagerAssembly
             }
 
@@ -217,6 +221,10 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
 
             Blockchain.TerraV2 -> {
                 TerraV2WalletManagerAssembly
+            }
+
+            Blockchain.Chia, Blockchain.ChiaTestnet -> {
+                ChiaWalletManagerAssembly
             }
 
             Blockchain.Unknown -> {

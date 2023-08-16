@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
+import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
@@ -18,6 +19,7 @@ import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.MultisigAddressProvider
 import com.tangem.blockchain.common.address.TrustWalletAddressService
+import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.BIP44
 import com.tangem.crypto.hdWallet.DerivationNode
@@ -41,8 +43,7 @@ enum class Blockchain(
     BitcoinTestnet("BTC/test", "BTC", "Bitcoin Testnet"),
     BitcoinCash("BCH", "BCH", "Bitcoin Cash"),
     BitcoinCashTestnet("BCH/test", "BCH", "Bitcoin Cash Testnet"),
-    Cardano("CARDANO", "ADA", "Cardano"),
-    CardanoShelley("CARDANO-S", "ADA", "Cardano"),
+    Cardano("CARDANO-S", "ADA", "Cardano"),
     Cosmos("cosmos", "ATOM", "Cosmos"),
     CosmosTestnet("cosmos/test", "ATOM", "Cosmos Testnet"),
     Dogecoin("DOGE", "DOGE", "Dogecoin"),
@@ -91,17 +92,20 @@ enum class Blockchain(
     AlephZeroTestnet("aleph-zero/test", "TZERO", "Aleph Zero Testnet"),
     OctaSpace("octaspace", "OCTA", "OctaSpace"),
     OctaSpaceTestnet("octaspace/test", "OCTA", "OctaSpace Testnet"),
+    Chia("chia", "XCH", "Chia Network"),
+    ChiaTestnet("chia/test", "TXCH", "Chia Network Testnet"),
     ;
 
     fun decimals(): Int = when (this) {
         Unknown -> 0
-        Cardano, CardanoShelley,
+        Cardano,
         XRP,
         Tezos,
         Tron, TronTestnet,
         Cosmos, CosmosTestnet,
         TerraV1, TerraV2,
         -> 6
+
         Stellar, StellarTestnet -> 7
         Bitcoin, BitcoinTestnet,
         BitcoinCash, BitcoinCashTestnet,
@@ -113,11 +117,16 @@ enum class Blockchain(
         Kaspa,
         Ravencoin, RavencoinTestnet,
         -> 8
+
         Solana, SolanaTestnet,
         TON, TONTestnet,
         -> 9
+
         Polkadot -> 10
-        PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet -> 12
+        PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
+        Chia, ChiaTestnet,
+        -> 12
+
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet,
         EthereumClassic, EthereumClassicTestnet,
@@ -132,7 +141,7 @@ enum class Blockchain(
         Kava, KavaTestnet,
         Cronos,
         Telos, TelosTestnet,
-        OctaSpace, OctaSpaceTestnet
+        OctaSpace, OctaSpaceTestnet,
         -> 18
     }
 
@@ -160,6 +169,7 @@ enum class Blockchain(
             Dash,
             Ravencoin, RavencoinTestnet,
             -> BitcoinAddressService(this)
+
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
             Arbitrum, ArbitrumTestnet,
             Ethereum, EthereumTestnet,
@@ -175,10 +185,11 @@ enum class Blockchain(
             Kava, KavaTestnet,
             Cronos,
             Telos, TelosTestnet,
-            OctaSpace, OctaSpaceTestnet
+            OctaSpace, OctaSpaceTestnet,
             -> EthereumAddressService()
+
             RSK -> RskAddressService()
-            Cardano, CardanoShelley -> CardanoAddressService(this)
+            Cardano -> CardanoAddressService(this)
             XRP -> XrpAddressService()
             Binance -> BinanceAddressService()
             BinanceTestnet -> BinanceAddressService(true)
@@ -189,6 +200,7 @@ enum class Blockchain(
             TON, TONTestnet, Cosmos, CosmosTestnet, TerraV1, TerraV2 -> TrustWalletAddressService(blockchain = this)
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
+            Chia, ChiaTestnet -> ChiaAddressService(this)
             Unknown -> throw Exception("unsupported blockchain")
         }
     }
@@ -221,7 +233,7 @@ enum class Blockchain(
         BitcoinCashTestnet -> "https://www.blockchain.com/bch-testnet/"
         BSC -> "https://bscscan.com/"
         BSCTestnet -> "https://testnet.bscscan.com/"
-        Cardano, CardanoShelley -> "https://www.blockchair.com/cardano/"
+        Cardano -> "https://www.blockchair.com/cardano/"
         Dogecoin -> "https://blockchair.com/dogecoin/"
         Ducatus -> "https://insight.ducatus.io/#/DUC/mainnet/"
         Ethereum -> "https://etherscan.io/"
@@ -270,6 +282,8 @@ enum class Blockchain(
         AlephZeroTestnet -> throw Exception("unsupported blockchain")
         OctaSpace -> "https://explorer.octa.space/"
         OctaSpaceTestnet -> throw Exception("unsupported blockchain")
+        Chia -> "https://xchscan.com/"
+        ChiaTestnet -> "https://testnet10.spacescan.io/"
         Unknown -> throw Exception("unsupported blockchain")
     }
 
@@ -283,14 +297,17 @@ enum class Blockchain(
             } else {
                 "$baseUrl$tokenContractAddress?a=$address"
             }
+
             EthereumClassic, EthereumClassicTestnet,
             Kava, KavaTestnet,
             -> "$fullUrl/transactions"
+
             RSK -> if (tokenContractAddress != null) {
                 "$fullUrl?__tab=tokens"
             } else {
                 fullUrl
             }
+
             SolanaTestnet -> "$fullUrl/?cluster=devnet"
             XRP, Stellar, StellarTestnet -> "${baseUrl}account/$address"
             Tezos -> "$baseUrl$address"
@@ -330,6 +347,7 @@ enum class Blockchain(
             TelosTestnet -> "https://app.telos.net/testnet/developers"
             CosmosTestnet -> "https://discord.com/channels/669268347736686612/953697793476821092"
             AlephZeroTestnet -> "https://faucet.test.azero.dev/"
+            ChiaTestnet -> "https://xchdev.com/#!faucet.md"
             else -> null
         }
     }
@@ -361,6 +379,7 @@ enum class Blockchain(
             Cosmos, CosmosTestnet -> CosmosTestnet
             AlephZero, AlephZeroTestnet -> AlephZeroTestnet
             OctaSpace, OctaSpaceTestnet -> OctaSpaceTestnet
+            Chia, ChiaTestnet -> ChiaTestnet
             else -> null
         }
     }
@@ -369,8 +388,11 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
+            -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519Slip0010)
+
             XRP,
             -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
+
             Arbitrum, ArbitrumTestnet,
             Bitcoin, BitcoinTestnet,
             BitcoinCash, BitcoinCashTestnet,
@@ -397,15 +419,18 @@ enum class Blockchain(
             Cosmos, CosmosTestnet,
             TerraV1, TerraV2,
             Cronos,
-            OctaSpace, OctaSpaceTestnet
+            OctaSpace, OctaSpaceTestnet,
             -> listOf(EllipticCurve.Secp256k1)
+
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
-            Cardano,
-            CardanoShelley,
             Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
             TON, TONTestnet,
-            -> listOf(EllipticCurve.Ed25519)
+            -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
+
+            Cardano -> listOf(EllipticCurve.Ed25519) //todo until cardano support in wallet 2
+            Chia, ChiaTestnet,
+            -> listOf(EllipticCurve.Bls12381G2Aug)
         }
     }
 
@@ -446,58 +471,12 @@ enum class Blockchain(
     fun derivationPath(style: DerivationStyle?): DerivationPath? {
         if (style == null) return null
         if (!getSupportedCurves().contains(EllipticCurve.Secp256k1) &&
-            !getSupportedCurves().contains(EllipticCurve.Ed25519)
+            !getSupportedCurves().contains(EllipticCurve.Ed25519) &&
+            !getSupportedCurves().contains(EllipticCurve.Ed25519Slip0010)
         ) {
             return null
         }
-
-        return when (this) {
-            Stellar, StellarTestnet, Solana, SolanaTestnet -> {
-                //Path according to sep-0005. https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0005.md
-                // Solana path consistent with TrustWallet:
-                // https://github.com/trustwallet/wallet-core/blob/456f22d6a8ce8a66ccc73e3b42bcfec5a6afe53a/registry.json#L1013
-                DerivationPath(
-                    path = listOf(
-                        DerivationNode.Hardened(BIP44.purpose),
-                        DerivationNode.Hardened(CoinTypeProvider.getCoinType(this, style)),
-                        DerivationNode.Hardened(0)
-                    )
-                )
-            }
-            CardanoShelley -> { //We use shelley for all new cards with HD wallets feature
-                //Path according to CIP-1852. https://cips.cardano.org/cips/cip1852/
-                DerivationPath(
-                    path = listOf(
-                        DerivationNode.Hardened(1852),
-                        DerivationNode.Hardened(CoinTypeProvider.getCoinType(this, style)),
-                        DerivationNode.Hardened(0),
-                        DerivationNode.NonHardened(0),
-                        DerivationNode.NonHardened(0)
-                    )
-                )
-            }
-            AlephZero, AlephZeroTestnet -> {
-                DerivationPath(
-                    path = listOf(
-                        DerivationNode.Hardened(BIP44.purpose),
-                        DerivationNode.Hardened(CoinTypeProvider.getCoinType(this, style)),
-                        DerivationNode.Hardened(0),
-                        DerivationNode.Hardened(0),
-                        DerivationNode.Hardened(0)
-                    )
-                )
-            }
-            else -> {
-                // Standard BIP44
-                val bip44 = BIP44(
-                    coinType = CoinTypeProvider.getCoinType(this, style),
-                    account = 0,
-                    change = BIP44.Chain.External,
-                    addressIndex = 0
-                )
-                bip44.buildPath()
-            }
-        }
+        return style.getConfig().derivations(this).values.first()
     }
 
     fun canHandleTokens(): Boolean {
@@ -509,6 +488,7 @@ enum class Blockchain(
             Tron, TronTestnet,
             TerraV1,
             -> true
+
             else -> false
         }
     }
@@ -520,10 +500,12 @@ enum class Blockchain(
         Tron, TronTestnet,
         Cronos,
         -> amountType is AmountType.Token
+
         Arbitrum, ArbitrumTestnet,
         Optimism, OptimismTestnet,
         TON, TONTestnet,
         -> true
+
         else -> false
     }
 
@@ -556,5 +538,12 @@ enum class Blockchain(
             .filter { it.isTestnet() == isTestnet }
             .filter { it.getSupportedCurves().size == 1 }
             .filter { it.getSupportedCurves()[0] == EllipticCurve.Ed25519 }
+
+        fun ed25519Blockchains(isTestnet: Boolean): List<Blockchain> = values
+            .filter {
+                it.isTestnet() == isTestnet && it.getSupportedCurves().contains(EllipticCurve.Ed25519)
+            }
+            
     }
+    
 }
