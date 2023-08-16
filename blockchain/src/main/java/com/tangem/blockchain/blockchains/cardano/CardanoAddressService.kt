@@ -18,14 +18,12 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.CRC32
 
-
 class CardanoAddressService(private val blockchain: Blockchain) : AddressService() {
     private val shelleyHeaderByte: Byte = 97
 
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         return when (blockchain) {
-            Blockchain.Cardano -> makeByronAddress(walletPublicKey)
-            Blockchain.CardanoShelley -> makeShelleyAddress(walletPublicKey)
+            Blockchain.Cardano -> makeShelleyAddress(walletPublicKey)
             else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
         }
     }
@@ -39,16 +37,11 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
     }
 
     override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?): Set<Address> {
-        return if (blockchain == Blockchain.CardanoShelley) {
-            setOf(
-                    Address(makeByronAddress(walletPublicKey), AddressType.Legacy),
-                    Address(makeShelleyAddress(walletPublicKey), AddressType.Default)
-            )
-        } else {
-            setOf(Address(makeAddress(walletPublicKey)))
-        }
+        return setOf(
+            Address(makeByronAddress(walletPublicKey), AddressType.Legacy),
+            Address(makeShelleyAddress(walletPublicKey), AddressType.Default)
+        )
     }
-
 
     private fun makeByronAddress(walletPublicKey: ByteArray): String {
         val extendedPublicKey = extendPublicKey(walletPublicKey)
@@ -68,7 +61,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
 
         val addressBytes = byteArrayOf(shelleyHeaderByte) + publicKeyHash
         val convertedAddressBytes =
-                Crypto.convertBits(addressBytes, 0, addressBytes.size, 8, 5, true)
+            Crypto.convertBits(addressBytes, 0, addressBytes.size, 8, 5, true)
 
         return Bech32.encode(BECH32_HRP, convertedAddressBytes)
     }
@@ -80,7 +73,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
         return try {
             val bais = ByteArrayInputStream(decoded)
             val addressList =
-                    (CborDecoder(bais).decode()[0] as Array).dataItems
+                (CborDecoder(bais).decode()[0] as Array).dataItems
             val addressItemBytes = (addressList[0] as ByteString).bytes
             val checksum = (addressList[1] as UnsignedInteger).value.toLong()
 
@@ -96,7 +89,8 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
 
     private fun makePubKeyWithAttributes(extendedPublicKey: ByteArray): ByteArray {
         val pubKeyWithAttributes = ByteArrayOutputStream()
-        CborEncoder(pubKeyWithAttributes).encode(CborBuilder()
+        CborEncoder(pubKeyWithAttributes).encode(
+            CborBuilder()
                 .addArray()
                 .add(0)
                 .addArray()
@@ -106,20 +100,23 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
                 .addMap()
                 .end()
                 .end()
-                .build())
+                .build()
+        )
         return pubKeyWithAttributes.toByteArray()
     }
 
     private fun makeHashWithAttributes(blakeHash: ByteArray): ByteArray {
         val hashWithAttributes = ByteArrayOutputStream()
-        CborEncoder(hashWithAttributes).encode(CborBuilder()
+        CborEncoder(hashWithAttributes).encode(
+            CborBuilder()
                 .addArray()
                 .add(blakeHash)
                 .addMap() //additional attributes
                 .end()
                 .add(0) //address type
                 .end()
-                .build())
+                .build()
+        )
         return hashWithAttributes.toByteArray()
     }
 
@@ -131,12 +128,14 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
 
         //addr + checksum
         val address = ByteArrayOutputStream()
-        CborEncoder(address).encode(CborBuilder()
+        CborEncoder(address).encode(
+            CborBuilder()
                 .addArray()
                 .add(addressItem)
                 .add(checksum)
                 .end()
-                .build())
+                .build()
+        )
 
         return address.toByteArray().encodeBase58()
     }
