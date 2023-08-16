@@ -110,7 +110,7 @@ sealed class BlockchainSdkError(
         class Api(code: Int, message: String) : Cosmos(subCode = code, customMessage = message)
     }
 
-    sealed class Near(
+    sealed class NearException(
         subCode: Int,
         customMessage: String? = null,
         throwable: Throwable? = null,
@@ -120,7 +120,10 @@ sealed class BlockchainSdkError(
         messageResId = null,
         cause = throwable,
     ) {
-        class Api(code: Int, message: String) : Near(subCode = code, customMessage = message)
+        class Api(val name: String, code: Int, message: String) : NearException(
+            subCode = code,
+            customMessage = message
+        )
     }
 
     class WalletCoreException(
