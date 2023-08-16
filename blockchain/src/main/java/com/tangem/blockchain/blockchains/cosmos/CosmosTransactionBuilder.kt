@@ -5,6 +5,7 @@ import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.common.*
 import com.tangem.common.core.TangemError
+import com.tangem.common.extensions.toCompressedPublicKey
 import wallet.core.jni.DataVector
 import wallet.core.jni.TransactionCompiler
 import wallet.core.jni.proto.Common
@@ -77,8 +78,10 @@ internal class CosmosTransactionBuilder(
 
         val txInputData = input.toByteArray()
 
+        // compressed key because old cards have 65 bytes PK, new cards have 33 bytes
+        // wallet core requires 33 bytes
         val publicKeys = DataVector()
-        publicKeys.add(publicKey.blockchainKey)
+        publicKeys.add(publicKey.blockchainKey.toCompressedPublicKey())
 
         val signatures = DataVector()
         signatures.add(signature)
@@ -144,7 +147,7 @@ internal class CosmosTransactionBuilder(
             .setChainId(cosmosChain.chainId)
             .setMemo(extras?.memo ?: "")
             .setSequence(sequenceNumber)
-            .setPublicKey(ByteString.copyFrom(publicKey.blockchainKey))
+            .setPublicKey(ByteString.copyFrom(publicKey.blockchainKey.toCompressedPublicKey()))
             .addMessages(message)
             .setPrivateKey(ByteString.copyFrom(ByteArray(32) { 1 }))
 

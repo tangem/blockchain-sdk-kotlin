@@ -1,10 +1,7 @@
 package com.tangem.blockchain_demo.extensions
 
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.DerivationParams
-import com.tangem.blockchain.common.DerivationStyle
-import com.tangem.blockchain.common.WalletManager
-import com.tangem.blockchain.common.WalletManagerFactory
+import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.blockchain_demo.model.BlockchainNetwork
 import com.tangem.blockchain_demo.model.ScanResponse
 import com.tangem.common.card.Card
@@ -17,6 +14,7 @@ import com.tangem.crypto.hdWallet.DerivationPath
 /**
 [REDACTED_AUTHOR]
  */
+@Deprecated("Need refactor to use right derivations")
 fun WalletManagerFactory.makeWalletManagerForApp(
     scanResponse: ScanResponse,
     blockchain: Blockchain,
@@ -41,6 +39,7 @@ fun WalletManagerFactory.makeWalletManagerForApp(
                 curve = wallet.curve
             )
         }
+
         seedKey != null && derivationParams != null -> {
             val derivedKeys = scanResponse.derivedKeys[wallet.publicKey.toMapKey()]
             val derivationPath = when (derivationParams) {
@@ -57,6 +56,7 @@ fun WalletManagerFactory.makeWalletManagerForApp(
                 derivation = derivationParams
             )
         }
+
         else -> {
             createLegacyWalletManager(
                 blockchain = environmentBlockchain,

@@ -2,7 +2,7 @@ package com.tangem.blockchain.common
 
 internal class CycleListIterator<E>(private val elements: List<E>) : Iterator<E> {
 
-    private var currentIndex = 0
+    private var currentIndex = -1
 
     override fun next() : E {
         currentIndex = getNextIndex()
@@ -15,7 +15,7 @@ internal class CycleListIterator<E>(private val elements: List<E>) : Iterator<E>
 
     private fun getNextIndex(): Int {
         return if (currentIndex < elements.lastIndex) {
-            currentIndex ++
+            currentIndex + 1
         } else {
             0
         }

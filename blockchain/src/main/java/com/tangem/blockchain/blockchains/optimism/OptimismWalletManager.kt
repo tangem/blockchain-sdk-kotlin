@@ -6,12 +6,7 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.network.ContractCallData
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.Token
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -39,7 +34,7 @@ class OptimismWalletManager(
         val blockchain = wallet.blockchain
         val layer2fee = super.getFee(amount, destination).successOr {
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-        }
+        } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
         val minimumFee = (layer2fee.minimum as Fee.Ethereum)
         val normalFee = (layer2fee.normal as Fee.Ethereum)
@@ -108,7 +103,6 @@ class OptimismWalletManager(
             ?: (transactionData.fee as? Fee.Ethereum)?.gasLimit
             ?: DEFAULT_GAS_LIMIT
 
-
         val updatedTransactionData = transactionData.copy(
             fee = Fee.Ethereum(
                 amount = Amount(value = calculatedTransactionFee, blockchain = wallet.blockchain),
@@ -125,7 +119,7 @@ class OptimismWalletManager(
         val blockchain = wallet.blockchain
         val layer2fee = super.getFee(amount, destination, data).successOr {
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-        }
+        } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
         val extras = layer2fee.minimum as Fee.Ethereum
 
