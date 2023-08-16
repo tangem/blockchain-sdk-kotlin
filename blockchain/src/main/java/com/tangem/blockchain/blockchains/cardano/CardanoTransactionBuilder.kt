@@ -18,7 +18,7 @@ class CardanoTransactionBuilder {
 
     private var outputs: List<CardanoUnspentOutput> = emptyList()
     private val coinType: CoinType = CoinType.CARDANO
-    private var decimalValue: Int = Blockchain.CardanoShelley.decimals()
+    private var decimalValue: Int = Blockchain.Cardano.decimals()
 
     fun update(outputs: List<CardanoUnspentOutput>) {
         this.outputs = outputs
