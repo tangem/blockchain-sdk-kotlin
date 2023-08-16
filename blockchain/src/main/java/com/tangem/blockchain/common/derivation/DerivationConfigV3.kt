@@ -42,12 +42,7 @@ object DerivationConfigV3 : DerivationConfig() {
             }
 
             Blockchain.Cardano -> {
-                //"DerivationConfigV3 supports only shelley address"
-                emptyMap()
-            }
-
-            Blockchain.CardanoShelley -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/1815'/0'/0/0"))
+                mapOf(AddressType.Default to DerivationPath("m/1852'/1815'/0'/0/0"))
             }
 
             Blockchain.BitcoinCash -> {
@@ -88,7 +83,7 @@ object DerivationConfigV3 : DerivationConfig() {
                 mapOf(AddressType.Default to DerivationPath("m/44'/0'/0'/0/0"))
             }
             Blockchain.Tezos -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/1729'/0'/0/0"))
+                mapOf(AddressType.Default to DerivationPath("m/44'/1729'/0'/0'"))
             }
             Blockchain.Dogecoin -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/3'/0'/0/0"))
@@ -148,6 +143,8 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.TelosTestnet,
             Blockchain.AlephZeroTestnet,
             Blockchain.OctaSpaceTestnet,
+            Blockchain.Chia,
+            Blockchain.ChiaTestnet,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
