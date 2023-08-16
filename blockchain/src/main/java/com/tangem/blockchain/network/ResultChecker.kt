@@ -42,14 +42,14 @@ object ResultChecker {
 
     internal fun getErrorMessageIfAvailable(result: Result<*>): String? {
         return when (result) {
-            is Result.Failure -> result.error.message
+            is Result.Failure -> result.error.customMessage
             is Result.Success -> extractEthereumErrorMessage(result)
         }
     }
 
     internal fun getErrorMessageIfAvailable(result: SimpleResult): String? {
         return when (result) {
-            is SimpleResult.Failure -> result.error.message
+            is SimpleResult.Failure -> result.error.customMessage
             SimpleResult.Success -> null
         }
     }

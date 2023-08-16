@@ -2,7 +2,7 @@ package com.tangem.blockchain_demo.extensions
 
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.DerivationParams
-import com.tangem.blockchain.common.DerivationStyle
+import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.common.card.Card
 import com.tangem.crypto.hdWallet.DerivationPath
 
@@ -17,7 +17,7 @@ private val secondCardSeries = listOf("CB62", "CB65")
 private val tangemNoteBatches = mapOf(
     "AB01" to Blockchain.Bitcoin,
     "AB02" to Blockchain.Ethereum,
-    "AB03" to Blockchain.CardanoShelley,
+    "AB03" to Blockchain.Cardano,
     "AB04" to Blockchain.Dogecoin,
     "AB05" to Blockchain.BSC,
     "AB06" to Blockchain.XRP,
