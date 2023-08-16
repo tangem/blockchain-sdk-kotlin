@@ -1,6 +1,8 @@
-package com.tangem.blockchain.blockchains.near.network
+package com.tangem.blockchain.blockchains.near.network.api
 
 import com.tangem.blockchain.common.JsonRPCRequest
+import com.tangem.blockchain.extensions.encodeBase58
+import com.tangem.common.extensions.hexToBytes
 import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.Headers
@@ -15,13 +17,35 @@ import retrofit2.http.POST
 interface NearApi {
 
     @Headers("Content-Type: application/json", "Accept: application/json")
-    @POST("jsonRPC")
-    suspend fun post(@Body body: JsonRPCRequest): ResponseBody
+    @POST("./")
+    suspend fun sendJsonRpc(@Body body: JsonRPCRequest): ResponseBody
 }
 
-sealed interface NearMethod {
+internal sealed interface NearMethod {
 
     fun asRequestBody(): JsonRPCRequest
+
+    object NetworkStatus : NearMethod {
+        override fun asRequestBody(): JsonRPCRequest = JsonRPCRequest(
+            method = "status",
+            params = arrayOf<Any>(),
+        )
+    }
+
+    sealed class AccessKey : NearMethod {
+
+        data class View(val accountId: String) : AccessKey() {
+            override fun asRequestBody(): JsonRPCRequest = JsonRPCRequest(
+                method = "query",
+                params = mapOf(
+                    "request_type" to "view_access_key",
+                    "finality" to "final",
+                    "account_id" to accountId,
+                    "public_key" to "ed25519:${accountId.hexToBytes().encodeBase58()}"
+                ),
+            )
+        }
+    }
 
     sealed class Account : NearMethod {
 
