@@ -19,24 +19,14 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
     fun createWalletManager(
         blockchain: Blockchain,
         seedKey: ByteArray,
-        derivedKey: ExtendedPublicKey,
-        derivation: DerivationParams,
+        derivationType: Wallet.PublicKey.DerivationType?
     ): WalletManager? {
-        val derivationPath: DerivationPath? = when (derivation) {
-            is DerivationParams.Custom -> derivation.path
-            is DerivationParams.Default -> blockchain.derivationPath(derivation.style)
-        }
 
         return createWalletManager(
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(
                 seedKey = seedKey,
-                derivationKey = derivationPath?.let { derivationPath ->
-                    Wallet.DerivationKey(
-                        extendedPublicKey = derivedKey,
-                        path = derivationPath
-                    )
-                }
+                derivationType = derivationType
             )
         )
     }
