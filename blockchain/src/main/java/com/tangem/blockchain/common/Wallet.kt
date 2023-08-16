@@ -1,8 +1,8 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.blockchains.cardano.CardanoUtils
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressType
-import com.tangem.common.extensions.calculateHashCode
 import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import java.math.BigDecimal
@@ -108,31 +108,36 @@ class Wallet(
         val path: DerivationPath,
     )
 
-    data class PublicKey(
+    class PublicKey(
         val seedKey: ByteArray,
-        val derivationKey: DerivationKey?
+        val derivationType: DerivationType?
     ) {
-        val blockchainKey: ByteArray = derivationKey?.extendedPublicKey?.publicKey ?: seedKey
 
-        override fun equals(other: Any?): Boolean {
-            val other = other as? PublicKey ?: return false
+        val blockchainKey: ByteArray
+            get() = when (derivationType) {
+                null -> seedKey
+                is DerivationType.Plain -> derivationType.derivationKey.extendedPublicKey.publicKey
+                is DerivationType.Double -> {
+                    CardanoUtils.extendPublicKey(derivationType.first.extendedPublicKey, derivationType.second.extendedPublicKey)
+                }
+            }
 
-            if (!seedKey.contentEquals(other.seedKey)) return false
-            if (!derivationKey?.extendedPublicKey?.publicKey.contentEquals(other.derivationKey?.extendedPublicKey?.publicKey)) return false
+        val derivationPath = derivationType?.derivationKey?.path
 
-            return when {
-                derivationKey?.path == null && other.derivationKey?.path == null -> true
-                derivationKey?.path == null -> false
-                else -> derivationKey?.path == other.derivationKey?.path
+        val derivedKey = derivationType?.derivationKey?.extendedPublicKey?.publicKey
+
+        sealed class DerivationType {
+
+            abstract val derivationKey: DerivationKey
+
+            class Plain(override val derivationKey: DerivationKey) : DerivationType()
+
+            class Double(val first: DerivationKey, val second: DerivationKey) : DerivationType() {
+
+                override val derivationKey = first
+
             }
         }
 
-        override fun hashCode(): Int {
-            return calculateHashCode(
-                seedKey.contentHashCode(),
-                derivationKey?.extendedPublicKey?.publicKey?.contentHashCode() ?: 0,
-                derivationKey?.path?.hashCode() ?: 0
-            )
-        }
     }
 }
