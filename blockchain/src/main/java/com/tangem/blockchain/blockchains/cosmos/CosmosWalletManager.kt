@@ -121,7 +121,9 @@ class CosmosWalletManager(
             signature = CryptoUtils.generateRandomBytes(length = 64) // signature is not necessary for fee calculation
         )
 
-        return when (val estimateGasResult = networkService.estimateGas(input)) {
+        val estimateGasResult = networkService.estimateGas(input)
+
+        return when (estimateGasResult) {
             is Result.Failure -> estimateGasResult
             is Result.Success -> {
                 val amounts = cosmosChain.gasPrices(amount.type).map { gasPrice ->
