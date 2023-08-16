@@ -1,4 +1,4 @@
-package com.tangem.blockchain.blockchains.near.network
+package com.tangem.blockchain.blockchains.near.network.api
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
@@ -7,29 +7,46 @@ import com.squareup.moshi.JsonClass
 [REDACTED_AUTHOR]
  */
 @JsonClass(generateAdapter = true)
-data class NearResponse<Result>(
-    @Json(name = "jsonrpc") val jsonRpc: String,
-    @Json(name = "id") val id: String,
-    @Json(name = "result") val result: Result?,
-    @Json(name = "error") val error: ErrorResult?,
+data class NetworkStatusResult(
+    @Json(name = "chain_id") val chainId: String,
+    @Json(name = "latest_protocol_version") val latestProtocolVersion: Int,
+    @Json(name = "node_key") val nodeKey: Any?,
+    @Json(name = "node_public_key") val nodePublicKey: String,
+    @Json(name = "protocol_version") val protocolVersion: Int,
+    @Json(name = "rpc_addr") val rpcIpAddress: String,
+    @Json(name = "uptime_sec") val uptimeSeconds: Long,
+    @Json(name = "validator_account_id") val validatorAccountId: Any?,
+    @Json(name = "validator_public_key") val validatorPublicKey: Any?,
+    @Json(name = "sync_info") val syncInfo: SyncInfo,
+    @Json(name = "version") val version: Version,
 ) {
+    data class SyncInfo(
+        @Json(name = "earliest_block_hash") val earliestBlockHash: String,
+        @Json(name = "earliest_block_height") val earliestBlockHeight: Long,
+        @Json(name = "earliest_block_time") val earliestBlockTime: String,
+        @Json(name = "epoch_id") val epochId: String,
+        @Json(name = "epoch_start_height") val epochStartHeight: Long,
+        @Json(name = "latest_block_hash") val latestBlockHash: String,
+        @Json(name = "latest_block_height") val latestBlockHeight: Long,
+        @Json(name = "latest_block_time") val latestBlockTime: String,
+        @Json(name = "latest_state_root") val latestStateRoot: String,
+        @Json(name = "syncing") val syncing: Boolean,
+    )
 
-    @JsonClass(generateAdapter = true)
-    data class ErrorResult(
-        @Json(name = "name") val name: String,
-        @Json(name = "cause") val cause: Cause,
-        @Json(name = "code") val code: Int,
-        @Json(name = "data") val data: String,
-        @Json(name = "message") val message: String,
-    ) {
-
-        @JsonClass(generateAdapter = true)
-        data class Cause(
-            @Json(name = "info") val info: Any,
-            @Json(name = "name") val name: String,
-        )
-    }
+    data class Version(
+        @Json(name = "build") val build: String,
+        @Json(name = "rustc_version") val rustcVersion: String,
+        @Json(name = "version") val version: String,
+    )
 }
+
+@JsonClass(generateAdapter = true)
+data class AccessKeyResult(
+    @Json(name = "nonce") val nonce: Long,
+    @Json(name = "block_height") val blockHeight: Long,
+    @Json(name = "block_hash") val blockHash: String,
+    @Json(name = "permission") val permission: Any,
+)
 
 @JsonClass(generateAdapter = true)
 data class ViewAccountResult(
