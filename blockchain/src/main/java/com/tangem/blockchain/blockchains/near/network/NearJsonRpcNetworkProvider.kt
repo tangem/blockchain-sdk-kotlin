@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.near.network
 
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Types
+import com.tangem.blockchain.blockchains.near.network.api.*
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
@@ -14,6 +15,19 @@ class NearJsonRpcNetworkProvider(
     override val baseUrl: String,
     private val api: NearApi,
 ) : NearNetworkProvider {
+
+    private val networkStatusAdapter = moshi.adapter<NearResponse<NetworkStatusResult>>(
+        Types.newParameterizedType(
+            NearResponse::class.java,
+            NetworkStatusResult::class.java,
+        )
+    )
+    private val accessKeyResultAdapter = moshi.adapter<NearResponse<AccessKeyResult>>(
+        Types.newParameterizedType(
+            NearResponse::class.java,
+            AccessKeyResult::class.java,
+        )
+    )
 
     private val accountAdapter = moshi.adapter<NearResponse<ViewAccountResult>>(
         Types.newParameterizedType(
@@ -43,6 +57,22 @@ class NearJsonRpcNetworkProvider(
         )
     )
 
+    override suspend fun getNetworkStatus(): Result<NetworkStatusResult> {
+        return try {
+            postMethod(NearMethod.NetworkStatus, networkStatusAdapter).toResult()
+        } catch (ex: Exception) {
+            Result.Failure(ex.toBlockchainSdkError())
+        }
+    }
+
+    override suspend fun getAccessKey(accountId: String): Result<AccessKeyResult> {
+        return try {
+            postMethod(NearMethod.AccessKey.View(accountId), accessKeyResultAdapter).toResult()
+        } catch (ex: Exception) {
+            Result.Failure(ex.toBlockchainSdkError())
+        }
+    }
+
     override suspend fun getAccount(address: String): Result<ViewAccountResult> {
         return try {
             postMethod(NearMethod.Account.View(address), accountAdapter).toResult()
@@ -51,9 +81,9 @@ class NearJsonRpcNetworkProvider(
         }
     }
 
-    override suspend fun getGas(blockHeight: Long): Result<GasPriceResult> {
+    override suspend fun getGas(blockHash: String): Result<GasPriceResult> {
         return try {
-            postMethod(NearMethod.GasPrice.BlockHeight(blockHeight), gasAdapter).toResult()
+            postMethod(NearMethod.GasPrice.BlockHash(blockHash), gasAdapter).toResult()
         } catch (ex: Exception) {
             Result.Failure(ex.toBlockchainSdkError())
         }
@@ -80,7 +110,7 @@ class NearJsonRpcNetworkProvider(
 
     @Throws(IllegalArgumentException::class)
     private suspend fun <T> postMethod(method: NearMethod, adapter: JsonAdapter<T>): T {
-        val responseBody = api.post(method.asRequestBody())
+        val responseBody = api.sendJsonRpc(method.asRequestBody())
         return requireNotNull(
             value = adapter.fromJson(responseBody.string()) as T,
             lazyMessage = { "Can not parse response" },
@@ -90,7 +120,14 @@ class NearJsonRpcNetworkProvider(
     private fun <T> NearResponse<T>.toResult(): Result<T> {
         return when {
             result != null && error == null -> Result.Success(result)
-            result == null && error != null -> Result.Failure(BlockchainSdkError.Near.Api(error.code, error.message))
+            result == null && error != null -> Result.Failure(
+                BlockchainSdkError.NearException.Api(
+                    name = error.cause.name,
+                    code = error.cause.name.hashCode(),
+                    message = error.cause.info.toString(),
+                )
+            )
+
             else -> Result.Failure(
                 BlockchainSdkError.UnsupportedOperation(
                     "Instance of the NearResponse is broken. Result and Error can't be null. Based on JSONRPC 2.0"
