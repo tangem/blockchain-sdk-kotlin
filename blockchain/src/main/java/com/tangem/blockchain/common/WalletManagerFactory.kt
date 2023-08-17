@@ -18,16 +18,12 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
      */
     fun createWalletManager(
         blockchain: Blockchain,
-        seedKey: ByteArray,
-        derivationType: Wallet.PublicKey.DerivationType?
+        publicKey: Wallet.PublicKey
     ): WalletManager? {
 
         return createWalletManager(
             blockchain = blockchain,
-            publicKey = Wallet.PublicKey(
-                seedKey = seedKey,
-                derivationType = derivationType
-            )
+            publicKey = publicKey
         )
     }
 
