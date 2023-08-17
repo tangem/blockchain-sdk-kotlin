@@ -10,7 +10,7 @@ import com.squareup.moshi.JsonClass
 [REDACTED_AUTHOR]
  */
 @JsonClass(generateAdapter = true)
-data class NearResponse<Result>(
+internal data class NearResponse<Result>(
     @Json(name = "jsonrpc") val jsonRpc: String,
     @Json(name = "id") val id: String,
     @Json(name = "result") val result: Result?,
@@ -18,7 +18,7 @@ data class NearResponse<Result>(
 )
 
 @JsonClass(generateAdapter = true)
-data class ErrorResult(
+internal data class ErrorResult(
     @Json(name = "name") val name: String,
     @Json(name = "cause") val cause: Cause,
 ) {

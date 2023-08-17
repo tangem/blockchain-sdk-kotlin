@@ -7,7 +7,9 @@ import com.tangem.blockchain.extensions.Result
 /**
 [REDACTED_AUTHOR]
  */
-interface NearNetworkProvider: NetworkProvider {
+interface NearNetworkProvider : NetworkProvider {
+
+    suspend fun getProtocolConfig(): Result<ProtocolConfigResult>
 
     suspend fun getNetworkStatus(): Result<NetworkStatusResult>
 
