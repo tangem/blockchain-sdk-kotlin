@@ -1,13 +1,10 @@
 package com.tangem.blockchain.blockchains.near.network
 
-import com.tangem.blockchain.blockchains.near.NearTransactionBuilder
-import com.tangem.blockchain.blockchains.near.network.api.SendTransactionAsyncResult
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
-import java.math.BigDecimal
 
 /**
 [REDACTED_AUTHOR]
@@ -15,7 +12,6 @@ import java.math.BigDecimal
 class NearNetworkService(
     private val blockchain: Blockchain,
     private val multiJsonRpcProvider: MultiNetworkProvider<NearJsonRpcNetworkProvider>,
-    private val txBuilder: NearTransactionBuilder,
 ) {
 
     init {
@@ -52,18 +48,6 @@ class NearNetworkService(
 
         val accessKey = AccessKey(accessKeyResult.nonce, accessKeyResult.blockHeight, accessKeyResult.blockHash)
         return Result.Success(accessKey)
-    }
-
-    private suspend fun createAccount(address: String, amount: BigDecimal): Result<SendTransactionAsyncResult> {
-        val nonce = 1L // if account doesn't exist, then nonce must be 1
-        val status = getNetworkStatus()
-            .successOr { return it }
-        val builtTx = txBuilder.buildForCreateAccount(address, amount, nonce, status.latestBlockHash)
-            .successOr { return it }
-        val sentTxHash = multiJsonRpcProvider.performRequest(NearNetworkProvider::sendTransaction, builtTx)
-            .successOr { return it }
-
-        return Result.Success(sentTxHash)
     }
 
     suspend fun getGas(blockHash: String?): Result<NearGasPrice> {
