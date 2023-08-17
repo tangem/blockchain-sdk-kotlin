@@ -23,8 +23,6 @@ class NearWalletManager(
     override val currentHost: String
         get() = networkService.host
 
-    override val dustValue: BigDecimal = NearAmount.DEPOSIT_VALUE
-
     override suspend fun update() {
         when (val walletInfoResult = networkService.getAccount(wallet.address)) {
             is Result.Success -> {
@@ -38,7 +36,14 @@ class NearWalletManager(
     }
 
     private fun updateWallet(amountValue: BigDecimal) {
-        wallet.setAmount(Amount(amountValue, wallet.blockchain))
+        if (amountValue >= NearAmount.DEPOSIT_VALUE) {
+            val realAmount = amountValue - NearAmount.DEPOSIT_VALUE
+            wallet.setAmount(Amount(realAmount, wallet.blockchain))
+            wallet.setReserveValue(NearAmount.DEPOSIT_VALUE)
+        } else {
+            // should we attach the reserve in that situation ?
+            wallet.setReserveValue(amountValue)
+        }
     }
 
     private fun updateError(error: BlockchainError) {
@@ -47,59 +52,61 @@ class NearWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
-        // val status = networkService.getNetworkStatus()
-        //     .successOr { return it }
-        // val yoctoGasPrice = networkService.getGas(status.latestBlockHash)
-        //     .successOr { return it }.yoctoGasPrice
-        val destinationAccount = networkService.getAccount(destination)
-            .successOr { return it }
+        val destinationAccount = networkService.getAccount(destination).successOr { return it }
+        val protocolConfig = networkService.getProtocolConfig().successOr { return it }
+        val gasPrice = networkService.getGas(blockHash = null).successOr { return it }
 
         return when (destinationAccount) {
             is NearAccount.Full -> {
-                val feeAmount = Amount(ActionCost.SendFunds.near.value, wallet.blockchain)
+                val feeYocto = protocolConfig.calculateSendFundsFee(gasPrice)
+                val feeAmount = Amount(NearAmount(feeYocto).value, wallet.blockchain)
                 Result.Success(TransactionFee.Single(Fee.Common(feeAmount)))
             }
             NearAccount.Empty -> {
-                val cost = ActionCost.CreateAccount.near + ActionCost.SendFunds.near
-                val feeAmount = Amount(cost.value, wallet.blockchain)
+                val feeYocto = protocolConfig.calculateSendFundsFee(gasPrice) +
+                    protocolConfig.calculateCreateAccountFee(gasPrice)
+                val feeAmount = Amount(NearAmount(feeYocto).value, wallet.blockchain)
                 Result.Success(TransactionFee.Single(Fee.Common(feeAmount)))
             }
         }
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val accessKey = networkService.getAccessKey(wallet.address).successOr { return it.toSimpleFailure() }
-        val sendTo = transactionData.destinationAddress
+        val accessKey = networkService.getAccessKey(wallet.address)
+            .successOr { return it.toSimpleFailure() }
+        val destinationAccount = networkService.getAccount(transactionData.destinationAddress)
+            .successOr { return it.toSimpleFailure() }
+        val buildWithAccountCreation = destinationAccount is NearAccount.Empty
 
-        return when (val destinationAccountResult = networkService.getAccount(sendTo)) {
-            is Result.Success -> {
-                val txToSign = txBuilder.buildForSign(transactionData, accessKey.nextNonce, accessKey.blockHash)
-                when (val signatureResult = signer.sign(txToSign, wallet.publicKey)) {
-                    is CompletionResult.Success -> {
-                        val txToSend = txBuilder.buildForSend(
-                            transaction = transactionData,
-                            signature = signatureResult.data,
-                            nonce = accessKey.nextNonce,
-                            blockHash = accessKey.blockHash,
-                        )
-                        when (val sendResult = networkService.sendTransaction(txToSend.encodeBase64NoWrap())) {
-                            is Result.Success -> {
-                                transactionData.hash = sendResult.data.hash
-                                wallet.addOutgoingTransaction(transactionData)
-                                SimpleResult.Success
-                            }
-                            is Result.Failure -> {
-                                sendResult.toSimpleFailure()
-                            }
-                        }
+        val txToSign = txBuilder.buildForSign(
+            transaction = transactionData,
+            withAccountCreation = buildWithAccountCreation,
+            nonce = accessKey.nextNonce,
+            blockHash = accessKey.blockHash,
+        )
+
+        return when (val signatureResult = signer.sign(txToSign, wallet.publicKey)) {
+            is CompletionResult.Success -> {
+                val txToSend = txBuilder.buildForSend(
+                    transaction = transactionData,
+                    signature = signatureResult.data,
+                    withAccountCreation = buildWithAccountCreation,
+                    nonce = accessKey.nextNonce,
+                    blockHash = accessKey.blockHash,
+                )
+                when (val sendResult = networkService.sendTransaction(txToSend.encodeBase64NoWrap())) {
+                    is Result.Success -> {
+                        transactionData.hash = sendResult.data.hash
+                        wallet.addOutgoingTransaction(transactionData)
+                        SimpleResult.Success
                     }
-                    is CompletionResult.Failure -> {
-                        SimpleResult.Failure(signatureResult.error.toBlockchainSdkError())
+                    is Result.Failure -> {
+                        sendResult.toSimpleFailure()
                     }
                 }
             }
-            is Result.Failure -> {
-                destinationAccountResult.toSimpleFailure()
+            is CompletionResult.Failure -> {
+                SimpleResult.Failure(signatureResult.error.toBlockchainSdkError())
             }
         }
     }

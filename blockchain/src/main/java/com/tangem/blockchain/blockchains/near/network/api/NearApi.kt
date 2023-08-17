@@ -25,6 +25,15 @@ internal sealed interface NearMethod {
 
     fun asRequestBody(): JsonRPCRequest
 
+    object ProtocolConfig : NearMethod {
+        override fun asRequestBody(): JsonRPCRequest = JsonRPCRequest(
+            method = "EXPERIMENTAL_protocol_config",
+            params = mapOf(
+                "finality" to "final",
+            ),
+        )
+    }
+
     object NetworkStatus : NearMethod {
         override fun asRequestBody(): JsonRPCRequest = JsonRPCRequest(
             method = "status",

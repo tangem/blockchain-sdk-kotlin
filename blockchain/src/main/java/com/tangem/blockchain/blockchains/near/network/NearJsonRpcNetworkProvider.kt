@@ -16,12 +16,20 @@ class NearJsonRpcNetworkProvider(
     private val api: NearApi,
 ) : NearNetworkProvider {
 
+    private val protocolConfigAdapter = moshi.adapter<NearResponse<ProtocolConfigResult>>(
+        Types.newParameterizedType(
+            NearResponse::class.java,
+            ProtocolConfigResult::class.java,
+        )
+    )
+
     private val networkStatusAdapter = moshi.adapter<NearResponse<NetworkStatusResult>>(
         Types.newParameterizedType(
             NearResponse::class.java,
             NetworkStatusResult::class.java,
         )
     )
+
     private val accessKeyResultAdapter = moshi.adapter<NearResponse<AccessKeyResult>>(
         Types.newParameterizedType(
             NearResponse::class.java,
@@ -56,6 +64,14 @@ class NearJsonRpcNetworkProvider(
             SendTransactionAsyncResult::class.java,
         )
     )
+
+    override suspend fun getProtocolConfig(): Result<ProtocolConfigResult> {
+        return try {
+            postMethod(NearMethod.ProtocolConfig, protocolConfigAdapter).toResult()
+        } catch (ex: Exception) {
+            Result.Failure(ex.toBlockchainSdkError())
+        }
+    }
 
     override suspend fun getNetworkStatus(): Result<NetworkStatusResult> {
         return try {
