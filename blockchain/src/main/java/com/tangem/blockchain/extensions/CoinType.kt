@@ -12,5 +12,6 @@ internal val Blockchain.trustWalletCoinType: CoinType
         Blockchain.TON, Blockchain.TONTestnet -> CoinType.TON
         Blockchain.TerraV1 -> CoinType.TERRA
         Blockchain.TerraV2 -> CoinType.TERRAV2
+        Blockchain.Near, Blockchain.NearTestnet -> CoinType.NEAR
         else -> throw IllegalStateException()
     }
