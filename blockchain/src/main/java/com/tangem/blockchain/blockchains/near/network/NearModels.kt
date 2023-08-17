@@ -25,9 +25,7 @@ class Yocto(
     }
 
     fun toByteString(): ByteString {
-        val amountByteArray = value.toByteArray()
-        val bytes = amountByteArray.reversedArray().copyOf(16)
-        return ByteString.copyFrom(bytes)
+        return ByteString.copyFrom(value.toByteArray())
     }
 
     internal companion object {
