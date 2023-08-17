@@ -16,6 +16,10 @@ fun ByteArray.encodeBase64NoWrap(): String {
     return Base64.encodeToString(this, Base64.NO_WRAP)
 }
 
+fun ByteArray.encodeBase64(): String {
+    return Base64.encodeToString(this, Base64.DEFAULT)
+}
+
 fun ByteArray.calculateSha3v256(): ByteArray {
     val sha3Digest = DigestFactory.createSHA3_256()
     sha3Digest.update(this, 0, this.size)
