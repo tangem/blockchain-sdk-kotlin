@@ -49,9 +49,9 @@ fun WalletManagerFactory.makeWalletManagerForApp(
             val derivedKey = derivedKeys?.get(derivationPath)
                 ?: return null
 
-            val derivationKey = derivationPath?.let { derivationPath ->
+            val hdKey = derivationPath?.let { derivationPath ->
                 Wallet.PublicKey.DerivationType.Plain(
-                    Wallet.DerivationKey(
+                    Wallet.HDKey(
                         extendedPublicKey = derivedKey,
                         path = derivationPath
                     )
@@ -61,7 +61,7 @@ fun WalletManagerFactory.makeWalletManagerForApp(
             createWalletManager(
                 blockchain = environmentBlockchain,
                 seedKey = wallet.publicKey,
-                derivationType = derivationKey
+                derivationType = hdKey
             )
         }
 
