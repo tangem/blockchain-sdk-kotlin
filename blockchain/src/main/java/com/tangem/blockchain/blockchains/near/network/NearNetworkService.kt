@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.near.network
 
+import com.tangem.blockchain.blockchains.near.network.api.ProtocolConfigResult
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.extensions.Result
@@ -27,7 +28,12 @@ class NearNetworkService(
 
         return when (result) {
             is Result.Success -> {
-                Result.Success(NearAccount.Full(NearAmount(Yocto(result.data.amount))))
+                Result.Success(
+                    NearAccount.Full(
+                        near = NearAmount(Yocto(result.data.amount)),
+                        blockHash = result.data.blockHash,
+                    )
+                )
             }
 
             is Result.Failure -> {
@@ -89,6 +95,10 @@ class NearNetworkService(
         )
 
         return Result.Success(status)
+    }
+
+    suspend fun getProtocolConfig(): Result<ProtocolConfigResult> {
+        return multiJsonRpcProvider.performRequest(NearNetworkProvider::getProtocolConfig)
     }
 
     private fun Result.Failure.mapToNearError(): NearError? {
