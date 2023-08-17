@@ -60,8 +60,11 @@ fun WalletManagerFactory.makeWalletManagerForApp(
 
             createWalletManager(
                 blockchain = environmentBlockchain,
-                seedKey = wallet.publicKey,
-                derivationType = hdKey
+                publicKey = Wallet.PublicKey(
+                    seedKey = wallet.publicKey,
+                    derivationType = hdKey
+                )
+
             )
         }
 
