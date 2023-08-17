@@ -16,12 +16,16 @@ class Yocto(
 
     constructor(yocto: String) : this(BigInteger(yocto))
 
-    operator fun times(yocto: Yocto): Yocto {
-        return Yocto(value.times(yocto.value))
-    }
-
     operator fun plus(yocto: Yocto): Yocto {
         return Yocto(value.plus(yocto.value))
+    }
+
+    operator fun minus(yocto: Yocto): Yocto {
+        return Yocto(value.minus(yocto.value))
+    }
+
+    operator fun times(yocto: Yocto): Yocto {
+        return Yocto(value.times(yocto.value))
     }
 
     fun toByteString(): ByteString {
@@ -45,11 +49,15 @@ data class NearAmount(val yocto: Yocto) {
     fun toByteString(): ByteString = yocto.toByteString()
 
     operator fun plus(near: NearAmount): NearAmount {
-        return NearAmount(value.plus(near.value))
+        return NearAmount(yocto.plus(near.yocto))
     }
 
     operator fun minus(near: NearAmount): NearAmount {
-        return NearAmount(value.minus(near.value))
+        return NearAmount(yocto.minus(near.yocto))
+    }
+
+    operator fun times(near: NearAmount): NearAmount {
+        return NearAmount(yocto.times(near.yocto))
     }
 
     companion object {
@@ -69,7 +77,7 @@ sealed class NearAccount {
     /**
      * An object corresponding to an existing account with its amount
      */
-    data class Full(val near: NearAmount) : NearAccount()
+    data class Full(val near: NearAmount, val blockHash: String) : NearAccount()
 
     /**
      * An object corresponding to a non-existent account
