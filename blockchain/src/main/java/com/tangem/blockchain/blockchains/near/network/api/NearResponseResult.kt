@@ -6,6 +6,42 @@ import com.squareup.moshi.JsonClass
 /**
 [REDACTED_AUTHOR]
  */
+
+data class ProtocolConfigResult(
+    @Json(name = "chain_id") val chainId: String,
+    @Json(name = "protocol_version") val protocolVersion: String,
+    @Json(name = "genesis_height") val genesisHeight: Long,
+    @Json(name = "max_gas_price") val maxGasPrice: Long,
+    @Json(name = "min_gas_price") val minGasPrice: Long,
+    @Json(name = "runtime_config") val runtimeConfig: RuntimeConfig,
+) {
+    data class RuntimeConfig(
+        @Json(name = "transaction_costs") val transactionCosts: TransactionCost,
+    )
+
+    data class TransactionCost(
+        @Json(name = "action_creation_config") val actionCreationConfig: ActionCreationConfig,
+        @Json(name = "action_receipt_creation_config") val actionReceiptCreationConfig: CostConfig,
+    )
+
+    data class ActionCreationConfig(
+        @Json(name = "add_key_cost") val addKeyCost: AddKeyCost,
+        @Json(name = "transfer_cost") val transferCost: CostConfig,
+        @Json(name = "create_account_cost") val createAccountCost: CostConfig,
+    )
+
+    data class AddKeyCost(
+        @Json(name = "full_access_cost") val fullAccessCost: CostConfig,
+        @Json(name = "function_call_cost") val functionCallCost: CostConfig,
+    )
+
+    data class CostConfig(
+        @Json(name = "send_sir") val sendSir: Long,
+        @Json(name = "send_not_sir") val sendNotSir: Long,
+        @Json(name = "execution") val execution: Long,
+    )
+}
+
 @JsonClass(generateAdapter = true)
 data class NetworkStatusResult(
     @Json(name = "chain_id") val chainId: String,
