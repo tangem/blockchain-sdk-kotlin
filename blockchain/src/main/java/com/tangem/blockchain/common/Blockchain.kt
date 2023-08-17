@@ -388,7 +388,11 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
-            -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519Slip0010)
+            -> listOf(
+                EllipticCurve.Secp256k1,
+                EllipticCurve.Ed25519,
+                EllipticCurve.Ed25519Slip0010
+            )
 
             XRP,
             -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
@@ -543,7 +547,5 @@ enum class Blockchain(
             .filter {
                 it.isTestnet() == isTestnet && it.getSupportedCurves().contains(EllipticCurve.Ed25519)
             }
-            
     }
-    
 }
