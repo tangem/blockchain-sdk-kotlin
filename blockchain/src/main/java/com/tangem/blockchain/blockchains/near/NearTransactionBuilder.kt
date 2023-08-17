@@ -30,10 +30,11 @@ class NearTransactionBuilder(
     // https://github.com/trustwallet/wallet-core/blob/master/android/app/src/androidTest/java/com/trustwallet/core/app/blockchains/near/TestNEARSigner.kt
     fun buildForSign(
         transaction: TransactionData,
+        withAccountCreation: Boolean,
         nonce: Long,
         blockHash: String,
     ): ByteArray {
-        val input = createSigningInput(transaction, nonce, blockHash)
+        val input = createSigningInput(transaction, withAccountCreation, nonce, blockHash)
         val txInputData = input.toByteArray()
 
         val preImageHashes = TransactionCompiler.preImageHashes(coinType, txInputData)
@@ -49,10 +50,11 @@ class NearTransactionBuilder(
     fun buildForSend(
         transaction: TransactionData,
         signature: ByteArray,
+        withAccountCreation: Boolean,
         nonce: Long,
         blockHash: String,
     ): ByteArray {
-        val input = createSigningInput(transaction, nonce, blockHash)
+        val input = createSigningInput(transaction, withAccountCreation, nonce, blockHash)
         val txInputData = input.toByteArray()
 
         val signatures = DataVector()
@@ -75,6 +77,7 @@ class NearTransactionBuilder(
 
     private fun createSigningInput(
         transaction: TransactionData,
+        withAccountCreation: Boolean,
         nonce: Long,
         blockHash: String,
     ): NEAR.SigningInput {
@@ -86,24 +89,28 @@ class NearTransactionBuilder(
             .build()
         val action = NEAR.Action.newBuilder()
             .setTransfer(transfer)
-            .build()
+        if (withAccountCreation) {
+            action.setCreateAccount(NEAR.CreateAccount.newBuilder().build())
+        }
 
-        return createSigningInputWithAction(action, transaction, nonce, blockHash)
+        return createSigningInputWithAction(transaction, nonce, blockHash, action.build())
             .build()
     }
 
     private fun createSigningInputWithAction(
-        action: NEAR.Action,
         transaction: TransactionData,
         nonce: Long,
         blockHash: String,
-    ): NEAR.SigningInput.Builder = NEAR.SigningInput.newBuilder()
-        .setSignerId(transaction.sourceAddress)
-        .setNonce(nonce)
-        .setReceiverId(transaction.destinationAddress)
-        .addActions(action)
-        .setBlockHash(ByteString.copyFrom(Base58.decodeNoCheck(blockHash)))
-        .setPrivateKey(ByteString.copyFrom(keyPair.privateKey))
+        action: NEAR.Action,
+    ): NEAR.SigningInput.Builder {
+        return NEAR.SigningInput.newBuilder()
+            .setSignerId(transaction.sourceAddress)
+            .setNonce(nonce)
+            .setReceiverId(transaction.destinationAddress)
+            .addActions(action)
+            .setBlockHash(ByteString.copyFrom(Base58.decodeNoCheck(blockHash)))
+            .setPrivateKey(ByteString.copyFrom(keyPair.privateKey)) // ??
+    }
 
     private fun generateKeyPair(): KeyPair {
         val privateKey = CryptoUtils.generateRandomBytes(32)
