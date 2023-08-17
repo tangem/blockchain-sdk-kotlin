@@ -103,7 +103,7 @@ class Wallet(
     fun getShareUri(address: String? = null) =
         blockchain.getShareUri(address ?: this.address)
 
-    class DerivationKey(
+    class HDKey(
         val extendedPublicKey: ExtendedPublicKey,
         val path: DerivationPath,
     )
@@ -116,25 +116,25 @@ class Wallet(
         val blockchainKey: ByteArray
             get() = when (derivationType) {
                 null -> seedKey
-                is DerivationType.Plain -> derivationType.derivationKey.extendedPublicKey.publicKey
+                is DerivationType.Plain -> derivationType.hdKey.extendedPublicKey.publicKey
                 is DerivationType.Double -> {
                     CardanoUtils.extendPublicKey(derivationType.first.extendedPublicKey, derivationType.second.extendedPublicKey)
                 }
             }
 
-        val derivationPath = derivationType?.derivationKey?.path
+        val derivationPath = derivationType?.hdKey?.path
 
-        val derivedKey = derivationType?.derivationKey?.extendedPublicKey?.publicKey
+        val derivedKey = derivationType?.hdKey?.extendedPublicKey?.publicKey
 
         sealed class DerivationType {
 
-            abstract val derivationKey: DerivationKey
+            abstract val hdKey: HDKey
 
-            class Plain(override val derivationKey: DerivationKey) : DerivationType()
+            class Plain(override val hdKey: HDKey) : DerivationType()
 
-            class Double(val first: DerivationKey, val second: DerivationKey) : DerivationType() {
+            class Double(val first: HDKey, val second: HDKey) : DerivationType() {
 
-                override val derivationKey = first
+                override val hdKey = first
 
             }
         }
