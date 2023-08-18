@@ -4,6 +4,7 @@ import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.common.extensions.calculateHashCode
 import com.tangem.crypto.hdWallet.DerivationPath
+import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import java.math.BigDecimal
 import java.util.Calendar
 import java.util.Locale
@@ -102,31 +103,35 @@ class Wallet(
     fun getShareUri(address: String? = null) =
         blockchain.getShareUri(address ?: this.address)
 
+    class DerivationKey(
+        val extendedPublicKey: ExtendedPublicKey,
+        val path: DerivationPath,
+    )
+
     data class PublicKey(
         val seedKey: ByteArray,
-        val derivedKey: ByteArray?,
-        val derivationPath: DerivationPath?,
+        val derivationKey: DerivationKey?
     ) {
-        val blockchainKey: ByteArray = derivedKey ?: seedKey
+        val blockchainKey: ByteArray = derivationKey?.extendedPublicKey?.publicKey ?: seedKey
 
         override fun equals(other: Any?): Boolean {
             val other = other as? PublicKey ?: return false
 
             if (!seedKey.contentEquals(other.seedKey)) return false
-            if (!derivedKey.contentEquals(other.derivedKey)) return false
+            if (!derivationKey?.extendedPublicKey?.publicKey.contentEquals(other.derivationKey?.extendedPublicKey?.publicKey)) return false
 
             return when {
-                derivationPath == null && other.derivationPath == null -> true
-                derivationPath == null -> false
-                else -> derivationPath == other.derivationPath
+                derivationKey?.path == null && other.derivationKey?.path == null -> true
+                derivationKey?.path == null -> false
+                else -> derivationKey?.path == other.derivationKey?.path
             }
         }
 
         override fun hashCode(): Int {
             return calculateHashCode(
                 seedKey.contentHashCode(),
-                derivedKey?.contentHashCode() ?: 0,
-                derivationPath?.hashCode() ?: 0
+                derivationKey?.extendedPublicKey?.publicKey?.contentHashCode() ?: 0,
+                derivationKey?.path?.hashCode() ?: 0
             )
         }
     }
