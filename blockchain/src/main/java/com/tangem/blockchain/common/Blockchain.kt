@@ -21,8 +21,6 @@ import com.tangem.blockchain.common.address.MultisigAddressProvider
 import com.tangem.blockchain.common.address.TrustWalletAddressService
 import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.common.card.EllipticCurve
-import com.tangem.crypto.hdWallet.BIP44
-import com.tangem.crypto.hdWallet.DerivationNode
 import com.tangem.crypto.hdWallet.DerivationPath
 
 enum class Blockchain(
@@ -190,7 +188,7 @@ enum class Blockchain(
 
             RSK -> RskAddressService()
             Cardano -> {
-                if (CardanoAddressConfig.useExtendedAddressation) {
+                if (CardanoAddressConfig.useExtendedAddressing) {
                     TrustWalletAddressService(Cardano)
                 } else {
                     CardanoAddressService(this)
