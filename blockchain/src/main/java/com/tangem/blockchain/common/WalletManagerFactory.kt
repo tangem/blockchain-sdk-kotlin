@@ -23,7 +23,9 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
 
         return createWalletManager(
             blockchain = blockchain,
-            publicKey = publicKey
+            publicKey = publicKey,
+            pairPublicKey = null,
+            curve = EllipticCurve.Secp256k1
         )
     }
 
