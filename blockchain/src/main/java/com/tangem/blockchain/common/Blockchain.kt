@@ -156,57 +156,6 @@ enum class Blockchain(
         return AddressServiceFactory(this).makeAddressService().validate(address)
     }
 
-    private fun getAddressService(): AddressService {
-        return when (this) {
-            Bitcoin, BitcoinTestnet,
-            Litecoin,
-            Dogecoin,
-            Ducatus,
-            Dash,
-            Ravencoin, RavencoinTestnet,
-            -> BitcoinAddressService(this)
-
-            BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
-            Arbitrum, ArbitrumTestnet,
-            Ethereum, EthereumTestnet,
-            EthereumClassic, EthereumClassicTestnet,
-            BSC, BSCTestnet,
-            Polygon, PolygonTestnet,
-            Avalanche, AvalancheTestnet,
-            Fantom, FantomTestnet,
-            Gnosis,
-            Optimism, OptimismTestnet,
-            EthereumFair,
-            EthereumPow, EthereumPowTestnet,
-            Kava, KavaTestnet,
-            Cronos,
-            Telos, TelosTestnet,
-            OctaSpace, OctaSpaceTestnet,
-            -> EthereumAddressService()
-
-            RSK -> RskAddressService()
-            Cardano -> {
-                if (CardanoAddressConfig.useExtendedAddressing) {
-                    WalletCoreAddressService(Cardano)
-                } else {
-                    CardanoAddressService(this)
-                }
-            }
-            XRP -> XrpAddressService()
-            Binance -> BinanceAddressService()
-            BinanceTestnet -> BinanceAddressService(true)
-            Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet -> PolkadotAddressService(this)
-            Stellar, StellarTestnet -> StellarAddressService()
-            Solana, SolanaTestnet -> SolanaAddressService()
-            Tezos -> TezosAddressService()
-            TON, TONTestnet, Cosmos, CosmosTestnet, TerraV1, TerraV2 -> WalletCoreAddressService(blockchain = this)
-            Tron, TronTestnet -> TronAddressService()
-            Kaspa -> KaspaAddressService()
-            Chia, ChiaTestnet -> ChiaAddressService(this)
-            Unknown -> throw Exception("unsupported blockchain")
-        }
-    }
-
     fun getShareScheme(): String? = when (this) {
         Bitcoin, BitcoinTestnet -> "bitcoin"
         Ethereum, EthereumTestnet -> "ethereum"
