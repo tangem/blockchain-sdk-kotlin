@@ -10,9 +10,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
     /**
      * Base wallet manager initializer
      * @param blockchain: blockchain to create
-     * @param seedKey: Public key of the wallet
-     * @param derivedKey: Derived ExtendedPublicKey by the card
-     * @param derivationParams: derivation style or derivation path
+     * @param publicKey: Public Key of the wallet
      */
     fun createWalletManager(
         blockchain: Blockchain,
