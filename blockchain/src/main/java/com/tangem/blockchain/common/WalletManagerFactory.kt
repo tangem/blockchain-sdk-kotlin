@@ -1,26 +1,11 @@
 package com.tangem.blockchain.common
 
-import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.impl.*
 import com.tangem.common.card.EllipticCurve
-import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 
 class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainSdkConfig()) {
-
-    fun createWalletManager(
-        blockchain: Blockchain,
-        publicKeys: Map<AddressType, Wallet.PublicKey>,
-        curve: EllipticCurve = EllipticCurve.Secp256k1,
-    ): WalletManager? {
-        val addressService = AddressServiceFactory(blockchain).makeAddressService()
-
-        val walletFactory = WalletFactory(blockchain, addressService)
-        val wallet = walletFactory.makeWallet(publicKeys = publicKeys, curve = curve)
-
-        return createWalletManager(blockchain, wallet)
-    }
 
     /**
      * Base wallet manager initializer
