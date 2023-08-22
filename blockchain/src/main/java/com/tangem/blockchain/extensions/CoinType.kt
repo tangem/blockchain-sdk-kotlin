@@ -12,5 +12,6 @@ internal val Blockchain.walletCoreWalletType: CoinType
         Blockchain.TON, Blockchain.TONTestnet -> CoinType.TON
         Blockchain.TerraV1 -> CoinType.TERRA
         Blockchain.TerraV2 -> CoinType.TERRAV2
+        Blockchain.Cardano -> CoinType.CARDANO
         else -> throw IllegalStateException()
     }

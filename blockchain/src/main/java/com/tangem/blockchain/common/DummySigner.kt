@@ -13,7 +13,7 @@ class DummySigner : TransactionSigner {
 
     val publicKey = Wallet.PublicKey(
         seedKey = keyPair.publicKey.toCompressedPublicKey(),
-        derivation = null
+        derivationType = null
     )
 
     override suspend fun sign(
