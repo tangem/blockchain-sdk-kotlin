@@ -16,6 +16,7 @@ class WalletFactory(
     @Throws(Exception::class)
     fun makeWallet(publicKey: Wallet.PublicKey, curve: EllipticCurve): Wallet {
         // Temporary for get count on addresses
+        // TODO replace this by adding AddressTypesConfig after [REDACTED_TASK_KEY]
         val addressTypes: Array<AddressType> = blockchain.derivationPaths(DerivationStyle.V2).keys.toTypedArray()
 
         val addresses: MutableMap<AddressType, PlainAddress> = mutableMapOf()
