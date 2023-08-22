@@ -6,6 +6,7 @@ import com.tangem.blockchain.extensions.walletCoreWalletType
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.toCompressedPublicKey
 import wallet.core.jni.AnyAddress
+import wallet.core.jni.Cardano
 import wallet.core.jni.CoinType
 import wallet.core.jni.PublicKey
 import wallet.core.jni.PublicKeyType
