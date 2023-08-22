@@ -9,4 +9,10 @@ sealed class DerivationParams {
 
     data class Custom(val path: DerivationPath) : DerivationParams()
 
+    fun getPath(blockchain: Blockchain) : DerivationPath? {
+        return when (this) {
+            is DerivationParams.Custom -> path
+            is DerivationParams.Default -> blockchain.derivationPath(style)
+        }
+    }
 }

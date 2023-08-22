@@ -7,7 +7,6 @@ import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
 import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.common.address.*
-import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
@@ -18,8 +17,8 @@ import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.AddressService
+import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.common.card.EllipticCurve
-import com.tangem.crypto.hdWallet.BIP44
 import com.tangem.crypto.hdWallet.DerivationPath
 
 enum class Blockchain(
@@ -186,7 +185,13 @@ enum class Blockchain(
             -> EthereumAddressService()
 
             RSK -> RskAddressService()
-            Cardano -> CardanoAddressService(this)
+            Cardano -> {
+                if (CardanoAddressConfig.useExtendedAddressing) {
+                    WalletCoreAddressService(Cardano)
+                } else {
+                    CardanoAddressService(this)
+                }
+            }
             XRP -> XrpAddressService()
             Binance -> BinanceAddressService()
             BinanceTestnet -> BinanceAddressService(true)
@@ -403,7 +408,12 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
-            -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519Slip0010)
+            -> listOf(
+                EllipticCurve.Secp256k1,
+                EllipticCurve.Ed25519,
+                EllipticCurve.Ed25519Slip0010
+            )
+
             XRP,
             -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
 
@@ -438,10 +448,10 @@ enum class Blockchain(
 
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
-            Cardano,
             Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
             TON, TONTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
+
             Cardano -> listOf(EllipticCurve.Ed25519) //todo until cardano support in wallet 2
             Chia, ChiaTestnet,
             -> listOf(EllipticCurve.Bls12381G2Aug)
@@ -482,11 +492,15 @@ enum class Blockchain(
         }
     }
 
-    // TODO refactoring remove this method
     fun derivationPath(style: DerivationStyle?): DerivationPath? {
-        return style?.let {
-            derivationPaths(it)[AddressType.Default]
+        if (style == null) return null
+        if (!getSupportedCurves().contains(EllipticCurve.Secp256k1) &&
+            !getSupportedCurves().contains(EllipticCurve.Ed25519) &&
+            !getSupportedCurves().contains(EllipticCurve.Ed25519Slip0010)
+        ) {
+            return null
         }
+        return style.provider().derivations(this).values.first()
     }
 
     fun canHandleTokens(): Boolean {
@@ -565,8 +579,15 @@ enum class Blockchain(
             .filter { it.getSupportedCurves().size == 1 }
             .filter { it.getSupportedCurves()[0] == EllipticCurve.Ed25519 }
 
+
         fun valuesWithoutUnknown(): List<Blockchain> {
             return Blockchain.values().toMutableList().apply { remove(Unknown) }.toList()
         }
+
+        fun ed25519Blockchains(isTestnet: Boolean): List<Blockchain> = values
+            .filter {
+                it.isTestnet() == isTestnet && it.getSupportedCurves().contains(EllipticCurve.Ed25519)
+            }
+
     }
 }

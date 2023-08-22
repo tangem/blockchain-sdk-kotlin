@@ -31,30 +31,9 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
      */
     fun createWalletManager(
         blockchain: Blockchain,
-        seedKey: ByteArray,
-        derivedKey: ExtendedPublicKey,
-        derivationParams: DerivationParams,
+        publicKey: Wallet.PublicKey
     ): WalletManager? {
 
-        val derivation: Wallet.Derivation? = when (derivationParams) {
-            is DerivationParams.Custom -> {
-                Wallet.Derivation(
-                    derivedKey = derivedKey.publicKey,
-                    derivationPath = derivationParams.path
-                )
-            }
-            is DerivationParams.Default -> {
-                val path = blockchain.derivationPath(derivationParams.style)
-                path?.let {
-                    Wallet.Derivation (
-                        derivedKey = derivedKey.publicKey,
-                        derivationPath = it
-                    )
-                }
-            }
-        }
-
-        val publicKey = Wallet.PublicKey(seedKey = seedKey, derivation = derivation)
         val addressService = AddressServiceFactory(blockchain)
             .makeAddressService()
 
@@ -63,7 +42,9 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
 
         return createWalletManager(
             blockchain = blockchain,
-            wallet = wallet
+            wallet = wallet,
+            pairPublicKey = null,
+            curve = EllipticCurve.Secp256k1
         )
     }
 
@@ -80,7 +61,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
         blockchain: Blockchain = Blockchain.Bitcoin,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
-        val publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivation = null)
+        val publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivationType = null)
         val addressService = AddressServiceFactory(blockchain).makeAddressService()
 
         val walletFactory = WalletFactory(blockchain, addressService)
@@ -105,7 +86,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
         walletPublicKey: ByteArray,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
-        val publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivation = null)
+        val publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivationType = null)
         val addressService = AddressServiceFactory(blockchain).makeAddressService()
 
         val walletFactory = WalletFactory(blockchain, addressService)
@@ -194,14 +175,17 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
             Blockchain.EthereumPowTestnet,
             Blockchain.Kava, Blockchain.KavaTestnet,
             Blockchain.Cronos,
-            Blockchain.Telos, Blockchain.TelosTestnet,
-            Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet
+            Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet,
             -> {
                 EthereumLikeWalletManagerAssembly
             }
 
             Blockchain.Optimism, Blockchain.OptimismTestnet -> {
                 OptimismWalletManagerAssembly
+            }
+
+            Blockchain.Telos, Blockchain.TelosTestnet -> {
+                TelosWalletManagerAssembly
             }
 
             // endregion
@@ -211,7 +195,8 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
             }
 
             Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama,
-            Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> {
+            Blockchain.AlephZero, Blockchain.AlephZeroTestnet,
+            -> {
                 PolkadotWalletManagerAssembly
             }
 

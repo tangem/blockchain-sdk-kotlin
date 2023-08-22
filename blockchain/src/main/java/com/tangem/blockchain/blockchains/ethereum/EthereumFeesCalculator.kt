@@ -76,6 +76,25 @@ class EthereumFeesCalculator {
         )
     }
 
+    internal fun calculateSingleFee(
+        amountParams: Amount,
+        gasLimit: BigInteger,
+        gasPrice: BigInteger,
+    ): TransactionFee.Single {
+        val gasPriceDecimal = BigDecimal(gasPrice)
+        val gasLimitDecimal = BigDecimal(gasLimit)
+
+        val normalFeeBigInt = (gasLimitDecimal * gasPriceDecimal).toBigInteger()
+
+        return TransactionFee.Single(
+            normal = Fee.Ethereum(
+                amount = createFee(amountParams, normalFeeBigInt),
+                gasLimit = gasLimit,
+                gasPrice = gasPrice
+            )
+        )
+    }
+
     private fun createFee(amountParams: Amount, value: BigInteger): Amount {
         return Amount(
             amountParams, value.toBigDecimal(
