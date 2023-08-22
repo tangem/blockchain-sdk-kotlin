@@ -1,150 +1,124 @@
 package com.tangem.blockchain.blockchains.cardano
 
-import co.nstant.`in`.cbor.CborBuilder
-import co.nstant.`in`.cbor.CborEncoder
-import co.nstant.`in`.cbor.model.DataItem
-import com.tangem.blockchain.blockchains.cardano.crypto.Blake2b
+import com.google.protobuf.ByteString
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.CardanoAddressConfig
 import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.transaction.Fee
-import com.tangem.common.extensions.hexToBytes
-import java.io.ByteArrayOutputStream
+import wallet.core.java.AnySigner
+import wallet.core.jni.CoinType
+import wallet.core.jni.DataVector
+import wallet.core.jni.TransactionCompiler
+import wallet.core.jni.proto.Cardano
+import wallet.core.jni.proto.Common
+import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
 import java.math.BigDecimal
 
-class CardanoTransactionBuilder(private val walletPublicKey: ByteArray) {
+// You can decode your CBOR transaction here: https://cbor.me
+class CardanoTransactionBuilder {
 
-    var unspentOutputs: List<CardanoUnspentOutput> = listOf()
-    private var transactionBody: DataItem? = null
+    private var outputs: List<CardanoUnspentOutput> = emptyList()
+    private val coinType: CoinType = CoinType.CARDANO
+    private var decimalValue: Int = Blockchain.Cardano.decimals()
 
-    fun buildToSign(transactionData: TransactionData): ByteArray {
-        val transactionMap = CborBuilder().addMap()
-
-        transactionMap.put(0.toDataItem(), createInputsDataItem())
-        transactionMap.put(1.toDataItem(), createOutputsDataItem(transactionData))
-        transactionMap.put(2, transactionData.fee!!.amount.longValue!!)
-        // Transaction validity time. Currently we are using absolute values.
-        // At 16 April 2023 was 90007700 slot number.
-        // We need to rework this logic to use relative validity time. TODO: https://tangem.atlassian.net/browse/AND-3431
-        // This can be constructed using absolute ttl slot from `/metadata` endpoint.
-        transactionMap.put(3, 190000000) // ttl
-
-        val unsignedTransaction = transactionMap.end().build()
-        transactionBody = unsignedTransaction[0]
-
-        val baos = ByteArrayOutputStream()
-        CborEncoder(baos).encode(unsignedTransaction)
-
-        return Blake2b.Digest.newInstance(32).digest(baos.toByteArray())
+    fun update(outputs: List<CardanoUnspentOutput>) {
+        this.outputs = outputs
     }
 
-    fun buildToSend(signature: ByteArray): ByteArray {
-        val useByronWitness =
-                unspentOutputs.find { !CardanoAddressService.isShelleyAddress(it.address) } != null
-        val useShelleyWitness =
-                unspentOutputs.find { CardanoAddressService.isShelleyAddress(it.address) } != null
+    internal fun buildForSign(transaction: TransactionData): ByteArray {
+        val input = buildCardanoSigningInput(transaction)
+        val txInputData = input.toByteArray()
 
-        val txArray = CborBuilder().addArray()
-        txArray.add(transactionBody)
-        val witnessMap = txArray.addMap()
-        txArray.add(null as DataItem?)
+        val preImageHashes = TransactionCompiler.preImageHashes(coinType, txInputData)
+        val preSigningOutput = PreSigningOutput.parseFrom(preImageHashes)
 
-        if (useByronWitness) {
-            witnessMap.put(2.toDataItem(), createByronWitnessDataItem(signature))
-        }
-        if (useShelleyWitness) {
-            witnessMap.put(0.toDataItem(), createShelleyWitnessDataItem(signature))
+        if (preSigningOutput.error != Common.SigningError.OK) {
+            throw BlockchainSdkError.FailedToBuildTx
         }
 
-        val baos = ByteArrayOutputStream()
-        CborEncoder(baos).encode(txArray.end().build())
-        return baos.toByteArray()
+        return preSigningOutput.dataHash.toByteArray()
     }
 
-    private fun Int.toDataItem(): DataItem? {
-        return CborBuilder().add(this.toLong()).build()[0]
-    }
+    internal fun buildForSend(transaction: TransactionData, signatureInfo: SignatureInfo): ByteArray {
+        val input = buildCardanoSigningInput(transaction)
+        val txInputData = input.toByteArray()
 
-    private fun createInputsDataItem(): DataItem? {
-        val inputsArray = CborBuilder().addArray()
+        val signatures = DataVector()
+        signatures.add(signatureInfo.signature)
 
-        unspentOutputs.forEach {
-            inputsArray.addArray()
-                    .add(it.transactionHash)
-                    .add(it.outputIndex)
+        val publicKeys = DataVector()
+
+        // WalletCore used here `.ed25519Cardano` curve with 128 bytes publicKey.
+        // Calculated as: chainCode + secondPubKey + chainCode
+        // The number of bytes in a Cardano public key (two ed25519 public key + chain code).
+        // We should add dummy chain code in publicKey if we use old 32 byte key to get 128 bytes in total
+        val publicKey = if (CardanoAddressConfig.useExtendedAddressing) {
+            signatureInfo.publicKey
+        } else {
+            signatureInfo.publicKey + ByteArray(32 * 3)
         }
+        publicKeys.add(publicKey)
 
-        return inputsArray.end().build()[0]
-    }
-
-    private fun createOutputsDataItem(transactionData: TransactionData): DataItem? {
-        val amount = transactionData.amount.longValue!!
-        val change = calculateChange(amount, transactionData.fee!!.amount.longValue!!)
-
-        val sourceBytes = CardanoAddressService.decode(transactionData.sourceAddress)
-        val destinationBytes = CardanoAddressService.decode(transactionData.destinationAddress)
-
-        val outputsArray = CborBuilder().addArray()
-
-        outputsArray
-                .addArray()
-                .add(destinationBytes)
-                .add(amount)
-
-        if (change > 0) {
-            outputsArray
-                    .addArray()
-                    .add(sourceBytes)
-                    .add(change)
-                    .end()
-        }
-        return outputsArray.end().build()[0]
-    }
-
-    private fun createByronWitnessDataItem(signature: ByteArray): DataItem? {
-        return CborBuilder().addArray().addArray()
-                .add(walletPublicKey)
-                .add(signature)
-                .add(ByteArray(32))
-                .add("A0".hexToBytes())
-                .end().end().build().get(0)
-    }
-
-    private fun createShelleyWitnessDataItem(signature: ByteArray): DataItem? {
-        return CborBuilder().addArray().addArray()
-                .add(walletPublicKey)
-                .add(signature)
-                .end().end().build().get(0)
-    }
-
-    private fun calculateChange(amount: Long, fee: Long): Long {
-        val fullAmount = unspentOutputs.map { it.amount }.sum()
-        return fullAmount - (amount + fee)
-    }
-
-//    fun getEstimateSize(transactionData: TransactionData): Int {
-//        val fullAmount = unspentOutputs.map { it.amount }.sum()
-//        val outputsNumber = if (transactionData.amount.longValue == fullAmount) 1 else 2
-//        return unspentOutputs.size * 40 + outputsNumber * 65 + 160
-//    }
-
-    fun getEstimateSize(transactionData: TransactionData): Int {
-        val dummyFeeValue = BigDecimal.valueOf(0.1)
-
-        val dummyFee = transactionData.amount.copy(value = dummyFeeValue)
-        val dummyAmount =
-                transactionData.amount.copy(value = transactionData.amount.value!! - dummyFeeValue)
-
-        val dummyTransactionData = transactionData.copy(
-                amount = dummyAmount,
-                fee = Fee.Common(dummyFee)
+        val compileWithSignatures = TransactionCompiler.compileWithSignatures(
+            coinType,
+            txInputData,
+            signatures,
+            publicKeys
         )
-        buildToSign(dummyTransactionData)
-        return buildToSend(ByteArray(64)).size
+
+        val output = Cardano.SigningOutput.parseFrom(compileWithSignatures)
+
+        if (output.error != Common.SigningError.OK || output.encoded.isEmpty) {
+            throw BlockchainSdkError.FailedToBuildTx
+        }
+
+        return output.encoded.toByteArray()
+    }
+
+    fun estimatedFee(transaction: TransactionData): BigDecimal {
+        val input = buildCardanoSigningInput(transaction)
+        val plan = AnySigner.plan(input, coinType, Cardano.TransactionPlan.parser())
+
+        return BigDecimal(plan.fee)
+    }
+
+    private fun buildCardanoSigningInput(transaction: TransactionData): Cardano.SigningInput {
+        val utxos = outputs.map { output ->
+            Cardano.TxInput.newBuilder()
+                .setOutPoint(
+                    Cardano.OutPoint.newBuilder()
+                        .setTxHash(ByteString.copyFrom(output.transactionHash))
+                        .setOutputIndex(output.outputIndex)
+                        .build()
+                )
+                .setAddress(output.address)
+                .setAmount(output.amount)
+                .build()
+        }
+
+        val input = Cardano.SigningInput.newBuilder()
+            .setTransferMessage(
+                Cardano.Transfer.newBuilder()
+                    .setToAddress(transaction.destinationAddress)
+                    .setChangeAddress(transaction.sourceAddress)
+                    .setAmount(transaction.amount.longValue!!)
+                    .setUseMaxAmount(false)
+            )
+            .setTtl(190000000)
+            .addAllUtxos(utxos)
+            .build()
+
+        if (outputs.isEmpty()) {
+            throw BlockchainSdkError.CustomError("Outputs are empty")
+        }
+
+        val minChange = decimalValue.toBigInteger().toLong()
+        val acceptableChangeRange = 1L..minChange
+
+        if (acceptableChangeRange.contains(input.plan.change)) {
+            throw BlockchainSdkError.FailedToBuildTx
+        }
+
+        return input
     }
 }
-
-class CardanoUnspentOutput(
-        val address: String,
-        val amount: Long,
-        val outputIndex: Long,
-        val transactionHash: ByteArray
-)
