@@ -45,17 +45,4 @@ class WalletFactory(
         )
     }
 
-    // with different public keys
-    fun makeWallet(publicKeys: Map<AddressType, Wallet.PublicKey>, curve: EllipticCurve): Wallet {
-        require(publicKeys.containsKey(AddressType.Default)) { "PublicKeys have to contain default publicKey" }
-
-        val addresses = publicKeys.mapValues { (addressType, publicKey) ->
-            addressService.makeAddress(publicKey, addressType, curve)
-        }
-
-        return Wallet(
-            blockchain = blockchain,
-            walletAddresses = addresses
-        )
-    }
 }
