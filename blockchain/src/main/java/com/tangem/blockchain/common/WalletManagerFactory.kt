@@ -14,20 +14,21 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
      */
     fun createWalletManager(
         blockchain: Blockchain,
-        publicKey: Wallet.PublicKey
+        publicKey: Wallet.PublicKey,
+        curve: EllipticCurve
     ): WalletManager? {
 
         val addressService = AddressServiceFactory(blockchain)
             .makeAddressService()
 
         val walletFactory = WalletFactory(blockchain, addressService)
-        val wallet = walletFactory.makeWallet(publicKey, EllipticCurve.Secp256k1)
+        val wallet = walletFactory.makeWallet(publicKey, curve)
 
         return createWalletManager(
             blockchain = blockchain,
             wallet = wallet,
             pairPublicKey = null,
-            curve = EllipticCurve.Secp256k1
+            curve = curve
         )
     }
 
