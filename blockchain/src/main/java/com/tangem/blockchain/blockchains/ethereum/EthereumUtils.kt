@@ -1,11 +1,8 @@
 package com.tangem.blockchain.blockchains.ethereum
 
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.blockchains.ethereum.eip712.EthEip712Util
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
 import com.tangem.common.extensions.toDecompressedPublicKey
@@ -13,7 +10,6 @@ import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.crypto.api.ec.ECDSASignature
 import org.kethereum.crypto.determineRecId
 import org.kethereum.crypto.impl.ec.canonicalise
-import org.kethereum.eip712.MoshiAdapter
 import org.kethereum.extensions.toBytesPadded
 import org.kethereum.extensions.toFixedLengthByteArray
 import org.kethereum.extensions.transactions.encode
@@ -23,7 +19,6 @@ import org.kethereum.model.Address
 import org.kethereum.model.PublicKey
 import org.kethereum.model.SignatureData
 import org.kethereum.model.createTransactionWithDefaults
-import pm.gnosis.eip712.typedDataHash
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -464,8 +459,7 @@ class EthereumUtils {
         }
 
         fun makeTypedDataHash(rawMessage: String): ByteArray {
-            val messageParsed = TangemEIP712JsonParser(MoshiAdapter()).parseMessage(rawMessage)
-           return typedDataHash(messageParsed.message, messageParsed.domain)
+            return EthEip712Util.eip712Hash(rawMessage)
         }
     }
 }
