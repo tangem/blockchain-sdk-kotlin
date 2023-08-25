@@ -17,11 +17,11 @@ data class GetAddressResponse(
     @JsonClass(generateAdapter = true)
     data class Transaction(
         @Json(name = "txid") val txid: String,
-        @Json(name = "vout") val vout: List<Vout>,
+        @Json(name = "vout") val vout: List<Vout> = emptyList(),
         @Json(name = "confirmations") val confirmations: Int,
         @Json(name = "blockTime") val blockTime: Int,
         @Json(name = "value") val value: String,
-        @Json(name = "vin") val vin: List<Vin>,
+        @Json(name = "vin") val vin: List<Vin> = emptyList(),
         @Json(name = "fees") val fees: String,
     ) {
 
