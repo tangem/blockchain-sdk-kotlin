@@ -13,10 +13,7 @@ import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
-
-private const val EMPTY_ADDRESS = "empty address"
 
 internal class BitcoinTransactionHistoryProvider(
     private val blockchain: Blockchain,
@@ -60,7 +57,7 @@ internal class BitcoinTransactionHistoryProvider(
     }
 
     private fun GetAddressResponse.Transaction.toTransactionHistoryItem(walletAddress: String): TransactionHistoryItem {
-        val isIncoming = vin?.any { !it.addresses.contains(walletAddress) } ?: false
+        val isIncoming = vin.any { !it.addresses.contains(walletAddress) }
         return TransactionHistoryItem(
             txHash = txid,
             timestamp = TimeUnit.SECONDS.toMillis(blockTime.toLong()),
@@ -85,13 +82,32 @@ internal class BitcoinTransactionHistoryProvider(
         tx: GetAddressResponse.Transaction,
         walletAddress: String,
     ): TransactionDirection {
-        val address = if (isIncoming) {
-            tx.vin?.find { !it.addresses.contains(walletAddress) }?.addresses?.firstOrNull()
+        val address: TransactionHistoryItem.Address = if (isIncoming) {
+            val inputsWithOtherAddresses = tx.vin
+                .filter { !it.addresses.contains(walletAddress) }
+                .flatMap { it.addresses }
+                .toSet()
+            when {
+                inputsWithOtherAddresses.isEmpty() -> TransactionHistoryItem.Address.Single(rawAddress = walletAddress)
+                inputsWithOtherAddresses.size == 1 -> TransactionHistoryItem.Address.Single(
+                    rawAddress = inputsWithOtherAddresses.first()
+                )
+                else -> TransactionHistoryItem.Address.Multiple
+            }
         } else {
-            tx.vout?.find { !it.addresses.contains(walletAddress) }?.addresses?.firstOrNull()
-        } ?: EMPTY_ADDRESS
-
-        return if (isIncoming) TransactionDirection.Incoming(from = address) else TransactionDirection.Outgoing(to = address)
+            val outputsWithOtherAddresses = tx.vout
+                .filter { !it.addresses.contains(walletAddress) }
+                .flatMap { it.addresses }
+                .toSet()
+            when {
+                outputsWithOtherAddresses.isEmpty() -> TransactionHistoryItem.Address.Single(rawAddress = walletAddress)
+                outputsWithOtherAddresses.size == 1 -> TransactionHistoryItem.Address.Single(
+                    rawAddress = outputsWithOtherAddresses.first()
+                )
+                else -> TransactionHistoryItem.Address.Multiple
+            }
+        }
+        return if (isIncoming) TransactionDirection.Incoming(address) else TransactionDirection.Outgoing(address)
     }
 
     private fun extractAmount(
@@ -103,18 +119,17 @@ internal class BitcoinTransactionHistoryProvider(
         return try {
             val amount = if (isIncoming) {
                 val outputs = tx.vout
-                    ?.find { it.addresses.contains(walletAddress) }
+                    .find { it.addresses.contains(walletAddress) }
                     ?.value.toBigDecimalOrDefault()
                 val inputs = tx.vin
-                    ?.find { it.addresses.contains(walletAddress) }
+                    .find { it.addresses.contains(walletAddress) }
                     ?.value.toBigDecimalOrDefault()
                 outputs - inputs
             } else {
                 val outputs = tx.vout
-                    ?.filter { !it.addresses.contains(walletAddress) }
-                    ?.mapNotNull { it.value.toBigDecimalOrNull() }
-                    ?.sumOf { it }
-                    ?: BigDecimal.ZERO
+                    .filter { !it.addresses.contains(walletAddress) }
+                    .mapNotNull { it.value.toBigDecimalOrNull() }
+                    .sumOf { it }
                 val fee = tx.fees.toBigDecimalOrDefault()
                 outputs + fee
             }
