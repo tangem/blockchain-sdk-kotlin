@@ -51,6 +51,9 @@ class TonTransactionBuilder {
 
     private fun generateKeyPair(): KeyPair {
         val privateKey = CryptoUtils.generateRandomBytes(32)
+/* [REDACTED_TODO_COMMENT]
+* [REDACTED_JIRA]
+         */
         val publicKey = CryptoUtils.generatePublicKey(privateKey, EllipticCurve.Ed25519)
         return KeyPair(publicKey, privateKey)
     }
