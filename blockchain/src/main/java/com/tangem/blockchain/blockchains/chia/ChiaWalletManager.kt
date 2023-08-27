@@ -27,7 +27,7 @@ class ChiaWalletManager(
 ) : WalletManager(wallet), TransactionSender {
 
     override val currentHost: String
-        get() = networkProvider.host
+        get() = networkProvider.baseUrl
 
     private val blockchain = wallet.blockchain
     private val puzzleHash = ChiaAddressService.getPuzzleHash(wallet.address).toHexString()

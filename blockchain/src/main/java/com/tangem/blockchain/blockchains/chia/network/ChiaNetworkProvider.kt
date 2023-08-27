@@ -1,11 +1,11 @@
 package com.tangem.blockchain.blockchains.chia.network
 
+import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import java.math.BigDecimal
 
-interface ChiaNetworkProvider {
-    val host: String
+interface ChiaNetworkProvider: NetworkProvider {
 
     suspend fun getUnspents(puzzleHash: String): Result<List<ChiaCoin>>
 
