@@ -12,6 +12,7 @@ data class BlockchainSdkConfig(
     val tronGridApiKey: String? = null,
     val kaspaSecondaryApiUrl: String? = null,
     val chiaFireAcademyApiKey: String? = null,
+    val chiaTangemApiKey: String? = null,
 )
 
 data class BlockchairCredentials(
