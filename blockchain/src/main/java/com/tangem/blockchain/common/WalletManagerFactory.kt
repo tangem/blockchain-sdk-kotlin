@@ -15,17 +15,19 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
      * @param seedKey: Public key of the wallet
      * @param derivedKey: Derived ExtendedPublicKey by the card
      * @param derivation: derivation style or derivation path
+     * @param curve optional curve to generate addresses for some blockchains
      */
     fun createWalletManager(
         blockchain: Blockchain,
-        publicKey: Wallet.PublicKey
+        publicKey: Wallet.PublicKey,
+        curve: EllipticCurve,
     ): WalletManager? {
 
         return createWalletManager(
             blockchain = blockchain,
             publicKey = publicKey,
             pairPublicKey = null,
-            curve = EllipticCurve.Secp256k1
+            curve = curve
         )
     }
 
