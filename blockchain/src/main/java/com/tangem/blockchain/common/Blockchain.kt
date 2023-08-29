@@ -279,7 +279,7 @@ enum class Blockchain(
         RavencoinTestnet -> "https://testnet.ravencoin.network/"
         CosmosTestnet -> "https://explorer.theta-testnet.polypore.xyz/accounts/"
         Cosmos -> "https://www.mintscan.io/cosmos/account/"
-        TerraV1 -> "https://finder.terra.money/classic/"
+        TerraV1 -> "https://atomscan.com/terra/accounts/"
         TerraV2 -> "https://terrasco.pe/mainnet/"
         Cronos -> "https://cronoscan.com/"
         AlephZero -> "https://alephzero.subscan.io/"
@@ -317,6 +317,7 @@ enum class Blockchain(
             Tezos -> "$baseUrl$address"
             Kaspa -> "${baseUrl}addresses/$address"
             Cosmos -> "${baseUrl}$address"
+            TerraV1 -> "${baseUrl}$address"
             CosmosTestnet -> "${baseUrl}$address"
             else -> fullUrl
         }
