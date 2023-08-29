@@ -9,8 +9,7 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.createRetrofitInstance
 
-open class ChiaJsonRpcProvider(baseUrl: String, fireAcademyApiKey: String) : ChiaNetworkProvider {
-    override val host = baseUrl
+open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : ChiaNetworkProvider {
 
     private val api: ChiaApi by lazy {
         createRetrofitInstance(
@@ -19,7 +18,7 @@ open class ChiaJsonRpcProvider(baseUrl: String, fireAcademyApiKey: String) : Chi
                 AddHeaderInterceptor(
                     headers = buildMap {
                         put("Content-Type", "application/json")
-                        put("X-API-Key", fireAcademyApiKey)
+                        put("X-API-Key", key)
                     },
                 )
             )
