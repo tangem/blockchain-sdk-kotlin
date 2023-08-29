@@ -232,6 +232,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
         curve: EllipticCurve,
         publicKey: Wallet.PublicKey
     ): Boolean {
+        // wallet2 has cardano with extended key, so we should take this into account
         return when (curve) {
             EllipticCurve.Ed25519 -> publicKey.seedKey.size > 32 ||
                 (publicKey.blockchainKey.size > 32 && blockchain != Blockchain.Cardano)
