@@ -4,7 +4,15 @@ import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.crypto.hdWallet.DerivationPath
 
 sealed class DerivationParams {
+
     data class Default(val style: DerivationStyle) : DerivationParams()
 
     data class Custom(val path: DerivationPath) : DerivationParams()
+
+    fun getPath(blockchain: Blockchain) : DerivationPath? {
+        return when (this) {
+            is DerivationParams.Custom -> path
+            is DerivationParams.Default -> blockchain.derivationPath(style)
+        }
+    }
 }
