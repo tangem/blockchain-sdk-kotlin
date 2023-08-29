@@ -12,7 +12,7 @@ class DummySigner : TransactionSigner {
     val keyPair: KeyPair = Secp256k1.generateKeyPair()
 
     val publicKey = Wallet.PublicKey(
-        keyPair.publicKey.toCompressedPublicKey(), null, null
+        keyPair.publicKey.toCompressedPublicKey(), null
     )
 
 
