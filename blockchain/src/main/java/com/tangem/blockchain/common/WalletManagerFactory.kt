@@ -19,23 +19,14 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
      */
     fun createWalletManager(
         blockchain: Blockchain,
-        seedKey: ByteArray,
-        derivedKey: ExtendedPublicKey,
-        derivation: DerivationParams,
+        publicKey: Wallet.PublicKey,
         curve: EllipticCurve,
     ): WalletManager? {
-        val derivationPath: DerivationPath? = when (derivation) {
-            is DerivationParams.Custom -> derivation.path
-            is DerivationParams.Default -> blockchain.derivationPath(derivation.style)
-        }
 
         return createWalletManager(
             blockchain = blockchain,
-            publicKey = Wallet.PublicKey(
-                seedKey = seedKey,
-                derivedKey = derivedKey.publicKey,
-                derivationPath = derivationPath,
-            ),
+            publicKey = publicKey,
+            pairPublicKey = null,
             curve = curve
         )
     }
@@ -55,7 +46,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
     ): WalletManager? {
         return createWalletManager(
             blockchain = blockchain,
-            publicKey = Wallet.PublicKey(walletPublicKey, null, null),
+            publicKey = Wallet.PublicKey(walletPublicKey, null),
             pairPublicKey = pairPublicKey,
             curve = curve
         )
@@ -74,7 +65,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
     ): WalletManager? {
         return createWalletManager(
             blockchain = blockchain,
-            publicKey = Wallet.PublicKey(walletPublicKey, null, null),
+            publicKey = Wallet.PublicKey(walletPublicKey, null),
             curve = curve
         )
     }
