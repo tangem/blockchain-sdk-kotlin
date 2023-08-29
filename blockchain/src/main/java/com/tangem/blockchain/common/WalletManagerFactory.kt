@@ -76,7 +76,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
-        if (checkIfWrongKey(curve, publicKey)) return null
+        if (checkIfWrongKey(blockchain, curve, publicKey)) return null
 
         val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
         val wallet = Wallet(blockchain, addresses, publicKey, setOf())
@@ -227,9 +227,14 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
         }
     }
 
-    private fun checkIfWrongKey(curve: EllipticCurve, publicKey: Wallet.PublicKey): Boolean {
+    private fun checkIfWrongKey(
+        blockchain: Blockchain,
+        curve: EllipticCurve,
+        publicKey: Wallet.PublicKey
+    ): Boolean {
         return when (curve) {
-            EllipticCurve.Ed25519 -> publicKey.seedKey.size > 32 || publicKey.blockchainKey.size > 32
+            EllipticCurve.Ed25519 -> publicKey.seedKey.size > 32 ||
+                (publicKey.blockchainKey.size > 32 && blockchain != Blockchain.Cardano)
             else -> false
         }
     }
