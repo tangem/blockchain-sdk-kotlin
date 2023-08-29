@@ -63,8 +63,8 @@ fun WalletManagerFactory.makeWalletManagerForApp(
                 publicKey = Wallet.PublicKey(
                     seedKey = wallet.publicKey,
                     derivationType = hdKey
-                )
-
+                ),
+                curve = wallet.curve
             )
         }
 
