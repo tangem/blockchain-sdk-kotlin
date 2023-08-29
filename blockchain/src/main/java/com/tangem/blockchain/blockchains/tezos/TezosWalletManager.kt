@@ -161,7 +161,7 @@ class TezosWalletManager(
 
     private fun canonicalizeSignature(signature: ByteArray): ByteArray {
         return when (curve) {
-            EllipticCurve.Ed25519 -> signature
+            EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010 -> signature
             EllipticCurve.Secp256k1 -> {
                 val canonicalECDSASignature = signature.toCanonicalECDSASignature()
                 //bigIntegerToBytes cuts leading zero if present
