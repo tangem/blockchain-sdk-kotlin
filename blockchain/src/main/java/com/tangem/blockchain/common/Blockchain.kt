@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
+import com.tangem.blockchain.blockchains.cardano.FacadeCardanoAddressService
 import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
@@ -187,13 +188,7 @@ enum class Blockchain(
             -> EthereumAddressService()
 
             RSK -> RskAddressService()
-            Cardano -> {
-                if (CardanoAddressConfig.useExtendedAddressing) {
-                    TrustWalletAddressService(Cardano)
-                } else {
-                    CardanoAddressService(this)
-                }
-            }
+            Cardano -> FacadeCardanoAddressService()
             XRP -> XrpAddressService()
             Binance -> BinanceAddressService()
             BinanceTestnet -> BinanceAddressService(true)
