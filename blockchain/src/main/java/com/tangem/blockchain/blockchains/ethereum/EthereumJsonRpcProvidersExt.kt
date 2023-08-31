@@ -107,7 +107,6 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = "https://polygon-rpc.com/"),
             getNowNodesProvider(baseUrl = "https://matic.nownodes.io/", config = config),
             getGetBlockProvider(baseUrl = "https://matic.getblock.io/mainnet/", config = config),
-            EthereumJsonRpcProvider(baseUrl = "https://matic-mainnet.chainstacklabs.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpc-mainnet.maticvigil.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpc-mainnet.matic.quiknode.pro/"),
         )
