@@ -16,7 +16,9 @@ import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blstlib.generated.P2
 import com.tangem.blstlib.generated.P2_Affine
-import com.tangem.common.extensions.*
+import com.tangem.common.extensions.calculateSha256
+import com.tangem.common.extensions.hexToBytes
+import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
 
 class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockchain: Blockchain) {
@@ -35,9 +37,20 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
             BlockchainSdkError.CustomError("Unspent coins are missing")
         )
 
-        val change = calculateChange(transactionData, unspentCoins)
+        val unspentsToSpend = getUnspentsToSpend()
 
-        coinSpends = transactionData.toChiaCoinSpends(unspentCoins, change)
+        val change = calculateChange(transactionData, unspentsToSpend)
+        if (change < 0) { // unspentsToSpend not enough to cover transaction amount
+            val maxAmount = transactionData.amount.value!! + change.toBigDecimal().movePointLeft(blockchain.decimals())
+            return Result.Failure(
+                BlockchainSdkError.Chia.UtxoAmountError(
+                    maxOutputs = MAX_INPUT_COUNT,
+                    maxAmount = maxAmount
+                )
+            )
+        }
+
+        coinSpends = transactionData.toChiaCoinSpends(unspentsToSpend, change)
 
         val hashesForSign = coinSpends.map { it ->
             // our solutions are always Cons
@@ -60,6 +73,12 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
 
         return (coinSpends.size * COIN_SPEND_COST) + (numberOfCoinsCreated * CREATE_COIN_COST)
     }
+
+    private fun getUnspentsToSpend() = unspentCoins
+        .sortedByDescending { it.amount }
+        .take(getUnspentsToSpendCount())
+
+    private fun getUnspentsToSpendCount(): Int = unspentCoins.size.coerceAtMost(MAX_INPUT_COUNT)
 
     private fun calculateChange(
         transactionData: TransactionData,
@@ -142,6 +161,8 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
         // costs were calculated with get_fee_estimate API method with real transactions of currently use format
         private const val COIN_SPEND_COST = 4500000L
         private const val CREATE_COIN_COST = 2400000L
+
+        private const val MAX_INPUT_COUNT = 50 // Aligned inside Tangem. In iOS max input count is 15.
 
         private const val AUG_SCHEME_DST = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_AUG_"
     }
