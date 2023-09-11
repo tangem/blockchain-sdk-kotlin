@@ -25,7 +25,7 @@ internal object CardanoWalletManagerAssembly : WalletManagerAssembly<CardanoWall
 
             return CardanoWalletManager(
                 this,
-                CardanoTransactionBuilder(publicKey.blockchainKey),
+                CardanoTransactionBuilder(),
                 CardanoNetworkService(providers)
             )
         }
