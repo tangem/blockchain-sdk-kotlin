@@ -16,8 +16,8 @@ internal fun Blockchain.getBitcoinNetworkProviders(
 ): List<BitcoinNetworkProvider> {
     return when (this) {
         Blockchain.Bitcoin -> listOfNotNull(
-            getNowNodesProvider(blockchain, config),
-            getGetBlockProvider(blockchain, config),
+            // getNowNodesProvider(blockchain, config),
+            // getGetBlockProvider(blockchain, config),
             *getBlockchairProviders(blockchain, config),
             getBlockcypherProvider(blockchain, config),
             BlockchainInfoNetworkProvider() // crashes when large input
