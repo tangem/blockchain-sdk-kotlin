@@ -157,18 +157,9 @@ class EthereumNetworkService(
     override suspend fun getGasPrice(): Result<BigInteger> {
         return try {
             coroutineScope {
-                val gasPriceResponses = multiJsonRpcProvider.providers.map {
-                    async { it.getGasPrice() }
-                }.map { it.await() }
-
-                val gasPrice = gasPriceResponses
-                    .map { result -> result.checkBodyForErrors() }
-                    .mapNotNull { (it as? Result.Success)?.data?.responseToBigInteger() }
-                    .maxOrNull()
-                // all responses have failed
-                    ?: return@coroutineScope Result.Failure(
-                        (gasPriceResponses.first() as Result.Failure).error
-                    )
+                val gasPrice = multiJsonRpcProvider.performRequest(
+                    EthereumJsonRpcProvider::getGasPrice,
+                ).extractResult().responseToBigInteger()
 
                 Result.Success(gasPrice)
             }
