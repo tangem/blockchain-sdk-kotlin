@@ -19,23 +19,14 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
      */
     fun createWalletManager(
         blockchain: Blockchain,
-        seedKey: ByteArray,
-        derivedKey: ExtendedPublicKey,
-        derivation: DerivationParams,
+        publicKey: Wallet.PublicKey,
         curve: EllipticCurve,
     ): WalletManager? {
-        val derivationPath: DerivationPath? = when (derivation) {
-            is DerivationParams.Custom -> derivation.path
-            is DerivationParams.Default -> blockchain.derivationPath(derivation.style)
-        }
 
         return createWalletManager(
             blockchain = blockchain,
-            publicKey = Wallet.PublicKey(
-                seedKey = seedKey,
-                derivedKey = derivedKey.publicKey,
-                derivationPath = derivationPath,
-            ),
+            publicKey = publicKey,
+            pairPublicKey = null,
             curve = curve
         )
     }
@@ -55,7 +46,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
     ): WalletManager? {
         return createWalletManager(
             blockchain = blockchain,
-            publicKey = Wallet.PublicKey(walletPublicKey, null, null),
+            publicKey = Wallet.PublicKey(walletPublicKey, null),
             pairPublicKey = pairPublicKey,
             curve = curve
         )
@@ -74,7 +65,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
     ): WalletManager? {
         return createWalletManager(
             blockchain = blockchain,
-            publicKey = Wallet.PublicKey(walletPublicKey, null, null),
+            publicKey = Wallet.PublicKey(walletPublicKey, null),
             curve = curve
         )
     }
@@ -85,7 +76,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
-        if (checkIfWrongKey(curve, publicKey)) return null
+        if (checkIfWrongKey(blockchain, curve, publicKey)) return null
 
         val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
         val wallet = Wallet(blockchain, addresses, publicKey, setOf())
@@ -236,9 +227,15 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
         }
     }
 
-    private fun checkIfWrongKey(curve: EllipticCurve, publicKey: Wallet.PublicKey): Boolean {
+    private fun checkIfWrongKey(
+        blockchain: Blockchain,
+        curve: EllipticCurve,
+        publicKey: Wallet.PublicKey
+    ): Boolean {
+        // wallet2 has cardano with extended key, so we should take this into account
         return when (curve) {
-            EllipticCurve.Ed25519 -> publicKey.seedKey.size > 32 || publicKey.blockchainKey.size > 32
+            EllipticCurve.Ed25519 -> publicKey.seedKey.size > 32 ||
+                (publicKey.blockchainKey.size > 32 && blockchain != Blockchain.Cardano)
             else -> false
         }
     }
