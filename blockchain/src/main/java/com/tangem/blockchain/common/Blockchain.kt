@@ -3,7 +3,7 @@ package com.tangem.blockchain.common
 import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
-import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
+import com.tangem.blockchain.blockchains.cardano.CardanoAddressServiceFacade
 import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
@@ -21,8 +21,6 @@ import com.tangem.blockchain.common.address.MultisigAddressProvider
 import com.tangem.blockchain.common.address.TrustWalletAddressService
 import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.common.card.EllipticCurve
-import com.tangem.crypto.hdWallet.BIP44
-import com.tangem.crypto.hdWallet.DerivationNode
 import com.tangem.crypto.hdWallet.DerivationPath
 
 enum class Blockchain(
@@ -189,7 +187,7 @@ enum class Blockchain(
             -> EthereumAddressService()
 
             RSK -> RskAddressService()
-            Cardano -> CardanoAddressService(this)
+            Cardano -> CardanoAddressServiceFacade()
             XRP -> XrpAddressService()
             Binance -> BinanceAddressService()
             BinanceTestnet -> BinanceAddressService(true)
@@ -503,10 +501,13 @@ enum class Blockchain(
     fun isFeeApproximate(amountType: AmountType): Boolean = when (this) {
         Fantom, FantomTestnet,
         Tron, TronTestnet,
+        Avalanche, AvalancheTestnet,
+        EthereumPow,
         Cronos,
         -> amountType is AmountType.Token
 
         Arbitrum, ArbitrumTestnet,
+        Stellar, StellarTestnet,
         Optimism, OptimismTestnet,
         TON, TONTestnet,
         -> true
