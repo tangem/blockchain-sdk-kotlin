@@ -19,6 +19,7 @@ import org.kethereum.model.Address
 import org.kethereum.model.PublicKey
 import org.kethereum.model.SignatureData
 import org.kethereum.model.createTransactionWithDefaults
+import org.komputing.khex.extensions.toHexString
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -33,9 +34,32 @@ class EthereumUtils {
 
         private const val HEX_PREFIX = "0x"
 
+        // ERC-20 standard defines balanceOf function as returning uint256. Don't accept anything else.
+        private const val UInt256Size = 32
+
         fun ByteArray.toKeccak(): ByteArray {
             return this.keccak()
         }
+
+        internal fun parseEthereumDecimal(value: String, decimalsCount: Int): BigDecimal? {
+            val data = value.hexToBytes()
+            val zeroInByte: Byte = 0
+
+            val balanceData = when {
+                data.size <= UInt256Size -> data
+                data.allOutOfRangeIsEqualTo(UInt256Size, 0) -> data.copyOf(UInt256Size)
+                else -> return null
+            }
+
+            return balanceData
+                .toHexString("")
+                .toBigIntegerOrNull(radix = 16)
+                ?.toBigDecimal()
+                ?.movePointLeft(decimalsCount)
+        }
+
+        private fun ByteArray.allOutOfRangeIsEqualTo(range: Int, equal: Byte): Boolean =
+            this.copyOfRange(range, this.size).all{ it == equal }
 
         fun prepareSignedMessageData(
             signedHash: ByteArray,
