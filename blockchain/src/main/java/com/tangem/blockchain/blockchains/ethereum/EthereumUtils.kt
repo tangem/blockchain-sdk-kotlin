@@ -3,9 +3,11 @@ package com.tangem.blockchain.blockchains.ethereum
 import com.tangem.blockchain.blockchains.ethereum.eip712.EthEip712Util
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.extensions.toBigDecimalOrDefault
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
 import com.tangem.common.extensions.toDecompressedPublicKey
+import com.tangem.common.extensions.toHexString
 import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.crypto.api.ec.ECDSASignature
 import org.kethereum.crypto.determineRecId
@@ -19,7 +21,6 @@ import org.kethereum.model.Address
 import org.kethereum.model.PublicKey
 import org.kethereum.model.SignatureData
 import org.kethereum.model.createTransactionWithDefaults
-import org.komputing.khex.extensions.toHexString
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -52,10 +53,10 @@ class EthereumUtils {
             }
 
             return balanceData
-                .toHexString("")
+                .toHexString()
                 .toBigIntegerOrNull(radix = 16)
-                ?.toBigDecimal()
-                ?.movePointLeft(decimalsCount)
+                .toBigDecimalOrDefault()
+                .movePointLeft(decimalsCount)
         }
 
         private fun ByteArray.allOutOfRangeIsEqualTo(range: Int, equal: Byte): Boolean =
