@@ -29,6 +29,8 @@ fun String.hexToBigDecimal(): BigDecimal? {
 fun String?.toBigDecimalOrDefault(default: BigDecimal = BigDecimal.ZERO): BigDecimal =
     this?.toBigDecimalOrNull() ?: default
 
+fun String.isValidHex(): Boolean = this.all { it.isAscii() }
+
 inline fun <R> String?.letNotBlank(block: (String) -> R): R? {
     if (isNullOrBlank()) return null
 
