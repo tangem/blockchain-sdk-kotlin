@@ -183,3 +183,15 @@ interface SignatureCountValidator {
 interface TokenFinder {
     suspend fun findTokens(): Result<List<Token>>
 }
+
+interface Approver {
+    suspend fun getAllowance(
+        spenderAddress: String,
+        token: Token,
+    ): Result<BigDecimal>
+
+    fun getApproveData(
+        spenderAddress: String,
+        value: Amount? = null,
+    ): String
+}
