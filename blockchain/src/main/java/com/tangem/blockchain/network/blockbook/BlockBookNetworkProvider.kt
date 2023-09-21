@@ -131,7 +131,7 @@ class BlockBookNetworkProvider(
                     val outputs = transaction.vout
                         .asSequence()
                         .filter { !it.addresses.contains(address) }
-                        .mapNotNull { it.value.toBigDecimalOrNull() }
+                        .mapNotNull { it.value?.toBigDecimalOrNull() }
                         .sumOf { it }
                     val fee = transaction.fees.toBigDecimalOrDefault()
                     outputs + fee

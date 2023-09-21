@@ -1,11 +1,16 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import android.util.Log
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.PaginationWrapper
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionDirection
+import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionStatus
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionType
 import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
+import com.tangem.blockchain.common.txhistory.TransactionHistoryRequest
 import com.tangem.blockchain.common.txhistory.TransactionHistoryState
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.toBigDecimalOrDefault
@@ -34,15 +39,20 @@ internal class BitcoinTransactionHistoryProvider(
         }
     }
 
-    override suspend fun getTransactionsHistory(
-        address: String,
-        page: Int,
-        pageSize: Int,
-    ): Result<PaginationWrapper<TransactionHistoryItem>> {
+    override suspend fun getTransactionsHistory(request: TransactionHistoryRequest): Result<PaginationWrapper<TransactionHistoryItem>> {
         return try {
             val response =
-                withContext(Dispatchers.IO) { blockBookApi.getTransactions(address, page, pageSize) }
-            val txs = response.transactions?.map { tx -> tx.toTransactionHistoryItem(address) } ?: emptyList()
+                withContext(Dispatchers.IO) {
+                    blockBookApi.getTransactions(
+                        address = request.address,
+                        page = request.page.number,
+                        pageSize = request.page.size,
+                        filterType = null,
+                    )
+                }
+            val txs = response.transactions
+                ?.map { tx -> tx.toTransactionHistoryItem(request.address) }
+                ?: emptyList()
             Result.Success(
                 PaginationWrapper(
                     page = response.page,
@@ -128,7 +138,7 @@ internal class BitcoinTransactionHistoryProvider(
             } else {
                 val outputs = tx.vout
                     .filter { !it.addresses.contains(walletAddress) }
-                    .mapNotNull { it.value.toBigDecimalOrNull() }
+                    .mapNotNull { it.value?.toBigDecimalOrNull() }
                     .sumOf { it }
                 val fee = tx.fees.toBigDecimalOrDefault()
                 outputs + fee
