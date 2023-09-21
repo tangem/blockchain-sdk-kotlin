@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
-import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.TransactionData
@@ -12,7 +11,7 @@ import java.math.BigInteger
 
 interface EthereumNetworkProvider: NetworkProvider {
     suspend fun getInfo(address: String, tokens: Set<Token>): Result<EthereumInfoResponse>
-    suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<Amount>
+    suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<BigDecimal>
     suspend fun sendTransaction(transaction: String): SimpleResult
     suspend fun getSignatureCount(address: String): Result<Int>
     suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>>
