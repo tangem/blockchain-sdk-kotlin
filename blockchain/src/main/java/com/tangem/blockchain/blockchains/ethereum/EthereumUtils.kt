@@ -3,9 +3,9 @@ package com.tangem.blockchain.blockchains.ethereum
 import com.tangem.blockchain.blockchains.ethereum.eip712.EthEip712Util
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
-import com.tangem.common.extensions.hexToBytes
-import com.tangem.common.extensions.toByteArray
-import com.tangem.common.extensions.toDecompressedPublicKey
+import com.tangem.blockchain.extensions.isValidHex
+import com.tangem.blockchain.extensions.toBigDecimalOrDefault
+import com.tangem.common.extensions.*
 import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.crypto.api.ec.ECDSASignature
 import org.kethereum.crypto.determineRecId
@@ -33,9 +33,40 @@ class EthereumUtils {
 
         private const val HEX_PREFIX = "0x"
 
+        // ERC-20 standard defines balanceOf function as returning uint256. Don't accept anything else.
+        private const val UInt256Size = 32
+
         fun ByteArray.toKeccak(): ByteArray {
             return this.keccak()
         }
+
+        internal fun parseEthereumDecimal(value: String, decimalsCount: Int): BigDecimal? {
+            val data = value.removePrefix(HEX_PREFIX).asciiHexToBytes() ?: return null
+
+            val balanceData = when {
+                data.size <= UInt256Size -> data
+                data.allOutOfRangeIsEqualTo(UInt256Size, 0) -> data.copyOf(UInt256Size)
+                else -> return null
+            }
+
+            return balanceData
+                .toHexString()
+                .toBigIntegerOrNull(radix = 16)
+                .toBigDecimalOrDefault()
+                .movePointLeft(decimalsCount)
+        }
+
+        private fun String.asciiHexToBytes(): ByteArray? {
+            var trimmedString = this.remove(" ")
+            if (trimmedString.length % 2 != 0) {
+                trimmedString = "0$trimmedString"
+            }
+
+            return if (trimmedString.isValidHex()) trimmedString.hexToBytes() else null
+        }
+
+        private fun ByteArray.allOutOfRangeIsEqualTo(range: Int, equal: Byte): Boolean =
+            this.copyOfRange(range, this.size).all { it == equal }
 
         fun prepareSignedMessageData(
             signedHash: ByteArray,
