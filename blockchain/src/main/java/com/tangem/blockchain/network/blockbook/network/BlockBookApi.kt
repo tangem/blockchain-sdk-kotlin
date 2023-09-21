@@ -4,6 +4,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapter
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.txhistory.TransactionHistoryRequest
 import com.tangem.blockchain.extensions.AddHeaderInterceptor
 import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
 import com.tangem.blockchain.network.blockbook.config.BlockBookConfig
@@ -28,7 +29,7 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
     private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
 
     suspend fun getAddress(address: String): GetAddressResponse {
-        val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.GET_ADDRESS, blockchain)
+        val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.GetAddress(), blockchain)
         return client
             .newCall(
                 request = Request.Builder()
@@ -40,13 +41,19 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
             .unpack()
     }
 
-    suspend fun getTransactions(address: String, page: Int, pageSize: Int): GetAddressResponse {
-        val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.GET_ADDRESS, blockchain)
+    suspend fun getTransactions(
+        address: String,
+        page: Int,
+        pageSize: Int,
+        filterType: TransactionHistoryRequest.FilterType?,
+    ): GetAddressResponse {
+        val request = BlockBookRequest.GetAddress(page, pageSize, filterType)
+        val requestBaseUrl = config.getRequestBaseUrl(request, blockchain)
         return client
             .newCall(
                 request = Request.Builder()
                     .get()
-                    .url("$requestBaseUrl/address/$address?details=txs&page=$page&pageSize=$pageSize")
+                    .url("$requestBaseUrl/address/$address?details=txs${request.params()}")
                     .build()
             )
             .await()
@@ -63,7 +70,7 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
                             .toJson(GetFeeRequest.getFee(param))
                             .toRequestBody(APPLICATION_JSON_MEDIA_TYPE.toMediaTypeOrNull())
                     )
-                    .url(config.getRequestBaseUrl(BlockBookRequest.GET_FEE, blockchain))
+                    .url(config.getRequestBaseUrl(BlockBookRequest.GetFee, blockchain))
                     .build()
             )
             .await()
@@ -71,7 +78,7 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
     }
 
     suspend fun sendTransaction(txHex: String) {
-        val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.SEND_TRANSACTION, blockchain)
+        val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.SendTransaction, blockchain)
         val response = client
             .newCall(
                 request = Request.Builder()
@@ -90,7 +97,7 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
     }
 
     suspend fun getUtxo(address: String): List<GetUtxoResponseItem> {
-        val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.GET_UTXO, blockchain)
+        val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.GetUTXO, blockchain)
         return client
             .newCall(
                 request = Request.Builder()
