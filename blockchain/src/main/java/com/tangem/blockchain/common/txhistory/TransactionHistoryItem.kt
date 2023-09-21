@@ -1,7 +1,6 @@
 package com.tangem.blockchain.common.txhistory
 
 import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.TransactionStatus
 
 data class TransactionHistoryItem(
     val txHash: String,
@@ -21,6 +20,20 @@ data class TransactionHistoryItem(
 
     sealed interface TransactionType {
         object Transfer : TransactionType
+        object Submit : TransactionType
+        object Approve : TransactionType
+        object Supply : TransactionType
+        object Withdraw : TransactionType
+        object Deposit : TransactionType
+        object Swap : TransactionType
+        object Unoswap : TransactionType
+        data class Custom(val id: String) : TransactionType
+    }
+
+    sealed class TransactionStatus {
+        object Failed : TransactionStatus()
+        object Unconfirmed : TransactionStatus()
+        object Confirmed : TransactionStatus()
     }
 
     sealed class Address {
