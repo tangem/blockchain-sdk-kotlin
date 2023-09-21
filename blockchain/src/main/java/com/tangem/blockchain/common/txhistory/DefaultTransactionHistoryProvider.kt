@@ -8,9 +8,7 @@ internal object DefaultTransactionHistoryProvider : TransactionHistoryProvider {
         TransactionHistoryState.NotImplemented
 
     override suspend fun getTransactionsHistory(
-        address: String,
-        page: Int,
-        pageSize: Int,
+        request: TransactionHistoryRequest
     ): Result<PaginationWrapper<TransactionHistoryItem>> = Result.Success(
         PaginationWrapper(
             page = 0,
