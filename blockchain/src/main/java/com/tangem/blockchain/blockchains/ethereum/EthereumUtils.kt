@@ -19,6 +19,7 @@ import org.kethereum.model.Address
 import org.kethereum.model.PublicKey
 import org.kethereum.model.SignatureData
 import org.kethereum.model.createTransactionWithDefaults
+import org.komputing.khex.extensions.toHexString
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -32,6 +33,7 @@ class EthereumUtils {
         private val tokenTransferFromSignature = "transferFrom(address,address,uint256)".toByteArray().toKeccak().copyOf(4)
 
         private const val HEX_PREFIX = "0x"
+        private const val HEX_F = "f"
 
         // ERC-20 standard defines balanceOf function as returning uint256. Don't accept anything else.
         private const val UInt256Size = 32
@@ -295,7 +297,6 @@ class EthereumUtils {
             return CompiledEthereumTransaction(transaction, hash)
         }
 
-
         fun buildSetWalletToSign(
             processorContractAddress: String,
             cardAddress: String,
@@ -332,7 +333,6 @@ class EthereumUtils {
 
             return CompiledEthereumTransaction(transaction, hash)
         }
-
 
         fun buildProcessToSign(
             processorContractAddress: String,
@@ -428,6 +428,12 @@ class EthereumUtils {
             return CompiledEthereumTransaction(transaction, hash)
         }
 
+        fun createErc20ApproveDataHex(spender: String, amount: Amount?): String =
+            createErc20ApproveData(
+                spender = spender,
+                amount = amount?.value?.movePointRight(amount.decimals)?.toBigInteger()
+            ).toHexString()
+
         private fun createErc20TransferData(recipient: String, amount: BigInteger) =
             tokenTransferSignature.toByteArray() +
                 recipient.substring(2).hexToBytes().toFixedLengthByteArray(32) +
@@ -438,16 +444,10 @@ class EthereumUtils {
                 recepient, amount.value!!.movePointRight(amount.decimals).toBigInteger()
             )
 
-        private fun createErc20ApproveData(spender: String, amount: BigInteger) =
+        private fun createErc20ApproveData(spender: String, amount: BigInteger?): ByteArray =
             tokenApproveSignature +
                 spender.substring(2).hexToBytes().toFixedLengthByteArray(32) +
-                amount.toBytesPadded(32)
-
-        internal fun createErc20ApproveData(spender: String, amount: Amount) =
-            createErc20ApproveData(
-                spender = spender,
-                amount = amount.value!!.movePointRight(amount.decimals).toBigInteger()
-            )
+                (amount?.toBytesPadded(32) ?: HEX_F.repeat(64).hexToBytes())
 
         private fun createSetSpendLimitData(cardAddress: String, amount: BigInteger) =
             setSpendLimitSignature +
