@@ -16,6 +16,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.kethereum.extensions.toHexString
 import org.kethereum.keccakshortcut.keccak
+import org.komputing.khex.extensions.toHexString
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -28,7 +29,8 @@ open class EthereumWalletManager(
     TransactionSender,
     SignatureCountValidator,
     TokenFinder,
-    EthereumGasLoader {
+    EthereumGasLoader,
+    Approver {
 
     // move to constructor later
     protected val feesCalculator = EthereumFeesCalculator()
@@ -215,6 +217,18 @@ open class EthereumWalletManager(
     override suspend fun getGasLimit(amount: Amount, destination: String, data: String): Result<BigInteger> {
         return getGasLimitInternal(amount, destination, data)
     }
+
+    override suspend fun getAllowance(
+        spenderAddress: String,
+        token: Token,
+    ): Result<BigDecimal> {
+        return networkProvider.getAllowance(wallet.address, token, spenderAddress)
+    }
+
+    override fun getApproveData(
+        spenderAddress: String,
+        value: Amount?,
+    ) = EthereumUtils.createErc20ApproveDataHex(spenderAddress, value)
 
     private suspend fun getGasLimitInternal(
         amount: Amount,
