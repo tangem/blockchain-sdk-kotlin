@@ -136,6 +136,23 @@ sealed class BlockchainSdkError(
         cause = throwable,
     )
 
+    sealed class Chia(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_CHIA + subCode,
+        customMessage = customMessage ?: (ERROR_CODE_CHIA + subCode).toString(),
+        messageResId = null,
+        cause = throwable,
+    ) {
+        class UtxoAmountError(val maxOutputs: Int, val maxAmount: BigDecimal) : Chia(
+            1,
+            "Due to Chia limitations only $maxOutputs UTXOs can fit in a single transaction. This means you can only" +
+                " send ${maxAmount.toPlainString()}."
+        )
+    }
+
     companion object {
         const val ERROR_CODE_SOLANA = 1000
         const val ERROR_CODE_POLKADOT = 2000
@@ -143,7 +160,8 @@ sealed class BlockchainSdkError(
         const val ERROR_CODE_TON = 4000
         const val ERROR_CODE_COSMOS = 5000
         const val ERROR_CODE_WALLET_CORE = 6000
-        const val ERROR_CODE_NEAR = 7000
+        const val ERROR_CODE_CHIA = 7000
+        const val ERROR_CODE_NEAR = 8000
     }
 }
 
