@@ -6,6 +6,7 @@ import com.tangem.blockchain.common.GetBlockCredentials
 import com.tangem.blockchain.common.NowNodeCredentials
 import com.tangem.blockchain.common.QuickNodeCredentials
 import com.tangem.blockchain.extensions.AddHeaderInterceptor
+import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
 import okhttp3.Interceptor
 import org.p2p.solanaj.rpc.Cluster
 
@@ -26,11 +27,11 @@ class SolanaRpcClientBuilder {
         }
     }
 
-    private fun mainNet(): RpcClient = RpcClient(Cluster.MAINNET.endpoint)
+    private fun mainNet(): RpcClient = RpcClient(Cluster.MAINNET.endpoint, BlockchainSdkRetrofitBuilder.interceptors)
 
-    private fun devNet(): RpcClient = RpcClient(Cluster.DEVNET.endpoint)
+    private fun devNet(): RpcClient = RpcClient(Cluster.DEVNET.endpoint, BlockchainSdkRetrofitBuilder.interceptors)
 
-    private fun testNet(): RpcClient = RpcClient(Cluster.TESTNET.endpoint)
+    private fun testNet(): RpcClient = RpcClient(Cluster.TESTNET.endpoint, BlockchainSdkRetrofitBuilder.interceptors)
 
     private fun quickNode(cred: QuickNodeCredentials): RpcClient {
         val host = "https://${cred.subdomain}.solana-mainnet.discover.quiknode.pro/${cred.apiKey}"
@@ -63,6 +64,6 @@ class SolanaRpcClientBuilder {
     }
 
     private fun createInterceptor(key: String, value: String): List<Interceptor> {
-        return listOf(AddHeaderInterceptor(mapOf(key to value)))
+        return listOf(AddHeaderInterceptor(mapOf(key to value))) + BlockchainSdkRetrofitBuilder.interceptors
     }
 }
