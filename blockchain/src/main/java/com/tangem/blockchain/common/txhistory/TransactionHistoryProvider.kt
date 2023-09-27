@@ -7,9 +7,5 @@ interface TransactionHistoryProvider {
 
     suspend fun getTransactionHistoryState(address: String): TransactionHistoryState
 
-    suspend fun getTransactionsHistory(
-        address: String,
-        page: Int,
-        pageSize: Int,
-    ): Result<PaginationWrapper<TransactionHistoryItem>>
+    suspend fun getTransactionsHistory(request: TransactionHistoryRequest): Result<PaginationWrapper<TransactionHistoryItem>>
 }

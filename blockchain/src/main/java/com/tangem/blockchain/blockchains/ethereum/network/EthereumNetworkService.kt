@@ -1,10 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.Token
-import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
@@ -47,7 +44,12 @@ class EthereumNetworkService(
                     blockchairEthNetworkProvider?.getTransactions(address, tokens)
                 }
 
-                val balance = balanceResponseDeferred.await().extractResult().parseAmount(decimals)
+                val balance = balanceResponseDeferred.await().extractResult().let { balanceResponse ->
+                    requireNotNull(
+                        value = EthereumUtils.parseEthereumDecimal(value = balanceResponse, decimalsCount = decimals),
+                        lazyMessage = { "Error while parsing balance. Balance response: $balanceResponse" }
+                    )
+                }
                 val txCount = txCountResponseDeferred.await().extractResult().responseToBigInteger().toLong()
                 val pendingTxCount = pendingTxCountResponseDeferred.await().extractResult()
                     .responseToBigInteger().toLong()
@@ -74,7 +76,7 @@ class EthereumNetworkService(
         }
     }
 
-    override suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<Amount> {
+    override suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<BigDecimal> {
         return try {
             val requestData = EthereumTokenAllowanceRequestData(ownerAddress, token.contractAddress, spenderAddress)
             val amountValue = multiJsonRpcProvider.performRequest(
@@ -82,7 +84,7 @@ class EthereumNetworkService(
                 data = requestData
             ).extractResult().parseAmount(token.decimals)
 
-            Result.Success(Amount(token, amountValue))
+            Result.Success(amountValue)
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
@@ -144,7 +146,9 @@ class EthereumNetworkService(
             }.toMap()
             val tokenBalanceResponses = tokenBalancesDeferred.mapValues { it.value.await() }
             tokenBalanceResponses.mapValues {
-                it.value.extractResult().parseAmount(it.key.decimals)
+                requireNotNull(EthereumUtils.parseEthereumDecimal(it.value.extractResult(), it.key.decimals)) {
+                    "Failed to parse token balance. Token: ${it.key.name}. Balance: ${it.value.extractResult()}"
+                }
             }
         }
     }
@@ -157,18 +161,9 @@ class EthereumNetworkService(
     override suspend fun getGasPrice(): Result<BigInteger> {
         return try {
             coroutineScope {
-                val gasPriceResponses = multiJsonRpcProvider.providers.map {
-                    async { it.getGasPrice() }
-                }.map { it.await() }
-
-                val gasPrice = gasPriceResponses
-                    .map { result -> result.checkBodyForErrors() }
-                    .mapNotNull { (it as? Result.Success)?.data?.responseToBigInteger() }
-                    .maxOrNull()
-                // all responses have failed
-                    ?: return@coroutineScope Result.Failure(
-                        (gasPriceResponses.first() as Result.Failure).error
-                    )
+                val gasPrice = multiJsonRpcProvider.performRequest(
+                    EthereumJsonRpcProvider::getGasPrice,
+                ).extractResult().responseToBigInteger()
 
                 Result.Success(gasPrice)
             }
