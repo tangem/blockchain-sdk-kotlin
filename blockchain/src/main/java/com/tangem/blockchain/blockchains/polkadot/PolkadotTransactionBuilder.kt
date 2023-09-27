@@ -61,7 +61,7 @@ class PolkadotTransactionBuilder(blockchain: Blockchain) {
         destinationAddress: String,
         amount: Amount,
         context: ExtrinsicContext,
-        signedPayload: ByteArray
+        signedPayload: ByteArray,
     ): ByteArray {
         val txBuffer = ByteArrayOutputStream()
         val codecWriter = ScaleCodecWriter(txBuffer)
@@ -109,6 +109,9 @@ internal class DummyPolkadotTransactionSigner : TransactionSigner {
     private val privateKey = CryptoUtils.generateRandomBytes(32)
 
     override suspend fun sign(hashes: List<ByteArray>, publicKey: Wallet.PublicKey): CompletionResult<List<ByteArray>> {
+/* [REDACTED_TODO_COMMENT]
+* [REDACTED_JIRA]
+         */
         val signResults = hashes.map { it.sign(privateKey, EllipticCurve.Ed25519) }
         return CompletionResult.Success(signResults)
     }
