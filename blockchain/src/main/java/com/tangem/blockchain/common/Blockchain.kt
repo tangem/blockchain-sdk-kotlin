@@ -3,7 +3,7 @@ package com.tangem.blockchain.common
 import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
-import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
+import com.tangem.blockchain.blockchains.cardano.CardanoAddressServiceFacade
 import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
@@ -21,8 +21,6 @@ import com.tangem.blockchain.common.address.MultisigAddressProvider
 import com.tangem.blockchain.common.address.TrustWalletAddressService
 import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.common.card.EllipticCurve
-import com.tangem.crypto.hdWallet.BIP44
-import com.tangem.crypto.hdWallet.DerivationNode
 import com.tangem.crypto.hdWallet.DerivationPath
 
 enum class Blockchain(
@@ -193,7 +191,7 @@ enum class Blockchain(
             -> EthereumAddressService()
 
             RSK -> RskAddressService()
-            Cardano -> CardanoAddressService(this)
+            Cardano -> CardanoAddressServiceFacade()
             XRP -> XrpAddressService()
             Binance -> BinanceAddressService()
             BinanceTestnet -> BinanceAddressService(true)
@@ -283,7 +281,7 @@ enum class Blockchain(
         RavencoinTestnet -> "https://testnet.ravencoin.network/"
         CosmosTestnet -> "https://explorer.theta-testnet.polypore.xyz/accounts/"
         Cosmos -> "https://www.mintscan.io/cosmos/account/"
-        TerraV1 -> "https://finder.terra.money/classic/"
+        TerraV1 -> "https://atomscan.com/terra/accounts/"
         TerraV2 -> "https://terrasco.pe/mainnet/"
         Cronos -> "https://cronoscan.com/"
         AlephZero -> "https://alephzero.subscan.io/"
@@ -321,6 +319,7 @@ enum class Blockchain(
             Tezos -> "$baseUrl$address"
             Kaspa -> "${baseUrl}addresses/$address"
             Cosmos -> "${baseUrl}$address"
+            TerraV1 -> "${baseUrl}$address"
             CosmosTestnet -> "${baseUrl}$address"
             Near, NearTestnet -> "${baseUrl}accounts/$address"
             else -> fullUrl
@@ -399,7 +398,11 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
-            -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519Slip0010)
+            -> listOf(
+                EllipticCurve.Secp256k1,
+                EllipticCurve.Ed25519,
+                EllipticCurve.Ed25519Slip0010
+            )
 
             XRP,
             -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
@@ -509,10 +512,13 @@ enum class Blockchain(
     fun isFeeApproximate(amountType: AmountType): Boolean = when (this) {
         Fantom, FantomTestnet,
         Tron, TronTestnet,
+        Avalanche, AvalancheTestnet,
+        EthereumPow,
         Cronos,
         -> amountType is AmountType.Token
 
         Arbitrum, ArbitrumTestnet,
+        Stellar, StellarTestnet,
         Optimism, OptimismTestnet,
         TON, TONTestnet,
         -> true
@@ -554,7 +560,5 @@ enum class Blockchain(
             .filter {
                 it.isTestnet() == isTestnet && it.getSupportedCurves().contains(EllipticCurve.Ed25519)
             }
-
     }
-
 }

@@ -50,8 +50,13 @@ class CardanoTransactionBuilder {
         // WalletCore used here `.ed25519Cardano` curve with 128 bytes publicKey.
         // Calculated as: chainCode + secondPubKey + chainCode
         // The number of bytes in a Cardano public key (two ed25519 public key + chain code).
-        // We should add dummy chain code in publicKey
-        val publicKey = signatureInfo.publicKey + ByteArray(32 * 3)
+        // We should add dummy chain code in publicKey if we use old 32 byte key to get 128 bytes in total
+        val publicKey = if (signatureInfo.publicKey.isExtendedPublicKey()) {
+            signatureInfo.publicKey
+        } else {
+            signatureInfo.publicKey + ByteArray(32 * 3)
+        }
+
         publicKeys.add(publicKey)
 
         val compileWithSignatures = TransactionCompiler.compileWithSignatures(
@@ -116,4 +121,7 @@ class CardanoTransactionBuilder {
 
         return input
     }
+
+    private fun ByteArray.isExtendedPublicKey() = this.size == 128
+
 }
