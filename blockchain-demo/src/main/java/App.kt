@@ -1,6 +1,8 @@
 package com.tangem.blockchain_demo
 
 import android.app.Application
+import com.chuckerteam.chucker.api.ChuckerInterceptor
+import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
 
 class App : Application() {
 
@@ -8,5 +10,6 @@ class App : Application() {
         super.onCreate()
 
         System.loadLibrary("TrustWalletCore")
+        BlockchainSdkRetrofitBuilder.interceptors = listOf(ChuckerInterceptor(this))
     }
 }
