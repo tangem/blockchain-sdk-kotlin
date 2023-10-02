@@ -52,7 +52,7 @@ class EthereumUtils {
             }
 
             return balanceData
-                .toHexString()
+                .toHexString(prefix = "")
                 .toBigIntegerOrNull(radix = 16)
                 .toBigDecimalOrDefault()
                 .movePointLeft(decimalsCount)
