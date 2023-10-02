@@ -100,6 +100,7 @@ class EthereumJsonRpcProvider(
         //5c9b5c6313a3746a1246d07bbedc0292da99f8e2000000000000000000000000e4c4693526e4e3a26f36311d3f80a193b2bae906
         data = buildString {
             append(tokenAllowanceSignature)
+            append(CALL_DATA_SEPARATOR)
             append(ownerAddress.substring(2))
             append(CALL_DATA_SEPARATOR)
             append(spenderAddress.substring(2))
@@ -114,7 +115,7 @@ class EthereumJsonRpcProvider(
         otp: ByteArray,
         otpCounter: Int,
     ): EthCallObject {
-        val data: String = "0x" + EthereumUtils.createProcessData(
+        val data: String = EthereumUtils.createProcessData(
             cardAddress,
             amount.movePointLeft(decimals).toBigInteger(),
             otp,
@@ -141,7 +142,7 @@ class EthereumJsonRpcProvider(
     }
 
     companion object {
-        private val tokenAllowanceSignature = "allowance(address,address)".toByteArray().toKeccak().copyOf(4)
+        private val tokenAllowanceSignature = "allowance(address,address)".toByteArray().toKeccak().copyOf(4).toHexString()
         private const val CALL_DATA_SEPARATOR = "000000000000000000000000"
     }
 }
