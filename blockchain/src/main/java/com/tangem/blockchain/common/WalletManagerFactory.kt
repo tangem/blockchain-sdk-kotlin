@@ -221,6 +221,10 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
                 ChiaWalletManagerAssembly
             }
 
+            Blockchain.Near, Blockchain.NearTestnet -> {
+                NearWalletManagerAssembly
+            }
+
             Blockchain.Unknown -> {
                 throw IllegalStateException("Unsupported blockchain")
             }
