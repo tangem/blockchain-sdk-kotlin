@@ -53,6 +53,8 @@ enum class Blockchain(
     Fantom("FTM", "FTM", "Fantom"),
     FantomTestnet("FTM/test", "FTM", "Fantom Testnet"),
     Litecoin("LTC", "LTC", "Litecoin"),
+    Near("NEAR", "NEAR", "NEAR Protocol"),
+    NearTestnet("NEAR", "NEAR", "NEAR Protocol Testnet"),
     Polkadot("Polkadot", "DOT", "Polkadot"),
     PolkadotTestnet("Polkadot", "WND", "Polkadot Westend Testnet"),
     Kava("KAVA", "KAVA", "Kava EVM"),
@@ -96,6 +98,8 @@ enum class Blockchain(
 
     fun decimals(): Int = when (this) {
         Unknown -> 0
+        Near, NearTestnet,
+        -> 5
         Cardano,
         XRP,
         Tezos,
@@ -195,7 +199,9 @@ enum class Blockchain(
             Stellar, StellarTestnet -> StellarAddressService()
             Solana, SolanaTestnet -> SolanaAddressService()
             Tezos -> TezosAddressService()
-            TON, TONTestnet, Cosmos, CosmosTestnet, TerraV1, TerraV2 -> TrustWalletAddressService(blockchain = this)
+            TON, TONTestnet, Cosmos, CosmosTestnet, TerraV1, TerraV2, Near, NearTestnet,
+            -> TrustWalletAddressService(blockchain = this)
+
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
             Chia, ChiaTestnet -> ChiaAddressService(this)
@@ -241,6 +247,8 @@ enum class Blockchain(
         Fantom -> "https://ftmscan.com/"
         FantomTestnet -> "https://testnet.ftmscan.com/"
         Litecoin -> "https://blockchair.com/litecoin/"
+        Near -> "https://explorer.near.org/"
+        NearTestnet -> "https://explorer.testnet.near.org/"
         Polkadot -> "https://polkadot.subscan.io/"
         PolkadotTestnet -> "https://westend.subscan.io/"
         Kusama -> "https://kusama.subscan.io/"
@@ -313,6 +321,7 @@ enum class Blockchain(
             Cosmos -> "${baseUrl}$address"
             TerraV1 -> "${baseUrl}$address"
             CosmosTestnet -> "${baseUrl}$address"
+            Near, NearTestnet -> "${baseUrl}accounts/$address"
             else -> fullUrl
         }
     }
@@ -347,6 +356,7 @@ enum class Blockchain(
             CosmosTestnet -> "https://discord.com/channels/669268347736686612/953697793476821092"
             AlephZeroTestnet -> "https://faucet.test.azero.dev/"
             ChiaTestnet -> "https://xchdev.com/#!faucet.md"
+            NearTestnet -> "https://near-faucet.io/"
             else -> null
         }
     }
@@ -379,6 +389,7 @@ enum class Blockchain(
             AlephZero, AlephZeroTestnet -> AlephZeroTestnet
             OctaSpace, OctaSpaceTestnet -> OctaSpaceTestnet
             Chia, ChiaTestnet -> ChiaTestnet
+            Near, NearTestnet -> NearTestnet
             else -> null
         }
     }
@@ -428,7 +439,7 @@ enum class Blockchain(
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
-            TON, TONTestnet,
+            TON, TONTestnet, Near, NearTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
 
             Cardano -> listOf(EllipticCurve.Ed25519) //todo until cardano support in wallet 2
