@@ -33,6 +33,7 @@ sealed class BlockchainSdkError(
         messageResId = null,
         cause = throwable,
     )
+
     object FailedToBuildTx : BlockchainSdkError(7, "Failed to build transaction")
 
     object SignatureCountNotMatched : BlockchainSdkError(100)
@@ -40,7 +41,7 @@ sealed class BlockchainSdkError(
     sealed class Solana(
         subCode: Int,
         customMessage: String? = null,
-        throwable: Throwable? = null
+        throwable: Throwable? = null,
     ) : BlockchainSdkError(
         code = ERROR_CODE_SOLANA + subCode,
         customMessage = customMessage ?: (ERROR_CODE_SOLANA + subCode).toString(),
@@ -109,6 +110,22 @@ sealed class BlockchainSdkError(
         class Api(code: Int, message: String) : Cosmos(subCode = code, customMessage = message)
     }
 
+    sealed class NearException(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_NEAR + subCode,
+        customMessage = customMessage ?: "${ERROR_CODE_NEAR + subCode}",
+        messageResId = null,
+        cause = throwable,
+    ) {
+        class Api(val name: String, code: Int, message: String) : NearException(
+            subCode = code,
+            customMessage = message
+        )
+    }
+
     class WalletCoreException(
         customMessage: String? = null,
         throwable: Throwable? = null,
@@ -144,6 +161,7 @@ sealed class BlockchainSdkError(
         const val ERROR_CODE_COSMOS = 5000
         const val ERROR_CODE_WALLET_CORE = 6000
         const val ERROR_CODE_CHIA = 7000
+        const val ERROR_CODE_NEAR = 8000
     }
 }
 
