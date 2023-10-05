@@ -13,7 +13,7 @@ interface NearNetworkProvider : NetworkProvider {
 
     suspend fun getNetworkStatus(): Result<NetworkStatusResult>
 
-    suspend fun getAccessKey(accountId: String): Result<AccessKeyResult>
+    suspend fun getAccessKey(accountId: NearGetAccessKeyParams): Result<AccessKeyResult>
 
     suspend fun getAccount(address: String): Result<ViewAccountResult>
 
