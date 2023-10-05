@@ -22,6 +22,10 @@ class TrustWalletAddressService(
     }
 
     override fun validate(address: String): Boolean {
+        // TODO consider address validation due to the possibility of having human readable addresses
+        if (coinType == CoinType.NEAR) {
+            return true
+        }
         val anyAddress: AnyAddress? = try {
             AnyAddress(address, coinType)
         } catch (_: Exception) {
