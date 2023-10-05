@@ -48,9 +48,12 @@ class NearNetworkService(
         }
     }
 
-    suspend fun getAccessKey(address: String): Result<AccessKey> {
-        val accessKeyResult = multiJsonRpcProvider.performRequest(NearNetworkProvider::getAccessKey, address)
-            .successOr { return it }
+    suspend fun getAccessKey(address: String, publicKeyEncodedToBase58: String): Result<AccessKey> {
+        val accessKeyResult =
+            multiJsonRpcProvider.performRequest(
+                request = NearNetworkProvider::getAccessKey,
+                data = NearGetAccessKeyParams(address, publicKeyEncodedToBase58)
+            ).successOr { return it }
 
         val accessKey = AccessKey(accessKeyResult.nonce, accessKeyResult.blockHeight, accessKeyResult.blockHash)
         return Result.Success(accessKey)
