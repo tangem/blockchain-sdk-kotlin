@@ -11,14 +11,13 @@ suspend fun <T> retryIO(
     initialDelay: Long = 100,
     maxDelay: Long = 1000,
     factor: Double = 2.0,
-    block: suspend () -> T
+    block: suspend () -> T,
 ): T {
     var currentDelay = initialDelay
     repeat(times - 1) {
         try {
             return block()
         } catch (e: IOException) {
-
 
         }
         delay(currentDelay)
@@ -42,6 +41,10 @@ inline fun <T> Result<T>.successOr(failureClause: (Result.Failure) -> T): T {
         is Result.Success -> this.data
         is Result.Failure -> failureClause(this)
     }
+}
+
+fun Result.Failure.toSimpleFailure(): SimpleResult.Failure {
+    return SimpleResult.Failure(error)
 }
 
 sealed class SimpleResult {
