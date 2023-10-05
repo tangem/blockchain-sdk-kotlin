@@ -9,6 +9,9 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.*
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.hexToBytes
+import com.tangem.crypto.encodeToBase58String
+import wallet.core.jni.Base58
 import java.math.BigDecimal
 
 /**
@@ -72,7 +75,7 @@ class NearWalletManager(
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val accessKey = networkService.getAccessKey(wallet.address)
+        val accessKey = networkService.getAccessKey(wallet.address, wallet.publicKey.blockchainKey.encodeToBase58String())
             .successOr { return it.toSimpleFailure() }
         val destinationAccount = networkService.getAccount(transactionData.destinationAddress)
             .successOr { return it.toSimpleFailure() }
