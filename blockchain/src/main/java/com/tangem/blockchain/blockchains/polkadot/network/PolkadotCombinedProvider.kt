@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.polkadot.network
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.tangem.blockchain.blockchains.polkadot.polkaj.extensions.toBigDecimal
+import com.tangem.blockchain.blockchains.polkadot.extensions.toBigDecimal
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
