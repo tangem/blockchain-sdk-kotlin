@@ -81,9 +81,9 @@ class NearJsonRpcNetworkProvider(
         }
     }
 
-    override suspend fun getAccessKey(accountId: String): Result<AccessKeyResult> {
+    override suspend fun getAccessKey(params: NearGetAccessKeyParams): Result<AccessKeyResult> {
         return try {
-            postMethod(NearMethod.AccessKey.View(accountId), accessKeyResultAdapter).toResult()
+            postMethod(NearMethod.AccessKey.View(params.address, params.publicKeyEncodedToBase58), accessKeyResultAdapter).toResult()
         } catch (ex: Exception) {
             Result.Failure(ex.toBlockchainSdkError())
         }
