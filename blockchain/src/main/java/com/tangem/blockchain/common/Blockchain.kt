@@ -326,9 +326,10 @@ enum class Blockchain(
         }
     }
 
-    fun getExploreTxUrl(transaction: String): String {
-        val url = getBaseExploreUrl() + "tx/$transaction"
+    fun getExploreTxUrl(transactionHash: String): String {
+        val url = getBaseExploreUrl() + "tx/$transactionHash"
         return when (this) {
+            Bitcoin, BitcoinTestnet -> "${getBaseExploreUrl()}transaction/$transactionHash"
             SolanaTestnet -> "$url/?cluster=devnet"
             else -> url
         }
