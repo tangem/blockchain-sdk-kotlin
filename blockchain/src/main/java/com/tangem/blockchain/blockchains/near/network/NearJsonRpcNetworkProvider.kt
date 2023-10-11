@@ -61,7 +61,7 @@ class NearJsonRpcNetworkProvider(
     private val txStatusAdapter = moshi.adapter<NearResponse<TransactionStatusResult>>(
         Types.newParameterizedType(
             NearResponse::class.java,
-            SendTransactionAsyncResult::class.java,
+            TransactionStatusResult::class.java,
         )
     )
 
@@ -105,12 +105,9 @@ class NearJsonRpcNetworkProvider(
         }
     }
 
-    override suspend fun getTransactionStatus(
-        txHash: String,
-        senderAccountId: String,
-    ): Result<TransactionStatusResult> {
+    override suspend fun getTransactionStatus(params: NearGetTxParams): Result<TransactionStatusResult> {
         return try {
-            postMethod(NearMethod.Transaction.Status(txHash, senderAccountId), txStatusAdapter).toResult()
+            postMethod(NearMethod.Transaction.Status(params.txHash, params.senderId), txStatusAdapter).toResult()
         } catch (ex: Exception) {
             Result.Failure(ex.toBlockchainSdkError())
         }

@@ -73,14 +73,14 @@ internal sealed interface NearMethod {
 
     sealed class GasPrice : NearMethod {
 
-        class BlockHeight(val blockHeight: Long) : GasPrice() {
+        class BlockHeight(private val blockHeight: Long) : GasPrice() {
             override fun asRequestBody(): JsonRPCRequest = JsonRPCRequest(
                 method = "gas_price",
                 params = arrayOf(blockHeight),
             )
         }
 
-        class BlockHash(val blockHash: String) : GasPrice() {
+        class BlockHash(private val blockHash: String) : GasPrice() {
             override fun asRequestBody(): JsonRPCRequest = JsonRPCRequest(
                 method = "gas_price",
                 params = arrayOf(blockHash),
@@ -97,14 +97,14 @@ internal sealed interface NearMethod {
 
     sealed class Transaction : NearMethod {
 
-        class SendTxAsync(val signedTxBase64: String) : Transaction() {
+        class SendTxAsync(private val signedTxBase64: String) : Transaction() {
             override fun asRequestBody(): JsonRPCRequest = JsonRPCRequest(
-                method = "broadcast_tx_commit",// поменять на commit
+                method = "broadcast_tx_async",
                 params = arrayOf(signedTxBase64),
             )
         }
 
-        class Status(val txHash: String, val senderAccountId: String) : Transaction() {
+        class Status(private val txHash: String, private val senderAccountId: String) : Transaction() {
             override fun asRequestBody(): JsonRPCRequest = JsonRPCRequest(
                 method = "tx",
                 params = arrayOf(txHash, senderAccountId),
