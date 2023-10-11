@@ -107,23 +107,23 @@ typealias SendTransactionAsyncResult = String
 @JsonClass(generateAdapter = true)
 data class TransactionStatusResult(
     @Json(name = "status") val status: Status,
-    // @Json(name = "transaction") val transaction: Transaction?,
+    @Json(name = "transaction") val transaction: Transaction,
     // @Json(name = "transaction_outcome") val transactionOutcome: Outcome,
     // @Json(name = "receipts_outcome") val receiptsOutcome: Outcome,
 ) {
 
     @JsonClass(generateAdapter = true)
     data class Status(
-        @Json(name = "SuccessValue") val successValue: String,
+        @Json(name = "SuccessValue") val successValue: String?,
     )
 
     @JsonClass(generateAdapter = true)
     data class Transaction(
         @Json(name = "signer_id") val signerId: String,
         @Json(name = "public_key") val publicKey: String,
-        @Json(name = "nonce") val nonce: Int,
+        @Json(name = "nonce") val nonce: Long,
         @Json(name = "receiver_id") val receiverId: String,
-        @Json(name = "actions") val actions: List<Any>,
+        // @Json(name = "actions") val actions: List<Any>,
         @Json(name = "signature") val signature: String,
         @Json(name = "hash") val hash: String,
     )
