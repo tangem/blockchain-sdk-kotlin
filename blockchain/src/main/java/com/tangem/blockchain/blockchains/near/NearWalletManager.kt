@@ -9,9 +9,7 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.*
 import com.tangem.common.CompletionResult
-import com.tangem.common.extensions.hexToBytes
 import com.tangem.crypto.encodeToBase58String
-import wallet.core.jni.Base58
 import java.math.BigDecimal
 
 /**
@@ -36,6 +34,8 @@ class NearWalletManager(
             }
             is Result.Failure -> updateError(walletInfoResult.error)
         }
+
+        updateTransactions()
     }
 
     private fun updateWallet(amountValue: BigDecimal) {
@@ -46,6 +46,15 @@ class NearWalletManager(
         } else {
             // should we attach the reserve in that situation ?
             wallet.setReserveValue(amountValue)
+        }
+    }
+
+    private suspend fun updateTransactions() {
+        wallet.recentTransactions.firstOrNull()?.let {
+            val status = networkService.getStatus(requireNotNull(it.hash), it.sourceAddress).successOr { return }
+            if (status.isSuccessful) {
+                it.status = TransactionStatus.Confirmed
+            }
         }
     }
 
@@ -97,14 +106,15 @@ class NearWalletManager(
                     nonce = accessKey.nextNonce,
                     blockHash = accessKey.blockHash,
                 )
-                when (val sendResult = networkService.sendTransaction(txToSend.encodeBase64NoWrap())) {
+                when (val sendResultHash = networkService.sendTransaction(txToSend.encodeBase64NoWrap())) {
                     is Result.Success -> {
-                        transactionData.hash = sendResult.data.hash
-                        wallet.addOutgoingTransaction(transactionData)
+                        transactionData.hash = sendResultHash.data
+                        wallet.addOutgoingTransaction(transactionData = transactionData, hashToLowercase = false)
+
                         SimpleResult.Success
                     }
                     is Result.Failure -> {
-                        sendResult.toSimpleFailure()
+                        sendResultHash.toSimpleFailure()
                     }
                 }
             }
