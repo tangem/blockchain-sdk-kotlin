@@ -67,19 +67,19 @@ internal class BitcoinTransactionHistoryProvider(
     }
 
     private fun GetAddressResponse.Transaction.toTransactionHistoryItem(walletAddress: String): TransactionHistoryItem {
-        val isIncoming = vin.any { !it.addresses.contains(walletAddress) }
+        val isOutgoing = vin.any { it.addresses.contains(walletAddress) }
         return TransactionHistoryItem(
             txHash = txid,
             timestamp = TimeUnit.SECONDS.toMillis(blockTime.toLong()),
             direction = extractTransactionDirection(
-                isIncoming = isIncoming,
+                isIncoming = !isOutgoing,
                 tx = this,
                 walletAddress = walletAddress
             ),
             status = if (confirmations > 0) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed,
             type = TransactionType.Transfer,
             amount = extractAmount(
-                isIncoming = isIncoming,
+                isIncoming = !isOutgoing,
                 tx = this,
                 walletAddress = walletAddress,
                 blockchain = blockchain,
