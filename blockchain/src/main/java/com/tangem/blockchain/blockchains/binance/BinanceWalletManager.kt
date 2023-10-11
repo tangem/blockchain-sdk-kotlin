@@ -21,7 +21,7 @@ class BinanceWalletManager(
     override val currentHost: String
         get() = networkProvider.host
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         val result = networkProvider.getInfo(wallet.address)
         when (result) {
             is Result.Success -> updateWallet(result.data)

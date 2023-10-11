@@ -30,7 +30,7 @@ class XrpWalletManager(
 
     private val blockchain = wallet.blockchain
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         when (val result = networkProvider.getInfo(wallet.address)) {
             is Result.Success -> updateWallet(result.data)
             is Result.Failure -> updateError(result.error)
