@@ -123,9 +123,15 @@ data class NearGasPrice(
 
 data class NearSentTransaction(
     val hash: String,
+    val isSuccessful: Boolean
 )
 
 class NearGetAccessKeyParams(
     val address: String,
     val publicKeyEncodedToBase58: String
+)
+
+class NearGetTxParams(
+    val txHash: String,
+    val senderId: String
 )
