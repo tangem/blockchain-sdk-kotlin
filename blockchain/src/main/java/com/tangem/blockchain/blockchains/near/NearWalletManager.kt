@@ -23,7 +23,7 @@ class NearWalletManager(
     override val currentHost: String
         get() = networkService.host
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         when (val walletInfoResult = networkService.getAccount(wallet.address)) {
             is Result.Success -> {
                 when (val account = walletInfoResult.data) {
