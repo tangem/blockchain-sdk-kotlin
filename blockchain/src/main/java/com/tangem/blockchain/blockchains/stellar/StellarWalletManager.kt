@@ -25,7 +25,7 @@ class StellarWalletManager(
     private var baseReserve = BASE_RESERVE
     private var sequence = 0L
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         when (val result = networkProvider.getInfo(wallet.address)) {
             is Result.Failure -> updateError(result.error)
             is Result.Success -> updateWallet(result.data)
