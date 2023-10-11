@@ -32,7 +32,7 @@ class KaspaWalletManager(
     private val blockchain = wallet.blockchain
     override val dustValue: BigDecimal = FEE_PER_UNSPENT_OUTPUT.toBigDecimal()
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         when (val response = networkProvider.getInfo(wallet.address)) {
             is Result.Success -> updateWallet(response.data)
             is Result.Failure -> updateError(response.error)

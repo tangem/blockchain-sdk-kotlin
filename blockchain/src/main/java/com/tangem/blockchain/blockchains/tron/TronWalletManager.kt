@@ -39,7 +39,7 @@ class TronWalletManager(
 
     private val dummySigner = DummySigner()
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         val transactionIds = wallet.recentTransactions
             .filter { it.status == TransactionStatus.Unconfirmed }
             .mapNotNull { it.hash }
