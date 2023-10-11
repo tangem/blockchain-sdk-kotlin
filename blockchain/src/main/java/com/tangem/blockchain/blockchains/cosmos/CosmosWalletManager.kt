@@ -40,7 +40,7 @@ class CosmosWalletManager(
         get() = networkService.host
 
     override val allowsFeeSelection: FeeSelectionState = cosmosChain.allowsFeeSelection
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         val unconfirmedTxHashes = wallet.recentTransactions
             .filter { it.status == TransactionStatus.Unconfirmed }
             .mapNotNull { it.hash }
