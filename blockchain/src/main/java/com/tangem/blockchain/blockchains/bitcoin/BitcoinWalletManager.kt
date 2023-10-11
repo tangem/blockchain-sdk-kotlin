@@ -45,7 +45,7 @@ open class BitcoinWalletManager(
     override val currentHost: String
         get() = networkProvider.baseUrl
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         coroutineScope {
             val addressInfos = mutableListOf<BitcoinAddressInfo>()
             val responsesDeferred =
