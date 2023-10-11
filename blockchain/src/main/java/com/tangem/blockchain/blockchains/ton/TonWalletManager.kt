@@ -37,7 +37,7 @@ class TonWalletManager(
     override val currentHost: String
         get() = networkService.host
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         when (val walletInfoResult = networkService.getWalletInformation(wallet.address)) {
             is Result.Failure -> updateError(walletInfoResult.error)
             is Result.Success -> updateWallet(walletInfoResult.data)

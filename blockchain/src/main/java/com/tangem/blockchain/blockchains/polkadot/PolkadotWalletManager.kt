@@ -50,7 +50,7 @@ class PolkadotWalletManager(
     override val currentHost: String
         get() = networkProvider.baseUrl
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         val amount = networkProvider.getBalance(wallet.address).successOr {
             wallet.removeAllTokens()
             throw (it.error as BlockchainSdkError)
