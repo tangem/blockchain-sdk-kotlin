@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.extensions.DebouncedInvoke
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
@@ -28,7 +29,18 @@ abstract class WalletManager(
 
     open val dustValue: BigDecimal? = null
 
-    abstract suspend fun update()
+    private val updateDebounced = DebouncedInvoke()
+
+    /**
+     * Update wallet state. [forceUpdate] to skip debounce
+     */
+    suspend fun update(forceUpdate: Boolean = false) {
+        updateDebounced.invokeOnExpire(forceUpdate) {
+            updateInternal()
+        }
+    }
+
+    internal abstract suspend fun updateInternal()
 
     protected open fun updateRecentTransactionsBasic(transactions: List<BasicTransactionData>) {
         val (confirmedTransactions, unconfirmedTransactions) =
