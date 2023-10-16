@@ -40,7 +40,7 @@ class NearNetworkService(
                 val nearError = result.mapToNearError() ?: return result
 
                 return if (nearError is NearError.UnknownAccount) {
-                    Result.Success(NearAccount.Empty)
+                    Result.Success(NearAccount.NotInitialized)
                 } else {
                     result
                 }
