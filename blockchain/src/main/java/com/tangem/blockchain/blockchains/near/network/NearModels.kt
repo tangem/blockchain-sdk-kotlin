@@ -90,7 +90,7 @@ sealed class NearAccount {
     /**
      * An object corresponding to a non-existent account
      */
-    object Empty : NearAccount()
+    object NotInitialized : NearAccount()
 }
 
 data class NearNetworkStatus(
