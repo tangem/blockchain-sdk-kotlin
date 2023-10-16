@@ -29,7 +29,7 @@ class NearWalletManager(
             is Result.Success -> {
                 when (val account = walletInfoResult.data) {
                     is NearAccount.Full -> updateWallet(account.near.value)
-                    NearAccount.Empty -> updateWallet(BigDecimal.ZERO)
+                    NearAccount.NotInitialized -> updateWallet(BigDecimal.ZERO)
                 }
             }
             is Result.Failure -> updateError(walletInfoResult.error)
@@ -74,7 +74,7 @@ class NearWalletManager(
                 val feeAmount = Amount(NearAmount(feeYocto).value, wallet.blockchain)
                 Result.Success(TransactionFee.Single(Fee.Common(feeAmount)))
             }
-            NearAccount.Empty -> {
+            NearAccount.NotInitialized -> {
                 val feeYocto = protocolConfig.calculateSendFundsFee(gasPrice) +
                     protocolConfig.calculateCreateAccountFee(gasPrice)
                 val feeAmount = Amount(NearAmount(feeYocto).value, wallet.blockchain)
@@ -88,7 +88,7 @@ class NearWalletManager(
             .successOr { return it.toSimpleFailure() }
         val destinationAccount = networkService.getAccount(transactionData.destinationAddress)
             .successOr { return it.toSimpleFailure() }
-        val buildWithAccountCreation = destinationAccount is NearAccount.Empty
+        val buildWithAccountCreation = destinationAccount is NearAccount.NotInitialized
 
         val txToSign = txBuilder.buildForSign(
             transaction = transactionData,
@@ -122,5 +122,9 @@ class NearWalletManager(
                 SimpleResult.Failure(signatureResult.error.toBlockchainSdkError())
             }
         }
+    }
+
+    suspend fun getAccount(address: String) : Result<NearAccount> {
+        return networkService.getAccount(address)
     }
 }
