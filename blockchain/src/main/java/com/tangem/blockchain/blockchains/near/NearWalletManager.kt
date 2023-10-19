@@ -71,14 +71,16 @@ class NearWalletManager(
         val protocolConfig = networkService.getProtocolConfig().successOr { return it }
         val gasPrice = networkService.getGas(blockHash = null).successOr { return it }
 
+        val isImplicitAccount = destination.length == IMPLICIT_ACCOUNT_ADDRESS_LENGTH
+
         return when (destinationAccount) {
             is NearAccount.Full -> {
-                val feeYocto = protocolConfig.calculateSendFundsFee(gasPrice)
+                val feeYocto = protocolConfig.calculateSendFundsFee(gasPrice, isImplicitAccount)
                 val feeAmount = Amount(NearAmount(feeYocto).value, wallet.blockchain)
                 Result.Success(TransactionFee.Single(Fee.Common(feeAmount)))
             }
             NearAccount.NotInitialized -> {
-                val feeYocto = protocolConfig.calculateSendFundsFee(gasPrice) +
+                val feeYocto = protocolConfig.calculateSendFundsFee(gasPrice, isImplicitAccount) +
                     protocolConfig.calculateCreateAccountFee(gasPrice)
                 val feeAmount = Amount(NearAmount(feeYocto).value, wallet.blockchain)
                 Result.Success(TransactionFee.Single(Fee.Common(feeAmount)))
@@ -129,5 +131,9 @@ class NearWalletManager(
 
     suspend fun getAccount(address: String) : Result<NearAccount> {
         return networkService.getAccount(address)
+    }
+
+    companion object {
+        private const val IMPLICIT_ACCOUNT_ADDRESS_LENGTH = 64
     }
 }
