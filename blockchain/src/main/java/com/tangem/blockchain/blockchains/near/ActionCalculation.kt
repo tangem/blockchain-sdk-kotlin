@@ -9,28 +9,30 @@ import com.tangem.blockchain.blockchains.near.network.api.ProtocolConfigResult
  * @see <a href="https://docs.near.org/concepts/basics/transactions/gas#the-cost-of-common-actions">Docs</a>
 [REDACTED_AUTHOR]
  */
-internal fun ProtocolConfigResult.calculateSendFundsFee(gasPrice: NearGasPrice): Yocto {
-    val transferConfig = runtimeConfig.transactionCosts.actionCreationConfig.transferCost
-    val receiptConfig = runtimeConfig.transactionCosts.actionReceiptCreationConfig
+internal fun ProtocolConfigResult.calculateSendFundsFee(gasPrice: NearGasPrice, isImplicitAccount: Boolean): Yocto {
+    with(runtimeConfig.transactionCosts) {
+        val receiptCreationCost = actionReceiptCreationConfig.cost
 
-    val actionCost = (transferConfig.sendNotSir + receiptConfig.sendNotSir).toBigInteger()
-        .times(gasPrice.yoctoGasPrice.value)
+        val transferCost = actionCreationConfig.transferCost.cost
 
-    val executionCost = (transferConfig.execution + receiptConfig.execution).toBigInteger()
-        .times(gasPrice.yoctoGasPrice.value)
+        val additionalCosts = if (isImplicitAccount) {
+            actionCreationConfig.createAccountCost.cost + actionCreationConfig.addKeyCost.fullAccessCost.cost
+        } else {
+            0
+        }
 
-    return Yocto(actionCost + executionCost)
+        val gas = (receiptCreationCost + transferCost + additionalCosts).toBigInteger()
+        val gasPriceValue = gasPrice.yoctoGasPrice.value
+
+        return Yocto(gas * gasPriceValue)
+    }
 }
 
 internal fun ProtocolConfigResult.calculateCreateAccountFee(gasPrice: NearGasPrice): Yocto {
-    val createAccount = runtimeConfig.transactionCosts.actionCreationConfig.createAccountCost
-    val receiptConfig = runtimeConfig.transactionCosts.actionReceiptCreationConfig
+    val createAccount = runtimeConfig.transactionCosts.actionCreationConfig.createAccountCost.cost
 
-    val actionCost = (createAccount.sendNotSir + receiptConfig.sendNotSir).toBigInteger()
-        .times(gasPrice.yoctoGasPrice.value)
-
-    val executionCost = (createAccount.execution + receiptConfig.execution).toBigInteger()
-        .times(gasPrice.yoctoGasPrice.value)
-
-    return Yocto(actionCost + executionCost)
+    return Yocto(createAccount.toBigInteger() * gasPrice.yoctoGasPrice.value)
 }
+
+private val ProtocolConfigResult.CostConfig.cost: Long
+    get() = execution + sendNotSir
