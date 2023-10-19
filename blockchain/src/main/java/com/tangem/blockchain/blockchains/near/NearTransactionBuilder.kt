@@ -82,7 +82,7 @@ class NearTransactionBuilder(
             throw BlockchainSdkError.FailedToBuildTx
         }
         val transfer = NEAR.Transfer.newBuilder()
-            .setDeposit(ByteString.copyFrom(NearAmount(sendAmountValue).toDepositBytes()))
+            .setDeposit(ByteString.copyFrom(NearAmount(sendAmountValue).toLittleEndian()))
             .build()
         val actionBuilder = NEAR.Action.newBuilder()
             .setTransfer(transfer)
