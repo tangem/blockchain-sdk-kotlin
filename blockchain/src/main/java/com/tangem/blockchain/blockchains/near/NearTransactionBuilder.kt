@@ -9,10 +9,7 @@ import com.tangem.common.KeyPair
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.guard
 import com.tangem.crypto.CryptoUtils
-import wallet.core.jni.Base58
-import wallet.core.jni.CoinType
-import wallet.core.jni.DataVector
-import wallet.core.jni.TransactionCompiler
+import wallet.core.jni.*
 import wallet.core.jni.proto.Common
 import wallet.core.jni.proto.NEAR
 import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
@@ -85,15 +82,16 @@ class NearTransactionBuilder(
             throw BlockchainSdkError.FailedToBuildTx
         }
         val transfer = NEAR.Transfer.newBuilder()
-            .setDeposit(NearAmount(sendAmountValue).toByteString())
+            .setDeposit(ByteString.copyFrom(NearAmount(sendAmountValue).toLittleEndian()))
             .build()
-        val action = NEAR.Action.newBuilder()
+        val actionBuilder = NEAR.Action.newBuilder()
             .setTransfer(transfer)
-        if (withAccountCreation) {
-            action.setCreateAccount(NEAR.CreateAccount.newBuilder().build())
-        }
 
-        return createSigningInputWithAction(transaction, nonce, blockHash, action.build())
+        // if (withAccountCreation) {
+        //     actionBuilder.setCreateAccount(NEAR.CreateAccount.newBuilder().build())
+        // }
+
+        return createSigningInputWithAction(transaction, nonce, blockHash, actionBuilder.build())
             .build()
     }
 
@@ -109,7 +107,7 @@ class NearTransactionBuilder(
             .setReceiverId(transaction.destinationAddress)
             .addActions(action)
             .setBlockHash(ByteString.copyFrom(Base58.decodeNoCheck(blockHash)))
-            .setPrivateKey(ByteString.copyFrom(keyPair.privateKey)) // ??
+            .setPublicKey(ByteString.copyFrom(publicKey.blockchainKey))
     }
 
     private fun generateKeyPair(): KeyPair {
