@@ -9,6 +9,7 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.*
 import com.tangem.common.CompletionResult
+import com.tangem.crypto.encodeToBase58String
 import java.math.BigDecimal
 
 /**
@@ -28,11 +29,16 @@ class NearWalletManager(
             is Result.Success -> {
                 when (val account = walletInfoResult.data) {
                     is NearAccount.Full -> updateWallet(account.near.value)
-                    NearAccount.Empty -> updateWallet(BigDecimal.ZERO)
+                    NearAccount.NotInitialized -> {
+                        updateError(BlockchainSdkError.AccountNotFound)
+                        return
+                    }
                 }
             }
             is Result.Failure -> updateError(walletInfoResult.error)
         }
+
+        updateTransactions()
     }
 
     private fun updateWallet(amountValue: BigDecimal) {
@@ -43,6 +49,15 @@ class NearWalletManager(
         } else {
             // should we attach the reserve in that situation ?
             wallet.setReserveValue(amountValue)
+        }
+    }
+
+    private suspend fun updateTransactions() {
+        wallet.recentTransactions.firstOrNull()?.let {
+            val status = networkService.getStatus(requireNotNull(it.hash), it.sourceAddress).successOr { return }
+            if (status.isSuccessful) {
+                it.status = TransactionStatus.Confirmed
+            }
         }
     }
 
@@ -62,7 +77,7 @@ class NearWalletManager(
                 val feeAmount = Amount(NearAmount(feeYocto).value, wallet.blockchain)
                 Result.Success(TransactionFee.Single(Fee.Common(feeAmount)))
             }
-            NearAccount.Empty -> {
+            NearAccount.NotInitialized -> {
                 val feeYocto = protocolConfig.calculateSendFundsFee(gasPrice) +
                     protocolConfig.calculateCreateAccountFee(gasPrice)
                 val feeAmount = Amount(NearAmount(feeYocto).value, wallet.blockchain)
@@ -72,11 +87,11 @@ class NearWalletManager(
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val accessKey = networkService.getAccessKey(wallet.address)
+        val accessKey = networkService.getAccessKey(wallet.address, wallet.publicKey.blockchainKey.encodeToBase58String())
             .successOr { return it.toSimpleFailure() }
         val destinationAccount = networkService.getAccount(transactionData.destinationAddress)
             .successOr { return it.toSimpleFailure() }
-        val buildWithAccountCreation = destinationAccount is NearAccount.Empty
+        val buildWithAccountCreation = destinationAccount is NearAccount.NotInitialized
 
         val txToSign = txBuilder.buildForSign(
             transaction = transactionData,
@@ -94,14 +109,15 @@ class NearWalletManager(
                     nonce = accessKey.nextNonce,
                     blockHash = accessKey.blockHash,
                 )
-                when (val sendResult = networkService.sendTransaction(txToSend.encodeBase64NoWrap())) {
+                when (val sendResultHash = networkService.sendTransaction(txToSend.encodeBase64NoWrap())) {
                     is Result.Success -> {
-                        transactionData.hash = sendResult.data.hash
-                        wallet.addOutgoingTransaction(transactionData)
+                        transactionData.hash = sendResultHash.data
+                        wallet.addOutgoingTransaction(transactionData = transactionData, hashToLowercase = false)
+
                         SimpleResult.Success
                     }
                     is Result.Failure -> {
-                        sendResult.toSimpleFailure()
+                        sendResultHash.toSimpleFailure()
                     }
                 }
             }
@@ -109,5 +125,9 @@ class NearWalletManager(
                 SimpleResult.Failure(signatureResult.error.toBlockchainSdkError())
             }
         }
+    }
+
+    suspend fun getAccount(address: String) : Result<NearAccount> {
+        return networkService.getAccount(address)
     }
 }
