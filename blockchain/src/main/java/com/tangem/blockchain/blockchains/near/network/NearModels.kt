@@ -59,7 +59,10 @@ data class NearAmount(val yocto: Yocto) {
         return NearAmount(yocto.times(near.yocto))
     }
 
-    fun toDepositBytes(): ByteArray {
+    /**
+     * @return Yocto value in hex little endian format
+     */
+    fun toLittleEndian(): ByteArray {
         var hexString = yocto.value.toString(16)
 
         val leadingZeroesCount = 32 - hexString.length
