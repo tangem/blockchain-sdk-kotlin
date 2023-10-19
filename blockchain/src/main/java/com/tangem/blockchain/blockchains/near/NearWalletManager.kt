@@ -29,7 +29,10 @@ class NearWalletManager(
             is Result.Success -> {
                 when (val account = walletInfoResult.data) {
                     is NearAccount.Full -> updateWallet(account.near.value)
-                    NearAccount.NotInitialized -> updateWallet(BigDecimal.ZERO)
+                    NearAccount.NotInitialized -> {
+                        updateError(BlockchainSdkError.AccountNotFound)
+                        return
+                    }
                 }
             }
             is Result.Failure -> updateError(walletInfoResult.error)
