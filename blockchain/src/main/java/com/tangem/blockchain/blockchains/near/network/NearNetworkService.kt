@@ -40,7 +40,7 @@ class NearNetworkService(
                 val nearError = result.mapToNearError() ?: return result
 
                 return if (nearError is NearError.UnknownAccount) {
-                    Result.Success(NearAccount.Empty)
+                    Result.Success(NearAccount.NotInitialized)
                 } else {
                     result
                 }
@@ -48,9 +48,12 @@ class NearNetworkService(
         }
     }
 
-    suspend fun getAccessKey(address: String): Result<AccessKey> {
-        val accessKeyResult = multiJsonRpcProvider.performRequest(NearNetworkProvider::getAccessKey, address)
-            .successOr { return it }
+    suspend fun getAccessKey(address: String, publicKeyEncodedToBase58: String): Result<AccessKey> {
+        val accessKeyResult =
+            multiJsonRpcProvider.performRequest(
+                request = NearNetworkProvider::getAccessKey,
+                data = NearGetAccessKeyParams(address, publicKeyEncodedToBase58)
+            ).successOr { return it }
 
         val accessKey = AccessKey(accessKeyResult.nonce, accessKeyResult.blockHeight, accessKeyResult.blockHash)
         return Result.Success(accessKey)
@@ -70,12 +73,22 @@ class NearNetworkService(
         return Result.Success(gasPrice)
     }
 
-    suspend fun sendTransaction(signedTxBase64: String): Result<NearSentTransaction> {
-        val sendTxResult = multiJsonRpcProvider.performRequest(NearNetworkProvider::sendTransaction, signedTxBase64)
+    suspend fun sendTransaction(signedTxBase64: String): Result<String> {
+        val sendTxHash = multiJsonRpcProvider.performRequest(NearNetworkProvider::sendTransaction, signedTxBase64)
             .successOr { return it }
 
+        return Result.Success(sendTxHash)
+    }
+
+    suspend fun getStatus(txHash: String, senderId: String): Result<NearSentTransaction> {
+        val sendTxResult = multiJsonRpcProvider.performRequest(
+            request = NearNetworkProvider::getTransactionStatus,
+            data = NearGetTxParams(txHash, senderId)
+        ).successOr { return it }
+
         val nearWalletInfo = NearSentTransaction(
-            hash = sendTxResult
+            hash = sendTxResult.transaction.hash,
+            isSuccessful = sendTxResult.status.successValue != null
         )
 
         return Result.Success(nearWalletInfo)
