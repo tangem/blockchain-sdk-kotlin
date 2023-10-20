@@ -1,6 +1,5 @@
-package com.tangem.blockchain.blockchains.polkadot.polkaj.extensions
+package com.tangem.blockchain.blockchains.polkadot.extensions
 
-import io.emeraldpay.polkaj.ss58.SS58Type
 import io.emeraldpay.polkaj.types.DotAmount
 import java.math.BigDecimal
 

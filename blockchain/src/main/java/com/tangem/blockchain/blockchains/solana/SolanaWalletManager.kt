@@ -55,7 +55,7 @@ class SolanaWalletManager(
     private val feeRentHolder = mutableMapOf<Fee, BigDecimal>()
     private val valueConverter = ValueConverter()
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         val accountInfo = multiNetworkProvider.performRequest {
             getMainAccountInfo(accountPubK)
         }.successOr {

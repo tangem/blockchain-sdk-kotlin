@@ -33,7 +33,7 @@ class CardanoWalletManager(
     override val currentHost: String
         get() = networkProvider.baseUrl
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         when (val response = networkProvider.getInfo(wallet.addresses.map { it.value }.toSet())) {
             is Result.Success -> updateWallet(response.data)
             is Result.Failure -> updateError(response.error)
