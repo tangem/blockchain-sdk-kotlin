@@ -87,10 +87,9 @@ class NearTransactionBuilder(
         val actionBuilder = NEAR.Action.newBuilder()
             .setTransfer(transfer)
 
-        // разнести в разные actions
-        // if (withAccountCreation) {
-        //     actionBuilder.setCreateAccount(NEAR.CreateAccount.newBuilder().build())
-        // }
+        if (withAccountCreation) {
+            actionBuilder.createAccount = NEAR.CreateAccount.newBuilder().build()
+        }
 
         return createSigningInputWithAction(transaction, nonce, blockHash, actionBuilder.build())
             .build()
