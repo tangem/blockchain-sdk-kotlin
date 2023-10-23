@@ -19,8 +19,9 @@ internal object NearWalletManagerAssembly : WalletManagerAssembly<NearWalletMana
                 add(createNearJsonRpcProvider(isTestNet = true))
             } else {
                 add(createNearJsonRpcProvider(isTestNet = false))
-                config.nowNodeCredentials?.apiKey.letNotBlank { add(createNowNodeJsonRpcProvider(it)) }
                 config.getBlockCredentials?.apiKey.letNotBlank { add(createGetBlockJsonRpcProvider(it)) }
+                config.infuraProjectId?.letNotBlank { add(getInfuraProvider(it)) }
+                config.nowNodeCredentials?.apiKey.letNotBlank { add(createNowNodeJsonRpcProvider(it)) }
             }
         }
         val txBuilder = NearTransactionBuilder(wallet.publicKey)
@@ -37,13 +38,20 @@ internal object NearWalletManagerAssembly : WalletManagerAssembly<NearWalletMana
 
     private fun createGetBlockJsonRpcProvider(apiKey: String): NearJsonRpcNetworkProvider {
         val baseUrl = "https://near.getblock.io/"
-        val nearApi = createRetrofitInstance("$baseUrl${apiKey}/mainnet/").create(NearApi::class.java)
+        val nearApi = createRetrofitInstance("$baseUrl$apiKey/mainnet/").create(NearApi::class.java)
         return NearJsonRpcNetworkProvider(baseUrl, nearApi)
     }
 
     private fun createNowNodeJsonRpcProvider(apiKey: String): NearJsonRpcNetworkProvider {
-        val url = "https://near.nownodes.io/"
-        val nearApi = createRetrofitInstance("$url${apiKey}/").create(NearApi::class.java)
-        return NearJsonRpcNetworkProvider(url, nearApi)
+        val baseUrl = "https://near.nownodes.io/"
+        val nearApi = createRetrofitInstance("$baseUrl$apiKey/").create(NearApi::class.java)
+        return NearJsonRpcNetworkProvider(baseUrl, nearApi)
     }
+
+    private fun getInfuraProvider(infuraProjectId: String): NearJsonRpcNetworkProvider {
+        val baseUrl = "https://near-mainnet.infura.io/"
+        val nearApi = createRetrofitInstance("${baseUrl}v3/").create(NearApi::class.java)
+        return NearJsonRpcNetworkProvider(baseUrl, nearApi, infuraProjectId)
+    }
+
 }
