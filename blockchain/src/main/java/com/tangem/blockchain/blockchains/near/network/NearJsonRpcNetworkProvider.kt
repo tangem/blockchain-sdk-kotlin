@@ -14,6 +14,7 @@ import com.tangem.blockchain.network.moshi
 class NearJsonRpcNetworkProvider(
     override val baseUrl: String,
     private val api: NearApi,
+    private val urlPostfix: String = "",
 ) : NearNetworkProvider {
 
     private val protocolConfigAdapter = moshi.adapter<NearResponse<ProtocolConfigResult>>(
@@ -123,7 +124,7 @@ class NearJsonRpcNetworkProvider(
 
     @Throws(IllegalArgumentException::class)
     private suspend fun <T> postMethod(method: NearMethod, adapter: JsonAdapter<T>): T {
-        val responseBody = api.sendJsonRpc(method.asRequestBody())
+        val responseBody = api.sendJsonRpc(method.asRequestBody(), urlPostfix)
         return requireNotNull(
             value = adapter.fromJson(responseBody.string()) as T,
             lazyMessage = { "Can not parse response" },
