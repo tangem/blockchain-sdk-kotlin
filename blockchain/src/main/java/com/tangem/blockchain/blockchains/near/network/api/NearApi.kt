@@ -1,11 +1,11 @@
 package com.tangem.blockchain.blockchains.near.network.api
 
 import com.tangem.blockchain.common.JsonRPCRequest
-import com.tangem.crypto.encodeToBase58String
 import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import retrofit2.http.Url
 
 /**
  * NearApi provides access to posting requests to jsonRPC endpoints.
@@ -16,8 +16,11 @@ import retrofit2.http.POST
 interface NearApi {
 
     @Headers("Content-Type: application/json", "Accept: application/json")
-    @POST("/")
-    suspend fun sendJsonRpc(@Body body: JsonRPCRequest): ResponseBody
+    @POST
+    suspend fun sendJsonRpc(
+        @Body body: JsonRPCRequest,
+        @Url urlPostfix: String
+    ): ResponseBody
 }
 
 internal sealed interface NearMethod {
