@@ -247,8 +247,8 @@ enum class Blockchain(
         Fantom -> "https://ftmscan.com/"
         FantomTestnet -> "https://testnet.ftmscan.com/"
         Litecoin -> "https://blockchair.com/litecoin/"
-        Near -> "https://explorer.near.org/"
-        NearTestnet -> "https://explorer.testnet.near.org/"
+        Near -> "https://nearblocks.io/"
+        NearTestnet -> "https://testnet.nearblocks.io/"
         Polkadot -> "https://polkadot.subscan.io/"
         PolkadotTestnet -> "https://westend.subscan.io/"
         Kusama -> "https://kusama.subscan.io/"
@@ -321,7 +321,7 @@ enum class Blockchain(
             Cosmos -> "${baseUrl}$address"
             TerraV1 -> "${baseUrl}$address"
             CosmosTestnet -> "${baseUrl}$address"
-            Near, NearTestnet -> "${baseUrl}accounts/$address"
+            Near, NearTestnet -> "${baseUrl}address/$address"
             else -> fullUrl
         }
     }
@@ -331,6 +331,7 @@ enum class Blockchain(
         return when (this) {
             Bitcoin, BitcoinTestnet -> "${getBaseExploreUrl()}transaction/$transactionHash"
             SolanaTestnet -> "$url/?cluster=devnet"
+            Near, NearTestnet -> "${getBaseExploreUrl()}txns/$transactionHash"
             else -> url
         }
     }
