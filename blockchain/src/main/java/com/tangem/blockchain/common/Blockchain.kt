@@ -20,6 +20,8 @@ import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.MultisigAddressProvider
 import com.tangem.blockchain.common.address.TrustWalletAddressService
 import com.tangem.blockchain.common.derivation.DerivationStyle
+import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
+import com.tangem.blockchain.externallinkprovider.ExternalLinkProviderFactory
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 
@@ -95,6 +97,8 @@ enum class Blockchain(
     Chia("chia", "XCH", "Chia Network"),
     ChiaTestnet("chia/test", "TXCH", "Chia Network Testnet"),
     ;
+
+    private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
 
     fun decimals(): Int = when (this) {
         Unknown -> 0
@@ -224,142 +228,16 @@ enum class Blockchain(
         return scheme == getShareScheme()
     }
 
-    private fun getBaseExploreUrl(): String = when (this) {
-        Arbitrum -> "https://arbiscan.io/"
-        ArbitrumTestnet -> "https://goerli-rollup-explorer.arbitrum.io/"
-        Avalanche -> "https://snowtrace.io/"
-        AvalancheTestnet -> "https://testnet.snowtrace.io/"
-        Binance -> "https://explorer.binance.org/"
-        BinanceTestnet -> "https://testnet-explorer.binance.org/"
-        Bitcoin -> "https://www.blockchair.com/bitcoin/"
-        BitcoinTestnet -> "https://www.blockchair.com/bitcoin/testnet/"
-        BitcoinCash -> "https://www.blockchair.com/bitcoin-cash/"
-        BitcoinCashTestnet -> "https://www.blockchain.com/bch-testnet/"
-        BSC -> "https://bscscan.com/"
-        BSCTestnet -> "https://testnet.bscscan.com/"
-        Cardano -> "https://www.blockchair.com/cardano/"
-        Dogecoin -> "https://blockchair.com/dogecoin/"
-        Ducatus -> "https://insight.ducatus.io/#/DUC/mainnet/"
-        Ethereum -> "https://etherscan.io/"
-        EthereumTestnet -> "https://goerli.etherscan.io/"
-        EthereumClassic -> "https://blockscout.com/etc/mainnet/"
-        EthereumClassicTestnet -> "https://blockscout.com/etc/kotti/"
-        Fantom -> "https://ftmscan.com/"
-        FantomTestnet -> "https://testnet.ftmscan.com/"
-        Litecoin -> "https://blockchair.com/litecoin/"
-        Near -> "https://explorer.near.org/"
-        NearTestnet -> "https://explorer.testnet.near.org/"
-        Polkadot -> "https://polkadot.subscan.io/"
-        PolkadotTestnet -> "https://westend.subscan.io/"
-        Kusama -> "https://kusama.subscan.io/"
-        Polygon -> "https://polygonscan.com/"
-        PolygonTestnet -> "https://explorer-mumbai.maticvigil.com/"
-        RSK -> "https://explorer.rsk.co/"
-        Stellar -> "https://stellar.expert/explorer/public/"
-        StellarTestnet -> "https://stellar.expert/explorer/testnet/"
-        Solana -> "https://explorer.solana.com/"
-        SolanaTestnet -> "https://explorer.solana.com/"
-        Tezos -> "https://tzkt.io/"
-        Telos -> "https://teloscan.io/"
-        TelosTestnet -> "https://testnet.teloscan.io/"
-        TON -> "https://tonscan.org/"
-        TONTestnet -> "https://testnet.tonscan.org/"
-        Tron -> "https://tronscan.org/#/"
-        TronTestnet -> "https://nile.tronscan.org/#/"
-        XRP -> "https://xrpscan.com/"
-        Gnosis -> "https://blockscout.com/xdai/mainnet/"
-        Dash -> "https://blockexplorer.one/dash/mainnet/"
-        Optimism -> "https://optimistic.etherscan.io/"
-        OptimismTestnet -> "https://blockscout.com/optimism/goerli/"
-        EthereumFair -> "https://explorer.etherfair.org/"
-        EthereumPow -> "https://mainnet.ethwscan.com/"
-        EthereumPowTestnet -> "https://iceberg.ethwscan.com/"
-        Kaspa -> "https://explorer.kaspa.org/"
-        Kava -> "https://explorer.kava.io/"
-        KavaTestnet -> "https://explorer.testnet.kava.io/"
-        Ravencoin -> "https://api.ravencoin.org/"
-        RavencoinTestnet -> "https://testnet.ravencoin.network/"
-        CosmosTestnet -> "https://explorer.theta-testnet.polypore.xyz/accounts/"
-        Cosmos -> "https://www.mintscan.io/cosmos/account/"
-        TerraV1 -> "https://atomscan.com/terra/accounts/"
-        TerraV2 -> "https://terrasco.pe/mainnet/"
-        Cronos -> "https://cronoscan.com/"
-        AlephZero -> "https://alephzero.subscan.io/"
-        AlephZeroTestnet -> throw Exception("unsupported blockchain")
-        OctaSpace -> "https://explorer.octa.space/"
-        OctaSpaceTestnet -> throw Exception("unsupported blockchain")
-        Chia -> "https://xchscan.com/"
-        ChiaTestnet -> "https://testnet10.spacescan.io/"
-        Unknown -> throw Exception("unsupported blockchain")
-    }
-
     fun getExploreUrl(address: String, tokenContractAddress: String? = null): String {
-        val path = "address/$address"
-        val baseUrl = getBaseExploreUrl()
-        val fullUrl = baseUrl + path
-        return when (this) {
-            Ethereum, EthereumTestnet -> if (tokenContractAddress == null) {
-                fullUrl
-            } else {
-                "$baseUrl$tokenContractAddress?a=$address"
-            }
-
-            EthereumClassic, EthereumClassicTestnet,
-            Kava, KavaTestnet,
-            -> "$fullUrl/transactions"
-
-            RSK -> if (tokenContractAddress != null) {
-                "$fullUrl?__tab=tokens"
-            } else {
-                fullUrl
-            }
-
-            SolanaTestnet -> "$fullUrl/?cluster=devnet"
-            XRP, Stellar, StellarTestnet -> "${baseUrl}account/$address"
-            Tezos -> "$baseUrl$address"
-            Kaspa -> "${baseUrl}addresses/$address"
-            Cosmos -> "${baseUrl}$address"
-            TerraV1 -> "${baseUrl}$address"
-            CosmosTestnet -> "${baseUrl}$address"
-            Near, NearTestnet -> "${baseUrl}accounts/$address"
-            else -> fullUrl
-        }
+        return externalLinkProvider.explorerUrl(walletAddress = address, contractAddress = tokenContractAddress)
     }
 
     fun getExploreTxUrl(transactionHash: String): String {
-        val url = getBaseExploreUrl() + "tx/$transactionHash"
-        return when (this) {
-            Bitcoin, BitcoinTestnet -> "${getBaseExploreUrl()}transaction/$transactionHash"
-            SolanaTestnet -> "$url/?cluster=devnet"
-            else -> url
-        }
+        return externalLinkProvider.explorerTransactionUrl(transactionHash)
     }
 
     fun getTestnetTopUpUrl(): String? {
-        return when (this) {
-            AvalancheTestnet -> "https://faucet.avax-test.network/"
-            BitcoinTestnet -> "https://coinfaucet.eu/en/btc-testnet/"
-            EthereumTestnet -> "https://goerlifaucet.com/"
-            EthereumClassicTestnet -> "https://kottifaucet.me"
-            BitcoinCashTestnet -> "https://coinfaucet.eu/en/bch-testnet/"
-            BinanceTestnet -> "https://docs.binance.org/smart-chain/wallet/binance.html"
-            BSCTestnet -> "https://testnet.binance.org/faucet-smart"
-            FantomTestnet -> "https://faucet.fantom.network"
-            PolygonTestnet -> "https://faucet.matic.network"
-            PolkadotTestnet -> "https://app.element.io/#/room/#westend_faucet:matrix.org"
-            StellarTestnet -> "https://laboratory.stellar.org/#account-creator?network=test"
-            SolanaTestnet -> "https://solfaucet.com/"
-            TronTestnet -> "https://nileex.io/join/getJoinPage"
-            OptimismTestnet -> "https://optimismfaucet.xyz" //another one https://faucet.paradigm.xyz
-            EthereumPowTestnet -> "https://faucet.ethwscan.com"
-            KavaTestnet -> "https://faucet.kava.io"
-            TelosTestnet -> "https://app.telos.net/testnet/developers"
-            CosmosTestnet -> "https://discord.com/channels/669268347736686612/953697793476821092"
-            AlephZeroTestnet -> "https://faucet.test.azero.dev/"
-            ChiaTestnet -> "https://xchdev.com/#!faucet.md"
-            NearTestnet -> "https://near-faucet.io/"
-            else -> null
-        }
+        return externalLinkProvider.testNetTopUpUrl
     }
 
     fun isTestnet(): Boolean = this == getTestnetVersion()
