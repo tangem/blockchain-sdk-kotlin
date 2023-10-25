@@ -5,39 +5,40 @@ import com.tangem.blockchain.common.Amount
 data class TransactionHistoryItem(
     val txHash: String,
     val timestamp: Long,
-    val direction: TransactionDirection,
+    val isOutgoing: Boolean,
+    val destinationType: DestinationType,
+    val sourceType: SourceType,
     val status: TransactionStatus,
     val type: TransactionType,
     val amount: Amount,
 ) {
-    sealed interface TransactionDirection {
 
-        val address: Address
+    sealed class DestinationType {
+        data class Single(val addressType: AddressType) : DestinationType()
+        data class Multiple(val addressTypes: List<AddressType>) : DestinationType()
+    }
 
-        data class Incoming(override val address: Address) : TransactionDirection
-        data class Outgoing(override val address: Address) : TransactionDirection
+    sealed class SourceType {
+
+        data class Single(val address: String) : SourceType()
+        data class Multiple(val addresses: List<String>) : SourceType()
+    }
+
+    sealed class AddressType {
+        abstract val address: String
+
+        data class User(override val address: String) : AddressType()
+        data class Contract(override val address: String) : AddressType()
     }
 
     sealed interface TransactionType {
         object Transfer : TransactionType
-        object Submit : TransactionType
-        object Approve : TransactionType
-        object Supply : TransactionType
-        object Withdraw : TransactionType
-        object Deposit : TransactionType
-        object Swap : TransactionType
-        object Unoswap : TransactionType
-        data class Custom(val id: String) : TransactionType
+        data class ContractMethod(val id: String) : TransactionType
     }
 
     sealed class TransactionStatus {
         object Failed : TransactionStatus()
         object Unconfirmed : TransactionStatus()
         object Confirmed : TransactionStatus()
-    }
-
-    sealed class Address {
-        data class Single(val rawAddress: String) : Address()
-        object Multiple : Address()
     }
 }
