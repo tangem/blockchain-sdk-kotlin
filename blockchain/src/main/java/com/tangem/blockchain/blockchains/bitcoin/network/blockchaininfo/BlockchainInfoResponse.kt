@@ -11,8 +11,11 @@ data class BlockchainInfoAddress(
         @Json(name = "n_tx")
         val transactionCount: Int? = null,
 
+        @Json(name = "address")
+        val address: String? = null,
+
         @Json(name = "txs")
-        val transactions: List<BlockchainInfoTransaction>? = null
+        val transactions: List<BlockchainInfoTransaction>? = null,
 )
 
 @JsonClass(generateAdapter = true)
@@ -28,7 +31,13 @@ data class BlockchainInfoTransaction(
         @Json(name = "vin_sz")
         val inputCount: Int? = null,
 
-        val time: Long? = null
+        val time: Long? = null,
+
+        @Json(name = "inputs")
+        val inputs: List<BlockchainInfoInput> = emptyList(),
+
+        @Json(name = "outputs")
+        val outputs: List<BlockchainInfoOutput> = emptyList(),
 )
 
 @JsonClass(generateAdapter = true)
@@ -49,7 +58,7 @@ data class BlockchainInfoUtxo(
         val amount: Long? = null,
 
         @Json(name = "script")
-        val outputScript: String? = null
+        val outputScript: String? = null,
 )
 
 @JsonClass(generateAdapter = true)
@@ -58,5 +67,47 @@ data class BlockchainInfoFees(
         val regularFeePerByte: Int? = null,
 
         @Json(name = "priority")
-        val priorityFeePerByte: Int? = null
+        val priorityFeePerByte: Int? = null,
+)
+
+@JsonClass(generateAdapter = true)
+data class BlockchainInfoInput(
+        @Json(name = "sequence")
+        val sequence: Int?,
+
+        @Json(name = "witness")
+        val witness: String?,
+
+        @Json(name = "script")
+        val script: String?,
+
+        @Json(name = "n")
+        val index: Int?,
+
+        @Json(name = "prev_out")
+        val previousOutput: BlockchainInfoOutput?,
+)
+
+@JsonClass(generateAdapter = true)
+data class BlockchainInfoOutput(
+        @Json(name = "type")
+        val type: Int?,
+
+        @Json(name = "spent")
+        val spent: Boolean?,
+
+        @Json(name = "value")
+        val value: Long?,
+
+        @Json(name = "script")
+        val script: String?,
+
+        @Json(name = "addr")
+        val address: String?,
+
+        @Json(name = "n")
+        val index: Int?,
+
+        @Json(name = "tx_index")
+        val txIndex: Long?,
 )
