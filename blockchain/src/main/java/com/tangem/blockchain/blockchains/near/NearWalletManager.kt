@@ -91,8 +91,6 @@ class NearWalletManager(
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         val accessKey = networkService.getAccessKey(wallet.address, wallet.publicKey.blockchainKey.encodeToBase58String())
             .successOr { return it.toSimpleFailure() }
-        val destinationAccount = networkService.getAccount(transactionData.destinationAddress)
-            .successOr { return it.toSimpleFailure() }
 
         val txToSign = txBuilder.buildForSign(
             transaction = transactionData,
