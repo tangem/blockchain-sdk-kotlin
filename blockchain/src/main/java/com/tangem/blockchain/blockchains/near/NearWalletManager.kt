@@ -93,11 +93,9 @@ class NearWalletManager(
             .successOr { return it.toSimpleFailure() }
         val destinationAccount = networkService.getAccount(transactionData.destinationAddress)
             .successOr { return it.toSimpleFailure() }
-        val buildWithAccountCreation = destinationAccount is NearAccount.NotInitialized
 
         val txToSign = txBuilder.buildForSign(
             transaction = transactionData,
-            withAccountCreation = buildWithAccountCreation,
             nonce = accessKey.nextNonce,
             blockHash = accessKey.blockHash,
         )
@@ -107,7 +105,6 @@ class NearWalletManager(
                 val txToSend = txBuilder.buildForSend(
                     transaction = transactionData,
                     signature = signatureResult.data,
-                    withAccountCreation = buildWithAccountCreation,
                     nonce = accessKey.nextNonce,
                     blockHash = accessKey.blockHash,
                 )
