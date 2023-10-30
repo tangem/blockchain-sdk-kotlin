@@ -19,6 +19,7 @@ data class ProtocolConfigResult(
 ) {
     data class RuntimeConfig(
         @Json(name = "transaction_costs") val transactionCosts: TransactionCost,
+        @Json(name = "storage_amount_per_byte") val storageAmountPerByte: BigDecimal,
     )
 
     data class TransactionCost(
