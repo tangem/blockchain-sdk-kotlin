@@ -119,7 +119,15 @@ class BlockBookNetworkProvider(
             .filter { it.confirmations == 0 }
             .map { transaction ->
                 val isIncoming = transaction.vin.any { !it.addresses.contains(address) }
+                var source = "unknown"
+                var destination = "unknown"
                 val amount = if (isIncoming) {
+                    destination = address
+                    transaction.vin
+                        .firstOrNull()
+                        ?.addresses
+                        ?.firstOrNull()
+                        ?.let { source = it }
                     val outputs = transaction.vout
                         .find { it.addresses.contains(address) }
                         ?.value.toBigDecimalOrDefault()
@@ -128,6 +136,12 @@ class BlockBookNetworkProvider(
                         ?.value.toBigDecimalOrDefault()
                     outputs - inputs
                 } else {
+                    source = address
+                    transaction.vout
+                        .firstOrNull()
+                        ?.addresses
+                        ?.firstOrNull()
+                        ?.let { destination = it }
                     val outputs = transaction.vout
                         .asSequence()
                         .filter { !it.addresses.contains(address) }
@@ -144,6 +158,8 @@ class BlockBookNetworkProvider(
                         timeInMillis = transaction.blockTime.toLong()
                     },
                     isConfirmed = false,
+                    destination = destination,
+                    source = source,
                 )
             }
     }
