@@ -92,7 +92,9 @@ open class BitcoinWalletManager(
                 balanceDif = it.value.sumOf { transaction -> transaction.balanceDif },
                 hash = it.value[0].hash,
                 date = it.value[0].date,
-                isConfirmed = it.value[0].isConfirmed
+                isConfirmed = it.value[0].isConfirmed,
+                destination = it.value[0].destination,
+                source = it.value[0].source,
             )
         }
         return BitcoinAddressInfo(balance, unspentOutputs, finalTransactions, hasUnconfirmed)
