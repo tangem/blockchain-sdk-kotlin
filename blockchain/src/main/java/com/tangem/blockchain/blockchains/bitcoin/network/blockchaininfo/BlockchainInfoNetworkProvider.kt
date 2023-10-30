@@ -38,15 +38,6 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
                 val addressData = addressDeferred.await()
                 val unspents = unspentsDeferred.await()
 
-                val transactions = addressData.transactions!!.map {
-                    BasicTransactionData(
-                        balanceDif = it.balanceDif!!.toBigDecimal().movePointLeft(decimals),
-                        hash = it.hash!!,
-                        isConfirmed = it.blockHeight != 0L,
-                        date = Calendar.getInstance().apply { this.timeInMillis = it.time!! * 1000 }
-                    )
-                }
-
                 val unspentOutputs = unspents.unspentOutputs!!.map {
                     BitcoinUnspentOutput(
                         amount = it.amount!!.toBigDecimal().movePointLeft(decimals),
@@ -60,7 +51,7 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
                         balance = addressData.finalBalance?.toBigDecimal()?.movePointLeft(decimals)
                             ?: 0.toBigDecimal(),
                         unspentOutputs = unspentOutputs,
-                        recentTransactions = transactions
+                        recentTransactions = addressData.transactions.toRecentTransactions(walletAddress = address),
                     ))
             }
         } catch (exception: Exception) {
@@ -121,6 +112,42 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
+    }
+
+    private fun List<BlockchainInfoTransaction>?.toRecentTransactions(walletAddress: String): List<BasicTransactionData> {
+        return this?.map { it.toBasicTransactionData(walletAddress) } ?: emptyList()
+    }
+
+    private fun BlockchainInfoTransaction.toBasicTransactionData(walletAddress: String): BasicTransactionData {
+        val balanceDiff = balanceDif ?: 0
+        val isIncoming = balanceDiff > 0
+        val date = Calendar.getInstance().also { calendar ->
+            if (time != null) calendar.timeInMillis = time * 100
+        }
+        var source = "unknown"
+        var destination = "unknown"
+        if (isIncoming) {
+            inputs
+                .firstOrNull { it.previousOutput?.address != walletAddress }
+                ?.previousOutput
+                ?.address
+                ?.let { source = it }
+            destination = walletAddress
+        } else {
+            source = walletAddress
+            outputs
+                .firstOrNull { it.address != walletAddress }
+                ?.address
+                ?.let { destination = it }
+        }
+        return BasicTransactionData(
+            balanceDif = balanceDiff.toBigDecimal().movePointLeft(decimals),
+            hash = hash.orEmpty(),
+            date = date,
+            isConfirmed = blockHeight != 0L,
+            destination = destination,
+            source = source,
+        )
     }
 
     private suspend fun getRemainingTransactions(
