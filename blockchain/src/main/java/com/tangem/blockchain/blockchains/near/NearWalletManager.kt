@@ -25,29 +25,35 @@ class NearWalletManager(
         get() = networkService.host
 
     override suspend fun updateInternal() {
-        when (val walletInfoResult = networkService.getAccount(wallet.address)) {
+        val walletInfoResult = networkService.getAccount(wallet.address)
+        val protocolConfigResult = networkService.getProtocolConfig().successOr { return }
+        when (walletInfoResult) {
             is Result.Success -> {
                 when (val account = walletInfoResult.data) {
-                    is NearAccount.Full -> updateWallet(account.near.value)
+                    is NearAccount.Full -> updateWallet(
+                        amountValue = account.near.value,
+                        depositValue = account.storageUsage.value * protocolConfigResult.runtimeConfig.storageAmountPerByte
+                    )
+
                     NearAccount.NotInitialized -> {
                         updateError(BlockchainSdkError.AccountNotFound)
                         return
                     }
                 }
             }
+
             is Result.Failure -> updateError(walletInfoResult.error)
         }
 
         updateTransactions()
     }
 
-    private fun updateWallet(amountValue: BigDecimal) {
-        if (amountValue >= NearAmount.DEPOSIT_VALUE) {
-            val realAmount = amountValue - NearAmount.DEPOSIT_VALUE
+    private fun updateWallet(amountValue: BigDecimal, depositValue: BigDecimal) {
+        if (amountValue >= depositValue) {
+            val realAmount = amountValue - depositValue
             wallet.setAmount(Amount(realAmount, wallet.blockchain))
             wallet.setReserveValue(NearAmount.DEPOSIT_VALUE)
         } else {
-            // should we attach the reserve in that situation ?
             wallet.setReserveValue(amountValue)
         }
     }
@@ -79,6 +85,7 @@ class NearWalletManager(
                 val feeAmount = Amount(NearAmount(feeYocto).value, wallet.blockchain)
                 Result.Success(TransactionFee.Single(Fee.Common(feeAmount)))
             }
+
             NearAccount.NotInitialized -> {
                 val feeYocto = protocolConfig.calculateSendFundsFee(gasPrice, isImplicitAccount) +
                     protocolConfig.calculateCreateAccountFee(gasPrice)
@@ -89,8 +96,9 @@ class NearWalletManager(
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val accessKey = networkService.getAccessKey(wallet.address, wallet.publicKey.blockchainKey.encodeToBase58String())
-            .successOr { return it.toSimpleFailure() }
+        val accessKey =
+            networkService.getAccessKey(wallet.address, wallet.publicKey.blockchainKey.encodeToBase58String())
+                .successOr { return it.toSimpleFailure() }
 
         val txToSign = txBuilder.buildForSign(
             transaction = transactionData,
@@ -113,18 +121,20 @@ class NearWalletManager(
 
                         SimpleResult.Success
                     }
+
                     is Result.Failure -> {
                         sendResultHash.toSimpleFailure()
                     }
                 }
             }
+
             is CompletionResult.Failure -> {
                 SimpleResult.Failure(signatureResult.error.toBlockchainSdkError())
             }
         }
     }
 
-    suspend fun getAccount(address: String) : Result<NearAccount> {
+    suspend fun getAccount(address: String): Result<NearAccount> {
         return networkService.getAccount(address)
     }
 
