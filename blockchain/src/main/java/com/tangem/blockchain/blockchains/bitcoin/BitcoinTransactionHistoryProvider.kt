@@ -27,7 +27,7 @@ internal class BitcoinTransactionHistoryProvider(
     override suspend fun getTransactionHistoryState(address: String): TransactionHistoryState {
         return try {
             val addressResponse = withContext(Dispatchers.IO) { blockBookApi.getAddress(address) }
-            if (addressResponse.txs > 0) {
+            if (!addressResponse.transactions.isNullOrEmpty()) {
                 TransactionHistoryState.Success.HasTransactions(addressResponse.txs)
             } else {
                 TransactionHistoryState.Success.Empty
