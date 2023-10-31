@@ -11,7 +11,6 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
-import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.kethereum.extensions.toHexString
@@ -83,7 +82,7 @@ open class EthereumWalletManager(
                         transactionToSign = signResponse.data.second
                     )
                 val sendResult = networkProvider
-                    .sendTransaction("0x" + transactionToSend.toHexString())
+                    .sendTransaction(transactionToSend.toHexString())
 
                 if (sendResult is SimpleResult.Success) {
                     transactionData.hash = transactionToSend.keccak().toHexString()
@@ -118,7 +117,7 @@ open class EthereumWalletManager(
         return when (val signerResponse = signer.sign(transactionToSign.hash, wallet.publicKey)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data, transactionToSign)
-                val sendResult = networkProvider.sendTransaction("0x" + transactionToSend.toHexString())
+                val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())
                 sendResult
             }
 
@@ -249,7 +248,7 @@ open class EthereumWalletManager(
             is AmountType.Token -> {
                 if (finalData == null) {
                     to = amount.type.token.contractAddress
-                    finalData = "0x" + EthereumUtils.createErc20TransferData(destination, amount).toHexString()
+                    finalData = EthereumUtils.createErc20TransferData(destination, amount).toHexString()
                 }
             }
 
