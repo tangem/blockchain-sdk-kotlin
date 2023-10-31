@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.xrp
 
 import android.util.Log
+import com.tangem.blockchain.blockchains.xrp.network.XrpAddressResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpInfoResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.common.Amount
@@ -95,5 +96,13 @@ class XrpWalletManager(
                 )
             )
         }
+    }
+
+    suspend fun decodeAddress(address: String): Result<XrpAddressResponse> {
+        return networkProvider.decodeAddress(address)
+    }
+
+    suspend fun encodeAddress(address: String, tag: String): Result<XrpAddressResponse> {
+        return networkProvider.encodeAddress(address, tag)
     }
 }

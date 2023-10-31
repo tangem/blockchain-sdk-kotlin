@@ -1,8 +1,6 @@
 package com.tangem.blockchain.blockchains.xrp.network.rippled
 
-import com.tangem.blockchain.blockchains.xrp.network.XrpFeeResponse
-import com.tangem.blockchain.blockchains.xrp.network.XrpInfoResponse
-import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
+import com.tangem.blockchain.blockchains.xrp.network.*
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
@@ -10,6 +8,7 @@ import com.tangem.blockchain.extensions.AddHeaderInterceptor
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
+import com.tangem.blockchain.network.API_XRP_ADDRESS_INFO
 import com.tangem.blockchain.network.createRetrofitInstance
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -34,6 +33,18 @@ class RippledNetworkProvider(
                 )
             )
         ).create(RippledApi::class.java)
+    }
+    private val addressApi: XrpAddressInfoApi by lazy {
+        createRetrofitInstance(
+            baseUrl = API_XRP_ADDRESS_INFO,
+            headerInterceptors = listOf(
+                AddHeaderInterceptor(
+                    headers = buildMap {
+                        put("Content-Type", "application/json")
+                    },
+                )
+            )
+        ).create(XrpAddressInfoApi::class.java)
     }
     private val decimals = Blockchain.XRP.decimals()
 
@@ -131,6 +142,33 @@ class RippledNetworkProvider(
             accountData.result!!.errorCode != 19
         } catch (exception: Exception) {
             true // or let's assume it's created? (normally it is)
+        }
+    }
+
+    override suspend fun encodeAddress(address: String, tag: String): Result<XrpAddressResponse> {
+        return try {
+            val decodedAddress = retryIO { addressApi.encodeAddress(address, tag) }
+            Result.Success(
+                XrpAddressResponse(
+                    address = decodedAddress.address!!,
+                )
+            )
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    override suspend fun decodeAddress(address: String): Result<XrpAddressResponse> {
+        return try {
+            val decodedAddress = retryIO { addressApi.decodeAddress(address) }
+            Result.Success(
+                XrpAddressResponse(
+                    address = decodedAddress.account!!,
+                    tag = decodedAddress.tag
+                )
+            )
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 }
