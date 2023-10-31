@@ -4,8 +4,10 @@ import com.tangem.blockchain.common.PaginationWrapper
 import com.tangem.blockchain.extensions.Result
 
 internal object DefaultTransactionHistoryProvider : TransactionHistoryProvider {
-    override suspend fun getTransactionHistoryState(address: String): TransactionHistoryState =
-        TransactionHistoryState.NotImplemented
+    override suspend fun getTransactionHistoryState(
+        address: String,
+        filterType: TransactionHistoryRequest.FilterType,
+    ): TransactionHistoryState = TransactionHistoryState.NotImplemented
 
     override suspend fun getTransactionsHistory(
         request: TransactionHistoryRequest
