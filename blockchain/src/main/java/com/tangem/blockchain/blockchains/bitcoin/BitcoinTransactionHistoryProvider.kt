@@ -24,11 +24,21 @@ internal class BitcoinTransactionHistoryProvider(
     private val blockBookApi: BlockBookApi,
 ) : TransactionHistoryProvider {
 
-    override suspend fun getTransactionHistoryState(address: String): TransactionHistoryState {
+    override suspend fun getTransactionHistoryState(
+        address: String,
+        filterType: TransactionHistoryRequest.FilterType,
+    ): TransactionHistoryState {
         return try {
-            val addressResponse = withContext(Dispatchers.IO) { blockBookApi.getAddress(address) }
-            if (!addressResponse.transactions.isNullOrEmpty()) {
-                TransactionHistoryState.Success.HasTransactions(addressResponse.txs)
+            val response = withContext(Dispatchers.IO) {
+                blockBookApi.getTransactions(
+                    address = address,
+                    page = 1,
+                    pageSize = 1, // We don't need to know all transactions to define state
+                    filterType = filterType,
+                )
+            }
+            if (!response.transactions.isNullOrEmpty()) {
+                TransactionHistoryState.Success.HasTransactions(response.txs)
             } else {
                 TransactionHistoryState.Success.Empty
             }
@@ -54,9 +64,9 @@ internal class BitcoinTransactionHistoryProvider(
                 ?: emptyList()
             Result.Success(
                 PaginationWrapper(
-                    page = response.page,
-                    totalPages = response.totalPages,
-                    itemsOnPage = response.itemsOnPage,
+                    page = response.page ?: request.page.number,
+                    totalPages = response.totalPages ?: 0,
+                    itemsOnPage = response.itemsOnPage ?: 0,
                     items = txs
                 )
             )
