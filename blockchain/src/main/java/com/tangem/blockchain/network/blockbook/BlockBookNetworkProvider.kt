@@ -95,7 +95,7 @@ class BlockBookNetworkProvider(
         address: String,
     ): List<BitcoinUnspentOutput> {
         val outputScript = transactions.firstNotNullOfOrNull { transaction ->
-            transaction.vout.firstOrNull { it.addresses.contains(address) }?.hex
+            transaction.vout.firstOrNull { it.addresses?.contains(address) == true }?.hex
         } ?: return emptyList()
 
         return getUtxoResponseItems.mapNotNull {
@@ -118,7 +118,7 @@ class BlockBookNetworkProvider(
         return transactions
             .filter { it.confirmations == 0 }
             .map { transaction ->
-                val isIncoming = transaction.vin.any { !it.addresses.contains(address) }
+                val isIncoming = transaction.vin.any { it.addresses?.contains(address) == false }
                 var source = "unknown"
                 var destination = "unknown"
                 val amount = if (isIncoming) {
@@ -129,10 +129,10 @@ class BlockBookNetworkProvider(
                         ?.firstOrNull()
                         ?.let { source = it }
                     val outputs = transaction.vout
-                        .find { it.addresses.contains(address) }
+                        .find { it.addresses?.contains(address) == true }
                         ?.value.toBigDecimalOrDefault()
                     val inputs = transaction.vin
-                        .find { it.addresses.contains(address) }
+                        .find { it.addresses?.contains(address) == true }
                         ?.value.toBigDecimalOrDefault()
                     outputs - inputs
                 } else {
@@ -144,7 +144,7 @@ class BlockBookNetworkProvider(
                         ?.let { destination = it }
                     val outputs = transaction.vout
                         .asSequence()
-                        .filter { !it.addresses.contains(address) }
+                        .filter { it.addresses?.contains(address) == false }
                         .mapNotNull { it.value?.toBigDecimalOrNull() }
                         .sumOf { it }
                     val fee = transaction.fees.toBigDecimalOrDefault()

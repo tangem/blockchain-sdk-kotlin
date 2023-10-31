@@ -29,13 +29,13 @@ data class GetAddressResponse(
 
         @JsonClass(generateAdapter = true)
         data class Vin(
-            @Json(name = "addresses") val addresses: List<String>,
+            @Json(name = "addresses") val addresses: List<String>?,
             @Json(name = "value") val value: String?,
         )
 
         @JsonClass(generateAdapter = true)
         data class Vout(
-            @Json(name = "addresses") val addresses: List<String>,
+            @Json(name = "addresses") val addresses: List<String>?,
             @Json(name = "hex") val hex: String?,
             @Json(name = "value") val value: String?,
         )
