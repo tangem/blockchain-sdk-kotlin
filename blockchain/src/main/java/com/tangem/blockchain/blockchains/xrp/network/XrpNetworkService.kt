@@ -22,4 +22,12 @@ class XrpNetworkService(providers: List<XrpNetworkProvider>) : XrpNetworkProvide
     override suspend fun checkIsAccountCreated(address: String): Boolean {
         return multiProvider.currentProvider.checkIsAccountCreated(address)
     }
+
+    override suspend fun encodeAddress(address: String, tag: String): Result<XrpAddressResponse> {
+        return multiProvider.currentProvider.encodeAddress(address, tag)
+    }
+
+    override suspend fun decodeAddress(address: String): Result<XrpAddressResponse> {
+        return multiProvider.performRequest(XrpNetworkProvider::decodeAddress, address)
+    }
 }
