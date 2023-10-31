@@ -66,7 +66,7 @@ internal class BitcoinTransactionHistoryProvider(
     }
 
     private fun GetAddressResponse.Transaction.toTransactionHistoryItem(walletAddress: String): TransactionHistoryItem {
-        val isOutgoing = vin.any { it.addresses.contains(walletAddress) }
+        val isOutgoing = vin.any { it.addresses?.contains(walletAddress) == true }
         return TransactionHistoryItem(
             txHash = txid,
             timestamp = TimeUnit.SECONDS.toMillis(blockTime.toLong()),
@@ -89,8 +89,9 @@ internal class BitcoinTransactionHistoryProvider(
         walletAddress: String,
     ): TransactionHistoryItem.DestinationType {
         val outputsWithOtherAddresses = tx.vout
-            .filter { !it.addresses.contains(walletAddress) }
-            .flatMap { it.addresses }
+            .filter { it.addresses?.contains(walletAddress) == false }
+            .mapNotNull { it.addresses }
+            .flatten()
             .toSet()
         return when {
             outputsWithOtherAddresses.isEmpty() -> TransactionHistoryItem.DestinationType.Single(
@@ -112,8 +113,9 @@ internal class BitcoinTransactionHistoryProvider(
         walletAddress: String,
     ): TransactionHistoryItem.SourceType {
         val inputsWithOtherAddresses = tx.vin
-            .filter { !it.addresses.contains(walletAddress) }
-            .flatMap { it.addresses }
+            .filter { it.addresses?.contains(walletAddress) == false }
+            .mapNotNull { it.addresses }
+            .flatten()
             .toSet()
         return when {
             inputsWithOtherAddresses.isEmpty() -> TransactionHistoryItem.SourceType.Single(walletAddress)
@@ -131,17 +133,17 @@ internal class BitcoinTransactionHistoryProvider(
         return try {
             val amount = if (isOutgoing) {
                 val outputs = tx.vout
-                    .filter { !it.addresses.contains(walletAddress) }
+                    .filter { it.addresses?.contains(walletAddress) == false }
                     .mapNotNull { it.value?.toBigDecimalOrNull() }
                     .sumOf { it }
                 val fee = tx.fees.toBigDecimalOrDefault()
                 outputs + fee
             } else {
                 val outputs = tx.vout
-                    .find { it.addresses.contains(walletAddress) }
+                    .find { it.addresses?.contains(walletAddress) == true}
                     ?.value.toBigDecimalOrDefault()
                 val inputs = tx.vin
-                    .find { it.addresses.contains(walletAddress) }
+                    .find { it.addresses?.contains(walletAddress) == true }
                     ?.value.toBigDecimalOrDefault()
                 outputs - inputs
             }
