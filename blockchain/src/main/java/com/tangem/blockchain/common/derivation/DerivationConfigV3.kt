@@ -28,7 +28,6 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.Bitcoin -> {
                 mapOf(AddressType.Default to DerivationPath("m/84'/0'/0'/0/0"))
             }
-
             Blockchain.Litecoin -> {
                 mapOf(AddressType.Default to DerivationPath("m/84'/2'/0'/0/0"))
             }
@@ -44,7 +43,6 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.Cardano -> {
                 mapOf(AddressType.Default to DerivationPath("m/1852'/1815'/0'/0/0"))
             }
-
             Blockchain.BitcoinCash -> {
                 mapOf(
                     AddressType.Default to DerivationPath("m/44'/145'/0'/0/0"),
@@ -67,9 +65,11 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.Cronos,
             Blockchain.Telos,
             Blockchain.OctaSpace,
+            Blockchain.Decimal,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             }
+
             Blockchain.EthereumClassic -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))
             }
@@ -147,7 +147,8 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.TelosTestnet,
             Blockchain.AlephZeroTestnet,
             Blockchain.OctaSpaceTestnet,
-            Blockchain.NearTestnet
+            Blockchain.NearTestnet,
+            Blockchain.DecimalTestnet,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
