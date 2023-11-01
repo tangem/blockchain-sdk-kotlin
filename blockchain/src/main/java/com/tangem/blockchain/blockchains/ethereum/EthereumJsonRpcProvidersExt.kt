@@ -56,9 +56,9 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             getInfuraProvider(baseUrl = "https://goerli.infura.io/v3/", config = config)
         )
         Blockchain.EthereumClassic -> listOfNotNull(
+            EthereumJsonRpcProvider(baseUrl = "https://etc.etcdesktop.com/"),
             getGetBlockProvider(baseUrl = "https://etc.getblock.io/mainnet/", config = config),
             EthereumJsonRpcProvider(baseUrl = "https://www.ethercluster.com/etc/"),
-            EthereumJsonRpcProvider(baseUrl = "https://etc.etcdesktop.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://blockscout.com/etc/mainnet/api/eth-rpc/"),
             EthereumJsonRpcProvider(baseUrl = "https://etc.mytokenpocket.vip/"),
             EthereumJsonRpcProvider(baseUrl = "https://besu-de.etc-network.info/"),
