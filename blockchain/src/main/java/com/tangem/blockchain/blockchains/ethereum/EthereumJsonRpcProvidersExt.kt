@@ -161,13 +161,28 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = "https://api.kainosbp.com", postfixUrl = "evm"),
             EthereumJsonRpcProvider(baseUrl = "https://telos-evm.rpc.thirdweb.com/")
         )
+
         Blockchain.TelosTestnet -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://telos-evm-testnet.rpc.thirdweb.com/"),
         )
+
         Blockchain.OctaSpace -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://rpc.octa.space"),
             EthereumJsonRpcProvider(baseUrl = "https://octaspace.rpc.thirdweb.com"),
         )
+
+        Blockchain.Decimal -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://node.decimalchain.com/web3/"),
+            EthereumJsonRpcProvider(baseUrl = "https://node1-mainnet.decimalchain.com/web3/"),
+            EthereumJsonRpcProvider(baseUrl = "https://node2-mainnet.decimalchain.com/web3/"),
+            EthereumJsonRpcProvider(baseUrl = "https://node3-mainnet.decimalchain.com/web3/"),
+            EthereumJsonRpcProvider(baseUrl = "https://node4-mainnet.decimalchain.com/web3/"),
+        )
+
+        Blockchain.DecimalTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://testnet-val.decimalchain.com/web3/")
+        )
+
         else -> throw IllegalStateException("$this isn't supported")
     }
 
