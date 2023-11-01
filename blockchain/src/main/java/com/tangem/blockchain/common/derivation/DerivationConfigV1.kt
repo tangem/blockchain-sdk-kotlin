@@ -58,10 +58,12 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Ethereum,
             Blockchain.EthereumPow,
             Blockchain.EthereumFair,
-            Blockchain.OctaSpace
+            Blockchain.OctaSpace,
+            Blockchain.Decimal,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             }
+
             Blockchain.EthereumClassic -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))
             }
@@ -174,6 +176,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.AlephZeroTestnet,
             Blockchain.OctaSpaceTestnet,
             Blockchain.NearTestnet,
+            Blockchain.DecimalTestnet,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
