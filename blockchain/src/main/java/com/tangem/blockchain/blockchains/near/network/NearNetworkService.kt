@@ -24,14 +24,13 @@ class NearNetworkService(
     val host: String get() = multiJsonRpcProvider.currentProvider.baseUrl
 
     suspend fun getAccount(address: String): Result<NearAccount> {
-        val result = multiJsonRpcProvider.performRequest(NearNetworkProvider::getAccount, address)
-
-        return when (result) {
+        return when (val result = multiJsonRpcProvider.performRequest(NearNetworkProvider::getAccount, address)) {
             is Result.Success -> {
                 Result.Success(
                     NearAccount.Full(
                         near = NearAmount(Yocto(result.data.amount)),
                         blockHash = result.data.blockHash,
+                        storageUsage = NearAmount(Yocto(result.data.storageUsage.toBigInteger()))
                     )
                 )
             }

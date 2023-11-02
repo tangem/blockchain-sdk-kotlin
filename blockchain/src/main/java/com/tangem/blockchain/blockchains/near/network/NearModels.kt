@@ -88,7 +88,11 @@ sealed class NearAccount {
     /**
      * An object corresponding to an existing account with its amount
      */
-    data class Full(val near: NearAmount, val blockHash: String) : NearAccount()
+    data class Full(
+        val near: NearAmount,
+        val blockHash: String,
+        val storageUsage: NearAmount
+    ) : NearAccount()
 
     /**
      * An object corresponding to a non-existent account
@@ -126,15 +130,15 @@ data class NearGasPrice(
 
 data class NearSentTransaction(
     val hash: String,
-    val isSuccessful: Boolean
+    val isSuccessful: Boolean,
 )
 
 class NearGetAccessKeyParams(
     val address: String,
-    val publicKeyEncodedToBase58: String
+    val publicKeyEncodedToBase58: String,
 )
 
 class NearGetTxParams(
     val txHash: String,
-    val senderId: String
+    val senderId: String,
 )
