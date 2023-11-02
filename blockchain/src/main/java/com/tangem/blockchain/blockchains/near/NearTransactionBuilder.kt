@@ -9,10 +9,7 @@ import com.tangem.common.KeyPair
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.guard
 import com.tangem.crypto.CryptoUtils
-import wallet.core.jni.Base58
-import wallet.core.jni.CoinType
-import wallet.core.jni.DataVector
-import wallet.core.jni.TransactionCompiler
+import wallet.core.jni.*
 import wallet.core.jni.proto.Common
 import wallet.core.jni.proto.NEAR
 import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
@@ -30,11 +27,10 @@ class NearTransactionBuilder(
     // https://github.com/trustwallet/wallet-core/blob/master/android/app/src/androidTest/java/com/trustwallet/core/app/blockchains/near/TestNEARSigner.kt
     fun buildForSign(
         transaction: TransactionData,
-        withAccountCreation: Boolean,
         nonce: Long,
         blockHash: String,
     ): ByteArray {
-        val input = createSigningInput(transaction, withAccountCreation, nonce, blockHash)
+        val input = createSigningInput(transaction, nonce, blockHash)
         val txInputData = input.toByteArray()
 
         val preImageHashes = TransactionCompiler.preImageHashes(coinType, txInputData)
@@ -50,11 +46,10 @@ class NearTransactionBuilder(
     fun buildForSend(
         transaction: TransactionData,
         signature: ByteArray,
-        withAccountCreation: Boolean,
         nonce: Long,
         blockHash: String,
     ): ByteArray {
-        val input = createSigningInput(transaction, withAccountCreation, nonce, blockHash)
+        val input = createSigningInput(transaction, nonce, blockHash)
         val txInputData = input.toByteArray()
 
         val signatures = DataVector()
@@ -77,7 +72,6 @@ class NearTransactionBuilder(
 
     private fun createSigningInput(
         transaction: TransactionData,
-        withAccountCreation: Boolean,
         nonce: Long,
         blockHash: String,
     ): NEAR.SigningInput {
@@ -85,15 +79,12 @@ class NearTransactionBuilder(
             throw BlockchainSdkError.FailedToBuildTx
         }
         val transfer = NEAR.Transfer.newBuilder()
-            .setDeposit(NearAmount(sendAmountValue).toByteString())
+            .setDeposit(ByteString.copyFrom(NearAmount(sendAmountValue).toLittleEndian()))
             .build()
-        val action = NEAR.Action.newBuilder()
+        val actionBuilder = NEAR.Action.newBuilder()
             .setTransfer(transfer)
-        if (withAccountCreation) {
-            action.setCreateAccount(NEAR.CreateAccount.newBuilder().build())
-        }
 
-        return createSigningInputWithAction(transaction, nonce, blockHash, action.build())
+        return createSigningInputWithAction(transaction, nonce, blockHash, actionBuilder.build())
             .build()
     }
 
@@ -109,7 +100,7 @@ class NearTransactionBuilder(
             .setReceiverId(transaction.destinationAddress)
             .addActions(action)
             .setBlockHash(ByteString.copyFrom(Base58.decodeNoCheck(blockHash)))
-            .setPrivateKey(ByteString.copyFrom(keyPair.privateKey)) // ??
+            .setPublicKey(ByteString.copyFrom(publicKey.blockchainKey))
     }
 
     private fun generateKeyPair(): KeyPair {
