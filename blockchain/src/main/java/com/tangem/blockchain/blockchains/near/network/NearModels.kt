@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.near.network
 
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.near.network.Yocto.Companion.YOCTO_DECIMALS
+import com.tangem.common.extensions.hexToBytes
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -46,8 +47,6 @@ data class NearAmount(val yocto: Yocto) {
 
     val value: BigDecimal by lazy { yocto.value.toBigDecimal().movePointLeft(YOCTO_DECIMALS) }
 
-    fun toByteString(): ByteString = yocto.toByteString()
-
     operator fun plus(near: NearAmount): NearAmount {
         return NearAmount(yocto.plus(near.yocto))
     }
@@ -58,6 +57,18 @@ data class NearAmount(val yocto: Yocto) {
 
     operator fun times(near: NearAmount): NearAmount {
         return NearAmount(yocto.times(near.yocto))
+    }
+
+    /**
+     * @return Yocto value in hex little endian format
+     */
+    fun toLittleEndian(): ByteArray {
+        var hexString = yocto.value.toString(16)
+
+        val leadingZeroesCount = 32 - hexString.length
+        hexString = "0".repeat(leadingZeroesCount) + hexString
+
+        return hexString.chunked(2).reversed().joinToString("").hexToBytes()
     }
 
     companion object {
@@ -77,12 +88,16 @@ sealed class NearAccount {
     /**
      * An object corresponding to an existing account with its amount
      */
-    data class Full(val near: NearAmount, val blockHash: String) : NearAccount()
+    data class Full(
+        val near: NearAmount,
+        val blockHash: String,
+        val storageUsage: NearAmount
+    ) : NearAccount()
 
     /**
      * An object corresponding to a non-existent account
      */
-    object Empty : NearAccount()
+    object NotInitialized : NearAccount()
 }
 
 data class NearNetworkStatus(
@@ -115,4 +130,15 @@ data class NearGasPrice(
 
 data class NearSentTransaction(
     val hash: String,
+    val isSuccessful: Boolean,
+)
+
+class NearGetAccessKeyParams(
+    val address: String,
+    val publicKeyEncodedToBase58: String,
+)
+
+class NearGetTxParams(
+    val txHash: String,
+    val senderId: String,
 )

@@ -56,7 +56,7 @@ enum class Blockchain(
     FantomTestnet("FTM/test", "FTM", "Fantom Testnet"),
     Litecoin("LTC", "LTC", "Litecoin"),
     Near("NEAR", "NEAR", "NEAR Protocol"),
-    NearTestnet("NEAR", "NEAR", "NEAR Protocol Testnet"),
+    NearTestnet("NEAR/test", "NEAR", "NEAR Protocol Testnet"),
     Polkadot("Polkadot", "DOT", "Polkadot"),
     PolkadotTestnet("Polkadot", "WND", "Polkadot Westend Testnet"),
     Kava("KAVA", "KAVA", "Kava EVM"),
