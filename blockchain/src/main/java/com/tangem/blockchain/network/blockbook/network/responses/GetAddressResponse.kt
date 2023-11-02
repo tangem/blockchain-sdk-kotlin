@@ -9,9 +9,9 @@ data class GetAddressResponse(
     @Json(name = "unconfirmedTxs") val unconfirmedTxs: Int,
     @Json(name = "txs") val txs: Int,
     @Json(name = "transactions") val transactions: List<Transaction>?,
-    @Json(name = "page") val page: Int,
-    @Json(name = "totalPages") val totalPages: Int,
-    @Json(name = "itemsOnPage") val itemsOnPage: Int,
+    @Json(name = "page") val page: Int?,
+    @Json(name = "totalPages") val totalPages: Int?,
+    @Json(name = "itemsOnPage") val itemsOnPage: Int?,
 ) {
 
     @JsonClass(generateAdapter = true)
@@ -29,13 +29,13 @@ data class GetAddressResponse(
 
         @JsonClass(generateAdapter = true)
         data class Vin(
-            @Json(name = "addresses") val addresses: List<String>,
+            @Json(name = "addresses") val addresses: List<String>?,
             @Json(name = "value") val value: String?,
         )
 
         @JsonClass(generateAdapter = true)
         data class Vout(
-            @Json(name = "addresses") val addresses: List<String>,
+            @Json(name = "addresses") val addresses: List<String>?,
             @Json(name = "hex") val hex: String?,
             @Json(name = "value") val value: String?,
         )
