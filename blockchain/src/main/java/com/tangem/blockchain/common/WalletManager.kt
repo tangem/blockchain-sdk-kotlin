@@ -151,12 +151,11 @@ abstract class WalletManager(
     }
 
     private fun BasicTransactionData.toTransactionData(): TransactionData {
-        val isIncoming = this.balanceDif.signum() > 0
         return TransactionData(
             amount = Amount(wallet.amounts[AmountType.Coin]!!, this.balanceDif.abs()),
             fee = null,
-            sourceAddress = if (isIncoming) "unknown" else wallet.address,
-            destinationAddress = if (isIncoming) wallet.address else "unknown",
+            sourceAddress = source,
+            destinationAddress = destination,
             hash = this.hash,
             date = this.date,
             status = if (this.isConfirmed) {
