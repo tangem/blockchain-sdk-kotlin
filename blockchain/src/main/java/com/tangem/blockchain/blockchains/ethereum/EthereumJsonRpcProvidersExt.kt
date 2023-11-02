@@ -13,6 +13,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
     val providers = when (this) {
         Blockchain.Arbitrum -> listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://arb1.arbitrum.io/rpc/"),
+            getNowNodesProvider(baseUrl = "https://arbitrum.nownodes.io/", config = config),
             getInfuraProvider(baseUrl = "https://arbitrum-mainnet.infura.io/v3/", config = config)
         )
         Blockchain.ArbitrumTestnet -> listOf(
@@ -46,18 +47,18 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             )
         )
         Blockchain.Ethereum -> listOfNotNull(
-            getInfuraProvider(baseUrl = "https://mainnet.infura.io/v3/", config = config),
             getNowNodesProvider(baseUrl = "https://eth.nownodes.io/", config = config),
-            getGetBlockProvider(baseUrl = "https://eth.getblock.io/mainnet/", config = config)
+            getGetBlockProvider(baseUrl = "https://eth.getblock.io/mainnet/", config = config),
+            getInfuraProvider(baseUrl = "https://mainnet.infura.io/v3/", config = config),
         )
         Blockchain.EthereumTestnet -> listOfNotNull(
             getNowNodesProvider(baseUrl = "https://eth-goerli.nownodes.io/", config = config),
             getInfuraProvider(baseUrl = "https://goerli.infura.io/v3/", config = config)
         )
         Blockchain.EthereumClassic -> listOfNotNull(
+            EthereumJsonRpcProvider(baseUrl = "https://etc.etcdesktop.com/"),
             getGetBlockProvider(baseUrl = "https://etc.getblock.io/mainnet/", config = config),
             EthereumJsonRpcProvider(baseUrl = "https://www.ethercluster.com/etc/"),
-            EthereumJsonRpcProvider(baseUrl = "https://etc.etcdesktop.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://blockscout.com/etc/mainnet/api/eth-rpc/"),
             EthereumJsonRpcProvider(baseUrl = "https://etc.mytokenpocket.vip/"),
             EthereumJsonRpcProvider(baseUrl = "https://besu-de.etc-network.info/"),

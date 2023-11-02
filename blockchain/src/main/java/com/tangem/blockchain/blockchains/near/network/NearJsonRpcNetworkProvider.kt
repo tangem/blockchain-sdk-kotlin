@@ -14,6 +14,7 @@ import com.tangem.blockchain.network.moshi
 class NearJsonRpcNetworkProvider(
     override val baseUrl: String,
     private val api: NearApi,
+    private val urlPostfix: String = "",
 ) : NearNetworkProvider {
 
     private val protocolConfigAdapter = moshi.adapter<NearResponse<ProtocolConfigResult>>(
@@ -61,7 +62,7 @@ class NearJsonRpcNetworkProvider(
     private val txStatusAdapter = moshi.adapter<NearResponse<TransactionStatusResult>>(
         Types.newParameterizedType(
             NearResponse::class.java,
-            SendTransactionAsyncResult::class.java,
+            TransactionStatusResult::class.java,
         )
     )
 
@@ -81,9 +82,9 @@ class NearJsonRpcNetworkProvider(
         }
     }
 
-    override suspend fun getAccessKey(accountId: String): Result<AccessKeyResult> {
+    override suspend fun getAccessKey(params: NearGetAccessKeyParams): Result<AccessKeyResult> {
         return try {
-            postMethod(NearMethod.AccessKey.View(accountId), accessKeyResultAdapter).toResult()
+            postMethod(NearMethod.AccessKey.View(params.address, params.publicKeyEncodedToBase58), accessKeyResultAdapter).toResult()
         } catch (ex: Exception) {
             Result.Failure(ex.toBlockchainSdkError())
         }
@@ -105,12 +106,9 @@ class NearJsonRpcNetworkProvider(
         }
     }
 
-    override suspend fun getTransactionStatus(
-        txHash: String,
-        senderAccountId: String,
-    ): Result<TransactionStatusResult> {
+    override suspend fun getTransactionStatus(params: NearGetTxParams): Result<TransactionStatusResult> {
         return try {
-            postMethod(NearMethod.Transaction.Status(txHash, senderAccountId), txStatusAdapter).toResult()
+            postMethod(NearMethod.Transaction.Status(params.txHash, params.senderId), txStatusAdapter).toResult()
         } catch (ex: Exception) {
             Result.Failure(ex.toBlockchainSdkError())
         }
@@ -126,7 +124,7 @@ class NearJsonRpcNetworkProvider(
 
     @Throws(IllegalArgumentException::class)
     private suspend fun <T> postMethod(method: NearMethod, adapter: JsonAdapter<T>): T {
-        val responseBody = api.sendJsonRpc(method.asRequestBody())
+        val responseBody = api.sendJsonRpc(method.asRequestBody(), urlPostfix)
         return requireNotNull(
             value = adapter.fromJson(responseBody.string()) as T,
             lazyMessage = { "Can not parse response" },
