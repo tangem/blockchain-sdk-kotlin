@@ -27,11 +27,10 @@ class NearTransactionBuilder(
     // https://github.com/trustwallet/wallet-core/blob/master/android/app/src/androidTest/java/com/trustwallet/core/app/blockchains/near/TestNEARSigner.kt
     fun buildForSign(
         transaction: TransactionData,
-        withAccountCreation: Boolean,
         nonce: Long,
         blockHash: String,
     ): ByteArray {
-        val input = createSigningInput(transaction, withAccountCreation, nonce, blockHash)
+        val input = createSigningInput(transaction, nonce, blockHash)
         val txInputData = input.toByteArray()
 
         val preImageHashes = TransactionCompiler.preImageHashes(coinType, txInputData)
@@ -47,11 +46,10 @@ class NearTransactionBuilder(
     fun buildForSend(
         transaction: TransactionData,
         signature: ByteArray,
-        withAccountCreation: Boolean,
         nonce: Long,
         blockHash: String,
     ): ByteArray {
-        val input = createSigningInput(transaction, withAccountCreation, nonce, blockHash)
+        val input = createSigningInput(transaction, nonce, blockHash)
         val txInputData = input.toByteArray()
 
         val signatures = DataVector()
@@ -74,7 +72,6 @@ class NearTransactionBuilder(
 
     private fun createSigningInput(
         transaction: TransactionData,
-        withAccountCreation: Boolean,
         nonce: Long,
         blockHash: String,
     ): NEAR.SigningInput {
@@ -86,10 +83,6 @@ class NearTransactionBuilder(
             .build()
         val actionBuilder = NEAR.Action.newBuilder()
             .setTransfer(transfer)
-
-        if (withAccountCreation) {
-            actionBuilder.createAccount = NEAR.CreateAccount.newBuilder().build()
-        }
 
         return createSigningInputWithAction(transaction, nonce, blockHash, actionBuilder.build())
             .build()
