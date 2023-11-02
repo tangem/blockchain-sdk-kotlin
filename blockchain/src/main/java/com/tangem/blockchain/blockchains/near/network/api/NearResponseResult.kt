@@ -2,6 +2,8 @@ package com.tangem.blockchain.blockchains.near.network.api
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import java.math.BigDecimal
+import java.math.BigInteger
 
 /**
 [REDACTED_AUTHOR]
@@ -11,12 +13,13 @@ data class ProtocolConfigResult(
     @Json(name = "chain_id") val chainId: String,
     @Json(name = "protocol_version") val protocolVersion: String,
     @Json(name = "genesis_height") val genesisHeight: Long,
-    @Json(name = "max_gas_price") val maxGasPrice: Long,
-    @Json(name = "min_gas_price") val minGasPrice: Long,
+    @Json(name = "max_gas_price") val maxGasPrice: BigDecimal,
+    @Json(name = "min_gas_price") val minGasPrice: BigDecimal,
     @Json(name = "runtime_config") val runtimeConfig: RuntimeConfig,
 ) {
     data class RuntimeConfig(
         @Json(name = "transaction_costs") val transactionCosts: TransactionCost,
+        @Json(name = "storage_amount_per_byte") val storageAmountPerByte: BigDecimal,
     )
 
     data class TransactionCost(
@@ -106,29 +109,26 @@ typealias SendTransactionAsyncResult = String
 data class TransactionStatusResult(
     @Json(name = "status") val status: Status,
     @Json(name = "transaction") val transaction: Transaction,
-    @Json(name = "transaction_outcome") val transactionOutcome: Outcome,
-    @Json(name = "receipts_outcome") val receiptsOutcome: Outcome,
 ) {
 
     @JsonClass(generateAdapter = true)
     data class Status(
-        @Json(name = "SuccessValue") val successValue: String,
+        @Json(name = "SuccessValue") val successValue: String?,
     )
 
     @JsonClass(generateAdapter = true)
     data class Transaction(
         @Json(name = "signer_id") val signerId: String,
         @Json(name = "public_key") val publicKey: String,
-        @Json(name = "nonce") val nonce: Int,
+        @Json(name = "nonce") val nonce: Long,
         @Json(name = "receiver_id") val receiverId: String,
-        @Json(name = "actions") val actions: List<Any>,
         @Json(name = "signature") val signature: String,
         @Json(name = "hash") val hash: String,
     )
 
     @JsonClass(generateAdapter = true)
     data class Outcome(
-        @Json(name = "proof") val proof: List<Proof>,
+        // @Json(name = "proof") val proof: List<Proof>,
         @Json(name = "block_hash") val blockHash: String,
         @Json(name = "id") val id: String,
         @Json(name = "outcome") val outcome: OutcomeData,
@@ -142,11 +142,9 @@ data class TransactionStatusResult(
 
     @JsonClass(generateAdapter = true)
     data class OutcomeData(
-        @Json(name = "logs") val logs: List<Any>,
         @Json(name = "receipt_ids") val receiptIds: List<String>,
         @Json(name = "gas_burnt") val gasBurnt: Double,
         @Json(name = "tokens_burnt") val tokensBurnt: String,
-        @Json(name = "executor_id") val executorId: String,
         @Json(name = "status") val status: Any,
     )
 }

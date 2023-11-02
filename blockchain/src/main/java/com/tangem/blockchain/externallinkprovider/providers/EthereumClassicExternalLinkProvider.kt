@@ -10,10 +10,10 @@ internal class EthereumClassicExternalLinkProvider(isTestnet: Boolean) : Externa
     override val testNetTopUpUrl: String? = if (isTestnet) "https://kottifaucet.me" else null
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
-        return explorerBaseUrl + "address/$walletAddress/transactions"
+        return explorerBaseUrl + "address/$walletAddress"
     }
 
     override fun explorerTransactionUrl(transactionHash: String): String {
-        return explorerBaseUrl + "tx/$transactionHash/transactions"
+        return explorerBaseUrl + "tx/$transactionHash"
     }
 }
