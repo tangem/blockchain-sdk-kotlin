@@ -11,11 +11,12 @@ internal class CosmosExternalLinkProvider(private val isTestnet: Boolean) : Exte
         if (isTestnet) "https://discord.com/channels/669268347736686612/953697793476821092" else null
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
-        val path = if (isTestnet) "accounts/$walletAddress" else "account/$walletAddress"
+        val path = if (isTestnet) "accounts/$walletAddress" else "address/$walletAddress"
         return explorerBaseUrl + path
     }
 
     override fun explorerTransactionUrl(transactionHash: String): String {
-        return explorerBaseUrl + "transactions/$transactionHash"
+        val path = if (isTestnet) "transactions/$transactionHash" else "tx/$transactionHash"
+        return explorerBaseUrl + path
     }
 }
