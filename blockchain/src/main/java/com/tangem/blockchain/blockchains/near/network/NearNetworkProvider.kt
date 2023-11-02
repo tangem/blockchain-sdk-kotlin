@@ -13,13 +13,13 @@ interface NearNetworkProvider : NetworkProvider {
 
     suspend fun getNetworkStatus(): Result<NetworkStatusResult>
 
-    suspend fun getAccessKey(accountId: String): Result<AccessKeyResult>
+    suspend fun getAccessKey(params: NearGetAccessKeyParams): Result<AccessKeyResult>
 
     suspend fun getAccount(address: String): Result<ViewAccountResult>
 
     suspend fun getGas(blockHash: String): Result<GasPriceResult>
 
-    suspend fun getTransactionStatus(txHash: String, senderAccountId: String): Result<TransactionStatusResult>
+    suspend fun getTransactionStatus(params: NearGetTxParams): Result<TransactionStatusResult>
 
     suspend fun sendTransaction(signedTxBase64: String): Result<SendTransactionAsyncResult>
 }
