@@ -55,6 +55,7 @@ class NearWalletManager(
             wallet.setReserveValue(NearAmount.DEPOSIT_VALUE)
         } else {
             wallet.setReserveValue(amountValue)
+            wallet.setAmount(Amount(BigDecimal.ZERO, wallet.blockchain))
         }
     }
 
