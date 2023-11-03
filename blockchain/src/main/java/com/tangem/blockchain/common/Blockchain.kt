@@ -102,8 +102,7 @@ enum class Blockchain(
 
     fun decimals(): Int = when (this) {
         Unknown -> 0
-        Near, NearTestnet,
-        -> 5
+
         Cardano,
         XRP,
         Tezos,
@@ -149,6 +148,9 @@ enum class Blockchain(
         Telos, TelosTestnet,
         OctaSpace, OctaSpaceTestnet,
         -> 18
+
+        Near, NearTestnet,
+        -> 24
     }
 
     fun makeAddresses(
