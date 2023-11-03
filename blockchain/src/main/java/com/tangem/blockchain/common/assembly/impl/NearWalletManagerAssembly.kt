@@ -21,7 +21,8 @@ internal object NearWalletManagerAssembly : WalletManagerAssembly<NearWalletMana
                 add(createNearJsonRpcProvider(isTestNet = false))
                 config.nowNodeCredentials?.apiKey.letNotBlank { add(createNowNodeJsonRpcProvider(it)) }
                 config.getBlockCredentials?.apiKey.letNotBlank { add(createGetBlockJsonRpcProvider(it)) }
-                config.infuraProjectId?.letNotBlank { add(getInfuraProvider(it)) }
+                // temporarily exclude before AND-5171 fix
+                // config.infuraProjectId?.letNotBlank { add(getInfuraProvider(it)) }
             }
         }
         val txBuilder = NearTransactionBuilder(wallet.publicKey)
