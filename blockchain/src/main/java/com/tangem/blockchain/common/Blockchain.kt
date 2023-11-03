@@ -400,6 +400,7 @@ enum class Blockchain(
         Stellar, StellarTestnet,
         Optimism, OptimismTestnet,
         TON, TONTestnet,
+        Near, NearTestnet
         -> true
 
         else -> false
