@@ -144,7 +144,7 @@ object DerivationConfigV1 : DerivationConfig() {
                 mapOf(AddressType.Default to DerivationPath("m/44'/977'/0'/0/0"))
             }
             Blockchain.Near -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/397'/0'/0/0"))
+                mapOf(AddressType.Default to DerivationPath("m/44'/397'/0'"))
             }
 
             Blockchain.Chia, Blockchain.ChiaTestnet -> mapOf(AddressType.Default to DerivationPath(""))
