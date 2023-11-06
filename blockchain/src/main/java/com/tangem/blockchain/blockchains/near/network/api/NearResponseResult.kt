@@ -50,14 +50,11 @@ data class NetworkStatusResult(
     @Json(name = "chain_id") val chainId: String,
     @Json(name = "latest_protocol_version") val latestProtocolVersion: Int,
     @Json(name = "node_key") val nodeKey: Any?,
-    @Json(name = "node_public_key") val nodePublicKey: String,
     @Json(name = "protocol_version") val protocolVersion: Int,
-    @Json(name = "rpc_addr") val rpcIpAddress: String,
     @Json(name = "uptime_sec") val uptimeSeconds: Long,
     @Json(name = "validator_account_id") val validatorAccountId: Any?,
     @Json(name = "validator_public_key") val validatorPublicKey: Any?,
     @Json(name = "sync_info") val syncInfo: SyncInfo,
-    @Json(name = "version") val version: Version,
 ) {
     data class SyncInfo(
         @Json(name = "earliest_block_hash") val earliestBlockHash: String,
@@ -72,11 +69,6 @@ data class NetworkStatusResult(
         @Json(name = "syncing") val syncing: Boolean,
     )
 
-    data class Version(
-        @Json(name = "build") val build: String,
-        @Json(name = "rustc_version") val rustcVersion: String,
-        @Json(name = "version") val version: String,
-    )
 }
 
 @JsonClass(generateAdapter = true)
