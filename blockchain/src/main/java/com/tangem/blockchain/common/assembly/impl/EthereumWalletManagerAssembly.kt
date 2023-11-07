@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionHistoryProv
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.getEthereumJsonRpcProviders
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
@@ -29,16 +30,22 @@ internal object EthereumWalletManagerAssembly : WalletManagerAssembly<EthereumWa
                         tokens = input.config.blockcypherTokens
                     ),
                 ),
-                transactionHistoryProvider = if (input.config.nowNodeCredentials != null && input.config.nowNodeCredentials.apiKey.isNotBlank()) {
-                    EthereumTransactionHistoryProvider(
-                        blockchain = blockchain,
-                        blockBookApi = BlockBookApi(
-                            config = BlockBookConfig.NowNodes(nowNodesCredentials = input.config.nowNodeCredentials),
-                            blockchain = blockchain,
-                        )
-                    )
-                } else {
-                    DefaultTransactionHistoryProvider
+                transactionHistoryProvider = when (blockchain) {
+                    Blockchain.Ethereum -> {
+                        if (input.config.nowNodeCredentials != null && input.config.nowNodeCredentials.apiKey.isNotBlank()) {
+                            EthereumTransactionHistoryProvider(
+                                blockchain = blockchain,
+                                blockBookApi = BlockBookApi(
+                                    config = BlockBookConfig.NowNodes(nowNodesCredentials = input.config.nowNodeCredentials),
+                                    blockchain = blockchain,
+                                )
+                            )
+                        } else {
+                            DefaultTransactionHistoryProvider
+                        }
+                    }
+
+                    else -> DefaultTransactionHistoryProvider
                 }
             )
         }
