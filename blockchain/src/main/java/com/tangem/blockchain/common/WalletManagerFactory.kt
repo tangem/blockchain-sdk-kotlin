@@ -4,8 +4,6 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.impl.*
 import com.tangem.common.card.EllipticCurve
-import com.tangem.crypto.hdWallet.DerivationPath
-import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 
 class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainSdkConfig()) {
 
@@ -151,6 +149,10 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
             Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet,
             -> {
                 EthereumLikeWalletManagerAssembly
+            }
+
+            Blockchain.Decimal, Blockchain.DecimalTestnet -> {
+                DecimalWalletManagerAssembly
             }
 
             Blockchain.Optimism, Blockchain.OptimismTestnet -> {
