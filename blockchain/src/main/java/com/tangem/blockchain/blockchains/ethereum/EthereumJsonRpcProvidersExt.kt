@@ -58,14 +58,14 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         Blockchain.EthereumClassic -> listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://etc.etcdesktop.com/"),
             getGetBlockProvider(baseUrl = "https://etc.getblock.io/mainnet/", config = config),
-            EthereumJsonRpcProvider(baseUrl = "https://www.ethercluster.com/etc/"),
+            EthereumJsonRpcProvider(baseUrl = "https://etc.rivet.link/etc/"),
             EthereumJsonRpcProvider(baseUrl = "https://blockscout.com/etc/mainnet/api/eth-rpc/"),
             EthereumJsonRpcProvider(baseUrl = "https://etc.mytokenpocket.vip/"),
             EthereumJsonRpcProvider(baseUrl = "https://besu-de.etc-network.info/"),
             EthereumJsonRpcProvider(baseUrl = "https://geth-at.etc-network.info/"),
         )
         Blockchain.EthereumClassicTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://www.ethercluster.com/kotti/")
+            EthereumJsonRpcProvider(baseUrl = "https://etc.rivet.link/kotti/")
         )
         Blockchain.Fantom -> listOfNotNull(
             getNowNodesProvider(baseUrl = "https://ftm.nownodes.io/", config = config),
