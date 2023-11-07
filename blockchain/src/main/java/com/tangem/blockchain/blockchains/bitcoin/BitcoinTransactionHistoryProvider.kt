@@ -34,7 +34,7 @@ internal class BitcoinTransactionHistoryProvider(
                     address = address,
                     page = 1,
                     pageSize = 1, // We don't need to know all transactions to define state
-                    filterType = filterType,
+                    filterType = null,
                 )
             }
             if (!response.transactions.isNullOrEmpty()) {
