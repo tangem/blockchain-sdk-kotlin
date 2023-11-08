@@ -2,7 +2,10 @@ package com.tangem.blockchain.blockchains.xrp
 
 import com.ripple.encodings.addresses.Addresses
 import com.ripple.encodings.base58.B58
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.AddressService
+import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.PlainAddress
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
@@ -11,10 +14,21 @@ import org.kethereum.extensions.toBigInteger
 
 class XrpAddressService : AddressService {
 
-    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-        val canonicalPublicKey = canonizePublicKey(walletPublicKey)
+    // TODO check implementation, should support both curves
+    // https://tangem.atlassian.net/browse/AND-4114}
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve,
+    ): PlainAddress {
+        val canonicalPublicKey = canonizePublicKey(publicKey.blockchainKey)
         val publicKeyHash = canonicalPublicKey.calculateSha256().calculateRipemd160()
-        return Addresses.encodeAccountID(publicKeyHash)
+
+        return PlainAddress(
+            value = Addresses.encodeAccountID(publicKeyHash),
+            type = addressType,
+            publicKey = publicKey
+        )
     }
 
     override fun validate(address: String): Boolean {
@@ -22,9 +36,10 @@ class XrpAddressService : AddressService {
             address.startsWith("r") -> try {
                 Addresses.decodeAccountID(address)
                 true
-            } catch (excpetion: Exception) {
+            } catch (exception: Exception) {
                 false
             }
+
             address.startsWith("X") -> decodeXAddress(address) != null
             else -> false
         }
@@ -67,6 +82,7 @@ class XrpAddressService : AddressService {
                     1.toByte() -> {
                         tag = tagBytes.reversedArray().toBigInteger().toLong()
                     }
+
                     else -> return null
                 }
                 return XrpTaggedAddress(classicAddress, tag)
@@ -78,6 +94,6 @@ class XrpAddressService : AddressService {
 }
 
 data class XrpTaggedAddress(
-        val address: String,
-        val destinationTag: Long?
+    val address: String,
+    val destinationTag: Long?,
 )

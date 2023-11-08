@@ -1,6 +1,9 @@
 package com.tangem.blockchain.blockchains.tezos
 
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.AddressService
+import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.PlainAddress
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
@@ -8,15 +11,24 @@ import com.tangem.common.extensions.toCompressedPublicKey
 import org.bitcoinj.core.Base58
 import org.spongycastle.jcajce.provider.digest.Blake2b
 
-class TezosAddressService : AddressService {
-    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-        val publicKeyHash = Blake2b.Blake2b160().digest(walletPublicKey.toCompressedPublicKey())
+class TezosAddressService() : AddressService {
 
-        val prefix = TezosConstants.getAddressPrefix(curve!!)
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve,
+    ): PlainAddress {
+        val publicKeyHash = Blake2b.Blake2b160().digest(publicKey.blockchainKey.toCompressedPublicKey())
+
+        val prefix = TezosConstants.getAddressPrefix(curve)
         val prefixedHash = prefix.hexToBytes() + publicKeyHash
         val checksum = prefixedHash.calculateTezosChecksum()
 
-        return Base58.encode(prefixedHash + checksum)
+        return PlainAddress(
+            value = Base58.encode(prefixedHash + checksum),
+            type = addressType,
+            publicKey = publicKey
+        )
     }
 
     override fun validate(address: String): Boolean {
@@ -37,6 +49,6 @@ class TezosAddressService : AddressService {
 
     companion object {
         fun ByteArray.calculateTezosChecksum() =
-                this.calculateSha256().calculateSha256().copyOfRange(0, 4)
+            this.calculateSha256().calculateSha256().copyOfRange(0, 4)
     }
 }

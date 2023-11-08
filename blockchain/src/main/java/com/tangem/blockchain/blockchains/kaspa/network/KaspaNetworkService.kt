@@ -7,8 +7,8 @@ import com.tangem.blockchain.network.MultiNetworkProvider
 class KaspaNetworkService(providers: List<KaspaNetworkProvider>) : KaspaNetworkProvider {
 
     private val multiNetworkProvider = MultiNetworkProvider(providers)
-    override val host: String
-        get() = multiNetworkProvider.currentProvider.host
+    override val baseUrl: String
+        get() = multiNetworkProvider.currentProvider.baseUrl
 
     override suspend fun getInfo(address: String): Result<KaspaInfoResponse> {
         return multiNetworkProvider.performRequest(KaspaNetworkProvider::getInfo, address)

@@ -10,7 +10,8 @@ buildscript {
         classpath "com.android.tools.build:gradle:$versions.build_gradle"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
         classpath "com.github.dcendents:android-maven-gradle-plugin:2.1"
-        classpath 'com.squareup.wire:wire-gradle-plugin:4.3.0'
+        classpath 'com.squareup.wire:wire-gradle-plugin:4.4.3'
+        classpath "org.jetbrains.kotlin:kotlin-serialization:$versions.kotlin"
     }
 }
 
@@ -19,6 +20,8 @@ configurations.all {
 }
 
 allprojects {
+    def Properties properties = new Properties()
+    properties.load(project.rootProject.file("local.properties").newDataInputStream())
     def nexusUser = "viewer"
     def nexusPass = "smartcash124"
     repositories {
@@ -26,18 +29,19 @@ allprojects {
         mavenCentral()
         mavenLocal()
         maven {
+            // setting any repository from tangem project allows maven search all packages in the project
+            url = uri("https://maven.pkg.github.com/tangem/tangem-sdk-android")
             credentials {
-                username = nexusUser
-                password = nexusPass
+                username = properties.getProperty("gpr.user", System.getenv('GITHUB_ACTOR'))
+                password = properties.getProperty("gpr.key", System.getenv('GITHUB_TOKEN'))
             }
-            url "https://nexus.tangem-tech.com/repository/maven-releases/"
         }
         maven {
             credentials {
                 username = nexusUser
                 password = nexusPass
             }
-            url "https://nexus.tangem-tech.com/repository/maven-snapshots/"
+            url "https://nexus.tangem-tech.com/repository/maven-releases/"
         }
         maven { url 'https://jitpack.io' }
     }

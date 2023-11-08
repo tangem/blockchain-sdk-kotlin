@@ -43,10 +43,6 @@ object DerivationConfigV2 : DerivationConfig() {
             }
 
             Blockchain.Cardano -> {
-                emptyMap()
-            }
-
-            Blockchain.CardanoShelley -> {
                 mapOf(
                     AddressType.Default to DerivationPath("m/1852'/1815'/0'/0/0"),
                     AddressType.Legacy to DerivationPath("m/1852'/1815'/0'/0/0")
@@ -74,9 +70,13 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.Optimism,
             Blockchain.Kava,
             Blockchain.Cronos,
-            Blockchain.Telos -> {
+            Blockchain.Telos,
+            Blockchain.OctaSpace,
+            Blockchain.Decimal,
+            -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             }
+
             Blockchain.Binance -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/714'/0'/0/0"))
             }
@@ -122,6 +122,10 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.TerraV1, Blockchain.TerraV2 -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/330'/0'/0/0"))
             }
+            Blockchain.Near -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/397'/0'"))
+            }
+            Blockchain.Chia, Blockchain.ChiaTestnet -> mapOf(AddressType.Default to DerivationPath(""))
 
             Blockchain.Unknown,
             Blockchain.ArbitrumTestnet,
@@ -145,7 +149,11 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.TONTestnet,
             Blockchain.RavencoinTestnet,
             Blockchain.TelosTestnet,
-            Blockchain.AlephZeroTestnet -> {
+            Blockchain.AlephZeroTestnet,
+            Blockchain.OctaSpaceTestnet,
+            Blockchain.NearTestnet,
+            Blockchain.DecimalTestnet,
+            -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
         }

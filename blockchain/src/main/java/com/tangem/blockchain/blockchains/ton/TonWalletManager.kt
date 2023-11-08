@@ -29,12 +29,15 @@ class TonWalletManager(
 
     private var sequenceNumber: Int = 0
     private val txBuilder = TonTransactionBuilder()
-    private val networkService = TonNetworkService(jsonRpcProviders = networkProviders, blockchain = wallet.blockchain)
+    private val networkService = TonNetworkService(
+        jsonRpcProviders = networkProviders,
+        blockchain = wallet.blockchain
+    )
 
     override val currentHost: String
         get() = networkService.host
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         when (val walletInfoResult = networkService.getWalletInformation(wallet.address)) {
             is Result.Failure -> updateError(walletInfoResult.error)
             is Result.Success -> updateWallet(walletInfoResult.data)

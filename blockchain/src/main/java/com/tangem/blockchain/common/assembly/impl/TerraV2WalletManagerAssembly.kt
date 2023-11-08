@@ -11,6 +11,7 @@ internal object TerraV2WalletManagerAssembly : WalletManagerAssembly<CosmosWalle
 
     override fun make(input: WalletManagerAssemblyInput): CosmosWalletManager {
         val providers = buildList {
+            input.config.nowNodeCredentials?.apiKey.letNotBlank { add("https://luna.nownodes.io/$it/") }
             input.config.getBlockCredentials?.apiKey.letNotBlank { add("https://luna.getblock.io/$it/mainnet/") }
             add("https://phoenix-lcd.terra.dev/")
         }.map(::CosmosRestProvider)
@@ -18,8 +19,7 @@ internal object TerraV2WalletManagerAssembly : WalletManagerAssembly<CosmosWalle
         return CosmosWalletManager(
             wallet = input.wallet,
             networkProviders = providers,
-            cosmosChain = CosmosChain.TerraV2
+            cosmosChain = CosmosChain.TerraV2,
         )
     }
-
 }

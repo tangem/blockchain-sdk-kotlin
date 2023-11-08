@@ -11,6 +11,8 @@ data class BlockchainSdkConfig(
     val infuraProjectId: String? = null,
     val tronGridApiKey: String? = null,
     val kaspaSecondaryApiUrl: String? = null,
+    val chiaFireAcademyApiKey: String? = null,
+    val chiaTangemApiKey: String? = null,
 )
 
 data class BlockchairCredentials(

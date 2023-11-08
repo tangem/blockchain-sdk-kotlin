@@ -39,7 +39,7 @@ class TonTransactionBuilder {
             .setAmount(amount.longValue ?: 0L)
             .setSequenceNumber(sequenceNumber)
             .setMode(modeTransactionConstant)
-            .setBounceBehavior(TheOpenNetwork.BounceBehavior.NON_BOUNCEABLE)
+            .setBounceable(false)
             .setComment(comment)
 
         return TheOpenNetwork.SigningInput
@@ -51,6 +51,9 @@ class TonTransactionBuilder {
 
     private fun generateKeyPair(): KeyPair {
         val privateKey = CryptoUtils.generateRandomBytes(32)
+        /* todo use Ed25519Slip0010 or Ed25519 depends on wallet manager
+         * https://tangem.atlassian.net/browse/AND-4378
+         */
         val publicKey = CryptoUtils.generatePublicKey(privateKey, EllipticCurve.Ed25519)
         return KeyPair(publicKey, privateKey)
     }

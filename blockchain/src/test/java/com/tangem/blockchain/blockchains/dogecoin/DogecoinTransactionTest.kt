@@ -8,9 +8,12 @@ import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.makeAddressWithDefaultType
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 import org.libdohj.params.DogecoinMainNetParams
@@ -33,16 +36,20 @@ class DogecoinTransactionTest {
         val feeValue = "0.01".toBigDecimal()
         val destinationAddress = "DRgF4iLXRhnYeQEV9kHmkvvnz128uCFZXL"
 
-        val addresses = BitcoinAddressService(blockchain).makeAddresses(walletPublicKey)
-        val address = addresses.find { it.type == AddressType.Default }!!.value
-        val transactionBuilder = BitcoinTransactionBuilder(walletPublicKey, blockchain, addresses)
+        val address = BitcoinAddressService(blockchain).makeAddress(
+            publicKey = Wallet.PublicKey(walletPublicKey, null),
+            addressType = AddressType.Legacy,
+            curve = EllipticCurve.Secp256k1
+        )
+
+        val transactionBuilder = BitcoinTransactionBuilder(walletPublicKey, blockchain, listOf(address))
         transactionBuilder.unspentOutputs =
-            BitcoinTransactionTest.prepareTwoUnspentOutputs(listOf(address), networkParameters)
+            BitcoinTransactionTest.prepareTwoUnspentOutputs(listOf(address.value), networkParameters)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
         val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
-            sourceAddress = address,
+            sourceAddress = address.value,
             destinationAddress = destinationAddress,
             amount = amountToSend,
             fee = fee

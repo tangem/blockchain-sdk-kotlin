@@ -1,28 +1,23 @@
 package com.tangem.blockchain.extensions
 
-import com.squareup.moshi.JsonDataException
-import com.tangem.blockchain.blockchains.ethereum.network.EthereumResponse
 import com.tangem.blockchain.common.BlockchainError
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.common.core.TangemError
 import kotlinx.coroutines.delay
-import retrofit2.HttpException
 import java.io.IOException
-
 
 suspend fun <T> retryIO(
     times: Int = 3,
     initialDelay: Long = 100,
     maxDelay: Long = 1000,
     factor: Double = 2.0,
-    block: suspend () -> T
+    block: suspend () -> T,
 ): T {
     var currentDelay = initialDelay
     repeat(times - 1) {
         try {
             return block()
         } catch (e: IOException) {
-
 
         }
         delay(currentDelay)
@@ -48,6 +43,10 @@ inline fun <T> Result<T>.successOr(failureClause: (Result.Failure) -> T): T {
     }
 }
 
+fun Result.Failure.toSimpleFailure(): SimpleResult.Failure {
+    return SimpleResult.Failure(error)
+}
+
 sealed class SimpleResult {
     object Success : SimpleResult()
     data class Failure(val error: BlockchainError) : SimpleResult()
@@ -62,46 +61,4 @@ inline fun SimpleResult.successOr(failureClause: (SimpleResult.Failure) -> Nothi
         is SimpleResult.Success -> this
         is SimpleResult.Failure -> failureClause(this)
     }
-}
-
-fun Result<*>.isNetworkError(): Boolean {
-    return when (this) {
-        is Result.Success -> {
-            this.isError()
-        }
-        is Result.Failure -> {
-            when (this.error) {
-                is BlockchainSdkError.WrappedThrowable -> this.error.isNetworkError()
-                is BlockchainSdkError.Solana.Api -> true
-                is BlockchainSdkError.Polkadot.Api -> true
-                is BlockchainSdkError.Ton.Api -> true
-                is BlockchainSdkError.Cosmos.Api -> true
-                else -> false
-            }
-        }
-    }
-}
-
-fun SimpleResult.isNetworkError(): Boolean {
-    return when (this) {
-        is SimpleResult.Success -> false
-        is SimpleResult.Failure -> {
-            when (this.error) {
-                is BlockchainSdkError.WrappedThrowable -> this.error.isNetworkError()
-                is BlockchainSdkError.Solana.Api -> true
-                is BlockchainSdkError.Polkadot.Api -> true
-                is BlockchainSdkError.Ton.Api -> true
-                is BlockchainSdkError.Cosmos.Api -> true
-                else -> false
-            }
-        }
-    }
-}
-
-private fun Result.Success<*>.isError(): Boolean {
-    return this.data is EthereumResponse && this.data.error != null
-}
-
-private fun BlockchainSdkError.WrappedThrowable.isNetworkError(): Boolean {
-   return cause is IOException || cause is HttpException || cause is JsonDataException
 }

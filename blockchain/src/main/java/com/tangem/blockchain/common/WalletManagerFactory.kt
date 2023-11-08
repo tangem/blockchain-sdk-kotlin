@@ -1,72 +1,34 @@
 package com.tangem.blockchain.common
 
-import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.impl.*
 import com.tangem.common.card.EllipticCurve
-import com.tangem.crypto.hdWallet.DerivationPath
-import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
-import java.lang.IllegalStateException
 
-class WalletManagerFactory(private val config: BlockchainSdkConfig) {
-
-    // TODO refactoring, make wallet hold address instead of addresskeypair in next task
-    fun createWalletManager(
-        blockchain: Blockchain,
-        publicKeys: Map<AddressType, Wallet.PublicKey>,
-        curve: EllipticCurve = EllipticCurve.Secp256k1,
-    ): WalletManager {
-        val walletFactory = WalletFactory(blockchain.getAddressService())
-        val wallet = walletFactory.makeWallet(blockchain = blockchain, publicKeys = publicKeys)
-
-        val input = WalletManagerAssemblyInput(
-            wallet = wallet,
-            config = config,
-            curve = curve
-        )
-
-        return getAssembly(blockchain).make(input)
-    }
+class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainSdkConfig()) {
 
     /**
      * Base wallet manager initializer
      * @param blockchain: blockchain to create
-     * @param seedKey: Public key of the wallet
-     * @param derivedKey: Derived ExtendedPublicKey by the card
-     * @param derivationParams: derivation style or derivation path
+     * @param publicKey: Public Key of the wallet
      */
     fun createWalletManager(
         blockchain: Blockchain,
-        seedKey: ByteArray,
-        derivedKey: ExtendedPublicKey,
-        derivationParams: DerivationParams,
+        publicKey: Wallet.PublicKey,
+        curve: EllipticCurve,
     ): WalletManager? {
 
-        val derivation: Wallet.Derivation? = when (derivationParams) {
-            is DerivationParams.Custom -> {
-                Wallet.Derivation(
-                    derivedKey = derivedKey.publicKey,
-                    derivationPath = derivationParams.path
-                )
-            }
-            is DerivationParams.Default -> {
-                val path = blockchain.derivationPath(derivationParams.style)
-                path?.let {
-                    Wallet.Derivation (
-                        derivedKey = derivedKey.publicKey,
-                        derivationPath = it
-                    )
-                }
-            }
-        }
+        val addressService = AddressServiceFactory(blockchain)
+            .makeAddressService()
+
+        val walletFactory = WalletFactory(blockchain, addressService)
+        val wallet = walletFactory.makeWallet(publicKey, curve)
 
         return createWalletManager(
             blockchain = blockchain,
-            publicKey = Wallet.PublicKey(
-                seedKey = seedKey,
-                derivation = derivation
-            )
+            wallet = wallet,
+            pairPublicKey = null,
+            curve = curve
         )
     }
 
@@ -83,9 +45,15 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
         blockchain: Blockchain = Blockchain.Bitcoin,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
+        val publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivationType = null)
+        val addressService = AddressServiceFactory(blockchain).makeAddressService()
+
+        val walletFactory = WalletFactory(blockchain, addressService)
+        val wallet = walletFactory.makeWallet(publicKey, pairPublicKey)
+
         return createWalletManager(
             blockchain = blockchain,
-            publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivation = null),
+            wallet = wallet,
             pairPublicKey = pairPublicKey,
             curve = curve
         )
@@ -102,29 +70,33 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
         walletPublicKey: ByteArray,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
+        val publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivationType = null)
+        val addressService = AddressServiceFactory(blockchain).makeAddressService()
+
+        val walletFactory = WalletFactory(blockchain, addressService)
+        val wallet = walletFactory.makeWallet(publicKey, curve)
+
         return createWalletManager(
             blockchain = blockchain,
-            publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivation = null),
+            wallet = wallet,
             curve = curve
         )
     }
 
     private fun createWalletManager(
         blockchain: Blockchain,
-        publicKey: Wallet.PublicKey,
+        wallet: Wallet,
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
-        if (checkIfWrongKey(curve, publicKey)) return null
-
-        val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
-        val wallet = Wallet(blockchain, addresses, publicKey)
+        if (checkIfWrongKey(blockchain, curve, wallet.publicKey)) return null
 
         return getAssembly(blockchain).make(
             input = WalletManagerAssemblyInput(
                 wallet = wallet,
                 config = config,
-                curve = curve
+                curve = curve,
+                pairPublicKey = pairPublicKey
             )
         )
     }
@@ -187,13 +159,21 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
             Blockchain.EthereumPowTestnet,
             Blockchain.Kava, Blockchain.KavaTestnet,
             Blockchain.Cronos,
-            Blockchain.Telos, Blockchain.TelosTestnet
+            Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet,
             -> {
                 EthereumLikeWalletManagerAssembly
             }
 
+            Blockchain.Decimal, Blockchain.DecimalTestnet -> {
+                DecimalWalletManagerAssembly
+            }
+
             Blockchain.Optimism, Blockchain.OptimismTestnet -> {
                 OptimismWalletManagerAssembly
+            }
+
+            Blockchain.Telos, Blockchain.TelosTestnet -> {
+                TelosWalletManagerAssembly
             }
 
             // endregion
@@ -203,7 +183,8 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
             }
 
             Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama,
-            Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> {
+            Blockchain.AlephZero, Blockchain.AlephZeroTestnet,
+            -> {
                 PolkadotWalletManagerAssembly
             }
 
@@ -211,7 +192,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
                 StellarWalletManagerAssembly
             }
 
-            Blockchain.Cardano, Blockchain.CardanoShelley -> {
+            Blockchain.Cardano -> {
                 CardanoWalletManagerAssembly
             }
 
@@ -251,15 +232,29 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig) {
                 TerraV2WalletManagerAssembly
             }
 
+            Blockchain.Chia, Blockchain.ChiaTestnet -> {
+                ChiaWalletManagerAssembly
+            }
+
+            Blockchain.Near, Blockchain.NearTestnet -> {
+                NearWalletManagerAssembly
+            }
+
             Blockchain.Unknown -> {
                 throw IllegalStateException("Unsupported blockchain")
             }
         }
     }
 
-    private fun checkIfWrongKey(curve: EllipticCurve, publicKey: Wallet.PublicKey): Boolean {
+    private fun checkIfWrongKey(
+        blockchain: Blockchain,
+        curve: EllipticCurve,
+        publicKey: Wallet.PublicKey
+    ): Boolean {
+        // wallet2 has cardano with extended key, so we should take this into account
         return when (curve) {
-            EllipticCurve.Ed25519 -> publicKey.seedKey.size > 32 || publicKey.blockchainKey.size > 32
+            EllipticCurve.Ed25519 -> publicKey.seedKey.size > 32 ||
+                (publicKey.blockchainKey.size > 32 && blockchain != Blockchain.Cardano)
             else -> false
         }
     }

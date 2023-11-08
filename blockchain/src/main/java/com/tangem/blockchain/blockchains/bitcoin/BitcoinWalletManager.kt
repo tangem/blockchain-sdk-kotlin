@@ -43,9 +43,9 @@ open class BitcoinWalletManager(
     open val minimalFee = 0.000001.toBigDecimal()
 
     override val currentHost: String
-        get() = networkProvider.host
+        get() = networkProvider.baseUrl
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         coroutineScope {
             val addressInfos = mutableListOf<BitcoinAddressInfo>()
             val responsesDeferred =
@@ -92,7 +92,9 @@ open class BitcoinWalletManager(
                 balanceDif = it.value.sumOf { transaction -> transaction.balanceDif },
                 hash = it.value[0].hash,
                 date = it.value[0].date,
-                isConfirmed = it.value[0].isConfirmed
+                isConfirmed = it.value[0].isConfirmed,
+                destination = it.value[0].destination,
+                source = it.value[0].source,
             )
         }
         return BitcoinAddressInfo(balance, unspentOutputs, finalTransactions, hasUnconfirmed)

@@ -1,7 +1,6 @@
 package com.tangem.blockchain_demo.cardSdk
 
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain_demo.extensions.getPrimaryCurve
 import com.tangem.blockchain_demo.extensions.useOldStyleDerivation
 import com.tangem.blockchain_demo.model.BlockchainNetwork
 import com.tangem.blockchain_demo.model.ScanResponse

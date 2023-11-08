@@ -9,6 +9,7 @@ import co.nstant.`in`.cbor.model.UnsignedInteger
 import com.tangem.blockchain.blockchains.binance.client.encoding.Bech32
 import com.tangem.blockchain.blockchains.binance.client.encoding.Crypto
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.*
 import com.tangem.blockchain.extensions.*
 import com.tangem.common.card.EllipticCurve
@@ -16,15 +17,25 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.CRC32
 
-class CardanoAddressService(private val blockchain: Blockchain) : MultipleAddressProvider {
+class CardanoAddressService(private val blockchain: Blockchain) : AddressService {
+
     private val shelleyHeaderByte: Byte = 97
 
-    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-        return when (blockchain) {
-            Blockchain.Cardano -> makeByronAddress(walletPublicKey)
-            Blockchain.CardanoShelley -> makeShelleyAddress(walletPublicKey)
-            else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve,
+    ): PlainAddress {
+        val address = when (addressType) {
+            AddressType.Default -> makeShelleyAddress(publicKey.blockchainKey)
+            AddressType.Legacy -> makeByronAddress(publicKey.blockchainKey)
         }
+
+        return PlainAddress(
+            value = address,
+            type = addressType,
+            publicKey = publicKey
+        )
     }
 
     override fun validate(address: String): Boolean {
@@ -32,17 +43,6 @@ class CardanoAddressService(private val blockchain: Blockchain) : MultipleAddres
             address.decodeBech32() != null
         } else {
             validateBase58Address(address)
-        }
-    }
-
-    override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?): Set<Address> {
-        return if (blockchain == Blockchain.CardanoShelley) {
-            setOf(
-                PlainAddress(makeByronAddress(walletPublicKey), AddressType.Legacy),
-                PlainAddress(makeShelleyAddress(walletPublicKey), AddressType.Default)
-            )
-        } else {
-            setOf(PlainAddress(makeAddress(walletPublicKey)))
         }
     }
 

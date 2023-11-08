@@ -1,25 +1,26 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.blockchains.cardano.CardanoUtils
 import com.tangem.blockchain.common.address.Address
-import com.tangem.blockchain.common.address.AddressPublicKeyPair
 import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.PlainAddress
 import com.tangem.common.extensions.calculateHashCode
 import com.tangem.crypto.hdWallet.DerivationPath
+import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import java.math.BigDecimal
 import java.util.Calendar
 import java.util.Locale
 
 class Wallet(
     val blockchain: Blockchain,
-    val walletAddresses: Map<AddressType, AddressPublicKeyPair>,
-    tokens: Set<Token>,
+    val walletAddresses: Map<AddressType, Address>
 ) {
     //we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
     val recentTransactions: MutableList<TransactionData> = mutableListOf()
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
 
-    val addresses: List<AddressPublicKeyPair>
-        get() = walletAddresses.map { it.value }
+    val addresses: List<Address>
+        get() = walletAddresses.map { it.value }.sortedBy { it.type.priority }
 
     private val defaultAddress = requireNotNull(
         value = walletAddresses[AddressType.Default],
@@ -34,16 +35,14 @@ class Wallet(
     constructor(blockchain: Blockchain, addresses: Set<Address>, publicKey: PublicKey) : this(
         blockchain = blockchain,
         walletAddresses = addresses.associate { address ->
-            address.type to AddressPublicKeyPair(address.value, publicKey, address.type)
+            address.type to PlainAddress(address.value, address.type, publicKey)
         }.toMutableMap(),
-        tokens = emptySet()
     ) {
         require(walletAddresses.containsKey(AddressType.Default)) { "Addresses have to contain the default address" }
     }
 
     init {
         setAmount(Amount(null, blockchain, AmountType.Coin))
-        tokens.forEach { setAmount(Amount(it)) }
     }
 
     fun setAmount(amount: Amount) {
@@ -76,6 +75,12 @@ class Wallet(
     }
 
     fun setReserveValue(value: BigDecimal) = setAmount(Amount(value, blockchain, AmountType.Reserve))
+
+    fun getCoinAmount(): Amount {
+        return requireNotNull(amounts[AmountType.Coin]) {
+            "Coin Amount is NULL, but it can't be, because it setup on init"
+        }
+    }
 
     fun getTokenAmount(token: Token): Amount? {
         val key = amounts.keys.find { it is AmountType.Token && it.token == token }
@@ -123,36 +128,41 @@ class Wallet(
     fun getShareUri(address: String? = null) =
         blockchain.getShareUri(address ?: this.address)
 
-    data class PublicKey(
+    class HDKey(
+        val extendedPublicKey: ExtendedPublicKey,
+        val path: DerivationPath,
+    )
+
+    class PublicKey(
         val seedKey: ByteArray,
-        val derivation: Derivation?,
+        val derivationType: DerivationType?
     ) {
-        val blockchainKey: ByteArray = derivation?.derivedKey ?: seedKey
 
-        override fun equals(other: Any?): Boolean {
-            val other = other as? PublicKey ?: return false
+        val blockchainKey: ByteArray
+            get() = when (derivationType) {
+                null -> seedKey
+                is DerivationType.Plain -> derivationType.hdKey.extendedPublicKey.publicKey
+                is DerivationType.Double -> {
+                    CardanoUtils.extendPublicKey(derivationType.first.extendedPublicKey, derivationType.second.extendedPublicKey)
+                }
+            }
 
-            if (!seedKey.contentEquals(other.seedKey)) return false
-            if (!derivation?.derivedKey.contentEquals(other.derivation?.derivedKey)) return false
+        val derivationPath = derivationType?.hdKey?.path
 
-            return when {
-                derivation?.derivationPath == null && other.derivation?.derivationPath == null -> true
-                derivation?.derivationPath == null -> false
-                else -> derivation.derivationPath == other.derivation?.derivationPath
+        val derivedKey = derivationType?.hdKey?.extendedPublicKey?.publicKey
+
+        sealed class DerivationType {
+
+            abstract val hdKey: HDKey
+
+            class Plain(override val hdKey: HDKey) : DerivationType()
+
+            class Double(val first: HDKey, val second: HDKey) : DerivationType() {
+
+                override val hdKey = first
+
             }
         }
 
-        override fun hashCode(): Int {
-            return calculateHashCode(
-                seedKey.contentHashCode(),
-                derivation?.derivedKey?.contentHashCode() ?: 0,
-                derivation?.derivationPath?.hashCode() ?: 0
-            )
-        }
     }
-
-    class Derivation(
-        val derivedKey: ByteArray,
-        val derivationPath: DerivationPath,
-    )
 }

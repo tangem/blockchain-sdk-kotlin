@@ -6,38 +6,63 @@ import com.tangem.blockchain.common.NowNodeCredentials
 
 sealed class BlockBookConfig(val credentials: BlockBookCredentials) {
 
-    abstract val host: String
+    abstract val baseHost: String
+
+    abstract fun getHost(blockchain: Blockchain): String
+
+     abstract fun path(request: BlockBookRequest): String
 
     abstract fun getRequestBaseUrl(request: BlockBookRequest, blockchain: Blockchain): String
 
     class NowNodes(nowNodesCredentials: NowNodeCredentials) : BlockBookConfig(
         credentials = NowNodeCredentials.headerApiKey to nowNodesCredentials.apiKey
     ) {
-        override val host: String = "nownodes.io"
+        override val baseHost: String = "nownodes.io"
+
+        override fun getHost(blockchain: Blockchain): String {
+            val prefix = blockchain.currency.lowercase()
+            return when (blockchain) {
+                Blockchain.Bitcoin, Blockchain.BitcoinTestnet,
+                Blockchain.Dash,
+                Blockchain.Litecoin,
+                Blockchain.Dogecoin,
+                -> {
+                    val testnetSuffix = if (blockchain.isTestnet()) "-testnet" else ""
+                    "https://${prefix}book${testnetSuffix}.${baseHost}"
+                }
+
+                Blockchain.Ethereum -> "https://${prefix}-blockbook.${baseHost}"
+                else -> error("BlockBookConfig.NowNodes don't support blockchain $blockchain")
+            }
+        }
 
         override fun getRequestBaseUrl(request: BlockBookRequest, blockchain: Blockchain): String {
-            val currencySymbolPrefix = blockchain.currency.lowercase()
-            return when (request) {
-                BlockBookRequest.GET_FEE -> "https://$currencySymbolPrefix.$host"
-                else -> {
-                    val testnetSuffix = if (blockchain.isTestnet()) "-testnet" else ""
-                    return "https://${currencySymbolPrefix}book$testnetSuffix.$host/api/v2"
-                }
-            }
+            return "${getHost(blockchain)}${path(request)}"
+        }
+
+        override fun path(request: BlockBookRequest): String = when(request) {
+            BlockBookRequest.GetFee -> ""
+            else -> "/api/v2"
         }
     }
 
     class GetBlock(getBlockCredentials: GetBlockCredentials) : BlockBookConfig(
         credentials = GetBlockCredentials.HEADER_PARAM_NAME to getBlockCredentials.apiKey
     ) {
-        override val host: String = "getblock.io"
+        override val baseHost: String = "getblock.io"
+
+        override fun getHost(blockchain: Blockchain): String {
+            val currencySymbolPrefix = blockchain.currency.lowercase()
+            return "https://$currencySymbolPrefix.$baseHost"
+        }
 
         override fun getRequestBaseUrl(request: BlockBookRequest, blockchain: Blockchain): String {
-            val currencySymbolPrefix = blockchain.currency.lowercase()
-            return when (request) {
-                BlockBookRequest.GET_FEE -> "https://$currencySymbolPrefix.$host/mainnet"
-                else -> "https://$currencySymbolPrefix.$host/mainnet/blockbook/api/v2"
-            }
+            return "${getHost(blockchain)}${path(request)}"
+        }
+
+        override fun path(request: BlockBookRequest): String = when(request) {
+            BlockBookRequest.GetFee -> "/mainnet"
+            else -> "/mainnet/blockbook/api/v2"
         }
     }
 }

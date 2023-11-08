@@ -3,7 +3,16 @@ package com.tangem.blockchain.blockchains.cardano
 import android.util.Log
 import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.BlockchainError
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionSender
+import com.tangem.blockchain.common.TransactionSigner
+import com.tangem.blockchain.common.TransactionStatus
+import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -11,7 +20,6 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
-import java.math.RoundingMode
 
 class CardanoWalletManager(
     wallet: Wallet,
@@ -23,9 +31,9 @@ class CardanoWalletManager(
     private val blockchain = wallet.blockchain
 
     override val currentHost: String
-        get() = networkProvider.host
+        get() = networkProvider.baseUrl
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         when (val response = networkProvider.getInfo(wallet.addresses.map { it.value }.toSet())) {
             is Result.Success -> updateWallet(response.data)
             is Result.Failure -> updateError(response.error)
@@ -40,7 +48,7 @@ class CardanoWalletManager(
             newValue = response.balance.toBigDecimal().movePointLeft(blockchain.decimals())
         )
 
-        transactionBuilder.unspentOutputs = response.unspentOutputs
+        transactionBuilder.update(response.unspentOutputs)
 
         wallet.recentTransactions.forEach { recentTransaction ->
             if (response.recentTransactionsHashes.isEmpty()) { // case for Rosetta API, it lacks recent transactions
@@ -70,40 +78,46 @@ class CardanoWalletManager(
     override suspend fun send(
         transactionData: TransactionData, signer: TransactionSigner,
     ): SimpleResult {
-        val transactionHash = transactionBuilder.buildToSign(transactionData)
-        val signerResponse = signer.sign(transactionHash, wallet.publicKey)
-        return when (signerResponse) {
+        val transactionHash = transactionBuilder.buildForSign(transactionData)
+
+        return when (val signatureResult = signer.sign(transactionHash, wallet.publicKey)) {
             is CompletionResult.Success -> {
-                val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
+                val signatureInfo = SignatureInfo(signatureResult.data, wallet.publicKey.blockchainKey)
+
+                val transactionToSend = transactionBuilder.buildForSend(transactionData, signatureInfo)
                 val sendResult = networkProvider.sendTransaction(transactionToSend)
 
                 if (sendResult is SimpleResult.Success) {
                     transactionData.hash = transactionHash.toHexString()
                     wallet.addOutgoingTransaction(transactionData)
                 }
+
                 sendResult
             }
 
-            is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResponse.error)
+            is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signatureResult.error)
         }
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
-        val size = transactionBuilder.getEstimateSize(
-            TransactionData(
-                amount = amount,
-                fee = null,
-                sourceAddress = wallet.address,
-                destinationAddress = destination
+        val dummyTransaction = TransactionData(
+            amount = amount,
+            fee = null,
+            sourceAddress = wallet.address,
+            destinationAddress = destination
+        )
+
+        val feeValue = transactionBuilder.estimatedFee(dummyTransaction)
+
+        val fee = Fee.Common(
+            Amount(
+                value = feeValue.movePointLeft(blockchain.decimals()),
+                blockchain = wallet.blockchain,
+                type = AmountType.Coin
             )
         )
-        val fee = (MINIMAL_FEE + COST_OF_KB * size).toBigDecimal().setScale(blockchain.decimals(), RoundingMode.UP)
-        return Result.Success(TransactionFee.Single(Fee.Common(Amount(amount, fee))))
-    }
 
-    companion object {
 
-        private const val MINIMAL_FEE = 0.155381
-        private const val COST_OF_KB = 0.000044
+        return Result.Success(TransactionFee.Single(fee))
     }
 }
