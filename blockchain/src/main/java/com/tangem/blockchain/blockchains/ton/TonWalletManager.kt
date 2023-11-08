@@ -42,6 +42,7 @@ class TonWalletManager(
             is Result.Failure -> updateError(walletInfoResult.error)
             is Result.Success -> updateWallet(walletInfoResult.data)
         }
+        wallet.blockchain.getSupportedCurves()
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
