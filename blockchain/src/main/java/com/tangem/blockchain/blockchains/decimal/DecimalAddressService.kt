@@ -1,8 +1,10 @@
 package com.tangem.blockchain.blockchains.decimal
 
 import com.tangem.blockchain.blockchains.binance.client.encoding.Crypto
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.address.PlainAddress
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toDecompressedPublicKey
@@ -13,27 +15,27 @@ import org.kethereum.erc55.withERC55Checksum
 import org.kethereum.model.Address
 import org.kethereum.model.PublicKey
 import org.komputing.khex.extensions.toHexString
-import com.tangem.blockchain.common.address.Address as SdkAddress
 
-internal class DecimalAddressService : AddressService() {
+internal class DecimalAddressService : AddressService {
 
-    override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-        return makeErcAddress(walletPublicKey)
-    }
-
-    override fun makeAddresses(
-        walletPublicKey: ByteArray,
-        curve: EllipticCurve?,
-    ): Set<SdkAddress> {
-        val ercAddress = makeErcAddress(walletPublicKey)
-
-        return setOf(
-            SdkAddress(ercAddress),
-            SdkAddress(
-                convertErcAddressToDscAddress(ercAddress),
-                AddressType.Legacy,
+    override fun makeAddress(
+        publicKey: Wallet.PublicKey,
+        addressType: AddressType,
+        curve: EllipticCurve,
+    ): PlainAddress {
+        return if (addressType == AddressType.Default) {
+            PlainAddress(
+                value = makeErcAddress(publicKey.blockchainKey),
+                type = AddressType.Default,
+                publicKey = publicKey
             )
-        )
+        } else {
+            PlainAddress(
+                value =  convertErcAddressToDscAddress(makeErcAddress(publicKey.blockchainKey)),
+                type = AddressType.Legacy,
+                publicKey = publicKey
+            )
+        }
     }
 
     private fun makeErcAddress(walletPublicKey: ByteArray): String {
