@@ -10,6 +10,7 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.toBigDecimalOrDefault
 import com.tangem.blockchain.network.blockbook.config.BlockBookConfig
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
@@ -94,7 +95,7 @@ class BlockBookNetworkProvider(
         address: String,
     ): List<BitcoinUnspentOutput> {
         val outputScript = transactions.firstNotNullOfOrNull { transaction ->
-            transaction.vout?.firstOrNull { it.addresses.contains(address) }?.hex
+            transaction.vout.firstOrNull { it.addresses?.contains(address) == true }?.hex
         } ?: return emptyList()
 
         return getUtxoResponseItems.mapNotNull {
@@ -116,32 +117,49 @@ class BlockBookNetworkProvider(
     ): List<BasicTransactionData> {
         return transactions
             .filter { it.confirmations == 0 }
-            .mapNotNull { transaction ->
-                var balanceDif = transaction
-                    .vout?.firstOrNull()
-                    ?.value?.toBigDecimalOrNull()
-                    ?.movePointLeft(blockchain.decimals())
-                    ?: return@mapNotNull null
-
-                balanceDif = if (transaction.vin?.any { it.addresses.contains(address) } == true &&
-                    transaction.vout.any { !it.addresses.contains(address) }
-                ) {
-                    balanceDif.negate()
-                } else if (transaction.vout.any { it.addresses.contains(address) } &&
-                    transaction.vin?.any { !it.addresses.contains(address) } == true
-                ) {
-                    balanceDif.abs()
+            .map { transaction ->
+                val isIncoming = transaction.vin.any { it.addresses?.contains(address) == false }
+                var source = "unknown"
+                var destination = "unknown"
+                val amount = if (isIncoming) {
+                    destination = address
+                    transaction.vin
+                        .firstOrNull()
+                        ?.addresses
+                        ?.firstOrNull()
+                        ?.let { source = it }
+                    val outputs = transaction.vout
+                        .find { it.addresses?.contains(address) == true }
+                        ?.value.toBigDecimalOrDefault()
+                    val inputs = transaction.vin
+                        .find { it.addresses?.contains(address) == true }
+                        ?.value.toBigDecimalOrDefault()
+                    outputs - inputs
                 } else {
-                    return@mapNotNull null
-                }
+                    source = address
+                    transaction.vout
+                        .firstOrNull()
+                        ?.addresses
+                        ?.firstOrNull()
+                        ?.let { destination = it }
+                    val outputs = transaction.vout
+                        .asSequence()
+                        .filter { it.addresses?.contains(address) == false }
+                        .mapNotNull { it.value?.toBigDecimalOrNull() }
+                        .sumOf { it }
+                    val fee = transaction.fees.toBigDecimalOrDefault()
+                    outputs + fee
+                }.movePointLeft(blockchain.decimals())
 
                 BasicTransactionData(
-                    balanceDif = balanceDif,
+                    balanceDif = if (isIncoming) amount else amount.negate(),
                     hash = transaction.txid,
                     date = Calendar.getInstance().apply {
                         timeInMillis = transaction.blockTime.toLong()
                     },
                     isConfirmed = false,
+                    destination = destination,
+                    source = source,
                 )
             }
     }

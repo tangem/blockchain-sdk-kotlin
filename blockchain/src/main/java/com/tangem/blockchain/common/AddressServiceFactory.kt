@@ -7,6 +7,7 @@ import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressService
 import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.dash.DashMainNetParams
+import com.tangem.blockchain.blockchains.decimal.DecimalAddressService
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
@@ -143,6 +144,8 @@ class AddressServiceFactory(
             Blockchain.CosmosTestnet,
             Blockchain.TerraV1,
             Blockchain.TerraV2,
+            Blockchain.Near,
+            Blockchain.NearTestnet
             -> {
                 WalletCoreAddressService(blockchain)
             }
@@ -159,6 +162,10 @@ class AddressServiceFactory(
 
             Blockchain.Chia, Blockchain.ChiaTestnet -> {
                 ChiaAddressService(blockchain)
+            }
+
+            Blockchain.Decimal, Blockchain.DecimalTestnet -> {
+                DecimalAddressService()
             }
 
             Blockchain.Unknown -> {

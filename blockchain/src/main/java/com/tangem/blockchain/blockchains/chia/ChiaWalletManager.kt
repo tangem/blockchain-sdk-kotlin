@@ -27,12 +27,12 @@ class ChiaWalletManager(
 ) : WalletManager(wallet), TransactionSender {
 
     override val currentHost: String
-        get() = networkProvider.host
+        get() = networkProvider.baseUrl
 
     private val blockchain = wallet.blockchain
     private val puzzleHash = ChiaAddressService.getPuzzleHash(wallet.address).toHexString()
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         when (val response = networkProvider.getUnspents(puzzleHash)) {
             is Result.Success -> updateWallet(response.data)
             is Result.Failure -> updateError(response.error)

@@ -76,6 +76,12 @@ class Wallet(
 
     fun setReserveValue(value: BigDecimal) = setAmount(Amount(value, blockchain, AmountType.Reserve))
 
+    fun getCoinAmount(): Amount {
+        return requireNotNull(amounts[AmountType.Coin]) {
+            "Coin Amount is NULL, but it can't be, because it setup on init"
+        }
+    }
+
     fun getTokenAmount(token: Token): Amount? {
         val key = amounts.keys.find { it is AmountType.Token && it.token == token }
         return amounts[key]

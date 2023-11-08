@@ -15,7 +15,7 @@ class BitcoinCashWalletManager(
 
     override val minimalFee = 0.00001.toBigDecimal()
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         when (val response = networkProvider.getInfo(wallet.address)) {
             is Result.Success -> updateWallet(response.data)
             is Result.Failure -> updateError(response.error)

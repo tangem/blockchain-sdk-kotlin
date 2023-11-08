@@ -5,11 +5,7 @@ import com.tangem.blockchain.extensions.Result
 
 interface TransactionHistoryProvider {
 
-    suspend fun getTransactionHistoryState(address: String): TransactionHistoryState
+    suspend fun getTransactionHistoryState(address: String, filterType: TransactionHistoryRequest.FilterType): TransactionHistoryState
 
-    suspend fun getTransactionsHistory(
-        address: String,
-        page: Int,
-        pageSize: Int,
-    ): Result<PaginationWrapper<TransactionHistoryItem>>
+    suspend fun getTransactionsHistory(request: TransactionHistoryRequest): Result<PaginationWrapper<TransactionHistoryItem>>
 }
