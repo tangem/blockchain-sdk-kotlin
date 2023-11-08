@@ -2,6 +2,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'kotlinx-serialization'
 apply from: '../upload-github.gradle'
 apply plugin: 'com.squareup.wire'
 
@@ -66,7 +67,7 @@ dependencies {
     implementation "com.madgag.spongycastle:core:1.58.0.0"
     implementation "com.madgag.spongycastle:prov:1.58.0.0"
 
-    ext.kethereum_version = '0.85.7'
+    ext.kethereum_version = '0.86.0'
     implementation "com.github.walleth.kethereum:extensions_kotlin:$kethereum_version"
     implementation "com.github.walleth.kethereum:extensions_transactions:$kethereum_version"
     implementation "com.github.walleth.kethereum:erc55:$kethereum_version"
@@ -79,7 +80,6 @@ dependencies {
     implementation "com.github.walleth.kethereum:rlp:$kethereum_version"
     implementation "com.github.walleth.kethereum:abi:$kethereum_version"
     implementation "com.github.walleth.kethereum:types:$kethereum_version"
-    implementation "com.github.walleth.kethereum:erc712:$kethereum_version"
 
     ext.komputing_khex_extensions_version = "1.1.2"
     implementation("com.github.komputing.khex:extensions:$komputing_khex_extensions_version")
@@ -90,8 +90,8 @@ dependencies {
     implementation files('libs/solanaj-0.0.10.jar')
     implementation files('libs/polkaj-root-0.1.5.jar')
     implementation "com.tangem:blst-android:0.0.2@aar"
-    implementation "com.tangem:wallet-core:3.2.4-tangem3@aar"
-    implementation("com.tangem:wallet-core-proto:3.2.4-tangem3") {
+    implementation "com.tangem:wallet-core:3.2.4-tangem4@aar"
+    implementation("com.tangem:wallet-core-proto:3.2.4-tangem4") {
         exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
     }
 
@@ -123,6 +123,8 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
     implementation 'org.slf4j:slf4j-log4j12:1.7.26'
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
 }
 
 //Protobuf

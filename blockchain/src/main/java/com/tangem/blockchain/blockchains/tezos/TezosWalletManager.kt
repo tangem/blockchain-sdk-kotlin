@@ -44,7 +44,7 @@ class TezosWalletManager(
     private val blockchain = wallet.blockchain
     private var publicKeyRevealed: Boolean? = null
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         when (val response = networkProvider.getInfo(wallet.address)) {
             is Result.Success -> updateWallet(response.data)
             is Result.Failure -> updateError(response.error)
@@ -161,7 +161,7 @@ class TezosWalletManager(
 
     private fun canonicalizeSignature(signature: ByteArray): ByteArray {
         return when (curve) {
-            EllipticCurve.Ed25519 -> signature
+            EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010 -> signature
             EllipticCurve.Secp256k1 -> {
                 val canonicalECDSASignature = signature.toCanonicalECDSASignature()
                 //bigIntegerToBytes cuts leading zero if present

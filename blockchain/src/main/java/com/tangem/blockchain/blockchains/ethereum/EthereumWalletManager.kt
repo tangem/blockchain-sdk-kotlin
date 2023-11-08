@@ -3,30 +3,19 @@ package com.tangem.blockchain.blockchains.ethereum
 import android.util.Log
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.BlockchainError
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.SignatureCountValidator
-import com.tangem.blockchain.common.Token
-import com.tangem.blockchain.common.TokenFinder
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionSender
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.TransactionStatus
-import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.WalletManager
-import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
+import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
-import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.kethereum.extensions.toHexString
 import org.kethereum.keccakshortcut.keccak
+import org.komputing.khex.extensions.toHexString
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -34,11 +23,13 @@ open class EthereumWalletManager(
     wallet: Wallet,
     val transactionBuilder: EthereumTransactionBuilder,
     protected val networkProvider: EthereumNetworkProvider,
-) : WalletManager(wallet),
+    transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
+) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider),
     TransactionSender,
     SignatureCountValidator,
     TokenFinder,
-    EthereumGasLoader {
+    EthereumGasLoader,
+    Approver {
 
     // move to constructor later
     protected val feesCalculator = EthereumFeesCalculator()
@@ -51,7 +42,7 @@ open class EthereumWalletManager(
     override val currentHost: String
         get() = networkProvider.baseUrl
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         when (val result = networkProvider.getInfo(wallet.address, cardTokens)) {
             is Result.Success -> updateWallet(result.data)
             is Result.Failure -> updateError(result.error)
@@ -91,7 +82,7 @@ open class EthereumWalletManager(
                         transactionToSign = signResponse.data.second
                     )
                 val sendResult = networkProvider
-                    .sendTransaction("0x" + transactionToSend.toHexString())
+                    .sendTransaction(transactionToSend.toHexString())
 
                 if (sendResult is SimpleResult.Success) {
                     transactionData.hash = transactionToSend.keccak().toHexString()
@@ -126,7 +117,7 @@ open class EthereumWalletManager(
         return when (val signerResponse = signer.sign(transactionToSign.hash, wallet.publicKey)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data, transactionToSign)
-                val sendResult = networkProvider.sendTransaction("0x" + transactionToSend.toHexString())
+                val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())
                 sendResult
             }
 
@@ -226,6 +217,18 @@ open class EthereumWalletManager(
         return getGasLimitInternal(amount, destination, data)
     }
 
+    override suspend fun getAllowance(
+        spenderAddress: String,
+        token: Token,
+    ): Result<BigDecimal> {
+        return networkProvider.getAllowance(wallet.address, token, spenderAddress)
+    }
+
+    override fun getApproveData(
+        spenderAddress: String,
+        value: Amount?,
+    ) = EthereumUtils.createErc20ApproveDataHex(spenderAddress, value)
+
     private suspend fun getGasLimitInternal(
         amount: Amount,
         destination: String,
@@ -245,7 +248,7 @@ open class EthereumWalletManager(
             is AmountType.Token -> {
                 if (finalData == null) {
                     to = amount.type.token.contractAddress
-                    finalData = "0x" + EthereumUtils.createErc20TransferData(destination, amount).toHexString()
+                    finalData = EthereumUtils.createErc20TransferData(destination, amount).toHexString()
                 }
             }
 
