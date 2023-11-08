@@ -1,19 +1,15 @@
 package com.tangem.blockchain.blockchains.ethereum
 
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.blockchains.ethereum.eip712.EthEip712Util
 import com.tangem.blockchain.common.*
-import com.tangem.common.extensions.hexToBytes
-import com.tangem.common.extensions.toByteArray
-import com.tangem.common.extensions.toDecompressedPublicKey
+import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.extensions.isValidHex
+import com.tangem.blockchain.extensions.toBigDecimalOrDefault
+import com.tangem.common.extensions.*
 import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.crypto.api.ec.ECDSASignature
 import org.kethereum.crypto.determineRecId
 import org.kethereum.crypto.impl.ec.canonicalise
-import org.kethereum.eip712.MoshiAdapter
 import org.kethereum.extensions.toBytesPadded
 import org.kethereum.extensions.toFixedLengthByteArray
 import org.kethereum.extensions.transactions.encode
@@ -23,7 +19,7 @@ import org.kethereum.model.Address
 import org.kethereum.model.PublicKey
 import org.kethereum.model.SignatureData
 import org.kethereum.model.createTransactionWithDefaults
-import pm.gnosis.eip712.typedDataHash
+import org.komputing.khex.extensions.toHexString
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -37,10 +33,42 @@ class EthereumUtils {
         private val tokenTransferFromSignature = "transferFrom(address,address,uint256)".toByteArray().toKeccak().copyOf(4)
 
         private const val HEX_PREFIX = "0x"
+        private const val HEX_F = "f"
+
+        // ERC-20 standard defines balanceOf function as returning uint256. Don't accept anything else.
+        private const val UInt256Size = 32
 
         fun ByteArray.toKeccak(): ByteArray {
             return this.keccak()
         }
+
+        internal fun parseEthereumDecimal(value: String, decimalsCount: Int): BigDecimal? {
+            val data = value.removePrefix(HEX_PREFIX).asciiHexToBytes() ?: return null
+
+            val balanceData = when {
+                data.size <= UInt256Size -> data
+                data.allOutOfRangeIsEqualTo(UInt256Size, 0) -> data.copyOf(UInt256Size)
+                else -> return null
+            }
+
+            return balanceData
+                .toHexString(prefix = "")
+                .toBigIntegerOrNull(radix = 16)
+                .toBigDecimalOrDefault()
+                .movePointLeft(decimalsCount)
+        }
+
+        private fun String.asciiHexToBytes(): ByteArray? {
+            var trimmedString = this.remove(" ")
+            if (trimmedString.length % 2 != 0) {
+                trimmedString = "0$trimmedString"
+            }
+
+            return if (trimmedString.isValidHex()) trimmedString.hexToBytes() else null
+        }
+
+        private fun ByteArray.allOutOfRangeIsEqualTo(range: Int, equal: Byte): Boolean =
+            this.copyOfRange(range, this.size).all { it == equal }
 
         fun prepareSignedMessageData(
             signedHash: ByteArray,
@@ -269,7 +297,6 @@ class EthereumUtils {
             return CompiledEthereumTransaction(transaction, hash)
         }
 
-
         fun buildSetWalletToSign(
             processorContractAddress: String,
             cardAddress: String,
@@ -306,7 +333,6 @@ class EthereumUtils {
 
             return CompiledEthereumTransaction(transaction, hash)
         }
-
 
         fun buildProcessToSign(
             processorContractAddress: String,
@@ -402,6 +428,12 @@ class EthereumUtils {
             return CompiledEthereumTransaction(transaction, hash)
         }
 
+        fun createErc20ApproveDataHex(spender: String, amount: Amount?): String =
+            createErc20ApproveData(
+                spender = spender,
+                amount = amount?.value?.movePointRight(amount.decimals)?.toBigInteger()
+            ).toHexString()
+
         private fun createErc20TransferData(recipient: String, amount: BigInteger) =
             tokenTransferSignature.toByteArray() +
                 recipient.substring(2).hexToBytes().toFixedLengthByteArray(32) +
@@ -412,16 +444,10 @@ class EthereumUtils {
                 recepient, amount.value!!.movePointRight(amount.decimals).toBigInteger()
             )
 
-        private fun createErc20ApproveData(spender: String, amount: BigInteger) =
+        private fun createErc20ApproveData(spender: String, amount: BigInteger?): ByteArray =
             tokenApproveSignature +
                 spender.substring(2).hexToBytes().toFixedLengthByteArray(32) +
-                amount.toBytesPadded(32)
-
-        internal fun createErc20ApproveData(spender: String, amount: Amount) =
-            createErc20ApproveData(
-                spender = spender,
-                amount = amount.value!!.movePointRight(amount.decimals).toBigInteger()
-            )
+                (amount?.toBytesPadded(32) ?: HEX_F.repeat(64).hexToBytes())
 
         private fun createSetSpendLimitData(cardAddress: String, amount: BigInteger) =
             setSpendLimitSignature +
@@ -464,8 +490,7 @@ class EthereumUtils {
         }
 
         fun makeTypedDataHash(rawMessage: String): ByteArray {
-            val messageParsed = TangemEIP712JsonParser(MoshiAdapter()).parseMessage(rawMessage)
-           return typedDataHash(messageParsed.message, messageParsed.domain)
+            return EthEip712Util.eip712Hash(rawMessage)
         }
     }
 }
