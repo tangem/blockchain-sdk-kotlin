@@ -1,11 +1,15 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import android.util.Log
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.PaginationWrapper
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem
-import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionDirection
+import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionStatus
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionType
 import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
+import com.tangem.blockchain.common.txhistory.TransactionHistoryRequest
 import com.tangem.blockchain.common.txhistory.TransactionHistoryState
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.toBigDecimalOrDefault
@@ -13,21 +17,28 @@ import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
-
-private const val EMPTY_ADDRESS = "empty address"
 
 internal class BitcoinTransactionHistoryProvider(
     private val blockchain: Blockchain,
     private val blockBookApi: BlockBookApi,
 ) : TransactionHistoryProvider {
 
-    override suspend fun getTransactionHistoryState(address: String): TransactionHistoryState {
+    override suspend fun getTransactionHistoryState(
+        address: String,
+        filterType: TransactionHistoryRequest.FilterType,
+    ): TransactionHistoryState {
         return try {
-            val addressResponse = withContext(Dispatchers.IO) { blockBookApi.getAddress(address) }
-            if (addressResponse.txs > 0) {
-                TransactionHistoryState.Success.HasTransactions(addressResponse.txs)
+            val response = withContext(Dispatchers.IO) {
+                blockBookApi.getTransactions(
+                    address = address,
+                    page = 1,
+                    pageSize = 1, // We don't need to know all transactions to define state
+                    filterType = null,
+                )
+            }
+            if (!response.transactions.isNullOrEmpty()) {
+                TransactionHistoryState.Success.HasTransactions(response.txs)
             } else {
                 TransactionHistoryState.Success.Empty
             }
@@ -37,20 +48,25 @@ internal class BitcoinTransactionHistoryProvider(
         }
     }
 
-    override suspend fun getTransactionsHistory(
-        address: String,
-        page: Int,
-        pageSize: Int,
-    ): Result<PaginationWrapper<TransactionHistoryItem>> {
+    override suspend fun getTransactionsHistory(request: TransactionHistoryRequest): Result<PaginationWrapper<TransactionHistoryItem>> {
         return try {
             val response =
-                withContext(Dispatchers.IO) { blockBookApi.getTransactions(address, page, pageSize) }
-            val txs = response.transactions?.map { tx -> tx.toTransactionHistoryItem(address) } ?: emptyList()
+                withContext(Dispatchers.IO) {
+                    blockBookApi.getTransactions(
+                        address = request.address,
+                        page = request.page.number,
+                        pageSize = request.page.size,
+                        filterType = null,
+                    )
+                }
+            val txs = response.transactions
+                ?.map { tx -> tx.toTransactionHistoryItem(request.address) }
+                ?: emptyList()
             Result.Success(
                 PaginationWrapper(
-                    page = response.page,
-                    totalPages = response.totalPages,
-                    itemsOnPage = response.itemsOnPage,
+                    page = response.page ?: request.page.number,
+                    totalPages = response.totalPages ?: 0,
+                    itemsOnPage = response.itemsOnPage ?: 0,
                     items = txs
                 )
             )
@@ -60,19 +76,17 @@ internal class BitcoinTransactionHistoryProvider(
     }
 
     private fun GetAddressResponse.Transaction.toTransactionHistoryItem(walletAddress: String): TransactionHistoryItem {
-        val isIncoming = vin?.any { !it.addresses.contains(walletAddress) } ?: false
+        val isOutgoing = vin.any { it.addresses?.contains(walletAddress) == true }
         return TransactionHistoryItem(
             txHash = txid,
             timestamp = TimeUnit.SECONDS.toMillis(blockTime.toLong()),
-            direction = extractTransactionDirection(
-                isIncoming = isIncoming,
-                tx = this,
-                walletAddress = walletAddress
-            ),
+            isOutgoing = isOutgoing,
+            destinationType = extractDestinationType(tx = this, walletAddress = walletAddress),
+            sourceType = sourceType(tx = this, walletAddress = walletAddress),
             status = if (confirmations > 0) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed,
             type = TransactionType.Transfer,
             amount = extractAmount(
-                isIncoming = isIncoming,
+                isOutgoing = isOutgoing,
                 tx = this,
                 walletAddress = walletAddress,
                 blockchain = blockchain,
@@ -80,43 +94,68 @@ internal class BitcoinTransactionHistoryProvider(
         )
     }
 
-    private fun extractTransactionDirection(
-        isIncoming: Boolean,
+    private fun extractDestinationType(
         tx: GetAddressResponse.Transaction,
         walletAddress: String,
-    ): TransactionDirection {
-        val address = if (isIncoming) {
-            tx.vin?.find { !it.addresses.contains(walletAddress) }?.addresses?.firstOrNull()
-        } else {
-            tx.vout?.find { !it.addresses.contains(walletAddress) }?.addresses?.firstOrNull()
-        } ?: EMPTY_ADDRESS
+    ): TransactionHistoryItem.DestinationType {
+        val outputsWithOtherAddresses = tx.vout
+            .filter { it.addresses?.contains(walletAddress) == false }
+            .mapNotNull { it.addresses }
+            .flatten()
+            .toSet()
+        return when {
+            outputsWithOtherAddresses.isEmpty() -> TransactionHistoryItem.DestinationType.Single(
+                TransactionHistoryItem.AddressType.User(walletAddress)
+            )
 
-        return if (isIncoming) TransactionDirection.Incoming(from = address) else TransactionDirection.Outgoing(to = address)
+            outputsWithOtherAddresses.size == 1 -> TransactionHistoryItem.DestinationType.Single(
+                TransactionHistoryItem.AddressType.User(outputsWithOtherAddresses.first())
+            )
+
+            else -> TransactionHistoryItem.DestinationType.Multiple(
+                outputsWithOtherAddresses.map { TransactionHistoryItem.AddressType.User(it) }
+            )
+        }
+    }
+
+    private fun sourceType(
+        tx: GetAddressResponse.Transaction,
+        walletAddress: String,
+    ): TransactionHistoryItem.SourceType {
+        val inputsWithOtherAddresses = tx.vin
+            .filter { it.addresses?.contains(walletAddress) == false }
+            .mapNotNull { it.addresses }
+            .flatten()
+            .toSet()
+        return when {
+            inputsWithOtherAddresses.isEmpty() -> TransactionHistoryItem.SourceType.Single(walletAddress)
+            inputsWithOtherAddresses.size == 1 -> TransactionHistoryItem.SourceType.Single(inputsWithOtherAddresses.first())
+            else -> TransactionHistoryItem.SourceType.Multiple(inputsWithOtherAddresses.toList())
+        }
     }
 
     private fun extractAmount(
-        isIncoming: Boolean,
+        isOutgoing: Boolean,
         tx: GetAddressResponse.Transaction,
         walletAddress: String,
         blockchain: Blockchain,
     ): Amount {
         return try {
-            val amount = if (isIncoming) {
+            val amount = if (isOutgoing) {
                 val outputs = tx.vout
-                    ?.find { it.addresses.contains(walletAddress) }
-                    ?.value.toBigDecimalOrDefault()
-                val inputs = tx.vin
-                    ?.find { it.addresses.contains(walletAddress) }
-                    ?.value.toBigDecimalOrDefault()
-                outputs - inputs
-            } else {
-                val outputs = tx.vout
-                    ?.filter { !it.addresses.contains(walletAddress) }
-                    ?.mapNotNull { it.value.toBigDecimalOrNull() }
-                    ?.sumOf { it }
-                    ?: BigDecimal.ZERO
+                    .filter { it.addresses?.contains(walletAddress) == false }
+                    .mapNotNull { it.value?.toBigDecimalOrNull() }
+                    .sumOf { it }
                 val fee = tx.fees.toBigDecimalOrDefault()
                 outputs + fee
+            } else {
+                val outputs = tx.vout
+                    .find { it.addresses?.contains(walletAddress) == true}
+                    ?.value.toBigDecimalOrDefault()
+                val inputs = tx.vin
+                    .find { it.addresses?.contains(walletAddress) == true }
+                    ?.value.toBigDecimalOrDefault()
+                outputs - inputs
             }
 
             Amount(value = amount.movePointLeft(blockchain.decimals()), blockchain = blockchain)

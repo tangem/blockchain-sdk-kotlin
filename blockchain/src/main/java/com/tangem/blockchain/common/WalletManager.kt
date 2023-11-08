@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.extensions.DebouncedInvoke
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
@@ -28,7 +29,18 @@ abstract class WalletManager(
 
     open val dustValue: BigDecimal? = null
 
-    abstract suspend fun update()
+    private val updateDebounced = DebouncedInvoke()
+
+    /**
+     * Update wallet state. [forceUpdate] to skip debounce
+     */
+    suspend fun update(forceUpdate: Boolean = false) {
+        updateDebounced.invokeOnExpire(forceUpdate) {
+            updateInternal()
+        }
+    }
+
+    internal abstract suspend fun updateInternal()
 
     protected open fun updateRecentTransactionsBasic(transactions: List<BasicTransactionData>) {
         val (confirmedTransactions, unconfirmedTransactions) =
@@ -139,12 +151,11 @@ abstract class WalletManager(
     }
 
     private fun BasicTransactionData.toTransactionData(): TransactionData {
-        val isIncoming = this.balanceDif.signum() > 0
         return TransactionData(
             amount = Amount(wallet.amounts[AmountType.Coin]!!, this.balanceDif.abs()),
             fee = null,
-            sourceAddress = if (isIncoming) "unknown" else wallet.address,
-            destinationAddress = if (isIncoming) wallet.address else "unknown",
+            sourceAddress = source,
+            destinationAddress = destination,
             hash = this.hash,
             date = this.date,
             status = if (this.isConfirmed) {
@@ -183,4 +194,16 @@ interface SignatureCountValidator {
 
 interface TokenFinder {
     suspend fun findTokens(): Result<List<Token>>
+}
+
+interface Approver {
+    suspend fun getAllowance(
+        spenderAddress: String,
+        token: Token,
+    ): Result<BigDecimal>
+
+    fun getApproveData(
+        spenderAddress: String,
+        value: Amount? = null,
+    ): String
 }

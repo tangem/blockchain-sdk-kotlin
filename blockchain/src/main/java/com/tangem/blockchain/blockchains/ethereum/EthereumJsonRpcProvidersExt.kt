@@ -13,6 +13,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
     val providers = when (this) {
         Blockchain.Arbitrum -> listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://arb1.arbitrum.io/rpc/"),
+            getNowNodesProvider(baseUrl = "https://arbitrum.nownodes.io/", config = config),
             getInfuraProvider(baseUrl = "https://arbitrum-mainnet.infura.io/v3/", config = config)
         )
         Blockchain.ArbitrumTestnet -> listOf(
@@ -46,25 +47,25 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             )
         )
         Blockchain.Ethereum -> listOfNotNull(
-            getInfuraProvider(baseUrl = "https://mainnet.infura.io/v3/", config = config),
             getNowNodesProvider(baseUrl = "https://eth.nownodes.io/", config = config),
-            getGetBlockProvider(baseUrl = "https://eth.getblock.io/mainnet/", config = config)
+            getGetBlockProvider(baseUrl = "https://eth.getblock.io/mainnet/", config = config),
+            getInfuraProvider(baseUrl = "https://mainnet.infura.io/v3/", config = config),
         )
         Blockchain.EthereumTestnet -> listOfNotNull(
             getNowNodesProvider(baseUrl = "https://eth-goerli.nownodes.io/", config = config),
             getInfuraProvider(baseUrl = "https://goerli.infura.io/v3/", config = config)
         )
         Blockchain.EthereumClassic -> listOfNotNull(
-            getGetBlockProvider(baseUrl = "https://etc.getblock.io/mainnet/", config = config),
-            EthereumJsonRpcProvider(baseUrl = "https://www.ethercluster.com/etc/"),
             EthereumJsonRpcProvider(baseUrl = "https://etc.etcdesktop.com/"),
+            getGetBlockProvider(baseUrl = "https://etc.getblock.io/mainnet/", config = config),
+            EthereumJsonRpcProvider(baseUrl = "https://etc.rivet.link/etc/"),
             EthereumJsonRpcProvider(baseUrl = "https://blockscout.com/etc/mainnet/api/eth-rpc/"),
             EthereumJsonRpcProvider(baseUrl = "https://etc.mytokenpocket.vip/"),
             EthereumJsonRpcProvider(baseUrl = "https://besu-de.etc-network.info/"),
             EthereumJsonRpcProvider(baseUrl = "https://geth-at.etc-network.info/"),
         )
         Blockchain.EthereumClassicTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://www.ethercluster.com/kotti/")
+            EthereumJsonRpcProvider(baseUrl = "https://etc.rivet.link/kotti/")
         )
         Blockchain.Fantom -> listOfNotNull(
             getNowNodesProvider(baseUrl = "https://ftm.nownodes.io/", config = config),
@@ -107,7 +108,6 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = "https://polygon-rpc.com/"),
             getNowNodesProvider(baseUrl = "https://matic.nownodes.io/", config = config),
             getGetBlockProvider(baseUrl = "https://matic.getblock.io/mainnet/", config = config),
-            EthereumJsonRpcProvider(baseUrl = "https://matic-mainnet.chainstacklabs.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpc-mainnet.maticvigil.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpc-mainnet.matic.quiknode.pro/"),
         )
@@ -161,13 +161,28 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = "https://api.kainosbp.com", postfixUrl = "evm"),
             EthereumJsonRpcProvider(baseUrl = "https://telos-evm.rpc.thirdweb.com/")
         )
+
         Blockchain.TelosTestnet -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://telos-evm-testnet.rpc.thirdweb.com/"),
         )
+
         Blockchain.OctaSpace -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://rpc.octa.space"),
             EthereumJsonRpcProvider(baseUrl = "https://octaspace.rpc.thirdweb.com"),
         )
+
+        Blockchain.Decimal -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://node.decimalchain.com/web3/"),
+            EthereumJsonRpcProvider(baseUrl = "https://node1-mainnet.decimalchain.com/web3/"),
+            EthereumJsonRpcProvider(baseUrl = "https://node2-mainnet.decimalchain.com/web3/"),
+            EthereumJsonRpcProvider(baseUrl = "https://node3-mainnet.decimalchain.com/web3/"),
+            EthereumJsonRpcProvider(baseUrl = "https://node4-mainnet.decimalchain.com/web3/"),
+        )
+
+        Blockchain.DecimalTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://testnet-val.decimalchain.com/web3/")
+        )
+
         else -> throw IllegalStateException("$this isn't supported")
     }
 
