@@ -89,7 +89,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
-        if (checkIfWrongKey(curve, wallet.publicKey)) return null
+        if (checkIfWrongKey(blockchain, curve, wallet.publicKey)) return null
 
         return getAssembly(blockchain).make(
             input = WalletManagerAssemblyInput(
