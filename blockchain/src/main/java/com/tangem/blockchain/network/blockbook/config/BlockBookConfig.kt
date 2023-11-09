@@ -31,7 +31,16 @@ sealed class BlockBookConfig(val credentials: BlockBookCredentials) {
                     "https://${prefix}book${testnetSuffix}.${baseHost}"
                 }
 
-                Blockchain.Ethereum -> "https://${prefix}-blockbook.${baseHost}"
+                Blockchain.Arbitrum -> "https://arb-blockbook.$baseHost"
+                Blockchain.BSC -> "https://bsc-blockbook.$baseHost"
+                Blockchain.EthereumTestnet -> "https://${prefix}book-goerli.${baseHost}"
+                Blockchain.Polygon -> "https://${prefix}book.$baseHost"
+                Blockchain.Kava -> "https://kava-tendermint.$baseHost"
+                Blockchain.Ethereum,
+                Blockchain.Avalanche,
+                Blockchain.EthereumPow,
+                -> "https://${prefix}-blockbook.${baseHost}"
+
                 else -> error("BlockBookConfig.NowNodes don't support blockchain $blockchain")
             }
         }
