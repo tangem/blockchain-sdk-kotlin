@@ -142,7 +142,7 @@ internal class EthereumTransactionHistoryProvider(
                 .equals(walletAddress, ignoreCase = true)
 
             is TransactionHistoryRequest.FilterType.Contract -> transaction.tokenTransfers
-                .firstOrNull { filterType.address.equals(it.contract, true) }
+                .firstOrNull { filterType.address.equals(it.contract, true) || filterType.address.equals(it.token, ignoreCase = true) }
                 ?.from.equals(walletAddress, ignoreCase = true)
         }
     }
@@ -171,7 +171,7 @@ internal class EthereumTransactionHistoryProvider(
 
             is TransactionHistoryRequest.FilterType.Contract -> {
                 val transfer = tx.tokenTransfers
-                    .firstOrNull { filterType.address.equals(it.contract, ignoreCase = true) }
+                    .firstOrNull { filterType.address.equals(it.contract, ignoreCase = true) || filterType.address.equals(it.token, ignoreCase = true) }
                     .guard { return null }
                 val isOutgoing = transfer.from == walletAddress
                 TransactionHistoryItem.DestinationType.Single(
@@ -207,13 +207,13 @@ internal class EthereumTransactionHistoryProvider(
 
             is TransactionHistoryRequest.FilterType.Contract -> {
                 val transfer = tx.tokenTransfers
-                    .firstOrNull { filterType.address.equals(it.contract, ignoreCase = true) }
+                    .firstOrNull { filterType.address.equals(it.contract, ignoreCase = true) || filterType.address.equals(it.token, ignoreCase = true) }
                     .guard { return null }
                 val transferValue = transfer.value ?: "0"
                 val token = Token(
                     name = transfer.name.orEmpty(),
                     symbol = transfer.symbol.orEmpty(),
-                    contractAddress = transfer.contract,
+                    contractAddress = transfer.contract ?: transfer.token ?: "",
                     decimals = transfer.decimals,
                 )
                 Amount(value = BigDecimal(transferValue).movePointLeft(transfer.decimals), token = token)
