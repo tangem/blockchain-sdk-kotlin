@@ -7,6 +7,7 @@ import com.tangem.blockchain.blockchains.tron.network.TronNetwork
 import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
+import com.tangem.blockchain.common.txhistory.getTransactionHistoryProvider
 import com.tangem.blockchain.extensions.letNotBlank
 
 internal object TronWalletManagerAssembly : WalletManagerAssembly<TronWalletManager>() {
@@ -35,6 +36,7 @@ internal object TronWalletManagerAssembly : WalletManagerAssembly<TronWalletMana
 
             return TronWalletManager(
                 wallet = this,
+                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
                 transactionBuilder = TronTransactionBuilder(blockchain),
                 networkService = TronNetworkService(
                     rpcNetworkProviders = rpcProviders,
