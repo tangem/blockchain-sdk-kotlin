@@ -1,4 +1,4 @@
-package com.tangem.blockchain.blockchains.ethereum
+package com.tangem.blockchain.blockchains.tron
 
 import com.tangem.Log
 import com.tangem.blockchain.common.*
@@ -10,18 +10,18 @@ import com.tangem.blockchain.common.txhistory.TransactionHistoryState
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
-import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse.Transaction.EthereumSpecific
 import com.tangem.common.extensions.guard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 
-internal class EthereumTransactionHistoryProvider(
+private const val PREFIX = "0x"
+
+internal class TronTransactionHistoryProvider(
     private val blockchain: Blockchain,
     private val blockBookApi: BlockBookApi,
 ) : TransactionHistoryProvider {
-
     override suspend fun getTransactionHistoryState(
         address: String,
         filterType: TransactionHistoryRequest.FilterType,
@@ -81,11 +81,7 @@ internal class EthereumTransactionHistoryProvider(
         walletAddress: String,
         filterType: TransactionHistoryRequest.FilterType,
     ): TransactionHistoryItem? {
-        val destinationType = extractDestinationType(walletAddress, this, filterType).guard {
-            Log.info { "Transaction $this doesn't contain a required value" }
-            return null
-        }
-        val sourceType = extractSourceType(this).guard {
+        val destinationType = extractDestinationType(this, filterType).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
         }
@@ -93,105 +89,67 @@ internal class EthereumTransactionHistoryProvider(
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
         }
-
+        val sourceType = extractSourceType(tx = this, filterType = filterType).guard {
+            Log.info { "Transaction $this doesn't contain a required value" }
+            return null
+        }
         return TransactionHistoryItem(
-            txHash = txid,
+            txHash = txid.removePrefix(PREFIX),
             timestamp = TimeUnit.SECONDS.toMillis(blockTime.toLong()),
-            isOutgoing = isOutgoing(walletAddress, this, filterType),
+            isOutgoing = fromAddress?.equals(walletAddress, ignoreCase = true) == true,
             destinationType = destinationType,
             sourceType = sourceType,
-            status = extractStatus(tx = this),
+            status = if (confirmations > 0) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed,
             type = extractType(tx = this),
             amount = amount,
         )
     }
 
-    private fun extractStatus(tx: GetAddressResponse.Transaction): TransactionStatus {
-        val status = tx.ethereumSpecific?.status.guard {
-            return if (tx.confirmations > 0) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed
-        }
-
-        return when (EthereumSpecific.StatusType.fromType(status)) {
-            EthereumSpecific.StatusType.PENDING -> TransactionStatus.Unconfirmed
-            EthereumSpecific.StatusType.FAILURE -> TransactionStatus.Failed
-            EthereumSpecific.StatusType.OK -> TransactionStatus.Confirmed
-        }
-    }
-
-    private fun extractType(tx: GetAddressResponse.Transaction): TransactionHistoryItem.TransactionType {
-        val methodId = tx.ethereumSpecific?.parsedData?.methodId.guard {
-            return TransactionHistoryItem.TransactionType.Transfer
-        }
-
-        // MethodId is empty for the coin transfers
-        if (methodId.isEmpty()) return TransactionHistoryItem.TransactionType.Transfer
-
-        return TransactionHistoryItem.TransactionType.ContractMethod(id = methodId)
-    }
-
-    private fun isOutgoing(
-        walletAddress: String,
-        transaction: GetAddressResponse.Transaction,
-        filterType: TransactionHistoryRequest.FilterType,
-    ): Boolean {
-        return when (filterType) {
-            TransactionHistoryRequest.FilterType.Coin -> transaction.vin
-                .firstOrNull()
-                ?.addresses
-                ?.firstOrNull()
-                .equals(walletAddress, ignoreCase = true)
-
-            is TransactionHistoryRequest.FilterType.Contract -> transaction.tokenTransfers
-                .firstOrNull { filterType.address.equals(it.contract, true) }
-                ?.from.equals(walletAddress, ignoreCase = true)
-        }
-    }
-
     private fun extractDestinationType(
-        walletAddress: String,
         tx: GetAddressResponse.Transaction,
         filterType: TransactionHistoryRequest.FilterType,
     ): TransactionHistoryItem.DestinationType? {
-        val address = tx.vout
-            .firstOrNull()
-            ?.addresses
-            ?.firstOrNull()
-            .guard { return null }
-
+        tx.toAddress ?: return null
+        tx.fromAddress ?: return null
         return when (filterType) {
             TransactionHistoryRequest.FilterType.Coin -> {
                 TransactionHistoryItem.DestinationType.Single(
                     addressType = if (tx.tokenTransfers.isEmpty()) {
-                        TransactionHistoryItem.AddressType.User(address)
+                        TransactionHistoryItem.AddressType.User(tx.toAddress)
                     } else {
-                        TransactionHistoryItem.AddressType.Contract(address)
+                        TransactionHistoryItem.AddressType.Contract(tx.toAddress)
                     }
                 )
             }
 
             is TransactionHistoryRequest.FilterType.Contract -> {
-                val transfer = tx.tokenTransfers
-                    .firstOrNull { filterType.address.equals(it.contract, ignoreCase = true) }
-                    .guard { return null }
-                val isOutgoing = transfer.from == walletAddress
+                val transfer = tx.getTokenTransfer(filterType.address) ?: return null
                 TransactionHistoryItem.DestinationType.Single(
-                    addressType = if (isOutgoing) {
-                        TransactionHistoryItem.AddressType.User(transfer.to)
-                    } else {
-                        TransactionHistoryItem.AddressType.User(transfer.from)
-                    },
+                    addressType = TransactionHistoryItem.AddressType.User(transfer.to)
                 )
             }
         }
     }
 
-    private fun extractSourceType(tx: GetAddressResponse.Transaction): TransactionHistoryItem.SourceType? {
-        val address = tx.vin
-            .firstOrNull()
-            ?.addresses
-            ?.firstOrNull()
-            .guard { return null }
+    private fun extractSourceType(
+        tx: GetAddressResponse.Transaction,
+        filterType: TransactionHistoryRequest.FilterType,
+    ): TransactionHistoryItem.SourceType? {
+        val address = when (filterType) {
+            TransactionHistoryRequest.FilterType.Coin -> tx.fromAddress
+            is TransactionHistoryRequest.FilterType.Contract -> {
+                tx.getTokenTransfer(filterType.address)?.from
+            }
+        }.guard { return null }
+
         return TransactionHistoryItem.SourceType.Single(address = address)
+    }
+
+    private fun extractType(tx: GetAddressResponse.Transaction): TransactionHistoryItem.TransactionType {
+        // Contract type 1 means transfer
+        if (tx.contractType == 1) return TransactionHistoryItem.TransactionType.Transfer
+
+        return TransactionHistoryItem.TransactionType.ContractMethod(id = tx.contractAddress.orEmpty())
     }
 
     private fun extractAmount(
@@ -206,18 +164,20 @@ internal class EthereumTransactionHistoryProvider(
             )
 
             is TransactionHistoryRequest.FilterType.Contract -> {
-                val transfer = tx.tokenTransfers
-                    .firstOrNull { filterType.address.equals(it.contract, ignoreCase = true) }
-                    .guard { return null }
+                val transfer = tx.getTokenTransfer(filterType.address) ?: return null
                 val transferValue = transfer.value ?: "0"
                 val token = Token(
                     name = transfer.name.orEmpty(),
                     symbol = transfer.symbol.orEmpty(),
-                    contractAddress = transfer.contract.orEmpty(),
+                    contractAddress = transfer.token.orEmpty(),
                     decimals = transfer.decimals,
                 )
                 Amount(value = BigDecimal(transferValue).movePointLeft(transfer.decimals), token = token)
             }
         }
+    }
+
+    private fun GetAddressResponse.Transaction.getTokenTransfer(contractAddress: String): GetAddressResponse.Transaction.TokenTransfer? {
+        return tokenTransfers.firstOrNull { contractAddress.equals(it.token, ignoreCase = true) }
     }
 }
