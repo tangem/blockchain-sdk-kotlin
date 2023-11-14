@@ -39,6 +39,7 @@ sealed class BlockBookConfig(val credentials: BlockBookCredentials) {
                 Blockchain.Ethereum,
                 Blockchain.Avalanche,
                 Blockchain.EthereumPow,
+                Blockchain.Tron,
                 -> "https://${prefix}-blockbook.${baseHost}"
 
                 else -> error("BlockBookConfig.NowNodes don't support blockchain $blockchain")
