@@ -3,10 +3,10 @@ package com.tangem.blockchain.common.assembly.impl
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.getEthereumJsonRpcProviders
-import com.tangem.blockchain.blockchains.ethereum.getEthereumTransactionHistoryProvider
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
+import com.tangem.blockchain.common.txhistory.getTransactionHistoryProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 
 internal object EthereumWalletManagerAssembly : WalletManagerAssembly<EthereumWalletManager>() {
@@ -26,7 +26,7 @@ internal object EthereumWalletManagerAssembly : WalletManagerAssembly<EthereumWa
                         tokens = input.config.blockcypherTokens
                     ),
                 ),
-                transactionHistoryProvider = blockchain.getEthereumTransactionHistoryProvider(input.config)
+                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config)
             )
         }
     }
