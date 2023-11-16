@@ -13,12 +13,12 @@ internal fun Blockchain.getEthereumTransactionHistoryProvider(
     return when (this) {
         Blockchain.Ethereum,
         Blockchain.EthereumTestnet,
-        Blockchain.Arbitrum,
+        // Blockchain.Arbitrum,
         Blockchain.Avalanche,
         Blockchain.BSC,
-        Blockchain.Polygon,
+        // Blockchain.Polygon,
         Blockchain.EthereumPow,
-        Blockchain.Kava,
+        // Blockchain.Kava,
         -> {
             if (config.nowNodeCredentials != null && config.nowNodeCredentials.apiKey.isNotBlank()) {
                 EthereumTransactionHistoryProvider(
