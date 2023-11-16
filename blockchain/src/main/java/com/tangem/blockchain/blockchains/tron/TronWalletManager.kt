@@ -18,6 +18,7 @@ import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.bigIntegerValue
@@ -31,9 +32,10 @@ import java.math.BigDecimal
 
 class TronWalletManager(
     wallet: Wallet,
+    transactionHistoryProvider: TransactionHistoryProvider,
     private val transactionBuilder: TronTransactionBuilder,
     private val networkService: TronNetworkService,
-) : WalletManager(wallet), TransactionSender {
+) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider), TransactionSender {
 
     override val currentHost: String = networkService.host
 

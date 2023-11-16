@@ -213,7 +213,7 @@ internal class EthereumTransactionHistoryProvider(
                 val token = Token(
                     name = transfer.name.orEmpty(),
                     symbol = transfer.symbol.orEmpty(),
-                    contractAddress = transfer.contract,
+                    contractAddress = transfer.contract.orEmpty(),
                     decimals = transfer.decimals,
                 )
                 Amount(value = BigDecimal(transferValue).movePointLeft(transfer.decimals), token = token)
