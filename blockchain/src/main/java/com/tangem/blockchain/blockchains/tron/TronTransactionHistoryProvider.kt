@@ -60,7 +60,8 @@ internal class TronTransactionHistoryProvider(
                 ?.mapNotNull { tx ->
                     tx.toTransactionHistoryItem(
                         walletAddress = request.address,
-                        filterType = request.filterType
+                        decimals = request.decimals,
+                        filterType = request.filterType,
                     )
                 }
                 ?: emptyList()
@@ -79,13 +80,14 @@ internal class TronTransactionHistoryProvider(
 
     private fun GetAddressResponse.Transaction.toTransactionHistoryItem(
         walletAddress: String,
+        decimals: Int,
         filterType: TransactionHistoryRequest.FilterType,
     ): TransactionHistoryItem? {
         val destinationType = extractDestinationType(this, filterType).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
         }
-        val amount = extractAmount(tx = this, filterType = filterType).guard {
+        val amount = extractAmount(tx = this, decimals = decimals, filterType = filterType).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
         }
@@ -154,6 +156,7 @@ internal class TronTransactionHistoryProvider(
 
     private fun extractAmount(
         tx: GetAddressResponse.Transaction,
+        decimals: Int,
         filterType: TransactionHistoryRequest.FilterType,
     ): Amount? {
         return when (filterType) {
@@ -170,9 +173,9 @@ internal class TronTransactionHistoryProvider(
                     name = transfer.name.orEmpty(),
                     symbol = transfer.symbol.orEmpty(),
                     contractAddress = transfer.token.orEmpty(),
-                    decimals = transfer.decimals,
+                    decimals = decimals,
                 )
-                Amount(value = BigDecimal(transferValue).movePointLeft(transfer.decimals), token = token)
+                Amount(value = BigDecimal(transferValue).movePointLeft(decimals), token = token)
             }
         }
     }
