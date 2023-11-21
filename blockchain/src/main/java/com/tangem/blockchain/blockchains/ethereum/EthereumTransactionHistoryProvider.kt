@@ -60,6 +60,7 @@ internal class EthereumTransactionHistoryProvider(
                 ?.mapNotNull { tx ->
                     tx.toTransactionHistoryItem(
                         walletAddress = request.address,
+                        decimals = request.decimals,
                         filterType = request.filterType
                     )
                 }
@@ -79,6 +80,7 @@ internal class EthereumTransactionHistoryProvider(
 
     private fun GetAddressResponse.Transaction.toTransactionHistoryItem(
         walletAddress: String,
+        decimals: Int,
         filterType: TransactionHistoryRequest.FilterType,
     ): TransactionHistoryItem? {
         val destinationType = extractDestinationType(walletAddress, this, filterType).guard {
@@ -89,7 +91,7 @@ internal class EthereumTransactionHistoryProvider(
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
         }
-        val amount = extractAmount(tx = this, filterType = filterType).guard {
+        val amount = extractAmount(tx = this, decimals = decimals, filterType = filterType).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
         }
@@ -196,6 +198,7 @@ internal class EthereumTransactionHistoryProvider(
 
     private fun extractAmount(
         tx: GetAddressResponse.Transaction,
+        decimals: Int,
         filterType: TransactionHistoryRequest.FilterType,
     ): Amount? {
         return when (filterType) {
@@ -214,9 +217,9 @@ internal class EthereumTransactionHistoryProvider(
                     name = transfer.name.orEmpty(),
                     symbol = transfer.symbol.orEmpty(),
                     contractAddress = transfer.contract.orEmpty(),
-                    decimals = transfer.decimals,
+                    decimals = decimals,
                 )
-                Amount(value = BigDecimal(transferValue).movePointLeft(transfer.decimals), token = token)
+                Amount(value = BigDecimal(transferValue).movePointLeft(decimals), token = token)
             }
         }
     }
