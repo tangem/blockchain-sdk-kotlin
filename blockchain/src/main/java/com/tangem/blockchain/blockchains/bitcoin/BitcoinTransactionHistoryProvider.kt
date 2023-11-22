@@ -150,11 +150,13 @@ internal class BitcoinTransactionHistoryProvider(
                 outputs + fee
             } else {
                 val outputs = tx.vout
-                    .find { it.addresses?.contains(walletAddress) == true}
-                    ?.value.toBigDecimalOrDefault()
+                    .filter { it.addresses?.contains(walletAddress) == true }
+                    .map { it.value.toBigDecimalOrDefault() }
+                    .sumOf { it }
                 val inputs = tx.vin
-                    .find { it.addresses?.contains(walletAddress) == true }
-                    ?.value.toBigDecimalOrDefault()
+                    .filter { it.addresses?.contains(walletAddress) == true }
+                    .map { it.value.toBigDecimalOrDefault() }
+                    .sumOf { it }
                 outputs - inputs
             }
 
