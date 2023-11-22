@@ -68,6 +68,7 @@ class ChiaWalletManager(
                         val sendResult = networkProvider.sendTransaction(transactionToSend)
 
                         if (sendResult is SimpleResult.Success) {
+                            transactionData.hash = transactionToSend.spendBundle.aggregatedSignature
                             wallet.addOutgoingTransaction(transactionData)
                         }
                         sendResult
