@@ -6,7 +6,7 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class GetAddressResponse(
     @Json(name = "balance") val balance: String,
-    @Json(name = "unconfirmedTxs") val unconfirmedTxs: Int,
+    @Json(name = "unconfirmedTxs") val unconfirmedTxs: Int?,
     @Json(name = "txs") val txs: Int,
     @Json(name = "transactions") val transactions: List<Transaction>?,
     @Json(name = "page") val page: Int?,
@@ -25,6 +25,11 @@ data class GetAddressResponse(
         @Json(name = "fees") val fees: String,
         @Json(name = "tokenTransfers") val tokenTransfers: List<TokenTransfer> = emptyList(),
         @Json(name = "ethereumSpecific") val ethereumSpecific: EthereumSpecific? = null,
+        //** TRX specific fields **//
+        @Json(name = "fromAddress") val fromAddress: String?,
+        @Json(name = "toAddress") val toAddress: String?,
+        @Json(name = "contract_type") val contractType: Int?,
+        @Json(name = "contract_name") val contractAddress: String?,
     ) {
 
         @JsonClass(generateAdapter = true)
@@ -49,7 +54,6 @@ data class GetAddressResponse(
             @Json(name = "token") val token: String?,
             @Json(name = "name") val name: String?,
             @Json(name = "symbol") val symbol: String?,
-            @Json(name = "decimals") val decimals: Int,
             @Json(name = "value") val value: String?,
         )
 
