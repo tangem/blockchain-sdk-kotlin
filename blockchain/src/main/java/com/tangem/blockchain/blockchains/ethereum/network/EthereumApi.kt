@@ -1,7 +1,6 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.squareup.moshi.JsonClass
-import com.tangem.blockchain.common.GetBlockCredentials
 import com.tangem.blockchain.common.NowNodeCredentials
 import retrofit2.http.*
 
@@ -13,7 +12,6 @@ interface EthereumApi {
         @Url infuraProjectId: String,
         @Header("Authorization") token: String? = null,
         @Header(NowNodeCredentials.headerApiKey) nowNodesApiKey: String? = null,
-        @Query(GetBlockCredentials.QUERY_PARAM_NAME) getBlockApiKey: String? = null,
     ): EthereumResponse
 }
 
