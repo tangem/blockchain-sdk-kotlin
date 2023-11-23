@@ -52,8 +52,7 @@ class SolanaRpcClientBuilder {
     // unstable
     private fun getBlock(cred: GetBlockCredentials): RpcClient {
         return RpcClient(
-            host = "https://sol.getblock.io/mainnet",
-            httpInterceptors = createInterceptor(GetBlockCredentials.HEADER_PARAM_NAME, cred.apiKey),
+            host = "https://go.getblock.io/${cred.solana}",
         )
     }
 
