@@ -17,7 +17,7 @@ internal object CosmosWalletManagerAssembly : WalletManagerAssembly<CosmosWallet
                     add("https://rest.seed-01.theta-testnet.polypore.xyz")
                 } else {
                     input.config.nowNodeCredentials?.apiKey.letNotBlank { add("https://atom.nownodes.io/$it/") }
-                    input.config.getBlockCredentials?.apiKey.letNotBlank { add("https://atom.getblock.io/$it/") }
+                    input.config.getBlockCredentials?.cosmos?.rest.letNotBlank { add("https://go.getblock.io/$it/") }
 
                     add("https://cosmos-mainnet-rpc.allthatnode.com:1317/")
                     // This is a REST proxy combining the servers below (and others)
