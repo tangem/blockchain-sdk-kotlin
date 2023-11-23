@@ -32,11 +32,10 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
                     nowNodesApiKey = nowNodesApiKey // special for Avalanche
                 )
             },
-            config.getBlockCredentials?.apiKey.letNotBlank { getBlockApiKey ->
+            config.getBlockCredentials?.avalanche?.jsonRpc.letNotBlank { avalancheToken ->
                 EthereumJsonRpcProvider(
-                    baseUrl = "https://avax.getblock.io/mainnet/",
+                    baseUrl = "https://go.getblock.io/$avalancheToken/",
                     postfixUrl = AVALANCHE_POSTFIX,
-                    getBlockApiKey = getBlockApiKey
                 )
             },
         )
@@ -48,7 +47,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         )
         Blockchain.Ethereum -> listOfNotNull(
             getNowNodesProvider(baseUrl = "https://eth.nownodes.io/", config = config),
-            getGetBlockProvider(baseUrl = "https://eth.getblock.io/mainnet/", config = config),
+            config.getBlockCredentials?.eth?.jsonRpc.letNotBlank { getGetBlockProvider(accessToken = it) },
             getInfuraProvider(baseUrl = "https://mainnet.infura.io/v3/", config = config),
         )
         Blockchain.EthereumTestnet -> listOfNotNull(
@@ -57,7 +56,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         )
         Blockchain.EthereumClassic -> listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://etc.etcdesktop.com/"),
-            getGetBlockProvider(baseUrl = "https://etc.getblock.io/mainnet/", config = config),
+            config.getBlockCredentials?.etc?.jsonRpc.letNotBlank { getGetBlockProvider(accessToken = it) },
             EthereumJsonRpcProvider(baseUrl = "https://etc.rivet.link/etc/"),
             EthereumJsonRpcProvider(baseUrl = "https://blockscout.com/etc/mainnet/api/eth-rpc/"),
             EthereumJsonRpcProvider(baseUrl = "https://etc.mytokenpocket.vip/"),
@@ -69,7 +68,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         )
         Blockchain.Fantom -> listOfNotNull(
             getNowNodesProvider(baseUrl = "https://ftm.nownodes.io/", config = config),
-            getGetBlockProvider(baseUrl = "https://ftm.getblock.io/mainnet/", config = config),
+            config.getBlockCredentials?.fantom?.jsonRpc.letNotBlank { getGetBlockProvider(accessToken = it) },
             EthereumJsonRpcProvider(baseUrl = "https://rpc.ftm.tools/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpcapi.fantom.network/"),
             EthereumJsonRpcProvider(baseUrl = "https://fantom-mainnet.public.blastapi.io/"),
@@ -82,13 +81,13 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         Blockchain.RSK -> listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://public-node.rsk.co/"),
             getNowNodesProvider(baseUrl = "https://rsk.nownodes.io/", config = config),
-            getGetBlockProvider(baseUrl = "https://rsk.getblock.io/mainnet/", config = config),
+            config.getBlockCredentials?.rsk?.jsonRpc.letNotBlank { getGetBlockProvider(accessToken = it) },
         )
         // https://docs.fantom.foundation/api/public-api-endpoints
         Blockchain.BSC -> listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://bsc-dataseed.binance.org/"),
             getNowNodesProvider(baseUrl = "https://bsc.nownodes.io/", config = config),
-            getGetBlockProvider(baseUrl = "https://bsc.getblock.io/mainnet/", config = config),
+            config.getBlockCredentials?.bsc?.jsonRpc.letNotBlank { getGetBlockProvider(accessToken = it) },
             config.quickNodeBscCredentials?.let { credentials ->
                 if (credentials.subdomain.isNotBlank() && credentials.apiKey.isNotBlank()) {
                     EthereumJsonRpcProvider(
@@ -107,7 +106,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         Blockchain.Polygon -> listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://polygon-rpc.com/"),
             getNowNodesProvider(baseUrl = "https://matic.nownodes.io/", config = config),
-            getGetBlockProvider(baseUrl = "https://matic.getblock.io/mainnet/", config = config),
+            config.getBlockCredentials?.polygon?.jsonRpc.letNotBlank { getGetBlockProvider(accessToken = it) },
             EthereumJsonRpcProvider(baseUrl = "https://rpc-mainnet.maticvigil.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpc-mainnet.matic.quiknode.pro/"),
         )
@@ -115,7 +114,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = "https://rpc-mumbai.maticvigil.com/")
         )
         Blockchain.Gnosis -> listOfNotNull(
-            getGetBlockProvider(baseUrl = "https://gno.getblock.io/mainnet/", config = config),
+            config.getBlockCredentials?.gnosis?.jsonRpc.letNotBlank { getGetBlockProvider(accessToken = it) },
             EthereumJsonRpcProvider(baseUrl = "https://rpc.gnosischain.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://gnosischain-rpc.gateway.pokt.network/"),
             EthereumJsonRpcProvider(baseUrl = "https://gnosis-mainnet.public.blastapi.io/"),
@@ -151,7 +150,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         Blockchain.Cronos -> listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://evm.cronos.org/"),
             EthereumJsonRpcProvider(baseUrl = "https://evm-cronos.crypto.org/"),
-            getGetBlockProvider(baseUrl = "https://cro.getblock.io/mainnet/", config = config),
+            config.getBlockCredentials?.cronos?.jsonRpc.letNotBlank { getGetBlockProvider(accessToken = it) },
             EthereumJsonRpcProvider(baseUrl = "https://node.croswap.com/rpc/"),
             EthereumJsonRpcProvider(baseUrl = "https://cronos.blockpi.network/v1/rpc/public/"),
             EthereumJsonRpcProvider(baseUrl = "https://cronos-evm.publicnode.com/"),
@@ -200,14 +199,8 @@ private fun getNowNodesProvider(
     }
 }
 
-private fun getGetBlockProvider(
-    baseUrl: String,
-    config: BlockchainSdkConfig,
-): EthereumJsonRpcProvider? {
-    return config.getBlockCredentials?.apiKey.letNotBlank { getBlockApiKey ->
-        EthereumJsonRpcProvider(baseUrl = baseUrl, getBlockApiKey = getBlockApiKey)
-    }
-}
+private fun getGetBlockProvider(accessToken: String): EthereumJsonRpcProvider =
+    EthereumJsonRpcProvider(baseUrl = "go.getblock.io/$accessToken")
 
 private fun getInfuraProvider(
     baseUrl: String,
