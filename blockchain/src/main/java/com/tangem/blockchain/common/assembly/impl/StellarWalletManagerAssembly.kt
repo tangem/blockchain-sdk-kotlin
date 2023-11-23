@@ -17,7 +17,7 @@ internal object StellarWalletManagerAssembly : WalletManagerAssembly<StellarWall
                 buildList {
                     add(StellarNetwork.Horizon)
                     input.config.nowNodeCredentials?.apiKey.letNotBlank { add(StellarNetwork.Nownodes(it)) }
-                    input.config.getBlockCredentials?.apiKey.letNotBlank { add(StellarNetwork.Getblock(it)) }
+                    input.config.getBlockCredentials?.stellar?.rest.letNotBlank { add(StellarNetwork.Getblock(it)) }
                 }
             } else {
                 listOf<StellarNetwork>(StellarNetwork.HorizonTestnet)
