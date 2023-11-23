@@ -4,7 +4,6 @@ import com.tangem.blockchain.blockchains.xrp.XrpTransactionBuilder
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkService
 import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledNetworkProvider
-import com.tangem.blockchain.common.GetBlockCredentials
 import com.tangem.blockchain.common.NowNodeCredentials
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
@@ -25,11 +24,10 @@ internal object XRPWalletManagerAssembly : WalletManagerAssembly<XrpWalletManage
                         )
                     )
                 }
-                input.config.getBlockCredentials?.apiKey?.letNotBlank { apiKey ->
+                input.config.getBlockCredentials?.xrp?.jsonRpc.letNotBlank { jsonRpcToken ->
                     add(
                         RippledNetworkProvider(
-                            baseUrl = "https://xrp.getblock.io/mainnet/",
-                            apiKeyHeader = GetBlockCredentials.HEADER_PARAM_NAME to apiKey
+                            baseUrl = "https://go.getblock.io/$jsonRpcToken/",
                         )
                     )
                 }
