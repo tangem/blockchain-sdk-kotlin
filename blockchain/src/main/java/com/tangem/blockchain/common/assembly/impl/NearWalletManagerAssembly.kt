@@ -20,7 +20,7 @@ internal object NearWalletManagerAssembly : WalletManagerAssembly<NearWalletMana
             } else {
                 add(createNearJsonRpcProvider(isTestNet = false))
                 config.nowNodeCredentials?.apiKey.letNotBlank { add(createNowNodeJsonRpcProvider(it)) }
-                config.getBlockCredentials?.apiKey.letNotBlank { add(createGetBlockJsonRpcProvider(it)) }
+                config.getBlockCredentials?.near?.jsonRpc.letNotBlank { add(createGetBlockJsonRpcProvider(it)) }
                 // temporarily exclude before [REDACTED_TASK_KEY] fix
                 // config.infuraProjectId?.letNotBlank { add(getInfuraProvider(it)) }
             }
@@ -37,9 +37,9 @@ internal object NearWalletManagerAssembly : WalletManagerAssembly<NearWalletMana
         return NearJsonRpcNetworkProvider(url, nearApi)
     }
 
-    private fun createGetBlockJsonRpcProvider(apiKey: String): NearJsonRpcNetworkProvider {
-        val baseUrl = "https://near.getblock.io/"
-        val nearApi = createRetrofitInstance("$baseUrl$apiKey/mainnet/").create(NearApi::class.java)
+    private fun createGetBlockJsonRpcProvider(accessToken: String): NearJsonRpcNetworkProvider {
+        val baseUrl = "https://go.getblock.io/$accessToken/"
+        val nearApi = createRetrofitInstance(baseUrl).create(NearApi::class.java)
         return NearJsonRpcNetworkProvider(baseUrl, nearApi)
     }
 
