@@ -23,7 +23,7 @@ internal object TronWalletManagerAssembly : WalletManagerAssembly<TronWalletMana
                     input.config.nowNodeCredentials?.apiKey.letNotBlank {
                         add(TronNetwork.NowNodes(it))
                     }
-                    input.config.getBlockCredentials?.apiKey.letNotBlank {
+                    input.config.getBlockCredentials?.tron?.rest.letNotBlank {
                         add(TronNetwork.GetBlock(it))
                     }
                 }

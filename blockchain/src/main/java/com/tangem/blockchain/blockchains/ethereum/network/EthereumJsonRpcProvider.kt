@@ -15,7 +15,6 @@ class EthereumJsonRpcProvider(
     private val postfixUrl: String = "",
     private val authToken: String? = null,
     private val nowNodesApiKey: String? = null,
-    private val getBlockApiKey: String? = null,
 ): NetworkProvider {
 
     private val api = createRetrofitInstance(baseUrl).create(EthereumApi::class.java)
@@ -132,7 +131,6 @@ class EthereumJsonRpcProvider(
                     infuraProjectId = postfixUrl,
                     token = authToken,
                     nowNodesApiKey = nowNodesApiKey,
-                    getBlockApiKey = getBlockApiKey
                 )
             }
             Result.Success(result)
