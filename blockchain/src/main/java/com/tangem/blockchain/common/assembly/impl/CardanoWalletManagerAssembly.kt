@@ -16,7 +16,7 @@ internal object CardanoWalletManagerAssembly : WalletManagerAssembly<CardanoWall
     override fun make(input: WalletManagerAssemblyInput): CardanoWalletManager {
         with(input.wallet) {
             val providers = buildList {
-                input.config.getBlockCredentials?.apiKey.letNotBlank {
+                input.config.getBlockCredentials?.cardano?.rosetta.letNotBlank {
                     add(RosettaNetworkProvider(RosettaNetwork.RosettaGetblock(it)))
                 }
                 add(AdaliteNetworkProvider(API_ADALITE))
