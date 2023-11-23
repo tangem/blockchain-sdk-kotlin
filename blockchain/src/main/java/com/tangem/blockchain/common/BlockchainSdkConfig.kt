@@ -36,13 +36,36 @@ data class NowNodeCredentials(
 }
 
 data class GetBlockCredentials(
-    val apiKey: String,
-) {
-    companion object {
-        const val HEADER_PARAM_NAME = "x-api-key"
-        const val QUERY_PARAM_NAME = "api_key"
-    }
-}
+    val xrp: GetBlockAccessToken,
+    val cardano: GetBlockAccessToken?,
+    val avalanche: GetBlockAccessToken?,
+    val eth: GetBlockAccessToken?,
+    val etc: GetBlockAccessToken?,
+    val fantom: GetBlockAccessToken?,
+    val rsk: GetBlockAccessToken?,
+    val bsc: GetBlockAccessToken?,
+    val polygon: GetBlockAccessToken?,
+    val gnosis: GetBlockAccessToken?,
+    val cronos: GetBlockAccessToken?,
+    val solana: GetBlockAccessToken?,
+    val stellar: GetBlockAccessToken?,
+    val ton: GetBlockAccessToken?,
+    val tron: GetBlockAccessToken?,
+    val cosmos: GetBlockAccessToken?,
+    val near: GetBlockAccessToken?,
+    val luna: GetBlockAccessToken?,
+    val dogecoin: GetBlockAccessToken,
+    val litecoin: GetBlockAccessToken,
+    val dash: GetBlockAccessToken,
+    val bitcoin: GetBlockAccessToken,
+)
+
+data class GetBlockAccessToken(
+    val jsonRpc: String? = null,
+    val blockBookRest: String? = null,
+    val rest: String? = null,
+    val rosetta: String? = null,
+)
 
 data class TonCenterCredentials(
     private val mainnetApiKey: String,
