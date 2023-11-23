@@ -23,7 +23,9 @@ import java.io.IOException
 internal class BlockBookApi(private val config: BlockBookConfig, private val blockchain: Blockchain) {
 
     private val client = BlockchainSdkRetrofitBuilder.build(
-        internalInterceptors = listOf(AddHeaderInterceptor(mapOf(config.credentials)))
+        internalInterceptors = listOfNotNull(
+            config.credentials?.let { AddHeaderInterceptor(mapOf(it)) }
+        )
     )
 
     private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
