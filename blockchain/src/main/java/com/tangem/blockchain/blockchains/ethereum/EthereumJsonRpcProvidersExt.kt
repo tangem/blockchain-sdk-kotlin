@@ -200,7 +200,7 @@ private fun getNowNodesProvider(
 }
 
 private fun getGetBlockProvider(accessToken: String): EthereumJsonRpcProvider =
-    EthereumJsonRpcProvider(baseUrl = "go.getblock.io/$accessToken")
+    EthereumJsonRpcProvider(baseUrl = "https://go.getblock.io/$accessToken/")
 
 private fun getInfuraProvider(
     baseUrl: String,
