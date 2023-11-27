@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressServiceFacade
 import com.tangem.blockchain.blockchains.chia.ChiaAddressService
+import com.tangem.blockchain.blockchains.decimal.DecimalAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
@@ -96,14 +97,15 @@ enum class Blockchain(
     OctaSpaceTestnet("octaspace/test", "OCTA", "OctaSpace Testnet"),
     Chia("chia", "XCH", "Chia Network"),
     ChiaTestnet("chia/test", "TXCH", "Chia Network Testnet"),
+    Decimal("decimal", "DEL", "Decimal Smart Chain"),
+    DecimalTestnet("decimal/test", "tDEL", "Decimal Smart Chain Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
 
     fun decimals(): Int = when (this) {
         Unknown -> 0
-        Near, NearTestnet,
-        -> 5
+
         Cardano,
         XRP,
         Tezos,
@@ -113,6 +115,7 @@ enum class Blockchain(
         -> 6
 
         Stellar, StellarTestnet -> 7
+
         Bitcoin, BitcoinTestnet,
         BitcoinCash, BitcoinCashTestnet,
         Binance, BinanceTestnet,
@@ -129,6 +132,7 @@ enum class Blockchain(
         -> 9
 
         Polkadot -> 10
+
         PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
         Chia, ChiaTestnet,
         -> 12
@@ -148,7 +152,11 @@ enum class Blockchain(
         Cronos,
         Telos, TelosTestnet,
         OctaSpace, OctaSpaceTestnet,
+        Decimal, DecimalTestnet,
         -> 18
+
+        Near, NearTestnet,
+        -> 24
     }
 
     fun makeAddresses(
@@ -175,7 +183,6 @@ enum class Blockchain(
             Dash,
             Ravencoin, RavencoinTestnet,
             -> BitcoinAddressService(this)
-
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
             Arbitrum, ArbitrumTestnet,
             Ethereum, EthereumTestnet,
@@ -194,6 +201,7 @@ enum class Blockchain(
             OctaSpace, OctaSpaceTestnet,
             -> EthereumAddressService()
 
+            Decimal, DecimalTestnet -> DecimalAddressService()
             RSK -> RskAddressService()
             Cardano -> CardanoAddressServiceFacade()
             XRP -> XrpAddressService()
@@ -205,7 +213,6 @@ enum class Blockchain(
             Tezos -> TezosAddressService()
             TON, TONTestnet, Cosmos, CosmosTestnet, TerraV1, TerraV2, Near, NearTestnet,
             -> TrustWalletAddressService(blockchain = this)
-
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
             Chia, ChiaTestnet -> ChiaAddressService(this)
@@ -269,6 +276,7 @@ enum class Blockchain(
             OctaSpace, OctaSpaceTestnet -> OctaSpaceTestnet
             Chia, ChiaTestnet -> ChiaTestnet
             Near, NearTestnet -> NearTestnet
+            Decimal, DecimalTestnet -> DecimalTestnet
             else -> null
         }
     }
@@ -313,6 +321,7 @@ enum class Blockchain(
             TerraV1, TerraV2,
             Cronos,
             OctaSpace, OctaSpaceTestnet,
+            Decimal, DecimalTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -357,6 +366,8 @@ enum class Blockchain(
             Cronos -> Chain.Cronos.id
             OctaSpace -> Chain.OctaSpace.id
             OctaSpaceTestnet -> Chain.OctaSpaceTestnet.id
+            Decimal -> Chain.Decimal.id
+            DecimalTestnet -> Chain.DecimalTestnet.id
             else -> null
         }
     }
@@ -400,6 +411,7 @@ enum class Blockchain(
         Stellar, StellarTestnet,
         Optimism, OptimismTestnet,
         TON, TONTestnet,
+        Near, NearTestnet
         -> true
 
         else -> false
