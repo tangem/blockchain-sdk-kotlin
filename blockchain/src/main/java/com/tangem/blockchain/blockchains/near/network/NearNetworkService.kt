@@ -99,7 +99,6 @@ class NearNetworkService(
 
         val status = NearNetworkStatus(
             chainId = statusResult.chainId,
-            version = statusResult.version.version,
             latestBlockHash = statusResult.syncInfo.latestBlockHash,
             latestBlockHeight = statusResult.syncInfo.latestBlockHeight,
             latestBlockTime = statusResult.syncInfo.latestBlockTime,
