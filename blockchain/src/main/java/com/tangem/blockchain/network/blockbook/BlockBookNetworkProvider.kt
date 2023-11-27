@@ -27,7 +27,7 @@ class BlockBookNetworkProvider(
     val blockchain: Blockchain,
 ) : BitcoinNetworkProvider {
 
-    override val baseUrl: String = config.getHost(blockchain)
+    override val baseUrl: String = config.baseHost
 
     private val api: BlockBookApi = BlockBookApi(config, blockchain)
 
@@ -83,7 +83,7 @@ class BlockBookNetworkProvider(
     override suspend fun getSignatureCount(address: String): Result<Int> {
         return try {
             val response = withContext(Dispatchers.IO) { api.getAddress(address) }
-            Result.Success(response.txs + response.unconfirmedTxs)
+            Result.Success(response.txs.plus(response.unconfirmedTxs ?: 0))
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
