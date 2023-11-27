@@ -51,6 +51,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.OctaSpace -> OctaSpaceExternalLinkProvider()
             Blockchain.OctaSpaceTestnet -> throw Exception("unsupported blockchain")
             Blockchain.Chia, Blockchain.ChiaTestnet -> ChiaExternalLinkProvider(isTestnet)
+            Blockchain.Decimal, Blockchain.DecimalTestnet -> DecimalExternalLinkProvider(isTestnet)
         }
     }
 }

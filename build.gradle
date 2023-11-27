@@ -43,13 +43,6 @@ allprojects {
             }
             url "https://nexus.tangem-tech.com/repository/maven-releases/"
         }
-        maven {
-            credentials {
-                username = nexusUser
-                password = nexusPass
-            }
-            url "https://nexus.tangem-tech.com/repository/maven-snapshots/"
-        }
         maven { url 'https://jitpack.io' }
     }
 }

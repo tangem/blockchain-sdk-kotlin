@@ -90,8 +90,8 @@ dependencies {
     implementation files('libs/solanaj-0.0.10.jar')
     implementation files('libs/polkaj-root-0.1.5.jar')
     implementation "com.tangem:blst-android:0.0.2@aar"
-    implementation "com.tangem:wallet-core:3.2.4-tangem3@aar"
-    implementation("com.tangem:wallet-core-proto:3.2.4-tangem3") {
+    implementation "com.tangem:wallet-core:3.2.4-tangem4@aar"
+    implementation("com.tangem:wallet-core-proto:3.2.4-tangem4") {
         exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
     }
 
