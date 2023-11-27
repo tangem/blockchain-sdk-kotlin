@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.ethereum.getEthereumJsonRpcProviders
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
+import com.tangem.blockchain.common.txhistory.getTransactionHistoryProvider
 
 internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<EthereumWalletManager>() {
 
@@ -19,7 +20,8 @@ internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<Ethere
                 ),
                 networkProvider = EthereumNetworkService(
                     jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(input.config),
-                )
+                ),
+                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config)
             )
         }
     }
