@@ -11,7 +11,7 @@ internal class StellarExternalLinkProvider(isTestnet: Boolean) : ExternalLinkPro
         if (isTestnet) "https://laboratory.stellar.org/#account-creator?network=test" else null
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
-        return explorerBaseUrl + "address/$walletAddress"
+        return explorerBaseUrl + "account/$walletAddress"
     }
 
     override fun explorerTransactionUrl(transactionHash: String): String {
