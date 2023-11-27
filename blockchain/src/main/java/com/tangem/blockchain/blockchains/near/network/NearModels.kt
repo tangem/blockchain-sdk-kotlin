@@ -102,7 +102,6 @@ sealed class NearAccount {
 
 data class NearNetworkStatus(
     val chainId: String,
-    val version: String,
     val latestBlockHash: String,
     val latestBlockHeight: Long,
     val latestBlockTime: String,
