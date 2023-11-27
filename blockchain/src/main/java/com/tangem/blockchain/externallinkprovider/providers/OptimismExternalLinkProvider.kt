@@ -4,7 +4,8 @@ import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 
 internal class OptimismExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
-    override val explorerBaseUrl: String = if (isTestnet) "https://goerli-optimism.etherscan.io/" else "https://optimistic.etherscan.io"
+    override val explorerBaseUrl: String =
+        if (isTestnet) "https://goerli-optimism.etherscan.io/" else "https://optimistic.etherscan.io/"
 
     override val testNetTopUpUrl: String? = if (isTestnet) "https://optimismfaucet.xyz/" else null
 

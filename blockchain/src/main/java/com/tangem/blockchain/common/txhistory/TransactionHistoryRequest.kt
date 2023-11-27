@@ -4,6 +4,7 @@ private const val DEFAULT_PAGING_SIZE = 20
 
 data class TransactionHistoryRequest(
     val address: String,
+    val decimals: Int,
     val page: Page,
     val filterType: FilterType,
 ) {
