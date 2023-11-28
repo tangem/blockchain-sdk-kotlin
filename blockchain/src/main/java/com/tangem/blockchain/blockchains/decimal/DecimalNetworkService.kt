@@ -38,6 +38,6 @@ internal class DecimalNetworkService(
     }
 
     private fun convertAddress(address: String): String {
-        return DecimalAddressService.convertDscAddressToErcAddress(address) ?: address
+        return DecimalAddressService.convertDelAddressToDscAddress(address)
     }
 }
