@@ -6,6 +6,10 @@ package com.tangem.blockchain.common.address
 
 // btc:
 // segwit = default
+
+// decimal:
+// 0x = legacy
+// d0 = default
 enum class AddressType {
     Default,
     Legacy
