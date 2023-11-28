@@ -18,22 +18,23 @@ import com.tangem.blockchain.common.address.Address as SdkAddress
 internal class DecimalAddressService : AddressService() {
 
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-        return makeErcAddress(walletPublicKey)
+        return makeDscAddress(walletPublicKey)
     }
 
     override fun makeAddresses(
         walletPublicKey: ByteArray,
         curve: EllipticCurve?,
     ): Set<SdkAddress> {
-        val ercAddress = makeErcAddress(walletPublicKey)
+        val dscAddress = makeDscAddress(walletPublicKey)
 
         return setOf(
-            SdkAddress(ercAddress, AddressType.Legacy),
-            SdkAddress(convertErcAddressToDscAddress(ercAddress), AddressType.Default),
+            SdkAddress(dscAddress, AddressType.Legacy),
+            SdkAddress(convertDscAddressToDelAddress(dscAddress), AddressType.Default),
         )
     }
 
-    private fun makeErcAddress(walletPublicKey: ByteArray): String {
+    /** Same as ERC55 address */
+    private fun makeDscAddress(walletPublicKey: ByteArray): String {
         val decompressedPublicKey = walletPublicKey
             .toDecompressedPublicKey()
             .sliceArray(1..64)
@@ -47,7 +48,7 @@ internal class DecimalAddressService : AddressService() {
     override fun validate(address: String): Boolean {
         val addressToValidate = when {
             address.startsWith(ADDRESS_PREFIX) || address.startsWith(LEGACY_ADDRESS_PREFIX) -> {
-                convertDscAddressToErcAddress(address) ?: return false
+                convertDelAddressToDscAddress(address)
             }
 
             else -> address
@@ -61,20 +62,22 @@ internal class DecimalAddressService : AddressService() {
         private const val LEGACY_ADDRESS_PREFIX = "dx"
         private const val ERC55_ADDRESS_PREFIX = "0x"
 
-        fun convertDscAddressToErcAddress(addressHex: String): String? {
+        fun convertDelAddressToDscAddress(addressHex: String): String {
             if (addressHex.startsWith(ERC55_ADDRESS_PREFIX)) {
                 return addressHex
             }
 
             val (prefix, addressBytes) = Bech32.decode(addressHex).let { it.hrp to it.data }
-            if (prefix == null || addressBytes == null) return null
+            require(value = prefix != null && addressBytes != null) {
+                "Unable to convert DEL address to DSC address: $addressHex"
+            }
 
             val convertedAddressBytes = Crypto.convertBits(addressBytes, 0, addressBytes.size, 5, 8, false)
 
             return convertedAddressBytes.toHexString()
         }
 
-        fun convertErcAddressToDscAddress(addressHex: String): String {
+        fun convertDscAddressToDelAddress(addressHex: String): String {
             if (addressHex.startsWith(ADDRESS_PREFIX) || addressHex.startsWith(LEGACY_ADDRESS_PREFIX)) {
                 return addressHex
             }
