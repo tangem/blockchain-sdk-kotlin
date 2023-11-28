@@ -14,7 +14,7 @@ internal class DecimalExternalLinkProvider(isTestnet: Boolean) : ExternalLinkPro
     override val testNetTopUpUrl: String = "https://testnet.console.decimalchain.com/wallet/"
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
-        val address = DecimalAddressService.convertErcAddressToDscAddress(walletAddress)
+        val address = DecimalAddressService.convertDscAddressToDelAddress(walletAddress)
 
         return explorerBaseUrl + "address/$address"
     }
