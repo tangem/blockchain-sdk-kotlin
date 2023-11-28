@@ -28,11 +28,8 @@ internal class DecimalAddressService : AddressService() {
         val ercAddress = makeErcAddress(walletPublicKey)
 
         return setOf(
-            SdkAddress(ercAddress),
-            SdkAddress(
-                convertErcAddressToDscAddress(ercAddress),
-                AddressType.Legacy,
-            )
+            SdkAddress(ercAddress, AddressType.Legacy),
+            SdkAddress(convertErcAddressToDscAddress(ercAddress), AddressType.Default),
         )
     }
 
