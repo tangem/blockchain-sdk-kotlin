@@ -1,7 +1,10 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
@@ -13,7 +16,7 @@ import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 import java.math.BigInteger
 
-class EthereumNetworkService(
+open class EthereumNetworkService(
     jsonRpcProviders: List<EthereumJsonRpcProvider>,
     private val blockcypherNetworkProvider: BlockcypherNetworkProvider? = null,
     private val blockchairEthNetworkProvider: BlockchairEthNetworkProvider? = null,
