@@ -55,6 +55,6 @@ internal class DecimalWalletManager(
     )
 
     private fun convertAddress(destinationAddress: String): String {
-        return DecimalAddressService.convertDscAddressToErcAddress(destinationAddress) ?: destinationAddress
+        return DecimalAddressService.convertDelAddressToDscAddress(destinationAddress)
     }
 }
