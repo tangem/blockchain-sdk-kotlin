@@ -47,7 +47,7 @@ internal fun Blockchain.getBitcoinNetworkProviders(
         } else {
             listOf(
                 "https://api.ravencoin.org/api/",
-                "https://ravencoin.network/api/",
+                "https://explorer.rvn.zelcore.io/api/",
             )
         }.map(::RavencoinNetworkProvider)
         else -> throw IllegalStateException("$this isn't supported")
