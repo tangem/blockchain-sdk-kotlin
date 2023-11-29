@@ -151,7 +151,6 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = "https://evm.cronos.org/"),
             EthereumJsonRpcProvider(baseUrl = "https://evm-cronos.crypto.org/"),
             config.getBlockCredentials?.cronos?.jsonRpc.letNotBlank { getGetBlockProvider(accessToken = it) },
-            EthereumJsonRpcProvider(baseUrl = "https://node.croswap.com/rpc/"),
             EthereumJsonRpcProvider(baseUrl = "https://cronos.blockpi.network/v1/rpc/public/"),
             EthereumJsonRpcProvider(baseUrl = "https://cronos-evm.publicnode.com/"),
         )
