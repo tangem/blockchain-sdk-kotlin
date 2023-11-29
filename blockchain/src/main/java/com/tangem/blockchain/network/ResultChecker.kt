@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumResponse
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import org.stellar.sdk.requests.ErrorResponse
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -63,7 +64,10 @@ object ResultChecker {
     }
 
     private fun BlockchainSdkError.WrappedThrowable.isNetworkError(): Boolean {
-        return cause is IOException || cause is HttpException || cause is JsonDataException
+        return cause is IOException || cause is HttpException || cause is JsonDataException || stellarNetworkError(cause)
+    }
+
+    private fun stellarNetworkError(cause: Throwable?): Boolean {
+        return cause is ErrorResponse && cause.code != 404
     }
 }
-
