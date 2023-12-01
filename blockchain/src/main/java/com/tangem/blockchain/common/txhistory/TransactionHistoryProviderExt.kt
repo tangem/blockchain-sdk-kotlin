@@ -26,7 +26,7 @@ internal fun Blockchain.getTransactionHistoryProvider(
 
             Blockchain.Ethereum,
             Blockchain.EthereumTestnet,
-            Blockchain.Arbitrum,
+            // Blockchain.Arbitrum,
             Blockchain.Avalanche,
             Blockchain.BSC,
             // Blockchain.Polygon,
