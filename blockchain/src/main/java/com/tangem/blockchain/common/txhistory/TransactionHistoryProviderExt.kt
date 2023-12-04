@@ -2,7 +2,6 @@ package com.tangem.blockchain.common.txhistory
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionHistoryProvider
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionHistoryProvider
-import com.tangem.blockchain.blockchains.tron.TronTransactionHistoryProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.network.blockbook.config.BlockBookConfig
@@ -30,12 +29,12 @@ internal fun Blockchain.getTransactionHistoryProvider(
 
             Blockchain.Ethereum,
             Blockchain.EthereumTestnet,
-            Blockchain.Arbitrum,
+            // Blockchain.Arbitrum,
             Blockchain.Avalanche,
             Blockchain.BSC,
-            Blockchain.Polygon,
+            // Blockchain.Polygon,
             Blockchain.EthereumPow,
-            Blockchain.Kava,
+            // Blockchain.Kava,
             -> {
                 EthereumTransactionHistoryProvider(
                     blockchain = this,
@@ -46,15 +45,15 @@ internal fun Blockchain.getTransactionHistoryProvider(
                 )
             }
 
-            Blockchain.Tron -> {
-                TronTransactionHistoryProvider(
-                    blockchain = this,
-                    BlockBookApi(
-                        config = BlockBookConfig.NowNodes(nowNodesCredentials = config.nowNodeCredentials),
-                        blockchain = this,
-                    )
-                )
-            }
+            // Blockchain.Tron -> {
+            //     TronTransactionHistoryProvider(
+            //         blockchain = this,
+            //         BlockBookApi(
+            //             config = BlockBookConfig.NowNodes(nowNodesCredentials = config.nowNodeCredentials),
+            //             blockchain = this,
+            //         )
+            //     )
+            // }
 
             else -> DefaultTransactionHistoryProvider
         }
