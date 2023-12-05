@@ -17,6 +17,8 @@ import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 
+private const val ETHEREUM_METHOD_ID_LENGTH = 8
+
 internal class EthereumTransactionHistoryProvider(
     private val blockchain: Blockchain,
     private val blockBookApi: BlockBookApi,
@@ -121,14 +123,23 @@ internal class EthereumTransactionHistoryProvider(
     }
 
     private fun extractType(tx: GetAddressResponse.Transaction): TransactionHistoryItem.TransactionType {
-        val methodId = tx.ethereumSpecific?.parsedData?.methodId.guard {
-            return TransactionHistoryItem.TransactionType.Transfer
-        }
+        val ethereumSpecific = tx.ethereumSpecific
+
+        // Retrieve the methodId from a specific field in the response or parse it from ethereumSpecific. If unable to
+        // extract the methodId from either, return the default transaction type.
+        val methodId = ethereumSpecific?.parsedData?.methodId
+            ?: methodIdFromRawData(ethereumSpecific?.data)
+            ?: return TransactionHistoryItem.TransactionType.Transfer
 
         // MethodId is empty for the coin transfers
         if (methodId.isEmpty()) return TransactionHistoryItem.TransactionType.Transfer
 
         return TransactionHistoryItem.TransactionType.ContractMethod(id = methodId)
+    }
+
+    private fun methodIdFromRawData(rawData: String?): String? {
+        val methodId = rawData?.removePrefix("0x")?.take(ETHEREUM_METHOD_ID_LENGTH)
+        return if (methodId?.length == ETHEREUM_METHOD_ID_LENGTH) methodId else null
     }
 
     private fun isOutgoing(
