@@ -36,6 +36,7 @@ sealed class BlockBookConfig(val credentials: BlockBookCredentials?) {
                 Blockchain.Polygon -> "https://${prefix}book.$baseHost"
                 Blockchain.Kava -> "https://kava-tendermint.$baseHost"
                 Blockchain.Ethereum,
+                Blockchain.EthereumClassic,
                 Blockchain.Avalanche,
                 Blockchain.EthereumPow,
                 Blockchain.Tron,
