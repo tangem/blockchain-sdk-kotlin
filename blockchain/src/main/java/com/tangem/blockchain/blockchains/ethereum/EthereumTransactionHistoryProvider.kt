@@ -85,6 +85,7 @@ internal class EthereumTransactionHistoryProvider(
         decimals: Int,
         filterType: TransactionHistoryRequest.FilterType,
     ): TransactionHistoryItem? {
+        val isOutgoing = isOutgoing(walletAddress, this, filterType)
         val destinationType = extractDestinationType(walletAddress, this, filterType).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
@@ -93,7 +94,13 @@ internal class EthereumTransactionHistoryProvider(
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
         }
-        val amount = extractAmount(tx = this, decimals = decimals, filterType = filterType).guard {
+        val amount = extractAmount(
+            tx = this,
+            decimals = decimals,
+            filterType = filterType,
+            isOutgoing = isOutgoing,
+            walletAddress = walletAddress
+        ).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
         }
@@ -101,7 +108,7 @@ internal class EthereumTransactionHistoryProvider(
         return TransactionHistoryItem(
             txHash = txid,
             timestamp = TimeUnit.SECONDS.toMillis(blockTime.toLong()),
-            isOutgoing = isOutgoing(walletAddress, this, filterType),
+            isOutgoing = isOutgoing,
             destinationType = destinationType,
             sourceType = sourceType,
             status = extractStatus(tx = this),
@@ -155,8 +162,8 @@ internal class EthereumTransactionHistoryProvider(
                 .equals(walletAddress, ignoreCase = true)
 
             is TransactionHistoryRequest.FilterType.Contract -> transaction.tokenTransfers
-                .firstOrNull { filterType.address.equals(it.contract, true) || filterType.address.equals(it.token, ignoreCase = true) }
-                ?.from.equals(walletAddress, ignoreCase = true)
+                .filter { filterType.address.equals(it.contract, true) || filterType.address.equals(it.token, true) }
+                .any { it.from == walletAddress }
         }
     }
 
@@ -211,6 +218,8 @@ internal class EthereumTransactionHistoryProvider(
         tx: GetAddressResponse.Transaction,
         decimals: Int,
         filterType: TransactionHistoryRequest.FilterType,
+        isOutgoing: Boolean,
+        walletAddress: String,
     ): Amount? {
         return when (filterType) {
             TransactionHistoryRequest.FilterType.Coin -> Amount(
@@ -221,7 +230,11 @@ internal class EthereumTransactionHistoryProvider(
 
             is TransactionHistoryRequest.FilterType.Contract -> {
                 val transfer = tx.tokenTransfers
-                    .firstOrNull { filterType.address.equals(it.contract, ignoreCase = true) || filterType.address.equals(it.token, ignoreCase = true) }
+                    .filter { filterType.address.equals(it.contract, ignoreCase = true) || filterType.address.equals(it.token, ignoreCase = true) }
+                    .firstOrNull { transfer ->
+                        val otherAddress = if (isOutgoing) transfer.from else transfer.to
+                        walletAddress.equals(otherAddress, ignoreCase = true)
+                    }
                     .guard { return null }
                 val transferValue = transfer.value ?: "0"
                 val token = Token(
