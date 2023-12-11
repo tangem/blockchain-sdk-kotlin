@@ -53,7 +53,7 @@ data class GetBlockCredentials(
     val tron: GetBlockAccessToken?,
     val cosmos: GetBlockAccessToken?,
     val near: GetBlockAccessToken?,
-    val luna: GetBlockAccessToken?,
+    val luna: GetBlockAccessToken?, // TODO [REDACTED_TASK_KEY] remove this after 5.4 release
     val dogecoin: GetBlockAccessToken,
     val litecoin: GetBlockAccessToken,
     val dash: GetBlockAccessToken,
