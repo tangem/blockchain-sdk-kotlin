@@ -58,7 +58,6 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = "https://etc.etcdesktop.com/"),
             config.getBlockCredentials?.etc?.jsonRpc.letNotBlank { getGetBlockProvider(accessToken = it) },
             EthereumJsonRpcProvider(baseUrl = "https://etc.rivet.link/etc/"),
-            EthereumJsonRpcProvider(baseUrl = "https://blockscout.com/etc/mainnet/api/eth-rpc/"),
             EthereumJsonRpcProvider(baseUrl = "https://etc.mytokenpocket.vip/"),
             EthereumJsonRpcProvider(baseUrl = "https://besu-de.etc-network.info/"),
             EthereumJsonRpcProvider(baseUrl = "https://geth-at.etc-network.info/"),
