@@ -53,6 +53,10 @@ class StellarWalletManager(
         updateRecentTransactions(data.recentTransactions)
     }
 
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, wallet.address)
+    }
+
     private fun updateUnplannedTokens(balances: Set<StellarAssetBalance>) {
         balances.forEach {
             val token = Token(it.symbol, it.issuer, blockchain.decimals())

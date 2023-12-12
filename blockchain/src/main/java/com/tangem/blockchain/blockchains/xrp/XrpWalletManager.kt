@@ -96,4 +96,8 @@ class XrpWalletManager(
             )
         }
     }
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, wallet.address)
+    }
 }

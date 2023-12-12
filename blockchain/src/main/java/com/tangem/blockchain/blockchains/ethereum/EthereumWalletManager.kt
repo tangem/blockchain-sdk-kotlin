@@ -129,6 +129,10 @@ open class EthereumWalletManager(
         return getFeeInternal(amount, destination, null)
     }
 
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, wallet.address)
+    }
+
     open suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee> {
         return getFeeInternal(amount, destination, data)
     }
