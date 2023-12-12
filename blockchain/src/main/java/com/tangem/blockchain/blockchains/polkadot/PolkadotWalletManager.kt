@@ -90,6 +90,10 @@ class PolkadotWalletManager(
         return Result.Success(TransactionFee.Single(Fee.Common(feeAmount)))
     }
 
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, wallet.address)
+    }
+
     override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData {
         return when (amount.type) {
             AmountType.Coin -> super.createTransaction(amount, fee, destination)
