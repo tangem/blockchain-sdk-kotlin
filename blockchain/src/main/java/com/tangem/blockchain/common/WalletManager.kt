@@ -173,7 +173,15 @@ interface TransactionSender {
 
     suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult
 
+    // Think about migration to different interface
     suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee>
+
+    /**
+     * Estimates fee (approximate value)
+     *
+     * [Think about migration to different interface]
+     */
+    suspend fun estimateFee(amount: Amount): Result<TransactionFee>
 }
 
 interface TransactionSigner {
