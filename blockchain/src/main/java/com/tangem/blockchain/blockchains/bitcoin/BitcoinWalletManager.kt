@@ -186,6 +186,10 @@ open class BitcoinWalletManager(
         }
     }
 
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, wallet.address)
+    }
+
     override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
         return when (val result = networkProvider.getSignatureCount(wallet.address)) {
             is Result.Success -> if (result.data == signedHashes) {
