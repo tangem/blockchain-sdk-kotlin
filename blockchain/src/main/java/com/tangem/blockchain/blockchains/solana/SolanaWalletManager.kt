@@ -46,6 +46,7 @@ class SolanaWalletManager(
 
     private val accountPubK: PublicKey = PublicKey(wallet.address)
     private val networkServices = providers.map { SolanaNetworkService(it) }
+
     private val multiNetworkProvider: MultiNetworkProvider<SolanaNetworkService> =
         MultiNetworkProvider(networkServices)
 
@@ -282,6 +283,10 @@ class SolanaWalletManager(
         }
 
         return Result.Success(TransactionFee.Single(feeAmount))
+    }
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, wallet.address)
     }
 
     private suspend fun getNetworkFee(): Result<BigDecimal> {
