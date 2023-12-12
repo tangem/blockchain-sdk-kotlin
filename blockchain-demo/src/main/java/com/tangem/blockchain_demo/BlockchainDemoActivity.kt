@@ -6,8 +6,10 @@ import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.hedera.hashgraph.sdk.*
 import com.tangem.TangemSdk
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain_demo.cardSdk.ScanCardAndDerive
@@ -18,6 +20,8 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.card.CardWallet
 import com.tangem.common.core.TangemError
 import com.tangem.common.core.TangemSdkError
+import com.tangem.common.extensions.calculateSha256
+import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
 import com.tangem.sdk.extensions.init
 import kotlinx.coroutines.*
@@ -121,6 +125,10 @@ class BlockchainDemoActivity : AppCompatActivity() {
     }
 
     private fun scan() {
+        scope.launch {
+            doHederaStuff()
+        }
+
         tangemSdk.startSessionWithRunnable(ScanCardAndDerive(getTestedBlockchains())) { result ->
             when (result) {
                 is CompletionResult.Success -> {
@@ -240,6 +248,34 @@ class BlockchainDemoActivity : AppCompatActivity() {
         containerRecipientAddressFee.btnLoadFee.isEnabled = true
     }
 
+    private fun doHederaStuff() {
+        // val newAccountPrivateKey: PrivateKey = PrivateKey.generateED25519()
+        // val newAccountPublicKey: PublicKey = newAccountPrivateKey.publicKey
+
+        val privateKey = PrivateKey.fromString(
+            "3030020100300706052b8104000a04220420d22811308cacd33a0d371d93506a01b27060d2314e5f6bda0cd05faae18b418e"
+        )
+        val accountId = AccountId.fromString("0.0.6753476")
+
+        //Create your Hedera Testnet client
+        val client: Client = Client.forTestnet()
+
+        //Set your account as the client's operator
+        client.setOperator(accountId, privateKey)
+
+        //Set the default maximum transaction fee (in Hbar)
+        client.setDefaultMaxTransactionFee(Hbar(100))
+
+        //Set the maximum payment for queries (in Hbar)
+        client.setMaxQueryPayment(Hbar(50))
+
+        //Request the cost of the query
+        val queryCost: Hbar = AccountBalanceQuery()
+            .setAccountId(accountId)
+            .getCost(client)
+
+        println("The cost of this query is: $queryCost")
+    }
 
     private fun loadFee() = with(binding) {
         if (containerRecipientAddressFee.tilEtRecipientAddress.text.isNullOrBlank()) {
