@@ -150,6 +150,10 @@ class TezosWalletManager(
         }
     }
 
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, wallet.address)
+    }
+
     override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
         val errors = super.validateTransaction(amount, fee)
         val total = fee?.value?.add(amount.value) ?: amount.value

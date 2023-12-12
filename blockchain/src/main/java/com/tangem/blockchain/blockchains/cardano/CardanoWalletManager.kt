@@ -120,4 +120,8 @@ class CardanoWalletManager(
 
         return Result.Success(TransactionFee.Single(fee))
     }
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, wallet.address)
+    }
 }
