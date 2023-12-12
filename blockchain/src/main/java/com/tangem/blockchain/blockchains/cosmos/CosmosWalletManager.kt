@@ -163,6 +163,10 @@ class CosmosWalletManager(
         }
     }
 
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, wallet.address)
+    }
+
     private fun updateWallet(cosmosAccountInfo: CosmosAccountInfo) {
         wallet.recentTransactions.forEach {
             if (cosmosAccountInfo.confirmedTransactionHashes.contains(it.hash)) it.status = TransactionStatus.Confirmed
