@@ -59,6 +59,10 @@ class NearWalletManager(
         }
     }
 
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, wallet.address)
+    }
+
     private suspend fun updateTransactions() {
         wallet.recentTransactions.firstOrNull()?.let {
             val status = networkService.getStatus(requireNotNull(it.hash), it.sourceAddress).successOr { return }

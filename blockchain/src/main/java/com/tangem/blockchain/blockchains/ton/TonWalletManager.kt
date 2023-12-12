@@ -73,6 +73,10 @@ class TonWalletManager(
         }
     }
 
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, wallet.address)
+    }
+
     private fun updateWallet(info: TonWalletInfo) {
         if (info.sequenceNumber != sequenceNumber) {
             wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
