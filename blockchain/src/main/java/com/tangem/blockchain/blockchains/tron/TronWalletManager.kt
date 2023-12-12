@@ -147,6 +147,10 @@ class TronWalletManager(
         }
     }
 
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, TRON_ADDRESS_TO_ESTIMATE_FEE)
+    }
+
     private suspend fun signTransactionData(
         amount: Amount,
         source: String,
@@ -253,6 +257,10 @@ class TronWalletManager(
     private fun ByteArray.padLeft(length: Int): ByteArray {
         val paddingSize = Ints.max(length - this.size, 0)
         return ByteArray(paddingSize) + this
+    }
+
+    companion object {
+        private const val TRON_ADDRESS_TO_ESTIMATE_FEE = "TAFqkNfz3escPSdhogPX8nqDY4Rxzxv5v3"
     }
 }
 
