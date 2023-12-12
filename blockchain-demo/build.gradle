@@ -43,6 +43,10 @@ android {
     }
 }
 
+configurations.all {
+    exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
+}
+
 dependencies {
     implementation project(':blockchain')
 
@@ -62,4 +66,6 @@ dependencies {
 
     debugImplementation "com.github.chuckerteam.chucker:library:4.0.0"
     releaseImplementation "com.github.chuckerteam.chucker:library-no-op:4.0.0"
+
+    implementation 'com.hedera.hashgraph:sdk:2.29.0'
 }
