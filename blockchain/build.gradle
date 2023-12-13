@@ -60,9 +60,13 @@ dependencies {
 
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0'
 
-    implementation 'org.bitcoinj:bitcoinj-core:0.15.10'
+    implementation ("org.bitcoinj:bitcoinj-core:0.15.10") {
+        exclude group: 'com.google.protobuf', module: 'protobuf-java'
+    }
     implementation 'com.github.stellar:java-stellar-sdk:0.40.0'
-    implementation 'com.github.dogecoin:libdohj:v0.15'
+    implementation ("com.github.dogecoin:libdohj:v0.15") {
+        exclude group: 'com.google.protobuf', module: 'protobuf-java'
+    }
 
     implementation "com.madgag.spongycastle:core:1.58.0.0"
     implementation "com.madgag.spongycastle:prov:1.58.0.0"
@@ -98,8 +102,10 @@ dependencies {
     implementation 'net.i2p.crypto:eddsa:0.3.0'
 
     //dependencies for binance
-    implementation 'com.google.protobuf:protobuf-java:3.6.1'
-    implementation 'io.grpc:grpc-protobuf:1.17.1'
+    implementation ("com.google.protobuf:protobuf-java:3.6.1")
+    implementation ("io.grpc:grpc-protobuf:1.17.1") {
+        exclude group: 'com.google.protobuf', module: 'protobuf-java'
+    }
     implementation 'io.grpc:grpc-stub:1.17.1'
     implementation 'commons-codec:commons-codec:1.10'
     implementation 'org.apache.commons:commons-lang3:3.6'
