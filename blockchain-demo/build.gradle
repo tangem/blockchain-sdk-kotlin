@@ -43,9 +43,9 @@ android {
     }
 }
 
-configurations.all {
-    exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
-}
+// configurations.all {
+//     exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
+// }
 
 dependencies {
     implementation project(':blockchain')
