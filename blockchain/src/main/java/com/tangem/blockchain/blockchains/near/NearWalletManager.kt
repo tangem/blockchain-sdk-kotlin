@@ -135,11 +135,31 @@ class NearWalletManager(
         }
     }
 
+    suspend fun validateAddress(address: String): Boolean {
+        // implicit address validation
+        if (address.length == IMPLICIT_ACCOUNT_ADDRESS_LENGTH && hexRegex.matches(address)) {
+            return wallet.blockchain.validateAddress(address)
+        }
+
+        // named address validation
+        if (address.length in MIN_ACCOUNT_ADDRESS_LENGTH until IMPLICIT_ACCOUNT_ADDRESS_LENGTH &&
+            nearAddressRegex.matches(address)
+        ) {
+            val result = getAccount(address)
+            return result is Result.Success && result.data is NearAccount.Full
+        }
+
+        return false
+    }
+
     suspend fun getAccount(address: String): Result<NearAccount> {
         return networkService.getAccount(address)
     }
 
     companion object {
         private const val IMPLICIT_ACCOUNT_ADDRESS_LENGTH = 64
+        private const val MIN_ACCOUNT_ADDRESS_LENGTH = 2
+        private val hexRegex = Regex("^[0-9a-f]+$")
+        private val nearAddressRegex = Regex("^(([a-z\\d]+[\\-_])*[a-z\\d]+\\.)*([a-z\\d]+[\\-_])*[a-z\\d]+\$")
     }
 }
