@@ -13,6 +13,8 @@ class BitcoinCashWalletManager(
     private val networkProvider: BitcoinNetworkProvider
 ) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider) {
 
+    override val addressToEstimateFee = "bitcoincash:qz42lpts8hsvf00r2wd2et6dandw9n8hmucl67puqg"
+
     override val minimalFee = 0.00001.toBigDecimal()
 
     override suspend fun updateInternal() {
