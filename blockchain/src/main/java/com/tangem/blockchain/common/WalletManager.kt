@@ -171,21 +171,17 @@ abstract class WalletManager(
 
 interface TransactionSender {
 
-    val addressToEstimateFee: String
-
     suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult
 
     // Think about migration to different interface
     suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee>
-}
 
-/**
- * Estimates fee (approximate value)
- *
- * [Think about migration to interface]
- */
-suspend fun TransactionSender.estimateFee(amount: Amount): Result<TransactionFee> {
-    return getFee(amount, addressToEstimateFee)
+    /**
+     * Estimates fee (approximate value)
+     *
+     * [Think about migration to interface]
+     */
+    suspend fun estimateFee(amount: Amount): Result<TransactionFee>
 }
 
 interface TransactionSigner {
