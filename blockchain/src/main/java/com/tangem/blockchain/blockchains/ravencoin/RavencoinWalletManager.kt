@@ -4,7 +4,9 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
+import com.tangem.blockchain.extensions.Result
 import java.math.BigDecimal
 
 class RavencoinWalletManager(
@@ -14,7 +16,11 @@ class RavencoinWalletManager(
     transactionHistoryProvider: TransactionHistoryProvider,
 ) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider) {
 
-    override val addressToEstimateFee = "RCNTqArDCW57hBHrYKYdKNVs17PbpS9qN6"
+    private val addressToEstimateFee = "RCNTqArDCW57hBHrYKYdKNVs17PbpS9qN6"
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, addressToEstimateFee)
+    }
 
     // https://github.com/raven-community/ravencore-lib/blob/master/docs/transaction.md
     override val minimalFeePerKb: BigDecimal = BigDecimal(10_000).movePointLeft(wallet.blockchain.decimals())

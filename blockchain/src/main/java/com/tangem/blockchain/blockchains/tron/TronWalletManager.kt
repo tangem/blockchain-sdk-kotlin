@@ -37,7 +37,11 @@ class TronWalletManager(
     private val networkService: TronNetworkService,
 ) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider), TransactionSender {
 
-    override val addressToEstimateFee = "TAFqkNfz3escPSdhogPX8nqDY4Rxzxv5v3"
+    private val addressToEstimateFee = "TAFqkNfz3escPSdhogPX8nqDY4Rxzxv5v3"
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, addressToEstimateFee)
+    }
 
     override val currentHost: String = networkService.host
 
