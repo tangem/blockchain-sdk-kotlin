@@ -38,7 +38,11 @@ class TezosWalletManager(
     private val curve: EllipticCurve
 ) : WalletManager(wallet), TransactionSender {
 
-    override val addressToEstimateFee = "tz1T2BYR5vzmtrub9qhXzjBj7XFkTeXhHJ8R"
+    private val addressToEstimateFee = "tz1T2BYR5vzmtrub9qhXzjBj7XFkTeXhHJ8R"
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, addressToEstimateFee)
+    }
 
     override val currentHost: String
         get() = networkProvider.baseUrl
