@@ -14,5 +14,7 @@ class LitecoinWalletManager(
     transactionHistoryProvider: TransactionHistoryProvider,
 ) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider), TransactionSender {
 
+    override val addressToEstimateFee = "ltc1qtcl2c7mnld8pk7kjyef9gd2d7hxxz9wqh6ylef"
+
     override val minimalFee = 0.00001.toBigDecimal()
 }
