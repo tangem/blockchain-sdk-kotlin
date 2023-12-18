@@ -4,8 +4,10 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.TransactionSender
 import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
 import java.math.BigDecimal
@@ -17,7 +19,11 @@ class DogecoinWalletManager(
     transactionHistoryProvider: TransactionHistoryProvider,
 ) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider), TransactionSender {
 
-    override val addressToEstimateFee = "DDL1UEGQwdcKxqD1juYhW8AgJaXhEZMY3C"
+    private val addressToEstimateFee = "DDL1UEGQwdcKxqD1juYhW8AgJaXhEZMY3C"
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, addressToEstimateFee)
+    }
 
     override suspend fun getBitcoinFeePerKb(): Result<BitcoinFee> {
         return Result.Success(
