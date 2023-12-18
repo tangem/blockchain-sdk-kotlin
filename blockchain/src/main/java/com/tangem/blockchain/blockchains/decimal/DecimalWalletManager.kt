@@ -19,6 +19,8 @@ internal class DecimalWalletManager(
     networkProvider: EthereumNetworkProvider,
 ) : EthereumWalletManager(wallet, transactionBuilder, networkProvider) {
 
+    override val addressToEstimateFee = "d01kcj4xqnwzunua62ns6zqpjd2yruk4fhm9k8xj4"
+
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         return super.getFee(amount, convertAddress(destination))
     }

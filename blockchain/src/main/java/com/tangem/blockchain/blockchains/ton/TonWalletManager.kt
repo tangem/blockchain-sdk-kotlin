@@ -34,6 +34,8 @@ class TonWalletManager(
         blockchain = wallet.blockchain
     )
 
+    override val addressToEstimateFee = "EQCQsD3nAYO4agXyaiqVa3v0CA4K4nTdSRMJZw24ZFRQmBWT"
+
     override val currentHost: String
         get() = networkService.host
 
@@ -71,10 +73,6 @@ class TonWalletManager(
             is Result.Failure -> feeResult
             is Result.Success -> Result.Success(TransactionFee.Single(Fee.Common(feeResult.data)))
         }
-    }
-
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, wallet.address)
     }
 
     private fun updateWallet(info: TonWalletInfo) {

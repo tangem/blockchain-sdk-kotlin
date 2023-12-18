@@ -43,6 +43,15 @@ class PolkadotWalletManager(
         else -> throw IllegalStateException("${wallet.blockchain} isn't supported")
     }
 
+    override val addressToEstimateFee get() : String {
+        return when (wallet.blockchain) {
+            Blockchain.Polkadot, Blockchain.PolkadotTestnet -> "1mRpHu2zGPsugVJxrz41FMxopVWSn5s6HMepk3DitrP1cMf"
+            Blockchain.Kusama -> "Eh1V6Lqzd49RahV9ssZ6LTEvcDkWSnr53D1feYEZpM2Kdv3"
+            Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> "5HqqS1sYV19pP6jGVNyowBcPWvoyaJCQpwgyWDaNQaFNb93g"
+            else -> throw IllegalStateException("${wallet.blockchain} isn't supported")
+        }
+    }
+
     override fun getExistentialDeposit() = existentialDeposit
 
     private val txBuilder = PolkadotTransactionBuilder(wallet.blockchain)
@@ -88,10 +97,6 @@ class PolkadotWalletManager(
         val feeAmount = amount.copy(value = fee)
 
         return Result.Success(TransactionFee.Single(Fee.Common(feeAmount)))
-    }
-
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, wallet.address)
     }
 
     override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData {

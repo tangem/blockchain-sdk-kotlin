@@ -30,6 +30,8 @@ class CardanoWalletManager(
     override val dustValue: BigDecimal = BigDecimal.ONE
     private val blockchain = wallet.blockchain
 
+    override val addressToEstimateFee = "addr1q9svm389hgtksjvawpt9nfd9twk4kfckhs23wxrdfspynw9g3emv6k6njzwqvdmtff4426vy2pfg0ngu9t6pr9xmd0ass48agt"
+
     override val currentHost: String
         get() = networkProvider.baseUrl
 
@@ -121,7 +123,4 @@ class CardanoWalletManager(
         return Result.Success(TransactionFee.Single(fee))
     }
 
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, wallet.address)
-    }
 }

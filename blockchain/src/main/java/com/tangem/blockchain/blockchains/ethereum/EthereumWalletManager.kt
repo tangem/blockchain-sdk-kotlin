@@ -39,6 +39,8 @@ open class EthereumWalletManager(
     var txCount = -1L
         private set
 
+    override val addressToEstimateFee = "0xB62553026e1727cEE953868400C9AA20f96AA6fB"
+
     override val currentHost: String
         get() = networkProvider.baseUrl
 
@@ -127,10 +129,6 @@ open class EthereumWalletManager(
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         return getFeeInternal(amount, destination, null)
-    }
-
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, wallet.address)
     }
 
     open suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee> {
