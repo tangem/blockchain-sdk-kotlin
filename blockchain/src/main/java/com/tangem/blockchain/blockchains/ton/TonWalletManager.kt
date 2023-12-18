@@ -34,7 +34,11 @@ class TonWalletManager(
         blockchain = wallet.blockchain
     )
 
-    override val addressToEstimateFee = "EQCQsD3nAYO4agXyaiqVa3v0CA4K4nTdSRMJZw24ZFRQmBWT"
+    private val addressToEstimateFee = "EQCQsD3nAYO4agXyaiqVa3v0CA4K4nTdSRMJZw24ZFRQmBWT"
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, addressToEstimateFee)
+    }
 
     override val currentHost: String
         get() = networkService.host

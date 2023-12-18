@@ -16,7 +16,11 @@ class StellarWalletManager(
     private val networkProvider: StellarNetworkProvider,
 ) : WalletManager(wallet), TransactionSender, SignatureCountValidator {
 
-    override val addressToEstimateFee = "GAYK3NFZTAJQCLKGEDBRFQWMMY34MGO3PA6X3RX66XVZTCVE47A4SEK6"
+    private val addressToEstimateFee = "GAYK3NFZTAJQCLKGEDBRFQWMMY34MGO3PA6X3RX66XVZTCVE47A4SEK6"
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, addressToEstimateFee)
+    }
 
     override val currentHost: String
         get() = networkProvider.baseUrl

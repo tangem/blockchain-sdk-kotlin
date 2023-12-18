@@ -43,13 +43,17 @@ class PolkadotWalletManager(
         else -> throw IllegalStateException("${wallet.blockchain} isn't supported")
     }
 
-    override val addressToEstimateFee get() : String {
+    private val addressToEstimateFee get() : String {
         return when (wallet.blockchain) {
             Blockchain.Polkadot, Blockchain.PolkadotTestnet -> "1mRpHu2zGPsugVJxrz41FMxopVWSn5s6HMepk3DitrP1cMf"
             Blockchain.Kusama -> "Eh1V6Lqzd49RahV9ssZ6LTEvcDkWSnr53D1feYEZpM2Kdv3"
             Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> "5HqqS1sYV19pP6jGVNyowBcPWvoyaJCQpwgyWDaNQaFNb93g"
             else -> throw IllegalStateException("${wallet.blockchain} isn't supported")
         }
+    }
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, addressToEstimateFee)
     }
 
     override fun getExistentialDeposit() = existentialDeposit
