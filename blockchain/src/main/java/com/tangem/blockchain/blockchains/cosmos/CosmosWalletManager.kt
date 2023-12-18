@@ -22,6 +22,13 @@ class CosmosWalletManager(
     private val cosmosChain: CosmosChain,
 ) : WalletManager(wallet), TransactionSender {
 
+    override val addressToEstimateFee: String
+        get() = when (wallet.blockchain) {
+            Blockchain.Cosmos -> "cosmos158672lrar4kmsp29r0xw9suywp3snsgwe2gpym"
+            Blockchain.TerraV1, Blockchain.TerraV2 -> "terra1frj93e573hlw7qfdln0r5ms74kudnlfvmwv0n5"
+            else -> throw IllegalStateException("${wallet.blockchain} isn't supported")
+        }
+
     private val networkService: CosmosNetworkService = CosmosNetworkService(
         providers = networkProviders,
         cosmosChain = cosmosChain,
@@ -161,10 +168,6 @@ class CosmosWalletManager(
                 }
             }
         }
-    }
-
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, wallet.address)
     }
 
     private fun updateWallet(cosmosAccountInfo: CosmosAccountInfo) {
