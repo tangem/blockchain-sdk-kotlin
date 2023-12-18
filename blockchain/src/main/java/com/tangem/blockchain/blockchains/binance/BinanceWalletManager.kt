@@ -18,7 +18,11 @@ class BinanceWalletManager(
 
     private val blockchain = wallet.blockchain
 
-    override val addressToEstimateFee = "bnb1nhzmtee445kyf78a243pxacp85q866gdw74xar"
+    private val addressToEstimateFee = "bnb1nhzmtee445kyf78a243pxacp85q866gdw74xar"
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, addressToEstimateFee)
+    }
 
     override val currentHost: String
         get() = networkProvider.host
