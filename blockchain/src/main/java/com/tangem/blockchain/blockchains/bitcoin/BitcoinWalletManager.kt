@@ -42,7 +42,11 @@ open class BitcoinWalletManager(
     open val minimalFeePerKb = DEFAULT_MINIMAL_FEE_PER_KB.toBigDecimal()
     open val minimalFee = 0.000001.toBigDecimal()
 
-    override val addressToEstimateFee = "bc1qwff8ryfujqukhyjcqghs68j3ph948pwcpx24d8"
+    private val addressToEstimateFee = "bc1qwff8ryfujqukhyjcqghs68j3ph948pwcpx24d8"
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, addressToEstimateFee)
+    }
 
     override val currentHost: String
         get() = networkProvider.baseUrl
