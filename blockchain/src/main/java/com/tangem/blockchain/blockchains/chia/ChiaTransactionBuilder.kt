@@ -71,7 +71,7 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
         val change = balance - amount.value!!.toMojo()
         val numberOfCoinsCreated = if (change > 0) 2 else 1
 
-        return (coinSpends.size * COIN_SPEND_COST) + (numberOfCoinsCreated * CREATE_COIN_COST)
+        return (getUnspentsToSpendCount() * COIN_SPEND_COST) + (numberOfCoinsCreated * CREATE_COIN_COST)
     }
 
     private fun getUnspentsToSpend() = unspentCoins
