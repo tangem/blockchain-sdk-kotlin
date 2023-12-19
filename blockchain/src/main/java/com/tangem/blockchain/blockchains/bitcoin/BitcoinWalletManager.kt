@@ -42,6 +42,12 @@ open class BitcoinWalletManager(
     open val minimalFeePerKb = DEFAULT_MINIMAL_FEE_PER_KB.toBigDecimal()
     open val minimalFee = 0.000001.toBigDecimal()
 
+    private val addressToEstimateFee = "bc1qwff8ryfujqukhyjcqghs68j3ph948pwcpx24d8"
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, addressToEstimateFee)
+    }
+
     override val currentHost: String
         get() = networkProvider.baseUrl
 
@@ -184,10 +190,6 @@ open class BitcoinWalletManager(
         } catch (exception: Exception) {
             return Result.Failure(exception.toBlockchainSdkError())
         }
-    }
-
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, wallet.address)
     }
 
     override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
