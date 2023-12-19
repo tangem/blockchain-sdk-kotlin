@@ -44,6 +44,12 @@ class SolanaWalletManager(
     providers: List<RpcClient>,
     ) : WalletManager(wallet), TransactionSender, RentProvider {
 
+    private val addressToEstimateFee = "AEtkrvuucZhDbbdw4HPwad1w3dcuh9r3eVVS3GCDaHYX"
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, addressToEstimateFee)
+    }
+
     private val accountPubK: PublicKey = PublicKey(wallet.address)
     private val networkServices = providers.map { SolanaNetworkService(it) }
 
@@ -283,10 +289,6 @@ class SolanaWalletManager(
         }
 
         return Result.Success(TransactionFee.Single(feeAmount))
-    }
-
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, wallet.address)
     }
 
     private suspend fun getNetworkFee(): Result<BigDecimal> {
