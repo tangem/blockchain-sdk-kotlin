@@ -26,6 +26,12 @@ class KaspaWalletManager(
     private val networkProvider: KaspaNetworkProvider,
 ) : WalletManager(wallet), TransactionSender {
 
+    private val addressToEstimateFee = "kaspa:qypwj0zh73z276kufh3u9fv8vpjcc8h4tt356hc9pzvnykxxxr32yycwqedqmt0"
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, addressToEstimateFee)
+    }
+
     override val currentHost: String
         get() = networkProvider.baseUrl
 
@@ -76,10 +82,6 @@ class KaspaWalletManager(
                 }
             }
         }
-    }
-
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, wallet.address)
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
