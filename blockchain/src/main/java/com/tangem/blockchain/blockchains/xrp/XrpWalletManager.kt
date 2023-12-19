@@ -25,6 +25,12 @@ class XrpWalletManager(
     private val networkProvider: XrpNetworkProvider,
 ) : WalletManager(wallet), TransactionSender {
 
+    private val addressToEstimateFee = "rqVUVDZoBL1RN1E8sRMJXNy2baQ4p1Ekm"
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, addressToEstimateFee)
+    }
+
     override val currentHost: String
         get() = networkProvider.baseUrl
 
@@ -97,7 +103,4 @@ class XrpWalletManager(
         }
     }
 
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, wallet.address)
-    }
 }
