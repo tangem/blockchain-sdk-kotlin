@@ -179,7 +179,7 @@ interface TransactionSender {
     /**
      * Estimates fee (approximate value)
      *
-     * [Think about migration to different interface]
+     * [Think about migration to interface]
      */
     suspend fun estimateFee(amount: Amount): Result<TransactionFee>
 }
