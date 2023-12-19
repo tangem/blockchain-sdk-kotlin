@@ -2,7 +2,9 @@ package com.tangem.blockchain.blockchains.bitcoincash
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
 
@@ -12,6 +14,12 @@ class BitcoinCashWalletManager(
     transactionHistoryProvider: TransactionHistoryProvider,
     private val networkProvider: BitcoinNetworkProvider
 ) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider) {
+
+    private val addressToEstimateFee = "bitcoincash:qz42lpts8hsvf00r2wd2et6dandw9n8hmucl67puqg"
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, addressToEstimateFee)
+    }
 
     override val minimalFee = 0.00001.toBigDecimal()
 
