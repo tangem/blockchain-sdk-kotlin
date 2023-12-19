@@ -37,6 +37,12 @@ class TronWalletManager(
     private val networkService: TronNetworkService,
 ) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider), TransactionSender {
 
+    private val addressToEstimateFee = "TAFqkNfz3escPSdhogPX8nqDY4Rxzxv5v3"
+
+    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
+        return getFee(amount, addressToEstimateFee)
+    }
+
     override val currentHost: String = networkService.host
 
     private val dummySigner = DummySigner()
@@ -147,10 +153,6 @@ class TronWalletManager(
         }
     }
 
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, TRON_ADDRESS_TO_ESTIMATE_FEE)
-    }
-
     private suspend fun signTransactionData(
         amount: Amount,
         source: String,
@@ -259,9 +261,6 @@ class TronWalletManager(
         return ByteArray(paddingSize) + this
     }
 
-    companion object {
-        private const val TRON_ADDRESS_TO_ESTIMATE_FEE = "TAFqkNfz3escPSdhogPX8nqDY4Rxzxv5v3"
-    }
 }
 
 /**
