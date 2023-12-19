@@ -92,7 +92,7 @@ class ChiaWalletManager(
             is Result.Success -> {
                 Result.Success(
                     TransactionFee.Choosable(
-                        minimum = Fee.Common(Amount(BigDecimal.ZERO, blockchain)),
+                        minimum = Fee.Common(Amount(result.data.normalFee, blockchain)),
                         normal = Fee.Common(Amount(result.data.normalFee, blockchain)),
                         priority = Fee.Common(Amount(result.data.priorityFee, blockchain))
                     )
