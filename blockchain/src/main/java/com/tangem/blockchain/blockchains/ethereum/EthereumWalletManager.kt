@@ -25,7 +25,6 @@ open class EthereumWalletManager(
     protected val networkProvider: EthereumNetworkProvider,
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
 ) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider),
-    TransactionSender,
     SignatureCountValidator,
     TokenFinder,
     EthereumGasLoader,
@@ -38,12 +37,6 @@ open class EthereumWalletManager(
         private set
     var txCount = -1L
         private set
-
-    private val addressToEstimateFee = "0xB62553026e1727cEE953868400C9AA20f96AA6fB"
-
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, addressToEstimateFee)
-    }
 
     override val currentHost: String
         get() = networkProvider.baseUrl
