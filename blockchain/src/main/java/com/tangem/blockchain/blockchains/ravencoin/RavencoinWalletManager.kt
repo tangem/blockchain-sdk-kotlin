@@ -16,12 +16,6 @@ class RavencoinWalletManager(
     transactionHistoryProvider: TransactionHistoryProvider,
 ) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider) {
 
-    private val addressToEstimateFee = "RCNTqArDCW57hBHrYKYdKNVs17PbpS9qN6"
-
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, addressToEstimateFee)
-    }
-
     // https://github.com/raven-community/ravencore-lib/blob/master/docs/transaction.md
     override val minimalFeePerKb: BigDecimal = BigDecimal(10_000).movePointLeft(wallet.blockchain.decimals())
     override val dustValue: BigDecimal = BigDecimal(642).movePointLeft(wallet.blockchain.decimals())
