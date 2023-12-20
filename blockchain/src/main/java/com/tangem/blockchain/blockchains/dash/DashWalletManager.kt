@@ -18,10 +18,4 @@ class DashWalletManager(
     transactionHistoryProvider: TransactionHistoryProvider,
 ) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider), TransactionSender {
 
-    private val addressToEstimateFee = "XcN7YdKmSshcFSkL5vjJfnWUhnH2Uxqbm4"
-
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, addressToEstimateFee)
-    }
-
 }
