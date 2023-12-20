@@ -19,12 +19,6 @@ class DogecoinWalletManager(
     transactionHistoryProvider: TransactionHistoryProvider,
 ) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider), TransactionSender {
 
-    private val addressToEstimateFee = "DDL1UEGQwdcKxqD1juYhW8AgJaXhEZMY3C"
-
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, addressToEstimateFee)
-    }
-
     override suspend fun getBitcoinFeePerKb(): Result<BitcoinFee> {
         return Result.Success(
             BitcoinFee(
