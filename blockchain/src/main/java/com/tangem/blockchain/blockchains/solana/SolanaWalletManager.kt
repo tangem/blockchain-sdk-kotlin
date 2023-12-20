@@ -42,13 +42,7 @@ import java.math.RoundingMode
 class SolanaWalletManager(
     wallet: Wallet,
     providers: List<RpcClient>,
-    ) : WalletManager(wallet), TransactionSender, RentProvider {
-
-    private val addressToEstimateFee = "AEtkrvuucZhDbbdw4HPwad1w3dcuh9r3eVVS3GCDaHYX"
-
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, addressToEstimateFee)
-    }
+) : WalletManager(wallet), TransactionSender, RentProvider {
 
     private val accountPubK: PublicKey = PublicKey(wallet.address)
     private val networkServices = providers.map { SolanaNetworkService(it) }
@@ -127,7 +121,7 @@ class SolanaWalletManager(
     override fun createTransaction(
         amount: Amount,
         fee: Fee,
-        destination: String
+        destination: String,
     ): TransactionData {
         val accountCreationRent = feeRentHolder[fee]
 
@@ -140,9 +134,11 @@ class SolanaWalletManager(
                     val newAmount = amount.plus(accountCreationRent)
                     super.createTransaction(newAmount, newFee, destination)
                 }
+
                 is AmountType.Token -> {
                     super.createTransaction(amount, fee, destination)
                 }
+
                 AmountType.Reserve -> throw UnsupportedOperation()
             }
         }
@@ -150,7 +146,7 @@ class SolanaWalletManager(
 
     override suspend fun send(
         transactionData: TransactionData,
-        signer: TransactionSigner
+        signer: TransactionSigner,
     ): SimpleResult {
         return when (transactionData.amount.type) {
             AmountType.Coin -> sendCoin(transactionData, signer)
@@ -159,15 +155,16 @@ class SolanaWalletManager(
                 transactionData,
                 signer
             )
+
             AmountType.Reserve -> SimpleResult.Failure(UnsupportedOperation())
         }
     }
 
     private suspend fun sendCoin(
         transactionData: TransactionData,
-        signer: TransactionSigner
+        signer: TransactionSigner,
     ): SimpleResult {
-        val recentBlockHash = multiNetworkProvider.performRequest { getRecentBlockhash()}.successOr {
+        val recentBlockHash = multiNetworkProvider.performRequest { getRecentBlockhash() }.successOr {
             return SimpleResult.Failure(it.error)
         }
         val from = PublicKey(transactionData.sourceAddress)
@@ -198,7 +195,7 @@ class SolanaWalletManager(
     private suspend fun sendSplToken(
         token: Token,
         transactionData: TransactionData,
-        signer: TransactionSigner
+        signer: TransactionSigner,
     ): SimpleResult {
         val sourcePubK = PublicKey(transactionData.sourceAddress)
         val destinationPubK = PublicKey(transactionData.destinationAddress)
@@ -268,7 +265,6 @@ class SolanaWalletManager(
         return SimpleResult.Success
     }
 
-
     /**
      * This is not a natural fee, as it may contain additional information about the amount that may be required
      * to open an account. Later, when creating a transaction, this amount will be deducted from fee and added
@@ -291,19 +287,26 @@ class SolanaWalletManager(
         return Result.Success(TransactionFee.Single(feeAmount))
     }
 
+    override suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee> {
+        val feeRawValue = getNetworkFee().successOr { return it }
+        val feeAmount = Fee.Common(Amount(valueConverter.toSol(feeRawValue), wallet.blockchain))
+        return Result.Success(TransactionFee.Single(feeAmount))
+    }
+
     private suspend fun getNetworkFee(): Result<BigDecimal> {
-        return when (val result = multiNetworkProvider.performRequest {getFees()}) {
+        return when (val result = multiNetworkProvider.performRequest { getFees() }) {
             is Result.Success -> {
                 val feePerSignature = result.data.value.feeCalculator.lamportsPerSignature
                 Result.Success(feePerSignature.toBigDecimal())
             }
+
             is Result.Failure -> result
         }
     }
 
     private suspend fun getAccountCreationRent(
         amount: Amount,
-        destination: String
+        destination: String,
     ): Result<BigDecimal> {
         val amountValue = amount.value.guard {
             return Result.Failure(NPError("amountValue"))
@@ -328,11 +331,14 @@ class SolanaWalletManager(
                     multiNetworkProvider.currentProvider.mainAccountCreationFee()
                 }
             }
+
             is AmountType.Token -> {
-                val isExist = multiNetworkProvider.performRequest { isSplTokenAccountExist(
-                    account = destinationPubKey,
-                    mint = PublicKey(amount.type.token.contractAddress)
-                )}.successOr { return it }
+                val isExist = multiNetworkProvider.performRequest {
+                    isSplTokenAccountExist(
+                        account = destinationPubKey,
+                        mint = PublicKey(amount.type.token.contractAddress)
+                    )
+                }.successOr { return it }
 
                 if (isExist) {
                     BigDecimal.ZERO
@@ -342,6 +348,7 @@ class SolanaWalletManager(
                     }.successOr { return it }
                 }
             }
+
             AmountType.Reserve -> return Result.Failure(UnsupportedOperation())
         }
 
