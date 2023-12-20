@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.tangem.TangemSdk
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.address.EstimationFeeAddressFactory
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain_demo.cardSdk.ScanCardAndDerive
@@ -62,6 +63,15 @@ class BlockchainDemoActivity : AppCompatActivity() {
         initViews()
         setupViews()
         setupVisibility()
+
+        val factory = EstimationFeeAddressFactory()
+
+        val s = buildString {
+            Blockchain.values().forEach {
+                append("${it.name} ${factory.makeAddress(it, this@BlockchainDemoActivity)}\n")
+            }
+        }
+            Log.e("tag", s)
     }
 
     private fun getTestedBlockchains(): List<Blockchain> {
