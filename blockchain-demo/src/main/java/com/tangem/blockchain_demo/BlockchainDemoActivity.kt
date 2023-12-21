@@ -312,10 +312,10 @@ class BlockchainDemoActivity : AppCompatActivity() {
                 } else {
                     time.toString()
                 }
-                Log.e("generation time", "$it $printedTime" )
+                Log.d("generation time", "$it $printedTime" )
             }
         }
-        Log.e("addresses", joinedAddressesString)
+        Log.d("addresses", joinedAddressesString)
     }
 
 //    private fun send() {
