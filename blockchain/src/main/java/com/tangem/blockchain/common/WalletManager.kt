@@ -18,7 +18,11 @@ abstract class WalletManager(
     var wallet: Wallet,
     val cardTokens: MutableSet<Token> = mutableSetOf(),
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
-) : TransactionHistoryProvider by transactionHistoryProvider {
+) : TransactionHistoryProvider by transactionHistoryProvider, TransactionSender {
+
+    override suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee> {
+        return getFee(amount, destination)
+    }
 
     open val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Unspecified
 
@@ -181,8 +185,9 @@ interface TransactionSender {
      *
      * [Think about migration to interface]
      */
-    suspend fun estimateFee(amount: Amount): Result<TransactionFee>
+    suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee>
 }
+
 
 interface TransactionSigner {
     suspend fun sign(

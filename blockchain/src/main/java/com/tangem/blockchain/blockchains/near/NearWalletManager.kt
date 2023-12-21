@@ -21,12 +21,6 @@ class NearWalletManager(
     private val txBuilder: NearTransactionBuilder,
 ) : WalletManager(wallet), TransactionSender {
 
-    private val addressToEstimateFee = "e6ca3ee691ed78d47cffd38ecc04f1e80ef07b7908be7fc5fa5f2e5f25a0a3d8"
-
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, addressToEstimateFee)
-    }
-
     override val currentHost: String
         get() = networkService.host
 
