@@ -26,7 +26,7 @@ import java.math.BigInteger
 
 open class BitcoinTransactionBuilder(
     private val walletPublicKey: ByteArray, blockchain: Blockchain,
-    walletAddresses: Set<com.tangem.blockchain.common.address.Address> = emptySet()
+    walletAddresses: Set<com.tangem.blockchain.common.address.Address> = emptySet(),
 ) {
     private val walletScripts =
         walletAddresses.filterIsInstance<BitcoinScriptAddress>().map { it.script }
@@ -51,9 +51,10 @@ open class BitcoinTransactionBuilder(
             return Result.Failure(BlockchainSdkError.CustomError("Unspent outputs are missing"))
         }
 
-        val change: BigDecimal = calculateChange(transactionData, unspentOutputs!!)
+        val outputsToSend = getOutputsToSend(unspentOutputs!!, transactionData)
+        val change: BigDecimal = calculateChange(transactionData, outputsToSend)
         transaction =
-            transactionData.toBitcoinJTransaction(networkParameters, unspentOutputs!!, change)
+            transactionData.toBitcoinJTransaction(networkParameters, outputsToSend, change)
 
         val hashesToSign = MutableList(transaction.inputs.size) { byteArrayOf() }
         for (input in transaction.inputs) {
@@ -81,7 +82,7 @@ open class BitcoinTransactionBuilder(
                     transaction.hashForWitnessSignature(
                         index,
                         scriptToSign,
-                        Coin.parseCoin(unspentOutputs!![index].amount.toPlainString()),
+                        Coin.parseCoin(outputsToSend[index].amount.toPlainString()),
                         Transaction.SigHash.ALL,
                         false
                     ).bytes
@@ -156,7 +157,7 @@ open class BitcoinTransactionBuilder(
 
     fun calculateChange(
         transactionData: TransactionData,
-        unspentOutputs: List<BitcoinUnspentOutput>
+        unspentOutputs: List<BitcoinUnspentOutput>,
     ): BigDecimal {
         val fullAmount = unspentOutputs.map { it.amount }.reduce { acc, number -> acc + number }
         return fullAmount - (transactionData.amount.value!! + (transactionData.fee?.amount?.value
@@ -168,6 +169,23 @@ open class BitcoinTransactionBuilder(
         val s = BigInteger(1, signatures.copyOfRange(32 + index * 64, 64 + index * 64))
         val canonicalS = ECKey.ECDSASignature(r, s).toCanonicalised().s
         return TransactionSignature(r, canonicalS)
+    }
+
+    private fun getOutputsToSend(
+        unspentOutputs: List<BitcoinUnspentOutput>,
+        transactionData: TransactionData,
+    ): List<BitcoinUnspentOutput> {
+        val outputs = mutableListOf<BitcoinUnspentOutput>()
+        val amount = transactionData.amount.value!! + transactionData.fee?.amount?.value!!
+        var sum = BigDecimal.ZERO
+        var i = 0
+        while (sum <= amount && i < unspentOutputs.size) {
+            val output = unspentOutputs[i]
+            sum = sum.plus(output.amount)
+            outputs.add(output)
+            i++
+        }
+        return outputs
     }
 
     private fun findSpendingScript(scriptPubKey: Script): Script {
@@ -187,7 +205,7 @@ open class BitcoinTransactionBuilder(
 internal fun TransactionData.toBitcoinJTransaction(
     networkParameters: NetworkParameters?,
     unspentOutputs: List<BitcoinUnspentOutput>,
-    change: BigDecimal
+    change: BigDecimal,
 ): Transaction {
     val transaction = Transaction(networkParameters)
     for (utxo in unspentOutputs) {
