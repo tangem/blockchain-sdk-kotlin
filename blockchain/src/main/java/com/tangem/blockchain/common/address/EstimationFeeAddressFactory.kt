@@ -1,15 +1,23 @@
 package com.tangem.blockchain.common.address
 
-import android.content.Context
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.bip39.*
 import com.tangem.crypto.hdWallet.masterkey.AnyMasterKeyFactory
-import com.tangem.sdk.extensions.getWordlist
+import java.util.concurrent.ConcurrentHashMap
 
-class EstimationFeeAddressFactory {
+class EstimationFeeAddressFactory(
+    mnemonic: Mnemonic,
+) {
 
-    fun makeAddress(blockchain: Blockchain, context: Context): String {
+    private val anyKeyMasterFactory = AnyMasterKeyFactory(
+        mnemonic = mnemonic,
+        passphrase = ""
+    )
+
+    val addressesCache: ConcurrentHashMap<Blockchain, String> = ConcurrentHashMap()
+
+    fun makeAddress(blockchain: Blockchain): String {
         return when (blockchain) {
             Blockchain.Cardano -> {
                 "addr1q9svm389hgtksjvawpt9nfd9twk4kfckhs23wxrdfspynw9g3emv6k6njzwqvdmtff4426vy2pfg0ngu9t6pr9xmd0ass48agt"
@@ -111,28 +119,34 @@ class EstimationFeeAddressFactory {
             Blockchain.Near,
             Blockchain.NearTestnet,
             -> {
-                generateAddress(blockchain, context)
+                generateAddress(blockchain)
             }
 
         }
     }
 
-    private fun generateAddress(blockchain: Blockchain, context: Context): String {
+    private fun generateAddress(blockchain: Blockchain): String {
         val primaryCurve = primaryCurve(blockchain) ?: return ""
-        val mnemonic = DefaultMnemonic(
-            EntropyLength.Bits128Length,
-            Wordlist.getWordlist(context)
-        )
 
-        val factory = AnyMasterKeyFactory(mnemonic, "")
-        val masterKey = factory.makeMasterKey(primaryCurve)
-        val extendedPublicKey = masterKey.makePublicKey(primaryCurve)
-        val publicKey = extendedPublicKey.publicKey
-        val addresses = blockchain.makeAddresses(
-            walletPublicKey = publicKey,
-            curve = primaryCurve,
-        )
-        return addresses.find { it.type == AddressType.Default }?.value ?: addresses.first().value
+        val cachedValue = addressesCache[blockchain]
+
+        if (cachedValue == null) {
+            val masterKey = anyKeyMasterFactory.makeMasterKey(primaryCurve)
+            val extendedPublicKey = masterKey.makePublicKey(primaryCurve)
+            val publicKey = extendedPublicKey.publicKey
+            val addresses = blockchain.makeAddresses(
+                walletPublicKey = publicKey,
+                curve = primaryCurve,
+            )
+            val address = addresses.find { it.type == AddressType.Default }?.value ?: addresses.first().value
+
+            addressesCache[blockchain] = address
+
+            return address
+        } else {
+            return cachedValue
+        }
+
     }
 
     private fun primaryCurve(blockchain: Blockchain): EllipticCurve? {
