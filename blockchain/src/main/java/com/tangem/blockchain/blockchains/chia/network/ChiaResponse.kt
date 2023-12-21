@@ -12,7 +12,10 @@ data class ChiaCoinRecordsResponse(
 @JsonClass(generateAdapter = true)
 data class ChiaEstimateFeeResponse(
     @Json(name = "estimates")
-    val estimates: List<Long>
+    val estimates: List<Long>,
+
+    @Json(name = "fee_rate_last_block")
+    val feeRateLastBlock: Double
 )
 
 @JsonClass(generateAdapter = true)
