@@ -26,6 +26,8 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import java.math.BigDecimal
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 private val parentJob = Job()
 private val coroutineContext: CoroutineContext
@@ -64,14 +66,8 @@ class BlockchainDemoActivity : AppCompatActivity() {
         setupViews()
         setupVisibility()
 
-        val factory = EstimationFeeAddressFactory()
 
-        val s = buildString {
-            Blockchain.values().forEach {
-                append("${it.name} ${factory.makeAddress(it, this@BlockchainDemoActivity)}\n")
-            }
-        }
-            Log.e("tag", s)
+        runAddressesGeneration()
     }
 
     private fun getTestedBlockchains(): List<Blockchain> {
@@ -295,6 +291,31 @@ class BlockchainDemoActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun runAddressesGeneration() {
+        val factory = EstimationFeeAddressFactory(this)
+        generateAllAddresses(factory)
+        generateAllAddresses(factory)
+        generateAllAddresses(factory)
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun generateAllAddresses(factory: EstimationFeeAddressFactory) {
+        val joinedAddressesString = buildString {
+            Blockchain.values().forEach {
+                val time = measureTime {
+                    append("${it.name} ${factory.makeAddress(it)}\n")
+                }
+                val printedTime = if (time.inWholeMilliseconds < 1) {
+                    "<1 ms"
+                } else {
+                    time.toString()
+                }
+                Log.e("generation time", "$it $printedTime" )
+            }
+        }
+        Log.e("addresses", joinedAddressesString)
     }
 
 //    private fun send() {
