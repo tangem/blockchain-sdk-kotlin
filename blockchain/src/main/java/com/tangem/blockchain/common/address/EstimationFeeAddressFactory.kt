@@ -15,7 +15,7 @@ class EstimationFeeAddressFactory(
         passphrase = ""
     )
 
-    val addressesCache: ConcurrentHashMap<Blockchain, String> = ConcurrentHashMap()
+    private val addressesCache: ConcurrentHashMap<Blockchain, String> = ConcurrentHashMap()
 
     fun makeAddress(blockchain: Blockchain): String {
         return when (blockchain) {
