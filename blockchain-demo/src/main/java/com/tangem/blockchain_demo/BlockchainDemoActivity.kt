@@ -20,6 +20,10 @@ import com.tangem.common.card.CardWallet
 import com.tangem.common.core.TangemError
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.toHexString
+import com.tangem.crypto.bip39.DefaultMnemonic
+import com.tangem.crypto.bip39.EntropyLength
+import com.tangem.crypto.bip39.Wordlist
+import com.tangem.sdk.extensions.getWordlist
 import com.tangem.sdk.extensions.init
 import kotlinx.coroutines.*
 import java.io.PrintWriter
@@ -294,7 +298,12 @@ class BlockchainDemoActivity : AppCompatActivity() {
     }
 
     private fun runAddressesGeneration() {
-        val factory = EstimationFeeAddressFactory(this)
+        val factory = EstimationFeeAddressFactory(mnemonic =
+            DefaultMnemonic(
+                entropy = EntropyLength.Bits128Length,
+                wordlist = Wordlist.getWordlist(this)
+            )
+        )
         generateAllAddresses(factory)
         generateAllAddresses(factory)
         generateAllAddresses(factory)
