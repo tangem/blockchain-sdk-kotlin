@@ -26,12 +26,6 @@ class ChiaWalletManager(
     private val networkProvider: ChiaNetworkProvider,
 ) : WalletManager(wallet), TransactionSender {
 
-    private val addressToEstimateFee = "xch1zedrwdnv9jdt0an007pgk8wxjhvkveqnrxc003mceu2prt0hxknqtmggeu"
-
-    override suspend fun estimateFee(amount: Amount): Result<TransactionFee> {
-        return getFee(amount, addressToEstimateFee)
-    }
-
     override val currentHost: String
         get() = networkProvider.baseUrl
 
