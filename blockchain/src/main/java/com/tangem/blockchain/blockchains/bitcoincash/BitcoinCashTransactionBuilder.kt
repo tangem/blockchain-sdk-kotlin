@@ -43,6 +43,7 @@ class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, private val bloc
         return Result.Success(hashesForSign)
     }
 
+    @Suppress("MagicNumber")
     override fun extractSignature(index: Int, signatures: ByteArray): TransactionSignature {
         val r = BigInteger(1, signatures.copyOfRange(index * 64, 32 + index * 64))
         val s = BigInteger(1, signatures.copyOfRange(32 + index * 64, 64 + index * 64))

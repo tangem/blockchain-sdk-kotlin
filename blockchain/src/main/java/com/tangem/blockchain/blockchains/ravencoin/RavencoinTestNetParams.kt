@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.ravencoin
 import org.bitcoinj.core.Utils
 import org.bitcoinj.params.AbstractBitcoinNetParams
 
+@Suppress("MagicNumber")
 class RavencoinTestNetParams : AbstractBitcoinNetParams() {
     init {
         interval = INTERVAL
