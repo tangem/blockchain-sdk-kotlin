@@ -14,13 +14,13 @@ class XrpAddressTest {
         val expected = "rNxCXgKaCMAmowENKnYa5r8Ue78rjgrM6B"
 
         Truth.assertThat(addressService.makeAddress(walletPublicKey))
-                .isEqualTo(expected)
+            .isEqualTo(expected)
     }
 
     @Test
     fun makeAddressFromCorrectEdPublicKey() {
         val walletPublicKey = "12CC4DE73BACF875D7423D152E46C1A665F1718CBE7CA0FEB2BA28C149E11909"
-                .hexToBytes()
+            .hexToBytes()
         val expected = "rwWMNBs2GtJwfX7YNVV1sUYaPy6DRmDHB4"
 
         Truth.assertThat(addressService.makeAddress(walletPublicKey)).isEqualTo(expected)

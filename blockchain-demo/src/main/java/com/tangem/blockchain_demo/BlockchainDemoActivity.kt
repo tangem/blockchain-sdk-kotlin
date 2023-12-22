@@ -131,7 +131,6 @@ class BlockchainDemoActivity : AppCompatActivity() {
                         resetRecipientAddressFeeValues()
                         initWalletsBlockchainContainer()
                     }
-
                 }
                 is CompletionResult.Failure -> {
                     when (result.error) {
@@ -144,16 +143,15 @@ class BlockchainDemoActivity : AppCompatActivity() {
     }
 
     private fun initWalletsBlockchainContainer() = with(binding) {
-
         fun initSpBlockchain(wallet: CardWallet) = with(containerSelectWalletWithBlockchain) {
             val supportedBlockchains = getTestedBlockchains()
-                    .filter { it.getSupportedCurves()[0] == wallet.curve }
-                    .filter { it.isTestnet() == scanResponse.card.isTestCard }
+                .filter { it.getSupportedCurves()[0] == wallet.curve }
+                .filter { it.isTestnet() == scanResponse.card.isTestCard }
 
             val blockchainsAdapter = ArrayAdapter(
                 this@BlockchainDemoActivity,
                 R.layout.simple_spinner_item,
-                supportedBlockchains.map { it }
+                supportedBlockchains.map { it },
             )
             blockchainsAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item)
             spSelectBlockchain.adapter = blockchainsAdapter
@@ -169,48 +167,48 @@ class BlockchainDemoActivity : AppCompatActivity() {
                 resetRecipientAddressFeeValues()
                 loadWallet(
                     onSuccess = {
-                        containerRecipientAddressFee.root.show() { content.beginDelayedTransition() }
+                        containerRecipientAddressFee.root.show { content.beginDelayedTransition() }
                         onWalletLoaded(walletManager)
                     },
-                    onFailure = ::handleError
+                    onFailure = ::handleError,
                 )
             }
         }
-            content.beginDelayedTransition()
-            containerScanCard.root.hide()
-            containerSelectWalletWithBlockchain.root.show()
+        content.beginDelayedTransition()
+        containerScanCard.root.hide()
+        containerSelectWalletWithBlockchain.root.show()
 
-            val wallets = scanResponse.card.wallets
-            with(containerSelectWalletWithBlockchain) {
-                val walletsAdapter = ArrayAdapter(
-                    this@BlockchainDemoActivity,
-                    R.layout.simple_spinner_item,
-                    wallets.map { it.publicKey.toHexString() }
-                )
-                walletsAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item)
-                spSelectWallet.adapter = walletsAdapter
-                spSelectWallet.onItemSelected<String> { hexPublicKey, _ ->
-                    selectedWallet = wallets.firstOrNull { it.publicKey.toHexString() == hexPublicKey }
-                            ?: throw UnsupportedOperationException()
+        val wallets = scanResponse.card.wallets
+        with(containerSelectWalletWithBlockchain) {
+            val walletsAdapter = ArrayAdapter(
+                this@BlockchainDemoActivity,
+                R.layout.simple_spinner_item,
+                wallets.map { it.publicKey.toHexString() },
+            )
+            walletsAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item)
+            spSelectWallet.adapter = walletsAdapter
+            spSelectWallet.onItemSelected<String> { hexPublicKey, _ ->
+                selectedWallet = wallets.firstOrNull { it.publicKey.toHexString() == hexPublicKey }
+                    ?: throw UnsupportedOperationException()
 
-                    initSpBlockchain(selectedWallet)
-                }
-
-                selectedWallet = wallets[0]
                 initSpBlockchain(selectedWallet)
-                initBtnLoadWallet()
             }
+
+            selectedWallet = wallets[0]
+            initSpBlockchain(selectedWallet)
+            initBtnLoadWallet()
+        }
     }
 
     private fun loadWallet(onSuccess: () -> Unit, onFailure: (BlockchainSdkError) -> Unit) = with(binding) {
         containerSelectWalletWithBlockchain.tvBlockchainAddresses.text = ""
         try {
             walletManager = WalletManagerFactory(BlockchainSdkConfig()).makeWalletManagerForApp(
-                    scanResponse = scanResponse,
-                    blockchain = Blockchain.fromId(selectedBlockchain.id),
-                    derivationParams = scanResponse.card.derivationParams(null)
+                scanResponse = scanResponse,
+                blockchain = Blockchain.fromId(selectedBlockchain.id),
+                derivationParams = scanResponse.card.derivationParams(null),
             )!!
-        }catch (ex: Exception) {
+        } catch (ex: Exception) {
             showToast("WalletManager exception: ${ex.localizedMessage ?: "unknown"}")
             return@with
         }
@@ -240,7 +238,6 @@ class BlockchainDemoActivity : AppCompatActivity() {
         containerRecipientAddressFee.btnLoadFee.isEnabled = true
     }
 
-
     private fun loadFee() = with(binding) {
         if (containerRecipientAddressFee.tilEtRecipientAddress.text.isNullOrBlank()) {
             Toast.makeText(this@BlockchainDemoActivity, "Please enter receiver address", Toast.LENGTH_LONG).show()
@@ -260,16 +257,17 @@ class BlockchainDemoActivity : AppCompatActivity() {
         scope.launch {
             val feeResult = (walletManager as TransactionSender).getFee(
                 amount = amountToSend,
-                destination = containerRecipientAddressFee.tilEtRecipientAddress.text.toString()
+                destination = containerRecipientAddressFee.tilEtRecipientAddress.text.toString(),
             )
             withContext(Dispatchers.Main) {
                 when (feeResult) {
                     is Result.Success -> {
-                        when(val fees = feeResult.data) {
+                        when (val fees = feeResult.data) {
                             is TransactionFee.Single -> {
                                 containerRecipientAddressFee.tvFeeAverage.text = fees.normal.amount.value.toString()
                                 selectedFee = fees.normal.amount.value ?: BigDecimal(0)
                             }
+
                             is TransactionFee.Choosable -> {
                                 containerRecipientAddressFee.tvFeeMin.text =
                                     fees.minimum.amount.value?.stripZeroPlainString()

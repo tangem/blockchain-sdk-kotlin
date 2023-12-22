@@ -11,7 +11,6 @@ internal class SolanaExternalLinkProvider(private val isTestnet: Boolean) : Exte
 
     override val testNetTopUpUrl: String? = if (isTestnet) "https://solfaucet.com/" else null
 
-
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
         return buildString {
             append(baseUrl)

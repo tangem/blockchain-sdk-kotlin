@@ -25,7 +25,7 @@ sealed interface CosmosChain {
     // Default multiplier value is 1
     val feeMultiplier: BigDecimal
     val tokenDenominationByContractAddress: Map<String, String> get() = emptyMap()
-    val taxPercentByContractAddress : Map<String, BigDecimal> get() = emptyMap()
+    val taxPercentByContractAddress: Map<String, BigDecimal> get() = emptyMap()
     val coin: CoinType
     val allowsFeeSelection: FeeSelectionState get() = FeeSelectionState.Unspecified
 

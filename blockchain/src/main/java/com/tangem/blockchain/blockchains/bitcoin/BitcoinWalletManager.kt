@@ -4,18 +4,7 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.BasicTransactionData
-import com.tangem.blockchain.common.BlockchainError
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.SignatureCountValidator
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionSender
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.WalletManager
-import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
@@ -130,7 +119,7 @@ open class BitcoinWalletManager(
                 return when (signerResult) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(
-                            signerResult.data.reduce { acc, bytes -> acc + bytes }
+                            signerResult.data.reduce { acc, bytes -> acc + bytes },
                         )
                         val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())
 
@@ -153,15 +142,15 @@ open class BitcoinWalletManager(
                 is Result.Success -> {
                     val feeValue = BigDecimal.ONE.movePointLeft(blockchain.decimals())
 
-                    val newAmount =  amount.copy(value = amount.value!! - feeValue)
+                    val newAmount = amount.copy(value = amount.value!! - feeValue)
 
                     val sizeResult = transactionBuilder.getEstimateSize(
                         TransactionData(
                             amount = newAmount,
                             fee = Fee.Common(Amount(newAmount, feeValue)),
                             sourceAddress = wallet.address,
-                            destinationAddress = destination
-                        )
+                            destinationAddress = destination,
+                        ),
                     )
 
                     return when (sizeResult) {
@@ -174,7 +163,7 @@ open class BitcoinWalletManager(
                             val fees = TransactionFee.Choosable(
                                 minimum = Fee.Common(Amount(minFee, blockchain)),
                                 normal = Fee.Common(Amount(normalFee, blockchain)),
-                                priority = Fee.Common(Amount(priorityFee, blockchain))
+                                priority = Fee.Common(Amount(priorityFee, blockchain)),
                             )
                             Result.Success(fees)
                         }
