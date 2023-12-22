@@ -103,10 +103,10 @@ open class EthereumNetworkService(
 
     suspend fun sendRawTransaction(transaction: String): Result<String> {
         return try {
-            val tx_id = multiJsonRpcProvider
+            val txId = multiJsonRpcProvider
                 .performRequest(EthereumJsonRpcProvider::sendTransaction, transaction)
                 .extractResult()
-            Result.Success(tx_id)
+            Result.Success(txId)
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }

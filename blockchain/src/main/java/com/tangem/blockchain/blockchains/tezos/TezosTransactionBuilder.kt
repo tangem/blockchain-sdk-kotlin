@@ -39,9 +39,9 @@ class TezosTransactionBuilder(
                 source = transactionData.sourceAddress,
                 fee = TezosConstants.REVEAL_FEE.toMutezValueString(),
                 counter = counter.toString(),
-                gas_limit = "10000",
-                storage_limit = "0",
-                public_key = walletPublicKey.encodePublicKey(),
+                gasLimit = "10000",
+                storageLimit = "0",
+                publicKey = walletPublicKey.encodePublicKey(),
             )
             contents.add(revealOp)
         }
@@ -52,8 +52,8 @@ class TezosTransactionBuilder(
             source = transactionData.sourceAddress,
             fee = TezosConstants.TRANSACTION_FEE.toMutezValueString(),
             counter = counter.toString(),
-            gas_limit = "10600",
-            storage_limit = "300", // set it to 0?
+            gasLimit = "10600",
+            storageLimit = "300", // set it to 0?
             destination = transactionData.destinationAddress,
             amount = transactionData.amount.bigIntegerValue().toString(),
         )
@@ -80,11 +80,11 @@ class TezosTransactionBuilder(
             stringBuilder.append(operation.source.txEncodePublicKeyHash())
             stringBuilder.append(operation.fee.txEncodeInteger())
             stringBuilder.append(operation.counter.txEncodeInteger())
-            stringBuilder.append(operation.gas_limit.txEncodeInteger())
-            stringBuilder.append(operation.storage_limit.txEncodeInteger())
+            stringBuilder.append(operation.gasLimit.txEncodeInteger())
+            stringBuilder.append(operation.storageLimit.txEncodeInteger())
 
             // reveal operation only
-            operation.public_key?.let { stringBuilder.append(it.txEncodePublicKey()) }
+            operation.publicKey?.let { stringBuilder.append(it.txEncodePublicKey()) }
 
             // transaction operation only
             operation.amount?.let { stringBuilder.append(it.txEncodeInteger()) }
