@@ -12,5 +12,5 @@ data class BitcoinfeesEarnResponse(
     val normalFeePerByte: Int? = null,
 
     @Json(name = "fastestFee")
-    val priorityFeePerByte: Int? = null
+    val priorityFeePerByte: Int? = null,
 )

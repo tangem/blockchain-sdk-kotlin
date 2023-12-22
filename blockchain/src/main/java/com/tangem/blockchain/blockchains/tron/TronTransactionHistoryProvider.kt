@@ -45,7 +45,9 @@ internal class TronTransactionHistoryProvider(
         }
     }
 
-    override suspend fun getTransactionsHistory(request: TransactionHistoryRequest): Result<PaginationWrapper<TransactionHistoryItem>> {
+    override suspend fun getTransactionsHistory(
+        request: TransactionHistoryRequest,
+    ): Result<PaginationWrapper<TransactionHistoryItem>> {
         return try {
             val response =
                 withContext(Dispatchers.IO) {
@@ -70,8 +72,8 @@ internal class TronTransactionHistoryProvider(
                     page = response.page ?: request.page.number,
                     totalPages = response.totalPages ?: 0,
                     itemsOnPage = response.itemsOnPage ?: 0,
-                    items = txs
-                )
+                    items = txs,
+                ),
             )
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
@@ -120,14 +122,14 @@ internal class TronTransactionHistoryProvider(
                         TransactionHistoryItem.AddressType.User(tx.toAddress)
                     } else {
                         TransactionHistoryItem.AddressType.Contract(tx.toAddress)
-                    }
+                    },
                 )
             }
 
             is TransactionHistoryRequest.FilterType.Contract -> {
                 val transfer = tx.getTokenTransfer(filterType.address) ?: return null
                 TransactionHistoryItem.DestinationType.Single(
-                    addressType = TransactionHistoryItem.AddressType.User(transfer.to)
+                    addressType = TransactionHistoryItem.AddressType.User(transfer.to),
                 )
             }
         }
@@ -163,7 +165,7 @@ internal class TronTransactionHistoryProvider(
             TransactionHistoryRequest.FilterType.Coin -> Amount(
                 value = BigDecimal(tx.value).movePointLeft(blockchain.decimals()),
                 blockchain = blockchain,
-                type = AmountType.Coin
+                type = AmountType.Coin,
             )
 
             is TransactionHistoryRequest.FilterType.Contract -> {
@@ -180,7 +182,9 @@ internal class TronTransactionHistoryProvider(
         }
     }
 
-    private fun GetAddressResponse.Transaction.getTokenTransfer(contractAddress: String): GetAddressResponse.Transaction.TokenTransfer? {
+    private fun GetAddressResponse.Transaction.getTokenTransfer(
+        contractAddress: String,
+    ): GetAddressResponse.Transaction.TokenTransfer? {
         return tokenTransfers.firstOrNull { contractAddress.equals(it.token, ignoreCase = true) }
     }
 }

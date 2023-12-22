@@ -16,8 +16,7 @@ class XrpNetworkService(providers: List<XrpNetworkProvider>) : XrpNetworkProvide
     override suspend fun sendTransaction(transaction: String): SimpleResult =
         multiProvider.performRequest(XrpNetworkProvider::sendTransaction, transaction)
 
-    override suspend fun getFee(): Result<XrpFeeResponse> =
-        multiProvider.performRequest(XrpNetworkProvider::getFee)
+    override suspend fun getFee(): Result<XrpFeeResponse> = multiProvider.performRequest(XrpNetworkProvider::getFee)
 
     override suspend fun checkIsAccountCreated(address: String): Boolean {
         return multiProvider.currentProvider.checkIsAccountCreated(address)

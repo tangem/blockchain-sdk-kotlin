@@ -5,7 +5,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import java.math.BigDecimal
 
-interface ChiaNetworkProvider: NetworkProvider {
+interface ChiaNetworkProvider : NetworkProvider {
 
     suspend fun getUnspents(puzzleHash: String): Result<List<ChiaCoin>>
 
@@ -16,5 +16,5 @@ interface ChiaNetworkProvider: NetworkProvider {
 
 data class EstimateFeeResult(
     val normalFee: BigDecimal,
-    val priorityFee: BigDecimal
+    val priorityFee: BigDecimal,
 )

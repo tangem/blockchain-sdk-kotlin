@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.cardano
 
-
 import com.google.common.truth.Truth
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.AddressType
@@ -14,7 +13,7 @@ class CardanoAddressTest {
     @Test
     fun makeAddressesFromCorrectPublicKey() {
         val walletPublicKey = "EC5387D8B38BD9EF80BDBC78D0D7E1C53F08E269436C99D5B3C2DF4B2CE73012"
-                .hexToBytes()
+            .hexToBytes()
         val expectedSize = 2
         val expectedByronAddress = "Ae2tdPwUPEZB972NhMM1dqixaUjnveaic6A23bprgrhvvgbkx2zaezrLY2Y"
         val expectedShelleyAddress = "addr1vyfgrxddyvyaqhr4jprr655s8ehzna9nehanx3fmu9280cgxxg2zc"
