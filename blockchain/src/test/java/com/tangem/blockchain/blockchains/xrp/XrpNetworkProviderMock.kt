@@ -7,7 +7,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 
 class XrpNetworkProviderMock(
-        private val isAccountCreatedResponse: Boolean = true
+    private val isAccountCreatedResponse: Boolean = true,
 ) : XrpNetworkProvider {
 
     override val baseUrl: String

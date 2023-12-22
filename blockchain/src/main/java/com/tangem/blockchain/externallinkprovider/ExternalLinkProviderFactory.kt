@@ -20,7 +20,10 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Dogecoin -> DogecoinExternalLinkProvider()
             Blockchain.Ducatus -> DucatusExternalLinkProvider()
             Blockchain.Ethereum, Blockchain.EthereumTestnet -> EthereumExternalLinkProvider(isTestnet)
-            Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet -> EthereumClassicExternalLinkProvider(isTestnet)
+            Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet -> EthereumClassicExternalLinkProvider(
+                isTestnet,
+            )
+
             Blockchain.Fantom, Blockchain.FantomTestnet -> FantomExternalLinkProvider(isTestnet)
             Blockchain.Litecoin -> LitecoinExternalLinkProvider()
             Blockchain.Near, Blockchain.NearTestnet -> NearExternalLinkProvider(isTestnet)

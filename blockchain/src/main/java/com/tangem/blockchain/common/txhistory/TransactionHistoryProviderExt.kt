@@ -7,9 +7,7 @@ import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.network.blockbook.config.BlockBookConfig
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 
-internal fun Blockchain.getTransactionHistoryProvider(
-    config: BlockchainSdkConfig,
-): TransactionHistoryProvider {
+internal fun Blockchain.getTransactionHistoryProvider(config: BlockchainSdkConfig): TransactionHistoryProvider {
     return if (config.nowNodeCredentials != null && config.nowNodeCredentials.apiKey.isNotBlank()) {
         when (this) {
             Blockchain.Bitcoin,
@@ -23,7 +21,7 @@ internal fun Blockchain.getTransactionHistoryProvider(
                     BlockBookApi(
                         config = BlockBookConfig.NowNodes(nowNodesCredentials = config.nowNodeCredentials),
                         blockchain = this,
-                    )
+                    ),
                 )
             }
 
@@ -42,7 +40,7 @@ internal fun Blockchain.getTransactionHistoryProvider(
                     BlockBookApi(
                         config = BlockBookConfig.NowNodes(nowNodesCredentials = config.nowNodeCredentials),
                         blockchain = this,
-                    )
+                    ),
                 )
             }
 
