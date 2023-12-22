@@ -14,6 +14,7 @@ import wallet.core.jni.proto.Cosmos
 import wallet.core.jni.proto.Cosmos.SigningOutput
 import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
 
+@Suppress("LongParameterList")
 internal class CosmosTransactionBuilder(
     private val publicKey: Wallet.PublicKey,
     private val cosmosChain: CosmosChain,
