@@ -12,7 +12,10 @@ class LitecoinAddressTest {
 
     @Test
     fun makeAddressFromCorrectPublicKey() {
-        val walletPublicKey = "044A76C9A70422160F515F956D0F50C71BBBA4F9862A22913817D63F0B1EF7C2FAF512E1C91B1BE827560EFE24FB1652B47337E296C778DFB1014D080CDD35EF65".hexToBytes()
+        val walletPublicKey = (
+            "044A76C9A70422160F515F956D0F50C71BBBA4F9862A22913817D63F0B1EF7C2FAF512E1C91B1BE827560EFE24FB1652B47337E" +
+                "296C778DFB1014D080CDD35EF65"
+            ).hexToBytes()
         val expected = "LeweDi2SMmishGyCqQN2972qNByaSRdcfT"
 
         Truth.assertThat(addressService.makeAddress(walletPublicKey)).isEqualTo(expected)
