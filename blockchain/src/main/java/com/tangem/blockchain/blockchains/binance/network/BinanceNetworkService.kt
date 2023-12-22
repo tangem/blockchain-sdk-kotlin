@@ -69,7 +69,7 @@ class BinanceNetworkService(isTestNet: Boolean = false) : BinanceNetworkProvider
                     break
                 }
             }
-            return Result.Success(fee ?: throw Exception("Invalid fee response"))
+            return Result.Success(fee ?: error("Invalid fee response"))
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }

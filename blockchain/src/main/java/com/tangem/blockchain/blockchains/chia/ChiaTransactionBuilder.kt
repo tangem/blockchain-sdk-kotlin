@@ -26,7 +26,7 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
     private val genesisChallenge = when (blockchain) {
         Blockchain.Chia -> "ccd5bb71183532bff220ba46c268991a3ff07eb358e8255a65c30a2dce0e5fbb".hexToBytes()
         Blockchain.ChiaTestnet -> "ae83525ba8d1dd3f09b277de18ca3e43fc0af20d20c4b3e92ef2a48bd291ccb2".hexToBytes()
-        else -> throw IllegalStateException("$blockchain isn't supported")
+        else -> error("$blockchain isn't supported")
     }
 
     var unspentCoins: List<ChiaCoin> = emptyList()
@@ -54,7 +54,7 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
 
         coinSpends = transactionData.toChiaCoinSpends(unspentsToSpend, change)
 
-        val hashesForSign = coinSpends.map { it ->
+        val hashesForSign = coinSpends.map {
             // our solutions are always Cons
             val conditions = Program.deserialize(it.solution.hexToBytes()) as Program.Cons
             val conditionsHash = conditions.left.hash()
@@ -73,7 +73,7 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
         val change = balance - amount.value!!.toMojo()
         val numberOfCoinsCreated = if (change > 0) 2 else 1
 
-        return (coinSpends.size * COIN_SPEND_COST) + (numberOfCoinsCreated * CREATE_COIN_COST)
+        return coinSpends.size * COIN_SPEND_COST + numberOfCoinsCreated * CREATE_COIN_COST
     }
 
     private fun getUnspentsToSpend() = unspentCoins
@@ -98,7 +98,7 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
             sum.compress()
         } catch (e: IllegalArgumentException) {
             // Blst performs a G2 group membership test on each signature. We end up here if it fails.
-            throw IllegalStateException("Signature aggregation failed")
+            error("Signature aggregation failed")
         }
     }
 
