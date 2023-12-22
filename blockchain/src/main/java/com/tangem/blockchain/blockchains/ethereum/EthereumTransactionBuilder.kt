@@ -1,3 +1,5 @@
+@file:Suppress("EnumEntryNameCase")
+
 package com.tangem.blockchain.blockchains.ethereum
 
 import com.tangem.blockchain.common.Amount
@@ -6,6 +8,7 @@ import com.tangem.blockchain.common.TransactionData
 import com.tangem.common.extensions.toDecompressedPublicKey
 import java.math.BigInteger
 
+@Suppress("LongParameterList")
 class EthereumTransactionBuilder(
     walletPublicKey: ByteArray,
     private val blockchain: Blockchain,
