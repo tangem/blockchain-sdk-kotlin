@@ -179,7 +179,7 @@ class OptimismWalletManager(
 
     private suspend fun getLayer1Fee(transactionHash: ByteArray): Result<Amount> {
         return try {
-            val transaction = optimism_gas_l1TransactionGenerator(Address(OPTIMISM_FEE_CONTRACT_ADDRESS))
+            val transaction = OptimismGasL1TransactionGenerator(Address(OPTIMISM_FEE_CONTRACT_ADDRESS))
                 .getL1Fee(transactionHash)
 
             val contractCallData = ContractCallData.from(transaction)
