@@ -20,6 +20,7 @@ class StellarTransactionBuilder(
     var minReserve = 1.toBigDecimal()
     private val blockchain = Blockchain.Stellar
 
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     suspend fun buildToSign(transactionData: TransactionData, sequence: Long): Result<ByteArray> {
         val amount = transactionData.amount
         val fee = requireNotNull(transactionData.fee?.amount?.longValue).toInt()
