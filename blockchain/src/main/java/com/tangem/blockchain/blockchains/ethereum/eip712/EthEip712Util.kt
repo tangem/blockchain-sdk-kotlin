@@ -31,23 +31,6 @@ import java.math.BigInteger
  * with necessary fixes to make it work with various types of eip-712 data from different dApps.
  */
 
-/**
- * Represents the version of `signTypedData` being used.
- *
- * V1 is based upon [an early version of EIP-712](https://github.com/ethereum/EIPs/pull/712/commits/21abe254fe0452d8583d5b132b1d7be87c0439ca)
- * that lacked some later security improvements, and should generally be neglected in favor of
- * later versions.
- *
- * V3 is based on EIP-712, except that arrays and recursive data structures are not supported.
- *
- * V4 is based on EIP-712, and includes full support of arrays and recursive data structures.
- */
-private enum class SignTypedDataVersion {
-    V1,
-    V3,
-    V4,
-}
-
 private typealias TypedDataV1 = String
 
 @Serializable
@@ -121,31 +104,13 @@ internal object EthEip712Util {
         return (prefix + message).keccak()
     }
 
-    /**
-     * Validate that the given value is a valid version string.
-     *
-     * @param version - The version value to validate.
-     * @param allowedVersions - A list of allowed versions. If omitted, all versions are assumed to be
-     * allowed.
-     */
-    private fun validateVersion(version: SignTypedDataVersion, allowedVersions: List<SignTypedDataVersion>?) {
-        if (!SignTypedDataVersion.values().contains(version)) {
-            throw Error("Invalid version: '$version'")
-        } else if (allowedVersions != null && !allowedVersions.contains(version)) {
-            throw Error(
-                "SignTypedDataVersion not allowed: '$version'. " +
-                    "Allowed versions are: ${allowedVersions.joinToString(", ")}",
-            )
-        }
-    }
-
     private fun soliditySHA3(types: List<String>, values: List<Any>): ByteArray {
-        return (solidityPack(types, values)).keccak()
+        return solidityPack(types, values).keccak()
     }
 
     private fun solidityPack(types: List<String>, values: List<Any>): ByteArray {
         if (types.size != values.size) {
-            throw Error("Number of types are not matching the values")
+            error("Number of types are not matching the values")
         }
 
         var ret = byteArrayOf()
@@ -159,64 +124,64 @@ internal object EthEip712Util {
         return ret
     }
 
-    private fun solidityHexValue(type: String, value: Any): ByteArray = when {
-        type.lastIndexOf("]") == type.length - 1 -> {
-            val subType = type.substringBefore("[")
-            var arrayValues = byteArrayOf()
-            (value as Iterable<*>).filterNotNull().map { arrayValues += solidityHexValue(subType, it) }
-            BytesETHType(arrayValues, BytesTypeParams(32)).paddedValue
+    private fun solidityHexValue(type: String, value: Any): ByteArray {
+        return when {
+            type.lastIndexOf("]") == type.length - 1 -> {
+                val subType = type.substringBefore("[")
+                var arrayValues = byteArrayOf()
+                (value as Iterable<*>).filterNotNull().map { arrayValues += solidityHexValue(subType, it) }
+                BytesETHType(arrayValues, BytesTypeParams(32)).paddedValue
+            }
+            type == "bytes" -> BytesETHType(value as ByteArray, BytesTypeParams(32)).paddedValue
+            type == "string" -> BytesETHType(value.toString().toByteArray(), BytesTypeParams(32)).paddedValue
+            type == "bool" -> readBool(rawBool = value).paddedValue
+            type == "address" -> {
+                readNumber(
+                    rawNumber = value,
+                    creator = {
+                        AddressETHType.ofNativeKotlinType(Address(it.toByteArray().toHexString()))
+                    },
+                ).toKotlinType().hex.let { HexString(it).hexToByteArray() }
+            }
+            type.startsWith("bytes") -> {
+                BytesETHType(value as ByteArray, BytesTypeParams(32)).toKotlinType()
+            }
+            type.startsWith("uint") -> {
+                readNumber(
+                    rawNumber = value,
+                    creator = {
+                        UIntETHType.ofNativeKotlinType(
+                            it,
+                            BitsTypeParams(
+                                type.extractPrefixedNumber(
+                                    "uint",
+                                    INT_BITS_CONSTRAINT,
+                                ),
+                            ),
+                        )
+                    },
+                ).paddedValue
+            }
+            type.startsWith("int") -> {
+                readNumber(
+                    rawNumber = value,
+                    creator = {
+                        IntETHType.ofNativeKotlinType(
+                            it,
+                            BitsTypeParams(
+                                type.extractPrefixedNumber(
+                                    "int",
+                                    INT_BITS_CONSTRAINT,
+                                ),
+                            ),
+                        )
+                    },
+                ).toKotlinType().toByteArray()
+            }
+            else -> {
+                error("Unsupported or invalid type: $type")
+            }
         }
-
-        type == "bytes" -> BytesETHType((value as ByteArray), BytesTypeParams(32)).paddedValue
-        type == "string" -> BytesETHType(
-            value.toString().toByteArray(),
-            BytesTypeParams(32),
-        ).paddedValue
-
-        type == "bool" -> readBool(rawBool = value).paddedValue
-        type == "address" -> readNumber(
-            rawNumber = value,
-            creator = {
-                AddressETHType.ofNativeKotlinType(Address(it.toByteArray().toHexString()))
-            },
-        ).toKotlinType().hex.let { HexString(it).hexToByteArray() }
-
-        type.startsWith("bytes") -> BytesETHType(
-            (value as ByteArray),
-            BytesTypeParams(32),
-        ).toKotlinType()
-
-        type.startsWith("uint") -> readNumber(
-            rawNumber = value,
-            creator = {
-                UIntETHType.ofNativeKotlinType(
-                    it,
-                    BitsTypeParams(
-                        type.extractPrefixedNumber(
-                            "uint",
-                            INT_BITS_CONSTRAINT,
-                        ),
-                    ),
-                )
-            },
-        ).paddedValue
-
-        type.startsWith("int") -> readNumber(
-            rawNumber = value,
-            creator = {
-                IntETHType.ofNativeKotlinType(
-                    it,
-                    BitsTypeParams(
-                        type.extractPrefixedNumber(
-                            "int",
-                            INT_BITS_CONSTRAINT,
-                        ),
-                    ),
-                )
-            },
-        ).toKotlinType().toByteArray()
-
-        else -> throw Error("Unsupported or invalid type: $type")
     }
 
     private fun elementaryName(name: String): String = when {
@@ -354,12 +319,10 @@ internal object EthEip712Util {
             type.startsWith(prefix = "bytes") -> BytesETHType.ofNativeKotlinType(
                 (value as String).hexToBytes(),
                 BytesTypeParams(
-                    (
-                        type.extractPrefixedNumber(
-                            "bytes",
-                            BYTES_COUNT_CONSTRAINT,
-                        )
-                        ),
+                    type.extractPrefixedNumber(
+                        prefix = "bytes",
+                        constraint = BYTES_COUNT_CONSTRAINT,
+                    ),
                 ),
             )
 
@@ -371,7 +334,7 @@ internal object EthEip712Util {
                 },
             )
 
-            else -> throw IllegalArgumentException("Unknown literal type $type")
+            else -> error("Unknown literal type $type")
         }
     }
 
@@ -420,7 +383,7 @@ internal object EthEip712Util {
             }
         }
 
-        else -> throw IllegalArgumentException("Value $rawNumber is neither a Number nor String")
+        else -> error("Value $rawNumber is neither a Number nor String")
     }
 
     private fun readBool(rawBool: Any): BoolETHType = if (rawBool is Boolean) {
@@ -431,14 +394,14 @@ internal object EthEip712Util {
         if (isTrue || isFalse) {
             BoolETHType.ofNativeKotlinType(rawBool.toString().equals("true", ignoreCase = true))
         } else {
-            throw java.lang.IllegalArgumentException("Value $rawBool is not a Boolean")
+            error("Value $rawBool is not a Boolean")
         }
     }
 
     private fun BigDecimal.exactNumber() = try {
         toBigIntegerExact()
     } catch (e: Exception) {
-        throw IllegalArgumentException("Value ${toString()} is a decimal (not supported)")
+        error("Value ${toString()} is a decimal (not supported)")
     }
 
     /**
@@ -518,8 +481,9 @@ internal object EthEip712Util {
             is Iterable<*> -> iterableToByteArray(value)
             is String -> {
                 if (!isHexString(value)) {
-                    throw Error(
-                        "Cannot convert string to buffer. toBuffer only supports hex strings and this string was given: $value",
+                    error(
+                        "Cannot convert string to buffer. toBuffer only supports hex strings and this string was " +
+                            "given: $value",
                     )
                 }
                 HexString(padToEven(stripHexPrefix(value))).hexToByteArray()
@@ -527,7 +491,7 @@ internal object EthEip712Util {
 
             is Int -> intToBuffer(value)
             is BigInteger -> value.toByteArray()
-            else -> throw Error("invalid type")
+            else -> error("invalid type")
         }
     }
 
@@ -552,8 +516,6 @@ internal object EthEip712Util {
         else -> string
     }
 
-    private fun isEven(n: Int): Boolean = n and 1 == 0
-
     /**
      * Removes '0x' from a given `String` if present
      * @param {String} str the string value
@@ -563,7 +525,7 @@ internal object EthEip712Util {
 
     private fun isHexPrefixed(str: Any): Boolean {
         if (str !is String) {
-            throw Error(
+            error(
                 "[is-hex-prefixed] value must be type 'string', is currently type $str, while checking isHexPrefixed.",
             )
         }

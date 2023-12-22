@@ -150,10 +150,10 @@ internal fun TransactionData.toKaspaTransaction(
             ScriptBuilder().data(destinationAddressDecoded.hash).op(OP_CODESEPARATOR).build()
         KaspaAddressType.P2SH -> {
             // known P2SH addresses won't throw
-            if (destinationAddressDecoded.hash.size != 32) throw Exception("Invalid hash length in P2SH address")
+            if (destinationAddressDecoded.hash.size != 32) error("Invalid hash length in P2SH address")
             ScriptBuilder().op(OP_HASH256).data(destinationAddressDecoded.hash).op(OP_EQUAL).build()
         }
-        null -> throw Exception("Null script type") // should never happen
+        null -> error("Null script type") // should never happen
     }
 
     transaction.addOutput(

@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
-import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.Companion.toKeccak
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.toKeccak
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
@@ -128,7 +128,8 @@ class EthereumJsonRpcProvider(
     }
 
     companion object {
-        private val tokenAllowanceSignature = "allowance(address,address)".toByteArray().toKeccak().copyOf(4).toHexString()
+        private val tokenAllowanceSignature =
+            "allowance(address,address)".toByteArray().toKeccak().copyOf(4).toHexString()
         private const val CALL_DATA_SEPARATOR = "000000000000000000000000"
     }
 }

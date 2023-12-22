@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.tron
 
 import com.google.common.primitives.Ints.max
 import com.squareup.wire.AnyMessage
-import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.Companion.toKeccak
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.toKeccak
 import com.tangem.blockchain.blockchains.tron.network.TronBlock
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
@@ -102,7 +102,7 @@ class TronTransactionBuilder(private val blockchain: Blockchain) {
                     parameter = AnyMessage.pack(parameter),
                 )
             }
-            AmountType.Reserve -> throw Exception("Not supported")
+            AmountType.Reserve -> error("Not supported")
         }
     }
 
