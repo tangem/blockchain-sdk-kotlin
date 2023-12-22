@@ -25,7 +25,8 @@ import java.math.BigDecimal
 import java.math.BigInteger
 
 open class BitcoinTransactionBuilder(
-    private val walletPublicKey: ByteArray, blockchain: Blockchain,
+    private val walletPublicKey: ByteArray,
+    blockchain: Blockchain,
     walletAddresses: Set<com.tangem.blockchain.common.address.Address> = emptySet(),
 ) {
     private val walletScripts =
@@ -65,7 +66,7 @@ open class BitcoinTransactionBuilder(
                 Script.ScriptType.P2PKH -> scriptPubKey
                 Script.ScriptType.P2SH, Script.ScriptType.P2WSH -> findSpendingScript(scriptPubKey)
                 Script.ScriptType.P2WPKH -> ScriptBuilder.createP2PKHOutputScript(
-                    ECKey.fromPublicOnly(walletPublicKey.toCompressedPublicKey())
+                    ECKey.fromPublicOnly(walletPublicKey.toCompressedPublicKey()),
                 )
                 else -> throw Exception("Unsupported output script")
             }
@@ -75,7 +76,7 @@ open class BitcoinTransactionBuilder(
                         index,
                         scriptToSign,
                         Transaction.SigHash.ALL,
-                        false
+                        false,
                     ).bytes
                 }
                 Script.ScriptType.P2WPKH, Script.ScriptType.P2WSH -> {
@@ -84,7 +85,7 @@ open class BitcoinTransactionBuilder(
                         scriptToSign,
                         Coin.parseCoin(outputsToSend[index].amount.toPlainString()),
                         Transaction.SigHash.ALL,
-                        false
+                        false,
                     ).bytes
                 }
                 else -> throw Exception("Unsupported output script")
@@ -103,7 +104,7 @@ open class BitcoinTransactionBuilder(
             transaction.inputs[index].scriptSig = when (scriptPubKey.scriptType) {
                 Script.ScriptType.P2PKH -> ScriptBuilder.createInputScript(
                     signature,
-                    ECKey.fromPublicOnly(walletPublicKey)
+                    ECKey.fromPublicOnly(walletPublicKey),
                 )
                 Script.ScriptType.P2SH -> { // only 1 of 2 multisig script for now
                     val script = findSpendingScript(scriptPubKey)
@@ -120,7 +121,7 @@ open class BitcoinTransactionBuilder(
             transaction.inputs[index].witness = when (scriptPubKey.scriptType) {
                 Script.ScriptType.P2WPKH -> TransactionWitness.redeemP2WPKH(
                     signature,
-                    ECKey.fromPublicOnly(walletPublicKey.toCompressedPublicKey())
+                    ECKey.fromPublicOnly(walletPublicKey.toCompressedPublicKey()),
                 )
                 Script.ScriptType.P2WSH -> { // only 1 of 2 multisig script for now
                     val witness = TransactionWitness(3)
@@ -155,13 +156,14 @@ open class BitcoinTransactionBuilder(
         }
     }
 
-    fun calculateChange(
-        transactionData: TransactionData,
-        unspentOutputs: List<BitcoinUnspentOutput>,
-    ): BigDecimal {
+    fun calculateChange(transactionData: TransactionData, unspentOutputs: List<BitcoinUnspentOutput>): BigDecimal {
         val fullAmount = unspentOutputs.map { it.amount }.reduce { acc, number -> acc + number }
-        return fullAmount - (transactionData.amount.value!! + (transactionData.fee?.amount?.value
-            ?: 0.toBigDecimal()))
+        return fullAmount - (
+            transactionData.amount.value!! + (
+                transactionData.fee?.amount?.value
+                    ?: 0.toBigDecimal()
+                )
+            )
     }
 
     open fun extractSignature(index: Int, signatures: ByteArray): TransactionSignature {
@@ -212,20 +214,20 @@ internal fun TransactionData.toBitcoinJTransaction(
         transaction.addInput(
             Sha256Hash.wrap(utxo.transactionHash),
             utxo.outputIndex,
-            Script(utxo.outputScript)
+            Script(utxo.outputScript),
         )
     }
     transaction.addOutput(
         Coin.parseCoin(this.amount.value!!.toPlainString()),
-        Address.fromString(networkParameters, this.destinationAddress)
+        Address.fromString(networkParameters, this.destinationAddress),
     )
     if (!change.isZero()) {
         transaction.addOutput(
             Coin.parseCoin(change.toPlainString()),
             Address.fromString(
                 networkParameters,
-                this.sourceAddress
-            )
+                this.sourceAddress,
+            ),
         )
     }
     return transaction

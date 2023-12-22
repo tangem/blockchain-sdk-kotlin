@@ -41,9 +41,8 @@ internal object TronWalletManagerAssembly : WalletManagerAssembly<TronWalletMana
                 networkService = TronNetworkService(
                     rpcNetworkProviders = rpcProviders,
                     blockchain = input.wallet.blockchain,
-                )
+                ),
             )
         }
     }
-
 }

@@ -53,7 +53,7 @@ class RavencoinNetworkProvider(
                     minimalPerKb = minimalRate,
                     normalPerKb = normalRate,
                     priorityPerKb = priorityRate,
-                )
+                ),
             )
         } catch (e: Exception) {
             return Result.Failure(e.toBlockchainSdkError())
@@ -133,7 +133,7 @@ class RavencoinNetworkProvider(
             date = Calendar.getInstance().apply { this.timeInMillis = timestamp },
             isConfirmed = transaction.confirmations != 0L,
             destination = if (isIncoming) walletAddress else otherAddress,
-            source = if (isIncoming) otherAddress else walletAddress
+            source = if (isIncoming) otherAddress else walletAddress,
         )
     }
 }

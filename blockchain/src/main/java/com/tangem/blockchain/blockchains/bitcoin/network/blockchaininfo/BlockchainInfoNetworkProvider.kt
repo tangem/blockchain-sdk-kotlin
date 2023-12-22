@@ -20,7 +20,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.util.Calendar
 
-class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
+class BlockchainInfoNetworkProvider : BitcoinNetworkProvider {
     override val baseUrl: String = API_BLOCKCHAIN_INFO
 
     private val api =
@@ -43,7 +43,8 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
                         amount = it.amount!!.toBigDecimal().movePointLeft(decimals),
                         outputIndex = it.outputIndex!!.toLong(),
                         transactionHash = it.hash!!.hexToBytes(),
-                        outputScript = it.outputScript!!.hexToBytes())
+                        outputScript = it.outputScript!!.hexToBytes(),
+                    )
                 }
 
                 Result.Success(
@@ -52,7 +53,8 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
                             ?: 0.toBigDecimal(),
                         unspentOutputs = unspentOutputs,
                         recentTransactions = addressData.transactions.toRecentTransactions(walletAddress = address),
-                    ))
+                    ),
+                )
             }
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
@@ -62,20 +64,26 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
     override suspend fun getFee(): Result<BitcoinFee> {
         return try {
             val feeData = retryIO { api.getFees() }
-            ifNotNullOr(feeData.regularFeePerByte, feeData.priorityFeePerByte,
+            ifNotNullOr(
+                feeData.regularFeePerByte,
+                feeData.priorityFeePerByte,
                 { regular, priority ->
                     val minimalFeePerKb = regular * 1024
                     val normalFeePerKb = (regular + priority) / 2 * 1024
                     val priorityFeePerKb = priority * 1024
 
-                    Result.Success(BitcoinFee(
-                        minimalFeePerKb.toBigDecimal().movePointLeft(decimals),
-                        normalFeePerKb.toBigDecimal().movePointLeft(decimals),
-                        priorityFeePerKb.toBigDecimal().movePointLeft(decimals)
-                    ))
-                }, {
+                    Result.Success(
+                        BitcoinFee(
+                            minimalFeePerKb.toBigDecimal().movePointLeft(decimals),
+                            normalFeePerKb.toBigDecimal().movePointLeft(decimals),
+                            priorityFeePerKb.toBigDecimal().movePointLeft(decimals),
+                        ),
+                    )
+                },
+                {
                     Result.Failure(BlockchainSdkError.FailedToLoadFee)
-                })
+                },
+            )
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
@@ -114,7 +122,9 @@ class BlockchainInfoNetworkProvider() : BitcoinNetworkProvider {
         }
     }
 
-    private fun List<BlockchainInfoTransaction>?.toRecentTransactions(walletAddress: String): List<BasicTransactionData> {
+    private fun List<BlockchainInfoTransaction>?.toRecentTransactions(
+        walletAddress: String,
+    ): List<BasicTransactionData> {
         return this?.map { it.toBasicTransactionData(walletAddress) } ?: emptyList()
     }
 

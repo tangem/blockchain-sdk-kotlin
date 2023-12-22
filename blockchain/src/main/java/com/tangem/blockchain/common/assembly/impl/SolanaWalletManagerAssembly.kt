@@ -15,5 +15,4 @@ internal object SolanaWalletManagerAssembly : WalletManagerAssembly<SolanaWallet
             return SolanaWalletManager(wallet = this, providers = clients)
         }
     }
-
 }
