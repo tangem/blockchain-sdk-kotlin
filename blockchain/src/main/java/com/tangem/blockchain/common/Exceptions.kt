@@ -5,6 +5,7 @@ package com.tangem.blockchain.common
 import com.tangem.common.core.TangemError
 import java.math.BigDecimal
 
+@Suppress("UnnecessaryAbstractClass")
 abstract class BlockchainError(code: Int) : TangemError(code)
 
 sealed class BlockchainSdkError(

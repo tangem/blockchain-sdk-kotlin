@@ -218,7 +218,7 @@ class StellarNetworkService(
                 decimals = decimals,
                 type = AmountType.Token(Token(asset.code, asset.issuer, decimals)),
             )
-            else -> throw Exception("Unknown asset type")
+            else -> error("Unknown asset type")
         }
         return TransactionData(
             amount = amount,
