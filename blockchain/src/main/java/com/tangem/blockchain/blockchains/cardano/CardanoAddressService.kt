@@ -43,6 +43,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
         )
     }
 
+    @Suppress("MagicNumber")
     private fun makeByronAddress(walletPublicKey: ByteArray): String {
         val extendedPublicKey = extendPublicKey(walletPublicKey)
 
@@ -56,6 +57,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
         return makeByronAddressWithChecksum(hashWithAttributes)
     }
 
+    @Suppress("MagicNumber")
     private fun makeShelleyAddress(walletPublicKey: ByteArray): String {
         val publicKeyHash = walletPublicKey.calculateBlake2b(28)
 
@@ -120,6 +122,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
         return hashWithAttributes.toByteArray()
     }
 
+    @Suppress("MagicNumber")
     private fun makeByronAddressWithChecksum(hashWithAttributes: ByteArray): String {
         val checksum = getCheckSum(hashWithAttributes)
 
@@ -150,6 +153,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
         const val BECH32_HRP = "addr"
         const val BECH32_SEPARATOR = "1"
 
+        @Suppress("MagicNumber")
         fun extendPublicKey(publicKey: ByteArray): ByteArray {
             val zeroBytes = ByteArray(32)
             return publicKey + zeroBytes

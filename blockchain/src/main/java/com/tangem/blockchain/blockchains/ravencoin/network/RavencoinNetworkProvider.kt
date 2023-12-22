@@ -17,6 +17,7 @@ import java.util.Calendar
 
 private const val FEE_NUMBER_OF_BLOCKS = 10
 
+@Suppress("MagicNumber")
 class RavencoinNetworkProvider(
     override val baseUrl: String,
 ) : BitcoinNetworkProvider {

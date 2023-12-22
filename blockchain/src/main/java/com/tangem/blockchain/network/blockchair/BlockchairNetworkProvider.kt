@@ -118,6 +118,7 @@ open class BlockchairNetworkProvider(
         }
     }
 
+    @Suppress("MagicNumber")
     override suspend fun getFee(): Result<BitcoinFee> {
         return try {
             val stats = makeRequestUsingKeyOnlyWhenNeeded { api.getBlockchainStats(apiKey, authorizationToken) }
