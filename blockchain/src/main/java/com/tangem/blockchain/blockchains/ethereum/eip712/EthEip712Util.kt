@@ -70,7 +70,7 @@ object AnySerializer : KSerializer<Any> {
     }
 }
 
-@Suppress("MagicNumber")
+@Suppress("MagicNumber", "LargeClass")
 internal object EthEip712Util {
     private const val EIP712_DOMAIN_TYPE = "EIP712Domain"
     private val json = Json { serializersModule = serializersModuleOf(AnySerializer) }
@@ -244,7 +244,7 @@ internal object EthEip712Util {
      */
     private fun sanitizeData(data: String): TypedMessage = json.decodeFromString(data)
 
-    @Suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST", "LongMethod")
     private fun encodeField(
         types: Map<String, List<MessageTypeProperty>>,
         type: String,

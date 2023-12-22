@@ -7,6 +7,7 @@ import com.tangem.blockchain.extensions.letNotBlank
 
 private const val AVALANCHE_POSTFIX = "ext/bc/C/rpc"
 
+@Suppress("CyclomaticComplexMethod", "LongMethod")
 internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig): List<EthereumJsonRpcProvider> {
     val providers = when (this) {
         Blockchain.Arbitrum -> listOfNotNull(

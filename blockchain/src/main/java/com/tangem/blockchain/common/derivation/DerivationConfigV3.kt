@@ -23,6 +23,7 @@ import com.tangem.crypto.hdWallet.DerivationPath
 
 object DerivationConfigV3 : DerivationConfig() {
 
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     override fun derivations(blockchain: Blockchain): Map<AddressType, DerivationPath> {
         return when (blockchain) {
             Blockchain.Bitcoin -> {
