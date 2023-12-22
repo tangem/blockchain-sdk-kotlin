@@ -1,6 +1,6 @@
 package com.tangem.blockchain.blockchains.tron
 
-import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.Companion.toKeccak
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.toKeccak
 import com.tangem.blockchain.blockchains.tron.libs.Base58Check
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.extensions.decodeBase58
