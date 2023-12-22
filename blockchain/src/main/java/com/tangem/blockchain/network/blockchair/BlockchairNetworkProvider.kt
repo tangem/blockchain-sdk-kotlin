@@ -45,9 +45,7 @@ open class BlockchairNetworkProvider(
         return api + getPath(blockchain)
     }
 
-    private suspend fun <T> makeRequestUsingKeyOnlyWhenNeeded(
-        block: suspend () -> T,
-    ): T {
+    private suspend fun <T> makeRequestUsingKeyOnlyWhenNeeded(block: suspend () -> T): T {
         return try {
             retryIO { block() }
         } catch (error: HttpException) {
@@ -68,7 +66,7 @@ open class BlockchairNetworkProvider(
                     transactionDetails = true,
                     limit = transactionHashesCountLimit,
                     key = apiKey,
-                    authorizationToken = authorizationToken
+                    authorizationToken = authorizationToken,
                 )
             }
 
@@ -87,7 +85,7 @@ open class BlockchairNetworkProvider(
                         amount = it.amount!!.toBigDecimal().movePointLeft(decimals),
                         outputIndex = it.index!!.toLong(),
                         transactionHash = it.transactionHash!!.hexToBytes(),
-                        outputScript = script
+                        outputScript = script,
                     )
                 }
 
@@ -96,7 +94,7 @@ open class BlockchairNetworkProvider(
                     balanceDif = it.balanceDif!!.toBigDecimal().movePointLeft(decimals),
                     hash = it.hash!!,
                     isConfirmed = it.block!! != -1,
-                    date = Calendar.getInstance().apply { time = dateFormat.parse(it.time!!)!! }
+                    date = Calendar.getInstance().apply { time = dateFormat.parse(it.time!!)!! },
                 )
             }
 
@@ -112,8 +110,8 @@ open class BlockchairNetworkProvider(
                 BitcoinAddressInfo(
                     balance = balance,
                     unspentOutputs = unspentOutputs,
-                    recentTransactions = transactions
-                )
+                    recentTransactions = transactions,
+                ),
             )
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
@@ -128,14 +126,14 @@ open class BlockchairNetworkProvider(
                 BitcoinFee(
                     minimalPerKb = (feePerKb * BigDecimal.valueOf(0.8)).setScale(
                         decimals,
-                        RoundingMode.DOWN
+                        RoundingMode.DOWN,
                     ),
                     normalPerKb = feePerKb.setScale(decimals, RoundingMode.DOWN),
                     priorityPerKb = (feePerKb * BigDecimal.valueOf(1.2)).setScale(
                         decimals,
-                        RoundingMode.DOWN
-                    )
-                )
+                        RoundingMode.DOWN,
+                    ),
+                ),
             )
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
@@ -159,7 +157,7 @@ open class BlockchairNetworkProvider(
                 api.getAddressData(
                     address = address,
                     key = apiKey,
-                    authorizationToken = authorizationToken
+                    authorizationToken = authorizationToken,
                 )
             }
             val addressInfo = blockchairAddress.data!!.getValue(address).addressInfo!!

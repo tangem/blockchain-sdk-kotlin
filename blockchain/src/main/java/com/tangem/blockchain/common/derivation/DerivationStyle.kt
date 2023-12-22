@@ -1,6 +1,5 @@
 package com.tangem.blockchain.common.derivation
 
-
 enum class DerivationStyle {
 
     @Deprecated("Will be removed after refactoring")
@@ -25,15 +24,15 @@ enum class DerivationStyle {
      * `EVM-like` blockchains have identical derivation with `ethereumCoinType == 60`
      *  `Bitcoin-like` blockchains have different derivation related to `BIP`. For example `Legacy` and `SegWit`
      */
-    V3;
+    V3,
 
-    fun getConfig() : DerivationConfig {
-        return when(this) {
+    ;
+
+    fun getConfig(): DerivationConfig {
+        return when (this) {
             LEGACY, V1 -> DerivationConfigV1
             NEW, V2 -> DerivationConfigV2
             V3 -> DerivationConfigV3
         }
     }
-
-
 }
