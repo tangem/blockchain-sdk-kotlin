@@ -22,8 +22,9 @@ class BinanceTransactionBuilder(
     var sequence: Long? = null
 
     private val chainId = BinanceChain.getChain(isTestNet).value
-    private val prefixedPubKey =
-        MessageType.PubKey.typePrefixBytes + 33.toByte() + publicKey.toCompressedPublicKey()
+
+    @Suppress("MagicNumber")
+    private val prefixedPubKey = MessageType.PubKey.typePrefixBytes + 33.toByte() + publicKey.toCompressedPublicKey()
 
     private var transactionAssembler: TransactionRequestAssemblerExtSign? = null
     private var transferMessage: TransferMessage? = null
@@ -61,6 +62,7 @@ class BinanceTransactionBuilder(
         return Result.Success(transactionAssembler!!.prepareForSign(transferMessage).calculateSha256())
     }
 
+    @Suppress("MagicNumber")
     fun buildToSend(signature: ByteArray): ByteArray {
         val r = BigInteger(1, signature.copyOfRange(0, 32))
         val s = BigInteger(1, signature.copyOfRange(32, 64))
