@@ -18,6 +18,7 @@ suspend fun <T> retryIO(
         try {
             return block()
         } catch (e: IOException) {
+            // Do nothing
         }
         delay(currentDelay)
         currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelay)

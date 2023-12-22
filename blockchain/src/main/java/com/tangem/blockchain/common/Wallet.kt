@@ -19,7 +19,7 @@ class Wallet(
     val recentTransactions: MutableList<TransactionData> = mutableListOf()
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
     val address = addresses.find { it.type == AddressType.Default }?.value
-        ?: throw Exception("Addresses must contain default address")
+        ?: error("Addresses must contain default address")
 
     init {
         setAmount(Amount(null, blockchain, AmountType.Coin))
