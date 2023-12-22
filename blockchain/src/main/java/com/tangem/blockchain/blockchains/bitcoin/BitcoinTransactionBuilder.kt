@@ -43,7 +43,7 @@ open class BitcoinTransactionBuilder(
         Blockchain.Dash -> DashMainNetParams()
         Blockchain.Ravencoin -> RavencoinMainNetParams()
         Blockchain.RavencoinTestnet -> RavencoinTestNetParams()
-        else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
+        else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
     var unspentOutputs: List<BitcoinUnspentOutput>? = null
 
@@ -68,7 +68,7 @@ open class BitcoinTransactionBuilder(
                 Script.ScriptType.P2WPKH -> ScriptBuilder.createP2PKHOutputScript(
                     ECKey.fromPublicOnly(walletPublicKey.toCompressedPublicKey()),
                 )
-                else -> throw Exception("Unsupported output script")
+                else -> error("Unsupported output script")
             }
             hashesToSign[index] = when (scriptPubKey.scriptType) {
                 Script.ScriptType.P2PKH, Script.ScriptType.P2SH -> {
@@ -88,7 +88,7 @@ open class BitcoinTransactionBuilder(
                         false,
                     ).bytes
                 }
-                else -> throw Exception("Unsupported output script")
+                else -> error("Unsupported output script")
             }
         }
         return Result.Success(hashesToSign)
@@ -110,12 +110,12 @@ open class BitcoinTransactionBuilder(
                 Script.ScriptType.P2SH -> { // only 1 of 2 multisig script for now
                     val script = findSpendingScript(scriptPubKey)
                     if (!ScriptPattern.isSentToMultisig(script)) {
-                        throw Exception("Unsupported wallet script")
+                        error("Unsupported wallet script")
                     }
                     ScriptBuilder.createP2SHMultiSigInputScript(mutableListOf(signature), script)
                 }
                 Script.ScriptType.P2WPKH, Script.ScriptType.P2WSH -> ScriptBuilder.createEmpty()
-                else -> throw Exception("Unsupported output script")
+                else -> error("Unsupported output script")
             }
             transactionSizeWithoutWitness = transaction.messageSize
 
@@ -204,7 +204,7 @@ open class BitcoinTransactionBuilder(
                 it.program.calculateSha256().contentEquals(scriptHash)
             }
             else -> null
-        } ?: throw Exception("No script for P2SH output found")
+        } ?: error("No script for P2SH output found")
     }
 }
 
