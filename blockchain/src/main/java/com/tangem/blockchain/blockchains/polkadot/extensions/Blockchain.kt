@@ -24,6 +24,6 @@ internal fun Blockchain.getPolkadotHosts(): List<String> {
         Blockchain.AlephZeroTestnet -> listOf(
             "https://rpc.test.azero.dev",
         )
-        else -> throw IllegalStateException("$this isn't supported")
+        else -> error("$this isn't supported")
     }
 }
