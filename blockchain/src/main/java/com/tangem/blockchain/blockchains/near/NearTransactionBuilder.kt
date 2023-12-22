@@ -96,6 +96,7 @@ class NearTransactionBuilder(
             .setPublicKey(ByteString.copyFrom(publicKey.blockchainKey))
     }
 
+    @Suppress("MagicNumber")
     private fun generateKeyPair(): KeyPair {
         val privateKey = CryptoUtils.generateRandomBytes(32)
         val publicKey = CryptoUtils.generatePublicKey(privateKey, EllipticCurve.Ed25519)

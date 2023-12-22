@@ -11,6 +11,7 @@ import java.math.RoundingMode
 
 class EthereumFeesCalculator {
 
+    @Suppress("MagicNumber")
     @Deprecated("use calculateFees() instead of this")
     internal fun calculateFeesUsingOldMethod(
         amountParams: Amount,
