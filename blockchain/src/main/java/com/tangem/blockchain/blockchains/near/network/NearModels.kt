@@ -43,9 +43,9 @@ class Yocto(
  */
 data class NearAmount(val yocto: Yocto) {
 
-    constructor(nearValue: BigDecimal) : this(Yocto(nearValue.movePointRight(YOCTO_DECIMALS).toBigInteger()))
-
     val value: BigDecimal by lazy { yocto.value.toBigDecimal().movePointLeft(YOCTO_DECIMALS) }
+
+    constructor(nearValue: BigDecimal) : this(Yocto(nearValue.movePointRight(YOCTO_DECIMALS).toBigInteger()))
 
     operator fun plus(near: NearAmount): NearAmount {
         return NearAmount(yocto.plus(near.yocto))

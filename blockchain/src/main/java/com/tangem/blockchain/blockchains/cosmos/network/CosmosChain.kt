@@ -12,8 +12,6 @@ sealed interface CosmosChain {
     val smallestDenomination: String
     val blockchain: Blockchain
     val chainId: String
-    fun gasPrices(amountType: AmountType): List<BigDecimal>
-    fun getExtraFee(amount: Amount): BigDecimal? = null
 
     // Often times the value specified in Keplr is not enough:
     // >>> out of gas in location: WriteFlat; gasWanted: 76012, gasUsed: 76391: out of gas
@@ -29,9 +27,16 @@ sealed interface CosmosChain {
     val coin: CoinType
     val allowsFeeSelection: FeeSelectionState get() = FeeSelectionState.Unspecified
 
+    fun gasPrices(amountType: AmountType): List<BigDecimal>
+    fun getExtraFee(amount: Amount): BigDecimal? = null
+
     data class Cosmos(val testnet: Boolean) : CosmosChain {
         override val blockchain: Blockchain = if (testnet) Blockchain.CosmosTestnet else Blockchain.Cosmos
         override val chainId: String = if (testnet) "theta-testnet-001" else "cosmoshub-4"
+        override val smallestDenomination: String = "uatom"
+        override val gasMultiplier: BigDecimal = BigDecimal(2)
+        override val feeMultiplier: BigDecimal = BigDecimal(1.0)
+        override val coin: CoinType = CoinType.COSMOS
 
         @Suppress("MagicNumber")
         override fun gasPrices(amountType: AmountType): List<BigDecimal> = listOf(
@@ -39,11 +44,6 @@ sealed interface CosmosChain {
             BigDecimal(0.025),
             BigDecimal(0.03),
         )
-
-        override val smallestDenomination: String = "uatom"
-        override val gasMultiplier: BigDecimal = BigDecimal(2)
-        override val feeMultiplier: BigDecimal = BigDecimal(1.0)
-        override val coin: CoinType = CoinType.COSMOS
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)
@@ -51,11 +51,11 @@ sealed interface CosmosChain {
     object Gaia : CosmosChain {
         override val blockchain: Blockchain = Blockchain.CosmosTestnet
         override val chainId: String = "gaia-13003"
-        override fun gasPrices(amountType: AmountType): List<BigDecimal> = throw IllegalStateException()
         override val smallestDenomination: String = "muon"
         override val gasMultiplier: BigDecimal = BigDecimal(2)
         override val feeMultiplier: BigDecimal = BigDecimal(1.0)
         override val coin: CoinType = CoinType.COSMOS
+        override fun gasPrices(amountType: AmountType): List<BigDecimal> = error("Not implemented")
     }
 
     @Suppress("MagicNumber")
@@ -73,6 +73,7 @@ sealed interface CosmosChain {
         // Stability or "spread" fee. Applied to both main currency and tokens
         // https://classic-docs.terra.money/docs/learn/fees.html#spread-fee
         private val minimumSpreadFeePercentage = BigDecimal("0.005") // 0.5%
+
         override fun gasPrices(amountType: AmountType): List<BigDecimal> = when (amountType) {
             AmountType.Coin -> listOf(BigDecimal(28.325))
             else -> listOf(BigDecimal(1.0))

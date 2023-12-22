@@ -74,7 +74,7 @@ class TezosTransactionBuilder(
                 when (operation.kind) {
                     "reveal" -> TezosConstants.REVEAL_OPERATION_KIND
                     "transaction" -> TezosConstants.TRANSACTION_OPERATION_KIND
-                    else -> throw Exception("Unsupported operation kind")
+                    else -> error("Unsupported operation kind")
                 },
             )
             stringBuilder.append(operation.source.txEncodePublicKeyHash())
@@ -89,7 +89,8 @@ class TezosTransactionBuilder(
             // transaction operation only
             operation.amount?.let { stringBuilder.append(it.txEncodeInteger()) }
             operation.destination?.let { stringBuilder.append(it.txEncodeAddress()) }
-            operation.destination?.let { stringBuilder.append("00") } // parameters for transaction operation, we don't use them yet
+            // parameters for transaction operation, we don't use them yet
+            operation.destination?.let { stringBuilder.append("00") }
         }
 
         return stringBuilder.toString()
@@ -119,7 +120,7 @@ class TezosTransactionBuilder(
             TezosConstants.TZ1_PREFIX -> "00"
             TezosConstants.TZ2_PREFIX -> "01"
             TezosConstants.TZ3_PREFIX -> "02"
-            else -> throw Exception("Invalid address format")
+            else -> error("Invalid address format")
         }
         return newPrefix + addressHex.removePrefix(prefix)
     }
@@ -131,7 +132,7 @@ class TezosTransactionBuilder(
             TezosConstants.EDPK_PREFIX -> "00"
             TezosConstants.SPPK_PREFIX -> "01"
             TezosConstants.P2PK_PREFIX -> "02"
-            else -> throw Exception("Invalid public key format")
+            else -> error("Invalid public key format")
         }
         return newPrefix + publicKeyHex.removePrefix(prefix)
     }
@@ -145,7 +146,7 @@ class TezosTransactionBuilder(
             TezosConstants.KT1_PREFIX -> {
                 "01" + addressHex.removePrefix(prefix) + "00"
             }
-            else -> throw Exception("Invalid address format")
+            else -> error("Invalid address format")
         }
     }
 

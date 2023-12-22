@@ -41,7 +41,7 @@ internal fun Blockchain.getBitcoinNetworkProviders(
             *getBlockchairProviders(blockchain, config),
         )
         // TODO: we don't have BCH testnet providers now. Maybe remove it completely?
-        Blockchain.BitcoinCashTestnet -> throw IllegalStateException("No providers for $this")
+        Blockchain.BitcoinCashTestnet -> error("No providers for $this")
         Blockchain.Ravencoin, Blockchain.RavencoinTestnet -> if (blockchain.isTestnet()) {
             listOf("https://testnet.ravencoin.network/api/")
         } else {
@@ -50,7 +50,7 @@ internal fun Blockchain.getBitcoinNetworkProviders(
                 "https://explorer.rvn.zelcore.io/api/",
             )
         }.map(::RavencoinNetworkProvider)
-        else -> throw IllegalStateException("$this isn't supported")
+        else -> error("$this isn't supported")
     }
 }
 

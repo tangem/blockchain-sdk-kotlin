@@ -132,7 +132,7 @@ class BlockchairEthNetworkProvider(
                 currentApiKey = apiKey
                 retryIO { block() }
             } else {
-                throw error
+                error("${error.code()} ${error.message()}")
             }
         }
     }

@@ -37,9 +37,9 @@ class OptimismWalletManager(
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
-        val minimumFee = (layer2fee.minimum as Fee.Ethereum)
-        val normalFee = (layer2fee.normal as Fee.Ethereum)
-        val priorityFee = (layer2fee.priority as Fee.Ethereum)
+        val minimumFee = layer2fee.minimum as Fee.Ethereum
+        val normalFee = layer2fee.normal as Fee.Ethereum
+        val priorityFee = layer2fee.priority as Fee.Ethereum
 
         // amount and fee value is not important for dummy transactions
         val preparedAmount = Amount(
@@ -133,8 +133,9 @@ class OptimismWalletManager(
         val gasPriceL2 = extras.gasPrice
         val gasLimitL2 = extras.gasLimit
         val value = preparedAmount.value?.movePointRight(preparedAmount.decimals)?.toBigInteger() ?: BigInteger.ZERO
-        val chainId =
-            requireNotNull(blockchain.getChainId()) { "${blockchain.fullName} blockchain is not supported by Optimism Wallet Manager" }
+        val chainId = requireNotNull(blockchain.getChainId()) {
+            "${blockchain.fullName} blockchain is not supported by Optimism Wallet Manager"
+        }
 
         // creating sample transaction that hash should be send to optimism contract to determine layer1Fee
         val txHash = createTransactionWithDefaults(
@@ -185,10 +186,8 @@ class OptimismWalletManager(
             val fee: BigInteger = networkProvider.callContractForFee(contractCallData).successOr {
                 return Result.Failure(BlockchainSdkError.FailedToLoadFee)
             }
-            val feeIndexed = (
-                fee.toBigDecimal().movePointLeft(wallet.blockchain.decimals()) *
-                    BigDecimal.valueOf(OPTIMISM_FEE_MULTIPLIER)
-                )
+            val feeIndexed = fee.toBigDecimal().movePointLeft(wallet.blockchain.decimals()) *
+                BigDecimal.valueOf(OPTIMISM_FEE_MULTIPLIER)
             val amount = Amount(
                 blockchain = wallet.blockchain,
                 value = feeIndexed,

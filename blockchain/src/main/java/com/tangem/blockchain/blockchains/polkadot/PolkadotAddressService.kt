@@ -18,7 +18,7 @@ class PolkadotAddressService(
         Blockchain.PolkadotTestnet -> SS58Type.Network.WESTEND
         Blockchain.Kusama -> SS58Type.Network.KUSAMA
         Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> SS58Type.Network.SUBSTRATE
-        else -> throw IllegalStateException("$blockchain isn't supported")
+        else -> error("$blockchain isn't supported")
     }
 
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {

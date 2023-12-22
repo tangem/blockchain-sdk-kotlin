@@ -19,7 +19,6 @@ import java.util.EnumSet
  */
 class PolkadotWalletManager(
     wallet: Wallet,
-    private val transactionBuilder: PolkadotTransactionBuilder,
     private val networkProvider: PolkadotNetworkProvider,
 ) : WalletManager(wallet), TransactionSender, ExistentialDepositProvider {
 
@@ -30,20 +29,20 @@ class PolkadotWalletManager(
         Blockchain.PolkadotTestnet -> 0.01.toBigDecimal()
         Blockchain.Kusama -> 0.000033333333.toBigDecimal()
         Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> 0.0000000005.toBigDecimal()
-        else -> throw IllegalStateException("${wallet.blockchain} isn't supported")
+        else -> error("${wallet.blockchain} isn't supported")
     }
-
-    override fun getExistentialDeposit() = existentialDeposit
 
     private val txBuilder = PolkadotTransactionBuilder(wallet.blockchain)
 
     override val currentHost: String
         get() = networkProvider.baseUrl
 
+    override fun getExistentialDeposit() = existentialDeposit
+
     override suspend fun updateInternal() {
         val amount = networkProvider.getBalance(wallet.address).successOr {
             wallet.removeAllTokens()
-            throw (it.error as BlockchainSdkError)
+            throw it.error as BlockchainSdkError
         }
         wallet.setCoinValue(amount)
         updateRecentTransactions()

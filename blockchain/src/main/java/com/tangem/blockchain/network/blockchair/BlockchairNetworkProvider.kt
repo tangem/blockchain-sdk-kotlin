@@ -53,7 +53,7 @@ open class BlockchairNetworkProvider(
                 currentApiKey = apiKey
                 retryIO { block() }
             } else {
-                throw error
+                error("${error.code()}: ${error.message()}")
             }
         }
     }
@@ -78,7 +78,8 @@ open class BlockchairNetworkProvider(
                 .filter {
                     // Unspents with blockId lower than or equal 1 is not currently available
                     // This unspents related to transaction in Mempool and are pending. We should ignore this unspents
-                    (it.block ?: 0) > 1
+                    val block = it.block ?: 0
+                    block > 1
                 }
                 .map {
                     BitcoinUnspentOutput(
@@ -176,7 +177,7 @@ open class BlockchairNetworkProvider(
             Blockchain.Litecoin -> "litecoin/"
             Blockchain.Dogecoin -> "dogecoin/"
             Blockchain.Dash -> "dash/"
-            else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
+            else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
         }
     }
 }

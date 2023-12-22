@@ -217,7 +217,7 @@ enum class Blockchain(
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
             Chia, ChiaTestnet -> ChiaAddressService(this)
-            Unknown -> throw Exception("unsupported blockchain")
+            Unknown -> error("unsupported blockchain")
         }
     }
 

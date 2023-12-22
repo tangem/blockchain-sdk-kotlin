@@ -50,9 +50,9 @@ internal object ExternalLinkProviderFactory {
             Blockchain.TerraV2 -> TerraV2ExternalLinkProvider()
             Blockchain.Cronos -> CronosExternalLinkProvider()
             Blockchain.AlephZero -> AlephZeroExternalLinkProvider()
-            Blockchain.AlephZeroTestnet -> throw Exception("unsupported blockchain")
+            Blockchain.AlephZeroTestnet -> error("unsupported blockchain")
             Blockchain.OctaSpace -> OctaSpaceExternalLinkProvider()
-            Blockchain.OctaSpaceTestnet -> throw Exception("unsupported blockchain")
+            Blockchain.OctaSpaceTestnet -> error("unsupported blockchain")
             Blockchain.Chia, Blockchain.ChiaTestnet -> ChiaExternalLinkProvider(isTestnet)
             Blockchain.Decimal, Blockchain.DecimalTestnet -> DecimalExternalLinkProvider(isTestnet)
         }

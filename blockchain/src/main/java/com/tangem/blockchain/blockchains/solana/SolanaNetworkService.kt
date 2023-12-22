@@ -195,9 +195,6 @@ class SolanaNetworkService(
 private val AccountInfo.accountExist
     get() = value != null
 
-private val AccountInfo.requireValue
-    get() = value!!
-
 data class SolanaMainAccountInfo(
     val value: AccountInfo.Value?,
     val tokensByMint: Map<String, SolanaTokenAccountInfo>,
