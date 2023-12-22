@@ -10,21 +10,19 @@ import com.tangem.blockchain.common.txhistory.getTransactionHistoryProvider
 
 internal object BitcoinCashWalletManagerAssembly : WalletManagerAssembly<BitcoinCashWalletManager>() {
 
-    override fun make(input: WalletManagerAssemblyInput): BitcoinCashWalletManager  {
+    override fun make(input: WalletManagerAssemblyInput): BitcoinCashWalletManager {
         with(input.wallet) {
             return BitcoinCashWalletManager(
                 wallet = this,
                 transactionBuilder = BitcoinCashTransactionBuilder(
                     walletPublicKey = publicKey.blockchainKey,
-                    blockchain = blockchain
+                    blockchain = blockchain,
                 ),
                 networkProvider = BitcoinNetworkService(
                     providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config),
                 ),
-                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config)
+                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
             )
         }
     }
-
-
 }

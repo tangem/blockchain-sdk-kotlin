@@ -10,7 +10,7 @@ internal fun Blockchain.getPolkadotHosts(): List<String> {
             "https://polkadot-rpc.dwellir.com/",
         )
         Blockchain.PolkadotTestnet -> listOf(
-            "https://westend-rpc.polkadot.io/"
+            "https://westend-rpc.polkadot.io/",
         )
         Blockchain.Kusama -> listOf(
             "https://kusama-rpc.polkadot.io/",
@@ -22,7 +22,7 @@ internal fun Blockchain.getPolkadotHosts(): List<String> {
             "https://aleph-zero-rpc.dwellir.com/",
         )
         Blockchain.AlephZeroTestnet -> listOf(
-            "https://rpc.test.azero.dev"
+            "https://rpc.test.azero.dev",
         )
         else -> throw IllegalStateException("$this isn't supported")
     }

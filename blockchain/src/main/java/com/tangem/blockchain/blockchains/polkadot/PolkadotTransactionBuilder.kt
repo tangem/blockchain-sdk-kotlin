@@ -1,6 +1,9 @@
 package com.tangem.blockchain.blockchains.polkadot
 
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.TransactionSigner
+import com.tangem.blockchain.common.Wallet
 import com.tangem.common.CompletionResult
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
@@ -29,15 +32,11 @@ class PolkadotTransactionBuilder(blockchain: Blockchain) {
         Blockchain.Polkadot, Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> "0500".hexToBytes()
         Blockchain.PolkadotTestnet, Blockchain.Kusama -> "0400".hexToBytes()
         else -> throw Exception(
-            "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}"
+            "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}",
         )
     }
 
-    fun buildForSign(
-        destinationAddress: String,
-        amount: Amount,
-        context: ExtrinsicContext,
-    ): ByteArray {
+    fun buildForSign(destinationAddress: String, amount: Amount, context: ExtrinsicContext): ByteArray {
         val buffer = ByteArrayOutputStream()
         val codecWriter = ScaleCodecWriter(buffer)
 

@@ -64,7 +64,9 @@ object ResultChecker {
     }
 
     private fun BlockchainSdkError.WrappedThrowable.isNetworkError(): Boolean {
-        return cause is IOException || cause is HttpException || cause is JsonDataException || stellarNetworkError(cause)
+        return cause is IOException || cause is HttpException || cause is JsonDataException || stellarNetworkError(
+            cause,
+        )
     }
 
     private fun stellarNetworkError(cause: Throwable?): Boolean {

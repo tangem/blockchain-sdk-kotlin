@@ -6,8 +6,8 @@ import retrofit2.http.*
 interface BlockchainInfoApi {
     @GET("rawaddr/{address}")
     suspend fun getAddressData(
-            @Path("address") address: String,
-            @Query("offset") transactionOffset: Int?
+        @Path("address") address: String,
+        @Query("offset") transactionOffset: Int?,
     ): BlockchainInfoAddress
 
     @GET("unspent")
@@ -20,4 +20,3 @@ interface BlockchainInfoApi {
     @POST("pushtx")
     suspend fun sendTransaction(@Field("tx") transaction: String): ResponseBody
 }
-

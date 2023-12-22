@@ -20,8 +20,8 @@ open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : Chia
                         put("Content-Type", "application/json")
                         put("X-API-Key", key)
                     },
-                )
-            )
+                ),
+            ),
         ).create(ChiaApi::class.java)
     }
 
@@ -44,8 +44,8 @@ open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : Chia
             Result.Success(
                 EstimateFeeResult(
                     normalFee = feeData.estimates[1].toBigDecimal().movePointLeft(decimals),
-                    priorityFee = feeData.estimates[0].toBigDecimal().movePointLeft(decimals)
-                )
+                    priorityFee = feeData.estimates[0].toBigDecimal().movePointLeft(decimals),
+                ),
             )
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
@@ -60,12 +60,12 @@ open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : Chia
                     SimpleResult.Success
                 } else {
                     SimpleResult.Failure(
-                        BlockchainSdkError.CustomError("${sendResponse.status} status returned on send")
+                        BlockchainSdkError.CustomError("${sendResponse.status} status returned on send"),
                     )
                 }
             } else {
                 SimpleResult.Failure(
-                    BlockchainSdkError.CustomError(sendResponse.error ?: "Unknown send error")
+                    BlockchainSdkError.CustomError(sendResponse.error ?: "Unknown send error"),
                 )
             }
         } catch (exception: Exception) {

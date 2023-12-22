@@ -18,7 +18,7 @@ class EthereumFeesCalculator {
         gasPrice: BigInteger,
     ): TransactionFee.Choosable {
         val minFee = gasPrice * gasLimit
-        //By dividing by ten before last multiplication here we can lose some digits
+        // By dividing by ten before last multiplication here we can lose some digits
         val normalFee = gasPrice * BigInteger.valueOf(12) / BigInteger.TEN * gasLimit
         val priorityFee = gasPrice * BigInteger.valueOf(15) / BigInteger.TEN * gasLimit
 
@@ -26,18 +26,18 @@ class EthereumFeesCalculator {
             minimum = Fee.Ethereum(
                 amount = createFee(amountParams, minFee),
                 gasLimit = gasLimit,
-                gasPrice = gasPrice
+                gasPrice = gasPrice,
             ),
             normal = Fee.Ethereum(
                 amount = createFee(amountParams, normalFee),
                 gasLimit = gasLimit,
-                gasPrice = gasPrice
+                gasPrice = gasPrice,
             ),
             priority = Fee.Ethereum(
                 amount = createFee(amountParams, priorityFee),
                 gasLimit = gasLimit,
-                gasPrice = gasPrice
-            )
+                gasPrice = gasPrice,
+            ),
         )
     }
 
@@ -61,18 +61,18 @@ class EthereumFeesCalculator {
             minimum = Fee.Ethereum(
                 amount = createFee(amountParams, minimalFeeBigInt),
                 gasLimit = gasLimit,
-                gasPrice = gasPrice
+                gasPrice = gasPrice,
             ),
             normal = Fee.Ethereum(
                 amount = createFee(amountParams, normalFeeBigInt),
                 gasLimit = gasLimit,
-                gasPrice = gasPrice
+                gasPrice = gasPrice,
             ),
             priority = Fee.Ethereum(
                 amount = createFee(amountParams, priorityFeeBigInt),
                 gasLimit = gasLimit,
-                gasPrice = gasPrice
-            )
+                gasPrice = gasPrice,
+            ),
         )
     }
 
@@ -90,17 +90,18 @@ class EthereumFeesCalculator {
             normal = Fee.Ethereum(
                 amount = createFee(amountParams, normalFeeBigInt),
                 gasLimit = gasLimit,
-                gasPrice = gasPrice
-            )
+                gasPrice = gasPrice,
+            ),
         )
     }
 
     private fun createFee(amountParams: Amount, value: BigInteger): Amount {
         return Amount(
-            amountParams, value.toBigDecimal(
+            amountParams,
+            value.toBigDecimal(
                 scale = Blockchain.Ethereum.decimals(),
-                mathContext = MathContext(Blockchain.Ethereum.decimals(), RoundingMode.HALF_EVEN)
-            )
+                mathContext = MathContext(Blockchain.Ethereum.decimals(), RoundingMode.HALF_EVEN),
+            ),
         )
     }
 
