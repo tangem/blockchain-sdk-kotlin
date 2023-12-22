@@ -17,12 +17,12 @@ internal object DogecoinWalletManagerAssembly : WalletManagerAssembly<DogecoinWa
                 transactionBuilder = BitcoinTransactionBuilder(
                     walletPublicKey = publicKey.blockchainKey,
                     blockchain = blockchain,
-                    walletAddresses = addresses
+                    walletAddresses = addresses,
                 ),
                 networkProvider = BitcoinNetworkService(
                     providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config),
                 ),
-                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config)
+                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
             )
         }
     }

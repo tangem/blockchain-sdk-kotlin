@@ -49,7 +49,7 @@ class RavencoinWalletManager(
             destinationAddress = destination,
             hash = this.hash,
             date = this.date,
-            status = if (this.isConfirmed) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed
+            status = if (this.isConfirmed) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed,
         )
     }
 }

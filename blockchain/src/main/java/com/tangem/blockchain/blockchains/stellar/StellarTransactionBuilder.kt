@@ -21,7 +21,6 @@ class StellarTransactionBuilder(
     private val blockchain = Blockchain.Stellar
 
     suspend fun buildToSign(transactionData: TransactionData, sequence: Long): Result<ByteArray> {
-
         val amount = transactionData.amount
         val fee = requireNotNull(transactionData.fee?.amount?.longValue).toInt()
         val destinationKeyPair = KeyPair.fromAccountId(transactionData.destinationAddress)
@@ -37,8 +36,9 @@ class StellarTransactionBuilder(
 
         val amountType = transactionData.amount.type
         val token = if (amountType is AmountType.Token) amountType.token else null
-        val targetAccountResponse = when (val result =
-            networkProvider.checkTargetAccount(transactionData.destinationAddress, token)
+        val targetAccountResponse = when (
+            val result =
+                networkProvider.checkTargetAccount(transactionData.destinationAddress, token)
         ) {
             is Result.Success -> result.data
             is Result.Failure -> return result
@@ -51,7 +51,7 @@ class StellarTransactionBuilder(
                         PaymentOperation.Builder(
                             destinationKeyPair.accountId,
                             AssetTypeNative(),
-                            amount.value.toString()
+                            amount.value.toString(),
                         ).build()
                     } else {
                         if (amount.value!! < minReserve) {
@@ -59,13 +59,13 @@ class StellarTransactionBuilder(
                             return Result.Failure(
                                 BlockchainSdkError.CreateAccountUnderfunded(
                                     blockchain = blockchain,
-                                    minReserve = minAmount
-                                )
+                                    minReserve = minAmount,
+                                ),
                             )
                         }
                         CreateAccountOperation.Builder(
                             destinationKeyPair.accountId,
-                            amount.value.toString()
+                            amount.value.toString(),
                         ).build()
                     }
                 transaction = operation.toTransaction(sourceKeyPair, sequence, fee, timeBounds, memo)
@@ -77,16 +77,16 @@ class StellarTransactionBuilder(
                 if (!targetAccountResponse.accountCreated) {
                     return Result.Failure(
                         BlockchainSdkError.CustomError(
-                            "The destination account is not created. To create account send 1+ XLM."
-                        )
+                            "The destination account is not created. To create account send 1+ XLM.",
+                        ),
                     )
                 }
 
                 if (!targetAccountResponse.trustlineCreated!!) {
                     return Result.Failure(
                         BlockchainSdkError.CustomError(
-                            "The destination account does not have a trustline for the asset being sent."
-                        )
+                            "The destination account does not have a trustline for the asset being sent.",
+                        ),
                     )
                 }
 
@@ -98,16 +98,16 @@ class StellarTransactionBuilder(
                     PaymentOperation.Builder(
                         destinationKeyPair.accountId,
                         Asset.create(null, amount.currencySymbol, amount.type.token.contractAddress),
-                        amount.value!!.toPlainString()
+                        amount.value.toPlainString(),
                     )
                         .build()
                 } else {
                     ChangeTrustOperation.Builder(
                         ChangeTrustAsset.createNonNativeAsset(
                             amount.currencySymbol,
-                            amount.type.token.contractAddress
+                            amount.type.token.contractAddress,
                         ),
-                        CHANGE_TRUST_OPERATION_LIMIT
+                        CHANGE_TRUST_OPERATION_LIMIT,
                     )
                         .setSourceAccount(sourceKeyPair.accountId)
                         .build()
@@ -135,13 +135,12 @@ class StellarTransactionBuilder(
         timeBounds: TimeBounds,
         memo: Memo?,
     ): Transaction? {
-
         val accountID = AccountID()
         accountID.accountID = sourceKeyPair.xdrPublicKey
 
         val transactionBuilder = TransactionBuilder(
             Account(sourceKeyPair.accountId, sequence),
-            network
+            network,
         )
         transactionBuilder
             .addOperation(this)

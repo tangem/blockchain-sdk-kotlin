@@ -32,7 +32,7 @@ class NearWalletManager(
                 when (val account = walletInfoResult.data) {
                     is NearAccount.Full -> updateWallet(
                         amountValue = account.near.value,
-                        depositValue = account.storageUsage.value * protocolConfigResult.runtimeConfig.storageAmountPerByte
+                        depositValue = account.storageUsage.value * protocolConfigResult.runtimeConfig.storageAmountPerByte,
                     )
 
                     NearAccount.NotInitialized -> {

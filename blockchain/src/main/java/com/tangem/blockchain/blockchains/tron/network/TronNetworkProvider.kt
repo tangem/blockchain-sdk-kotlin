@@ -3,7 +3,7 @@ package com.tangem.blockchain.blockchains.tron.network
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.extensions.Result
 
-interface TronNetworkProvider: NetworkProvider {
+interface TronNetworkProvider : NetworkProvider {
     val network: TronNetwork
 
     suspend fun getAccount(address: String): Result<TronGetAccountResponse>

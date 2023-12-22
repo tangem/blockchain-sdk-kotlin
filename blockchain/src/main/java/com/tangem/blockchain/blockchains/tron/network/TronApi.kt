@@ -6,15 +6,11 @@ interface TronApi {
 
     @Headers("Content-Type: application/json", "Accept: application/json")
     @POST("wallet/getaccount")
-    suspend fun getAccount(
-        @Body requestBody: TronGetAccountRequest,
-    ): TronGetAccountResponse
+    suspend fun getAccount(@Body requestBody: TronGetAccountRequest): TronGetAccountResponse
 
     @Headers("Content-Type: application/json", "Accept: application/json")
     @POST("wallet/getaccountresource")
-    suspend fun getAccountResource(
-        @Body requestBody: TronGetAccountRequest,
-    ): TronGetAccountResourceResponse
+    suspend fun getAccountResource(@Body requestBody: TronGetAccountRequest): TronGetAccountResourceResponse
 
     @Headers("Content-Type: application/json", "Accept: application/json")
     @POST("wallet/getnowblock")

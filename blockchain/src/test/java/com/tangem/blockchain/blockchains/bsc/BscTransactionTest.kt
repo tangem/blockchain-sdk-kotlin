@@ -3,11 +3,7 @@ package com.tangem.blockchain.blockchains.bsc
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.Token
-import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
@@ -39,7 +35,7 @@ class BscTransactionTest {
             sourceAddress = walletAddress,
             destinationAddress = destinationAddress,
             amount = amountToSend,
-            fee = fee
+            fee = fee,
         )
 
         val expectedHashToSign = "166A2BF5E57A4732331F876327803E1D35559D8A4F7BEBF6356EA30BC52F0258"
@@ -71,7 +67,7 @@ class BscTransactionTest {
         val token = Token(
             symbol = "USDC",
             contractAddress = contractAddress,
-            decimals = 6
+            decimals = 6,
         )
 
         val walletAddress = EthereumAddressService().makeAddress(walletPublicKey)

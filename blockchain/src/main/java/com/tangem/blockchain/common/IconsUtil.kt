@@ -3,7 +3,7 @@ package com.tangem.blockchain.common
 import android.net.Uri
 import org.kethereum.erc55.withERC55Checksum
 import org.kethereum.model.Address
-import java.util.*
+import java.util.Locale
 
 class IconsUtil {
     companion object {
@@ -47,11 +47,10 @@ class IconsUtil {
             val path = token.contractAddress
 
             return when (blockchain) {
-                Blockchain.Binance -> path.toUpperCase(Locale.ROOT)
+                Blockchain.Binance -> path.uppercase(Locale.ROOT)
                 Blockchain.Ethereum -> Address(path).withERC55Checksum().hex
                 else -> path
             }
         }
-
     }
 }

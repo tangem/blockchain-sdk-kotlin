@@ -36,7 +36,7 @@ fun WalletManagerFactory.makeWalletManagerForApp(
                 walletPublicKey = wallet.publicKey,
                 pairPublicKey = scanResponse.secondTwinPublicKey.hexToBytes(),
                 blockchain = environmentBlockchain,
-                curve = wallet.curve
+                curve = wallet.curve,
             )
         }
 
@@ -53,8 +53,8 @@ fun WalletManagerFactory.makeWalletManagerForApp(
                 Wallet.PublicKey.DerivationType.Plain(
                     Wallet.HDKey(
                         extendedPublicKey = derivedKey,
-                        path = derivationPath
-                    )
+                        path = derivationPath,
+                    ),
                 )
             }
 
@@ -62,9 +62,9 @@ fun WalletManagerFactory.makeWalletManagerForApp(
                 blockchain = environmentBlockchain,
                 publicKey = Wallet.PublicKey(
                     seedKey = wallet.publicKey,
-                    derivationType = hdKey
+                    derivationType = hdKey,
                 ),
-                curve = wallet.curve
+                curve = wallet.curve,
             )
         }
 
@@ -72,26 +72,27 @@ fun WalletManagerFactory.makeWalletManagerForApp(
             createLegacyWalletManager(
                 blockchain = environmentBlockchain,
                 walletPublicKey = wallet.publicKey,
-                curve = wallet.curve
+                curve = wallet.curve,
             )
         }
     }
 }
 
 fun WalletManagerFactory.makeWalletManagerForApp(
-    scanResponse: ScanResponse, blockchainNetwork: BlockchainNetwork,
+    scanResponse: ScanResponse,
+    blockchainNetwork: BlockchainNetwork,
 ): WalletManager? {
     return makeWalletManagerForApp(
         scanResponse,
         blockchain = blockchainNetwork.blockchain,
-        derivationParams = getDerivationParams(blockchainNetwork.derivationPath, scanResponse.card)
+        derivationParams = getDerivationParams(blockchainNetwork.derivationPath, scanResponse.card),
     )
 }
 
 private fun getDerivationParams(derivationPath: String?, card: Card): DerivationParams? {
     return derivationPath?.let {
         DerivationParams.Custom(
-            DerivationPath(it)
+            DerivationPath(it),
         )
     } ?: if (!card.settings.isHDWalletAllowed) {
         null
@@ -103,7 +104,8 @@ private fun getDerivationParams(derivationPath: String?, card: Card): Derivation
 }
 
 fun WalletManagerFactory.makeWalletManagersForApp(
-    scanResponse: ScanResponse, blockchains: List<BlockchainNetwork>,
+    scanResponse: ScanResponse,
+    blockchains: List<BlockchainNetwork>,
 ): List<WalletManager> {
     return blockchains.mapNotNull { this.makeWalletManagerForApp(scanResponse, it) }
 }

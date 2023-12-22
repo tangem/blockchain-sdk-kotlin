@@ -21,10 +21,7 @@ internal class DecimalAddressService : AddressService() {
         return makeDscAddress(walletPublicKey)
     }
 
-    override fun makeAddresses(
-        walletPublicKey: ByteArray,
-        curve: EllipticCurve?,
-    ): Set<SdkAddress> {
+    override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?): Set<SdkAddress> {
         val dscAddress = makeDscAddress(walletPublicKey)
 
         return setOf(

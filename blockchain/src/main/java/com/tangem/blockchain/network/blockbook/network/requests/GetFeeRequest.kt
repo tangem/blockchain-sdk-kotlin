@@ -4,7 +4,7 @@ class GetFeeRequest private constructor(
     val jsonrpc: String,
     val id: String,
     val method: String,
-    val params: List<Int>
+    val params: List<Int>,
 ) {
     companion object {
 
@@ -13,7 +13,7 @@ class GetFeeRequest private constructor(
                 jsonrpc = "2.0",
                 id = "id",
                 method = "estimatesmartfee",
-                params = listOf(param)
+                params = listOf(param),
             )
         }
     }

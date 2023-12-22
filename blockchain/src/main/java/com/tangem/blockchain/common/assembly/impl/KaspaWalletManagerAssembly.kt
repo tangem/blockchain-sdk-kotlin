@@ -25,8 +25,7 @@ internal object KaspaWalletManagerAssembly : WalletManagerAssembly<KaspaWalletMa
         return KaspaWalletManager(
             wallet = input.wallet,
             transactionBuilder = KaspaTransactionBuilder(),
-            networkProvider = KaspaNetworkService(providers)
+            networkProvider = KaspaNetworkService(providers),
         )
     }
-
 }

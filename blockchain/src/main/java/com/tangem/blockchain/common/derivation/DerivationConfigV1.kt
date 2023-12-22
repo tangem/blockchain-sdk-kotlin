@@ -23,14 +23,14 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Bitcoin -> {
                 mapOf(
                     AddressType.Legacy to DerivationPath("m/44'/0'/0'/0/0"),
-                    AddressType.Default to DerivationPath("m/44'/0'/0'/0/0")
+                    AddressType.Default to DerivationPath("m/44'/0'/0'/0/0"),
                 )
             }
 
             Blockchain.Litecoin -> {
                 mapOf(
                     AddressType.Legacy to DerivationPath("m/44'/2'/0'/0/0"),
-                    AddressType.Default to DerivationPath("m/44'/2'/0'/0/0")
+                    AddressType.Default to DerivationPath("m/44'/2'/0'/0/0"),
                 )
             }
 
@@ -45,13 +45,13 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Cardano -> {
                 mapOf(
                     AddressType.Default to DerivationPath("m/1852'/1815'/0'/0/0"),
-                    AddressType.Legacy to DerivationPath("m/1852'/1815'/0'/0/0")
+                    AddressType.Legacy to DerivationPath("m/1852'/1815'/0'/0/0"),
                 )
             }
             Blockchain.BitcoinCash -> {
                 mapOf(
                     AddressType.Legacy to DerivationPath("m/44'/145'/0'/0/0"),
-                    AddressType.Default to DerivationPath("m/44'/145'/0'/0/0")
+                    AddressType.Default to DerivationPath("m/44'/145'/0'/0/0"),
                 )
             }
 

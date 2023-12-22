@@ -17,5 +17,4 @@ class DucatusNetworkService : BitcoreNetworkProvider(API_DUCATUS) {
         // Bitcore is used only in Ducatus and we don't check signature count
         return Result.Failure(BlockchainSdkError.CustomError("Signature count is not appliable for ducatus"))
     }
-    
 }

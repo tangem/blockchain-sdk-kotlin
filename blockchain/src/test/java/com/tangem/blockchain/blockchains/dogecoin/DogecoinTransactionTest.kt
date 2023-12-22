@@ -45,7 +45,7 @@ class DogecoinTransactionTest {
             sourceAddress = address,
             destinationAddress = destinationAddress,
             amount = amountToSend,
-            fee = fee
+            fee = fee,
         )
 
         val expectedHashToSign1 = "D07A3B066782BAB7F1ACADC7615DF4F590D92DB2D6326B4BB98AF4617B641832"

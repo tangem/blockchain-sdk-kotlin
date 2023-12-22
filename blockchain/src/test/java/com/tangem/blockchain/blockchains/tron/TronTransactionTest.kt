@@ -24,9 +24,9 @@ class TronTransactionTest {
                 witnessAddress = "415863f6091b8e71766da808b1dd3159790f61de7d",
                 parentHash = "00000000002f7b3af4f5f8b9e23a30c530f719f165b742e7358536b280eead2d",
                 version = 3,
-                timestamp = 1539295479000
-            )
-        )
+                timestamp = 1539295479000,
+            ),
+        ),
     )
 
     @Test
@@ -35,7 +35,7 @@ class TronTransactionTest {
             amount = Amount(BigDecimal.valueOf(1), blockchain),
             source = "TU1BRXbr6EmKmrLL4Kymv7Wp18eYFkRfAF",
             destination = "TXXxc9NsHndfQ2z9kMKyWpYa5T3QbhKGwn",
-            block = tronBlock
+            block = tronBlock,
         )
         val signature =
             "6b5de85a80b2f4f02351f691593fb0e49f14c5cb42451373485357e42d7890cd77ad7bfcb733555c098b992da79dabe5050f5e2db77d9d98f199074222de037701".hexToBytes()
@@ -53,13 +53,13 @@ class TronTransactionTest {
             name = "Tether",
             symbol = "USDT",
             contractAddress = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj",
-            decimals = 6
+            decimals = 6,
         )
         val transactionRaw = transactionBuilder.buildForSign(
             amount = Amount(token, BigDecimal.ONE),
             source = "TU1BRXbr6EmKmrLL4Kymv7Wp18eYFkRfAF",
             destination = "TXXxc9NsHndfQ2z9kMKyWpYa5T3QbhKGwn",
-            block = tronBlock
+            block = tronBlock,
         )
         val signature =
             "6b5de85a80b2f4f02351f691593fb0e49f14c5cb42451373485357e42d7890cd77ad7bfcb733555c098b992da79dabe5050f5e2db77d9d98f199074222de037701".hexToBytes()

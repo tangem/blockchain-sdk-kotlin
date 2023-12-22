@@ -9,19 +9,20 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.isZero
 import com.tangem.common.extensions.toCompressedPublicKey
 import org.bitcoinj.core.*
-import org.bitcoinj.core.LegacyAddress
 import org.bitcoinj.crypto.TransactionSignature
 import org.bitcoinj.script.Script
 import java.math.BigDecimal
 import java.math.BigInteger
 
-class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, private val blockchain: Blockchain)
-    : BitcoinTransactionBuilder(walletPublicKey.toCompressedPublicKey(), blockchain) {
+class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, private val blockchain: Blockchain) :
+    BitcoinTransactionBuilder(walletPublicKey.toCompressedPublicKey(), blockchain) {
 
-    override fun buildToSign(
-            transactionData: TransactionData): Result<List<ByteArray>> {
-
-        if (unspentOutputs.isNullOrEmpty()) return Result.Failure(BlockchainSdkError.CustomError("Unspent outputs are missing"))
+    override fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
+        if (unspentOutputs.isNullOrEmpty()) {
+            return Result.Failure(
+                BlockchainSdkError.CustomError("Unspent outputs are missing"),
+            )
+        }
 
         val change: BigDecimal = calculateChange(transactionData, unspentOutputs!!)
 
@@ -32,11 +33,11 @@ class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, private val bloc
             val index = input.index
             val value = Coin.parseCoin(unspentOutputs!![index].amount.toString())
             hashesForSign[index] = getTransaction().hashForSignatureWitness(
-                    index,
-                    input.scriptBytes,
-                    value,
-                    Transaction.SigHash.ALL,
-                    false
+                index,
+                input.scriptBytes,
+                value,
+                Transaction.SigHash.ALL,
+                false,
             ).bytes
         }
         return Result.Success(hashesForSign)
@@ -57,7 +58,7 @@ internal fun TransactionData.toBitcoinCashTransaction(
     networkParameters: NetworkParameters?,
     unspentOutputs: List<BitcoinUnspentOutput>,
     change: BigDecimal,
-    blockchain: Blockchain
+    blockchain: Blockchain,
 ): BitcoinCashTransaction {
     val transaction = BitcoinCashTransaction(networkParameters)
     for (utxo in unspentOutputs) {
@@ -74,13 +75,13 @@ internal fun TransactionData.toBitcoinCashTransaction(
     }
 
     transaction.addOutput(
-            Coin.parseCoin(this.amount.value!!.toPlainString()),
-            destinationLegacyAddress
+        Coin.parseCoin(this.amount.value!!.toPlainString()),
+        destinationLegacyAddress,
     )
     if (!change.isZero()) {
         transaction.addOutput(
-                Coin.parseCoin(change.toPlainString()),
-                sourceLegacyAddress
+            Coin.parseCoin(change.toPlainString()),
+            sourceLegacyAddress,
         )
     }
     return transaction
