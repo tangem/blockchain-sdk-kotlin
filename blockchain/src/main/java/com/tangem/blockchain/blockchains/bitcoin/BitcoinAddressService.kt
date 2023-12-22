@@ -37,7 +37,7 @@ open class BitcoinAddressService(
         Blockchain.Dash -> DashMainNetParams()
         Blockchain.Ravencoin -> RavencoinMainNetParams()
         Blockchain.RavencoinTestnet -> RavencoinTestNetParams()
-        else -> throw Exception(
+        else -> error(
             "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}",
         )
     }

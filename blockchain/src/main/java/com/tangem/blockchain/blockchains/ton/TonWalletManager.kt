@@ -41,7 +41,7 @@ class TonWalletManager(
             sequenceNumber = sequenceNumber,
             amount = transactionData.amount,
             destination = transactionData.destinationAddress,
-            extras = (transactionData.extras as? TonTransactionExtras),
+            extras = transactionData.extras as? TonTransactionExtras,
         )
         val message = buildTransaction(input, signer).successOr { return SimpleResult.fromTangemSdkError(it.error) }
 
@@ -75,7 +75,7 @@ class TonWalletManager(
 
     private fun updateError(error: BlockchainError) {
         Log.e(this::class.java.simpleName, error.customMessage)
-        if (error is BlockchainSdkError) throw error
+        if (error is BlockchainSdkError) error("Error isn't BlockchainSdkError")
     }
 
     private fun buildTransaction(input: TheOpenNetwork.SigningInput, signer: TransactionSigner?): Result<String> {
