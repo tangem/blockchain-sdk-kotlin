@@ -1,3 +1,5 @@
+apply(from: "$rootDir/detekt-convention.gradle")
+
 buildscript {
     apply from: 'dependencies.gradle'
 
@@ -20,7 +22,7 @@ configurations.all {
 }
 
 allprojects {
-    def Properties properties = new Properties()
+    Properties properties = new Properties()
     properties.load(project.rootProject.file("local.properties").newDataInputStream())
     def nexusUser = "viewer"
     def nexusPass = "smartcash124"
