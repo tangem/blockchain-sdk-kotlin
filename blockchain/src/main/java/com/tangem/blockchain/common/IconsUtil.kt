@@ -22,6 +22,7 @@ class IconsUtil {
             return Uri.parse("$BASE_URL/$blockchainPath/assets/$tokenPath/logo.png")
         }
 
+        @Suppress("CyclomaticComplexMethod")
         private fun Blockchain.getPath(): String? = when (this) {
             Blockchain.Avalanche, Blockchain.AvalancheTestnet -> "avalanchec"
             Blockchain.Binance, Blockchain.BinanceTestnet -> "binance"

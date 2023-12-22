@@ -26,7 +26,7 @@ import org.komputing.khex.extensions.toHexString
 import java.math.BigDecimal
 import java.math.BigInteger
 
-@Suppress("MagicNumber")
+@Suppress("MagicNumber", "LargeClass", "LongParameterList")
 object EthereumUtils {
     private val tokenApproveSignature = "approve(address,uint256)".toByteArray().toKeccak().copyOf(4)
     private val setSpendLimitSignature = "setSpendLimit(address,uint256)".toByteArray().toKeccak().copyOf(4)
@@ -342,6 +342,7 @@ object EthereumUtils {
         return CompiledEthereumTransaction(transaction, hash)
     }
 
+    @Suppress("LongParameterList")
     fun buildProcessToSign(
         processorContractAddress: String,
         processorAddress: String,
