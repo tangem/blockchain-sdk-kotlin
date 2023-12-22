@@ -70,6 +70,7 @@ class TronJsonRpcNetworkProvider(override val network: TronNetwork) : TronNetwor
         }
     }
 
+    @Suppress("MagicNumber")
     override suspend fun getTokenBalance(
         tokenBalanceRequestData: TokenBalanceRequestData,
     ): Result<TronTriggerSmartContractResponse> {

@@ -164,15 +164,13 @@ internal class EthereumTransactionHistoryProvider(
                     ?.firstOrNull()
                     .equals(walletAddress, ignoreCase = true)
 
-            is TransactionHistoryRequest.FilterType.Contract ->
+            is TransactionHistoryRequest.FilterType.Contract -> {
+                val equalsAddress = { value: String? -> filterType.address.equals(value, true) }
+
                 transaction.tokenTransfers
-                    .filter {
-                        filterType.address.equals(it.contract, true) || filterType.address.equals(
-                            it.token,
-                            true
-                        )
-                    }
+                    .filter { equalsAddress(it.contract) || equalsAddress(it.token) }
                     .any { it.from == walletAddress }
+            }
         }
     }
 

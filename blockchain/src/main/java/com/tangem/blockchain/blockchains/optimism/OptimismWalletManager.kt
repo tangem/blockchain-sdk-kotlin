@@ -28,6 +28,7 @@ class OptimismWalletManager(
 
     private var lastLayer1FeeAmount: Amount? = null
 
+    @Suppress("MagicNumber")
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee.Choosable> {
         lastLayer1FeeAmount = null
 
@@ -113,6 +114,7 @@ class OptimismWalletManager(
         return super.sign(updatedTransactionData, signer)
     }
 
+    @Suppress("MagicNumber")
     override suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee.Choosable> {
         lastLayer1FeeAmount = null
 

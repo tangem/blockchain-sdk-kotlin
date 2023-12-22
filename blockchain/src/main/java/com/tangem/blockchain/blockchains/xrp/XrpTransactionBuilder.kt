@@ -14,6 +14,7 @@ import org.bitcoinj.core.ECKey
 import java.math.BigInteger
 import com.ripple.core.coretypes.Amount as XrpAmount
 
+@Suppress("MagicNumber")
 class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, publicKey: ByteArray) {
     var sequence: Long? = null
     var minReserve = 20.toBigDecimal()

@@ -94,6 +94,7 @@ open class BitcoinTransactionBuilder(
         return Result.Success(hashesToSign)
     }
 
+    @Suppress("MagicNumber")
     open fun buildToSend(signatures: ByteArray): ByteArray {
 //        witnessSize = 0
 
@@ -138,6 +139,7 @@ open class BitcoinTransactionBuilder(
 
     fun getTransactionHash() = transaction.txId.bytes
 
+    @Suppress("MagicNumber")
     fun getEstimateSize(transactionData: TransactionData): Result<Int> {
         return when (val buildTransactionResult = buildToSign(transactionData)) {
             is Result.Failure -> buildTransactionResult
@@ -166,6 +168,7 @@ open class BitcoinTransactionBuilder(
             )
     }
 
+    @Suppress("MagicNumber")
     open fun extractSignature(index: Int, signatures: ByteArray): TransactionSignature {
         val r = BigInteger(1, signatures.copyOfRange(index * 64, 32 + index * 64))
         val s = BigInteger(1, signatures.copyOfRange(32 + index * 64, 64 + index * 64))
@@ -190,6 +193,7 @@ open class BitcoinTransactionBuilder(
         return outputs
     }
 
+    @Suppress("MagicNumber")
     private fun findSpendingScript(scriptPubKey: Script): Script {
         val scriptHash = ScriptPattern.extractHashFromP2SH(scriptPubKey)
         return when (scriptHash.size) {

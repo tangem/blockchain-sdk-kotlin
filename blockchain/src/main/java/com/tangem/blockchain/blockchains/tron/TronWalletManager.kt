@@ -86,6 +86,7 @@ class TronWalletManager(
         }
     }
 
+    @Suppress("MagicNumber")
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val blockchain = wallet.blockchain
         return coroutineScope {

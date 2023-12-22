@@ -8,7 +8,9 @@ import com.tangem.common.extensions.toCompressedPublicKey
 import org.bitcoinj.core.Base58
 import org.spongycastle.jcajce.provider.digest.Blake2b
 
+@Suppress("MagicNumber")
 class TezosAddressService : AddressService() {
+
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         val publicKeyHash = Blake2b.Blake2b160().digest(walletPublicKey.toCompressedPublicKey())
 

@@ -87,6 +87,7 @@ object AnySerializer : KSerializer<Any> {
     }
 }
 
+@Suppress("MagicNumber")
 internal object EthEip712Util {
     private const val EIP712_DOMAIN_TYPE = "EIP712Domain"
     private val json = Json { serializersModule = serializersModuleOf(AnySerializer) }
@@ -424,12 +425,14 @@ internal object EthEip712Util {
 
     private fun readBool(rawBool: Any): BoolETHType = if (rawBool is Boolean) {
         BoolETHType.ofNativeKotlinType(rawBool)
-    } else if (rawBool.toString().equals("true", ignoreCase = true) || rawBool.toString()
-            .equals("false", ignoreCase = true)
-    ) {
-        BoolETHType.ofNativeKotlinType(rawBool.toString().equals("true", ignoreCase = true))
     } else {
-        throw java.lang.IllegalArgumentException("Value $rawBool is not a Boolean")
+        val isTrue = rawBool.toString().equals("true", ignoreCase = true)
+        val isFalse = rawBool.toString().equals("false", ignoreCase = true)
+        if (isTrue || isFalse) {
+            BoolETHType.ofNativeKotlinType(rawBool.toString().equals("true", ignoreCase = true))
+        } else {
+            throw java.lang.IllegalArgumentException("Value $rawBool is not a Boolean")
+        }
     }
 
     private fun BigDecimal.exactNumber() = try {
