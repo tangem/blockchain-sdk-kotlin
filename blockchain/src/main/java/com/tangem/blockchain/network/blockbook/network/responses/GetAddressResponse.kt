@@ -25,7 +25,7 @@ data class GetAddressResponse(
         @Json(name = "fees") val fees: String,
         @Json(name = "tokenTransfers") val tokenTransfers: List<TokenTransfer> = emptyList(),
         @Json(name = "ethereumSpecific") val ethereumSpecific: EthereumSpecific? = null,
-        //** TRX specific fields **//
+        // ** TRX specific fields **//
         @Json(name = "fromAddress") val fromAddress: String?,
         @Json(name = "toAddress") val toAddress: String?,
         @Json(name = "contract_type") val contractType: Int?,
@@ -83,7 +83,7 @@ data class GetAddressResponse(
 
             @JsonClass(generateAdapter = true)
             data class ParsedData(
-                /// First 4byte from data. E.g. `0x617ba037`
+                // / First 4byte from data. E.g. `0x617ba037`
                 @Json(name = "methodId") val methodId: String,
                 @Json(name = "name") val name: String,
             )

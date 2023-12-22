@@ -28,27 +28,27 @@ interface TezosApi {
 
 @JsonClass(generateAdapter = true)
 data class TezosForgeBody(
-        val branch: String,
-        val contents: List<TezosOperationContent>
+    val branch: String,
+    val contents: List<TezosOperationContent>,
 )
 
 @JsonClass(generateAdapter = true)
 data class TezosOperationContent(
-        val kind: String,
-        val source: String,
-        val fee: String,
-        val counter: String,
-        val gas_limit: String,
-        val storage_limit: String,
-        val public_key: String? = null,
-        val destination: String? = null,
-        val amount: String? = null
+    val kind: String,
+    val source: String,
+    val fee: String,
+    val counter: String,
+    val gas_limit: String,
+    val storage_limit: String,
+    val public_key: String? = null,
+    val destination: String? = null,
+    val amount: String? = null,
 )
 
 @JsonClass(generateAdapter = true)
 data class TezosPreapplyBody(
-        val protocol: String,
-        val branch: String,
-        val contents: List<TezosOperationContent>,
-        val signature: String
+    val protocol: String,
+    val branch: String,
+    val contents: List<TezosOperationContent>,
+    val signature: String,
 )
