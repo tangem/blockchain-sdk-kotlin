@@ -87,6 +87,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
         )
     }
 
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     private fun getAssembly(blockchain: Blockchain): WalletManagerAssembly<WalletManager> {
         return when (blockchain) {
             // region BTC-like blockchains
