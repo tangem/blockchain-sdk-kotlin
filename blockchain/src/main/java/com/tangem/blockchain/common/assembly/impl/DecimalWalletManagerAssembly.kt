@@ -19,7 +19,7 @@ internal object DecimalWalletManagerAssembly : WalletManagerAssembly<DecimalWall
                 ),
                 networkProvider = DecimalNetworkService(
                     jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(input.config),
-                )
+                ),
             )
         }
     }

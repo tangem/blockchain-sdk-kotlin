@@ -12,5 +12,4 @@ sealed class Fee(open val amount: Amount) {
     ) : Fee(amount)
 
     data class Common(override val amount: Amount) : Fee(amount)
-
 }

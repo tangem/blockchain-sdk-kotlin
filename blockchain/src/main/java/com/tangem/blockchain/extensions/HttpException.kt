@@ -13,5 +13,9 @@ fun HttpException.isApiKeyNeeded(currentApiKey: String?, apiKey: String?): Boole
 
 private val apiLimitErrorCodes: List<Int>
     get() = listOf(
-        402, 429, 430, 434, 503 //https://blockchair.com/api/docs#link_M05
+        402,
+        429,
+        430,
+        434,
+        503, // https://blockchair.com/api/docs#link_M05
     )

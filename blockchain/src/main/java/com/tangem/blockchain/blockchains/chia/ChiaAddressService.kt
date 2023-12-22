@@ -22,7 +22,7 @@ class ChiaAddressService(blockchain: Blockchain) : AddressService() {
 
         return Bech32.encode(
             humanReadablePart = humanReadablePart,
-            dataIn = puzzleHash.toUByteArray()
+            dataIn = puzzleHash.toUByteArray(),
         )
     }
 

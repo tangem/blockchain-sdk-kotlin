@@ -12,23 +12,17 @@ class DummySigner : TransactionSigner {
     val keyPair: KeyPair = Secp256k1.generateKeyPair()
 
     val publicKey = Wallet.PublicKey(
-        keyPair.publicKey.toCompressedPublicKey(), null
+        keyPair.publicKey.toCompressedPublicKey(),
+        null,
     )
 
-
-    override suspend fun sign(
-        hashes: List<ByteArray>,
-        publicKey: Wallet.PublicKey
-    ): CompletionResult<List<ByteArray>> {
+    override suspend fun sign(hashes: List<ByteArray>, publicKey: Wallet.PublicKey): CompletionResult<List<ByteArray>> {
         return CompletionResult.Success(
-            hashes.map { (sign(it, publicKey) as CompletionResult.Success).data }
+            hashes.map { (sign(it, publicKey) as CompletionResult.Success).data },
         )
     }
 
-    override suspend fun sign(
-        hash: ByteArray,
-        publicKey: Wallet.PublicKey
-    ): CompletionResult<ByteArray> {
+    override suspend fun sign(hash: ByteArray, publicKey: Wallet.PublicKey): CompletionResult<ByteArray> {
         return CompletionResult.Success(hash.sign(keyPair.privateKey))
     }
 }

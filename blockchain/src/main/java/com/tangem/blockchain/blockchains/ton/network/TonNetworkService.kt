@@ -28,7 +28,7 @@ class TonNetworkService(
                 TonWalletInfo(
                     balance = addressInformation.balance.movePointLeft(blockchain.decimals()),
                     sequenceNumber = addressInformation.seqno ?: 0,
-                )
+                ),
             )
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
@@ -44,7 +44,7 @@ class TonNetworkService(
                 Amount(
                     value = totalFee.setScale(2, RoundingMode.UP),
                     blockchain = blockchain,
-                )
+                ),
             )
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())

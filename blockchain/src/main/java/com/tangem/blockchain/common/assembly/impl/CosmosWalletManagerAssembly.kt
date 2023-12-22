@@ -32,8 +32,7 @@ internal object CosmosWalletManagerAssembly : WalletManagerAssembly<CosmosWallet
                 wallet = input.wallet,
                 networkProviders = providers,
                 cosmosChain = CosmosChain.Cosmos(testnet),
-                )
+            )
         }
     }
-
 }

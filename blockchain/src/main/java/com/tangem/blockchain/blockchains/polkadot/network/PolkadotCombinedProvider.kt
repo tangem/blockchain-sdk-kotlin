@@ -54,7 +54,7 @@ class PolkadotCombinedProvider(
         try {
             val fee = polkadotProvider.getFee(
                 transaction = builtTransaction,
-                decimals = decimals
+                decimals = decimals,
             )
             Result.Success(fee)
         } catch (ex: Exception) {

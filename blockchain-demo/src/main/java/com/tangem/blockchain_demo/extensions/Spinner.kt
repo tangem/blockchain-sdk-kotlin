@@ -9,12 +9,10 @@ import android.widget.Spinner
 [REDACTED_AUTHOR]
  */
 fun <T> Spinner.onItemSelected(callback: (T, Int) -> Unit) {
-
     onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
         var pos: Int = 0
 
         override fun onNothingSelected(parent: AdapterView<*>?) {
-
         }
 
         override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {

@@ -5,7 +5,7 @@ import com.tangem.blockchain.extensions.Result
 import io.emeraldpay.polkaj.tx.ExtrinsicContext
 import java.math.BigDecimal
 
-interface PolkadotNetworkProvider: NetworkProvider {
+interface PolkadotNetworkProvider : NetworkProvider {
     suspend fun getBalance(address: String): Result<BigDecimal>
 
     suspend fun getFee(builtTransaction: ByteArray): Result<BigDecimal>
