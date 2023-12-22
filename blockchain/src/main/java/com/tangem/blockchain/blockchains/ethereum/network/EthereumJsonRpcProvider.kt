@@ -41,6 +41,7 @@ class EthereumJsonRpcProvider(
         return createEthereumBody(EthereumMethod.CALL, data, EthBlockParam.LATEST.value).post()
     }
 
+    @Suppress("LongParameterList")
     suspend fun callProcess(
         contractAddress: String,
         amount: BigDecimal,
@@ -94,6 +95,7 @@ class EthereumJsonRpcProvider(
             },
         )
 
+    @Suppress("LongParameterList")
     private fun createProcessCallObject(
         contractAddress: String,
         amount: BigDecimal,
