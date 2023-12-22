@@ -178,7 +178,8 @@ open class EthereumNetworkService(
         } catch (exception: Exception) {
             if (exception.message?.contains("gas required exceeds allowance", true) == true) {
                 Result.Failure(
-                    Exception("Not enough funds for the transaction. Please top up your account.").toBlockchainSdkError(),
+                    Exception("Not enough funds for the transaction. Please top up your account.")
+                        .toBlockchainSdkError(),
                 )
             } else {
                 Result.Failure(exception.toBlockchainSdkError())
@@ -209,25 +210,8 @@ open class EthereumNetworkService(
                 ?: throw this.data.error?.toException()?.toBlockchainSdkError()
                     ?: BlockchainSdkError.CustomError("Unknown response format")
         }
-
         is Result.Failure -> {
-            throw (this.error as? BlockchainSdkError)
-                ?: BlockchainSdkError.CustomError("Unknown error format")
+            throw this.error as? BlockchainSdkError ?: BlockchainSdkError.CustomError("Unknown error format")
         }
-    }
-
-    private fun Result<EthereumResponse>.checkBodyForErrors(): Result<String> = when (this) {
-        is Result.Success -> {
-            if (this.data.result != null) {
-                Result.Success(this.data.result)
-            } else {
-                Result.Failure(
-                    this.data.error?.toException()?.toBlockchainSdkError()
-                        ?: BlockchainSdkError.CustomError("Unknown response format"),
-                )
-            }
-        }
-
-        is Result.Failure -> this
     }
 }

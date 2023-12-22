@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+@Suppress("IteratorNotThrowingNoSuchElementException")
 internal class CycleListIterator<E>(private val elements: List<E>) : Iterator<E> {
 
     private var currentIndex = -1
