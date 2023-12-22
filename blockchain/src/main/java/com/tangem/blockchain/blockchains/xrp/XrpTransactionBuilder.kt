@@ -37,10 +37,11 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
             xAddressDestinationTag
         }
 
-        if (!networkProvider.checkIsAccountCreated(destinationAddress)
-            && transactionData.amount.value!! < minReserve) {
+        if (!networkProvider.checkIsAccountCreated(destinationAddress) &&
+            transactionData.amount.value!! < minReserve
+        ) {
             return Result.Failure(
-                BlockchainSdkError.CreateAccountUnderfunded(blockchain, Amount(minReserve, blockchain))
+                BlockchainSdkError.CreateAccountUnderfunded(blockchain, Amount(minReserve, blockchain)),
             )
         }
 

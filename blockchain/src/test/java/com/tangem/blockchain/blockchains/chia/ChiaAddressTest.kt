@@ -1,15 +1,9 @@
 package com.tangem.blockchain.blockchains.chia
 
 import com.google.common.truth.Truth
-import com.tangem.blockchain.blockchains.chia.clvm.CreateCoinCondition
-import com.tangem.blockchain.blockchains.chia.clvm.Program
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
-import com.tangem.common.extensions.toByteArray
-import com.tangem.common.extensions.toHexString
 import org.junit.Test
-import java.math.BigInteger
 
 class ChiaAddressTest {
 

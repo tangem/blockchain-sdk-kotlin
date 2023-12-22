@@ -6,7 +6,6 @@ import org.junit.Test
 
 internal class DerivationStyleTests {
 
-
     @Test
     fun testDerivationStyles() {
         val legacy = DerivationStyle.LEGACY
@@ -36,5 +35,4 @@ internal class DerivationStyleTests {
         Truth.assertThat(xrp.derivationPath(new)!!.rawPath)
             .isEqualTo("m/44'/144'/0'/0/0")
     }
-
 }

@@ -11,7 +11,6 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import java.math.BigDecimal
 
 class TelosWalletManager(
     wallet: Wallet,
@@ -19,11 +18,7 @@ class TelosWalletManager(
     networkProvider: EthereumNetworkProvider,
 ) : EthereumWalletManager(wallet, transactionBuilder, networkProvider) {
 
-    override suspend fun getFeeInternal(
-        amount: Amount,
-        destination: String,
-        data: String?,
-    ): Result<TransactionFee> {
+    override suspend fun getFeeInternal(amount: Amount, destination: String, data: String?): Result<TransactionFee> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async {
@@ -45,7 +40,7 @@ class TelosWalletManager(
                 val fee = feesCalculator.calculateSingleFee(
                     amountParams = getAmountParams(),
                     gasLimit = gLimit,
-                    gasPrice = gPrice
+                    gasPrice = gPrice,
                 )
 
                 Result.Success(fee)

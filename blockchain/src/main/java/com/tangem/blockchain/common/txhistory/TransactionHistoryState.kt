@@ -12,5 +12,4 @@ sealed interface TransactionHistoryState {
     }
 
     object NotImplemented : TransactionHistoryState
-
 }

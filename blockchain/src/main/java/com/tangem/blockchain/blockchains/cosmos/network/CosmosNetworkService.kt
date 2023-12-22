@@ -22,7 +22,11 @@ class CosmosNetworkService(
 
     val host: String get() = multiJsonRpcProvider.currentProvider.baseUrl
 
-    suspend fun getAccountInfo(address: String, tokens: Set<Token>, unconfirmedTxsHashes: List<String>): Result<CosmosAccountInfo> {
+    suspend fun getAccountInfo(
+        address: String,
+        tokens: Set<Token>,
+        unconfirmedTxsHashes: List<String>,
+    ): Result<CosmosAccountInfo> {
         return coroutineScope {
             val accountResult = multiJsonRpcProvider.performRequest(CosmosRestProvider::accounts, address)
             val balancesResult = multiJsonRpcProvider.performRequest(CosmosRestProvider::balances, address)
@@ -58,7 +62,7 @@ class CosmosNetworkService(
                     amount = amount,
                     tokenBalances = tokenAmounts,
                     confirmedTransactionHashes = confirmedTxHashes,
-                )
+                ),
             )
         }
     }
@@ -74,8 +78,11 @@ class CosmosNetworkService(
             val txResult = multiJsonRpcProvider.performRequest(CosmosRestProvider::txs, requestBody)
             val txInfo = txResult.successOr { return it }.txInfo
 
-            if (txInfo.code == 0) Result.Success(txInfo.txhash)
-            else Result.Failure(BlockchainSdkError.FailedToSendException)
+            if (txInfo.code == 0) {
+                Result.Success(txInfo.txhash)
+            } else {
+                Result.Failure(BlockchainSdkError.FailedToSendException)
+            }
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }

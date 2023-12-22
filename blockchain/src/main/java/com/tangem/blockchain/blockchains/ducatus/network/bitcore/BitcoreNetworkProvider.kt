@@ -36,7 +36,7 @@ abstract class BitcoreNetworkProvider(final override val baseUrl: String) : Bitc
                         amount = it.amount!!.toBigDecimal().movePointLeft(decimals),
                         outputIndex = it.index!!.toLong(),
                         transactionHash = it.transactionHash!!.hexToBytes(),
-                        outputScript = it.script!!.hexToBytes()
+                        outputScript = it.script!!.hexToBytes(),
                     )
                 }
 
@@ -46,8 +46,8 @@ abstract class BitcoreNetworkProvider(final override val baseUrl: String) : Bitc
                             .movePointLeft(decimals), // only confirmed balance is returned right
                         unspentOutputs = unspentOutputs,
                         recentTransactions = emptyList(),
-                        hasUnconfirmed = balanceData.unconfirmed!! != 0L
-                    )
+                        hasUnconfirmed = balanceData.unconfirmed!! != 0L,
+                    ),
                 )
             }
         } catch (exception: Exception) {

@@ -10,7 +10,6 @@ import org.kethereum.model.Transaction
 import org.kethereum.model.createEmptyTransaction
 import java.math.BigInteger
 
-
 /**
  * Generated from contract ABI by https://github.com/komputing/kethabi
  */
@@ -46,7 +45,7 @@ internal val FourByteSetScalar: ByteArray = byteArrayOf(112, 70, 85, -105)
 internal val FourByteTransferOwnership: ByteArray = byteArrayOf(-14, -3, -29, -117)
 
 internal class optimism_gas_l1TransactionGenerator(
-    address: Address
+    address: Address,
 ) {
     private val tx: Transaction = createEmptyTransaction().apply { to = address }
 
@@ -56,7 +55,7 @@ internal class optimism_gas_l1TransactionGenerator(
      * Signature: decimals()
      * 4Byte: 313ce567
      */
-    public fun decimals(): Transaction = decimalsETHTyped()
+    fun decimals(): Transaction = decimalsETHTyped()
 
     internal fun gasPriceETHTyped() = tx.copy(input = FourByteGasPrice + encodeTypes())
 
@@ -64,26 +63,30 @@ internal class optimism_gas_l1TransactionGenerator(
      * Signature: gasPrice()
      * 4Byte: fe173b97
      */
-    public fun gasPrice(): Transaction = gasPriceETHTyped()
+    fun gasPrice(): Transaction = gasPriceETHTyped()
 
-    internal fun getL1FeeETHTyped(_data: DynamicSizedBytesETHType) = tx.copy(input =
-    FourByteGetL1Fee + encodeTypes(_data))
+    internal fun getL1FeeETHTyped(_data: DynamicSizedBytesETHType) = tx.copy(
+        input =
+        FourByteGetL1Fee + encodeTypes(_data),
+    )
 
     /**
      * Signature: getL1Fee(bytes)
      * 4Byte: 49948e0e
      */
-    public fun getL1Fee(_data: ByteArray): Transaction =
+    fun getL1Fee(_data: ByteArray): Transaction =
         getL1FeeETHTyped(DynamicSizedBytesETHType.ofNativeKotlinType(_data))
 
-    internal fun getL1GasUsedETHTyped(_data: DynamicSizedBytesETHType) = tx.copy(input =
-    FourByteGetL1GasUsed + encodeTypes(_data))
+    internal fun getL1GasUsedETHTyped(_data: DynamicSizedBytesETHType) = tx.copy(
+        input =
+        FourByteGetL1GasUsed + encodeTypes(_data),
+    )
 
     /**
      * Signature: getL1GasUsed(bytes)
      * 4Byte: de26c4a1
      */
-    public fun getL1GasUsed(_data: ByteArray): Transaction =
+    fun getL1GasUsed(_data: ByteArray): Transaction =
         getL1GasUsedETHTyped(DynamicSizedBytesETHType.ofNativeKotlinType(_data))
 
     internal fun l1BaseFeeETHTyped() = tx.copy(input = FourByteL1BaseFee + encodeTypes())
@@ -92,7 +95,7 @@ internal class optimism_gas_l1TransactionGenerator(
      * Signature: l1BaseFee()
      * 4Byte: 519b4bd3
      */
-    public fun l1BaseFee(): Transaction = l1BaseFeeETHTyped()
+    fun l1BaseFee(): Transaction = l1BaseFeeETHTyped()
 
     internal fun overheadETHTyped() = tx.copy(input = FourByteOverhead + encodeTypes())
 
@@ -100,7 +103,7 @@ internal class optimism_gas_l1TransactionGenerator(
      * Signature: overhead()
      * 4Byte: 0c18c162
      */
-    public fun overhead(): Transaction = overheadETHTyped()
+    fun overhead(): Transaction = overheadETHTyped()
 
     internal fun ownerETHTyped() = tx.copy(input = FourByteOwner + encodeTypes())
 
@@ -108,16 +111,18 @@ internal class optimism_gas_l1TransactionGenerator(
      * Signature: owner()
      * 4Byte: 8da5cb5b
      */
-    public fun owner(): Transaction = ownerETHTyped()
+    fun owner(): Transaction = ownerETHTyped()
 
-    internal fun renounceOwnershipETHTyped() = tx.copy(input = FourByteRenounceOwnership +
-            encodeTypes())
+    internal fun renounceOwnershipETHTyped() = tx.copy(
+        input = FourByteRenounceOwnership +
+            encodeTypes(),
+    )
 
     /**
      * Signature: renounceOwnership()
      * 4Byte: 715018a6
      */
-    public fun renounceOwnership(): Transaction = renounceOwnershipETHTyped()
+    fun renounceOwnership(): Transaction = renounceOwnershipETHTyped()
 
     internal fun scalarETHTyped() = tx.copy(input = FourByteScalar + encodeTypes())
 
@@ -125,73 +130,85 @@ internal class optimism_gas_l1TransactionGenerator(
      * Signature: scalar()
      * 4Byte: f45e65d8
      */
-    public fun scalar(): Transaction = scalarETHTyped()
+    fun scalar(): Transaction = scalarETHTyped()
 
-    internal fun setDecimalsETHTyped(_decimals: UIntETHType) = tx.copy(input = FourByteSetDecimals +
-            encodeTypes(_decimals))
+    internal fun setDecimalsETHTyped(_decimals: UIntETHType) = tx.copy(
+        input = FourByteSetDecimals +
+            encodeTypes(_decimals),
+    )
 
     /**
      * Signature: setDecimals(uint256)
      * 4Byte: 8c8885c8
      */
-    public fun setDecimals(_decimals: BigInteger): Transaction =
-        setDecimalsETHTyped(UIntETHType.ofNativeKotlinType(_decimals,BitsTypeParams(bits=256)))
+    fun setDecimals(_decimals: BigInteger): Transaction =
+        setDecimalsETHTyped(UIntETHType.ofNativeKotlinType(_decimals, BitsTypeParams(bits = 256)))
 
-    internal fun setGasPriceETHTyped(_gasPrice: UIntETHType) = tx.copy(input = FourByteSetGasPrice +
-            encodeTypes(_gasPrice))
+    internal fun setGasPriceETHTyped(_gasPrice: UIntETHType) = tx.copy(
+        input = FourByteSetGasPrice +
+            encodeTypes(_gasPrice),
+    )
 
     /**
      * Signature: setGasPrice(uint256)
      * 4Byte: bf1fe420
      */
-    public fun setGasPrice(_gasPrice: BigInteger): Transaction =
-        setGasPriceETHTyped(UIntETHType.ofNativeKotlinType(_gasPrice,BitsTypeParams(bits=256)))
+    fun setGasPrice(_gasPrice: BigInteger): Transaction =
+        setGasPriceETHTyped(UIntETHType.ofNativeKotlinType(_gasPrice, BitsTypeParams(bits = 256)))
 
-    internal fun setL1BaseFeeETHTyped(_baseFee: UIntETHType) = tx.copy(input = FourByteSetL1BaseFee +
-            encodeTypes(_baseFee))
+    internal fun setL1BaseFeeETHTyped(_baseFee: UIntETHType) = tx.copy(
+        input = FourByteSetL1BaseFee +
+            encodeTypes(_baseFee),
+    )
 
     /**
      * Signature: setL1BaseFee(uint256)
      * 4Byte: bede39b5
      */
-    public fun setL1BaseFee(_baseFee: BigInteger): Transaction =
-        setL1BaseFeeETHTyped(UIntETHType.ofNativeKotlinType(_baseFee,BitsTypeParams(bits=256)))
+    fun setL1BaseFee(_baseFee: BigInteger): Transaction =
+        setL1BaseFeeETHTyped(UIntETHType.ofNativeKotlinType(_baseFee, BitsTypeParams(bits = 256)))
 
-    internal fun setOverheadETHTyped(_overhead: UIntETHType) = tx.copy(input = FourByteSetOverhead +
-            encodeTypes(_overhead))
+    internal fun setOverheadETHTyped(_overhead: UIntETHType) = tx.copy(
+        input = FourByteSetOverhead +
+            encodeTypes(_overhead),
+    )
 
     /**
      * Signature: setOverhead(uint256)
      * 4Byte: 3577afc5
      */
-    public fun setOverhead(_overhead: BigInteger): Transaction =
-        setOverheadETHTyped(UIntETHType.ofNativeKotlinType(_overhead,BitsTypeParams(bits=256)))
+    fun setOverhead(_overhead: BigInteger): Transaction =
+        setOverheadETHTyped(UIntETHType.ofNativeKotlinType(_overhead, BitsTypeParams(bits = 256)))
 
-    internal fun setScalarETHTyped(_scalar: UIntETHType) = tx.copy(input = FourByteSetScalar +
-            encodeTypes(_scalar))
+    internal fun setScalarETHTyped(_scalar: UIntETHType) = tx.copy(
+        input = FourByteSetScalar +
+            encodeTypes(_scalar),
+    )
 
     /**
      * Signature: setScalar(uint256)
      * 4Byte: 70465597
      */
-    public fun setScalar(_scalar: BigInteger): Transaction =
-        setScalarETHTyped(UIntETHType.ofNativeKotlinType(_scalar,BitsTypeParams(bits=256)))
+    fun setScalar(_scalar: BigInteger): Transaction =
+        setScalarETHTyped(UIntETHType.ofNativeKotlinType(_scalar, BitsTypeParams(bits = 256)))
 
-    internal fun transferOwnershipETHTyped(newOwner: AddressETHType) = tx.copy(input =
-    FourByteTransferOwnership + encodeTypes(newOwner))
+    internal fun transferOwnershipETHTyped(newOwner: AddressETHType) = tx.copy(
+        input =
+        FourByteTransferOwnership + encodeTypes(newOwner),
+    )
 
     /**
      * Signature: transferOwnership(address)
      * 4Byte: f2fde38b
      */
-    public fun transferOwnership(newOwner: Address): Transaction =
+    fun transferOwnership(newOwner: Address): Transaction =
         transferOwnershipETHTyped(AddressETHType.ofNativeKotlinType(newOwner))
 }
 
-//public class optimism_gas_l1RPCConnector(
+// public class optimism_gas_l1RPCConnector(
 //    private val address: Address,
 //    private val rpc: EthereumRPC
-//) {
+// ) {
 //    private val txGenerator: optimism_gas_l1TransactionGenerator =
 //        optimism_gas_l1TransactionGenerator(address)
 //
@@ -391,51 +408,38 @@ internal class optimism_gas_l1TransactionGenerator(
 //    public fun transferOwnership(newOwner: Address, blockSpec: String = "latest"): Unit {
 //        transferOwnershipETHTyped(AddressETHType.ofNativeKotlinType(newOwner),blockSpec)
 //    }
-//}
+// }
 
-internal class optimism_gas_l1TransactionDecoder() {
-    public fun isDecimals(tx: Transaction): Boolean =
-        tx.input.sliceArray(0..3).contentEquals(FourByteDecimals)
+internal class optimism_gas_l1TransactionDecoder {
+    fun isDecimals(tx: Transaction): Boolean = tx.input.sliceArray(0..3).contentEquals(FourByteDecimals)
 
-    public fun isGasPrice(tx: Transaction): Boolean =
-        tx.input.sliceArray(0..3).contentEquals(FourByteGasPrice)
+    fun isGasPrice(tx: Transaction): Boolean = tx.input.sliceArray(0..3).contentEquals(FourByteGasPrice)
 
-    public fun isGetL1Fee(tx: Transaction): Boolean =
-        tx.input.sliceArray(0..3).contentEquals(FourByteGetL1Fee)
+    fun isGetL1Fee(tx: Transaction): Boolean = tx.input.sliceArray(0..3).contentEquals(FourByteGetL1Fee)
 
-    public fun isGetL1GasUsed(tx: Transaction): Boolean =
-        tx.input.sliceArray(0..3).contentEquals(FourByteGetL1GasUsed)
+    fun isGetL1GasUsed(tx: Transaction): Boolean = tx.input.sliceArray(0..3).contentEquals(FourByteGetL1GasUsed)
 
-    public fun isL1BaseFee(tx: Transaction): Boolean =
-        tx.input.sliceArray(0..3).contentEquals(FourByteL1BaseFee)
+    fun isL1BaseFee(tx: Transaction): Boolean = tx.input.sliceArray(0..3).contentEquals(FourByteL1BaseFee)
 
-    public fun isOverhead(tx: Transaction): Boolean =
-        tx.input.sliceArray(0..3).contentEquals(FourByteOverhead)
+    fun isOverhead(tx: Transaction): Boolean = tx.input.sliceArray(0..3).contentEquals(FourByteOverhead)
 
-    public fun isOwner(tx: Transaction): Boolean =
-        tx.input.sliceArray(0..3).contentEquals(FourByteOwner)
+    fun isOwner(tx: Transaction): Boolean = tx.input.sliceArray(0..3).contentEquals(FourByteOwner)
 
-    public fun isRenounceOwnership(tx: Transaction): Boolean =
+    fun isRenounceOwnership(tx: Transaction): Boolean =
         tx.input.sliceArray(0..3).contentEquals(FourByteRenounceOwnership)
 
-    public fun isScalar(tx: Transaction): Boolean =
-        tx.input.sliceArray(0..3).contentEquals(FourByteScalar)
+    fun isScalar(tx: Transaction): Boolean = tx.input.sliceArray(0..3).contentEquals(FourByteScalar)
 
-    public fun isSetDecimals(tx: Transaction): Boolean =
-        tx.input.sliceArray(0..3).contentEquals(FourByteSetDecimals)
+    fun isSetDecimals(tx: Transaction): Boolean = tx.input.sliceArray(0..3).contentEquals(FourByteSetDecimals)
 
-    public fun isSetGasPrice(tx: Transaction): Boolean =
-        tx.input.sliceArray(0..3).contentEquals(FourByteSetGasPrice)
+    fun isSetGasPrice(tx: Transaction): Boolean = tx.input.sliceArray(0..3).contentEquals(FourByteSetGasPrice)
 
-    public fun isSetL1BaseFee(tx: Transaction): Boolean =
-        tx.input.sliceArray(0..3).contentEquals(FourByteSetL1BaseFee)
+    fun isSetL1BaseFee(tx: Transaction): Boolean = tx.input.sliceArray(0..3).contentEquals(FourByteSetL1BaseFee)
 
-    public fun isSetOverhead(tx: Transaction): Boolean =
-        tx.input.sliceArray(0..3).contentEquals(FourByteSetOverhead)
+    fun isSetOverhead(tx: Transaction): Boolean = tx.input.sliceArray(0..3).contentEquals(FourByteSetOverhead)
 
-    public fun isSetScalar(tx: Transaction): Boolean =
-        tx.input.sliceArray(0..3).contentEquals(FourByteSetScalar)
+    fun isSetScalar(tx: Transaction): Boolean = tx.input.sliceArray(0..3).contentEquals(FourByteSetScalar)
 
-    public fun isTransferOwnership(tx: Transaction): Boolean =
+    fun isTransferOwnership(tx: Transaction): Boolean =
         tx.input.sliceArray(0..3).contentEquals(FourByteTransferOwnership)
 }

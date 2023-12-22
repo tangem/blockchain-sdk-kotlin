@@ -9,7 +9,10 @@ import com.tangem.common.KeyPair
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.guard
 import com.tangem.crypto.CryptoUtils
-import wallet.core.jni.*
+import wallet.core.jni.Base58
+import wallet.core.jni.CoinType
+import wallet.core.jni.DataVector
+import wallet.core.jni.TransactionCompiler
 import wallet.core.jni.proto.Common
 import wallet.core.jni.proto.NEAR
 import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
@@ -25,11 +28,7 @@ class NearTransactionBuilder(
     private val keyPair: KeyPair by lazy { generateKeyPair() }
 
     // https://github.com/trustwallet/wallet-core/blob/master/android/app/src/androidTest/java/com/trustwallet/core/app/blockchains/near/TestNEARSigner.kt
-    fun buildForSign(
-        transaction: TransactionData,
-        nonce: Long,
-        blockHash: String,
-    ): ByteArray {
+    fun buildForSign(transaction: TransactionData, nonce: Long, blockHash: String): ByteArray {
         val input = createSigningInput(transaction, nonce, blockHash)
         val txInputData = input.toByteArray()
 
@@ -43,12 +42,7 @@ class NearTransactionBuilder(
         return preSigningOutput.dataHash.toByteArray()
     }
 
-    fun buildForSend(
-        transaction: TransactionData,
-        signature: ByteArray,
-        nonce: Long,
-        blockHash: String,
-    ): ByteArray {
+    fun buildForSend(transaction: TransactionData, signature: ByteArray, nonce: Long, blockHash: String): ByteArray {
         val input = createSigningInput(transaction, nonce, blockHash)
         val txInputData = input.toByteArray()
 
@@ -59,7 +53,10 @@ class NearTransactionBuilder(
         publicKeys.add(publicKey.blockchainKey)
 
         val compileWithSignatures = TransactionCompiler.compileWithSignatures(
-            coinType, txInputData, signatures, publicKeys
+            coinType,
+            txInputData,
+            signatures,
+            publicKeys,
         )
 
         val output = NEAR.SigningOutput.parseFrom(compileWithSignatures)
@@ -70,11 +67,7 @@ class NearTransactionBuilder(
         return output.signedTransaction.toByteArray()
     }
 
-    private fun createSigningInput(
-        transaction: TransactionData,
-        nonce: Long,
-        blockHash: String,
-    ): NEAR.SigningInput {
+    private fun createSigningInput(transaction: TransactionData, nonce: Long, blockHash: String): NEAR.SigningInput {
         val sendAmountValue = transaction.amount.value.guard {
             throw BlockchainSdkError.FailedToBuildTx
         }
