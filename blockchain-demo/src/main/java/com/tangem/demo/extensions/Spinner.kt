@@ -1,4 +1,4 @@
-package com.tangem.blockchain_demo.extensions
+package com.tangem.demo.extensions
 
 import android.view.View
 import android.widget.AdapterView
