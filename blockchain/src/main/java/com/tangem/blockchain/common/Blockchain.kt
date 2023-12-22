@@ -103,6 +103,7 @@ enum class Blockchain(
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
 
+    @Suppress("MagicNumber")
     fun decimals(): Int = when (this) {
         Unknown -> 0
 

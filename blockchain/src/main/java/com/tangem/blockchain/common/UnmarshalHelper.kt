@@ -9,6 +9,8 @@ import org.kethereum.model.SignatureData
 import java.math.BigInteger
 
 internal class UnmarshalHelper {
+
+    @Suppress("MagicNumber")
     fun unmarshalSignature(signature: ByteArray, hash: ByteArray, publicKey: Wallet.PublicKey): ByteArray {
         val r = BigInteger(1, signature.copyOfRange(0, 32))
         val s = BigInteger(1, signature.copyOfRange(32, 64))

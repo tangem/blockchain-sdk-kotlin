@@ -26,6 +26,7 @@ import org.komputing.khex.extensions.toHexString
 import java.math.BigDecimal
 import java.math.BigInteger
 
+@Suppress("MagicNumber")
 class EthereumUtils {
     companion object {
         private val tokenApproveSignature = "approve(address,uint256)".toByteArray().toKeccak().copyOf(4)

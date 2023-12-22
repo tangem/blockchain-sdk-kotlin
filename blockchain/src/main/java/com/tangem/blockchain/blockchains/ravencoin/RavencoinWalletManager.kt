@@ -28,10 +28,8 @@ class RavencoinWalletManager(
             }
         }
         unconfirmedTransactions.forEach { unconfirmed ->
-            if (wallet.recentTransactions.find { recent ->
-                    recent.hash.equals(unconfirmed.hash, true)
-                } == null
-            ) {
+            val recentTx = wallet.recentTransactions.find { recent -> recent.hash.equals(unconfirmed.hash, true) }
+            if (recentTx == null) {
                 wallet.recentTransactions.add(unconfirmed.toTransactionData())
             }
         }

@@ -126,6 +126,7 @@ class TronNetworkService(
         }
     }
 
+    @Suppress("MagicNumber")
     private suspend fun getTokenBalance(address: String, token: Token): Result<Pair<Token, BigDecimal>> {
         val result = multiProvider.performRequest(
             TronJsonRpcNetworkProvider::getTokenBalance,
