@@ -175,6 +175,7 @@ class CosmosTestsFromTrustWallet {
         )
     }
 
+    @Suppress("LongMethod")
     @Test
     fun testSigningJSON() {
         val json = """
