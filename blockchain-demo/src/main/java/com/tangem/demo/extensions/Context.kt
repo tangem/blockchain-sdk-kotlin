@@ -1,4 +1,4 @@
-package com.tangem.blockchain_demo.extensions
+package com.tangem.demo.extensions
 
 import android.content.ClipData
 import android.content.ClipboardManager
