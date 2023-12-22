@@ -18,6 +18,7 @@ import wallet.core.jni.PublicKeyType
 
 class AnySignerWrapper {
 
+    @Suppress("LongParameterList")
     fun <T : MessageLite> sign(
         walletPublicKey: Wallet.PublicKey,
         publicKeyType: PublicKeyType,
@@ -46,6 +47,7 @@ class AnySignerWrapper {
         }
     }
 
+    @Suppress("LongParameterList")
     private fun <T : MessageLite> signWithCard(
         walletPublicKey: Wallet.PublicKey,
         publicKeyType: PublicKeyType,
