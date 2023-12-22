@@ -1,15 +1,15 @@
-package com.tangem.blockchain_demo.extensions
+package com.tangem.demo.extensions
 
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.derivation.DerivationStyle
-import com.tangem.blockchain_demo.model.BlockchainNetwork
-import com.tangem.blockchain_demo.model.ScanResponse
 import com.tangem.common.card.Card
 import com.tangem.common.card.CardWallet
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toMapKey
 import com.tangem.crypto.hdWallet.DerivationPath
+import com.tangem.demo.model.BlockchainNetwork
+import com.tangem.demo.model.ScanResponse
 
 /**
 [REDACTED_AUTHOR]
