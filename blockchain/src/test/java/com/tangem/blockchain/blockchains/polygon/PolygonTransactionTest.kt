@@ -3,11 +3,7 @@ package com.tangem.blockchain.blockchains.polygon
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.Token
-import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
@@ -39,7 +35,7 @@ class PolygonTransactionTest {
             sourceAddress = walletAddress,
             destinationAddress = destinationAddress,
             amount = amountToSend,
-            fee = fee
+            fee = fee,
         )
 
         val expectedHashToSign = "9786CAD43696FBFF7024A2707B0A060F54F233708F0A4B4003A42D20A536B39D"
@@ -71,7 +67,7 @@ class PolygonTransactionTest {
         val token = Token(
             symbol = "USDC",
             contractAddress = contractAddress,
-            decimals = 6
+            decimals = 6,
         )
 
         val walletAddress = EthereumAddressService().makeAddress(walletPublicKey)

@@ -3,15 +3,7 @@ package com.tangem.blockchain.blockchains.chia
 import android.util.Log
 import com.tangem.blockchain.blockchains.chia.network.ChiaCoin
 import com.tangem.blockchain.blockchains.chia.network.ChiaNetworkProvider
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.BlockchainError
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionSender
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -55,9 +47,7 @@ class ChiaWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    override suspend fun send(
-        transactionData: TransactionData, signer: TransactionSigner,
-    ): SimpleResult {
+    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
             is Result.Success -> {
@@ -88,8 +78,8 @@ class ChiaWalletManager(
                     TransactionFee.Choosable(
                         minimum = Fee.Common(Amount(BigDecimal.ZERO, blockchain)),
                         normal = Fee.Common(Amount(result.data.normalFee, blockchain)),
-                        priority = Fee.Common(Amount(result.data.priorityFee, blockchain))
-                    )
+                        priority = Fee.Common(Amount(result.data.priorityFee, blockchain)),
+                    ),
                 )
             }
             is Result.Failure -> result
