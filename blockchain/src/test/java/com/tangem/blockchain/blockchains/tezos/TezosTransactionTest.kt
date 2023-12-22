@@ -45,17 +45,17 @@ class TezosTransactionTest {
             source = "tz1W3nEJjDmQrZRK72jAzZczWmErfGLUaMuN",
             fee = "1300",
             counter = "1562",
-            gas_limit = "10000",
-            storage_limit = "0",
-            public_key = "edpkuQebQ8VAWLM7Hb1dFQJm8gmhfn5UabsNmtg7fJuepAPag4gpRF",
+            gasLimit = "10000",
+            storageLimit = "0",
+            publicKey = "edpkuQebQ8VAWLM7Hb1dFQJm8gmhfn5UabsNmtg7fJuepAPag4gpRF",
         )
         val expectedContent2 = TezosOperationContent(
             kind = "transaction",
             source = "tz1W3nEJjDmQrZRK72jAzZczWmErfGLUaMuN",
             fee = "1420",
             counter = "1563",
-            gas_limit = "10600",
-            storage_limit = "300",
+            gasLimit = "10600",
+            storageLimit = "300",
             destination = "KT1G1ARHx4Ujry8PzTis6HLNwQ29rYQY2Nay",
             amount = "100000",
         )

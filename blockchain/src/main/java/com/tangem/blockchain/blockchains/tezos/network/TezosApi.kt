@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.tezos.network
 
+import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import retrofit2.http.*
 
@@ -34,15 +35,15 @@ data class TezosForgeBody(
 
 @JsonClass(generateAdapter = true)
 data class TezosOperationContent(
-    val kind: String,
-    val source: String,
-    val fee: String,
-    val counter: String,
-    val gas_limit: String,
-    val storage_limit: String,
-    val public_key: String? = null,
-    val destination: String? = null,
-    val amount: String? = null,
+    @Json(name = "kind") val kind: String,
+    @Json(name = "source") val source: String,
+    @Json(name = "fee") val fee: String,
+    @Json(name = "counter") val counter: String,
+    @Json(name = "gas_limit") val gasLimit: String,
+    @Json(name = "storage_limit") val storageLimit: String,
+    @Json(name = "public_key") val publicKey: String? = null,
+    @Json(name = "destination") val destination: String? = null,
+    @Json(name = "amount") val amount: String? = null,
 )
 
 @JsonClass(generateAdapter = true)

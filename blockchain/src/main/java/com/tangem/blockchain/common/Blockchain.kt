@@ -175,6 +175,7 @@ enum class Blockchain(
 
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
+    @Suppress("CyclomaticComplexMethod")
     private fun getAddressService(): AddressService {
         return when (this) {
             Bitcoin, BitcoinTestnet,
@@ -231,6 +232,7 @@ enum class Blockchain(
 
     fun getShareUri(address: String): String = getShareScheme()?.plus(":$address") ?: address
 
+    @Suppress("ComplexCondition")
     fun validateShareScheme(scheme: String): Boolean {
         if (this == XRP && (scheme == "ripple" || scheme == "xrpl" || scheme == "xrp")) return true
         return scheme == getShareScheme()
@@ -250,6 +252,7 @@ enum class Blockchain(
 
     fun isTestnet(): Boolean = this == getTestnetVersion()
 
+    @Suppress("CyclomaticComplexMethod")
     fun getTestnetVersion(): Blockchain? {
         return when (this) {
             Avalanche, AvalancheTestnet -> AvalancheTestnet
@@ -337,6 +340,7 @@ enum class Blockchain(
         }
     }
 
+    @Suppress("CyclomaticComplexMethod")
     fun getChainId(): Int? {
         return when (this) {
             Arbitrum -> Chain.Arbitrum.id
