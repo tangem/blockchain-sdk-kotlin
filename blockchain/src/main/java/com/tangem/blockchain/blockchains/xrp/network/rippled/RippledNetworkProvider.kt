@@ -31,8 +31,8 @@ class RippledNetworkProvider(
                         put("User-Agent", "Never-mind")
                         apiKeyHeader?.let { put(key = it.first, value = it.second) }
                     },
-                )
-            )
+                ),
+            ),
         ).create(RippledApi::class.java)
     }
     private val decimals = Blockchain.XRP.decimals()
@@ -59,8 +59,8 @@ class RippledNetworkProvider(
                     Result.Success(
                         XrpInfoResponse(
                             reserveBase = reserveBase,
-                            accountFound = false
-                        )
+                            accountFound = false,
+                        ),
                     )
                 } else {
                     val confirmedBalance =
@@ -75,11 +75,10 @@ class RippledNetworkProvider(
                             balance = confirmedBalance,
                             sequence = accountData.result!!.accountData!!.sequence!!,
                             hasUnconfirmed = confirmedBalance != unconfirmedBalance,
-                            reserveBase = reserveBase
-                        )
+                            reserveBase = reserveBase,
+                        ),
                     )
                 }
-
             }
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
@@ -93,8 +92,8 @@ class RippledNetworkProvider(
                 XrpFeeResponse(
                     feeData.result!!.feeData!!.minimalFee!!.toBigDecimal().movePointLeft(decimals),
                     feeData.result!!.feeData!!.normalFee!!.toBigDecimal().movePointLeft(decimals),
-                    feeData.result!!.feeData!!.priorityFee!!.toBigDecimal().movePointLeft(decimals)
-                )
+                    feeData.result!!.feeData!!.priorityFee!!.toBigDecimal().movePointLeft(decimals),
+                ),
             )
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
@@ -114,8 +113,8 @@ class RippledNetworkProvider(
                 } else {
                     SimpleResult.Failure(
                         BlockchainSdkError.CustomError(
-                            result.resultMessage ?: result.errorException ?: "Unknown error message"
-                        )
+                            result.resultMessage ?: result.errorException ?: "Unknown error message",
+                        ),
                     )
                 }
             }

@@ -20,16 +20,17 @@ data class ScanResponse(
     val secondTwinPublicKey: String? = null,
     val derivedKeys: Map<KeyWalletPublicKey, ExtendedPublicKeysMap> = mapOf(),
     val primaryCard: PrimaryCard? = null,
-    val productType: ProductType = ProductType.Wallet
+    val productType: ProductType = ProductType.Wallet,
 ) : CommandResponse {
 
     fun getBlockchain(): Blockchain {
-        if (productType == ProductType.Note) return card.getTangemNoteBlockchain()
+        if (productType == ProductType.Note) {
+            return card.getTangemNoteBlockchain()
                 ?: return Blockchain.Unknown
+        }
         val blockchainName: String = walletData?.blockchain ?: return Blockchain.Unknown
         return Blockchain.fromId(blockchainName)
     }
-
 }
 
 enum class ProductType {
@@ -41,11 +42,11 @@ typealias KeyWalletPublicKey = ByteArrayKey
 data class BlockchainNetwork(
     val blockchain: Blockchain,
     val derivationPath: String?,
-    val tokens: List<Token>
+    val tokens: List<Token>,
 ) {
     constructor(blockchain: Blockchain, card: Card) : this(
         blockchain = blockchain,
         derivationPath = if (card.settings.isHDWalletAllowed) blockchain.derivationPath(card.derivationStyle)?.rawPath else null,
-        tokens = emptyList()
+        tokens = emptyList(),
     )
 }

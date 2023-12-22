@@ -1,18 +1,8 @@
 package com.tangem.blockchain.blockchains.polkadot
 
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkProvider
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionError
-import com.tangem.blockchain.common.TransactionSender
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.TransactionStatus
-import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -62,13 +52,13 @@ class PolkadotWalletManager(
     private fun updateRecentTransactions() {
         val currentTimeInMillis = Calendar.getInstance().timeInMillis
         val confirmedTxData = wallet.recentTransactions
-                .filter { it.hash != null && it.date != null }
-                .filter {
-                    val txTimeInMillis = it.date?.timeInMillis ?: currentTimeInMillis
-                    currentTimeInMillis - txTimeInMillis > 9999
-                }.map {
-                    it.copy(status = TransactionStatus.Confirmed)
-                }
+            .filter { it.hash != null && it.date != null }
+            .filter {
+                val txTimeInMillis = it.date?.timeInMillis ?: currentTimeInMillis
+                currentTimeInMillis - txTimeInMillis > 9999
+            }.map {
+                it.copy(status = TransactionStatus.Confirmed)
+            }
 
         updateRecentTransactions(confirmedTxData)
     }
@@ -81,7 +71,7 @@ class PolkadotWalletManager(
             sourceAddress = wallet.address,
             destinationAddress = destination,
             context = currentContext,
-            signer = DummyPolkadotTransactionSigner()
+            signer = DummyPolkadotTransactionSigner(),
         ).successOr { return it }
 
         val fee = networkProvider.getFee(signedTransaction).successOr { return it }
@@ -137,7 +127,7 @@ class PolkadotWalletManager(
             sourceAddress = wallet.address,
             destinationAddress = destinationAddress,
             context = currentContext,
-            signer = signer
+            signer = signer,
         ).successOr { return SimpleResult.Failure(it.error) }
 
         val txHash = networkProvider.sendTransaction(signedTransaction).successOr {

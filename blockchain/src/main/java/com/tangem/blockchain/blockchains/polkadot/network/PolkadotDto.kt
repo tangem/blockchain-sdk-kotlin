@@ -3,15 +3,13 @@ package com.tangem.blockchain.blockchains.polkadot.network
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
-
 @JsonClass(generateAdapter = true)
 data class PolkadotBody(
     val method: String,
     val params: List<Any> = listOf(),
     val jsonrpc: String = "2.0",
-    val id: Int = 4
+    val id: Int = 4,
 )
-
 
 @JsonClass(generateAdapter = true)
 data class PolkadotResponse(
@@ -25,7 +23,7 @@ data class PolkadotResponse(
     val result: Map<String, Any>? = null,
 
     @Json(name = "error")
-    val error: PolkadotError? = null
+    val error: PolkadotError? = null,
 )
 
 @JsonClass(generateAdapter = true)
@@ -34,9 +32,9 @@ data class PolkadotError(
     val code: Int? = null,
 
     @Json(name = "message")
-    val message: String? = null
+    val message: String? = null,
 )
 
 enum class PolkadotMethod(val method: String) {
-    GET_FEE("payment_queryInfo")
+    GET_FEE("payment_queryInfo"),
 }

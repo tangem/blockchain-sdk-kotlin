@@ -1,7 +1,6 @@
 package com.tangem.blockchain.blockchains.kaspa
 
 import com.google.common.truth.Truth
-import com.tangem.blockchain.blockchains.kaspa.kaspacashaddr.KaspaCashAddr
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 

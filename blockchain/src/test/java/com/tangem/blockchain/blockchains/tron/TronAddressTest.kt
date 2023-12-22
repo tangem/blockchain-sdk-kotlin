@@ -28,17 +28,17 @@ class TronAddressTest {
     @Test
     fun validateCorrectAddress_returnsTrue() {
         Truth.assertThat(
-            addressService.validate("TJRyWwFs9wTFGZg3JbrVriFbNfCug5tDeC")
+            addressService.validate("TJRyWwFs9wTFGZg3JbrVriFbNfCug5tDeC"),
         ).isTrue()
         Truth.assertThat(
-            addressService.validate("TDpBe64DqirkKWj6HWuR1pWgmnhw2wDacE")
+            addressService.validate("TDpBe64DqirkKWj6HWuR1pWgmnhw2wDacE"),
         ).isTrue()
     }
 
     @Test
     fun validateIncorrectAddress_returnsFalse() {
         Truth.assertThat(
-            addressService.validate("RJRyWwFs9wTFGZg3JbrVriFbNfCug5tDeC")
+            addressService.validate("RJRyWwFs9wTFGZg3JbrVriFbNfCug5tDeC"),
         ).isFalse()
     }
 }

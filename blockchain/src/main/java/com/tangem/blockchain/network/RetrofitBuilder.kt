@@ -9,10 +9,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 
-fun createRetrofitInstance(
-    baseUrl: String,
-    headerInterceptors: List<Interceptor> = emptyList(),
-): Retrofit =
+fun createRetrofitInstance(baseUrl: String, headerInterceptors: List<Interceptor> = emptyList()): Retrofit =
     Retrofit.Builder()
         .baseUrl(baseUrl)
         .addConverterFactory(MoshiConverterFactory.create(moshi))

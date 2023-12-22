@@ -36,7 +36,6 @@ class TezosAddressService : AddressService() {
     }
 
     companion object {
-        fun ByteArray.calculateTezosChecksum() =
-                this.calculateSha256().calculateSha256().copyOfRange(0, 4)
+        fun ByteArray.calculateTezosChecksum() = this.calculateSha256().calculateSha256().copyOfRange(0, 4)
     }
 }

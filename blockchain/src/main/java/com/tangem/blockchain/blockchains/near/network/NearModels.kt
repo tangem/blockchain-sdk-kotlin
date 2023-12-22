@@ -91,7 +91,7 @@ sealed class NearAccount {
     data class Full(
         val near: NearAmount,
         val blockHash: String,
-        val storageUsage: NearAmount
+        val storageUsage: NearAmount,
     ) : NearAccount()
 
     /**

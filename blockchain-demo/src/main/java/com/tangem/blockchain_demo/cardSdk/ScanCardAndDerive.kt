@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 [REDACTED_AUTHOR]
  */
 class ScanCardAndDerive(
-    private val blockchainsToDerive: List<Blockchain>
+    private val blockchainsToDerive: List<Blockchain>,
 ) : CardSessionRunnable<ScanResponse> {
 
     override fun run(session: CardSession, callback: CompletionCallback<ScanResponse>) {
@@ -47,7 +47,7 @@ class ScanCardAndDerive(
                             card = card,
                             walletData = session.environment.walletData,
                             derivedKeys = result.data.entries,
-                            primaryCard = null
+                            primaryCard = null,
                         )
                         callback(CompletionResult.Success(response))
                     }
@@ -94,7 +94,7 @@ class ScanCardAndDerive(
                     Blockchain.RSK,
                     Blockchain.Fantom, Blockchain.FantomTestnet,
                     Blockchain.Avalanche, Blockchain.AvalancheTestnet,
-                ).map { BlockchainNetwork(it, card) }
+                ).map { BlockchainNetwork(it, card) },
             )
         }
 

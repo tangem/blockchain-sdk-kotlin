@@ -8,7 +8,7 @@ import org.p2p.solanaj.core.PublicKey
 [REDACTED_AUTHOR]
  */
 class Message(
-    private val feePayerPublicKey: PublicKey
+    private val feePayerPublicKey: PublicKey,
 ) : Message() {
 
     @Deprecated("Override getFeePayerPublicKey instead")

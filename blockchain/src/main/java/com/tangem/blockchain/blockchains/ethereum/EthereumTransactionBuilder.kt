@@ -16,7 +16,7 @@ class EthereumTransactionBuilder(
         return EthereumUtils.buildTransactionToSign(
             transactionData = transactionData,
             nonce = nonce,
-            blockchain = blockchain
+            blockchain = blockchain,
         )
     }
 
@@ -29,7 +29,7 @@ class EthereumTransactionBuilder(
             transactionData = transactionData,
             nonce = nonce,
             blockchain = blockchain,
-            gasLimit = gasLimit
+            gasLimit = gasLimit,
         )
     }
 
@@ -38,10 +38,18 @@ class EthereumTransactionBuilder(
         cardAddress: String,
         amount: Amount,
         transactionFee: Amount?,
-        gasLimit: BigInteger?, nonce: BigInteger?,
+        gasLimit: BigInteger?,
+        nonce: BigInteger?,
     ): CompiledEthereumTransaction? {
         return EthereumUtils.buildSetSpendLimitToSign(
-            processorContractAddress, cardAddress, amount, transactionFee, blockchain, gasLimit, nonce)
+            processorContractAddress,
+            cardAddress,
+            amount,
+            transactionFee,
+            blockchain,
+            gasLimit,
+            nonce,
+        )
     }
 
     fun buildInitOTPToSign(
@@ -54,7 +62,15 @@ class EthereumTransactionBuilder(
         nonce: BigInteger?,
     ): CompiledEthereumTransaction? {
         return EthereumUtils.buildInitOTPToSign(
-            processorContractAddress, cardAddress, otp, otpCounter, transactionFee, blockchain, gasLimit, nonce)
+            processorContractAddress,
+            cardAddress,
+            otp,
+            otpCounter,
+            transactionFee,
+            blockchain,
+            gasLimit,
+            nonce,
+        )
     }
 
     fun buildSetWalletToSign(
@@ -62,10 +78,16 @@ class EthereumTransactionBuilder(
         cardAddress: String,
         transactionFee: Amount?,
         gasLimit: BigInteger?,
-        nonce: BigInteger
+        nonce: BigInteger,
     ): CompiledEthereumTransaction? {
         return EthereumUtils.buildSetWalletToSign(
-            processorContractAddress, cardAddress, transactionFee, blockchain, gasLimit, nonce)
+            processorContractAddress,
+            cardAddress,
+            transactionFee,
+            blockchain,
+            gasLimit,
+            nonce,
+        )
     }
 
     fun buildProcessToSign(
@@ -77,7 +99,7 @@ class EthereumTransactionBuilder(
         otp: ByteArray,
         otpCounter: Int,
         gasLimit: BigInteger?,
-        nonceValue: BigInteger
+        nonceValue: BigInteger,
     ): CompiledEthereumTransaction? {
         return EthereumUtils.buildProcessToSign(
             processorContractAddress = processorContractAddress,
@@ -89,16 +111,20 @@ class EthereumTransactionBuilder(
             otpCounter = otpCounter,
             blockchain = blockchain,
             gasLimit = gasLimit,
-            nonce = nonceValue
+            nonce = nonceValue,
         )
     }
 
-    fun buildTransferFromToSign(transactionData: TransactionData, nonce: BigInteger?, gasLimit: BigInteger?): CompiledEthereumTransaction? {
+    fun buildTransferFromToSign(
+        transactionData: TransactionData,
+        nonce: BigInteger?,
+        gasLimit: BigInteger?,
+    ): CompiledEthereumTransaction? {
         return EthereumUtils.buildTransferFromToSign(
             transactionData = transactionData,
             nonce = nonce,
             blockchain = blockchain,
-            gasLimit = gasLimit
+            gasLimit = gasLimit,
         )
     }
 
@@ -145,5 +171,5 @@ enum class Chain(
     OctaSpace(800001, Blockchain.OctaSpace),
     OctaSpaceTestnet(800002, Blockchain.OctaSpaceTestnet),
     Decimal(75, Blockchain.Decimal),
-    DecimalTestnet(202020, Blockchain.DecimalTestnet)
+    DecimalTestnet(202020, Blockchain.DecimalTestnet),
 }

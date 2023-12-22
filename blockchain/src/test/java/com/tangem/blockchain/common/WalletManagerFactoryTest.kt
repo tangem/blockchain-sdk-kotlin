@@ -26,6 +26,7 @@ import org.junit.Test
 import org.kethereum.crypto.CryptoAPI
 import org.kethereum.extensions.toBigInteger
 import org.kethereum.model.ADDRESS_LENGTH_IN_HEX
+import java.util.Locale
 
 internal class WalletManagerFactoryTest {
 
@@ -119,7 +120,7 @@ internal class WalletManagerFactoryTest {
         val walletManager =
             WalletManagerFactory(BlockchainSdkConfig()).createTwinWalletManager(
                 card.wallets.first().publicKey,
-                pairPublicKey.hexToBytes()
+                pairPublicKey.hexToBytes(),
             )
 
         Truth.assertThat(walletManager).isInstanceOf(BitcoinWalletManager::class.java)
@@ -138,7 +139,7 @@ internal class WalletManagerFactoryTest {
             BlockchainSdkConfig(
                 blockchairCredentials = BlockchairCredentials(
                     apiKey = listOf("anyKey"),
-                    authToken = "anyToken"
+                    authToken = "anyToken",
                 ),
                 blockcypherTokens = setOf(),
                 infuraProjectId = "infuraProjectId",
@@ -168,10 +169,12 @@ internal class WalletManagerFactoryTest {
                     bitcoin = GetBlockAccessToken(),
                 ),
                 tronGridApiKey = "",
-                chiaFireAcademyApiKey = ""
-            )
+                chiaFireAcademyApiKey = "",
+            ),
         ).createLegacyWalletManager(
-            blockchain, publicKey, curve
+            blockchain,
+            publicKey,
+            curve,
         )
     }
 
@@ -184,7 +187,7 @@ internal class WalletManagerFactoryTest {
         val publicKeyBytes = publicKeyPoint.getEncoded(false)
         val publicKeyHash = Keccak.Digest256().digest(publicKeyBytes).toHexString()
         val ethereumAddress = publicKeyHash.substring(publicKeyHash.length - ADDRESS_LENGTH_IN_HEX)
-        println(ethereumAddress.toLowerCase())
+        println(ethereumAddress.lowercase(Locale.getDefault()))
 
         val hash = "95DB218B4288E60DA2807FC42EFBB2BFEF0A19607EC1D701AF54704DC5A253F6".hexToBytes()
         val signature = CryptoAPI.signer.sign(hash, privateKey, true)

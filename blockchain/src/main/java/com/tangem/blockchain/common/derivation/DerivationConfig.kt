@@ -6,6 +6,5 @@ import com.tangem.crypto.hdWallet.DerivationPath
 
 abstract class DerivationConfig {
 
-    abstract fun derivations(blockchain: Blockchain) : Map<AddressType, DerivationPath>
-
+    abstract fun derivations(blockchain: Blockchain): Map<AddressType, DerivationPath>
 }
