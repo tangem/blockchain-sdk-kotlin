@@ -1,4 +1,4 @@
-package com.tangem.blockchain_demo
+package com.tangem.demo
 
 import android.R
 import android.os.Bundle
@@ -10,15 +10,15 @@ import com.tangem.TangemSdk
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain_demo.cardSdk.ScanCardAndDerive
-import com.tangem.blockchain_demo.databinding.ActivityBlockchainDemoBinding
-import com.tangem.blockchain_demo.extensions.*
-import com.tangem.blockchain_demo.model.ScanResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.card.CardWallet
 import com.tangem.common.core.TangemError
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.toHexString
+import com.tangem.demo.cardSdk.ScanCardAndDerive
+import com.tangem.demo.databinding.ActivityBlockchainDemoBinding
+import com.tangem.demo.extensions.*
+import com.tangem.demo.model.ScanResponse
 import com.tangem.sdk.extensions.init
 import kotlinx.coroutines.*
 import java.io.PrintWriter
@@ -64,14 +64,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
         setupVisibility()
     }
 
-    private fun getTestedBlockchains(): List<Blockchain> {
-//        return listOf(
-//            Blockchain.Gnosis,
-//            Blockchain.Arbitrum,
-//            Blockchain.Fantom,
-//        )
-        return Blockchain.valuesWithoutUnknown()
-    }
+    private fun getTestedBlockchains(): List<Blockchain> = Blockchain.valuesWithoutUnknown()
 
     private fun initBinding() {
         binding = ActivityBlockchainDemoBinding.inflate(layoutInflater)
@@ -132,6 +125,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
                         initWalletsBlockchainContainer()
                     }
                 }
+
                 is CompletionResult.Failure -> {
                     when (result.error) {
                         is TangemSdkError.UserCancelled -> {}
@@ -267,7 +261,6 @@ class BlockchainDemoActivity : AppCompatActivity() {
                                 containerRecipientAddressFee.tvFeeAverage.text = fees.normal.amount.value.toString()
                                 selectedFee = fees.normal.amount.value ?: BigDecimal(0)
                             }
-
                             is TransactionFee.Choosable -> {
                                 containerRecipientAddressFee.tvFeeMin.text =
                                     fees.minimum.amount.value?.stripZeroPlainString()
@@ -284,40 +277,6 @@ class BlockchainDemoActivity : AppCompatActivity() {
             }
         }
     }
-
-//    private fun send() {
-//        scope.launch {
-//            val result = (walletManager as TransactionSender).send(
-//                transactionData = formTransactionData(),
-//                signer = signer
-//            )
-//            withContext(Dispatchers.Main) {
-//                when (result) {
-//                    is SimpleResult.Success -> showToast("Sending success")
-//                    is SimpleResult.Failure -> handleError(result.error)
-//                }
-//            }
-//        }
-//    }
-
-//    private fun formTransactionData(): TransactionData = with(binding) {
-//        val amount = if (token != null) {
-//            walletManager.wallet.getTokenAmount(token!!)!!.copy(
-//                value = containerRecipientAddressFee.tilEtSumToSend.text.toString().toBigDecimal()
-//            )
-//        } else {
-//            walletManager.wallet.amounts[AmountType.Coin]!!.copy(
-//                value = containerRecipientAddressFee.tilEtSumToSend.text.toString().toBigDecimal() - selectedFee
-//            )
-//        }
-//        return TransactionData(
-//            amount,
-//            walletManager.wallet.amounts[AmountType.Coin]!!.copy(value = selectedFee),
-//            walletManager.wallet.address,
-//            containerRecipientAddressFee.tilEtRecipientAddress.text.toString(),
-//            contractAddress = token?.contractAddress
-//        )
-//    }
 
     private fun handleError(error: TangemError) {
         val message = error.messageResId?.let { this.getString(it) } ?: error.customMessage
