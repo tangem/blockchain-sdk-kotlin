@@ -1,4 +1,4 @@
-package com.tangem.blockchain_demo.extensions
+package com.tangem.demo.extensions
 
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.common.card.EllipticCurve
