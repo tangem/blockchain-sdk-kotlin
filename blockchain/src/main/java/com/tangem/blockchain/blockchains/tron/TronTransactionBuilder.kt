@@ -21,6 +21,7 @@ import protocol.TriggerSmartContract
 
 class TronTransactionBuilder(private val blockchain: Blockchain) {
 
+    @Suppress("MagicNumber")
     fun buildForSign(amount: Amount, source: String, destination: String, block: TronBlock): Transaction.raw {
         val contract = contract(amount, source, destination)
         val feeLimit = if (amount.type == AmountType.Coin) 0L else SMART_CONTRACT_FEE_LIMIT
@@ -61,6 +62,7 @@ class TronTransactionBuilder(private val blockchain: Blockchain) {
         return Transaction(rawData, listOf(signature.toByteString()))
     }
 
+    @Suppress("MagicNumber")
     private fun contract(amount: Amount, source: String, destination: String): Transaction.Contract {
         return when (amount.type) {
             AmountType.Coin -> {
