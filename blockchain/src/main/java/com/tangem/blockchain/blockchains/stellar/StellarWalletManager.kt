@@ -43,8 +43,8 @@ class StellarWalletManager(
 
         cardTokens.forEach { token ->
             val tokenBalance = data.tokenBalances
-                    .find { it.symbol == token.symbol && it.issuer == token.contractAddress }?.balance
-                    ?: 0.toBigDecimal()
+                .find { it.symbol == token.symbol && it.issuer == token.contractAddress }?.balance
+                ?: 0.toBigDecimal()
             wallet.addTokenValue(tokenBalance, token)
         }
         // only if no token(s) specified on manager creation or stored on card
@@ -93,11 +93,13 @@ class StellarWalletManager(
         val minChargedFee = feeStats.feeCharged.min.toBigDecimal().movePointLeft(blockchain.decimals())
         val averageChargedFee = (maxChargedFee - minChargedFee).divide(2.toBigDecimal()) + minChargedFee
 
-        return Result.Success(TransactionFee.Choosable(
-            minimum = Fee.Common(Amount(minChargedFee, blockchain)),
-            normal = Fee.Common(Amount(averageChargedFee, blockchain)),
-            priority = Fee.Common(Amount(maxChargedFee, blockchain))
-        ))
+        return Result.Success(
+            TransactionFee.Choosable(
+                minimum = Fee.Common(Amount(minChargedFee, blockchain)),
+                normal = Fee.Common(Amount(averageChargedFee, blockchain)),
+                priority = Fee.Common(Amount(maxChargedFee, blockchain)),
+            ),
+        )
     }
 
     override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
