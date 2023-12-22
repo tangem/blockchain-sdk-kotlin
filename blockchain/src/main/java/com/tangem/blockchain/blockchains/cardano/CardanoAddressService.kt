@@ -39,7 +39,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
     override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?): Set<Address> {
         return setOf(
             Address(makeByronAddress(walletPublicKey), AddressType.Legacy),
-            Address(makeShelleyAddress(walletPublicKey), AddressType.Default)
+            Address(makeShelleyAddress(walletPublicKey), AddressType.Default),
         )
     }
 
@@ -100,7 +100,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
                 .addMap()
                 .end()
                 .end()
-                .build()
+                .build(),
         )
         return pubKeyWithAttributes.toByteArray()
     }
@@ -111,11 +111,11 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
             CborBuilder()
                 .addArray()
                 .add(blakeHash)
-                .addMap() //additional attributes
+                .addMap() // additional attributes
                 .end()
-                .add(0) //address type
+                .add(0) // address type
                 .end()
-                .build()
+                .build(),
         )
         return hashWithAttributes.toByteArray()
     }
@@ -126,7 +126,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
         val addressItem = CborBuilder().add(hashWithAttributes).build().get(0)
         addressItem.setTag(24)
 
-        //addr + checksum
+        // addr + checksum
         val address = ByteArrayOutputStream()
         CborEncoder(address).encode(
             CborBuilder()
@@ -134,7 +134,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
                 .add(addressItem)
                 .add(checksum)
                 .end()
-                .build()
+                .build(),
         )
 
         return address.toByteArray().encodeBase58()

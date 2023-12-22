@@ -1,10 +1,10 @@
 package com.tangem.blockchain.common
 
-import com.tangem.blockchain.extensions.DebouncedInvoke
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
+import com.tangem.blockchain.extensions.DebouncedInvoke
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.isAboveZero
@@ -162,7 +162,7 @@ abstract class WalletManager(
                 TransactionStatus.Confirmed
             } else {
                 TransactionStatus.Unconfirmed
-            }
+            },
         )
     }
 
@@ -177,15 +177,9 @@ interface TransactionSender {
 }
 
 interface TransactionSigner {
-    suspend fun sign(
-        hashes: List<ByteArray>,
-        publicKey: Wallet.PublicKey,
-    ): CompletionResult<List<ByteArray>>
+    suspend fun sign(hashes: List<ByteArray>, publicKey: Wallet.PublicKey): CompletionResult<List<ByteArray>>
 
-    suspend fun sign(
-        hash: ByteArray,
-        publicKey: Wallet.PublicKey,
-    ): CompletionResult<ByteArray>
+    suspend fun sign(hash: ByteArray, publicKey: Wallet.PublicKey): CompletionResult<ByteArray>
 }
 
 interface SignatureCountValidator {
@@ -197,13 +191,7 @@ interface TokenFinder {
 }
 
 interface Approver {
-    suspend fun getAllowance(
-        spenderAddress: String,
-        token: Token,
-    ): Result<BigDecimal>
+    suspend fun getAllowance(spenderAddress: String, token: Token): Result<BigDecimal>
 
-    fun getApproveData(
-        spenderAddress: String,
-        value: Amount? = null,
-    ): String
+    fun getApproveData(spenderAddress: String, value: Amount? = null): String
 }

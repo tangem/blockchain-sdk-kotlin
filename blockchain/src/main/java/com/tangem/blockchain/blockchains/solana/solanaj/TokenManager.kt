@@ -17,7 +17,7 @@ class TokenManager(rpcClient: RpcClient) : TokenManager(rpcClient) {
         source: PublicKey,
         destination: PublicKey,
         tokenMint: PublicKey,
-        amount: Long
+        amount: Long,
     ): String {
         throw UnsupportedOperationException()
     }
@@ -29,7 +29,7 @@ class TokenManager(rpcClient: RpcClient) : TokenManager(rpcClient) {
         destination: PublicKey?,
         tokenMint: PublicKey?,
         amount: Long,
-        decimals: Byte
+        decimals: Byte,
     ): String {
         throw UnsupportedOperationException()
     }

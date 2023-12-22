@@ -16,8 +16,8 @@ import org.spongycastle.jcajce.provider.digest.Blake2b
 import java.math.BigDecimal
 
 class TezosTransactionBuilder(
-        private val walletPublicKey: ByteArray,
-        private val curve: EllipticCurve
+    private val walletPublicKey: ByteArray,
+    private val curve: EllipticCurve,
 ) {
     var counter: Long? = null
     val decimals = Blockchain.Tezos.decimals()
@@ -34,27 +34,27 @@ class TezosTransactionBuilder(
         if (!publicKeyRevealed) {
             counter++
             val revealOp = TezosOperationContent(
-                    kind = "reveal",
-                    source = transactionData.sourceAddress,
-                    fee = TezosConstants.REVEAL_FEE.toMutezValueString(),
-                    counter = counter.toString(),
-                    gas_limit = "10000",
-                    storage_limit = "0",
-                    public_key = walletPublicKey.encodePublicKey()
+                kind = "reveal",
+                source = transactionData.sourceAddress,
+                fee = TezosConstants.REVEAL_FEE.toMutezValueString(),
+                counter = counter.toString(),
+                gas_limit = "10000",
+                storage_limit = "0",
+                public_key = walletPublicKey.encodePublicKey(),
             )
             contents.add(revealOp)
         }
 
         counter++
         val transactionOp = TezosOperationContent(
-                kind = "transaction",
-                source = transactionData.sourceAddress,
-                fee = TezosConstants.TRANSACTION_FEE.toMutezValueString(),
-                counter = counter.toString(),
-                gas_limit = "10600",
-                storage_limit = "300", // set it to 0?
-                destination = transactionData.destinationAddress,
-                amount = transactionData.amount.bigIntegerValue().toString()
+            kind = "transaction",
+            source = transactionData.sourceAddress,
+            fee = TezosConstants.TRANSACTION_FEE.toMutezValueString(),
+            counter = counter.toString(),
+            gas_limit = "10600",
+            storage_limit = "300", // set it to 0?
+            destination = transactionData.destinationAddress,
+            amount = transactionData.amount.bigIntegerValue().toString(),
         )
         contents.add(transactionOp)
 
@@ -65,17 +65,16 @@ class TezosTransactionBuilder(
         val stringBuilder = StringBuilder(320)
 
         val branchHex = Base58.decodeChecked(headerHash)
-                .toHexString().removePrefix(TezosConstants.BRANCH_PREFIX)
+            .toHexString().removePrefix(TezosConstants.BRANCH_PREFIX)
         stringBuilder.append(branchHex)
 
         for (operation in operationContents) {
-
             stringBuilder.append(
-                    when (operation.kind) {
-                        "reveal" -> TezosConstants.REVEAL_OPERATION_KIND
-                        "transaction" -> TezosConstants.TRANSACTION_OPERATION_KIND
-                        else -> throw Exception("Unsupported operation kind")
-                    }
+                when (operation.kind) {
+                    "reveal" -> TezosConstants.REVEAL_OPERATION_KIND
+                    "transaction" -> TezosConstants.TRANSACTION_OPERATION_KIND
+                    else -> throw Exception("Unsupported operation kind")
+                },
             )
             stringBuilder.append(operation.source.txEncodePublicKeyHash())
             stringBuilder.append(operation.fee.txEncodeInteger())
@@ -96,7 +95,7 @@ class TezosTransactionBuilder(
     }
 
     fun buildToSign(forgedContents: String) = Blake2b.Blake2b256()
-            .digest((TezosConstants.GENERIC_OPERATION_WATERMARK + forgedContents).hexToBytes())
+        .digest((TezosConstants.GENERIC_OPERATION_WATERMARK + forgedContents).hexToBytes())
 
     fun buildToSend(signature: ByteArray, forgedContents: String) = forgedContents + signature.toHexString()
 

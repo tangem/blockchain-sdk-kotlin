@@ -23,11 +23,10 @@ class BitcoinCashAddressService(blockchain: Blockchain) : AddressService() {
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?) =
         makeCashAddrAddress(walletPublicKey).value
 
-    override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?) =
-        setOf(
-            bitcoinAddressService.makeLegacyAddress(walletPublicKey.toCompressedPublicKey()),
-            makeCashAddrAddress(walletPublicKey)
-        )
+    override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?) = setOf(
+        bitcoinAddressService.makeLegacyAddress(walletPublicKey.toCompressedPublicKey()),
+        makeCashAddrAddress(walletPublicKey),
+    )
 
     override fun validate(address: String) =
         validateCashAddrAddress(address) || bitcoinAddressService.validateLegacyAddress(address)

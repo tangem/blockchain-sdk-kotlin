@@ -48,7 +48,9 @@ internal class BitcoinTransactionHistoryProvider(
         }
     }
 
-    override suspend fun getTransactionsHistory(request: TransactionHistoryRequest): Result<PaginationWrapper<TransactionHistoryItem>> {
+    override suspend fun getTransactionsHistory(
+        request: TransactionHistoryRequest,
+    ): Result<PaginationWrapper<TransactionHistoryItem>> {
         return try {
             val response =
                 withContext(Dispatchers.IO) {
@@ -67,8 +69,8 @@ internal class BitcoinTransactionHistoryProvider(
                     page = response.page ?: request.page.number,
                     totalPages = response.totalPages ?: 0,
                     itemsOnPage = response.itemsOnPage ?: 0,
-                    items = txs
-                )
+                    items = txs,
+                ),
             )
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
@@ -90,7 +92,7 @@ internal class BitcoinTransactionHistoryProvider(
                 tx = this,
                 walletAddress = walletAddress,
                 blockchain = blockchain,
-            )
+            ),
         )
     }
 
@@ -105,15 +107,15 @@ internal class BitcoinTransactionHistoryProvider(
             .toSet()
         return when {
             outputsWithOtherAddresses.isEmpty() -> TransactionHistoryItem.DestinationType.Single(
-                TransactionHistoryItem.AddressType.User(walletAddress)
+                TransactionHistoryItem.AddressType.User(walletAddress),
             )
 
             outputsWithOtherAddresses.size == 1 -> TransactionHistoryItem.DestinationType.Single(
-                TransactionHistoryItem.AddressType.User(outputsWithOtherAddresses.first())
+                TransactionHistoryItem.AddressType.User(outputsWithOtherAddresses.first()),
             )
 
             else -> TransactionHistoryItem.DestinationType.Multiple(
-                outputsWithOtherAddresses.map { TransactionHistoryItem.AddressType.User(it) }
+                outputsWithOtherAddresses.map { TransactionHistoryItem.AddressType.User(it) },
             )
         }
     }
@@ -129,7 +131,10 @@ internal class BitcoinTransactionHistoryProvider(
             .toSet()
         return when {
             inputsWithOtherAddresses.isEmpty() -> TransactionHistoryItem.SourceType.Single(walletAddress)
-            inputsWithOtherAddresses.size == 1 -> TransactionHistoryItem.SourceType.Single(inputsWithOtherAddresses.first())
+            inputsWithOtherAddresses.size == 1 -> TransactionHistoryItem.SourceType.Single(
+                inputsWithOtherAddresses.first(),
+            )
+
             else -> TransactionHistoryItem.SourceType.Multiple(inputsWithOtherAddresses.toList())
         }
     }

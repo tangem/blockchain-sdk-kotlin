@@ -12,5 +12,5 @@ package com.tangem.blockchain.common.address
 // d0 = default
 enum class AddressType {
     Default,
-    Legacy
+    Legacy,
 }

@@ -29,14 +29,13 @@ class MultiNetworkProvider<P : NetworkProvider>(
     suspend fun <D> performRequest(request: suspend P.(D) -> SimpleResult, data: D): SimpleResult =
         SimpleRequest(request, data).perform()
 
-    suspend fun <R> performRequest(request: suspend P.() -> Result<R>): Result<R> =
-        NoDataRequest(request).perform()
+    suspend fun <R> performRequest(request: suspend P.() -> Result<R>): Result<R> = NoDataRequest(request).perform()
 
     @JvmName("performRawResultRequest")
     suspend fun <R> performRequest(request: suspend P.() -> R): Result<R> =
         NoDataRequestWithIOException(request).perform()
 
-    private suspend fun <T: Any> Request<P, T>.perform(): T {
+    private suspend fun <T : Any> Request<P, T>.perform(): T {
         lateinit var finalResult: T
 
         repeat(providers.size) {
@@ -124,7 +123,7 @@ class MultiNetworkProvider<P : NetworkProvider>(
         }
     }
 
-    private fun <T>isResultNetworkError(result: T): Boolean {
+    private fun <T> isResultNetworkError(result: T): Boolean {
         return when (result) {
             is Result<*> -> ResultChecker.isNetworkError(result = result)
             is SimpleResult -> ResultChecker.isNetworkError(result = result)
@@ -132,7 +131,7 @@ class MultiNetworkProvider<P : NetworkProvider>(
         }
     }
 
-    private fun <T>getErrorMessage(result: T): String? {
+    private fun <T> getErrorMessage(result: T): String? {
         return when (result) {
             is Result<*> -> ResultChecker.getErrorMessageIfAvailable(result = result)
             is SimpleResult -> ResultChecker.getErrorMessageIfAvailable(result = result)

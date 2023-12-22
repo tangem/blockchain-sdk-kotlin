@@ -24,8 +24,9 @@ class BitcoinTransactionTest {
     fun buildCorrectTransaction() {
         // arrange
         val walletPublicKey = "04E3F3BE3CE3D8284DB3BA073AD0291040093D83C11A277B905D5555C9EC41073E103F4D9D299EDEA8285C51C3356A8681A545618C174251B984DF841F49D2376F"
-                .hexToBytes()
-        val signature = "88E322D377878E83F25FD2E258344F0A7CC401654BF71C43DF96FC6B46766CAE30E97BD9018E9B2E918EF79E15E2747D4E00C55D69FA0B8ADFAFD07F41144F81337D7F3BD0798D66FDCE04B07C30984424B13B98BB2C3645744A696AD26ECC780157EA9D44DC41D0BCB420175A5D3F543079F4263AA2DBDE0EE2D33A877FC583"
+            .hexToBytes()
+        val signature =
+            "88E322D377878E83F25FD2E258344F0A7CC401654BF71C43DF96FC6B46766CAE30E97BD9018E9B2E918EF79E15E2747D4E00C55D69FA0B8ADFAFD07F41144F81337D7F3BD0798D66FDCE04B07C30984424B13B98BB2C3645744A696AD26ECC780157EA9D44DC41D0BCB420175A5D3F543079F4263AA2DBDE0EE2D33A877FC583"
                 .hexToBytes()
         val sendValue = "0.1".toBigDecimal()
         val feeValue = "0.01".toBigDecimal()
@@ -36,15 +37,15 @@ class BitcoinTransactionTest {
         val segwitAddress = addresses.find { it.type == AddressType.Default }!!.value
         val transactionBuilder = BitcoinTransactionBuilder(walletPublicKey, blockchain, addresses)
         transactionBuilder.unspentOutputs =
-                prepareTwoUnspentOutputs(listOf(legacyAddress, segwitAddress), networkParameters)
+            prepareTwoUnspentOutputs(listOf(legacyAddress, segwitAddress), networkParameters)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
         val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
-                sourceAddress = segwitAddress,
-                destinationAddress = destinationAddress,
-                amount = amountToSend,
-                fee = fee
+            sourceAddress = segwitAddress,
+            destinationAddress = destinationAddress,
+            amount = amountToSend,
+            fee = fee,
         )
 
         val expectedHashToSign1 = "886A853A86E8A1DA678E1727D20E053A28CDE99DDC09767391C05C626B3FC4EF"
@@ -89,10 +90,10 @@ class BitcoinTransactionTest {
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
         val fee = Fee.Common(Amount(amountToSend, feeValue))
         val transactionData = TransactionData(
-                sourceAddress = segwitAddress,
-                destinationAddress = destinationAddress,
-                amount = amountToSend,
-                fee = fee
+            sourceAddress = segwitAddress,
+            destinationAddress = destinationAddress,
+            amount = amountToSend,
+            fee = fee,
         )
 
         val expectedHashToSign1 = "53AC758A191610D1D0BE7FB962B8F58AB42031DDBE43011F01719DDA0A3FF634"
@@ -109,33 +110,32 @@ class BitcoinTransactionTest {
 
         // assert
         Truth.assertThat(buildToSignResult.data.map { it.toList() })
-                .containsExactly(expectedHashToSign1, expectedHashToSign2)
+            .containsExactly(expectedHashToSign1, expectedHashToSign2)
         Truth.assertThat(signedTransaction).isEqualTo(expectedSignedTransaction)
     }
 
     companion object {
         fun prepareTwoUnspentOutputs(
-                addresses: List<String>,
-                networkParameters: NetworkParameters
+            addresses: List<String>,
+            networkParameters: NetworkParameters,
         ): List<BitcoinUnspentOutput> {
-
             if (addresses.isEmpty()) throw Exception("Address is needed to prepare utxo")
             val bitcoinAddresses = addresses.map { Address.fromString(networkParameters, it) }
             val utxo1 = BitcoinUnspentOutput(
-                    amount = "10000".toBigDecimal(),
-                    outputIndex = 0,
-                    transactionHash = "6d9c1d5275317d1ea1f2683546414e971f3cac6ce4f460557bd504dd3b67a2b6"
-                            .hexToBytes(),
-                    outputScript = ScriptBuilder.createOutputScript(bitcoinAddresses[0]).program
+                amount = "10000".toBigDecimal(),
+                outputIndex = 0,
+                transactionHash = "6d9c1d5275317d1ea1f2683546414e971f3cac6ce4f460557bd504dd3b67a2b6"
+                    .hexToBytes(),
+                outputScript = ScriptBuilder.createOutputScript(bitcoinAddresses[0]).program,
             )
             val utxo2 = BitcoinUnspentOutput(
-                    amount = "0.01".toBigDecimal(),
-                    outputIndex = 73,
-                    transactionHash = "aef291cc72c2a82311bfcacb94b52368470dd3023b7ee47e3e3e2fc17dd6863f"
-                            .hexToBytes(),
-                    outputScript = ScriptBuilder.createOutputScript(
-                            bitcoinAddresses.getOrNull(1) ?: bitcoinAddresses[0]
-                    ).program
+                amount = "0.01".toBigDecimal(),
+                outputIndex = 73,
+                transactionHash = "aef291cc72c2a82311bfcacb94b52368470dd3023b7ee47e3e3e2fc17dd6863f"
+                    .hexToBytes(),
+                outputScript = ScriptBuilder.createOutputScript(
+                    bitcoinAddresses.getOrNull(1) ?: bitcoinAddresses[0],
+                ).program,
             )
             return listOf(utxo1, utxo2)
         }
