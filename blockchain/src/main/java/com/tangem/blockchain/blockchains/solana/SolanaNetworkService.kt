@@ -49,6 +49,7 @@ class SolanaNetworkService(
         )
     }
 
+    @Suppress("MagicNumber")
     private suspend fun getTransactionsInProgressInfo(account: PublicKey): Result<List<TransactionInfo>> =
         withContext(Dispatchers.IO) {
             try {

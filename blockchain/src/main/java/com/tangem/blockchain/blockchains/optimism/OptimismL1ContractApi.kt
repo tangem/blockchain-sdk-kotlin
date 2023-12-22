@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber")
+
 package com.tangem.blockchain.blockchains.optimism
 
 import org.kethereum.contract.abi.types.encodeTypes
@@ -74,8 +76,9 @@ internal class optimism_gas_l1TransactionGenerator(
      * Signature: getL1Fee(bytes)
      * 4Byte: 49948e0e
      */
-    fun getL1Fee(_data: ByteArray): Transaction =
-        getL1FeeETHTyped(DynamicSizedBytesETHType.ofNativeKotlinType(_data))
+    fun getL1Fee(_data: ByteArray): Transaction {
+        return getL1FeeETHTyped(DynamicSizedBytesETHType.ofNativeKotlinType(_data))
+    }
 
     internal fun getL1GasUsedETHTyped(_data: DynamicSizedBytesETHType) = tx.copy(
         input =

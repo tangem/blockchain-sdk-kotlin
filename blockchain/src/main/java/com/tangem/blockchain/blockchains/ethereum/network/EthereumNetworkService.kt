@@ -196,6 +196,7 @@ open class EthereumNetworkService(
         }
     }
 
+    @Suppress("MagicNumber")
     private fun String.responseToBigInteger() = this.substring(2).ifBlank { "0" }.toBigInteger(16)
 
     private fun String.parseAmount(decimals: Int) = this.responseToBigInteger().toBigDecimal().movePointLeft(decimals)
