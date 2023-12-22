@@ -101,6 +101,7 @@ class CosmosWalletManager(
         }
     }
 
+    @Suppress("MagicNumber")
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val accNumber = accountNumber ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 

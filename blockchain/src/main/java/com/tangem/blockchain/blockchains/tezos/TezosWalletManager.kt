@@ -148,6 +148,7 @@ class TezosWalletManager(
         return errors
     }
 
+    @Suppress("MagicNumber")
     private fun canonicalizeSignature(signature: ByteArray): ByteArray {
         return when (curve) {
             EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010 -> signature

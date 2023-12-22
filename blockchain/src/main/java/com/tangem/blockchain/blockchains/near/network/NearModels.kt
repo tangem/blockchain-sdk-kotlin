@@ -62,6 +62,7 @@ data class NearAmount(val yocto: Yocto) {
     /**
      * @return Yocto value in hex little endian format
      */
+    @Suppress("MagicNumber")
     fun toLittleEndian(): ByteArray {
         var hexString = yocto.value.toString(16)
 

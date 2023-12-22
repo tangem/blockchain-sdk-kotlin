@@ -34,6 +34,7 @@ class DucatusWalletManager(
         }
     }
 
+    @Suppress("MagicNumber")
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val feeValue = BigDecimal.ONE.movePointLeft(blockchain.decimals())
         val sizeResult = transactionBuilder.getEstimateSize(

@@ -4,6 +4,7 @@ import com.tangem.crypto.hdWallet.DerivationNode
 import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 
+@Suppress("MagicNumber")
 object CardanoUtils {
 
     // Link to the original code:
