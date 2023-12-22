@@ -181,10 +181,10 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://testnet-val.decimalchain.com/web3/"),
         )
 
-        else -> throw IllegalStateException("$this isn't supported")
+        else -> error("$this isn't supported")
     }
 
-    if (providers.isEmpty()) throw IllegalStateException("Provider list of $this is null or empty")
+    if (providers.isEmpty()) error("Provider list of $this is null or empty")
 
     return providers
 }
