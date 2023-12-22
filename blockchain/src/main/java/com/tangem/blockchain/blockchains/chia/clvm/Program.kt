@@ -11,6 +11,7 @@ import kotlin.experimental.and
  * https://github.com/irulast/chia-crypto-utils/blob/a07e7457f40e0d243482b6793518956df5b50a84/lib/src/clvm/program.dart
  * https://github.com/irulast/chia-crypto-utils/blob/a07e7457f40e0d243482b6793518956df5b50a84/lib/src/clvm/ir.dart
  */
+@Suppress("MagicNumber")
 sealed class Program {
     class Atom(val atom: ByteArray) : Program()
     class Cons(val left: Program, val right: Program) : Program()

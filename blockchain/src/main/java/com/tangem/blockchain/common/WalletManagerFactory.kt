@@ -232,6 +232,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
         }
     }
 
+    @Suppress("MagicNumber")
     private fun checkIfWrongKey(blockchain: Blockchain, curve: EllipticCurve, publicKey: Wallet.PublicKey): Boolean {
         // wallet2 has cardano with extended key, so we should take this into account
         return when (curve) {

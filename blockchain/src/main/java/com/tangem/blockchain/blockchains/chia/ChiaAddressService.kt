@@ -42,6 +42,7 @@ class ChiaAddressService(blockchain: Blockchain) : AddressService() {
                 .hexToBytes() + walletPublicKey + "ff018080".hexToBytes()
         }
 
+        @Suppress("MagicNumber")
         fun getPuzzleHash(address: String): ByteArray {
             val dataBytes = Bech32.decode(address).data.toByteArray()
             return Crypto.convertBits(dataBytes, 0, dataBytes.size, 5, 8, false)
