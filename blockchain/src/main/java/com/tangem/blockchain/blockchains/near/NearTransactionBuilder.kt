@@ -5,10 +5,7 @@ import com.tangem.blockchain.blockchains.near.network.NearAmount
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.Wallet
-import com.tangem.common.KeyPair
-import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.guard
-import com.tangem.crypto.CryptoUtils
 import wallet.core.jni.Base58
 import wallet.core.jni.CoinType
 import wallet.core.jni.DataVector
@@ -25,7 +22,6 @@ class NearTransactionBuilder(
 ) {
 
     private val coinType = CoinType.NEAR
-    private val keyPair: KeyPair by lazy { generateKeyPair() }
 
     // https://github.com/trustwallet/wallet-core/blob/master/android/app/src/androidTest/java/com/trustwallet/core/app/blockchains/near/TestNEARSigner.kt
     fun buildForSign(transaction: TransactionData, nonce: Long, blockHash: String): ByteArray {
@@ -61,7 +57,7 @@ class NearTransactionBuilder(
 
         val output = NEAR.SigningOutput.parseFrom(compileWithSignatures)
         if (output.error != Common.SigningError.OK) {
-            throw IllegalStateException("something went wrong")
+            error("something went wrong")
         }
 
         return output.signedTransaction.toByteArray()
@@ -94,12 +90,5 @@ class NearTransactionBuilder(
             .addActions(action)
             .setBlockHash(ByteString.copyFrom(Base58.decodeNoCheck(blockHash)))
             .setPublicKey(ByteString.copyFrom(publicKey.blockchainKey))
-    }
-
-    @Suppress("MagicNumber")
-    private fun generateKeyPair(): KeyPair {
-        val privateKey = CryptoUtils.generateRandomBytes(32)
-        val publicKey = CryptoUtils.generatePublicKey(privateKey, EllipticCurve.Ed25519)
-        return KeyPair(publicKey, privateKey)
     }
 }
