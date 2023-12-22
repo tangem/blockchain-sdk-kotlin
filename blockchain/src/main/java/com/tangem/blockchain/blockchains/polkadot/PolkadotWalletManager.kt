@@ -49,6 +49,7 @@ class PolkadotWalletManager(
         updateRecentTransactions()
     }
 
+    @Suppress("MagicNumber")
     private fun updateRecentTransactions() {
         val currentTimeInMillis = Calendar.getInstance().timeInMillis
         val confirmedTxData = wallet.recentTransactions

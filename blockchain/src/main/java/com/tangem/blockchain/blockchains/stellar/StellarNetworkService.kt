@@ -90,7 +90,7 @@ class StellarNetworkService(
                 )
             }
         } catch (errorResponse: ErrorResponse) {
-            if (errorResponse.code == 404) {
+            if (errorResponse.code == HTTP_NOT_FOUND_CODE) {
                 Result.Success(StellarTargetAccountResponse(accountCreated = false))
             } else {
                 Result.Failure(errorResponse.toBlockchainSdkError())
@@ -104,9 +104,10 @@ class StellarNetworkService(
         return try {
             coroutineScope {
                 val accountResponseDeferred = async(Dispatchers.IO) {
-                    stellarMultiProvider.performRequest(StellarWrapperNetworkProvider::accountCall, accountId).successOr {
-                        throw it.error
-                    }
+                    stellarMultiProvider.performRequest(StellarWrapperNetworkProvider::accountCall, accountId)
+                        .successOr {
+                            throw it.error
+                        }
                 }
                 val ledgerResponseDeferred = async(Dispatchers.IO) {
                     val latestLedger =
@@ -122,9 +123,10 @@ class StellarNetworkService(
                     }
                 }
                 val paymentsResponseDeferred = async(Dispatchers.IO) {
-                    stellarMultiProvider.performRequest(StellarWrapperNetworkProvider::paymentsCall, accountId).successOr {
-                        throw it.error
-                    }
+                    stellarMultiProvider.performRequest(StellarWrapperNetworkProvider::paymentsCall, accountId)
+                        .successOr {
+                            throw it.error
+                        }
                 }
 
                 val accountResponse = accountResponseDeferred.await()
@@ -161,7 +163,7 @@ class StellarNetworkService(
                 )
             }
         } catch (exception: Exception) {
-            if (exception is ErrorResponse && exception.code == 404) {
+            if (exception is ErrorResponse && exception.code == HTTP_NOT_FOUND_CODE) {
                 Result.Failure(BlockchainSdkError.AccountNotFound)
             } else {
                 Result.Failure(exception.toBlockchainSdkError())
@@ -239,5 +241,9 @@ class StellarNetworkService(
             date = Calendar.getInstance().apply { time = dateFormat.parse(createdAt)!! },
             hash = transactionHash,
         )
+    }
+
+    companion object {
+        const val HTTP_NOT_FOUND_CODE = 404
     }
 }

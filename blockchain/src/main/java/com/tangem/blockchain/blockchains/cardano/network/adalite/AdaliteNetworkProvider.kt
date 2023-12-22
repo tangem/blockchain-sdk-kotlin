@@ -67,7 +67,7 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
             retryIO { api.sendTransaction(AdaliteSendBody(transaction.encodeBase64NoWrap())) }
             SimpleResult.Success
         } catch (exception: Exception) {
-            if (exception is HttpException && exception.code() == 400) {
+            if (exception is HttpException && exception.code() == HTTP_BAD_REQUEST_CODE) {
                 val error = IOException(
                     "${Blockchain.Cardano}. Failed to send transaction ${transaction.toHexString()}\nwith an error: " +
                         "\n${exception.response()?.errorBody()?.string()}",
@@ -77,6 +77,10 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
                 SimpleResult.Failure(exception.toBlockchainSdkError())
             }
         }
+    }
+
+    private companion object {
+        const val HTTP_BAD_REQUEST_CODE = 400
     }
 }
 
