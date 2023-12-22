@@ -49,6 +49,7 @@ internal object NearWalletManagerAssembly : WalletManagerAssembly<NearWalletMana
         return NearJsonRpcNetworkProvider(baseUrl, nearApi)
     }
 
+    @Suppress("UnusedPrivateMember")
     private fun getInfuraProvider(infuraProjectId: String): NearJsonRpcNetworkProvider {
         val baseUrl = "https://near-mainnet.infura.io/"
         val nearApi = createRetrofitInstance("${baseUrl}v3/").create(NearApi::class.java)

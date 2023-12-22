@@ -99,7 +99,7 @@ internal class CosmosTransactionBuilder(
             .build()
 
         if (output.error != Common.SigningError.OK) {
-            throw IllegalStateException("something went wrong")
+            error("something went wrong")
         }
 
         return output.serialized

@@ -17,7 +17,7 @@ class NearNetworkService(
 
     init {
         if (blockchain != Blockchain.Near && blockchain != Blockchain.NearTestnet) {
-            throw IllegalArgumentException("The blockchain parameter should be Near or NearTestnet")
+            error("The blockchain parameter should be Near or NearTestnet")
         }
     }
 

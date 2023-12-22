@@ -36,7 +36,7 @@ fun ByteArray.calculateBlake2b(digestByteSize: Int): ByteArray {
 
 @Suppress("MagicNumber")
 fun ByteArray.toCanonicalECDSASignature(): ECKey.ECDSASignature {
-    if (this.size != 64) throw Exception("Invalid signature length")
+    if (this.size != 64) error("Invalid signature length")
     val r = BigInteger(1, this.copyOfRange(0, 32))
     val s = BigInteger(1, this.copyOfRange(32, 64))
     return ECKey.ECDSASignature(r, s).toCanonicalised()
