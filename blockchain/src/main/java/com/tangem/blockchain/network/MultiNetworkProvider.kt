@@ -12,7 +12,7 @@ class MultiNetworkProvider<P : NetworkProvider>(
     val providers: List<P>,
 ) {
     init {
-        if (providers.isEmpty()) throw Exception("Empty providers list")
+        if (providers.isEmpty()) error("Empty providers list")
     }
 
     private val providerIterator = CycleListIterator(providers)
@@ -127,7 +127,7 @@ class MultiNetworkProvider<P : NetworkProvider>(
         return when (result) {
             is Result<*> -> ResultChecker.isNetworkError(result = result)
             is SimpleResult -> ResultChecker.isNetworkError(result = result)
-            else -> throw Exception("Invalid result type")
+            else -> error("Invalid result type")
         }
     }
 

@@ -65,18 +65,14 @@ abstract class WalletManager(
             transactions.partition { it.status == TransactionStatus.Confirmed }
 
         wallet.recentTransactions.forEach { recent ->
-            if (confirmedTransactions.find { confirmed ->
-                    confirmed.hash.equals(recent.hash, true)
-                } != null
-            ) {
+            val confirmedTx = confirmedTransactions.find { confirmed -> confirmed.hash.equals(recent.hash, true) }
+            if (confirmedTx != null) {
                 recent.status = TransactionStatus.Confirmed
             }
         }
         unconfirmedTransactions.forEach { unconfirmed ->
-            if (wallet.recentTransactions.find { recent ->
-                    recent.hash.equals(unconfirmed.hash, true)
-                } == null
-            ) {
+            val recentTx = wallet.recentTransactions.find { recent -> recent.hash.equals(unconfirmed.hash, true) }
+            if (recentTx == null) {
                 wallet.recentTransactions.add(unconfirmed)
             }
         }

@@ -32,7 +32,8 @@ class NearWalletManager(
                 when (val account = walletInfoResult.data) {
                     is NearAccount.Full -> updateWallet(
                         amountValue = account.near.value,
-                        depositValue = account.storageUsage.value * protocolConfigResult.runtimeConfig.storageAmountPerByte,
+                        depositValue = account.storageUsage.value *
+                            protocolConfigResult.runtimeConfig.storageAmountPerByte,
                     )
 
                     NearAccount.NotInitialized -> {
@@ -70,7 +71,7 @@ class NearWalletManager(
 
     private fun updateError(error: BlockchainError) {
         Log.e(this::class.java.simpleName, error.customMessage)
-        if (error is BlockchainSdkError) throw error
+        if (error is BlockchainSdkError) error("Error isn't BlockchainSdkError")
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {

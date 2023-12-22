@@ -10,6 +10,8 @@ data class Amount(
     val type: AmountType = AmountType.Coin,
 ) {
 
+    val longValue get() = value?.movePointRight(decimals)?.toLong()
+
     constructor(
         value: BigDecimal?,
         blockchain: Blockchain,
@@ -24,9 +26,6 @@ data class Amount(
 
     constructor(blockchain: Blockchain) :
         this(blockchain.currency, BigDecimal.ZERO, blockchain.decimals(), AmountType.Coin)
-
-    val longValue
-        get() = value?.movePointRight(decimals)?.toLong()
 
     operator fun plus(add: BigDecimal): Amount = copy(value = (value ?: BigDecimal.ZERO).plus(add))
 

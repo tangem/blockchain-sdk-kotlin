@@ -38,10 +38,8 @@ class PolkadotJsonRpcProvider(baseUrl: String) {
                 ?: throw this.data.error?.toException()?.toBlockchainSdkError()
                     ?: BlockchainSdkError.CustomError("Unknown response format")
         }
-
         is Result.Failure -> {
-            throw (this.error as? BlockchainSdkError)
-                ?: BlockchainSdkError.CustomError("Unknown error format")
+            throw this.error as? BlockchainSdkError ?: BlockchainSdkError.CustomError("Unknown error format")
         }
     }
 
