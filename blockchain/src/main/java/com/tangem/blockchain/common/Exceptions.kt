@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber")
+
 package com.tangem.blockchain.common
 
 import com.tangem.common.core.TangemError

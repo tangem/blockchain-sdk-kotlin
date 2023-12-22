@@ -90,10 +90,6 @@ class StellarTransactionBuilder(
                     )
                 }
 
-                val asset = Asset.create(
-                    "native",
-
-                    )
                 val operation: Operation = if (amount.value != null) {
                     PaymentOperation.Builder(
                         destinationKeyPair.accountId,
@@ -121,6 +117,7 @@ class StellarTransactionBuilder(
         }
     }
 
+    @Suppress("MagicNumber")
     private fun getTimeBounds(transactionData: TransactionData): TimeBounds {
         val calendar = transactionData.date ?: Calendar.getInstance()
         val minTime = 0L
@@ -152,6 +149,7 @@ class StellarTransactionBuilder(
         return transactionBuilder.build()
     }
 
+    @Suppress("MagicNumber")
     fun buildToSend(signature: ByteArray): String {
         val hint = publicKey.takeLast(4).toByteArray()
         val decoratedSignature = DecoratedSignature().apply {

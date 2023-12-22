@@ -20,6 +20,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.util.Calendar
 
+@Suppress("MagicNumber")
 class BlockchainInfoNetworkProvider : BitcoinNetworkProvider {
     override val baseUrl: String = API_BLOCKCHAIN_INFO
 

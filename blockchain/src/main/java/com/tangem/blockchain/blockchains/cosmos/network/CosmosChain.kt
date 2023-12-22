@@ -32,11 +32,14 @@ sealed interface CosmosChain {
     data class Cosmos(val testnet: Boolean) : CosmosChain {
         override val blockchain: Blockchain = if (testnet) Blockchain.CosmosTestnet else Blockchain.Cosmos
         override val chainId: String = if (testnet) "theta-testnet-001" else "cosmoshub-4"
+
+        @Suppress("MagicNumber")
         override fun gasPrices(amountType: AmountType): List<BigDecimal> = listOf(
             BigDecimal(0.01),
             BigDecimal(0.025),
             BigDecimal(0.03),
         )
+
         override val smallestDenomination: String = "uatom"
         override val gasMultiplier: BigDecimal = BigDecimal(2)
         override val feeMultiplier: BigDecimal = BigDecimal(1.0)
@@ -44,6 +47,7 @@ sealed interface CosmosChain {
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)
+    @Suppress("MagicNumber")
     object Gaia : CosmosChain {
         override val blockchain: Blockchain = Blockchain.CosmosTestnet
         override val chainId: String = "gaia-13003"
@@ -54,6 +58,7 @@ sealed interface CosmosChain {
         override val coin: CoinType = CoinType.COSMOS
     }
 
+    @Suppress("MagicNumber")
     object TerraV1 : CosmosChain {
         override val blockchain: Blockchain = Blockchain.TerraV1
         override val chainId: String = "columbus-5"
@@ -78,6 +83,7 @@ sealed interface CosmosChain {
         }
     }
 
+    @Suppress("MagicNumber")
     object TerraV2 : CosmosChain {
         override val blockchain: Blockchain = Blockchain.TerraV2
         override val chainId: String = "phoenix-1"

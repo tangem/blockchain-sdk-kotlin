@@ -52,9 +52,8 @@ class CardanoWalletManager(
                     recentTransaction.status = TransactionStatus.Confirmed
                 }
             } else { // case for APIs with recent transactions
-                if (response.recentTransactionsHashes
-                        .find { it.equals(recentTransaction.hash, true) } != null
-                ) {
+                val recentTx = response.recentTransactionsHashes.find { it.equals(recentTransaction.hash, true) }
+                if (recentTx != null) {
                     recentTransaction.status = TransactionStatus.Confirmed
                 }
             }

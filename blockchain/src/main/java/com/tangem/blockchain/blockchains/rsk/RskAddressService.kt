@@ -12,6 +12,8 @@ import org.kethereum.model.PublicKey
 import java.util.Locale
 
 class RskAddressService : AddressService() {
+
+    @Suppress("MagicNumber")
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String = PublicKey(
         walletPublicKey.toDecompressedPublicKey().sliceArray(1..64),
     ).toAddress().withChecksum().hex
