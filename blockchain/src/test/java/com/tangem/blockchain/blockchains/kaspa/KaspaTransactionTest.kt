@@ -17,14 +17,20 @@ class KaspaTransactionTest {
     private val decimals = blockchain.decimals()
     private val addressService = KaspaAddressService()
 
+    @Suppress("LongMethod")
     @Test
     fun buildCorrectTransactionToSchnorrAddress() {
         // arrange
-        val walletPublicKey = "04EB30400CE9D1DEED12B84D4161A1FA922EF4185A155EF3EC208078B3807B126FA22C335081AAEBF161095C11C7D8BD550EF8882A3125B0EE9AE96DDDE1AE743F"
-            .hexToBytes()
-        val signature =
-            "E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D377878E83F25FD2E258B2E918EF79E151337D7F3BD0798D66FDCE04B07C30984424B13344F0A7CC401654BF71C43DF96FC6B46766CAE30E97BD9018E9B98BB2C3645744A696AD26ECC780157EA9D44DC41D0BCB420175A5D3F543079F4263AA2DBDE0EE2D33A877FC583E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D377878E83F25FD2E258B2E918EF79E151337D7F3BD0798D66FDCE04B07C30984424B13344F0A7CC40168"
-                .hexToBytes()
+        val walletPublicKey = (
+            "04EB30400CE9D1DEED12B84D4161A1FA922EF4185A155EF3EC208078B3807B126FA22C335081AAEBF161095C11C7D8BD550EF88" +
+                "82A3125B0EE9AE96DDDE1AE743F"
+            ).hexToBytes()
+        val signature = (
+            "E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D377878E83F25FD2E258B2E918EF79E151337D7F3BD0798D66FDCE04B07C" +
+                "30984424B13344F0A7CC401654BF71C43DF96FC6B46766CAE30E97BD9018E9B98BB2C3645744A696AD26ECC780157EA9D44" +
+                "DC41D0BCB420175A5D3F543079F4263AA2DBDE0EE2D33A877FC583E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D3" +
+                "77878E83F25FD2E258B2E918EF79E151337D7F3BD0798D66FDCE04B07C30984424B13344F0A7CC40168"
+            ).hexToBytes()
         val sendValue = "0.001".toBigDecimal()
         val feeValue = "0.0003".toBigDecimal()
         val destinationAddress = "kaspa:qpsqw2aamda868dlgqczeczd28d5nc3rlrj3t87vu9q58l2tugpjs2psdm4fv"
@@ -77,7 +83,8 @@ class KaspaTransactionTest {
                             transactionId = "ae96e819429e9da538e84cb213f62fbc8ad32e932d7c7f1fb9bd2fedf8fd7b4a",
                             index = 0,
                         ),
-                        signatureScript = "41E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D377878E83F25FD2E258B2E918EF79E151337D7F3BD0798D66FDCE04B07C30984424B13344F0A7CC4016501",
+                        signatureScript = "41E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D377878E83F25FD2E258B2E918EF" +
+                            "79E151337D7F3BD0798D66FDCE04B07C30984424B13344F0A7CC4016501",
                         sequence = 0,
                         sigOpCount = 1,
                     ),
@@ -86,7 +93,8 @@ class KaspaTransactionTest {
                             transactionId = "deb88e7dd734437c6232a636085ef917d1d13cc549fe14749765508b2782f2fb",
                             index = 0,
                         ),
-                        signatureScript = "414BF71C43DF96FC6B46766CAE30E97BD9018E9B98BB2C3645744A696AD26ECC780157EA9D44DC41D0BCB420175A5D3F543079F4263AA2DBDE0EE2D33A877FC58301",
+                        signatureScript = "414BF71C43DF96FC6B46766CAE30E97BD9018E9B98BB2C3645744A696AD26ECC780157EA9" +
+                            "D44DC41D0BCB420175A5D3F543079F4263AA2DBDE0EE2D33A877FC58301",
                         sequence = 0,
                         sigOpCount = 1,
                     ),
@@ -95,7 +103,8 @@ class KaspaTransactionTest {
                             transactionId = "304db39069dc409acedf544443dcd4a4f02bfad4aeb67116f8bf087822c456af",
                             index = 0,
                         ),
-                        signatureScript = "41E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D377878E83F25FD2E258B2E918EF79E151337D7F3BD0798D66FDCE04B07C30984424B13344F0A7CC4016801",
+                        signatureScript = "41E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D377878E83F25FD2E258B2E918EF" +
+                            "79E151337D7F3BD0798D66FDCE04B07C30984424B13344F0A7CC4016801",
                         sequence = 0,
                         sigOpCount = 1,
                     ),
@@ -131,13 +140,18 @@ class KaspaTransactionTest {
         Truth.assertThat(signedTransaction).isEqualTo(expectedSignedTransaction)
     }
 
+    @Suppress("LongMethod")
     @Test
     fun buildCorrectTransactionToP2SHAddress() {
         // arrange
-        val walletPublicKey = "04EB30400CE9D1DEED12B84D4161A1FA922EF4185A155EF3EC208078B3807B126FA22C335081AAEBF161095C11C7D8BD550EF8882A3125B0EE9AE96DDDE1AE743F"
-            .hexToBytes()
-        val signature = "E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D377878E83F25FD2E258B2E918EF79E151337D7F3BD0798D66FDCE04B0704EB30400CE9D1DEED12B84D41"
-            .hexToBytes()
+        val walletPublicKey = (
+            "04EB30400CE9D1DEED12B84D4161A1FA922EF4185A155EF3EC208078B3807B126FA22C335081AAEBF161095C11C7D8BD550EF88" +
+                "82A3125B0EE9AE96DDDE1AE743F"
+            ).hexToBytes()
+        val signature = (
+            "E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D377878E83F25FD2E258B2E918EF79E151337D7F3BD0798D66FDCE04B070" +
+                "4EB30400CE9D1DEED12B84D41"
+            ).hexToBytes()
         val sendValue = "0.001".toBigDecimal()
         val feeValue = "0.0001".toBigDecimal()
         val destinationAddress = "kaspa:pqurku73qluhxrmvyj799yeyptpmsflpnc8pha80z6zjh6efwg3v2rrepjm5r"
@@ -174,7 +188,8 @@ class KaspaTransactionTest {
                             transactionId = "ae96e819429e9da538e84cb213f62fbc8ad32e932d7c7f1fb9bd2fedf8fd7b4a",
                             index = 0,
                         ),
-                        signatureScript = "41E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D377878E83F25FD2E258B2E918EF79E151337D7F3BD0798D66FDCE04B0704EB30400CE9D1DEED12B84D4101",
+                        signatureScript = "41E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D377878E83F25FD2E258B2E918EF" +
+                            "79E151337D7F3BD0798D66FDCE04B0704EB30400CE9D1DEED12B84D4101",
                         sequence = 0,
                         sigOpCount = 1,
                     ),
