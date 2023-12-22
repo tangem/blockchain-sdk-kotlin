@@ -16,14 +16,14 @@ class TronAddressService : AddressService() {
         val data = decompressedPublicKey.drop(1).toByteArray()
         val hash = data.toKeccak()
 
-        val addressData = PREFIX.toByteArray(1) + hash.takeLast(ADDRESS_LENGTH-1).toByteArray()
+        val addressData = PREFIX.toByteArray(1) + hash.takeLast(ADDRESS_LENGTH - 1).toByteArray()
         return Base58Check.bytesToBase58(addressData)
     }
 
     override fun validate(address: String): Boolean {
         val decoded = address.decodeBase58(checked = true) ?: return false
         return decoded.count() == ADDRESS_LENGTH &&
-                decoded.toHexString().startsWith(PREFIX.toByteArray(1).toHexString())
+            decoded.toHexString().startsWith(PREFIX.toByteArray(1).toHexString())
     }
 
     companion object {

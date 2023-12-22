@@ -3,15 +3,7 @@ package com.tangem.blockchain.blockchains.xrp
 import android.util.Log
 import com.tangem.blockchain.blockchains.xrp.network.XrpInfoResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.BlockchainError
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionSender
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.TransactionStatus
-import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -61,9 +53,7 @@ class XrpWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    override suspend fun send(
-        transactionData: TransactionData, signer: TransactionSigner,
-    ): SimpleResult {
+    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         val transactionHash = when (val buildResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Success -> buildResult.data
             is Result.Failure -> return SimpleResult.Failure(buildResult.error)
@@ -91,8 +81,8 @@ class XrpWalletManager(
                 TransactionFee.Choosable(
                     minimum = Fee.Common(Amount(result.data.minimalFee, blockchain)),
                     normal = Fee.Common(Amount(result.data.normalFee, blockchain)),
-                    priority = Fee.Common(Amount(result.data.priorityFee, blockchain))
-                )
+                    priority = Fee.Common(Amount(result.data.priorityFee, blockchain)),
+                ),
             )
         }
     }

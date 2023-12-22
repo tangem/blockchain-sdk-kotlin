@@ -3,7 +3,7 @@ package com.tangem.blockchain.blockchains.ton.network
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.extensions.Result
 
-interface TonNetworkProvider: NetworkProvider {
+interface TonNetworkProvider : NetworkProvider {
 
     suspend fun getWalletInformation(address: String): Result<TonGetWalletInfoResponse>
 

@@ -288,7 +288,7 @@ enum class Blockchain(
             -> listOf(
                 EllipticCurve.Secp256k1,
                 EllipticCurve.Ed25519,
-                EllipticCurve.Ed25519Slip0010
+                EllipticCurve.Ed25519Slip0010,
             )
 
             XRP,
@@ -330,7 +330,7 @@ enum class Blockchain(
             TON, TONTestnet, Near, NearTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
 
-            Cardano -> listOf(EllipticCurve.Ed25519) //todo until cardano support in wallet 2
+            Cardano -> listOf(EllipticCurve.Ed25519) // todo until cardano support in wallet 2
             Chia, ChiaTestnet,
             -> listOf(EllipticCurve.Bls12381G2Aug)
         }
@@ -411,7 +411,7 @@ enum class Blockchain(
         Stellar, StellarTestnet,
         Optimism, OptimismTestnet,
         TON, TONTestnet,
-        Near, NearTestnet
+        Near, NearTestnet,
         -> true
 
         else -> false
