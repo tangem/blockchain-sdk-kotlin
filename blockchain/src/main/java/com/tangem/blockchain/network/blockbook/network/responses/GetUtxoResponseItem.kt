@@ -5,5 +5,5 @@ data class GetUtxoResponseItem(
     val height: Int?,
     val txid: String,
     val value: String,
-    val vout: Int
+    val vout: Int,
 )

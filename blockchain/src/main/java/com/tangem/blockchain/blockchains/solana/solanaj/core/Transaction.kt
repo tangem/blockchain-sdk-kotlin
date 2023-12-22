@@ -9,7 +9,7 @@ import org.p2p.solanaj.core.Transaction
  * Created by Anton Zhilenkov on 26/01/2022.
  */
 class Transaction(
-    private val feePayerPublicKey: PublicKey
+    private val feePayerPublicKey: PublicKey,
 ) : Transaction(Message(feePayerPublicKey)) {
 
     @Deprecated("Instead, use getDataForSign and then addSignedDataSignature before submitting the transaction.")

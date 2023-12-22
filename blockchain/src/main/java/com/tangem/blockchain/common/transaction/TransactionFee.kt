@@ -14,4 +14,3 @@ sealed class TransactionFee {
         override val normal: Fee,
     ) : TransactionFee()
 }
-

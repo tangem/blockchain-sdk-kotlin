@@ -3,7 +3,6 @@ package com.tangem.blockchain.blockchains.near.network.api
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import java.math.BigDecimal
-import java.math.BigInteger
 
 /**
  * @author Anton Zhilenkov on 08.08.2023.
@@ -68,7 +67,6 @@ data class NetworkStatusResult(
         @Json(name = "latest_state_root") val latestStateRoot: String,
         @Json(name = "syncing") val syncing: Boolean,
     )
-
 }
 
 @JsonClass(generateAdapter = true)

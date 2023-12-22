@@ -36,10 +36,10 @@ open class KaspaRestApiNetworkProvider(baseUrl: String) : KaspaNetworkProvider {
                                 amount = it.utxoEntry!!.amount!!.toBigDecimal().movePointLeft(decimals),
                                 outputIndex = it.outpoint!!.index!!,
                                 transactionHash = it.outpoint!!.transactionId!!.hexToBytes(),
-                                outputScript = it.utxoEntry!!.scriptPublicKey!!.scriptPublicKey!!.hexToBytes()
+                                outputScript = it.utxoEntry!!.scriptPublicKey!!.scriptPublicKey!!.hexToBytes(),
                             )
-                        }
-                    )
+                        },
+                    ),
                 )
             }
         } catch (exception: Exception) {
@@ -56,4 +56,3 @@ open class KaspaRestApiNetworkProvider(baseUrl: String) : KaspaNetworkProvider {
         }
     }
 }
-

@@ -8,7 +8,7 @@ import org.p2p.solanaj.core.PublicKey
  * Created by Anton Zhilenkov on 26/01/2022.
  */
 class Message(
-    private val feePayerPublicKey: PublicKey
+    private val feePayerPublicKey: PublicKey,
 ) : Message() {
 
     @Deprecated("Override getFeePayerPublicKey instead")

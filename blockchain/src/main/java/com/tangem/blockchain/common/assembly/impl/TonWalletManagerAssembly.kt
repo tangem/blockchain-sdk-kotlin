@@ -13,7 +13,7 @@ internal object TonWalletManagerAssembly : WalletManagerAssembly<TonWalletManage
             networkProviders = TonJsonRpcClientBuilder()
                 .build(
                     isTestNet = input.wallet.blockchain.isTestnet(),
-                    blockchainSdkConfig = input.config
+                    blockchainSdkConfig = input.config,
                 ),
         )
     }

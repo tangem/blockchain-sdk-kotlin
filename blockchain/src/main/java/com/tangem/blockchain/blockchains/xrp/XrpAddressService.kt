@@ -78,6 +78,6 @@ class XrpAddressService : AddressService() {
 }
 
 data class XrpTaggedAddress(
-        val address: String,
-        val destinationTag: Long?
+    val address: String,
+    val destinationTag: Long?,
 )

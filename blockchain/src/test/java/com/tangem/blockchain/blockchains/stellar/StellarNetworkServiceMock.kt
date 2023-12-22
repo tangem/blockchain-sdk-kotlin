@@ -6,9 +6,9 @@ import com.tangem.blockchain.extensions.SimpleResult
 import org.stellar.sdk.responses.FeeStatsResponse
 
 class StellarNetworkServiceMock(
-        private val checkTargetAccountResult: Result<StellarTargetAccountResponse> = Result.Success(
-                StellarTargetAccountResponse(accountCreated = true, trustlineCreated = true)
-        )
+    private val checkTargetAccountResult: Result<StellarTargetAccountResponse> = Result.Success(
+        StellarTargetAccountResponse(accountCreated = true, trustlineCreated = true),
+    ),
 ) : StellarNetworkProvider {
 
     override val baseUrl: String
@@ -26,10 +26,9 @@ class StellarNetworkServiceMock(
         TODO("Not yet implemented")
     }
 
-    override suspend fun checkTargetAccount(
-            address: String,
-            token: Token?
-    ): Result<StellarTargetAccountResponse> = checkTargetAccountResult
+    override suspend fun checkTargetAccount(address: String, token: Token?): Result<StellarTargetAccountResponse> =
+        checkTargetAccountResult
+
     override suspend fun getSignatureCount(accountId: String): Result<Int> {
         TODO("Not yet implemented")
     }

@@ -21,12 +21,12 @@ internal fun Blockchain.getBitcoinNetworkProviders(
             getGetBlockProvider(blockchain, config.getBlockCredentials),
             *getBlockchairProviders(blockchain, config),
             getBlockcypherProvider(blockchain, config),
-            BlockchainInfoNetworkProvider() // crashes when large input
+            BlockchainInfoNetworkProvider(), // crashes when large input
         )
         Blockchain.BitcoinTestnet -> listOfNotNull(
             getNowNodesProvider(blockchain, config),
             *getBlockchairProviders(blockchain, config),
-            getBlockcypherProvider(blockchain, config)
+            getBlockcypherProvider(blockchain, config),
         )
         Blockchain.Litecoin,
         Blockchain.Dogecoin,
@@ -35,7 +35,7 @@ internal fun Blockchain.getBitcoinNetworkProviders(
             getNowNodesProvider(blockchain, config),
             getGetBlockProvider(blockchain, config.getBlockCredentials),
             *getBlockchairProviders(blockchain, config),
-            getBlockcypherProvider(blockchain, config)
+            getBlockcypherProvider(blockchain, config),
         )
         Blockchain.BitcoinCash -> listOfNotNull(
             *getBlockchairProviders(blockchain, config),
@@ -54,14 +54,11 @@ internal fun Blockchain.getBitcoinNetworkProviders(
     }
 }
 
-private fun getNowNodesProvider(
-    blockchain: Blockchain,
-    config: BlockchainSdkConfig,
-): BitcoinNetworkProvider? {
+private fun getNowNodesProvider(blockchain: Blockchain, config: BlockchainSdkConfig): BitcoinNetworkProvider? {
     return if (config.nowNodeCredentials != null && config.nowNodeCredentials.apiKey.isNotBlank()) {
         BlockBookNetworkProvider(
             config = BlockBookConfig.NowNodes(nowNodesCredentials = config.nowNodeCredentials),
-            blockchain = blockchain
+            blockchain = blockchain,
         )
     } else {
         null
@@ -73,7 +70,7 @@ private fun getGetBlockProvider(
     getBlockCredentials: GetBlockCredentials?,
 ): BitcoinNetworkProvider? {
     val credentials = getBlockCredentials ?: return null
-    val accessToken = when(blockchain) {
+    val accessToken = when (blockchain) {
         Blockchain.Bitcoin -> credentials.bitcoin
         Blockchain.Dash -> credentials.dash
         Blockchain.Dogecoin -> credentials.dogecoin
@@ -87,7 +84,7 @@ private fun getGetBlockProvider(
                 blockBookToken = accessToken.blockBookRest,
                 jsonRpcToken = accessToken.jsonRpc,
             ),
-            blockchain = blockchain
+            blockchain = blockchain,
         )
     } else {
         null
@@ -109,10 +106,7 @@ private fun getBlockchairProviders(
     } ?: emptyArray()
 }
 
-private fun getBlockcypherProvider(
-    blockchain: Blockchain,
-    config: BlockchainSdkConfig,
-): BitcoinNetworkProvider? {
+private fun getBlockcypherProvider(blockchain: Blockchain, config: BlockchainSdkConfig): BitcoinNetworkProvider? {
     return config.blockcypherTokens?.let {
         BlockcypherNetworkProvider(blockchain = blockchain, tokens = config.blockcypherTokens)
     }

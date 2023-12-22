@@ -23,7 +23,7 @@ internal sealed class NearError {
     object UnknownError : NearError()
 
     companion object {
-        fun mapFrom(error: BlockchainSdkError.NearException.Api): NearError? = when (error.name) {
+        fun mapFrom(error: BlockchainSdkError.NearException.Api): NearError = when (error.name) {
             "UNKNOWN_BLOCK" -> UnknownBlock
             "INVALID_ACCOUNT" -> InvalidAccount
             "UNKNOWN_ACCOUNT" -> UnknownAccount

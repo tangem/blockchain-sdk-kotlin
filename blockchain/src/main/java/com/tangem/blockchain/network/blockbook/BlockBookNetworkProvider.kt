@@ -43,14 +43,14 @@ class BlockBookNetworkProvider(
                     unspentOutputs = createUnspentOutputs(
                         getUtxoResponseItems = getUtxoResponseItems,
                         transactions = getAddressResponse.transactions.orEmpty(),
-                        address = address
+                        address = address,
                     ),
                     recentTransactions = createRecentTransactions(
                         transactions = getAddressResponse.transactions.orEmpty(),
                         address = address,
                     ),
-                    hasUnconfirmed = getAddressResponse.unconfirmedTxs != 0
-                )
+                    hasUnconfirmed = getAddressResponse.unconfirmedTxs != 0,
+                ),
             )
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
@@ -64,7 +64,7 @@ class BlockBookNetworkProvider(
             val priorityPerKb = getFeePerKb(param = PRIORITY_FEE_BLOCK_AMOUNT)
 
             Result.Success(
-                BitcoinFee(minimalPerKb, normalPerKb, priorityPerKb)
+                BitcoinFee(minimalPerKb, normalPerKb, priorityPerKb),
             )
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
