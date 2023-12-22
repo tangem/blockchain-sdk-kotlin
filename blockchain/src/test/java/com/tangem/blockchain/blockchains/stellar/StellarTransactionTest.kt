@@ -61,11 +61,11 @@ class StellarTransactionTest {
     @Test
     fun buildCorrectTokenTransaction() {
         // arrange
-        val walletPublicKey = "64DF67680F2167E1A085083FE3085561E6BEF5AA1FC165785FFAE6264706DB8C"
-            .hexToBytes()
-        val signature =
-            "C0FBC3255442CAE582FDC3CF8F431AAAB0B89D1D0DFBDAE71FEE44F99E4C11BD3D31BEB446589EDC761493C369CDA6B13AC09D122C58C7F5903832678371A96D"
-                .hexToBytes()
+        val walletPublicKey = "64DF67680F2167E1A085083FE3085561E6BEF5AA1FC165785FFAE6264706DB8C".hexToBytes()
+        val signature = (
+            "C0FBC3255442CAE582FDC3CF8F431AAAB0B89D1D0DFBDAE71FEE44F99E4C11BD3D31BEB446589EDC761493C369CDA6B13AC09D1" +
+                "22C58C7F5903832678371A96D"
+            ).hexToBytes()
         val sendValue = "3".toBigDecimal()
         val feeValue = "0.01".toBigDecimal()
         val destinationAddress = "GAI3GJ2Q3B35AOZJ36C4ANE3HSS4NK7WI6DNO4ZSHRAX6NG7BMX6VJER"
