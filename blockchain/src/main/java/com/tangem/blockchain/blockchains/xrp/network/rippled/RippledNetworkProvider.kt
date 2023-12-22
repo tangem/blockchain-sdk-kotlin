@@ -55,7 +55,7 @@ class RippledNetworkProvider(
                 val reserveBase = serverState.result!!.state!!.validatedLedger!!.reserveBase!!
                     .toBigDecimal().movePointLeft(decimals)
 
-                if (accountData.result!!.errorCode == 19) {
+                if (accountData.result!!.errorCode == ERROR_CODE) {
                     Result.Success(
                         XrpInfoResponse(
                             reserveBase = reserveBase,
@@ -127,10 +127,14 @@ class RippledNetworkProvider(
         return try {
             val accountBody = makeAccountBody(address, validated = true)
             val accountData = retryIO { api.getAccount(accountBody) }
-            accountData.result!!.errorCode != 19
+            accountData.result!!.errorCode != ERROR_CODE
         } catch (exception: Exception) {
             true // or let's assume it's created? (normally it is)
         }
+    }
+
+    private companion object {
+        private const val ERROR_CODE = 19
     }
 }
 
