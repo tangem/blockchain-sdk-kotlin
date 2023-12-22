@@ -24,7 +24,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         return when (blockchain) {
             Blockchain.Cardano -> makeShelleyAddress(walletPublicKey)
-            else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
+            else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
         }
     }
 

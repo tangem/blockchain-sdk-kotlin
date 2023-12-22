@@ -21,7 +21,7 @@ class RskAddressService : AddressService() {
     override fun validate(address: String): Boolean = Address(address).hasValidChecksumOrNoChecksum()
 
     private fun Address.withChecksum(): Address { // it's like ERC55 but with chainId
-        return ("30$hex").lowercase(Locale.ROOT).toByteArray().keccak().toHexString()
+        return "30$hex".lowercase(Locale.ROOT).toByteArray().keccak().toHexString()
             .let { hexHash ->
                 Address(
                     cleanHex.mapIndexed { index, hexChar ->
