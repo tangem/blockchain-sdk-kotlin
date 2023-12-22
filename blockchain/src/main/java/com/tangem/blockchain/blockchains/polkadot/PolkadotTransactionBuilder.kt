@@ -55,6 +55,7 @@ class PolkadotTransactionBuilder(blockchain: Blockchain) {
         return buffer.toByteArray()
     }
 
+    @Suppress("MagicNumber")
     fun buildForSend(
         sourceAddress: String,
         destinationAddress: String,

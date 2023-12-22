@@ -73,7 +73,7 @@ class BlockcypherNetworkProvider(
                 ),
             )
         } catch (error: HttpException) {
-            return if (error.code() == 429 && token == null && !tokens.isNullOrEmpty()) {
+            return if (error.code() == HTTP_TOO_MANY_REQUESTS && token == null && !tokens.isNullOrEmpty()) {
                 getInfo(address, getToken())
             } else {
                 Result.Failure(error.toBlockchainSdkError())
@@ -97,7 +97,7 @@ class BlockcypherNetworkProvider(
                 ),
             )
         } catch (error: HttpException) {
-            return if (error.code() == 429 && token == null && !tokens.isNullOrEmpty()) {
+            return if (error.code() == HTTP_TOO_MANY_REQUESTS && token == null && !tokens.isNullOrEmpty()) {
                 getFee(getToken())
             } else {
                 Result.Failure(error.toBlockchainSdkError())
@@ -139,7 +139,7 @@ class BlockcypherNetworkProvider(
 
             Result.Success(signatureCount)
         } catch (error: HttpException) {
-            return if (error.code() == 429 && token == null && !tokens.isNullOrEmpty()) {
+            return if (error.code() == HTTP_TOO_MANY_REQUESTS && token == null && !tokens.isNullOrEmpty()) {
                 getSignatureCount(address, getToken())
             } else {
                 Result.Failure(error.toBlockchainSdkError())
@@ -199,5 +199,9 @@ class BlockcypherNetworkProvider(
             else -> "main/"
         }
         return API_BLOCKCYPHER + apiVersionPath + blockchainPath + networkPath
+    }
+
+    private companion object {
+        const val HTTP_TOO_MANY_REQUESTS = 429
     }
 }

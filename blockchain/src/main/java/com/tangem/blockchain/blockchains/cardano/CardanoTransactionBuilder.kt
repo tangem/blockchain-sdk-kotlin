@@ -38,6 +38,7 @@ class CardanoTransactionBuilder {
         return preSigningOutput.dataHash.toByteArray()
     }
 
+    @Suppress("MagicNumber")
     internal fun buildForSend(transaction: TransactionData, signatureInfo: SignatureInfo): ByteArray {
         val input = buildCardanoSigningInput(transaction)
         val txInputData = input.toByteArray()
@@ -82,6 +83,7 @@ class CardanoTransactionBuilder {
         return BigDecimal(plan.fee)
     }
 
+    @Suppress("MagicNumber")
     private fun buildCardanoSigningInput(transaction: TransactionData): Cardano.SigningInput {
         val utxos = outputs.map { output ->
             Cardano.TxInput.newBuilder()
@@ -122,5 +124,6 @@ class CardanoTransactionBuilder {
         return input
     }
 
+    @Suppress("MagicNumber")
     private fun ByteArray.isExtendedPublicKey() = this.size == 128
 }

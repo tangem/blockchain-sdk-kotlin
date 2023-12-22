@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.stellar
 
+import com.tangem.blockchain.blockchains.stellar.StellarNetworkService.Companion.HTTP_NOT_FOUND_CODE
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
@@ -63,7 +64,7 @@ internal class StellarWrapperNetworkProvider(
             val result = block()
             Result.Success(result)
         } catch (exception: Exception) {
-            if (exception is ErrorResponse && exception.code == 404) {
+            if (exception is ErrorResponse && exception.code == HTTP_NOT_FOUND_CODE) {
                 throw exception // handled in NetworkService
             } else {
                 Result.Failure(exception.toBlockchainSdkError())

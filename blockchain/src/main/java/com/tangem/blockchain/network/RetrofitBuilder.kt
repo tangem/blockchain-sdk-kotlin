@@ -42,6 +42,7 @@ data class TimeoutConfig(
     val write: Timeout,
 ) {
     companion object {
+        @Suppress("MagicNumber")
         fun default(): TimeoutConfig = TimeoutConfig(
             call = Timeout(10),
             connect = Timeout(20),
