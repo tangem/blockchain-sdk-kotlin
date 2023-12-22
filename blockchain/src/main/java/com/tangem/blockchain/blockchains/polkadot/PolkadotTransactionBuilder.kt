@@ -31,7 +31,7 @@ class PolkadotTransactionBuilder(blockchain: Blockchain) {
     private val balanceTransferCallIndex: ByteArray = when (blockchain) {
         Blockchain.Polkadot, Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> "0500".hexToBytes()
         Blockchain.PolkadotTestnet, Blockchain.Kusama -> "0400".hexToBytes()
-        else -> throw Exception(
+        else -> error(
             "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}",
         )
     }
