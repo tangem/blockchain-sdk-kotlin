@@ -143,6 +143,8 @@ internal class CosmosTransactionBuilder(
         } else {
             null
         }
+
+        @Suppress("MagicNumber")
         val input = Cosmos.SigningInput.newBuilder()
             .setMode(Cosmos.BroadcastMode.SYNC)
             .setSigningMode(Cosmos.SigningMode.Protobuf)
