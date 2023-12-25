@@ -8,6 +8,8 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.extensions.guard
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.Program
@@ -83,7 +85,7 @@ class SolanaNetworkService(
         }
     }
 
-    suspend fun accountInfo(account: PublicKey): Result<AccountInfo> = withContext(Dispatchers.IO) {
+    private suspend fun accountInfo(account: PublicKey): Result<AccountInfo> = withContext(Dispatchers.IO) {
         try {
             Result.Success(provider.api.getAccountInfo(account, Commitment.FINALIZED.toMap()))
         } catch (ex: Exception) {
@@ -91,17 +93,35 @@ class SolanaNetworkService(
         }
     }
 
-    suspend fun accountTokensInfo(
+    private suspend fun accountTokensInfo(
         account: PublicKey,
     ): Result<List<TokenAccountInfo.Value>> = withContext(Dispatchers.IO) {
         try {
-            val params = mutableMapOf<String, Any>("programId" to Program.Id.token)
-            params.addCommitment(Commitment.RECENT)
-            val tokensAccountsInfo = provider.api.getTokenAccountsByOwner(account, params, mutableMapOf())
-            Result.Success(tokensAccountsInfo.value)
+            val tokensAccountsInfoDefault = async { tokenAccountInfo(account, Program.Id.token) }
+
+            // https://spl.solana.com/token-2022
+            val tokensAccountsInfo2022 = async {
+                tokenAccountInfo(
+                    account,
+                    programId = PublicKey(TOKEN_2022_PROGRAM),
+                )
+            }
+
+            val tokensAccountsInfo = awaitAll(tokensAccountsInfoDefault, tokensAccountsInfo2022)
+                .flatMap { it.value }
+                .distinct()
+
+            Result.Success(tokensAccountsInfo)
         } catch (ex: Exception) {
             Result.Failure(Solana.Api(ex))
         }
+    }
+
+    private fun tokenAccountInfo(account: PublicKey, programId: PublicKey): TokenAccountInfo {
+        val params = mutableMapOf<String, Any>("programId" to programId)
+            .apply { addCommitment(Commitment.RECENT) }
+
+        return provider.api.getTokenAccountsByOwner(account, params, mutableMapOf())
     }
 
     suspend fun splAccountInfo(
@@ -193,6 +213,8 @@ class SolanaNetworkService(
         const val RENT_PER_BYTE_EPOCH = 19.055441478439427
         const val RENT_PER_BYTE_EPOCH_DEV_NET = 0.359375
         const val BUFFER_LENGTH = 165L
+
+        private const val TOKEN_2022_PROGRAM = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
     }
 }
 
