@@ -49,7 +49,7 @@ sealed class BlockchainSdkError(
         cause = throwable,
     ) {
         class Api(ex: Exception) : Solana(1, ex.localizedMessage ?: "Unknown api exception", ex)
-        object FailedToCreateAssociatedTokenAddress : Solana(2, "Public key conversion failed")
+        object FailedToCreateAssociatedAccount : Solana(2, "Public key conversion failed")
         object SameSourceAndDestinationAddress : Solana(3, "Same source and destination address")
         object UnsupportedTokenDestinationAddress : Solana(4)
     }
