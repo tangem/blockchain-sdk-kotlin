@@ -1,18 +1,17 @@
 package com.tangem.blockchain.blockchains.solana
 
 import com.tangem.blockchain.blockchains.solana.solanaj.core.Transaction
+import com.tangem.blockchain.blockchains.solana.solanaj.program.TokenProgramId
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
 import com.tangem.blockchain.common.BlockchainSdkError.Solana
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
-import com.tangem.common.extensions.guard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import org.p2p.solanaj.core.PublicKey
-import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.rpc.Cluster
 import org.p2p.solanaj.rpc.types.*
 import org.p2p.solanaj.rpc.types.config.Commitment
@@ -21,6 +20,7 @@ import java.math.BigDecimal
 /**
 [REDACTED_AUTHOR]
  */
+// FIXME: Refactor with wallet-core: [REDACTED_JIRA]
 class SolanaNetworkService(
     private val provider: RpcClient,
 ) : NetworkProvider {
@@ -97,14 +97,11 @@ class SolanaNetworkService(
         account: PublicKey,
     ): Result<List<TokenAccountInfo.Value>> = withContext(Dispatchers.IO) {
         try {
-            val tokensAccountsInfoDefault = async { tokenAccountInfo(account, Program.Id.token) }
-
-            // https://spl.solana.com/token-2022
+            val tokensAccountsInfoDefault = async {
+                tokenAccountInfo(account, TokenProgramId.TOKEN.value)
+            }
             val tokensAccountsInfo2022 = async {
-                tokenAccountInfo(
-                    account,
-                    programId = PublicKey(TOKEN_2022_PROGRAM),
-                )
+                tokenAccountInfo(account, TokenProgramId.TOKEN_2022.value)
             }
 
             val tokensAccountsInfo = awaitAll(tokensAccountsInfoDefault, tokensAccountsInfo2022)
@@ -124,16 +121,12 @@ class SolanaNetworkService(
         return provider.api.getTokenAccountsByOwner(account, params, mutableMapOf())
     }
 
-    suspend fun splAccountInfo(
-        account: PublicKey,
-        mintAddress: PublicKey,
+    private suspend fun splAccountInfo(
+        associatedAccount: PublicKey,
     ): Result<SolanaSplAccountInfo> = withContext(Dispatchers.IO) {
-        val associatedTokenAddress = PublicKey.associatedTokenAddress(account, mintAddress).guard {
-            return@withContext Result.Failure(Solana.FailedToCreateAssociatedTokenAddress)
-        }
         try {
-            val splAccountInfo = provider.api.getSplTokenAccountInfo(associatedTokenAddress)
-            Result.Success(SolanaSplAccountInfo(splAccountInfo.value, associatedTokenAddress))
+            val splAccountInfo = provider.api.getSplTokenAccountInfo(associatedAccount)
+            Result.Success(SolanaSplAccountInfo(splAccountInfo.value, associatedAccount))
         } catch (ex: Exception) {
             Result.Failure(Solana.Api(ex))
         }
@@ -153,11 +146,13 @@ class SolanaNetworkService(
         Result.Success(info.accountExist)
     }
 
-    suspend fun isSplTokenAccountExist(account: PublicKey, mint: PublicKey): Result<Boolean> =
-        withContext(Dispatchers.IO) {
-            val info = splAccountInfo(account, mint).successOr { return@withContext it }
+    suspend fun isTokenAccountExist(associatedAccount: PublicKey): Result<Boolean> {
+        return withContext(Dispatchers.IO) {
+            val info = splAccountInfo(associatedAccount).successOr { return@withContext it }
+
             Result.Success(info.accountExist)
         }
+    }
 
     fun mainAccountCreationFee(): BigDecimal = accountRentFeeByEpoch(1)
 
@@ -213,8 +208,6 @@ class SolanaNetworkService(
         const val RENT_PER_BYTE_EPOCH = 19.055441478439427
         const val RENT_PER_BYTE_EPOCH_DEV_NET = 0.359375
         const val BUFFER_LENGTH = 165L
-
-        private const val TOKEN_2022_PROGRAM = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
     }
 }
 
