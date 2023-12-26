@@ -2,21 +2,14 @@ package com.tangem.blockchain.blockchains.solana
 
 import android.util.Log
 import com.tangem.blockchain.blockchains.solana.solanaj.core.Transaction
+import com.tangem.blockchain.blockchains.solana.solanaj.core.createAssociatedTokenAddress
+import com.tangem.blockchain.blockchains.solana.solanaj.program.TokenProgramId
+import com.tangem.blockchain.blockchains.solana.solanaj.program.createTransferCheckedInstruction
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.BlockchainSdkError.NPError
 import com.tangem.blockchain.common.BlockchainSdkError.Solana
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
-import com.tangem.blockchain.common.Token
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionSender
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.TransactionStatus
-import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -30,7 +23,6 @@ import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.AssociatedTokenProgram
 import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.programs.SystemProgram
-import org.p2p.solanaj.programs.TokenProgram
 import org.p2p.solanaj.rpc.types.TokenAccountInfo
 import org.p2p.solanaj.rpc.types.config.Commitment
 import java.math.BigDecimal
@@ -39,10 +31,11 @@ import java.math.RoundingMode
 /**
 [REDACTED_AUTHOR]
  */
+// FIXME: Refactor with wallet-core: [REDACTED_JIRA]
 class SolanaWalletManager(
     wallet: Wallet,
     providers: List<RpcClient>,
-    ) : WalletManager(wallet), TransactionSender, RentProvider {
+) : WalletManager(wallet), TransactionSender, RentProvider {
 
     private val accountPubK: PublicKey = PublicKey(wallet.address)
     private val networkServices = providers.map { SolanaNetworkService(it) }
@@ -147,11 +140,12 @@ class SolanaWalletManager(
     ): SimpleResult {
         return when (transactionData.amount.type) {
             AmountType.Coin -> sendCoin(transactionData, signer)
-            is AmountType.Token -> sendSplToken(
+            is AmountType.Token -> sendToken(
                 transactionData.amount.type.token,
                 transactionData,
                 signer
             )
+
             AmountType.Reserve -> SimpleResult.Failure(UnsupportedOperation())
         }
     }
@@ -188,66 +182,163 @@ class SolanaWalletManager(
         return SimpleResult.Success
     }
 
-    private suspend fun sendSplToken(
+    private suspend fun sendToken(
         token: Token,
         transactionData: TransactionData,
-        signer: TransactionSigner
+        signer: TransactionSigner,
     ): SimpleResult {
-        val sourcePubK = PublicKey(transactionData.sourceAddress)
-        val destinationPubK = PublicKey(transactionData.destinationAddress)
-        val mintPubKey = transactionData.contractAddress.guard {
-            return SimpleResult.Failure(NPError("contractAddress"))
-        }.let { PublicKey(it) }
+        val transaction = buildTokenTransaction(token, transactionData, signer)
+            .successOr { return SimpleResult.Failure(it.error) }
 
-        val sourceSplTokenPubK = PublicKey.associatedTokenAddress(
-            sourcePubK,
-            mintPubKey,
-        ).guard {
-            return SimpleResult.Failure(Solana.FailedToCreateAssociatedTokenAddress)
-        }
-        val destinationSplTokenInfo = multiNetworkProvider.performRequest {
-            splAccountInfo(destinationPubK, mintPubKey)
-        }.successOr {
-            return SimpleResult.Failure(it.error)
-        }
-        if (sourceSplTokenPubK == destinationSplTokenInfo.associatedPubK) {
-            return SimpleResult.Failure(Solana.SameSourceAndDestinationAddress)
-        }
+        return sendTokenTransaction(transaction, transactionData)
+    }
 
-        val transaction = Transaction(accountPubK)
-        if (!destinationSplTokenInfo.accountExist) {
-            val createATokenInstruction =
-                AssociatedTokenProgram.createSplAssociatedTokenAccountInstruction(
-                    mintPubKey,
-                    destinationSplTokenInfo.associatedPubK,
-                    destinationPubK,
-                    accountPubK,
-                )
-            transaction.addInstruction(createATokenInstruction)
+    private suspend fun buildTokenTransaction(
+        token: Token,
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<Transaction> {
+        val sourceAccount = PublicKey(transactionData.sourceAddress)
+        val destinationAccount = PublicKey(transactionData.destinationAddress)
+        val mint = transactionData.contractAddress
+            .guard { return Result.Failure(NPError("contractAddress")) }
+            .let(::PublicKey)
+
+        val (sourceAssociatedAccount, tokenProgramId) = getAssociatedAccountAndTokenProgramId(
+            account = sourceAccount,
+            mint = mint,
+        ).successOr { return it }
+
+        val destinationAssociatedAccount = createAssociatedTokenAddress(
+            account = destinationAccount,
+            mint = mint,
+            tokenProgramId = tokenProgramId,
+        ).getOrElse {
+            return Result.Failure(Solana.FailedToCreateAssociatedAccount)
         }
 
-        val tokenAmountToSend =
-            valueConverter.toLamports(token, transactionData.amount.value ?: BigDecimal.ZERO)
+        if (sourceAssociatedAccount == destinationAssociatedAccount) {
+            return Result.Failure(Solana.SameSourceAndDestinationAddress)
+        }
 
-        val sendInstruction = TokenProgram.transfer(
-            sourceSplTokenPubK,
-            destinationSplTokenInfo.associatedPubK,
-            tokenAmountToSend,
-            accountPubK,
+        val transaction = Transaction(accountPubK).apply {
+            addInstructions(
+                tokenProgramId = tokenProgramId,
+                mint = mint,
+                destinationAssociatedAccount = destinationAssociatedAccount,
+                destinationAccount = destinationAccount,
+                sourceAssociatedAccount = sourceAssociatedAccount,
+                token = token,
+                transactionData = transactionData
+            ).successOr { return Result.Failure(it.error) }
+
+            val recentBlockHash = multiNetworkProvider.performRequest {
+                getRecentBlockhash()
+            }.successOr {
+                return it
+            }
+            setRecentBlockHash(recentBlockHash)
+
+            val signResult = signer.sign(getDataForSign(), wallet.publicKey).successOr {
+                return Result.fromTangemSdkError(it.error)
+            }
+            addSignedDataSignature(signResult)
+        }
+
+        return Result.Success(transaction)
+    }
+
+    private suspend fun Transaction.addInstructions(
+        tokenProgramId: TokenProgramId,
+        mint: PublicKey,
+        destinationAssociatedAccount: PublicKey,
+        destinationAccount: PublicKey,
+        sourceAssociatedAccount: PublicKey,
+        token: Token,
+        transactionData: TransactionData,
+    ): SimpleResult {
+        val isDestinationAccountExists = multiNetworkProvider.performRequest {
+            isTokenAccountExist(destinationAssociatedAccount)
+        }.successOr { return SimpleResult.Failure(it.error) }
+
+        if (!isDestinationAccountExists) {
+            val associatedTokenInstruction = AssociatedTokenProgram.createAssociatedTokenAccountInstruction(
+                /* associatedProgramId = */ Program.Id.splAssociatedTokenAccount,
+                /* programId = */ tokenProgramId.value,
+                /* mint = */ mint,
+                /* associatedAccount = */ destinationAssociatedAccount,
+                /* owner = */ destinationAccount,
+                /* payer = */ accountPubK,
+            )
+            addInstruction(associatedTokenInstruction)
+        }
+
+        val sendInstruction = createTransferCheckedInstruction(
+            source = sourceAssociatedAccount,
+            destination = destinationAssociatedAccount,
+            amount = valueConverter.toLamports(
+                token = token,
+                value = transactionData.amount.value ?: BigDecimal.ZERO,
+            ),
+            owner = accountPubK,
+            decimals = token.decimals.toByte(),
+            tokenMint = mint,
+            programId = tokenProgramId,
         )
-        transaction.addInstruction(sendInstruction)
-        val recentBlockHash = multiNetworkProvider.performRequest {
-            getRecentBlockhash()
-        }.successOr {
-            return SimpleResult.Failure(it.error)
+        addInstruction(sendInstruction)
+
+        return SimpleResult.Success
+    }
+
+    private suspend fun getAssociatedAccountAndTokenProgramId(
+        account: PublicKey,
+        mint: PublicKey,
+    ): Result<Pair<PublicKey, TokenProgramId>> {
+        val resultForTokenProgram = tryGetAssociatedTokenAddressAndTokenProgramId(
+            account = account,
+            mint = mint,
+            programId = TokenProgramId.TOKEN,
+        )
+
+        return when (resultForTokenProgram) {
+            is Result.Failure -> tryGetAssociatedTokenAddressAndTokenProgramId(
+                account = account,
+                mint = mint,
+                programId = TokenProgramId.TOKEN_2022,
+            )
+
+            is Result.Success -> resultForTokenProgram
+        }
+    }
+
+    private suspend fun tryGetAssociatedTokenAddressAndTokenProgramId(
+        account: PublicKey,
+        mint: PublicKey,
+        programId: TokenProgramId,
+    ): Result<Pair<PublicKey, TokenProgramId>> {
+        val associatedTokenAddress = createAssociatedTokenAddress(
+            account = account,
+            mint = mint,
+            tokenProgramId = programId,
+        ).getOrElse {
+            return Result.Failure(Solana.FailedToCreateAssociatedAccount)
         }
 
-        transaction.setRecentBlockHash(recentBlockHash)
-        val signResult = signer.sign(transaction.getDataForSign(), wallet.publicKey).successOr {
-            return SimpleResult.fromTangemSdkError(it.error)
-        }
+        val isTokenAccountExist = multiNetworkProvider.performRequest {
+            isTokenAccountExist(associatedTokenAddress)
+        }.successOr { return it }
 
-        transaction.addSignedDataSignature(signResult)
+        return if (isTokenAccountExist) {
+            Result.Success(data = associatedTokenAddress to programId)
+        } else {
+            Result.Failure(Solana.FailedToCreateAssociatedAccount)
+        }
+    }
+
+    private suspend fun sendTokenTransaction(
+        transaction: Transaction,
+        transactionData: TransactionData,
+    ): SimpleResult {
         val sendResult = multiNetworkProvider.performRequest {
             sendTransaction(transaction)
         }.successOr {
@@ -256,11 +347,10 @@ class SolanaWalletManager(
 
         feeRentHolder.clear()
         transactionData.hash = sendResult
-        wallet.addOutgoingTransaction(transactionData, false)
+        wallet.addOutgoingTransaction(transactionData, hashToLowercase = false)
 
         return SimpleResult.Success
     }
-
 
     /**
      * This is not a natural fee, as it may contain additional information about the amount that may be required
@@ -322,10 +412,10 @@ class SolanaWalletManager(
                 }
             }
             is AmountType.Token -> {
-                val isExist = multiNetworkProvider.performRequest { isSplTokenAccountExist(
+                val isExist = isTokenAccountExist(
                     account = destinationPubKey,
-                    mint = PublicKey(amount.type.token.contractAddress)
-                )}.successOr { return it }
+                    mint = PublicKey(amount.type.token.contractAddress),
+                ).successOr { return it }
 
                 if (isExist) {
                     BigDecimal.ZERO
@@ -335,10 +425,43 @@ class SolanaWalletManager(
                     }.successOr { return it }
                 }
             }
+
             AmountType.Reserve -> return Result.Failure(UnsupportedOperation())
         }
 
         return Result.Success(accountCreationFee)
+    }
+
+    private suspend fun isTokenAccountExist(
+        account: PublicKey,
+        mint: PublicKey,
+    ): Result<Boolean> {
+        val isTokenAccountExistInTokenProgram = isTokenAccountExist(account, mint, TokenProgramId.TOKEN)
+            .successOr { return it }
+
+        return if (isTokenAccountExistInTokenProgram) {
+            Result.Success(data = true)
+        } else {
+            isTokenAccountExist(account, mint, TokenProgramId.TOKEN_2022)
+        }
+    }
+
+    private suspend fun isTokenAccountExist(
+        account: PublicKey,
+        mint: PublicKey,
+        programId: TokenProgramId,
+    ): Result<Boolean> {
+        val associatedTokenAddress = createAssociatedTokenAddress(
+            account = account,
+            mint = mint,
+            tokenProgramId = programId,
+        ).getOrElse {
+            return Result.Failure(Solana.FailedToCreateAssociatedAccount)
+        }
+
+        return multiNetworkProvider.performRequest {
+            isTokenAccountExist(associatedTokenAddress)
+        }
     }
 
     override suspend fun minimalBalanceForRentExemption(): Result<BigDecimal> {
