@@ -46,12 +46,6 @@ data class BlockcypherTxref(
 )
 
 @JsonClass(generateAdapter = true)
-data class BlockcypherTx(
-    @Json(name = "hex")
-    val hex: String? = null,
-)
-
-@JsonClass(generateAdapter = true)
 data class BlockcypherFee(
     @Json(name = "low_fee_per_kb")
     val minFeePerKb: Long? = null,
