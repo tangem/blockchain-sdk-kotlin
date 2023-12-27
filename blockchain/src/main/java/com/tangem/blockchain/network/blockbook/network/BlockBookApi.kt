@@ -13,6 +13,7 @@ import com.tangem.blockchain.network.blockbook.network.requests.GetFeeRequest
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import com.tangem.blockchain.network.blockbook.network.responses.GetFeeResponse
 import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponseItem
+import com.tangem.blockchain.network.blockbook.network.responses.SendTransactionResponse
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -79,9 +80,9 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
             .unpack()
     }
 
-    suspend fun sendTransaction(txHex: String) {
+    suspend fun sendTransaction(txHex: String): SendTransactionResponse {
         val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.SendTransaction, blockchain)
-        val response = client
+        return client
             .newCall(
                 request = Request.Builder()
                     .post(txHex.toRequestBody(TEXT_PLAIN_MEDIA_TYPE.toMediaTypeOrNull()))
@@ -89,13 +90,7 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
                     .build(),
             )
             .await()
-
-        val responseBody = response.body?.string()
-        if (response.isSuccessful && responseBody != null) {
-            return
-        } else {
-            throw IOException("Response is null")
-        }
+            .unpack()
     }
 
     suspend fun getUtxo(address: String): List<GetUtxoResponseItem> {
