@@ -73,8 +73,12 @@ class BlockBookNetworkProvider(
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
-            withContext(Dispatchers.IO) { api.sendTransaction(transaction) }
-            SimpleResult.Success
+            val response = withContext(Dispatchers.IO) { api.sendTransaction(transaction) }
+            if (response.result.isNotBlank()) {
+                SimpleResult.Success
+            } else {
+                SimpleResult.Failure(BlockchainSdkError.FailedToSendException)
+            }
         } catch (e: Exception) {
             SimpleResult.Failure(e.toBlockchainSdkError())
         }
