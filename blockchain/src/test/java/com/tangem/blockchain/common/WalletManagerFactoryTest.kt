@@ -30,11 +30,11 @@ import java.util.Locale
 
 internal class WalletManagerFactoryTest {
 
-    private val ECDSAPublicKey = (
+    private val ecDsaPublicKey = (
         "040876BDEC26B89BD2159A668B9AF3D9FE86370F318717C92B8D6C1186FB3648C32A5F9321998CC2D042901C91D40601E79A641E1CB" +
             "CEBE7A2358BE6054E1B6E5D"
         ).hexToBytes()
-    private val EdDSAPublicKey = "E078212D58B2B9D0EDC9C936830D10081CD38B90C31778C56DFB1171027E294E".hexToBytes()
+    private val edDsaPublicKey = "E078212D58B2B9D0EDC9C936830D10081CD38B90C31778C56DFB1171027E294E".hexToBytes()
 
     @Test
     fun createBitcoinWalletManager() {
@@ -126,7 +126,8 @@ internal class WalletManagerFactoryTest {
 
         val responseApdu = ResponseApdu(data.hexToBytes())
         val card = ReadCommand().deserialize(SessionEnvironment(Config(), InMemoryStorage()), responseApdu).card
-        val walletManager = WalletManagerFactory(config = BlockchainSdkConfig()).createTwinWalletManager(
+        val config = BlockchainSdkConfig(nowNodeCredentials = NowNodeCredentials(apiKey = "4y821489124"))
+        val walletManager = WalletManagerFactory(config = config).createTwinWalletManager(
             walletPublicKey = card.wallets.first().publicKey,
             pairPublicKey = pairPublicKey.hexToBytes(),
         )
@@ -136,8 +137,8 @@ internal class WalletManagerFactoryTest {
 
     private fun makeWalletManager(blockchain: Blockchain, curve: EllipticCurve): WalletManager? {
         val publicKey = when (curve) {
-            EllipticCurve.Secp256k1, EllipticCurve.Secp256r1 -> ECDSAPublicKey
-            EllipticCurve.Ed25519 -> EdDSAPublicKey
+            EllipticCurve.Secp256k1, EllipticCurve.Secp256r1 -> ecDsaPublicKey
+            EllipticCurve.Ed25519 -> edDsaPublicKey
             else -> error("unsupported curve $curve")
         }
 

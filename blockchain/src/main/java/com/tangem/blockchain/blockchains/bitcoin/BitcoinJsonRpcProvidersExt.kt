@@ -1,7 +1,6 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
-import com.tangem.blockchain.blockchains.bitcoin.network.blockchaininfo.BlockchainInfoNetworkProvider
 import com.tangem.blockchain.blockchains.ravencoin.network.RavencoinNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
@@ -21,7 +20,6 @@ internal fun Blockchain.getBitcoinNetworkProviders(
             getGetBlockProvider(blockchain, config.getBlockCredentials),
             *getBlockchairProviders(blockchain, config),
             getBlockcypherProvider(blockchain, config),
-            BlockchainInfoNetworkProvider(), // crashes when large input
         )
         Blockchain.BitcoinTestnet -> listOfNotNull(
             getNowNodesProvider(blockchain, config),
