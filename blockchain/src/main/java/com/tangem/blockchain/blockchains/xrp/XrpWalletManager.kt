@@ -10,12 +10,13 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
+import java.math.BigDecimal
 
 class XrpWalletManager(
     wallet: Wallet,
     private val transactionBuilder: XrpTransactionBuilder,
     private val networkProvider: XrpNetworkProvider,
-) : WalletManager(wallet), TransactionSender {
+) : WalletManager(wallet), TransactionSender, ReserveAmountProvider {
 
     override val currentHost: String
         get() = networkProvider.baseUrl
@@ -85,5 +86,11 @@ class XrpWalletManager(
                 ),
             )
         }
+    }
+
+    override fun getReserveAmount(): BigDecimal = transactionBuilder.minReserve
+
+    override suspend fun isAccountFunded(destinationAddress: String): Boolean {
+        return networkProvider.checkIsAccountCreated(destinationAddress)
     }
 }

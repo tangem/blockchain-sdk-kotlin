@@ -9,12 +9,13 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
+import java.math.BigDecimal
 
 class StellarWalletManager(
     wallet: Wallet,
     private val transactionBuilder: StellarTransactionBuilder,
     private val networkProvider: StellarNetworkProvider,
-) : WalletManager(wallet), TransactionSender, SignatureCountValidator {
+) : WalletManager(wallet), TransactionSender, SignatureCountValidator, ReserveAmountProvider {
 
     override val currentHost: String
         get() = networkProvider.baseUrl
@@ -110,6 +111,15 @@ class StellarWalletManager(
                 SimpleResult.Failure(BlockchainSdkError.SignatureCountNotMatched)
             }
             is Result.Failure -> SimpleResult.Failure(result.error)
+        }
+    }
+
+    override fun getReserveAmount(): BigDecimal = transactionBuilder.minReserve
+
+    override suspend fun isAccountFunded(destinationAddress: String): Boolean {
+        return when (val response = networkProvider.checkTargetAccount(destinationAddress, null)) {
+            is Result.Success -> response.data.accountCreated
+            is Result.Failure -> false
         }
     }
 
