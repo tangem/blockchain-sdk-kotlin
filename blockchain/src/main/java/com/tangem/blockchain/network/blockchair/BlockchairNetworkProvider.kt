@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -144,10 +145,15 @@ open class BlockchairNetworkProvider(
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
-            makeRequestUsingKeyOnlyWhenNeeded {
+            val response = makeRequestUsingKeyOnlyWhenNeeded {
                 api.sendTransaction(BlockchairBody(transaction), apiKey, authorizationToken)
             }
-            SimpleResult.Success
+
+            if (response.transactionData.hash.isNotBlank()) {
+                SimpleResult.Success
+            } else {
+                SimpleResult.Failure(BlockchainSdkError.FailedToSendException)
+            }
         } catch (exception: Exception) {
             SimpleResult.Failure(exception.toBlockchainSdkError())
         }
