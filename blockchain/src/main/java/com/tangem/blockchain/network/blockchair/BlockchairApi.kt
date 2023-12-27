@@ -1,6 +1,7 @@
 package com.tangem.blockchain.network.blockchair
 
 import com.squareup.moshi.JsonClass
+import com.tangem.blockchain.network.blockchair.response.SendTransactionResponse
 import retrofit2.http.*
 
 interface BlockchairApi {
@@ -31,7 +32,7 @@ interface BlockchairApi {
         @Body sendBody: BlockchairBody,
         @Query("key") key: String?,
         @Header("authorizationToken") authorizationToken: String?,
-    )
+    ): SendTransactionResponse
 
     @GET("erc-20/{contract_address}/dashboards/address/{address}")
     suspend fun getTokenHolderData(
