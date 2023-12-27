@@ -113,11 +113,17 @@ class BlockcypherNetworkProvider(
                 BlockchainSdkError.CustomError("Send transaction request is unavailable without a token"),
             )
         }
+
         return try {
-            retryIO {
+            val response = retryIO {
                 api.sendTransaction(BlockcypherSendBody(transaction), getToken()!!)
             }
-            SimpleResult.Success
+
+            if (response.transactionData.hash.isNotBlank()) {
+                SimpleResult.Success
+            } else {
+                SimpleResult.Failure(BlockchainSdkError.FailedToSendException)
+            }
         } catch (exception: Exception) {
             SimpleResult.Failure(exception.toBlockchainSdkError())
         }

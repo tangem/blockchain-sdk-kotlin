@@ -1,6 +1,7 @@
 package com.tangem.blockchain.network.blockcypher
 
 import com.squareup.moshi.JsonClass
+import com.tangem.blockchain.network.blockcypher.response.SendTransactionResponse
 import retrofit2.http.*
 
 interface BlockcypherApi {
@@ -16,7 +17,7 @@ interface BlockcypherApi {
 
     @Headers("Content-Type: application/json")
     @POST("txs/push")
-    suspend fun sendTransaction(@Body body: BlockcypherSendBody, @Query("token") token: String): BlockcypherTx
+    suspend fun sendTransaction(@Body body: BlockcypherSendBody, @Query("token") token: String): SendTransactionResponse
 }
 
 @JsonClass(generateAdapter = true)
