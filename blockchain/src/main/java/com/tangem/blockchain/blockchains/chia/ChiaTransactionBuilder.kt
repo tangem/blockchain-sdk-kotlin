@@ -41,9 +41,13 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
 
         val unspentsToSpend = getUnspentsToSpend()
 
-        val change = calculateChange(transactionData, unspentsToSpend)
+        val change = calculateChange(
+            amount = requireNotNull(transactionData.amount.value) { "Transaction amount is null" },
+            fee = transactionData.fee?.amount?.value ?: BigDecimal.ZERO,
+            unspentCoins = unspentsToSpend,
+        )
         if (change < 0) { // unspentsToSpend not enough to cover transaction amount
-            val maxAmount = transactionData.amount.value!! + change.toBigDecimal().movePointLeft(blockchain.decimals())
+            val maxAmount = transactionData.amount.value + change.toBigDecimal().movePointLeft(blockchain.decimals())
             return Result.Failure(
                 BlockchainSdkError.Chia.UtxoAmountError(
                     maxOutputs = MAX_INPUT_COUNT,
@@ -76,17 +80,16 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
         return coinSpends.size * COIN_SPEND_COST + numberOfCoinsCreated * CREATE_COIN_COST
     }
 
-    private fun getUnspentsToSpend() = unspentCoins
+    fun getUnspentsToSpend() = unspentCoins
         .sortedByDescending { it.amount }
         .take(getUnspentsToSpendCount())
 
-    private fun getUnspentsToSpendCount(): Int = unspentCoins.size.coerceAtMost(MAX_INPUT_COUNT)
-
-    private fun calculateChange(transactionData: TransactionData, unspentCoins: List<ChiaCoin>): Long {
+    fun calculateChange(amount: BigDecimal, fee: BigDecimal, unspentCoins: List<ChiaCoin>): Long {
         val balance = unspentCoins.sumOf { it.amount }
-        return balance -
-            (transactionData.amount.value!!.toMojo() + (transactionData.fee?.amount?.value?.toMojo() ?: 0L))
+        return balance - (amount.toMojo() + fee.toMojo())
     }
+
+    private fun getUnspentsToSpendCount(): Int = unspentCoins.size.coerceAtMost(MAX_INPUT_COUNT)
 
     private fun aggregateSignatures(signatures: List<ByteArray>): ByteArray {
         return try {
@@ -158,7 +161,7 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
         private const val COIN_SPEND_COST = 4500000L
         private const val CREATE_COIN_COST = 2400000L
 
-        private const val MAX_INPUT_COUNT = 50 // Aligned inside Tangem. In iOS max input count is 15.
+        const val MAX_INPUT_COUNT = 50 // Aligned inside Tangem. In iOS max input count is 15.
 
         private const val AUG_SCHEME_DST = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_AUG_"
     }
