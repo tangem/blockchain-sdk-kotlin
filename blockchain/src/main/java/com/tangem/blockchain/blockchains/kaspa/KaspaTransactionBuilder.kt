@@ -29,9 +29,13 @@ class KaspaTransactionBuilder {
 
         val unspentsToSpend = getUnspentsToSpend()
 
-        val change: BigDecimal = calculateChange(transactionData, unspentsToSpend)
+        val change = calculateChange(
+            amount = requireNotNull(transactionData.amount.value) { "Transaction amount is null" },
+            fee = transactionData.fee?.amount?.value ?: BigDecimal.ZERO,
+            unspentOutputs = unspentsToSpend,
+        )
         if (change < BigDecimal.ZERO) { // unspentsToSpend not enough to cover transaction amount
-            val maxAmount = transactionData.amount.value!! + change
+            val maxAmount = transactionData.amount.value + change
             return Result.Failure(BlockchainSdkError.Kaspa.UtxoAmountError(MAX_INPUT_COUNT, maxAmount))
         }
 
@@ -88,17 +92,9 @@ class KaspaTransactionBuilder {
         return canonicalSignature + SigHash.ALL.value.toByte()
     }
 
-    private fun calculateChange(
-        transactionData: TransactionData,
-        unspentOutputs: List<KaspaUnspentOutput>,
-    ): BigDecimal {
+    fun calculateChange(amount: BigDecimal, fee: BigDecimal, unspentOutputs: List<KaspaUnspentOutput>): BigDecimal {
         val fullAmount = unspentOutputs.map { it.amount }.reduce { acc, number -> acc + number }
-        return fullAmount - (
-            transactionData.amount.value!! + (
-                transactionData.fee?.amount?.value
-                    ?: 0.toBigDecimal()
-                )
-            )
+        return fullAmount - (amount + fee)
     }
 
     fun getUnspentsToSpendCount(): Int {
@@ -106,7 +102,7 @@ class KaspaTransactionBuilder {
         return if (count < MAX_INPUT_COUNT) count else MAX_INPUT_COUNT
     }
 
-    private fun getUnspentsToSpend() = unspentOutputs!!.sortedByDescending { it.amount }.take(getUnspentsToSpendCount())
+    fun getUnspentsToSpend() = unspentOutputs!!.sortedByDescending { it.amount }.take(getUnspentsToSpendCount())
 
     companion object {
         const val MAX_INPUT_COUNT = 84 // Kaspa rejects transactions with more inputs
