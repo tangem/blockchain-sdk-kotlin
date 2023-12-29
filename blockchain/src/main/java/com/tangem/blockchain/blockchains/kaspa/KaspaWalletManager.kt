@@ -15,7 +15,7 @@ class KaspaWalletManager(
     wallet: Wallet,
     private val transactionBuilder: KaspaTransactionBuilder,
     private val networkProvider: KaspaNetworkProvider,
-) : WalletManager(wallet), TransactionSender {
+) : WalletManager(wallet), TransactionSender, UtxoAmountLimitProvider {
 
     override val currentHost: String
         get() = networkProvider.baseUrl
@@ -75,6 +75,19 @@ class KaspaWalletManager(
         } else {
             val fee = FEE_PER_UNSPENT_OUTPUT.toBigDecimal().multiply(unspentOutputCount.toBigDecimal())
             Result.Success(TransactionFee.Single(Fee.Common(Amount(fee, blockchain))))
+        }
+    }
+
+    override fun checkUtxoAmountLimit(amount: BigDecimal, fee: BigDecimal): UtxoAmountLimit? {
+        val unspents = transactionBuilder.getUnspentsToSpend()
+        val change = transactionBuilder.calculateChange(amount, fee, unspents)
+        return if (change < BigDecimal.ZERO) { // unspentsToSpend not enough to cover transaction amount
+            UtxoAmountLimit(
+                KaspaTransactionBuilder.MAX_INPUT_COUNT.toBigDecimal(),
+                amount + change,
+            )
+        } else {
+            null
         }
     }
 
