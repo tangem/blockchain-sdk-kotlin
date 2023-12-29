@@ -16,7 +16,7 @@ class ChiaWalletManager(
     wallet: Wallet,
     private val transactionBuilder: ChiaTransactionBuilder,
     private val networkProvider: ChiaNetworkProvider,
-) : WalletManager(wallet), TransactionSender {
+) : WalletManager(wallet), TransactionSender, UtxoAmountLimitProvider {
 
     override val currentHost: String
         get() = networkProvider.baseUrl
@@ -83,6 +83,19 @@ class ChiaWalletManager(
                 )
             }
             is Result.Failure -> result
+        }
+    }
+
+    override fun checkUtxoAmountLimit(amount: BigDecimal, fee: BigDecimal): UtxoAmountLimit? {
+        val unspents = transactionBuilder.getUnspentsToSpend()
+        val change = transactionBuilder.calculateChange(amount, fee, unspents).toBigDecimal()
+        return if (change < BigDecimal.ZERO) { // unspentsToSpend not enough to cover transaction amount
+            UtxoAmountLimit(
+                ChiaTransactionBuilder.MAX_INPUT_COUNT.toBigDecimal(),
+                amount + change,
+            )
+        } else {
+            null
         }
     }
 }
