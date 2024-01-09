@@ -43,6 +43,13 @@ inline fun <T> Result<T>.successOr(failureClause: (Result.Failure) -> T): T {
     }
 }
 
+inline fun <A, B> Result<A>.map(block: (A) -> B): Result<B> {
+    return when (this) {
+        is Result.Success -> Result.Success(block(this.data))
+        is Result.Failure -> this
+    }
+}
+
 fun Result.Failure.toSimpleFailure(): SimpleResult.Failure {
     return SimpleResult.Failure(error)
 }
