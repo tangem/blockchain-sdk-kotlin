@@ -99,6 +99,8 @@ enum class Blockchain(
     ChiaTestnet("chia/test", "TXCH", "Chia Network Testnet"),
     Decimal("decimal", "DEL", "Decimal Smart Chain"),
     DecimalTestnet("decimal/test", "tDEL", "Decimal Smart Chain Testnet"),
+    Vechain("vechain", "VET", "VeChain"),
+    VechainTestnet("vechain/test", "VET", "VeChain Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -154,6 +156,7 @@ enum class Blockchain(
         Telos, TelosTestnet,
         OctaSpace, OctaSpaceTestnet,
         Decimal, DecimalTestnet,
+        Vechain, VechainTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -201,6 +204,7 @@ enum class Blockchain(
             Cronos,
             Telos, TelosTestnet,
             OctaSpace, OctaSpaceTestnet,
+            Vechain, VechainTestnet,
             -> EthereumAddressService()
 
             Decimal, DecimalTestnet -> DecimalAddressService()
@@ -281,6 +285,7 @@ enum class Blockchain(
             Chia, ChiaTestnet -> ChiaTestnet
             Near, NearTestnet -> NearTestnet
             Decimal, DecimalTestnet -> DecimalTestnet
+            Vechain, VechainTestnet -> VechainTestnet
             else -> null
         }
     }
@@ -326,6 +331,7 @@ enum class Blockchain(
             Cronos,
             OctaSpace, OctaSpaceTestnet,
             Decimal, DecimalTestnet,
+            Vechain, VechainTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -396,6 +402,7 @@ enum class Blockchain(
             Solana, SolanaTestnet,
             Tron, TronTestnet,
             TerraV1,
+            Vechain, VechainTestnet,
             -> true
 
             else -> false
@@ -410,6 +417,7 @@ enum class Blockchain(
         Avalanche, AvalancheTestnet,
         EthereumPow,
         Cronos,
+        Vechain, VechainTestnet,
         -> amountType is AmountType.Token
 
         Arbitrum, ArbitrumTestnet,
