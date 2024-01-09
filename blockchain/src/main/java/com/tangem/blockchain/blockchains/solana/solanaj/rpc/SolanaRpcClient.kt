@@ -6,12 +6,11 @@ import org.p2p.solanaj.rpc.RpcClient
 /**
 [REDACTED_AUTHOR]
  */
-class RpcClient(
+internal class SolanaRpcClient(
     val host: String,
     httpInterceptors: List<Interceptor>? = null,
 ) : RpcClient(host, httpInterceptors) {
 
-    override fun createRpcApi(): RpcApi = RpcApi(this)
-
-    override fun getApi(): RpcApi = super.getApi() as RpcApi
+    override fun createRpcApi(): SolanaRpcApi = SolanaRpcApi(this)
+    override fun getApi(): SolanaRpcApi = super.getApi() as SolanaRpcApi
 }
