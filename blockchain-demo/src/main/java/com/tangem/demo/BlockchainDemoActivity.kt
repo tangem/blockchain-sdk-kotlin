@@ -8,7 +8,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.tangem.TangemSdk
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.address.EstimationFeeAddressFactory
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.CompletionResult
@@ -26,8 +25,6 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import java.math.BigDecimal
 import kotlin.coroutines.CoroutineContext
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 
 private val parentJob = Job()
 private val coroutineContext: CoroutineContext
@@ -65,9 +62,6 @@ class BlockchainDemoActivity : AppCompatActivity() {
         initViews()
         setupViews()
         setupVisibility()
-
-
-        runAddressesGeneration()
     }
 
     private fun getTestedBlockchains(): List<Blockchain> = Blockchain.valuesWithoutUnknown()
