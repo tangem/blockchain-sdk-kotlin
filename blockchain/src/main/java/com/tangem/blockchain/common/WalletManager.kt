@@ -18,7 +18,7 @@ abstract class WalletManager(
     var wallet: Wallet,
     val cardTokens: MutableSet<Token> = mutableSetOf(),
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
-) : TransactionHistoryProvider by transactionHistoryProvider {
+) : TransactionHistoryProvider by transactionHistoryProvider, TransactionSender {
 
     open val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Unspecified
 
@@ -38,6 +38,10 @@ abstract class WalletManager(
         updateDebounced.invokeOnExpire(forceUpdate) {
             updateInternal()
         }
+    }
+
+    override suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee> {
+        return getFee(amount, destination)
     }
 
     internal abstract suspend fun updateInternal()
@@ -165,7 +169,15 @@ interface TransactionSender {
 
     suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult
 
+    // Think about migration to different interface
     suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee>
+
+    /**
+     * Estimates fee (approximate value)
+     *
+     * [Think about migration to interface]
+     */
+    suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee>
 }
 
 interface TransactionSigner {
