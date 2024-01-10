@@ -46,13 +46,13 @@ open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : Chia
                 feeData.estimates[0].toBigDecimal().movePointLeft(decimals),
                 (feeData.feeRateLastBlock * transactionCost).toBigDecimal()
                     .setScale(0, RoundingMode.DOWN)
-                    .movePointLeft(decimals)
+                    .movePointLeft(decimals),
             ).sorted()
             Result.Success(
                 EstimateFeeResult(
                     normalFee = feeList[0],
-                    priorityFee = feeList[1]
-                )
+                    priorityFee = feeList[1],
+                ),
             )
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())

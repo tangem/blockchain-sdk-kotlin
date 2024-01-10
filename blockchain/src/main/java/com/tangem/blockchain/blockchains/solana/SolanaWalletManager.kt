@@ -23,7 +23,6 @@ import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.AssociatedTokenProgram
 import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.programs.SystemProgram
-import org.p2p.solanaj.rpc.types.TokenAccountInfo
 import org.p2p.solanaj.rpc.types.config.Commitment
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -32,6 +31,7 @@ import java.math.RoundingMode
 [REDACTED_AUTHOR]
  */
 // FIXME: Refactor with wallet-core: [REDACTED_JIRA]
+@Suppress("LargeClass")
 class SolanaWalletManager(
     wallet: Wallet,
     providers: List<RpcClient>,
@@ -115,11 +115,7 @@ class SolanaWalletManager(
         wallet.recentTransactions.addAll(newUnconfirmedTxData)
     }
 
-    override fun createTransaction(
-        amount: Amount,
-        fee: Fee,
-        destination: String,
-    ): TransactionData {
+    override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData {
         val accountCreationRent = feeRentHolder[fee]
 
         return if (accountCreationRent == null) {
@@ -141,10 +137,7 @@ class SolanaWalletManager(
         }
     }
 
-    override suspend fun send(
-        transactionData: TransactionData,
-        signer: TransactionSigner,
-    ): SimpleResult {
+    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         return when (transactionData.amount.type) {
             AmountType.Coin -> sendCoin(transactionData, signer)
             is AmountType.Token -> sendToken(
@@ -157,10 +150,7 @@ class SolanaWalletManager(
         }
     }
 
-    private suspend fun sendCoin(
-        transactionData: TransactionData,
-        signer: TransactionSigner,
-    ): SimpleResult {
+    private suspend fun sendCoin(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         val recentBlockHash = multiNetworkProvider.performRequest { getRecentBlockhash() }.successOr {
             return SimpleResult.Failure(it.error)
         }
@@ -236,7 +226,7 @@ class SolanaWalletManager(
                 destinationAccount = destinationAccount,
                 sourceAssociatedAccount = sourceAssociatedAccount,
                 token = token,
-                transactionData = transactionData
+                transactionData = transactionData,
             ).successOr { return Result.Failure(it.error) }
 
             val recentBlockHash = multiNetworkProvider.performRequest {
@@ -255,6 +245,7 @@ class SolanaWalletManager(
         return Result.Success(transaction)
     }
 
+    @Suppress("LongParameterList")
     private suspend fun Transaction.addInstructions(
         tokenProgramId: TokenProgramId,
         mint: PublicKey,
@@ -398,10 +389,7 @@ class SolanaWalletManager(
         }
     }
 
-    private suspend fun getAccountCreationRent(
-        amount: Amount,
-        destination: String,
-    ): Result<BigDecimal> {
+    private suspend fun getAccountCreationRent(amount: Amount, destination: String): Result<BigDecimal> {
         val amountValue = amount.value.guard {
             return Result.Failure(NPError("amountValue"))
         }
@@ -447,10 +435,7 @@ class SolanaWalletManager(
         return Result.Success(accountCreationFee)
     }
 
-    private suspend fun isTokenAccountExist(
-        account: PublicKey,
-        mint: PublicKey,
-    ): Result<Boolean> {
+    private suspend fun isTokenAccountExist(account: PublicKey, mint: PublicKey): Result<Boolean> {
         val isTokenAccountExistInTokenProgram = isTokenAccountExist(account, mint, TokenProgramId.TOKEN)
             .successOr { return it }
 
