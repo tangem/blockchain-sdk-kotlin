@@ -17,17 +17,16 @@ class BitcoinCashAddressService(blockchain: Blockchain) : AddressService() {
     private val cashAddr = when (blockchain) {
         Blockchain.BitcoinCash -> CashAddr(false)
         Blockchain.BitcoinCashTestnet -> CashAddr(true)
-        else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
+        else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
     private val bitcoinAddressService = BitcoinAddressService(Blockchain.Bitcoin)
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?) =
         makeCashAddrAddress(walletPublicKey).value
 
-    override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?) =
-        setOf(
-            bitcoinAddressService.makeLegacyAddress(walletPublicKey.toCompressedPublicKey()),
-            makeCashAddrAddress(walletPublicKey)
-        )
+    override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?) = setOf(
+        bitcoinAddressService.makeLegacyAddress(walletPublicKey.toCompressedPublicKey()),
+        makeCashAddrAddress(walletPublicKey),
+    )
 
     override fun validate(address: String) =
         validateCashAddrAddress(address) || bitcoinAddressService.validateLegacyAddress(address)

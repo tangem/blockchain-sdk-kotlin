@@ -19,8 +19,9 @@ class DucatusWalletManager(
     wallet = wallet,
     transactionHistoryProvider = transactionHistoryProvider,
     transactionBuilder = transactionBuilder,
-    networkProvider = networkProvider
-), TransactionSender {
+    networkProvider = networkProvider,
+),
+    TransactionSender {
 
     override val minimalFeePerKb = 0.0001.toBigDecimal()
     override val minimalFee = 0.00001.toBigDecimal()
@@ -33,10 +34,11 @@ class DucatusWalletManager(
         }
     }
 
+    @Suppress("MagicNumber")
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val feeValue = BigDecimal.ONE.movePointLeft(blockchain.decimals())
         val sizeResult = transactionBuilder.getEstimateSize(
-            TransactionData(amount, Fee.Common(Amount(amount, feeValue)), wallet.address, destination)
+            TransactionData(amount, Fee.Common(Amount(amount, feeValue)), wallet.address, destination),
         )
         return when (sizeResult) {
             is Result.Failure -> sizeResult
@@ -48,11 +50,10 @@ class DucatusWalletManager(
                 val fees = TransactionFee.Choosable(
                     minimum = Fee.Common(Amount(minFee, blockchain)),
                     normal = Fee.Common(Amount(normalFee, blockchain)),
-                    priority = Fee.Common(Amount(priorityFee, blockchain))
+                    priority = Fee.Common(Amount(priorityFee, blockchain)),
                 )
                 Result.Success(fees)
             }
         }
     }
-
 }

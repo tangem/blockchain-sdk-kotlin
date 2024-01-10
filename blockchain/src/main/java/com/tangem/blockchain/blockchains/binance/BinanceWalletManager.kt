@@ -11,9 +11,9 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
 
 class BinanceWalletManager(
-        wallet: Wallet,
-        private val transactionBuilder: BinanceTransactionBuilder,
-        private val networkProvider: BinanceNetworkProvider,
+    wallet: Wallet,
+    private val transactionBuilder: BinanceTransactionBuilder,
+    private val networkProvider: BinanceNetworkProvider,
 ) : WalletManager(wallet), TransactionSender {
 
     private val blockchain = wallet.blockchain
@@ -45,12 +45,10 @@ class BinanceWalletManager(
 
     private fun updateError(error: BlockchainError) {
         Log.e(this::class.java.simpleName, error.customMessage)
-        if (error is BlockchainSdkError) throw error
+        if (error is BlockchainSdkError) error("Error isn't BlockchainSdkError")
     }
 
-    override suspend fun send(
-            transactionData: TransactionData, signer: TransactionSigner
-    ): SimpleResult {
+    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         val buildTransactionResult = transactionBuilder.buildToSign(transactionData)
         return when (buildTransactionResult) {
             is Result.Failure -> SimpleResult.Failure(buildTransactionResult.error)
@@ -73,5 +71,4 @@ class BinanceWalletManager(
             is Result.Failure -> result
         }
     }
-
 }

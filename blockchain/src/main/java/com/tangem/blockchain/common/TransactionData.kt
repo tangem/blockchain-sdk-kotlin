@@ -34,7 +34,7 @@ enum class TransactionError { // TODO: add address validation?
 enum class TransactionDirection { Incoming, Outgoing }
 
 data class BasicTransactionData(
-    val balanceDif: BigDecimal, //change of balance
+    val balanceDif: BigDecimal, // change of balance
     val hash: String,
     val date: Calendar?,
     val isConfirmed: Boolean,

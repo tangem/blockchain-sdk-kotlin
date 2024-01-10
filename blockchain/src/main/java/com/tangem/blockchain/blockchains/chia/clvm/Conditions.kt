@@ -9,7 +9,7 @@ interface Condition {
 class CreateCoinCondition(
     private val destinationPuzzleHash: ByteArray,
     private val amount: Long,
-    private val memos: List<ByteArray> = emptyList() // doesn't seem to be used by exchanges or wallets right now
+    private val memos: List<ByteArray> = emptyList(), // doesn't seem to be used by exchanges or wallets right now
 ) : Condition {
     override val conditionCode = 51L
 
@@ -17,14 +17,14 @@ class CreateCoinCondition(
         val programList = mutableListOf<Program>(
             Program.fromLong(conditionCode),
             Program.fromBytes(destinationPuzzleHash),
-            Program.fromLong(amount)
+            Program.fromLong(amount),
         )
 
         if (memos.isNotEmpty()) {
             programList.add(
                 Program.fromList(
-                    memos.map { Program.fromBytes(it) }
-                )
+                    memos.map { Program.fromBytes(it) },
+                ),
             )
         }
 
@@ -33,7 +33,7 @@ class CreateCoinCondition(
 }
 
 // always valid condition
-class RemarkCondition() : Condition {
+class RemarkCondition : Condition {
     override val conditionCode = 1L
 
     override fun toProgram(): Program {

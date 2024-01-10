@@ -27,6 +27,7 @@ data class TonGetWalletInfoResponse(
 enum class TonAccountState {
     @Json(name = "active")
     ACTIVE,
+
     @Json(name = "uninitialized")
     UNINITIALIZED,
 }

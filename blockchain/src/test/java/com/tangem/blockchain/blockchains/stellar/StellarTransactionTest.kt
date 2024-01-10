@@ -17,8 +17,10 @@ class StellarTransactionTest {
     fun buildCorrectCoinTransaction() {
         // arrange
         val walletPublicKey = "64DF67680F2167E1A085083FE3085561E6BEF5AA1FC165785FFAE6264706DB8C".hexToBytes()
-        val signature = ("C0FBC3255442CAE582FDC3CF8F431AAAB0B89D1D0DFBDAE71FEE44F99E4C11BD3D31BEB446589EDC761493C369" +
-            "CDA6B13AC09D122C58C7F5903832678371A96D").hexToBytes()
+        val signature = (
+            "C0FBC3255442CAE582FDC3CF8F431AAAB0B89D1D0DFBDAE71FEE44F99E4C11BD3D31BEB446589EDC761493C369" +
+                "CDA6B13AC09D122C58C7F5903832678371A96D"
+            ).hexToBytes()
         val sendValue = "0.1".toBigDecimal()
         val feeValue = "0.01".toBigDecimal()
         val destinationAddress = "GAI3GJ2Q3B35AOZJ36C4ANE3HSS4NK7WI6DNO4ZSHRAX6NG7BMX6VJER"
@@ -36,7 +38,7 @@ class StellarTransactionTest {
             destinationAddress = destinationAddress,
             amount = amountToSend,
             fee = fee,
-            date = calendar
+            date = calendar,
         )
 
         val expectedHashToSign = "43D14A19E4FB9D21F461F9A2EC558D843E2E4CEEBEE8EB48740CFB496C38BC23".hexToBytes()
@@ -59,11 +61,11 @@ class StellarTransactionTest {
     @Test
     fun buildCorrectTokenTransaction() {
         // arrange
-        val walletPublicKey = "64DF67680F2167E1A085083FE3085561E6BEF5AA1FC165785FFAE6264706DB8C"
-            .hexToBytes()
-        val signature =
-            "C0FBC3255442CAE582FDC3CF8F431AAAB0B89D1D0DFBDAE71FEE44F99E4C11BD3D31BEB446589EDC761493C369CDA6B13AC09D122C58C7F5903832678371A96D"
-                .hexToBytes()
+        val walletPublicKey = "64DF67680F2167E1A085083FE3085561E6BEF5AA1FC165785FFAE6264706DB8C".hexToBytes()
+        val signature = (
+            "C0FBC3255442CAE582FDC3CF8F431AAAB0B89D1D0DFBDAE71FEE44F99E4C11BD3D31BEB446589EDC761493C369CDA6B13AC09D1" +
+                "22C58C7F5903832678371A96D"
+            ).hexToBytes()
         val sendValue = "3".toBigDecimal()
         val feeValue = "0.01".toBigDecimal()
         val destinationAddress = "GAI3GJ2Q3B35AOZJ36C4ANE3HSS4NK7WI6DNO4ZSHRAX6NG7BMX6VJER"
@@ -72,7 +74,7 @@ class StellarTransactionTest {
         val token = Token(
             symbol = "MYNT",
             contractAddress = "GAHSHLZHWC3BGDDZ3JGUYXOHOQT4PCPL5WBQPGBXFB4OD3LG2MTOSRXD",
-            decimals = 0
+            decimals = 0,
         )
 
         val walletAddress = StellarAddressService().makeAddress(walletPublicKey)
@@ -86,7 +88,7 @@ class StellarTransactionTest {
             destinationAddress = destinationAddress,
             amount = amountToSend,
             fee = fee,
-            date = calendar
+            date = calendar,
         )
 
         val expectedHashToSign = "89632F5A2FD4A6D94859F3A0C53468489EFE8BCAF0AB3A89847775C2D7610749"

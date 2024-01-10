@@ -25,14 +25,13 @@ internal object StellarWalletManagerAssembly : WalletManagerAssembly<StellarWall
             }
             val networkService = StellarNetworkService(
                 hosts = hosts,
-                isTestnet = isTestnet
+                isTestnet = isTestnet,
             )
             return StellarWalletManager(
                 this,
                 StellarTransactionBuilder(networkService, publicKey.blockchainKey),
-                networkService
+                networkService,
             )
         }
     }
-
 }

@@ -15,19 +15,19 @@ class TonJsonRpcNetworkProvider(
         Types.newParameterizedType(
             TonProviderResponse::class.java,
             TonGetWalletInfoResponse::class.java,
-        )
+        ),
     )
     private val feeAdapter = moshi.adapter<TonProviderResponse<TonGetFeeResponse>>(
         Types.newParameterizedType(
             TonProviderResponse::class.java,
             TonGetFeeResponse::class.java,
-        )
+        ),
     )
     private val sendAdapter = moshi.adapter<TonProviderResponse<TonSendBocResponse>>(
         Types.newParameterizedType(
             TonProviderResponse::class.java,
             TonSendBocResponse::class.java,
-        )
+        ),
     )
 
     override suspend fun getWalletInformation(address: String): Result<TonGetWalletInfoResponse> {
@@ -42,7 +42,7 @@ class TonJsonRpcNetworkProvider(
             } else {
                 val error = BlockchainSdkError.Ton.Api(
                     code = getWalletInfoResponse.code ?: 0,
-                    message = getWalletInfoResponse.error.orEmpty()
+                    message = getWalletInfoResponse.error.orEmpty(),
                 )
                 Result.Failure(error)
             }
@@ -63,7 +63,7 @@ class TonJsonRpcNetworkProvider(
             } else {
                 val error = BlockchainSdkError.Ton.Api(
                     code = getFeeResponse.code ?: 0,
-                    message = getFeeResponse.error.orEmpty()
+                    message = getFeeResponse.error.orEmpty(),
                 )
                 Result.Failure(error)
             }
@@ -84,7 +84,7 @@ class TonJsonRpcNetworkProvider(
             } else {
                 val error = BlockchainSdkError.Ton.Api(
                     code = sendBocResponse.code ?: 0,
-                    message = sendBocResponse.error.orEmpty()
+                    message = sendBocResponse.error.orEmpty(),
                 )
                 Result.Failure(error)
             }

@@ -13,6 +13,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.rpc.Cluster
+import org.p2p.solanaj.rpc.RpcException
 import org.p2p.solanaj.rpc.types.*
 import org.p2p.solanaj.rpc.types.config.Commitment
 import java.math.BigDecimal
@@ -27,9 +28,7 @@ class SolanaNetworkService(
 
     override val baseUrl: String = provider.host
 
-    suspend fun getMainAccountInfo(
-        account: PublicKey,
-    ): Result<SolanaMainAccountInfo> = withContext(Dispatchers.IO) {
+    suspend fun getMainAccountInfo(account: PublicKey): Result<SolanaMainAccountInfo> = withContext(Dispatchers.IO) {
         val accountInfo = accountInfo(account).successOr { return@withContext it }
         val tokenAccounts = accountTokensInfo(account).successOr { return@withContext it }
 
@@ -47,11 +46,12 @@ class SolanaNetworkService(
             SolanaMainAccountInfo(
                 value = accountInfo.value,
                 tokensByMint = tokensByMint,
-                txsInProgress = txsInProgress
-            )
+                txsInProgress = txsInProgress,
+            ),
         )
     }
 
+    @Suppress("MagicNumber")
     private suspend fun getTransactionsInProgressInfo(
         account: PublicKey,
     ): Result<List<TransactionInfo>> = withContext(Dispatchers.IO) {
@@ -75,15 +75,14 @@ class SolanaNetworkService(
         }
     }
 
-    suspend fun getSignatureStatuses(
-        signatures: List<String>,
-    ): Result<SignatureStatuses> = withContext(Dispatchers.IO) {
-        try {
-            Result.Success(provider.api.getSignatureStatuses(signatures, true))
-        } catch (ex: Exception) {
-            Result.Failure(Solana.Api(ex))
+    suspend fun getSignatureStatuses(signatures: List<String>): Result<SignatureStatuses> =
+        withContext(Dispatchers.IO) {
+            try {
+                Result.Success(provider.api.getSignatureStatuses(signatures, true))
+            } catch (ex: Exception) {
+                Result.Failure(Solana.Api(ex))
+            }
         }
-    }
 
     private suspend fun accountInfo(account: PublicKey): Result<AccountInfo> = withContext(Dispatchers.IO) {
         try {
@@ -152,7 +151,7 @@ class SolanaNetworkService(
 
             Result.Success(info.accountExist)
         }
-    }
+        }
 
     fun mainAccountCreationFee(): BigDecimal = accountRentFeeByEpoch(1)
 
@@ -213,9 +212,6 @@ class SolanaNetworkService(
 
 private val AccountInfo.accountExist
     get() = value != null
-
-private val AccountInfo.requireValue
-    get() = value!!
 
 data class SolanaMainAccountInfo(
     val value: AccountInfo.Value?,

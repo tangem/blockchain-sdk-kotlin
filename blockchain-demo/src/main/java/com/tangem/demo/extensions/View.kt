@@ -1,4 +1,4 @@
-package com.tangem.blockchain_demo.extensions
+package com.tangem.demo.extensions
 
 import android.view.View
 import android.view.ViewGroup
@@ -26,8 +26,11 @@ fun View.beginDelayedTransition(transition: Transition = AutoTransition()) {
 }
 
 fun View.show(show: Boolean, invokeBeforeStateChanged: (() -> Unit)? = null) {
-    return if (show) this.show(invokeBeforeStateChanged)
-    else this.hide(invokeBeforeStateChanged)
+    return if (show) {
+        this.show(invokeBeforeStateChanged)
+    } else {
+        this.hide(invokeBeforeStateChanged)
+    }
 }
 
 fun View.show(invokeBeforeStateChanged: (() -> Unit)? = null) {

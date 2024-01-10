@@ -18,6 +18,7 @@ import wallet.core.jni.PublicKeyType
 
 class AnySignerWrapper {
 
+    @Suppress("LongParameterList")
     fun <T : MessageLite> sign(
         walletPublicKey: Wallet.PublicKey,
         publicKeyType: PublicKeyType,
@@ -46,6 +47,7 @@ class AnySignerWrapper {
         }
     }
 
+    @Suppress("LongParameterList")
     private fun <T : MessageLite> signWithCard(
         walletPublicKey: Wallet.PublicKey,
         publicKeyType: PublicKeyType,
@@ -73,11 +75,7 @@ class AnySignerWrapper {
         }
     }
 
-    private fun <T : MessageLite> signWithoutCard(
-        input: MessageLite,
-        coin: CoinType,
-        parser: Parser<T>,
-    ): Result<T> {
+    private fun <T : MessageLite> signWithoutCard(input: MessageLite, coin: CoinType, parser: Parser<T>): Result<T> {
         return try {
             val result = AnySigner.sign(input, coin, parser)
             Result.Success(result)

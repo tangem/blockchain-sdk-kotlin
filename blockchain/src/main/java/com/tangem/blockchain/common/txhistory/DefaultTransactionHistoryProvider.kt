@@ -10,13 +10,13 @@ internal object DefaultTransactionHistoryProvider : TransactionHistoryProvider {
     ): TransactionHistoryState = TransactionHistoryState.NotImplemented
 
     override suspend fun getTransactionsHistory(
-        request: TransactionHistoryRequest
+        request: TransactionHistoryRequest,
     ): Result<PaginationWrapper<TransactionHistoryItem>> = Result.Success(
         PaginationWrapper(
             page = 0,
             totalPages = 0,
             itemsOnPage = 0,
-            items = emptyList()
-        )
+            items = emptyList(),
+        ),
     )
 }

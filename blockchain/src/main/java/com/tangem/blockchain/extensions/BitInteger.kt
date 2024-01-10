@@ -11,5 +11,5 @@ fun BigInteger.toCanonicalised(): BigInteger {
 
 fun BigInteger.isCanonical(): Boolean = this <= ECKey.HALF_CURVE_ORDER
 
-fun BigInteger?.toBigDecimalOrDefault(default: BigDecimal = BigDecimal.ZERO): BigDecimal
-    = this?.toBigDecimal() ?: default
+fun BigInteger?.toBigDecimalOrDefault(default: BigDecimal = BigDecimal.ZERO): BigDecimal =
+    this?.toBigDecimal() ?: default

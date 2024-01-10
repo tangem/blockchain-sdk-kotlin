@@ -20,8 +20,8 @@ class StellarTransactionBuilder(
     var minReserve = 1.toBigDecimal()
     private val blockchain = Blockchain.Stellar
 
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     suspend fun buildToSign(transactionData: TransactionData, sequence: Long): Result<ByteArray> {
-
         val amount = transactionData.amount
         val fee = requireNotNull(transactionData.fee?.amount?.longValue).toInt()
         val destinationKeyPair = KeyPair.fromAccountId(transactionData.destinationAddress)
@@ -37,8 +37,9 @@ class StellarTransactionBuilder(
 
         val amountType = transactionData.amount.type
         val token = if (amountType is AmountType.Token) amountType.token else null
-        val targetAccountResponse = when (val result =
-            networkProvider.checkTargetAccount(transactionData.destinationAddress, token)
+        val targetAccountResponse = when (
+            val result =
+                networkProvider.checkTargetAccount(transactionData.destinationAddress, token)
         ) {
             is Result.Success -> result.data
             is Result.Failure -> return result
@@ -51,7 +52,7 @@ class StellarTransactionBuilder(
                         PaymentOperation.Builder(
                             destinationKeyPair.accountId,
                             AssetTypeNative(),
-                            amount.value.toString()
+                            amount.value.toString(),
                         ).build()
                     } else {
                         if (amount.value!! < minReserve) {
@@ -59,13 +60,13 @@ class StellarTransactionBuilder(
                             return Result.Failure(
                                 BlockchainSdkError.CreateAccountUnderfunded(
                                     blockchain = blockchain,
-                                    minReserve = minAmount
-                                )
+                                    minReserve = minAmount,
+                                ),
                             )
                         }
                         CreateAccountOperation.Builder(
                             destinationKeyPair.accountId,
-                            amount.value.toString()
+                            amount.value.toString(),
                         ).build()
                     }
                 transaction = operation.toTransaction(sourceKeyPair, sequence, fee, timeBounds, memo)
@@ -77,37 +78,33 @@ class StellarTransactionBuilder(
                 if (!targetAccountResponse.accountCreated) {
                     return Result.Failure(
                         BlockchainSdkError.CustomError(
-                            "The destination account is not created. To create account send 1+ XLM."
-                        )
+                            "The destination account is not created. To create account send 1+ XLM.",
+                        ),
                     )
                 }
 
                 if (!targetAccountResponse.trustlineCreated!!) {
                     return Result.Failure(
                         BlockchainSdkError.CustomError(
-                            "The destination account does not have a trustline for the asset being sent."
-                        )
+                            "The destination account does not have a trustline for the asset being sent.",
+                        ),
                     )
                 }
 
-                val asset = Asset.create(
-                    "native",
-
-                    )
                 val operation: Operation = if (amount.value != null) {
                     PaymentOperation.Builder(
                         destinationKeyPair.accountId,
                         Asset.create(null, amount.currencySymbol, amount.type.token.contractAddress),
-                        amount.value!!.toPlainString()
+                        amount.value.toPlainString(),
                     )
                         .build()
                 } else {
                     ChangeTrustOperation.Builder(
                         ChangeTrustAsset.createNonNativeAsset(
                             amount.currencySymbol,
-                            amount.type.token.contractAddress
+                            amount.type.token.contractAddress,
                         ),
-                        CHANGE_TRUST_OPERATION_LIMIT
+                        CHANGE_TRUST_OPERATION_LIMIT,
                     )
                         .setSourceAccount(sourceKeyPair.accountId)
                         .build()
@@ -121,6 +118,7 @@ class StellarTransactionBuilder(
         }
     }
 
+    @Suppress("MagicNumber")
     private fun getTimeBounds(transactionData: TransactionData): TimeBounds {
         val calendar = transactionData.date ?: Calendar.getInstance()
         val minTime = 0L
@@ -135,13 +133,12 @@ class StellarTransactionBuilder(
         timeBounds: TimeBounds,
         memo: Memo?,
     ): Transaction? {
-
         val accountID = AccountID()
         accountID.accountID = sourceKeyPair.xdrPublicKey
 
         val transactionBuilder = TransactionBuilder(
             Account(sourceKeyPair.accountId, sequence),
-            network
+            network,
         )
         transactionBuilder
             .addOperation(this)
@@ -153,6 +150,7 @@ class StellarTransactionBuilder(
         return transactionBuilder.build()
     }
 
+    @Suppress("MagicNumber")
     fun buildToSend(signature: ByteArray): String {
         val hint = publicKey.takeLast(4).toByteArray()
         val decoratedSignature = DecoratedSignature().apply {
@@ -183,8 +181,8 @@ private fun StellarMemo.toStellarSdkMemo(): Memo {
         is StellarMemo.Text -> Memo.text(this.value)
         is StellarMemo.Id -> {
             val id = this.value
-            if (id !in BigInteger.ZERO..(Long.MAX_VALUE.toBigInteger() * 2.toBigInteger())) { // ID is uint64
-                throw Exception("ID value out of uint64 range")
+            if (id !in BigInteger.ZERO..Long.MAX_VALUE.toBigInteger() * 2.toBigInteger()) { // ID is uint64
+                error("ID value out of uint64 range")
             }
             Memo.id(id.toLong())
         }

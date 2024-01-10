@@ -20,15 +20,15 @@ internal object XRPWalletManagerAssembly : WalletManagerAssembly<XrpWalletManage
                     add(
                         RippledNetworkProvider(
                             baseUrl = "https://xrp.nownodes.io/",
-                            apiKeyHeader = NowNodeCredentials.headerApiKey to apiKey
-                        )
+                            apiKeyHeader = NowNodeCredentials.headerApiKey to apiKey,
+                        ),
                     )
                 }
                 input.config.getBlockCredentials?.xrp?.jsonRpc.letNotBlank { jsonRpcToken ->
                     add(
                         RippledNetworkProvider(
                             baseUrl = "https://go.getblock.io/$jsonRpcToken/",
-                        )
+                        ),
                     )
                 }
             },
@@ -37,7 +37,7 @@ internal object XRPWalletManagerAssembly : WalletManagerAssembly<XrpWalletManage
         return XrpWalletManager(
             wallet = input.wallet,
             transactionBuilder = XrpTransactionBuilder(networkService, input.wallet.publicKey.blockchainKey),
-            networkProvider = networkService
+            networkProvider = networkService,
         )
     }
 }

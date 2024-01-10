@@ -43,7 +43,7 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
                             address = it.address,
                             amount = it.amountData.amount,
                             outputIndex = it.outputIndex.toLong(),
-                            transactionHash = it.hash.hexToBytes()
+                            transactionHash = it.hash.hexToBytes(),
                         )
                     }
                 val recentTransactionsHashes = addressesData
@@ -53,8 +53,8 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
                     CardanoAddressResponse(
                         balance = cardanoUnspents.sumOf { it.amount },
                         unspentOutputs = cardanoUnspents,
-                        recentTransactionsHashes = recentTransactionsHashes
-                    )
+                        recentTransactionsHashes = recentTransactionsHashes,
+                    ),
                 )
             }
         } catch (exception: Exception) {
@@ -67,16 +67,20 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
             retryIO { api.sendTransaction(AdaliteSendBody(transaction.encodeBase64NoWrap())) }
             SimpleResult.Success
         } catch (exception: Exception) {
-            if (exception is HttpException && exception.code() == 400) {
+            if (exception is HttpException && exception.code() == HTTP_BAD_REQUEST_CODE) {
                 val error = IOException(
                     "${Blockchain.Cardano}. Failed to send transaction ${transaction.toHexString()}\nwith an error: " +
-                        "\n${exception.response()?.errorBody()?.string()}"
+                        "\n${exception.response()?.errorBody()?.string()}",
                 )
                 SimpleResult.Failure(error.toBlockchainSdkError())
             } else {
                 SimpleResult.Failure(exception.toBlockchainSdkError())
             }
         }
+    }
+
+    private companion object {
+        const val HTTP_BAD_REQUEST_CODE = 400
     }
 }
 
