@@ -14,9 +14,9 @@ internal fun Blockchain.getTransactionHistoryProvider(
         when (this) {
             Blockchain.Bitcoin,
             Blockchain.BitcoinTestnet,
-            Blockchain.Litecoin,
-            Blockchain.Dogecoin,
-            Blockchain.Dash,
+            // Blockchain.Litecoin,
+            // Blockchain.Dogecoin,
+            // Blockchain.Dash,
             -> {
                 BitcoinTransactionHistoryProvider(
                     blockchain = this,
@@ -29,7 +29,7 @@ internal fun Blockchain.getTransactionHistoryProvider(
 
             Blockchain.Ethereum,
             Blockchain.EthereumTestnet,
-            Blockchain.EthereumClassic,
+            // Blockchain.EthereumClassic,
             Blockchain.Arbitrum,
             Blockchain.Avalanche,
             Blockchain.BSC,
