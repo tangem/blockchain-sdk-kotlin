@@ -46,5 +46,4 @@ internal object NearWalletManagerAssembly : WalletManagerAssembly<NearWalletMana
         val nearApi = createRetrofitInstance("$baseUrl$apiKey/").create(NearApi::class.java)
         return NearJsonRpcNetworkProvider(baseUrl, nearApi)
     }
-
 }
