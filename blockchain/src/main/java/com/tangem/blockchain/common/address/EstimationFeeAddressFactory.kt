@@ -12,16 +12,15 @@ class EstimationFeeAddressFactory(
 
     private val anyKeyMasterFactory = AnyMasterKeyFactory(
         mnemonic = mnemonic,
-        passphrase = ""
+        passphrase = "",
     )
 
     private val addressesCache: ConcurrentHashMap<Blockchain, String> = ConcurrentHashMap()
 
+    @Suppress("LongMethod")
     fun makeAddress(blockchain: Blockchain): String {
         return when (blockchain) {
-            Blockchain.Cardano -> {
-                "addr1q9svm389hgtksjvawpt9nfd9twk4kfckhs23wxrdfspynw9g3emv6k6njzwqvdmtff4426vy2pfg0ngu9t6pr9xmd0ass48agt"
-            }
+            Blockchain.Cardano -> { CARDANO_ESTIMATION_ADDRESS }
 
             Blockchain.Chia,
             Blockchain.ChiaTestnet,
@@ -43,7 +42,7 @@ class EstimationFeeAddressFactory(
             }
 
             Blockchain.Tezos -> {
-                // Tezos has a fixed fee. 
+                // Tezos has a fixed fee.
                 ""
             }
 
@@ -69,7 +68,7 @@ class EstimationFeeAddressFactory(
             Blockchain.Dash,
             Blockchain.Ravencoin,
             Blockchain.RavencoinTestnet,
-                // EVM-like
+            // EVM-like
             Blockchain.Ethereum,
             Blockchain.EthereumTestnet,
             Blockchain.EthereumPow,
@@ -100,18 +99,18 @@ class EstimationFeeAddressFactory(
             Blockchain.OctaSpaceTestnet,
             Blockchain.Decimal,
             Blockchain.DecimalTestnet,
-                // Polkadot-like
+            // Polkadot-like
             Blockchain.Polkadot,
             Blockchain.PolkadotTestnet,
             Blockchain.Kusama,
             Blockchain.AlephZero,
             Blockchain.AlephZeroTestnet,
-                // Cosmos-like
+            // Cosmos-like
             Blockchain.Cosmos,
             Blockchain.CosmosTestnet,
             Blockchain.TerraV1,
             Blockchain.TerraV2,
-                // Others
+            // Others
             Blockchain.Tron,
             Blockchain.TronTestnet,
             Blockchain.TON,
@@ -121,7 +120,6 @@ class EstimationFeeAddressFactory(
             -> {
                 generateAddress(blockchain)
             }
-
         }
     }
 
@@ -146,7 +144,6 @@ class EstimationFeeAddressFactory(
         } else {
             return cachedValue
         }
-
     }
 
     private fun primaryCurve(blockchain: Blockchain): EllipticCurve? {
@@ -172,5 +169,10 @@ class EstimationFeeAddressFactory(
                 null
             }
         }
+    }
+
+    companion object {
+        private const val CARDANO_ESTIMATION_ADDRESS =
+            "addr1q9svm389hgtksjvawpt9nfd9twk4kfckhs23wxrdfspynw9g3emv6k6njzwqvdmtff4426vy2pfg0ngu9t6pr9xmd0ass48agt"
     }
 }
