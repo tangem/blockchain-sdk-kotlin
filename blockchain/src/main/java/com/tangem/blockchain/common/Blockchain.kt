@@ -103,6 +103,7 @@ enum class Blockchain(
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
 
+    @Suppress("MagicNumber")
     fun decimals(): Int = when (this) {
         Unknown -> 0
 
@@ -174,6 +175,7 @@ enum class Blockchain(
 
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
+    @Suppress("CyclomaticComplexMethod")
     private fun getAddressService(): AddressService {
         return when (this) {
             Bitcoin, BitcoinTestnet,
@@ -216,7 +218,7 @@ enum class Blockchain(
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
             Chia, ChiaTestnet -> ChiaAddressService(this)
-            Unknown -> throw Exception("unsupported blockchain")
+            Unknown -> error("unsupported blockchain")
         }
     }
 
@@ -230,6 +232,7 @@ enum class Blockchain(
 
     fun getShareUri(address: String): String = getShareScheme()?.plus(":$address") ?: address
 
+    @Suppress("ComplexCondition")
     fun validateShareScheme(scheme: String): Boolean {
         if (this == XRP && (scheme == "ripple" || scheme == "xrpl" || scheme == "xrp")) return true
         return scheme == getShareScheme()
@@ -249,6 +252,7 @@ enum class Blockchain(
 
     fun isTestnet(): Boolean = this == getTestnetVersion()
 
+    @Suppress("CyclomaticComplexMethod")
     fun getTestnetVersion(): Blockchain? {
         return when (this) {
             Avalanche, AvalancheTestnet -> AvalancheTestnet
@@ -288,7 +292,7 @@ enum class Blockchain(
             -> listOf(
                 EllipticCurve.Secp256k1,
                 EllipticCurve.Ed25519,
-                EllipticCurve.Ed25519Slip0010
+                EllipticCurve.Ed25519Slip0010,
             )
 
             XRP,
@@ -330,12 +334,13 @@ enum class Blockchain(
             TON, TONTestnet, Near, NearTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
 
-            Cardano -> listOf(EllipticCurve.Ed25519) //todo until cardano support in wallet 2
+            Cardano -> listOf(EllipticCurve.Ed25519) // todo until cardano support in wallet 2
             Chia, ChiaTestnet,
             -> listOf(EllipticCurve.Bls12381G2Aug)
         }
     }
 
+    @Suppress("CyclomaticComplexMethod")
     fun getChainId(): Int? {
         return when (this) {
             Arbitrum -> Chain.Arbitrum.id
@@ -411,7 +416,7 @@ enum class Blockchain(
         Stellar, StellarTestnet,
         Optimism, OptimismTestnet,
         TON, TONTestnet,
-        Near, NearTestnet
+        Near, NearTestnet,
         -> true
 
         else -> false
