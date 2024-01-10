@@ -242,7 +242,12 @@ internal class EthereumTransactionHistoryProvider(
 
             is TransactionHistoryRequest.FilterType.Contract -> {
                 val transfers = tx.tokenTransfers
-                    .filter { filterType.address.equals(it.contract, ignoreCase = true) || filterType.address.equals(it.token, ignoreCase = true) }
+                    .filter {
+                        filterType.address.equals(it.contract, ignoreCase = true) || filterType.address.equals(
+                            it.token,
+                            ignoreCase = true,
+                        )
+                    }
                     .filter { transfer ->
                         val otherAddress = if (isOutgoing) transfer.from else transfer.to
                         walletAddress.equals(otherAddress, ignoreCase = true)
