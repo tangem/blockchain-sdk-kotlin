@@ -14,7 +14,7 @@ sealed class BlockBookConfig(val credentials: BlockBookCredentials?) {
     abstract fun getRequestBaseUrl(request: BlockBookRequest, blockchain: Blockchain): String
 
     class NowNodes(nowNodesCredentials: NowNodeCredentials) : BlockBookConfig(
-        credentials = NowNodeCredentials.headerApiKey to nowNodesCredentials.apiKey
+        credentials = NowNodeCredentials.headerApiKey to nowNodesCredentials.apiKey,
     ) {
         override val baseHost: String = "nownodes.io"
 
@@ -27,12 +27,12 @@ sealed class BlockBookConfig(val credentials: BlockBookCredentials?) {
                 Blockchain.Dogecoin,
                 -> {
                     val testnetSuffix = if (blockchain.isTestnet()) "-testnet" else ""
-                    "https://${prefix}book${testnetSuffix}.${baseHost}"
+                    "https://${prefix}book$testnetSuffix.$baseHost"
                 }
 
                 Blockchain.Arbitrum -> "https://arb-blockbook.$baseHost"
                 Blockchain.BSC -> "https://bsc-blockbook.$baseHost"
-                Blockchain.EthereumTestnet -> "https://${prefix}book-goerli.${baseHost}"
+                Blockchain.EthereumTestnet -> "https://${prefix}book-goerli.$baseHost"
                 Blockchain.Polygon -> "https://${prefix}book.$baseHost"
                 Blockchain.Kava -> "https://kava-tendermint.$baseHost"
                 Blockchain.Ethereum,
@@ -40,7 +40,7 @@ sealed class BlockBookConfig(val credentials: BlockBookCredentials?) {
                 Blockchain.Avalanche,
                 Blockchain.EthereumPow,
                 Blockchain.Tron,
-                -> "https://${prefix}-blockbook.${baseHost}"
+                -> "https://$prefix-blockbook.$baseHost"
 
                 else -> error("BlockBookConfig.NowNodes don't support blockchain $blockchain")
             }

@@ -24,9 +24,8 @@ internal object TezosWalletManagerAssembly : WalletManagerAssembly<TezosWalletMa
                 this,
                 TezosTransactionBuilder(publicKey.blockchainKey, input.curve),
                 TezosNetworkService(providers),
-                input.curve
+                input.curve,
             )
         }
     }
-
 }

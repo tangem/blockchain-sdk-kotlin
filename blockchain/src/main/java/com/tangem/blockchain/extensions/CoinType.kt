@@ -14,5 +14,5 @@ internal val Blockchain.trustWalletCoinType: CoinType
         Blockchain.TerraV2 -> CoinType.TERRAV2
         Blockchain.Near, Blockchain.NearTestnet -> CoinType.NEAR
         Blockchain.Cardano -> CoinType.CARDANO
-        else -> throw IllegalStateException()
+        else -> error("Unsupported blockchain: $this")
     }
