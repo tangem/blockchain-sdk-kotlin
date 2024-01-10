@@ -66,19 +66,16 @@ open class EthereumWalletManager(
 
     private fun updateError(error: BlockchainError) {
         Log.e(this::class.java.simpleName, error.customMessage)
-        if (error is BlockchainSdkError) throw error
+        if (error is BlockchainSdkError) error("Error isn't BlockchainSdkError")
     }
 
-    override suspend fun send(
-        transactionData: TransactionData,
-        signer: TransactionSigner,
-    ): SimpleResult {
+    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         return when (val signResponse = sign(transactionData, signer)) {
             is Result.Success -> {
                 val transactionToSend = transactionBuilder
                     .buildToSend(
                         signature = signResponse.data.first,
-                        transactionToSign = signResponse.data.second
+                        transactionToSign = signResponse.data.second,
                     )
                 val sendResult = networkProvider
                     .sendTransaction(transactionToSend.toHexString())
@@ -100,7 +97,7 @@ open class EthereumWalletManager(
     ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
         val transactionToSign = transactionBuilder.buildToSign(
             transactionData,
-            txCount.toBigInteger()
+            txCount.toBigInteger(),
         ) ?: return Result.Failure(BlockchainSdkError.CustomError("Not enough data"))
 
         return when (val signResponse = signer.sign(transactionToSign.hash, wallet.publicKey)) {
@@ -109,10 +106,7 @@ open class EthereumWalletManager(
         }
     }
 
-    suspend fun signAndSend(
-        transactionToSign: CompiledEthereumTransaction,
-        signer: TransactionSigner,
-    ): SimpleResult {
+    suspend fun signAndSend(transactionToSign: CompiledEthereumTransaction, signer: TransactionSigner): SimpleResult {
         return when (val signerResponse = signer.sign(transactionToSign.hash, wallet.publicKey)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data, transactionToSign)
@@ -158,7 +152,7 @@ open class EthereumWalletManager(
                 val fees = feesCalculator.calculateFees(
                     amountParams = getAmountParams(),
                     gasLimit = gLimit,
-                    gasPrice = gPrice
+                    gasPrice = gPrice,
                 )
 
                 Result.Success(fees)
@@ -216,24 +210,18 @@ open class EthereumWalletManager(
         return getGasLimitInternal(amount, destination, data)
     }
 
-    override suspend fun getAllowance(
-        spenderAddress: String,
-        token: Token,
-    ): Result<BigDecimal> {
+    override suspend fun getAllowance(spenderAddress: String, token: Token): Result<BigDecimal> {
         return networkProvider.getAllowance(wallet.address, token, spenderAddress)
     }
 
-    override fun getApproveData(
-        spenderAddress: String,
-        value: Amount?,
-    ) = EthereumUtils.createErc20ApproveDataHex(spenderAddress, value)
+    override fun getApproveData(spenderAddress: String, value: Amount?) =
+        EthereumUtils.createErc20ApproveDataHex(spenderAddress, value)
 
     private suspend fun getGasLimitInternal(
         amount: Amount,
         destination: String,
         data: String? = null,
     ): Result<BigInteger> {
-
         val from = wallet.address
         var to = destination
         var value: String? = null

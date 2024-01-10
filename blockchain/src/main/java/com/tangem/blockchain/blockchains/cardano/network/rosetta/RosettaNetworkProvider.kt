@@ -47,8 +47,8 @@ class RosettaNetworkProvider(rosettaNetwork: RosettaNetwork) : CardanoNetworkPro
                 val coinsMap = coinsDeferred.mapValues { it.value.await().coins!! }
                 val unspentOutputs = coinsMap.flatMap { entry ->
                     entry.value.mapNotNull {
-                        if (it.amount!!.currency!!.symbol == "ADA"
-                            && it.metadata == null // filter tokens while we don't support them
+                        if (it.amount!!.currency!!.symbol == "ADA" &&
+                            it.metadata == null // filter tokens while we don't support them
                         ) {
                             val identifierSplit =
                                 it.coinIdentifier!!.identifier!!.split(":")
@@ -56,7 +56,7 @@ class RosettaNetworkProvider(rosettaNetwork: RosettaNetwork) : CardanoNetworkPro
                                 address = entry.key,
                                 amount = it.amount.value!!,
                                 outputIndex = identifierSplit[1].toLong(),
-                                transactionHash = identifierSplit[0].hexToBytes()
+                                transactionHash = identifierSplit[0].hexToBytes(),
                             )
                         } else {
                             null
@@ -66,7 +66,7 @@ class RosettaNetworkProvider(rosettaNetwork: RosettaNetwork) : CardanoNetworkPro
                 val balance = unspentOutputs.sumOf { it.amount }
 
                 Result.Success(
-                    CardanoAddressResponse(balance, unspentOutputs, emptyList())
+                    CardanoAddressResponse(balance, unspentOutputs, emptyList()),
                 )
             }
         } catch (exception: Exception) {
@@ -82,7 +82,7 @@ class RosettaNetworkProvider(rosettaNetwork: RosettaNetwork) : CardanoNetworkPro
             val encodedTransaction = baos.toByteArray()
 
             api.submitTransaction(
-                RosettaSubmitBody(networkIdentifier, encodedTransaction.toHexString())
+                RosettaSubmitBody(networkIdentifier, encodedTransaction.toHexString()),
             )
             SimpleResult.Success
         } catch (exception: Exception) {

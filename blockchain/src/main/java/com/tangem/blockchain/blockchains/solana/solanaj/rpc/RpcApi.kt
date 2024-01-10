@@ -28,15 +28,17 @@ class RpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
 
     @Deprecated("Use signAndSendTransaction instead")
     @Throws(UnsupportedOperationException::class)
-    override fun sendTransaction(
-        transaction: Transaction, signers: List<Account>, recentBlockHash: String?): String {
+    override fun sendTransaction(transaction: Transaction, signers: List<Account>, recentBlockHash: String?): String {
         throw UnsupportedOperationException()
     }
 
     @Deprecated("Don't use it at all, or make your own realization")
     @Throws(UnsupportedOperationException::class)
     override fun sendAndConfirmTransaction(
-        transaction: Transaction, signers: List<Account>, listener: NotificationEventListener) {
+        transaction: Transaction,
+        signers: List<Account>,
+        listener: NotificationEventListener,
+    ) {
         throw UnsupportedOperationException()
     }
 

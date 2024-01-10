@@ -17,12 +17,12 @@ internal object LitecoinWalletManagerAssembly : WalletManagerAssembly<LitecoinWa
                 transactionBuilder = BitcoinTransactionBuilder(
                     walletPublicKey = publicKey.blockchainKey,
                     blockchain = blockchain,
-                    walletAddresses = addresses
+                    walletAddresses = addresses,
                 ),
                 networkProvider = LitecoinNetworkService(
                     providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config),
                 ),
-                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config)
+                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
             )
         }
     }

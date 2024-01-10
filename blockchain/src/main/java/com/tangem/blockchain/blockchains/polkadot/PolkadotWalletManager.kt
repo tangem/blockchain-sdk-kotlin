@@ -1,18 +1,8 @@
 package com.tangem.blockchain.blockchains.polkadot
 
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkProvider
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionError
-import com.tangem.blockchain.common.TransactionSender
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.TransactionStatus
-import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.WalletManager
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -29,7 +19,6 @@ import java.util.EnumSet
  */
 class PolkadotWalletManager(
     wallet: Wallet,
-    private val transactionBuilder: PolkadotTransactionBuilder,
     private val networkProvider: PolkadotNetworkProvider,
 ) : WalletManager(wallet), TransactionSender, ExistentialDepositProvider {
 
@@ -40,35 +29,36 @@ class PolkadotWalletManager(
         Blockchain.PolkadotTestnet -> 0.01.toBigDecimal()
         Blockchain.Kusama -> 0.000033333333.toBigDecimal()
         Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> 0.0000000005.toBigDecimal()
-        else -> throw IllegalStateException("${wallet.blockchain} isn't supported")
+        else -> error("${wallet.blockchain} isn't supported")
     }
-
-    override fun getExistentialDeposit() = existentialDeposit
 
     private val txBuilder = PolkadotTransactionBuilder(wallet.blockchain)
 
     override val currentHost: String
         get() = networkProvider.baseUrl
 
+    override fun getExistentialDeposit() = existentialDeposit
+
     override suspend fun updateInternal() {
         val amount = networkProvider.getBalance(wallet.address).successOr {
             wallet.removeAllTokens()
-            throw (it.error as BlockchainSdkError)
+            throw it.error as BlockchainSdkError
         }
         wallet.setCoinValue(amount)
         updateRecentTransactions()
     }
 
+    @Suppress("MagicNumber")
     private fun updateRecentTransactions() {
         val currentTimeInMillis = Calendar.getInstance().timeInMillis
         val confirmedTxData = wallet.recentTransactions
-                .filter { it.hash != null && it.date != null }
-                .filter {
-                    val txTimeInMillis = it.date?.timeInMillis ?: currentTimeInMillis
-                    currentTimeInMillis - txTimeInMillis > 9999
-                }.map {
-                    it.copy(status = TransactionStatus.Confirmed)
-                }
+            .filter { it.hash != null && it.date != null }
+            .filter {
+                val txTimeInMillis = it.date?.timeInMillis ?: currentTimeInMillis
+                currentTimeInMillis - txTimeInMillis > 9999
+            }.map {
+                it.copy(status = TransactionStatus.Confirmed)
+            }
 
         updateRecentTransactions(confirmedTxData)
     }
@@ -81,7 +71,7 @@ class PolkadotWalletManager(
             sourceAddress = wallet.address,
             destinationAddress = destination,
             context = currentContext,
-            signer = DummyPolkadotTransactionSigner()
+            signer = DummyPolkadotTransactionSigner(),
         ).successOr { return it }
 
         val fee = networkProvider.getFee(signedTransaction).successOr { return it }
@@ -137,7 +127,7 @@ class PolkadotWalletManager(
             sourceAddress = wallet.address,
             destinationAddress = destinationAddress,
             context = currentContext,
-            signer = signer
+            signer = signer,
         ).successOr { return SimpleResult.Failure(it.error) }
 
         val txHash = networkProvider.sendTransaction(signedTransaction).successOr {

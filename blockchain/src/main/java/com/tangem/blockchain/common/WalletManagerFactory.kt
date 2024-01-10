@@ -20,12 +20,11 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
         publicKey: Wallet.PublicKey,
         curve: EllipticCurve,
     ): WalletManager? {
-
         return createWalletManager(
             blockchain = blockchain,
             publicKey = publicKey,
             pairPublicKey = null,
-            curve = curve
+            curve = curve,
         )
     }
 
@@ -46,7 +45,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(walletPublicKey, null),
             pairPublicKey = pairPublicKey,
-            curve = curve
+            curve = curve,
         )
     }
 
@@ -64,7 +63,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
         return createWalletManager(
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(walletPublicKey, null),
-            curve = curve
+            curve = curve,
         )
     }
 
@@ -84,10 +83,11 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
                 wallet = wallet,
                 config = config,
                 curve = curve,
-            )
+            ),
         )
     }
 
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     private fun getAssembly(blockchain: Blockchain): WalletManagerAssembly<WalletManager> {
         return when (blockchain) {
             // region BTC-like blockchains
@@ -231,20 +231,18 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
             }
 
             Blockchain.Unknown -> {
-                throw IllegalStateException("Unsupported blockchain")
+                error("Unsupported blockchain")
             }
         }
     }
 
-    private fun checkIfWrongKey(
-        blockchain: Blockchain,
-        curve: EllipticCurve,
-        publicKey: Wallet.PublicKey
-    ): Boolean {
+    @Suppress("MagicNumber")
+    private fun checkIfWrongKey(blockchain: Blockchain, curve: EllipticCurve, publicKey: Wallet.PublicKey): Boolean {
         // wallet2 has cardano with extended key, so we should take this into account
         return when (curve) {
-            EllipticCurve.Ed25519 -> publicKey.seedKey.size > 32 ||
-                (publicKey.blockchainKey.size > 32 && blockchain != Blockchain.Cardano)
+            EllipticCurve.Ed25519 ->
+                publicKey.seedKey.size > 32 || publicKey.blockchainKey.size > 32 && blockchain != Blockchain.Cardano
+
             else -> false
         }
     }

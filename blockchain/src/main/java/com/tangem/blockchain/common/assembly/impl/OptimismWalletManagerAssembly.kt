@@ -15,11 +15,11 @@ internal object OptimismWalletManagerAssembly : WalletManagerAssembly<OptimismWa
                 wallet = this,
                 transactionBuilder = EthereumTransactionBuilder(
                     walletPublicKey = publicKey.blockchainKey,
-                    blockchain = blockchain
+                    blockchain = blockchain,
                 ),
                 networkProvider = EthereumNetworkService(
                     jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(input.config),
-                )
+                ),
             )
         }
     }
