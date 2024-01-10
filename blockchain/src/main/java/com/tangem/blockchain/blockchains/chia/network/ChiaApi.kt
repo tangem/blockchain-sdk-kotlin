@@ -18,7 +18,7 @@ interface ChiaApi {
 @JsonClass(generateAdapter = true)
 data class ChiaPuzzleHashBody(
     @Json(name = "puzzle_hash")
-    val puzzleHash: String
+    val puzzleHash: String,
 )
 
 @JsonClass(generateAdapter = true)
@@ -27,13 +27,13 @@ data class ChiaFeeEstimateBody(
     val cost: Long,
 
     @Json(name = "target_times")
-    val targetTimes: List<Int>
+    val targetTimes: List<Int>,
 )
 
 @JsonClass(generateAdapter = true)
 data class ChiaTransactionBody(
     @Json(name = "spend_bundle")
-    val spendBundle: ChiaSpendBundle
+    val spendBundle: ChiaSpendBundle,
 )
 
 @JsonClass(generateAdapter = true)
@@ -42,7 +42,7 @@ data class ChiaSpendBundle(
     val aggregatedSignature: String,
 
     @Json(name = "coin_spends")
-    val coinSpends: List<ChiaCoinSpend>
+    val coinSpends: List<ChiaCoinSpend>,
 )
 
 @JsonClass(generateAdapter = true)
@@ -54,7 +54,7 @@ class ChiaCoinSpend(
     val puzzleReveal: String,
 
     @Json(name = "solution")
-    var solution: String
+    var solution: String,
 )
 
 @JsonClass(generateAdapter = true)

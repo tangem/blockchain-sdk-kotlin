@@ -12,7 +12,7 @@ interface BinanceNetworkProvider {
 }
 
 data class BinanceInfoResponse(
-        val balances: Map<String, BigDecimal>,
-        val accountNumber: Long?,
-        val sequence: Long?
+    val balances: Map<String, BigDecimal>,
+    val accountNumber: Long?,
+    val sequence: Long?,
 )

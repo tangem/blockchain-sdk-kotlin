@@ -14,7 +14,10 @@ internal object BigDecimalAdapter : JsonAdapter<BigDecimal>() {
     }
 
     override fun toJson(writer: JsonWriter, value: BigDecimal?) {
-        if (value == null) writer.nullValue()
-        else writer.value(value.toPlainString())
+        if (value == null) {
+            writer.nullValue()
+        } else {
+            writer.value(value.toPlainString())
+        }
     }
 }

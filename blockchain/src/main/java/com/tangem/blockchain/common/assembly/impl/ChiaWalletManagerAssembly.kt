@@ -16,9 +16,9 @@ internal object ChiaWalletManagerAssembly : WalletManagerAssembly<ChiaWalletMana
         return ChiaWalletManager(
             wallet = input.wallet,
             networkProvider = ChiaNetworkService(
-                chiaNetworkProviders = getNetworkProviders(input)
+                chiaNetworkProviders = getNetworkProviders(input),
             ),
-            transactionBuilder = ChiaTransactionBuilder(input.wallet.publicKey.blockchainKey, input.wallet.blockchain)
+            transactionBuilder = ChiaTransactionBuilder(input.wallet.publicKey.blockchainKey, input.wallet.blockchain),
         )
     }
 
@@ -42,7 +42,7 @@ internal object ChiaWalletManagerAssembly : WalletManagerAssembly<ChiaWalletMana
                     ChiaJsonRpcProvider(
                         baseUrl = API_CHIA_TANGEM,
                         key = input.config.chiaTangemApiKey ?: error("FireAcademy API key not provided"),
-                    )
+                    ),
                 )
                 add(chiaFireAcademyProvider)
             }

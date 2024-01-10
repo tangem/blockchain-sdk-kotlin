@@ -21,7 +21,9 @@ class TronNetworkService(
         get() = multiProvider.currentProvider.baseUrl
 
     suspend fun getAccountInfo(
-        address: String, tokens: Collection<Token>, transactionIds: List<String>,
+        address: String,
+        tokens: Collection<Token>,
+        transactionIds: List<String>,
     ): Result<TronAccountInfo> {
         return coroutineScope {
             val tokenBalancesDeferred = tokens.map { async { getTokenBalance(address, it) } }
@@ -32,14 +34,15 @@ class TronNetworkService(
             ) {
                 is Result.Failure -> Result.Failure(accountInfoResult.error)
                 is Result.Success -> {
-                    Result.Success(TronAccountInfo(
-                        balance = BigDecimal(accountInfoResult.data.balance ?: 0)
-                            .movePointLeft(blockchain.decimals()),
-                        tokenBalances = tokenBalancesDeferred.awaitAll()
-                            .mapNotNull { if (it is Result.Success) it.data else null }.toMap(),
-                        confirmedTransactionIds = confirmedTransactionsDeferred.awaitAll()
-                            .mapNotNull { if (it is Result.Success) it.data else null }
-                    )
+                    Result.Success(
+                        TronAccountInfo(
+                            balance = BigDecimal(accountInfoResult.data.balance ?: 0)
+                                .movePointLeft(blockchain.decimals()),
+                            tokenBalances = tokenBalancesDeferred.awaitAll()
+                                .mapNotNull { if (it is Result.Success) it.data else null }.toMap(),
+                            confirmedTransactionIds = confirmedTransactionsDeferred.awaitAll()
+                                .mapNotNull { if (it is Result.Success) it.data else null },
+                        ),
                     )
                 }
             }
@@ -59,8 +62,8 @@ class TronNetworkService(
                 } else {
                     Result.Failure(
                         BlockchainSdkError.CustomError(
-                            result.data.errorMessage ?: "error sending transaction"
-                        )
+                            result.data.errorMessage ?: "error sending transaction",
+                        ),
                     )
                 }
             }
@@ -114,7 +117,7 @@ class TronNetworkService(
                             sunPerEnergyUnit = energyFee,
                             dynamicEnergyMaxFactor = energyMaxFactor,
                             dynamicIncreaseFactor = increaseFactor,
-                        )
+                        ),
                     )
                 } else {
                     Result.Failure(BlockchainSdkError.CustomError("Can not get necessary chain parameters"))
@@ -123,17 +126,17 @@ class TronNetworkService(
         }
     }
 
-    private suspend fun getTokenBalance(
-        address: String,
-        token: Token,
-    ): Result<Pair<Token, BigDecimal>> {
+    @Suppress("MagicNumber")
+    private suspend fun getTokenBalance(address: String, token: Token): Result<Pair<Token, BigDecimal>> {
         val result = multiProvider.performRequest(
-            TronJsonRpcNetworkProvider::getTokenBalance, TokenBalanceRequestData(address, token.contractAddress)
+            TronJsonRpcNetworkProvider::getTokenBalance,
+            TokenBalanceRequestData(address, token.contractAddress),
         )
         when (result) {
             is Result.Failure -> {
                 return Result.Failure(result.error)
             }
+
             is Result.Success -> {
                 val hexValue = result.data.constantResult.firstOrNull()?.ifBlank { "0" }
                     ?: return Result.Failure(BlockchainSdkError.CustomError("FailedToParseNetworkResponse"))

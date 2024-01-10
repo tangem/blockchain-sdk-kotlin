@@ -24,7 +24,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         return when (blockchain) {
             Blockchain.Cardano -> makeShelleyAddress(walletPublicKey)
-            else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
+            else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
         }
     }
 
@@ -39,10 +39,11 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
     override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?): Set<Address> {
         return setOf(
             Address(makeByronAddress(walletPublicKey), AddressType.Legacy),
-            Address(makeShelleyAddress(walletPublicKey), AddressType.Default)
+            Address(makeShelleyAddress(walletPublicKey), AddressType.Default),
         )
     }
 
+    @Suppress("MagicNumber")
     private fun makeByronAddress(walletPublicKey: ByteArray): String {
         val extendedPublicKey = extendPublicKey(walletPublicKey)
 
@@ -56,6 +57,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
         return makeByronAddressWithChecksum(hashWithAttributes)
     }
 
+    @Suppress("MagicNumber")
     private fun makeShelleyAddress(walletPublicKey: ByteArray): String {
         val publicKeyHash = walletPublicKey.calculateBlake2b(28)
 
@@ -100,7 +102,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
                 .addMap()
                 .end()
                 .end()
-                .build()
+                .build(),
         )
         return pubKeyWithAttributes.toByteArray()
     }
@@ -111,22 +113,23 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
             CborBuilder()
                 .addArray()
                 .add(blakeHash)
-                .addMap() //additional attributes
+                .addMap() // additional attributes
                 .end()
-                .add(0) //address type
+                .add(0) // address type
                 .end()
-                .build()
+                .build(),
         )
         return hashWithAttributes.toByteArray()
     }
 
+    @Suppress("MagicNumber")
     private fun makeByronAddressWithChecksum(hashWithAttributes: ByteArray): String {
         val checksum = getCheckSum(hashWithAttributes)
 
         val addressItem = CborBuilder().add(hashWithAttributes).build().get(0)
         addressItem.setTag(24)
 
-        //addr + checksum
+        // addr + checksum
         val address = ByteArrayOutputStream()
         CborEncoder(address).encode(
             CborBuilder()
@@ -134,7 +137,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
                 .add(addressItem)
                 .add(checksum)
                 .end()
-                .build()
+                .build(),
         )
 
         return address.toByteArray().encodeBase58()
@@ -150,6 +153,7 @@ class CardanoAddressService(private val blockchain: Blockchain) : AddressService
         const val BECH32_HRP = "addr"
         const val BECH32_SEPARATOR = "1"
 
+        @Suppress("MagicNumber")
         fun extendPublicKey(publicKey: ByteArray): ByteArray {
             val zeroBytes = ByteArray(32)
             return publicKey + zeroBytes

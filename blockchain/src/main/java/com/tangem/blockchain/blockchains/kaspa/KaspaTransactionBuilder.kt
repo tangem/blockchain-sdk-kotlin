@@ -2,13 +2,7 @@ package com.tangem.blockchain.blockchains.kaspa
 
 import com.tangem.blockchain.blockchains.kaspa.kaspacashaddr.KaspaAddressType
 import com.tangem.blockchain.blockchains.kaspa.kaspacashaddr.KaspaCashAddr
-import com.tangem.blockchain.blockchains.kaspa.network.KaspaInput
-import com.tangem.blockchain.blockchains.kaspa.network.KaspaOutput
-import com.tangem.blockchain.blockchains.kaspa.network.KaspaPreviousOutpoint
-import com.tangem.blockchain.blockchains.kaspa.network.KaspaScriptPublicKey
-import com.tangem.blockchain.blockchains.kaspa.network.KaspaTransactionBody
-import com.tangem.blockchain.blockchains.kaspa.network.KaspaTransactionData
-import com.tangem.blockchain.blockchains.kaspa.network.KaspaUnspentOutput
+import com.tangem.blockchain.blockchains.kaspa.network.*
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
@@ -16,11 +10,8 @@ import com.tangem.common.extensions.isZero
 import com.tangem.common.extensions.toHexString
 import org.bitcoinj.core.*
 import org.bitcoinj.core.Transaction.SigHash
-import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.script.ScriptBuilder
-import org.bitcoinj.script.ScriptOpCodes.OP_CODESEPARATOR
-import org.bitcoinj.script.ScriptOpCodes.OP_EQUAL
-import org.bitcoinj.script.ScriptOpCodes.OP_HASH256
+import org.bitcoinj.script.ScriptOpCodes.*
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -30,15 +21,21 @@ class KaspaTransactionBuilder {
     var unspentOutputs: List<KaspaUnspentOutput>? = null
 
     fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
-        if (unspentOutputs.isNullOrEmpty()) return Result.Failure(
-            BlockchainSdkError.CustomError("Unspent outputs are missing")
-        )
+        if (unspentOutputs.isNullOrEmpty()) {
+            return Result.Failure(
+                BlockchainSdkError.CustomError("Unspent outputs are missing"),
+            )
+        }
 
         val unspentsToSpend = getUnspentsToSpend()
 
-        val change: BigDecimal = calculateChange(transactionData, unspentsToSpend)
+        val change = calculateChange(
+            amount = requireNotNull(transactionData.amount.value) { "Transaction amount is null" },
+            fee = transactionData.fee?.amount?.value ?: BigDecimal.ZERO,
+            unspentOutputs = unspentsToSpend,
+        )
         if (change < BigDecimal.ZERO) { // unspentsToSpend not enough to cover transaction amount
-            val maxAmount = transactionData.amount.value!! + change
+            val maxAmount = transactionData.amount.value + change
             return Result.Failure(BlockchainSdkError.Kaspa.UtxoAmountError(MAX_INPUT_COUNT, maxAmount))
         }
 
@@ -48,11 +45,11 @@ class KaspaTransactionBuilder {
         for (input in transaction.inputs) {
             val index = input.index
             hashesForSign[index] = transaction.hashForSignatureWitness(
-                    index,
-                    input.scriptBytes,
-                    input.value,
-                    SigHash.ALL,
-                    false
+                index,
+                input.scriptBytes,
+                input.value,
+                SigHash.ALL,
+                false,
             )
         }
         return Result.Success(hashesForSign)
@@ -65,21 +62,26 @@ class KaspaTransactionBuilder {
         }
         return KaspaTransactionBody(
             KaspaTransactionData(
-                inputs = transaction.inputs.map { KaspaInput(
-                    previousOutpoint = KaspaPreviousOutpoint(
-                        transactionId = it.outpoint.hash.toString(),
-                        index = it.outpoint.index
-                    ),
-                    signatureScript = it.scriptBytes.toHexString()
-                ) },
-                outputs = transaction.outputs.map { KaspaOutput(
-                    amount = it.value.getValue(),
-                    scriptPublicKey = KaspaScriptPublicKey(it.scriptBytes.toHexString())
-                ) }
-            )
+                inputs = transaction.inputs.map {
+                    KaspaInput(
+                        previousOutpoint = KaspaPreviousOutpoint(
+                            transactionId = it.outpoint.hash.toString(),
+                            index = it.outpoint.index,
+                        ),
+                        signatureScript = it.scriptBytes.toHexString(),
+                    )
+                },
+                outputs = transaction.outputs.map {
+                    KaspaOutput(
+                        amount = it.value.getValue(),
+                        scriptPublicKey = KaspaScriptPublicKey(it.scriptBytes.toHexString()),
+                    )
+                },
+            ),
         )
     }
 
+    @Suppress("MagicNumber")
     private fun extractSignature(index: Int, signatures: ByteArray): ByteArray {
         val r = BigInteger(1, signatures.copyOfRange(index * 64, 32 + index * 64))
         val s = BigInteger(1, signatures.copyOfRange(32 + index * 64, 64 + index * 64))
@@ -90,13 +92,9 @@ class KaspaTransactionBuilder {
         return canonicalSignature + SigHash.ALL.value.toByte()
     }
 
-    private fun calculateChange(
-        transactionData: TransactionData,
-        unspentOutputs: List<KaspaUnspentOutput>
-    ): BigDecimal {
+    fun calculateChange(amount: BigDecimal, fee: BigDecimal, unspentOutputs: List<KaspaUnspentOutput>): BigDecimal {
         val fullAmount = unspentOutputs.map { it.amount }.reduce { acc, number -> acc + number }
-        return fullAmount - (transactionData.amount.value!! + (transactionData.fee?.amount?.value
-            ?: 0.toBigDecimal()))
+        return fullAmount - (amount + fee)
     }
 
     fun getUnspentsToSpendCount(): Int {
@@ -104,22 +102,21 @@ class KaspaTransactionBuilder {
         return if (count < MAX_INPUT_COUNT) count else MAX_INPUT_COUNT
     }
 
-    private fun getUnspentsToSpend() =
-        unspentOutputs!!.sortedByDescending { it.amount }.take(getUnspentsToSpendCount())
+    fun getUnspentsToSpend() = unspentOutputs!!.sortedByDescending { it.amount }.take(getUnspentsToSpendCount())
 
     companion object {
         const val MAX_INPUT_COUNT = 84 // Kaspa rejects transactions with more inputs
     }
 }
 
+@Suppress("MagicNumber")
 internal fun TransactionData.toKaspaTransaction(
     networkParameters: NetworkParameters?,
     unspentOutputs: List<KaspaUnspentOutput>,
-    change: BigDecimal
+    change: BigDecimal,
 ): KaspaTransaction {
-
     val transaction = KaspaTransaction(
-        networkParameters
+        networkParameters,
     )
     transaction.setVersion(0) // the only Kaspa transaction version we know of yet
     for (utxo in unspentOutputs) {
@@ -129,8 +126,8 @@ internal fun TransactionData.toKaspaTransaction(
                 null,
                 utxo.outputScript,
                 TransactionOutPoint(networkParameters, utxo.outputIndex, Sha256Hash.wrap(utxo.transactionHash)),
-                Coin.parseCoin(utxo.amount.toPlainString())
-            )
+                Coin.parseCoin(utxo.amount.toPlainString()),
+            ),
         )
     }
     for (input in transaction.inputs) {
@@ -149,20 +146,20 @@ internal fun TransactionData.toKaspaTransaction(
             ScriptBuilder().data(destinationAddressDecoded.hash).op(OP_CODESEPARATOR).build()
         KaspaAddressType.P2SH -> {
             // known P2SH addresses won't throw
-            if (destinationAddressDecoded.hash.size != 32) throw Exception("Invalid hash length in P2SH address")
+            if (destinationAddressDecoded.hash.size != 32) error("Invalid hash length in P2SH address")
             ScriptBuilder().op(OP_HASH256).data(destinationAddressDecoded.hash).op(OP_EQUAL).build()
         }
-        null -> throw Exception("Null script type") // should never happen
+        null -> error("Null script type") // should never happen
     }
 
     transaction.addOutput(
         Coin.parseCoin(this.amount.value!!.toPlainString()),
-        destinationScript
+        destinationScript,
     )
     if (!change.isZero()) {
         transaction.addOutput(
             Coin.parseCoin(change.toPlainString()),
-            sourceScript
+            sourceScript,
         )
     }
     return transaction

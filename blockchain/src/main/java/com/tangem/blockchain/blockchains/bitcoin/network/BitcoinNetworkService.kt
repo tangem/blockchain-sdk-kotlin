@@ -29,14 +29,13 @@ open class BitcoinNetworkService(providers: List<BitcoinNetworkProvider>) : Bitc
                 BitcoinFee(
                     minimalPerKb = fees.map { it.minimalPerKb }.sorted().drop(1).average(),
                     normalPerKb = fees.map { it.normalPerKb }.sorted().drop(1).average(),
-                    priorityPerKb = fees.map { it.priorityPerKb }.sorted().drop(1).average()
-
+                    priorityPerKb = fees.map { it.priorityPerKb }.sorted().drop(1).average(),
                 )
             } else {
                 BitcoinFee(
                     minimalPerKb = fees.map { it.minimalPerKb }.maxOrNull()!!,
                     normalPerKb = fees.map { it.normalPerKb }.maxOrNull()!!,
-                    priorityPerKb = fees.map { it.priorityPerKb }.maxOrNull()!!
+                    priorityPerKb = fees.map { it.priorityPerKb }.maxOrNull()!!,
                 )
             }
 

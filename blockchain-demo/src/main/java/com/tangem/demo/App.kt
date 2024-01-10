@@ -1,4 +1,4 @@
-package com.tangem.blockchain_demo
+package com.tangem.demo
 
 import android.app.Application
 import com.chuckerteam.chucker.api.ChuckerInterceptor

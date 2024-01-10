@@ -1,7 +1,7 @@
 package com.tangem.blockchain.common
 
 import com.squareup.moshi.JsonClass
-import java.util.*
+import java.util.Locale
 
 @JsonClass(generateAdapter = true)
 data class Token(
@@ -9,7 +9,7 @@ data class Token(
     val symbol: String,
     val contractAddress: String,
     val decimals: Int,
-    val id: String? = null
+    val id: String? = null,
 ) {
     constructor(
         symbol: String,
@@ -24,7 +24,7 @@ data class Token(
         other as Token
 
         if (symbol != other.symbol) return false
-        if (contractAddress.toLowerCase(Locale.ROOT) != other.contractAddress.toLowerCase(Locale.ROOT)) {
+        if (contractAddress.lowercase(Locale.ROOT) != other.contractAddress.lowercase(Locale.ROOT)) {
             return false
         }
 
@@ -33,7 +33,7 @@ data class Token(
 
     override fun hashCode(): Int {
         var result = symbol.hashCode()
-        result = 31 * result + contractAddress.toLowerCase(Locale.ROOT).hashCode()
+        result = 31 * result + contractAddress.lowercase(Locale.ROOT).hashCode()
         return result
     }
 }
