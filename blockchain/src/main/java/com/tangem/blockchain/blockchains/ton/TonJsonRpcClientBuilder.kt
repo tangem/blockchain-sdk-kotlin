@@ -24,14 +24,11 @@ class TonJsonRpcClientBuilder {
         }
     }
 
-    private fun createTonCenterJsonRpcProvider(
-        isTestNet: Boolean,
-        apiKey: String,
-    ): TonJsonRpcNetworkProvider {
+    private fun createTonCenterJsonRpcProvider(isTestNet: Boolean, apiKey: String): TonJsonRpcNetworkProvider {
         val url = if (isTestNet) "https://testnet.toncenter.com/api/v2/" else "https://toncenter.com/api/v2/"
         val tonApi = createRetrofitInstance(
             baseUrl = url,
-            headerInterceptors = listOf(AddHeaderInterceptor(mapOf("x-api-key" to apiKey)))
+            headerInterceptors = listOf(AddHeaderInterceptor(mapOf("x-api-key" to apiKey))),
         ).create(TonApi::class.java)
         return TonJsonRpcNetworkProvider(baseUrl = url, api = tonApi)
     }
@@ -44,7 +41,7 @@ class TonJsonRpcClientBuilder {
 
     private fun createNowNodeJsonRpcProvider(apiKey: String): TonJsonRpcNetworkProvider {
         val url = "https://ton.nownodes.io/"
-        val tonApi = createRetrofitInstance("$url${apiKey}/").create(TonApi::class.java)
+        val tonApi = createRetrofitInstance("$url$apiKey/").create(TonApi::class.java)
         return TonJsonRpcNetworkProvider(baseUrl = url, api = tonApi)
     }
 }
