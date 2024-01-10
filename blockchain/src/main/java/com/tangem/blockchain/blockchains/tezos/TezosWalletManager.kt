@@ -139,6 +139,11 @@ class TezosWalletManager(
         }
     }
 
+    override suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee> {
+        val defaultFee = BigDecimal.valueOf(TezosConstants.TRANSACTION_FEE)
+        return Result.Success(TransactionFee.Single(Fee.Common(Amount(defaultFee, blockchain))))
+    }
+
     override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
         val errors = super.validateTransaction(amount, fee)
         val total = fee?.value?.add(amount.value) ?: amount.value

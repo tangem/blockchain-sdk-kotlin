@@ -94,9 +94,12 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
 
             Blockchain.Bitcoin,
             Blockchain.BitcoinTestnet,
-            Blockchain.Dash,
             -> {
                 BitcoinWalletManagerAssembly
+            }
+
+            Blockchain.Dash -> {
+                DashWalletManagerAssembly
             }
 
             Blockchain.Dogecoin -> {
