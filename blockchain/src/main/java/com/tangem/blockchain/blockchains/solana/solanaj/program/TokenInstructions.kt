@@ -10,6 +10,7 @@ import java.nio.ByteOrder
 /**
  * Same as [org.p2p.solanaj.programs.TokenProgram.transferChecked] but with [programId]
  * */
+@Suppress("LongParameterList")
 internal fun createTransferCheckedInstruction(
     source: PublicKey?,
     destination: PublicKey?,
@@ -30,6 +31,7 @@ internal fun createTransferCheckedInstruction(
     return Program.createTransactionInstruction(programId.value, keys, transactionData)
 }
 
+@Suppress("MagicNumber")
 private fun encodeTransferCheckedTokenInstructionData(amount: Long, decimals: Byte): ByteArray? {
     val result = ByteBuffer.allocate(10).apply {
         order(ByteOrder.LITTLE_ENDIAN)

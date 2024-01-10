@@ -20,10 +20,6 @@ abstract class WalletManager(
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
 ) : TransactionHistoryProvider by transactionHistoryProvider, TransactionSender {
 
-    override suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee> {
-        return getFee(amount, destination)
-    }
-
     open val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Unspecified
 
     var outputsCount: Int? = null
@@ -42,6 +38,10 @@ abstract class WalletManager(
         updateDebounced.invokeOnExpire(forceUpdate) {
             updateInternal()
         }
+    }
+
+    override suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee> {
+        return getFee(amount, destination)
     }
 
     internal abstract suspend fun updateInternal()
@@ -179,7 +179,6 @@ interface TransactionSender {
      */
     suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee>
 }
-
 
 interface TransactionSigner {
     suspend fun sign(hashes: List<ByteArray>, publicKey: Wallet.PublicKey): CompletionResult<List<ByteArray>>
