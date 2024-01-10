@@ -21,8 +21,8 @@ open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : Chia
                         put("Content-Type", "application/json")
                         put("X-API-Key", key)
                     },
-                )
-            )
+                ),
+            ),
         ).create(ChiaApi::class.java)
     }
 
@@ -67,12 +67,12 @@ open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : Chia
                     SimpleResult.Success
                 } else {
                     SimpleResult.Failure(
-                        BlockchainSdkError.CustomError("${sendResponse.status} status returned on send")
+                        BlockchainSdkError.CustomError("${sendResponse.status} status returned on send"),
                     )
                 }
             } else {
                 SimpleResult.Failure(
-                    BlockchainSdkError.CustomError(sendResponse.error ?: "Unknown send error")
+                    BlockchainSdkError.CustomError(sendResponse.error ?: "Unknown send error"),
                 )
             }
         } catch (exception: Exception) {

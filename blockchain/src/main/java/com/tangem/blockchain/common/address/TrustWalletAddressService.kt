@@ -4,11 +4,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.trustWalletCoinType
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.toCompressedPublicKey
-import wallet.core.jni.AnyAddress
-import wallet.core.jni.Cardano
-import wallet.core.jni.CoinType
-import wallet.core.jni.PublicKey
-import wallet.core.jni.PublicKeyType
+import wallet.core.jni.*
 
 class TrustWalletAddressService(
     private val blockchain: Blockchain,
@@ -36,8 +32,8 @@ class TrustWalletAddressService(
                 Address(makeAddress(walletPublicKey), AddressType.Default),
                 Address(
                     value = Cardano.getByronAddress(PublicKey(walletPublicKey, coinType.publicKeyType())),
-                    type = AddressType.Legacy
-                )
+                    type = AddressType.Legacy,
+                ),
             )
         } else {
             super.makeAddresses(walletPublicKey, curve)

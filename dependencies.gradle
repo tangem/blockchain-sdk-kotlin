@@ -1,5 +1,18 @@
-ext.versions = [
-        kotlin      : '1.7.21',
-        build_gradle: '7.4.2',
-        tangem      : '1.86.0'
-]
+ext {
+    versions = [
+        kotlin            : '1.7.21',
+        build_gradle      : '7.4.2',
+        tangem            : '1.86.0',
+        detekt            : '1.22.0',
+        composeDetektRules: '1.2.2'
+    ]
+
+    classpaths = [
+        "detektPlugin": "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:$versions.detekt",
+    ]
+
+    libraries = [
+        "formattingDetektRules": "io.gitlab.arturbosch.detekt:detekt-formatting:$versions.detekt",
+        "composeDetektRules"   : "ru.kode:detekt-rules-compose:$versions.composeDetektRules"
+    ]
+}
