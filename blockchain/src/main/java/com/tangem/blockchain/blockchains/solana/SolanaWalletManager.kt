@@ -54,7 +54,7 @@ class SolanaWalletManager(
             getMainAccountInfo(accountPubK)
         }.successOr {
             wallet.removeAllTokens()
-            throw (it.error as BlockchainSdkError)
+            throw it.error as BlockchainSdkError
         }
         wallet.setCoinValue(valueConverter.toSol(accountInfo.balance))
         updateRecentTransactions()
@@ -101,8 +101,12 @@ class SolanaWalletManager(
                 val amount = Amount(valueConverter.toSol(info.lamports), wallet.blockchain)
                 val feeAmount = Amount(valueConverter.toSol(it.fee), wallet.blockchain)
                 TransactionData(
-                    amount, Fee.Common(feeAmount), info.source, info.destination,
-                    TransactionStatus.Unconfirmed, hash = it.signature
+                    amount,
+                    Fee.Common(feeAmount),
+                    info.source,
+                    info.destination,
+                    TransactionStatus.Unconfirmed,
+                    hash = it.signature,
                 )
             } else {
                 null
@@ -146,7 +150,7 @@ class SolanaWalletManager(
             is AmountType.Token -> sendToken(
                 transactionData.amount.type.token,
                 transactionData,
-                signer
+                signer,
             )
 
             AmountType.Reserve -> SimpleResult.Failure(UnsupportedOperation())
@@ -476,9 +480,11 @@ class SolanaWalletManager(
     }
 
     override suspend fun minimalBalanceForRentExemption(): Result<BigDecimal> {
-        return when (val result = multiNetworkProvider.performRequest {
-            minimalBalanceForRentExemption()
-        }) {
+        return when (
+            val result = multiNetworkProvider.performRequest {
+                minimalBalanceForRentExemption()
+            }
+        ) {
             is Result.Success -> Result.Success(valueConverter.toSol(result.data))
             is Result.Failure -> result
         }
@@ -499,37 +505,18 @@ interface SolanaValueConverter {
 class ValueConverter : SolanaValueConverter {
     override fun toSol(value: BigDecimal): BigDecimal = value.toSOL()
     override fun toSol(value: Long): BigDecimal = value.toBigDecimal().toSOL()
-    override fun toLamports(value: BigDecimal): Long =
-        value.toLamports(Blockchain.Solana.decimals())
+    override fun toLamports(value: BigDecimal): Long = value.toLamports(Blockchain.Solana.decimals())
 
-    override fun toLamports(token: Token, value: BigDecimal): Long =
-        value.toLamports(token.decimals)
+    override fun toLamports(token: Token, value: BigDecimal): Long = value.toLamports(token.decimals)
 }
 
 private fun Long.toSOL(): BigDecimal = this.toBigDecimal().toSOL()
-private fun BigDecimal.toSOL(): BigDecimal =
-    movePointLeft(Blockchain.Solana.decimals()).toSolanaDecimals()
+private fun BigDecimal.toSOL(): BigDecimal = movePointLeft(Blockchain.Solana.decimals()).toSolanaDecimals()
 
-private fun BigDecimal.toLamports(decimals: Int): Long =
-    movePointRight(decimals).toSolanaDecimals().toLong()
+private fun BigDecimal.toLamports(decimals: Int): Long = movePointRight(decimals).toSolanaDecimals().toLong()
 
 private fun BigDecimal.toSolanaDecimals(): BigDecimal =
     this.setScale(Blockchain.Solana.decimals(), RoundingMode.HALF_UP)
-
-private fun <T> Result<T>.toSimpleResult(): SimpleResult {
-    return when (this) {
-        is Result.Success -> SimpleResult.Success
-        is Result.Failure -> SimpleResult.Failure(this.error)
-    }
-}
-
-private fun List<TokenAccountInfo.Value>.retrieveLamportsBy(token: Token): Long? {
-    return getSplTokenBy(token)?.account?.lamports
-}
-
-private fun List<TokenAccountInfo.Value>.getSplTokenBy(token: Token): TokenAccountInfo.Value? {
-    return firstOrNull { it.pubkey == token.contractAddress }
-}
 
 private inline fun <T> CompletionResult<T>.successOr(failureClause: (CompletionResult.Failure<T>) -> Nothing): T {
     return when (this) {

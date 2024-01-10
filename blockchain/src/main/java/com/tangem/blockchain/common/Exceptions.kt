@@ -1,8 +1,11 @@
+@file:Suppress("MagicNumber")
+
 package com.tangem.blockchain.common
 
 import com.tangem.common.core.TangemError
 import java.math.BigDecimal
 
+@Suppress("UnnecessaryAbstractClass")
 abstract class BlockchainError(code: Int) : TangemError(code)
 
 sealed class BlockchainSdkError(
@@ -80,7 +83,7 @@ sealed class BlockchainSdkError(
         class UtxoAmountError(val maxOutputs: Int, val maxAmount: BigDecimal) : Kaspa(
             2,
             "Due to Kaspa limitations only $maxOutputs UTXOs can fit in a single transaction. This means you can only" +
-                " send ${maxAmount.toPlainString()}. You need to reduce the amount"
+                " send ${maxAmount.toPlainString()}. You need to reduce the amount",
         )
     }
 
@@ -122,7 +125,7 @@ sealed class BlockchainSdkError(
     ) {
         class Api(val name: String, code: Int, message: String) : NearException(
             subCode = code,
-            customMessage = message
+            customMessage = message,
         )
     }
 
@@ -149,7 +152,7 @@ sealed class BlockchainSdkError(
         class UtxoAmountError(val maxOutputs: Int, val maxAmount: BigDecimal) : Chia(
             1,
             "Due to Chia limitations only $maxOutputs UTXOs can fit in a single transaction. This means you can only" +
-                " send ${maxAmount.toPlainString()}."
+                " send ${maxAmount.toPlainString()}.",
         )
     }
 

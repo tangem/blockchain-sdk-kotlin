@@ -70,6 +70,7 @@ class TronJsonRpcNetworkProvider(override val network: TronNetwork) : TronNetwor
         }
     }
 
+    @Suppress("MagicNumber")
     override suspend fun getTokenBalance(
         tokenBalanceRequestData: TokenBalanceRequestData,
     ): Result<TronTriggerSmartContractResponse> {
@@ -80,7 +81,7 @@ class TronJsonRpcNetworkProvider(override val network: TronNetwork) : TronNetwor
                     contractAddress = tokenBalanceRequestData.contractAddress,
                     functionSelector = "balanceOf(address)",
                     parameter = TronAddressService.toHexForm(tokenBalanceRequestData.address, 64) ?: "",
-                    visible = true
+                    visible = true,
                 ),
             )
             Result.Success(response)
@@ -96,14 +97,14 @@ class TronJsonRpcNetworkProvider(override val network: TronNetwork) : TronNetwor
     ): Result<TronTriggerSmartContractResponse> {
         return try {
             val response = api.getTokenBalance(
-                    requestBody = TronTriggerSmartContractRequest(
-                        ownerAddress = address,
-                        contractAddress = contractAddress,
-                        functionSelector = "transfer(address,uint256)",
-                        parameter = parameter,
-                        visible = true
-                    ),
-                )
+                requestBody = TronTriggerSmartContractRequest(
+                    ownerAddress = address,
+                    contractAddress = contractAddress,
+                    functionSelector = "transfer(address,uint256)",
+                    parameter = parameter,
+                    visible = true,
+                ),
+            )
             Result.Success(response)
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())

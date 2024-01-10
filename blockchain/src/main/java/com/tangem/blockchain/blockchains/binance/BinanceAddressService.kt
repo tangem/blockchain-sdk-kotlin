@@ -9,15 +9,33 @@ import com.tangem.common.extensions.toCompressedPublicKey
 import org.bitcoinj.core.Bech32
 
 class BinanceAddressService(private val testNet: Boolean = false) : AddressService() {
+
+    @Suppress("MagicNumber")
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         val publicKeyHash = walletPublicKey.toCompressedPublicKey().calculateSha256().calculateRipemd160()
         return if (testNet) {
-            Bech32.encode("tbnb", Crypto.convertBits(publicKeyHash, 0,
-                    publicKeyHash.size, 8, 5, false)
+            Bech32.encode(
+                "tbnb",
+                Crypto.convertBits(
+                    publicKeyHash,
+                    0,
+                    publicKeyHash.size,
+                    8,
+                    5,
+                    false,
+                ),
             )
         } else {
-            Bech32.encode("bnb", Crypto.convertBits(publicKeyHash, 0,
-                    publicKeyHash.size, 8, 5, false)
+            Bech32.encode(
+                "bnb",
+                Crypto.convertBits(
+                    publicKeyHash,
+                    0,
+                    publicKeyHash.size,
+                    8,
+                    5,
+                    false,
+                ),
             )
         }
     }
@@ -38,7 +56,8 @@ class BinanceAddressService(private val testNet: Boolean = false) : AddressServi
 
 enum class BinanceChain(val value: String) {
     Nile("Binance-Chain-Nile"),
-    Tigris("Binance-Chain-Tigris");
+    Tigris("Binance-Chain-Tigris"),
+    ;
 
     companion object {
         fun getChain(testNet: Boolean): BinanceChain = if (testNet) Nile else Tigris
