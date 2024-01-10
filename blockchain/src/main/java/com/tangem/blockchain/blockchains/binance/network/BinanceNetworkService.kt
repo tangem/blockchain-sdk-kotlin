@@ -23,11 +23,11 @@ class BinanceNetworkService(isTestNet: Boolean = false) : BinanceNetworkProvider
     }
     private val client: BinanceDexApiRestClient by lazy {
         BinanceDexApiClientFactory.newInstance().newRestClient(
-                if (!isTestNet) {
-                    BinanceDexEnvironment.PROD.baseUrl
-                } else {
-                    BinanceDexEnvironment.TEST_NET.baseUrl
-                }
+            if (!isTestNet) {
+                BinanceDexEnvironment.PROD.baseUrl
+            } else {
+                BinanceDexEnvironment.TEST_NET.baseUrl
+            },
         )
     }
 
@@ -37,20 +37,20 @@ class BinanceNetworkService(isTestNet: Boolean = false) : BinanceNetworkProvider
             val balances = accountData.balances.map { it.symbol to it.free.toBigDecimal() }.toMap()
 
             Result.Success(
-                    BinanceInfoResponse(
-                            balances = balances,
-                            accountNumber = accountData.accountNumber.toLong(),
-                            sequence = accountData.sequence
-                    )
+                BinanceInfoResponse(
+                    balances = balances,
+                    accountNumber = accountData.accountNumber.toLong(),
+                    sequence = accountData.sequence,
+                ),
             )
         } catch (exception: Exception) {
             if (exception.message == "account not found") {
                 Result.Success(
-                        BinanceInfoResponse(
-                                balances = emptyMap(),
-                                accountNumber = null,
-                                sequence = null
-                        )
+                    BinanceInfoResponse(
+                        balances = emptyMap(),
+                        accountNumber = null,
+                        sequence = null,
+                    ),
                 )
             } else {
                 Result.Failure(exception.toBlockchainSdkError())
@@ -65,11 +65,11 @@ class BinanceNetworkService(isTestNet: Boolean = false) : BinanceNetworkProvider
             for (binanceFee in feeData) {
                 if (binanceFee.transactionFee != null) {
                     fee = binanceFee.transactionFee?.value?.toBigDecimal()
-                            ?.movePointLeft(Blockchain.Binance.decimals())
+                        ?.movePointLeft(Blockchain.Binance.decimals())
                     break
                 }
             }
-            return Result.Success(fee ?: throw Exception("Invalid fee response"))
+            return Result.Success(fee ?: error("Invalid fee response"))
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }

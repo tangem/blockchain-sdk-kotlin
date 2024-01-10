@@ -9,10 +9,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 
-fun createRetrofitInstance(
-    baseUrl: String,
-    headerInterceptors: List<Interceptor> = emptyList(),
-): Retrofit =
+fun createRetrofitInstance(baseUrl: String, headerInterceptors: List<Interceptor> = emptyList()): Retrofit =
     Retrofit.Builder()
         .baseUrl(baseUrl)
         .addConverterFactory(MoshiConverterFactory.create(moshi))
@@ -45,6 +42,7 @@ data class TimeoutConfig(
     val write: Timeout,
 ) {
     companion object {
+        @Suppress("MagicNumber")
         fun default(): TimeoutConfig = TimeoutConfig(
             call = Timeout(10),
             connect = Timeout(20),
@@ -79,7 +77,6 @@ const val API_BINANCE_TESTNET = "https://testnet-dex.binance.org/"
 const val API_STELLAR = "https://horizon.stellar.org/"
 const val API_STELLAR_RESERVE = "https://horizon.sui.li/"
 const val API_STELLAR_TESTNET = "https://horizon-testnet.stellar.org/"
-const val API_BLOCKCHAIN_INFO = "https://blockchain.info/"
 const val API_ADALITE = "https://explorer2.adalite.io/"
 const val API_XRP_LEDGER_FOUNDATION = "https://xrplcluster.com/"
 const val API_BLOCKCHAIR = "https://api.blockchair.com/"

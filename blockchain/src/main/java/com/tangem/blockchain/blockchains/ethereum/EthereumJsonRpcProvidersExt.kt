@@ -7,29 +7,30 @@ import com.tangem.blockchain.extensions.letNotBlank
 
 private const val AVALANCHE_POSTFIX = "ext/bc/C/rpc"
 
-internal fun Blockchain.getEthereumJsonRpcProviders(
-    config: BlockchainSdkConfig,
-): List<EthereumJsonRpcProvider> {
+@Suppress("CyclomaticComplexMethod", "LongMethod")
+internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig): List<EthereumJsonRpcProvider> {
     val providers = when (this) {
         Blockchain.Arbitrum -> listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://arb1.arbitrum.io/rpc/"),
             getNowNodesProvider(baseUrl = "https://arbitrum.nownodes.io/", config = config),
-            getInfuraProvider(baseUrl = "https://arbitrum-mainnet.infura.io/v3/", config = config)
+            getInfuraProvider(baseUrl = "https://arbitrum-mainnet.infura.io/v3/", config = config),
         )
+
         Blockchain.ArbitrumTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://goerli-rollup.arbitrum.io/rpc/")
+            EthereumJsonRpcProvider(baseUrl = "https://goerli-rollup.arbitrum.io/rpc/"),
         )
+
         Blockchain.Avalanche -> listOfNotNull(
             // postfix is required because the AVALANCHE API needs url without a last slash !!!
             EthereumJsonRpcProvider(
                 baseUrl = "https://api.avax.network/",
-                postfixUrl = AVALANCHE_POSTFIX
+                postfixUrl = AVALANCHE_POSTFIX,
             ),
             config.nowNodeCredentials?.apiKey.letNotBlank { nowNodesApiKey ->
                 EthereumJsonRpcProvider(
                     baseUrl = "https://avax.nownodes.io/",
                     postfixUrl = AVALANCHE_POSTFIX,
-                    nowNodesApiKey = nowNodesApiKey // special for Avalanche
+                    nowNodesApiKey = nowNodesApiKey, // special for Avalanche
                 )
             },
             config.getBlockCredentials?.avalanche?.jsonRpc.letNotBlank { avalancheToken ->
@@ -42,8 +43,8 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         Blockchain.AvalancheTestnet -> listOf(
             EthereumJsonRpcProvider(
                 baseUrl = "https://api.avax-test.network/",
-                postfixUrl = AVALANCHE_POSTFIX
-            )
+                postfixUrl = AVALANCHE_POSTFIX,
+            ),
         )
         Blockchain.Ethereum -> listOfNotNull(
             getNowNodesProvider(baseUrl = "https://eth.nownodes.io/", config = config),
@@ -52,7 +53,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         )
         Blockchain.EthereumTestnet -> listOfNotNull(
             getNowNodesProvider(baseUrl = "https://eth-goerli.nownodes.io/", config = config),
-            getInfuraProvider(baseUrl = "https://goerli.infura.io/v3/", config = config)
+            getInfuraProvider(baseUrl = "https://goerli.infura.io/v3/", config = config),
         )
         Blockchain.EthereumClassic -> listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://etc.etcdesktop.com/"),
@@ -63,7 +64,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = "https://geth-at.etc-network.info/"),
         )
         Blockchain.EthereumClassicTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://etc.rivet.link/kotti/")
+            EthereumJsonRpcProvider(baseUrl = "https://etc.rivet.link/kotti/"),
         )
         Blockchain.Fantom -> listOfNotNull(
             getNowNodesProvider(baseUrl = "https://ftm.nownodes.io/", config = config),
@@ -91,15 +92,15 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
                 if (credentials.subdomain.isNotBlank() && credentials.apiKey.isNotBlank()) {
                     EthereumJsonRpcProvider(
                         baseUrl = "https://${credentials.subdomain}.bsc.discover.quiknode.pro/" +
-                            "${credentials.apiKey}/"
+                            "${credentials.apiKey}/",
                     )
                 } else {
                     null
                 }
-            }
+            },
         )
         Blockchain.BSCTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://data-seed-prebsc-1-s1.binance.org:8545/")
+            EthereumJsonRpcProvider(baseUrl = "https://data-seed-prebsc-1-s1.binance.org:8545/"),
         )
         // https://wiki.polygon.technology/docs/operate/network-rpc-endpoints
         Blockchain.Polygon -> listOfNotNull(
@@ -110,7 +111,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = "https://rpc-mainnet.matic.quiknode.pro/"),
         )
         Blockchain.PolygonTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://rpc-mumbai.maticvigil.com/")
+            EthereumJsonRpcProvider(baseUrl = "https://rpc-mumbai.maticvigil.com/"),
         )
         Blockchain.Gnosis -> listOfNotNull(
             config.getBlockCredentials?.gnosis?.jsonRpc.letNotBlank { getGetBlockProvider(accessToken = it) },
@@ -130,14 +131,14 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
             EthereumJsonRpcProvider(baseUrl = "https://goerli.optimism.io/"),
         )
         Blockchain.EthereumFair -> listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://rpc.etherfair.org/")
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.etherfair.org/"),
         )
         Blockchain.EthereumPow -> listOfNotNull(
             getNowNodesProvider(baseUrl = "https://ethw.nownodes.io/", config = config),
-            EthereumJsonRpcProvider(baseUrl = "https://mainnet.ethereumpow.org/")
+            EthereumJsonRpcProvider(baseUrl = "https://mainnet.ethereumpow.org/"),
         )
         Blockchain.EthereumPowTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://iceberg.ethereumpow.org/")
+            EthereumJsonRpcProvider(baseUrl = "https://iceberg.ethereumpow.org/"),
         )
         Blockchain.Kava -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://evm.kava.io/"),
@@ -156,7 +157,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         Blockchain.Telos -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://mainnet.telos.net", postfixUrl = "evm"),
             EthereumJsonRpcProvider(baseUrl = "https://api.kainosbp.com", postfixUrl = "evm"),
-            EthereumJsonRpcProvider(baseUrl = "https://telos-evm.rpc.thirdweb.com/")
+            EthereumJsonRpcProvider(baseUrl = "https://telos-evm.rpc.thirdweb.com/"),
         )
 
         Blockchain.TelosTestnet -> listOf(
@@ -177,21 +178,18 @@ internal fun Blockchain.getEthereumJsonRpcProviders(
         )
 
         Blockchain.DecimalTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://testnet-val.decimalchain.com/web3/")
+            EthereumJsonRpcProvider(baseUrl = "https://testnet-val.decimalchain.com/web3/"),
         )
 
-        else -> throw IllegalStateException("$this isn't supported")
+        else -> error("$this isn't supported")
     }
 
-    if (providers.isEmpty()) throw IllegalStateException("Provider list of $this is null or empty")
+    if (providers.isEmpty()) error("Provider list of $this is null or empty")
 
     return providers
 }
 
-private fun getNowNodesProvider(
-    baseUrl: String,
-    config: BlockchainSdkConfig,
-): EthereumJsonRpcProvider? {
+private fun getNowNodesProvider(baseUrl: String, config: BlockchainSdkConfig): EthereumJsonRpcProvider? {
     return config.nowNodeCredentials?.apiKey.letNotBlank { nowNodesApiKey ->
         EthereumJsonRpcProvider(baseUrl = baseUrl, postfixUrl = nowNodesApiKey)
     }
@@ -200,10 +198,7 @@ private fun getNowNodesProvider(
 private fun getGetBlockProvider(accessToken: String): EthereumJsonRpcProvider =
     EthereumJsonRpcProvider(baseUrl = "https://go.getblock.io/$accessToken/")
 
-private fun getInfuraProvider(
-    baseUrl: String,
-    config: BlockchainSdkConfig,
-): EthereumJsonRpcProvider? {
+private fun getInfuraProvider(baseUrl: String, config: BlockchainSdkConfig): EthereumJsonRpcProvider? {
     return config.infuraProjectId.letNotBlank { infuraProjectId ->
         EthereumJsonRpcProvider(baseUrl = baseUrl, postfixUrl = infuraProjectId)
     }

@@ -9,12 +9,13 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
+import java.math.BigDecimal
 
 class StellarWalletManager(
     wallet: Wallet,
     private val transactionBuilder: StellarTransactionBuilder,
     private val networkProvider: StellarNetworkProvider,
-) : WalletManager(wallet), TransactionSender, SignatureCountValidator {
+) : WalletManager(wallet), TransactionSender, SignatureCountValidator, ReserveAmountProvider {
 
     override val currentHost: String
         get() = networkProvider.baseUrl
@@ -43,8 +44,8 @@ class StellarWalletManager(
 
         cardTokens.forEach { token ->
             val tokenBalance = data.tokenBalances
-                    .find { it.symbol == token.symbol && it.issuer == token.contractAddress }?.balance
-                    ?: 0.toBigDecimal()
+                .find { it.symbol == token.symbol && it.issuer == token.contractAddress }?.balance
+                ?: 0.toBigDecimal()
             wallet.addTokenValue(tokenBalance, token)
         }
         // only if no token(s) specified on manager creation or stored on card
@@ -62,7 +63,7 @@ class StellarWalletManager(
 
     private fun updateError(error: BlockchainError) {
         Log.e(this::class.java.simpleName, error.customMessage)
-        if (error is BlockchainSdkError) throw error
+        if (error is BlockchainSdkError) error("Error isn't BlockchainSdkError")
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
@@ -93,11 +94,13 @@ class StellarWalletManager(
         val minChargedFee = feeStats.feeCharged.min.toBigDecimal().movePointLeft(blockchain.decimals())
         val averageChargedFee = (maxChargedFee - minChargedFee).divide(2.toBigDecimal()) + minChargedFee
 
-        return Result.Success(TransactionFee.Choosable(
-            minimum = Fee.Common(Amount(minChargedFee, blockchain)),
-            normal = Fee.Common(Amount(averageChargedFee, blockchain)),
-            priority = Fee.Common(Amount(maxChargedFee, blockchain))
-        ))
+        return Result.Success(
+            TransactionFee.Choosable(
+                minimum = Fee.Common(Amount(minChargedFee, blockchain)),
+                normal = Fee.Common(Amount(averageChargedFee, blockchain)),
+                priority = Fee.Common(Amount(maxChargedFee, blockchain)),
+            ),
+        )
     }
 
     override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
@@ -108,6 +111,15 @@ class StellarWalletManager(
                 SimpleResult.Failure(BlockchainSdkError.SignatureCountNotMatched)
             }
             is Result.Failure -> SimpleResult.Failure(result.error)
+        }
+    }
+
+    override fun getReserveAmount(): BigDecimal = transactionBuilder.minReserve
+
+    override suspend fun isAccountFunded(destinationAddress: String): Boolean {
+        return when (val response = networkProvider.checkTargetAccount(destinationAddress, null)) {
+            is Result.Success -> response.data.accountCreated
+            is Result.Failure -> false
         }
     }
 

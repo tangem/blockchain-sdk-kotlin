@@ -21,7 +21,7 @@ enum class RippledMethod(val value: String) {
     ACCOUNT_INFO("account_info"),
     SERVER_STATE("server_state"),
     FEE("fee"),
-    SUBMIT("submit")
+    SUBMIT("submit"),
 }
 
 data class RippledBody(

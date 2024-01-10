@@ -43,14 +43,14 @@ class BlockBookNetworkProvider(
                     unspentOutputs = createUnspentOutputs(
                         getUtxoResponseItems = getUtxoResponseItems,
                         transactions = getAddressResponse.transactions.orEmpty(),
-                        address = address
+                        address = address,
                     ),
                     recentTransactions = createRecentTransactions(
                         transactions = getAddressResponse.transactions.orEmpty(),
                         address = address,
                     ),
-                    hasUnconfirmed = getAddressResponse.unconfirmedTxs != 0
-                )
+                    hasUnconfirmed = getAddressResponse.unconfirmedTxs != 0,
+                ),
             )
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
@@ -64,7 +64,7 @@ class BlockBookNetworkProvider(
             val priorityPerKb = getFeePerKb(param = PRIORITY_FEE_BLOCK_AMOUNT)
 
             Result.Success(
-                BitcoinFee(minimalPerKb, normalPerKb, priorityPerKb)
+                BitcoinFee(minimalPerKb, normalPerKb, priorityPerKb),
             )
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
@@ -73,8 +73,12 @@ class BlockBookNetworkProvider(
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
-            withContext(Dispatchers.IO) { api.sendTransaction(transaction) }
-            SimpleResult.Success
+            val response = withContext(Dispatchers.IO) { api.sendTransaction(transaction) }
+            if (response.result.isNotBlank()) {
+                SimpleResult.Success
+            } else {
+                SimpleResult.Failure(BlockchainSdkError.FailedToSendException)
+            }
         } catch (e: Exception) {
             SimpleResult.Failure(e.toBlockchainSdkError())
         }
