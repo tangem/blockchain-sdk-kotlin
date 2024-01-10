@@ -49,6 +49,7 @@ class TonTransactionBuilder {
             .build()
     }
 
+    @Suppress("MagicNumber")
     private fun generateKeyPair(): KeyPair {
         val privateKey = CryptoUtils.generateRandomBytes(32)
 /* [REDACTED_TODO_COMMENT]

@@ -15,14 +15,16 @@ import org.bitcoinj.core.Utils
 import java.math.BigInteger
 
 class BinanceTransactionBuilder(
-        publicKey: ByteArray, isTestNet: Boolean = false
+    publicKey: ByteArray,
+    isTestNet: Boolean = false,
 ) {
     var accountNumber: Long? = null
     var sequence: Long? = null
 
     private val chainId = BinanceChain.getChain(isTestNet).value
-    private val prefixedPubKey =
-            MessageType.PubKey.typePrefixBytes + 33.toByte() + publicKey.toCompressedPublicKey()
+
+    @Suppress("MagicNumber")
+    private val prefixedPubKey = MessageType.PubKey.typePrefixBytes + 33.toByte() + publicKey.toCompressedPublicKey()
 
     private var transactionAssembler: TransactionRequestAssemblerExtSign? = null
     private var transferMessage: TransferMessage? = null
@@ -30,7 +32,11 @@ class BinanceTransactionBuilder(
     fun buildToSign(transactionData: TransactionData): Result<ByteArray> {
         val amount = transactionData.amount
 
-        if (!amount.isAboveZero()) return Result.Failure(BlockchainSdkError.CustomError("Transaction amount is not defined"))
+        if (!amount.isAboveZero()) {
+            return Result.Failure(
+                BlockchainSdkError.CustomError("Transaction amount is not defined"),
+            )
+        }
         val accountNumber = accountNumber ?: return Result.Failure(BlockchainSdkError.CustomError("No account number"))
         val sequence = sequence ?: return Result.Failure(BlockchainSdkError.CustomError("No sequence"))
 
@@ -43,7 +49,7 @@ class BinanceTransactionBuilder(
         transfer.fromAddress = transactionData.sourceAddress
         transfer.toAddress = transactionData.destinationAddress
         transfer.amount = transactionData.amount.value!!
-                .setScale(Blockchain.Binance.decimals()).toPlainString()
+            .setScale(Blockchain.Binance.decimals()).toPlainString()
 
         val options = TransactionOption.DEFAULT_INSTANCE
         options.memo = (transactionData.extras as? BinanceTransactionExtras)?.memo ?: ""
@@ -56,14 +62,15 @@ class BinanceTransactionBuilder(
         return Result.Success(transactionAssembler!!.prepareForSign(transferMessage).calculateSha256())
     }
 
+    @Suppress("MagicNumber")
     fun buildToSend(signature: ByteArray): ByteArray {
         val r = BigInteger(1, signature.copyOfRange(0, 32))
         val s = BigInteger(1, signature.copyOfRange(32, 64))
         val canonicalS = ECKey.ECDSASignature(r, s).toCanonicalised().s
 
-        //bigIntegerToBytes cuts leading zero if present
+        // bigIntegerToBytes cuts leading zero if present
         val canonicalSignature =
-                Utils.bigIntegerToBytes(r, 32) + Utils.bigIntegerToBytes(canonicalS, 32)
+            Utils.bigIntegerToBytes(r, 32) + Utils.bigIntegerToBytes(canonicalS, 32)
         val encodedSignature = transactionAssembler!!.encodeSignature(canonicalSignature)
 
         val encodedTransferMessage = transactionAssembler!!.encodeTransferMessage(transferMessage)
@@ -73,9 +80,9 @@ class BinanceTransactionBuilder(
 }
 
 data class BinanceAccountData(
-        val chainId: String,
-        val accountNumber: Long,
-        val sequence: Long
+    val chainId: String,
+    val accountNumber: Long,
+    val sequence: Long,
 )
 
 data class BinanceTransactionExtras(val memo: String) : TransactionExtras

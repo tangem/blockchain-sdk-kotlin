@@ -9,11 +9,9 @@ import org.kethereum.model.SignatureData
 import java.math.BigInteger
 
 internal class UnmarshalHelper {
-    fun unmarshalSignature(
-        signature: ByteArray,
-        hash: ByteArray,
-        publicKey: Wallet.PublicKey,
-    ): ByteArray {
+
+    @Suppress("MagicNumber")
+    fun unmarshalSignature(signature: ByteArray, hash: ByteArray, publicKey: Wallet.PublicKey): ByteArray {
         val r = BigInteger(1, signature.copyOfRange(0, 32))
         val s = BigInteger(1, signature.copyOfRange(32, 64))
 
@@ -21,7 +19,7 @@ internal class UnmarshalHelper {
 
         val recId = ecdsaSignature.determineRecId(
             hash,
-            org.kethereum.model.PublicKey(publicKey.blockchainKey.toDecompressedPublicKey().sliceArray(1..64))
+            org.kethereum.model.PublicKey(publicKey.blockchainKey.toDecompressedPublicKey().sliceArray(1..64)),
         )
         val v = (recId + 27).toBigInteger()
         val signatureData = SignatureData(ecdsaSignature.r, ecdsaSignature.s, v)

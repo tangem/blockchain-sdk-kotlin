@@ -1,4 +1,4 @@
-package com.tangem.blockchain_demo.extensions
+package com.tangem.demo.extensions
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -21,7 +21,7 @@ fun TextView.copyTextToClipboard(label: String = "") {
 
 fun Context.getFromClipboard(default: CharSequence? = null): CharSequence? {
     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-            ?: return default
+        ?: return default
     val clipData = clipboard.primaryClip ?: return default
     if (clipData.itemCount == 0) return default
 

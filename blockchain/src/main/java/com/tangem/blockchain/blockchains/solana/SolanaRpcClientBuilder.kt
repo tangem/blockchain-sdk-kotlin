@@ -30,6 +30,7 @@ class SolanaRpcClientBuilder {
 
     private fun devNet(): RpcClient = RpcClient(Cluster.DEVNET.endpoint)
 
+    @Suppress("UnusedPrivateMember")
     private fun testNet(): RpcClient = RpcClient(Cluster.TESTNET.endpoint)
 
     private fun quickNode(cred: QuickNodeCredentials): RpcClient {
@@ -45,20 +46,21 @@ class SolanaRpcClientBuilder {
     }
 
     // contains old data about 7 hours
+    @Suppress("UnusedPrivateMember")
     private fun ankr(): RpcClient {
         return RpcClient("https://rpc.ankr.com/solana")
     }
 
     // unstable
+    @Suppress("UnusedPrivateMember")
     private fun getBlock(cred: GetBlockCredentials): RpcClient {
-        return RpcClient(
-            host = "https://go.getblock.io/${cred.solana}",
-        )
+        return RpcClient(host = "https://go.getblock.io/${cred.solana}")
     }
 
     // zero uptime
+    @Suppress("UnusedPrivateMember")
     private fun projectserum(): RpcClient {
-        return RpcClient("https://solana-api.projectserum.com")
+        return RpcClient(host = "https://solana-api.projectserum.com")
     }
 
     private fun createInterceptor(key: String, value: String): List<Interceptor> {

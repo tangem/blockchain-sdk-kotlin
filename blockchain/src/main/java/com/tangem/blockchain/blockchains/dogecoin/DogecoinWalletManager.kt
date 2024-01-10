@@ -24,8 +24,8 @@ class DogecoinWalletManager(
             BitcoinFee(
                 minimalPerKb = BigDecimal(MINIMAL_FEE_PER_KB),
                 normalPerKb = BigDecimal(NORMAL_FEE_PER_KB),
-                priorityPerKb = BigDecimal(PRIORITY_FEE_PER_KB)
-            )
+                priorityPerKb = BigDecimal(PRIORITY_FEE_PER_KB),
+            ),
         )
     }
 

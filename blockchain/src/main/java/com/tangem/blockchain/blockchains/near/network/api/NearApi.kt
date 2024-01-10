@@ -17,10 +17,7 @@ interface NearApi {
 
     @Headers("Content-Type: application/json", "Accept: application/json")
     @POST
-    suspend fun sendJsonRpc(
-        @Body body: JsonRPCRequest,
-        @Url urlPostfix: String
-    ): ResponseBody
+    suspend fun sendJsonRpc(@Body body: JsonRPCRequest, @Url urlPostfix: String): ResponseBody
 }
 
 internal sealed interface NearMethod {
@@ -46,14 +43,14 @@ internal sealed interface NearMethod {
     sealed class AccessKey : NearMethod {
 
         class View(private val accountId: String, private val publicKeyEncodedToBase58: String) : AccessKey() {
-            override fun asRequestBody(): JsonRPCRequest{
+            override fun asRequestBody(): JsonRPCRequest {
                 return JsonRPCRequest(
                     method = "query",
                     params = mapOf(
                         "request_type" to "view_access_key",
                         "finality" to "final",
                         "account_id" to accountId,
-                        "public_key" to "ed25519:${publicKeyEncodedToBase58}"
+                        "public_key" to "ed25519:$publicKeyEncodedToBase58",
                     ),
                 )
             }

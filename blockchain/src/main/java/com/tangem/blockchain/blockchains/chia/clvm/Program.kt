@@ -11,9 +11,10 @@ import kotlin.experimental.and
  * https://github.com/irulast/chia-crypto-utils/blob/a07e7457f40e0d243482b6793518956df5b50a84/lib/src/clvm/program.dart
  * https://github.com/irulast/chia-crypto-utils/blob/a07e7457f40e0d243482b6793518956df5b50a84/lib/src/clvm/ir.dart
  */
+@Suppress("MagicNumber")
 sealed class Program {
-    class Atom(val atom: ByteArray): Program()
-    class Cons(val left: Program, val right: Program): Program()
+    class Atom(val atom: ByteArray) : Program()
+    class Cons(val left: Program, val right: Program) : Program()
 
     fun hash(): ByteArray {
         return when (this) {
@@ -76,9 +77,9 @@ sealed class Program {
         fun fromBytes(bytes: ByteArray) = Atom(bytes)
 
         fun fromList(list: List<Program>): Program {
-            var result: Program = NIL;
+            var result: Program = NIL
             for (item in list.reversed()) {
-                result = Cons(item, result);
+                result = Cons(item, result)
             }
             return result
         }
@@ -114,7 +115,7 @@ sealed class Program {
             }
 
             val size = sizeBytes.toInt()
-            return  Atom(programByteIterator.nextBytes(size))
+            return Atom(programByteIterator.nextBytes(size))
         }
     }
 }

@@ -1,6 +1,6 @@
 package com.tangem.blockchain.common.assembly
 
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.WalletManager
 
 /**
  * Creates WalletManager instance
@@ -8,6 +8,4 @@ import com.tangem.blockchain.common.*
 internal abstract class WalletManagerAssembly<out T : WalletManager> {
 
     internal abstract fun make(input: WalletManagerAssemblyInput): T
-
 }
-
