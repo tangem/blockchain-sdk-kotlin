@@ -21,8 +21,6 @@ internal object NearWalletManagerAssembly : WalletManagerAssembly<NearWalletMana
                 add(createNearJsonRpcProvider(isTestNet = false))
                 config.nowNodeCredentials?.apiKey.letNotBlank { add(createNowNodeJsonRpcProvider(it)) }
                 config.getBlockCredentials?.near?.jsonRpc.letNotBlank { add(createGetBlockJsonRpcProvider(it)) }
-                // temporarily exclude before [REDACTED_TASK_KEY] fix
-                // config.infuraProjectId?.letNotBlank { add(getInfuraProvider(it)) }
             }
         }
         val txBuilder = NearTransactionBuilder(wallet.publicKey)
@@ -47,12 +45,5 @@ internal object NearWalletManagerAssembly : WalletManagerAssembly<NearWalletMana
         val baseUrl = "https://near.nownodes.io/"
         val nearApi = createRetrofitInstance("$baseUrl$apiKey/").create(NearApi::class.java)
         return NearJsonRpcNetworkProvider(baseUrl, nearApi)
-    }
-
-    @Suppress("UnusedPrivateMember")
-    private fun getInfuraProvider(infuraProjectId: String): NearJsonRpcNetworkProvider {
-        val baseUrl = "https://near-mainnet.infura.io/"
-        val nearApi = createRetrofitInstance("${baseUrl}v3/").create(NearApi::class.java)
-        return NearJsonRpcNetworkProvider(baseUrl, nearApi, infuraProjectId)
     }
 }
