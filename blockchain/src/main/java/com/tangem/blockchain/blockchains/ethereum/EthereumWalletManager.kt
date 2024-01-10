@@ -25,7 +25,6 @@ open class EthereumWalletManager(
     protected val networkProvider: EthereumNetworkProvider,
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
 ) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider),
-    TransactionSender,
     SignatureCountValidator,
     TokenFinder,
     EthereumGasLoader,
