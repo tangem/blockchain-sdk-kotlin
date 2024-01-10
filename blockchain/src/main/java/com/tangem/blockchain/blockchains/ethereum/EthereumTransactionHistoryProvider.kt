@@ -241,26 +241,26 @@ internal class EthereumTransactionHistoryProvider(
             )
 
             is TransactionHistoryRequest.FilterType.Contract -> {
-                val transfer = tx.tokenTransfers
+                val transfers = tx.tokenTransfers
                     .filter {
                         filterType.address.equals(it.contract, ignoreCase = true) || filterType.address.equals(
                             it.token,
                             ignoreCase = true,
                         )
                     }
-                    .firstOrNull { transfer ->
+                    .filter { transfer ->
                         val otherAddress = if (isOutgoing) transfer.from else transfer.to
                         walletAddress.equals(otherAddress, ignoreCase = true)
                     }
-                    .guard { return null }
-                val transferValue = transfer.value ?: "0"
+                val transfer = transfers.firstOrNull().guard { return null }
+                val transferValue = transfers.sumOf { it.value?.toBigDecimalOrNull() ?: BigDecimal.ZERO }
                 val token = Token(
                     name = transfer.name.orEmpty(),
                     symbol = transfer.symbol.orEmpty(),
                     contractAddress = transfer.contract ?: transfer.token ?: "",
                     decimals = decimals,
                 )
-                Amount(value = BigDecimal(transferValue).movePointLeft(decimals), token = token)
+                Amount(value = transferValue.movePointLeft(decimals), token = token)
             }
         }
     }
