@@ -252,7 +252,6 @@ class TronWalletManager(
         val paddingSize = Ints.max(length - this.size, 0)
         return ByteArray(paddingSize) + this
     }
-
 }
 
 /**

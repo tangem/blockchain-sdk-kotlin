@@ -107,5 +107,4 @@ class CardanoWalletManager(
 
         return Result.Success(TransactionFee.Single(fee))
     }
-
 }
