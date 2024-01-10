@@ -6,7 +6,7 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class ChiaCoinRecordsResponse(
     @Json(name = "coin_records")
-    val coinRecords: List<ChiaCoinRecord>
+    val coinRecords: List<ChiaCoinRecord>,
 )
 
 @JsonClass(generateAdapter = true)
@@ -15,7 +15,7 @@ data class ChiaEstimateFeeResponse(
     val estimates: List<Long>,
 
     @Json(name = "fee_rate_last_block")
-    val feeRateLastBlock: Double
+    val feeRateLastBlock: Double,
 )
 
 @JsonClass(generateAdapter = true)
@@ -27,11 +27,11 @@ data class ChiaSendTransactionResponse(
     val status: String?,
 
     @Json(name = "error")
-    val error: String?
+    val error: String?,
 )
 
 @JsonClass(generateAdapter = true)
 data class ChiaCoinRecord(
     @Json(name = "coin")
-    val coin: ChiaCoin
+    val coin: ChiaCoin,
 )

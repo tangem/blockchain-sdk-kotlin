@@ -1,10 +1,11 @@
 package com.tangem.blockchain.blockchains.cosmos
 
-import android.util.Log
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
-import com.tangem.blockchain.common.*
-import com.tangem.common.core.TangemError
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.Wallet
 import com.tangem.common.extensions.toCompressedPublicKey
 import wallet.core.jni.DataVector
 import wallet.core.jni.TransactionCompiler
@@ -12,8 +13,8 @@ import wallet.core.jni.proto.Common
 import wallet.core.jni.proto.Cosmos
 import wallet.core.jni.proto.Cosmos.SigningOutput
 import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
-import java.lang.IllegalStateException
 
+@Suppress("LongParameterList")
 internal class CosmosTransactionBuilder(
     private val publicKey: Wallet.PublicKey,
     private val cosmosChain: CosmosChain,
@@ -39,7 +40,7 @@ internal class CosmosTransactionBuilder(
                 sequenceNumber = sequenceNumber,
                 feeAmount = feeAmount,
                 gas = gas,
-                extras = extras
+                extras = extras,
             )
 
         val txInputData = input.toByteArray()
@@ -73,7 +74,7 @@ internal class CosmosTransactionBuilder(
             sequenceNumber = sequenceNumber,
             feeAmount = feeAmount,
             gas = gas,
-            extras = extras
+            extras = extras,
         )
 
         val txInputData = input.toByteArray()
@@ -87,7 +88,10 @@ internal class CosmosTransactionBuilder(
         signatures.add(signature)
 
         val compileWithSignatures = TransactionCompiler.compileWithSignatures(
-            cosmosChain.coin, txInputData, signatures, publicKeys
+            cosmosChain.coin,
+            txInputData,
+            signatures,
+            publicKeys,
         )
 
         // transaction compiled with signatures may contain garbage bytes before json, we need drop them
@@ -96,7 +100,7 @@ internal class CosmosTransactionBuilder(
             .build()
 
         if (output.error != Common.SigningError.OK) {
-            throw IllegalStateException("something went wrong")
+            error("something went wrong")
         }
 
         return output.serialized
@@ -122,7 +126,7 @@ internal class CosmosTransactionBuilder(
             .addAmounts(
                 Cosmos.Amount.newBuilder()
                     .setAmount(amountInSmallestDenomination.toString())
-                    .setDenom(denomination)
+                    .setDenom(denomination),
             )
             .build()
         val message = Cosmos.Message.newBuilder()
@@ -135,11 +139,13 @@ internal class CosmosTransactionBuilder(
                 .addAmounts(
                     Cosmos.Amount.newBuilder()
                         .setAmount(feeInSmallestDenomination.toString())
-                        .setDenom(denomination)
+                        .setDenom(denomination),
                 )
         } else {
             null
         }
+
+        @Suppress("MagicNumber")
         val input = Cosmos.SigningInput.newBuilder()
             .setMode(Cosmos.BroadcastMode.SYNC)
             .setSigningMode(Cosmos.SigningMode.Protobuf)

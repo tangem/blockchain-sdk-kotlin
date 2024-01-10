@@ -5,16 +5,7 @@ import com.tangem.blockchain.blockchains.tezos.TezosAddressService.Companion.cal
 import com.tangem.blockchain.blockchains.tezos.network.TezosInfoResponse
 import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkProvider
 import com.tangem.blockchain.blockchains.tezos.network.TezosTransactionData
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.BlockchainError
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionError
-import com.tangem.blockchain.common.TransactionSender
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -35,7 +26,7 @@ class TezosWalletManager(
     wallet: Wallet,
     private val transactionBuilder: TezosTransactionBuilder,
     private val networkProvider: TezosNetworkProvider,
-    private val curve: EllipticCurve
+    private val curve: EllipticCurve,
 ) : WalletManager(wallet), TransactionSender {
 
     override val currentHost: String
@@ -62,12 +53,10 @@ class TezosWalletManager(
 
     private fun updateError(error: BlockchainError) {
         Log.e(this::class.java.simpleName, error.customMessage)
-        if (error is BlockchainSdkError) throw error
+        if (error is BlockchainSdkError) error("Error isn't BlockchainSdkError")
     }
 
-    override suspend fun send(
-        transactionData: TransactionData, signer: TransactionSigner
-    ): SimpleResult {
+    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         if (publicKeyRevealed == null) {
             return SimpleResult.Failure(BlockchainSdkError.CustomError("publicKeyRevealed is null"))
         }
@@ -99,7 +88,7 @@ class TezosWalletManager(
 
         return when (
             val response = networkProvider.checkTransaction(
-                TezosTransactionData(header, contents, encodeSignature(canonicalSignature))
+                TezosTransactionData(header, contents, encodeSignature(canonicalSignature)),
             )
         ) {
             is SimpleResult.Failure -> response
@@ -165,17 +154,17 @@ class TezosWalletManager(
         return errors
     }
 
+    @Suppress("MagicNumber")
     private fun canonicalizeSignature(signature: ByteArray): ByteArray {
         return when (curve) {
             EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010 -> signature
             EllipticCurve.Secp256k1 -> {
                 val canonicalECDSASignature = signature.toCanonicalECDSASignature()
-                //bigIntegerToBytes cuts leading zero if present
+                // bigIntegerToBytes cuts leading zero if present
                 Utils.bigIntegerToBytes(canonicalECDSASignature.r, 32) +
-                        Utils.bigIntegerToBytes(canonicalECDSASignature.s, 32)
+                    Utils.bigIntegerToBytes(canonicalECDSASignature.s, 32)
             }
             else -> throw java.lang.Exception("This curve ($curve) is not supported")
-
         }
     }
 
