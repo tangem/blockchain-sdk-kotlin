@@ -13,7 +13,7 @@ class ChiaAddressService(blockchain: Blockchain) : AddressService() {
     private val humanReadablePart = when (blockchain) {
         Blockchain.Chia -> "xch"
         Blockchain.ChiaTestnet -> "txch"
-        else -> throw IllegalStateException("$blockchain isn't supported")
+        else -> error("$blockchain isn't supported")
     }
 
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
@@ -22,7 +22,7 @@ class ChiaAddressService(blockchain: Blockchain) : AddressService() {
 
         return Bech32.encode(
             humanReadablePart = humanReadablePart,
-            dataIn = puzzleHash.toUByteArray()
+            dataIn = puzzleHash.toUByteArray(),
         )
     }
 
@@ -38,10 +38,15 @@ class ChiaAddressService(blockchain: Blockchain) : AddressService() {
     companion object {
         // curried and serialized signature.clsp (https://github.com/Chia-Network/chialisp-crash-course/blob/af620db2505db507b348d4f036dc4955fa81a004/signature.clsp)
         fun getPuzzle(walletPublicKey: ByteArray): ByteArray {
-            return "ff02ffff01ff02ffff01ff04ffff04ff04ffff04ff05ffff04ffff02ff06ffff04ff02ffff04ff0bff80808080ff80808080ff0b80ffff04ffff01ff32ff02ffff03ffff07ff0580ffff01ff0bffff0102ffff02ff06ffff04ff02ffff04ff09ff80808080ffff02ff06ffff04ff02ffff04ff0dff8080808080ffff01ff0bffff0101ff058080ff0180ff018080ffff04ffff01b0"
-                .hexToBytes() + walletPublicKey + "ff018080".hexToBytes()
+            return (
+                "ff02ffff01ff02ffff01ff04ffff04ff04ffff04ff05ffff04ffff02ff06ffff04ff02ffff04ff0bff80808080ff8080808" +
+                    "0ff0b80ffff04ffff01ff32ff02ffff03ffff07ff0580ffff01ff0bffff0102ffff02ff06ffff04ff02ffff04ff09ff" +
+                    "80808080ffff02ff06ffff04ff02ffff04ff0dff8080808080ffff01ff0bffff0101ff058080ff0180ff018080ffff0" +
+                    "4ffff01b0"
+                ).hexToBytes() + walletPublicKey + "ff018080".hexToBytes()
         }
 
+        @Suppress("MagicNumber")
         fun getPuzzleHash(address: String): ByteArray {
             val dataBytes = Bech32.decode(address).data.toByteArray()
             return Crypto.convertBits(dataBytes, 0, dataBytes.size, 5, 8, false)

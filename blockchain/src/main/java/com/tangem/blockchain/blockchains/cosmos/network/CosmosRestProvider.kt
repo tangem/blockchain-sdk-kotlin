@@ -10,7 +10,7 @@ import com.tangem.blockchain.network.moshi
 import retrofit2.Response
 import retrofit2.create
 
-class CosmosRestProvider(override val baseUrl: String): NetworkProvider {
+class CosmosRestProvider(override val baseUrl: String) : NetworkProvider {
 
     private val api = createRetrofitInstance(baseUrl).create<CosmosApi>()
     private val errorAdapter = moshi.adapter(CosmosErrorResponse::class.java)
