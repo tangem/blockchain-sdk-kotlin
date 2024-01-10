@@ -15,5 +15,4 @@ interface BitcoreApi {
 
     @POST("api/DUC/mainnet/tx/send")
     suspend fun sendTransaction(@Body body: BitcoreSendBody): BitcoreSendResponse
-
 }

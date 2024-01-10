@@ -23,16 +23,16 @@ data class StellarResponse(
     val baseReserve: BigDecimal,
     val sequence: Long,
     val recentTransactions: List<TransactionData>,
-    val subEntryCount: Int
+    val subEntryCount: Int,
 )
 
 data class StellarAssetBalance(
     val balance: BigDecimal,
     val symbol: String,
-    val issuer: String
+    val issuer: String,
 )
 
 data class StellarTargetAccountResponse(
     val accountCreated: Boolean,
-    val trustlineCreated: Boolean? = null
+    val trustlineCreated: Boolean? = null,
 )

@@ -13,8 +13,8 @@ class LitecoinNetworkService(providers: List<BitcoinNetworkProvider>) : BitcoinN
         return if (result is Result.Success) {
             Result.Success(
                 result.data.copy(
-                    minimalPerKb = BitcoinWalletManager.DEFAULT_MINIMAL_FEE_PER_KB.toBigDecimal()
-                )
+                    minimalPerKb = BitcoinWalletManager.DEFAULT_MINIMAL_FEE_PER_KB.toBigDecimal(),
+                ),
             )
         } else {
             result

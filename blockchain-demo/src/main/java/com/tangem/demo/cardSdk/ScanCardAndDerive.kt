@@ -1,11 +1,6 @@
-package com.tangem.blockchain_demo.cardSdk
+package com.tangem.demo.cardSdk
 
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain_demo.extensions.getPrimaryCurve
-import com.tangem.blockchain_demo.extensions.useOldStyleDerivation
-import com.tangem.blockchain_demo.model.BlockchainNetwork
-import com.tangem.blockchain_demo.model.ScanResponse
-import com.tangem.blockchain_demo.scope
 import com.tangem.common.CompletionResult
 import com.tangem.common.card.Card
 import com.tangem.common.core.CardSession
@@ -16,6 +11,11 @@ import com.tangem.common.extensions.ByteArrayKey
 import com.tangem.common.extensions.guard
 import com.tangem.common.extensions.toMapKey
 import com.tangem.crypto.hdWallet.DerivationPath
+import com.tangem.demo.extensions.getPrimaryCurve
+import com.tangem.demo.extensions.useOldStyleDerivation
+import com.tangem.demo.model.BlockchainNetwork
+import com.tangem.demo.model.ScanResponse
+import com.tangem.demo.scope
 import com.tangem.operations.derivation.DeriveMultipleWalletPublicKeysTask
 import kotlinx.coroutines.launch
 
@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 [REDACTED_AUTHOR]
  */
 class ScanCardAndDerive(
-    private val blockchainsToDerive: List<Blockchain>
+    private val blockchainsToDerive: List<Blockchain>,
 ) : CardSessionRunnable<ScanResponse> {
 
     override fun run(session: CardSession, callback: CompletionCallback<ScanResponse>) {
@@ -47,7 +47,7 @@ class ScanCardAndDerive(
                             card = card,
                             walletData = session.environment.walletData,
                             derivedKeys = result.data.entries,
-                            primaryCard = null
+                            primaryCard = null,
                         )
                         callback(CompletionResult.Success(response))
                     }
@@ -94,7 +94,7 @@ class ScanCardAndDerive(
                     Blockchain.RSK,
                     Blockchain.Fantom, Blockchain.FantomTestnet,
                     Blockchain.Avalanche, Blockchain.AvalancheTestnet,
-                ).map { BlockchainNetwork(it, card) }
+                ).map { BlockchainNetwork(it, card) },
             )
         }
 
