@@ -99,7 +99,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
             }
 
             Blockchain.Dash -> {
-                 DashWalletManagerAssembly
+                DashWalletManagerAssembly
             }
 
             Blockchain.Dogecoin -> {
