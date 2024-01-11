@@ -181,6 +181,19 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://testnet-val.decimalchain.com/web3/"),
         )
 
+        Blockchain.XinFin -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.xdcrpc.com"),
+            EthereumJsonRpcProvider(baseUrl = "https://erpc.xdcrpc.com"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.xinfin.network"),
+            EthereumJsonRpcProvider(baseUrl = "https://erpc.xinfin.network"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc1.xinfin.network"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.xdc.org"),
+        )
+
+        Blockchain.XinFinTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.apothem.network/"),
+        )
+
         else -> error("$this isn't supported")
     }
 
