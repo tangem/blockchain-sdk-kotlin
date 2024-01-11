@@ -6,6 +6,19 @@ import com.tangem.crypto.bip39.*
 import com.tangem.crypto.hdWallet.masterkey.AnyMasterKeyFactory
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * This entity provides addresses for calculating commissions in swap scenarios.
+ *
+ * If the blockchain lacks an "initialized account state", it generates a random address.
+ *
+ * If the commission for sending tokens to a “warmed-up” account differs from that for sending to an empty account,
+ * the address of the “warmed-up” account should be set (e.g., in Cardano).
+ *
+ * If the fee does not depend on the amount or destination, or if the fee is fixed, an empty address can be set to
+ * avoid wasting resources on address generation.
+ *
+ * @param mnemonic to help generate addresses
+ */
 class EstimationFeeAddressFactory(
     mnemonic: Mnemonic,
 ) {
@@ -20,7 +33,9 @@ class EstimationFeeAddressFactory(
     @Suppress("LongMethod")
     fun makeAddress(blockchain: Blockchain): String {
         return when (blockchain) {
-            Blockchain.Cardano -> { CARDANO_ESTIMATION_ADDRESS }
+            Blockchain.Cardano -> {
+                CARDANO_ESTIMATION_ADDRESS
+            }
 
             Blockchain.Chia,
             Blockchain.ChiaTestnet,
@@ -56,9 +71,7 @@ class EstimationFeeAddressFactory(
                 ""
             }
 
-            // We have to generate a new dummy address for
-
-            // UTXO-like
+            // We have to generate a new dummy address for UTXO-like
             Blockchain.Bitcoin,
             Blockchain.BitcoinTestnet,
             Blockchain.Litecoin,
@@ -68,7 +81,7 @@ class EstimationFeeAddressFactory(
             Blockchain.Dash,
             Blockchain.Ravencoin,
             Blockchain.RavencoinTestnet,
-            // EVM-like
+                // EVM-like
             Blockchain.Ethereum,
             Blockchain.EthereumTestnet,
             Blockchain.EthereumPow,
@@ -99,24 +112,26 @@ class EstimationFeeAddressFactory(
             Blockchain.OctaSpaceTestnet,
             Blockchain.Decimal,
             Blockchain.DecimalTestnet,
-            // Polkadot-like
+                // Polkadot-like
             Blockchain.Polkadot,
             Blockchain.PolkadotTestnet,
             Blockchain.Kusama,
             Blockchain.AlephZero,
             Blockchain.AlephZeroTestnet,
-            // Cosmos-like
+                // Cosmos-like
             Blockchain.Cosmos,
             Blockchain.CosmosTestnet,
             Blockchain.TerraV1,
             Blockchain.TerraV2,
-            // Others
+                // Others
             Blockchain.Tron,
             Blockchain.TronTestnet,
             Blockchain.TON,
             Blockchain.TONTestnet,
             Blockchain.Near,
             Blockchain.NearTestnet,
+            Blockchain.XinFin,
+            Blockchain.XinFinTestnet,
             -> {
                 generateAddress(blockchain)
             }
