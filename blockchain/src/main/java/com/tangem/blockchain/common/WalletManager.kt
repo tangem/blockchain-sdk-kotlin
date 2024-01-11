@@ -105,7 +105,7 @@ abstract class WalletManager(
         if (!validateAmountAvalible(fee)) errors.add(TransactionError.FeeExceedsBalance)
 
         val total: BigDecimal
-        if (amount.type == AmountType.Coin) {
+        if (amount.type == AmountType.Coin && amount.currencySymbol == fee.currencySymbol) {
             total = (amount.value ?: BigDecimal.ZERO) + (fee.value ?: BigDecimal.ZERO)
             if (!validateAmountAvalible(Amount(amount, total))) errors.add(TransactionError.TotalExceedsBalance)
         } else {
