@@ -9,7 +9,7 @@ import org.kethereum.erc55.withERC55Checksum
 import org.kethereum.model.Address
 import org.kethereum.model.PublicKey
 
-class EthereumAddressService : AddressService() {
+open class EthereumAddressService : AddressService() {
 
     @Suppress("MagicNumber")
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String = PublicKey(
