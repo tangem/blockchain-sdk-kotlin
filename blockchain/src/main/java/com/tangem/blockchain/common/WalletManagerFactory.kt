@@ -158,6 +158,10 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
                 DecimalWalletManagerAssembly
             }
 
+            Blockchain.XinFin, Blockchain.XinFinTestnet -> {
+                XinFinWalletManagerAssembly
+            }
+
             Blockchain.Optimism, Blockchain.OptimismTestnet -> {
                 OptimismWalletManagerAssembly
             }
