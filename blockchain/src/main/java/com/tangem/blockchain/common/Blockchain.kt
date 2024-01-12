@@ -101,7 +101,9 @@ enum class Blockchain(
     Decimal("decimal", "DEL", "Decimal Smart Chain"),
     DecimalTestnet("decimal/test", "tDEL", "Decimal Smart Chain Testnet"),
     XinFin("xinfin", "XDC", "XinFin Digital Contract"),
-    XinFinTestnet("xinfin/test", "XDC", "XinFin Digital Contract Testnet")
+    XinFinTestnet("xinfin/test", "XDC", "XinFin Digital Contract Testnet"),
+    Vechain("vechain", "VET", "VeChain"),
+    VechainTestnet("vechain/test", "VET", "VeChain Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -157,7 +159,8 @@ enum class Blockchain(
         Telos, TelosTestnet,
         OctaSpace, OctaSpaceTestnet,
         Decimal, DecimalTestnet,
-        XinFin, XinFinTestnet
+        XinFin, XinFinTestnet,
+        Vechain, VechainTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -205,6 +208,7 @@ enum class Blockchain(
             Cronos,
             Telos, TelosTestnet,
             OctaSpace, OctaSpaceTestnet,
+            Vechain, VechainTestnet,
             -> EthereumAddressService()
 
             XinFin, XinFinTestnet -> XinFinAddressService()
@@ -288,6 +292,7 @@ enum class Blockchain(
             Near, NearTestnet -> NearTestnet
             Decimal, DecimalTestnet -> DecimalTestnet
             XinFin, XinFinTestnet -> XinFinTestnet
+            Vechain, VechainTestnet -> VechainTestnet
             else -> null
         }
     }
@@ -334,6 +339,7 @@ enum class Blockchain(
             OctaSpace, OctaSpaceTestnet,
             Decimal, DecimalTestnet,
             XinFin, XinFinTestnet,
+            Vechain, VechainTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -406,6 +412,7 @@ enum class Blockchain(
             Solana, SolanaTestnet,
             Tron, TronTestnet,
             TerraV1,
+            Vechain, VechainTestnet,
             -> true
 
             else -> false
@@ -420,6 +427,7 @@ enum class Blockchain(
         Avalanche, AvalancheTestnet,
         EthereumPow,
         Cronos,
+        Vechain, VechainTestnet,
         -> amountType is AmountType.Token
 
         Arbitrum, ArbitrumTestnet,
