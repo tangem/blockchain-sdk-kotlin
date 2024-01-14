@@ -169,7 +169,6 @@ internal class WalletManagerFactoryTest {
                     tron = GetBlockAccessToken(),
                     cosmos = GetBlockAccessToken(),
                     near = GetBlockAccessToken(),
-                    luna = GetBlockAccessToken(),
                     dogecoin = GetBlockAccessToken(),
                     litecoin = GetBlockAccessToken(),
                     dash = GetBlockAccessToken(),
