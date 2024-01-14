@@ -15,6 +15,7 @@ import com.tangem.blockchain.blockchains.solana.SolanaAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
+import com.tangem.blockchain.blockchains.vechain.VechainWalletManager
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressService
@@ -430,9 +431,10 @@ enum class Blockchain(
         else -> false
     }
 
-    fun tokenTransactionFeePaidInNetworkCurrency(): Boolean = when (this) {
-        TerraV1 -> true
-        else -> false
+    fun feePaidCurrency(): FeePaidCurrency = when (this) {
+        Vechain, VechainTestnet -> FeePaidCurrency.Token(VechainWalletManager.VTHO_TOKEN)
+        TerraV1 -> FeePaidCurrency.SameCurrency
+        else -> FeePaidCurrency.Coin
     }
 
     companion object {
