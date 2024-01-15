@@ -30,7 +30,11 @@ internal class VechainWalletManager(
 
     override suspend fun updateInternal() {
         val pendingTxIds = wallet.recentTransactions.mapNotNullTo(hashSetOf()) { it.hash }
-        when (val response = networkService.getAccountInfo(wallet.address, pendingTxIds)) {
+        // Exclude VTHO token, since balance of VTHO fetched with main currency balance
+        val tokens = cardTokens
+            .filter { !it.contractAddress.equals(VTHO_TOKEN.contractAddress, ignoreCase = true) }
+            .toSet()
+        when (val response = networkService.getAccountInfo(wallet.address, pendingTxIds, tokens)) {
             is Result.Failure -> updateError(response.error)
             is Result.Success -> updateWallet(response.data)
         }
@@ -39,6 +43,7 @@ internal class VechainWalletManager(
     private fun updateWallet(info: VechainAccountInfo) {
         wallet.setAmount(Amount(value = info.balance, blockchain = wallet.blockchain))
         wallet.addTokenValue(value = info.energy, token = VTHO_TOKEN)
+        info.tokenBalances.forEach { wallet.addTokenValue(it.value, it.key) }
         info.completedTxIds.forEach { completedTxId ->
             wallet.recentTransactions.find { it.hash == completedTxId }?.let { transactionData ->
                 transactionData.status = TransactionStatus.Confirmed
