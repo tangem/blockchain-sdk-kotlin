@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import android.content.Context
 import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
@@ -8,6 +9,7 @@ import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.decimal.DecimalAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
@@ -18,10 +20,7 @@ import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.vechain.VeChainWalletManager
 import com.tangem.blockchain.blockchains.xdc.XDCAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
-import com.tangem.blockchain.common.address.Address
-import com.tangem.blockchain.common.address.AddressService
-import com.tangem.blockchain.common.address.MultisigAddressProvider
-import com.tangem.blockchain.common.address.TrustWalletAddressService
+import com.tangem.blockchain.common.address.*
 import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProviderFactory
@@ -108,6 +107,8 @@ enum class Blockchain(
     VeChainTestnet("vechain/test", "VET", "VeChain Testnet"),
     Aptos("aptos", "APT", "Aptos"),
     AptosTestnet("aptos/test", "APT", "Aptos Testnet"),
+    Hedera("hedera", "HBAR", "Hedera"),
+    HederaTestnet("hedera/test", "HBAR", "Hedera Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -136,6 +137,7 @@ enum class Blockchain(
         Kaspa,
         Ravencoin, RavencoinTestnet,
         Aptos, AptosTestnet,
+        Hedera, HederaTestnet
         -> 8
 
         Solana, SolanaTestnet,
@@ -176,12 +178,16 @@ enum class Blockchain(
         walletPublicKey: ByteArray,
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
+        context: Context? = null,
     ): Set<Address> {
+        val addressService = getAddressService()
         return if (pairPublicKey != null) {
-            (getAddressService() as? MultisigAddressProvider)
+            (addressService as? MultisigAddressProvider)
                 ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()
+        } else if (addressService is ContextAddressProvider && context != null) {
+            addressService.makeContextAddresses(walletPublicKey, curve, context)
         } else {
-            getAddressService().makeAddresses(walletPublicKey, curve)
+            addressService.makeAddresses(walletPublicKey, curve)
         }
     }
 
@@ -238,6 +244,7 @@ enum class Blockchain(
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
             Chia, ChiaTestnet -> ChiaAddressService(this)
+            Hedera, HederaTestnet -> HederaAddressService(this.isTestnet())
             Unknown -> error("unsupported blockchain")
         }
     }
@@ -304,6 +311,7 @@ enum class Blockchain(
             XDC, XDCTestnet -> XDCTestnet
             VeChain, VeChainTestnet -> VeChainTestnet
             Aptos, AptosTestnet -> AptosTestnet
+            Hedera, HederaTestnet -> HederaTestnet
             else -> null
         }
     }
@@ -312,6 +320,7 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
+            Hedera, HederaTestnet
             -> listOf(
                 EllipticCurve.Secp256k1,
                 EllipticCurve.Ed25519,
@@ -449,6 +458,7 @@ enum class Blockchain(
         Optimism, OptimismTestnet,
         TON, TONTestnet,
         Near, NearTestnet,
+        Hedera, HederaTestnet
         -> true
 
         else -> false
