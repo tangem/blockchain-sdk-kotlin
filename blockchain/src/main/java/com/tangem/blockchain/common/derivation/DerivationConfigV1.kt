@@ -61,6 +61,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.EthereumFair,
             Blockchain.OctaSpace,
             Blockchain.Decimal,
+            Blockchain.Hedera,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             }
@@ -186,6 +187,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.NearTestnet,
             Blockchain.DecimalTestnet,
             Blockchain.XDCTestnet,
+            Blockchain.HederaTestnet,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
