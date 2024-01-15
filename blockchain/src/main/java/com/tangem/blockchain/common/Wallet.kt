@@ -11,15 +11,16 @@ import java.util.Locale
 
 class Wallet(
     val blockchain: Blockchain,
-    val addresses: Set<Address>,
+    var addresses: Set<Address>,
     val publicKey: PublicKey,
     tokens: Set<Token>,
 ) {
     // we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
     val recentTransactions: MutableList<TransactionData> = mutableListOf()
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
-    val address = addresses.find { it.type == AddressType.Default }?.value
-        ?: error("Addresses must contain default address")
+    val address: String
+        get() = addresses.find { it.type == AddressType.Default }?.value
+            ?: error("Addresses must contain default address")
 
     init {
         setAmount(Amount(null, blockchain, AmountType.Coin))
