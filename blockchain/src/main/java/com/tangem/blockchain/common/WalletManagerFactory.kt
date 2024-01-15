@@ -234,6 +234,10 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
                 VechainWalletManagerAssembly
             }
 
+            Blockchain.Hedera, Blockchain.HederaTestnet -> {
+                HederaWalletManagerAssembly
+            }
+
             Blockchain.Unknown -> {
                 error("Unsupported blockchain")
             }

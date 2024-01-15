@@ -8,6 +8,7 @@ import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.decimal.DecimalAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
@@ -102,6 +103,8 @@ enum class Blockchain(
     DecimalTestnet("decimal/test", "tDEL", "Decimal Smart Chain Testnet"),
     Vechain("vechain", "VET", "VeChain"),
     VechainTestnet("vechain/test", "VET", "VeChain Testnet"),
+    Hedera("hedera", "HBAR", "Hedera"),
+    HederaTestnet("hedera/test", "HBAR", "Hedera Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -129,6 +132,7 @@ enum class Blockchain(
         Dash,
         Kaspa,
         Ravencoin, RavencoinTestnet,
+        Hedera, HederaTestnet
         -> 8
 
         Solana, SolanaTestnet,
@@ -223,6 +227,7 @@ enum class Blockchain(
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
             Chia, ChiaTestnet -> ChiaAddressService(this)
+            Hedera, HederaTestnet -> HederaAddressService(this.isTestnet())
             Unknown -> error("unsupported blockchain")
         }
     }
@@ -287,6 +292,7 @@ enum class Blockchain(
             Near, NearTestnet -> NearTestnet
             Decimal, DecimalTestnet -> DecimalTestnet
             Vechain, VechainTestnet -> VechainTestnet
+            Hedera, HederaTestnet -> HederaTestnet
             else -> null
         }
     }
@@ -295,6 +301,7 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
+            Hedera, HederaTestnet
             -> listOf(
                 EllipticCurve.Secp256k1,
                 EllipticCurve.Ed25519,
@@ -426,6 +433,7 @@ enum class Blockchain(
         Optimism, OptimismTestnet,
         TON, TONTestnet,
         Near, NearTestnet,
+        Hedera, HederaTestnet
         -> true
 
         else -> false

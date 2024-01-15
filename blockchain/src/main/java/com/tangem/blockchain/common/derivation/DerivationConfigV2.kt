@@ -74,6 +74,7 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.Telos,
             Blockchain.OctaSpace,
             Blockchain.Decimal,
+            Blockchain.Hedera,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             }
@@ -157,6 +158,7 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.OctaSpaceTestnet,
             Blockchain.NearTestnet,
             Blockchain.DecimalTestnet,
+            Blockchain.HederaTestnet,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
