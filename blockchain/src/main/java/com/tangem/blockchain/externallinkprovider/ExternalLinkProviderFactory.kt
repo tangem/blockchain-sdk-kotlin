@@ -59,6 +59,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.XDC, Blockchain.XDCTestnet -> XDCExternalLinkProvider(isTestnet)
             Blockchain.VeChain, Blockchain.VeChainTestnet -> VeChainExternalLinkProvider(isTestnet)
             Blockchain.Aptos, Blockchain.AptosTestnet -> AptosExternalLinkProvider(isTestnet)
+            Blockchain.Hedera, Blockchain.HederaTestnet -> HederaExternalLinkProvider(isTestnet)
         }
     }
 }
