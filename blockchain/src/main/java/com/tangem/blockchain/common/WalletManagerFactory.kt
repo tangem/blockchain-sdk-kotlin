@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import android.content.Context
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.impl.*
@@ -82,7 +83,7 @@ class WalletManagerFactory(
     ): WalletManager? {
         if (checkIfWrongKey(blockchain, curve, publicKey)) return null
 
-        val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
+        val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve, context)
         val wallet = Wallet(blockchain, addresses, publicKey, setOf())
 
         return getAssembly(blockchain).make(
@@ -90,6 +91,7 @@ class WalletManagerFactory(
                 wallet = wallet,
                 config = config,
                 curve = curve,
+                context
             ),
         )
     }
@@ -247,6 +249,10 @@ class WalletManagerFactory(
 
             Blockchain.Aptos, Blockchain.AptosTestnet -> {
                 AptosWalletManagerAssembly
+            }
+
+            Blockchain.Hedera, Blockchain.HederaTestnet -> {
+                HederaWalletManagerAssembly
             }
 
             Blockchain.Unknown -> {
