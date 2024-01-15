@@ -23,3 +23,14 @@ internal data class VechainCommitTransactionResponse(@Json(name = "id") val txId
 
 @JsonClass(generateAdapter = true)
 internal data class VechainTransactionInfoResponse(@Json(name = "id") val txId: String)
+
+internal data class VechainTokenBalanceRequest(@Json(name = "clauses") val clauses: List<VechainClause>)
+
+@JsonClass(generateAdapter = true)
+internal data class VechainClause(
+    @Json(name = "to") val to: String,
+    @Json(name = "value") val value: String,
+    @Json(name = "data") val data: String,
+)
+
+internal data class VechainData(@Json(name = "data") val data: String)
