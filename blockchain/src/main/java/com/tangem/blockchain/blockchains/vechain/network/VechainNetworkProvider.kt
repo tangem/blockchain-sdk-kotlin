@@ -1,38 +1,41 @@
 package com.tangem.blockchain.blockchains.vechain.network
 
-import com.tangem.blockchain.blockchains.vechain.VechainAccountInfo
 import com.tangem.blockchain.blockchains.vechain.VechainBlockInfo
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.hexToBigDecimal
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import org.komputing.khex.extensions.toHexString
-import retrofit2.Response
-
-private const val VETHOR_DECIMALS = 18
 
 internal class VechainNetworkProvider(
     override val baseUrl: String,
     val api: VechainApi,
 ) : NetworkProvider {
 
-    suspend fun getAccountInfo(decimals: Int, address: String, pendingTxIds: Set<String>): Result<VechainAccountInfo> {
+    suspend fun getAccountInfo(address: String): Result<VechainGetAccountResponse> {
         return try {
-            coroutineScope {
-                val accountInfo = async { api.getAccount(address) }
-                val pendingTxsInfo =
-                    pendingTxIds.map { txId -> async { api.getTransactionInfo(transactionId = txId, pending = false) } }
-                Result.Success(
-                    mapAccountInfo(
-                        decimals = decimals,
-                        accountResponse = accountInfo.await(),
-                        pendingTxsInfo = pendingTxsInfo.awaitAll(),
-                    )
-                )
-            }
+            val response = api.getAccount(address)
+            Result.Success(response)
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
+    /**
+     * Returns null when [includePending] is false, but transaction with [txId] in pending status
+     */
+    suspend fun getTransactionInfo(txId: String, includePending: Boolean): Result<VechainTransactionInfoResponse?> {
+        return try {
+            val response = api.getTransactionInfo(transactionId = txId, pending = includePending)
+            Result.Success(response.body())
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
+    suspend fun getTokenBalance(request: VechainTokenBalanceRequest): Result<List<VechainData>> {
+        return try {
+            val response = api.getTokenBalance(requestBody = request)
+            Result.Success(response)
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
@@ -55,19 +58,6 @@ internal class VechainNetworkProvider(
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
-    }
-
-    private fun mapAccountInfo(
-        decimals: Int,
-        accountResponse: VechainGetAccountResponse,
-        pendingTxsInfo: List<Response<VechainTransactionInfoResponse?>>,
-    ): VechainAccountInfo {
-        val balance = accountResponse.balance.hexToBigDecimal().movePointLeft(decimals)
-        val energy = accountResponse.energy.hexToBigDecimal().movePointLeft(VETHOR_DECIMALS)
-        return VechainAccountInfo(
-            balance = balance,
-            energy = energy,
-            completedTxIds = pendingTxsInfo.mapNotNullTo(hashSetOf()) { it.body()?.txId })
     }
 
     private fun mapBlockInfo(response: VechainLatestBlockResponse): VechainBlockInfo {
