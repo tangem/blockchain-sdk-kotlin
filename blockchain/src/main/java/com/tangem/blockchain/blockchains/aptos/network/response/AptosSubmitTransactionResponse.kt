@@ -4,8 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-internal data class SimulateTransactionResponse(
-    @Json(name = "gas_used") val usedGasUnit: String,
+internal data class AptosSubmitTransactionResponse(
+    @Json(name = "hash") val hash: String,
     @Json(name = "sequence_number") val sequenceNumber: String,
-    @Json(name = "success") val isSuccess: Boolean,
 )
