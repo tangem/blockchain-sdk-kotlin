@@ -13,8 +13,8 @@ data class TransferERC20TokenMethod(
     override val data: ByteArray
         get() {
             val prefixData = prefix.hexToBytes()
-            val addressData = destination.hexToBytes().leftPadToFixedSize(32)
-            val amountData = amount.toByteArray().leftPadToFixedSize(32)
+            val addressData = destination.hexToBytes().leftPadToFixedSize(fixedSize = 32)
+            val amountData = amount.toByteArray().leftPadToFixedSize(fixedSize = 32)
             return prefixData + addressData + amountData
         }
 }
