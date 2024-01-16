@@ -16,6 +16,7 @@ import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.xdc.XinFinAddressService
+import com.tangem.blockchain.blockchains.vechain.VechainWalletManager
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressService
@@ -27,6 +28,7 @@ import com.tangem.blockchain.externallinkprovider.ExternalLinkProviderFactory
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 
+@Suppress("LargeClass")
 enum class Blockchain(
     val id: String,
     val currency: String,
@@ -101,7 +103,9 @@ enum class Blockchain(
     Decimal("decimal", "DEL", "Decimal Smart Chain"),
     DecimalTestnet("decimal/test", "tDEL", "Decimal Smart Chain Testnet"),
     XinFin("xinfin", "XDC", "XinFin Digital Contract"),
-    XinFinTestnet("xinfin/test", "XDC", "XinFin Digital Contract Testnet")
+    XinFinTestnet("xinfin/test", "XDC", "XinFin Digital Contract Testnet"),
+    Vechain("vechain", "VET", "VeChain"),
+    VechainTestnet("vechain/test", "VET", "VeChain Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -157,7 +161,8 @@ enum class Blockchain(
         Telos, TelosTestnet,
         OctaSpace, OctaSpaceTestnet,
         Decimal, DecimalTestnet,
-        XinFin, XinFinTestnet
+        XinFin, XinFinTestnet,
+        Vechain, VechainTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -205,6 +210,7 @@ enum class Blockchain(
             Cronos,
             Telos, TelosTestnet,
             OctaSpace, OctaSpaceTestnet,
+            Vechain, VechainTestnet,
             -> EthereumAddressService()
 
             XinFin, XinFinTestnet -> XinFinAddressService()
@@ -288,6 +294,7 @@ enum class Blockchain(
             Near, NearTestnet -> NearTestnet
             Decimal, DecimalTestnet -> DecimalTestnet
             XinFin, XinFinTestnet -> XinFinTestnet
+            Vechain, VechainTestnet -> VechainTestnet
             else -> null
         }
     }
@@ -334,6 +341,7 @@ enum class Blockchain(
             OctaSpace, OctaSpaceTestnet,
             Decimal, DecimalTestnet,
             XinFin, XinFinTestnet,
+            Vechain, VechainTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -406,6 +414,7 @@ enum class Blockchain(
             Solana, SolanaTestnet,
             Tron, TronTestnet,
             TerraV1,
+            Vechain, VechainTestnet,
             -> true
 
             else -> false
@@ -420,6 +429,7 @@ enum class Blockchain(
         Avalanche, AvalancheTestnet,
         EthereumPow,
         Cronos,
+        Vechain, VechainTestnet,
         -> amountType is AmountType.Token
 
         Arbitrum, ArbitrumTestnet,
@@ -432,9 +442,10 @@ enum class Blockchain(
         else -> false
     }
 
-    fun tokenTransactionFeePaidInNetworkCurrency(): Boolean = when (this) {
-        TerraV1 -> true
-        else -> false
+    fun feePaidCurrency(): FeePaidCurrency = when (this) {
+        Vechain, VechainTestnet -> FeePaidCurrency.Token(VechainWalletManager.VTHO_TOKEN)
+        TerraV1 -> FeePaidCurrency.SameCurrency
+        else -> FeePaidCurrency.Coin
     }
 
     companion object {

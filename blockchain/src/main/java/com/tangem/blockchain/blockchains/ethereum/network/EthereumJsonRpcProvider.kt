@@ -77,11 +77,13 @@ class EthereumJsonRpcProvider(
     private fun createEthereumBody(method: EthereumMethod, vararg params: Any) =
         EthereumBody(method.value, params.toList())
 
+    // TODO: [REDACTED_JIRA] Replace with SmartContractMethod interface implementations
     private fun createTokenBalanceCallObject(address: String, contractAddress: String) = EthCallObject(
         to = contractAddress,
         data = "0x70a08231000000000000000000000000" + address.substring(2),
     )
 
+    // TODO: [REDACTED_JIRA] Replace with SmartContractMethod interface implementations
     private fun createTokenAllowanceCallObject(ownerAddress: String, contractAddress: String, spenderAddress: String) =
         EthCallObject(
             to = contractAddress,
