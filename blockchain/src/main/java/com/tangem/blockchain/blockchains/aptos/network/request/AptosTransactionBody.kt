@@ -4,7 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-internal data class TransactionBody(
+internal data class AptosTransactionBody(
     @Json(name = "expiration_timestamp_secs") val expirationTimestamp: String,
     @Json(name = "gas_unit_price") val gasUnitPrice: String,
     @Json(name = "max_gas_amount") val maxGasAmount: String,
