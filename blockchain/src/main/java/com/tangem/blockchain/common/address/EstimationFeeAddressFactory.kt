@@ -132,6 +132,8 @@ class EstimationFeeAddressFactory(
             Blockchain.NearTestnet,
             Blockchain.XinFin,
             Blockchain.XinFinTestnet,
+            Blockchain.Vechain,
+            Blockchain.VechainTestnet,
             -> {
                 generateAddress(blockchain)
             }
