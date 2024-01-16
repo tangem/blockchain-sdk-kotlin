@@ -8,6 +8,9 @@ internal interface VechainApi {
     @GET("accounts/{address}")
     suspend fun getAccount(@Path("address") address: String): VechainGetAccountResponse
 
+    @POST("accounts/*")
+    suspend fun getTokenBalance(@Body requestBody: VechainTokenBalanceRequest): List<VechainData>
+
     @GET("blocks/best")
     suspend fun getLatestBlockInfo(): VechainLatestBlockResponse
 
