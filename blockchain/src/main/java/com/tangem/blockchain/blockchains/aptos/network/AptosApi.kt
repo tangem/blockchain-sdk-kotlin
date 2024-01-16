@@ -1,10 +1,10 @@
 package com.tangem.blockchain.blockchains.aptos.network
 
-import com.tangem.blockchain.blockchains.aptos.network.request.TransactionBody
-import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
-import com.tangem.blockchain.blockchains.aptos.network.response.EstimateGasPriceResponse
-import com.tangem.blockchain.blockchains.aptos.network.response.SimulateTransactionResponse
-import com.tangem.blockchain.blockchains.aptos.network.response.SubmitTransactionResponse
+import com.tangem.blockchain.blockchains.aptos.network.request.AptosTransactionBody
+import com.tangem.blockchain.blockchains.aptos.network.response.AptosEstimateGasPriceResponse
+import com.tangem.blockchain.blockchains.aptos.network.response.AptosResourceBody
+import com.tangem.blockchain.blockchains.aptos.network.response.AptosSimulateTransactionBody
+import com.tangem.blockchain.blockchains.aptos.network.response.AptosSubmitTransactionResponse
 import retrofit2.http.*
 
 /**
@@ -21,11 +21,11 @@ internal interface AptosApi {
      *
      * @param address account address
      *
-     * @see AptosResource to know more details about kind of resources
+     * @see AptosResourceBody to know more details about kind of resources
      */
     @Headers("Content-Type: application/json")
     @GET("v1/accounts/{address}/resources")
-    suspend fun getAccountResources(@Path("address") address: String): List<AptosResource>
+    suspend fun getAccountResources(@Path("address") address: String): List<AptosResourceBody>
 
     /**
      * Gives an estimate of the gas unit price required to get a transaction on chain in a reasonable amount of time.
@@ -34,7 +34,7 @@ internal interface AptosApi {
      */
     @Headers("Content-Type: application/json")
     @GET("v1/estimate_gas_price")
-    suspend fun estimateGasPrice(): EstimateGasPriceResponse
+    suspend fun estimateGasPrice(): AptosEstimateGasPriceResponse
 
     /**
      * Simulate transaction's sending. Use it to estimate the maximum gas units for a submitted transaction.
@@ -55,15 +55,15 @@ internal interface AptosApi {
             "estimate_max_gas_amount=true&" +
             "estimate_prioritized_gas_unit_price=false",
     )
-    suspend fun simulateTransaction(@Body body: TransactionBody): List<SimulateTransactionResponse>
+    suspend fun simulateTransaction(@Body body: AptosTransactionBody): List<AptosSimulateTransactionBody>
 
     /** Build raw transaction data [body] and encode in BCS */
     @Headers("Content-Type: application/json")
     @POST("v1/transactions/encode_submission")
-    suspend fun encodeSubmission(@Body body: TransactionBody): String
+    suspend fun encodeSubmission(@Body body: AptosTransactionBody): String
 
     /** Submit transaction [body] */
     @Headers("Content-Type: application/json")
     @POST("v1/transactions")
-    suspend fun submitTransaction(@Body body: TransactionBody): SubmitTransactionResponse
+    suspend fun submitTransaction(@Body body: AptosTransactionBody): AptosSubmitTransactionResponse
 }
