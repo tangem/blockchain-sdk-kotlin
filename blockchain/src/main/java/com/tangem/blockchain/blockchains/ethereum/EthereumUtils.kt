@@ -441,7 +441,7 @@ object EthereumUtils {
             .keccak()
         return CompiledEthereumTransaction(transaction, hash)
     }
-
+// [REDACTED_TODO_COMMENT]
     fun createErc20ApproveDataHex(spender: String, amount: Amount?): String = createErc20ApproveData(
         spender = spender,
         amount = amount?.value?.movePointRight(amount.decimals)?.toBigInteger(),
@@ -450,7 +450,7 @@ object EthereumUtils {
     private fun createErc20TransferData(recipient: String, amount: BigInteger) = tokenTransferSignature.toByteArray() +
         recipient.substring(2).hexToBytes().toFixedLengthByteArray(32) +
         amount.toBytesPadded(32)
-
+// [REDACTED_TODO_COMMENT]
     internal fun createErc20TransferData(recepient: String, amount: Amount) = createErc20TransferData(
         recepient,
         amount.value!!.movePointRight(amount.decimals).toBigInteger(),

@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.vechain
 
 import com.google.protobuf.ByteString
-import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TransferERC20TokenMethod
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -145,7 +145,7 @@ class VechainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
         return when (val type = amount.type) {
             is AmountType.Token -> {
                 val token = type.token
-                val data = EthereumUtils.createErc20TransferData(destination, amount)
+                val data = TransferERC20TokenMethod(destination, value).data
                 VeChain.Clause.newBuilder()
                     .setToBytes(ByteString.copyFromUtf8(token.contractAddress))
                     .setValue(ByteString.EMPTY)
