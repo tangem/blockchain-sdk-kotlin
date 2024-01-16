@@ -27,6 +27,7 @@ import com.tangem.blockchain.externallinkprovider.ExternalLinkProviderFactory
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 
+@Suppress("LargeClass")
 enum class Blockchain(
     val id: String,
     val currency: String,
