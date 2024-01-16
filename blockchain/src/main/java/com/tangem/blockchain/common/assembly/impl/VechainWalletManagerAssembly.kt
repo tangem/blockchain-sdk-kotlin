@@ -9,7 +9,10 @@ internal object VechainWalletManagerAssembly : WalletManagerAssembly<VechainWall
     override fun make(input: WalletManagerAssemblyInput): VechainWalletManager {
         return VechainWalletManager(
             wallet = input.wallet,
-            networkProviders = VechainNetworkProvidersBuilder().build(input.wallet.blockchain.isTestnet(), input.config)
+            networkProviders = VechainNetworkProvidersBuilder().build(
+                isTestNet = input.wallet.blockchain.isTestnet(),
+                config = input.config,
+            ),
         )
     }
 }
