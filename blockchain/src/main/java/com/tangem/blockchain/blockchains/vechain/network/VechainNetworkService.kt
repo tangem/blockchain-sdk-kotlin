@@ -47,7 +47,7 @@ internal class VechainNetworkService(
                         accountResponse = accountInfoDeferred.await().extractResult(),
                         pendingTxsInfo = pendingTxsDeferred.awaitAll().map { it.extractResult() },
                         tokenBalances = tokenBalances,
-                    )
+                    ),
                 )
             }
         } catch (e: Exception) {

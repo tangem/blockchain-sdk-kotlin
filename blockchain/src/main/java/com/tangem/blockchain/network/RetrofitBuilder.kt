@@ -2,6 +2,7 @@ package com.tangem.blockchain.network
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import com.tangem.blockchain.blockchains.aptos.network.response.AptosResourceBody
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -62,6 +63,7 @@ data class Timeout(
 internal val moshi: Moshi by lazy {
     Moshi.Builder()
         .add(BigDecimal::class.java, BigDecimalAdapter)
+        .add(AptosResourceBody.createPolymorphicJsonAdapterFactory())
         .add(KotlinJsonAdapterFactory())
         .build()
 }

@@ -37,21 +37,21 @@ class VechainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
             minimum = Fee.Vechain(
                 amount = Amount(
                     token = VechainWalletManager.VTHO_TOKEN,
-                    value = gas.toBigDecimal().movePointLeft(GAS_TO_VET_DECIMAL)
+                    value = gas.toBigDecimal().movePointLeft(GAS_TO_VET_DECIMAL),
                 ),
                 gasPriceCoef = 0,
             ),
             normal = Fee.Vechain(
                 amount = Amount(
                     token = VechainWalletManager.VTHO_TOKEN,
-                    value = (gas * 1.5).toBigDecimal().movePointLeft(GAS_TO_VET_DECIMAL)
+                    value = (gas * NORMAL_FEE_COEFFICIENT).toBigDecimal().movePointLeft(GAS_TO_VET_DECIMAL),
                 ),
                 gasPriceCoef = 127,
             ),
             priority = Fee.Vechain(
                 amount = Amount(
                     token = VechainWalletManager.VTHO_TOKEN,
-                    value = (gas * 2).toBigDecimal().movePointLeft(GAS_TO_VET_DECIMAL)
+                    value = (gas * PRIORITY_FEE_COEFFICIENT).toBigDecimal().movePointLeft(GAS_TO_VET_DECIMAL),
                 ),
                 gasPriceCoef = 255,
             ),
@@ -85,7 +85,7 @@ class VechainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
             fee,
             transactionData.destinationAddress,
             blockInfo,
-            nonce
+            nonce,
         )
 
         val publicKeys = DataVector()
@@ -95,12 +95,15 @@ class VechainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
         signatures.add(unmarshalSignature(signature, hash, publicKey))
 
         val compileWithSignatures = TransactionCompiler.compileWithSignatures(
-            coinType, inputData.toByteArray(), signatures, publicKeys
+            coinType,
+            inputData.toByteArray(),
+            signatures,
+            publicKeys,
         )
 
         val output = VeChain.SigningOutput.parseFrom(compileWithSignatures)
         if (output.error != Common.SigningError.OK) {
-            throw IllegalStateException("something went wrong")
+            error("something went wrong")
         }
 
         return output.encoded.toByteArray()
@@ -119,7 +122,7 @@ class VechainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
             .setChainTag(chainTag)
             .setNonce(nonce)
             .setBlockRef(blockInfo.blockRef)
-            .setExpiration(180)
+            .setExpiration(EXPIRATION_BLOCKS)
             .setGas(intrinsicGas(clause))
             .setGasPriceCoef(fee.gasPriceCoef)
             .addClauses(clause)
@@ -166,14 +169,17 @@ class VechainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
     }
 
     private fun unmarshalSignature(signature: ByteArray, hash: ByteArray, publicKey: Wallet.PublicKey): ByteArray {
-        val r = BigInteger(1, signature.copyOfRange(0, 32))
-        val s = BigInteger(1, signature.copyOfRange(32, 64))
+        val r = BigInteger(1, signature.copyOfRange(fromIndex = 0, toIndex = 32))
+        val s = BigInteger(1, signature.copyOfRange(fromIndex = 32, toIndex = 64))
 
         val ecdsaSignature = ECDSASignature(r, s).canonicalise()
 
         val recId = ecdsaSignature.determineRecId(
             hash,
-            PublicKey(publicKey.blockchainKey.toDecompressedPublicKey().sliceArray(1..64)),
+            PublicKey(
+                publicKey = publicKey.blockchainKey.toDecompressedPublicKey()
+                    .sliceArray(1..PUBLIC_KEY_LENGTH),
+            ),
         )
         val signatureData = SignatureData(ecdsaSignature.r, ecdsaSignature.s, recId.toBigInteger())
 
@@ -183,13 +189,20 @@ class VechainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
     }
 
     private companion object {
-        private const val TX_GAS = 5_000L
-        private const val CLAUSE_GAS = 16_000L
-        private const val VM_INVOCATION_COST = 15_000L
+        const val TX_GAS = 5_000L
+        const val CLAUSE_GAS = 16_000L
+        const val VM_INVOCATION_COST = 15_000L
 
-        private const val Z_GAS = 4L
-        private const val NZ_GAS = 68L
+        const val Z_GAS = 4L
+        const val NZ_GAS = 68L
 
-        private const val GAS_TO_VET_DECIMAL = 5
+        const val GAS_TO_VET_DECIMAL = 5
+
+        const val NORMAL_FEE_COEFFICIENT = 1.5
+        const val PRIORITY_FEE_COEFFICIENT = 2
+
+        const val EXPIRATION_BLOCKS = 180
+
+        const val PUBLIC_KEY_LENGTH = 64
     }
 }
