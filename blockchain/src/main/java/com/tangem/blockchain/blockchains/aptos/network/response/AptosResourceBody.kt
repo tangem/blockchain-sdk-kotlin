@@ -4,12 +4,12 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
 
-internal sealed class AptosResource {
+internal sealed class AptosResourceBody {
 
     @JsonClass(generateAdapter = true)
     data class AccountResource(
         @Json(name = "data") val account: AccountData,
-    ) : AptosResource() {
+    ) : AptosResourceBody() {
 
         @JsonClass(generateAdapter = true)
         data class AccountData(
@@ -19,8 +19,8 @@ internal sealed class AptosResource {
 
     @JsonClass(generateAdapter = true)
     data class CoinResource(
-        @Json(name = "data") val coin: CoinData,
-    ) : AptosResource() {
+        @Json(name = "data") val coinData: CoinData,
+    ) : AptosResourceBody() {
 
         @JsonClass(generateAdapter = true)
         data class CoinData(
@@ -34,13 +34,13 @@ internal sealed class AptosResource {
         }
     }
 
-    object Unknown : AptosResource()
+    object Unknown : AptosResourceBody()
 
     companion object {
 
-        fun createPolymorphicJsonAdapterFactory(): PolymorphicJsonAdapterFactory<AptosResource> {
+        fun createPolymorphicJsonAdapterFactory(): PolymorphicJsonAdapterFactory<AptosResourceBody> {
             return PolymorphicJsonAdapterFactory
-                .of(AptosResource::class.java, "type")
+                .of(AptosResourceBody::class.java, "type")
                 .withSubtype(AccountResource::class.java, "0x1::account::Account")
                 .withSubtype(CoinResource::class.java, "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>")
                 .withDefaultValue(Unknown)
