@@ -24,8 +24,8 @@ fun String.decodeBech32(): ByteArray? {
 }
 
 @Suppress("MagicNumber")
-fun String.hexToBigDecimal(): BigDecimal? {
-    return removePrefix("0x").toBigIntegerOrNull(16)?.toBigDecimal()
+fun String.hexToBigDecimal(default: BigDecimal = BigDecimal.ZERO): BigDecimal {
+    return removePrefix("0x").toBigIntegerOrNull(16)?.toBigDecimal() ?: default
 }
 
 fun String?.toBigDecimalOrDefault(default: BigDecimal = BigDecimal.ZERO): BigDecimal =
