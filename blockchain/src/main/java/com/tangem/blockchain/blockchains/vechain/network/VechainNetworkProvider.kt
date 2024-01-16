@@ -63,12 +63,17 @@ internal class VechainNetworkProvider(
     private fun mapBlockInfo(response: VechainLatestBlockResponse): VechainBlockInfo {
         val blockRef = response.blockId
             .removePrefix("0x")
-            .substring(0..15)
+            .substring(range = 0..BLOCK_REFERENCE_LENGTH)
             .toLongOrNull(radix = 16)
         return VechainBlockInfo(
             blockId = response.blockId,
             blockRef = blockRef ?: 0,
             blockNumber = response.number,
         )
+    }
+
+    private companion object {
+
+        const val BLOCK_REFERENCE_LENGTH = 15
     }
 }
