@@ -3,13 +3,20 @@ package com.tangem.blockchain.common.transaction
 import com.tangem.blockchain.common.Amount
 import java.math.BigInteger
 
-sealed class Fee(open val amount: Amount) {
+sealed class Fee {
+
+    abstract val amount: Amount
 
     data class Ethereum(
         override val amount: Amount,
         val gasLimit: BigInteger,
         val gasPrice: BigInteger,
-    ) : Fee(amount)
+    ) : Fee()
 
-    data class Common(override val amount: Amount) : Fee(amount)
+    data class Vechain(
+        override val amount: Amount,
+        val gasPriceCoef: Int,
+    ) : Fee()
+
+    data class Common(override val amount: Amount) : Fee()
 }
