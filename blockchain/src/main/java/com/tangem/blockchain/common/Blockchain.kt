@@ -15,6 +15,7 @@ import com.tangem.blockchain.blockchains.solana.SolanaAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
+import com.tangem.blockchain.blockchains.xdc.XinFinAddressService
 import com.tangem.blockchain.blockchains.vechain.VechainWalletManager
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.Address
@@ -101,6 +102,8 @@ enum class Blockchain(
     ChiaTestnet("chia/test", "TXCH", "Chia Network Testnet"),
     Decimal("decimal", "DEL", "Decimal Smart Chain"),
     DecimalTestnet("decimal/test", "tDEL", "Decimal Smart Chain Testnet"),
+    XinFin("xinfin", "XDC", "XinFin Digital Contract"),
+    XinFinTestnet("xinfin/test", "XDC", "XinFin Digital Contract Testnet"),
     Vechain("vechain", "VET", "VeChain"),
     VechainTestnet("vechain/test", "VET", "VeChain Testnet"),
     Aptos("aptos", "APT", "Aptos"),
@@ -161,6 +164,7 @@ enum class Blockchain(
         Telos, TelosTestnet,
         OctaSpace, OctaSpaceTestnet,
         Decimal, DecimalTestnet,
+        XinFin, XinFinTestnet,
         Vechain, VechainTestnet,
         -> 18
 
@@ -211,6 +215,8 @@ enum class Blockchain(
             OctaSpace, OctaSpaceTestnet,
             Vechain, VechainTestnet,
             -> EthereumAddressService()
+
+            XinFin, XinFinTestnet -> XinFinAddressService()
 
             Decimal, DecimalTestnet -> DecimalAddressService()
             RSK -> RskAddressService()
@@ -295,6 +301,7 @@ enum class Blockchain(
             Chia, ChiaTestnet -> ChiaTestnet
             Near, NearTestnet -> NearTestnet
             Decimal, DecimalTestnet -> DecimalTestnet
+            XinFin, XinFinTestnet -> XinFinTestnet
             Vechain, VechainTestnet -> VechainTestnet
             Aptos, AptosTestnet -> AptosTestnet
             else -> null
@@ -342,6 +349,7 @@ enum class Blockchain(
             Cronos,
             OctaSpace, OctaSpaceTestnet,
             Decimal, DecimalTestnet,
+            XinFin, XinFinTestnet,
             Vechain, VechainTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
@@ -392,6 +400,8 @@ enum class Blockchain(
             OctaSpaceTestnet -> Chain.OctaSpaceTestnet.id
             Decimal -> Chain.Decimal.id
             DecimalTestnet -> Chain.DecimalTestnet.id
+            XinFin -> Chain.XinFin.id
+            XinFinTestnet -> Chain.XinFinTestnet.id
             else -> null
         }
     }

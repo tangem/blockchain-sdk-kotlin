@@ -71,6 +71,10 @@ object DerivationConfigV3 : DerivationConfig() {
                 mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             }
 
+            Blockchain.XinFin -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
+            }
+
             Blockchain.EthereumClassic -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))
             }
@@ -153,6 +157,7 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.OctaSpaceTestnet,
             Blockchain.NearTestnet,
             Blockchain.DecimalTestnet,
+            Blockchain.XinFinTestnet,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
