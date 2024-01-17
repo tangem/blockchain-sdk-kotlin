@@ -172,4 +172,6 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     OctaSpaceTestnet(id = 800002, blockchain = Blockchain.OctaSpaceTestnet),
     Decimal(id = 75, blockchain = Blockchain.Decimal),
     DecimalTestnet(id = 202020, blockchain = Blockchain.DecimalTestnet),
+    XinFin(id = 50, blockchain = Blockchain.XinFin),
+    XinFinTestnet(id = 51, blockchain = Blockchain.XinFinTestnet),
 }
