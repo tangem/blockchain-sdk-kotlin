@@ -41,7 +41,7 @@ class KaspaWalletManager(
 
     private fun updateError(error: BlockchainError) {
         Log.e(this::class.java.simpleName, error.customMessage)
-        if (error is BlockchainSdkError) error("Error isn't BlockchainSdkError")
+        if (error is BlockchainSdkError) throw error
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
