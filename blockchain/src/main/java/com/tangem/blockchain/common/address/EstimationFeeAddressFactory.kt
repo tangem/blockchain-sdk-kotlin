@@ -6,6 +6,19 @@ import com.tangem.crypto.bip39.Mnemonic
 import com.tangem.crypto.hdWallet.masterkey.AnyMasterKeyFactory
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * This entity provides addresses for calculating commissions in swap scenarios.
+ *
+ * If the blockchain lacks an "initialized account state", it generates a random address.
+ *
+ * If the commission for sending tokens to a “warmed-up” account differs from that for sending to an empty account,
+ * the address of the “warmed-up” account should be set (e.g., in Cardano).
+ *
+ * If the fee does not depend on the amount or destination, or if the fee is fixed, an empty address can be set to
+ * avoid wasting resources on address generation.
+ *
+ * @param mnemonic to help generate addresses
+ */
 class EstimationFeeAddressFactory(
     mnemonic: Mnemonic,
 ) {
@@ -56,9 +69,7 @@ class EstimationFeeAddressFactory(
                 ""
             }
 
-            // We have to generate a new dummy address for
-
-            // UTXO-like
+            // We have to generate a new dummy address for UTXO-like
             Blockchain.Bitcoin,
             Blockchain.BitcoinTestnet,
             Blockchain.Litecoin,
@@ -117,6 +128,8 @@ class EstimationFeeAddressFactory(
             Blockchain.TONTestnet,
             Blockchain.Near,
             Blockchain.NearTestnet,
+            Blockchain.XinFin,
+            Blockchain.XinFinTestnet,
             Blockchain.Vechain,
             Blockchain.VechainTestnet,
             Blockchain.Aptos,
