@@ -28,6 +28,10 @@ internal class XinFinWalletManager(
     }
 
     private fun convertTransactionDataAddress(transactionData: TransactionData) = transactionData.copy(
+        sourceAddress = XinFinAddressService.makeWith0xPrefix(transactionData.sourceAddress),
         destinationAddress = XinFinAddressService.makeWith0xPrefix(transactionData.destinationAddress),
+        contractAddress = transactionData.contractAddress?.let {
+            XinFinAddressService.makeWith0xPrefix(it)
+        }
     )
 }
