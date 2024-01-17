@@ -13,9 +13,8 @@ data class TransactionData(
     var date: Calendar? = null,
     var hash: String? = null,
     val extras: TransactionExtras? = null,
-) {
-    val contractAddress: String? = (amount.type as? AmountType.Token)?.token?.contractAddress
-}
+    val contractAddress: String? = (amount.type as? AmountType.Token)?.token?.contractAddress,
+)
 
 enum class TransactionStatus { Confirmed, Unconfirmed }
 
