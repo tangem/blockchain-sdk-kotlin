@@ -106,6 +106,8 @@ enum class Blockchain(
     XinFinTestnet("xinfin/test", "XDC", "XinFin Digital Contract Testnet"),
     Vechain("vechain", "VET", "VeChain"),
     VechainTestnet("vechain/test", "VET", "VeChain Testnet"),
+    Aptos("aptos", "APT", "Aptos"),
+    AptosTestnet("aptos/test", "APT", "Aptos Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -133,6 +135,7 @@ enum class Blockchain(
         Dash,
         Kaspa,
         Ravencoin, RavencoinTestnet,
+        Aptos, AptosTestnet,
         -> 8
 
         Solana, SolanaTestnet,
@@ -225,7 +228,12 @@ enum class Blockchain(
             Stellar, StellarTestnet -> StellarAddressService()
             Solana, SolanaTestnet -> SolanaAddressService()
             Tezos -> TezosAddressService()
-            TON, TONTestnet, Cosmos, CosmosTestnet, TerraV1, TerraV2, Near, NearTestnet,
+            TON, TONTestnet,
+            Cosmos, CosmosTestnet,
+            TerraV1,
+            TerraV2,
+            Near, NearTestnet,
+            Aptos, AptosTestnet,
             -> TrustWalletAddressService(blockchain = this)
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
@@ -295,6 +303,7 @@ enum class Blockchain(
             Decimal, DecimalTestnet -> DecimalTestnet
             XinFin, XinFinTestnet -> XinFinTestnet
             Vechain, VechainTestnet -> VechainTestnet
+            Aptos, AptosTestnet -> AptosTestnet
             else -> null
         }
     }
@@ -347,7 +356,9 @@ enum class Blockchain(
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
-            TON, TONTestnet, Near, NearTestnet,
+            TON, TONTestnet,
+            Near, NearTestnet,
+            Aptos, AptosTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
 
             Cardano -> listOf(EllipticCurve.Ed25519) // todo until cardano support in wallet 2

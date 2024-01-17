@@ -2,7 +2,7 @@ package com.tangem.blockchain.common.address
 
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.common.card.EllipticCurve
-import com.tangem.crypto.bip39.*
+import com.tangem.crypto.bip39.Mnemonic
 import com.tangem.crypto.hdWallet.masterkey.AnyMasterKeyFactory
 import java.util.concurrent.ConcurrentHashMap
 
@@ -33,9 +33,7 @@ class EstimationFeeAddressFactory(
     @Suppress("LongMethod")
     fun makeAddress(blockchain: Blockchain): String {
         return when (blockchain) {
-            Blockchain.Cardano -> {
-                CARDANO_ESTIMATION_ADDRESS
-            }
+            Blockchain.Cardano -> CARDANO_ESTIMATION_ADDRESS
 
             Blockchain.Chia,
             Blockchain.ChiaTestnet,
@@ -134,6 +132,8 @@ class EstimationFeeAddressFactory(
             Blockchain.XinFinTestnet,
             Blockchain.Vechain,
             Blockchain.VechainTestnet,
+            Blockchain.Aptos,
+            Blockchain.AptosTestnet,
             -> {
                 generateAddress(blockchain)
             }
