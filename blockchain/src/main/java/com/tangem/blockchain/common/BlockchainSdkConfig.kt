@@ -20,11 +20,6 @@ data class BlockchairCredentials(
     val authToken: String?,
 )
 
-data class BlockscoutCredentials(
-    val userName: String,
-    val password: String,
-)
-
 data class QuickNodeCredentials(val apiKey: String, val subdomain: String)
 
 data class NowNodeCredentials(
@@ -57,6 +52,7 @@ data class GetBlockCredentials(
     val litecoin: GetBlockAccessToken,
     val dash: GetBlockAccessToken,
     val bitcoin: GetBlockAccessToken,
+    val aptos: GetBlockAccessToken?,
 )
 
 data class GetBlockAccessToken(
