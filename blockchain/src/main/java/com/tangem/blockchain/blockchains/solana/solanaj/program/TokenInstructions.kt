@@ -11,14 +11,14 @@ import java.nio.ByteOrder
  * Same as [org.p2p.solanaj.programs.TokenProgram.transferChecked] but with [programId]
  * */
 @Suppress("LongParameterList")
-internal fun createTransferCheckedInstruction(
+internal fun createSolanaTransferCheckedInstruction(
     source: PublicKey?,
     destination: PublicKey?,
     amount: Long,
     decimals: Byte,
     owner: PublicKey?,
     tokenMint: PublicKey?,
-    programId: TokenProgramId,
+    programId: SolanaTokenProgramId,
 ): TransactionInstruction {
     val keys = buildList {
         add(AccountMeta(source, false, true))

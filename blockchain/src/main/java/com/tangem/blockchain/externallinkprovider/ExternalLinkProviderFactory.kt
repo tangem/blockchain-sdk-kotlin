@@ -58,6 +58,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Decimal, Blockchain.DecimalTestnet -> DecimalExternalLinkProvider(isTestnet)
             Blockchain.XinFin, Blockchain.XinFinTestnet -> XinFinExternalLinkProvider(isTestnet)
             Blockchain.Vechain, Blockchain.VechainTestnet -> VechainExternalLinkProvider(isTestnet)
+            Blockchain.Aptos, Blockchain.AptosTestnet -> AptosExternalLinkProvider(isTestnet)
         }
     }
 }
