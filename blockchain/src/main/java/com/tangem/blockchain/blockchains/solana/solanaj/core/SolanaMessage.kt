@@ -7,7 +7,7 @@ import org.p2p.solanaj.core.PublicKey
 /**
 [REDACTED_AUTHOR]
  */
-class Message(
+internal class SolanaMessage(
     private val feePayerPublicKey: PublicKey,
 ) : Message() {
 
