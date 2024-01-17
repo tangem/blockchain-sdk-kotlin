@@ -9,11 +9,10 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
 
     /**
      * Base wallet manager initializer
-     * @param blockchain: blockchain to create
-     * @param seedKey: Public key of the wallet
-     * @param derivedKey: Derived ExtendedPublicKey by the card
-     * @param derivation: derivation style or derivation path
-     * @param curve optional curve to generate addresses for some blockchains
+     *
+     * @param blockchain blockchain to create
+     * @param publicKey  public key of the wallet
+     * @param curve      optional curve to generate addresses for some blockchains
      */
     fun createWalletManager(
         blockchain: Blockchain,
@@ -236,6 +235,10 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
 
             Blockchain.Vechain, Blockchain.VechainTestnet -> {
                 VechainWalletManagerAssembly
+            }
+
+            Blockchain.Aptos, Blockchain.AptosTestnet -> {
+                AptosWalletManagerAssembly
             }
 
             Blockchain.Unknown -> {
