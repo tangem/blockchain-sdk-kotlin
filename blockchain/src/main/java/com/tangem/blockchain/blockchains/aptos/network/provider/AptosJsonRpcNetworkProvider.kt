@@ -6,20 +6,16 @@ import com.tangem.blockchain.blockchains.aptos.network.AptosApi
 import com.tangem.blockchain.blockchains.aptos.network.AptosNetworkProvider
 import com.tangem.blockchain.blockchains.aptos.network.converter.AptosTransactionConverter
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResourceBody
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.createRetrofitInstance
-import okhttp3.Interceptor
+import java.math.BigDecimal
 
-internal class AptosJsonRpcNetworkProvider(
-    override val baseUrl: String,
-    headerInterceptors: List<Interceptor>,
-    private val decimals: Int,
-) : AptosNetworkProvider {
+internal class AptosJsonRpcNetworkProvider(override val baseUrl: String) : AptosNetworkProvider {
 
-    private val api = createRetrofitInstance(baseUrl = baseUrl, headerInterceptors = headerInterceptors)
-        .create(AptosApi::class.java)
+    private val api = createRetrofitInstance(baseUrl = baseUrl).create(AptosApi::class.java)
 
     override suspend fun getAccountInfo(address: String): Result<AptosAccountInfo> {
         return try {
@@ -32,7 +28,8 @@ internal class AptosJsonRpcNetworkProvider(
                 Result.Success(
                     AptosAccountInfo(
                         sequenceNumber = accountResource.sequenceNumber.toLong(),
-                        balance = coinResource.coin.value.toBigDecimal().movePointLeft(decimals),
+                        balance = BigDecimal(coinResource.coin.value)
+                            .movePointLeft(Blockchain.Aptos.decimals()),
                     ),
                 )
             } else {
