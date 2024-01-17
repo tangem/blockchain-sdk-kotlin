@@ -30,5 +30,4 @@ internal class XinFinWalletManager(
     private fun convertTransactionDataAddress(transactionData: TransactionData) = transactionData.copy(
         destinationAddress = XinFinAddressService.makeWith0xPrefix(transactionData.destinationAddress),
     )
-
 }
