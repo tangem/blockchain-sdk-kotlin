@@ -18,5 +18,10 @@ sealed class Fee {
         val gasPriceCoef: Int,
     ) : Fee()
 
+    data class Aptos(
+        override val amount: Amount,
+        val gasUnitPrice: Long,
+    ) : Fee()
+
     data class Common(override val amount: Amount) : Fee()
 }
