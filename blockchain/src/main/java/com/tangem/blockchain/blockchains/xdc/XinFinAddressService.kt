@@ -19,7 +19,7 @@ internal class XinFinAddressService : EthereumAddressService() {
         private const val ETH_PREFIX = "0x"
         private const val XDC_PREFIX = "xdc"
 
-        fun makeWith0xPrefix(address: String) : String {
+        fun makeWith0xPrefix(address: String): String {
             return if (address.startsWith(XDC_PREFIX)) {
                 address.replace(XDC_PREFIX, ETH_PREFIX)
             } else {
@@ -27,7 +27,7 @@ internal class XinFinAddressService : EthereumAddressService() {
             }
         }
 
-        fun makeWithXdcPrefix(address: String) : String {
+        fun makeWithXdcPrefix(address: String): String {
             return if (address.startsWith(ETH_PREFIX)) {
                 address.replace(ETH_PREFIX, XDC_PREFIX)
             } else {
@@ -35,5 +35,4 @@ internal class XinFinAddressService : EthereumAddressService() {
             }
         }
     }
-
 }

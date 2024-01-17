@@ -79,7 +79,7 @@ class EstimationFeeAddressFactory(
             Blockchain.Dash,
             Blockchain.Ravencoin,
             Blockchain.RavencoinTestnet,
-                // EVM-like
+            // EVM-like
             Blockchain.Ethereum,
             Blockchain.EthereumTestnet,
             Blockchain.EthereumPow,
@@ -110,18 +110,18 @@ class EstimationFeeAddressFactory(
             Blockchain.OctaSpaceTestnet,
             Blockchain.Decimal,
             Blockchain.DecimalTestnet,
-                // Polkadot-like
+            // Polkadot-like
             Blockchain.Polkadot,
             Blockchain.PolkadotTestnet,
             Blockchain.Kusama,
             Blockchain.AlephZero,
             Blockchain.AlephZeroTestnet,
-                // Cosmos-like
+            // Cosmos-like
             Blockchain.Cosmos,
             Blockchain.CosmosTestnet,
             Blockchain.TerraV1,
             Blockchain.TerraV2,
-                // Others
+            // Others
             Blockchain.Tron,
             Blockchain.TronTestnet,
             Blockchain.TON,
