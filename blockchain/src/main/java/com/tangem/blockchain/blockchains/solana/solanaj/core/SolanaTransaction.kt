@@ -8,9 +8,9 @@ import org.p2p.solanaj.core.Transaction
 /**
 [REDACTED_AUTHOR]
  */
-class Transaction(
-    private val feePayerPublicKey: PublicKey,
-) : Transaction(Message(feePayerPublicKey)) {
+internal class SolanaTransaction(
+    feePayerPublicKey: PublicKey,
+) : Transaction(SolanaMessage(feePayerPublicKey)) {
 
     @Deprecated("Instead, use getDataForSign and then addSignedDataSignature before submitting the transaction.")
     override fun sign(signer: Account?) {
@@ -22,7 +22,7 @@ class Transaction(
         throw UnsupportedOperationException()
     }
 
-    fun getDataForSign(): ByteArray {
+    fun getSerializedMessage(): ByteArray {
         serializedMessage = message.serialize()
         return serializedMessage
     }
