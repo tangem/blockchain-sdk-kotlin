@@ -3,7 +3,7 @@ package com.tangem.blockchain.blockchains.xdc
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.common.card.EllipticCurve
 
-internal class XinFinAddressService : EthereumAddressService() {
+internal class XDCAddressService : EthereumAddressService() {
 
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         val ethAddress = super.makeAddress(walletPublicKey, curve)
