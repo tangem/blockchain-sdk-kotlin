@@ -1,7 +1,5 @@
 package com.tangem.blockchain.common.assembly.impl
 
-import com.tangem.blockchain.blockchains.decimal.DecimalNetworkService
-import com.tangem.blockchain.blockchains.decimal.DecimalWalletManager
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.getEthereumJsonRpcProviders
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
