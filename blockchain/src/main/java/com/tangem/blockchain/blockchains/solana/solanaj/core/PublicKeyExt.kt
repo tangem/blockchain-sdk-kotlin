@@ -1,16 +1,16 @@
 package com.tangem.blockchain.blockchains.solana.solanaj.core
 
-import com.tangem.blockchain.blockchains.solana.solanaj.program.TokenProgramId
+import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgramId
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.Program
 
 /**
  * Same as [org.p2p.solanaj.core.PublicKey.associatedTokenAddress] but with [tokenProgramId]
  * */
-internal fun createAssociatedTokenAddress(
+internal fun createAssociatedSolanaTokenAddress(
     account: PublicKey,
     mint: PublicKey,
-    tokenProgramId: TokenProgramId,
+    tokenProgramId: SolanaTokenProgramId,
 ): Result<PublicKey> = runCatching {
     val seeds = buildList {
         add(account.toByteArray())
