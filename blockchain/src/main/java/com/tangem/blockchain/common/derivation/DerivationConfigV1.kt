@@ -189,6 +189,10 @@ object DerivationConfigV1 : DerivationConfig() {
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
+
+            Blockchain.Aptos, Blockchain.AptosTestnet -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/637'/0'/0'/0'"))
+            }
         }
     }
 }
