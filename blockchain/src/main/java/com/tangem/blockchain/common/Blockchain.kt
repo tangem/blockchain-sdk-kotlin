@@ -441,6 +441,7 @@ enum class Blockchain(
         EthereumPow,
         Cronos,
         Vechain, VechainTestnet,
+        XDC, XDC,
         -> amountType is AmountType.Token
 
         Arbitrum, ArbitrumTestnet,
