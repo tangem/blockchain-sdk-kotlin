@@ -187,7 +187,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://rpc.xinfin.network"),
             EthereumJsonRpcProvider(baseUrl = "https://erpc.xinfin.network"),
             EthereumJsonRpcProvider(baseUrl = "https://rpc.xdc.org"),
-            EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/xdc"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/xdc/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpc1.xinfin.network"),
         )
 
