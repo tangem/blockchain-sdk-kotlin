@@ -74,7 +74,7 @@ class TonWalletManager(
 
     private fun updateError(error: BlockchainError) {
         Log.e(this::class.java.simpleName, error.customMessage)
-        if (error is BlockchainSdkError) error("Error isn't BlockchainSdkError")
+        if (error is BlockchainSdkError) throw error
     }
 
     private fun buildTransaction(input: TheOpenNetwork.SigningInput, signer: TransactionSigner?): Result<String> {
