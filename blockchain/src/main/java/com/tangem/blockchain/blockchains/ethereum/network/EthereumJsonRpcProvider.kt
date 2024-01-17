@@ -79,7 +79,7 @@ class EthereumJsonRpcProvider(
 // [REDACTED_TODO_COMMENT]
     private fun createTokenBalanceCallObject(address: String, contractAddress: String) = EthCallObject(
         to = contractAddress,
-        data = "0x70a08231000000000000000000000000" + address.substring(2),
+        data = "0x70a08231000000000000000000000000" + address.removePrefixes()
     )
 // [REDACTED_TODO_COMMENT]
     private fun createTokenAllowanceCallObject(ownerAddress: String, contractAddress: String, spenderAddress: String) =
@@ -127,6 +127,10 @@ class EthereumJsonRpcProvider(
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
+    }
+
+    private fun String.removePrefixes() : String {
+        return removePrefix("0x").removePrefix("xdc")
     }
 
     companion object {
