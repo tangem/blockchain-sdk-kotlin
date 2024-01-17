@@ -11,7 +11,9 @@ import com.tangem.blockchain.blockchains.aptos.network.request.AptosTransactionB
 internal object AptosTransactionConverter {
 
     private const val TRANSFER_PAYLOAD_TYPE = "entry_function_payload"
+// [REDACTED_TODO_COMMENT]
     private const val TRANSFER_PAYLOAD_FUNCTION = "0x1::aptos_account::transfer"
+
     private const val SIGNATURE_TYPE = "ed25519_signature"
 
     fun convert(from: AptosTransactionInfo): AptosTransactionBody {
