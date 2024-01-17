@@ -181,7 +181,8 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://testnet-val.decimalchain.com/web3/"),
         )
 
-        Blockchain.XDC -> listOf(
+        Blockchain.XDC -> listOfNotNull(
+            getNowNodesProvider(baseUrl = "https://xdc.nownodes.io/", config = config),
             EthereumJsonRpcProvider(baseUrl = "https://rpc.xdcrpc.com"),
             EthereumJsonRpcProvider(baseUrl = "https://erpc.xdcrpc.com"),
             EthereumJsonRpcProvider(baseUrl = "https://rpc.xinfin.network"),
