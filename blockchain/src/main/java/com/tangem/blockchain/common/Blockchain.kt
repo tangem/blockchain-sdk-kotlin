@@ -15,8 +15,8 @@ import com.tangem.blockchain.blockchains.solana.SolanaAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
-import com.tangem.blockchain.blockchains.xdc.XDCAddressService
 import com.tangem.blockchain.blockchains.vechain.VechainWalletManager
+import com.tangem.blockchain.blockchains.xdc.XDCAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressService
@@ -426,6 +426,7 @@ enum class Blockchain(
             Tron, TronTestnet,
             TerraV1,
             Vechain, VechainTestnet,
+            Aptos, AptosTestnet,
             -> true
 
             else -> false
