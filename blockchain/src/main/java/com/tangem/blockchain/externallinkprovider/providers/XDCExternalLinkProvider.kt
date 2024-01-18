@@ -2,7 +2,7 @@ package com.tangem.blockchain.externallinkprovider.providers
 
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 
-internal class XinFinExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
+internal class XDCExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
     override val explorerBaseUrl: String = if (isTestnet) {
         "https://explorer.apothem.network/"
