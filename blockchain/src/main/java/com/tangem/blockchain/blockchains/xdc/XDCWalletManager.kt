@@ -32,6 +32,6 @@ internal class XDCWalletManager(
         destinationAddress = XDCAddressService.makeWith0xPrefix(transactionData.destinationAddress),
         contractAddress = transactionData.contractAddress?.let {
             XDCAddressService.makeWith0xPrefix(it)
-        }
+        },
     )
 }
