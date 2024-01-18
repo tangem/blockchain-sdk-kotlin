@@ -33,6 +33,10 @@ internal class AptosTransactionBuilder(private val wallet: Wallet) {
             sourceAddress = wallet.address,
             destinationAddress = destination,
             amount = amount.longValue ?: 0L,
+            contractAddress = when (amount.type) {
+                is AmountType.Token -> amount.type.token.contractAddress
+                else -> null
+            },
             gasUnitPrice = gasUnitPrice,
             maxGasAmount = PSEUDO_TRANSACTION_MAX_GAS_AMOUNT,
             expirationTimestamp = createExpirationTimestamp(),
@@ -56,6 +60,7 @@ internal class AptosTransactionBuilder(private val wallet: Wallet) {
             sourceAddress = wallet.address,
             destinationAddress = transactionData.destinationAddress,
             amount = transactionData.amount.longValue ?: 0L,
+            contractAddress = transactionData.contractAddress,
             gasUnitPrice = aptosFee.gasUnitPrice,
             maxGasAmount = aptosFee.amount.longValue ?: 0L,
             expirationTimestamp = createExpirationTimestamp(),
