@@ -80,7 +80,7 @@ class EthereumJsonRpcProvider(
     // TODO: [REDACTED_JIRA] Replace with SmartContractMethod interface implementations
     private fun createTokenBalanceCallObject(address: String, contractAddress: String) = EthCallObject(
         to = contractAddress,
-        data = "0x70a08231000000000000000000000000" + address.substring(2),
+        data = "0x70a08231000000000000000000000000" + address.removePrefixes(),
     )
 
     // TODO: [REDACTED_JIRA] Replace with SmartContractMethod interface implementations
@@ -91,9 +91,9 @@ class EthereumJsonRpcProvider(
             data = buildString {
                 append(tokenAllowanceSignature)
                 append(CALL_DATA_SEPARATOR)
-                append(ownerAddress.substring(2))
+                append(ownerAddress.removePrefixes())
                 append(CALL_DATA_SEPARATOR)
-                append(spenderAddress.substring(2))
+                append(spenderAddress.removePrefixes())
             },
         )
 
@@ -131,10 +131,17 @@ class EthereumJsonRpcProvider(
         }
     }
 
+    private fun String.removePrefixes(): String {
+        return takeLast(ETH_VALUABLE_ADDRESS_PART_LENGTH)
+    }
+
     companion object {
         private val tokenAllowanceSignature =
             "allowance(address,address)".toByteArray().toKeccak().copyOf(4).toHexString()
+
         private const val CALL_DATA_SEPARATOR = "000000000000000000000000"
+
+        private const val ETH_VALUABLE_ADDRESS_PART_LENGTH = 40
     }
 }
 
