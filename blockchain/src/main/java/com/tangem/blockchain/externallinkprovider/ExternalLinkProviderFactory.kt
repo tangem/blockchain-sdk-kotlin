@@ -56,7 +56,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.OctaSpaceTestnet -> error("unsupported blockchain")
             Blockchain.Chia, Blockchain.ChiaTestnet -> ChiaExternalLinkProvider(isTestnet)
             Blockchain.Decimal, Blockchain.DecimalTestnet -> DecimalExternalLinkProvider(isTestnet)
-            Blockchain.XinFin, Blockchain.XinFinTestnet -> XinFinExternalLinkProvider(isTestnet)
+            Blockchain.XDC, Blockchain.XDCTestnet -> XDCExternalLinkProvider(isTestnet)
             Blockchain.Vechain, Blockchain.VechainTestnet -> VechainExternalLinkProvider(isTestnet)
             Blockchain.Aptos, Blockchain.AptosTestnet -> AptosExternalLinkProvider(isTestnet)
         }
