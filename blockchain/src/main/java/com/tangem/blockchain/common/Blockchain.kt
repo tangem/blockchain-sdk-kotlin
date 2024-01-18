@@ -426,7 +426,6 @@ enum class Blockchain(
             Tron, TronTestnet,
             TerraV1,
             Vechain, VechainTestnet,
-            Aptos, AptosTestnet,
             -> true
 
             else -> false
