@@ -35,8 +35,12 @@ class PolkadotJsonRpcProvider(baseUrl: String) {
     private fun Result<PolkadotResponse>.extractResult(): Map<String, Any> = when (this) {
         is Result.Success -> {
             this.data.result
-                ?: throw this.data.error?.toException()?.toBlockchainSdkError()
-                    ?: BlockchainSdkError.CustomError("Unknown response format")
+                ?: throw this.data.error?.let { error ->
+                    BlockchainSdkError.Polkadot.ApiWithCode(
+                        code = error.code ?: 0,
+                        message = error.message ?: "No error message",
+                    )
+                } ?: BlockchainSdkError.CustomError("Unknown response format")
         }
         is Result.Failure -> {
             throw this.error as? BlockchainSdkError ?: BlockchainSdkError.CustomError("Unknown error format")
@@ -47,8 +51,6 @@ class PolkadotJsonRpcProvider(baseUrl: String) {
         val feeString = this[FEE] as? String
         return feeString?.toBigDecimal()?.movePointLeft(decimals) ?: BigDecimal.ZERO
     }
-
-    private fun PolkadotError.toException() = Exception("Code: ${this.code}, ${this.message}")
 
     companion object {
         const val FEE = "partialFee"
