@@ -4,6 +4,7 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.aptos.models.AptosAccountInfo
 import com.tangem.blockchain.blockchains.aptos.models.AptosTransactionInfo
 import com.tangem.blockchain.blockchains.aptos.network.AptosNetworkService
+import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -25,7 +26,6 @@ internal class AptosWalletManager(
     private var sequenceNumber: Long = 0
 
     override suspend fun updateInternal() {
-        // TODO-5852 Add Aptos tokens support
         when (val result = networkService.getAccountInfo(wallet.address)) {
             is Result.Success -> updateWallet(result.data)
             is Result.Failure -> updateError(result.error)
@@ -82,9 +82,8 @@ internal class AptosWalletManager(
             wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
         }
 
-        wallet.setAmount(
-            amount = Amount(value = info.balance, blockchain = wallet.blockchain),
-        )
+        wallet.setCoinValue(value = info.balance.movePointLeft(Blockchain.Aptos.decimals()))
+        wallet.updateAptosTokens(info.tokens)
 
         sequenceNumber = info.sequenceNumber
     }
@@ -92,6 +91,19 @@ internal class AptosWalletManager(
     private fun updateError(error: BlockchainError) {
         Log.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
+    }
+
+    private fun Wallet.updateAptosTokens(tokens: List<AptosResource.TokenResource>) {
+        cardTokens
+            .mapNotNull { cardToken ->
+                val token = tokens.firstOrNull { it.contractAddress == cardToken.contractAddress }
+                if (token != null) {
+                    token.balance.movePointLeft(cardToken.decimals) to cardToken
+                } else {
+                    null
+                }
+            }
+            .forEach { addTokenValue(value = it.first, token = it.second) }
     }
 
     private suspend fun submitTransaction(
