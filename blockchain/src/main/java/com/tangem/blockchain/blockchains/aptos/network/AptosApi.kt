@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.aptos.network
 
 import com.tangem.blockchain.blockchains.aptos.network.request.AptosTransactionBody
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosEstimateGasPriceResponse
-import com.tangem.blockchain.blockchains.aptos.network.response.AptosResourceBody
+import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosSimulateTransactionBody
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosSubmitTransactionResponse
 import retrofit2.http.*
@@ -21,11 +21,11 @@ internal interface AptosApi {
      *
      * @param address account address
      *
-     * @see AptosResourceBody to know more details about kind of resources
+     * @see AptosResource to know more details about kind of resources
      */
     @Headers("Content-Type: application/json")
     @GET("v1/accounts/{address}/resources")
-    suspend fun getAccountResources(@Path("address") address: String): List<AptosResourceBody>
+    suspend fun getAccountResources(@Path("address") address: String): List<AptosResource>
 
     /**
      * Gives an estimate of the gas unit price required to get a transaction on chain in a reasonable amount of time.
