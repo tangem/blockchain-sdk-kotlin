@@ -11,9 +11,8 @@ import com.tangem.blockchain.blockchains.aptos.network.request.AptosTransactionB
 internal object AptosTransactionConverter {
 
     private const val TRANSFER_PAYLOAD_TYPE = "entry_function_payload"
-// [REDACTED_TODO_COMMENT]
-    private const val TRANSFER_PAYLOAD_FUNCTION = "0x1::aptos_account::transfer"
-
+    private const val TRANSFER_PAYLOAD_FUNCTION = "0x1::aptos_account::transfer_coins"
+    private const val APTOS_COIN_CONTRACT = "0x1::aptos_coin::AptosCoin"
     private const val SIGNATURE_TYPE = "ed25519_signature"
 
     fun convert(from: AptosTransactionInfo): AptosTransactionBody {
@@ -23,16 +22,20 @@ internal object AptosTransactionConverter {
             expirationTimestamp = from.expirationTimestamp.toString(),
             gasUnitPrice = from.gasUnitPrice.toString(),
             maxGasAmount = from.maxGasAmount.toString(),
-            payload = createTransferPayload(from.destinationAddress, from.amount),
+            payload = createTransferPayload(from.destinationAddress, from.amount, from.contractAddress),
             signature = from.hash?.let { createSignature(publicKey = from.publicKey, hash = it) },
         )
     }
 
-    private fun createTransferPayload(destination: String, amount: Long): AptosTransactionBody.Payload {
+    private fun createTransferPayload(
+        destination: String,
+        amount: Long,
+        contractAddress: String?,
+    ): AptosTransactionBody.Payload {
         return AptosTransactionBody.Payload(
             type = TRANSFER_PAYLOAD_TYPE,
             function = TRANSFER_PAYLOAD_FUNCTION,
-            argumentTypes = listOf(),
+            argumentTypes = listOf(contractAddress ?: APTOS_COIN_CONTRACT),
             arguments = listOf(destination, amount.toString()),
         )
     }
