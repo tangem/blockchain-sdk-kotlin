@@ -68,6 +68,7 @@ sealed class BlockchainSdkError(
         cause = throwable,
     ) {
         class Api(ex: Exception) : Polkadot(1, ex.localizedMessage ?: "Unknown api exception", ex)
+        class ApiWithCode(code: Int, message: String) : Polkadot(code, message)
     }
 
     sealed class Kaspa(
@@ -156,6 +157,19 @@ sealed class BlockchainSdkError(
         )
     }
 
+    sealed class Ethereum(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_ETHEREUM + subCode,
+        customMessage = customMessage ?: "${ERROR_CODE_ETHEREUM + subCode}",
+        messageResId = null,
+        cause = throwable,
+    ) {
+        class Api(code: Int, message: String) : Ethereum(subCode = code, customMessage = message)
+    }
+
     companion object {
         const val ERROR_CODE_SOLANA = 1000
         const val ERROR_CODE_POLKADOT = 2000
@@ -165,6 +179,7 @@ sealed class BlockchainSdkError(
         const val ERROR_CODE_WALLET_CORE = 6000
         const val ERROR_CODE_CHIA = 7000
         const val ERROR_CODE_NEAR = 8000
+        const val ERROR_CODE_ETHEREUM = 9000
     }
 }
 
