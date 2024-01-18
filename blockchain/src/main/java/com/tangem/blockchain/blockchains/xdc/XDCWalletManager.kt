@@ -10,7 +10,7 @@ import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 
-internal class XinFinWalletManager(
+internal class XDCWalletManager(
     wallet: Wallet,
     transactionBuilder: EthereumTransactionBuilder,
     networkProvider: EthereumNetworkProvider,
@@ -28,6 +28,10 @@ internal class XinFinWalletManager(
     }
 
     private fun convertTransactionDataAddress(transactionData: TransactionData) = transactionData.copy(
-        destinationAddress = XinFinAddressService.makeWith0xPrefix(transactionData.destinationAddress),
+        sourceAddress = XDCAddressService.makeWith0xPrefix(transactionData.sourceAddress),
+        destinationAddress = XDCAddressService.makeWith0xPrefix(transactionData.destinationAddress),
+        contractAddress = transactionData.contractAddress?.let {
+            XDCAddressService.makeWith0xPrefix(it)
+        },
     )
 }
