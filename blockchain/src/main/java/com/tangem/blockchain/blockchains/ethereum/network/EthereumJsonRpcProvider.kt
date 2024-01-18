@@ -89,9 +89,9 @@ class EthereumJsonRpcProvider(
             data = buildString {
                 append(tokenAllowanceSignature)
                 append(CALL_DATA_SEPARATOR)
-                append(ownerAddress.substring(2))
+                append(ownerAddress.removePrefixes())
                 append(CALL_DATA_SEPARATOR)
-                append(spenderAddress.substring(2))
+                append(spenderAddress.removePrefixes())
             },
         )
 
@@ -130,7 +130,7 @@ class EthereumJsonRpcProvider(
     }
 
     private fun String.removePrefixes(): String {
-        return removePrefix("0x").removePrefix("xdc")
+        return takeLast(40)
     }
 
     companion object {
