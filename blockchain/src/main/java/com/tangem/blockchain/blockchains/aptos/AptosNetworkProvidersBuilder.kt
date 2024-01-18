@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.aptos
 
 import com.tangem.blockchain.blockchains.aptos.network.AptosNetworkProvider
-import com.tangem.blockchain.blockchains.aptos.network.provider.AptosJsonRpcNetworkProvider
+import com.tangem.blockchain.blockchains.aptos.network.provider.AptosRestNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.extensions.letNotBlank
@@ -20,16 +20,16 @@ internal class AptosNetworkProvidersBuilder(
     }
 
     private fun createOfficialNetworkProvider(): AptosNetworkProvider {
-        return AptosJsonRpcNetworkProvider(
+        return AptosRestNetworkProvider(
             baseUrl = "https://fullnode.${if (blockchain.isTestnet()) "testnet" else "mainnet"}.aptoslabs.com/",
         )
     }
 
     private fun createNowNodesNetworkProvider(apiKey: String): AptosNetworkProvider {
-        return AptosJsonRpcNetworkProvider(baseUrl = "https://apt.nownodes.io/$apiKey/")
+        return AptosRestNetworkProvider(baseUrl = "https://apt.nownodes.io/$apiKey/")
     }
 
-    private fun createGetBlockNetworkProvider(accessToken: String): AptosJsonRpcNetworkProvider {
-        return AptosJsonRpcNetworkProvider(baseUrl = "https://go.getblock.io/$accessToken/")
+    private fun createGetBlockNetworkProvider(accessToken: String): AptosRestNetworkProvider {
+        return AptosRestNetworkProvider(baseUrl = "https://go.getblock.io/$accessToken/")
     }
 }
