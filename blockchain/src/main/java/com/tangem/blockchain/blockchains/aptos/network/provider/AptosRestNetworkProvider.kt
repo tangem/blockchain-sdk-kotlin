@@ -5,15 +5,13 @@ import com.tangem.blockchain.blockchains.aptos.models.AptosTransactionInfo
 import com.tangem.blockchain.blockchains.aptos.network.AptosApi
 import com.tangem.blockchain.blockchains.aptos.network.AptosNetworkProvider
 import com.tangem.blockchain.blockchains.aptos.network.converter.AptosTransactionConverter
-import com.tangem.blockchain.blockchains.aptos.network.response.AptosResourceBody
-import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.createRetrofitInstance
-import java.math.BigDecimal
 
-internal class AptosJsonRpcNetworkProvider(override val baseUrl: String) : AptosNetworkProvider {
+internal class AptosRestNetworkProvider(override val baseUrl: String) : AptosNetworkProvider {
 
     private val api = createRetrofitInstance(baseUrl = baseUrl).create(AptosApi::class.java)
 
@@ -21,15 +19,15 @@ internal class AptosJsonRpcNetworkProvider(override val baseUrl: String) : Aptos
         return try {
             val resources = api.getAccountResources(address)
 
-            val accountResource = resources.getResource<AptosResourceBody.AccountResource>()?.account
-            val coinResource = resources.getResource<AptosResourceBody.CoinResource>()?.coinData
+            val accountResource = resources.getResource<AptosResource.AccountResource>()
+            val coinResource = resources.getResource<AptosResource.CoinResource>()
 
             if (accountResource != null && coinResource != null) {
                 Result.Success(
                     AptosAccountInfo(
                         sequenceNumber = accountResource.sequenceNumber.toLong(),
-                        balance = BigDecimal(coinResource.coin.value)
-                            .movePointLeft(Blockchain.Aptos.decimals()),
+                        balance = coinResource.balance,
+                        tokens = resources.filterIsInstance<AptosResource.TokenResource>(),
                     ),
                 )
             } else {
@@ -98,7 +96,7 @@ internal class AptosJsonRpcNetworkProvider(override val baseUrl: String) : Aptos
         }
     }
 
-    private inline fun <reified T : AptosResourceBody> List<AptosResourceBody>.getResource(): T? {
+    private inline fun <reified T : AptosResource> List<AptosResource>.getResource(): T? {
         return firstNotNullOfOrNull { it as? T }
     }
 }
