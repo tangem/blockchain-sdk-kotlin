@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.aptos
 
+import androidx.annotation.VisibleForTesting
 import com.tangem.blockchain.blockchains.aptos.models.AptosTransactionInfo
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
@@ -85,7 +86,8 @@ internal class AptosTransactionBuilder(private val wallet: Wallet) {
 
     private fun DateTime.seconds(): Long = millis.div(other = 1000)
 
-    private companion object {
+    @VisibleForTesting(otherwise = VisibleForTesting.NONE)
+    companion object {
 
         const val TRANSACTION_LIFETIME_IN_MIN = 5
 
