@@ -132,13 +132,16 @@ class EthereumJsonRpcProvider(
     }
 
     private fun String.removePrefixes(): String {
-        return takeLast(40)
+        return takeLast(ETH_VALUABLE_ADDRESS_PART_LENGTH)
     }
 
     companion object {
         private val tokenAllowanceSignature =
             "allowance(address,address)".toByteArray().toKeccak().copyOf(4).toHexString()
+
         private const val CALL_DATA_SEPARATOR = "000000000000000000000000"
+
+        private const val ETH_VALUABLE_ADDRESS_PART_LENGTH = 40
     }
 }
 
