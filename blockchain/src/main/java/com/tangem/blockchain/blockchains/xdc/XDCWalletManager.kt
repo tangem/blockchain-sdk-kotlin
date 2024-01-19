@@ -28,10 +28,10 @@ internal class XDCWalletManager(
     }
 
     private fun convertTransactionDataAddress(transactionData: TransactionData) = transactionData.copy(
-        sourceAddress = XDCAddressService.makeWith0xPrefix(transactionData.sourceAddress),
-        destinationAddress = XDCAddressService.makeWith0xPrefix(transactionData.destinationAddress),
+        sourceAddress = XDCAddressService.formatWith0xPrefix(transactionData.sourceAddress),
+        destinationAddress = XDCAddressService.formatWith0xPrefix(transactionData.destinationAddress),
         contractAddress = transactionData.contractAddress?.let {
-            XDCAddressService.makeWith0xPrefix(it)
+            XDCAddressService.formatWith0xPrefix(it)
         },
     )
 }
