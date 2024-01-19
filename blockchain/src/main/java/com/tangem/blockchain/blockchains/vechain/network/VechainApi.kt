@@ -9,7 +9,7 @@ internal interface VechainApi {
     suspend fun getAccount(@Path("address") address: String): VechainGetAccountResponse
 
     @POST("accounts/*")
-    suspend fun getTokenBalance(@Body requestBody: VechainTokenBalanceRequest): List<VechainData>
+    suspend fun callContract(@Body requestBody: VechainContractCallRequest): List<VechainContractCallResponse>
 
     @GET("blocks/best")
     suspend fun getLatestBlockInfo(): VechainLatestBlockResponse
