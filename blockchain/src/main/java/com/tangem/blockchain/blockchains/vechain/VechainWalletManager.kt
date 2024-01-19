@@ -57,7 +57,22 @@ internal class VechainWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
-        return Result.Success(transactionBuilder.constructFee(amount, destination))
+        val vmGas = getVmGas(amount, destination).successOr { return it }
+
+        return Result.Success(transactionBuilder.constructFee(amount, destination, vmGas))
+    }
+
+    private suspend fun getVmGas(amount: Amount, destination: String): Result<Long> {
+        return when (amount.type) {
+            AmountType.Coin -> Result.Success(0)
+            is AmountType.Token -> networkService.getVmGas(
+                source = wallet.address,
+                destination = destination,
+                amount = amount,
+                token = amount.type.token,
+            )
+            AmountType.Reserve -> throw BlockchainSdkError.FailedToLoadFee
+        }
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
