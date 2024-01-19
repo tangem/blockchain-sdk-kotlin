@@ -67,9 +67,10 @@ sealed class SimpleResult {
     data class Failure(val error: BlockchainError) : SimpleResult()
 
     companion object {
-        fun fromTangemSdkError(sdkError: TangemError): Failure = Failure(
-            BlockchainSdkError.WrappedTangemError(sdkError),
-        )
+        fun fromTangemSdkError(sdkError: TangemError): Failure {
+            return (sdkError as? BlockchainSdkError)?.let { Failure(it) }
+                ?: Failure(BlockchainSdkError.WrappedTangemError(sdkError))
+        }
     }
 }
 
