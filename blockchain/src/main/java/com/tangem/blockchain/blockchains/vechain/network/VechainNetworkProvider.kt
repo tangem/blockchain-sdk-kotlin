@@ -32,9 +32,9 @@ internal class VechainNetworkProvider(
         }
     }
 
-    suspend fun getTokenBalance(request: VechainTokenBalanceRequest): Result<List<VechainData>> {
+    suspend fun callContract(request: VechainContractCallRequest): Result<List<VechainContractCallResponse>> {
         return try {
-            val response = api.getTokenBalance(requestBody = request)
+            val response = api.callContract(requestBody = request)
             Result.Success(response)
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
