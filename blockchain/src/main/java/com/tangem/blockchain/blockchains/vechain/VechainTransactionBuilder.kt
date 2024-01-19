@@ -30,9 +30,9 @@ class VechainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
     private val chainTag = if (blockchain.isTestnet()) 0x27 else 0x4a
     private val coinType = blockchain.trustWalletCoinType
 
-    fun constructFee(amount: Amount, destination: String): TransactionFee {
+    fun constructFee(amount: Amount, destination: String, vmGas: Long): TransactionFee {
         val toClause = buildClause(amount, destination)
-        val gas = intrinsicGas(toClause)
+        val gas = intrinsicGas(toClause, vmGas)
         return TransactionFee.Choosable(
             minimum = Fee.Vechain(
                 amount = Amount(
@@ -123,18 +123,18 @@ class VechainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
             .setNonce(nonce)
             .setBlockRef(blockInfo.blockRef)
             .setExpiration(EXPIRATION_BLOCKS)
-            .setGas(intrinsicGas(clause))
+            .setGas(fee.amount.value?.movePointRight(GAS_TO_VET_DECIMAL)?.toLong() ?: 0L)
             .setGasPriceCoef(fee.gasPriceCoef)
             .addClauses(clause)
             .build()
     }
 
-    private fun intrinsicGas(clause: VeChain.Clause): Long {
+    private fun intrinsicGas(clause: VeChain.Clause, vmGas: Long): Long {
         val data = clause.data.toStringUtf8()
         val dataCost = calculateDataCost(data)
-        val vmInvocationCost = if (dataCost > 0) VM_INVOCATION_COST * 2 else 0
+        val vmInvocationCost = if (dataCost > 0) VM_INVOCATION_COST else 0
 
-        return TX_GAS + CLAUSE_GAS + dataCost + vmInvocationCost
+        return TX_GAS + CLAUSE_GAS + dataCost + vmInvocationCost + vmGas
     }
 
     private fun calculateDataCost(data: String): Long {
