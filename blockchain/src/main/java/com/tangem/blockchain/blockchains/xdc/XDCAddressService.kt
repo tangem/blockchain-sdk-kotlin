@@ -22,11 +22,11 @@ internal class XDCAddressService : EthereumAddressService() {
         return super.validate(address.replace(XDC_PREFIX, ETH_PREFIX))
     }
 
-    private fun makeAddressWith0xPrefix(walletPublicKey: ByteArray, curve: EllipticCurve?) : String {
+    private fun makeAddressWith0xPrefix(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         return super.makeAddress(walletPublicKey, curve)
     }
 
-    private fun makeAddressWithXdcPrefix(walletPublicKey: ByteArray, curve: EllipticCurve?) : String {
+    private fun makeAddressWithXdcPrefix(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         val ethAddress = makeAddressWith0xPrefix(walletPublicKey, curve)
 
         return formatWithXdcPrefix(ethAddress)
