@@ -202,13 +202,15 @@ open class EthereumNetworkService(
 
     private fun String.parseAmount(decimals: Int) = this.responseToBigInteger().toBigDecimal().movePointLeft(decimals)
 
-    private fun EthereumError.toException() = Exception("Code: ${this.code}, ${this.message}")
-
     private fun Result<EthereumResponse>.extractResult(): String = when (this) {
         is Result.Success -> {
             this.data.result
-                ?: throw this.data.error?.toException()?.toBlockchainSdkError()
-                    ?: BlockchainSdkError.CustomError("Unknown response format")
+                ?: throw this.data.error?.let { error ->
+                    BlockchainSdkError.Ethereum.Api(
+                        code = error.code ?: 0,
+                        message = error.message ?: "No error message",
+                    )
+                } ?: BlockchainSdkError.CustomError("Unknown response format")
         }
         is Result.Failure -> {
             throw this.error as? BlockchainSdkError ?: BlockchainSdkError.CustomError("Unknown error format")
