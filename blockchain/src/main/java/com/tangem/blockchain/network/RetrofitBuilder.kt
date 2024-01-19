@@ -91,3 +91,5 @@ const val API_CHIA_FIREACADEMY_TESTNET = "https://kraken.fireacademy.io/leaflet-
 const val API_CHIA_TANGEM = "https://chia.tangem.com/"
 const val API_HEDERA_MIRROR = "https://mainnet-public.mirrornode.hedera.com/"
 const val API_HEDERA_MIRROR_TESTNET = "https://testnet.mirrornode.hedera.com/"
+const val API_HEDERA_ARKHIA_MIRROR = "https://pool.arkhia.io/hedera/mainnet/api/v1/"
+const val API_HEDERA_ARKHIA_MIRROR_TESTNET = "https://pool.arkhia.io/hedera/testnet/api/v1/"

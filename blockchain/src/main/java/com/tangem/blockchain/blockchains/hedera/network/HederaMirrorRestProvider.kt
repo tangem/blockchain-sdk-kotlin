@@ -2,16 +2,26 @@ package com.tangem.blockchain.blockchains.hedera.network
 
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.extensions.AddHeaderInterceptor
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
 
-class HederaMirrorRestProvider(override val baseUrl: String) : HederaNetworkProvider {
+class HederaMirrorRestProvider(override val baseUrl: String, key: String? = null) : HederaNetworkProvider {
 
     private val api: HederaMirrorNodeApi by lazy {
-        createRetrofitInstance(baseUrl = baseUrl).create(HederaMirrorNodeApi::class.java)
+        createRetrofitInstance(
+            baseUrl = baseUrl,
+            headerInterceptors = listOf(
+                AddHeaderInterceptor(
+                    headers = buildMap {
+                        key?.let { put("X-API-Key", it) }
+                    },
+                ),
+            ),
+        ).create(HederaMirrorNodeApi::class.java)
     }
 
     override suspend fun getAccountId(publicKey: ByteArray): Result<String> {
