@@ -4,7 +4,6 @@ import android.util.Log
 import com.hedera.hashgraph.sdk.AccountBalanceQuery
 import com.hedera.hashgraph.sdk.AccountId
 import com.hedera.hashgraph.sdk.Client
-import com.hedera.hashgraph.sdk.PrivateKey
 import com.tangem.blockchain.blockchains.hedera.network.HederaNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.address.Address
@@ -13,7 +12,7 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
-import com.tangem.common.extensions.toHexString
+import com.tangem.common.extensions.toCompressedPublicKey
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -99,11 +98,14 @@ class HederaWalletManager(
         val accountId = wallet.address
 
         return if (accountId.isEmpty()) {
-            when (val getAccountIdResult = networkProvider.getAccountId(wallet.publicKey.blockchainKey)) {
+            when (
+                val getAccountIdResult =
+                    networkProvider.getAccountId(wallet.publicKey.blockchainKey.toCompressedPublicKey())
+            ) {
                 is Result.Success -> {
-                    val requestedAccountId = getAccountIdResult.data
-                    wallet.addresses = setOf(Address(requestedAccountId))
                     // TODO cache retrieved address in storage
+                    val fetchedAccountId = getAccountIdResult.data
+                    wallet.addresses = setOf(Address(fetchedAccountId))
                     getAccountIdResult
                 }
                 is Result.Failure -> {

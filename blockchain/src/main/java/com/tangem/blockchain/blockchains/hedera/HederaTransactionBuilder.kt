@@ -1,14 +1,12 @@
 package com.tangem.blockchain.blockchains.hedera
 
 import com.hedera.hashgraph.sdk.*
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.toKeccak
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.card.EllipticCurve
-import java.math.BigDecimal
-import java.math.RoundingMode
+import com.tangem.crypto.CryptoUtils
 
 class HederaTransactionBuilder(
     curve: EllipticCurve,
@@ -38,12 +36,17 @@ class HederaTransactionBuilder(
 
         val bodiesToSign = transaction!!.innerSignedTransactions.map { it.bodyBytes.toByteArray() }
 
-        return Result.Success(bodiesToSign)
+        return if (publicKey.isED25519) {
+            Result.Success(bodiesToSign)
+        } else {
+            Result.Success(bodiesToSign.map { it.toKeccak() })
+        }
     }
 
     fun buildToSend(signatures: List<ByteArray>): TransferTransaction {
+        val normalizedSignatures = if (publicKey.isED25519) signatures else signatures.map { CryptoUtils.normalize(it) }
         transaction!!.innerSignedTransactions.indices.forEach {
-            transaction!!.sigPairLists[it].addSigPair(publicKey.toSignaturePairProtobuf(signatures[it]))
+            transaction!!.sigPairLists[it].addSigPair(publicKey.toSignaturePairProtobuf(normalizedSignatures[it]))
         }
         return transaction!!
     }
