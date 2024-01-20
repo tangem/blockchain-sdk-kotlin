@@ -4,15 +4,14 @@ import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 
 internal class HederaExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
-    override val explorerBaseUrl: String = if (isTestnet) TODO() else TODO()
-
-    override val testNetTopUpUrl: String? = if (isTestnet) null else null
+    override val explorerBaseUrl: String =
+        if (isTestnet) "https://hashscan.io/testnet/" else "https://hashscan.io/mainnet/"
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
-        return explorerBaseUrl + TODO()
+        return explorerBaseUrl + "account/$walletAddress"
     }
 
     override fun explorerTransactionUrl(transactionHash: String): String {
-        return explorerBaseUrl + TODO()
+        return explorerBaseUrl + "transaction/$transactionHash"
     }
 }
