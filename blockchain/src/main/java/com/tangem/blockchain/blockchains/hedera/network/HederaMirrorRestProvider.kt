@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.hedera.network
 
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.AddHeaderInterceptor
@@ -43,7 +44,8 @@ class HederaMirrorRestProvider(override val baseUrl: String, key: String? = null
             // use current rate for simplicity, we make an overhead on transaction building anyway
             val rateToUse = exchangeRateData.currentRate
             Result.Success(
-                CENTS_IN_A_DOLLAR.toBigDecimal() * rateToUse.hbarEquivalent.toBigDecimal() /
+                CENTS_IN_A_DOLLAR.toBigDecimal().setScale(Blockchain.Hedera.decimals()) *
+                    rateToUse.hbarEquivalent.toBigDecimal() /
                     rateToUse.centEquivalent.toBigDecimal()
             )
         } catch (exception: Exception) {

@@ -15,6 +15,7 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 class HederaWalletManager(
     wallet: Wallet,
@@ -84,11 +85,9 @@ class HederaWalletManager(
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         return when (val usdExchangeRateResult = networkProvider.getUsdExchangeRate()) {
             is Result.Success -> {
-                Result.Success(
-                    TransactionFee.Single(
-                        Fee.Common(Amount(HBAR_TRANSFER_USD_COST * usdExchangeRateResult.data, blockchain))
-                    )
-                )
+                val fee = (HBAR_TRANSFER_USD_COST * MAX_FEE_MULTIPLIER * usdExchangeRateResult.data)
+                    .setScale(blockchain.decimals(), RoundingMode.UP)
+                Result.Success(TransactionFee.Single(Fee.Common(Amount(fee, blockchain))))
             }
             is Result.Failure -> {
                 usdExchangeRateResult
@@ -128,5 +127,7 @@ class HederaWalletManager(
     companion object {
         // https://docs.hedera.com/hedera/networks/mainnet/fees
         private val HBAR_TRANSFER_USD_COST = BigDecimal("0.0001")
+        // Hedera fees are low, allow 10% safety margin to allow usage of not precise fee estimate
+        private val MAX_FEE_MULTIPLIER = BigDecimal("1.1")
     }
 }

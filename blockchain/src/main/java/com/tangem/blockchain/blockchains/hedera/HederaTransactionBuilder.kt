@@ -8,6 +8,7 @@ import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.card.EllipticCurve
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 class HederaTransactionBuilder(
     curve: EllipticCurve,
@@ -24,7 +25,7 @@ class HederaTransactionBuilder(
 
     fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
         val transferValue = transactionData.amount.value!!
-        val maxFeeValue = transactionData.fee!!.amount.value!! * MAX_FEE_MULTIPLIER
+        val maxFeeValue = transactionData.fee!!.amount.value!!
         val sourceAccountId = AccountId.fromString(transactionData.sourceAddress)
         val destinationAccountId = AccountId.fromString(transactionData.destinationAddress)
 
@@ -45,10 +46,5 @@ class HederaTransactionBuilder(
             transaction!!.sigPairLists[it].addSigPair(publicKey.toSignaturePairProtobuf(signatures[it]))
         }
         return transaction!!
-    }
-
-    companion object {
-        // Hedera fees are low, allow 10% safety margin to allow usage of not precise fee estimate
-        private val MAX_FEE_MULTIPLIER = BigDecimal("1.1")
     }
 }
