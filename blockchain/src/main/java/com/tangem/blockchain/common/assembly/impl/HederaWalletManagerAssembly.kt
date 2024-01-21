@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common.assembly.impl
 
+import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.hedera.HederaTransactionBuilder
 import com.tangem.blockchain.blockchains.hedera.HederaWalletManager
 import com.tangem.blockchain.blockchains.hedera.network.HederaMirrorRestProvider
@@ -33,7 +34,8 @@ internal object HederaWalletManagerAssembly : WalletManagerAssembly<HederaWallet
                 curve = input.curve,
                 wallet = input.wallet,
             ),
-            networkProvider = HederaNetworkService(providers)
+            networkProvider = HederaNetworkService(providers),
+            addressService = HederaAddressService(isTestnet, input.context)
         )
     }
 }

@@ -1,11 +1,15 @@
 package com.tangem.blockchain.common
 
+import android.content.Context
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.impl.*
 import com.tangem.common.card.EllipticCurve
 
-class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainSdkConfig()) {
+class WalletManagerFactory(
+    private val config: BlockchainSdkConfig = BlockchainSdkConfig(),
+    private val context: Context
+) {
 
     /**
      * Base wallet manager initializer
@@ -75,7 +79,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
     ): WalletManager? {
         if (checkIfWrongKey(blockchain, curve, publicKey)) return null
 
-        val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
+        val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve, context)
         val wallet = Wallet(blockchain, addresses, publicKey, setOf())
 
         return getAssembly(blockchain).make(
@@ -83,6 +87,7 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
                 wallet = wallet,
                 config = config,
                 curve = curve,
+                context
             ),
         )
     }

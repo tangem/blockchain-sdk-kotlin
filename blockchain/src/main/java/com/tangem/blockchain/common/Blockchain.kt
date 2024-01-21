@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import android.content.Context
 import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
@@ -18,10 +19,7 @@ import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.vechain.VechainWalletManager
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
-import com.tangem.blockchain.common.address.Address
-import com.tangem.blockchain.common.address.AddressService
-import com.tangem.blockchain.common.address.MultisigAddressProvider
-import com.tangem.blockchain.common.address.TrustWalletAddressService
+import com.tangem.blockchain.common.address.*
 import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProviderFactory
@@ -172,12 +170,16 @@ enum class Blockchain(
         walletPublicKey: ByteArray,
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
+        context: Context? = null,
     ): Set<Address> {
+        val addressService = getAddressService()
         return if (pairPublicKey != null) {
-            (getAddressService() as? MultisigAddressProvider)
+            (addressService as? MultisigAddressProvider)
                 ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()
+        } else if (addressService is ContextAddressProvider && context != null) {
+            addressService.makeContextAddresses(walletPublicKey, curve, context)
         } else {
-            getAddressService().makeAddresses(walletPublicKey, curve)
+            addressService.makeAddresses(walletPublicKey, curve)
         }
     }
 

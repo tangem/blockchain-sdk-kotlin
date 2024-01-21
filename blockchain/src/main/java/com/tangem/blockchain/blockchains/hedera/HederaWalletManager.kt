@@ -20,6 +20,7 @@ class HederaWalletManager(
     wallet: Wallet,
     private val transactionBuilder: HederaTransactionBuilder,
     private val networkProvider: HederaNetworkProvider,
+    private val addressService: HederaAddressService
 ) : WalletManager(wallet), TransactionSender {
 
     private val blockchain = wallet.blockchain
@@ -103,9 +104,9 @@ class HederaWalletManager(
                     networkProvider.getAccountId(wallet.publicKey.blockchainKey.toCompressedPublicKey())
             ) {
                 is Result.Success -> {
-                    // TODO cache retrieved address in storage
                     val fetchedAccountId = getAccountIdResult.data
                     wallet.addresses = setOf(Address(fetchedAccountId))
+                    addressService.saveAddress(fetchedAccountId, wallet.publicKey.blockchainKey)
                     getAccountIdResult
                 }
                 is Result.Failure -> {
