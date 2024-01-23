@@ -47,7 +47,6 @@ class EstimationFeeAddressFactory(
             Blockchain.StellarTestnet,
             Blockchain.Binance,
             Blockchain.BinanceTestnet,
-            Blockchain.Solana,
             Blockchain.SolanaTestnet,
             -> {
                 // Doesn't depend on amount and destination
@@ -79,6 +78,7 @@ class EstimationFeeAddressFactory(
             Blockchain.Dash,
             Blockchain.Ravencoin,
             Blockchain.RavencoinTestnet,
+            Blockchain.Solana,
             // EVM-like
             Blockchain.Ethereum,
             Blockchain.EthereumTestnet,
