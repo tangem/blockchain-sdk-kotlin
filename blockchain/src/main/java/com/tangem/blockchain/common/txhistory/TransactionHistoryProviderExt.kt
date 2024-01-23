@@ -4,7 +4,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionHistoryProvid
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionHistoryProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
-import com.tangem.blockchain.network.blockbook.config.BlockBookConfig
+import com.tangem.blockchain.network.blockbook.config.NowNodesConfig
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 
 internal fun Blockchain.getTransactionHistoryProvider(config: BlockchainSdkConfig): TransactionHistoryProvider {
@@ -19,7 +19,7 @@ internal fun Blockchain.getTransactionHistoryProvider(config: BlockchainSdkConfi
                 BitcoinTransactionHistoryProvider(
                     blockchain = this,
                     BlockBookApi(
-                        config = BlockBookConfig.NowNodes(nowNodesCredentials = config.nowNodeCredentials),
+                        config = NowNodesConfig(nowNodesCredentials = config.nowNodeCredentials),
                         blockchain = this,
                     ),
                 )
@@ -33,12 +33,12 @@ internal fun Blockchain.getTransactionHistoryProvider(config: BlockchainSdkConfi
             Blockchain.BSC,
             // Blockchain.Polygon,
             Blockchain.EthereumPow,
-            // Blockchain.Kava,
+                // Blockchain.Kava,
             -> {
                 EthereumTransactionHistoryProvider(
                     blockchain = this,
                     BlockBookApi(
-                        config = BlockBookConfig.NowNodes(nowNodesCredentials = config.nowNodeCredentials),
+                        config = NowNodesConfig(nowNodesCredentials = config.nowNodeCredentials),
                         blockchain = this,
                     ),
                 )
