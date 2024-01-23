@@ -1,10 +1,14 @@
 package com.tangem.blockchain.network.blockbook.network.requests
 
-class GetFeeRequest private constructor(
-    val jsonrpc: String,
-    val id: String,
-    val method: String,
-    val params: List<Int>,
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = true)
+internal class GetFeeRequest(
+    @Json(name = "jsonrpc") val jsonrpc: String,
+    @Json(name = "id") val id: String,
+    @Json(name = "method") val method: String,
+    @Json(name = "params") val params: List<Int>,
 ) {
     companion object {
 
