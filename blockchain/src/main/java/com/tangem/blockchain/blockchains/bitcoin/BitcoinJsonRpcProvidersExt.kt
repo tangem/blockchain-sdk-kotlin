@@ -6,7 +6,8 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.GetBlockCredentials
 import com.tangem.blockchain.network.blockbook.BlockBookNetworkProvider
-import com.tangem.blockchain.network.blockbook.config.BlockBookConfig
+import com.tangem.blockchain.network.blockbook.config.GetBlockConfig
+import com.tangem.blockchain.network.blockbook.config.NowNodesConfig
 import com.tangem.blockchain.network.blockchair.BlockchairNetworkProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 
@@ -55,7 +56,7 @@ internal fun Blockchain.getBitcoinNetworkProviders(
 private fun getNowNodesProvider(blockchain: Blockchain, config: BlockchainSdkConfig): BitcoinNetworkProvider? {
     return if (config.nowNodeCredentials != null && config.nowNodeCredentials.apiKey.isNotBlank()) {
         BlockBookNetworkProvider(
-            config = BlockBookConfig.NowNodes(nowNodesCredentials = config.nowNodeCredentials),
+            config = NowNodesConfig(nowNodesCredentials = config.nowNodeCredentials),
             blockchain = blockchain,
         )
     } else {
@@ -78,7 +79,7 @@ private fun getGetBlockProvider(
 
     return if (!accessToken.blockBookRest.isNullOrEmpty() && !accessToken.jsonRpc.isNullOrEmpty()) {
         BlockBookNetworkProvider(
-            config = BlockBookConfig.GetBlock(
+            config = GetBlockConfig(
                 blockBookToken = accessToken.blockBookRest,
                 jsonRpcToken = accessToken.jsonRpc,
             ),
