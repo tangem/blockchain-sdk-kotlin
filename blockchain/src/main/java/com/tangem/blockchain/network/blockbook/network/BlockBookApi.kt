@@ -14,9 +14,10 @@ import com.tangem.blockchain.network.blockbook.network.responses.GetAddressRespo
 import com.tangem.blockchain.network.blockbook.network.responses.GetFeeResponse
 import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponseItem
 import com.tangem.blockchain.network.blockbook.network.responses.SendTransactionResponse
-import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import ru.gildor.coroutines.okhttp.await
 import java.io.IOException
 
@@ -25,6 +26,7 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
 
     private val client = BlockchainSdkRetrofitBuilder.build(
         internalInterceptors = listOfNotNull(
+            AddHeaderInterceptor(mapOf("Content-Type" to "application/json")),
             config.credentials?.let { AddHeaderInterceptor(mapOf(it)) },
         ),
     )
