@@ -43,7 +43,6 @@ data class GetBlockCredentials(
     val gnosis: GetBlockAccessToken?,
     val cronos: GetBlockAccessToken?,
     val solana: GetBlockAccessToken?,
-    val stellar: GetBlockAccessToken?,
     val ton: GetBlockAccessToken?,
     val tron: GetBlockAccessToken?,
     val cosmos: GetBlockAccessToken?,
