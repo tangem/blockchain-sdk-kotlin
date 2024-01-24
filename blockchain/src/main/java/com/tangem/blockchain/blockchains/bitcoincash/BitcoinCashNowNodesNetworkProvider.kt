@@ -21,7 +21,7 @@ import java.math.RoundingMode
 import java.util.Calendar
 
 @Suppress("MagicNumber")
-class BitcoinCashNownodesNetworkProvider(
+class BitcoinCashNowNodesNetworkProvider(
     val credentials: Pair<String, String>,
     val bchBookUrl: String,
     val bchUrl: String,
