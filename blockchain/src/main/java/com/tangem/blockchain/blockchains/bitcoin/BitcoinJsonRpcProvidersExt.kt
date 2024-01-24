@@ -1,10 +1,12 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashNownodesNetworkProvider
 import com.tangem.blockchain.blockchains.ravencoin.network.RavencoinNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.GetBlockCredentials
+import com.tangem.blockchain.common.NowNodeCredentials
 import com.tangem.blockchain.network.blockbook.BlockBookNetworkProvider
 import com.tangem.blockchain.network.blockbook.config.GetBlockConfig
 import com.tangem.blockchain.network.blockbook.config.NowNodesConfig
@@ -18,26 +20,29 @@ internal fun Blockchain.getBitcoinNetworkProviders(
     return when (this) {
         Blockchain.Bitcoin -> listOfNotNull(
             getNowNodesProvider(blockchain, config),
-            getGetBlockProvider(blockchain, config.getBlockCredentials),
-            *getBlockchairProviders(blockchain, config),
-            getBlockcypherProvider(blockchain, config),
+            // getGetBlockProvider(blockchain, config.getBlockCredentials),
+            // *getBlockchairProviders(blockchain, config),
+            // getBlockcypherProvider(blockchain, config),
         )
         Blockchain.BitcoinTestnet -> listOfNotNull(
             getNowNodesProvider(blockchain, config),
-            *getBlockchairProviders(blockchain, config),
-            getBlockcypherProvider(blockchain, config),
+            // *getBlockchairProviders(blockchain, config),
+            // getBlockcypherProvider(blockchain, config),
         )
         Blockchain.Litecoin,
         Blockchain.Dogecoin,
         Blockchain.Dash,
         -> listOfNotNull(
             getNowNodesProvider(blockchain, config),
-            getGetBlockProvider(blockchain, config.getBlockCredentials),
-            *getBlockchairProviders(blockchain, config),
-            getBlockcypherProvider(blockchain, config),
+            // getGetBlockProvider(blockchain, config.getBlockCredentials),
+            // *getBlockchairProviders(blockchain, config),
+            // getBlockcypherProvider(blockchain, config),
         )
         Blockchain.BitcoinCash -> listOfNotNull(
-            *getBlockchairProviders(blockchain, config),
+            getBitcoinCashNownodesNetworkProvider(config),
+            // getNowNodesProvider(blockchain, config),
+            // getGetBlockProvider(blockchain, config.getBlockCredentials),
+            // *getBlockchairProviders(blockchain, config),
         )
         // TODO: we don't have BCH testnet providers now. Maybe remove it completely?
         Blockchain.BitcoinCashTestnet -> error("No providers for $this")
@@ -110,3 +115,14 @@ private fun getBlockcypherProvider(blockchain: Blockchain, config: BlockchainSdk
         BlockcypherNetworkProvider(blockchain = blockchain, tokens = config.blockcypherTokens)
     }
 }
+
+private fun getBitcoinCashNownodesNetworkProvider(config: BlockchainSdkConfig): BitcoinNetworkProvider? {
+    return if (config.nowNodeCredentials != null && config.nowNodeCredentials.apiKey.isNotBlank()) {
+        BitcoinCashNownodesNetworkProvider(
+            credentials = NowNodeCredentials.headerApiKey to config.nowNodeCredentials.apiKey,
+            bchBookUrl = "https://bchbook.nownodes.io/",
+            bchUrl = "https://bch.nownodes.io/"
+        )
+    } else null
+}
+
