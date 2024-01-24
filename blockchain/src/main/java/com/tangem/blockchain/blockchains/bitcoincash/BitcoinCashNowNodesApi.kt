@@ -36,7 +36,6 @@ internal class BitcoinCashNowNodesApi(
 
     private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
 
-    // done
     suspend fun getAddress(address: String): GetAddressResponse {
         return client
             .newCall(
@@ -49,26 +48,6 @@ internal class BitcoinCashNowNodesApi(
             .unpack()
     }
 
-    suspend fun getTransactions(
-        address: String,
-        page: Int,
-        pageSize: Int,
-        filterType: TransactionHistoryRequest.FilterType?,
-    ): GetAddressResponse {
-        val request = BlockBookRequest.GetAddress(page, pageSize, filterType)
-        return client
-            .newCall(
-                request = Request.Builder()
-                    .get()
-                    // .url("$requestBaseUrl/address/$address?details=txs${request.params()}")
-                    .url(bchUrl)
-                    .build(),
-            )
-            .await()
-            .unpack()
-    }
-
-    // done
     suspend fun getFee(): BitconCashGetFeeResponse {
         return client
             .newCall(
@@ -91,7 +70,6 @@ internal class BitcoinCashNowNodesApi(
             .unpack()
     }
 
-    // done
     suspend fun sendTransaction(txHex: String): SendTransactionResponse {
         return client
             .newCall(
@@ -109,14 +87,12 @@ internal class BitcoinCashNowNodesApi(
             .unpack()
     }
 
-    // done
     suspend fun getUtxo(address: String): List<GetUtxoResponseItem> {
         return client
             .newCall(
                 request = Request.Builder()
                     .get()
                     .url("$bchBookUrl/api/v2/utxo/$address")
-                    // .url(host1)
                     .build(),
             )
             .await()
