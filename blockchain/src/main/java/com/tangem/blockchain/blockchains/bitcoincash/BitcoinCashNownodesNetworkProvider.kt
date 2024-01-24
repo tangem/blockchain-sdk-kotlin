@@ -87,7 +87,12 @@ class BitcoinCashNownodesNetworkProvider(
     }
 
     override suspend fun getSignatureCount(address: String): Result<Int> {
-        throw BlockchainSdkError.CustomError("Not yet implemented")
+        return try {
+            val response = withContext(Dispatchers.IO) { api.getAddress(address) }
+            Result.Success(response.txs.plus(response.unconfirmedTxs ?: 0))
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
     }
 
     private fun createUnspentOutputs(
