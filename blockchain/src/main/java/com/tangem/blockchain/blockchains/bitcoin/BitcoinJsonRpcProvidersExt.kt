@@ -119,8 +119,9 @@ private fun getBitcoinCashNowNodesNetworkProvider(config: BlockchainSdkConfig): 
         BitcoinCashNowNodesNetworkProvider(
             credentials = NowNodeCredentials.headerApiKey to config.nowNodeCredentials.apiKey,
             bchBookUrl = "https://bchbook.nownodes.io/",
-            bchUrl = "https://bch.nownodes.io/"
+            bchUrl = "https://bch.nownodes.io/",
         )
-    } else null
+    } else {
+        null
+    }
 }
-
