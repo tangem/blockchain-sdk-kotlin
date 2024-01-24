@@ -33,7 +33,7 @@ internal fun Blockchain.getTransactionHistoryProvider(config: BlockchainSdkConfi
             Blockchain.BSC,
             // Blockchain.Polygon,
             Blockchain.EthereumPow,
-                // Blockchain.Kava,
+            // Blockchain.Kava,
             -> {
                 EthereumTransactionHistoryProvider(
                     blockchain = this,
