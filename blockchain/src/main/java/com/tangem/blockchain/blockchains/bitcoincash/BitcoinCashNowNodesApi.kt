@@ -5,10 +5,8 @@ import com.squareup.moshi.adapter
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.blockchain.blockchains.bitcoincash.network.BitconCashGetFeeResponse
 import com.tangem.blockchain.blockchains.bitcoincash.network.SendTransactionRequest
-import com.tangem.blockchain.common.txhistory.TransactionHistoryRequest
 import com.tangem.blockchain.extensions.AddHeaderInterceptor
 import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
-import com.tangem.blockchain.network.blockbook.config.BlockBookRequest
 import com.tangem.blockchain.network.blockbook.network.requests.GetFeeRequest
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponseItem
@@ -30,7 +28,7 @@ internal class BitcoinCashNowNodesApi(
     private val client = BlockchainSdkRetrofitBuilder.build(
         internalInterceptors = listOf(
             AddHeaderInterceptor(mapOf("Content-Type" to "application/json")),
-            AddHeaderInterceptor(mapOf(credentials))
+            AddHeaderInterceptor(mapOf(credentials)),
         ),
     )
 
@@ -58,8 +56,8 @@ internal class BitcoinCashNowNodesApi(
                             .toJson(
                                 GetFeeRequest.getFee(
                                     paramsList = emptyList(),
-                                    method = "estimatefee"
-                                )
+                                    method = "estimatefee",
+                                ),
                             )
                             .toRequestBody(APPLICATION_JSON_MEDIA_TYPE.toMediaTypeOrNull()),
                     )
