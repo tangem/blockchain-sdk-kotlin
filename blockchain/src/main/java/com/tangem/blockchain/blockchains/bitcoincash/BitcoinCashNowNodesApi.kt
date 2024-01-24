@@ -1,17 +1,16 @@
-package com.tangem.blockchain.network.blockbook.network
+package com.tangem.blockchain.blockchains.bitcoincash
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapter
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.blockchains.bitcoincash.network.BitconCashGetFeeResponse
+import com.tangem.blockchain.blockchains.bitcoincash.network.SendTransactionRequest
 import com.tangem.blockchain.common.txhistory.TransactionHistoryRequest
 import com.tangem.blockchain.extensions.AddHeaderInterceptor
 import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
-import com.tangem.blockchain.network.blockbook.config.BlockBookConfig
 import com.tangem.blockchain.network.blockbook.config.BlockBookRequest
 import com.tangem.blockchain.network.blockbook.network.requests.GetFeeRequest
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
-import com.tangem.blockchain.network.blockbook.network.responses.GetFeeResponse
 import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponseItem
 import com.tangem.blockchain.network.blockbook.network.responses.SendTransactionResponse
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -22,24 +21,28 @@ import ru.gildor.coroutines.okhttp.await
 import java.io.IOException
 
 @OptIn(ExperimentalStdlibApi::class)
-internal class BlockBookApi(private val config: BlockBookConfig, private val blockchain: Blockchain) {
+internal class BitcoinCashNowNodesApi(
+    private val bchBookUrl: String,
+    private val bchUrl: String,
+    credentials: Pair<String, String>,
+) {
 
     private val client = BlockchainSdkRetrofitBuilder.build(
-        internalInterceptors = listOfNotNull(
+        internalInterceptors = listOf(
             AddHeaderInterceptor(mapOf("Content-Type" to "application/json")),
-            config.credentials?.let { AddHeaderInterceptor(mapOf(it)) },
+            AddHeaderInterceptor(mapOf(credentials))
         ),
     )
 
     private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
 
+    // done
     suspend fun getAddress(address: String): GetAddressResponse {
-        val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.GetAddress(), blockchain)
         return client
             .newCall(
                 request = Request.Builder()
                     .get()
-                    .url("$requestBaseUrl/address/$address?details=txs")
+                    .url("${bchBookUrl}api/v2/address/$address?details=txs")
                     .build(),
             )
             .await()
@@ -53,55 +56,67 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
         filterType: TransactionHistoryRequest.FilterType?,
     ): GetAddressResponse {
         val request = BlockBookRequest.GetAddress(page, pageSize, filterType)
-        val requestBaseUrl = config.getRequestBaseUrl(request, blockchain)
         return client
             .newCall(
                 request = Request.Builder()
                     .get()
-                    .url("$requestBaseUrl/address/$address?details=txs${request.params()}")
+                    // .url("$requestBaseUrl/address/$address?details=txs${request.params()}")
+                    .url(bchUrl)
                     .build(),
             )
             .await()
             .unpack()
     }
 
-    suspend fun getFee(param: Int): GetFeeResponse {
+    // done
+    suspend fun getFee(): BitconCashGetFeeResponse {
         return client
             .newCall(
                 request = Request.Builder()
                     .post(
                         moshi
                             .adapter<GetFeeRequest>()
-                            .toJson(GetFeeRequest.getFee(listOf(param)))
+                            .toJson(
+                                GetFeeRequest.getFee(
+                                    paramsList = emptyList(),
+                                    method = "estimatefee"
+                                )
+                            )
                             .toRequestBody(APPLICATION_JSON_MEDIA_TYPE.toMediaTypeOrNull()),
                     )
-                    .url(config.getRequestBaseUrl(BlockBookRequest.GetFee, blockchain))
+                    .url(bchUrl)
                     .build(),
             )
             .await()
             .unpack()
     }
 
+    // done
     suspend fun sendTransaction(txHex: String): SendTransactionResponse {
-        val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.SendTransaction, blockchain)
         return client
             .newCall(
                 request = Request.Builder()
-                    .post(txHex.toRequestBody(TEXT_PLAIN_MEDIA_TYPE.toMediaTypeOrNull()))
-                    .url("$requestBaseUrl/sendtx/")
+                    .post(
+                        moshi
+                            .adapter<SendTransactionRequest>()
+                            .toJson(SendTransactionRequest.getSendRequest(txHex))
+                            .toRequestBody(APPLICATION_JSON_MEDIA_TYPE.toMediaTypeOrNull()),
+                    )
+                    .url(bchUrl)
                     .build(),
             )
             .await()
             .unpack()
     }
 
+    // done
     suspend fun getUtxo(address: String): List<GetUtxoResponseItem> {
-        val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.GetUTXO, blockchain)
         return client
             .newCall(
                 request = Request.Builder()
                     .get()
-                    .url("$requestBaseUrl/utxo/$address")
+                    .url("$bchBookUrl/api/v2/utxo/$address")
+                    // .url(host1)
                     .build(),
             )
             .await()
@@ -123,6 +138,5 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
 
     private companion object {
         const val APPLICATION_JSON_MEDIA_TYPE = "application/json"
-        const val TEXT_PLAIN_MEDIA_TYPE = "text/plain"
     }
 }
