@@ -37,23 +37,30 @@ class VechainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
             minimum = Fee.Vechain(
                 amount = Amount(
                     token = VechainWalletManager.VTHO_TOKEN,
-                    value = gas.toBigDecimal().movePointLeft(GAS_TO_VET_DECIMAL),
+                    value = gas.toBigDecimal().movePointLeft(Fee.Vechain.GAS_TO_VET_DECIMAL),
                 ),
-                gasPriceCoef = 0,
+                gasPriceCoef = Fee.Vechain.MINIMUM_GAS_PRICE_COEFFICIENT,
+                gasLimit = gas,
             ),
             normal = Fee.Vechain(
                 amount = Amount(
                     token = VechainWalletManager.VTHO_TOKEN,
-                    value = (gas * NORMAL_FEE_COEFFICIENT).toBigDecimal().movePointLeft(GAS_TO_VET_DECIMAL),
+                    value = (gas * Fee.Vechain.NORMAL_FEE_COEFFICIENT)
+                        .toBigDecimal()
+                        .movePointLeft(Fee.Vechain.GAS_TO_VET_DECIMAL),
                 ),
-                gasPriceCoef = 127,
+                gasPriceCoef = Fee.Vechain.NORMAL_GAS_PRICE_COEFFICIENT,
+                gasLimit = gas,
             ),
             priority = Fee.Vechain(
                 amount = Amount(
                     token = VechainWalletManager.VTHO_TOKEN,
-                    value = (gas * PRIORITY_FEE_COEFFICIENT).toBigDecimal().movePointLeft(GAS_TO_VET_DECIMAL),
+                    value = (gas * Fee.Vechain.PRIORITY_FEE_COEFFICIENT)
+                        .toBigDecimal()
+                        .movePointLeft(Fee.Vechain.GAS_TO_VET_DECIMAL),
                 ),
-                gasPriceCoef = 255,
+                gasPriceCoef = Fee.Vechain.PRIORITY_GAS_PRICE_COEFFICIENT,
+                gasLimit = gas,
             ),
         )
     }
@@ -123,7 +130,7 @@ class VechainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
             .setNonce(nonce)
             .setBlockRef(blockInfo.blockRef)
             .setExpiration(EXPIRATION_BLOCKS)
-            .setGas(fee.amount.value?.movePointRight(GAS_TO_VET_DECIMAL)?.toLong() ?: 0L)
+            .setGas(fee.gasLimit)
             .setGasPriceCoef(fee.gasPriceCoef)
             .addClauses(clause)
             .build()
@@ -195,11 +202,6 @@ class VechainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
 
         const val Z_GAS = 4L
         const val NZ_GAS = 68L
-
-        const val GAS_TO_VET_DECIMAL = 5
-
-        const val NORMAL_FEE_COEFFICIENT = 1.5
-        const val PRIORITY_FEE_COEFFICIENT = 2
 
         const val EXPIRATION_BLOCKS = 180
 
