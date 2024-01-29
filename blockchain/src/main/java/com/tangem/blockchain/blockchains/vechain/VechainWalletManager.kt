@@ -110,7 +110,7 @@ internal class VechainWalletManager(
             id = "vethor-token",
             name = "VeThor",
             symbol = "VTHO",
-            contractAddress = "0x0000000000000000000000000000456E65726779",
+            contractAddress = "0x0000000000000000000000000000456e65726779",
             decimals = 18,
         )
     }
