@@ -14,7 +14,7 @@ sealed class Fee {
         val gasPrice: BigInteger,
     ) : Fee()
 
-    data class Vechain(
+    data class VeChain(
         override val amount: Amount,
         val gasPriceCoef: Int,
         val gasLimit: Long,
