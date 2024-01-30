@@ -2,7 +2,7 @@ package com.tangem.blockchain.externallinkprovider.providers
 
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 
-internal class VechainExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
+internal class VeChainExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
     override val explorerBaseUrl: String =
         if (isTestnet) "https://explore-testnet.vechain.org/" else "https://explore.vechain.org/"
