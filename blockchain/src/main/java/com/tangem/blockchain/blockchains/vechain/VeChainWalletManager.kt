@@ -10,6 +10,8 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.common.CompletionResult
+import java.math.BigDecimal
+import java.util.EnumSet
 
 internal class VeChainWalletManager(
     wallet: Wallet,
@@ -32,6 +34,19 @@ internal class VeChainWalletManager(
         if (token == VTHO_TOKEN) return // we don't delete energy token
 
         super.removeToken(token)
+    }
+
+    override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
+        val errors = super.validateTransaction(amount, fee)
+
+        if (amount.type is AmountType.Token && amount.type.token == VTHO_TOKEN) {
+            val totalToSend = fee?.value?.add(amount.value) ?: amount.value ?: BigDecimal.ZERO
+            val energyBalance = wallet.fundsAvailable(AmountType.Token(VTHO_TOKEN))
+            if (energyBalance < totalToSend) {
+                errors.add(TransactionError.TotalExceedsBalance)
+            }
+        }
+        return errors
     }
 
     override suspend fun updateInternal() {
