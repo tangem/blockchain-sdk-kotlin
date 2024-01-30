@@ -130,8 +130,8 @@ class EstimationFeeAddressFactory(
             Blockchain.NearTestnet,
             Blockchain.XDC,
             Blockchain.XDCTestnet,
-            Blockchain.Vechain,
-            Blockchain.VechainTestnet,
+            Blockchain.VeChain,
+            Blockchain.VeChainTestnet,
             Blockchain.Aptos,
             Blockchain.AptosTestnet,
             -> {
