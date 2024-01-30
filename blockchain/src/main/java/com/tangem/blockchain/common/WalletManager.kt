@@ -120,7 +120,7 @@ abstract class WalletManager(
         return errors
     }
 
-    fun removeToken(token: Token) {
+    open fun removeToken(token: Token) {
         cardTokens.remove(token)
         wallet.removeToken(token)
     }
