@@ -1,8 +1,8 @@
 package com.tangem.blockchain.blockchains.vechain
 
 import android.util.Log
-import com.tangem.blockchain.blockchains.vechain.network.VechainNetworkProvider
-import com.tangem.blockchain.blockchains.vechain.network.VechainNetworkService
+import com.tangem.blockchain.blockchains.vechain.network.VeChainNetworkProvider
+import com.tangem.blockchain.blockchains.vechain.network.VeChainNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -11,22 +11,28 @@ import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.common.CompletionResult
 
-internal class VechainWalletManager(
+internal class VeChainWalletManager(
     wallet: Wallet,
-    networkProviders: List<VechainNetworkProvider>,
+    networkProviders: List<VeChainNetworkProvider>,
 ) : WalletManager(wallet), TransactionSender {
 
-    private val networkService = VechainNetworkService(
+    private val networkService = VeChainNetworkService(
         networkProviders = networkProviders,
         blockchain = wallet.blockchain,
     )
 
     override val currentHost: String get() = networkService.host
 
-    private val transactionBuilder = VechainTransactionBuilder(
+    private val transactionBuilder = VeChainTransactionBuilder(
         blockchain = wallet.blockchain,
         publicKey = wallet.publicKey,
     )
+
+    override fun removeToken(token: Token) {
+        if (token == VTHO_TOKEN) return // we don't delete energy token
+
+        super.removeToken(token)
+    }
 
     override suspend fun updateInternal() {
         val pendingTxIds = wallet.recentTransactions.mapNotNullTo(hashSetOf()) { it.hash }
@@ -40,7 +46,7 @@ internal class VechainWalletManager(
         }
     }
 
-    private fun updateWallet(info: VechainAccountInfo) {
+    private fun updateWallet(info: VeChainAccountInfo) {
         wallet.setAmount(Amount(value = info.balance, blockchain = wallet.blockchain))
         wallet.addTokenValue(value = info.energy, token = VTHO_TOKEN)
         info.tokenBalances.forEach { wallet.addTokenValue(it.value, it.key) }
