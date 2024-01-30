@@ -10,6 +10,7 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.createRetrofitInstance
+import retrofit2.HttpException
 
 internal class AptosRestNetworkProvider(override val baseUrl: String) : AptosNetworkProvider {
 
@@ -34,7 +35,11 @@ internal class AptosRestNetworkProvider(override val baseUrl: String) : AptosNet
                 Result.Failure(BlockchainSdkError.AccountNotFound)
             }
         } catch (e: Exception) {
-            Result.Failure(e.toBlockchainSdkError())
+            if (e.isNoAccountFoundException()) {
+                Result.Failure(BlockchainSdkError.AccountNotFound)
+            } else {
+                Result.Failure(e.toBlockchainSdkError())
+            }
         }
     }
 
@@ -98,5 +103,15 @@ internal class AptosRestNetworkProvider(override val baseUrl: String) : AptosNet
 
     private inline fun <reified T : AptosResource> List<AptosResource>.getResource(): T? {
         return firstNotNullOfOrNull { it as? T }
+    }
+
+    private fun Exception.isNoAccountFoundException(): Boolean {
+        return this is HttpException && code() == NOT_FOUND_HTTP_CODE &&
+            response()?.errorBody()?.string()?.contains(ACCOUNT_NOT_FOUND_ERROR_CODE) == true
+    }
+
+    private companion object {
+        const val NOT_FOUND_HTTP_CODE = 404
+        const val ACCOUNT_NOT_FOUND_ERROR_CODE = "account_not_found"
     }
 }
