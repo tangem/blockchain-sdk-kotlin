@@ -233,8 +233,8 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
                 NearWalletManagerAssembly
             }
 
-            Blockchain.Vechain, Blockchain.VechainTestnet -> {
-                VechainWalletManagerAssembly
+            Blockchain.VeChain, Blockchain.VeChainTestnet -> {
+                VeChainWalletManagerAssembly
             }
 
             Blockchain.Aptos, Blockchain.AptosTestnet -> {

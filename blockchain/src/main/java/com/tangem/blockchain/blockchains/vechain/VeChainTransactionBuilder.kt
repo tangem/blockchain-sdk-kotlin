@@ -20,7 +20,7 @@ import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
 import wallet.core.jni.proto.VeChain
 import java.math.BigInteger
 
-class VechainTransactionBuilder(blockchain: Blockchain, private val publicKey: Wallet.PublicKey) {
+class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: Wallet.PublicKey) {
 
     /**
      * “Chain tag is the last byte of the genesis block ID”.
@@ -34,39 +34,39 @@ class VechainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
         val toClause = buildClause(amount, destination)
         val gas = intrinsicGas(toClause, vmGas)
         return TransactionFee.Choosable(
-            minimum = Fee.Vechain(
+            minimum = Fee.VeChain(
                 amount = Amount(
-                    token = VechainWalletManager.VTHO_TOKEN,
-                    value = gas.toBigDecimal().movePointLeft(Fee.Vechain.GAS_TO_VET_DECIMAL),
+                    token = VeChainWalletManager.VTHO_TOKEN,
+                    value = gas.toBigDecimal().movePointLeft(Fee.VeChain.GAS_TO_VET_DECIMAL),
                 ),
-                gasPriceCoef = Fee.Vechain.MINIMUM_GAS_PRICE_COEFFICIENT,
+                gasPriceCoef = Fee.VeChain.MINIMUM_GAS_PRICE_COEFFICIENT,
                 gasLimit = gas,
             ),
-            normal = Fee.Vechain(
+            normal = Fee.VeChain(
                 amount = Amount(
-                    token = VechainWalletManager.VTHO_TOKEN,
-                    value = (gas * Fee.Vechain.NORMAL_FEE_COEFFICIENT)
+                    token = VeChainWalletManager.VTHO_TOKEN,
+                    value = (gas * Fee.VeChain.NORMAL_FEE_COEFFICIENT)
                         .toBigDecimal()
-                        .movePointLeft(Fee.Vechain.GAS_TO_VET_DECIMAL),
+                        .movePointLeft(Fee.VeChain.GAS_TO_VET_DECIMAL),
                 ),
-                gasPriceCoef = Fee.Vechain.NORMAL_GAS_PRICE_COEFFICIENT,
+                gasPriceCoef = Fee.VeChain.NORMAL_GAS_PRICE_COEFFICIENT,
                 gasLimit = gas,
             ),
-            priority = Fee.Vechain(
+            priority = Fee.VeChain(
                 amount = Amount(
-                    token = VechainWalletManager.VTHO_TOKEN,
-                    value = (gas * Fee.Vechain.PRIORITY_FEE_COEFFICIENT)
+                    token = VeChainWalletManager.VTHO_TOKEN,
+                    value = (gas * Fee.VeChain.PRIORITY_FEE_COEFFICIENT)
                         .toBigDecimal()
-                        .movePointLeft(Fee.Vechain.GAS_TO_VET_DECIMAL),
+                        .movePointLeft(Fee.VeChain.GAS_TO_VET_DECIMAL),
                 ),
-                gasPriceCoef = Fee.Vechain.PRIORITY_GAS_PRICE_COEFFICIENT,
+                gasPriceCoef = Fee.VeChain.PRIORITY_GAS_PRICE_COEFFICIENT,
                 gasLimit = gas,
             ),
         )
     }
 
-    fun buildForSign(transactionData: TransactionData, blockInfo: VechainBlockInfo, nonce: Long): ByteArray {
-        val fee = transactionData.fee as? Fee.Vechain ?: throw BlockchainSdkError.FailedToBuildTx
+    fun buildForSign(transactionData: TransactionData, blockInfo: VeChainBlockInfo, nonce: Long): ByteArray {
+        val fee = transactionData.fee as? Fee.VeChain ?: throw BlockchainSdkError.FailedToBuildTx
         val input =
             createSigningInput(transactionData.amount, fee, transactionData.destinationAddress, blockInfo, nonce)
         val preImageHashes = TransactionCompiler.preImageHashes(coinType, input.toByteArray())
@@ -83,10 +83,10 @@ class VechainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
         transactionData: TransactionData,
         hash: ByteArray,
         signature: ByteArray,
-        blockInfo: VechainBlockInfo,
+        blockInfo: VeChainBlockInfo,
         nonce: Long,
     ): ByteArray {
-        val fee = transactionData.fee as? Fee.Vechain ?: throw BlockchainSdkError.FailedToBuildTx
+        val fee = transactionData.fee as? Fee.VeChain ?: throw BlockchainSdkError.FailedToBuildTx
         val inputData = createSigningInput(
             transactionData.amount,
             fee,
@@ -118,9 +118,9 @@ class VechainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
 
     private fun createSigningInput(
         amount: Amount,
-        fee: Fee.Vechain,
+        fee: Fee.VeChain,
         destination: String,
-        blockInfo: VechainBlockInfo,
+        blockInfo: VeChainBlockInfo,
         nonce: Long,
     ): VeChain.SigningInput {
         val clause = buildClause(amount, destination)
