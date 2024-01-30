@@ -1,6 +1,6 @@
 package com.tangem.blockchain.blockchains.vechain
 
-data class VechainBlockInfo(
+data class VeChainBlockInfo(
     val blockId: String,
     val blockRef: Long,
     val blockNumber: Long,
