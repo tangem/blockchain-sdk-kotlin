@@ -1,8 +1,8 @@
 package com.tangem.blockchain.blockchains.vechain
 
 import android.util.Log
-import com.tangem.blockchain.blockchains.vechain.network.VechainNetworkProvider
-import com.tangem.blockchain.blockchains.vechain.network.VechainNetworkService
+import com.tangem.blockchain.blockchains.vechain.network.VeChainNetworkProvider
+import com.tangem.blockchain.blockchains.vechain.network.VeChainNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -10,23 +10,44 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.common.CompletionResult
+import java.math.BigDecimal
+import java.util.EnumSet
 
-internal class VechainWalletManager(
+internal class VeChainWalletManager(
     wallet: Wallet,
-    networkProviders: List<VechainNetworkProvider>,
+    networkProviders: List<VeChainNetworkProvider>,
 ) : WalletManager(wallet), TransactionSender {
 
-    private val networkService = VechainNetworkService(
+    private val networkService = VeChainNetworkService(
         networkProviders = networkProviders,
         blockchain = wallet.blockchain,
     )
 
     override val currentHost: String get() = networkService.host
 
-    private val transactionBuilder = VechainTransactionBuilder(
+    private val transactionBuilder = VeChainTransactionBuilder(
         blockchain = wallet.blockchain,
         publicKey = wallet.publicKey,
     )
+
+    override fun removeToken(token: Token) {
+        if (token == VTHO_TOKEN) return // we don't delete energy token
+
+        super.removeToken(token)
+    }
+
+    override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
+        val errors = super.validateTransaction(amount, fee)
+
+        if (amount.type is AmountType.Token && amount.type.token == VTHO_TOKEN) {
+            val totalToSend = fee?.value?.add(amount.value) ?: amount.value ?: BigDecimal.ZERO
+            val energyBalance = wallet.fundsAvailable(AmountType.Token(VTHO_TOKEN))
+            if (energyBalance < totalToSend) {
+                errors.add(TransactionError.TotalExceedsBalance)
+            }
+        }
+        return errors
+    }
 
     override suspend fun updateInternal() {
         val pendingTxIds = wallet.recentTransactions.mapNotNullTo(hashSetOf()) { it.hash }
@@ -40,7 +61,7 @@ internal class VechainWalletManager(
         }
     }
 
-    private fun updateWallet(info: VechainAccountInfo) {
+    private fun updateWallet(info: VeChainAccountInfo) {
         wallet.setAmount(Amount(value = info.balance, blockchain = wallet.blockchain))
         wallet.addTokenValue(value = info.energy, token = VTHO_TOKEN)
         info.tokenBalances.forEach { wallet.addTokenValue(it.value, it.key) }
@@ -110,7 +131,7 @@ internal class VechainWalletManager(
             id = "vethor-token",
             name = "VeThor",
             symbol = "VTHO",
-            contractAddress = "0x0000000000000000000000000000456E65726779",
+            contractAddress = "0x0000000000000000000000000000456e65726779",
             decimals = 18,
         )
     }
