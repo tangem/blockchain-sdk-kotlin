@@ -2,9 +2,9 @@ package com.tangem.blockchain.blockchains.vechain.network
 
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TokenBalanceERC20TokenMethod
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TransferERC20TokenMethod
-import com.tangem.blockchain.blockchains.vechain.VechainAccountInfo
-import com.tangem.blockchain.blockchains.vechain.VechainBlockInfo
-import com.tangem.blockchain.blockchains.vechain.VechainWalletManager
+import com.tangem.blockchain.blockchains.vechain.VeChainAccountInfo
+import com.tangem.blockchain.blockchains.vechain.VeChainBlockInfo
+import com.tangem.blockchain.blockchains.vechain.VeChainWalletManager
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.hexToBigDecimal
@@ -23,8 +23,8 @@ private const val MAX_ALLOWED_VM_GAS = 20_000_000
 // Placeholder value, not used in contract calls.
 private const val CONTRACT_CALL_VALUE = "0"
 
-internal class VechainNetworkService(
-    networkProviders: List<VechainNetworkProvider>,
+internal class VeChainNetworkService(
+    networkProviders: List<VeChainNetworkProvider>,
     private val blockchain: Blockchain,
 ) {
 
@@ -35,11 +35,11 @@ internal class VechainNetworkService(
         address: String,
         pendingTxIds: Set<String>,
         tokens: Set<Token>,
-    ): Result<VechainAccountInfo> {
+    ): Result<VeChainAccountInfo> {
         return try {
             coroutineScope {
                 val accountInfoDeferred = async {
-                    multiJsonRpcProvider.performRequest(VechainNetworkProvider::getAccountInfo, address)
+                    multiJsonRpcProvider.performRequest(VeChainNetworkProvider::getAccountInfo, address)
                 }
                 val pendingTxsDeferred = pendingTxIds.map { txId ->
                     async {
@@ -60,11 +60,11 @@ internal class VechainNetworkService(
         }
     }
 
-    suspend fun getLatestBlock(): Result<VechainBlockInfo> {
-        return multiJsonRpcProvider.performRequest(VechainNetworkProvider::getLatestBlock)
+    suspend fun getLatestBlock(): Result<VeChainBlockInfo> {
+        return multiJsonRpcProvider.performRequest(VeChainNetworkProvider::getLatestBlock)
     }
 
-    suspend fun sendTransaction(rawData: ByteArray): Result<VechainCommitTransactionResponse> {
+    suspend fun sendTransaction(rawData: ByteArray): Result<VeChainCommitTransactionResponse> {
         return multiJsonRpcProvider.performRequest {
             sendTransaction(rawData)
         }
@@ -72,12 +72,12 @@ internal class VechainNetworkService(
 
     suspend fun getVmGas(source: String, destination: String, amount: Amount, token: Token): Result<Long> {
         val amountValue = amount.value?.movePointRight(amount.decimals)?.toBigInteger() ?: BigInteger.ZERO
-        val clause = VechainClause(
+        val clause = VeChainClause(
             to = token.contractAddress,
             value = CONTRACT_CALL_VALUE,
             data = "0x" + TransferERC20TokenMethod(destination = destination, amount = amountValue).data.toHexString(),
         )
-        val request = VechainContractCallRequest(
+        val request = VeChainContractCallRequest(
             clauses = listOf(clause),
             caller = source,
             gas = MAX_ALLOWED_VM_GAS,
@@ -94,13 +94,13 @@ internal class VechainNetworkService(
             val tokenBalancesDeferred = tokens.associateWith { token ->
                 async {
                     multiJsonRpcProvider.performRequest {
-                        val clause = VechainClause(
+                        val clause = VeChainClause(
                             to = token.contractAddress,
                             value = CONTRACT_CALL_VALUE,
                             data = "0x" + TokenBalanceERC20TokenMethod(address = address).data.toHexString(),
                         )
                         this.callContract(
-                            request = VechainContractCallRequest(
+                            request = VeChainContractCallRequest(
                                 clauses = listOf(clause),
                                 caller = null,
                                 gas = null,
@@ -118,13 +118,13 @@ internal class VechainNetworkService(
     }
 
     private fun mapAccountInfo(
-        accountResponse: VechainGetAccountResponse,
-        pendingTxsInfo: List<VechainTransactionInfoResponse?>,
+        accountResponse: VeChainGetAccountResponse,
+        pendingTxsInfo: List<VeChainTransactionInfoResponse?>,
         tokenBalances: Map<Token, BigDecimal>,
-    ): VechainAccountInfo {
+    ): VeChainAccountInfo {
         val balance = accountResponse.balance.hexToBigDecimal().movePointLeft(blockchain.decimals())
-        val energy = accountResponse.energy.hexToBigDecimal().movePointLeft(VechainWalletManager.VTHO_TOKEN.decimals)
-        return VechainAccountInfo(
+        val energy = accountResponse.energy.hexToBigDecimal().movePointLeft(VeChainWalletManager.VTHO_TOKEN.decimals)
+        return VeChainAccountInfo(
             balance = balance,
             energy = energy,
             completedTxIds = pendingTxsInfo.mapNotNullTo(hashSetOf()) { it?.txId },
