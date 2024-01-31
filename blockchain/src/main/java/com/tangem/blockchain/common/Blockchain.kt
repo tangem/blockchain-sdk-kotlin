@@ -15,7 +15,7 @@ import com.tangem.blockchain.blockchains.solana.SolanaAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
-import com.tangem.blockchain.blockchains.vechain.VechainWalletManager
+import com.tangem.blockchain.blockchains.vechain.VeChainWalletManager
 import com.tangem.blockchain.blockchains.xdc.XDCAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.Address
@@ -104,8 +104,8 @@ enum class Blockchain(
     DecimalTestnet("decimal/test", "tDEL", "Decimal Smart Chain Testnet"),
     XDC("xdc", "XDC", "XDC Network"),
     XDCTestnet("xdc/test", "XDC", "XDC Network Testnet"),
-    Vechain("vechain", "VET", "VeChain"),
-    VechainTestnet("vechain/test", "VET", "VeChain Testnet"),
+    VeChain("vechain", "VET", "VeChain"),
+    VeChainTestnet("vechain/test", "VET", "VeChain Testnet"),
     Aptos("aptos", "APT", "Aptos"),
     AptosTestnet("aptos/test", "APT", "Aptos Testnet"),
     ;
@@ -165,7 +165,7 @@ enum class Blockchain(
         OctaSpace, OctaSpaceTestnet,
         Decimal, DecimalTestnet,
         XDC, XDCTestnet,
-        Vechain, VechainTestnet,
+        VeChain, VeChainTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -213,7 +213,7 @@ enum class Blockchain(
             Cronos,
             Telos, TelosTestnet,
             OctaSpace, OctaSpaceTestnet,
-            Vechain, VechainTestnet,
+            VeChain, VeChainTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -302,7 +302,7 @@ enum class Blockchain(
             Near, NearTestnet -> NearTestnet
             Decimal, DecimalTestnet -> DecimalTestnet
             XDC, XDCTestnet -> XDCTestnet
-            Vechain, VechainTestnet -> VechainTestnet
+            VeChain, VeChainTestnet -> VeChainTestnet
             Aptos, AptosTestnet -> AptosTestnet
             else -> null
         }
@@ -350,7 +350,7 @@ enum class Blockchain(
             OctaSpace, OctaSpaceTestnet,
             Decimal, DecimalTestnet,
             XDC, XDCTestnet,
-            Vechain, VechainTestnet,
+            VeChain, VeChainTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -425,7 +425,7 @@ enum class Blockchain(
             Solana, SolanaTestnet,
             Tron, TronTestnet,
             TerraV1,
-            Vechain, VechainTestnet,
+            VeChain, VeChainTestnet,
             -> true
 
             else -> false
@@ -440,7 +440,7 @@ enum class Blockchain(
         Avalanche, AvalancheTestnet,
         EthereumPow,
         Cronos,
-        Vechain, VechainTestnet,
+        VeChain, VeChainTestnet,
         XDC, XDCTestnet,
         -> amountType is AmountType.Token
 
@@ -455,7 +455,7 @@ enum class Blockchain(
     }
 
     fun feePaidCurrency(): FeePaidCurrency = when (this) {
-        Vechain, VechainTestnet -> FeePaidCurrency.Token(VechainWalletManager.VTHO_TOKEN)
+        VeChain, VeChainTestnet -> FeePaidCurrency.Token(VeChainWalletManager.VTHO_TOKEN)
         TerraV1 -> FeePaidCurrency.SameCurrency
         else -> FeePaidCurrency.Coin
     }
