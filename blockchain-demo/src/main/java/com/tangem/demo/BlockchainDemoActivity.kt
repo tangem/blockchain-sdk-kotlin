@@ -17,6 +17,7 @@ import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.toHexString
 import com.tangem.demo.cardSdk.ScanCardAndDerive
 import com.tangem.demo.databinding.ActivityBlockchainDemoBinding
+import com.tangem.demo.datastorage.DummyBlockchainDataStorage
 import com.tangem.demo.extensions.*
 import com.tangem.demo.model.ScanResponse
 import com.tangem.sdk.extensions.init
@@ -197,7 +198,10 @@ class BlockchainDemoActivity : AppCompatActivity() {
     private fun loadWallet(onSuccess: () -> Unit, onFailure: (BlockchainSdkError) -> Unit) = with(binding) {
         containerSelectWalletWithBlockchain.tvBlockchainAddresses.text = ""
         try {
-            walletManager = WalletManagerFactory(BlockchainSdkConfig()).makeWalletManagerForApp(
+            walletManager = WalletManagerFactory(
+                config = BlockchainSdkConfig(),
+                blockchainDataStorage = DummyBlockchainDataStorage,
+            ).makeWalletManagerForApp(
                 scanResponse = scanResponse,
                 blockchain = Blockchain.fromId(selectedBlockchain.id),
                 derivationParams = scanResponse.card.derivationParams(null),
