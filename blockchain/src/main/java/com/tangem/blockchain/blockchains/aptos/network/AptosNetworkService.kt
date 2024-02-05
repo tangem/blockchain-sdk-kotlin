@@ -58,20 +58,9 @@ internal class AptosNetworkService(providers: List<AptosNetworkProvider>) : Apto
         }
     }
 
-    override suspend fun encodeTransaction(transaction: AptosTransactionInfo): Result<String> {
+    override suspend fun submitTransaction(jsonOutput: String): Result<String> {
         return try {
-            val hash = multiJsonRpcProvider.performRequest(AptosNetworkProvider::encodeTransaction, transaction)
-                .successOr { return it }
-
-            Result.Success(hash)
-        } catch (e: Exception) {
-            Result.Failure(e.toBlockchainSdkError())
-        }
-    }
-
-    override suspend fun submitTransaction(transaction: AptosTransactionInfo): Result<String> {
-        return try {
-            val hash = multiJsonRpcProvider.performRequest(AptosNetworkProvider::submitTransaction, transaction)
+            val hash = multiJsonRpcProvider.performRequest(AptosNetworkProvider::submitTransaction, jsonOutput)
                 .successOr { return it }
 
             Result.Success(hash)

@@ -11,7 +11,7 @@ internal data class AptosTransactionBody(
     @Json(name = "payload") val payload: Payload,
     @Json(name = "sender") val sender: String,
     @Json(name = "sequence_number") val sequenceNumber: String,
-    @Json(name = "signature") val signature: Signature? = null,
+    @Json(name = "signature") val signature: Signature,
 ) {
 
     @JsonClass(generateAdapter = true)

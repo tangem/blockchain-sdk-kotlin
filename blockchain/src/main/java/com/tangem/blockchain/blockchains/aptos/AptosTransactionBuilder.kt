@@ -1,11 +1,15 @@
 package com.tangem.blockchain.blockchains.aptos
 
-import androidx.annotation.VisibleForTesting
-import com.tangem.blockchain.blockchains.aptos.models.AptosTransactionInfo
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.transaction.Fee
-import com.tangem.common.extensions.toHexString
-import org.joda.time.DateTime
+import wallet.core.jni.CoinType
+import wallet.core.jni.DataVector
+import wallet.core.jni.TransactionCompiler
+import wallet.core.jni.proto.Aptos
+import wallet.core.jni.proto.Common
+import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
 
 /**
  * Aptos transaction builder
@@ -14,88 +18,69 @@ import org.joda.time.DateTime
  */
 internal class AptosTransactionBuilder(private val wallet: Wallet) {
 
-    /**
-     * Build pseudo transaction to calculate required fee to send it
-     *
-     * @param sequenceNumber account sequence number
-     * @param destination    destination address
-     * @param amount         amount
-     * @param gasUnitPrice   gas unit price
-     */
-    fun buildToCalculateFee(
-        sequenceNumber: Long,
-        destination: String,
-        amount: Amount,
-        gasUnitPrice: Long,
-    ): AptosTransactionInfo {
-        return AptosTransactionInfo(
-            sequenceNumber = sequenceNumber,
-            publicKey = wallet.getPublicKey(),
-            sourceAddress = wallet.address,
-            destinationAddress = destination,
-            amount = amount.longValue ?: 0L,
-            contractAddress = when (amount.type) {
-                is AmountType.Token -> amount.type.token.contractAddress
-                else -> null
-            },
-            gasUnitPrice = gasUnitPrice,
-            maxGasAmount = PSEUDO_TRANSACTION_MAX_GAS_AMOUNT,
-            expirationTimestamp = createExpirationTimestamp(),
-            hash = PSEUDO_TRANSACTION_HASH,
-        )
-    }
-
-    /**
-     * Build transaction to encode
-     *
-     * @param sequenceNumber  account sequence number
-     * @param transactionData transaction data
-     */
-    @Throws(BlockchainSdkError.FailedToBuildTx::class)
-    fun buildToEncode(sequenceNumber: Long, transactionData: TransactionData): AptosTransactionInfo {
+    fun buildForSign(sequenceNumber: Long, transactionData: TransactionData, expirationTimestamp: Long): ByteArray {
         val aptosFee = transactionData.fee as? Fee.Aptos ?: throw BlockchainSdkError.FailedToBuildTx
+        val input = createSigningInput(sequenceNumber, transactionData, aptosFee, expirationTimestamp).toByteArray()
 
-        return AptosTransactionInfo(
-            sequenceNumber = sequenceNumber,
-            publicKey = wallet.getPublicKey(),
-            sourceAddress = wallet.address,
-            destinationAddress = transactionData.destinationAddress,
-            amount = transactionData.amount.longValue ?: 0L,
-            contractAddress = transactionData.contractAddress,
-            gasUnitPrice = aptosFee.gasUnitPrice,
-            maxGasAmount = aptosFee.amount.longValue ?: 0L,
-            expirationTimestamp = createExpirationTimestamp(),
+        val preImageHashes = TransactionCompiler.preImageHashes(CoinType.APTOS, input)
+        val output = PreSigningOutput.parseFrom(preImageHashes)
+
+        if (output.error != Common.SigningError.OK) {
+            throw BlockchainSdkError.CustomError("Error while parse preImageHashes")
+        }
+
+        return output.data.toByteArray()
+    }
+
+    fun buildForSend(
+        sequenceNumber: Long,
+        transactionData: TransactionData,
+        expirationTimestamp: Long,
+        signature: ByteArray,
+    ): String {
+        val aptosFee = transactionData.fee as? Fee.Aptos ?: throw BlockchainSdkError.FailedToBuildTx
+        val input = createSigningInput(sequenceNumber, transactionData, aptosFee, expirationTimestamp).toByteArray()
+
+        val publicKeys = DataVector()
+        publicKeys.add(wallet.publicKey.blockchainKey)
+
+        val signatures = DataVector()
+        signatures.add(signature)
+
+        val compileWithSignatures = TransactionCompiler.compileWithSignatures(
+            CoinType.APTOS,
+            input,
+            signatures,
+            publicKeys,
         )
+
+        val output = Aptos.SigningOutput.parseFrom(compileWithSignatures)
+
+        if (output.error != Common.SigningError.OK) {
+            error("Something went wrong")
+        }
+
+        return output.json
     }
 
-    /**
-     * Build transaction to send using encoded and signed transaction
-     *
-     * @param transaction encoded transaction
-     * @param hash        encoded and signed transaction hash
-     */
-    fun buildToSend(transaction: AptosTransactionInfo, hash: ByteArray): AptosTransactionInfo {
-        return transaction.copy(hash = hash.toHexStringWithPrefix())
-    }
-
-    private fun Wallet.getPublicKey(): String = publicKey.blockchainKey.toHexStringWithPrefix()
-
-    private fun ByteArray.toHexStringWithPrefix(): String = "0x" + toHexString().lowercase()
-
-    private fun createExpirationTimestamp(): Long = DateTime.now().plusMinutes(TRANSACTION_LIFETIME_IN_MIN).seconds()
-
-    private fun DateTime.seconds(): Long = millis.div(other = 1000)
-
-    @VisibleForTesting(otherwise = VisibleForTesting.NONE)
-    companion object {
-
-        const val TRANSACTION_LIFETIME_IN_MIN = 5
-
-        /** Max gas amount doesn't matter for fee calculating */
-        const val PSEUDO_TRANSACTION_MAX_GAS_AMOUNT = 100_000L
-
-        /** Transaction hash doesn't matter for fee calculating */
-        const val PSEUDO_TRANSACTION_HASH = "0x000000000000000000000000000000000000000000000000000000000000000000000" +
-            "00000000000000000000000000000000000000000000000000000000000"
+    private fun createSigningInput(
+        sequenceNumber: Long,
+        transactionData: TransactionData,
+        fee: Fee.Aptos,
+        expirationTimestamp: Long,
+    ): Aptos.SigningInput {
+        return Aptos.SigningInput.newBuilder()
+            .setChainId(1)
+            .setExpirationTimestampSecs(expirationTimestamp)
+            .setGasUnitPrice(fee.gasUnitPrice)
+            .setMaxGasAmount(fee.amount.longValue ?: 0L)
+            .setSender(wallet.address)
+            .setSequenceNumber(sequenceNumber)
+            .setTransfer(
+                Aptos.TransferMessage.newBuilder()
+                    .setAmount(transactionData.amount.longValue ?: 0L)
+                    .setTo(transactionData.destinationAddress),
+            )
+            .build()
     }
 }
