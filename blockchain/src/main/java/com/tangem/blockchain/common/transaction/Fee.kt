@@ -29,7 +29,7 @@ sealed class Fee {
             internal const val PRIORITY_FEE_COEFFICIENT = 2.0
 
             fun getGasPriceCoef(gasLimit: Long, fee: BigDecimal): Int {
-                return when(fee.movePointRight(GAS_TO_VET_DECIMAL).toDouble() / gasLimit) {
+                return when (fee.movePointRight(GAS_TO_VET_DECIMAL).toDouble() / gasLimit) {
                     NORMAL_FEE_COEFFICIENT -> NORMAL_GAS_PRICE_COEFFICIENT
                     PRIORITY_FEE_COEFFICIENT -> PRIORITY_GAS_PRICE_COEFFICIENT
                     else -> MINIMUM_GAS_PRICE_COEFFICIENT
