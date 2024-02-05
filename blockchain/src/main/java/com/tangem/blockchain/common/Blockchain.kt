@@ -108,6 +108,8 @@ enum class Blockchain(
     VeChainTestnet("vechain/test", "VET", "VeChain Testnet"),
     Aptos("aptos", "APT", "Aptos"),
     AptosTestnet("aptos/test", "APT", "Aptos Testnet"),
+    Algorand("algorand", "ALGO", "Algorand"),
+    AlgorandTestnet("algorand/test", "ALGO", "Algorand Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -122,6 +124,7 @@ enum class Blockchain(
         Tron, TronTestnet,
         Cosmos, CosmosTestnet,
         TerraV1, TerraV2,
+        Algorand, AlgorandTestnet,
         -> 6
 
         Stellar, StellarTestnet -> 7
@@ -234,6 +237,7 @@ enum class Blockchain(
             TerraV2,
             Near, NearTestnet,
             Aptos, AptosTestnet,
+            Algorand, AlgorandTestnet,
             -> TrustWalletAddressService(blockchain = this)
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
@@ -304,6 +308,7 @@ enum class Blockchain(
             XDC, XDCTestnet -> XDCTestnet
             VeChain, VeChainTestnet -> VeChainTestnet
             Aptos, AptosTestnet -> AptosTestnet
+            Algorand, AlgorandTestnet -> AlgorandTestnet
             else -> null
         }
     }
@@ -359,6 +364,7 @@ enum class Blockchain(
             TON, TONTestnet,
             Near, NearTestnet,
             Aptos, AptosTestnet,
+            Algorand, AlgorandTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
 
             Cardano -> listOf(EllipticCurve.Ed25519) // todo until cardano support in wallet 2

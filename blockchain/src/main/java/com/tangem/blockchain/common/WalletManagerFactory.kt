@@ -249,6 +249,10 @@ class WalletManagerFactory(
                 AptosWalletManagerAssembly
             }
 
+            Blockchain.Algorand, Blockchain.AlgorandTestnet -> {
+                AlgorandWalletManagerAssembly
+            }
+
             Blockchain.Unknown -> {
                 error("Unsupported blockchain")
             }
