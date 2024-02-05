@@ -131,6 +131,9 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.VeChain, Blockchain.VeChainTestnet -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/818'/0'/0/0"))
             }
+            Blockchain.Algorand, Blockchain.AlgorandTestnet -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/283'/0'/0'/0'"))
+            }
             Blockchain.Chia, Blockchain.ChiaTestnet -> mapOf(AddressType.Default to DerivationPath(""))
 
             Blockchain.Unknown,
