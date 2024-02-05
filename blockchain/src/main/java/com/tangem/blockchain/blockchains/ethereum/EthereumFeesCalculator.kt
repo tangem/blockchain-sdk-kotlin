@@ -11,37 +11,6 @@ import java.math.RoundingMode
 
 class EthereumFeesCalculator {
 
-    @Suppress("MagicNumber")
-    @Deprecated("use calculateFees() instead of this")
-    internal fun calculateFeesUsingOldMethod(
-        amountParams: Amount,
-        gasLimit: BigInteger,
-        gasPrice: BigInteger,
-    ): TransactionFee.Choosable {
-        val minFee = gasPrice * gasLimit
-        // By dividing by ten before last multiplication here we can lose some digits
-        val normalFee = gasPrice * BigInteger.valueOf(12) / BigInteger.TEN * gasLimit
-        val priorityFee = gasPrice * BigInteger.valueOf(15) / BigInteger.TEN * gasLimit
-
-        return TransactionFee.Choosable(
-            minimum = Fee.Ethereum(
-                amount = createFee(amountParams, minFee),
-                gasLimit = gasLimit,
-                gasPrice = gasPrice,
-            ),
-            normal = Fee.Ethereum(
-                amount = createFee(amountParams, normalFee),
-                gasLimit = gasLimit,
-                gasPrice = gasPrice,
-            ),
-            priority = Fee.Ethereum(
-                amount = createFee(amountParams, priorityFee),
-                gasLimit = gasLimit,
-                gasPrice = gasPrice,
-            ),
-        )
-    }
-
     internal fun calculateFees(
         amountParams: Amount,
         gasLimit: BigInteger,
@@ -50,9 +19,13 @@ class EthereumFeesCalculator {
         val gasPriceDecimal = BigDecimal(gasPrice)
         val gasLimitDecimal = BigDecimal(gasLimit)
 
-        val minFee = gasPriceDecimal * minimalMultiplier * gasLimitDecimal
-        val normalFee = gasPriceDecimal * normalMultiplier * gasLimitDecimal
-        val priorityFee = gasPriceDecimal * priorityMultiplier * gasLimitDecimal
+        val minGasPrice = gasPriceDecimal * minimalMultiplier
+        val normalGasPrice = gasPriceDecimal * normalMultiplier
+        val priorityGasPrice = gasPriceDecimal * priorityMultiplier
+
+        val minFee = minGasPrice * gasLimitDecimal
+        val normalFee = normalGasPrice * gasLimitDecimal
+        val priorityFee = priorityGasPrice * gasLimitDecimal
 
         val minimalFeeBigInt = minFee.toBigInteger()
         val normalFeeBigInt = normalFee.toBigInteger()
@@ -62,17 +35,17 @@ class EthereumFeesCalculator {
             minimum = Fee.Ethereum(
                 amount = createFee(amountParams, minimalFeeBigInt),
                 gasLimit = gasLimit,
-                gasPrice = gasPrice,
+                gasPrice = minGasPrice.toBigInteger(),
             ),
             normal = Fee.Ethereum(
                 amount = createFee(amountParams, normalFeeBigInt),
                 gasLimit = gasLimit,
-                gasPrice = gasPrice,
+                gasPrice = normalGasPrice.toBigInteger(),
             ),
             priority = Fee.Ethereum(
                 amount = createFee(amountParams, priorityFeeBigInt),
                 gasLimit = gasLimit,
-                gasPrice = gasPrice,
+                gasPrice = priorityGasPrice.toBigInteger(),
             ),
         )
     }
