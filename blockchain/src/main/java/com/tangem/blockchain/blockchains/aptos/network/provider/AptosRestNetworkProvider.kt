@@ -1,15 +1,18 @@
 package com.tangem.blockchain.blockchains.aptos.network.provider
 
+import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.aptos.models.AptosAccountInfo
 import com.tangem.blockchain.blockchains.aptos.models.AptosTransactionInfo
 import com.tangem.blockchain.blockchains.aptos.network.AptosApi
 import com.tangem.blockchain.blockchains.aptos.network.AptosNetworkProvider
-import com.tangem.blockchain.blockchains.aptos.network.converter.AptosTransactionConverter
+import com.tangem.blockchain.blockchains.aptos.network.converter.AptosPseudoTransactionConverter
+import com.tangem.blockchain.blockchains.aptos.network.request.AptosTransactionBody
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.createRetrofitInstance
+import com.tangem.blockchain.network.moshi
 import retrofit2.HttpException
 
 internal class AptosRestNetworkProvider(override val baseUrl: String) : AptosNetworkProvider {
@@ -55,11 +58,11 @@ internal class AptosRestNetworkProvider(override val baseUrl: String) : AptosNet
 
     override suspend fun calculateUsedGasPriceUnit(transaction: AptosTransactionInfo): Result<Long> {
         return try {
-            val requestBody = AptosTransactionConverter.convert(transaction)
+            val requestBody = AptosPseudoTransactionConverter.convert(transaction)
             val response = api.simulateTransaction(requestBody).firstOrNull()
 
             val usedGasUnit = response?.usedGasUnit?.toLongOrNull()
-            if (response != null && usedGasUnit != null && response.isSuccess) {
+            if (usedGasUnit != null && response.isSuccess) {
                 Result.Success(usedGasUnit)
             } else {
                 Result.Failure(BlockchainSdkError.FailedToLoadFee)
@@ -69,27 +72,13 @@ internal class AptosRestNetworkProvider(override val baseUrl: String) : AptosNet
         }
     }
 
-    override suspend fun encodeTransaction(transaction: AptosTransactionInfo): Result<String> {
+    @OptIn(ExperimentalStdlibApi::class)
+    override suspend fun submitTransaction(jsonOutput: String): Result<String> {
         return try {
-            val requestBody = AptosTransactionConverter.convert(transaction)
-            val hash = api.encodeSubmission(requestBody)
+            val body = moshi.adapter<AptosTransactionBody>().fromJson(jsonOutput)
+                ?: return Result.Failure(BlockchainSdkError.FailedToSendException)
 
-            if (hash.isNotBlank()) {
-                Result.Success(hash)
-            } else {
-                Result.Failure(BlockchainSdkError.FailedToSendException)
-            }
-
-            Result.Success(hash)
-        } catch (e: Exception) {
-            Result.Failure(e.toBlockchainSdkError())
-        }
-    }
-
-    override suspend fun submitTransaction(transaction: AptosTransactionInfo): Result<String> {
-        return try {
-            val requestBody = AptosTransactionConverter.convert(transaction)
-            val response = api.submitTransaction(requestBody)
+            val response = api.submitTransaction(body)
 
             if (response.hash.isNotBlank()) {
                 Result.Success(response.hash)
