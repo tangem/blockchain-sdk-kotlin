@@ -52,7 +52,7 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
     @Throws(RpcException::class)
     fun sendSignedTransaction(
         transaction: SolanaTransaction,
-        maxRetries: Int = 50,
+        maxRetries: Int = 6,
         skipPreflight: Boolean = false,
         commitment: Commitment = Commitment.FINALIZED,
     ): String {
