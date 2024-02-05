@@ -15,7 +15,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.rpc.types.SignatureStatuses
-import org.p2p.solanaj.rpc.types.TokenAccountInfo
 import org.p2p.solanaj.rpc.types.config.Commitment
 
 /**
@@ -38,7 +37,7 @@ internal class SolanaNetworkService(
                 value = it,
                 address = it.pubkey,
                 mint = it.account.data.parsed.info.mint,
-                uiAmount = it.account.data.parsed.info.tokenAmount.uiAmount.toBigDecimal(),
+                solAmount = it.account.data.parsed.info.tokenAmount.uiAmount.toBigDecimal(),
             )
         }.associateBy { it.mint }
 
@@ -84,7 +83,7 @@ internal class SolanaNetworkService(
             }
         }
 
-    suspend fun getAccountInfoIfExist(account: PublicKey): Result<SolanaAccountInfo.Value> {
+    suspend fun getAccountInfoIfExist(account: PublicKey): Result<NewSolanaAccountInfo.Value> {
         return withContext(Dispatchers.IO) {
             try {
                 val accountInfo = getAccountInfo(account)
@@ -117,7 +116,7 @@ internal class SolanaNetworkService(
         }
     }
 
-    private suspend fun getAccountInfo(account: PublicKey): Result<SolanaAccountInfo.Value?> {
+    private suspend fun getAccountInfo(account: PublicKey): Result<NewSolanaAccountInfo.Value?> {
         return withContext(Dispatchers.IO) {
             try {
                 val params = mapOf("commitment" to Commitment.FINALIZED)
@@ -130,7 +129,7 @@ internal class SolanaNetworkService(
         }
     }
 
-    private suspend fun accountTokensInfo(account: PublicKey): Result<List<TokenAccountInfo.Value>> =
+    private suspend fun accountTokensInfo(account: PublicKey): Result<List<NewSolanaTokenAccountInfo.Value>> =
         withContext(Dispatchers.IO) {
             try {
                 val tokensAccountsInfoDefault = async {
@@ -150,13 +149,13 @@ internal class SolanaNetworkService(
             }
         }
 
-    private fun tokenAccountInfo(account: PublicKey, programId: PublicKey): TokenAccountInfo {
+    private fun tokenAccountInfo(account: PublicKey, programId: PublicKey): NewSolanaTokenAccountInfo {
         val params = buildMap {
             put("programId", programId)
             put("commitment", Commitment.RECENT.value)
         }
 
-        return provider.api.getTokenAccountsByOwner(account, params, mutableMapOf())
+        return provider.api.getTokenAccountsByOwnerNew(account, params)
     }
 
     suspend fun getFeeForMessage(transaction: SolanaTransaction): Result<FeeInfo> = withContext(Dispatchers.IO) {
