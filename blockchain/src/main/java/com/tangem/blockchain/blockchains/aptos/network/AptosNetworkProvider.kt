@@ -28,13 +28,6 @@ internal interface AptosNetworkProvider : NetworkProvider {
      */
     suspend fun calculateUsedGasPriceUnit(transaction: AptosTransactionInfo): Result<Long>
 
-    /**
-     * Encode transaction in BCS
-     *
-     * @param transaction unsigned transaction
-     */
-    suspend fun encodeTransaction(transaction: AptosTransactionInfo): Result<String>
-
-    /** Submit signed transaction [transaction] */
-    suspend fun submitTransaction(transaction: AptosTransactionInfo): Result<String>
+    /** Submit signed transaction using [jsonOutput] */
+    suspend fun submitTransaction(jsonOutput: String): Result<String>
 }
