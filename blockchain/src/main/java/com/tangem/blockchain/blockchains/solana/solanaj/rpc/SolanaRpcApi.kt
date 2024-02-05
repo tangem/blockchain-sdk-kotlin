@@ -13,7 +13,6 @@ import org.p2p.solanaj.rpc.RpcApi
 import org.p2p.solanaj.rpc.RpcClient
 import org.p2p.solanaj.rpc.RpcException
 import org.p2p.solanaj.rpc.types.config.Commitment
-import org.p2p.solanaj.rpc.types.config.RpcSendTransactionConfig
 import org.p2p.solanaj.ws.listeners.NotificationEventListener
 
 /**
@@ -50,10 +49,23 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
     }
 
     @Throws(RpcException::class)
-    fun sendSignedTransaction(transaction: SolanaTransaction): String {
+    fun sendSignedTransaction(
+        transaction: SolanaTransaction,
+        skipPreflight: Boolean = false,
+        commitment: Commitment = Commitment.FINALIZED,
+    ): String {
         val serializedTransaction = transaction.serialize()
         val base64Trx = Base64.encodeToString(serializedTransaction, Base64.NO_WRAP)
-        val params = mutableListOf<Any>(base64Trx, RpcSendTransactionConfig())
+        val params = buildList {
+            add(base64Trx)
+
+            val additionalParams = buildMap<String, Any> {
+                this["encoding"] = "base64"
+                this["skipPreflight"] = skipPreflight
+                this["commitment"] = commitment.value
+            }
+            add(additionalParams)
+        }
 
         return client.call("sendTransaction", params, String::class.java)
     }
