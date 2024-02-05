@@ -164,7 +164,6 @@ internal class WalletManagerFactoryTest {
                     gnosis = GetBlockAccessToken(),
                     cronos = GetBlockAccessToken(),
                     solana = GetBlockAccessToken(),
-                    stellar = GetBlockAccessToken(),
                     ton = GetBlockAccessToken(),
                     tron = GetBlockAccessToken(),
                     cosmos = GetBlockAccessToken(),
