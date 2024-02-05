@@ -39,7 +39,7 @@ class SolanaWalletManager internal constructor(
     private val tokenAccountInfoFinder = SolanaTokenAccountInfoFinder(multiNetworkProvider)
     private val transactionBuilder = SolanaTransactionBuilder(account, multiNetworkProvider, tokenAccountInfoFinder)
 
-    private var accountSize: Long? = null
+    private var accountSize: Long = MIN_ACCOUNT_DATA_SIZE
 
     override val currentHost: String
         get() = multiNetworkProvider.currentProvider.baseUrl
@@ -64,7 +64,7 @@ class SolanaWalletManager internal constructor(
 
         cardTokens.forEach { cardToken ->
             val tokenBalance =
-                accountInfo.tokensByMint[cardToken.contractAddress]?.uiAmount ?: BigDecimal.ZERO
+                accountInfo.tokensByMint[cardToken.contractAddress]?.solAmount ?: BigDecimal.ZERO
             wallet.addTokenValue(tokenBalance, cardToken)
         }
     }
@@ -303,19 +303,12 @@ class SolanaWalletManager internal constructor(
     }
 
     override suspend fun minimalBalanceForRentExemption(): Result<BigDecimal> {
-        val size = requireNotNull(accountSize) {
-            "Account size must be initialized. Call update() first."
-        }
-
-        return getMinimalBalanceForRentExemptionInSol(size)
+        return getMinimalBalanceForRentExemptionInSol(accountSize)
     }
 
     // FIXME: The rent calculation is based on hardcoded values that may be changed in the future
     override suspend fun rentAmount(): BigDecimal {
-        val size = requireNotNull(accountSize) {
-            "Account size must be initialized. Call update() first."
-        }
-        val accountSizeWithMetadata = (size + ACCOUNT_METADATA_SIZE).toBigDecimal()
+        val accountSizeWithMetadata = (accountSize + ACCOUNT_METADATA_SIZE).toBigDecimal()
         val rentPerEpoch = determineRentPerEpoch(multiNetworkProvider.currentProvider).toBigDecimal()
 
         return accountSizeWithMetadata
