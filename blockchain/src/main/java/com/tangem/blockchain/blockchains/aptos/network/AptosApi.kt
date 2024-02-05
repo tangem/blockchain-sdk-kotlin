@@ -39,7 +39,7 @@ internal interface AptosApi {
     /**
      * Simulate transaction's sending. Use it to estimate the maximum gas units for a submitted transaction.
      * Request queries:
-     *  - {estimate_gas_unit_price} - If set to true, the gas unit price in the transaction will be ignored and the
+     * - {estimate_gas_unit_price} - If set to true, the gas unit price in the transaction will be ignored and the
      *                                  estimated value will be used
      * - {estimate_max_gas_amount} - If set to true, the max gas value in the transaction will be ignored and the
      *                                  maximum possible gas will be used
@@ -56,11 +56,6 @@ internal interface AptosApi {
             "estimate_prioritized_gas_unit_price=false",
     )
     suspend fun simulateTransaction(@Body body: AptosTransactionBody): List<AptosSimulateTransactionBody>
-
-    /** Build raw transaction data [body] and encode in BCS */
-    @Headers("Content-Type: application/json")
-    @POST("v1/transactions/encode_submission")
-    suspend fun encodeSubmission(@Body body: AptosTransactionBody): String
 
     /** Submit transaction [body] */
     @Headers("Content-Type: application/json")
