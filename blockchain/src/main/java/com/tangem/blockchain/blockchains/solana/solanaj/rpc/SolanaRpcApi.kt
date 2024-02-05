@@ -3,7 +3,8 @@ package com.tangem.blockchain.blockchains.solana.solanaj.rpc
 import android.util.Base64
 import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
 import com.tangem.blockchain.blockchains.solana.solanaj.model.FeeInfo
-import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaAccountInfo
+import com.tangem.blockchain.blockchains.solana.solanaj.model.NewSolanaAccountInfo
+import com.tangem.blockchain.blockchains.solana.solanaj.model.NewSolanaTokenAccountInfo
 import org.p2p.solanaj.core.Account
 import org.p2p.solanaj.core.MapUtils
 import org.p2p.solanaj.core.PublicKey
@@ -68,10 +69,10 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
     }
 
     /**
-     * Same as [RpcApi.getAccountInfo] but returns improved [SolanaAccountInfo]
+     * Same as [RpcApi.getAccountInfo] but returns improved [NewSolanaAccountInfo]
      * instead of [org.p2p.solanaj.rpc.types.AccountInfo]
      * */
-    fun getAccountInfoNew(account: PublicKey, additionalParams: Map<String, Any>): SolanaAccountInfo {
+    fun getAccountInfoNew(account: PublicKey, additionalParams: Map<String, Any>): NewSolanaAccountInfo {
         val params = buildList {
             add(account.toString())
 
@@ -89,6 +90,50 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
 
             add(parameterMap)
         }
-        return client.call("getAccountInfo", params, SolanaAccountInfo::class.java)
+
+        return client.call("getAccountInfo", params, NewSolanaAccountInfo::class.java)
+    }
+
+    fun getTokenAccountsByOwnerNew(
+        accountOwner: PublicKey,
+        requiredParams: Map<String, Any>,
+        optionalParams: Map<String, Any> = mapOf(),
+    ): NewSolanaTokenAccountInfo {
+        val params = buildList {
+            add(accountOwner.toString())
+
+            val requiredParamsMap = buildMap {
+                if (requiredParams.containsKey("mint")) {
+                    this["mint"] = requiredParams["mint"].toString()
+                } else {
+                    if (!requiredParams.containsKey("programId")) {
+                        throw RpcException("mint or programId are mandatory parameters")
+                    }
+
+                    this["programId"] = requiredParams["programId"].toString()
+                }
+            }
+            add(requiredParamsMap)
+
+            val optionalParamsMap = buildMap {
+                this["encoding"] = MapUtils.getOrDefault(optionalParams, "encoding", "jsonParsed")
+
+                if (optionalParams.containsKey("commitment")) {
+                    val commitment = optionalParams["commitment"] as Commitment
+                    this["commitment"] = commitment.value
+                }
+
+                if (optionalParams.containsKey("dataSlice")) {
+                    this["dataSlice"] = optionalParams["dataSlice"]
+                }
+            }
+            add(optionalParamsMap)
+        }
+
+        return client.call(
+            "getTokenAccountsByOwner",
+            params,
+            NewSolanaTokenAccountInfo::class.java,
+        ) as NewSolanaTokenAccountInfo
     }
 }
