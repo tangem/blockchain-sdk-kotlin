@@ -1,7 +1,6 @@
 package com.tangem.blockchain.blockchains.solana.solanaj.model
 
 import org.p2p.solanaj.core.PublicKey
-import org.p2p.solanaj.rpc.types.TokenResultObjects
 import java.math.BigDecimal
 
 internal data class SolanaMainAccountInfo(
@@ -14,7 +13,7 @@ internal data class SolanaMainAccountInfo(
 }
 
 internal data class SolanaSplAccountInfo(
-    val value: TokenResultObjects.Value,
+    val value: NewSolanaTokenResultObjects.Value,
     val associatedPubK: PublicKey,
 )
 
