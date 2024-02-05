@@ -64,7 +64,7 @@ class SolanaWalletManager internal constructor(
 
         cardTokens.forEach { cardToken ->
             val tokenBalance =
-                accountInfo.tokensByMint[cardToken.contractAddress]?.uiAmount ?: BigDecimal.ZERO
+                accountInfo.tokensByMint[cardToken.contractAddress]?.solAmount ?: BigDecimal.ZERO
             wallet.addTokenValue(tokenBalance, cardToken)
         }
     }
