@@ -1,52 +1,34 @@
 package com.tangem.blockchain.blockchains.bitcoincash
 
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import com.tangem.blockchain.blockchains.bitcoincash.apiservice.BitcoinCashApiService
-import com.tangem.blockchain.blockchains.bitcoincash.apiservice.BitcoinCashBlockBookApiService
+import com.tangem.blockchain.blockchains.bitcoincash.apiservice.BitcoinCashApi
+import com.tangem.blockchain.blockchains.bitcoincash.apiservice.BitcoinCashBlockBookApi
 import com.tangem.blockchain.blockchains.bitcoincash.network.BitconCashGetFeeResponse
 import com.tangem.blockchain.blockchains.bitcoincash.network.SendTransactionRequest
 import com.tangem.blockchain.extensions.AddHeaderInterceptor
-import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
 import com.tangem.blockchain.network.blockbook.network.requests.GetFeeRequest
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponseItem
 import com.tangem.blockchain.network.blockbook.network.responses.SendTransactionResponse
-import retrofit2.Retrofit
-import retrofit2.converter.moshi.MoshiConverterFactory
-import okhttp3.OkHttpClient
+import com.tangem.blockchain.network.createRetrofitInstance
 import retrofit2.Response
 import java.io.IOException
 
-internal class BitcoinCashNowNodesApi(
+internal class BitcoinCashNowNodesApiService(
     bchBookUrl: String,
     bchUrl: String,
     credentials: Pair<String, String>,
 ) {
-    private val client: OkHttpClient = BlockchainSdkRetrofitBuilder.build(
-        internalInterceptors = listOf(
+    private val interceptors = listOf(
             AddHeaderInterceptor(mapOf("Content-Type" to "application/json")),
             AddHeaderInterceptor(mapOf(credentials)),
-        ),
-    )
+        )
 
-    private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+    private val retrofitBlockBook = createRetrofitInstance(bchBookUrl, interceptors)
+    private val retrofitBch = createRetrofitInstance(bchUrl, interceptors)
 
-    private val retrofitBlockBook: Retrofit = Retrofit.Builder()
-        .client(client)
-        .baseUrl(bchBookUrl)
-        .addConverterFactory(MoshiConverterFactory.create(moshi))
-        .build()
-
-    private val retrofitBch: Retrofit = Retrofit.Builder()
-        .client(client)
-        .baseUrl(bchUrl)
-        .addConverterFactory(MoshiConverterFactory.create(moshi))
-        .build()
-
-    private val blockBookService: BitcoinCashBlockBookApiService =
-        retrofitBlockBook.create(BitcoinCashBlockBookApiService::class.java)
-    private val bchService: BitcoinCashApiService = retrofitBch.create(BitcoinCashApiService::class.java)
+    private val blockBookService: BitcoinCashBlockBookApi =
+        retrofitBlockBook.create(BitcoinCashBlockBookApi::class.java)
+    private val bchService: BitcoinCashApi = retrofitBch.create(BitcoinCashApi::class.java)
 
     suspend fun getAddress(address: String): GetAddressResponse {
         val response = blockBookService.getAddress(address)
