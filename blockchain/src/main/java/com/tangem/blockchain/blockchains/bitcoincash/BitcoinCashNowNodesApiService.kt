@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.bitcoincash
 
-import com.tangem.blockchain.blockchains.bitcoincash.apiservice.BitcoinCashApi
-import com.tangem.blockchain.blockchains.bitcoincash.apiservice.BitcoinCashBlockBookApi
+import com.tangem.blockchain.blockchains.bitcoincash.api.BitcoinCashApi
+import com.tangem.blockchain.blockchains.bitcoincash.api.BitcoinCashBlockBookApi
 import com.tangem.blockchain.blockchains.bitcoincash.network.BitconCashGetFeeResponse
 import com.tangem.blockchain.blockchains.bitcoincash.network.SendTransactionRequest
 import com.tangem.blockchain.extensions.AddHeaderInterceptor
