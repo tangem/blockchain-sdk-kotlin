@@ -196,6 +196,10 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://rpc.apothem.network/"),
         )
 
+        Blockchain.Playa3ull -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://api.mainnet.playa3ull.games/"),
+        )
+
         else -> error("$this isn't supported")
     }
 
