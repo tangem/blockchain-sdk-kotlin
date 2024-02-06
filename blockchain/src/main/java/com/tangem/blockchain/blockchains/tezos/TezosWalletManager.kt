@@ -10,6 +10,7 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.extensions.toCanonicalECDSASignature
 import com.tangem.common.CompletionResult
 import com.tangem.common.card.EllipticCurve
@@ -58,7 +59,11 @@ class TezosWalletManager(
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         if (publicKeyRevealed == null) {
-            return SimpleResult.Failure(BlockchainSdkError.CustomError("publicKeyRevealed is null"))
+            // in case of publicKeyRevealed is null, we should try request it
+            val publicKeyRevealedUpdated = networkProvider.isPublicKeyRevealed(wallet.address)
+            publicKeyRevealed = publicKeyRevealedUpdated.successOr {
+                return SimpleResult.Failure(BlockchainSdkError.CustomError("publicKeyRevealed is null"))
+            }
         }
 
         val contents =
@@ -140,6 +145,9 @@ class TezosWalletManager(
     }
 
     override suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee> {
+        // we should update publicKeyRevealed on every fee estimation
+        val publicKeyRevealedUpdated = networkProvider.isPublicKeyRevealed(wallet.address)
+        publicKeyRevealed = publicKeyRevealedUpdated.successOr { null }
         val defaultFee = BigDecimal.valueOf(TezosConstants.TRANSACTION_FEE)
         return Result.Success(TransactionFee.Single(Fee.Common(Amount(defaultFee, blockchain))))
     }
