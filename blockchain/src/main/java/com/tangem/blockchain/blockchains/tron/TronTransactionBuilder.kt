@@ -2,40 +2,27 @@ package com.tangem.blockchain.blockchains.tron
 
 import com.google.common.primitives.Ints.max
 import com.squareup.wire.AnyMessage
-import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.Companion.toKeccak
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.toKeccak
 import com.tangem.blockchain.blockchains.tron.network.TronBlock
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.extensions.bigIntegerValue
 import com.tangem.blockchain.extensions.decodeBase58
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
-import com.tangem.common.extensions.toDecompressedPublicKey
 import okio.ByteString.Companion.EMPTY
 import okio.ByteString.Companion.toByteString
-import org.kethereum.crypto.api.ec.ECDSASignature
-import org.kethereum.crypto.determineRecId
-import org.kethereum.crypto.impl.ec.canonicalise
-import org.kethereum.extensions.removeLeadingZero
-import org.kethereum.model.PublicKey
-import org.kethereum.model.SignatureData
 import org.tron.protos.BlockHeader
 import org.tron.protos.Transaction
 import protocol.TransferContract
 import protocol.TriggerSmartContract
-import java.math.BigInteger
 
 class TronTransactionBuilder(private val blockchain: Blockchain) {
 
-    fun buildForSign(
-        amount: Amount,
-        source: String,
-        destination: String,
-        block: TronBlock
-    ): Transaction.raw {
+    @Suppress("MagicNumber")
+    fun buildForSign(amount: Amount, source: String, destination: String, block: TronBlock): Transaction.raw {
         val contract = contract(amount, source, destination)
         val feeLimit = if (amount.type == AmountType.Coin) 0L else SMART_CONTRACT_FEE_LIMIT
 
@@ -67,7 +54,7 @@ class TronTransactionBuilder(private val blockchain: Blockchain) {
             ref_block_hash = refBlockHash,
             ref_block_bytes = refBlockBytes,
             contract = listOf(contract),
-            fee_limit = feeLimit
+            fee_limit = feeLimit,
         )
     }
 
@@ -75,22 +62,18 @@ class TronTransactionBuilder(private val blockchain: Blockchain) {
         return Transaction(rawData, listOf(signature.toByteString()))
     }
 
-    private fun contract(
-        amount: Amount,
-        source: String,
-        destination: String,
-    ): Transaction.Contract {
-
+    @Suppress("MagicNumber")
+    private fun contract(amount: Amount, source: String, destination: String): Transaction.Contract {
         return when (amount.type) {
             AmountType.Coin -> {
                 val parameter = TransferContract(
                     owner_address = source.decodeBase58(checked = true)?.toByteString() ?: EMPTY,
                     to_address = destination.decodeBase58(checked = true)?.toByteString() ?: EMPTY,
-                    amount = amount.longValue ?: 0L
+                    amount = amount.longValue ?: 0L,
                 )
                 Transaction.Contract(
                     type = Transaction.Contract.ContractType.TransferContract,
-                    parameter = AnyMessage.pack(parameter)
+                    parameter = AnyMessage.pack(parameter),
                 )
             }
             is AmountType.Token -> {
@@ -111,15 +94,15 @@ class TronTransactionBuilder(private val blockchain: Blockchain) {
                     contract_address = amount.type.token.contractAddress
                         .decodeBase58(true)?.toByteString() ?: EMPTY,
                     data_ = contractData.toByteString(),
-                    owner_address = source.decodeBase58(true)?.toByteString() ?: EMPTY
+                    owner_address = source.decodeBase58(true)?.toByteString() ?: EMPTY,
                 )
 
                 Transaction.Contract(
                     type = Transaction.Contract.ContractType.TriggerSmartContract,
-                    parameter = AnyMessage.pack(parameter)
+                    parameter = AnyMessage.pack(parameter),
                 )
             }
-            AmountType.Reserve -> throw Exception("Not supported")
+            AmountType.Reserve -> error("Not supported")
         }
     }
 
@@ -131,5 +114,4 @@ class TronTransactionBuilder(private val blockchain: Blockchain) {
     companion object {
         const val SMART_CONTRACT_FEE_LIMIT = 100_000_000L
     }
-
 }
