@@ -1,4 +1,4 @@
-package com.tangem.blockchain.blockchains.bitcoincash.apiservice
+package com.tangem.blockchain.blockchains.bitcoincash.api
 
 import com.tangem.blockchain.blockchains.bitcoincash.network.BitconCashGetFeeResponse
 import com.tangem.blockchain.blockchains.bitcoincash.network.SendTransactionRequest
