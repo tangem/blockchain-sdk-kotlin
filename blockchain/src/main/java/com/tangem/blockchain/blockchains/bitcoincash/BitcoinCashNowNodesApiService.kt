@@ -19,9 +19,9 @@ internal class BitcoinCashNowNodesApiService(
     credentials: Pair<String, String>,
 ) {
     private val interceptors = listOf(
-            AddHeaderInterceptor(mapOf("Content-Type" to "application/json")),
-            AddHeaderInterceptor(mapOf(credentials)),
-        )
+        AddHeaderInterceptor(mapOf("Content-Type" to "application/json")),
+        AddHeaderInterceptor(mapOf(credentials)),
+    )
 
     private val retrofitBlockBook = createRetrofitInstance(bchBookUrl, interceptors)
     private val retrofitBch = createRetrofitInstance(bchUrl, interceptors)
@@ -53,7 +53,7 @@ internal class BitcoinCashNowNodesApiService(
     suspend fun getUtxo(address: String): List<GetUtxoResponseItem> {
         val response = blockBookService.getUtxo(address)
         return response.unpack<List<GetUtxoResponseItem>>().filter {
-            it.confirmations > 0  // filter unconfirmed UTXOs, to not block sending tx
+            it.confirmations > 0 // filter unconfirmed UTXOs, to not block sending tx
         }
     }
 
