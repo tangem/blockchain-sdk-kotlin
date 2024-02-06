@@ -7,7 +7,7 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.Response
 
-internal interface BitcoinCashBlockBookApiService {
+internal interface BitcoinCashBlockBookApi {
 
     @GET("api/v2/address/{address}")
     suspend fun getAddress(
