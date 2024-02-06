@@ -66,6 +66,10 @@ object DerivationConfigV1 : DerivationConfig() {
                 mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             }
 
+            Blockchain.XDC -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
+            }
+
             Blockchain.EthereumClassic -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))
             }
@@ -150,7 +154,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Near -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/397'/0'"))
             }
-            Blockchain.Vechain, Blockchain.VechainTestnet -> {
+            Blockchain.VeChain, Blockchain.VeChainTestnet -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/818'/0'/0/0"))
             }
 
@@ -182,9 +186,14 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.OctaSpaceTestnet,
             Blockchain.NearTestnet,
             Blockchain.DecimalTestnet,
+            Blockchain.XDCTestnet,
             Blockchain.HederaTestnet,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
+            }
+
+            Blockchain.Aptos, Blockchain.AptosTestnet -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/637'/0'/0'/0'"))
             }
         }
     }

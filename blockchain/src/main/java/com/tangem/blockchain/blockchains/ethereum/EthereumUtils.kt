@@ -442,6 +442,7 @@ object EthereumUtils {
         return CompiledEthereumTransaction(transaction, hash)
     }
 
+    // TODO: https://tangem.atlassian.net/browse/AND-5811 Replace with SmartContractMethod interface implementations
     fun createErc20ApproveDataHex(spender: String, amount: Amount?): String = createErc20ApproveData(
         spender = spender,
         amount = amount?.value?.movePointRight(amount.decimals)?.toBigInteger(),
@@ -451,6 +452,7 @@ object EthereumUtils {
         recipient.substring(2).hexToBytes().toFixedLengthByteArray(32) +
         amount.toBytesPadded(32)
 
+    // TODO: https://tangem.atlassian.net/browse/AND-5811 Replace with SmartContractMethod interface implementations
     internal fun createErc20TransferData(recepient: String, amount: Amount) = createErc20TransferData(
         recepient,
         amount.value!!.movePointRight(amount.decimals).toBigInteger(),

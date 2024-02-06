@@ -54,7 +54,7 @@ open class BlockchairNetworkProvider(
                 currentApiKey = apiKey
                 retryIO { block() }
             } else {
-                error("${error.code()}: ${error.message()}")
+                throw error
             }
         }
     }

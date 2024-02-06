@@ -17,7 +17,8 @@ import com.tangem.blockchain.blockchains.solana.SolanaAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
-import com.tangem.blockchain.blockchains.vechain.VechainWalletManager
+import com.tangem.blockchain.blockchains.vechain.VeChainWalletManager
+import com.tangem.blockchain.blockchains.xdc.XDCAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.*
 import com.tangem.blockchain.common.derivation.DerivationStyle
@@ -26,6 +27,7 @@ import com.tangem.blockchain.externallinkprovider.ExternalLinkProviderFactory
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 
+@Suppress("LargeClass")
 enum class Blockchain(
     val id: String,
     val currency: String,
@@ -99,8 +101,12 @@ enum class Blockchain(
     ChiaTestnet("chia/test", "TXCH", "Chia Network Testnet"),
     Decimal("decimal", "DEL", "Decimal Smart Chain"),
     DecimalTestnet("decimal/test", "tDEL", "Decimal Smart Chain Testnet"),
-    Vechain("vechain", "VET", "VeChain"),
-    VechainTestnet("vechain/test", "VET", "VeChain Testnet"),
+    XDC("xdc", "XDC", "XDC Network"),
+    XDCTestnet("xdc/test", "XDC", "XDC Network Testnet"),
+    VeChain("vechain", "VET", "VeChain"),
+    VeChainTestnet("vechain/test", "VET", "VeChain Testnet"),
+    Aptos("aptos", "APT", "Aptos"),
+    AptosTestnet("aptos/test", "APT", "Aptos Testnet"),
     Hedera("hedera", "HBAR", "Hedera"),
     HederaTestnet("hedera/test", "HBAR", "Hedera Testnet"),
     ;
@@ -130,7 +136,8 @@ enum class Blockchain(
         Dash,
         Kaspa,
         Ravencoin, RavencoinTestnet,
-        Hedera, HederaTestnet
+        Aptos, AptosTestnet,
+        Hedera, HederaTestnet,
         -> 8
 
         Solana, SolanaTestnet,
@@ -159,7 +166,8 @@ enum class Blockchain(
         Telos, TelosTestnet,
         OctaSpace, OctaSpaceTestnet,
         Decimal, DecimalTestnet,
-        Vechain, VechainTestnet,
+        XDC, XDCTestnet,
+        VeChain, VeChainTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -211,8 +219,10 @@ enum class Blockchain(
             Cronos,
             Telos, TelosTestnet,
             OctaSpace, OctaSpaceTestnet,
-            Vechain, VechainTestnet,
+            VeChain, VeChainTestnet,
             -> EthereumAddressService()
+
+            XDC, XDCTestnet -> XDCAddressService()
 
             Decimal, DecimalTestnet -> DecimalAddressService()
             RSK -> RskAddressService()
@@ -224,7 +234,12 @@ enum class Blockchain(
             Stellar, StellarTestnet -> StellarAddressService()
             Solana, SolanaTestnet -> SolanaAddressService()
             Tezos -> TezosAddressService()
-            TON, TONTestnet, Cosmos, CosmosTestnet, TerraV1, TerraV2, Near, NearTestnet,
+            TON, TONTestnet,
+            Cosmos, CosmosTestnet,
+            TerraV1,
+            TerraV2,
+            Near, NearTestnet,
+            Aptos, AptosTestnet,
             -> TrustWalletAddressService(blockchain = this)
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
@@ -293,7 +308,9 @@ enum class Blockchain(
             Chia, ChiaTestnet -> ChiaTestnet
             Near, NearTestnet -> NearTestnet
             Decimal, DecimalTestnet -> DecimalTestnet
-            Vechain, VechainTestnet -> VechainTestnet
+            XDC, XDCTestnet -> XDCTestnet
+            VeChain, VeChainTestnet -> VeChainTestnet
+            Aptos, AptosTestnet -> AptosTestnet
             Hedera, HederaTestnet -> HederaTestnet
             else -> null
         }
@@ -341,13 +358,16 @@ enum class Blockchain(
             Cronos,
             OctaSpace, OctaSpaceTestnet,
             Decimal, DecimalTestnet,
-            Vechain, VechainTestnet,
+            XDC, XDCTestnet,
+            VeChain, VeChainTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
-            TON, TONTestnet, Near, NearTestnet,
+            TON, TONTestnet,
+            Near, NearTestnet,
+            Aptos, AptosTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
 
             Cardano -> listOf(EllipticCurve.Ed25519) // todo until cardano support in wallet 2
@@ -389,6 +409,8 @@ enum class Blockchain(
             OctaSpaceTestnet -> Chain.OctaSpaceTestnet.id
             Decimal -> Chain.Decimal.id
             DecimalTestnet -> Chain.DecimalTestnet.id
+            XDC -> Chain.Xdc.id
+            XDCTestnet -> Chain.XdcTestnet.id
             else -> null
         }
     }
@@ -412,7 +434,7 @@ enum class Blockchain(
             Solana, SolanaTestnet,
             Tron, TronTestnet,
             TerraV1,
-            Vechain, VechainTestnet,
+            VeChain, VeChainTestnet,
             -> true
 
             else -> false
@@ -427,7 +449,8 @@ enum class Blockchain(
         Avalanche, AvalancheTestnet,
         EthereumPow,
         Cronos,
-        Vechain, VechainTestnet,
+        VeChain, VeChainTestnet,
+        XDC, XDCTestnet,
         -> amountType is AmountType.Token
 
         Arbitrum, ArbitrumTestnet,
@@ -442,7 +465,7 @@ enum class Blockchain(
     }
 
     fun feePaidCurrency(): FeePaidCurrency = when (this) {
-        Vechain, VechainTestnet -> FeePaidCurrency.Token(VechainWalletManager.VTHO_TOKEN)
+        VeChain, VeChainTestnet -> FeePaidCurrency.Token(VeChainWalletManager.VTHO_TOKEN)
         TerraV1 -> FeePaidCurrency.SameCurrency
         else -> FeePaidCurrency.Coin
     }

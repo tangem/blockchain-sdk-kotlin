@@ -4,20 +4,24 @@ import android.content.Context
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.impl.*
+import com.tangem.blockchain.common.datastorage.BlockchainDataStorage
+import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.common.card.EllipticCurve
 
 class WalletManagerFactory(
     private val config: BlockchainSdkConfig = BlockchainSdkConfig(),
-    private val context: Context
+    blockchainDataStorage: BlockchainDataStorage,
 ) {
+
+    @Suppress("UnusedPrivateMember")
+    private val dataStorage by lazy { AdvancedDataStorage(blockchainDataStorage) }
 
     /**
      * Base wallet manager initializer
-     * @param blockchain: blockchain to create
-     * @param seedKey: Public key of the wallet
-     * @param derivedKey: Derived ExtendedPublicKey by the card
-     * @param derivation: derivation style or derivation path
-     * @param curve optional curve to generate addresses for some blockchains
+     *
+     * @param blockchain blockchain to create
+     * @param publicKey  public key of the wallet
+     * @param curve      optional curve to generate addresses for some blockchains
      */
     fun createWalletManager(
         blockchain: Blockchain,
@@ -163,6 +167,10 @@ class WalletManagerFactory(
                 DecimalWalletManagerAssembly
             }
 
+            Blockchain.XDC, Blockchain.XDCTestnet -> {
+                XDCWalletManagerAssembly
+            }
+
             Blockchain.Optimism, Blockchain.OptimismTestnet -> {
                 OptimismWalletManagerAssembly
             }
@@ -235,8 +243,12 @@ class WalletManagerFactory(
                 NearWalletManagerAssembly
             }
 
-            Blockchain.Vechain, Blockchain.VechainTestnet -> {
-                VechainWalletManagerAssembly
+            Blockchain.VeChain, Blockchain.VeChainTestnet -> {
+                VeChainWalletManagerAssembly
+            }
+
+            Blockchain.Aptos, Blockchain.AptosTestnet -> {
+                AptosWalletManagerAssembly
             }
 
             Blockchain.Hedera, Blockchain.HederaTestnet -> {
