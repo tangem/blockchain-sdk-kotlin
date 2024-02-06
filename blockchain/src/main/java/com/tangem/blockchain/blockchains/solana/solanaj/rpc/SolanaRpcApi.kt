@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
 import com.tangem.blockchain.blockchains.solana.solanaj.model.FeeInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.NewSolanaAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.NewSolanaTokenAccountInfo
+import com.tangem.blockchain.blockchains.solana.solanaj.model.NewSplTokenAccountInfo
 import org.p2p.solanaj.core.Account
 import org.p2p.solanaj.core.MapUtils
 import org.p2p.solanaj.core.PublicKey
@@ -94,6 +95,9 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
         return client.call("getAccountInfo", params, NewSolanaAccountInfo::class.java)
     }
 
+    /**
+     * Same as [RpcApi.getTokenAccountsByOwner] but returns improved response [NewSolanaTokenAccountInfo]
+     * */
     fun getTokenAccountsByOwnerNew(
         accountOwner: PublicKey,
         requiredParams: Map<String, Any>,
@@ -135,5 +139,26 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
             params,
             NewSolanaTokenAccountInfo::class.java,
         ) as NewSolanaTokenAccountInfo
+    }
+
+    /**
+     * Same as [RpcApi.getSplTokenAccountInfo] but returns improved response [NewSplTokenAccountInfo]
+     * */
+    fun getSplTokenAccountInfoNew(account: PublicKey): NewSplTokenAccountInfo {
+        val params = buildList {
+            add(account.toString())
+
+            val paramsMap = buildMap {
+                this["encoding"] = "jsonParsed"
+            }
+
+            add(paramsMap)
+        }
+
+        return client.call(
+            "getAccountInfo",
+            params,
+            NewSplTokenAccountInfo::class.java,
+        ) as NewSplTokenAccountInfo
     }
 }
