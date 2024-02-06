@@ -6,6 +6,7 @@ import org.p2p.solanaj.rpc.types.RpcResultObject;
 
 import java.util.List;
 
+/** Same as [solanaj.rpc.types.TokenAccountInfo] but without rentEpoch field */
 public class NewSolanaTokenAccountInfo extends RpcResultObject {
 
     @Json(
