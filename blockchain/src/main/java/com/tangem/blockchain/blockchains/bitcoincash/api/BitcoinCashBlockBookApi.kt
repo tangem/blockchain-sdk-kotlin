@@ -16,7 +16,5 @@ internal interface BitcoinCashBlockBookApi {
     ): Response<GetAddressResponse>
 
     @GET("api/v2/utxo/{address}")
-    suspend fun getUtxo(
-        @Path("address") address: String,
-    ): Response<List<GetUtxoResponseItem>>
+    suspend fun getUtxo(@Path("address") address: String): Response<List<GetUtxoResponseItem>>
 }
