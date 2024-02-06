@@ -1,7 +1,6 @@
 package com.tangem.blockchain.blockchains.cosmos
 
 import android.util.Log
-import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosNetworkService
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
@@ -10,7 +9,6 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.crypto.CryptoUtils
 import java.math.BigDecimal
@@ -31,7 +29,7 @@ class CosmosWalletManager(
 
     private val txBuilder: CosmosTransactionBuilder = CosmosTransactionBuilder(
         cosmosChain = cosmosChain,
-        publicKey = wallet.publicKey
+        publicKey = wallet.publicKey,
     )
 
     private var gas: BigDecimal? = null
@@ -76,7 +74,7 @@ class CosmosWalletManager(
                     feeAmount = transactionData.fee?.amount,
                     gas = gas?.toLong(),
                     extras = transactionData.extras as? CosmosTransactionExtras,
-                    signature = signature.data
+                    signature = signature.data,
                 )
             }
 
@@ -88,10 +86,7 @@ class CosmosWalletManager(
         return sendToNetwork(transactionData, message)
     }
 
-    private suspend fun sendToNetwork(
-        transactionData: TransactionData,
-        message: String,
-    ): SimpleResult {
+    private suspend fun sendToNetwork(transactionData: TransactionData, message: String): SimpleResult {
         return when (val sendResult = networkService.send(message)) {
             is Result.Failure -> SimpleResult.Failure(sendResult.error)
             is Result.Success -> {
@@ -106,6 +101,7 @@ class CosmosWalletManager(
         }
     }
 
+    @Suppress("MagicNumber")
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val accNumber = accountNumber ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
@@ -118,7 +114,7 @@ class CosmosWalletManager(
             feeAmount = null,
             gas = null,
             extras = null,
-            signature = CryptoUtils.generateRandomBytes(length = 64) // signature is not necessary for fee calculation
+            signature = CryptoUtils.generateRandomBytes(length = 64), // signature is not necessary for fee calculation
         )
 
         val estimateGasResult = networkService.estimateGas(input)
@@ -150,8 +146,8 @@ class CosmosWalletManager(
                             TransactionFee.Choosable(
                                 minimum = Fee.Common(amounts[0]),
                                 normal = Fee.Common(amounts[1]),
-                                priority = Fee.Common(amounts[2])
-                            )
+                                priority = Fee.Common(amounts[2]),
+                            ),
                         )
                     }
 

@@ -9,7 +9,7 @@ import com.tangem.blockchain.network.blockchair.BlockchairToken
 import java.math.BigDecimal
 import java.math.BigInteger
 
-interface EthereumNetworkProvider: NetworkProvider {
+interface EthereumNetworkProvider : NetworkProvider {
     suspend fun getInfo(address: String, tokens: Set<Token>): Result<EthereumInfoResponse>
     suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<BigDecimal>
     suspend fun sendTransaction(transaction: String): SimpleResult
@@ -17,10 +17,7 @@ interface EthereumNetworkProvider: NetworkProvider {
     suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>>
     suspend fun getGasPrice(): Result<BigInteger>
     suspend fun getGasLimit(to: String, from: String, value: String?, data: String?): Result<BigInteger>
-    suspend fun getTokensBalance(
-        address: String,
-        tokens: Set<Token>,
-    ): Result<Map<Token, BigDecimal>>
+    suspend fun getTokensBalance(address: String, tokens: Set<Token>): Result<Map<Token, BigDecimal>>
 
     suspend fun callContractForFee(data: ContractCallData): Result<BigInteger>
 }

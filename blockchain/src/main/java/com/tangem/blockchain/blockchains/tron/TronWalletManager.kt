@@ -4,18 +4,7 @@ import android.util.Log
 import com.google.common.primitives.Ints
 import com.tangem.blockchain.blockchains.tron.network.TronAccountInfo
 import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.BlockchainError
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.DummySigner
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionSender
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.TransactionStatus
-import com.tangem.blockchain.common.UnmarshalHelper
-import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
@@ -46,8 +35,10 @@ class TronWalletManager(
             .filter { it.status == TransactionStatus.Unconfirmed }
             .mapNotNull { it.hash }
 
-        when (val response =
-            networkService.getAccountInfo(wallet.address, cardTokens, transactionIds)) {
+        when (
+            val response =
+                networkService.getAccountInfo(wallet.address, cardTokens, transactionIds)
+        ) {
             is Result.Success -> updateWallet(response.data)
             is Result.Failure -> updateError(response.error)
         }
@@ -71,16 +62,13 @@ class TronWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    override suspend fun send(
-        transactionData: TransactionData,
-        signer: TransactionSigner,
-    ): SimpleResult {
+    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         val signResult = signTransactionData(
             amount = transactionData.amount,
             source = wallet.address,
             destination = transactionData.destinationAddress,
             signer = signer,
-            publicKey = wallet.publicKey
+            publicKey = wallet.publicKey,
         )
         return when (signResult) {
             is Result.Failure -> SimpleResult.Failure(signResult.error)
@@ -89,7 +77,7 @@ class TronWalletManager(
                     is Result.Failure -> SimpleResult.Failure(sendResult.error)
                     is Result.Success -> {
                         wallet.addOutgoingTransaction(
-                            transactionData.copy(hash = sendResult.data.txid)
+                            transactionData.copy(hash = sendResult.data.txid),
                         )
                         SimpleResult.Success
                     }
@@ -98,6 +86,7 @@ class TronWalletManager(
         }
     }
 
+    @Suppress("MagicNumber")
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val blockchain = wallet.blockchain
         return coroutineScope {
@@ -105,7 +94,11 @@ class TronWalletManager(
             val resourceDef = async { networkService.getAccountResource(wallet.address) }
             val transactionDataDef = async {
                 signTransactionData(
-                    amount, wallet.address, destination, dummySigner, dummySigner.publicKey
+                    amount,
+                    wallet.address,
+                    destination,
+                    dummySigner,
+                    dummySigner.publicKey,
                 )
             }
 
@@ -115,10 +108,10 @@ class TronWalletManager(
                         Fee.Common(
                             amount = Amount(
                                 BigDecimal.valueOf(1.1),
-                                blockchain
-                            )
-                        )
-                    )
+                                blockchain,
+                            ),
+                        ),
+                    ),
                 )
             }
 
@@ -154,7 +147,6 @@ class TronWalletManager(
         signer: TransactionSigner,
         publicKey: Wallet.PublicKey,
     ): Result<ByteArray> {
-
         return when (val result = networkService.getNowBlock()) {
             is Result.Failure -> {
                 Result.Failure(result.error)
@@ -162,14 +154,20 @@ class TronWalletManager(
 
             is Result.Success -> {
                 val transactionToSign = transactionBuilder.buildForSign(
-                    amount, source, destination, result.data
+                    amount,
+                    source,
+                    destination,
+                    result.data,
                 )
-                when (val signResult =
-                    sign(transactionToSign.encode().calculateSha256(), signer, publicKey)) {
+                when (
+                    val signResult =
+                        sign(transactionToSign.encode().calculateSha256(), signer, publicKey)
+                ) {
                     is Result.Failure -> Result.Failure(signResult.error)
                     is Result.Success -> {
                         val transactionToSend = transactionBuilder.buildForSend(
-                            rawData = transactionToSign, signature = signResult.data
+                            rawData = transactionToSign,
+                            signature = signResult.data,
                         )
                         Result.Success(transactionToSend.encode())
                     }

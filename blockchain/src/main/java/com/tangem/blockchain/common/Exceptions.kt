@@ -1,8 +1,11 @@
+@file:Suppress("MagicNumber")
+
 package com.tangem.blockchain.common
 
 import com.tangem.common.core.TangemError
 import java.math.BigDecimal
 
+@Suppress("UnnecessaryAbstractClass")
 abstract class BlockchainError(code: Int) : TangemError(code)
 
 sealed class BlockchainSdkError(
@@ -49,7 +52,7 @@ sealed class BlockchainSdkError(
         cause = throwable,
     ) {
         class Api(ex: Exception) : Solana(1, ex.localizedMessage ?: "Unknown api exception", ex)
-        object FailedToCreateAssociatedTokenAddress : Solana(2, "Public key conversion failed")
+        object FailedToCreateAssociatedAccount : Solana(2, "Public key conversion failed")
         object SameSourceAndDestinationAddress : Solana(3, "Same source and destination address")
         object UnsupportedTokenDestinationAddress : Solana(4)
     }
@@ -65,6 +68,7 @@ sealed class BlockchainSdkError(
         cause = throwable,
     ) {
         class Api(ex: Exception) : Polkadot(1, ex.localizedMessage ?: "Unknown api exception", ex)
+        class ApiWithCode(code: Int, message: String) : Polkadot(code, message)
     }
 
     sealed class Kaspa(
@@ -80,7 +84,7 @@ sealed class BlockchainSdkError(
         class UtxoAmountError(val maxOutputs: Int, val maxAmount: BigDecimal) : Kaspa(
             2,
             "Due to Kaspa limitations only $maxOutputs UTXOs can fit in a single transaction. This means you can only" +
-                " send ${maxAmount.toPlainString()}. You need to reduce the amount"
+                " send ${maxAmount.toPlainString()}. You need to reduce the amount",
         )
     }
 
@@ -122,7 +126,7 @@ sealed class BlockchainSdkError(
     ) {
         class Api(val name: String, code: Int, message: String) : NearException(
             subCode = code,
-            customMessage = message
+            customMessage = message,
         )
     }
 
@@ -149,8 +153,21 @@ sealed class BlockchainSdkError(
         class UtxoAmountError(val maxOutputs: Int, val maxAmount: BigDecimal) : Chia(
             1,
             "Due to Chia limitations only $maxOutputs UTXOs can fit in a single transaction. This means you can only" +
-                " send ${maxAmount.toPlainString()}."
+                " send ${maxAmount.toPlainString()}.",
         )
+    }
+
+    sealed class Ethereum(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_ETHEREUM + subCode,
+        customMessage = customMessage ?: "${ERROR_CODE_ETHEREUM + subCode}",
+        messageResId = null,
+        cause = throwable,
+    ) {
+        class Api(code: Int, message: String) : Ethereum(subCode = code, customMessage = message)
     }
 
     companion object {
@@ -162,6 +179,7 @@ sealed class BlockchainSdkError(
         const val ERROR_CODE_WALLET_CORE = 6000
         const val ERROR_CODE_CHIA = 7000
         const val ERROR_CODE_NEAR = 8000
+        const val ERROR_CODE_ETHEREUM = 9000
     }
 }
 

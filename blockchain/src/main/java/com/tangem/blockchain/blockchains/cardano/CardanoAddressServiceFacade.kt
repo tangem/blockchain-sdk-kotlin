@@ -31,5 +31,6 @@ class CardanoAddressServiceFacade : AddressService() {
         }
     }
 
+    @Suppress("MagicNumber")
     private fun ByteArray.isExtendedPublicKey() = this.size == 128
 }

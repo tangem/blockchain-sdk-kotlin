@@ -3,16 +3,7 @@ package com.tangem.blockchain.blockchains.kaspa
 import android.util.Log
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaInfoResponse
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkProvider
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.BlockchainError
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionSender
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.WalletManager
-import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -24,7 +15,7 @@ class KaspaWalletManager(
     wallet: Wallet,
     private val transactionBuilder: KaspaTransactionBuilder,
     private val networkProvider: KaspaNetworkProvider,
-) : WalletManager(wallet), TransactionSender {
+) : WalletManager(wallet), TransactionSender, UtxoAmountLimitProvider {
 
     override val currentHost: String
         get() = networkProvider.baseUrl
@@ -53,9 +44,7 @@ class KaspaWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    override suspend fun send(
-        transactionData: TransactionData, signer: TransactionSigner,
-    ): SimpleResult {
+    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
             is Result.Success -> {
@@ -63,7 +52,7 @@ class KaspaWalletManager(
                 return when (signerResult) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(
-                            signerResult.data.reduce { acc, bytes -> acc + bytes }
+                            signerResult.data.reduce { acc, bytes -> acc + bytes },
                         )
                         val sendResult = networkProvider.sendTransaction(transactionToSend)
 
@@ -86,6 +75,19 @@ class KaspaWalletManager(
         } else {
             val fee = FEE_PER_UNSPENT_OUTPUT.toBigDecimal().multiply(unspentOutputCount.toBigDecimal())
             Result.Success(TransactionFee.Single(Fee.Common(Amount(fee, blockchain))))
+        }
+    }
+
+    override fun checkUtxoAmountLimit(amount: BigDecimal, fee: BigDecimal): UtxoAmountLimit? {
+        val unspents = transactionBuilder.getUnspentsToSpend()
+        val change = transactionBuilder.calculateChange(amount, fee, unspents)
+        return if (change < BigDecimal.ZERO) { // unspentsToSpend not enough to cover transaction amount
+            UtxoAmountLimit(
+                KaspaTransactionBuilder.MAX_INPUT_COUNT.toBigDecimal(),
+                amount + change,
+            )
+        } else {
+            null
         }
     }
 

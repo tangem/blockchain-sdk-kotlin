@@ -14,16 +14,19 @@ internal class EthereumFeeCalculatorTest {
         val gasLimit = BigInteger.valueOf(21000)
         val gasPrice = BigInteger.valueOf(12323534123121231)
 
-        val oldFees = feesCalculator.calculateFeesUsingOldMethod(
-            amountParams = Amount(Blockchain.Ethereum), gasLimit = gasLimit, gasPrice
+        val newFees = feesCalculator.calculateFees(
+            amountParams = Amount(Blockchain.Ethereum),
+            gasLimit = gasLimit,
+            gasPrice = gasPrice,
         )
-        val newFees =
-            feesCalculator.calculateFees(amountParams = Amount(Blockchain.Ethereum), gasLimit, gasPrice)
 
+        val minimum = gasLimit.toBigDecimal() * gasPrice.toBigDecimal() * BigDecimal(1)
+        val normal = gasLimit.toBigDecimal() * gasPrice.toBigDecimal() * BigDecimal(1.2)
+        val priority = gasLimit.toBigDecimal() * gasPrice.toBigDecimal() * BigDecimal(1.5)
 
-        assert((oldFees.minimum.amount.value!! - newFees.minimum.amount.value!!) < BigDecimal("1E-18"))
-        assert((oldFees.normal.amount.value!! - newFees.normal.amount.value!!) < BigDecimal("1E-18"))
-        assert((oldFees.priority.amount.value!! - newFees.priority.amount.value!!) < BigDecimal("1E-18"))
+        assert(newFees.minimum.amount.value!! - minimum < BigDecimal("1E-18"))
+        assert(newFees.normal.amount.value!! - normal < BigDecimal("1E-18"))
+        assert(newFees.priority.amount.value!! - priority < BigDecimal("1E-18"))
     }
 
     @Test
@@ -31,16 +34,19 @@ internal class EthereumFeeCalculatorTest {
         val gasLimit = BigInteger.valueOf(21000)
         val gasPrice = BigInteger.valueOf(213923412000)
 
-        val oldFees = feesCalculator.calculateFeesUsingOldMethod(
-            amountParams = Amount(Blockchain.Ethereum), gasLimit = gasLimit, gasPrice
+        val newFees = feesCalculator.calculateFees(
+            amountParams = Amount(Blockchain.Ethereum),
+            gasLimit = gasLimit,
+            gasPrice = gasPrice,
         )
-        val newFees =
-            feesCalculator.calculateFees(amountParams = Amount(Blockchain.Ethereum), gasLimit, gasPrice)
 
+        val minimum = gasLimit.toBigDecimal() * gasPrice.toBigDecimal() * BigDecimal(1)
+        val normal = gasLimit.toBigDecimal() * gasPrice.toBigDecimal() * BigDecimal(1.2)
+        val priority = gasLimit.toBigDecimal() * gasPrice.toBigDecimal() * BigDecimal(1.5)
 
-        assert((oldFees.minimum.amount.value!! - newFees.minimum.amount.value!!) < BigDecimal("1E-18"))
-        assert((oldFees.normal.amount.value!! - newFees.normal.amount.value!!) < BigDecimal("1E-18"))
-        assert((oldFees.priority.amount.value!! - newFees.priority.amount.value!!) < BigDecimal("1E-18"))
+        assert(newFees.minimum.amount.value!! - minimum < BigDecimal("1E-18"))
+        assert(newFees.normal.amount.value!! - normal < BigDecimal("1E-18"))
+        assert(newFees.priority.amount.value!! - priority < BigDecimal("1E-18"))
     }
 
     @Test
@@ -48,17 +54,18 @@ internal class EthereumFeeCalculatorTest {
         val gasLimit = BigInteger.valueOf(22000)
         val gasPrice = BigInteger.valueOf(2139812310000)
 
-        val oldFees = feesCalculator.calculateFeesUsingOldMethod(
-            amountParams = Amount(Blockchain.Ethereum), gasLimit = gasLimit, gasPrice
+        val newFees = feesCalculator.calculateFees(
+            amountParams = Amount(Blockchain.Ethereum),
+            gasLimit = gasLimit,
+            gasPrice = gasPrice,
         )
-        val newFees =
-            feesCalculator.calculateFees(amountParams = Amount(Blockchain.Ethereum), gasLimit, gasPrice)
 
+        val minimum = gasLimit.toBigDecimal() * gasPrice.toBigDecimal() * BigDecimal(1)
+        val normal = gasLimit.toBigDecimal() * gasPrice.toBigDecimal() * BigDecimal(1.2)
+        val priority = gasLimit.toBigDecimal() * gasPrice.toBigDecimal() * BigDecimal(1.5)
 
-        assert((oldFees.minimum.amount.value!! - newFees.minimum.amount.value!!) < BigDecimal("1E-18"))
-        assert((oldFees.normal.amount.value!! - newFees.normal.amount.value!!) < BigDecimal("1E-18"))
-        assert((oldFees.priority.amount.value!! - newFees.priority.amount.value!!) < BigDecimal("1E-18"))
+        assert(newFees.minimum.amount.value!! - minimum < BigDecimal("1E-18"))
+        assert(newFees.normal.amount.value!! - normal < BigDecimal("1E-18"))
+        assert(newFees.priority.amount.value!! - priority < BigDecimal("1E-18"))
     }
-
-
 }

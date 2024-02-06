@@ -17,7 +17,7 @@ class NearNetworkService(
 
     init {
         if (blockchain != Blockchain.Near && blockchain != Blockchain.NearTestnet) {
-            throw IllegalArgumentException("The blockchain parameter should be Near or NearTestnet")
+            error("The blockchain parameter should be Near or NearTestnet")
         }
     }
 
@@ -30,8 +30,8 @@ class NearNetworkService(
                     NearAccount.Full(
                         near = NearAmount(Yocto(result.data.amount)),
                         blockHash = result.data.blockHash,
-                        storageUsage = NearAmount(Yocto(result.data.storageUsage.toBigInteger()))
-                    )
+                        storageUsage = NearAmount(Yocto(result.data.storageUsage.toBigInteger())),
+                    ),
                 )
             }
 
@@ -51,7 +51,7 @@ class NearNetworkService(
         val accessKeyResult =
             multiJsonRpcProvider.performRequest(
                 request = NearNetworkProvider::getAccessKey,
-                data = NearGetAccessKeyParams(address, publicKeyEncodedToBase58)
+                data = NearGetAccessKeyParams(address, publicKeyEncodedToBase58),
             ).successOr { return it }
 
         val accessKey = AccessKey(accessKeyResult.nonce, accessKeyResult.blockHeight, accessKeyResult.blockHash)
@@ -82,12 +82,12 @@ class NearNetworkService(
     suspend fun getStatus(txHash: String, senderId: String): Result<NearSentTransaction> {
         val sendTxResult = multiJsonRpcProvider.performRequest(
             request = NearNetworkProvider::getTransactionStatus,
-            data = NearGetTxParams(txHash, senderId)
+            data = NearGetTxParams(txHash, senderId),
         ).successOr { return it }
 
         val nearWalletInfo = NearSentTransaction(
             hash = sendTxResult.transaction.hash,
-            isSuccessful = sendTxResult.status.successValue != null
+            isSuccessful = sendTxResult.status.successValue != null,
         )
 
         return Result.Success(nearWalletInfo)
