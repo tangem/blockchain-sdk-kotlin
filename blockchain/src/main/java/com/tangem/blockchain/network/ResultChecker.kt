@@ -2,6 +2,7 @@ package com.tangem.blockchain.network
 
 import com.squareup.moshi.JsonDataException
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumResponse
+import com.tangem.blockchain.blockchains.stellar.StellarNetworkService.Companion.HTTP_NOT_FOUND_CODE
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -64,10 +65,12 @@ object ResultChecker {
     }
 
     private fun BlockchainSdkError.WrappedThrowable.isNetworkError(): Boolean {
-        return cause is IOException || cause is HttpException || cause is JsonDataException || stellarNetworkError(cause)
+        return cause is IOException || cause is HttpException || cause is JsonDataException || stellarNetworkError(
+            cause,
+        )
     }
 
     private fun stellarNetworkError(cause: Throwable?): Boolean {
-        return cause is ErrorResponse && cause.code != 404
+        return cause is ErrorResponse && cause.code != HTTP_NOT_FOUND_CODE
     }
 }
