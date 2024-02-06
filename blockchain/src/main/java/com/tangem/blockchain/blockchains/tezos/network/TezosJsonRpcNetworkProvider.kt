@@ -22,8 +22,8 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
             Result.Success(
                 TezosInfoResponse(
                     balance = addressData.balance!!.toBigDecimal().movePointLeft(decimals),
-                    counter = addressData.counter!!
-                )
+                    counter = addressData.counter!!,
+                ),
             )
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
@@ -34,7 +34,7 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
         return try {
             retryIO { api.getManagerKey(address) }
             Result.Success(true)
-        } catch (exception: Exception) { //TODO: check exception
+        } catch (exception: Exception) { // TODO: check exception
             Result.Success(false)
         }
     }
@@ -45,8 +45,8 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
             Result.Success(
                 TezosHeader(
                     hash = headerResponse.hash!!,
-                    protocol = headerResponse.protocol!!
-                )
+                    protocol = headerResponse.protocol!!,
+                ),
             )
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
@@ -70,7 +70,7 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
                 protocol = transactionData.header.protocol,
                 branch = transactionData.header.hash,
                 contents = transactionData.contents,
-                signature = transactionData.encodedSignature
+                signature = transactionData.encodedSignature,
             )
             retryIO { api.preapplyOperations(listOf(tezosPreapplyBody)) }
             SimpleResult.Success
@@ -88,4 +88,3 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
         }
     }
 }
-

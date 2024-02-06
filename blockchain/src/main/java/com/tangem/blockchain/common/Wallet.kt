@@ -15,11 +15,11 @@ class Wallet(
     val publicKey: PublicKey,
     tokens: Set<Token>,
 ) {
-    //we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
+    // we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
     val recentTransactions: MutableList<TransactionData> = mutableListOf()
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
     val address = addresses.find { it.type == AddressType.Default }?.value
-        ?: throw Exception("Addresses must contain default address")
+        ?: error("Addresses must contain default address")
 
     init {
         setAmount(Amount(null, blockchain, AmountType.Coin))
@@ -36,8 +36,7 @@ class Wallet(
         }
     }
 
-    fun setCoinValue(value: BigDecimal) =
-        setAmount(Amount(value, blockchain, AmountType.Coin))
+    fun setCoinValue(value: BigDecimal) = setAmount(Amount(value, blockchain, AmountType.Coin))
 
     fun addTokenValue(value: BigDecimal, token: Token): Amount {
         val amount = Amount(token, value)
@@ -84,7 +83,7 @@ class Wallet(
             fee = null,
             sourceAddress = sourceAddress,
             destinationAddress = destinationAddress,
-            date = Calendar.getInstance()
+            date = Calendar.getInstance(),
         )
         recentTransactions.add(transaction)
     }
@@ -92,7 +91,7 @@ class Wallet(
     fun addOutgoingTransaction(transactionData: TransactionData, hashToLowercase: Boolean = true) {
         transactionData.apply {
             date = Calendar.getInstance()
-            if (hashToLowercase) hash = hash?.toLowerCase(Locale.US)
+            if (hashToLowercase) hash = hash?.lowercase(Locale.US)
         }
         if (recentTransactions.any { it.hash == transactionData.hash }) return
 
@@ -106,8 +105,7 @@ class Wallet(
     fun getExploreUrl(address: String? = null, token: Token? = null) =
         blockchain.getExploreUrl(address ?: this.address, token?.contractAddress)
 
-    fun getShareUri(address: String? = null) =
-        blockchain.getShareUri(address ?: this.address)
+    fun getShareUri(address: String? = null) = blockchain.getShareUri(address ?: this.address)
 
     class HDKey(
         val extendedPublicKey: ExtendedPublicKey,
@@ -116,7 +114,7 @@ class Wallet(
 
     class PublicKey(
         val seedKey: ByteArray,
-        val derivationType: DerivationType?
+        val derivationType: DerivationType?,
     ) {
 
         val blockchainKey: ByteArray
@@ -124,7 +122,10 @@ class Wallet(
                 null -> seedKey
                 is DerivationType.Plain -> derivationType.hdKey.extendedPublicKey.publicKey
                 is DerivationType.Double -> {
-                    CardanoUtils.extendPublicKey(derivationType.first.extendedPublicKey, derivationType.second.extendedPublicKey)
+                    CardanoUtils.extendPublicKey(
+                        derivationType.first.extendedPublicKey,
+                        derivationType.second.extendedPublicKey,
+                    )
                 }
             }
 
@@ -141,9 +142,7 @@ class Wallet(
             class Double(val first: HDKey, val second: HDKey) : DerivationType() {
 
                 override val hdKey = first
-
             }
         }
-
     }
 }

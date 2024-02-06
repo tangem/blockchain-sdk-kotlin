@@ -21,49 +21,49 @@ class NearJsonRpcNetworkProvider(
         Types.newParameterizedType(
             NearResponse::class.java,
             ProtocolConfigResult::class.java,
-        )
+        ),
     )
 
     private val networkStatusAdapter = moshi.adapter<NearResponse<NetworkStatusResult>>(
         Types.newParameterizedType(
             NearResponse::class.java,
             NetworkStatusResult::class.java,
-        )
+        ),
     )
 
     private val accessKeyResultAdapter = moshi.adapter<NearResponse<AccessKeyResult>>(
         Types.newParameterizedType(
             NearResponse::class.java,
             AccessKeyResult::class.java,
-        )
+        ),
     )
 
     private val accountAdapter = moshi.adapter<NearResponse<ViewAccountResult>>(
         Types.newParameterizedType(
             NearResponse::class.java,
             ViewAccountResult::class.java,
-        )
+        ),
     )
 
     private val gasAdapter = moshi.adapter<NearResponse<GasPriceResult>>(
         Types.newParameterizedType(
             NearResponse::class.java,
             GasPriceResult::class.java,
-        )
+        ),
     )
 
     private val sendAdapter = moshi.adapter<NearResponse<SendTransactionAsyncResult>>(
         Types.newParameterizedType(
             NearResponse::class.java,
             SendTransactionAsyncResult::class.java,
-        )
+        ),
     )
 
     private val txStatusAdapter = moshi.adapter<NearResponse<TransactionStatusResult>>(
         Types.newParameterizedType(
             NearResponse::class.java,
             TransactionStatusResult::class.java,
-        )
+        ),
     )
 
     override suspend fun getProtocolConfig(): Result<ProtocolConfigResult> {
@@ -84,7 +84,10 @@ class NearJsonRpcNetworkProvider(
 
     override suspend fun getAccessKey(params: NearGetAccessKeyParams): Result<AccessKeyResult> {
         return try {
-            postMethod(NearMethod.AccessKey.View(params.address, params.publicKeyEncodedToBase58), accessKeyResultAdapter).toResult()
+            postMethod(
+                NearMethod.AccessKey.View(params.address, params.publicKeyEncodedToBase58),
+                accessKeyResultAdapter,
+            ).toResult()
         } catch (ex: Exception) {
             Result.Failure(ex.toBlockchainSdkError())
         }
@@ -139,15 +142,14 @@ class NearJsonRpcNetworkProvider(
                     name = error.cause.name,
                     code = error.cause.name.hashCode(),
                     message = error.cause.info.toString(),
-                )
+                ),
             )
 
             else -> Result.Failure(
                 BlockchainSdkError.UnsupportedOperation(
-                    "Instance of the NearResponse is broken. Result and Error can't be null. Based on JSONRPC 2.0"
-                )
+                    "Instance of the NearResponse is broken. Result and Error can't be null. Based on JSONRPC 2.0",
+                ),
             )
         }
     }
 }
-

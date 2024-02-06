@@ -21,10 +21,7 @@ internal class DecimalAddressService : AddressService() {
         return makeDscAddress(walletPublicKey)
     }
 
-    override fun makeAddresses(
-        walletPublicKey: ByteArray,
-        curve: EllipticCurve?,
-    ): Set<SdkAddress> {
+    override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?): Set<SdkAddress> {
         val dscAddress = makeDscAddress(walletPublicKey)
 
         return setOf(
@@ -34,6 +31,7 @@ internal class DecimalAddressService : AddressService() {
     }
 
     /** Same as ERC55 address */
+    @Suppress("MagicNumber")
     private fun makeDscAddress(walletPublicKey: ByteArray): String {
         val decompressedPublicKey = walletPublicKey
             .toDecompressedPublicKey()
@@ -62,6 +60,7 @@ internal class DecimalAddressService : AddressService() {
         private const val LEGACY_ADDRESS_PREFIX = "dx"
         private const val ERC55_ADDRESS_PREFIX = "0x"
 
+        @Suppress("MagicNumber")
         fun convertDelAddressToDscAddress(addressHex: String): String {
             if (addressHex.startsWith(ERC55_ADDRESS_PREFIX)) {
                 return addressHex
@@ -77,6 +76,7 @@ internal class DecimalAddressService : AddressService() {
             return convertedAddressBytes.toHexString()
         }
 
+        @Suppress("MagicNumber")
         fun convertDscAddressToDelAddress(addressHex: String): String {
             if (addressHex.startsWith(ADDRESS_PREFIX) || addressHex.startsWith(LEGACY_ADDRESS_PREFIX)) {
                 return addressHex

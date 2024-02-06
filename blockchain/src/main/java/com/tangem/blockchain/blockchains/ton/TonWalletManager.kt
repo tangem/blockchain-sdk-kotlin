@@ -3,16 +3,7 @@ package com.tangem.blockchain.blockchains.ton
 import android.util.Log
 import com.tangem.blockchain.blockchains.ton.network.TonJsonRpcNetworkProvider
 import com.tangem.blockchain.blockchains.ton.network.TonNetworkService
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AnySignerWrapper
-import com.tangem.blockchain.common.BlockchainError
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionSender
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.TransactionStatus
-import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.WalletManager
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -31,7 +22,7 @@ class TonWalletManager(
     private val txBuilder = TonTransactionBuilder()
     private val networkService = TonNetworkService(
         jsonRpcProviders = networkProviders,
-        blockchain = wallet.blockchain
+        blockchain = wallet.blockchain,
     )
 
     override val currentHost: String
@@ -42,7 +33,6 @@ class TonWalletManager(
             is Result.Failure -> updateError(walletInfoResult.error)
             is Result.Success -> updateWallet(walletInfoResult.data)
         }
-        wallet.blockchain.getSupportedCurves()
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
@@ -50,7 +40,7 @@ class TonWalletManager(
             sequenceNumber = sequenceNumber,
             amount = transactionData.amount,
             destination = transactionData.destinationAddress,
-            extras = (transactionData.extras as? TonTransactionExtras)
+            extras = transactionData.extras as? TonTransactionExtras,
         )
         val message = buildTransaction(input, signer).successOr { return SimpleResult.fromTangemSdkError(it.error) }
 

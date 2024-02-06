@@ -1,21 +1,17 @@
 package com.tangem.blockchain.blockchains.stellar
 
+import com.tangem.blockchain.blockchains.stellar.StellarNetworkService.Companion.HTTP_NOT_FOUND_CODE
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.extensions.Result
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.stellar.sdk.Server
 import org.stellar.sdk.Transaction
+import org.stellar.sdk.requests.ErrorResponse
 import org.stellar.sdk.requests.RequestBuilder
-import org.stellar.sdk.responses.AccountResponse
-import org.stellar.sdk.responses.FeeStatsResponse
-import org.stellar.sdk.responses.LedgerResponse
-import org.stellar.sdk.responses.Page
-import org.stellar.sdk.responses.RootResponse
-import org.stellar.sdk.responses.SubmitTransactionResponse
+import org.stellar.sdk.responses.*
 import org.stellar.sdk.responses.operations.OperationResponse
 import shadow.okhttp3.OkHttpClient
-import com.tangem.blockchain.extensions.Result
-import org.stellar.sdk.requests.ErrorResponse
 import java.io.IOException
 
 internal class StellarWrapperNetworkProvider(
@@ -33,7 +29,7 @@ internal class StellarWrapperNetworkProvider(
     }
 
     fun accountCall(data: String): Result<AccountResponse> {
-        return runWithErrorHandling { server.accounts().account(data)  }
+        return runWithErrorHandling { server.accounts().account(data) }
     }
 
     fun rootCall(): Result<RootResponse> {
@@ -68,7 +64,7 @@ internal class StellarWrapperNetworkProvider(
             val result = block()
             Result.Success(result)
         } catch (exception: Exception) {
-            if (exception is ErrorResponse && exception.code == 404) {
+            if (exception is ErrorResponse && exception.code == HTTP_NOT_FOUND_CODE) {
                 throw exception // handled in NetworkService
             } else {
                 Result.Failure(exception.toBlockchainSdkError())
