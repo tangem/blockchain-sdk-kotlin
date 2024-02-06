@@ -108,6 +108,7 @@ enum class Blockchain(
     VeChainTestnet("vechain/test", "VET", "VeChain Testnet"),
     Aptos("aptos", "APT", "Aptos"),
     AptosTestnet("aptos/test", "APT", "Aptos Testnet"),
+    Playa3ull("playa3ull", "3ULL", "PLAYA3ULL GAMES"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -166,6 +167,7 @@ enum class Blockchain(
         Decimal, DecimalTestnet,
         XDC, XDCTestnet,
         VeChain, VeChainTestnet,
+        Playa3ull
         -> 18
 
         Near, NearTestnet,
@@ -214,6 +216,7 @@ enum class Blockchain(
             Telos, TelosTestnet,
             OctaSpace, OctaSpaceTestnet,
             VeChain, VeChainTestnet,
+            Playa3ull
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -351,6 +354,7 @@ enum class Blockchain(
             Decimal, DecimalTestnet,
             XDC, XDCTestnet,
             VeChain, VeChainTestnet,
+            Playa3ull
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -402,6 +406,7 @@ enum class Blockchain(
             DecimalTestnet -> Chain.DecimalTestnet.id
             XDC -> Chain.Xdc.id
             XDCTestnet -> Chain.XdcTestnet.id
+            Playa3ull -> Chain.Playa3ull.id
             else -> null
         }
     }
