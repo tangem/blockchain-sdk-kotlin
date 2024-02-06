@@ -9,7 +9,7 @@ import retrofit2.http.Body
 import retrofit2.http.Headers
 import retrofit2.Response
 
-internal interface BitcoinCashApiService {
+internal interface BitcoinCashApi {
 
     @Headers("Content-Type: application/json")
     @POST("/")
