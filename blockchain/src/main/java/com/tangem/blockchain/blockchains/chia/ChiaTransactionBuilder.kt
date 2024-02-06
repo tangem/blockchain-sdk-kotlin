@@ -26,33 +26,39 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
     private val genesisChallenge = when (blockchain) {
         Blockchain.Chia -> "ccd5bb71183532bff220ba46c268991a3ff07eb358e8255a65c30a2dce0e5fbb".hexToBytes()
         Blockchain.ChiaTestnet -> "ae83525ba8d1dd3f09b277de18ca3e43fc0af20d20c4b3e92ef2a48bd291ccb2".hexToBytes()
-        else -> throw IllegalStateException("$blockchain isn't supported")
+        else -> error("$blockchain isn't supported")
     }
 
     var unspentCoins: List<ChiaCoin> = emptyList()
     private var coinSpends: List<ChiaCoinSpend> = emptyList()
 
     fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
-        if (unspentCoins.isEmpty()) return Result.Failure(
-            BlockchainSdkError.CustomError("Unspent coins are missing")
-        )
+        if (unspentCoins.isEmpty()) {
+            return Result.Failure(
+                BlockchainSdkError.CustomError("Unspent coins are missing"),
+            )
+        }
 
         val unspentsToSpend = getUnspentsToSpend()
 
-        val change = calculateChange(transactionData, unspentsToSpend)
+        val change = calculateChange(
+            amount = requireNotNull(transactionData.amount.value) { "Transaction amount is null" },
+            fee = transactionData.fee?.amount?.value ?: BigDecimal.ZERO,
+            unspentCoins = unspentsToSpend,
+        )
         if (change < 0) { // unspentsToSpend not enough to cover transaction amount
-            val maxAmount = transactionData.amount.value!! + change.toBigDecimal().movePointLeft(blockchain.decimals())
+            val maxAmount = transactionData.amount.value + change.toBigDecimal().movePointLeft(blockchain.decimals())
             return Result.Failure(
                 BlockchainSdkError.Chia.UtxoAmountError(
                     maxOutputs = MAX_INPUT_COUNT,
-                    maxAmount = maxAmount
-                )
+                    maxAmount = maxAmount,
+                ),
             )
         }
 
         coinSpends = transactionData.toChiaCoinSpends(unspentsToSpend, change)
 
-        val hashesForSign = coinSpends.map { it ->
+        val hashesForSign = coinSpends.map {
             // our solutions are always Cons
             val conditions = Program.deserialize(it.solution.hexToBytes()) as Program.Cons
             val conditionsHash = conditions.left.hash()
@@ -63,7 +69,7 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
     }
 
     fun buildToSend(signatures: List<ByteArray>) = ChiaTransactionBody(
-        ChiaSpendBundle(aggregateSignatures(signatures).toHexString(), coinSpends)
+        ChiaSpendBundle(aggregateSignatures(signatures).toHexString(), coinSpends),
     )
 
     fun getTransactionCost(amount: Amount): Long {
@@ -71,23 +77,19 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
         val change = balance - amount.value!!.toMojo()
         val numberOfCoinsCreated = if (change > 0) 2 else 1
 
-        return (coinSpends.size * COIN_SPEND_COST) + (numberOfCoinsCreated * CREATE_COIN_COST)
+        return getUnspentsToSpendCount() * COIN_SPEND_COST + numberOfCoinsCreated * CREATE_COIN_COST
     }
 
-    private fun getUnspentsToSpend() = unspentCoins
+    fun getUnspentsToSpend() = unspentCoins
         .sortedByDescending { it.amount }
         .take(getUnspentsToSpendCount())
 
-    private fun getUnspentsToSpendCount(): Int = unspentCoins.size.coerceAtMost(MAX_INPUT_COUNT)
-
-    private fun calculateChange(
-        transactionData: TransactionData,
-        unspentCoins: List<ChiaCoin>,
-    ): Long {
+    fun calculateChange(amount: BigDecimal, fee: BigDecimal, unspentCoins: List<ChiaCoin>): Long {
         val balance = unspentCoins.sumOf { it.amount }
-        return balance -
-            (transactionData.amount.value!!.toMojo() + (transactionData.fee?.amount?.value?.toMojo() ?: 0L))
+        return balance - (amount.toMojo() + fee.toMojo())
     }
+
+    private fun getUnspentsToSpendCount(): Int = unspentCoins.size.coerceAtMost(MAX_INPUT_COUNT)
 
     private fun aggregateSignatures(signatures: List<ByteArray>): ByteArray {
         return try {
@@ -99,30 +101,27 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
             sum.compress()
         } catch (e: IllegalArgumentException) {
             // Blst performs a G2 group membership test on each signature. We end up here if it fails.
-            throw IllegalStateException("Signature aggregation failed")
+            error("Signature aggregation failed")
         }
     }
 
-    private fun TransactionData.toChiaCoinSpends(
-        unspentCoins: List<ChiaCoin>,
-        change: Long,
-    ): List<ChiaCoinSpend> {
+    private fun TransactionData.toChiaCoinSpends(unspentCoins: List<ChiaCoin>, change: Long): List<ChiaCoinSpend> {
         val coinSpends = unspentCoins.map {
             ChiaCoinSpend(
                 coin = it,
                 puzzleReveal = ChiaAddressService.getPuzzle(walletPublicKey).toHexString(),
-                solution = ""
+                solution = "",
             )
         }
 
         val sendCondition = CreateCoinCondition(
             destinationPuzzleHash = ChiaAddressService.getPuzzleHash(this.destinationAddress),
-            amount = this.amount.value!!.toMojo()
+            amount = this.amount.value!!.toMojo(),
         )
         val changeCondition = if (change != 0L) {
             CreateCoinCondition(
                 destinationPuzzleHash = ChiaAddressService.getPuzzleHash(this.sourceAddress),
-                amount = change
+                amount = change,
             )
         } else {
             null
@@ -162,7 +161,7 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
         private const val COIN_SPEND_COST = 4500000L
         private const val CREATE_COIN_COST = 2400000L
 
-        private const val MAX_INPUT_COUNT = 50 // Aligned inside Tangem. In iOS max input count is 15.
+        const val MAX_INPUT_COUNT = 50 // Aligned inside Tangem. In iOS max input count is 15.
 
         private const val AUG_SCHEME_DST = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_AUG_"
     }

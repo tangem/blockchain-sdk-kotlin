@@ -17,16 +17,16 @@ internal object EthereumWalletManagerAssembly : WalletManagerAssembly<EthereumWa
                 wallet = this,
                 transactionBuilder = EthereumTransactionBuilder(
                     walletPublicKey = publicKey.blockchainKey,
-                    blockchain = blockchain
+                    blockchain = blockchain,
                 ),
                 networkProvider = EthereumNetworkService(
                     jsonRpcProviders = blockchain.getEthereumJsonRpcProviders(input.config),
                     blockcypherNetworkProvider = BlockcypherNetworkProvider(
                         blockchain = blockchain,
-                        tokens = input.config.blockcypherTokens
+                        tokens = input.config.blockcypherTokens,
                     ),
                 ),
-                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config)
+                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
             )
         }
     }
