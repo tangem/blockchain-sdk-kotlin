@@ -29,7 +29,7 @@ class BitcoinCashNowNodesNetworkProvider(
 
     override val baseUrl: String = bchBookUrl
 
-    private val api: BitcoinCashNowNodesApi = BitcoinCashNowNodesApi(bchBookUrl, bchUrl, credentials)
+    private val api: BitcoinCashNowNodesApiService = BitcoinCashNowNodesApiService(bchBookUrl, bchUrl, credentials)
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         return try {
