@@ -11,7 +11,7 @@ class StellarAddressTest {
     @Test
     fun makeAddressFromCorrectPublicKey() {
         val walletPublicKey = "EC5387D8B38BD9EF80BDBC78D0D7E1C53F08E269436C99D5B3C2DF4B2CE73012"
-                .hexToBytes()
+            .hexToBytes()
         val expected = "GDWFHB6YWOF5T34AXW6HRUGX4HCT6CHCNFBWZGOVWPBN6SZM44YBFUDZ"
 
         Truth.assertThat(addressService.makeAddress(walletPublicKey)).isEqualTo(expected)

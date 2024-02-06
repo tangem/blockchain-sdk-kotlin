@@ -15,6 +15,8 @@ import com.tangem.blockchain.blockchains.solana.SolanaAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
+import com.tangem.blockchain.blockchains.vechain.VeChainWalletManager
+import com.tangem.blockchain.blockchains.xdc.XDCAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressService
@@ -26,6 +28,7 @@ import com.tangem.blockchain.externallinkprovider.ExternalLinkProviderFactory
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 
+@Suppress("LargeClass")
 enum class Blockchain(
     val id: String,
     val currency: String,
@@ -99,10 +102,17 @@ enum class Blockchain(
     ChiaTestnet("chia/test", "TXCH", "Chia Network Testnet"),
     Decimal("decimal", "DEL", "Decimal Smart Chain"),
     DecimalTestnet("decimal/test", "tDEL", "Decimal Smart Chain Testnet"),
+    XDC("xdc", "XDC", "XDC Network"),
+    XDCTestnet("xdc/test", "XDC", "XDC Network Testnet"),
+    VeChain("vechain", "VET", "VeChain"),
+    VeChainTestnet("vechain/test", "VET", "VeChain Testnet"),
+    Aptos("aptos", "APT", "Aptos"),
+    AptosTestnet("aptos/test", "APT", "Aptos Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
 
+    @Suppress("MagicNumber")
     fun decimals(): Int = when (this) {
         Unknown -> 0
 
@@ -125,6 +135,7 @@ enum class Blockchain(
         Dash,
         Kaspa,
         Ravencoin, RavencoinTestnet,
+        Aptos, AptosTestnet,
         -> 8
 
         Solana, SolanaTestnet,
@@ -153,6 +164,8 @@ enum class Blockchain(
         Telos, TelosTestnet,
         OctaSpace, OctaSpaceTestnet,
         Decimal, DecimalTestnet,
+        XDC, XDCTestnet,
+        VeChain, VeChainTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -174,6 +187,7 @@ enum class Blockchain(
 
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
+    @Suppress("CyclomaticComplexMethod")
     private fun getAddressService(): AddressService {
         return when (this) {
             Bitcoin, BitcoinTestnet,
@@ -199,7 +213,10 @@ enum class Blockchain(
             Cronos,
             Telos, TelosTestnet,
             OctaSpace, OctaSpaceTestnet,
+            VeChain, VeChainTestnet,
             -> EthereumAddressService()
+
+            XDC, XDCTestnet -> XDCAddressService()
 
             Decimal, DecimalTestnet -> DecimalAddressService()
             RSK -> RskAddressService()
@@ -211,12 +228,17 @@ enum class Blockchain(
             Stellar, StellarTestnet -> StellarAddressService()
             Solana, SolanaTestnet -> SolanaAddressService()
             Tezos -> TezosAddressService()
-            TON, TONTestnet, Cosmos, CosmosTestnet, TerraV1, TerraV2, Near, NearTestnet,
+            TON, TONTestnet,
+            Cosmos, CosmosTestnet,
+            TerraV1,
+            TerraV2,
+            Near, NearTestnet,
+            Aptos, AptosTestnet,
             -> TrustWalletAddressService(blockchain = this)
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
             Chia, ChiaTestnet -> ChiaAddressService(this)
-            Unknown -> throw Exception("unsupported blockchain")
+            Unknown -> error("unsupported blockchain")
         }
     }
 
@@ -230,6 +252,7 @@ enum class Blockchain(
 
     fun getShareUri(address: String): String = getShareScheme()?.plus(":$address") ?: address
 
+    @Suppress("ComplexCondition")
     fun validateShareScheme(scheme: String): Boolean {
         if (this == XRP && (scheme == "ripple" || scheme == "xrpl" || scheme == "xrp")) return true
         return scheme == getShareScheme()
@@ -249,6 +272,7 @@ enum class Blockchain(
 
     fun isTestnet(): Boolean = this == getTestnetVersion()
 
+    @Suppress("CyclomaticComplexMethod")
     fun getTestnetVersion(): Blockchain? {
         return when (this) {
             Avalanche, AvalancheTestnet -> AvalancheTestnet
@@ -277,6 +301,9 @@ enum class Blockchain(
             Chia, ChiaTestnet -> ChiaTestnet
             Near, NearTestnet -> NearTestnet
             Decimal, DecimalTestnet -> DecimalTestnet
+            XDC, XDCTestnet -> XDCTestnet
+            VeChain, VeChainTestnet -> VeChainTestnet
+            Aptos, AptosTestnet -> AptosTestnet
             else -> null
         }
     }
@@ -288,7 +315,7 @@ enum class Blockchain(
             -> listOf(
                 EllipticCurve.Secp256k1,
                 EllipticCurve.Ed25519,
-                EllipticCurve.Ed25519Slip0010
+                EllipticCurve.Ed25519Slip0010,
             )
 
             XRP,
@@ -322,20 +349,25 @@ enum class Blockchain(
             Cronos,
             OctaSpace, OctaSpaceTestnet,
             Decimal, DecimalTestnet,
+            XDC, XDCTestnet,
+            VeChain, VeChainTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
             Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
-            TON, TONTestnet, Near, NearTestnet,
+            TON, TONTestnet,
+            Near, NearTestnet,
+            Aptos, AptosTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
 
-            Cardano -> listOf(EllipticCurve.Ed25519) //todo until cardano support in wallet 2
+            Cardano -> listOf(EllipticCurve.Ed25519) // todo until cardano support in wallet 2
             Chia, ChiaTestnet,
             -> listOf(EllipticCurve.Bls12381G2Aug)
         }
     }
 
+    @Suppress("CyclomaticComplexMethod")
     fun getChainId(): Int? {
         return when (this) {
             Arbitrum -> Chain.Arbitrum.id
@@ -368,6 +400,8 @@ enum class Blockchain(
             OctaSpaceTestnet -> Chain.OctaSpaceTestnet.id
             Decimal -> Chain.Decimal.id
             DecimalTestnet -> Chain.DecimalTestnet.id
+            XDC -> Chain.Xdc.id
+            XDCTestnet -> Chain.XdcTestnet.id
             else -> null
         }
     }
@@ -391,6 +425,7 @@ enum class Blockchain(
             Solana, SolanaTestnet,
             Tron, TronTestnet,
             TerraV1,
+            VeChain, VeChainTestnet,
             -> true
 
             else -> false
@@ -405,21 +440,24 @@ enum class Blockchain(
         Avalanche, AvalancheTestnet,
         EthereumPow,
         Cronos,
+        VeChain, VeChainTestnet,
+        XDC, XDCTestnet,
         -> amountType is AmountType.Token
 
         Arbitrum, ArbitrumTestnet,
         Stellar, StellarTestnet,
         Optimism, OptimismTestnet,
         TON, TONTestnet,
-        Near, NearTestnet
+        Near, NearTestnet,
         -> true
 
         else -> false
     }
 
-    fun tokenTransactionFeePaidInNetworkCurrency(): Boolean = when (this) {
-        TerraV1 -> true
-        else -> false
+    fun feePaidCurrency(): FeePaidCurrency = when (this) {
+        VeChain, VeChainTestnet -> FeePaidCurrency.Token(VeChainWalletManager.VTHO_TOKEN)
+        TerraV1 -> FeePaidCurrency.SameCurrency
+        else -> FeePaidCurrency.Coin
     }
 
     companion object {

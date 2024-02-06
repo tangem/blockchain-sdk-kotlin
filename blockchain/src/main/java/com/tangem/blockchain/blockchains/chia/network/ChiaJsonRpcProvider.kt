@@ -8,6 +8,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.createRetrofitInstance
+import java.math.RoundingMode
 
 open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : ChiaNetworkProvider {
 
@@ -20,8 +21,8 @@ open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : Chia
                         put("Content-Type", "application/json")
                         put("X-API-Key", key)
                     },
-                )
-            )
+                ),
+            ),
         ).create(ChiaApi::class.java)
     }
 
@@ -41,11 +42,17 @@ open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : Chia
             val feeData = retryIO {
                 api.getFeeEstimate(ChiaFeeEstimateBody(transactionCost, ESTIMATE_FEE_TARGET_TIMES))
             }
+            val feeList = listOf(
+                feeData.estimates[0].toBigDecimal().movePointLeft(decimals),
+                (feeData.feeRateLastBlock * transactionCost).toBigDecimal()
+                    .setScale(0, RoundingMode.DOWN)
+                    .movePointLeft(decimals),
+            ).sorted()
             Result.Success(
                 EstimateFeeResult(
-                    normalFee = feeData.estimates[1].toBigDecimal().movePointLeft(decimals),
-                    priorityFee = feeData.estimates[0].toBigDecimal().movePointLeft(decimals)
-                )
+                    normalFee = feeList[0],
+                    priorityFee = feeList[1],
+                ),
             )
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
@@ -60,12 +67,12 @@ open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : Chia
                     SimpleResult.Success
                 } else {
                     SimpleResult.Failure(
-                        BlockchainSdkError.CustomError("${sendResponse.status} status returned on send")
+                        BlockchainSdkError.CustomError("${sendResponse.status} status returned on send"),
                     )
                 }
             } else {
                 SimpleResult.Failure(
-                    BlockchainSdkError.CustomError(sendResponse.error ?: "Unknown send error")
+                    BlockchainSdkError.CustomError(sendResponse.error ?: "Unknown send error"),
                 )
             }
         } catch (exception: Exception) {
@@ -74,7 +81,8 @@ open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : Chia
     }
 
     companion object {
-        private val ESTIMATE_FEE_TARGET_TIMES = listOf(60, 300) // time in seconds, 1 and 5 minutes
+        // time in seconds, 1 minute only, 5 minutes gives bad estimate now
+        private val ESTIMATE_FEE_TARGET_TIMES = listOf(60)
 
         private const val SUCCESS_STATUS = "SUCCESS"
     }

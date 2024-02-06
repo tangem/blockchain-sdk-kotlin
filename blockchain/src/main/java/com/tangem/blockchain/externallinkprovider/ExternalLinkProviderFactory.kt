@@ -5,6 +5,7 @@ import com.tangem.blockchain.externallinkprovider.providers.*
 
 internal object ExternalLinkProviderFactory {
 
+    @Suppress("CyclomaticComplexMethod")
     fun makeProvider(blockchain: Blockchain): ExternalLinkProvider {
         val isTestnet = blockchain.isTestnet()
         return when (blockchain) {
@@ -20,7 +21,10 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Dogecoin -> DogecoinExternalLinkProvider()
             Blockchain.Ducatus -> DucatusExternalLinkProvider()
             Blockchain.Ethereum, Blockchain.EthereumTestnet -> EthereumExternalLinkProvider(isTestnet)
-            Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet -> EthereumClassicExternalLinkProvider(isTestnet)
+            Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet -> EthereumClassicExternalLinkProvider(
+                isTestnet,
+            )
+
             Blockchain.Fantom, Blockchain.FantomTestnet -> FantomExternalLinkProvider(isTestnet)
             Blockchain.Litecoin -> LitecoinExternalLinkProvider()
             Blockchain.Near, Blockchain.NearTestnet -> NearExternalLinkProvider(isTestnet)
@@ -47,11 +51,14 @@ internal object ExternalLinkProviderFactory {
             Blockchain.TerraV2 -> TerraV2ExternalLinkProvider()
             Blockchain.Cronos -> CronosExternalLinkProvider()
             Blockchain.AlephZero -> AlephZeroExternalLinkProvider()
-            Blockchain.AlephZeroTestnet -> throw Exception("unsupported blockchain")
+            Blockchain.AlephZeroTestnet -> error("unsupported blockchain")
             Blockchain.OctaSpace -> OctaSpaceExternalLinkProvider()
-            Blockchain.OctaSpaceTestnet -> throw Exception("unsupported blockchain")
+            Blockchain.OctaSpaceTestnet -> error("unsupported blockchain")
             Blockchain.Chia, Blockchain.ChiaTestnet -> ChiaExternalLinkProvider(isTestnet)
             Blockchain.Decimal, Blockchain.DecimalTestnet -> DecimalExternalLinkProvider(isTestnet)
+            Blockchain.XDC, Blockchain.XDCTestnet -> XDCExternalLinkProvider(isTestnet)
+            Blockchain.VeChain, Blockchain.VeChainTestnet -> VeChainExternalLinkProvider(isTestnet)
+            Blockchain.Aptos, Blockchain.AptosTestnet -> AptosExternalLinkProvider(isTestnet)
         }
     }
 }

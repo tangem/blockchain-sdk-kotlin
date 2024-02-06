@@ -1,6 +1,6 @@
 package com.tangem.blockchain.blockchains.solana
 
-import com.tangem.blockchain.blockchains.solana.solanaj.rpc.RpcClient
+import com.tangem.blockchain.blockchains.solana.solanaj.rpc.SolanaRpcClient
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.GetBlockCredentials
 import com.tangem.blockchain.common.NowNodeCredentials
@@ -12,9 +12,9 @@ import org.p2p.solanaj.rpc.Cluster
 /**
 [REDACTED_AUTHOR]
  */
-class SolanaRpcClientBuilder {
+internal class SolanaRpcClientBuilder {
 
-    fun build(isTestnet: Boolean, config: BlockchainSdkConfig): List<RpcClient> {
+    fun build(isTestnet: Boolean, config: BlockchainSdkConfig): List<SolanaRpcClient> {
         return if (isTestnet) {
             listOf(devNet())
         } else {
@@ -26,39 +26,41 @@ class SolanaRpcClientBuilder {
         }
     }
 
-    private fun mainNet(): RpcClient = RpcClient(Cluster.MAINNET.endpoint)
+    private fun mainNet(): SolanaRpcClient = SolanaRpcClient(Cluster.MAINNET.endpoint)
 
-    private fun devNet(): RpcClient = RpcClient(Cluster.DEVNET.endpoint)
+    private fun devNet(): SolanaRpcClient = SolanaRpcClient(Cluster.DEVNET.endpoint)
 
-    private fun testNet(): RpcClient = RpcClient(Cluster.TESTNET.endpoint)
+    @Suppress("UnusedPrivateMember")
+    private fun testNet(): SolanaRpcClient = SolanaRpcClient(Cluster.TESTNET.endpoint)
 
-    private fun quickNode(cred: QuickNodeCredentials): RpcClient {
+    private fun quickNode(cred: QuickNodeCredentials): SolanaRpcClient {
         val host = "https://${cred.subdomain}.solana-mainnet.discover.quiknode.pro/${cred.apiKey}"
-        return RpcClient(host)
+        return SolanaRpcClient(host)
     }
 
-    private fun nowNode(cred: NowNodeCredentials): RpcClient {
-        return RpcClient(
+    private fun nowNode(cred: NowNodeCredentials): SolanaRpcClient {
+        return SolanaRpcClient(
             host = "https://sol.nownodes.io",
             httpInterceptors = createInterceptor(NowNodeCredentials.headerApiKey, cred.apiKey),
         )
     }
 
     // contains old data about 7 hours
-    private fun ankr(): RpcClient {
-        return RpcClient("https://rpc.ankr.com/solana")
+    @Suppress("UnusedPrivateMember")
+    private fun ankr(): SolanaRpcClient {
+        return SolanaRpcClient(host = "https://rpc.ankr.com/solana")
     }
 
     // unstable
-    private fun getBlock(cred: GetBlockCredentials): RpcClient {
-        return RpcClient(
-            host = "https://go.getblock.io/${cred.solana}",
-        )
+    @Suppress("UnusedPrivateMember")
+    private fun getBlock(cred: GetBlockCredentials): SolanaRpcClient {
+        return SolanaRpcClient(host = "https://go.getblock.io/${cred.solana}")
     }
 
     // zero uptime
-    private fun projectserum(): RpcClient {
-        return RpcClient("https://solana-api.projectserum.com")
+    @Suppress("UnusedPrivateMember")
+    private fun projectserum(): SolanaRpcClient {
+        return SolanaRpcClient(host = "https://solana-api.projectserum.com")
     }
 
     private fun createInterceptor(key: String, value: String): List<Interceptor> {

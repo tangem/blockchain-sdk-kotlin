@@ -30,6 +30,7 @@ class XrpAddressService : AddressService() {
         }
     }
 
+    @Suppress("MagicNumber")
     companion object {
         private val xrpBase58 = B58("rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz")
         private val xAddressMainnetPrefix = byteArrayOf(0x05, 0x44)
@@ -44,6 +45,7 @@ class XrpAddressService : AddressService() {
             }
         }
 
+        @Suppress("MagicNumber")
         fun decodeXAddress(address: String): XrpTaggedAddress? {
             try {
                 val addressBytes = xrpBase58.decodeChecked(address)
@@ -78,6 +80,6 @@ class XrpAddressService : AddressService() {
 }
 
 data class XrpTaggedAddress(
-        val address: String,
-        val destinationTag: Long?
+    val address: String,
+    val destinationTag: Long?,
 )

@@ -47,7 +47,9 @@ internal class EthereumTransactionHistoryProvider(
         }
     }
 
-    override suspend fun getTransactionsHistory(request: TransactionHistoryRequest): Result<PaginationWrapper<TransactionHistoryItem>> {
+    override suspend fun getTransactionsHistory(
+        request: TransactionHistoryRequest,
+    ): Result<PaginationWrapper<TransactionHistoryItem>> {
         return try {
             val response =
                 withContext(Dispatchers.IO) {
@@ -63,7 +65,7 @@ internal class EthereumTransactionHistoryProvider(
                     tx.toTransactionHistoryItem(
                         walletAddress = request.address,
                         decimals = request.decimals,
-                        filterType = request.filterType
+                        filterType = request.filterType,
                     )
                 }
                 ?: emptyList()
@@ -72,8 +74,8 @@ internal class EthereumTransactionHistoryProvider(
                     page = response.page ?: request.page.number,
                     totalPages = response.totalPages ?: 0,
                     itemsOnPage = response.itemsOnPage ?: 0,
-                    items = txs
-                )
+                    items = txs,
+                ),
             )
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
@@ -99,7 +101,7 @@ internal class EthereumTransactionHistoryProvider(
             decimals = decimals,
             filterType = filterType,
             isOutgoing = isOutgoing,
-            walletAddress = walletAddress
+            walletAddress = walletAddress,
         ).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
@@ -155,15 +157,20 @@ internal class EthereumTransactionHistoryProvider(
         filterType: TransactionHistoryRequest.FilterType,
     ): Boolean {
         return when (filterType) {
-            TransactionHistoryRequest.FilterType.Coin -> transaction.vin
-                .firstOrNull()
-                ?.addresses
-                ?.firstOrNull()
-                .equals(walletAddress, ignoreCase = true)
+            TransactionHistoryRequest.FilterType.Coin ->
+                transaction.vin
+                    .firstOrNull()
+                    ?.addresses
+                    ?.firstOrNull()
+                    .equals(walletAddress, ignoreCase = true)
 
-            is TransactionHistoryRequest.FilterType.Contract -> transaction.tokenTransfers
-                .filter { filterType.address.equals(it.contract, true) || filterType.address.equals(it.token, true) }
-                .any { it.from == walletAddress }
+            is TransactionHistoryRequest.FilterType.Contract -> {
+                val equalsAddress = { value: String? -> filterType.address.equals(value, true) }
+
+                transaction.tokenTransfers
+                    .filter { equalsAddress(it.contract) || equalsAddress(it.token) }
+                    .any { it.from == walletAddress }
+            }
         }
     }
 
@@ -185,13 +192,18 @@ internal class EthereumTransactionHistoryProvider(
                         TransactionHistoryItem.AddressType.User(address)
                     } else {
                         TransactionHistoryItem.AddressType.Contract(address)
-                    }
+                    },
                 )
             }
 
             is TransactionHistoryRequest.FilterType.Contract -> {
                 val transfer = tx.tokenTransfers
-                    .firstOrNull { filterType.address.equals(it.contract, ignoreCase = true) || filterType.address.equals(it.token, ignoreCase = true) }
+                    .firstOrNull {
+                        filterType.address.equals(it.contract, ignoreCase = true) || filterType.address.equals(
+                            it.token,
+                            ignoreCase = true,
+                        )
+                    }
                     .guard { return null }
                 val isOutgoing = transfer.from == walletAddress
                 TransactionHistoryItem.DestinationType.Single(
@@ -225,25 +237,30 @@ internal class EthereumTransactionHistoryProvider(
             TransactionHistoryRequest.FilterType.Coin -> Amount(
                 value = BigDecimal(tx.value).movePointLeft(blockchain.decimals()),
                 blockchain = blockchain,
-                type = AmountType.Coin
+                type = AmountType.Coin,
             )
 
             is TransactionHistoryRequest.FilterType.Contract -> {
-                val transfer = tx.tokenTransfers
-                    .filter { filterType.address.equals(it.contract, ignoreCase = true) || filterType.address.equals(it.token, ignoreCase = true) }
-                    .firstOrNull { transfer ->
+                val transfers = tx.tokenTransfers
+                    .filter {
+                        filterType.address.equals(it.contract, ignoreCase = true) || filterType.address.equals(
+                            it.token,
+                            ignoreCase = true,
+                        )
+                    }
+                    .filter { transfer ->
                         val otherAddress = if (isOutgoing) transfer.from else transfer.to
                         walletAddress.equals(otherAddress, ignoreCase = true)
                     }
-                    .guard { return null }
-                val transferValue = transfer.value ?: "0"
+                val transfer = transfers.firstOrNull().guard { return null }
+                val transferValue = transfers.sumOf { it.value?.toBigDecimalOrNull() ?: BigDecimal.ZERO }
                 val token = Token(
                     name = transfer.name.orEmpty(),
                     symbol = transfer.symbol.orEmpty(),
                     contractAddress = transfer.contract ?: transfer.token ?: "",
                     decimals = decimals,
                 )
-                Amount(value = BigDecimal(transferValue).movePointLeft(decimals), token = token)
+                Amount(value = transferValue.movePointLeft(decimals), token = token)
             }
         }
     }

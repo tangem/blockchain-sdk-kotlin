@@ -18,19 +18,20 @@ import com.tangem.crypto.hdWallet.DerivationPath
 
 object DerivationConfigV1 : DerivationConfig() {
 
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     override fun derivations(blockchain: Blockchain): Map<AddressType, DerivationPath> {
         return when (blockchain) {
             Blockchain.Bitcoin -> {
                 mapOf(
                     AddressType.Legacy to DerivationPath("m/44'/0'/0'/0/0"),
-                    AddressType.Default to DerivationPath("m/44'/0'/0'/0/0")
+                    AddressType.Default to DerivationPath("m/44'/0'/0'/0/0"),
                 )
             }
 
             Blockchain.Litecoin -> {
                 mapOf(
                     AddressType.Legacy to DerivationPath("m/44'/2'/0'/0/0"),
-                    AddressType.Default to DerivationPath("m/44'/2'/0'/0/0")
+                    AddressType.Default to DerivationPath("m/44'/2'/0'/0/0"),
                 )
             }
 
@@ -45,13 +46,13 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Cardano -> {
                 mapOf(
                     AddressType.Default to DerivationPath("m/1852'/1815'/0'/0/0"),
-                    AddressType.Legacy to DerivationPath("m/1852'/1815'/0'/0/0")
+                    AddressType.Legacy to DerivationPath("m/1852'/1815'/0'/0/0"),
                 )
             }
             Blockchain.BitcoinCash -> {
                 mapOf(
                     AddressType.Legacy to DerivationPath("m/44'/145'/0'/0/0"),
-                    AddressType.Default to DerivationPath("m/44'/145'/0'/0/0")
+                    AddressType.Default to DerivationPath("m/44'/145'/0'/0/0"),
                 )
             }
 
@@ -62,6 +63,10 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Decimal,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
+            }
+
+            Blockchain.XDC -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
             }
 
             Blockchain.EthereumClassic -> {
@@ -148,6 +153,9 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Near -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/397'/0'"))
             }
+            Blockchain.VeChain, Blockchain.VeChainTestnet -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/818'/0'/0/0"))
+            }
 
             Blockchain.Chia, Blockchain.ChiaTestnet -> mapOf(AddressType.Default to DerivationPath(""))
 
@@ -177,8 +185,13 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.OctaSpaceTestnet,
             Blockchain.NearTestnet,
             Blockchain.DecimalTestnet,
+            Blockchain.XDCTestnet,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
+            }
+
+            Blockchain.Aptos, Blockchain.AptosTestnet -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/637'/0'/0'/0'"))
             }
         }
     }

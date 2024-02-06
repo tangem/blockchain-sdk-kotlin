@@ -10,7 +10,7 @@ class BitcoinCashWalletManager(
     wallet: Wallet,
     transactionBuilder: BitcoinCashTransactionBuilder,
     transactionHistoryProvider: TransactionHistoryProvider,
-    private val networkProvider: BitcoinNetworkProvider
+    private val networkProvider: BitcoinNetworkProvider,
 ) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider) {
 
     override val minimalFee = 0.00001.toBigDecimal()

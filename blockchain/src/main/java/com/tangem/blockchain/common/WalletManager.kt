@@ -1,10 +1,10 @@
 package com.tangem.blockchain.common
 
-import com.tangem.blockchain.extensions.DebouncedInvoke
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
+import com.tangem.blockchain.extensions.DebouncedInvoke
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.isAboveZero
@@ -18,7 +18,7 @@ abstract class WalletManager(
     var wallet: Wallet,
     val cardTokens: MutableSet<Token> = mutableSetOf(),
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
-) : TransactionHistoryProvider by transactionHistoryProvider {
+) : TransactionHistoryProvider by transactionHistoryProvider, TransactionSender {
 
     open val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Unspecified
 
@@ -40,25 +40,25 @@ abstract class WalletManager(
         }
     }
 
+    override suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee> {
+        return getFee(amount, destination)
+    }
+
     internal abstract suspend fun updateInternal()
 
     protected open fun updateRecentTransactionsBasic(transactions: List<BasicTransactionData>) {
-        val (confirmedTransactions, unconfirmedTransactions) =
-            transactions.partition { it.isConfirmed }
+        val (confirmedTransactions, unconfirmedTransactions) = transactions.partition { it.isConfirmed }
 
         wallet.recentTransactions.forEach { recent ->
-            if (confirmedTransactions.find { confirmed ->
-                    confirmed.hash.equals(recent.hash, true)
-                } != null
-            ) {
+            val confirmedTx = confirmedTransactions.find { confirmed -> confirmed.hash.equals(recent.hash, true) }
+            if (confirmedTx != null) {
                 recent.status = TransactionStatus.Confirmed
             }
         }
+
         unconfirmedTransactions.forEach { unconfirmed ->
-            if (wallet.recentTransactions.find { recent ->
-                    recent.hash.equals(unconfirmed.hash, true)
-                } == null
-            ) {
+            val recentTx = wallet.recentTransactions.find { recent -> recent.hash.equals(unconfirmed.hash, true) }
+            if (recentTx == null) {
                 wallet.recentTransactions.add(unconfirmed.toTransactionData())
             }
         }
@@ -69,18 +69,14 @@ abstract class WalletManager(
             transactions.partition { it.status == TransactionStatus.Confirmed }
 
         wallet.recentTransactions.forEach { recent ->
-            if (confirmedTransactions.find { confirmed ->
-                    confirmed.hash.equals(recent.hash, true)
-                } != null
-            ) {
+            val confirmedTx = confirmedTransactions.find { confirmed -> confirmed.hash.equals(recent.hash, true) }
+            if (confirmedTx != null) {
                 recent.status = TransactionStatus.Confirmed
             }
         }
         unconfirmedTransactions.forEach { unconfirmed ->
-            if (wallet.recentTransactions.find { recent ->
-                    recent.hash.equals(unconfirmed.hash, true)
-                } == null
-            ) {
+            val recentTx = wallet.recentTransactions.find { recent -> recent.hash.equals(unconfirmed.hash, true) }
+            if (recentTx == null) {
                 wallet.recentTransactions.add(unconfirmed)
             }
         }
@@ -109,7 +105,7 @@ abstract class WalletManager(
         if (!validateAmountAvalible(fee)) errors.add(TransactionError.FeeExceedsBalance)
 
         val total: BigDecimal
-        if (amount.type == AmountType.Coin) {
+        if (amount.type == AmountType.Coin && amount.currencySymbol == fee.currencySymbol) {
             total = (amount.value ?: BigDecimal.ZERO) + (fee.value ?: BigDecimal.ZERO)
             if (!validateAmountAvalible(Amount(amount, total))) errors.add(TransactionError.TotalExceedsBalance)
         } else {
@@ -124,7 +120,7 @@ abstract class WalletManager(
         return errors
     }
 
-    fun removeToken(token: Token) {
+    open fun removeToken(token: Token) {
         cardTokens.remove(token)
         wallet.removeToken(token)
     }
@@ -162,7 +158,7 @@ abstract class WalletManager(
                 TransactionStatus.Confirmed
             } else {
                 TransactionStatus.Unconfirmed
-            }
+            },
         )
     }
 
@@ -173,19 +169,21 @@ interface TransactionSender {
 
     suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult
 
+    // Think about migration to different interface
     suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee>
+
+    /**
+     * Estimates fee (approximate value)
+     *
+     * [Think about migration to interface]
+     */
+    suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee>
 }
 
 interface TransactionSigner {
-    suspend fun sign(
-        hashes: List<ByteArray>,
-        publicKey: Wallet.PublicKey,
-    ): CompletionResult<List<ByteArray>>
+    suspend fun sign(hashes: List<ByteArray>, publicKey: Wallet.PublicKey): CompletionResult<List<ByteArray>>
 
-    suspend fun sign(
-        hash: ByteArray,
-        publicKey: Wallet.PublicKey,
-    ): CompletionResult<ByteArray>
+    suspend fun sign(hash: ByteArray, publicKey: Wallet.PublicKey): CompletionResult<ByteArray>
 }
 
 interface SignatureCountValidator {
@@ -197,13 +195,7 @@ interface TokenFinder {
 }
 
 interface Approver {
-    suspend fun getAllowance(
-        spenderAddress: String,
-        token: Token,
-    ): Result<BigDecimal>
+    suspend fun getAllowance(spenderAddress: String, token: Token): Result<BigDecimal>
 
-    fun getApproveData(
-        spenderAddress: String,
-        value: Amount? = null,
-    ): String
+    fun getApproveData(spenderAddress: String, value: Amount? = null): String
 }
