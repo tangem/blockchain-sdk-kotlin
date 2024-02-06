@@ -69,7 +69,7 @@ class BitcoinCashNowNodesNetworkProvider(
 
             Result.Success(BitcoinFee(fee, fee, fee))
         } catch (e: Exception) {
-            Result.Failure(e.toBlockchainSdkError())
+            Result.Failure(BlockchainSdkError.FailedToLoadFee)
         }
     }
 
