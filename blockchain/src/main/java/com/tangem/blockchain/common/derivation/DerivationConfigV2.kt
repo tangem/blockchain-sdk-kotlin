@@ -74,6 +74,7 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.Telos,
             Blockchain.OctaSpace,
             Blockchain.Decimal,
+            Blockchain.Playa3ull,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             }
