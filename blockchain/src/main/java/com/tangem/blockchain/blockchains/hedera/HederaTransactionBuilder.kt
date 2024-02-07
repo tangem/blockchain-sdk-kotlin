@@ -10,13 +10,14 @@ import com.tangem.crypto.CryptoUtils
 
 class HederaTransactionBuilder(
     curve: EllipticCurve,
-    wallet: Wallet
+    wallet: Wallet,
 ) {
     private val client = if (wallet.blockchain.isTestnet()) Client.forTestnet() else Client.forMainnet()
     val publicKey: PublicKey = when (curve) {
         EllipticCurve.Secp256k1 -> PublicKey.fromBytesECDSA(wallet.publicKey.blockchainKey)
         EllipticCurve.Ed25519,
-        EllipticCurve.Ed25519Slip0010 -> PublicKey.fromBytesED25519(wallet.publicKey.blockchainKey)
+        EllipticCurve.Ed25519Slip0010,
+        -> PublicKey.fromBytesED25519(wallet.publicKey.blockchainKey)
         else -> error("unsupported curve $curve")
     }
     private var transaction: TransferTransaction? = null

@@ -1,6 +1,5 @@
 package com.tangem.blockchain.common
 
-import android.content.Context
 import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
@@ -20,7 +19,10 @@ import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.vechain.VeChainWalletManager
 import com.tangem.blockchain.blockchains.xdc.XDCAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
-import com.tangem.blockchain.common.address.*
+import com.tangem.blockchain.common.address.Address
+import com.tangem.blockchain.common.address.AddressService
+import com.tangem.blockchain.common.address.MultisigAddressProvider
+import com.tangem.blockchain.common.address.TrustWalletAddressService
 import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProviderFactory
@@ -178,14 +180,11 @@ enum class Blockchain(
         walletPublicKey: ByteArray,
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
-        context: Context? = null,
     ): Set<Address> {
         val addressService = getAddressService()
         return if (pairPublicKey != null) {
             (addressService as? MultisigAddressProvider)
                 ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()
-        } else if (addressService is ContextAddressProvider && context != null) {
-            addressService.makeContextAddresses(walletPublicKey, curve, context)
         } else {
             addressService.makeAddresses(walletPublicKey, curve)
         }
@@ -320,7 +319,7 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
-            Hedera, HederaTestnet
+            Hedera, HederaTestnet,
             -> listOf(
                 EllipticCurve.Secp256k1,
                 EllipticCurve.Ed25519,
@@ -458,7 +457,7 @@ enum class Blockchain(
         Optimism, OptimismTestnet,
         TON, TONTestnet,
         Near, NearTestnet,
-        Hedera, HederaTestnet
+        Hedera, HederaTestnet,
         -> true
 
         else -> false
