@@ -111,6 +111,8 @@ class EstimationFeeAddressFactory(
             Blockchain.Decimal,
             Blockchain.DecimalTestnet,
             Blockchain.Playa3ull,
+            Blockchain.Shibarium,
+            Blockchain.ShibariumTestnet,
             // Polkadot-like
             Blockchain.Polkadot,
             Blockchain.PolkadotTestnet,
