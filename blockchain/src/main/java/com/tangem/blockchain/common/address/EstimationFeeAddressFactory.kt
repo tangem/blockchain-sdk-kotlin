@@ -49,7 +49,7 @@ class EstimationFeeAddressFactory(
             Blockchain.BinanceTestnet,
             Blockchain.SolanaTestnet,
             Blockchain.Hedera,
-            Blockchain.HederaTestnet
+            Blockchain.HederaTestnet,
             -> {
                 // Doesn't depend on amount and destination
                 ""
