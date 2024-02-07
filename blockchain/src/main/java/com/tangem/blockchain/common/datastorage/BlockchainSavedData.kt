@@ -7,6 +7,6 @@ internal sealed interface BlockchainSavedData {
 
     @JsonClass(generateAdapter = true)
     data class Hedera(
-        @Json(name = "address") val address: String,
+        @Json(name = "accountId") val accountId: String,
     ) : BlockchainSavedData
 }
