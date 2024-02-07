@@ -7,6 +7,8 @@ import com.hedera.hashgraph.sdk.Client
 import com.tangem.blockchain.blockchains.hedera.network.HederaNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.address.Address
+import com.tangem.blockchain.common.datastorage.BlockchainSavedData
+import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -16,11 +18,11 @@ import com.tangem.common.extensions.toCompressedPublicKey
 import java.math.BigDecimal
 import java.math.RoundingMode
 
-class HederaWalletManager(
+internal class HederaWalletManager(
     wallet: Wallet,
     private val transactionBuilder: HederaTransactionBuilder,
     private val networkProvider: HederaNetworkProvider,
-    private val addressService: HederaAddressService
+    private val dataStorage: AdvancedDataStorage,
 ) : WalletManager(wallet), TransactionSender {
 
     private val blockchain = wallet.blockchain
@@ -36,7 +38,7 @@ class HederaWalletManager(
         }
     }
 
-    private suspend fun updateBalance(accountId: String) {
+    private fun updateBalance(accountId: String) {
         try {
             val balance = AccountBalanceQuery()
                 .setAccountId(AccountId.fromString(accountId))
@@ -96,7 +98,9 @@ class HederaWalletManager(
     }
 
     private suspend fun getAccountId(): Result<String> {
-        val accountId = wallet.address
+        val accountId = wallet.address.ifBlank {
+            dataStorage.getOrNull<BlockchainSavedData.Hedera>(wallet.publicKey)?.accountId.orEmpty()
+        }
 
         return if (accountId.isEmpty()) {
             when (
@@ -106,7 +110,9 @@ class HederaWalletManager(
                 is Result.Success -> {
                     val fetchedAccountId = getAccountIdResult.data
                     wallet.addresses = setOf(Address(fetchedAccountId))
-                    addressService.saveAddress(fetchedAccountId, wallet.publicKey.blockchainKey)
+
+                    dataStorage.store(wallet.publicKey, BlockchainSavedData.Hedera(fetchedAccountId))
+
                     getAccountIdResult
                 }
                 is Result.Failure -> {
@@ -122,7 +128,7 @@ class HederaWalletManager(
         }
     }
 
-    private suspend fun requestCreateAccount(): Result<String> {
+    private fun requestCreateAccount(): Result<String> {
         // TODO create account with our backend service
         return Result.Failure(BlockchainSdkError.CustomError("Account creation is not implemented yet"))
     }
