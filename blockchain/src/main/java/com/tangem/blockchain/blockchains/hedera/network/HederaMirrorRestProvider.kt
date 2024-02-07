@@ -46,7 +46,7 @@ class HederaMirrorRestProvider(override val baseUrl: String, key: String? = null
             Result.Success(
                 CENTS_IN_A_DOLLAR.toBigDecimal().setScale(Blockchain.Hedera.decimals()) *
                     rateToUse.hbarEquivalent.toBigDecimal() /
-                    rateToUse.centEquivalent.toBigDecimal()
+                    rateToUse.centEquivalent.toBigDecimal(),
             )
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
