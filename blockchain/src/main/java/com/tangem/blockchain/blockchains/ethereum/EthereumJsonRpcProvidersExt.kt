@@ -200,6 +200,16 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://api.mainnet.playa3ull.games/"),
         )
 
+        Blockchain.Shibarium -> listOfNotNull(
+            // the official api goes first due to the problems we have recently had with https://xdc.nownodes.io/
+            EthereumJsonRpcProvider(baseUrl = "https://www.shibrpc.com/"),
+            getNowNodesProvider(baseUrl = "https://shib.nownodes.io/", config = config),
+        )
+
+        Blockchain.ShibariumTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://puppynet.shibrpc.com/"),
+        )
+
         else -> error("$this isn't supported")
     }
 
