@@ -1,6 +1,5 @@
 package com.tangem.blockchain.common.assembly.impl
 
-import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.hedera.HederaTransactionBuilder
 import com.tangem.blockchain.blockchains.hedera.HederaWalletManager
 import com.tangem.blockchain.blockchains.hedera.network.HederaMirrorRestProvider
@@ -8,13 +7,19 @@ import com.tangem.blockchain.blockchains.hedera.network.HederaNetworkProvider
 import com.tangem.blockchain.blockchains.hedera.network.HederaNetworkService
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
+import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.extensions.letNotBlank
-import com.tangem.blockchain.network.*
+import com.tangem.blockchain.network.API_HEDERA_ARKHIA_MIRROR
+import com.tangem.blockchain.network.API_HEDERA_ARKHIA_MIRROR_TESTNET
+import com.tangem.blockchain.network.API_HEDERA_MIRROR
+import com.tangem.blockchain.network.API_HEDERA_MIRROR_TESTNET
 
-internal object HederaWalletManagerAssembly : WalletManagerAssembly<HederaWalletManager>() {
+internal class HederaWalletManagerAssembly(
+    private val dataStorage: AdvancedDataStorage,
+) : WalletManagerAssembly<HederaWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): HederaWalletManager {
-        val isTestnet = input.wallet.blockchain.isTestnet();
+        val isTestnet = input.wallet.blockchain.isTestnet()
         val providers: List<HederaNetworkProvider> = buildList {
             add(HederaMirrorRestProvider(if (isTestnet) API_HEDERA_MIRROR_TESTNET else API_HEDERA_MIRROR))
 
@@ -22,8 +27,8 @@ internal object HederaWalletManagerAssembly : WalletManagerAssembly<HederaWallet
                 ?.letNotBlank {
                     add(
                         HederaMirrorRestProvider(
-                            if (isTestnet) API_HEDERA_ARKHIA_MIRROR_TESTNET else API_HEDERA_ARKHIA_MIRROR
-                        )
+                            if (isTestnet) API_HEDERA_ARKHIA_MIRROR_TESTNET else API_HEDERA_ARKHIA_MIRROR,
+                        ),
                     )
                 }
         }
@@ -35,7 +40,7 @@ internal object HederaWalletManagerAssembly : WalletManagerAssembly<HederaWallet
                 wallet = input.wallet,
             ),
             networkProvider = HederaNetworkService(providers),
-            addressService = HederaAddressService(isTestnet, input.context)
+            dataStorage = dataStorage,
         )
     }
 }
