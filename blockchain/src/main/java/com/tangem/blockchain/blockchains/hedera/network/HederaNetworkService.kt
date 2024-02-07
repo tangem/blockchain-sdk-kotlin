@@ -1,7 +1,6 @@
 package com.tangem.blockchain.blockchains.hedera.network
 
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
 import java.math.BigDecimal
 
