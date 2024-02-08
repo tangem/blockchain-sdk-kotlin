@@ -157,7 +157,7 @@ class WalletManagerFactory(
             Blockchain.Kava, Blockchain.KavaTestnet,
             Blockchain.Cronos,
             Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet,
-            Blockchain.Playa3ull
+            Blockchain.Playa3ull,
             -> {
                 EthereumLikeWalletManagerAssembly
             }
