@@ -4,7 +4,8 @@ import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.createRetrofitInstance
-import org.komputing.khex.extensions.toHexString
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 
 internal class AlgorandNetworkProvider(override val baseUrl: String) : NetworkProvider {
 
@@ -30,7 +31,7 @@ internal class AlgorandNetworkProvider(override val baseUrl: String) : NetworkPr
 
     suspend fun sendTransaction(data: ByteArray): Result<AlgorandTransactionResultResponse> {
         return try {
-            val body = AlgorandCommitTransactionRequest(raw = data.toHexString())
+            val body = data.toRequestBody(contentType = "application/octet-stream".toMediaTypeOrNull())
             val response = api.commitTransaction(body = body)
             Result.Success(response)
         } catch (e: Exception) {
@@ -38,6 +39,7 @@ internal class AlgorandNetworkProvider(override val baseUrl: String) : NetworkPr
         }
     }
 
+    @Suppress("MagicNumber")
     suspend fun getPendingTransaction(txHash: String): Result<AlgorandPendingTransactionResponse?> {
         return try {
             val response = api.getPendingTransaction(transactionId = txHash)

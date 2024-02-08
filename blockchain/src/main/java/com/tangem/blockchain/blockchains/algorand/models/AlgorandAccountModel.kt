@@ -6,4 +6,5 @@ internal data class AlgorandAccountModel(
     val coinValue: BigDecimal,
     val reserveValue: BigDecimal,
     val existentialDeposit: BigDecimal,
+    val transactionsInfo: List<AlgorandTransactionInfo>,
 )
