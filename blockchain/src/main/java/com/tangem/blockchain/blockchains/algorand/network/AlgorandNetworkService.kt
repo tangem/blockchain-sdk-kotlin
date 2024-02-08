@@ -6,10 +6,15 @@ import com.tangem.blockchain.blockchains.algorand.models.AlgorandTransactionBuil
 import com.tangem.blockchain.blockchains.algorand.models.AlgorandTransactionInfo
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.map
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.common.extensions.guard
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 import kotlin.math.max
 
@@ -28,17 +33,22 @@ internal class AlgorandNetworkService(
 
     private val multiJsonRpcProvider = MultiNetworkProvider(networkProviders)
 
-    suspend fun getAccount(address: String): Result<AlgorandAccountModel> {
-        return multiJsonRpcProvider
-            .performRequest(AlgorandNetworkProvider::getAccount, address)
-            .map { response ->
-                val balance = calculateCoinValueWithReserveDeposit(response)
-                AlgorandAccountModel(
-                    coinValue = balance.coinBalance,
-                    reserveValue = balance.reserveBalance,
-                    existentialDeposit = balance.existentialDeposit,
+    suspend fun getAccountInfo(address: String, pendingTxHashes: Set<String>): Result<AlgorandAccountModel> {
+        return try {
+            coroutineScope {
+                val balanceDeferred = async { getAccountBalance(address) }
+                val txsDeferred = pendingTxHashes.map { async { getPendingTransaction(it) } }
+
+                Result.Success(
+                    constructAlgorandAccountModel(
+                        balanceResult = balanceDeferred.await(),
+                        txsResult = txsDeferred.awaitAll(),
+                    ),
                 )
             }
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
     }
 
     suspend fun getEstimatedFee(): Result<AlgorandEstimatedFeeParams> {
@@ -71,7 +81,13 @@ internal class AlgorandNetworkService(
             .map(AlgorandTransactionResultResponse::txId)
     }
 
-    suspend fun getPendingTransaction(txHash: String): Result<AlgorandTransactionInfo?> {
+    private suspend fun getAccountBalance(address: String): Result<AlgorandBalance> {
+        return multiJsonRpcProvider
+            .performRequest(AlgorandNetworkProvider::getAccount, address)
+            .map(::calculateCoinValueWithReserveDeposit)
+    }
+
+    private suspend fun getPendingTransaction(txHash: String): Result<AlgorandTransactionInfo?> {
         return multiJsonRpcProvider
             .performRequest(AlgorandNetworkProvider::getPendingTransaction, txHash)
             .map { response ->
@@ -82,15 +98,15 @@ internal class AlgorandNetworkService(
                     when {
                         confirmedRound > 0 -> AlgorandTransactionInfo(
                             transactionHash = txHash,
-                            status = AlgorandTransactionInfo.Status.COMMITTED
+                            status = AlgorandTransactionInfo.Status.COMMITTED,
                         )
                         confirmedRound == 0L && response.poolError.isEmpty() -> AlgorandTransactionInfo(
                             transactionHash = txHash,
-                            status = AlgorandTransactionInfo.Status.STILL
+                            status = AlgorandTransactionInfo.Status.STILL,
                         )
                         confirmedRound == 0L && response.poolError.isNotEmpty() -> AlgorandTransactionInfo(
                             transactionHash = txHash,
-                            status = AlgorandTransactionInfo.Status.REMOVED
+                            status = AlgorandTransactionInfo.Status.REMOVED,
                         )
                         else -> throw BlockchainSdkError.CustomError("Unknown response format")
                     }
@@ -109,6 +125,21 @@ internal class AlgorandNetworkService(
             coinBalance = coinBalance,
             reserveBalance = reserveCoinBalance,
             existentialDeposit = reserveCoinBalance,
+        )
+    }
+
+    private fun constructAlgorandAccountModel(
+        balanceResult: Result<AlgorandBalance>,
+        txsResult: List<Result<AlgorandTransactionInfo?>>,
+    ): AlgorandAccountModel {
+        val balance = balanceResult.successOr { throw it.error }
+        val txs = txsResult.mapNotNull { it.successOr { null } }
+
+        return AlgorandAccountModel(
+            coinValue = balance.coinBalance,
+            reserveValue = balance.reserveBalance,
+            existentialDeposit = balance.existentialDeposit,
+            transactionsInfo = txs,
         )
     }
 
