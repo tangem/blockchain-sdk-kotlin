@@ -167,7 +167,7 @@ enum class Blockchain(
         Decimal, DecimalTestnet,
         XDC, XDCTestnet,
         VeChain, VeChainTestnet,
-        Playa3ull
+        Playa3ull,
         -> 18
 
         Near, NearTestnet,
@@ -216,7 +216,7 @@ enum class Blockchain(
             Telos, TelosTestnet,
             OctaSpace, OctaSpaceTestnet,
             VeChain, VeChainTestnet,
-            Playa3ull
+            Playa3ull,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -354,7 +354,7 @@ enum class Blockchain(
             Decimal, DecimalTestnet,
             XDC, XDCTestnet,
             VeChain, VeChainTestnet,
-            Playa3ull
+            Playa3ull,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
