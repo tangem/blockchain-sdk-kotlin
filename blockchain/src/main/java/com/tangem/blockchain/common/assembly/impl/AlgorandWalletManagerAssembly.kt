@@ -18,7 +18,7 @@ internal object AlgorandWalletManagerAssembly : WalletManagerAssembly<AlgorandWa
                     config = input.config,
                 ).build(),
                 blockchain = blockchain,
-            )
+            ),
         )
     }
 }
