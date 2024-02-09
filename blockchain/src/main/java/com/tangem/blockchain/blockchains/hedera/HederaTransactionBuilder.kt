@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.hedera
 import com.hedera.hashgraph.sdk.*
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.toKeccak
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionExtras
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.card.EllipticCurve
@@ -27,12 +28,14 @@ class HederaTransactionBuilder(
         val maxFeeValue = transactionData.fee!!.amount.value!!
         val sourceAccountId = AccountId.fromString(transactionData.sourceAddress)
         val destinationAccountId = AccountId.fromString(transactionData.destinationAddress)
+        val memo = (transactionData.extras as? HederaTransactionExtras)?.memo ?: ""
 
         transaction = TransferTransaction()
             .addHbarTransfer(sourceAccountId, Hbar.from(transferValue.negate()))
             .addHbarTransfer(destinationAccountId, Hbar.from(transferValue))
             .setTransactionId(TransactionId.generate(sourceAccountId))
             .setMaxTransactionFee(Hbar.from(maxFeeValue))
+            .setTransactionMemo(memo)
             .freezeWith(client)
 
         val bodiesToSign = transaction!!.innerSignedTransactions.map { it.bodyBytes.toByteArray() }
@@ -51,4 +54,6 @@ class HederaTransactionBuilder(
         }
         return transaction!!
     }
+
+    data class HederaTransactionExtras(val memo: String) : TransactionExtras
 }
