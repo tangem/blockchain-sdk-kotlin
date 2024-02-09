@@ -60,6 +60,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.VeChain, Blockchain.VeChainTestnet -> VeChainExternalLinkProvider(isTestnet)
             Blockchain.Aptos, Blockchain.AptosTestnet -> AptosExternalLinkProvider(isTestnet)
             Blockchain.Playa3ull -> Playa3ullExternalLinkProvider()
+            Blockchain.Shibarium, Blockchain.ShibariumTestnet -> ShibariumExternalLinkProvider(isTestnet)
         }
     }
 }
