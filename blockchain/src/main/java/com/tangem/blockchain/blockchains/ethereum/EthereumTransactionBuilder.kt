@@ -175,4 +175,6 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     Xdc(id = 50, blockchain = Blockchain.XDC),
     XdcTestnet(id = 51, blockchain = Blockchain.XDCTestnet),
     Playa3ull(id = 3011, blockchain = Blockchain.Playa3ull),
+    Shibarium(id = 109, blockchain = Blockchain.Shibarium),
+    ShibariumTestnet(id = 157, blockchain = Blockchain.ShibariumTestnet),
 }
