@@ -15,6 +15,7 @@ internal fun Blockchain.getTransactionHistoryProvider(config: BlockchainSdkConfi
             Blockchain.Litecoin,
             Blockchain.Dogecoin,
             Blockchain.Dash,
+            Blockchain.BitcoinCash,
             -> {
                 BitcoinTransactionHistoryProvider(
                     blockchain = this,
