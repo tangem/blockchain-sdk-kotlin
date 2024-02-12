@@ -8,7 +8,7 @@ import org.komputing.khex.extensions.toHexString
 
 internal class VeChainNetworkProvider(
     override val baseUrl: String,
-    val api: VeChainApi,
+    private val api: VeChainApi,
 ) : NetworkProvider {
 
     suspend fun getAccountInfo(address: String): Result<VeChainGetAccountResponse> {

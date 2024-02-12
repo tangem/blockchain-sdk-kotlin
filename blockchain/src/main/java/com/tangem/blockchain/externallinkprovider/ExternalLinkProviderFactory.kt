@@ -61,6 +61,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Aptos, Blockchain.AptosTestnet -> AptosExternalLinkProvider(isTestnet)
             Blockchain.Playa3ull -> Playa3ullExternalLinkProvider()
             Blockchain.Shibarium, Blockchain.ShibariumTestnet -> ShibariumExternalLinkProvider(isTestnet)
+            Blockchain.Algorand, Blockchain.AlgorandTestnet -> AlgorandExternalLinkProvider(isTestnet)
         }
     }
 }
