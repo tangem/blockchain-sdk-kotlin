@@ -75,7 +75,11 @@ class ChiaWalletManager(
         return when (val result = networkProvider.getFeeEstimate(transactionCost)) {
             is Result.Success -> {
                 Result.Success(
-                    TransactionFee.Single(Fee.Common(Amount(result.data.priorityFee, blockchain))),
+                    TransactionFee.Choosable(
+                        minimum = Fee.Common(Amount(result.data.minimalFee, blockchain)),
+                        normal = Fee.Common(Amount(result.data.normalFee, blockchain)),
+                        priority = Fee.Common(Amount(result.data.priorityFee, blockchain)),
+                    )
                 )
             }
             is Result.Failure -> result
