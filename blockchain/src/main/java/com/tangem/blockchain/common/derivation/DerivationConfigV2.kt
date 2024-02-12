@@ -74,6 +74,8 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.Telos,
             Blockchain.OctaSpace,
             Blockchain.Decimal,
+            Blockchain.Playa3ull,
+            Blockchain.Shibarium,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             }
@@ -133,6 +135,9 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.VeChain, Blockchain.VeChainTestnet -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/818'/0'/0/0"))
             }
+            Blockchain.Algorand, Blockchain.AlgorandTestnet -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/283'/0'/0'/0'"))
+            }
             Blockchain.Chia, Blockchain.ChiaTestnet -> mapOf(AddressType.Default to DerivationPath(""))
 
             Blockchain.Unknown,
@@ -162,6 +167,7 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.NearTestnet,
             Blockchain.DecimalTestnet,
             Blockchain.XDCTestnet,
+            Blockchain.ShibariumTestnet,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
