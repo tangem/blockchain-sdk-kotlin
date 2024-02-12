@@ -9,6 +9,7 @@ import com.tangem.common.card.EllipticCurve
 
 class WalletManagerFactory(
     private val config: BlockchainSdkConfig = BlockchainSdkConfig(),
+    private val accountCreator: AccountCreator,
     blockchainDataStorage: BlockchainDataStorage,
 ) {
 
@@ -249,7 +250,7 @@ class WalletManagerFactory(
             }
 
             Blockchain.Hedera, Blockchain.HederaTestnet -> {
-                HederaWalletManagerAssembly(dataStorage)
+                HederaWalletManagerAssembly(dataStorage, accountCreator)
             }
 
             Blockchain.Unknown -> {
