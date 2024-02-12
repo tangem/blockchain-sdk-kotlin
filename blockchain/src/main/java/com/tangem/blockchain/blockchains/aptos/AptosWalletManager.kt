@@ -12,7 +12,8 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
-import com.tangem.common.extensions.hexToBytes
+import com.tangem.common.extensions.toHexString
+import org.joda.time.DateTime
 import java.math.BigDecimal
 
 internal class AptosWalletManager(
@@ -36,12 +37,7 @@ internal class AptosWalletManager(
         val gasUnitPrice = networkService.getGasUnitPrice()
             .successOr { return it }
 
-        val transaction = txBuilder.buildToCalculateFee(
-            sequenceNumber = sequenceNumber,
-            destination = destination,
-            amount = amount,
-            gasUnitPrice = gasUnitPrice,
-        )
+        val transaction = createTransactionInfo(destination, amount, gasUnitPrice)
 
         val usedGasPriceUnit = networkService.calculateUsedGasPriceUnit(transaction)
             .successOr { return it }
@@ -60,19 +56,32 @@ internal class AptosWalletManager(
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val transaction = txBuilder.buildToEncode(sequenceNumber = sequenceNumber, transactionData = transactionData)
+        val expirationTimestamp = createExpirationTimestamp()
 
-        val encodedHash = networkService.encodeTransaction(transaction)
-            .successOr { return SimpleResult.Failure(it.error) }
+        val rawTx = txBuilder.buildForSign(
+            sequenceNumber = sequenceNumber,
+            transactionData = transactionData,
+            expirationTimestamp = expirationTimestamp,
+        )
 
-        return when (val signingResult = signer.sign(encodedHash.hexToBytes(), wallet.publicKey)) {
+        return when (val signingResult = signer.sign(rawTx, wallet.publicKey)) {
             is CompletionResult.Failure -> SimpleResult.Failure(signingResult.error.toBlockchainSdkError())
             is CompletionResult.Success -> {
-                submitTransaction(
-                    signedTransaction = transaction,
-                    hash = signingResult.data,
+                val hash = txBuilder.buildForSend(
+                    sequenceNumber = sequenceNumber,
                     transactionData = transactionData,
+                    expirationTimestamp = expirationTimestamp,
+                    signature = signingResult.data,
                 )
+
+                when (val result = networkService.submitTransaction(hash)) {
+                    is Result.Failure -> SimpleResult.Failure(result.error)
+                    is Result.Success -> {
+                        wallet.addOutgoingTransaction(transactionData.copy(hash = result.data))
+
+                        SimpleResult.Success
+                    }
+                }
             }
         }
     }
@@ -82,7 +91,7 @@ internal class AptosWalletManager(
             wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
         }
 
-        wallet.setCoinValue(value = info.balance.movePointLeft(Blockchain.Aptos.decimals()))
+        wallet.setCoinValue(value = info.balance.movePointLeft(wallet.blockchain.decimals()))
         wallet.updateAptosTokens(info.tokens)
 
         sequenceNumber = info.sequenceNumber
@@ -106,24 +115,27 @@ internal class AptosWalletManager(
             .forEach { addTokenValue(value = it.first, token = it.second) }
     }
 
-    private suspend fun submitTransaction(
-        signedTransaction: AptosTransactionInfo,
-        hash: ByteArray,
-        transactionData: TransactionData,
-    ): SimpleResult {
-        val transaction = txBuilder.buildToSend(transaction = signedTransaction, hash = hash)
+    private fun createTransactionInfo(destination: String, amount: Amount, gasUnitPrice: Long): AptosTransactionInfo {
+        return AptosTransactionInfo(
+            sequenceNumber = sequenceNumber,
+            publicKey = wallet.publicKey.blockchainKey.toHexString(),
+            sourceAddress = wallet.address,
+            destinationAddress = destination,
+            amount = amount.longValue ?: 0L,
+            gasUnitPrice = gasUnitPrice,
+            expirationTimestamp = createExpirationTimestamp(),
+        )
+    }
 
-        return when (val result = networkService.submitTransaction(transaction)) {
-            is Result.Failure -> SimpleResult.Failure(result.error)
-            is Result.Success -> {
-                wallet.addOutgoingTransaction(transactionData.copy(hash = result.data))
-
-                SimpleResult.Success
-            }
-        }
+    private fun createExpirationTimestamp(): Long {
+        return DateTime.now()
+            .plusMinutes(TRANSACTION_LIFETIME_IN_MIN)
+            .millis
+            .div(other = 1000)
     }
 
     private companion object {
+        const val TRANSACTION_LIFETIME_IN_MIN = 5
         const val SUCCESS_TRANSACTION_SAFE_FACTOR = 1.5
     }
 }
