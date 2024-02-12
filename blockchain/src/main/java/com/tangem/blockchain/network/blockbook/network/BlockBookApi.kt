@@ -72,7 +72,7 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
                     .post(
                         moshi
                             .adapter<GetFeeRequest>()
-                            .toJson(GetFeeRequest.getFee(param))
+                            .toJson(GetFeeRequest.getFee(listOf(param)))
                             .toRequestBody(APPLICATION_JSON_MEDIA_TYPE.toMediaTypeOrNull()),
                     )
                     .url(config.getRequestBaseUrl(BlockBookRequest.GetFee, blockchain))
