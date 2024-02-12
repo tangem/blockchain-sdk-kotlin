@@ -35,11 +35,11 @@ internal class AptosRestNetworkProvider(override val baseUrl: String) : AptosNet
                     ),
                 )
             } else {
-                Result.Failure(BlockchainSdkError.AccountNotFound)
+                Result.Failure(BlockchainSdkError.AccountNotFound())
             }
         } catch (e: Exception) {
             if (e.isNoAccountFoundException()) {
-                Result.Failure(BlockchainSdkError.AccountNotFound)
+                Result.Failure(BlockchainSdkError.AccountNotFound())
             } else {
                 Result.Failure(e.toBlockchainSdkError())
             }
