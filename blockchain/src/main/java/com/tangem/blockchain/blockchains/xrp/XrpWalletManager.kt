@@ -34,7 +34,7 @@ class XrpWalletManager(
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
 
         if (!response.accountFound) {
-            updateError(BlockchainSdkError.AccountNotFound)
+            updateError(BlockchainSdkError.AccountNotFound())
             return
         }
         wallet.setCoinValue(response.balance - response.reserveBase)

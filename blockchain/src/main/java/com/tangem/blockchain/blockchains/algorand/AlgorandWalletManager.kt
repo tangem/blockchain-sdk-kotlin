@@ -48,7 +48,7 @@ internal class AlgorandWalletManager(
             }
 
         if (accountModel.coinValue < accountModel.existentialDeposit) {
-            updateError(BlockchainSdkError.AccountNotFound)
+            updateError(BlockchainSdkError.AccountNotFound(amountToCreateAccount = accountModel.reserveValue))
         }
     }
 
