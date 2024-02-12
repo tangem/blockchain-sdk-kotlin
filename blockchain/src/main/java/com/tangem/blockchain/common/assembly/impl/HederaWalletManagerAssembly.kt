@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.hedera.HederaWalletManager
 import com.tangem.blockchain.blockchains.hedera.network.HederaMirrorRestProvider
 import com.tangem.blockchain.blockchains.hedera.network.HederaNetworkProvider
 import com.tangem.blockchain.blockchains.hedera.network.HederaNetworkService
+import com.tangem.blockchain.common.AccountCreator
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
@@ -16,6 +17,7 @@ import com.tangem.blockchain.network.API_HEDERA_MIRROR_TESTNET
 
 internal class HederaWalletManagerAssembly(
     private val dataStorage: AdvancedDataStorage,
+    private val accountCreator: AccountCreator
 ) : WalletManagerAssembly<HederaWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): HederaWalletManager {
@@ -41,6 +43,7 @@ internal class HederaWalletManagerAssembly(
             ),
             networkProvider = HederaNetworkService(providers),
             dataStorage = dataStorage,
+            accountCreator = accountCreator,
         )
     }
 }
