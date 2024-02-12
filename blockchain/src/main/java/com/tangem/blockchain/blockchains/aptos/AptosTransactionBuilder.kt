@@ -73,7 +73,7 @@ internal class AptosTransactionBuilder(private val wallet: Wallet) {
             .setChainId(1)
             .setExpirationTimestampSecs(expirationTimestamp)
             .setGasUnitPrice(fee.gasUnitPrice)
-            .setMaxGasAmount(fee.amount.longValue ?: 0L)
+            .setMaxGasAmount(fee.gasLimit)
             .setSender(wallet.address)
             .setSequenceNumber(sequenceNumber)
             .setTransfer(
