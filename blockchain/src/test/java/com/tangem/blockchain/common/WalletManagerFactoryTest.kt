@@ -180,6 +180,7 @@ internal class WalletManagerFactoryTest {
                     dash = GetBlockAccessToken(),
                     bitcoin = GetBlockAccessToken(),
                     aptos = GetBlockAccessToken(),
+                    algorand = GetBlockAccessToken(),
                 ),
                 tronGridApiKey = "",
                 chiaFireAcademyApiKey = "",
