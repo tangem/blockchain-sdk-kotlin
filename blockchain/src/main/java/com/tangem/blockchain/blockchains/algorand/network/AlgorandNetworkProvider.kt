@@ -31,7 +31,7 @@ internal class AlgorandNetworkProvider(override val baseUrl: String) : NetworkPr
 
     suspend fun sendTransaction(data: ByteArray): Result<AlgorandTransactionResultResponse> {
         return try {
-            val body = data.toRequestBody(contentType = "application/octet-stream".toMediaTypeOrNull())
+            val body = data.toRequestBody(contentType = APPLICATION_OCTET_STREAM.toMediaTypeOrNull())
             val response = api.commitTransaction(body = body)
             Result.Success(response)
         } catch (e: Exception) {
@@ -48,5 +48,9 @@ internal class AlgorandNetworkProvider(override val baseUrl: String) : NetworkPr
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
+    }
+
+    private companion object {
+        private const val APPLICATION_OCTET_STREAM = "application/octet-stream"
     }
 }
