@@ -15,6 +15,7 @@ import com.tangem.common.card.CardWallet
 import com.tangem.common.core.TangemError
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.toHexString
+import com.tangem.demo.accountcreator.DummyAccountCreator
 import com.tangem.demo.cardSdk.ScanCardAndDerive
 import com.tangem.demo.databinding.ActivityBlockchainDemoBinding
 import com.tangem.demo.datastorage.DummyBlockchainDataStorage
@@ -200,6 +201,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
         try {
             walletManager = WalletManagerFactory(
                 config = BlockchainSdkConfig(),
+                accountCreator = DummyAccountCreator,
                 blockchainDataStorage = DummyBlockchainDataStorage,
             ).makeWalletManagerForApp(
                 scanResponse = scanResponse,
