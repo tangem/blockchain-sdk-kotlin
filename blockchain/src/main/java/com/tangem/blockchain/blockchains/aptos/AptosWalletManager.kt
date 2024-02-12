@@ -42,14 +42,15 @@ internal class AptosWalletManager(
         val usedGasPriceUnit = networkService.calculateUsedGasPriceUnit(transaction)
             .successOr { return it }
 
+        val gasLimit = usedGasPriceUnit * SUCCESS_TRANSACTION_SAFE_FACTOR
         return Result.Success(
             data = TransactionFee.Single(
                 Fee.Aptos(
                     amount = amount.copy(
-                        value = BigDecimal(gasUnitPrice * usedGasPriceUnit * SUCCESS_TRANSACTION_SAFE_FACTOR)
-                            .movePointLeft(wallet.blockchain.decimals()),
+                        value = BigDecimal(gasUnitPrice * gasLimit).movePointLeft(wallet.blockchain.decimals()),
                     ),
                     gasUnitPrice = gasUnitPrice,
+                    gasLimit = gasLimit.toLong(),
                 ),
             ),
         )
