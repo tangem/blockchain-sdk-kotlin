@@ -17,6 +17,7 @@ internal class NowNodesConfig(nowNodesCredentials: NowNodeCredentials) : BlockBo
             Blockchain.Dash,
             Blockchain.Litecoin,
             Blockchain.Dogecoin,
+            Blockchain.BitcoinCash, // BitcoinCash supports transactions history only
             -> {
                 if (isRpcRequest) {
                     "https://$prefix.$baseHost"
