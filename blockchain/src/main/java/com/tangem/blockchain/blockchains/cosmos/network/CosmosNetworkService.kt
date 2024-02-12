@@ -32,11 +32,11 @@ class CosmosNetworkService(
             val balancesResult = multiJsonRpcProvider.performRequest(CosmosRestProvider::balances, address)
 
             val accounts = when (accountResult) {
-                is Result.Failure -> return@coroutineScope Result.Failure(BlockchainSdkError.AccountNotFound)
+                is Result.Failure -> return@coroutineScope Result.Failure(BlockchainSdkError.AccountNotFound())
                 is Result.Success -> accountResult.data
             }
             val balances = when (balancesResult) {
-                is Result.Failure -> return@coroutineScope Result.Failure(BlockchainSdkError.AccountNotFound)
+                is Result.Failure -> return@coroutineScope Result.Failure(BlockchainSdkError.AccountNotFound())
                 is Result.Success -> balancesResult.data
             }
             val confirmedTxHashes = getConfirmedTxsHashes(unconfirmedTxsHashes)
