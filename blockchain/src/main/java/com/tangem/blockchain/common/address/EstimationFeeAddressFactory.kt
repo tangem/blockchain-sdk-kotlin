@@ -35,19 +35,14 @@ class EstimationFeeAddressFactory(
         return when (blockchain) {
             Blockchain.Cardano -> CARDANO_ESTIMATION_ADDRESS
 
-            Blockchain.Chia,
-            Blockchain.ChiaTestnet,
-            -> {
+            Blockchain.Chia, Blockchain.ChiaTestnet -> {
                 // Can not generate and doesn't depend on destination
                 ""
             }
 
             Blockchain.XRP,
-            Blockchain.Stellar,
-            Blockchain.StellarTestnet,
-            Blockchain.Binance,
-            Blockchain.BinanceTestnet,
-            Blockchain.SolanaTestnet,
+            Blockchain.Stellar, Blockchain.StellarTestnet,
+            Blockchain.Binance, Blockchain.BinanceTestnet,
             -> {
                 // Doesn't depend on amount and destination
                 ""
@@ -69,71 +64,49 @@ class EstimationFeeAddressFactory(
             }
 
             // We have to generate a new dummy address for UTXO-like
-            Blockchain.Bitcoin,
-            Blockchain.BitcoinTestnet,
+            Blockchain.Bitcoin, Blockchain.BitcoinTestnet,
             Blockchain.Litecoin,
-            Blockchain.BitcoinCash,
-            Blockchain.BitcoinCashTestnet,
+            Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet,
             Blockchain.Dogecoin,
             Blockchain.Dash,
-            Blockchain.Ravencoin,
-            Blockchain.RavencoinTestnet,
-            Blockchain.Solana,
+            Blockchain.Ravencoin, Blockchain.RavencoinTestnet,
+            Blockchain.Solana, Blockchain.SolanaTestnet,
             // EVM-like
-            Blockchain.Ethereum,
-            Blockchain.EthereumTestnet,
-            Blockchain.EthereumPow,
-            Blockchain.EthereumPowTestnet,
+            Blockchain.Ethereum, Blockchain.EthereumTestnet,
+            Blockchain.EthereumPow, Blockchain.EthereumPowTestnet,
             Blockchain.EthereumFair,
-            Blockchain.EthereumClassic,
-            Blockchain.EthereumClassicTestnet,
+            Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet,
             Blockchain.RSK,
-            Blockchain.BSC,
-            Blockchain.BSCTestnet,
-            Blockchain.Polygon,
-            Blockchain.PolygonTestnet,
-            Blockchain.Avalanche,
-            Blockchain.AvalancheTestnet,
-            Blockchain.Fantom,
-            Blockchain.FantomTestnet,
-            Blockchain.Arbitrum,
-            Blockchain.ArbitrumTestnet,
+            Blockchain.BSC, Blockchain.BSCTestnet,
+            Blockchain.Polygon, Blockchain.PolygonTestnet,
+            Blockchain.Avalanche, Blockchain.AvalancheTestnet,
+            Blockchain.Fantom, Blockchain.FantomTestnet,
+            Blockchain.Arbitrum, Blockchain.ArbitrumTestnet,
             Blockchain.Gnosis,
-            Blockchain.Optimism,
-            Blockchain.OptimismTestnet,
-            Blockchain.Kava,
-            Blockchain.KavaTestnet,
+            Blockchain.Optimism, Blockchain.OptimismTestnet,
+            Blockchain.Kava, Blockchain.KavaTestnet,
             Blockchain.Cronos,
-            Blockchain.Telos,
-            Blockchain.TelosTestnet,
-            Blockchain.OctaSpace,
-            Blockchain.OctaSpaceTestnet,
-            Blockchain.Decimal,
-            Blockchain.DecimalTestnet,
+            Blockchain.Telos, Blockchain.TelosTestnet,
+            Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet,
+            Blockchain.Decimal, Blockchain.DecimalTestnet,
+            Blockchain.Playa3ull,
+            Blockchain.Shibarium, Blockchain.ShibariumTestnet,
             // Polkadot-like
-            Blockchain.Polkadot,
-            Blockchain.PolkadotTestnet,
+            Blockchain.Polkadot, Blockchain.PolkadotTestnet,
             Blockchain.Kusama,
-            Blockchain.AlephZero,
-            Blockchain.AlephZeroTestnet,
+            Blockchain.AlephZero, Blockchain.AlephZeroTestnet,
             // Cosmos-like
-            Blockchain.Cosmos,
-            Blockchain.CosmosTestnet,
+            Blockchain.Cosmos, Blockchain.CosmosTestnet,
             Blockchain.TerraV1,
             Blockchain.TerraV2,
             // Others
-            Blockchain.Tron,
-            Blockchain.TronTestnet,
-            Blockchain.TON,
-            Blockchain.TONTestnet,
-            Blockchain.Near,
-            Blockchain.NearTestnet,
-            Blockchain.XDC,
-            Blockchain.XDCTestnet,
-            Blockchain.VeChain,
-            Blockchain.VeChainTestnet,
-            Blockchain.Aptos,
-            Blockchain.AptosTestnet,
+            Blockchain.Tron, Blockchain.TronTestnet,
+            Blockchain.TON, Blockchain.TONTestnet,
+            Blockchain.Near, Blockchain.NearTestnet,
+            Blockchain.XDC, Blockchain.XDCTestnet,
+            Blockchain.VeChain, Blockchain.VeChainTestnet,
+            Blockchain.Aptos, Blockchain.AptosTestnet,
+            Blockchain.Algorand, Blockchain.AlgorandTestnet,
             -> {
                 generateAddress(blockchain)
             }

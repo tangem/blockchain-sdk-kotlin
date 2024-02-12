@@ -3,9 +3,17 @@ package com.tangem.blockchain.common
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.impl.*
+import com.tangem.blockchain.common.datastorage.BlockchainDataStorage
+import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.common.card.EllipticCurve
 
-class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainSdkConfig()) {
+class WalletManagerFactory(
+    private val config: BlockchainSdkConfig = BlockchainSdkConfig(),
+    blockchainDataStorage: BlockchainDataStorage,
+) {
+
+    @Suppress("UnusedPrivateMember")
+    private val dataStorage by lazy { AdvancedDataStorage(blockchainDataStorage) }
 
     /**
      * Base wallet manager initializer
@@ -149,6 +157,8 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
             Blockchain.Kava, Blockchain.KavaTestnet,
             Blockchain.Cronos,
             Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet,
+            Blockchain.Playa3ull,
+            Blockchain.Shibarium, Blockchain.ShibariumTestnet,
             -> {
                 EthereumLikeWalletManagerAssembly
             }
@@ -239,6 +249,10 @@ class WalletManagerFactory(private val config: BlockchainSdkConfig = BlockchainS
 
             Blockchain.Aptos, Blockchain.AptosTestnet -> {
                 AptosWalletManagerAssembly
+            }
+
+            Blockchain.Algorand, Blockchain.AlgorandTestnet -> {
+                AlgorandWalletManagerAssembly
             }
 
             Blockchain.Unknown -> {

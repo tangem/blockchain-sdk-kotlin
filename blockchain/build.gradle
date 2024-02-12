@@ -91,8 +91,8 @@ dependencies {
     implementation files('libs/solanaj-0.0.10.jar')
     implementation files('libs/polkaj-root-0.1.5.jar')
     implementation "com.tangem:blst-android:0.0.2@aar"
-    implementation "com.tangem:wallet-core:3.2.4-tangem4@aar"
-    implementation("com.tangem:wallet-core-proto:3.2.4-tangem4") {
+    implementation "com.tangem:wallet-core:4.0.21-tangem2@aar"
+    implementation("com.tangem:wallet-core-proto:4.0.21-tangem2") {
         exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
     }
 
@@ -120,6 +120,7 @@ dependencies {
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.2'
     testImplementation "com.google.truth:truth:1.0.1"
+    androidTestImplementation "com.google.truth:truth:1.0.1"
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
