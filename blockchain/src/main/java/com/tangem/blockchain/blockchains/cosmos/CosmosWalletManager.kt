@@ -50,7 +50,7 @@ class CosmosWalletManager(
 
     // TODO think about split base "send" method to "sign" and "send" to satisfy SRP
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val accNumber = accountNumber ?: return SimpleResult.Failure(BlockchainSdkError.AccountNotFound)
+        val accNumber = accountNumber ?: return SimpleResult.Failure(BlockchainSdkError.AccountNotFound())
 
         val hash = txBuilder.buildForSign(
             amount = transactionData.amount,
