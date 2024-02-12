@@ -25,7 +25,11 @@ sealed class BlockchainSdkError(
     class UnsupportedOperation(message: String = "Unsupported operation") : BlockchainSdkError(0, message)
 
     object FailedToSendException : BlockchainSdkError(1, "Failed to send transaction")
-    object AccountNotFound : BlockchainSdkError(2, "Account not found")
+    data class AccountNotFound(val amountToCreateAccount: BigDecimal? = null) : BlockchainSdkError(
+        2,
+        "Account not found",
+    )
+
     class CreateAccountUnderfunded(val blockchain: Blockchain, val minReserve: Amount) : BlockchainSdkError(3)
     object FailedToLoadFee : BlockchainSdkError(4, "Failed to load fee")
     class CustomError(message: String) : BlockchainSdkError(5, message)
