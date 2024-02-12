@@ -11,6 +11,7 @@ import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
 import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
 import com.tangem.blockchain.blockchains.tezos.TezosWalletManager
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
+import com.tangem.blockchain.common.datastorage.BlockchainDataStorage
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.core.Config
@@ -127,7 +128,13 @@ internal class WalletManagerFactoryTest {
         val responseApdu = ResponseApdu(data.hexToBytes())
         val card = ReadCommand().deserialize(SessionEnvironment(Config(), InMemoryStorage()), responseApdu).card
         val config = BlockchainSdkConfig(nowNodeCredentials = NowNodeCredentials(apiKey = "4y821489124"))
-        val walletManager = WalletManagerFactory(config = config).createTwinWalletManager(
+        val walletManager = WalletManagerFactory(
+            config = config,
+            blockchainDataStorage = object : BlockchainDataStorage {
+                override suspend fun getOrNull(key: String): String? = null
+                override suspend fun store(key: String, value: String) = Unit
+            },
+        ).createTwinWalletManager(
             walletPublicKey = card.wallets.first().publicKey,
             pairPublicKey = pairPublicKey.hexToBytes(),
         )
@@ -173,10 +180,15 @@ internal class WalletManagerFactoryTest {
                     dash = GetBlockAccessToken(),
                     bitcoin = GetBlockAccessToken(),
                     aptos = GetBlockAccessToken(),
+                    algorand = GetBlockAccessToken(),
                 ),
                 tronGridApiKey = "",
                 chiaFireAcademyApiKey = "",
             ),
+            blockchainDataStorage = object : BlockchainDataStorage {
+                override suspend fun getOrNull(key: String): String? = null
+                override suspend fun store(key: String, value: String) = Unit
+            },
         ).createLegacyWalletManager(
             blockchain,
             publicKey,
