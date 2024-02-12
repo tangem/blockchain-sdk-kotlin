@@ -37,7 +37,7 @@ class NearWalletManager(
                     )
 
                     NearAccount.NotInitialized -> {
-                        updateError(BlockchainSdkError.AccountNotFound)
+                        updateError(BlockchainSdkError.AccountNotFound())
                         return
                     }
                 }
