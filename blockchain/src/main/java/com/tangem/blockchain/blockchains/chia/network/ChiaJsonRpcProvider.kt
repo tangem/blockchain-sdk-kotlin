@@ -8,6 +8,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.createRetrofitInstance
+import java.math.BigDecimal
 import java.math.RoundingMode
 
 open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : ChiaNetworkProvider {
@@ -37,21 +38,21 @@ open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : Chia
         }
     }
 
-    override suspend fun getFeeEstimate(transactionCost: Long): Result<EstimateFeeResult> {
+    override suspend fun getFeeEstimate(transactionCost: Long): Result<ChiaEstimateFeeResult> {
         return try {
             val feeData = retryIO {
                 api.getFeeEstimate(ChiaFeeEstimateBody(transactionCost, ESTIMATE_FEE_TARGET_TIMES))
             }
-            val feeList = listOf(
-                feeData.estimates[0].toBigDecimal().movePointLeft(decimals),
-                (feeData.feeRateLastBlock * transactionCost).toBigDecimal()
-                    .setScale(0, RoundingMode.DOWN)
-                    .movePointLeft(decimals),
-            ).sorted()
+            val baseFee = listOf(
+                feeData.estimates[0].toBigDecimal(),
+                (feeData.feeRateLastBlock * transactionCost).toBigDecimal().setScale(0, RoundingMode.DOWN),
+            ).max().movePointLeft(decimals)
+
             Result.Success(
-                EstimateFeeResult(
-                    normalFee = feeList[0],
-                    priorityFee = feeList[1],
+                ChiaEstimateFeeResult(
+                    minimalFee = (baseFee * minimalFeeMultiplier).setScale(decimals, RoundingMode.DOWN),
+                    normalFee = (baseFee * normalFeeMultiplier).setScale(decimals, RoundingMode.DOWN),
+                    priorityFee = (baseFee * priorityFeeMultiplier).setScale(decimals, RoundingMode.DOWN),
                 ),
             )
         } catch (exception: Exception) {
@@ -85,5 +86,9 @@ open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : Chia
         private val ESTIMATE_FEE_TARGET_TIMES = listOf(60)
 
         private const val SUCCESS_STATUS = "SUCCESS"
+
+        val minimalFeeMultiplier: BigDecimal = BigDecimal("1.5")
+        val normalFeeMultiplier: BigDecimal = BigDecimal("2")
+        val priorityFeeMultiplier: BigDecimal = BigDecimal("5")
     }
 }
