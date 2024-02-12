@@ -79,7 +79,7 @@ class ChiaWalletManager(
                         minimum = Fee.Common(Amount(result.data.minimalFee, blockchain)),
                         normal = Fee.Common(Amount(result.data.normalFee, blockchain)),
                         priority = Fee.Common(Amount(result.data.priorityFee, blockchain)),
-                    )
+                    ),
                 )
             }
             is Result.Failure -> result
