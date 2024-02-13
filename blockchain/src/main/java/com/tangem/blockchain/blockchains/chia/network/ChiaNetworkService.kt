@@ -15,7 +15,7 @@ class ChiaNetworkService(chiaNetworkProviders: List<ChiaJsonRpcProvider>) : Chia
         return multiProvider.performRequest(ChiaNetworkProvider::getUnspents, puzzleHash)
     }
 
-    override suspend fun getFeeEstimate(transactionCost: Long): Result<EstimateFeeResult> {
+    override suspend fun getFeeEstimate(transactionCost: Long): Result<ChiaEstimateFeeResult> {
         return multiProvider.performRequest(ChiaNetworkProvider::getFeeEstimate, transactionCost)
     }
 

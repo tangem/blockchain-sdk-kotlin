@@ -41,7 +41,7 @@ internal object ChiaWalletManagerAssembly : WalletManagerAssembly<ChiaWalletMana
                 add(
                     ChiaJsonRpcProvider(
                         baseUrl = API_CHIA_TANGEM,
-                        key = input.config.chiaTangemApiKey ?: error("FireAcademy API key not provided"),
+                        key = input.config.chiaTangemApiKey ?: error("Chia Tangem API key not provided"),
                     ),
                 )
                 add(chiaFireAcademyProvider)
