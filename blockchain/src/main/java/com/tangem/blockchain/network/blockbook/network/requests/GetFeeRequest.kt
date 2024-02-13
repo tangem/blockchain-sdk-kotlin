@@ -12,12 +12,12 @@ internal class GetFeeRequest(
 ) {
     companion object {
 
-        fun getFee(param: Int): GetFeeRequest {
+        fun getFee(paramsList: List<Int>, method: String = "estimatesmartfee"): GetFeeRequest {
             return GetFeeRequest(
                 jsonrpc = "2.0",
                 id = "id",
-                method = "estimatesmartfee",
-                params = listOf(param),
+                method = method,
+                params = paramsList,
             )
         }
     }

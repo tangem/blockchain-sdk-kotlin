@@ -157,6 +157,8 @@ class WalletManagerFactory(
             Blockchain.Kava, Blockchain.KavaTestnet,
             Blockchain.Cronos,
             Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet,
+            Blockchain.Playa3ull,
+            Blockchain.Shibarium, Blockchain.ShibariumTestnet,
             -> {
                 EthereumLikeWalletManagerAssembly
             }
@@ -247,6 +249,10 @@ class WalletManagerFactory(
 
             Blockchain.Aptos, Blockchain.AptosTestnet -> {
                 AptosWalletManagerAssembly
+            }
+
+            Blockchain.Algorand, Blockchain.AlgorandTestnet -> {
+                AlgorandWalletManagerAssembly
             }
 
             Blockchain.Hedera, Blockchain.HederaTestnet -> {
