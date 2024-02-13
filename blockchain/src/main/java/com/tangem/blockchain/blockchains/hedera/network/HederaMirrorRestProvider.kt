@@ -29,7 +29,7 @@ class HederaMirrorRestProvider(override val baseUrl: String, key: String? = null
         return try {
             val accountData = retryIO { api.getAccountsByPublicKey(publicKey.toHexString()) }
             if (accountData.accounts.isEmpty()) {
-                Result.Failure(BlockchainSdkError.AccountNotFound)
+                Result.Failure(BlockchainSdkError.AccountNotFound())
             } else {
                 Result.Success(accountData.accounts[0].account) // we expect only one account per public key
             }

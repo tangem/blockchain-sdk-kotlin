@@ -72,7 +72,7 @@ class EstimationFeeAddressFactory(
             Blockchain.Dogecoin,
             Blockchain.Dash,
             Blockchain.Ravencoin, Blockchain.RavencoinTestnet,
-            Blockchain.Solana, Blockchain.SolanaTestnet,
+            Blockchain.Solana,
                 // EVM-like
             Blockchain.Ethereum, Blockchain.EthereumTestnet,
             Blockchain.EthereumPow, Blockchain.EthereumPowTestnet,
