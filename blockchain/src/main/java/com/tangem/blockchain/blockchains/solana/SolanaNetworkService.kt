@@ -90,7 +90,7 @@ internal class SolanaNetworkService(
                     .successOr { return@withContext it }
 
                 if (accountInfo == null) {
-                    Result.Failure(BlockchainSdkError.AccountNotFound)
+                    Result.Failure(BlockchainSdkError.AccountNotFound())
                 } else {
                     Result.Success(accountInfo)
                 }
@@ -103,10 +103,10 @@ internal class SolanaNetworkService(
     suspend fun getTokenAccountInfoIfExist(associatedAccount: PublicKey): Result<SolanaSplAccountInfo> {
         return withContext(Dispatchers.IO) {
             try {
-                val splAccountInfo = provider.api.getSplTokenAccountInfo(associatedAccount)
+                val splAccountInfo = provider.api.getSplTokenAccountInfoNew(associatedAccount)
 
                 if (splAccountInfo.value == null) {
-                    Result.Failure(BlockchainSdkError.AccountNotFound)
+                    Result.Failure(BlockchainSdkError.AccountNotFound())
                 } else {
                     Result.Success(SolanaSplAccountInfo(splAccountInfo.value, associatedAccount))
                 }
