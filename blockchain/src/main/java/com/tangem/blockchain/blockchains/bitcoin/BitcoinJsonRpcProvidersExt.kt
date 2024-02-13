@@ -1,10 +1,12 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashNowNodesNetworkProvider
 import com.tangem.blockchain.blockchains.ravencoin.network.RavencoinNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.GetBlockCredentials
+import com.tangem.blockchain.common.NowNodeCredentials
 import com.tangem.blockchain.network.blockbook.BlockBookNetworkProvider
 import com.tangem.blockchain.network.blockbook.config.GetBlockConfig
 import com.tangem.blockchain.network.blockbook.config.NowNodesConfig
@@ -37,6 +39,7 @@ internal fun Blockchain.getBitcoinNetworkProviders(
             getBlockcypherProvider(blockchain, config),
         )
         Blockchain.BitcoinCash -> listOfNotNull(
+            getBitcoinCashNowNodesNetworkProvider(config),
             *getBlockchairProviders(blockchain, config),
         )
         // TODO: we don't have BCH testnet providers now. Maybe remove it completely?
@@ -108,5 +111,17 @@ private fun getBlockchairProviders(
 private fun getBlockcypherProvider(blockchain: Blockchain, config: BlockchainSdkConfig): BitcoinNetworkProvider? {
     return config.blockcypherTokens?.let {
         BlockcypherNetworkProvider(blockchain = blockchain, tokens = config.blockcypherTokens)
+    }
+}
+
+private fun getBitcoinCashNowNodesNetworkProvider(config: BlockchainSdkConfig): BitcoinNetworkProvider? {
+    return if (config.nowNodeCredentials != null && config.nowNodeCredentials.apiKey.isNotBlank()) {
+        BitcoinCashNowNodesNetworkProvider(
+            credentials = NowNodeCredentials.headerApiKey to config.nowNodeCredentials.apiKey,
+            bchBookUrl = "https://bchbook.nownodes.io/",
+            bchUrl = "https://bch.nownodes.io/",
+        )
+    } else {
+        null
     }
 }
