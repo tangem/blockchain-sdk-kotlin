@@ -109,6 +109,11 @@ enum class Blockchain(
     VeChainTestnet("vechain/test", "VET", "VeChain Testnet"),
     Aptos("aptos", "APT", "Aptos"),
     AptosTestnet("aptos/test", "APT", "Aptos Testnet"),
+    Playa3ull("playa3ull", "3ULL", "PLAYA3ULL GAMES"),
+    Shibarium("shibarium", "BONE", "Shibarium"),
+    ShibariumTestnet("shibarium/test", "BONE", "Shibarium Testnet"),
+    Algorand("algorand", "ALGO", "Algorand"),
+    AlgorandTestnet("algorand/test", "ALGO", "Algorand Testnet"),
     Hedera("hedera", "HBAR", "Hedera"),
     HederaTestnet("hedera/test", "HBAR", "Hedera Testnet"),
     ;
@@ -125,6 +130,7 @@ enum class Blockchain(
         Tron, TronTestnet,
         Cosmos, CosmosTestnet,
         TerraV1, TerraV2,
+        Algorand, AlgorandTestnet,
         -> 6
 
         Stellar, StellarTestnet -> 7
@@ -170,6 +176,8 @@ enum class Blockchain(
         Decimal, DecimalTestnet,
         XDC, XDCTestnet,
         VeChain, VeChainTestnet,
+        Playa3ull,
+        Shibarium, ShibariumTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -219,6 +227,8 @@ enum class Blockchain(
             Telos, TelosTestnet,
             OctaSpace, OctaSpaceTestnet,
             VeChain, VeChainTestnet,
+            Playa3ull,
+            Shibarium, ShibariumTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -239,6 +249,7 @@ enum class Blockchain(
             TerraV2,
             Near, NearTestnet,
             Aptos, AptosTestnet,
+            Algorand, AlgorandTestnet,
             -> TrustWalletAddressService(blockchain = this)
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
@@ -310,6 +321,8 @@ enum class Blockchain(
             XDC, XDCTestnet -> XDCTestnet
             VeChain, VeChainTestnet -> VeChainTestnet
             Aptos, AptosTestnet -> AptosTestnet
+            Shibarium, ShibariumTestnet -> ShibariumTestnet
+            Algorand, AlgorandTestnet -> AlgorandTestnet
             Hedera, HederaTestnet -> HederaTestnet
             else -> null
         }
@@ -359,6 +372,8 @@ enum class Blockchain(
             Decimal, DecimalTestnet,
             XDC, XDCTestnet,
             VeChain, VeChainTestnet,
+            Playa3ull,
+            Shibarium, ShibariumTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -367,6 +382,7 @@ enum class Blockchain(
             TON, TONTestnet,
             Near, NearTestnet,
             Aptos, AptosTestnet,
+            Algorand, AlgorandTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
 
             Cardano -> listOf(EllipticCurve.Ed25519) // todo until cardano support in wallet 2
@@ -410,6 +426,9 @@ enum class Blockchain(
             DecimalTestnet -> Chain.DecimalTestnet.id
             XDC -> Chain.Xdc.id
             XDCTestnet -> Chain.XdcTestnet.id
+            Playa3ull -> Chain.Playa3ull.id
+            Shibarium -> Chain.Shibarium.id
+            ShibariumTestnet -> Chain.ShibariumTestnet.id
             else -> null
         }
     }

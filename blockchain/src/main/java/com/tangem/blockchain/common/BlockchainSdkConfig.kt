@@ -53,6 +53,7 @@ data class GetBlockCredentials(
     val dash: GetBlockAccessToken,
     val bitcoin: GetBlockAccessToken,
     val aptos: GetBlockAccessToken?,
+    val algorand: GetBlockAccessToken?,
 )
 
 data class GetBlockAccessToken(
