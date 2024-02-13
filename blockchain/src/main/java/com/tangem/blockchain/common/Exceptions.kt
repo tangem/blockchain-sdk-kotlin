@@ -43,6 +43,8 @@ sealed class BlockchainSdkError(
 
     object FailedToBuildTx : BlockchainSdkError(7, "Failed to build transaction")
 
+    object FailedToCreateAccount : BlockchainSdkError(8, "Failed to create account")
+
     object SignatureCountNotMatched : BlockchainSdkError(100)
 
     sealed class Solana(
