@@ -9,12 +9,13 @@ interface ChiaNetworkProvider : NetworkProvider {
 
     suspend fun getUnspents(puzzleHash: String): Result<List<ChiaCoin>>
 
-    suspend fun getFeeEstimate(transactionCost: Long): Result<EstimateFeeResult>
+    suspend fun getFeeEstimate(transactionCost: Long): Result<ChiaEstimateFeeResult>
 
     suspend fun sendTransaction(transaction: ChiaTransactionBody): SimpleResult
 }
 
-data class EstimateFeeResult(
+data class ChiaEstimateFeeResult(
+    val minimalFee: BigDecimal,
     val normalFee: BigDecimal,
     val priorityFee: BigDecimal,
 )
