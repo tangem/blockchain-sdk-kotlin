@@ -164,7 +164,7 @@ class StellarNetworkService(
             }
         } catch (exception: Exception) {
             if (exception is ErrorResponse && exception.code == HTTP_NOT_FOUND_CODE) {
-                Result.Failure(BlockchainSdkError.AccountNotFound)
+                Result.Failure(BlockchainSdkError.AccountNotFound())
             } else {
                 Result.Failure(exception.toBlockchainSdkError())
             }

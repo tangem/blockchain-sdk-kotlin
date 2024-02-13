@@ -49,7 +49,7 @@ class CosmosWalletManager(
     }
 // [REDACTED_TODO_COMMENT]
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val accNumber = accountNumber ?: return SimpleResult.Failure(BlockchainSdkError.AccountNotFound)
+        val accNumber = accountNumber ?: return SimpleResult.Failure(BlockchainSdkError.AccountNotFound())
 
         val hash = txBuilder.buildForSign(
             amount = transactionData.amount,
