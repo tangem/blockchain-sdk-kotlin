@@ -23,7 +23,7 @@ internal class HederaWalletManager(
     private val transactionBuilder: HederaTransactionBuilder,
     private val networkProvider: HederaNetworkProvider,
     private val dataStorage: AdvancedDataStorage,
-    private val accountCreator: AccountCreator
+    private val accountCreator: AccountCreator,
 ) : WalletManager(wallet), TransactionSender {
 
     private val blockchain = wallet.blockchain
@@ -38,7 +38,6 @@ internal class HederaWalletManager(
             is Result.Failure -> updateError(getAccountIdResult.error)
         }
     }
-
 
     private fun updateBalance(accountId: String) {
         try {
