@@ -3,7 +3,8 @@ package com.tangem.blockchain.blockchains.bitcoin
 import android.util.Log
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.PaginationWrapper
+import com.tangem.blockchain.common.pagination.Page
+import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionStatus
@@ -32,7 +33,7 @@ internal class BitcoinTransactionHistoryProvider(
             val response = withContext(Dispatchers.IO) {
                 blockBookApi.getTransactions(
                     address = address,
-                    page = 1,
+                    page = null,
                     pageSize = 1, // We don't need to know all transactions to define state
                     filterType = null,
                 )
@@ -56,19 +57,23 @@ internal class BitcoinTransactionHistoryProvider(
                 withContext(Dispatchers.IO) {
                     blockBookApi.getTransactions(
                         address = request.address,
-                        page = request.page.number,
-                        pageSize = request.page.size,
+                        page = request.pageToLoad,
+                        pageSize = request.pageSize,
                         filterType = null,
                     )
                 }
             val txs = response.transactions
                 ?.map { tx -> tx.toTransactionHistoryItem(request.address) }
                 ?: emptyList()
+            val nextPage = if (response.page != null && request.page !is Page.LastPage) {
+                val page = response.page
+                if (page == response.totalPages) Page.LastPage else Page.Next(page.inc().toString())
+            } else {
+                Page.LastPage
+            }
             Result.Success(
                 PaginationWrapper(
-                    page = response.page ?: request.page.number,
-                    totalPages = response.totalPages ?: 0,
-                    itemsOnPage = response.itemsOnPage ?: 0,
+                    nextPage = nextPage,
                     items = txs,
                 ),
             )
