@@ -48,7 +48,7 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
 
     suspend fun getTransactions(
         address: String,
-        page: Int,
+        page: String?,
         pageSize: Int,
         filterType: TransactionHistoryRequest.FilterType?,
     ): GetAddressResponse {
