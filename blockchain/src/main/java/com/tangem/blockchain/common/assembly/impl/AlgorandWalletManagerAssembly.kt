@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.algorand.AlgorandWalletManager
 import com.tangem.blockchain.blockchains.algorand.network.AlgorandNetworkService
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
+import com.tangem.blockchain.common.txhistory.getTransactionHistoryProvider
 
 internal object AlgorandWalletManagerAssembly : WalletManagerAssembly<AlgorandWalletManager>() {
 
@@ -19,6 +20,7 @@ internal object AlgorandWalletManagerAssembly : WalletManagerAssembly<AlgorandWa
                 ).build(),
                 blockchain = blockchain,
             ),
+            transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
         )
     }
 }
