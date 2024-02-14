@@ -6,5 +6,4 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 internal data class AptosSimulateTransactionBody(
     @Json(name = "gas_used") val usedGasUnit: String,
-    @Json(name = "success") val isSuccess: Boolean,
 )
