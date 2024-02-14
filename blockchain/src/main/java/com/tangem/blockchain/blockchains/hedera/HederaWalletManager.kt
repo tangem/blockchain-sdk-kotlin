@@ -4,6 +4,7 @@ import android.util.Log
 import com.hedera.hashgraph.sdk.AccountBalanceQuery
 import com.hedera.hashgraph.sdk.AccountId
 import com.hedera.hashgraph.sdk.Client
+import com.hedera.hashgraph.sdk.TransferTransaction
 import com.tangem.blockchain.blockchains.hedera.network.HederaNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.address.Address
@@ -13,6 +14,8 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.map
+import com.tangem.blockchain.extensions.toSimpleResult
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toCompressedPublicKey
 import java.math.BigDecimal
@@ -65,24 +68,18 @@ internal class HederaWalletManager(
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
-            is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
-            is Result.Success -> {
-                val signerResult = signer.sign(buildTransactionResult.data, wallet.publicKey)
-                return when (signerResult) {
-                    is CompletionResult.Success -> {
-                        val transactionToSend = transactionBuilder.buildToSend(signerResult.data)
-                        try {
-                            transactionToSend.execute(client)
-                            SimpleResult.Success
-                        } catch (exception: Exception) {
-                            SimpleResult.Failure(exception.toBlockchainSdkError())
-                        }
-                    }
-                    is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResult.error)
+        return transactionBuilder.buildToSign(transactionData).map { buildTransaction ->
+            return when (val signerResult = signer.sign(buildTransaction.signatures, wallet.publicKey)) {
+                is CompletionResult.Success -> {
+                    val transactionToSend = transactionBuilder.buildToSend(
+                        buildTransaction.transferTransaction,
+                        signerResult.data,
+                    )
+                    executeTransaction(transactionToSend)
                 }
+                is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResult.error)
             }
-        }
+        }.toSimpleResult()
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
@@ -95,6 +92,15 @@ internal class HederaWalletManager(
             is Result.Failure -> {
                 usdExchangeRateResult
             }
+        }
+    }
+
+    private fun executeTransaction(transactionToSend: TransferTransaction): SimpleResult {
+        return try {
+            transactionToSend.execute(client)
+            SimpleResult.Success
+        } catch (exception: Exception) {
+            SimpleResult.Failure(exception.toBlockchainSdkError())
         }
     }
 
