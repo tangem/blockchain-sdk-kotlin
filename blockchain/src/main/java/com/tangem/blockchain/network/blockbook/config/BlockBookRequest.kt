@@ -4,7 +4,7 @@ import com.tangem.blockchain.common.txhistory.TransactionHistoryRequest
 
 sealed class BlockBookRequest {
     data class GetAddress(
-        val page: Int? = null,
+        val page: String? = null,
         val pageSize: Int? = null,
         val filterType: TransactionHistoryRequest.FilterType? = null,
     ) : BlockBookRequest() {

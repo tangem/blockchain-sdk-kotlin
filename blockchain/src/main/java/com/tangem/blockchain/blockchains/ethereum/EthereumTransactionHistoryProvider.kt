@@ -2,6 +2,8 @@ package com.tangem.blockchain.blockchains.ethereum
 
 import com.tangem.Log
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.pagination.Page
+import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionStatus
 import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
@@ -32,7 +34,7 @@ internal class EthereumTransactionHistoryProvider(
             val response = withContext(Dispatchers.IO) {
                 blockBookApi.getTransactions(
                     address = address,
-                    page = 1,
+                    page = null,
                     pageSize = 1, // We don't need to know all transactions to define state
                     filterType = filterType,
                 )
@@ -51,15 +53,14 @@ internal class EthereumTransactionHistoryProvider(
         request: TransactionHistoryRequest,
     ): Result<PaginationWrapper<TransactionHistoryItem>> {
         return try {
-            val response =
-                withContext(Dispatchers.IO) {
-                    blockBookApi.getTransactions(
-                        address = request.address,
-                        page = request.page.number,
-                        pageSize = request.page.size,
-                        filterType = request.filterType,
-                    )
-                }
+            val response = withContext(Dispatchers.IO) {
+                blockBookApi.getTransactions(
+                    address = request.address,
+                    page = request.pageToLoad,
+                    pageSize = request.pageSize,
+                    filterType = request.filterType,
+                )
+            }
             val txs = response.transactions
                 ?.mapNotNull { tx ->
                     tx.toTransactionHistoryItem(
@@ -69,11 +70,15 @@ internal class EthereumTransactionHistoryProvider(
                     )
                 }
                 ?: emptyList()
+            val nextPage = if (response.page != null && request.page !is Page.LastPage) {
+                val page = response.page
+                if (page == response.totalPages) Page.LastPage else Page.Next(page.inc().toString())
+            } else {
+                Page.LastPage
+            }
             Result.Success(
                 PaginationWrapper(
-                    page = response.page ?: request.page.number,
-                    totalPages = response.totalPages ?: 0,
-                    itemsOnPage = response.itemsOnPage ?: 0,
+                    nextPage = nextPage,
                     items = txs,
                 ),
             )
