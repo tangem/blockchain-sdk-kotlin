@@ -62,7 +62,7 @@ internal class AptosRestNetworkProvider(override val baseUrl: String) : AptosNet
             val response = api.simulateTransaction(requestBody).firstOrNull()
 
             val usedGasUnit = response?.usedGasUnit?.toLongOrNull()
-            if (usedGasUnit != null && response.isSuccess) {
+            if (usedGasUnit != null) {
                 Result.Success(usedGasUnit)
             } else {
                 Result.Failure(BlockchainSdkError.FailedToLoadFee)
