@@ -9,6 +9,7 @@ internal class HederaAddressService(isTestnet: Boolean) : AddressService() {
 
     private val client = if (isTestnet) Client.forTestnet() else Client.forMainnet()
 
+    // Address for Hedera generates with backend, and will be received in update wallet flow
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String = ""
 
     override fun validate(address: String): Boolean {
