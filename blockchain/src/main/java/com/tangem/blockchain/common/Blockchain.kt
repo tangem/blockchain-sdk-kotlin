@@ -468,6 +468,7 @@ enum class Blockchain(
         Optimism, OptimismTestnet,
         TON, TONTestnet,
         Near, NearTestnet,
+        Aptos, AptosTestnet,
         -> true
 
         else -> false
