@@ -145,7 +145,7 @@ enum class Blockchain(
         Kaspa,
         Ravencoin, RavencoinTestnet,
         Aptos, AptosTestnet,
-        Hedera, HederaTestnet
+        Hedera, HederaTestnet,
         -> 8
 
         Solana, SolanaTestnet,
@@ -210,6 +210,7 @@ enum class Blockchain(
             Dash,
             Ravencoin, RavencoinTestnet,
             -> BitcoinAddressService(this)
+
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
             Arbitrum, ArbitrumTestnet,
             Ethereum, EthereumTestnet,
@@ -251,6 +252,7 @@ enum class Blockchain(
             Aptos, AptosTestnet,
             Algorand, AlgorandTestnet,
             -> TrustWalletAddressService(blockchain = this)
+
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
             Chia, ChiaTestnet -> ChiaAddressService(this)
