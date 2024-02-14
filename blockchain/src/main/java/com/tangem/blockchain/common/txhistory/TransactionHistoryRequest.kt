@@ -1,15 +1,21 @@
 package com.tangem.blockchain.common.txhistory
 
-private const val DEFAULT_PAGING_SIZE = 20
+import com.tangem.blockchain.common.pagination.Page
 
 data class TransactionHistoryRequest(
     val address: String,
     val decimals: Int,
     val page: Page,
+    val pageSize: Int,
     val filterType: FilterType,
 ) {
 
-    data class Page(val number: Int, val size: Int = DEFAULT_PAGING_SIZE)
+    val pageToLoad: String?
+        get() = when (page) {
+            Page.Initial -> null
+            is Page.Next -> page.value
+            Page.LastPage -> error("EOF reached. No data to load")
+        }
 
     sealed class FilterType {
         object Coin : FilterType()
