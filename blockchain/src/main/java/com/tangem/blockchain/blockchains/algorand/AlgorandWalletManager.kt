@@ -7,6 +7,7 @@ import com.tangem.blockchain.blockchains.algorand.network.AlgorandNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -17,8 +18,9 @@ import java.util.EnumSet
 
 internal class AlgorandWalletManager(
     wallet: Wallet,
+    transactionHistoryProvider: TransactionHistoryProvider,
     private val networkService: AlgorandNetworkService,
-) : WalletManager(wallet) {
+) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider) {
 
     override val currentHost: String get() = networkService.host
     private val transactionBuilder = AlgorandTransactionBuilder(
