@@ -2,6 +2,8 @@ package com.tangem.blockchain.blockchains.tron
 
 import com.tangem.Log
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.pagination.Page
+import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem
 import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionStatus
 import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
@@ -30,7 +32,7 @@ internal class TronTransactionHistoryProvider(
             val response = withContext(Dispatchers.IO) {
                 blockBookApi.getTransactions(
                     address = address,
-                    page = 1,
+                    page = null,
                     pageSize = 1, // We don't need to know all transactions to define state
                     filterType = filterType,
                 )
@@ -53,8 +55,8 @@ internal class TronTransactionHistoryProvider(
                 withContext(Dispatchers.IO) {
                     blockBookApi.getTransactions(
                         address = request.address,
-                        page = request.page.number,
-                        pageSize = request.page.size,
+                        page = request.pageToLoad,
+                        pageSize = request.pageSize,
                         filterType = request.filterType,
                     )
                 }
@@ -67,11 +69,15 @@ internal class TronTransactionHistoryProvider(
                     )
                 }
                 ?: emptyList()
+            val nextPage = if (response.page != null && request.page !is Page.LastPage) {
+                val page = response.page
+                if (page == response.totalPages) Page.LastPage else Page.Next(page.inc().toString())
+            } else {
+                Page.LastPage
+            }
             Result.Success(
                 PaginationWrapper(
-                    page = response.page ?: request.page.number,
-                    totalPages = response.totalPages ?: 0,
-                    itemsOnPage = response.itemsOnPage ?: 0,
+                    nextPage = nextPage,
                     items = txs,
                 ),
             )
