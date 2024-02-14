@@ -17,7 +17,7 @@ import com.tangem.blockchain.network.API_HEDERA_MIRROR_TESTNET
 
 internal class HederaWalletManagerAssembly(
     private val dataStorage: AdvancedDataStorage,
-    private val accountCreator: AccountCreator
+    private val accountCreator: AccountCreator,
 ) : WalletManagerAssembly<HederaWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): HederaWalletManager {
