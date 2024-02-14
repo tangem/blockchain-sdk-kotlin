@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.hedera
 
 import com.hedera.hashgraph.sdk.*
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.toKeccak
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.TransactionExtras
 import com.tangem.blockchain.common.Wallet
@@ -21,16 +22,19 @@ class HederaTransactionBuilder(
         -> PublicKey.fromBytesED25519(wallet.publicKey.blockchainKey)
         else -> error("unsupported curve $curve")
     }
-    private var transaction: TransferTransaction? = null
 
-    fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
-        val transferValue = transactionData.amount.value!!
-        val maxFeeValue = transactionData.fee!!.amount.value!!
+    fun buildToSign(transactionData: TransactionData): Result<HederaBuiltTransaction> {
+        val transferValue = transactionData.amount.value ?: return Result.Failure(
+            BlockchainSdkError.NPError("transactionData.amount"),
+        )
+        val maxFeeValue = transactionData.fee?.amount?.value ?: return Result.Failure(
+            BlockchainSdkError.NPError("transactionData.fee"),
+        )
         val sourceAccountId = AccountId.fromString(transactionData.sourceAddress)
         val destinationAccountId = AccountId.fromString(transactionData.destinationAddress)
-        val memo = (transactionData.extras as? HederaTransactionExtras)?.memo ?: ""
+        val memo = (transactionData.extras as? HederaTransactionExtras)?.memo.orEmpty()
 
-        transaction = TransferTransaction()
+        val transaction = TransferTransaction()
             .addHbarTransfer(sourceAccountId, Hbar.from(transferValue.negate()))
             .addHbarTransfer(destinationAccountId, Hbar.from(transferValue))
             .setTransactionId(TransactionId.generate(sourceAccountId))
@@ -38,21 +42,30 @@ class HederaTransactionBuilder(
             .setTransactionMemo(memo)
             .freezeWith(client)
 
-        val bodiesToSign = transaction!!.innerSignedTransactions.map { it.bodyBytes.toByteArray() }
+        val bodiesToSign = transaction.innerSignedTransactions
+            .map { it.bodyBytes.toByteArray() }
+            .let { body ->
+                if (publicKey.isED25519) {
+                    body
+                } else {
+                    body.map { it.toKeccak() }
+                }
+            }
 
-        return if (publicKey.isED25519) {
-            Result.Success(bodiesToSign)
-        } else {
-            Result.Success(bodiesToSign.map { it.toKeccak() })
-        }
+        val hederaBuiltTransaction = HederaBuiltTransaction(
+            transferTransaction = transaction,
+            signatures = bodiesToSign,
+        )
+
+        return Result.Success(hederaBuiltTransaction)
     }
 
-    fun buildToSend(signatures: List<ByteArray>): TransferTransaction {
+    fun buildToSend(transaction: TransferTransaction, signatures: List<ByteArray>): TransferTransaction {
         val normalizedSignatures = if (publicKey.isED25519) signatures else signatures.map { CryptoUtils.normalize(it) }
-        transaction!!.innerSignedTransactions.indices.forEach {
-            transaction!!.sigPairLists[it].addSigPair(publicKey.toSignaturePairProtobuf(normalizedSignatures[it]))
+        transaction.innerSignedTransactions.indices.forEach {
+            transaction.sigPairLists[it].addSigPair(publicKey.toSignaturePairProtobuf(normalizedSignatures[it]))
         }
-        return transaction!!
+        return transaction
     }
 
     data class HederaTransactionExtras(val memo: String) : TransactionExtras
