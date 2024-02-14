@@ -75,7 +75,12 @@ internal class HederaWalletManager(
                         buildTransaction.transferTransaction,
                         signerResult.data,
                     )
-                    executeTransaction(transactionToSend)
+                    val executeResult = executeTransaction(transactionToSend)
+
+                    if (executeResult is SimpleResult.Success) {
+                        wallet.addOutgoingTransaction(transactionData)
+                    }
+                    executeResult
                 }
                 is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResult.error)
             }
