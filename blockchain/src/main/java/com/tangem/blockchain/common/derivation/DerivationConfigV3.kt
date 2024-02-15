@@ -69,6 +69,7 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.Decimal,
             Blockchain.Playa3ull,
             Blockchain.Shibarium,
+            Blockchain.Hedera,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             }
@@ -164,6 +165,7 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.DecimalTestnet,
             Blockchain.XDCTestnet,
             Blockchain.ShibariumTestnet,
+            Blockchain.HederaTestnet,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
