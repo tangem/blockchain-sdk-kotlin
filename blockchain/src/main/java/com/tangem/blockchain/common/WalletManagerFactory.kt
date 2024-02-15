@@ -9,10 +9,10 @@ import com.tangem.common.card.EllipticCurve
 
 class WalletManagerFactory(
     private val config: BlockchainSdkConfig = BlockchainSdkConfig(),
+    private val accountCreator: AccountCreator,
     blockchainDataStorage: BlockchainDataStorage,
 ) {
 
-    @Suppress("UnusedPrivateMember")
     private val dataStorage by lazy { AdvancedDataStorage(blockchainDataStorage) }
 
     /**
@@ -253,6 +253,10 @@ class WalletManagerFactory(
 
             Blockchain.Algorand, Blockchain.AlgorandTestnet -> {
                 AlgorandWalletManagerAssembly
+            }
+
+            Blockchain.Hedera, Blockchain.HederaTestnet -> {
+                HederaWalletManagerAssembly(dataStorage, accountCreator)
             }
 
             Blockchain.Unknown -> {

@@ -12,6 +12,7 @@ import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
 import com.tangem.blockchain.blockchains.tezos.TezosWalletManager
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.common.datastorage.BlockchainDataStorage
+import com.tangem.blockchain.extensions.Result
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.core.Config
@@ -36,6 +37,12 @@ internal class WalletManagerFactoryTest {
             "CEBE7A2358BE6054E1B6E5D"
         ).hexToBytes()
     private val edDsaPublicKey = "E078212D58B2B9D0EDC9C936830D10081CD38B90C31778C56DFB1171027E294E".hexToBytes()
+
+    private val accountCreator = object : AccountCreator {
+        override suspend fun createAccount(blockchain: Blockchain, walletPublicKey: ByteArray): Result<String> {
+            return Result.Success("account")
+        }
+    }
 
     @Test
     fun createBitcoinWalletManager() {
@@ -134,6 +141,7 @@ internal class WalletManagerFactoryTest {
                 override suspend fun getOrNull(key: String): String? = null
                 override suspend fun store(key: String, value: String) = Unit
             },
+            accountCreator = accountCreator,
         ).createTwinWalletManager(
             walletPublicKey = card.wallets.first().publicKey,
             pairPublicKey = pairPublicKey.hexToBytes(),
@@ -189,6 +197,7 @@ internal class WalletManagerFactoryTest {
                 override suspend fun getOrNull(key: String): String? = null
                 override suspend fun store(key: String, value: String) = Unit
             },
+            accountCreator = accountCreator,
         ).createLegacyWalletManager(
             blockchain,
             publicKey,
