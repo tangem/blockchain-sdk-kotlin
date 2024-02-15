@@ -8,6 +8,7 @@ import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.decimal.DecimalAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
@@ -113,6 +114,8 @@ enum class Blockchain(
     ShibariumTestnet("shibarium/test", "BONE", "Shibarium Testnet"),
     Algorand("algorand", "ALGO", "Algorand"),
     AlgorandTestnet("algorand/test", "ALGO", "Algorand Testnet"),
+    Hedera("hedera", "HBAR", "Hedera"),
+    HederaTestnet("hedera/test", "HBAR", "Hedera Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -142,6 +145,7 @@ enum class Blockchain(
         Kaspa,
         Ravencoin, RavencoinTestnet,
         Aptos, AptosTestnet,
+        Hedera, HederaTestnet,
         -> 8
 
         Solana, SolanaTestnet,
@@ -185,11 +189,12 @@ enum class Blockchain(
         pairPublicKey: ByteArray? = null,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): Set<Address> {
+        val addressService = getAddressService()
         return if (pairPublicKey != null) {
-            (getAddressService() as? MultisigAddressProvider)
+            (addressService as? MultisigAddressProvider)
                 ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()
         } else {
-            getAddressService().makeAddresses(walletPublicKey, curve)
+            addressService.makeAddresses(walletPublicKey, curve)
         }
     }
 
@@ -205,6 +210,7 @@ enum class Blockchain(
             Dash,
             Ravencoin, RavencoinTestnet,
             -> BitcoinAddressService(this)
+
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
             Arbitrum, ArbitrumTestnet,
             Ethereum, EthereumTestnet,
@@ -246,9 +252,11 @@ enum class Blockchain(
             Aptos, AptosTestnet,
             Algorand, AlgorandTestnet,
             -> TrustWalletAddressService(blockchain = this)
+
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
             Chia, ChiaTestnet -> ChiaAddressService(this)
+            Hedera, HederaTestnet -> HederaAddressService(this.isTestnet())
             Unknown -> error("unsupported blockchain")
         }
     }
@@ -317,6 +325,7 @@ enum class Blockchain(
             Aptos, AptosTestnet -> AptosTestnet
             Shibarium, ShibariumTestnet -> ShibariumTestnet
             Algorand, AlgorandTestnet -> AlgorandTestnet
+            Hedera, HederaTestnet -> HederaTestnet
             else -> null
         }
     }
@@ -325,6 +334,7 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
+            Hedera, HederaTestnet,
             -> listOf(
                 EllipticCurve.Secp256k1,
                 EllipticCurve.Ed25519,
@@ -469,6 +479,7 @@ enum class Blockchain(
         TON, TONTestnet,
         Near, NearTestnet,
         Aptos, AptosTestnet,
+        Hedera, HederaTestnet,
         -> true
 
         else -> false

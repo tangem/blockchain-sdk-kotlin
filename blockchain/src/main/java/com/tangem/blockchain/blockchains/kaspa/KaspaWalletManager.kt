@@ -33,6 +33,7 @@ class KaspaWalletManager(
     private fun updateWallet(response: KaspaInfoResponse) {
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
         if (response.balance != wallet.amounts[AmountType.Coin]?.value) {
+            // assume outgoing transaction has been finalized if balance has changed
             wallet.recentTransactions.clear()
         }
         wallet.changeAmountValue(AmountType.Coin, response.balance)
