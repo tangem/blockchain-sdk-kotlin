@@ -36,6 +36,7 @@ class ChiaWalletManager(
         Log.d(this::class.java.simpleName, "Balance is $balance")
 
         if (balance != wallet.amounts[AmountType.Coin]?.value) {
+            // assume outgoing transaction has been finalized if balance has changed
             wallet.recentTransactions.clear()
         }
         wallet.changeAmountValue(AmountType.Coin, balance)
