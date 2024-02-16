@@ -4,7 +4,7 @@ import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 
 internal class Playa3ullExternalLinkProvider : ExternalLinkProvider {
 
-    override val explorerBaseUrl: String = "https://explorer.playa3ull.games/blockchain/playa3ull/"
+    override val explorerBaseUrl: String = "https://explorer.playa3ull.games/"
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
         return explorerBaseUrl + "address/$walletAddress"
