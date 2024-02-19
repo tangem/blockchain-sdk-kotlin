@@ -13,8 +13,6 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.common.CompletionResult
-import java.math.BigDecimal
-import java.util.EnumSet
 
 internal class AlgorandWalletManager(
     wallet: Wallet,
@@ -82,18 +80,6 @@ internal class AlgorandWalletManager(
             }
             is CompletionResult.Failure -> SimpleResult.Failure(signatureResult.error.toBlockchainSdkError())
         }
-    }
-
-    override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
-        val errors = super.validateTransaction(amount, fee)
-        val totalSend = fee?.value?.add(amount.value) ?: amount.value ?: BigDecimal.ZERO
-        val balance = wallet.getCoinAmount().value ?: BigDecimal.ZERO
-        val reserve = wallet.amounts[AmountType.Reserve]?.value ?: BigDecimal.ZERO
-        if (balance - totalSend < reserve) {
-            errors.add(TransactionError.AmountLowerExistentialDeposit)
-        }
-
-        return errors
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
