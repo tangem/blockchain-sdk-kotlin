@@ -168,6 +168,9 @@ class WalletManagerFactory(
             Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet,
             Blockchain.Playa3ull,
             Blockchain.Shibarium, Blockchain.ShibariumTestnet,
+            Blockchain.Aurora, Blockchain.AuroraTestnet,
+            Blockchain.Areon, Blockchain.AreonTestnet,
+            Blockchain.PulseChain, Blockchain.PulseChainTestnet,
             -> {
                 EthereumLikeWalletManagerAssembly
             }
