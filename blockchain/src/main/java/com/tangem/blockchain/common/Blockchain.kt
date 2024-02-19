@@ -334,7 +334,6 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
-            Hedera, HederaTestnet,
             -> listOf(
                 EllipticCurve.Secp256k1,
                 EllipticCurve.Ed25519,
@@ -385,6 +384,7 @@ enum class Blockchain(
             Near, NearTestnet,
             Aptos, AptosTestnet,
             Algorand, AlgorandTestnet,
+            Hedera, HederaTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
 
             Cardano -> listOf(EllipticCurve.Ed25519) // todo until cardano support in wallet 2
