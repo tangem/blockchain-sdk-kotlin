@@ -16,7 +16,7 @@ internal interface AlgorandApi {
     suspend fun commitTransaction(
         @Body body: RequestBody,
         @Header("Content-Type") contentType: String = X_BINARY_HEADER,
-    ): AlgorandTransactionResultResponse
+    ): Response<AlgorandTransactionResultResponse>
 
     @GET("v2/transactions/pending/{txid}")
     suspend fun getPendingTransaction(
