@@ -43,6 +43,7 @@ internal class AptosTransactionBuilderTest {
                 fee = Fee.Aptos(
                     amount = APT_AMOUNT.copy(value = BigDecimal(9).movePointLeft(8)),
                     gasUnitPrice = 100,
+                    gasLimit = 9,
                 ),
                 sourceAddress = SOURCE_ADDRESS,
                 destinationAddress = DESTINATION_ADDRESS,
@@ -88,6 +89,7 @@ internal class AptosTransactionBuilderTest {
                 fee = Fee.Aptos(
                     amount = APT_AMOUNT.copy(value = BigDecimal(9).movePointLeft(8)),
                     gasUnitPrice = 100,
+                    gasLimit = 9,
                 ),
                 sourceAddress = SOURCE_ADDRESS,
                 destinationAddress = DESTINATION_ADDRESS,
