@@ -28,6 +28,9 @@ internal data class AlgorandPendingTransactionResponse(
     @Json(name = "pool-error") val poolError: String,
 )
 
+@JsonClass(generateAdapter = true)
+internal data class AlgorandErrorResponse(@Json(name = "message") val message: String?)
+
 // region TransactionHistory
 @JsonClass(generateAdapter = true)
 internal data class AlgorandTransactionHistoryResponse(
