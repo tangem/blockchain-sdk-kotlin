@@ -176,6 +176,16 @@ sealed class BlockchainSdkError(
         class Api(code: Int, message: String) : Ethereum(subCode = code, customMessage = message)
     }
 
+    sealed class Algorand(
+        subCode: Int,
+        customMessage: String? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_ALGORAND + subCode,
+        customMessage = customMessage ?: "${ERROR_CODE_ALGORAND + subCode}",
+    ) {
+        class Send(message: String) : Algorand(subCode = 0, customMessage = message)
+    }
+
     companion object {
         const val ERROR_CODE_SOLANA = 1000
         const val ERROR_CODE_POLKADOT = 2000
@@ -186,6 +196,7 @@ sealed class BlockchainSdkError(
         const val ERROR_CODE_CHIA = 7000
         const val ERROR_CODE_NEAR = 8000
         const val ERROR_CODE_ETHEREUM = 9000
+        const val ERROR_CODE_ALGORAND = 10000
     }
 }
 
