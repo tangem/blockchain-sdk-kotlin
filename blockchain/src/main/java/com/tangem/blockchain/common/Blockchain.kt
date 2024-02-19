@@ -64,7 +64,7 @@ enum class Blockchain(
     Near("NEAR", "NEAR", "NEAR Protocol"),
     NearTestnet("NEAR/test", "NEAR", "NEAR Protocol Testnet"),
     Polkadot("Polkadot", "DOT", "Polkadot"),
-    PolkadotTestnet("Polkadot", "WND", "Polkadot Westend Testnet"),
+    PolkadotTestnet("Polkadot", "WND", "Polkadot Western Testnet"),
     Kava("KAVA", "KAVA", "Kava EVM"),
     KavaTestnet("KAVA/test", "KAVA", "Kava EVM Testnet"),
     Kusama("Kusama", "KSM", "Kusama"),
@@ -117,6 +117,12 @@ enum class Blockchain(
     AlgorandTestnet("algorand/test", "ALGO", "Algorand Testnet"),
     Hedera("hedera", "HBAR", "Hedera"),
     HederaTestnet("hedera/test", "HBAR", "Hedera Testnet"),
+    Aurora("aurora", "ETH", "Aurora"),
+    AuroraTestnet("aurora/test", "ETH", "Aurora Testnet"),
+    Areon("areon", "AREA", "Areon Network"),
+    AreonTestnet("areon/test", "TAREA", "Areon Network Testnet"),
+    PulseChain("pls", "PLS", "PulseChain"),
+    PulseChainTestnet("pls/test", "tPLS", "PulseChain Testnet v4"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -179,6 +185,9 @@ enum class Blockchain(
         VeChain, VeChainTestnet,
         Playa3ull,
         Shibarium, ShibariumTestnet,
+        Aurora, AuroraTestnet,
+        Areon, AreonTestnet,
+        PulseChain, PulseChainTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -231,6 +240,9 @@ enum class Blockchain(
             VeChain, VeChainTestnet,
             Playa3ull,
             Shibarium, ShibariumTestnet,
+            Aurora, AuroraTestnet,
+            Areon, AreonTestnet,
+            PulseChain, PulseChainTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -327,6 +339,9 @@ enum class Blockchain(
             Shibarium, ShibariumTestnet -> ShibariumTestnet
             Algorand, AlgorandTestnet -> AlgorandTestnet
             Hedera, HederaTestnet -> HederaTestnet
+            Aurora, AuroraTestnet -> AuroraTestnet
+            Areon, AreonTestnet -> AreonTestnet
+            PulseChain, PulseChainTestnet -> PulseChainTestnet
             else -> null
         }
     }
@@ -376,6 +391,9 @@ enum class Blockchain(
             VeChain, VeChainTestnet,
             Playa3ull,
             Shibarium, ShibariumTestnet,
+            Aurora, AuroraTestnet,
+            Areon, AreonTestnet,
+            PulseChain, PulseChainTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -432,6 +450,12 @@ enum class Blockchain(
             Playa3ull -> Chain.Playa3ull.id
             Shibarium -> Chain.Shibarium.id
             ShibariumTestnet -> Chain.ShibariumTestnet.id
+            Aurora -> Chain.Aurora.id
+            AuroraTestnet -> Chain.AuroraTestnet.id
+            Areon -> Chain.Areon.id
+            AreonTestnet -> Chain.AreonTestnet.id
+            PulseChain -> Chain.PulseChain.id
+            PulseChainTestnet -> Chain.PulseChainTestnet.id
             else -> null
         }
     }
