@@ -177,4 +177,10 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     Playa3ull(id = 3011, blockchain = Blockchain.Playa3ull),
     Shibarium(id = 109, blockchain = Blockchain.Shibarium),
     ShibariumTestnet(id = 157, blockchain = Blockchain.ShibariumTestnet),
+    Aurora(id = 1313161554, blockchain = Blockchain.Aurora),
+    AuroraTestnet(id = 1313161555, blockchain = Blockchain.AuroraTestnet),
+    Areon(id = 463, blockchain = Blockchain.Areon),
+    AreonTestnet(id = 462, blockchain = Blockchain.AreonTestnet),
+    PulseChain(id = 369, blockchain = Blockchain.PulseChain),
+    PulseChainTestnet(id = 943, blockchain = Blockchain.PulseChainTestnet),
 }
