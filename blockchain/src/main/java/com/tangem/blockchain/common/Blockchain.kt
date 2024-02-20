@@ -82,7 +82,7 @@ enum class Blockchain(
     Dash("DASH", "DASH", "Dash"),
     Optimism("OPTIMISM", "ETH", "Optimistic Ethereum"),
     OptimismTestnet("OPTIMISM", "ETH", "Optimistic Ethereum Testnet"),
-    EthereumFair("ETH-Fair", "ETF", "EthereumFair"),
+    Dischain("dischain", "DIS", "DisChain (ETHF)"),
     EthereumPow("ETH-Pow", "ETHW", "EthereumPoW"),
     EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW Testnet"),
     Kaspa("KAS", "KAS", "Kaspa"),
@@ -168,7 +168,7 @@ enum class Blockchain(
         Fantom, FantomTestnet,
         Gnosis,
         Optimism, OptimismTestnet,
-        EthereumFair, EthereumPow, EthereumPowTestnet,
+        Dischain, EthereumPow, EthereumPowTestnet,
         Kava, KavaTestnet,
         Cronos,
         Telos, TelosTestnet,
@@ -221,7 +221,7 @@ enum class Blockchain(
             Fantom, FantomTestnet,
             Gnosis,
             Optimism, OptimismTestnet,
-            EthereumFair,
+            Dischain,
             EthereumPow, EthereumPowTestnet,
             Kava, KavaTestnet,
             Cronos,
@@ -363,7 +363,7 @@ enum class Blockchain(
             Gnosis,
             Dash,
             Optimism, OptimismTestnet,
-            EthereumFair, EthereumPow, EthereumPowTestnet,
+            Dischain, EthereumPow, EthereumPowTestnet,
             Kaspa,
             Ravencoin, RavencoinTestnet,
             Cosmos, CosmosTestnet,
@@ -414,7 +414,7 @@ enum class Blockchain(
             Gnosis -> Chain.Gnosis.id
             Optimism -> Chain.Optimism.id
             OptimismTestnet -> Chain.OptimismTestnet.id
-            EthereumFair -> Chain.EthereumFair.id
+            Dischain -> Chain.EthereumFair.id
             EthereumPow -> Chain.EthereumPow.id
             EthereumPowTestnet -> Chain.EthereumPowTestnet.id
             Kava -> Chain.Kava.id
