@@ -58,7 +58,7 @@ object DerivationConfigV1 : DerivationConfig() {
 
             Blockchain.Ethereum,
             Blockchain.EthereumPow,
-            Blockchain.EthereumFair,
+            Blockchain.Dischain,
             Blockchain.OctaSpace,
             Blockchain.Decimal,
             Blockchain.Playa3ull,
