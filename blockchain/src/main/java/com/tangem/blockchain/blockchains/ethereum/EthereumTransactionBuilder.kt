@@ -160,7 +160,7 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     FantomTestnet(id = 4002, blockchain = Blockchain.FantomTestnet),
     Optimism(id = 10, blockchain = Blockchain.Optimism),
     OptimismTestnet(id = 420, blockchain = Blockchain.OptimismTestnet),
-    EthereumFair(id = 513100, blockchain = Blockchain.EthereumFair),
+    EthereumFair(id = 513100, blockchain = Blockchain.Dischain),
     EthereumPow(id = 10001, blockchain = Blockchain.EthereumPow),
     EthereumPowTestnet(id = 10002, blockchain = Blockchain.EthereumPowTestnet),
     Kava(id = 2222, blockchain = Blockchain.Kava),
