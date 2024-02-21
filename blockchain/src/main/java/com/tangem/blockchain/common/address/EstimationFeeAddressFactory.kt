@@ -76,7 +76,7 @@ class EstimationFeeAddressFactory(
             // EVM-like
             Blockchain.Ethereum, Blockchain.EthereumTestnet,
             Blockchain.EthereumPow, Blockchain.EthereumPowTestnet,
-            Blockchain.EthereumFair,
+            Blockchain.Dischain,
             Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet,
             Blockchain.RSK,
             Blockchain.BSC, Blockchain.BSCTestnet,
