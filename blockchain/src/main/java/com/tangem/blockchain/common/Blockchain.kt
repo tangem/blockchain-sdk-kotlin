@@ -26,6 +26,7 @@ import com.tangem.blockchain.common.address.TrustWalletAddressService
 import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProviderFactory
+import com.tangem.blockchain.externallinkprovider.TxExploreState
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 
@@ -281,8 +282,8 @@ enum class Blockchain(
         return externalLinkProvider.explorerUrl(walletAddress = address, contractAddress = tokenContractAddress)
     }
 
-    fun getExploreTxUrl(transactionHash: String): String {
-        return externalLinkProvider.explorerTransactionUrl(transactionHash)
+    fun getExploreTxUrl(transactionHash: String): TxExploreState {
+        return externalLinkProvider.getExplorerTxUrl(transactionHash)
     }
 
     fun getTestnetTopUpUrl(): String? {

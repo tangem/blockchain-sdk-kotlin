@@ -1,6 +1,7 @@
 package com.tangem.blockchain.externallinkprovider.providers
 
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
+import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class AptosExternalLinkProvider(private val isTestnet: Boolean) : ExternalLinkProvider {
 
@@ -12,8 +13,8 @@ internal class AptosExternalLinkProvider(private val isTestnet: Boolean) : Exter
         return createExplorerUrl(path = "account/$walletAddress")
     }
 
-    override fun explorerTransactionUrl(transactionHash: String): String {
-        return createExplorerUrl(path = "txn/$transactionHash")
+    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+        return TxExploreState.Url(createExplorerUrl(path = "txn/$transactionHash"))
     }
 
     private fun createExplorerUrl(path: String): String {
