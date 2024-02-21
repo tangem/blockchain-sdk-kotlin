@@ -13,12 +13,13 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.common.CompletionResult
+import java.math.BigDecimal
 
 internal class AlgorandWalletManager(
     wallet: Wallet,
     transactionHistoryProvider: TransactionHistoryProvider,
     private val networkService: AlgorandNetworkService,
-) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider) {
+) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider), ReserveAmountProvider {
 
     override val currentHost: String get() = networkService.host
     private val transactionBuilder = AlgorandTransactionBuilder(
@@ -35,7 +36,7 @@ internal class AlgorandWalletManager(
     }
 
     private fun updateWallet(accountModel: AlgorandAccountModel) {
-        wallet.setCoinValue(accountModel.coinValue)
+        wallet.setCoinValue(accountModel.availableCoinBalance)
         wallet.setReserveValue(accountModel.reserveValue)
         accountModel.transactionsInfo
             .asSequence()
@@ -47,7 +48,7 @@ internal class AlgorandWalletManager(
                 }
             }
 
-        if (accountModel.coinValue < accountModel.existentialDeposit) {
+        if (accountModel.reserveValue > accountModel.balanceIncludingReserve) {
             updateError(BlockchainSdkError.AccountNotFound(amountToCreateAccount = accountModel.reserveValue))
         }
     }
@@ -91,5 +92,16 @@ internal class AlgorandWalletManager(
                 Fee.Common(amount = feeAmount),
             ),
         )
+    }
+
+    override fun getReserveAmount(): BigDecimal {
+        return wallet.amounts[AmountType.Reserve]?.value ?: BigDecimal.ZERO
+    }
+
+    override suspend fun isAccountFunded(destinationAddress: String): Boolean {
+        return when(val result = networkService.getAccountInfo(destinationAddress, emptySet())) {
+            is Result.Failure -> false
+            is Result.Success -> result.data.reserveValue < result.data.balanceIncludingReserve
+        }
     }
 }
