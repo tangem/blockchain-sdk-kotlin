@@ -59,7 +59,7 @@ object DerivationConfigV2 : DerivationConfig() {
 
             Blockchain.Ethereum,
             Blockchain.EthereumPow,
-            Blockchain.EthereumFair,
+            Blockchain.Dischain,
             Blockchain.EthereumClassic,
             Blockchain.RSK,
             Blockchain.BSC,
