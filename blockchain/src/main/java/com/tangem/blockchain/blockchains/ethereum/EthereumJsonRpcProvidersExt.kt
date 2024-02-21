@@ -130,8 +130,8 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
         Blockchain.OptimismTestnet -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://goerli.optimism.io/"),
         )
-        Blockchain.EthereumFair -> listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://rpc.etherfair.org/"),
+        Blockchain.Dischain -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.dischain.xyz/"),
         )
         Blockchain.EthereumPow -> listOfNotNull(
             getNowNodesProvider(baseUrl = "https://ethw.nownodes.io/", config = config),
