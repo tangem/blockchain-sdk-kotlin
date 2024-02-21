@@ -151,7 +151,7 @@ class WalletManagerFactory(
             Blockchain.Polygon,
             Blockchain.PolygonTestnet,
             Blockchain.Gnosis,
-            Blockchain.EthereumFair,
+            Blockchain.Dischain,
             Blockchain.EthereumPow,
             Blockchain.EthereumPowTestnet,
             Blockchain.Kava, Blockchain.KavaTestnet,
