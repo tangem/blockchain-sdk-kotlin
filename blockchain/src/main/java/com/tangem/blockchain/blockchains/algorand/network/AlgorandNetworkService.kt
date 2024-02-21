@@ -118,13 +118,13 @@ internal class AlgorandNetworkService(
 
     private fun calculateCoinValueWithReserveDeposit(accountResponse: AlgorandAccountResponse): AlgorandBalance {
         val changeBalanceValue = max(accountResponse.amount - accountResponse.minBalance, 0)
-        val coinBalance = changeBalanceValue.toBigDecimal().correctAlgorandDecimals()
+        val availableCoinBalance = changeBalanceValue.toBigDecimal().correctAlgorandDecimals()
 
         val reserveCoinBalance = accountResponse.minBalance.toBigDecimal().correctAlgorandDecimals()
         return AlgorandBalance(
-            coinBalance = coinBalance,
+            availableCoinBalance = availableCoinBalance,
             reserveBalance = reserveCoinBalance,
-            existentialDeposit = reserveCoinBalance,
+            balanceIncludingReserve = accountResponse.amount.toBigDecimal().correctAlgorandDecimals(),
         )
     }
 
@@ -136,9 +136,9 @@ internal class AlgorandNetworkService(
         val txs = txsResult.mapNotNull { it.successOr { null } }
 
         return AlgorandAccountModel(
-            coinValue = balance.coinBalance,
+            availableCoinBalance = balance.availableCoinBalance,
             reserveValue = balance.reserveBalance,
-            existentialDeposit = balance.existentialDeposit,
+            balanceIncludingReserve = balance.balanceIncludingReserve,
             transactionsInfo = txs,
         )
     }
@@ -146,8 +146,8 @@ internal class AlgorandNetworkService(
     private fun BigDecimal.correctAlgorandDecimals() = this.movePointLeft(blockchain.decimals())
 
     private data class AlgorandBalance(
-        val coinBalance: BigDecimal,
+        val availableCoinBalance: BigDecimal,
         val reserveBalance: BigDecimal,
-        val existentialDeposit: BigDecimal,
+        val balanceIncludingReserve: BigDecimal,
     )
 }
