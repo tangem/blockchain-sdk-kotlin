@@ -1,6 +1,7 @@
 package com.tangem.blockchain.externallinkprovider.providers
 
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
+import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class DogecoinExternalLinkProvider : ExternalLinkProvider {
 
@@ -10,7 +11,7 @@ internal class DogecoinExternalLinkProvider : ExternalLinkProvider {
         return explorerBaseUrl + "address/$walletAddress"
     }
 
-    override fun explorerTransactionUrl(transactionHash: String): String {
-        return explorerBaseUrl + "transaction/$transactionHash"
+    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+        return TxExploreState.Url(explorerBaseUrl + "transaction/$transactionHash")
     }
 }
