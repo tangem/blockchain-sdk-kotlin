@@ -72,7 +72,6 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://rpc.ftm.tools/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpcapi.fantom.network/"),
             EthereumJsonRpcProvider(baseUrl = "https://fantom-mainnet.public.blastapi.io/"),
-            EthereumJsonRpcProvider(baseUrl = "https://fantom-pokt.nodies.app/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/", postfixUrl = "fantom"),
         )
         Blockchain.FantomTestnet -> listOf(
