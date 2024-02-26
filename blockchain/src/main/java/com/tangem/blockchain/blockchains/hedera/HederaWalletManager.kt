@@ -12,11 +12,9 @@ import com.tangem.blockchain.common.datastorage.BlockchainSavedData
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
-import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.extensions.map
-import com.tangem.blockchain.extensions.toSimpleResult
+import com.tangem.blockchain.extensions.*
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.guard
 import com.tangem.common.extensions.toCompressedPublicKey
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -91,7 +89,9 @@ internal class HederaWalletManager(
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         return when (val usdExchangeRateResult = networkProvider.getUsdExchangeRate()) {
             is Result.Success -> {
-                val fee = (HBAR_TRANSFER_USD_COST * MAX_FEE_MULTIPLIER * usdExchangeRateResult.data)
+                val isAccountExists = isAccountExist(destination).successOr { false }
+                val feeBase = if (isAccountExists) HBAR_TRANSFER_USD_COST else HBAR_CREATE_ACCOUNT_USD_COST
+                val fee = (feeBase * MAX_FEE_MULTIPLIER * usdExchangeRateResult.data)
                     .setScale(blockchain.decimals(), RoundingMode.UP)
                 Result.Success(TransactionFee.Single(Fee.Common(Amount(fee, blockchain))))
             }
@@ -158,6 +158,26 @@ internal class HederaWalletManager(
         }
     }
 
+    /** Used to query the status of the `receiving` (`destination`) account. */
+    private suspend fun isAccountExist(destinationAddress: String): Result<Boolean> {
+        val destinationAccountId = try {
+            AccountId.fromString(destinationAddress)
+        } catch (e: Exception) {
+            return Result.Success(false)
+        }
+        // Accounts with an account ID and/or EVM address are considered existing accounts
+        val accountHasValidAccountIdOrEVMAddress =
+            destinationAccountId.num.toInt() != 0 || destinationAccountId.evmAddress != null
+        if (accountHasValidAccountIdOrEVMAddress) {
+            return Result.Success(true)
+        }
+        val alias = destinationAccountId.aliasKey.guard { return Result.Success(false) }
+        return networkProvider.getAccountId(alias.toBytesRaw()).fold(
+            success = { return Result.Success(true) },
+            failure = { return Result.Success(false) },
+        )
+    }
+
     private suspend fun requestCreateAccount(): Result<String> {
         return accountCreator.createAccount(blockchain = blockchain, walletPublicKey = wallet.publicKey.blockchainKey)
     }
@@ -165,6 +185,7 @@ internal class HederaWalletManager(
     companion object {
         // https://docs.hedera.com/hedera/networks/mainnet/fees
         private val HBAR_TRANSFER_USD_COST = BigDecimal("0.0001")
+        private val HBAR_CREATE_ACCOUNT_USD_COST = BigDecimal("0.05")
         // Hedera fees are low, allow 10% safety margin to allow usage of not precise fee estimate
         private val MAX_FEE_MULTIPLIER = BigDecimal("1.1")
     }
