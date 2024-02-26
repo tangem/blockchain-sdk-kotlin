@@ -51,6 +51,13 @@ internal inline fun <A, B> Result<A>.map(block: (A) -> B): Result<B> {
     }
 }
 
+internal inline fun <A, B> Result<A>.fold(success: (A) -> Result<B>, failure: () -> Result<B>): Result<B> {
+    return when (this) {
+        is Result.Success -> success(this.data)
+        is Result.Failure -> failure()
+    }
+}
+
 internal fun Result.Failure.toSimpleFailure(): SimpleResult.Failure {
     return SimpleResult.Failure(error)
 }
