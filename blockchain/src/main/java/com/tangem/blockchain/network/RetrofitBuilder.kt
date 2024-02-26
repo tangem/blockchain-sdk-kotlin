@@ -4,8 +4,10 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResourceBodyAdapter
+import com.tangem.blockchain.common.logging.Logger
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.math.BigDecimal
@@ -25,7 +27,12 @@ object BlockchainSdkRetrofitBuilder {
 
     internal fun build(internalInterceptors: List<Interceptor> = emptyList()): OkHttpClient {
         val builder = OkHttpClient.Builder()
-        (interceptors + internalInterceptors).forEach { builder.addInterceptor(it) }
+
+        val loggingInterceptor = listOf(
+            HttpLoggingInterceptor(Logger::logNetwork).setLevel(HttpLoggingInterceptor.Level.BASIC),
+        )
+
+        (interceptors + loggingInterceptor + internalInterceptors).forEach { builder.addInterceptor(it) }
         timeoutConfig?.let {
             builder.callTimeout(it.call.time, it.call.unit)
             builder.connectTimeout(it.connect.time, it.connect.unit)
@@ -44,14 +51,14 @@ data class TimeoutConfig(
     val write: Timeout,
 ) {
     companion object {
-        @Suppress("MagicNumber")
+
         fun default(): TimeoutConfig = TimeoutConfig(
-            call = Timeout(10),
-            connect = Timeout(20),
+            call = Timeout(time = 10),
+            connect = Timeout(time = 20),
             // increased timeouts to receive response for user with a lot inputs
             // part of task https://tangem.atlassian.net/browse/AND-3866
-            read = Timeout(90),
-            write = Timeout(90),
+            read = Timeout(time = 90),
+            write = Timeout(time = 90),
         )
     }
 }
@@ -77,9 +84,7 @@ const val API_BLOCKCYPHER = "https://api.blockcypher.com/"
 const val API_BLOCKCKAIR_TANGEM = "https://api.tangem-tech.com/"
 const val API_BINANCE = "https://dex.binance.org/"
 const val API_BINANCE_TESTNET = "https://testnet-dex.binance.org/"
-const val API_STELLAR = "https://horizon.stellar.org/"
 const val API_STELLAR_RESERVE = "https://horizon.sui.li/"
-const val API_STELLAR_TESTNET = "https://horizon-testnet.stellar.org/"
 const val API_ADALITE = "https://explorer2.adalite.io/"
 const val API_XRP_LEDGER_FOUNDATION = "https://xrplcluster.com/"
 const val API_BLOCKCHAIR = "https://api.blockchair.com/"
