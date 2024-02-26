@@ -5,15 +5,22 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.impl.*
 import com.tangem.blockchain.common.datastorage.BlockchainDataStorage
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
+import com.tangem.blockchain.common.logging.BlockchainSDKLogger
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.common.card.EllipticCurve
 
 class WalletManagerFactory(
     private val config: BlockchainSdkConfig = BlockchainSdkConfig(),
     private val accountCreator: AccountCreator,
     blockchainDataStorage: BlockchainDataStorage,
+    loggers: List<BlockchainSDKLogger> = emptyList(),
 ) {
 
     private val dataStorage by lazy { AdvancedDataStorage(blockchainDataStorage) }
+
+    init {
+        Logger.addLoggers(loggers)
+    }
 
     /**
      * Base wallet manager initializer
