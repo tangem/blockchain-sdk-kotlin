@@ -36,7 +36,7 @@ enum class Blockchain(
     val fullName: String,
 ) {
     Unknown("", "", ""),
-    Arbitrum("ARBITRUM-ONE", "ETH", "Arbitrum"),
+    Arbitrum("ARBITRUM-ONE", "ETH", "Arbitrum One"),
     ArbitrumTestnet("ARBITRUM/test", "ETH", "Arbitrum Testnet"),
     Avalanche("AVALANCHE", "AVAX", "Avalanche C-Chain"),
     AvalancheTestnet("AVALANCHE/test", "AVAX", "Avalanche C-Chain Testnet"),
