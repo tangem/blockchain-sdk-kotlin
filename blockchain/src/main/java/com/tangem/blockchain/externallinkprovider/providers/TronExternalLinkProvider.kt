@@ -1,6 +1,7 @@
 package com.tangem.blockchain.externallinkprovider.providers
 
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
+import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class TronExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
@@ -12,7 +13,7 @@ internal class TronExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvid
         return explorerBaseUrl + "address/$walletAddress"
     }
 
-    override fun explorerTransactionUrl(transactionHash: String): String {
-        return explorerBaseUrl + "transaction/$transactionHash"
+    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+        return TxExploreState.Url(explorerBaseUrl + "transaction/$transactionHash")
     }
 }
