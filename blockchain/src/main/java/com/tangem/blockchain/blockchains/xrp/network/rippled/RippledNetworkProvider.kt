@@ -5,8 +5,8 @@ import com.tangem.blockchain.blockchains.xrp.network.XrpInfoResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.common.toBlockchainSdkError
-import com.tangem.blockchain.extensions.AddHeaderInterceptor
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
@@ -15,11 +15,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
 class RippledNetworkProvider(
-    baseUrl: String,
+    override val baseUrl: String,
     apiKeyHeader: Pair<String, String>? = null,
 ) : XrpNetworkProvider {
-
-    override val baseUrl: String = baseUrl
 
     private val api: RippledApi by lazy {
         createRetrofitInstance(
