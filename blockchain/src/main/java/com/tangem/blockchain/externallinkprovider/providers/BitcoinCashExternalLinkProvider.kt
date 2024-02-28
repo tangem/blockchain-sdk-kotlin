@@ -1,6 +1,7 @@
 package com.tangem.blockchain.externallinkprovider.providers
 
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
+import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class BitcoinCashExternalLinkProvider(private val isTestnet: Boolean) : ExternalLinkProvider {
 
@@ -13,11 +14,13 @@ internal class BitcoinCashExternalLinkProvider(private val isTestnet: Boolean) :
         return explorerBaseUrl + "address/$walletAddress"
     }
 
-    override fun explorerTransactionUrl(transactionHash: String): String {
-        return if (isTestnet) {
-            explorerBaseUrl + "tx/$transactionHash"
-        } else {
-            explorerBaseUrl + "transaction/$transactionHash"
-        }
+    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+        return TxExploreState.Url(
+            if (isTestnet) {
+                explorerBaseUrl + "tx/$transactionHash"
+            } else {
+                explorerBaseUrl + "transaction/$transactionHash"
+            },
+        )
     }
 }

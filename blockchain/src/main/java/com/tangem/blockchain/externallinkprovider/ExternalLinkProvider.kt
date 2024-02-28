@@ -7,5 +7,5 @@ interface ExternalLinkProvider {
 
     fun explorerUrl(walletAddress: String, contractAddress: String?): String
 
-    fun explorerTransactionUrl(transactionHash: String): String
+    fun getExplorerTxUrl(transactionHash: String): TxExploreState
 }
