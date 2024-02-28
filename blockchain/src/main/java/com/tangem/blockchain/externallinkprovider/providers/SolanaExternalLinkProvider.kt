@@ -1,6 +1,7 @@
 package com.tangem.blockchain.externallinkprovider.providers
 
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
+import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class SolanaExternalLinkProvider(private val isTestnet: Boolean) : ExternalLinkProvider {
 
@@ -20,11 +21,12 @@ internal class SolanaExternalLinkProvider(private val isTestnet: Boolean) : Exte
         }
     }
 
-    override fun explorerTransactionUrl(transactionHash: String): String {
-        return buildString {
+    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+        val url = buildString {
             append(baseUrl)
             append("tx/$transactionHash")
             if (isTestnet) append(testNetParam)
         }
+        return TxExploreState.Url(url)
     }
 }
