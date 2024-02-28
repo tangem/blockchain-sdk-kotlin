@@ -1,6 +1,7 @@
 package com.tangem.blockchain.externallinkprovider.providers
 
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
+import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class XDCExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
@@ -16,7 +17,7 @@ internal class XDCExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvide
         return explorerBaseUrl + "address/$walletAddress"
     }
 
-    override fun explorerTransactionUrl(transactionHash: String): String {
-        return explorerBaseUrl + "txs/$transactionHash"
+    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+        return TxExploreState.Url(explorerBaseUrl + "txs/$transactionHash")
     }
 }
