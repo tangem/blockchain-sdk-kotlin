@@ -5,6 +5,7 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.impl.*
 import com.tangem.blockchain.common.datastorage.BlockchainDataStorage
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.logging.BlockchainSDKLogger
 import com.tangem.blockchain.common.logging.Logger
 import com.tangem.common.card.EllipticCurve
@@ -19,6 +20,7 @@ class WalletManagerFactory(
     private val dataStorage by lazy { AdvancedDataStorage(blockchainDataStorage) }
 
     init {
+        DepsContainer.onInit(config)
         Logger.addLoggers(loggers)
     }
 
