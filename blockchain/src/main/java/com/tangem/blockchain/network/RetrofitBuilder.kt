@@ -4,10 +4,9 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResourceBodyAdapter
-import com.tangem.blockchain.common.logging.Logger
+import com.tangem.blockchain.common.network.interceptors.HttpLoggingInterceptor
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.math.BigDecimal
@@ -28,11 +27,9 @@ object BlockchainSdkRetrofitBuilder {
     internal fun build(internalInterceptors: List<Interceptor> = emptyList()): OkHttpClient {
         val builder = OkHttpClient.Builder()
 
-        val loggingInterceptor = listOf(
-            HttpLoggingInterceptor(Logger::logNetwork).setLevel(HttpLoggingInterceptor.Level.BASIC),
-        )
+        val loggingInterceptors = listOf(HttpLoggingInterceptor)
 
-        (interceptors + loggingInterceptor + internalInterceptors).forEach { builder.addInterceptor(it) }
+        (interceptors + loggingInterceptors + internalInterceptors).forEach { builder.addInterceptor(it) }
         timeoutConfig?.let {
             builder.callTimeout(it.call.time, it.call.unit)
             builder.connectTimeout(it.connect.time, it.connect.unit)
