@@ -3,8 +3,8 @@ package com.tangem.blockchain.blockchains.algorand.models
 import java.math.BigDecimal
 
 internal data class AlgorandAccountModel(
-    val coinValue: BigDecimal,
+    val availableCoinBalance: BigDecimal,
     val reserveValue: BigDecimal,
-    val existentialDeposit: BigDecimal,
+    val balanceIncludingReserve: BigDecimal,
     val transactionsInfo: List<AlgorandTransactionInfo>,
 )
