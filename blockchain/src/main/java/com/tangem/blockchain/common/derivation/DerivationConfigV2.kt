@@ -139,7 +139,7 @@ object DerivationConfigV2 : DerivationConfig() {
                 mapOf(AddressType.Default to DerivationPath("m/44'/283'/0'/0'/0'"))
             }
             Blockchain.Hedera -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/3030'/0'/0'/0"))
+                mapOf(AddressType.Default to DerivationPath("m/44'/3030'/0'/0'/0'"))
             }
             Blockchain.Chia, Blockchain.ChiaTestnet -> mapOf(AddressType.Default to DerivationPath(""))
 
