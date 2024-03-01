@@ -2,8 +2,8 @@ package com.tangem.blockchain.blockchains.tron.network
 
 import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.common.NowNodeCredentials
+import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.common.toBlockchainSdkError
-import com.tangem.blockchain.extensions.AddHeaderInterceptor
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.toHexString
