@@ -95,12 +95,10 @@ internal class CosmosTransactionBuilder(
         )
 
         // transaction compiled with signatures may contain garbage bytes before json, we need drop them
-        val output = SigningOutput.newBuilder()
-            .setSerialized(compileWithSignatures.decodeToString().dropWhile { it != '{' })
-            .build()
+        val output = SigningOutput.parseFrom(compileWithSignatures)
 
         if (output.error != Common.SigningError.OK) {
-            error("something went wrong")
+            throw BlockchainSdkError.CustomError(output.errorMessage)
         }
 
         return output.serialized
