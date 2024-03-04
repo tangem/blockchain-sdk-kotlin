@@ -1,6 +1,7 @@
 package com.tangem.blockchain.externallinkprovider.providers
 
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
+import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class CosmosExternalLinkProvider(private val isTestnet: Boolean) : ExternalLinkProvider {
 
@@ -15,8 +16,8 @@ internal class CosmosExternalLinkProvider(private val isTestnet: Boolean) : Exte
         return explorerBaseUrl + path
     }
 
-    override fun explorerTransactionUrl(transactionHash: String): String {
+    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
         val path = if (isTestnet) "transactions/$transactionHash" else "tx/$transactionHash"
-        return explorerBaseUrl + path
+        return TxExploreState.Url(explorerBaseUrl + path)
     }
 }
