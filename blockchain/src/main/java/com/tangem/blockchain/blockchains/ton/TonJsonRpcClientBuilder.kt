@@ -3,7 +3,7 @@ package com.tangem.blockchain.blockchains.ton
 import com.tangem.blockchain.blockchains.ton.network.TonApi
 import com.tangem.blockchain.blockchains.ton.network.TonJsonRpcNetworkProvider
 import com.tangem.blockchain.common.BlockchainSdkConfig
-import com.tangem.blockchain.extensions.AddHeaderInterceptor
+import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.extensions.letNotBlank
 import com.tangem.blockchain.network.createRetrofitInstance
 
