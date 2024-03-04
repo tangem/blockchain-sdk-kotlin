@@ -88,23 +88,26 @@ class CardanoWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
-        val dummyTransaction = TransactionData(
-            amount = amount,
-            fee = null,
-            sourceAddress = wallet.address,
-            destinationAddress = destination,
-        )
+        return try {
+            val dummyTransaction = TransactionData(
+                amount = amount,
+                fee = null,
+                sourceAddress = wallet.address,
+                destinationAddress = destination,
+            )
 
-        val feeValue = transactionBuilder.estimatedFee(dummyTransaction)
+            val feeValue = transactionBuilder.estimatedFee(dummyTransaction)
 
-        val fee = Fee.Common(
-            Amount(
-                value = feeValue.movePointLeft(blockchain.decimals()),
-                blockchain = wallet.blockchain,
-                type = AmountType.Coin,
-            ),
-        )
-
-        return Result.Success(TransactionFee.Single(fee))
+            val fee = Fee.Common(
+                Amount(
+                    value = feeValue.movePointLeft(blockchain.decimals()),
+                    blockchain = wallet.blockchain,
+                    type = AmountType.Coin,
+                ),
+            )
+            Result.Success(TransactionFee.Single(fee))
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
     }
 }
