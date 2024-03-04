@@ -1,6 +1,7 @@
 package com.tangem.blockchain.externallinkprovider.providers
 
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
+import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class TelosExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
@@ -12,7 +13,7 @@ internal class TelosExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvi
         return explorerBaseUrl + "address/$walletAddress"
     }
 
-    override fun explorerTransactionUrl(transactionHash: String): String {
-        return explorerBaseUrl + "tx/$transactionHash"
+    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+        return TxExploreState.Url(explorerBaseUrl + "tx/$transactionHash")
     }
 }
