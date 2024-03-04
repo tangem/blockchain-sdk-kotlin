@@ -13,7 +13,6 @@ import okhttp3.internal.http.promisesBody
 import okio.Buffer
 import okio.GzipSource
 import org.json.JSONArray
-import org.json.JSONException
 import org.json.JSONObject
 import java.io.EOFException
 import java.io.IOException
@@ -202,12 +201,30 @@ internal object HttpLoggingInterceptor : Interceptor {
     }
 
     private fun String.beautifyJson(): String {
+        beautifyIfObject(json = this)?.let {
+            return it
+        }
+
+        beautifyIfArray(json = this)?.let {
+            return it
+        }
+
+        return this
+    }
+
+    private fun beautifyIfObject(json: String): String? {
         return try {
-            JSONObject(this).toString(JSON_INDENT_SPACES)
-        } catch (e: JSONException) {
-            JSONArray(this).toString(JSON_INDENT_SPACES)
-        } catch (e: JSONException) {
-            this
+            JSONObject(json).toString(JSON_INDENT_SPACES)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun beautifyIfArray(json: String): String? {
+        return try {
+            JSONArray(json).toString(JSON_INDENT_SPACES)
+        } catch (e: Exception) {
+            null
         }
     }
 }
