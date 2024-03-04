@@ -63,6 +63,9 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Shibarium, Blockchain.ShibariumTestnet -> ShibariumExternalLinkProvider(isTestnet)
             Blockchain.Algorand, Blockchain.AlgorandTestnet -> AlgorandExternalLinkProvider(isTestnet)
             Blockchain.Hedera, Blockchain.HederaTestnet -> HederaExternalLinkProvider(isTestnet)
+            Blockchain.Aurora, Blockchain.AuroraTestnet -> AuroraExternalLinkProvider(isTestnet)
+            Blockchain.Areon, Blockchain.AreonTestnet -> AreonExternalLinkProvider()
+            Blockchain.PulseChain, Blockchain.PulseChainTestnet -> PulseChainExternalLinkProvider(isTestnet)
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.tangem.blockchain.externallinkprovider.providers
 
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
+import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class HederaExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
@@ -11,7 +12,7 @@ internal class HederaExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProv
         return explorerBaseUrl + "account/$walletAddress"
     }
 
-    override fun explorerTransactionUrl(transactionHash: String): String {
-        return explorerBaseUrl + "transaction/$transactionHash"
+    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+        return TxExploreState.Url(explorerBaseUrl + "transaction/$transactionHash")
     }
 }
