@@ -102,8 +102,8 @@ class CosmosWalletManager(
     }
 
     @Suppress("MagicNumber")
-    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
-        val accNumber = accountNumber ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> = try {
+        val accNumber = accountNumber ?: throw BlockchainSdkError.FailedToLoadFee
 
         val input = txBuilder.buildForSend(
             amount = amount,
@@ -111,15 +111,13 @@ class CosmosWalletManager(
             destination = destination,
             accountNumber = accNumber,
             sequenceNumber = sequenceNumber,
-            feeAmount = null,
-            gas = null,
+            feeAmount = Amount(amount, BigDecimal.ZERO),
+            gas = 0,
             extras = null,
             signature = CryptoUtils.generateRandomBytes(length = 64), // signature is not necessary for fee calculation
         )
 
-        val estimateGasResult = networkService.estimateGas(input)
-
-        return when (estimateGasResult) {
+        when (val estimateGasResult = networkService.estimateGas(input)) {
             is Result.Failure -> estimateGasResult
             is Result.Success -> {
                 val amounts = cosmosChain.gasPrices(amount.type).map { gasPrice ->
@@ -136,7 +134,7 @@ class CosmosWalletManager(
                     Amount(value = feeValue, blockchain = wallet.blockchain)
                 }
 
-                return when (amounts.size) {
+                when (amounts.size) {
                     1 -> {
                         Result.Success(TransactionFee.Single(Fee.Common(amounts[0])))
                     }
@@ -157,6 +155,10 @@ class CosmosWalletManager(
                 }
             }
         }
+    } catch (e: BlockchainSdkError) {
+        Result.Failure(e)
+    } catch (e: Exception) {
+        Result.Failure(e.toBlockchainSdkError())
     }
 
     private fun updateWallet(cosmosAccountInfo: CosmosAccountInfo) {
