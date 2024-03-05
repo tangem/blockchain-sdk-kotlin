@@ -33,8 +33,8 @@ internal fun Blockchain.getBitcoinNetworkProviders(
         Blockchain.Dogecoin,
         Blockchain.Dash,
         -> listOfNotNull(
-            getNowNodesProvider(blockchain, config),
-            getGetBlockProvider(blockchain, config.getBlockCredentials),
+            // getNowNodesProvider(blockchain, config),
+            // getGetBlockProvider(blockchain, config.getBlockCredentials),
             *getBlockchairProviders(blockchain, config),
             getBlockcypherProvider(blockchain, config),
         )
