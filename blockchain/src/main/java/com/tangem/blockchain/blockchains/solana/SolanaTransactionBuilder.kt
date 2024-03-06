@@ -27,14 +27,16 @@ internal class SolanaTransactionBuilder(
 ) {
 
     suspend fun buildUnsignedTransaction(destinationAddress: String, amount: Amount): Result<SolanaTransaction> {
+        val amountToSend = amount.value ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx)
+
         return when (amount.type) {
             is AmountType.Coin -> buildUnsignedCoinTransaction(
                 destinationAddress = destinationAddress,
-                amount = amount,
+                amount = amountToSend,
             )
             is AmountType.Token -> buildUnsignedTokenTransaction(
                 destinationAddress = destinationAddress,
-                amount = amount,
+                amount = amountToSend,
                 token = amount.type.token,
             )
             is AmountType.Reserve -> Result.Failure(BlockchainSdkError.UnsupportedOperation())
@@ -43,13 +45,13 @@ internal class SolanaTransactionBuilder(
 
     private suspend fun buildUnsignedCoinTransaction(
         destinationAddress: String,
-        amount: Amount,
+        amount: BigDecimal,
     ): Result<SolanaTransaction> {
-        val recentBlockHash = multiNetworkProvider.performRequest { getRecentBlockhash() }.successOr {
-            return Result.Failure(it.error)
-        }
+        val recentBlockHash = multiNetworkProvider.performRequest {
+            getRecentBlockhash()
+        }.successOr { return Result.Failure(it.error) }
         val destinationAccount = PublicKey(destinationAddress)
-        val lamports = SolanaValueConverter.toLamports(amount.value ?: BigDecimal.ZERO)
+        val lamports = SolanaValueConverter.toLamports(amount)
 
         val transaction = SolanaTransaction(account)
         transaction.addInstruction(SystemProgram.transfer(account, destinationAccount, lamports))
@@ -60,7 +62,7 @@ internal class SolanaTransactionBuilder(
 
     private suspend fun buildUnsignedTokenTransaction(
         destinationAddress: String,
-        amount: Amount,
+        amount: BigDecimal,
         token: Token,
     ): Result<SolanaTransaction> {
         val destinationAccount = PublicKey(destinationAddress)
@@ -91,7 +93,7 @@ internal class SolanaTransactionBuilder(
                 destinationAccount = destinationAccount,
                 sourceAssociatedAccount = tokenInfo.associatedPubK,
                 token = token,
-                amount = amount.value,
+                amount = amount,
             ).successOr { return Result.Failure(it.error) }
 
             val recentBlockHash = multiNetworkProvider.performRequest {
@@ -111,7 +113,7 @@ internal class SolanaTransactionBuilder(
         destinationAccount: PublicKey,
         sourceAssociatedAccount: PublicKey,
         token: Token,
-        amount: BigDecimal?,
+        amount: BigDecimal,
     ): SimpleResult {
         val isDestinationAccountExists = isTokenAccountExist(destinationAssociatedAccount)
             .successOr { return SimpleResult.Failure(it.error) }
@@ -131,10 +133,7 @@ internal class SolanaTransactionBuilder(
         val sendInstruction = createSolanaTransferCheckedInstruction(
             source = sourceAssociatedAccount,
             destination = destinationAssociatedAccount,
-            amount = SolanaValueConverter.toLamports(
-                token = token,
-                value = amount ?: BigDecimal.ZERO,
-            ),
+            amount = SolanaValueConverter.toLamports(token, amount),
             owner = account,
             decimals = token.decimals.toByte(),
             tokenMint = mint,
