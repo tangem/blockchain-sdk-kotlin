@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.solana
 
 import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
 import com.tangem.blockchain.blockchains.solana.solanaj.core.createAssociatedSolanaTokenAddress
+import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaComputeBudgetProgram
 import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgram
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
@@ -116,20 +117,35 @@ internal class SolanaTransactionBuilder(
     ): SimpleResult {
         val isDestinationAccountExists = isTokenAccountExist(destinationAssociatedAccount)
             .successOr { return SimpleResult.Failure(it.error) }
+        val prioritizationFee = findPrioritizationFee(
+            sourceAccount = sourceAssociatedAccount,
+            destinationAccount = destinationAssociatedAccount,
+        ).successOr { return SimpleResult.Failure(it.error) }
+
+        SolanaComputeBudgetProgram.setComputeUnitPrice(
+            microLamports = prioritizationFee,
+        ).let(::addInstruction)
+
+        SolanaComputeBudgetProgram.setComputeUnitLimit(
+            units = if (isDestinationAccountExists) {
+                DEFAULT_CU_LIMIT
+            } else {
+                CREATE_NEW_ACCOUNT_CU_LIMIT
+            },
+        ).let(::addInstruction)
 
         if (!isDestinationAccountExists) {
-            val associatedTokenInstruction = AssociatedTokenProgram.createAssociatedTokenAccountInstruction(
+            AssociatedTokenProgram.createAssociatedTokenAccountInstruction(
                 /* associatedProgramId = */ Program.Id.splAssociatedTokenAccount,
                 /* programId = */ tokenProgramId.value,
                 /* mint = */ mint,
                 /* associatedAccount = */ destinationAssociatedAccount,
                 /* owner = */ destinationAccount,
                 /* payer = */ account,
-            )
-            addInstruction(associatedTokenInstruction)
+            ).let(::addInstruction)
         }
 
-        val sendInstruction = SolanaTokenProgram.createTransferCheckedInstruction(
+        SolanaTokenProgram.createTransferCheckedInstruction(
             source = sourceAssociatedAccount,
             destination = destinationAssociatedAccount,
             amount = SolanaValueConverter.toLamports(token, amount),
@@ -137,8 +153,7 @@ internal class SolanaTransactionBuilder(
             decimals = token.decimals.toByte(),
             tokenMint = mint,
             programId = tokenProgramId,
-        )
-        addInstruction(sendInstruction)
+        ).let(::addInstruction)
 
         return SimpleResult.Success
     }
@@ -161,5 +176,36 @@ internal class SolanaTransactionBuilder(
                 }
             }
         }
+    }
+
+    private suspend fun findPrioritizationFee(sourceAccount: PublicKey, destinationAccount: PublicKey): Result<Long> {
+        val fees = multiNetworkProvider.performRequest {
+            getRecentPrioritizationFees(listOf(sourceAccount, destinationAccount))
+        }.successOr { return it }
+
+        var maxFee: Long = MIN_CU_PRICE
+        var minFee: Long = MIN_CU_PRICE
+
+        fees.forEach { fee ->
+            if (fee.prioritizationFee > maxFee) {
+                maxFee = fee.prioritizationFee
+            }
+
+            if (fee.prioritizationFee < minFee) {
+                minFee = fee.prioritizationFee
+            }
+        }
+
+        val normalFee = (maxFee + minFee) * CU_PRICE_MULTIPLIER
+
+        return Result.Success(normalFee.toLong())
+    }
+
+    private companion object {
+        const val MIN_CU_PRICE = 1L
+        const val DEFAULT_CU_LIMIT = 200_000
+        const val CU_PRICE_MULTIPLIER = 0.8
+
+        const val CREATE_NEW_ACCOUNT_CU_LIMIT = 400_000
     }
 }
