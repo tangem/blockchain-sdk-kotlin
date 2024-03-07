@@ -2,10 +2,7 @@ package com.tangem.blockchain.blockchains.solana.solanaj.rpc
 
 import android.util.Base64
 import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
-import com.tangem.blockchain.blockchains.solana.solanaj.model.FeeInfo
-import com.tangem.blockchain.blockchains.solana.solanaj.model.NewSolanaAccountInfo
-import com.tangem.blockchain.blockchains.solana.solanaj.model.NewSolanaTokenAccountInfo
-import com.tangem.blockchain.blockchains.solana.solanaj.model.NewSplTokenAccountInfo
+import com.tangem.blockchain.blockchains.solana.solanaj.model.*
 import org.p2p.solanaj.core.Account
 import org.p2p.solanaj.core.MapUtils
 import org.p2p.solanaj.core.PublicKey
@@ -52,7 +49,7 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
     @Throws(RpcException::class)
     fun sendSignedTransaction(
         transaction: SolanaTransaction,
-        maxRetries: Int = 50,
+        maxRetries: Int = 6,
         skipPreflight: Boolean = false,
         commitment: Commitment = Commitment.FINALIZED,
     ): String {
@@ -174,5 +171,26 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
             params,
             NewSplTokenAccountInfo::class.java,
         ) as NewSplTokenAccountInfo
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun getRecentPrioritizationFees(accounts: List<PublicKey>): List<PrioritizationFee> {
+        val params = buildList {
+            add(accounts.map(PublicKey::toString))
+        }
+
+        val rawResult: List<Map<String, Any>> = client.call(
+            "getRecentPrioritizationFees",
+            params,
+            List::class.java,
+        ) as List<Map<String, Any>>
+
+        // All questions to the solanaj developers...
+        return rawResult.mapNotNull { item ->
+            PrioritizationFee(
+                slot = (item["slot"] as? Double)?.toLong() ?: return@mapNotNull null,
+                prioritizationFee = (item["prioritizationFee"] as? Double)?.toLong() ?: return@mapNotNull null,
+            )
+        }
     }
 }
