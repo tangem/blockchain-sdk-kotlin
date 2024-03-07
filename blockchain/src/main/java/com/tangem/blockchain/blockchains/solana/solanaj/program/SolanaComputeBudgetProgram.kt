@@ -17,7 +17,7 @@ internal object SolanaComputeBudgetProgram {
 
     private val programId: PublicKey = PublicKey("ComputeBudget111111111111111111111111111111")
 
-    fun setComputeUnitPrice(microLamports: Int): TransactionInstruction {
+    fun setComputeUnitPrice(microLamports: Long): TransactionInstruction {
         val transactionData = encodeSetComputeUnitPriceTransaction(microLamports)
 
         return Program.createTransactionInstruction(programId, emptyList<AccountMeta>(), transactionData)
@@ -30,11 +30,11 @@ internal object SolanaComputeBudgetProgram {
     }
 
     @Suppress("MagicNumber")
-    private fun encodeSetComputeUnitPriceTransaction(microLamports: Int): ByteArray {
+    private fun encodeSetComputeUnitPriceTransaction(microLamports: Long): ByteArray {
         val result = ByteBuffer.allocate(9).apply {
             order(ByteOrder.LITTLE_ENDIAN)
             put(0, 0x03.toByte())
-            putLong(1, microLamports.toLong())
+            putLong(1, microLamports)
         }
 
         return result.array()
