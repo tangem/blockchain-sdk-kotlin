@@ -40,6 +40,7 @@ internal class DefaultJsonRPCWebsocketService(
     private var socket: WebSocket? = null
     private val keepAlive = MutableStateFlow(false)
     private val mutex = Mutex()
+    private val internalConnectStatus = MutableStateFlow<ConnectStatus>(ConnectStatus.Disconnected)
 
     override suspend fun connect(keepAlive: Boolean) = mutex.withLock {
         if (state.value == WebSocketConnectionStatus.ESTABLISHED) {
@@ -52,15 +53,31 @@ internal class DefaultJsonRPCWebsocketService(
             .url(wssUrl)
             .build()
 
-        // establish connection
+        internalConnectStatus.value = ConnectStatus.Connecting
+        // establish connection (no exceptions here)
         socket = okHttpClient.newWebSocket(
             request,
             InnerWebSocketListener(),
         )
 
         // wait the connection to be established
-        withTimeout(REQUEST_TIMEOUT_MILLIS) {
-            state.first { it == WebSocketConnectionStatus.ESTABLISHED }
+        runCatching {
+            withTimeout(REQUEST_TIMEOUT_MILLIS) {
+                internalConnectStatus.first {
+                    it == ConnectStatus.Connected || it is ConnectStatus.ConnectionError // check for connection errors
+                }
+            }
+        }.onSuccess { status ->
+            if (status is ConnectStatus.ConnectionError) {
+                internalConnectStatus.value = ConnectStatus.Disconnected
+                throw status.throwable
+            } else {
+                // connected successfully
+                state.value = WebSocketConnectionStatus.ESTABLISHED
+            }
+        }.onFailure { // timeout
+            internalConnectStatus.value = ConnectStatus.Disconnected
+            throw it
         }
 
         // start ping-pong
@@ -107,13 +124,15 @@ internal class DefaultJsonRPCWebsocketService(
         socket?.cancel()
 
         // wait until websocket is fully closed
-        try {
-            withTimeout(REQUEST_TIMEOUT_MILLIS) {
-                state.first { it == WebSocketConnectionStatus.DISCONNECTED }
+        if (socket != null) {
+            runCatching {
+                withTimeout(REQUEST_TIMEOUT_MILLIS) {
+                    state.first { it == WebSocketConnectionStatus.DISCONNECTED }
+                }
             }
-        } finally {
-            state.value = WebSocketConnectionStatus.DISCONNECTED
         }
+
+        state.value = WebSocketConnectionStatus.DISCONNECTED
 
         // clear all the responses
         // we don't need them anymore
@@ -123,7 +142,13 @@ internal class DefaultJsonRPCWebsocketService(
     override suspend fun call(jsonRPCRequest: JsonRPCRequest): Result<JsonRPCResponse> {
         // connect only if connection wasn't already established
         if (state.value == WebSocketConnectionStatus.DISCONNECTED && !keepAlive.value) {
-            connect()
+            val connectResult = runCatching {
+                connect()
+            }
+
+            if (connectResult.isFailure) {
+                return Result.failure(connectResult.exceptionOrNull()!!)
+            }
         }
 
         // refresh timer on every call after which the websocket connection will be closed
@@ -131,7 +156,9 @@ internal class DefaultJsonRPCWebsocketService(
 
         // send request async
         val json = jsonRequestAdapter.toJson(jsonRPCRequest)
-        socket?.send(json) ?: return Result.failure(RuntimeException("No connection"))
+        socket?.send(json) ?: return Result.failure(
+            RuntimeException("No connection or message buffer overflows (16 MiB)"),
+        )
 
         return coroutineScope {
             val response = async {
@@ -153,11 +180,11 @@ internal class DefaultJsonRPCWebsocketService(
         }
     }
 
-    private fun close(ex: Throwable?) {
+    private fun close(ex: Throwable) {
         // terminate all waiting requests
         requests.update { reqs ->
             reqs.forEach {
-                it.cancel(CancellationException(message = ex?.message, cause = ex))
+                it.cancel(CancellationException(message = ex.message, cause = ex))
             }
             emptyList()
         }
@@ -166,6 +193,7 @@ internal class DefaultJsonRPCWebsocketService(
 
     private inner class InnerWebSocketListener : WebSocketListener() {
         override fun onOpen(webSocket: WebSocket, response: Response) {
+            internalConnectStatus.value = ConnectStatus.Connected
             state.value = WebSocketConnectionStatus.ESTABLISHED
             refreshDisconnectTimer()
         }
@@ -180,15 +208,27 @@ internal class DefaultJsonRPCWebsocketService(
         }
 
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+            internalConnectStatus.value = ConnectStatus.Disconnected
             close(RuntimeException(reason))
         }
 
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+            internalConnectStatus.value = ConnectStatus.Disconnected
             close(RuntimeException(reason))
         }
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+            internalConnectStatus.value = ConnectStatus.ConnectionError(t)
             close(t)
         }
+    }
+
+    private sealed class ConnectStatus {
+        object Disconnected : ConnectStatus()
+        object Connecting : ConnectStatus()
+        object Connected : ConnectStatus()
+        data class ConnectionError(
+            val throwable: Throwable,
+        ) : ConnectStatus()
     }
 }
