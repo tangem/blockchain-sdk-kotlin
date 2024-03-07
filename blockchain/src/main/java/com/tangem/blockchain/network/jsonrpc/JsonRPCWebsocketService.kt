@@ -26,6 +26,7 @@ internal interface JsonRPCWebsocketService {
      *
      * @param keepAlive true - the connection is being hold all the time,
      * false - the connection will be terminated some time after the last call
+     * @throws Exception if no connection
      */
     suspend fun connect(keepAlive: Boolean = false)
 
@@ -36,14 +37,15 @@ internal interface JsonRPCWebsocketService {
     suspend fun disconnect()
 
     /**
-     * Synchronized JsonRPC method call
+     * Synchronized exception free JsonRPC method call.
      *
      * In case the connection is not established, it will be established with keepAlive = false
      *
-     * If the connection was established with keepAlive == true,
+     * If the connection was established with keepAlive == false,
      * the call will reset the timer, after which the connection will be closed
      *
-     * @return the result of the request or some kind of connection error
+     * @param jsonRPCRequest JsonRPC request
+     * @return the result of the request or websocket connection error
      */
     suspend fun call(jsonRPCRequest: JsonRPCRequest): Result<JsonRPCResponse>
 }
