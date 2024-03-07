@@ -2,8 +2,7 @@ package com.tangem.blockchain.blockchains.solana
 
 import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
 import com.tangem.blockchain.blockchains.solana.solanaj.core.createAssociatedSolanaTokenAddress
-import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgramId
-import com.tangem.blockchain.blockchains.solana.solanaj.program.createSolanaTransferCheckedInstruction
+import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgram
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.BlockchainSdkError
@@ -107,7 +106,7 @@ internal class SolanaTransactionBuilder(
 
     @Suppress("LongParameterList")
     private suspend fun SolanaTransaction.addInstructions(
-        tokenProgramId: SolanaTokenProgramId,
+        tokenProgramId: SolanaTokenProgram.ID,
         mint: PublicKey,
         destinationAssociatedAccount: PublicKey,
         destinationAccount: PublicKey,
@@ -130,7 +129,7 @@ internal class SolanaTransactionBuilder(
             addInstruction(associatedTokenInstruction)
         }
 
-        val sendInstruction = createSolanaTransferCheckedInstruction(
+        val sendInstruction = SolanaTokenProgram.createTransferCheckedInstruction(
             source = sourceAssociatedAccount,
             destination = destinationAssociatedAccount,
             amount = SolanaValueConverter.toLamports(token, amount),
