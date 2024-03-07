@@ -10,7 +10,7 @@ internal class PulseChainExternalLinkProvider(isTestnet: Boolean) : ExternalLink
     override val explorerBaseUrl: String = if (isTestnet) {
         "https://scan.v4.testnet.pulsechain.com/#/"
     } else {
-        "https://beacon.pulsechain.com/"
+        "https://otter.pulsechain.com/"
     }
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
