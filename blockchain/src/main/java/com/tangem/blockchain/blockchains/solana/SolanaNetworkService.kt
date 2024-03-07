@@ -192,4 +192,15 @@ internal class SolanaNetworkService(
             Result.Failure(Solana.Api(ex))
         }
     }
+
+    suspend fun getRecentPrioritizationFees(accounts: List<PublicKey>): Result<List<PrioritizationFee>> =
+        withContext(Dispatchers.IO) {
+            try {
+                val fees = provider.api.getRecentPrioritizationFees(accounts)
+
+                Result.Success(fees)
+            } catch (ex: Exception) {
+                Result.Failure(Solana.Api(ex))
+            }
+        }
 }
