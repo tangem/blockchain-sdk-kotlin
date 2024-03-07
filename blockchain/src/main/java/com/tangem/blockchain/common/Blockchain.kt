@@ -505,6 +505,7 @@ enum class Blockchain(
         Near, NearTestnet,
         Aptos, AptosTestnet,
         Hedera, HederaTestnet,
+        PulseChain, PulseChainTestnet,
         -> true
 
         else -> false
