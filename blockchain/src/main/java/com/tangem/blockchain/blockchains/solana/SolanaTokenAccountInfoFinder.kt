@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.solana
 
 import com.tangem.blockchain.blockchains.solana.solanaj.core.createAssociatedSolanaTokenAddress
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaSplAccountInfo
-import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgramId
+import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgram
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.map
@@ -17,11 +17,11 @@ internal class SolanaTokenAccountInfoFinder(
     suspend fun getTokenAccountInfoAndTokenProgramId(
         account: PublicKey,
         mint: PublicKey,
-    ): Result<Pair<SolanaSplAccountInfo, SolanaTokenProgramId>> {
+    ): Result<Pair<SolanaSplAccountInfo, SolanaTokenProgram.ID>> {
         val resultForTokenProgram = getTokenAccountInfoIfExist(
             account = account,
             mint = mint,
-            programId = SolanaTokenProgramId.TOKEN,
+            programId = SolanaTokenProgram.ID.TOKEN,
         )
 
         return when (resultForTokenProgram) {
@@ -29,11 +29,11 @@ internal class SolanaTokenAccountInfoFinder(
                 getTokenAccountInfoIfExist(
                     account = account,
                     mint = mint,
-                    programId = SolanaTokenProgramId.TOKEN_2022,
-                ).map { it to SolanaTokenProgramId.TOKEN_2022 }
+                    programId = SolanaTokenProgram.ID.TOKEN_2022,
+                ).map { it to SolanaTokenProgram.ID.TOKEN_2022 }
             }
             is Result.Success -> {
-                resultForTokenProgram.map { it to SolanaTokenProgramId.TOKEN }
+                resultForTokenProgram.map { it to SolanaTokenProgram.ID.TOKEN }
             }
         }
     }
@@ -41,7 +41,7 @@ internal class SolanaTokenAccountInfoFinder(
     suspend fun getTokenAccountInfoIfExist(
         account: PublicKey,
         mint: PublicKey,
-        programId: SolanaTokenProgramId,
+        programId: SolanaTokenProgram.ID,
     ): Result<SolanaSplAccountInfo> {
         val associatedTokenAddress = createAssociatedSolanaTokenAddress(
             account = account,
