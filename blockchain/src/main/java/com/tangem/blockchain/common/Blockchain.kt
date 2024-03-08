@@ -123,6 +123,8 @@ enum class Blockchain(
     AreonTestnet("areon/test", "TAREA", "Areon Network Testnet"),
     PulseChain("pls", "PLS", "PulseChain"),
     PulseChainTestnet("pls/test", "tPLS", "PulseChain Testnet v4"),
+    ZkSyncEra("ZkSync-Era", "ETH", "ZkSync Era"),
+    ZkSyncEraTestnet("zkSync-Era", "ETH", "ZkSyncEra Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -188,6 +190,7 @@ enum class Blockchain(
         Aurora, AuroraTestnet,
         Areon, AreonTestnet,
         PulseChain, PulseChainTestnet,
+        ZkSyncEra, ZkSyncEraTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -243,6 +246,7 @@ enum class Blockchain(
             Aurora, AuroraTestnet,
             Areon, AreonTestnet,
             PulseChain, PulseChainTestnet,
+            ZkSyncEra, ZkSyncEraTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -342,6 +346,7 @@ enum class Blockchain(
             Aurora, AuroraTestnet -> AuroraTestnet
             Areon, AreonTestnet -> AreonTestnet
             PulseChain, PulseChainTestnet -> PulseChainTestnet
+            ZkSyncEra, ZkSyncEraTestnet -> ZkSyncEraTestnet
             else -> null
         }
     }
@@ -394,6 +399,7 @@ enum class Blockchain(
             Aurora, AuroraTestnet,
             Areon, AreonTestnet,
             PulseChain, PulseChainTestnet,
+            ZkSyncEra, ZkSyncEraTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -456,6 +462,7 @@ enum class Blockchain(
             AreonTestnet -> Chain.AreonTestnet.id
             PulseChain -> Chain.PulseChain.id
             PulseChainTestnet -> Chain.PulseChainTestnet.id
+            ZkSyncEraTestnet, Chain.ZkSyncEraTestnet.id,
             else -> null
         }
     }
