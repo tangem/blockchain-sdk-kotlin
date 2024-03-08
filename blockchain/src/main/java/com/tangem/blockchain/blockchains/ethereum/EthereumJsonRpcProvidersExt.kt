@@ -247,6 +247,19 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://rpc-testnet-pulsechain.g4mm4.io/"),
         )
 
+        Blockchain.ZkSyncEra -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://mainnet.era.zksync.io/"),
+            EthereumJsonRpcProvider(baseUrl = "https://zksync.meowrpc.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://zksync-era.blockpi.network/v1/rpc/public/"),
+            EthereumJsonRpcProvider(baseUrl = "https://zksync.drpc.org/"),
+            EthereumJsonRpcProvider(baseUrl = "https://1rpc.io/zksync2-era/"),
+        )
+
+        Blockchain.ZkSyncEraTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://sepolia.era.zksync.dev/"),
+            EthereumJsonRpcProvider(baseUrl = "https://zksync-era-sepolia.blockpi.network/v1/rpc/public/"),
+        )
+
         else -> error("$this isn't supported")
     }
 
