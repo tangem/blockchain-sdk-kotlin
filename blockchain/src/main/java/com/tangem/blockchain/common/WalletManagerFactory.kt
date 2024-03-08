@@ -171,6 +171,7 @@ class WalletManagerFactory(
             Blockchain.Aurora, Blockchain.AuroraTestnet,
             Blockchain.Areon, Blockchain.AreonTestnet,
             Blockchain.PulseChain, Blockchain.PulseChainTestnet,
+            Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet,
             -> {
                 EthereumLikeWalletManagerAssembly
             }
