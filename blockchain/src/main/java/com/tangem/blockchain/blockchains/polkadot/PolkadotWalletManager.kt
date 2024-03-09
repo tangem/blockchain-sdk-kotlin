@@ -8,8 +8,12 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
+import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.hexToBytes
+import io.emeraldpay.polkaj.tx.Era
 import io.emeraldpay.polkaj.tx.ExtrinsicContext
+import io.emeraldpay.polkaj.types.Hash256
 import java.math.BigDecimal
 import java.util.Calendar
 import java.util.EnumSet
@@ -92,7 +96,6 @@ class PolkadotWalletManager(
 
         val totalToSend = fee?.value?.add(amount.value) ?: amount.value ?: BigDecimal.ZERO
         val balance = wallet.amounts[AmountType.Coin]!!.value ?: BigDecimal.ZERO
-        if (totalToSend == balance) return errors
 
         val remainBalance = balance.minus(totalToSend)
         if (remainBalance < existentialDeposit) {
@@ -102,13 +105,21 @@ class PolkadotWalletManager(
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+        val latestBlockHash = networkProvider.getLatestBlockHash().successOr { return it.toSimpleFailure() }
+        val blockNumber = networkProvider.getBlockNumber(latestBlockHash).successOr { return it.toSimpleFailure() }
+        currentContext.era = Era.Mortal.forCurrent(TRANSACTION_LIFE_PERIOD, blockNumber.toLong())
+        currentContext.eraBlockHash = Hash256(latestBlockHash.hexToBytes())
         return when (transactionData.amount.type) {
-            AmountType.Coin -> sendCoin(transactionData, signer)
+            AmountType.Coin -> sendCoin(transactionData, signer, currentContext)
             else -> SimpleResult.Failure(UnsupportedOperation())
         }
     }
 
-    private suspend fun sendCoin(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    private suspend fun sendCoin(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+        extrinsicContext: ExtrinsicContext,
+    ): SimpleResult {
         val destinationAddress = transactionData.destinationAddress
         val isDestinationAccountIsUnderfunded = isAccountUnderfunded(destinationAddress).successOr {
             return SimpleResult.Failure(it.error)
@@ -126,7 +137,7 @@ class PolkadotWalletManager(
             amount = transactionData.amount,
             sourceAddress = wallet.address,
             destinationAddress = destinationAddress,
-            context = currentContext,
+            context = extrinsicContext,
             signer = signer,
         ).successOr { return SimpleResult.Failure(it.error) }
 
@@ -166,5 +177,10 @@ class PolkadotWalletManager(
         val isUnderfunded =
             destinationBalance == BigDecimal.ZERO || destinationBalance < existentialDeposit
         return Result.Success(isUnderfunded)
+    }
+
+    private companion object {
+
+        const val TRANSACTION_LIFE_PERIOD = 128L
     }
 }
