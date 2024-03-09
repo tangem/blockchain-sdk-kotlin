@@ -21,6 +21,7 @@ import io.emeraldpay.polkaj.types.ByteData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
+import java.math.BigInteger
 
 /**
 [REDACTED_AUTHOR]
@@ -57,6 +58,24 @@ class PolkadotCombinedProvider(
                 decimals = decimals,
             )
             Result.Success(fee)
+        } catch (ex: Exception) {
+            Result.Failure(BlockchainSdkError.Polkadot.Api(ex))
+        }
+    }
+
+    override suspend fun getLatestBlockHash(): Result<String> {
+        return try {
+            val latestBlock = polkadotProvider.getLatestBlockHash().successOr { return it }
+            Result.Success(latestBlock)
+        } catch (ex: Exception) {
+            Result.Failure(BlockchainSdkError.Polkadot.Api(ex))
+        }
+    }
+
+    override suspend fun getBlockNumber(blockHash: String): Result<BigInteger> {
+        return try {
+            val latestBlock = polkadotProvider.getBlockNumber(blockHash).successOr { return it }
+            Result.Success(latestBlock)
         } catch (ex: Exception) {
             Result.Failure(BlockchainSdkError.Polkadot.Api(ex))
         }
