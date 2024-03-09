@@ -4,7 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-data class PolkadotBody(
+data class RpcBody(
     val method: String,
     val params: List<Any> = listOf(),
     val jsonrpc: String = "2.0",
@@ -12,7 +12,7 @@ data class PolkadotBody(
 )
 
 @JsonClass(generateAdapter = true)
-data class PolkadotResponse(
+data class RpcMapResponse(
     @Json(name = "jsonrpc")
     val jsonrpc: String = "",
 
@@ -21,6 +21,21 @@ data class PolkadotResponse(
 
     @Json(name = "result")
     val result: Map<String, Any>? = null,
+
+    @Json(name = "error")
+    val error: PolkadotError? = null,
+)
+
+@JsonClass(generateAdapter = true)
+data class RpcStringResponse(
+    @Json(name = "jsonrpc")
+    val jsonrpc: String = "",
+
+    @Json(name = "id")
+    val id: Int? = null,
+
+    @Json(name = "result")
+    val result: String? = null,
 
     @Json(name = "error")
     val error: PolkadotError? = null,
