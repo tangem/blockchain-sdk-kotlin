@@ -31,7 +31,7 @@ class PolkadotWalletManager(
     private val existentialDeposit: BigDecimal = when (wallet.blockchain) {
         Blockchain.Polkadot -> BigDecimal.ONE
         Blockchain.PolkadotTestnet -> 0.01.toBigDecimal()
-        Blockchain.Kusama -> 0.000033333333.toBigDecimal()
+        Blockchain.Kusama -> 0.000333333.toBigDecimal()
         Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> 0.0000000005.toBigDecimal()
         else -> error("${wallet.blockchain} isn't supported")
     }
