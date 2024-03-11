@@ -209,6 +209,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
                 derivationParams = scanResponse.card.derivationParams(null),
             )!!
         } catch (ex: Exception) {
+            Log.e("WalletManager", ex.localizedMessage?.toString() ?: "null")
             showToast("WalletManager exception: ${ex.localizedMessage ?: "unknown"}")
             return@with
         }
