@@ -67,6 +67,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Areon, Blockchain.AreonTestnet -> AreonExternalLinkProvider()
             Blockchain.PulseChain, Blockchain.PulseChainTestnet -> PulseChainExternalLinkProvider(isTestnet)
             Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet -> ZkSyncEraExternalLinkProvider(isTestnet)
+            Blockchain.Nexa, Blockchain.NexaTestnet -> NexaExternalLinkProvider(isTestnet)
         }
     }
 }
