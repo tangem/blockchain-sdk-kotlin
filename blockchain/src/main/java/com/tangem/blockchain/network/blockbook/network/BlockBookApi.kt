@@ -4,8 +4,8 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapter
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.common.txhistory.TransactionHistoryRequest
-import com.tangem.blockchain.extensions.AddHeaderInterceptor
 import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
 import com.tangem.blockchain.network.blockbook.config.BlockBookConfig
 import com.tangem.blockchain.network.blockbook.config.BlockBookRequest
