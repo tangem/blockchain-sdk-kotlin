@@ -1,6 +1,5 @@
-package com.tangem.blockchain.blockchains.bitcoincash
+package com.tangem.blockchain.blockchains.nexa
 
-import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.BitcoinCashAddressType
 import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.BitcoinCashLikeAddressPrefix
 import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.CashAddr
@@ -13,32 +12,25 @@ import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
 
-class BitcoinCashAddressService(blockchain: Blockchain) : AddressService() {
+class NexaAddressService(
+    blockchain: Blockchain,
+) : AddressService() {
 
     private val cashAddr = when (blockchain) {
-        Blockchain.BitcoinCash -> CashAddr(BitcoinCashLikeAddressPrefix.BitcoinCash)
-        Blockchain.BitcoinCashTestnet -> CashAddr(BitcoinCashLikeAddressPrefix.BitcoinCashTestnet)
+        Blockchain.Nexa -> CashAddr(BitcoinCashLikeAddressPrefix.Nexa)
+        Blockchain.NexaTestnet -> CashAddr(BitcoinCashLikeAddressPrefix.NexaTestnet)
         else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
-    private val bitcoinAddressService = BitcoinAddressService(Blockchain.Bitcoin)
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?) =
         makeCashAddrAddress(walletPublicKey).value
 
-    override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?) = setOf(
-        bitcoinAddressService.makeLegacyAddress(walletPublicKey.toCompressedPublicKey()),
-        makeCashAddrAddress(walletPublicKey),
-    )
-
-    override fun validate(address: String) =
-        validateCashAddrAddress(address) || bitcoinAddressService.validateLegacyAddress(address)
+    override fun validate(address: String) = cashAddr.isValidCashAddress(address)
 
     private fun makeCashAddrAddress(walletPublicKey: ByteArray): Address {
         val publicKeyHash = walletPublicKey.toCompressedPublicKey().calculateSha256().calculateRipemd160()
         val address = cashAddr.toCashAddress(BitcoinCashAddressType.P2PKH, publicKeyHash)
         return Address(address, AddressType.Default)
     }
-
-    fun validateCashAddrAddress(address: String) = cashAddr.isValidCashAddress(address)
 
     fun getPublicKeyHash(address: String): ByteArray {
         return cashAddr.decodeCashAddress(address).hash
