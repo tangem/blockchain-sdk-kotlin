@@ -3,18 +3,21 @@ package com.tangem.blockchain.externallinkprovider.providers
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.TxExploreState
 
-internal class ShibariumExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
+internal class AuroraExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
-    override val explorerBaseUrl: String =
-        if (isTestnet) "https://puppyscan.shib.io/" else "https://www.shibariumscan.io/"
+    override val testNetTopUpUrl: String = "https://aurora.dev/faucet/"
 
-    override val testNetTopUpUrl: String = "https://beta.shibariumtech.com/faucet/"
+    override val explorerBaseUrl: String = if (isTestnet) {
+        "https://explorer.testnet.aurora.dev/"
+    } else {
+        "https://explorer.aurora.dev/"
+    }
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
         return "${explorerBaseUrl}address/$walletAddress"
     }
 
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
-        return TxExploreState.Url("${explorerBaseUrl}tx/$transactionHash")
+        return TxExploreState.Url(url = "${explorerBaseUrl}tx/$transactionHash")
     }
 }
