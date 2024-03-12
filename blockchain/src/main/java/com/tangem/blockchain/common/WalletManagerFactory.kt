@@ -272,6 +272,10 @@ class WalletManagerFactory(
                 HederaWalletManagerAssembly(dataStorage, accountCreator)
             }
 
+            Blockchain.Nexa, Blockchain.NexaTestnet -> {
+                NexaWalletManagerAssembly
+            }
+
             Blockchain.Unknown -> {
                 error("Unsupported blockchain")
             }
