@@ -10,6 +10,7 @@ import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
+import com.tangem.blockchain.blockchains.nexa.NexaAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
@@ -125,6 +126,8 @@ enum class Blockchain(
     PulseChainTestnet("pls/test", "tPLS", "PulseChain Testnet v4"),
     ZkSyncEra("ZkSync-Era", "ETH", "ZkSync Era"),
     ZkSyncEraTestnet("zkSync-Era", "ETH", "ZkSyncEra Testnet"),
+    Nexa("NEXA", "NEXA", "Nexa"),
+    NexaTestnet("NEXA/test", "NEXA", "Nexa Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -191,6 +194,7 @@ enum class Blockchain(
         Areon, AreonTestnet,
         PulseChain, PulseChainTestnet,
         ZkSyncEra, ZkSyncEraTestnet,
+        Nexa, NexaTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -274,6 +278,7 @@ enum class Blockchain(
             Kaspa -> KaspaAddressService()
             Chia, ChiaTestnet -> ChiaAddressService(this)
             Hedera, HederaTestnet -> HederaAddressService(this.isTestnet())
+            Nexa, NexaTestnet -> NexaAddressService(blockchain = this)
             Unknown -> error("unsupported blockchain")
         }
     }
@@ -400,6 +405,7 @@ enum class Blockchain(
             Areon, AreonTestnet,
             PulseChain, PulseChainTestnet,
             ZkSyncEra, ZkSyncEraTestnet,
+            Nexa, NexaTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
