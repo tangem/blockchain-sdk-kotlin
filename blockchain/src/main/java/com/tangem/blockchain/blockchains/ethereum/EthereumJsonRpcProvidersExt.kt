@@ -209,6 +209,44 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://puppynet.shibrpc.com/"),
         )
 
+        Blockchain.Aurora -> listOfNotNull(
+            EthereumJsonRpcProvider(baseUrl = "https://mainnet.aurora.dev/"),
+            EthereumJsonRpcProvider(baseUrl = "https://aurora.drpc.org/"),
+            EthereumJsonRpcProvider(baseUrl = "https://1rpc.io/aurora/"),
+        )
+
+        Blockchain.AuroraTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://testnet.aurora.dev/"),
+        )
+
+        Blockchain.Areon -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://mainnet-rpc.areon.network/"),
+            EthereumJsonRpcProvider(baseUrl = "https://mainnet-rpc2.areon.network/"),
+            EthereumJsonRpcProvider(baseUrl = "https://mainnet-rpc3.areon.network/"),
+            EthereumJsonRpcProvider(baseUrl = "https://mainnet-rpc4.areon.network/"),
+            EthereumJsonRpcProvider(baseUrl = "https://mainnet-rpc5.areon.network/"),
+        )
+
+        Blockchain.AreonTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://testnet-rpc.areon.network/"),
+            EthereumJsonRpcProvider(baseUrl = "https://testnet-rpc2.areon.network/"),
+            EthereumJsonRpcProvider(baseUrl = "https://testnet-rpc3.areon.network/"),
+            EthereumJsonRpcProvider(baseUrl = "https://testnet-rpc4.areon.network/"),
+            EthereumJsonRpcProvider(baseUrl = "https://testnet-rpc5.areon.network/"),
+        )
+
+        Blockchain.PulseChain -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.pulsechain.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://pulsechain.publicnode.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc-pulsechain.g4mm4.io/"),
+        )
+
+        Blockchain.PulseChainTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.v4.testnet.pulsechain.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://pulsechain-testnet.publicnode.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc-testnet-pulsechain.g4mm4.io/"),
+        )
+
         else -> error("$this isn't supported")
     }
 

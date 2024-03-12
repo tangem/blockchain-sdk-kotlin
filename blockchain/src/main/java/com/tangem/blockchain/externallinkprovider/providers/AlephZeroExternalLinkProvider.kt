@@ -1,6 +1,7 @@
 package com.tangem.blockchain.externallinkprovider.providers
 
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
+import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class AlephZeroExternalLinkProvider : ExternalLinkProvider {
 
@@ -10,7 +11,7 @@ internal class AlephZeroExternalLinkProvider : ExternalLinkProvider {
         return explorerBaseUrl + "account/$walletAddress"
     }
 
-    override fun explorerTransactionUrl(transactionHash: String): String {
-        return explorerBaseUrl + "extrinsic/$transactionHash"
+    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+        return TxExploreState.Url(explorerBaseUrl + "extrinsic/$transactionHash")
     }
 }
