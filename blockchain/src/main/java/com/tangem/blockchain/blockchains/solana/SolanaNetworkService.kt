@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.solana
 
 import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
 import com.tangem.blockchain.blockchains.solana.solanaj.model.*
-import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgramId
+import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgram
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.SolanaRpcClient
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.BlockchainSdkError.Solana
@@ -133,10 +133,10 @@ internal class SolanaNetworkService(
         withContext(Dispatchers.IO) {
             try {
                 val tokensAccountsInfoDefault = async {
-                    tokenAccountInfo(account, SolanaTokenProgramId.TOKEN.value)
+                    tokenAccountInfo(account, SolanaTokenProgram.ID.TOKEN.value)
                 }
                 val tokensAccountsInfo2022 = async {
-                    tokenAccountInfo(account, SolanaTokenProgramId.TOKEN_2022.value)
+                    tokenAccountInfo(account, SolanaTokenProgram.ID.TOKEN_2022.value)
                 }
 
                 val tokensAccountsInfo = awaitAll(tokensAccountsInfoDefault, tokensAccountsInfo2022)
@@ -192,4 +192,15 @@ internal class SolanaNetworkService(
             Result.Failure(Solana.Api(ex))
         }
     }
+
+    suspend fun getRecentPrioritizationFees(accounts: List<PublicKey>): Result<List<PrioritizationFee>> =
+        withContext(Dispatchers.IO) {
+            try {
+                val fees = provider.api.getRecentPrioritizationFees(accounts)
+
+                Result.Success(fees)
+            } catch (ex: Exception) {
+                Result.Failure(Solana.Api(ex))
+            }
+        }
 }
