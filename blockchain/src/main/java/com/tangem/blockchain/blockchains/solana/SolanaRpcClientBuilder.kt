@@ -5,7 +5,7 @@ import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.GetBlockCredentials
 import com.tangem.blockchain.common.NowNodeCredentials
 import com.tangem.blockchain.common.QuickNodeCredentials
-import com.tangem.blockchain.extensions.AddHeaderInterceptor
+import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import okhttp3.Interceptor
 import org.p2p.solanaj.rpc.Cluster
 
