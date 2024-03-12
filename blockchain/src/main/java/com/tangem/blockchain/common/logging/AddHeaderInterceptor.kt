@@ -1,4 +1,4 @@
-package com.tangem.blockchain.extensions
+package com.tangem.blockchain.common.logging
 
 import okhttp3.Interceptor
 import okhttp3.Response

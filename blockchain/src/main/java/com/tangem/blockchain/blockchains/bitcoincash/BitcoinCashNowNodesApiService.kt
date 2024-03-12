@@ -4,7 +4,7 @@ import com.tangem.blockchain.blockchains.bitcoincash.api.BitcoinCashApi
 import com.tangem.blockchain.blockchains.bitcoincash.api.BitcoinCashBlockBookApi
 import com.tangem.blockchain.blockchains.bitcoincash.network.BitconCashGetFeeResponse
 import com.tangem.blockchain.blockchains.bitcoincash.network.SendTransactionRequest
-import com.tangem.blockchain.extensions.AddHeaderInterceptor
+import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.network.blockbook.network.requests.GetFeeRequest
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponseItem
