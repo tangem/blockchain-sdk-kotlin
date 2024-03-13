@@ -468,7 +468,7 @@ enum class Blockchain(
             AreonTestnet -> Chain.AreonTestnet.id
             PulseChain -> Chain.PulseChain.id
             PulseChainTestnet -> Chain.PulseChainTestnet.id
-            ZkSyncEraTestnet, Chain.ZkSyncEraTestnet.id,
+            ZkSyncEraTestnet -> Chain.ZkSyncEraTestnet.id
             else -> null
         }
     }
