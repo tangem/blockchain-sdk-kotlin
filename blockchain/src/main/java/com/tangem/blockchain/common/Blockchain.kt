@@ -124,6 +124,8 @@ enum class Blockchain(
     AreonTestnet("areon/test", "TAREA", "Areon Network Testnet"),
     PulseChain("pls", "PLS", "PulseChain"),
     PulseChainTestnet("pls/test", "tPLS", "PulseChain Testnet v4"),
+    ZkSyncEra("zkSyncEra", "ETH", "ZkSync Era"),
+    ZkSyncEraTestnet("zkSyncEra/test", "ETH", "ZkSync Era Testnet"),
     Nexa("NEXA", "NEXA", "Nexa"),
     NexaTestnet("NEXA/test", "NEXA", "Nexa Testnet"),
     ;
@@ -191,6 +193,7 @@ enum class Blockchain(
         Aurora, AuroraTestnet,
         Areon, AreonTestnet,
         PulseChain, PulseChainTestnet,
+        ZkSyncEra, ZkSyncEraTestnet,
         Nexa, NexaTestnet,
         -> 18
 
@@ -247,6 +250,7 @@ enum class Blockchain(
             Aurora, AuroraTestnet,
             Areon, AreonTestnet,
             PulseChain, PulseChainTestnet,
+            ZkSyncEra, ZkSyncEraTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -347,6 +351,7 @@ enum class Blockchain(
             Aurora, AuroraTestnet -> AuroraTestnet
             Areon, AreonTestnet -> AreonTestnet
             PulseChain, PulseChainTestnet -> PulseChainTestnet
+            ZkSyncEra, ZkSyncEraTestnet -> ZkSyncEraTestnet
             else -> null
         }
     }
@@ -399,6 +404,7 @@ enum class Blockchain(
             Aurora, AuroraTestnet,
             Areon, AreonTestnet,
             PulseChain, PulseChainTestnet,
+            ZkSyncEra, ZkSyncEraTestnet,
             Nexa, NexaTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
@@ -462,6 +468,7 @@ enum class Blockchain(
             AreonTestnet -> Chain.AreonTestnet.id
             PulseChain -> Chain.PulseChain.id
             PulseChainTestnet -> Chain.PulseChainTestnet.id
+            ZkSyncEraTestnet -> Chain.ZkSyncEraTestnet.id
             else -> null
         }
     }
