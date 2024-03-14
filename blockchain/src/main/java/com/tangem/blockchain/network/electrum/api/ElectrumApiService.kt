@@ -1,4 +1,4 @@
-package com.tangem.blockchain.network.electrum
+package com.tangem.blockchain.network.electrum.api
 
 import com.tangem.blockchain.extensions.Result
 
@@ -21,13 +21,17 @@ internal interface ElectrumApiService {
 
     suspend fun getBlockTip(): Result<ElectrumResponse.BlockTip>
 
-    suspend fun getBalance(address: String): Result<ElectrumResponse.Balance>
+    suspend fun getBalance(addressScriptHash: String): Result<ElectrumResponse.Balance>
 
-    suspend fun getTransactionHistory(address: String): Result<List<ElectrumResponse.TxHistoryEntry>>
+    suspend fun getTransactionHistory(addressScriptHash: String): Result<List<ElectrumResponse.TxHistoryEntry>>
 
-    suspend fun getTransaction(address: String): Result<ElectrumResponse.Transaction>
+    suspend fun getTransaction(txHash: String): Result<ElectrumResponse.Transaction>
 
     suspend fun sendTransaction(rawTransactionHex: String): Result<ElectrumResponse.TxHex>
+
+    suspend fun getUnspentUTXOs(addressScriptHash: String): Result<List<ElectrumResponse.UnspentUTXORecord>>
+
+    suspend fun getEstimateFee(numberConfirmationBlocks: Int): Result<ElectrumResponse.EstimateFee>
 
     companion object {
         const val SUPPORTED_PROTOCOL_VERSION = "1.4.3"

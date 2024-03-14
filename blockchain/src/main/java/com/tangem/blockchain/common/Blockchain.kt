@@ -136,6 +136,9 @@ enum class Blockchain(
     fun decimals(): Int = when (this) {
         Unknown -> 0
 
+        Nexa, NexaTestnet,
+        -> 2
+
         Cardano,
         XRP,
         Tezos,
@@ -194,7 +197,6 @@ enum class Blockchain(
         Areon, AreonTestnet,
         PulseChain, PulseChainTestnet,
         ZkSyncEra, ZkSyncEraTestnet,
-        Nexa, NexaTestnet,
         -> 18
 
         Near, NearTestnet,
