@@ -1,7 +1,8 @@
-package com.tangem.blockchain.network.electrum
+package com.tangem.blockchain.network.electrum.api
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import java.math.BigDecimal
 
 /**
  * Electrum responses
@@ -26,8 +27,8 @@ internal object ElectrumResponse {
 
     @JsonClass(generateAdapter = true)
     data class Balance(
-        @Json(name = "confirmed") val confirmed: Double,
-        @Json(name = "unconfirmed") val unconfirmed: Double,
+        @Json(name = "confirmed") val satoshiConfirmed: Long,
+        @Json(name = "unconfirmed") val satoshiUnconfirmed: Long,
     )
 
     @JsonClass(generateAdapter = true)
@@ -42,24 +43,43 @@ internal object ElectrumResponse {
         val hash: String,
     )
 
+    @JvmInline
+    value class EstimateFee(
+        // null if the daemon does not have enough information to make an estimate
+        val feeInCoinsPer1000Bytes: BigDecimal?,
+    )
+
+    @JsonClass(generateAdapter = true)
+    data class UnspentUTXORecord(
+        // The integer height of the block the transaction was confirmed in. 0 if the transaction is in the mempool.
+        @Json(name = "height") val height: Long,
+        // The zero-based index of the output in the transaction’s list of outputs.
+        @Json(name = "tx_pos") val txPos: Long,
+        // The output’s transaction hash as a hexadecimal string.
+        @Json(name = "tx_hash") val txHash: String,
+        // The output’s value in minimum coin units (satoshis).
+        @Json(name = "value") val valueSatoshi: Long,
+        // Hash of utxo (hash of transaction idem + output index)
+        @Json(name = "outpoint_hash") val outpointHash: String, // TODO is Nexa epecific?
+    )
+
     @JsonClass(generateAdapter = true)
     data class Transaction(
         @Json(name = "blockhash") val blockHash: String,
         @Json(name = "blocktime") val blockTime: Long,
         @Json(name = "confirmations") val confirmations: Int,
+        @Json(name = "fee") val fee: Double,
+        @Json(name = "fee_satoshi") val feeSatoshi: Long,
         @Json(name = "hash") val hash: String,
         @Json(name = "hex") val hex: String, // The serialized, hex-encoded data for 'txid'
         @Json(name = "locktime") val lockTime: Long,
         @Json(name = "size") val size: Long,
-        @Json(name = "txid") val txid: String, // the transaction id (same as provided)
-        @Json(name = "version") val version: Int,
-        @Json(name = "txidem") val txidem: String?, // Nexa specific
-        @Json(name = "fee") val fee: Double,
-        @Json(name = "fee_satoshi") val feeSatoshi: Long,
         @Json(name = "time") val time: Long,
+        @Json(name = "txid") val txid: String, // the transaction id (same as provided)
+        @Json(name = "txidem") val txidem: String?, // Nexa specific
+        @Json(name = "version") val version: Int,
         @Json(name = "vin") val vin: List<Vin> = emptyList(),
         @Json(name = "vout") val vout: List<Vout> = emptyList(),
-        @Json(name = "value") val value: String,
     ) {
 
         @JsonClass(generateAdapter = true)
@@ -83,6 +103,7 @@ internal object ElectrumResponse {
         data class ScriptPublicKey(
             @Json(name = "addresses") val addresses: List<String> = emptyList(),
             @Json(name = "hex") val hex: String,
+            @Json(name = "scriptHash") val scriptHash: String?,
         )
     }
 }
