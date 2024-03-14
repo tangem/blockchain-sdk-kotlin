@@ -283,21 +283,19 @@ enum class Blockchain(
         }
     }
 
-    fun getShareScheme(): String? = when (this) {
-        Bitcoin, BitcoinTestnet -> "bitcoin"
-        Ethereum, EthereumTestnet -> "ethereum"
-        Litecoin -> "litecoin"
-        Binance, BinanceTestnet -> "bnb"
-        else -> null
+    fun getShareScheme(): List<String> = when (this) {
+        Bitcoin, BitcoinTestnet -> listOf("bitcoin:")
+        Ethereum, EthereumTestnet -> listOf("ethereum:", "ethereum:pay-") // "pay-" defined in ERC-681
+        Litecoin -> listOf("litecoin:")
+        Binance, BinanceTestnet -> listOf("bnb:")
+        Dogecoin -> listOf("doge:", "dogecoin:")
+        XRP -> listOf("ripple:", "xrpl:", "xrp:")
+        else -> emptyList()
     }
 
-    fun getShareUri(address: String): String = getShareScheme()?.plus(":$address") ?: address
+    fun getShareUri(address: String): String = getShareScheme().firstOrNull()?.plus(address) ?: address
 
-    @Suppress("ComplexCondition")
-    fun validateShareScheme(scheme: String): Boolean {
-        if (this == XRP && (scheme == "ripple" || scheme == "xrpl" || scheme == "xrp")) return true
-        return scheme == getShareScheme()
-    }
+    fun validateShareScheme(scheme: String) = getShareScheme().any { it == "$scheme:" }
 
     fun getExploreUrl(address: String, tokenContractAddress: String? = null): String {
         return externalLinkProvider.explorerUrl(walletAddress = address, contractAddress = tokenContractAddress)
