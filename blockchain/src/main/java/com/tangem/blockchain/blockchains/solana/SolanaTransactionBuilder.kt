@@ -53,9 +53,18 @@ internal class SolanaTransactionBuilder(
         val destinationAccount = PublicKey(destinationAddress)
         val lamports = SolanaValueConverter.toLamports(amount)
 
-        val transaction = SolanaTransaction(account)
-        transaction.addInstruction(SystemProgram.transfer(account, destinationAccount, lamports))
-        transaction.setRecentBlockHash(recentBlockHash)
+        val transaction = SolanaTransaction(account).apply {
+            SolanaComputeBudgetProgram.setComputeUnitPrice(
+                microLamports = DEFAULT_CU_PRICE,
+            ).let(::addInstruction)
+
+            SolanaComputeBudgetProgram.setComputeUnitLimit(
+                units = DEFAULT_CU_LIMIT,
+            ).let(::addInstruction)
+
+            SystemProgram.transfer(account, destinationAccount, lamports).let(::addInstruction)
+            setRecentBlockHash(recentBlockHash)
+        }
 
         return Result.Success(transaction)
     }
@@ -117,13 +126,13 @@ internal class SolanaTransactionBuilder(
     ): SimpleResult {
         val isDestinationAccountExists = isTokenAccountExist(destinationAssociatedAccount)
             .successOr { return SimpleResult.Failure(it.error) }
-        val prioritizationFee = findPrioritizationFee(
-            sourceAccount = sourceAssociatedAccount,
-            destinationAccount = destinationAssociatedAccount,
-        ).successOr { return SimpleResult.Failure(it.error) }
 
         SolanaComputeBudgetProgram.setComputeUnitPrice(
-            microLamports = prioritizationFee,
+            microLamports = if (isDestinationAccountExists) {
+                DEFAULT_CU_PRICE
+            } else {
+                CREATE_NEW_ACCOUNT_CU_PRICE
+            },
         ).let(::addInstruction)
 
         SolanaComputeBudgetProgram.setComputeUnitLimit(
@@ -178,34 +187,11 @@ internal class SolanaTransactionBuilder(
         }
     }
 
-    private suspend fun findPrioritizationFee(sourceAccount: PublicKey, destinationAccount: PublicKey): Result<Long> {
-        val fees = multiNetworkProvider.performRequest {
-            getRecentPrioritizationFees(listOf(sourceAccount, destinationAccount))
-        }.successOr { return it }
-
-        var maxFee: Long = MIN_CU_PRICE
-        var minFee: Long = MIN_CU_PRICE
-
-        fees.forEach { fee ->
-            if (fee.prioritizationFee > maxFee) {
-                maxFee = fee.prioritizationFee
-            }
-
-            if (fee.prioritizationFee < minFee) {
-                minFee = fee.prioritizationFee
-            }
-        }
-
-        val normalFee = (maxFee + minFee) * CU_PRICE_MULTIPLIER
-
-        return Result.Success(normalFee.toLong())
-    }
-
     private companion object {
-        const val MIN_CU_PRICE = 1L
         const val DEFAULT_CU_LIMIT = 200_000
-        const val CU_PRICE_MULTIPLIER = 0.8
-
         const val CREATE_NEW_ACCOUNT_CU_LIMIT = 400_000
+
+        const val DEFAULT_CU_PRICE = 1_000_000L
+        const val CREATE_NEW_ACCOUNT_CU_PRICE = 500_000L
     }
 }
