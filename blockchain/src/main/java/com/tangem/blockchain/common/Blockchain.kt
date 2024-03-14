@@ -506,6 +506,7 @@ enum class Blockchain(
         Aptos, AptosTestnet,
         Hedera, HederaTestnet,
         PulseChain, PulseChainTestnet,
+        Aurora, AuroraTestnet,
         -> true
 
         else -> false
