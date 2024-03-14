@@ -15,7 +15,6 @@ internal class SolanaExternalLinkProvider(private val isTestnet: Boolean) : Exte
         return buildString {
             append(baseUrl)
             append("address/$walletAddress")
-            if (contractAddress != null) append("tokens")
             if (isTestnet) append(testNetParam)
         }
     }
