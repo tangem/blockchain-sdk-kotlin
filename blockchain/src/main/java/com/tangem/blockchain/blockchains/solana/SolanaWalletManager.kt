@@ -40,12 +40,14 @@ class SolanaWalletManager internal constructor(
     private val transactionBuilder = SolanaTransactionBuilder(account, multiNetworkProvider, tokenAccountInfoFinder)
 
     private var accountSize: Long = MIN_ACCOUNT_DATA_SIZE
+    private var unsignedTransaction: SolanaTransaction? = null
 
     override val currentHost: String
         get() = multiNetworkProvider.currentProvider.baseUrl
 
     private val feeRentHolder = mutableMapOf<Fee, BigDecimal>()
     override suspend fun updateInternal() {
+        unsignedTransaction = null
         val accountInfo = multiNetworkProvider.performRequest {
             getMainAccountInfo(account)
         }.successOr {
@@ -145,26 +147,26 @@ class SolanaWalletManager internal constructor(
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val transaction = transactionBuilder.buildUnsignedTransaction(
+        val transaction = unsignedTransaction ?: transactionBuilder.buildUnsignedTransaction(
             destinationAddress = transactionData.destinationAddress,
             amount = transactionData.amount,
         ).successOr { return it.toSimpleResult() }
-
-        return sendTransaction(transaction, transactionData, signer)
-    }
-
-    private suspend fun sendTransaction(
-        transaction: SolanaTransaction,
-        transactionData: TransactionData,
-        signer: TransactionSigner,
-    ): SimpleResult {
         val signResult = signer.sign(transaction.getSerializedMessage(), wallet.publicKey).successOr {
             return SimpleResult.fromTangemSdkError(it.error)
         }
         transaction.addSignedDataSignature(signResult)
 
+        unsignedTransaction = null
+
+        return sendTransaction(transaction, transactionData)
+    }
+
+    private suspend fun sendTransaction(
+        signedTransaction: SolanaTransaction,
+        transactionData: TransactionData,
+    ): SimpleResult {
         val sendResult = multiNetworkProvider.performRequest {
-            sendTransaction(transaction)
+            sendTransaction(signedTransaction)
         }.successOr {
             return SimpleResult.Failure(it.error)
         }
@@ -183,6 +185,7 @@ class SolanaWalletManager internal constructor(
      */
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         feeRentHolder.clear()
+        unsignedTransaction = null
         val (networkFee, accountCreationRent) = getNetworkFeeAndAccountCreationRent(amount, destination)
             .successOr { return it }
 
@@ -219,6 +222,8 @@ class SolanaWalletManager internal constructor(
         val result = multiNetworkProvider.performRequest {
             getFeeForMessage(transaction)
         }.successOr { return it }
+
+        unsignedTransaction = transaction
 
         return Result.Success(result.value.let(SolanaValueConverter::toSol))
     }
