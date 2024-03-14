@@ -124,8 +124,8 @@ enum class Blockchain(
     AreonTestnet("areon/test", "TAREA", "Areon Network Testnet"),
     PulseChain("pls", "PLS", "PulseChain"),
     PulseChainTestnet("pls/test", "tPLS", "PulseChain Testnet v4"),
-    ZkSyncEra("ZkSync-Era", "ETH", "ZkSync Era"),
-    ZkSyncEraTestnet("zkSync-Era", "ETH", "ZkSyncEra Testnet"),
+    ZkSyncEra("zkSyncEra", "ETH", "ZkSync Era"),
+    ZkSyncEraTestnet("zkSyncEra/test", "ETH", "ZkSync Era Testnet"),
     Nexa("NEXA", "NEXA", "Nexa"),
     NexaTestnet("NEXA/test", "NEXA", "Nexa Testnet"),
     ;
