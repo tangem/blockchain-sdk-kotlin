@@ -41,6 +41,7 @@ internal class DefaultJsonRPCWebsocketService(
     private val keepAlive = MutableStateFlow(false)
     private val mutex = Mutex()
     private val internalConnectStatus = MutableStateFlow<ConnectStatus>(ConnectStatus.Disconnected)
+    private var pingPongJob: Job? = null
 
     override suspend fun connect(keepAlive: Boolean) = mutex.withLock {
         if (state.value == WebSocketConnectionStatus.ESTABLISHED) {
@@ -81,7 +82,8 @@ internal class DefaultJsonRPCWebsocketService(
         }
 
         // start ping-pong
-        coroutineScope.launch {
+        pingPongJob?.cancel()
+        pingPongJob = coroutineScope.launch {
             pingPong()
         }
     }
@@ -117,7 +119,7 @@ internal class DefaultJsonRPCWebsocketService(
 
     override suspend fun disconnect() {
         // cancel disconnect timer and ping-pong
-        coroutineScope.coroutineContext.cancelChildren()
+        pingPongJob?.cancel()
 
         // close websocket connection with default status
         socket?.close(WEBSOCKET_CONNECTION_CLOSE_NORMAL_STATUS, null)
@@ -203,7 +205,6 @@ internal class DefaultJsonRPCWebsocketService(
                 jsonResponseAdapter.fromJson(text)
             }.getOrNull() ?: return
 
-            refreshDisconnectTimer()
             responseMessages.tryEmit(response)
         }
 

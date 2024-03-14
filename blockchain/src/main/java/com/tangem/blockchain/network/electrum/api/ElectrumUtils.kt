@@ -1,4 +1,4 @@
-package com.tangem.blockchain.network.electrum
+package com.tangem.blockchain.network.electrum.api
 
 import android.os.SystemClock
 import com.tangem.blockchain.extensions.Result
