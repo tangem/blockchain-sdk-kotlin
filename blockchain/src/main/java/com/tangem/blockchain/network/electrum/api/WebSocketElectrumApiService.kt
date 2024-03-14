@@ -1,4 +1,4 @@
-package com.tangem.blockchain.network.electrum
+package com.tangem.blockchain.network.electrum.api
 
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.adapter
@@ -10,6 +10,7 @@ import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.network.jsonrpc.DefaultJsonRPCWebsocketService
 import com.tangem.blockchain.network.moshi
 import okhttp3.OkHttpClient
+import java.math.BigDecimal
 
 internal class WebSocketElectrumApiService(
     wssUrl: String,
@@ -79,26 +80,29 @@ internal class WebSocketElectrumApiService(
         )
     }
 
-    override suspend fun getBalance(address: String): Result<ElectrumResponse.Balance> {
+    override suspend fun getBalance(addressScriptHash: String): Result<ElectrumResponse.Balance> {
         return requestNotNull(
-            method = "blockchain.address.get_balance",
-            params = listOf(address, "exclude_tokens"),
+            method = "blockchain.scripthash.get_balance",
+            params = listOf(addressScriptHash),
             adapter = balanceAdapter,
         )
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    override suspend fun getTransactionHistory(address: String): Result<List<ElectrumResponse.TxHistoryEntry>> {
+    override suspend fun getTransactionHistory(
+        addressScriptHash: String,
+    ): Result<List<ElectrumResponse.TxHistoryEntry>> {
         return requestNotNull(
-            method = "blockchain.address.get_history",
-            params = listOf(address),
+            method = "blockchain.scripthash.get_history",
+            params = listOf(addressScriptHash),
             adapter = moshi.adapter<List<ElectrumResponse.TxHistoryEntry>>(),
         )
     }
-    override suspend fun getTransaction(address: String): Result<ElectrumResponse.Transaction> {
+
+    override suspend fun getTransaction(txHash: String): Result<ElectrumResponse.Transaction> {
         return requestNotNull(
             method = "blockchain.transaction.get",
-            params = listOf(address, true),
+            params = listOf(txHash, true),
             adapter = getTransactionAdapter,
         )
     }
@@ -109,6 +113,27 @@ internal class WebSocketElectrumApiService(
             params = listOf(rawTransactionHex),
         ).map {
             ElectrumResponse.TxHex(it)
+        }
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    override suspend fun getUnspentUTXOs(addressScriptHash: String): Result<List<ElectrumResponse.UnspentUTXORecord>> {
+        return requestNotNull(
+            method = "blockchain.scripthash.listunspent",
+            params = listOf(addressScriptHash),
+            adapter = moshi.adapter<List<ElectrumResponse.UnspentUTXORecord>>(),
+        )
+    }
+
+    override suspend fun getEstimateFee(numberConfirmationBlocks: Int): Result<ElectrumResponse.EstimateFee> {
+        return requestNotNull<BigDecimal>(
+            method = "blockchain.estimatefee",
+            params = listOf(numberConfirmationBlocks),
+        ).map {
+            // If the daemon does not have enough information to make an estimate, the integer -1 is returned.
+            ElectrumResponse.EstimateFee(
+                feeInCoinsPer1000Bytes = it.takeIf { it != BigDecimal.ONE.unaryMinus() },
+            )
         }
     }
 
