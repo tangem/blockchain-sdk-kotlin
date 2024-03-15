@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.algorand.AlgorandTransactionHistoryProv
 import com.tangem.blockchain.blockchains.algorand.network.AlgorandIndexerApi
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionHistoryProvider
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionHistoryProvider
+import com.tangem.blockchain.blockchains.tron.TronTransactionHistoryProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.network.blockbook.config.NowNodesConfig
@@ -21,7 +22,7 @@ internal fun Blockchain.getTransactionHistoryProvider(config: BlockchainSdkConfi
             Blockchain.BitcoinCash,
             -> BitcoinTransactionHistoryProvider(
                 blockchain = this,
-                BlockBookApi(
+                blockBookApi = BlockBookApi(
                     config = NowNodesConfig(nowNodesCredentials = config.nowNodeCredentials),
                     blockchain = this,
                 ),
@@ -38,7 +39,7 @@ internal fun Blockchain.getTransactionHistoryProvider(config: BlockchainSdkConfi
             // Blockchain.Kava,
             -> EthereumTransactionHistoryProvider(
                 blockchain = this,
-                BlockBookApi(
+                blockBookApi = BlockBookApi(
                     config = NowNodesConfig(nowNodesCredentials = config.nowNodeCredentials),
                     blockchain = this,
                 ),
@@ -51,15 +52,15 @@ internal fun Blockchain.getTransactionHistoryProvider(config: BlockchainSdkConfi
                 ).create(AlgorandIndexerApi::class.java),
             )
 
-            // Blockchain.Tron -> {
-            //     TronTransactionHistoryProvider(
-            //         blockchain = this,
-            //         BlockBookApi(
-            //             config = BlockBookConfig.NowNodes(nowNodesCredentials = config.nowNodeCredentials),
-            //             blockchain = this,
-            //         )
-            //     )
-            // }
+            Blockchain.Tron -> {
+                TronTransactionHistoryProvider(
+                    blockchain = this,
+                    blockBookApi = BlockBookApi(
+                        config = NowNodesConfig(nowNodesCredentials = config.nowNodeCredentials),
+                        blockchain = this,
+                    ),
+                )
+            }
 
             else -> DefaultTransactionHistoryProvider
         }
