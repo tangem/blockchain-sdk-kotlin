@@ -115,6 +115,9 @@ class EstimationFeeAddressFactory(
             Blockchain.VeChain, Blockchain.VeChainTestnet,
             Blockchain.Aptos, Blockchain.AptosTestnet,
             Blockchain.Algorand, Blockchain.AlgorandTestnet,
+            Blockchain.Moonbeam, Blockchain.MoonbeamTestnet,
+            Blockchain.Manta, Blockchain.MantaTestnet,
+            Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet,
             -> {
                 generateAddress(blockchain)
             }
