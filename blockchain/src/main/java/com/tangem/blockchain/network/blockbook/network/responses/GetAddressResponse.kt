@@ -12,7 +12,17 @@ data class GetAddressResponse(
     @Json(name = "page") val page: Int?,
     @Json(name = "totalPages") val totalPages: Int?,
     @Json(name = "itemsOnPage") val itemsOnPage: Int?,
+    @Json(name = "tokens") val trxTokens: List<TrxToken>?,
 ) {
+
+    @JsonClass(generateAdapter = true)
+    data class TrxToken(
+        @Json(name = "type") val type: String?,
+        @Json(name = "name") val name: String?,
+        @Json(name = "id") val id: String?,
+        @Json(name = "transfers") val transfers: Int?,
+        @Json(name = "balance") val balance: String?,
+    )
 
     @JsonClass(generateAdapter = true)
     data class Transaction(
