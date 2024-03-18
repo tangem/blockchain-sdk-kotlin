@@ -1,8 +1,6 @@
 package com.tangem.blockchain.network.blockbook.network
 
-import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapter
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.common.txhistory.TransactionHistoryRequest
@@ -14,6 +12,7 @@ import com.tangem.blockchain.network.blockbook.network.responses.GetAddressRespo
 import com.tangem.blockchain.network.blockbook.network.responses.GetFeeResponse
 import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponseItem
 import com.tangem.blockchain.network.blockbook.network.responses.SendTransactionResponse
+import com.tangem.blockchain.network.moshi
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -30,8 +29,6 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
             config.credentials?.let { AddHeaderInterceptor(mapOf(it)) },
         ),
     )
-
-    private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
 
     suspend fun getAddress(address: String): GetAddressResponse {
         val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.GetAddress(), blockchain)
