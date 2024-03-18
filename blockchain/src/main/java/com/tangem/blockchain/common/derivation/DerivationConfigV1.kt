@@ -172,7 +172,6 @@ object DerivationConfigV1 : DerivationConfig() {
             }
             Blockchain.Moonbeam -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1284'/0'/0/0"))
-
             }
             Blockchain.Chia, Blockchain.ChiaTestnet -> mapOf(AddressType.Default to DerivationPath(""))
 
