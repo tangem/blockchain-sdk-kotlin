@@ -128,6 +128,7 @@ enum class Blockchain(
     ZkSyncEraTestnet("zkSyncEra/test", "ETH", "ZkSync Era Testnet"),
     Nexa("NEXA", "NEXA", "Nexa"),
     NexaTestnet("NEXA/test", "NEXA", "Nexa Testnet"),
+    Radiant("radiant", "RXD", "Radiant"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -161,6 +162,7 @@ enum class Blockchain(
         Ravencoin, RavencoinTestnet,
         Aptos, AptosTestnet,
         Hedera, HederaTestnet,
+        Radiant,
         -> 8
 
         Solana, SolanaTestnet,
@@ -228,6 +230,7 @@ enum class Blockchain(
             Ducatus,
             Dash,
             Ravencoin, RavencoinTestnet,
+            Radiant,
             -> BitcoinAddressService(this)
 
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
@@ -406,6 +409,7 @@ enum class Blockchain(
             PulseChain, PulseChainTestnet,
             ZkSyncEra, ZkSyncEraTestnet,
             Nexa, NexaTestnet,
+            Radiant,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
