@@ -37,11 +37,7 @@ internal class TronTransactionHistoryProvider(
                     filterType = filterType,
                 )
             }
-            if (!response.transactions.isNullOrEmpty()) {
-                TransactionHistoryState.Success.HasTransactions(response.transactions.size)
-            } else {
-                TransactionHistoryState.Success.Empty
-            }
+            checkHistoryStatus(response, filterType)
         } catch (e: Exception) {
             TransactionHistoryState.Failed.FetchError(e)
         }
@@ -99,6 +95,33 @@ internal class TronTransactionHistoryProvider(
             Result.Failure(e.toBlockchainSdkError())
         }
     }
+
+    private fun checkHistoryStatus(
+        response: GetAddressResponse,
+        filterType: TransactionHistoryRequest.FilterType,
+    ): TransactionHistoryState {
+        return when (filterType) {
+            TransactionHistoryRequest.FilterType.Coin -> {
+                if (!response.transactions.isNullOrEmpty()) {
+                    TransactionHistoryState.Success.HasTransactions(response.transactions.size)
+                } else {
+                    TransactionHistoryState.Success.Empty
+                }
+            }
+            is TransactionHistoryRequest.FilterType.Contract -> {
+                val token = response.trxTokens
+                    ?.find { it.matching(filterType.address) } ?: return TransactionHistoryState.Success.Empty
+                if (token.transfers != null && token.transfers > 0) {
+                    TransactionHistoryState.Success.HasTransactions(token.transfers)
+                } else {
+                    TransactionHistoryState.Success.Empty
+                }
+            }
+        }
+    }
+
+    private fun GetAddressResponse.TrxToken.matching(contractAddress: String): Boolean =
+        listOf(this.id, this.name).any { it.equals(contractAddress, ignoreCase = true) }
 
     private fun GetAddressResponse.Transaction.toTransactionHistoryItem(
         walletAddress: String,
