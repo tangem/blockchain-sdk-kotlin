@@ -128,6 +128,12 @@ enum class Blockchain(
     ZkSyncEraTestnet("zkSyncEra/test", "ETH", "ZkSync Era Testnet"),
     Nexa("NEXA", "NEXA", "Nexa"),
     NexaTestnet("NEXA/test", "NEXA", "Nexa Testnet"),
+    Moonbeam("moonbeam", "GLMR", "Moonbeam"),
+    MoonbeamTestnet("moonbeam/test", "GLMR", "Moonbeam Testnet"),
+    Manta("manta", "ETH", "Manta"),
+    MantaTestnet("manta/test", "ETH", "Manta Testnet"),
+    PolygonZkEVM("polygonZkEVM", "ETH", "Polygon zkEVM"),
+    PolygonZkEVMTestnet("polygonZkEVM", "ETH", "Polygon zkEVM Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -197,6 +203,9 @@ enum class Blockchain(
         Areon, AreonTestnet,
         PulseChain, PulseChainTestnet,
         ZkSyncEra, ZkSyncEraTestnet,
+        Moonbeam, MoonbeamTestnet,
+        Manta, MantaTestnet,
+        PolygonZkEVM, PolygonZkEVMTestnet
         -> 18
 
         Near, NearTestnet,
@@ -253,6 +262,9 @@ enum class Blockchain(
             Areon, AreonTestnet,
             PulseChain, PulseChainTestnet,
             ZkSyncEra, ZkSyncEraTestnet,
+            Moonbeam, MoonbeamTestnet,
+            Manta, MantaTestnet,
+            PolygonZkEVM, PolygonZkEVMTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -352,6 +364,9 @@ enum class Blockchain(
             Areon, AreonTestnet -> AreonTestnet
             PulseChain, PulseChainTestnet -> PulseChainTestnet
             ZkSyncEra, ZkSyncEraTestnet -> ZkSyncEraTestnet
+            Moonbeam, MoonbeamTestnet -> MoonbeamTestnet
+            Manta, MantaTestnet -> MantaTestnet
+            PolygonZkEVM, PolygonZkEVMTestnet -> PolygonTestnet
             else -> null
         }
     }
@@ -406,6 +421,9 @@ enum class Blockchain(
             PulseChain, PulseChainTestnet,
             ZkSyncEra, ZkSyncEraTestnet,
             Nexa, NexaTestnet,
+            Moonbeam, MoonbeamTestnet,
+            Manta, MantaTestnet,
+            PolygonZkEVM, PolygonZkEVMTestnet
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -468,7 +486,14 @@ enum class Blockchain(
             AreonTestnet -> Chain.AreonTestnet.id
             PulseChain -> Chain.PulseChain.id
             PulseChainTestnet -> Chain.PulseChainTestnet.id
+            ZkSyncEra -> Chain.ZkSyncEra.id
             ZkSyncEraTestnet -> Chain.ZkSyncEraTestnet.id
+            Moonbeam -> Chain.Moonbeam.id
+            MoonbeamTestnet -> Chain.MoonbeamTestnet.id
+            Manta -> Chain.Manta.id
+            MantaTestnet -> Chain.MantaTestnet.id
+            PolygonZkEVM -> Chain.PolygonZkEVM.id
+            PolygonZkEVMTestnet -> Chain.PolygonZkEVMTestnet.id
             else -> null
         }
     }
