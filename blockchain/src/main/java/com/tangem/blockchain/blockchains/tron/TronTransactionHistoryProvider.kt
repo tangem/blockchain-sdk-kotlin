@@ -146,7 +146,7 @@ internal class TronTransactionHistoryProvider(
             isOutgoing = isOutgoing(walletAddress, sourceType),
             destinationType = destinationType,
             sourceType = sourceType,
-            status = if (confirmations > 0) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed,
+            status = extractStatus(tx = this),
             type = extractType(filterType = filterType, tx = this),
             amount = amount,
         )
@@ -245,6 +245,18 @@ internal class TronTransactionHistoryProvider(
                 )
                 Amount(value = BigDecimal(transferValue).movePointLeft(decimals), token = token)
             }
+        }
+    }
+
+    private fun extractStatus(tx: GetAddressResponse.Transaction): TransactionStatus {
+        val status = tx.tronTXReceipt?.status.guard {
+            return if (tx.confirmations > 0) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed
+        }
+
+        return when (status) {
+            GetAddressResponse.Transaction.StatusType.PENDING -> TransactionStatus.Unconfirmed
+            GetAddressResponse.Transaction.StatusType.FAILURE -> TransactionStatus.Failed
+            GetAddressResponse.Transaction.StatusType.OK -> TransactionStatus.Confirmed
         }
     }
 
