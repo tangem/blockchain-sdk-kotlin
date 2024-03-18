@@ -68,6 +68,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.PulseChain, Blockchain.PulseChainTestnet -> PulseChainExternalLinkProvider(isTestnet)
             Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet -> ZkSyncEraExternalLinkProvider(isTestnet)
             Blockchain.Nexa, Blockchain.NexaTestnet -> NexaExternalLinkProvider(isTestnet)
+            Blockchain.Radiant -> RadiantExternalLinkProvider()
         }
     }
 }
