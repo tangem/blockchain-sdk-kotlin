@@ -190,5 +190,5 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     Manta(id = 169, blockchain = Blockchain.Manta),
     MantaTestnet(id = 3441005, blockchain = Blockchain.MantaTestnet),
     PolygonZkEVM(id = 1101, blockchain = Blockchain.PolygonZkEVM),
-    PolygonZkEVMTestnet(id = 1442, blockchain = Blockchain.PolygonZkEVMTestnet),
+    PolygonZkEVMTestnet(id = 2442, blockchain = Blockchain.PolygonZkEVMTestnet),
 }
