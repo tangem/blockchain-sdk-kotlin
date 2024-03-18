@@ -205,7 +205,7 @@ enum class Blockchain(
         ZkSyncEra, ZkSyncEraTestnet,
         Moonbeam, MoonbeamTestnet,
         Manta, MantaTestnet,
-        PolygonZkEVM, PolygonZkEVMTestnet
+        PolygonZkEVM, PolygonZkEVMTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -423,7 +423,7 @@ enum class Blockchain(
             Nexa, NexaTestnet,
             Moonbeam, MoonbeamTestnet,
             Manta, MantaTestnet,
-            PolygonZkEVM, PolygonZkEVMTestnet
+            PolygonZkEVM, PolygonZkEVMTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
