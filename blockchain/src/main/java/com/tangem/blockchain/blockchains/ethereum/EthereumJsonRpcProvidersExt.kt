@@ -265,7 +265,9 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://1rpc.io/glmr/"),
             EthereumJsonRpcProvider(baseUrl = "https://moonbeam.public.blastapi.io/"),
             EthereumJsonRpcProvider(baseUrl = "https://moonbeam-rpc.dwellir.com/"),
-            EthereumJsonRpcProvider(baseUrl = "https://moonbeam-mainnet.gateway.pokt.network/v1/lb/629a2b5650ec8c0039bb30f0/"),
+            EthereumJsonRpcProvider(
+                baseUrl = "https://moonbeam-mainnet.gateway.pokt.network/v1/lb/629a2b5650ec8c0039bb30f0/",
+            ),
             EthereumJsonRpcProvider(baseUrl = "https://moonbeam.unitedbloc.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://moonbeam-rpc.publicnode.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/moonbeam/"),
@@ -300,7 +302,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
         )
 
         Blockchain.PolygonZkEVMTestnet -> listOf(
-            EthereumJsonRpcProvider(baseUrl ="https://rpc.cardona.zkevm-rpc.com/")
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.cardona.zkevm-rpc.com/"),
         )
 
         else -> error("$this isn't supported")
