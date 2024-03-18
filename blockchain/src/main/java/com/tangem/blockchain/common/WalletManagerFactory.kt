@@ -107,44 +107,19 @@ class WalletManagerFactory(
     private fun getAssembly(blockchain: Blockchain): WalletManagerAssembly<WalletManager> {
         return when (blockchain) {
             // region BTC-like blockchains
-
             Blockchain.Bitcoin,
             Blockchain.BitcoinTestnet,
-            -> {
-                BitcoinWalletManagerAssembly
-            }
-
-            Blockchain.Dash -> {
-                DashWalletManagerAssembly
-            }
-
-            Blockchain.Dogecoin -> {
-                DogecoinWalletManagerAssembly
-            }
-
-            Blockchain.Litecoin -> {
-                LitecoinWalletManagerAssembly
-            }
-
-            Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet -> {
-                BitcoinCashWalletManagerAssembly
-            }
-
-            Blockchain.Ravencoin, Blockchain.RavencoinTestnet -> {
-                RavencoinWalletManagerAssembly
-            }
-
-            Blockchain.Ducatus -> {
-                DucatusWalletManagerAssembly
-            }
-
+            -> BitcoinWalletManagerAssembly
+            Blockchain.Dash -> DashWalletManagerAssembly
+            Blockchain.Dogecoin -> DogecoinWalletManagerAssembly
+            Blockchain.Litecoin -> LitecoinWalletManagerAssembly
+            Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet -> BitcoinCashWalletManagerAssembly
+            Blockchain.Ravencoin, Blockchain.RavencoinTestnet -> RavencoinWalletManagerAssembly
+            Blockchain.Ducatus -> DucatusWalletManagerAssembly
             // endregion
 
             // region ETH-like blockchains
-
-            Blockchain.Ethereum, Blockchain.EthereumClassic -> {
-                EthereumWalletManagerAssembly
-            }
+            Blockchain.Ethereum, Blockchain.EthereumClassic -> EthereumWalletManagerAssembly
 
             Blockchain.Arbitrum,
             Blockchain.ArbitrumTestnet,
@@ -172,113 +147,40 @@ class WalletManagerFactory(
             Blockchain.Areon, Blockchain.AreonTestnet,
             Blockchain.PulseChain, Blockchain.PulseChainTestnet,
             Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet,
-            -> {
-                EthereumLikeWalletManagerAssembly
-            }
+            -> EthereumLikeWalletManagerAssembly
 
-            Blockchain.Decimal, Blockchain.DecimalTestnet -> {
-                DecimalWalletManagerAssembly
-            }
-
-            Blockchain.XDC, Blockchain.XDCTestnet -> {
-                XDCWalletManagerAssembly
-            }
-
-            Blockchain.Optimism, Blockchain.OptimismTestnet -> {
-                OptimismWalletManagerAssembly
-            }
-
-            Blockchain.Telos, Blockchain.TelosTestnet -> {
-                TelosWalletManagerAssembly
-            }
-
+            Blockchain.Decimal, Blockchain.DecimalTestnet -> DecimalWalletManagerAssembly
+            Blockchain.XDC, Blockchain.XDCTestnet -> XDCWalletManagerAssembly
+            Blockchain.Optimism, Blockchain.OptimismTestnet -> OptimismWalletManagerAssembly
+            Blockchain.Telos, Blockchain.TelosTestnet -> TelosWalletManagerAssembly
             // endregion
 
-            Blockchain.Solana, Blockchain.SolanaTestnet -> {
-                SolanaWalletManagerAssembly
-            }
+            Blockchain.Solana, Blockchain.SolanaTestnet -> SolanaWalletManagerAssembly
 
             Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama,
             Blockchain.AlephZero, Blockchain.AlephZeroTestnet,
-            -> {
-                PolkadotWalletManagerAssembly
-            }
+            -> PolkadotWalletManagerAssembly
 
-            Blockchain.Stellar, Blockchain.StellarTestnet -> {
-                StellarWalletManagerAssembly
-            }
-
-            Blockchain.Cardano -> {
-                CardanoWalletManagerAssembly
-            }
-
-            Blockchain.XRP -> {
-                XRPWalletManagerAssembly
-            }
-
-            Blockchain.Binance, Blockchain.BinanceTestnet -> {
-                BinanceWalletManagerAssembly
-            }
-
-            Blockchain.Tezos -> {
-                TezosWalletManagerAssembly
-            }
-
-            Blockchain.Tron, Blockchain.TronTestnet -> {
-                TronWalletManagerAssembly
-            }
-
-            Blockchain.Kaspa -> {
-                KaspaWalletManagerAssembly
-            }
-
-            Blockchain.TON, Blockchain.TONTestnet -> {
-                TonWalletManagerAssembly
-            }
-
-            Blockchain.Cosmos, Blockchain.CosmosTestnet -> {
-                CosmosWalletManagerAssembly
-            }
-
-            Blockchain.TerraV1 -> {
-                TerraV1WalletManagerAssembly
-            }
-
-            Blockchain.TerraV2 -> {
-                TerraV2WalletManagerAssembly
-            }
-
-            Blockchain.Chia, Blockchain.ChiaTestnet -> {
-                ChiaWalletManagerAssembly
-            }
-
-            Blockchain.Near, Blockchain.NearTestnet -> {
-                NearWalletManagerAssembly
-            }
-
-            Blockchain.VeChain, Blockchain.VeChainTestnet -> {
-                VeChainWalletManagerAssembly
-            }
-
-            Blockchain.Aptos, Blockchain.AptosTestnet -> {
-                AptosWalletManagerAssembly
-            }
-
-            Blockchain.Algorand, Blockchain.AlgorandTestnet -> {
-                AlgorandWalletManagerAssembly
-            }
-
-            Blockchain.Hedera, Blockchain.HederaTestnet -> {
-                HederaWalletManagerAssembly(dataStorage, accountCreator)
-            }
-
-            Blockchain.Nexa, Blockchain.NexaTestnet -> {
-                NexaWalletManagerAssembly
-            }
-
-            Blockchain.Unknown -> {
-                error("Unsupported blockchain")
-            }
+            Blockchain.Stellar, Blockchain.StellarTestnet -> StellarWalletManagerAssembly
+            Blockchain.Cardano -> CardanoWalletManagerAssembly
+            Blockchain.XRP -> XRPWalletManagerAssembly
+            Blockchain.Binance, Blockchain.BinanceTestnet -> BinanceWalletManagerAssembly
+            Blockchain.Tezos -> TezosWalletManagerAssembly
+            Blockchain.Tron, Blockchain.TronTestnet -> TronWalletManagerAssembly
+            Blockchain.Kaspa -> KaspaWalletManagerAssembly
+            Blockchain.TON, Blockchain.TONTestnet -> TonWalletManagerAssembly
+            Blockchain.Cosmos, Blockchain.CosmosTestnet -> CosmosWalletManagerAssembly
+            Blockchain.TerraV1 -> TerraV1WalletManagerAssembly
+            Blockchain.TerraV2 -> TerraV2WalletManagerAssembly
+            Blockchain.Chia, Blockchain.ChiaTestnet -> ChiaWalletManagerAssembly
+            Blockchain.Near, Blockchain.NearTestnet -> NearWalletManagerAssembly
+            Blockchain.VeChain, Blockchain.VeChainTestnet -> VeChainWalletManagerAssembly
+            Blockchain.Aptos, Blockchain.AptosTestnet -> AptosWalletManagerAssembly
+            Blockchain.Algorand, Blockchain.AlgorandTestnet -> AlgorandWalletManagerAssembly
+            Blockchain.Hedera, Blockchain.HederaTestnet -> HederaWalletManagerAssembly(dataStorage, accountCreator)
+            Blockchain.Nexa, Blockchain.NexaTestnet -> NexaWalletManagerAssembly
+            Blockchain.Radiant -> RadiantWalletManagerAssembly
+            Blockchain.Unknown -> error("Unsupported blockchain")
         }
     }
 
