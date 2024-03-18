@@ -1,10 +1,12 @@
 package com.tangem.blockchain.network
 
-import com.squareup.moshi.Moshi
+import com.squareup.moshi.*
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResourceBodyAdapter
+import com.tangem.blockchain.common.EnumeratedEnum
 import com.tangem.blockchain.common.network.interceptors.HttpLoggingInterceptor
+import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -69,8 +71,28 @@ internal val moshi: Moshi by lazy {
     Moshi.Builder()
         .add(BigDecimal::class.java, BigDecimalAdapter)
         .add(AptosResource::class.java, AptosResourceBodyAdapter)
+        .add(createEnumJsonAdapter<GetAddressResponse.Transaction.StatusType>())
         .add(KotlinJsonAdapterFactory())
         .build()
+}
+
+inline fun <reified T> createEnumJsonAdapter(): JsonAdapter<T> where T : Enum<T>, T : EnumeratedEnum {
+    return object : JsonAdapter<T>() {
+        @FromJson
+        override fun fromJson(reader: JsonReader): T? {
+            return if (reader.peek() != JsonReader.Token.NULL) {
+                val value = reader.nextInt()
+                enumValues<T>().firstOrNull { it.value == value }
+            } else {
+                reader.nextNull()
+            }
+        }
+
+        @ToJson
+        override fun toJson(writer: JsonWriter, value: T?) {
+            writer.value(value?.value)
+        }
+    }
 }
 
 const val API_TANGEM = "https://verify.tangem.com/"
