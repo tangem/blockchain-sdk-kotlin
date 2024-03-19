@@ -283,7 +283,7 @@ enum class Blockchain(
             Kaspa -> KaspaAddressService()
             Chia, ChiaTestnet -> ChiaAddressService(this)
             Hedera, HederaTestnet -> HederaAddressService(this.isTestnet())
-            Nexa, NexaTestnet -> NexaAddressService(blockchain = this)
+            Nexa, NexaTestnet -> NexaAddressService(this.isTestnet())
             Unknown -> error("unsupported blockchain")
         }
     }
