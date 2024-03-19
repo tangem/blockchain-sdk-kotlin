@@ -134,6 +134,7 @@ enum class Blockchain(
     MantaTestnet("manta/test", "ETH", "Manta Testnet"),
     PolygonZkEVM("polygonZkEVM", "ETH", "Polygon zkEVM"),
     PolygonZkEVMTestnet("polygonZkEVM/test", "ETH", "Polygon zkEVM Testnet"),
+    Radiant("radiant", "RXD", "Radiant"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -167,6 +168,7 @@ enum class Blockchain(
         Ravencoin, RavencoinTestnet,
         Aptos, AptosTestnet,
         Hedera, HederaTestnet,
+        Radiant,
         -> 8
 
         Solana, SolanaTestnet,
@@ -237,6 +239,7 @@ enum class Blockchain(
             Ducatus,
             Dash,
             Ravencoin, RavencoinTestnet,
+            Radiant,
             -> BitcoinAddressService(this)
 
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
@@ -424,6 +427,7 @@ enum class Blockchain(
             Moonbeam, MoonbeamTestnet,
             Manta, MantaTestnet,
             PolygonZkEVM, PolygonZkEVMTestnet,
+            Radiant,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
