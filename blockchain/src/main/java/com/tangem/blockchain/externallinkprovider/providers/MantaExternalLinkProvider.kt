@@ -3,7 +3,7 @@ package com.tangem.blockchain.externallinkprovider.providers
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.TxExploreState
 
-class MantaExternalLinkProvider(isTestNet: Boolean) : ExternalLinkProvider {
+internal class MantaExternalLinkProvider(isTestNet: Boolean) : ExternalLinkProvider {
 
     override val testNetTopUpUrl = "https://pacific-info.testnet.manta.network/"
 
