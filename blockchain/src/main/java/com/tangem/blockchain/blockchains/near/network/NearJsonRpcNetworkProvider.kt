@@ -144,10 +144,12 @@ class NearJsonRpcNetworkProvider(
                     message = error.cause.info.toString(),
                 ),
             )
-
+            // We expect that all result responses don't contain  { .. "result": null .. }
+            // Which can be true based on the JSON-RPC 2.0 specification
             else -> Result.Failure(
                 BlockchainSdkError.UnsupportedOperation(
-                    "Instance of the NearResponse is broken. Result and Error can't be null. Based on JSONRPC 2.0",
+                    "Instance of the NearResponse is broken." +
+                        "Result can't be null, and either result or error must be presented",
                 ),
             )
         }
