@@ -80,7 +80,7 @@ internal class AlgorandTransactionHistoryProvider(
         val isOutgoing = walletAddress.equals(sender, ignoreCase = true)
         return TransactionHistoryItem(
             txHash = this.id,
-            timestamp = this.roundTime ?: 0L,
+            timestamp = this.roundTime?.times(other = 1000) ?: 0L,
             isOutgoing = isOutgoing,
             destinationType = TransactionHistoryItem.DestinationType.Single(
                 addressType = TransactionHistoryItem.AddressType.User(this.paymentTransaction.receiver),
