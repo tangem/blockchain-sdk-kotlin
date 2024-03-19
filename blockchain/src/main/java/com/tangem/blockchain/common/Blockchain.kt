@@ -10,6 +10,7 @@ import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
+import com.tangem.blockchain.blockchains.nexa.NexaAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
@@ -123,6 +124,11 @@ enum class Blockchain(
     AreonTestnet("areon/test", "TAREA", "Areon Network Testnet"),
     PulseChain("pls", "PLS", "PulseChain"),
     PulseChainTestnet("pls/test", "tPLS", "PulseChain Testnet v4"),
+    ZkSyncEra("zkSyncEra", "ETH", "ZkSync Era"),
+    ZkSyncEraTestnet("zkSyncEra/test", "ETH", "ZkSync Era Testnet"),
+    Nexa("NEXA", "NEXA", "Nexa"),
+    NexaTestnet("NEXA/test", "NEXA", "Nexa Testnet"),
+    Radiant("radiant", "RXD", "Radiant"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -130,6 +136,9 @@ enum class Blockchain(
     @Suppress("MagicNumber")
     fun decimals(): Int = when (this) {
         Unknown -> 0
+
+        Nexa, NexaTestnet,
+        -> 2
 
         Cardano,
         XRP,
@@ -153,6 +162,7 @@ enum class Blockchain(
         Ravencoin, RavencoinTestnet,
         Aptos, AptosTestnet,
         Hedera, HederaTestnet,
+        Radiant,
         -> 8
 
         Solana, SolanaTestnet,
@@ -188,6 +198,7 @@ enum class Blockchain(
         Aurora, AuroraTestnet,
         Areon, AreonTestnet,
         PulseChain, PulseChainTestnet,
+        ZkSyncEra, ZkSyncEraTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -219,6 +230,7 @@ enum class Blockchain(
             Ducatus,
             Dash,
             Ravencoin, RavencoinTestnet,
+            Radiant,
             -> BitcoinAddressService(this)
 
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
@@ -243,6 +255,7 @@ enum class Blockchain(
             Aurora, AuroraTestnet,
             Areon, AreonTestnet,
             PulseChain, PulseChainTestnet,
+            ZkSyncEra, ZkSyncEraTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -270,25 +283,24 @@ enum class Blockchain(
             Kaspa -> KaspaAddressService()
             Chia, ChiaTestnet -> ChiaAddressService(this)
             Hedera, HederaTestnet -> HederaAddressService(this.isTestnet())
+            Nexa, NexaTestnet -> NexaAddressService(blockchain = this)
             Unknown -> error("unsupported blockchain")
         }
     }
 
-    fun getShareScheme(): String? = when (this) {
-        Bitcoin, BitcoinTestnet -> "bitcoin"
-        Ethereum, EthereumTestnet -> "ethereum"
-        Litecoin -> "litecoin"
-        Binance, BinanceTestnet -> "bnb"
-        else -> null
+    fun getShareScheme(): List<String> = when (this) {
+        Bitcoin, BitcoinTestnet -> listOf("bitcoin:")
+        Ethereum, EthereumTestnet -> listOf("ethereum:", "ethereum:pay-") // "pay-" defined in ERC-681
+        Litecoin -> listOf("litecoin:")
+        Binance, BinanceTestnet -> listOf("bnb:")
+        Dogecoin -> listOf("doge:", "dogecoin:")
+        XRP -> listOf("ripple:", "xrpl:", "xrp:")
+        else -> emptyList()
     }
 
-    fun getShareUri(address: String): String = getShareScheme()?.plus(":$address") ?: address
+    fun getShareUri(address: String): String = getShareScheme().firstOrNull()?.plus(address) ?: address
 
-    @Suppress("ComplexCondition")
-    fun validateShareScheme(scheme: String): Boolean {
-        if (this == XRP && (scheme == "ripple" || scheme == "xrpl" || scheme == "xrp")) return true
-        return scheme == getShareScheme()
-    }
+    fun validateShareScheme(scheme: String) = getShareScheme().any { it == "$scheme:" }
 
     fun getExploreUrl(address: String, tokenContractAddress: String? = null): String {
         return externalLinkProvider.explorerUrl(walletAddress = address, contractAddress = tokenContractAddress)
@@ -342,6 +354,7 @@ enum class Blockchain(
             Aurora, AuroraTestnet -> AuroraTestnet
             Areon, AreonTestnet -> AreonTestnet
             PulseChain, PulseChainTestnet -> PulseChainTestnet
+            ZkSyncEra, ZkSyncEraTestnet -> ZkSyncEraTestnet
             else -> null
         }
     }
@@ -394,6 +407,9 @@ enum class Blockchain(
             Aurora, AuroraTestnet,
             Areon, AreonTestnet,
             PulseChain, PulseChainTestnet,
+            ZkSyncEra, ZkSyncEraTestnet,
+            Nexa, NexaTestnet,
+            Radiant,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -456,6 +472,7 @@ enum class Blockchain(
             AreonTestnet -> Chain.AreonTestnet.id
             PulseChain -> Chain.PulseChain.id
             PulseChainTestnet -> Chain.PulseChainTestnet.id
+            ZkSyncEraTestnet -> Chain.ZkSyncEraTestnet.id
             else -> null
         }
     }
