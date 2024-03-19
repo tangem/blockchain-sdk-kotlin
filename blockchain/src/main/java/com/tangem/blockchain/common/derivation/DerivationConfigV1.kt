@@ -214,6 +214,10 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Nexa, Blockchain.NexaTestnet -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/29223'/0'/0/0"))
             }
+
+            Blockchain.Radiant -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/512'/0'/0/0"))
+            }
         }
     }
 }
