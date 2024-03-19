@@ -2,10 +2,7 @@ package com.tangem.blockchain.blockchains.solana.solanaj.rpc
 
 import android.util.Base64
 import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
-import com.tangem.blockchain.blockchains.solana.solanaj.model.FeeInfo
-import com.tangem.blockchain.blockchains.solana.solanaj.model.NewSolanaAccountInfo
-import com.tangem.blockchain.blockchains.solana.solanaj.model.NewSolanaTokenAccountInfo
-import com.tangem.blockchain.blockchains.solana.solanaj.model.NewSplTokenAccountInfo
+import com.tangem.blockchain.blockchains.solana.solanaj.model.*
 import org.p2p.solanaj.core.Account
 import org.p2p.solanaj.core.MapUtils
 import org.p2p.solanaj.core.PublicKey
@@ -14,7 +11,6 @@ import org.p2p.solanaj.rpc.RpcApi
 import org.p2p.solanaj.rpc.RpcClient
 import org.p2p.solanaj.rpc.RpcException
 import org.p2p.solanaj.rpc.types.config.Commitment
-import org.p2p.solanaj.rpc.types.config.RpcSendTransactionConfig
 import org.p2p.solanaj.ws.listeners.NotificationEventListener
 
 /**
@@ -51,10 +47,25 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
     }
 
     @Throws(RpcException::class)
-    fun sendSignedTransaction(transaction: SolanaTransaction): String {
+    fun sendSignedTransaction(
+        transaction: SolanaTransaction,
+        maxRetries: Int = 12,
+        skipPreflight: Boolean = false,
+        commitment: Commitment = Commitment.FINALIZED,
+    ): String {
         val serializedTransaction = transaction.serialize()
         val base64Trx = Base64.encodeToString(serializedTransaction, Base64.NO_WRAP)
-        val params = mutableListOf<Any>(base64Trx, RpcSendTransactionConfig())
+        val params = buildList {
+            add(base64Trx)
+
+            val additionalParams = buildMap<String, Any> {
+                this["encoding"] = "base64"
+                this["maxRetries"] = maxRetries
+                this["skipPreflight"] = skipPreflight
+                this["commitment"] = commitment.value
+            }
+            add(additionalParams)
+        }
 
         return client.call("sendTransaction", params, String::class.java)
     }
@@ -160,5 +171,26 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
             params,
             NewSplTokenAccountInfo::class.java,
         ) as NewSplTokenAccountInfo
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun getRecentPrioritizationFees(accounts: List<PublicKey>): List<PrioritizationFee> {
+        val params = buildList {
+            add(accounts.map(PublicKey::toString))
+        }
+
+        val rawResult: List<Map<String, Any>> = client.call(
+            "getRecentPrioritizationFees",
+            params,
+            List::class.java,
+        ) as List<Map<String, Any>>
+
+        // All questions to the solanaj developers...
+        return rawResult.mapNotNull { item ->
+            PrioritizationFee(
+                slot = (item["slot"] as? Double)?.toLong() ?: return@mapNotNull null,
+                prioritizationFee = (item["prioritizationFee"] as? Double)?.toLong() ?: return@mapNotNull null,
+            )
+        }
     }
 }

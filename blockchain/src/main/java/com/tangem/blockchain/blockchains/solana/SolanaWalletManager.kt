@@ -150,21 +150,20 @@ class SolanaWalletManager internal constructor(
             amount = transactionData.amount,
         ).successOr { return it.toSimpleResult() }
 
-        return sendTransaction(transaction, transactionData, signer)
-    }
-
-    private suspend fun sendTransaction(
-        transaction: SolanaTransaction,
-        transactionData: TransactionData,
-        signer: TransactionSigner,
-    ): SimpleResult {
         val signResult = signer.sign(transaction.getSerializedMessage(), wallet.publicKey).successOr {
             return SimpleResult.fromTangemSdkError(it.error)
         }
         transaction.addSignedDataSignature(signResult)
 
+        return sendTransaction(transaction, transactionData)
+    }
+
+    private suspend fun sendTransaction(
+        signedTransaction: SolanaTransaction,
+        transactionData: TransactionData,
+    ): SimpleResult {
         val sendResult = multiNetworkProvider.performRequest {
-            sendTransaction(transaction)
+            sendTransaction(signedTransaction)
         }.successOr {
             return SimpleResult.Failure(it.error)
         }
