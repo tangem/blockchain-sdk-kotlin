@@ -123,7 +123,6 @@ internal class DefaultJsonRPCWebsocketService(
 
         // close websocket connection with default status
         socket?.close(WEBSOCKET_CONNECTION_CLOSE_NORMAL_STATUS, null)
-        socket?.cancel()
 
         // wait until websocket is fully closed
         if (socket != null) {
@@ -133,6 +132,9 @@ internal class DefaultJsonRPCWebsocketService(
                 }
             }
         }
+
+        // free resources in case socket was closed incorrectly
+        socket?.cancel()
 
         state.value = WebSocketConnectionStatus.DISCONNECTED
 
