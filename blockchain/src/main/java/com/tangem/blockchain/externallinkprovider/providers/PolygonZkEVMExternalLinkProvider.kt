@@ -3,7 +3,7 @@ package com.tangem.blockchain.externallinkprovider.providers
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.TxExploreState
 
-class PolygonZkEVMExternalLinkProvider(isTestNet: Boolean) : ExternalLinkProvider {
+internal class PolygonZkEVMExternalLinkProvider(isTestNet: Boolean) : ExternalLinkProvider {
 
     override val testNetTopUpUrl = "https://faucet.quicknode.com/ethereum/sepolia/"
 
