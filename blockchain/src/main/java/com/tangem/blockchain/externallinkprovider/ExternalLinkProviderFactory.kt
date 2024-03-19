@@ -71,6 +71,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Moonbeam, Blockchain.MoonbeamTestnet -> MoonbeamExternalLinkProvider(isTestnet)
             Blockchain.Manta, Blockchain.MantaTestnet -> MantaExternalLinkProvider(isTestnet)
             Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet -> PolygonZkEVMExternalLinkProvider(isTestnet)
+            Blockchain.Radiant -> RadiantExternalLinkProvider()
         }
     }
 }
