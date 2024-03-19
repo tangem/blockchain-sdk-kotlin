@@ -2,6 +2,7 @@ package com.tangem.blockchain.network.blockbook.network.responses
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import com.tangem.blockchain.common.EnumeratedEnum
 
 @JsonClass(generateAdapter = true)
 data class GetAddressResponse(
@@ -12,7 +13,17 @@ data class GetAddressResponse(
     @Json(name = "page") val page: Int?,
     @Json(name = "totalPages") val totalPages: Int?,
     @Json(name = "itemsOnPage") val itemsOnPage: Int?,
+    @Json(name = "tokens") val trxTokens: List<TrxToken>?,
 ) {
+
+    @JsonClass(generateAdapter = true)
+    data class TrxToken(
+        @Json(name = "type") val type: String?,
+        @Json(name = "name") val name: String?,
+        @Json(name = "id") val id: String?,
+        @Json(name = "transfers") val transfers: Int?,
+        @Json(name = "balance") val balance: String?,
+    )
 
     @JsonClass(generateAdapter = true)
     data class Transaction(
@@ -26,11 +37,25 @@ data class GetAddressResponse(
         @Json(name = "tokenTransfers") val tokenTransfers: List<TokenTransfer> = emptyList(),
         @Json(name = "ethereumSpecific") val ethereumSpecific: EthereumSpecific? = null,
         // ** TRX specific fields **//
+        @Json(name = "tronTXReceipt") val tronTXReceipt: TronTXReceipt?,
         @Json(name = "fromAddress") val fromAddress: String?,
         @Json(name = "toAddress") val toAddress: String?,
         @Json(name = "contract_type") val contractType: Int?,
         @Json(name = "contract_name") val contractAddress: String?,
     ) {
+
+        /**
+         * Tron blockchain specific info.
+         * There are many more fields in this response, but we map only the required ones.
+         */
+        data class TronTXReceipt(val status: StatusType?)
+
+        enum class StatusType(override val value: Int) : EnumeratedEnum {
+            PENDING(-1),
+            FAILURE(0),
+            OK(1),
+            ;
+        }
 
         @JsonClass(generateAdapter = true)
         data class Vin(
@@ -59,7 +84,7 @@ data class GetAddressResponse(
 
         @JsonClass(generateAdapter = true)
         data class EthereumSpecific(
-            @Json(name = "status") val status: Int?,
+            @Json(name = "status") val status: StatusType?,
             @Json(name = "nonce") val nonce: Int?,
             @Json(name = "gasLimit") val gasLimit: Long?,
             @Json(name = "gasUsed") val gasUsed: Long?,
@@ -67,19 +92,6 @@ data class GetAddressResponse(
             @Json(name = "data") val data: String?,
             @Json(name = "parsedData") val parsedData: ParsedData?,
         ) {
-
-            enum class StatusType(val type: Int) {
-                PENDING(-1),
-                FAILURE(0),
-                OK(1),
-                ;
-
-                companion object {
-                    fun fromType(type: Int): StatusType {
-                        return values().firstOrNull { it.type == type } ?: error("StatusType for $type is not found.")
-                    }
-                }
-            }
 
             @JsonClass(generateAdapter = true)
             data class ParsedData(

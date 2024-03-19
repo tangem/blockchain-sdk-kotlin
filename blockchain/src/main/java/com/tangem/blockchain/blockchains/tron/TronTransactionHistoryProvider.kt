@@ -37,11 +37,7 @@ internal class TronTransactionHistoryProvider(
                     filterType = filterType,
                 )
             }
-            if (!response.transactions.isNullOrEmpty()) {
-                TransactionHistoryState.Success.HasTransactions(response.transactions.size)
-            } else {
-                TransactionHistoryState.Success.Empty
-            }
+            checkHistoryStatus(response, filterType)
         } catch (e: Exception) {
             TransactionHistoryState.Failed.FetchError(e)
         }
@@ -60,31 +56,72 @@ internal class TronTransactionHistoryProvider(
                         filterType = request.filterType,
                     )
                 }
-            val txs = response.transactions
-                ?.mapNotNull { tx ->
-                    tx.toTransactionHistoryItem(
-                        walletAddress = request.address,
-                        decimals = request.decimals,
-                        filterType = request.filterType,
-                    )
-                }
-                ?: emptyList()
-            val nextPage = if (response.page != null && request.page !is Page.LastPage) {
-                val page = response.page
-                if (page == response.totalPages) Page.LastPage else Page.Next(page.inc().toString())
+            val pageToLoad = request.pageToLoad?.toIntOrNull() ?: 0
+            val page = response.page ?: 0
+
+            // If response page is lower than request page, it means that we reached end. NowNodes works not
+            // correctly.
+            val isEndReached = page < pageToLoad
+            if (isEndReached) {
+                Result.Success(
+                    PaginationWrapper(
+                        nextPage = Page.LastPage,
+                        items = emptyList(),
+                    ),
+                )
             } else {
-                Page.LastPage
+                val txs = response.transactions
+                    .orEmpty()
+                    .mapNotNull { tx ->
+                        tx.toTransactionHistoryItem(
+                            walletAddress = request.address,
+                            decimals = request.decimals,
+                            filterType = request.filterType,
+                        )
+                    }
+                val nextPage = if (response.page != null && request.page !is Page.LastPage) {
+                    Page.Next(response.page.inc().toString())
+                } else {
+                    Page.LastPage
+                }
+                Result.Success(
+                    PaginationWrapper(
+                        nextPage = nextPage,
+                        items = txs,
+                    ),
+                )
             }
-            Result.Success(
-                PaginationWrapper(
-                    nextPage = nextPage,
-                    items = txs,
-                ),
-            )
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
     }
+
+    private fun checkHistoryStatus(
+        response: GetAddressResponse,
+        filterType: TransactionHistoryRequest.FilterType,
+    ): TransactionHistoryState {
+        return when (filterType) {
+            TransactionHistoryRequest.FilterType.Coin -> {
+                if (!response.transactions.isNullOrEmpty()) {
+                    TransactionHistoryState.Success.HasTransactions(response.transactions.size)
+                } else {
+                    TransactionHistoryState.Success.Empty
+                }
+            }
+            is TransactionHistoryRequest.FilterType.Contract -> {
+                val token = response.trxTokens
+                    ?.find { it.matching(filterType.address) } ?: return TransactionHistoryState.Success.Empty
+                if (token.transfers != null && token.transfers > 0) {
+                    TransactionHistoryState.Success.HasTransactions(token.transfers)
+                } else {
+                    TransactionHistoryState.Success.Empty
+                }
+            }
+        }
+    }
+
+    private fun GetAddressResponse.TrxToken.matching(contractAddress: String): Boolean =
+        listOf(this.id, this.name).any { it.equals(contractAddress, ignoreCase = true) }
 
     private fun GetAddressResponse.Transaction.toTransactionHistoryItem(
         walletAddress: String,
@@ -106,13 +143,24 @@ internal class TronTransactionHistoryProvider(
         return TransactionHistoryItem(
             txHash = txid.removePrefix(PREFIX),
             timestamp = TimeUnit.SECONDS.toMillis(blockTime.toLong()),
-            isOutgoing = fromAddress?.equals(walletAddress, ignoreCase = true) == true,
+            isOutgoing = isOutgoing(walletAddress, sourceType),
             destinationType = destinationType,
             sourceType = sourceType,
-            status = if (confirmations > 0) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed,
-            type = extractType(tx = this),
+            status = extractStatus(tx = this),
+            type = extractType(filterType = filterType, tx = this),
             amount = amount,
         )
+    }
+
+    private fun isOutgoing(walletAddress: String, sourceType: TransactionHistoryItem.SourceType): Boolean {
+        return when (sourceType) {
+            is TransactionHistoryItem.SourceType.Multiple -> {
+                sourceType.addresses.any { it.equals(walletAddress, ignoreCase = true) }
+            }
+            is TransactionHistoryItem.SourceType.Single -> {
+                sourceType.address.equals(walletAddress, ignoreCase = true)
+            }
+        }
     }
 
     private fun extractDestinationType(
@@ -155,11 +203,23 @@ internal class TronTransactionHistoryProvider(
         return TransactionHistoryItem.SourceType.Single(address = address)
     }
 
-    private fun extractType(tx: GetAddressResponse.Transaction): TransactionHistoryItem.TransactionType {
-        // Contract type 1 means transfer
-        if (tx.contractType == 1) return TransactionHistoryItem.TransactionType.Transfer
-
-        return TransactionHistoryItem.TransactionType.ContractMethod(id = tx.contractAddress.orEmpty())
+    private fun extractType(
+        filterType: TransactionHistoryRequest.FilterType,
+        tx: GetAddressResponse.Transaction,
+    ): TransactionHistoryItem.TransactionType {
+        return when (filterType) {
+            TransactionHistoryRequest.FilterType.Coin -> {
+                if (tx.isContractInteraction()) {
+                    TransactionHistoryItem.TransactionType.ContractMethod(id = tx.contractAddress.orEmpty())
+                } else {
+                    TransactionHistoryItem.TransactionType.Transfer
+                }
+            }
+            is TransactionHistoryRequest.FilterType.Contract -> {
+                // All TRC10 and TRC20 token transactions are considered simple & plain transfers
+                TransactionHistoryItem.TransactionType.Transfer
+            }
+        }
     }
 
     private fun extractAmount(
@@ -188,9 +248,30 @@ internal class TronTransactionHistoryProvider(
         }
     }
 
+    private fun extractStatus(tx: GetAddressResponse.Transaction): TransactionStatus {
+        val status = tx.tronTXReceipt?.status.guard {
+            return if (tx.confirmations > 0) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed
+        }
+
+        return when (status) {
+            GetAddressResponse.Transaction.StatusType.PENDING -> TransactionStatus.Unconfirmed
+            GetAddressResponse.Transaction.StatusType.FAILURE -> TransactionStatus.Failed
+            GetAddressResponse.Transaction.StatusType.OK -> TransactionStatus.Confirmed
+        }
+    }
+
     private fun GetAddressResponse.Transaction.getTokenTransfer(
         contractAddress: String,
     ): GetAddressResponse.Transaction.TokenTransfer? {
         return tokenTransfers.firstOrNull { contractAddress.equals(it.token, ignoreCase = true) }
+    }
+
+    private fun GetAddressResponse.Transaction.isContractInteraction(): Boolean = contractType != null &&
+        contractType != TRANSFER_CONTRACT_TYPE &&
+        contractType != TRANSFER_ASSET_CONTRACT_TYPE
+
+    private companion object {
+        private const val TRANSFER_CONTRACT_TYPE = 1
+        private const val TRANSFER_ASSET_CONTRACT_TYPE = 2
     }
 }

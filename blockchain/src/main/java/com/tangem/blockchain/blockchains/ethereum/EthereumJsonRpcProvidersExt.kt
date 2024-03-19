@@ -212,7 +212,6 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
         Blockchain.Aurora -> listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://mainnet.aurora.dev/"),
             EthereumJsonRpcProvider(baseUrl = "https://aurora.drpc.org/"),
-            EthereumJsonRpcProvider(baseUrl = "https://1rpc.io/aurora/"),
         )
 
         Blockchain.AuroraTestnet -> listOf(
