@@ -180,7 +180,11 @@ class WalletManagerFactory(
             Blockchain.Hedera, Blockchain.HederaTestnet -> HederaWalletManagerAssembly(dataStorage, accountCreator)
             Blockchain.Nexa, Blockchain.NexaTestnet -> NexaWalletManagerAssembly
             Blockchain.Radiant -> RadiantWalletManagerAssembly
-            Blockchain.Unknown -> error("Unsupported blockchain")
+            Blockchain.Moonbeam, Blockchain.MoonbeamTestnet,
+            Blockchain.Manta, Blockchain.MantaTestnet,
+            Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet,
+            Blockchain.Unknown,
+            -> error("Unsupported blockchain")
         }
     }
 
