@@ -2,8 +2,8 @@ package com.tangem.blockchain.blockchains.solana
 
 import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
 import com.tangem.blockchain.blockchains.solana.solanaj.core.createAssociatedSolanaTokenAddress
-import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgramId
-import com.tangem.blockchain.blockchains.solana.solanaj.program.createSolanaTransferCheckedInstruction
+import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaComputeBudgetProgram
+import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgram
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.BlockchainSdkError
@@ -27,14 +27,16 @@ internal class SolanaTransactionBuilder(
 ) {
 
     suspend fun buildUnsignedTransaction(destinationAddress: String, amount: Amount): Result<SolanaTransaction> {
+        val amountToSend = amount.value ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx)
+
         return when (amount.type) {
             is AmountType.Coin -> buildUnsignedCoinTransaction(
                 destinationAddress = destinationAddress,
-                amount = amount,
+                amount = amountToSend,
             )
             is AmountType.Token -> buildUnsignedTokenTransaction(
                 destinationAddress = destinationAddress,
-                amount = amount,
+                amount = amountToSend,
                 token = amount.type.token,
             )
             is AmountType.Reserve -> Result.Failure(BlockchainSdkError.UnsupportedOperation())
@@ -43,24 +45,33 @@ internal class SolanaTransactionBuilder(
 
     private suspend fun buildUnsignedCoinTransaction(
         destinationAddress: String,
-        amount: Amount,
+        amount: BigDecimal,
     ): Result<SolanaTransaction> {
-        val recentBlockHash = multiNetworkProvider.performRequest { getRecentBlockhash() }.successOr {
-            return Result.Failure(it.error)
-        }
+        val recentBlockHash = multiNetworkProvider.performRequest {
+            getRecentBlockhash()
+        }.successOr { return Result.Failure(it.error) }
         val destinationAccount = PublicKey(destinationAddress)
-        val lamports = SolanaValueConverter.toLamports(amount.value ?: BigDecimal.ZERO)
+        val lamports = SolanaValueConverter.toLamports(amount)
 
-        val transaction = SolanaTransaction(account)
-        transaction.addInstruction(SystemProgram.transfer(account, destinationAccount, lamports))
-        transaction.setRecentBlockHash(recentBlockHash)
+        val transaction = SolanaTransaction(account).apply {
+            SolanaComputeBudgetProgram.setComputeUnitPrice(
+                microLamports = DEFAULT_CU_PRICE,
+            ).let(::addInstruction)
+
+            SolanaComputeBudgetProgram.setComputeUnitLimit(
+                units = DEFAULT_CU_LIMIT,
+            ).let(::addInstruction)
+
+            SystemProgram.transfer(account, destinationAccount, lamports).let(::addInstruction)
+            setRecentBlockHash(recentBlockHash)
+        }
 
         return Result.Success(transaction)
     }
 
     private suspend fun buildUnsignedTokenTransaction(
         destinationAddress: String,
-        amount: Amount,
+        amount: BigDecimal,
         token: Token,
     ): Result<SolanaTransaction> {
         val destinationAccount = PublicKey(destinationAddress)
@@ -91,7 +102,7 @@ internal class SolanaTransactionBuilder(
                 destinationAccount = destinationAccount,
                 sourceAssociatedAccount = tokenInfo.associatedPubK,
                 token = token,
-                amount = amount.value,
+                amount = amount,
             ).successOr { return Result.Failure(it.error) }
 
             val recentBlockHash = multiNetworkProvider.performRequest {
@@ -105,42 +116,53 @@ internal class SolanaTransactionBuilder(
 
     @Suppress("LongParameterList")
     private suspend fun SolanaTransaction.addInstructions(
-        tokenProgramId: SolanaTokenProgramId,
+        tokenProgramId: SolanaTokenProgram.ID,
         mint: PublicKey,
         destinationAssociatedAccount: PublicKey,
         destinationAccount: PublicKey,
         sourceAssociatedAccount: PublicKey,
         token: Token,
-        amount: BigDecimal?,
+        amount: BigDecimal,
     ): SimpleResult {
         val isDestinationAccountExists = isTokenAccountExist(destinationAssociatedAccount)
             .successOr { return SimpleResult.Failure(it.error) }
 
+        SolanaComputeBudgetProgram.setComputeUnitPrice(
+            microLamports = if (isDestinationAccountExists) {
+                DEFAULT_CU_PRICE
+            } else {
+                CREATE_NEW_ACCOUNT_CU_PRICE
+            },
+        ).let(::addInstruction)
+
+        SolanaComputeBudgetProgram.setComputeUnitLimit(
+            units = if (isDestinationAccountExists) {
+                DEFAULT_CU_LIMIT
+            } else {
+                CREATE_NEW_ACCOUNT_CU_LIMIT
+            },
+        ).let(::addInstruction)
+
         if (!isDestinationAccountExists) {
-            val associatedTokenInstruction = AssociatedTokenProgram.createAssociatedTokenAccountInstruction(
+            AssociatedTokenProgram.createAssociatedTokenAccountInstruction(
                 /* associatedProgramId = */ Program.Id.splAssociatedTokenAccount,
                 /* programId = */ tokenProgramId.value,
                 /* mint = */ mint,
                 /* associatedAccount = */ destinationAssociatedAccount,
                 /* owner = */ destinationAccount,
                 /* payer = */ account,
-            )
-            addInstruction(associatedTokenInstruction)
+            ).let(::addInstruction)
         }
 
-        val sendInstruction = createSolanaTransferCheckedInstruction(
+        SolanaTokenProgram.createTransferCheckedInstruction(
             source = sourceAssociatedAccount,
             destination = destinationAssociatedAccount,
-            amount = SolanaValueConverter.toLamports(
-                token = token,
-                value = amount ?: BigDecimal.ZERO,
-            ),
+            amount = SolanaValueConverter.toLamports(token, amount),
             owner = account,
             decimals = token.decimals.toByte(),
             tokenMint = mint,
             programId = tokenProgramId,
-        )
-        addInstruction(sendInstruction)
+        ).let(::addInstruction)
 
         return SimpleResult.Success
     }
@@ -163,5 +185,13 @@ internal class SolanaTransactionBuilder(
                 }
             }
         }
+    }
+
+    private companion object {
+        const val DEFAULT_CU_LIMIT = 200_000
+        const val CREATE_NEW_ACCOUNT_CU_LIMIT = 400_000
+
+        const val DEFAULT_CU_PRICE = 1_000_000L
+        const val CREATE_NEW_ACCOUNT_CU_PRICE = 500_000L
     }
 }
