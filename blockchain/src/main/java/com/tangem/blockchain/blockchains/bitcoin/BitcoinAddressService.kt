@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 import com.tangem.blockchain.blockchains.dash.DashMainNetParams
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
+import com.tangem.blockchain.blockchains.radiant.RadiantMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinTestNetParams
 import com.tangem.blockchain.common.Blockchain
@@ -37,6 +38,7 @@ open class BitcoinAddressService(
         Blockchain.Dash -> DashMainNetParams()
         Blockchain.Ravencoin -> RavencoinMainNetParams()
         Blockchain.RavencoinTestnet -> RavencoinTestNetParams()
+        Blockchain.Radiant -> RadiantMainNetParams()
         else -> error(
             "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}",
         )
