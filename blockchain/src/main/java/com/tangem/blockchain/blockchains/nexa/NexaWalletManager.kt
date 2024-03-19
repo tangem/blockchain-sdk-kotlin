@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.nexa
 
-import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.network.electrum.ElectrumNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
@@ -9,11 +8,6 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.extensions.successOr
-import com.tangem.common.extensions.toHexString
-import org.bitcoinj.core.LegacyAddress
-import org.bitcoinj.core.Sha256Hash
-import org.bitcoinj.params.MainNetParams
-import org.bitcoinj.script.ScriptBuilder
 import java.math.RoundingMode
 
 class NexaWalletManager(
@@ -23,14 +17,8 @@ class NexaWalletManager(
     override val currentHost: String
         get() = networkProvider.baseUrl
 
-    private val bitcoinAddressService = BitcoinAddressService(Blockchain.Bitcoin)
-
     private val addressScriptHash: String by lazy {
-        val legacyAddress = bitcoinAddressService.makeLegacyAddress(wallet.publicKey.blockchainKey)
-        val address = LegacyAddress.fromBase58(MainNetParams(), legacyAddress.value)
-        val p2pkhScript = ScriptBuilder.createOutputScript(address)
-        val sha256Hash = Sha256Hash.hash(p2pkhScript.program)
-        sha256Hash.reversedArray().toHexString()
+        NexaAddressService.getScriptHash(wallet.publicKey.blockchainKey)
     }
 
     override suspend fun updateInternal() {
@@ -40,17 +28,13 @@ class NexaWalletManager(
 
         wallet.setCoinValue(account.confirmedAmount)
 
-        // TODO
         // val outputsRes = networkProvider.getUnspentUTXOs(addressScriptHash)
         // val outputs = outputsRes.successOr { throw it.error }
         //
         // val bitcoinUnspentOut = outputs
         //     .filter {
         //         it.isConfirmed
-        //     }.map {record ->
-        //         // val transaction = networkProvider.getTransaction(record.txHash)
-        //         //     .successOr { throw it.error }
-        //
+        //     }.map { record ->
         //         BitcoinUnspentOutput(
         //             amount = record.value,
         //             outputIndex = record.txPos,
@@ -68,18 +52,36 @@ class NexaWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
-        val transactionSize = TEST_TRANSACTION_SIZE // TODO
+        val transactionSizeBytes = TEST_TRANSACTION_SIZE.toBigDecimal() // TODO
 
-        // TODO research fee rates
-        return networkProvider.getEstimateFee(REQUIRED_NUMBER_OF_CONFIRMATION_BLOCKS).map {
-            val fee = (it.feeInCoinsPer1000Bytes ?: DEFAULT_FEE_IN_COINS_PER_1000_BYTES)
+        val requiredNumberOfBlocks =
+            if (amount.value == null || amount.value < HIGH_VALUE_TRANSACTION) {
+                REQUIRED_NUMBER_OF_CONFIRMATION_BLOCKS
+            } else {
+                REQUIRED_NUMBER_OF_CONFIRMATION_BLOCKS_FOR_HIGH_VALUES
+            }
+
+        // TODO add fee amount restriction
+
+        return networkProvider.getEstimateFee(requiredNumberOfBlocks).map {
+            val minimumFeeRatePerByte = (it.feeInCoinsPer1000Bytes ?: DEFAULT_FEE_IN_COINS_PER_1000_BYTES)
                 .divide(KB_DIVIDER)
-                .multiply(transactionSize.toBigDecimal())
-                .multiply(NORMAL_FEE_RATE)
-                .setScale(Blockchain.Nexa.decimals(), RoundingMode.DOWN)
+            val normalFeeRatePerByte = minimumFeeRatePerByte.multiply(1.5.toBigDecimal())
+                .setScale(0, RoundingMode.HALF_UP)
+            val priorityFeeRatePerByte = minimumFeeRatePerByte.multiply(2.5.toBigDecimal())
+                .setScale(0, RoundingMode.HALF_UP)
 
-            TransactionFee.Single(
-                normal = Fee.Common(Amount(fee, blockchain = Blockchain.Nexa)),
+            val minimumFee = minimumFeeRatePerByte.multiply(transactionSizeBytes)
+                .movePointLeft(Blockchain.Nexa.decimals())
+            val normalFee = normalFeeRatePerByte.multiply(transactionSizeBytes)
+                .movePointLeft(Blockchain.Nexa.decimals())
+            val priorityFee = priorityFeeRatePerByte.multiply(transactionSizeBytes)
+                .movePointLeft(Blockchain.Nexa.decimals())
+
+            TransactionFee.Choosable(
+                minimum = Fee.Common(Amount(minimumFee, Blockchain.Nexa)),
+                normal = Fee.Common(Amount(normalFee, Blockchain.Nexa)),
+                priority = Fee.Common(Amount(priorityFee, Blockchain.Nexa)),
             )
         }
     }
@@ -87,8 +89,9 @@ class NexaWalletManager(
     companion object {
         private const val TEST_TRANSACTION_SIZE = 256 // TODO delete
         private val DEFAULT_FEE_IN_COINS_PER_1000_BYTES = 1000.toBigDecimal()
-        private val NORMAL_FEE_RATE = 0.03.toBigDecimal()
         private val KB_DIVIDER = 1000.toBigDecimal()
-        private const val REQUIRED_NUMBER_OF_CONFIRMATION_BLOCKS = 332
+        private val HIGH_VALUE_TRANSACTION = 2_000_000_000.toBigDecimal()
+        private const val REQUIRED_NUMBER_OF_CONFIRMATION_BLOCKS = 6
+        private const val REQUIRED_NUMBER_OF_CONFIRMATION_BLOCKS_FOR_HIGH_VALUES = 32
     }
 }
