@@ -1,24 +1,15 @@
-package com.tangem.blockchain.blockchains.bitcoincash.cashaddr;
+package com.tangem.blockchain.blockchains.nexa.cashaddr;
+
+import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.BitcoinCashBase32;
+import com.tangem.blockchain.blockchains.kaspa.kaspacashaddr.KaspaAddressDecodedParts;
+import com.tangem.blockchain.blockchains.kaspa.kaspacashaddr.KaspaBase32;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 
-
-/**
- * Copyright (c) 2018 Tobias Brandt
- *
- * Distributed under the MIT software license, see the accompanying file LICENSE
- * or http://www.opensource.org/licenses/mit-license.php.
- */
-
-
-public class CashAddr {
+public class NexaAddr {
 
     public static final String SEPARATOR = ":";
-
-    public static final String MAIN_NET_PREFIX = "bitcoincash";
-
-    public static final String TEST_NET_PREFIX = "bchtest";
 
     private static final BigInteger[] POLYMOD_GENERATORS = new BigInteger[]{new BigInteger("98f2bc8e61", 16),
             new BigInteger("79b76d99e2", 16), new BigInteger("f33e5fb3c4", 16), new BigInteger("ae2eabe2a8", 16),
@@ -28,15 +19,15 @@ public class CashAddr {
 
     String networkPrefix;
 
-    public CashAddr(boolean isTestNet) {
-        if (isTestNet) {
-            networkPrefix = TEST_NET_PREFIX;
+    public NexaAddr(boolean isTestnet) {
+        if (isTestnet) {
+            networkPrefix = "nexatestnet";
         } else {
-            networkPrefix = MAIN_NET_PREFIX;
+            networkPrefix = "nexa";
         }
     }
 
-    public String toCashAddress(BitcoinCashAddressType addressType, byte[] hash) {
+    public String toNexaAddress(NexaAddressType addressType, byte[] hash) {
         byte[] prefixBytes = getPrefixBytes(networkPrefix);
         byte[] payloadBytes = concatenateByteArrays(new byte[]{addressType.getVersionByte()}, hash);
         payloadBytes = convertBits(payloadBytes, 8, 5, false);
@@ -49,12 +40,12 @@ public class CashAddr {
         return networkPrefix + SEPARATOR + cashAddress;
     }
 
-    public BitcoinCashAddressDecodedParts decodeCashAddress(String bitcoinCashAddress) {
+    public NexaAddressDecodedParts decodeNexaAddress(String bitcoinCashAddress) {
         if (!isValidCashAddress(bitcoinCashAddress)) {
             throw new RuntimeException("Address wasn't valid: " + bitcoinCashAddress);
         }
 
-        BitcoinCashAddressDecodedParts decoded = new BitcoinCashAddressDecodedParts();
+        NexaAddressDecodedParts decoded = new NexaAddressDecodedParts();
         String[] addressParts = bitcoinCashAddress.split(SEPARATOR);
         if (addressParts.length == 2) {
             decoded.setPrefix(addressParts[0]);
@@ -74,8 +65,9 @@ public class CashAddr {
         return decoded;
     }
 
-    private static BitcoinCashAddressType getAddressTypeFromVersionByte(byte versionByte) {
-        for (BitcoinCashAddressType addressType : BitcoinCashAddressType.values()) {
+
+    private static NexaAddressType getAddressTypeFromVersionByte(byte versionByte) {
+        for (NexaAddressType addressType : NexaAddressType.values()) {
             if (addressType.getVersionByte() == versionByte) {
                 return addressType;
             }
@@ -85,31 +77,31 @@ public class CashAddr {
     }
 
 
-    public boolean isValidCashAddress(String bitcoinCashAddress) {
+    public boolean isValidCashAddress(String nexaAddress) {
         try {
-            if (!isSingleCase(bitcoinCashAddress))
+            if (!isSingleCase(nexaAddress))
                 return false;
 
-            bitcoinCashAddress = bitcoinCashAddress.toLowerCase();
+            nexaAddress = nexaAddress.toLowerCase();
             String prefix;
 
-            if (bitcoinCashAddress.contains(SEPARATOR)) {
-                String[] split = bitcoinCashAddress.split(SEPARATOR);
+            if (nexaAddress.contains(SEPARATOR)) {
+                String[] split = nexaAddress.split(SEPARATOR);
                 prefix = split[0];
                 if (!prefix.equals(networkPrefix)) {
                     return false;
                 }
-                bitcoinCashAddress = split[1];
+                nexaAddress = split[1];
             } else {
                 prefix = networkPrefix;
             }
-            if (!bitcoinCashAddress.startsWith("q")) {
+            if (!nexaAddress.startsWith("q") && !nexaAddress.startsWith("n")) {
                 return false;
-            } //for now we use P2PKH addresses only
+            } //for now we use P2PKH and TEMPLATE addresses only
 
             byte[] checksumData = concatenateByteArrays(
                     concatenateByteArrays(getPrefixBytes(prefix), new byte[]{0x00}),
-                    BitcoinCashBase32.decode(bitcoinCashAddress));
+                    BitcoinCashBase32.decode(nexaAddress));
 
             byte[] calculateChecksumBytesPolymod = calculateChecksumBytesPolymod(checksumData);
             return new BigInteger(calculateChecksumBytesPolymod).compareTo(BigInteger.ZERO) == 0;
