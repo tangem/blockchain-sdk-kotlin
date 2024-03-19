@@ -133,7 +133,7 @@ enum class Blockchain(
     Manta("manta", "ETH", "Manta"),
     MantaTestnet("manta/test", "ETH", "Manta Testnet"),
     PolygonZkEVM("polygonZkEVM", "ETH", "Polygon zkEVM"),
-    PolygonZkEVMTestnet("polygonZkEVM", "ETH", "Polygon zkEVM Testnet"),
+    PolygonZkEVMTestnet("polygonZkEVM/test", "ETH", "Polygon zkEVM Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
