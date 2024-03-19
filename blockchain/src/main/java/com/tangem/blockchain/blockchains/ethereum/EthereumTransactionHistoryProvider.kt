@@ -12,7 +12,6 @@ import com.tangem.blockchain.common.txhistory.TransactionHistoryState
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
-import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse.Transaction.EthereumSpecific
 import com.tangem.common.extensions.guard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -129,10 +128,10 @@ internal class EthereumTransactionHistoryProvider(
             return if (tx.confirmations > 0) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed
         }
 
-        return when (EthereumSpecific.StatusType.fromType(status)) {
-            EthereumSpecific.StatusType.PENDING -> TransactionStatus.Unconfirmed
-            EthereumSpecific.StatusType.FAILURE -> TransactionStatus.Failed
-            EthereumSpecific.StatusType.OK -> TransactionStatus.Confirmed
+        return when (status) {
+            GetAddressResponse.Transaction.StatusType.PENDING -> TransactionStatus.Unconfirmed
+            GetAddressResponse.Transaction.StatusType.FAILURE -> TransactionStatus.Failed
+            GetAddressResponse.Transaction.StatusType.OK -> TransactionStatus.Confirmed
         }
     }
 
