@@ -308,7 +308,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://moonriver.public.blastapi.io/"),
             EthereumJsonRpcProvider(baseUrl = "https://moonriver-rpc.dwellir.com/"),
             EthereumJsonRpcProvider(
-                baseUrl = "https://moonriver-mainnet.gateway.pokt.network/v1/lb/62a74fdb123e6f003963642f/"
+                baseUrl = "https://moonriver-mainnet.gateway.pokt.network/v1/lb/62a74fdb123e6f003963642f/",
             ),
             EthereumJsonRpcProvider(baseUrl = "https://moonriver.unitedbloc.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://moonriver-rpc.publicnode.com/"),
