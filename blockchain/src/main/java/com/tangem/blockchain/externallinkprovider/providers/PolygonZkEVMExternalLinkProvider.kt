@@ -7,18 +7,17 @@ internal class PolygonZkEVMExternalLinkProvider(isTestNet: Boolean) : ExternalLi
 
     override val testNetTopUpUrl = "https://faucet.quicknode.com/ethereum/sepolia/"
 
-    override val explorerBaseUrl: String =
-        if (isTestNet) {
-            "https://cardona-zkevm.polygonscan.com"
+    override val explorerBaseUrl = if (isTestNet) {
+            "https://cardona-zkevm.polygonscan.com/"
         } else {
-            "https://zkevm.polygonscan.com"
+            "https://zkevm.polygonscan.com/"
         }
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
-        return "$explorerBaseUrl/address/$walletAddress"
+        return "${explorerBaseUrl}address/$walletAddress"
     }
 
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
-        return TxExploreState.Url("$explorerBaseUrl/tx/$transactionHash")
+        return TxExploreState.Url("${explorerBaseUrl}tx/$transactionHash")
     }
 }
