@@ -7,18 +7,17 @@ internal class MoonbeamExternalLinkProvider(isTestNet: Boolean) : ExternalLinkPr
 
     override val testNetTopUpUrl = "https://faucet.moonbeam.network/"
 
-    override val explorerBaseUrl: String =
-        if (isTestNet) {
-            "https://moonbase.moonscan.io"
-        } else {
-            "https://moonscan.io"
-        }
+    override val explorerBaseUrl = if (isTestNet) {
+        "https://moonbase.moonscan.io/"
+    } else {
+        "https://moonscan.io/"
+    }
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
-        return "$explorerBaseUrl/address/$walletAddress"
+        return "${explorerBaseUrl}address/$walletAddress"
     }
 
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
-        return TxExploreState.Url("$explorerBaseUrl/tx/$transactionHash")
+        return TxExploreState.Url("${explorerBaseUrl}tx/$transactionHash")
     }
 }
