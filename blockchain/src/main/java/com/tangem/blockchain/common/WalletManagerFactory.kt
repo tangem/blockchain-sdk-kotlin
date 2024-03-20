@@ -149,7 +149,7 @@ class WalletManagerFactory(
             Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet,
             Blockchain.Moonbeam, Blockchain.MoonbeamTestnet,
             Blockchain.Manta, Blockchain.MantaTestnet,
-            Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet
+            Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet,
             -> EthereumLikeWalletManagerAssembly
 
             Blockchain.Decimal, Blockchain.DecimalTestnet -> DecimalWalletManagerAssembly
