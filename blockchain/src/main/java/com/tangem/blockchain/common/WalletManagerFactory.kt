@@ -147,6 +147,9 @@ class WalletManagerFactory(
             Blockchain.Areon, Blockchain.AreonTestnet,
             Blockchain.PulseChain, Blockchain.PulseChainTestnet,
             Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet,
+            Blockchain.Moonbeam, Blockchain.MoonbeamTestnet,
+            Blockchain.Manta, Blockchain.MantaTestnet,
+            Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet,
             -> EthereumLikeWalletManagerAssembly
 
             Blockchain.Decimal, Blockchain.DecimalTestnet -> DecimalWalletManagerAssembly
@@ -180,7 +183,8 @@ class WalletManagerFactory(
             Blockchain.Hedera, Blockchain.HederaTestnet -> HederaWalletManagerAssembly(dataStorage, accountCreator)
             Blockchain.Nexa, Blockchain.NexaTestnet -> NexaWalletManagerAssembly
             Blockchain.Radiant -> RadiantWalletManagerAssembly
-            Blockchain.Unknown -> error("Unsupported blockchain")
+            Blockchain.Unknown,
+            -> error("Unsupported blockchain")
         }
     }
 
