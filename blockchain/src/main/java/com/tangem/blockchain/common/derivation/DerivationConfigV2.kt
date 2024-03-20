@@ -80,6 +80,7 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.Areon,
             Blockchain.PulseChain,
             Blockchain.ZkSyncEra,
+            Blockchain.Base,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             }
@@ -180,6 +181,7 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.AreonTestnet,
             Blockchain.PulseChainTestnet,
             Blockchain.ZkSyncEraTestnet,
+            Blockchain.BaseTestnet,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
