@@ -16,6 +16,10 @@ public class CashAddr {
 
     public static final String SEPARATOR = ":";
 
+    public static final String MAIN_NET_PREFIX = "bitcoincash";
+
+    public static final String TEST_NET_PREFIX = "bchtest";
+
     private static final BigInteger[] POLYMOD_GENERATORS = new BigInteger[]{new BigInteger("98f2bc8e61", 16),
             new BigInteger("79b76d99e2", 16), new BigInteger("f33e5fb3c4", 16), new BigInteger("ae2eabe2a8", 16),
             new BigInteger("1e4f43e470", 16)};
@@ -24,8 +28,12 @@ public class CashAddr {
 
     String networkPrefix;
 
-    public CashAddr(BitcoinCashLikeAddressPrefix prefixType) {
-        networkPrefix = prefixType.getAddressPrefix();
+    public CashAddr(boolean isTestNet) {
+        if (isTestNet) {
+            networkPrefix = TEST_NET_PREFIX;
+        } else {
+            networkPrefix = MAIN_NET_PREFIX;
+        }
     }
 
     public String toCashAddress(BitcoinCashAddressType addressType, byte[] hash) {

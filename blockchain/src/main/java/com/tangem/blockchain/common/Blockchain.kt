@@ -128,6 +128,12 @@ enum class Blockchain(
     ZkSyncEraTestnet("zkSyncEra/test", "ETH", "ZkSync Era Testnet"),
     Nexa("NEXA", "NEXA", "Nexa"),
     NexaTestnet("NEXA/test", "NEXA", "Nexa Testnet"),
+    Moonbeam("moonbeam", "GLMR", "Moonbeam"),
+    MoonbeamTestnet("moonbeam/test", "GLMR", "Moonbeam Testnet"),
+    Manta("manta", "ETH", "Manta"),
+    MantaTestnet("manta/test", "ETH", "Manta Testnet"),
+    PolygonZkEVM("polygonZkEVM", "ETH", "Polygon zkEVM"),
+    PolygonZkEVMTestnet("polygonZkEVM/test", "ETH", "Polygon zkEVM Testnet"),
     Radiant("radiant", "RXD", "Radiant"),
     Base("Base", "ETH", "Base"),
     BaseTestnet("Base/test", "ETH", "Base Testnet"),
@@ -201,6 +207,9 @@ enum class Blockchain(
         Areon, AreonTestnet,
         PulseChain, PulseChainTestnet,
         ZkSyncEra, ZkSyncEraTestnet,
+        Moonbeam, MoonbeamTestnet,
+        Manta, MantaTestnet,
+        PolygonZkEVM, PolygonZkEVMTestnet,
         Base, BaseTestnet,
         -> 18
 
@@ -259,6 +268,9 @@ enum class Blockchain(
             Areon, AreonTestnet,
             PulseChain, PulseChainTestnet,
             ZkSyncEra, ZkSyncEraTestnet,
+            Moonbeam, MoonbeamTestnet,
+            Manta, MantaTestnet,
+            PolygonZkEVM, PolygonZkEVMTestnet,
             Base, BaseTestnet,
             -> EthereumAddressService()
 
@@ -287,7 +299,7 @@ enum class Blockchain(
             Kaspa -> KaspaAddressService()
             Chia, ChiaTestnet -> ChiaAddressService(this)
             Hedera, HederaTestnet -> HederaAddressService(this.isTestnet())
-            Nexa, NexaTestnet -> NexaAddressService(blockchain = this)
+            Nexa, NexaTestnet -> NexaAddressService(this.isTestnet())
             Unknown -> error("unsupported blockchain")
         }
     }
@@ -359,6 +371,9 @@ enum class Blockchain(
             Areon, AreonTestnet -> AreonTestnet
             PulseChain, PulseChainTestnet -> PulseChainTestnet
             ZkSyncEra, ZkSyncEraTestnet -> ZkSyncEraTestnet
+            Moonbeam, MoonbeamTestnet -> MoonbeamTestnet
+            Manta, MantaTestnet -> MantaTestnet
+            PolygonZkEVM, PolygonZkEVMTestnet -> PolygonTestnet
             Base, BaseTestnet -> BaseTestnet
             else -> null
         }
@@ -414,6 +429,9 @@ enum class Blockchain(
             PulseChain, PulseChainTestnet,
             ZkSyncEra, ZkSyncEraTestnet,
             Nexa, NexaTestnet,
+            Moonbeam, MoonbeamTestnet,
+            Manta, MantaTestnet,
+            PolygonZkEVM, PolygonZkEVMTestnet,
             Radiant,
             Base, BaseTestnet,
             -> listOf(EllipticCurve.Secp256k1)
@@ -478,7 +496,14 @@ enum class Blockchain(
             AreonTestnet -> Chain.AreonTestnet.id
             PulseChain -> Chain.PulseChain.id
             PulseChainTestnet -> Chain.PulseChainTestnet.id
+            ZkSyncEra -> Chain.ZkSyncEra.id
             ZkSyncEraTestnet -> Chain.ZkSyncEraTestnet.id
+            Moonbeam -> Chain.Moonbeam.id
+            MoonbeamTestnet -> Chain.MoonbeamTestnet.id
+            Manta -> Chain.Manta.id
+            MantaTestnet -> Chain.MantaTestnet.id
+            PolygonZkEVM -> Chain.PolygonZkEVM.id
+            PolygonZkEVMTestnet -> Chain.PolygonZkEVMTestnet.id
             BaseTestnet -> Chain.BaseTestnet.id
             else -> null
         }
