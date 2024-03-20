@@ -185,4 +185,6 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     PulseChainTestnet(id = 943, blockchain = Blockchain.PulseChainTestnet),
     ZkSyncEra(id = 324, blockchain = Blockchain.ZkSyncEra),
     ZkSyncEraTestnet(id = 300, blockchain = Blockchain.ZkSyncEraTestnet),
+    Base(id = 8453, blockchain = Blockchain.Base),
+    BaseTestnet(id = 84532, blockchain = Blockchain.BaseTestnet),
 }
