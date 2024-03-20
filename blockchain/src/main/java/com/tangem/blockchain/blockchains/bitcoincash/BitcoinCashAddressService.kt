@@ -2,7 +2,6 @@ package com.tangem.blockchain.blockchains.bitcoincash
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.BitcoinCashAddressType
-import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.BitcoinCashLikeAddressPrefix
 import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.CashAddr
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.Address
@@ -16,8 +15,8 @@ import com.tangem.common.extensions.toCompressedPublicKey
 class BitcoinCashAddressService(blockchain: Blockchain) : AddressService() {
 
     private val cashAddr = when (blockchain) {
-        Blockchain.BitcoinCash -> CashAddr(BitcoinCashLikeAddressPrefix.BitcoinCash)
-        Blockchain.BitcoinCashTestnet -> CashAddr(BitcoinCashLikeAddressPrefix.BitcoinCashTestnet)
+        Blockchain.BitcoinCash -> CashAddr(false)
+        Blockchain.BitcoinCashTestnet -> CashAddr(true)
         else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
     private val bitcoinAddressService = BitcoinAddressService(Blockchain.Bitcoin)
