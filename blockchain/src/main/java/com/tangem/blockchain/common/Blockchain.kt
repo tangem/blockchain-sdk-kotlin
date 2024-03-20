@@ -129,6 +129,8 @@ enum class Blockchain(
     Nexa("NEXA", "NEXA", "Nexa"),
     NexaTestnet("NEXA/test", "NEXA", "Nexa Testnet"),
     Radiant("radiant", "RXD", "Radiant"),
+    Base("Base", "ETH", "Base"),
+    BaseTestnet("Base/test", "ETH", "Base Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -199,6 +201,7 @@ enum class Blockchain(
         Areon, AreonTestnet,
         PulseChain, PulseChainTestnet,
         ZkSyncEra, ZkSyncEraTestnet,
+        Base, BaseTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -256,6 +259,7 @@ enum class Blockchain(
             Areon, AreonTestnet,
             PulseChain, PulseChainTestnet,
             ZkSyncEra, ZkSyncEraTestnet,
+            Base, BaseTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -355,6 +359,7 @@ enum class Blockchain(
             Areon, AreonTestnet -> AreonTestnet
             PulseChain, PulseChainTestnet -> PulseChainTestnet
             ZkSyncEra, ZkSyncEraTestnet -> ZkSyncEraTestnet
+            Base, BaseTestnet -> BaseTestnet
             else -> null
         }
     }
@@ -410,6 +415,7 @@ enum class Blockchain(
             ZkSyncEra, ZkSyncEraTestnet,
             Nexa, NexaTestnet,
             Radiant,
+            Base, BaseTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -473,6 +479,7 @@ enum class Blockchain(
             PulseChain -> Chain.PulseChain.id
             PulseChainTestnet -> Chain.PulseChainTestnet.id
             ZkSyncEraTestnet -> Chain.ZkSyncEraTestnet.id
+            BaseTestnet -> Chain.BaseTestnet.id
             else -> null
         }
     }

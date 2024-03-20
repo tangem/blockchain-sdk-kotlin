@@ -147,6 +147,7 @@ class WalletManagerFactory(
             Blockchain.Areon, Blockchain.AreonTestnet,
             Blockchain.PulseChain, Blockchain.PulseChainTestnet,
             Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet,
+            Blockchain.Base, Blockchain.BaseTestnet,
             -> EthereumLikeWalletManagerAssembly
 
             Blockchain.Decimal, Blockchain.DecimalTestnet -> DecimalWalletManagerAssembly
