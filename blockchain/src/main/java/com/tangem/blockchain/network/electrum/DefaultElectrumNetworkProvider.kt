@@ -8,18 +8,14 @@ import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.network.electrum.api.ElectrumApiService
 import com.tangem.blockchain.network.electrum.api.WebSocketElectrumApiService
 import kotlinx.coroutines.delay
-import okhttp3.OkHttpClient
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class DefaultElectrumNetworkProvider(
     override val baseUrl: String,
     private val blockchain: Blockchain,
+    private val service: WebSocketElectrumApiService,
+    private val supportedProtocolVersion: String,
 ) : ElectrumNetworkProvider {
-
-    private val service: WebSocketElectrumApiService = WebSocketElectrumApiService(
-        wssUrl = baseUrl,
-        okHttpClient = OkHttpClient(),
-    )
 
     private val serverVersionRequested = AtomicBoolean(false)
 
@@ -86,9 +82,9 @@ internal class DefaultElectrumNetworkProvider(
             return null
         }
 
-        return when (val serverInfo = service.getServerVersion()) {
+        return when (val serverInfo = service.getServerVersion(supportedProtocolVersion = supportedProtocolVersion)) {
             is Result.Success -> {
-                if (serverInfo.data.versionNumber == ElectrumApiService.SUPPORTED_PROTOCOL_VERSION) {
+                if (serverInfo.data.versionNumber == supportedProtocolVersion) {
                     serverVersionRequested.set(true)
                     null
                 } else { // node doesn't support requested electrum protocol version
