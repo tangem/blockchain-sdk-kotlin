@@ -5,7 +5,7 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class ZkSyncEraExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
-    override val testNetTopUpUrl: String = "https://faucet.v4.testnet.pulsechain.com/"
+    override val testNetTopUpUrl: String = "https://faucet.chainstack.com/zksync-testnet-faucet/"
 
     override val explorerBaseUrl: String = if (isTestnet) {
         "https://sepolia.explorer.zksync.io/"
