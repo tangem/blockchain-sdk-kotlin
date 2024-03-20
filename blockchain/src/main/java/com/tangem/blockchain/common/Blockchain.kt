@@ -135,6 +135,14 @@ enum class Blockchain(
     PolygonZkEVM("polygonZkEVM", "ETH", "Polygon zkEVM"),
     PolygonZkEVMTestnet("polygonZkEVM/test", "ETH", "Polygon zkEVM Testnet"),
     Radiant("radiant", "RXD", "Radiant"),
+    Moonriver("moonriver", "MOVR", "Moonriver"),
+    MoonriverTestnet("moonriver/test", "MOVR", "Moonriver Testnet"),
+    Mantle("mantle", "MNT", "Mantle"),
+    MantleTestnet("mantle/test", "MNT", "Mantle Testnet"),
+    Flare("flare", "FLR", "Flare"),
+    FlareTestnet("flare/test", "FLR", "Flare Testnet"),
+    Taraxa("taraxa", "TARA", "Taraxa"),
+    TaraxaTestnet("taraxa/test", "TARA", "Taraxa Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -208,6 +216,10 @@ enum class Blockchain(
         Moonbeam, MoonbeamTestnet,
         Manta, MantaTestnet,
         PolygonZkEVM, PolygonZkEVMTestnet,
+        Moonriver, MoonriverTestnet,
+        Mantle, MantleTestnet,
+        Flare, FlareTestnet,
+        Taraxa, TaraxaTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -268,6 +280,10 @@ enum class Blockchain(
             Moonbeam, MoonbeamTestnet,
             Manta, MantaTestnet,
             PolygonZkEVM, PolygonZkEVMTestnet,
+            Moonriver, MoonriverTestnet,
+            Mantle, MantleTestnet,
+            Flare, FlareTestnet,
+            Taraxa, TaraxaTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -370,10 +386,15 @@ enum class Blockchain(
             Moonbeam, MoonbeamTestnet -> MoonbeamTestnet
             Manta, MantaTestnet -> MantaTestnet
             PolygonZkEVM, PolygonZkEVMTestnet -> PolygonTestnet
+            Moonriver, MoonriverTestnet -> MoonriverTestnet
+            Mantle, MantleTestnet -> MantleTestnet
+            Flare, FlareTestnet -> FlareTestnet
+            Taraxa, TaraxaTestnet -> TaraxaTestnet
             else -> null
         }
     }
 
+    @Suppress("LongMethod")
     fun getSupportedCurves(): List<EllipticCurve> {
         return when (this) {
             Unknown -> emptyList()
@@ -428,6 +449,10 @@ enum class Blockchain(
             Manta, MantaTestnet,
             PolygonZkEVM, PolygonZkEVMTestnet,
             Radiant,
+            Moonriver, MoonriverTestnet,
+            Mantle, MantleTestnet,
+            Flare, FlareTestnet,
+            Taraxa, TaraxaTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
