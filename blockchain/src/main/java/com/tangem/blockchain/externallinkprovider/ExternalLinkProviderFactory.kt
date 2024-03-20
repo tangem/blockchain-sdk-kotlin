@@ -5,7 +5,7 @@ import com.tangem.blockchain.externallinkprovider.providers.*
 
 internal object ExternalLinkProviderFactory {
 
-    @Suppress("CyclomaticComplexMethod")
+    @Suppress("CyclomaticComplexMethod", "LongMethod")
     fun makeProvider(blockchain: Blockchain): ExternalLinkProvider {
         val isTestnet = blockchain.isTestnet()
         return when (blockchain) {
