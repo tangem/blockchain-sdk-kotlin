@@ -523,6 +523,14 @@ enum class Blockchain(
             MantaTestnet -> Chain.MantaTestnet.id
             PolygonZkEVM -> Chain.PolygonZkEVM.id
             PolygonZkEVMTestnet -> Chain.PolygonZkEVMTestnet.id
+            Moonriver -> Chain.Moonriver.id
+            MoonriverTestnet -> Chain.MoonriverTestnet.id
+            Mantle -> Chain.Mantle.id
+            MantleTestnet -> Chain.MantleTestnet.id
+            Flare -> Chain.Flare.id
+            FlareTestnet -> Chain.FlareTestnet.id
+            Taraxa -> Chain.Taraxa.id
+            TaraxaTestnet -> Chain.TaraxaTestnet.id
             else -> null
         }
     }
