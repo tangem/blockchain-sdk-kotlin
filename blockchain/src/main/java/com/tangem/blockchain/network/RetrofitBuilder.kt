@@ -1,5 +1,6 @@
 package com.tangem.blockchain.network
 
+import android.annotation.SuppressLint
 import com.squareup.moshi.*
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
@@ -12,7 +13,12 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.math.BigDecimal
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 fun createRetrofitInstance(baseUrl: String, headerInterceptors: List<Interceptor> = emptyList()): Retrofit =
     Retrofit.Builder()
@@ -38,6 +44,31 @@ object BlockchainSdkRetrofitBuilder {
             builder.readTimeout(it.read.time, it.read.unit)
             builder.writeTimeout(it.write.time, it.write.unit)
         }
+
+        return builder.build()
+    }
+
+    // FIXME: Remove before releasing Radiant
+    internal fun createOkhttpClientForRadiant(): OkHttpClient {
+        val builder = OkHttpClient.Builder()
+
+        @SuppressLint("CustomX509TrustManager")
+        val trustAllCerts = arrayOf<TrustManager>(
+            object : X509TrustManager {
+                @SuppressLint("TrustAllX509TrustManager")
+                override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
+
+                @SuppressLint("TrustAllX509TrustManager")
+                override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
+                override fun getAcceptedIssuers(): Array<X509Certificate> {
+                    return arrayOf()
+                }
+            },
+        )
+        val sslContext = SSLContext.getInstance("SSL")
+        sslContext.init(null, trustAllCerts, SecureRandom())
+        builder.sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
+        builder.hostnameVerifier { _, _ -> true }
 
         return builder.build()
     }
