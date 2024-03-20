@@ -259,6 +259,19 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://zksync-era-sepolia.blockpi.network/v1/rpc/public/"),
         )
 
+        Blockchain.Base -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://base.meowrpc.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://base-rpc.publicnode.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://base.drpc.org/"),
+            EthereumJsonRpcProvider(baseUrl = "https://base-pokt.nodies.app/"),
+        )
+
+        Blockchain.BaseTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://sepolia.base.org/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.notadegen.com/base/sepolia/"),
+            EthereumJsonRpcProvider(baseUrl = "https://base-sepolia-rpc.publicnode.com/"),
+        )
+
         else -> error("$this isn't supported")
     }
 
