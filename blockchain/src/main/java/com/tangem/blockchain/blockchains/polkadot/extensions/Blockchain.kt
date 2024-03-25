@@ -27,3 +27,10 @@ internal fun Blockchain.getPolkadotHosts(): List<String> {
         else -> error("$this isn't supported")
     }
 }
+
+internal fun Blockchain.getPolkadotExtrinsicCheckHost(): String {
+    return when (this) {
+        Blockchain.Polkadot -> "https://polkadot.api.subscan.io/"
+        else -> error("$this isn't supported")
+    }
+}
