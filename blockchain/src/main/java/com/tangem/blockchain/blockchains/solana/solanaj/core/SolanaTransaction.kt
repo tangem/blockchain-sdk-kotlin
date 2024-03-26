@@ -8,7 +8,7 @@ import org.p2p.solanaj.core.Transaction
 /**
  * Created by Anton Zhilenkov on 26/01/2022.
  */
-internal class SolanaTransaction(
+class SolanaTransaction(
     feePayerPublicKey: PublicKey,
 ) : Transaction(SolanaMessage(feePayerPublicKey)) {
 
