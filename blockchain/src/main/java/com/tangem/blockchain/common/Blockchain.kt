@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.blockchains.aptos.AptosAddressService
 import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
@@ -262,10 +263,10 @@ enum class Blockchain(
             TerraV1,
             TerraV2,
             Near, NearTestnet,
-            Aptos, AptosTestnet,
             Algorand, AlgorandTestnet,
             -> TrustWalletAddressService(blockchain = this)
 
+            Aptos, AptosTestnet -> AptosAddressService(isTestnet())
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
             Chia, ChiaTestnet -> ChiaAddressService(this)
