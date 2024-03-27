@@ -69,6 +69,9 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.ZkSyncEra,
             Blockchain.Manta,
             Blockchain.PolygonZkEVM,
+            Blockchain.Mantle,
+            Blockchain.Flare,
+            Blockchain.Taraxa,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             }
@@ -173,6 +176,9 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Moonbeam -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1284'/0'/0/0"))
             }
+            Blockchain.Moonriver -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/1285'/0'/0/0"))
+            }
             Blockchain.Chia, Blockchain.ChiaTestnet -> mapOf(AddressType.Default to DerivationPath(""))
 
             Blockchain.Unknown,
@@ -211,6 +217,10 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.MoonbeamTestnet,
             Blockchain.MantaTestnet,
             Blockchain.PolygonZkEVMTestnet,
+            Blockchain.MoonriverTestnet,
+            Blockchain.MantleTestnet,
+            Blockchain.FlareTestnet,
+            Blockchain.TaraxaTestnet,
             -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             }
