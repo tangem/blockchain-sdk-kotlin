@@ -246,6 +246,110 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://rpc-testnet-pulsechain.g4mm4.io/"),
         )
 
+        Blockchain.ZkSyncEra -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://mainnet.era.zksync.io/"),
+            EthereumJsonRpcProvider(baseUrl = "https://zksync-era.blockpi.network/v1/rpc/public/"),
+            EthereumJsonRpcProvider(baseUrl = "https://1rpc.io/zksync2-era/"),
+            EthereumJsonRpcProvider(baseUrl = "https://zksync.meowrpc.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://zksync.drpc.org/"),
+        )
+
+        Blockchain.ZkSyncEraTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://sepolia.era.zksync.dev/"),
+            EthereumJsonRpcProvider(baseUrl = "https://zksync-era-sepolia.blockpi.network/v1/rpc/public/"),
+        )
+
+        Blockchain.Moonbeam -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.api.moonbeam.network/"),
+            EthereumJsonRpcProvider(baseUrl = "https://1rpc.io/glmr/"),
+            EthereumJsonRpcProvider(baseUrl = "https://moonbeam.public.blastapi.io/"),
+            EthereumJsonRpcProvider(baseUrl = "https://moonbeam-rpc.dwellir.com/"),
+            EthereumJsonRpcProvider(
+                baseUrl = "https://moonbeam-mainnet.gateway.pokt.network/v1/lb/629a2b5650ec8c0039bb30f0/",
+            ),
+            EthereumJsonRpcProvider(baseUrl = "https://moonbeam.unitedbloc.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://moonbeam-rpc.publicnode.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/moonbeam/"),
+        )
+
+        Blockchain.MoonbeamTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://moonbase-alpha.public.blastapi.io/"),
+            EthereumJsonRpcProvider(baseUrl = "https://moonbase-rpc.dwellir.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.api.moonbase.moonbeam.network/"),
+            EthereumJsonRpcProvider(baseUrl = "https://moonbase.unitedbloc.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://moonbeam-alpha.api.onfinality.io/public/"),
+        )
+
+        Blockchain.Manta -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://manta-pacific.drpc.org/"),
+            EthereumJsonRpcProvider(baseUrl = "https://pacific-rpc.manta.network/http/"),
+            EthereumJsonRpcProvider(baseUrl = "https://1rpc.io/manta/"),
+        )
+
+        Blockchain.MantaTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://pacific-rpc.testnet.manta.network/http/"),
+        )
+
+        Blockchain.PolygonZkEVM -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://1rpc.io/polygon/zkevm/"),
+            EthereumJsonRpcProvider(baseUrl = "https://polygon-zkevm.drpc.org/"),
+            EthereumJsonRpcProvider(baseUrl = "https://polygon-zkevm-mainnet.public.blastapi.io/"),
+            EthereumJsonRpcProvider(baseUrl = "https://zkevm-rpc.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://polygon-zkevm.blockpi.network/v1/rpc/public/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.polygon-zkevm.gateway.fm/"),
+            EthereumJsonRpcProvider(baseUrl = "https://api.zan.top/node/v1/polygonzkevm/mainnet/public/"),
+        )
+
+        Blockchain.PolygonZkEVMTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.cardona.zkevm-rpc.com/"),
+        )
+
+        Blockchain.Moonriver -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://moonriver.public.blastapi.io/"),
+            EthereumJsonRpcProvider(baseUrl = "https://moonriver-rpc.dwellir.com/"),
+            EthereumJsonRpcProvider(
+                baseUrl = "https://moonriver-mainnet.gateway.pokt.network/v1/lb/62a74fdb123e6f003963642f/",
+            ),
+            EthereumJsonRpcProvider(baseUrl = "https://moonriver.unitedbloc.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://moonriver-rpc.publicnode.com/"),
+        )
+
+        Blockchain.MoonriverTestnet -> listOf(
+            EthereumJsonRpcProvider("https://rpc.api.moonbase.moonbeam.network/"),
+        )
+
+        Blockchain.Mantle -> listOf(
+            EthereumJsonRpcProvider("https://rpc.mantle.xyz/"),
+            EthereumJsonRpcProvider("https://mantle-rpc.publicnode.com/"),
+            EthereumJsonRpcProvider("https://mantle-mainnet.public.blastapi.io/"),
+            EthereumJsonRpcProvider("https://rpc.ankr.com/mantle/"),
+            EthereumJsonRpcProvider("https://1rpc.io/mantle/"),
+        )
+
+        Blockchain.MantleTestnet -> listOf(
+            EthereumJsonRpcProvider("https://rpc.testnet.mantle.xyz/"),
+        )
+
+        Blockchain.Flare -> listOf(
+            EthereumJsonRpcProvider("https://flare-api.flare.network/ext/bc/C/rpc/"),
+            EthereumJsonRpcProvider("https://flare.rpc.thirdweb.com/"),
+            EthereumJsonRpcProvider("https://flare-bundler.etherspot.io/"),
+            EthereumJsonRpcProvider("https://rpc.ankr.com/flare/"),
+            EthereumJsonRpcProvider("https://flare.solidifi.app/ext/C/rpc/"),
+        )
+
+        Blockchain.FlareTestnet -> listOf(
+            EthereumJsonRpcProvider("https://coston2-api.flare.network/ext/C/rpc/"),
+        )
+
+        Blockchain.Taraxa -> listOf(
+            EthereumJsonRpcProvider("https://rpc.mainnet.taraxa.io/"), // the only existing provider
+        )
+
+        Blockchain.TaraxaTestnet -> listOf(
+            EthereumJsonRpcProvider("https://rpc.testnet.taraxa.io/"),
+        )
+
         else -> error("$this isn't supported")
     }
 
