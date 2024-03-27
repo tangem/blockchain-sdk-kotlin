@@ -4,15 +4,18 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
 
-class CardanoNetworkService(providers: List<CardanoNetworkProvider>) : CardanoNetworkProvider {
+internal class CardanoNetworkService(providers: List<CardanoNetworkProvider>) : CardanoNetworkProvider {
 
-    private val multiProvider = MultiNetworkProvider(providers)
     override val baseUrl: String
         get() = multiProvider.currentProvider.baseUrl
 
-    override suspend fun getInfo(addresses: Set<String>): Result<CardanoAddressResponse> =
-        multiProvider.performRequest(CardanoNetworkProvider::getInfo, addresses)
+    private val multiProvider = MultiNetworkProvider(providers)
 
-    override suspend fun sendTransaction(transaction: ByteArray): SimpleResult =
-        multiProvider.performRequest(CardanoNetworkProvider::sendTransaction, transaction)
+    override suspend fun getInfo(input: InfoInput): Result<CardanoAddressResponse> {
+        return multiProvider.performRequest(CardanoNetworkProvider::getInfo, input)
+    }
+
+    override suspend fun sendTransaction(transaction: ByteArray): SimpleResult {
+        return multiProvider.performRequest(CardanoNetworkProvider::sendTransaction, transaction)
+    }
 }
