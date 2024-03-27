@@ -2,9 +2,9 @@ package com.tangem.blockchain.blockchains.cardano.network.rosetta
 
 import co.nstant.`in`.cbor.CborBuilder
 import co.nstant.`in`.cbor.CborEncoder
-import com.tangem.blockchain.blockchains.cardano.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
+import com.tangem.blockchain.blockchains.cardano.network.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.RosettaNetwork
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaAccountIdentifier
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaAddressBody
@@ -66,7 +66,12 @@ class RosettaNetworkProvider(rosettaNetwork: RosettaNetwork) : CardanoNetworkPro
                 val balance = unspentOutputs.sumOf { it.amount }
 
                 Result.Success(
-                    CardanoAddressResponse(balance, unspentOutputs, emptyList()),
+                    CardanoAddressResponse(
+                        balance = balance,
+                        tokenBalances = emptyMap(),
+                        unspentOutputs = unspentOutputs,
+                        recentTransactionsHashes = emptyList(),
+                    ),
                 )
             }
         } catch (exception: Exception) {
