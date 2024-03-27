@@ -113,12 +113,12 @@ class Wallet(
         val path: DerivationPath,
     )
 
-    class PublicKey(
+    open class PublicKey(
         val seedKey: ByteArray,
         val derivationType: DerivationType?,
     ) {
 
-        val blockchainKey: ByteArray
+        open val blockchainKey: ByteArray
             get() = when (derivationType) {
                 null -> seedKey
                 is DerivationType.Plain -> derivationType.hdKey.extendedPublicKey.publicKey
