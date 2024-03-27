@@ -1,9 +1,9 @@
 package com.tangem.blockchain.blockchains.cardano.network.adalite
 
-import com.squareup.moshi.Json
-import com.tangem.blockchain.blockchains.cardano.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
+import com.tangem.blockchain.blockchains.cardano.network.CardanoUnspentOutput
+import com.tangem.blockchain.blockchains.cardano.network.adalite.request.AdaliteSendBody
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
@@ -30,12 +30,12 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
         return try {
             coroutineScope {
                 val addressesDeferred = addresses.map { retryIO { async { api.getAddressData(it) } } }
-                val unspentsDeferred = retryIO { async { api.getUnspents(addresses.toList()) } }
+                val unspentsDeferred = retryIO { async { api.getUnspentOutputs(addresses.toList()) } }
 
                 val addressesData = addressesDeferred.map { it.await() }
                 val unspents = unspentsDeferred.await()
 
-                val cardanoUnspents = unspents.data
+                val cardanoUnspents = unspents.successData
                     // we need to ignore unspents with tokens (until we start supporting tokens)
                     .filter { it.amountData.tokens.isEmpty() }
                     .map {
@@ -47,7 +47,7 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
                         )
                     }
                 val recentTransactionsHashes = addressesData
-                    .flatMap { it.data!!.transactions!!.mapNotNull { it.hash } }
+                    .flatMap { it.successData.transactions!!.mapNotNull { it.hash } }
 
                 Result.Success(
                     CardanoAddressResponse(
@@ -83,8 +83,3 @@ class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
         const val HTTP_BAD_REQUEST_CODE = 400
     }
 }
-
-data class AdaliteSendBody(
-    @Json(name = "signedTx")
-    val signedTransaction: String,
-)
