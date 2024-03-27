@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.blockchains.aptos.AptosAddressService
 import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
@@ -10,6 +11,7 @@ import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
+import com.tangem.blockchain.blockchains.nexa.NexaAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
@@ -123,6 +125,25 @@ enum class Blockchain(
     AreonTestnet("areon/test", "TAREA", "Areon Network Testnet"),
     PulseChain("pls", "PLS", "PulseChain"),
     PulseChainTestnet("pls/test", "tPLS", "PulseChain Testnet v4"),
+    ZkSyncEra("zkSyncEra", "ETH", "ZkSync Era"),
+    ZkSyncEraTestnet("zkSyncEra/test", "ETH", "ZkSync Era Testnet"),
+    Nexa("NEXA", "NEXA", "Nexa"),
+    NexaTestnet("NEXA/test", "NEXA", "Nexa Testnet"),
+    Moonbeam("moonbeam", "GLMR", "Moonbeam"),
+    MoonbeamTestnet("moonbeam/test", "GLMR", "Moonbeam Testnet"),
+    Manta("manta", "ETH", "Manta"),
+    MantaTestnet("manta/test", "ETH", "Manta Testnet"),
+    PolygonZkEVM("polygonZkEVM", "ETH", "Polygon zkEVM"),
+    PolygonZkEVMTestnet("polygonZkEVM/test", "ETH", "Polygon zkEVM Testnet"),
+    Radiant("radiant", "RXD", "Radiant"),
+    Moonriver("moonriver", "MOVR", "Moonriver"),
+    MoonriverTestnet("moonriver/test", "MOVR", "Moonriver Testnet"),
+    Mantle("mantle", "MNT", "Mantle"),
+    MantleTestnet("mantle/test", "MNT", "Mantle Testnet"),
+    Flare("flare", "FLR", "Flare"),
+    FlareTestnet("flare/test", "FLR", "Flare Testnet"),
+    Taraxa("taraxa", "TARA", "Taraxa"),
+    TaraxaTestnet("taraxa/test", "TARA", "Taraxa Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -130,6 +151,9 @@ enum class Blockchain(
     @Suppress("MagicNumber")
     fun decimals(): Int = when (this) {
         Unknown -> 0
+
+        Nexa, NexaTestnet,
+        -> 2
 
         Cardano,
         XRP,
@@ -153,6 +177,7 @@ enum class Blockchain(
         Ravencoin, RavencoinTestnet,
         Aptos, AptosTestnet,
         Hedera, HederaTestnet,
+        Radiant,
         -> 8
 
         Solana, SolanaTestnet,
@@ -188,6 +213,14 @@ enum class Blockchain(
         Aurora, AuroraTestnet,
         Areon, AreonTestnet,
         PulseChain, PulseChainTestnet,
+        ZkSyncEra, ZkSyncEraTestnet,
+        Moonbeam, MoonbeamTestnet,
+        Manta, MantaTestnet,
+        PolygonZkEVM, PolygonZkEVMTestnet,
+        Moonriver, MoonriverTestnet,
+        Mantle, MantleTestnet,
+        Flare, FlareTestnet,
+        Taraxa, TaraxaTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -219,6 +252,7 @@ enum class Blockchain(
             Ducatus,
             Dash,
             Ravencoin, RavencoinTestnet,
+            Radiant,
             -> BitcoinAddressService(this)
 
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
@@ -243,6 +277,14 @@ enum class Blockchain(
             Aurora, AuroraTestnet,
             Areon, AreonTestnet,
             PulseChain, PulseChainTestnet,
+            ZkSyncEra, ZkSyncEraTestnet,
+            Moonbeam, MoonbeamTestnet,
+            Manta, MantaTestnet,
+            PolygonZkEVM, PolygonZkEVMTestnet,
+            Moonriver, MoonriverTestnet,
+            Mantle, MantleTestnet,
+            Flare, FlareTestnet,
+            Taraxa, TaraxaTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -262,33 +304,32 @@ enum class Blockchain(
             TerraV1,
             TerraV2,
             Near, NearTestnet,
-            Aptos, AptosTestnet,
             Algorand, AlgorandTestnet,
             -> TrustWalletAddressService(blockchain = this)
 
+            Aptos, AptosTestnet -> AptosAddressService(isTestnet())
             Tron, TronTestnet -> TronAddressService()
             Kaspa -> KaspaAddressService()
             Chia, ChiaTestnet -> ChiaAddressService(this)
             Hedera, HederaTestnet -> HederaAddressService(this.isTestnet())
+            Nexa, NexaTestnet -> NexaAddressService(this.isTestnet())
             Unknown -> error("unsupported blockchain")
         }
     }
 
-    fun getShareScheme(): String? = when (this) {
-        Bitcoin, BitcoinTestnet -> "bitcoin"
-        Ethereum, EthereumTestnet -> "ethereum"
-        Litecoin -> "litecoin"
-        Binance, BinanceTestnet -> "bnb"
-        else -> null
+    fun getShareScheme(): List<String> = when (this) {
+        Bitcoin, BitcoinTestnet -> listOf("bitcoin:")
+        Ethereum, EthereumTestnet -> listOf("ethereum:", "ethereum:pay-") // "pay-" defined in ERC-681
+        Litecoin -> listOf("litecoin:")
+        Binance, BinanceTestnet -> listOf("bnb:")
+        Dogecoin -> listOf("doge:", "dogecoin:")
+        XRP -> listOf("ripple:", "xrpl:", "xrp:")
+        else -> emptyList()
     }
 
-    fun getShareUri(address: String): String = getShareScheme()?.plus(":$address") ?: address
+    fun getShareUri(address: String): String = getShareScheme().firstOrNull()?.plus(address) ?: address
 
-    @Suppress("ComplexCondition")
-    fun validateShareScheme(scheme: String): Boolean {
-        if (this == XRP && (scheme == "ripple" || scheme == "xrpl" || scheme == "xrp")) return true
-        return scheme == getShareScheme()
-    }
+    fun validateShareScheme(scheme: String) = getShareScheme().any { it == "$scheme:" }
 
     fun getExploreUrl(address: String, tokenContractAddress: String? = null): String {
         return externalLinkProvider.explorerUrl(walletAddress = address, contractAddress = tokenContractAddress)
@@ -342,10 +383,19 @@ enum class Blockchain(
             Aurora, AuroraTestnet -> AuroraTestnet
             Areon, AreonTestnet -> AreonTestnet
             PulseChain, PulseChainTestnet -> PulseChainTestnet
+            ZkSyncEra, ZkSyncEraTestnet -> ZkSyncEraTestnet
+            Moonbeam, MoonbeamTestnet -> MoonbeamTestnet
+            Manta, MantaTestnet -> MantaTestnet
+            PolygonZkEVM, PolygonZkEVMTestnet -> PolygonTestnet
+            Moonriver, MoonriverTestnet -> MoonriverTestnet
+            Mantle, MantleTestnet -> MantleTestnet
+            Flare, FlareTestnet -> FlareTestnet
+            Taraxa, TaraxaTestnet -> TaraxaTestnet
             else -> null
         }
     }
 
+    @Suppress("LongMethod")
     fun getSupportedCurves(): List<EllipticCurve> {
         return when (this) {
             Unknown -> emptyList()
@@ -394,6 +444,16 @@ enum class Blockchain(
             Aurora, AuroraTestnet,
             Areon, AreonTestnet,
             PulseChain, PulseChainTestnet,
+            ZkSyncEra, ZkSyncEraTestnet,
+            Nexa, NexaTestnet,
+            Moonbeam, MoonbeamTestnet,
+            Manta, MantaTestnet,
+            PolygonZkEVM, PolygonZkEVMTestnet,
+            Radiant,
+            Moonriver, MoonriverTestnet,
+            Mantle, MantleTestnet,
+            Flare, FlareTestnet,
+            Taraxa, TaraxaTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -456,6 +516,22 @@ enum class Blockchain(
             AreonTestnet -> Chain.AreonTestnet.id
             PulseChain -> Chain.PulseChain.id
             PulseChainTestnet -> Chain.PulseChainTestnet.id
+            ZkSyncEra -> Chain.ZkSyncEra.id
+            ZkSyncEraTestnet -> Chain.ZkSyncEraTestnet.id
+            Moonbeam -> Chain.Moonbeam.id
+            MoonbeamTestnet -> Chain.MoonbeamTestnet.id
+            Manta -> Chain.Manta.id
+            MantaTestnet -> Chain.MantaTestnet.id
+            PolygonZkEVM -> Chain.PolygonZkEVM.id
+            PolygonZkEVMTestnet -> Chain.PolygonZkEVMTestnet.id
+            Moonriver -> Chain.Moonriver.id
+            MoonriverTestnet -> Chain.MoonriverTestnet.id
+            Mantle -> Chain.Mantle.id
+            MantleTestnet -> Chain.MantleTestnet.id
+            Flare -> Chain.Flare.id
+            FlareTestnet -> Chain.FlareTestnet.id
+            Taraxa -> Chain.Taraxa.id
+            TaraxaTestnet -> Chain.TaraxaTestnet.id
             else -> null
         }
     }
