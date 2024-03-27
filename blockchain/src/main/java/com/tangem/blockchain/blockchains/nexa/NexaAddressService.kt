@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.nexa
 
 import com.tangem.blockchain.blockchains.nexa.cashaddr.NexaAddr
+import com.tangem.blockchain.blockchains.nexa.cashaddr.NexaAddressDecodedParts
 import com.tangem.blockchain.blockchains.nexa.cashaddr.NexaAddressType
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressService
@@ -21,11 +22,11 @@ class NexaAddressService(
     private val cashAddr = NexaAddr(isTestNet)
 
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?) =
-        makeTemplateNexaAddress(walletPublicKey).value
+        makeTemplateNexaAddress(byteArrayOf(0x02) + walletPublicKey.toCompressedPublicKey()).value
 
     override fun validate(address: String) = cashAddr.isValidCashAddress(address)
 
-    fun getPublicKey(address: String): ByteArray {
+    fun getPublicKeyHash(address: String): ByteArray {
         return cashAddr.decodeNexaAddress(address).hash
     }
 
@@ -34,7 +35,11 @@ class NexaAddressService(
      * @return script public key hash (as in the Explorer)
      */
     fun getScriptPublicKey(address: String): ByteArray {
-        return cashAddr.decodeNexaAddress(address).scriptPublicKeyHash
+        return cashAddr.decodeNexaAddress(address).outputScript().program
+    }
+
+    fun getAddressDecodedParts(address: String) : NexaAddressDecodedParts {
+        return cashAddr.decodeNexaAddress(address)
     }
 
     private fun makeTemplateNexaAddress(walletPublicKey: ByteArray): Address {

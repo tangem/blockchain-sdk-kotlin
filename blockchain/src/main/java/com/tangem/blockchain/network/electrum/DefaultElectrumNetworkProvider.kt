@@ -77,6 +77,31 @@ internal class DefaultElectrumNetworkProvider(
         }
     }
 
+    override suspend fun getBlockTip(): Result<ElectrumBlockTip> {
+        firstCheckServer()?.apply { return Result.Failure(this) }
+
+        return retryCall {
+            service.getBlockTip()
+        }.map {
+            ElectrumBlockTip(
+                height = it.height,
+                hex = it.hex
+            )
+        }
+    }
+
+    override suspend fun sendTransaction(rawTransactionHash: String): Result<ElectrumTransactionHex> {
+        firstCheckServer()?.apply { return Result.Failure(this) }
+
+        return retryCall {
+            service.sendTransaction(rawTransactionHash)
+        }.map {
+            ElectrumTransactionHex(
+                hash = it.hash
+            )
+        }
+    }
+
     private suspend fun firstCheckServer(): BlockchainError? {
         if (serverVersionRequested.get()) {
             return null
