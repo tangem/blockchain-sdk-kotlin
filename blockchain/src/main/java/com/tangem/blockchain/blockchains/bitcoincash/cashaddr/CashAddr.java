@@ -20,9 +20,9 @@ public class CashAddr {
 
     public static final String TEST_NET_PREFIX = "bchtest";
 
-    private static final BigInteger[] POLYMOD_GENERATORS = new BigInteger[] { new BigInteger("98f2bc8e61", 16),
+    private static final BigInteger[] POLYMOD_GENERATORS = new BigInteger[]{new BigInteger("98f2bc8e61", 16),
             new BigInteger("79b76d99e2", 16), new BigInteger("f33e5fb3c4", 16), new BigInteger("ae2eabe2a8", 16),
-            new BigInteger("1e4f43e470", 16) };
+            new BigInteger("1e4f43e470", 16)};
 
     private static final BigInteger POLYMOD_AND_CONSTANT = new BigInteger("07ffffffff", 16);
 
@@ -38,11 +38,11 @@ public class CashAddr {
 
     public String toCashAddress(BitcoinCashAddressType addressType, byte[] hash) {
         byte[] prefixBytes = getPrefixBytes(networkPrefix);
-        byte[] payloadBytes = concatenateByteArrays(new byte[] { addressType.getVersionByte() }, hash);
+        byte[] payloadBytes = concatenateByteArrays(new byte[]{addressType.getVersionByte()}, hash);
         payloadBytes = convertBits(payloadBytes, 8, 5, false);
         byte[] allChecksumInput = concatenateByteArrays(
-                concatenateByteArrays(concatenateByteArrays(prefixBytes, new byte[] { 0 }), payloadBytes),
-                new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 });
+                concatenateByteArrays(concatenateByteArrays(prefixBytes, new byte[]{0}), payloadBytes),
+                new byte[]{0, 0, 0, 0, 0, 0, 0, 0});
         byte[] checksumBytes = calculateChecksumBytesPolymod(allChecksumInput);
         checksumBytes = convertBits(checksumBytes, 8, 5, true);
         String cashAddress = BitcoinCashBase32.encode(concatenateByteArrays(payloadBytes, checksumBytes));
@@ -85,8 +85,7 @@ public class CashAddr {
     }
 
 
-
-    public boolean isValidCashAddress(String bitcoinCashAddress ) {
+    public boolean isValidCashAddress(String bitcoinCashAddress) {
         try {
             if (!isSingleCase(bitcoinCashAddress))
                 return false;
@@ -97,15 +96,19 @@ public class CashAddr {
             if (bitcoinCashAddress.contains(SEPARATOR)) {
                 String[] split = bitcoinCashAddress.split(SEPARATOR);
                 prefix = split[0];
-                if (!prefix.equals(networkPrefix)) {return false;}
+                if (!prefix.equals(networkPrefix)) {
+                    return false;
+                }
                 bitcoinCashAddress = split[1];
             } else {
                 prefix = networkPrefix;
             }
-            if (!bitcoinCashAddress.startsWith("q")) {return false;} //for now we use P2PKH addresses only
+            if (!bitcoinCashAddress.startsWith("q")) {
+                return false;
+            } //for now we use P2PKH addresses only
 
-            byte[] checksumData =  concatenateByteArrays(
-                    concatenateByteArrays(getPrefixBytes(prefix ), new byte[] { 0x00 }),
+            byte[] checksumData = concatenateByteArrays(
+                    concatenateByteArrays(getPrefixBytes(prefix), new byte[]{0x00}),
                     BitcoinCashBase32.decode(bitcoinCashAddress));
 
             byte[] calculateChecksumBytesPolymod = calculateChecksumBytesPolymod(checksumData);
@@ -114,7 +117,6 @@ public class CashAddr {
             return false;
         }
     }
-
 
 
     private static boolean isSingleCase(String bitcoinCashAddress) {
@@ -131,7 +133,7 @@ public class CashAddr {
     /**
      * @param checksumInput
      * @return Returns a 40 bits checksum in form of 5 8-bit arrays. This still has
-     *         to me mapped to 5-bit array representation
+     * to me mapped to 5-bit array representation
      */
     private static byte[] calculateChecksumBytesPolymod(byte[] checksumInput) {
         BigInteger c = BigInteger.ONE;
@@ -167,7 +169,7 @@ public class CashAddr {
 
     }
 
-    private static byte[] getPrefixBytes(String prefixString ) {
+    private static byte[] getPrefixBytes(String prefixString) {
         byte[] prefixBytes = new byte[prefixString.length()];
 
         char[] charArray = prefixString.toCharArray();
@@ -220,8 +222,4 @@ public class CashAddr {
 
         return result;
     }
-
-
-
-
 }
