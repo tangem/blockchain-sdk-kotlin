@@ -73,6 +73,8 @@ class EstimationFeeAddressFactory(
             Blockchain.Dash,
             Blockchain.Ravencoin, Blockchain.RavencoinTestnet,
             Blockchain.Solana,
+            Blockchain.Nexa, Blockchain.NexaTestnet,
+            Blockchain.Radiant,
             // EVM-like
             Blockchain.Ethereum, Blockchain.EthereumTestnet,
             Blockchain.EthereumPow, Blockchain.EthereumPowTestnet,
@@ -96,6 +98,14 @@ class EstimationFeeAddressFactory(
             Blockchain.Aurora, Blockchain.AuroraTestnet,
             Blockchain.Areon, Blockchain.AreonTestnet,
             Blockchain.PulseChain, Blockchain.PulseChainTestnet,
+            Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet,
+            Blockchain.Moonbeam, Blockchain.MoonbeamTestnet,
+            Blockchain.Manta, Blockchain.MantaTestnet,
+            Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet,
+            Blockchain.Moonriver, Blockchain.MoonriverTestnet,
+            Blockchain.Mantle, Blockchain.MantleTestnet,
+            Blockchain.Flare, Blockchain.FlareTestnet,
+            Blockchain.Taraxa, Blockchain.TaraxaTestnet,
             // Polkadot-like
             Blockchain.Polkadot, Blockchain.PolkadotTestnet,
             Blockchain.Kusama,
