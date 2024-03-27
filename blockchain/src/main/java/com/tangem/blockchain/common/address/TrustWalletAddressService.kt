@@ -4,9 +4,12 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.compressPublicKeyIfNeeded
 import com.tangem.blockchain.extensions.trustWalletCoinType
 import com.tangem.common.card.EllipticCurve
-import wallet.core.jni.*
+import wallet.core.jni.AnyAddress
+import wallet.core.jni.Cardano
+import wallet.core.jni.CoinType
+import wallet.core.jni.PublicKey
 
-class TrustWalletAddressService(
+internal open class TrustWalletAddressService(
     private val blockchain: Blockchain,
 ) : AddressService() {
 
