@@ -3,14 +3,14 @@ package com.tangem.blockchain.externallinkprovider.providers
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.TxExploreState
 
-internal class MoonbeamExternalLinkProvider(isTestNet: Boolean) : ExternalLinkProvider {
+internal class TaraxaExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
-    override val testNetTopUpUrl = "https://faucet.moonbeam.network/"
+    override val testNetTopUpUrl = "https://testnet.explorer.taraxa.io/faucet/"
 
-    override val explorerBaseUrl = if (isTestNet) {
-        "https://moonbase.moonscan.io/"
+    override val explorerBaseUrl = if (isTestnet) {
+        "https://explorer.testnet.taraxa.io/"
     } else {
-        "https://moonscan.io/"
+        "https://explorer.mainnet.taraxa.io/"
     }
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
@@ -18,6 +18,6 @@ internal class MoonbeamExternalLinkProvider(isTestNet: Boolean) : ExternalLinkPr
     }
 
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
-        return TxExploreState.Url("${explorerBaseUrl}tx/$transactionHash")
+        return TxExploreState.Url(url = "${explorerBaseUrl}tx/$transactionHash")
     }
 }
