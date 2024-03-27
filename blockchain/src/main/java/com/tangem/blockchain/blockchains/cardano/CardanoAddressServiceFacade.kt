@@ -31,6 +31,10 @@ class CardanoAddressServiceFacade : AddressService() {
         }
     }
 
-    @Suppress("MagicNumber")
-    private fun ByteArray.isExtendedPublicKey() = this.size == 128
+    private fun ByteArray.isExtendedPublicKey() = this.size == EXTENDED_PUBLIC_KEY_LENGTH
+
+    private companion object {
+
+        private const val EXTENDED_PUBLIC_KEY_LENGTH = 128
+    }
 }
