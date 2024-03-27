@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.cardano
 
 import com.google.protobuf.ByteString
+import com.tangem.blockchain.blockchains.cardano.network.CardanoUnspentOutput
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
