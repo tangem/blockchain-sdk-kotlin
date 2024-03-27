@@ -2,10 +2,7 @@ package com.tangem.blockchain.blockchains.cardano.network.rosetta
 
 import co.nstant.`in`.cbor.CborBuilder
 import co.nstant.`in`.cbor.CborEncoder
-import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
-import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
-import com.tangem.blockchain.blockchains.cardano.network.CardanoUnspentOutput
-import com.tangem.blockchain.blockchains.cardano.network.RosettaNetwork
+import com.tangem.blockchain.blockchains.cardano.network.*
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaAccountIdentifier
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaAddressBody
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaNetworkIdentifier
@@ -35,10 +32,10 @@ class RosettaNetworkProvider(rosettaNetwork: RosettaNetwork) : CardanoNetworkPro
 //    private var coinsMap: Map<String, List<RosettaCoin>> = emptyMap()
 //    private var payloadsResponse: RosettaPayloadsResponse? = null
 
-    override suspend fun getInfo(addresses: Set<String>): Result<CardanoAddressResponse> {
+    override suspend fun getInfo(input: InfoInput): Result<CardanoAddressResponse> {
         return try {
             coroutineScope {
-                val addressBodies = addresses
+                val addressBodies = input.addresses
                     .map { RosettaAddressBody(networkIdentifier, RosettaAccountIdentifier(it)) }
                 val coinsDeferred = addressBodies.map {
                     it.accountIdentifier.address!! to retryIO { async { api.getCoins(it) } }
