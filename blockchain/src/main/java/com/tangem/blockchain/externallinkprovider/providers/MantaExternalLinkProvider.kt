@@ -9,16 +9,16 @@ internal class MantaExternalLinkProvider(isTestNet: Boolean) : ExternalLinkProvi
 
     override val explorerBaseUrl: String =
         if (isTestNet) {
-            "https://pacific-explorer.testnet.manta.network"
+            "https://pacific-explorer.testnet.manta.network/"
         } else {
-            "https://pacific-explorer.manta.network"
+            "https://pacific-explorer.manta.network/"
         }
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
-        return "$explorerBaseUrl/address/$walletAddress"
+        return "${explorerBaseUrl}address/$walletAddress"
     }
 
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
-        return TxExploreState.Url("$explorerBaseUrl/tx/$transactionHash")
+        return TxExploreState.Url("${explorerBaseUrl}tx/$transactionHash")
     }
 }
