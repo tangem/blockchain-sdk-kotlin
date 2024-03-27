@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common.assembly.impl
 
+import com.tangem.blockchain.blockchains.nexa.NexaTransactionBuilder
 import com.tangem.blockchain.blockchains.nexa.NexaWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
@@ -14,6 +15,10 @@ internal object NexaWalletManagerAssembly : WalletManagerAssembly<NexaWalletMana
                 networkProvider = ElectrumMultiNetworkProvider(
                     providers = blockchain.getElectrumNetworkProviders(),
                 ),
+                transactionBuilder = NexaTransactionBuilder(
+                    walletPublicKey = byteArrayOf(0x02) + publicKey.blockchainKey,
+                    blockchain = blockchain
+                )
             )
         }
     }

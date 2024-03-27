@@ -40,13 +40,13 @@ public class NexaAddr {
         return networkPrefix + SEPARATOR + cashAddress;
     }
 
-    public NexaAddressDecodedParts decodeNexaAddress(String bitcoinCashAddress) {
-        if (!isValidCashAddress(bitcoinCashAddress)) {
-            throw new RuntimeException("Address wasn't valid: " + bitcoinCashAddress);
+    public NexaAddressDecodedParts decodeNexaAddress(String nexaAddress) {
+        if (!isValidCashAddress(nexaAddress)) {
+            throw new RuntimeException("Address wasn't valid: " + nexaAddress);
         }
 
         NexaAddressDecodedParts decoded = new NexaAddressDecodedParts();
-        String[] addressParts = bitcoinCashAddress.split(SEPARATOR);
+        String[] addressParts = nexaAddress.split(SEPARATOR);
         if (addressParts.length == 2) {
             decoded.setPrefix(addressParts[0]);
         } else {

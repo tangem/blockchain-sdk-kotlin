@@ -1,24 +1,37 @@
 package com.tangem.blockchain.blockchains.nexa
 
 import com.google.common.truth.Truth
+import com.tangem.blockchain.blockchains.nexa.cashaddr.NexaAddressType
+import com.tangem.blockchain.common.address.Address
+import com.tangem.blockchain.common.address.AddressType
 import com.tangem.common.extensions.hexToBytes
+import com.tangem.common.extensions.toHexString
+import org.bitcoinj.script.ScriptBuilder
 import org.junit.Test
 
 class NexaAddressTest {
 
     val addressService = NexaAddressService(isTestNet = false)
 
+    // @Test
+    // fun decodeAddress() {
+    //     // val address = "nexa:qz2e2eesqa4axqm7rtej0nnt6sq6t2y33cu3e7ss2w"
+    //     val address = "nexa:nqtsq5g5xwpr2kp6fvhng5lyuafu8jg3gaj8hk34k2r4rvs3"
+    //     val parts = addressService.getAddressDecodedParts(address)
+    //     Truth.assertThat(addressService.getScriptPublicKey(address)).isNull()
+    //     Truth.assertThat(parts.outputScript().program.toHexString()).isNull()
+    // }
+
     @Test
     fun makeAddressFromCorrectPublicKey() {
         val walletPublicKey = "029a1fa7122e910b1337492d88a6f906ab5ced9a8d7e7e3185e7dc5c5603f94e0d".hexToBytes()
         val expected = "nexa:nqtsq5g5whssewa9ewt0g8spdu0x6rz7g526w0dut3rntrp9"
 
-        Truth.assertThat(addressService.makeAddress(walletPublicKey))
-            .isEqualTo(expected)
+        Truth.assertThat(addressService.makeAddress(walletPublicKey)).isEqualTo(expected)
     }
 
     @Test
-    fun validateCorrectTEMPLATEAAddress() {
+    fun validateCorrectTEMPLATEAddress() {
         val address = "nexa:nqtsq5g5xwpr2kp6fvhng5lyuafu8jg3gaj8hk34k2r4rvs3"
 
         Truth.assertThat(addressService.validate(address)).isTrue()
@@ -32,7 +45,7 @@ class NexaAddressTest {
     }
 
     @Test
-    fun validateIncorrectTemplateAAddress() {
+    fun validateIncorrectAddress() {
         val address = "nexa:zw2e2eesqa4axqm7rtej0nnt6sq6t2y33c2e90h9ma"
 
         Truth.assertThat(addressService.validate(address)).isFalse()
@@ -43,7 +56,7 @@ class NexaAddressTest {
         val address = "nexa:nqtsq5g5whssewa9ewt0g8spdu0x6rz7g526w0dut3rntrp9"
         val expected = "1700511475e10cbba5cb96f41e016f1e6d0c5e4515a73dbc".hexToBytes()
 
-        Truth.assertThat(addressService.getPublicKey(address)).isEqualTo(expected)
+        Truth.assertThat(addressService.getPublicKeyHash(address)).isEqualTo(expected)
     }
 
     @Test

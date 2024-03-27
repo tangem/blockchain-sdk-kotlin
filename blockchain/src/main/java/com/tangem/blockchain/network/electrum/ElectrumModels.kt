@@ -22,3 +22,13 @@ value class ElectrumEstimateFee(
     // null if the daemon does not have enough information to make an estimate
     val feeInCoinsPer1000Bytes: BigDecimal?,
 )
+
+data class ElectrumBlockTip(
+    val height: Long,
+    val hex: String,
+)
+
+@JvmInline
+value class ElectrumTransactionHex(
+    val hash : String
+)
