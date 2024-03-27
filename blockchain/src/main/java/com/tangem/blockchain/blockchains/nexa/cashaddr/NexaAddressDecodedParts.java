@@ -1,7 +1,5 @@
 package com.tangem.blockchain.blockchains.nexa.cashaddr;
 
-import java.util.Arrays;
-
 public class NexaAddressDecodedParts {
 
     String prefix;
@@ -30,15 +28,7 @@ public class NexaAddressDecodedParts {
         return hash;
     }
 
-    /**
-     * @return script public key hash (as in the <a href="https://explorer.nexa.org/">explorer</a>)
-     */
-    public byte[] getScriptPublicKeyHash() {
-        return Arrays.copyOfRange(hash, 1, hash.length);
-    }
-
     public void setHash(byte[] hash) {
         this.hash = hash;
     }
-
 }

@@ -423,7 +423,6 @@ enum class Blockchain(
             Areon, AreonTestnet,
             PulseChain, PulseChainTestnet,
             ZkSyncEra, ZkSyncEraTestnet,
-            Nexa, NexaTestnet,
             Moonbeam, MoonbeamTestnet,
             Manta, MantaTestnet,
             PolygonZkEVM, PolygonZkEVMTestnet,
@@ -443,6 +442,9 @@ enum class Blockchain(
             Cardano -> listOf(EllipticCurve.Ed25519) // todo until cardano support in wallet 2
             Chia, ChiaTestnet,
             -> listOf(EllipticCurve.Bls12381G2Aug)
+
+            Nexa, NexaTestnet,
+            -> listOf(EllipticCurve.Bip0340)
         }
     }
 
@@ -506,7 +508,8 @@ enum class Blockchain(
         if (style == null) return null
         if (!getSupportedCurves().contains(EllipticCurve.Secp256k1) &&
             !getSupportedCurves().contains(EllipticCurve.Ed25519) &&
-            !getSupportedCurves().contains(EllipticCurve.Ed25519Slip0010)
+            !getSupportedCurves().contains(EllipticCurve.Ed25519Slip0010) &&
+            !getSupportedCurves().contains(EllipticCurve.Bip0340)
         ) {
             return null
         }

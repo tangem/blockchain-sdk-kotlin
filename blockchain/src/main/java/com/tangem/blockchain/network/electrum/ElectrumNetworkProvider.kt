@@ -10,4 +10,8 @@ interface ElectrumNetworkProvider : NetworkProvider {
     suspend fun getUnspentUTXOs(addressScriptHash: String): Result<List<ElectrumUnspentUTXORecord>>
 
     suspend fun getEstimateFee(numberConfirmationBlocks: Int): Result<ElectrumEstimateFee>
+
+    suspend fun getBlockTip(): Result<ElectrumBlockTip>
+
+    suspend fun sendTransaction(rawTransactionHash : String) : Result<ElectrumTransactionHex>
 }
