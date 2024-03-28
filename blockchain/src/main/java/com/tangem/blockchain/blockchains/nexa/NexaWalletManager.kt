@@ -10,7 +10,7 @@ import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.extensions.successOr
 import java.math.RoundingMode
 
-class NexaWalletManager(
+internal class NexaWalletManager(
     wallet: Wallet,
     private val networkProvider: ElectrumNetworkProvider,
 ) : WalletManager(wallet) {
@@ -22,7 +22,7 @@ class NexaWalletManager(
     }
 
     override suspend fun updateInternal() {
-        val accountRes = networkProvider.getAccount(addressScriptHash)
+        val accountRes = networkProvider.getAccountBalance(addressScriptHash)
 
         val account = accountRes.successOr { throw it.error }
 
