@@ -60,7 +60,7 @@ internal object ElectrumResponse {
         // The output’s value in minimum coin units (satoshis).
         @Json(name = "value") val valueSatoshi: Long,
         // Hash of utxo (hash of transaction idem + output index)
-        @Json(name = "outpoint_hash") val outpointHash: String, // TODO is Nexa epecific?
+        @Json(name = "outpoint_hash") val outpointHash: String?, // TODO is Nexa epecific?
     )
 
     @JsonClass(generateAdapter = true)
@@ -68,8 +68,8 @@ internal object ElectrumResponse {
         @Json(name = "blockhash") val blockHash: String,
         @Json(name = "blocktime") val blockTime: Long,
         @Json(name = "confirmations") val confirmations: Int,
-        @Json(name = "fee") val fee: Double,
-        @Json(name = "fee_satoshi") val feeSatoshi: Long,
+        @Json(name = "fee") val fee: Double?,
+        @Json(name = "fee_satoshi") val feeSatoshi: Long?,
         @Json(name = "hash") val hash: String,
         @Json(name = "hex") val hex: String, // The serialized, hex-encoded data for 'txid'
         @Json(name = "locktime") val lockTime: Long,
@@ -78,16 +78,16 @@ internal object ElectrumResponse {
         @Json(name = "txid") val txid: String, // the transaction id (same as provided)
         @Json(name = "txidem") val txidem: String?, // Nexa specific
         @Json(name = "version") val version: Int,
-        @Json(name = "vin") val vin: List<Vin> = emptyList(),
-        @Json(name = "vout") val vout: List<Vout> = emptyList(),
+        @Json(name = "vin") val vin: List<Vin>? = emptyList(),
+        @Json(name = "vout") val vout: List<Vout>? = emptyList(),
     ) {
 
         @JsonClass(generateAdapter = true)
         data class Vin(
-            @Json(name = "value") val value: Double,
+            @Json(name = "value") val value: Double?,
             @Json(name = "value_coins") val valueCoins: Double?, // rostrum specific (ex. Nexa)
             @Json(name = "value_satoshi") val valueSatoshi: Double?, // rostrum specific (ex. Nexa)
-            @Json(name = "addresses") val addresses: List<String> = emptyList(),
+            @Json(name = "addresses") val addresses: List<String>? = emptyList(),
         )
 
         @JsonClass(generateAdapter = true)
@@ -95,7 +95,7 @@ internal object ElectrumResponse {
             @Json(name = "value") val value: Double,
             @Json(name = "value_coins") val valueCoins: Double?, // rostrum specific (ex. Nexa)
             @Json(name = "value_satoshi") val valueSatoshi: Double?, // rostrum specific (ex. Nexa)
-            @Json(name = "scriptPubKey") val scriptPublicKey: ScriptPublicKey,
+            @Json(name = "scriptPubKey") val scriptPublicKey: ScriptPublicKey?,
             @Json(name = "txid") val txid: String?, // bitcoincash specific
         )
 
