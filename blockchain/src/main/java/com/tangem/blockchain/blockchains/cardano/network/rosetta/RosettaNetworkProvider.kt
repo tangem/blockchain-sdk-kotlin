@@ -2,11 +2,13 @@ package com.tangem.blockchain.blockchains.cardano.network.rosetta
 
 import co.nstant.`in`.cbor.CborBuilder
 import co.nstant.`in`.cbor.CborEncoder
-import com.tangem.blockchain.blockchains.cardano.network.*
-import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaAccountIdentifier
-import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaAddressBody
-import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaNetworkIdentifier
-import com.tangem.blockchain.blockchains.cardano.network.rosetta.model.RosettaSubmitBody
+import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
+import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
+import com.tangem.blockchain.blockchains.cardano.network.CardanoUnspentOutput
+import com.tangem.blockchain.blockchains.cardano.network.InfoInput
+import com.tangem.blockchain.blockchains.cardano.network.rosetta.request.RosettaCoinsBody
+import com.tangem.blockchain.blockchains.cardano.network.rosetta.request.RosettaNetworkIdentifier
+import com.tangem.blockchain.blockchains.cardano.network.rosetta.request.RosettaSubmitBody
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -36,22 +38,22 @@ class RosettaNetworkProvider(rosettaNetwork: RosettaNetwork) : CardanoNetworkPro
         return try {
             coroutineScope {
                 val addressBodies = input.addresses
-                    .map { RosettaAddressBody(networkIdentifier, RosettaAccountIdentifier(it)) }
+                    .map { RosettaCoinsBody(networkIdentifier, RosettaCoinsBody.AccountIdentifier(it)) }
                 val coinsDeferred = addressBodies.map {
-                    it.accountIdentifier.address!! to retryIO { async { api.getCoins(it) } }
+                    it.accountIdentifier.address to retryIO { async { api.getCoins(it) } }
                 }.toMap()
 
-                val coinsMap = coinsDeferred.mapValues { it.value.await().coins!! }
+                val coinsMap = coinsDeferred.mapValues { it.value.await().coins }
                 val unspentOutputs = coinsMap.flatMap { entry ->
                     entry.value.mapNotNull {
-                        if (it.amount!!.currency!!.symbol == "ADA" &&
+                        if (it.amount.currency.symbol == "ADA" &&
                             it.metadata == null // filter tokens while we don't support them
                         ) {
                             val identifierSplit =
-                                it.coinIdentifier!!.identifier!!.split(":")
+                                it.coinIdentifier.identifier.split(":")
                             CardanoUnspentOutput(
                                 address = entry.key,
-                                amount = it.amount.value!!,
+                                amount = it.amount.value,
                                 outputIndex = identifierSplit[1].toLong(),
                                 transactionHash = identifierSplit[0].hexToBytes(),
                             )
