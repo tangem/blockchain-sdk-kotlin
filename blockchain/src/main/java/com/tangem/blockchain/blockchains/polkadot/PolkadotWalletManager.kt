@@ -1,6 +1,10 @@
 package com.tangem.blockchain.blockchains.polkadot
 
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkProvider
+import com.tangem.blockchain.blockchains.polkadot.network.accounthealthcheck.AccountResponse
+import com.tangem.blockchain.blockchains.polkadot.network.accounthealthcheck.ExtrinsicDetailResponse
+import com.tangem.blockchain.blockchains.polkadot.network.accounthealthcheck.ExtrinsicListResponse
+import com.tangem.blockchain.blockchains.polkadot.network.accounthealthcheck.PolkadotAccountHealthCheckNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
 import com.tangem.blockchain.common.transaction.Fee
@@ -24,7 +28,8 @@ import java.util.EnumSet
 class PolkadotWalletManager(
     wallet: Wallet,
     private val networkProvider: PolkadotNetworkProvider,
-) : WalletManager(wallet), TransactionSender, ExistentialDepositProvider {
+    private val extrinsicCheckNetworkProvider: PolkadotAccountHealthCheckNetworkProvider,
+) : WalletManager(wallet), TransactionSender, ExistentialDepositProvider, AccountCheckProvider {
 
     private lateinit var currentContext: ExtrinsicContext
 
@@ -113,6 +118,23 @@ class PolkadotWalletManager(
             AmountType.Coin -> sendCoin(transactionData, signer, currentContext)
             else -> SimpleResult.Failure(UnsupportedOperation())
         }
+    }
+
+    override suspend fun getExtrinsicList(afterExtrinsicId: Long?): ExtrinsicListResponse {
+        return extrinsicCheckNetworkProvider.getExtrinsicsList(
+            address = wallet.address,
+            afterExtrinsicId = afterExtrinsicId,
+        ).successOr { throw it.error as BlockchainSdkError }
+    }
+
+    override suspend fun getExtrinsicDetail(hash: String): ExtrinsicDetailResponse {
+        return extrinsicCheckNetworkProvider.getExtrinsicDetail(hash = hash)
+            .successOr { throw it.error as BlockchainSdkError }
+    }
+
+    override suspend fun getAccountInfo(): AccountResponse {
+        return extrinsicCheckNetworkProvider.getAccountInfo(key = wallet.address)
+            .successOr { throw it.error as BlockchainSdkError }
     }
 
     private suspend fun sendCoin(

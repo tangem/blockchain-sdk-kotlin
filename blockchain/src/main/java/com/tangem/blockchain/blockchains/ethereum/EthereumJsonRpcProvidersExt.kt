@@ -317,6 +317,52 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://base-sepolia-rpc.publicnode.com/"),
         )
 
+        Blockchain.Moonriver -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://moonriver.public.blastapi.io/"),
+            EthereumJsonRpcProvider(baseUrl = "https://moonriver-rpc.dwellir.com/"),
+            EthereumJsonRpcProvider(
+                baseUrl = "https://moonriver-mainnet.gateway.pokt.network/v1/lb/62a74fdb123e6f003963642f/",
+            ),
+            EthereumJsonRpcProvider(baseUrl = "https://moonriver.unitedbloc.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://moonriver-rpc.publicnode.com/"),
+        )
+
+        Blockchain.MoonriverTestnet -> listOf(
+            EthereumJsonRpcProvider("https://rpc.api.moonbase.moonbeam.network/"),
+        )
+
+        Blockchain.Mantle -> listOf(
+            EthereumJsonRpcProvider("https://rpc.mantle.xyz/"),
+            EthereumJsonRpcProvider("https://mantle-rpc.publicnode.com/"),
+            EthereumJsonRpcProvider("https://mantle-mainnet.public.blastapi.io/"),
+            EthereumJsonRpcProvider("https://rpc.ankr.com/mantle/"),
+            EthereumJsonRpcProvider("https://1rpc.io/mantle/"),
+        )
+
+        Blockchain.MantleTestnet -> listOf(
+            EthereumJsonRpcProvider("https://rpc.testnet.mantle.xyz/"),
+        )
+
+        Blockchain.Flare -> listOf(
+            EthereumJsonRpcProvider("https://flare-api.flare.network/ext/bc/C/rpc/"),
+            EthereumJsonRpcProvider("https://flare.rpc.thirdweb.com/"),
+            EthereumJsonRpcProvider("https://flare-bundler.etherspot.io/"),
+            EthereumJsonRpcProvider("https://rpc.ankr.com/flare/"),
+            EthereumJsonRpcProvider("https://flare.solidifi.app/ext/C/rpc/"),
+        )
+
+        Blockchain.FlareTestnet -> listOf(
+            EthereumJsonRpcProvider("https://coston2-api.flare.network/ext/C/rpc/"),
+        )
+
+        Blockchain.Taraxa -> listOf(
+            EthereumJsonRpcProvider("https://rpc.mainnet.taraxa.io/"), // the only existing provider
+        )
+
+        Blockchain.TaraxaTestnet -> listOf(
+            EthereumJsonRpcProvider("https://rpc.testnet.taraxa.io/"),
+        )
+
         else -> error("$this isn't supported")
     }
 
