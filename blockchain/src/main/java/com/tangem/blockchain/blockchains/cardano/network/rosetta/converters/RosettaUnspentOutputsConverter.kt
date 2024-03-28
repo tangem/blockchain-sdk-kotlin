@@ -1,6 +1,6 @@
 package com.tangem.blockchain.blockchains.cardano.network.rosetta.converters
 
-import com.tangem.blockchain.blockchains.cardano.network.CardanoUnspentOutput
+import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.response.RosettaCoinsResponse.Coin as RosettaCoin

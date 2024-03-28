@@ -10,13 +10,12 @@ internal data class AdaliteAddressResponse(
 
     @JsonClass(generateAdapter = true)
     data class SuccessData(
-        @Json(name = "caBalance") val balance: AdaliteBalance? = null,
-        @Json(name = "caTxList") val transactions: List<Transaction>?,
+        @Json(name = "caTxList") val transactions: List<Transaction>,
     ) {
 
         @JsonClass(generateAdapter = true)
         data class Transaction(
-            @Json(name = "ctbId") val hash: String? = null,
+            @Json(name = "ctbId") val hash: String,
         )
     }
 }
