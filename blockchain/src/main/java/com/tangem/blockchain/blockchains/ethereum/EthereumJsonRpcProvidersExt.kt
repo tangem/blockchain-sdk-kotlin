@@ -115,9 +115,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
         Blockchain.Gnosis -> listOfNotNull(
             config.getBlockCredentials?.gnosis?.jsonRpc.letNotBlank { getGetBlockProvider(accessToken = it) },
             EthereumJsonRpcProvider(baseUrl = "https://rpc.gnosischain.com/"),
-            EthereumJsonRpcProvider(baseUrl = "https://gnosischain-rpc.gateway.pokt.network/"),
             EthereumJsonRpcProvider(baseUrl = "https://gnosis-mainnet.public.blastapi.io/"),
-            EthereumJsonRpcProvider(baseUrl = "https://xdai-rpc.gateway.pokt.network/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/gnosis/"),
         )
         Blockchain.Optimism -> listOfNotNull(
