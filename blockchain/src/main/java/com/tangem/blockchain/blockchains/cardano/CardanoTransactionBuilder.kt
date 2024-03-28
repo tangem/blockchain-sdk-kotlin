@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.cardano
 
 import com.google.protobuf.ByteString
+import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
@@ -14,7 +15,7 @@ import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
 import java.math.BigDecimal
 
 // You can decode your CBOR transaction here: https://cbor.me
-class CardanoTransactionBuilder {
+internal class CardanoTransactionBuilder {
 
     private var outputs: List<CardanoUnspentOutput> = emptyList()
     private val coinType: CoinType = CoinType.CARDANO
