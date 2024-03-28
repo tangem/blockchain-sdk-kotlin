@@ -13,6 +13,21 @@ internal data class AdaliteUnspentOutputsResponse(
         @Json(name = "cuAddress") val address: String,
         @Json(name = "cuId") val hash: String,
         @Json(name = "cuOutIndex") val outputIndex: Int,
-        @Json(name = "cuCoins") val amountData: AdaliteBalance,
-    )
+        @Json(name = "cuCoins") val amount: Amount,
+    ) {
+
+        @JsonClass(generateAdapter = true)
+        data class Amount(
+            @Json(name = "getCoin") val value: Long,
+            @Json(name = "getTokens") val tokens: List<Token>,
+        ) {
+
+            @JsonClass(generateAdapter = true)
+            data class Token(
+                @Json(name = "assetName") val assetName: String,
+                @Json(name = "quantity") val quantity: Long,
+                @Json(name = "policyId") val policyId: String,
+            )
+        }
+    }
 }
