@@ -1,8 +1,9 @@
 package com.tangem.blockchain.blockchains.cardano
 
 import android.util.Log
-import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
+import com.tangem.blockchain.blockchains.cardano.network.InfoInput
+import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoAddressResponse
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -12,7 +13,7 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
 
-class CardanoWalletManager(
+internal class CardanoWalletManager(
     wallet: Wallet,
     private val transactionBuilder: CardanoTransactionBuilder,
     private val networkProvider: CardanoNetworkProvider,
@@ -25,7 +26,8 @@ class CardanoWalletManager(
         get() = networkProvider.baseUrl
 
     override suspend fun updateInternal() {
-        when (val response = networkProvider.getInfo(wallet.addresses.map { it.value }.toSet())) {
+        val input = InfoInput(addresses = wallet.addresses.map { it.value }.toSet(), tokens = cardTokens)
+        when (val response = networkProvider.getInfo(input)) {
             is Result.Success -> updateWallet(response.data)
             is Result.Failure -> updateError(response.error)
         }
