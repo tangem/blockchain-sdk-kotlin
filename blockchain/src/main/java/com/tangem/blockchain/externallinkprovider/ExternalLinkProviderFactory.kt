@@ -5,7 +5,7 @@ import com.tangem.blockchain.externallinkprovider.providers.*
 
 internal object ExternalLinkProviderFactory {
 
-    @Suppress("CyclomaticComplexMethod")
+    @Suppress("CyclomaticComplexMethod", "LongMethod")
     fun makeProvider(blockchain: Blockchain): ExternalLinkProvider {
         val isTestnet = blockchain.isTestnet()
         return when (blockchain) {
@@ -69,9 +69,14 @@ internal object ExternalLinkProviderFactory {
             Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet -> ZkSyncEraExternalLinkProvider(isTestnet)
             Blockchain.Base, Blockchain.BaseTestnet -> BaseExternalLinkProvider(isTestnet)
             Blockchain.Nexa, Blockchain.NexaTestnet -> NexaExternalLinkProvider(isTestnet)
+            Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet -> ZkSyncEraExternalLinkProvider(isTestnet)
             Blockchain.Moonbeam, Blockchain.MoonbeamTestnet -> MoonbeamExternalLinkProvider(isTestnet)
             Blockchain.Manta, Blockchain.MantaTestnet -> MantaExternalLinkProvider(isTestnet)
             Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet -> PolygonZkEVMExternalLinkProvider(isTestnet)
+            Blockchain.Moonriver, Blockchain.MoonriverTestnet -> MoonriverExternalLinkProvider(isTestnet)
+            Blockchain.Mantle, Blockchain.MantleTestnet -> MantleExternalLinkProvider(isTestnet)
+            Blockchain.Flare, Blockchain.FlareTestnet -> FlareExternalLinkProvider(isTestnet)
+            Blockchain.Taraxa, Blockchain.TaraxaTestnet -> TaraxaExternalLinkProvider(isTestnet)
             Blockchain.Radiant -> RadiantExternalLinkProvider()
         }
     }
