@@ -258,7 +258,7 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://sepolia.era.zksync.dev/"),
             EthereumJsonRpcProvider(baseUrl = "https://zksync-era-sepolia.blockpi.network/v1/rpc/public/"),
         )
-
+          
         Blockchain.Moonbeam -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://rpc.api.moonbeam.network/"),
             EthereumJsonRpcProvider(baseUrl = "https://1rpc.io/glmr/"),
@@ -302,6 +302,19 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
 
         Blockchain.PolygonZkEVMTestnet -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://rpc.cardona.zkevm-rpc.com/"),
+        )
+        
+        Blockchain.Base -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://base.meowrpc.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://base-rpc.publicnode.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://base.drpc.org/"),
+            EthereumJsonRpcProvider(baseUrl = "https://base-pokt.nodies.app/"),
+        )
+
+        Blockchain.BaseTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://sepolia.base.org/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.notadegen.com/base/sepolia/"),
+            EthereumJsonRpcProvider(baseUrl = "https://base-sepolia-rpc.publicnode.com/"),
         )
 
         Blockchain.Moonriver -> listOf(
