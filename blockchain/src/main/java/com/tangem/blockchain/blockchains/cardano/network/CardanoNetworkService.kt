@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.cardano.network
 
+import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoAddressResponse
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
