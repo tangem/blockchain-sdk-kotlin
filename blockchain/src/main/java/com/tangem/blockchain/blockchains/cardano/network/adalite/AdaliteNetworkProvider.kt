@@ -1,10 +1,12 @@
 package com.tangem.blockchain.blockchains.cardano.network.adalite
 
-import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
 import com.tangem.blockchain.blockchains.cardano.network.InfoInput
-import com.tangem.blockchain.blockchains.cardano.network.adalite.converters.AdaliteAddressResponseConverter
+import com.tangem.blockchain.blockchains.cardano.network.adalite.converters.AdaliteUnspentOutputConverter
+import com.tangem.blockchain.blockchains.cardano.network.adalite.repsonse.AdaliteAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.adalite.request.AdaliteSendBody
+import com.tangem.blockchain.blockchains.cardano.network.common.converters.CardanoAddressResponseConverter
+import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoAddressResponse
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
@@ -16,6 +18,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import retrofit2.HttpException
 import java.io.IOException
+import com.tangem.blockchain.blockchains.cardano.network.adalite.repsonse.AdaliteAddressResponse.SuccessData.Transaction as AdaliteTransaction
 
 internal class AdaliteNetworkProvider(override val baseUrl: String) : CardanoNetworkProvider {
 
@@ -33,10 +36,10 @@ internal class AdaliteNetworkProvider(override val baseUrl: String) : CardanoNet
                 val unspentOutputsResponse = unspentOutputsDeferred.await()
 
                 Result.Success(
-                    data = AdaliteAddressResponseConverter.convert(
-                        addressDataResponse = addressDataResponse,
-                        unspentOutputsResponse = unspentOutputsResponse,
+                    data = CardanoAddressResponseConverter.convert(
+                        unspentOutputs = AdaliteUnspentOutputConverter.convert(unspentOutputsResponse),
                         tokens = input.tokens,
+                        recentTransactionsHashes = addressDataResponse.getTransactionHashes(),
                     ),
                 )
             }
@@ -58,6 +61,10 @@ internal class AdaliteNetworkProvider(override val baseUrl: String) : CardanoNet
 
             SimpleResult.Failure(result.toBlockchainSdkError())
         }
+    }
+
+    private fun List<AdaliteAddressResponse>.getTransactionHashes(): List<String> {
+        return flatMap { it.successData.transactions.mapNotNull(AdaliteTransaction::hash) }
     }
 
     private fun createBadRequestException(transaction: ByteArray, cause: HttpException): Exception {
