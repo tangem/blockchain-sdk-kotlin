@@ -2,10 +2,10 @@ package com.tangem.blockchain.blockchains.cardano.network.rosetta
 
 import co.nstant.`in`.cbor.CborBuilder
 import co.nstant.`in`.cbor.CborEncoder
-import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
-import com.tangem.blockchain.blockchains.cardano.network.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.InfoInput
+import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoAddressResponse
+import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.request.RosettaCoinsBody
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.request.RosettaNetworkIdentifier
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.request.RosettaSubmitBody
@@ -20,7 +20,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.io.ByteArrayOutputStream
 
-class RosettaNetworkProvider(rosettaNetwork: RosettaNetwork) : CardanoNetworkProvider {
+internal class RosettaNetworkProvider(rosettaNetwork: RosettaNetwork) : CardanoNetworkProvider {
 
     override val baseUrl: String = rosettaNetwork.url
 
@@ -56,6 +56,7 @@ class RosettaNetworkProvider(rosettaNetwork: RosettaNetwork) : CardanoNetworkPro
                                 amount = it.amount.value,
                                 outputIndex = identifierSplit[1].toLong(),
                                 transactionHash = identifierSplit[0].hexToBytes(),
+                                assets = emptyList(),
                             )
                         } else {
                             null
