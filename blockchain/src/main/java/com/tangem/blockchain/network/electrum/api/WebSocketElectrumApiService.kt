@@ -30,15 +30,15 @@ internal class WebSocketElectrumApiService(
     )
 
     private val blockTipAdapter: JsonAdapter<ElectrumResponse.BlockTip> by lazy {
-        ElectrumResponse_BlockTipJsonAdapter(moshi)
+        moshi.adapter(ElectrumResponse.BlockTip::class.java)
     }
 
     private val balanceAdapter: JsonAdapter<ElectrumResponse.Balance> by lazy {
-        ElectrumResponse_BalanceJsonAdapter(moshi)
+        moshi.adapter(ElectrumResponse.Balance::class.java)
     }
 
     private val getTransactionAdapter: JsonAdapter<ElectrumResponse.Transaction> by lazy {
-        ElectrumResponse_TransactionJsonAdapter(moshi)
+        moshi.adapter(ElectrumResponse.Transaction::class.java)
     }
 
     override suspend fun getServerVersion(
