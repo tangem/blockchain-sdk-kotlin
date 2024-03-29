@@ -16,7 +16,7 @@ internal object RosettaUnspentOutputsConverter {
 
                     CardanoUnspentOutput(
                         address = entry.key,
-                        amount = coin.amount.value,
+                        amount = coin.amount.value.toLong(),
                         outputIndex = outputIndex,
                         transactionHash = transactionHash,
                         assets = coin.metadata?.mapToAsset() ?: emptyList(),
@@ -46,7 +46,7 @@ internal object RosettaUnspentOutputsConverter {
                 CardanoUnspentOutput.Asset(
                     policyID = amount.currency.metadata?.policyId ?: return@mapNotNull null,
                     assetNameHex = amount.currency.symbol ?: return@mapNotNull null,
-                    amount = amount.value,
+                    amount = amount.value.toLong(),
                 )
             }
         }
