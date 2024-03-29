@@ -27,7 +27,7 @@ internal object AdaliteUnspentOutputConverter {
             CardanoUnspentOutput.Asset(
                 policyID = token.policyId,
                 assetNameHex = token.assetName,
-                amount = token.quantity,
+                amount = token.quantity.toLong(),
             )
         }
     }
