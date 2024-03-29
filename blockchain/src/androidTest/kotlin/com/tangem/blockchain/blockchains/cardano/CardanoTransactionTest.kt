@@ -1,10 +1,9 @@
 package com.tangem.blockchain.blockchains.cardano
 
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.common.extensions.hexToBytes
 import org.junit.Assert.assertArrayEquals
 import org.junit.Before
 import org.junit.Test
@@ -16,7 +15,17 @@ class CardanoTransactionTest {
         System.loadLibrary("TrustWalletCore")
     }
 
-    private val transactionBuilder = CardanoTransactionBuilder()
+    private val transactionBuilder = CardanoTransactionBuilder(
+        wallet = Wallet(
+            blockchain = Blockchain.Cardano,
+            addresses = setOf(),
+            publicKey = Wallet.PublicKey(
+                seedKey = "".hexToBytes(),
+                derivationType = null,
+            ),
+            tokens = setOf(),
+        ),
+    )
 
     @Before
     fun prepare() {

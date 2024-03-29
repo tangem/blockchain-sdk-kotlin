@@ -6,13 +6,13 @@ import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.TrustWalletAddressService
 import com.tangem.common.card.EllipticCurve
 
-class CardanoAddressServiceFacade : AddressService() {
+internal class CardanoAddressServiceFacade : AddressService() {
 
     private val legacyService = CardanoAddressService(Blockchain.Cardano)
     private val trustWalletService = TrustWalletAddressService(Blockchain.Cardano)
 
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-        return if (walletPublicKey.isExtendedPublicKey()) {
+        return if (CardanoUtils.isExtendedPublicKey(walletPublicKey)) {
             trustWalletService.makeAddress(walletPublicKey, curve)
         } else {
             legacyService.makeAddress(walletPublicKey, curve)
@@ -24,17 +24,10 @@ class CardanoAddressServiceFacade : AddressService() {
     }
 
     override fun makeAddresses(walletPublicKey: ByteArray, curve: EllipticCurve?): Set<Address> {
-        return if (walletPublicKey.isExtendedPublicKey()) {
+        return if (CardanoUtils.isExtendedPublicKey(walletPublicKey)) {
             trustWalletService.makeAddresses(walletPublicKey, curve)
         } else {
             legacyService.makeAddresses(walletPublicKey, curve)
         }
-    }
-
-    private fun ByteArray.isExtendedPublicKey() = this.size == EXTENDED_PUBLIC_KEY_LENGTH
-
-    private companion object {
-
-        private const val EXTENDED_PUBLIC_KEY_LENGTH = 128
     }
 }
