@@ -28,7 +28,7 @@ internal data class RosettaCoinsResponse(
 
         @JsonClass(generateAdapter = true)
         data class Amount(
-            @Json(name = "value") val value: Long,
+            @Json(name = "value") val value: String,
             @Json(name = "currency") val currency: Currency,
         ) {
 
