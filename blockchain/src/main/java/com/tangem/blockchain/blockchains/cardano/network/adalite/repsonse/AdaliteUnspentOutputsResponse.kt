@@ -25,7 +25,7 @@ internal data class AdaliteUnspentOutputsResponse(
             @JsonClass(generateAdapter = true)
             data class Token(
                 @Json(name = "assetName") val assetName: String,
-                @Json(name = "quantity") val quantity: Long,
+                @Json(name = "quantity") val quantity: String,
                 @Json(name = "policyId") val policyId: String,
             )
         }
