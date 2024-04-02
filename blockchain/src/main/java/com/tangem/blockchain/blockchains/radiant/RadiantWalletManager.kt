@@ -8,11 +8,11 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.blockchain.network.electrum.ElectrumNetworkProvider
-import com.tangem.common.extensions.toHexString
-import org.bitcoinj.core.LegacyAddress
-import org.bitcoinj.core.Sha256Hash
-import org.bitcoinj.script.ScriptBuilder
+import com.tangem.common.CompletionResult
+import wallet.core.jni.PublicKey
+import wallet.core.jni.PublicKeyType
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -23,12 +23,16 @@ internal class RadiantWalletManager(
 
     private val networkService = RadiantNetworkService(networkProviders)
     private val blockchain = wallet.blockchain
-    private val addressScriptHash by lazy { generateAddressScriptHash(walletAddress = wallet.address) }
+    private val addressScriptHash by lazy { RadiantAddressUtils.generateAddressScriptHash(wallet.address) }
+    private val transactionBuilder = RadiantTransactionBuilder(
+        publicKey = wallet.publicKey.blockchainKey,
+        decimals = blockchain.decimals(),
+    )
 
     override val currentHost: String get() = networkService.baseUrl
 
     override suspend fun updateInternal() {
-        when (val result = networkService.getInfo(address = wallet.address, scriptHash = addressScriptHash)) {
+        when (val result = networkService.getInfo(scriptHash = addressScriptHash)) {
             is Result.Success -> updateWallet(result.data)
             is Result.Failure -> updateError(result.error)
         }
@@ -36,7 +40,7 @@ internal class RadiantWalletManager(
 
     private fun updateWallet(accountModel: RadiantAccountInfo) {
         wallet.setCoinValue(accountModel.balance)
-        // transactionBuilder.setUnspentOutputs(accountModel.unspentOutputs)
+        transactionBuilder.setUnspentOutputs(accountModel.unspentOutputs)
     }
 
     private fun updateError(error: BlockchainError) {
@@ -45,7 +49,40 @@ internal class RadiantWalletManager(
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        TODO("Not yet implemented")
+        return try {
+            val hashesForSign = transactionBuilder.buildForSign(transactionData)
+            when (val signatureResult = signer.sign(hashes = hashesForSign, publicKey = wallet.publicKey)) {
+                is CompletionResult.Success -> {
+                    val signatures = signatureResult.data
+                    val walletCorePublicKey = PublicKey(wallet.publicKey.blockchainKey, PublicKeyType.SECP256K1)
+                    if (signatures.count() != hashesForSign.count()) {
+                        throw BlockchainSdkError.FailedToBuildTx
+                    }
+
+                    val isVerified = signatures.mapIndexed { index, sig ->
+                        walletCorePublicKey.verifyAsDER(sig, hashesForSign[index].reversedArray())
+                    }.none { it }
+                    if (!isVerified) {
+                        throw BlockchainSdkError.FailedToBuildTx
+                    }
+                    val rawTx = transactionBuilder.buildForSend(transactionData, signatures)
+                    when (val sendResult = networkService.sendTransaction(rawTx)) {
+                        is Result.Success -> {
+                            transactionData.hash = sendResult.data
+                            wallet.addOutgoingTransaction(transactionData, hashToLowercase = false)
+
+                            SimpleResult.Success
+                        }
+                        is Result.Failure -> sendResult.toSimpleFailure()
+                    }
+                }
+                is CompletionResult.Failure -> SimpleResult.Failure(signatureResult.error.toBlockchainSdkError())
+            }
+        } catch (e: BlockchainSdkError) {
+            SimpleResult.Failure(e)
+        } catch (e: Exception) {
+            SimpleResult.Failure(BlockchainSdkError.FailedToSendException)
+        }
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
@@ -73,13 +110,6 @@ internal class RadiantWalletManager(
     private fun BigDecimal.calculateFee(txSize: BigDecimal): BigDecimal = this
         .multiply(txSize)
         .setScale(wallet.blockchain.decimals(), RoundingMode.UP)
-
-    private fun generateAddressScriptHash(walletAddress: String): String {
-        val address = LegacyAddress.fromBase58(RadiantMainNetParams(), walletAddress)
-        val p2pkhScript = ScriptBuilder.createOutputScript(address)
-        val sha256Hash = Sha256Hash.hash(p2pkhScript.program)
-        return sha256Hash.reversedArray().toHexString()
-    }
 
     private companion object {
         private const val REQUIRED_NUMBER_OF_CONFIRMATION_BLOCKS = 10
