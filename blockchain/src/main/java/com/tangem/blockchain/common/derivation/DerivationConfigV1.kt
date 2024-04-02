@@ -70,7 +70,6 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Base,
             Blockchain.Manta,
             Blockchain.PolygonZkEVM,
-            Blockchain.Base,
             Blockchain.Mantle,
             Blockchain.Flare,
             Blockchain.Taraxa,
