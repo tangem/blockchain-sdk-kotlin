@@ -13,4 +13,6 @@ internal interface ElectrumNetworkProvider : NetworkProvider {
     suspend fun getEstimateFee(numberConfirmationBlocks: Int): Result<ElectrumEstimateFee>
 
     suspend fun getTransactionInfo(txHash: String): Result<ElectrumResponse.Transaction>
+
+    suspend fun broadcastTransaction(rawTx: ByteArray): Result<ElectrumResponse.TxHex>
 }
