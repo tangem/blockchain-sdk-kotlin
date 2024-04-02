@@ -530,6 +530,7 @@ enum class Blockchain(
             MantaTestnet -> Chain.MantaTestnet.id
             PolygonZkEVM -> Chain.PolygonZkEVM.id
             PolygonZkEVMTestnet -> Chain.PolygonZkEVMTestnet.id
+            Base -> Chain.Base.id
             BaseTestnet -> Chain.BaseTestnet.id
             Moonriver -> Chain.Moonriver.id
             MoonriverTestnet -> Chain.MoonriverTestnet.id
