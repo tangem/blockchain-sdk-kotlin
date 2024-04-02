@@ -36,7 +36,7 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
             .newCall(
                 request = Request.Builder()
                     .get()
-                    .url("$requestBaseUrl/address/$address?details=txs")
+                    .url("$requestBaseUrl/address/$address")
                     .build(),
             )
             .await()
@@ -56,6 +56,20 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
                 request = Request.Builder()
                     .get()
                     .url("$requestBaseUrl/address/$address?details=txs${request.params()}")
+                    .build(),
+            )
+            .await()
+            .unpack()
+    }
+
+    suspend fun getTransaction(txId: String): GetAddressResponse.Transaction {
+        val request = BlockBookRequest.GetTxById(txId)
+        val requestBaseUrl = config.getRequestBaseUrl(request, blockchain)
+        return client
+            .newCall(
+                request = Request.Builder()
+                    .get()
+                    .url("$requestBaseUrl/tx/${request.txId}")
                     .build(),
             )
             .await()
