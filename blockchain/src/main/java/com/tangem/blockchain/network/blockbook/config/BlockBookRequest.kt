@@ -24,4 +24,5 @@ sealed class BlockBookRequest {
     object GetFee : BlockBookRequest()
     object SendTransaction : BlockBookRequest()
     object GetUTXO : BlockBookRequest()
+    data class GetTxById(val txId: String) : BlockBookRequest()
 }
