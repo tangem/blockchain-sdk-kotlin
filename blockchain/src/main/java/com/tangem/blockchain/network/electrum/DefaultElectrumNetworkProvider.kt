@@ -8,6 +8,7 @@ import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.network.electrum.api.ElectrumApiService
 import com.tangem.blockchain.network.electrum.api.ElectrumResponse
 import com.tangem.blockchain.network.electrum.api.WebSocketElectrumApiService
+import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.delay
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -83,6 +84,14 @@ internal class DefaultElectrumNetworkProvider(
 
         return retryCall {
             service.getTransaction(txHash = txHash)
+        }
+    }
+
+    override suspend fun broadcastTransaction(rawTx: ByteArray): Result<ElectrumResponse.TxHex> {
+        firstCheckServer()?.apply { return Result.Failure(this) }
+
+        return retryCall {
+            service.sendTransaction(rawTransactionHex = rawTx.toHexString())
         }
     }
 
