@@ -107,9 +107,7 @@ class WalletManagerFactory(
     private fun getAssembly(blockchain: Blockchain): WalletManagerAssembly<WalletManager> {
         return when (blockchain) {
             // region BTC-like blockchains
-            Blockchain.Bitcoin,
-            Blockchain.BitcoinTestnet,
-            -> BitcoinWalletManagerAssembly
+            Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> BitcoinWalletManagerAssembly
             Blockchain.Dash -> DashWalletManagerAssembly
             Blockchain.Dogecoin -> DogecoinWalletManagerAssembly
             Blockchain.Litecoin -> LitecoinWalletManagerAssembly
@@ -121,23 +119,16 @@ class WalletManagerFactory(
             // region ETH-like blockchains
             Blockchain.Ethereum, Blockchain.EthereumClassic -> EthereumWalletManagerAssembly
 
-            Blockchain.Arbitrum,
-            Blockchain.ArbitrumTestnet,
-            Blockchain.Avalanche,
-            Blockchain.AvalancheTestnet,
-            Blockchain.EthereumTestnet,
-            Blockchain.EthereumClassicTestnet,
-            Blockchain.Fantom,
-            Blockchain.FantomTestnet,
+            Blockchain.Arbitrum, Blockchain.ArbitrumTestnet,
+            Blockchain.Avalanche, Blockchain.AvalancheTestnet,
+            Blockchain.EthereumTestnet, Blockchain.EthereumClassicTestnet,
+            Blockchain.Fantom, Blockchain.FantomTestnet,
             Blockchain.RSK,
-            Blockchain.BSC,
-            Blockchain.BSCTestnet,
-            Blockchain.Polygon,
-            Blockchain.PolygonTestnet,
+            Blockchain.BSC, Blockchain.BSCTestnet,
+            Blockchain.Polygon, Blockchain.PolygonTestnet,
             Blockchain.Gnosis,
             Blockchain.Dischain,
-            Blockchain.EthereumPow,
-            Blockchain.EthereumPowTestnet,
+            Blockchain.EthereumPow, Blockchain.EthereumPowTestnet,
             Blockchain.Kava, Blockchain.KavaTestnet,
             Blockchain.Cronos,
             Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet,
@@ -164,7 +155,8 @@ class WalletManagerFactory(
 
             Blockchain.Solana, Blockchain.SolanaTestnet -> SolanaWalletManagerAssembly
 
-            Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama,
+            Blockchain.Polkadot, Blockchain.PolkadotTestnet,
+            Blockchain.Kusama,
             Blockchain.AlephZero, Blockchain.AlephZeroTestnet,
             -> PolkadotWalletManagerAssembly
 
