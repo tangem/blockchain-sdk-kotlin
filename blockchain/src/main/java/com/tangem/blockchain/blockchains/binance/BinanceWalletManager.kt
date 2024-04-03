@@ -18,12 +18,10 @@ class BinanceWalletManager(
 
     private val blockchain = wallet.blockchain
 
-    override val currentHost: String
-        get() = networkProvider.host
+    override val currentHost: String get() = networkProvider.baseUrl
 
     override suspend fun updateInternal() {
-        val result = networkProvider.getInfo(wallet.address)
-        when (result) {
+        when (val result = networkProvider.getInfo(wallet.address)) {
             is Result.Success -> updateWallet(result.data)
             is Result.Failure -> updateError(result.error)
         }
@@ -49,12 +47,10 @@ class BinanceWalletManager(
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val buildTransactionResult = transactionBuilder.buildToSign(transactionData)
-        return when (buildTransactionResult) {
+        return when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Failure -> SimpleResult.Failure(buildTransactionResult.error)
             is Result.Success -> {
-                val signerResponse = signer.sign(buildTransactionResult.data, wallet.publicKey)
-                when (signerResponse) {
+                when (val signerResponse = signer.sign(buildTransactionResult.data, wallet.publicKey)) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
                         networkProvider.sendTransaction(transactionToSend)
