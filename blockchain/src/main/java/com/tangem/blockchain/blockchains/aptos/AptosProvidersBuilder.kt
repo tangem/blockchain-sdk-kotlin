@@ -4,22 +4,24 @@ import com.tangem.blockchain.blockchains.aptos.network.AptosNetworkProvider
 import com.tangem.blockchain.blockchains.aptos.network.provider.AptosRestNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.extensions.letNotBlank
 
-internal class AptosNetworkProvidersBuilder(
-    private val blockchain: Blockchain,
+internal class AptosProvidersBuilder(
     private val config: BlockchainSdkConfig,
-) {
+) : NetworkProvidersBuilder<AptosNetworkProvider>() {
 
-    fun build(): List<AptosNetworkProvider> {
+    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Aptos, Blockchain.AptosTestnet)
+
+    override fun createProviders(blockchain: Blockchain): List<AptosNetworkProvider> {
         return listOfNotNull(
-            createOfficialNetworkProvider(),
+            createOfficialNetworkProvider(blockchain),
             config.getBlockCredentials?.aptos?.rest?.letNotBlank(::createGetBlockNetworkProvider),
             config.nowNodeCredentials?.apiKey?.letNotBlank(::createNowNodesNetworkProvider),
         )
     }
 
-    private fun createOfficialNetworkProvider(): AptosNetworkProvider {
+    private fun createOfficialNetworkProvider(blockchain: Blockchain): AptosNetworkProvider {
         return AptosRestNetworkProvider(
             baseUrl = "https://fullnode.${if (blockchain.isTestnet()) "testnet" else "mainnet"}.aptoslabs.com/",
         )
