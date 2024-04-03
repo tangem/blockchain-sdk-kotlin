@@ -9,12 +9,12 @@ internal data class RadiantAmountUnspentTransaction(
     val unspents: List<RadiantUnspentTransaction>,
 ) {
     val amountSatoshiDecimalValue = amount.longValue ?: 0L
-    val feeSatoshiDecimalValue = fee?.amount?.longValue ?: 0L
     val changeSatoshiDecimalValue get() = calculateChange(
         unspents = unspents,
         amountSatoshi = amountSatoshiDecimalValue,
         feeSatoshi = feeSatoshiDecimalValue,
     )
+    private val feeSatoshiDecimalValue = fee?.amount?.longValue ?: 0L
 
     private fun calculateChange(
         unspents: List<RadiantUnspentTransaction>,
