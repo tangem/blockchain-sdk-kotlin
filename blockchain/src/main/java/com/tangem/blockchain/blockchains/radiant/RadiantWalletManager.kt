@@ -25,7 +25,7 @@ internal class RadiantWalletManager(
     private val blockchain = wallet.blockchain
     private val addressScriptHash by lazy { RadiantAddressUtils.generateAddressScriptHash(wallet.address) }
     private val transactionBuilder = RadiantTransactionBuilder(
-        publicKey = wallet.publicKey.blockchainKey,
+        publicKey = wallet.publicKey,
         decimals = blockchain.decimals(),
     )
 
@@ -90,7 +90,14 @@ internal class RadiantWalletManager(
             when (val feeResult = networkService.getEstimatedFee(REQUIRED_NUMBER_OF_CONFIRMATION_BLOCKS)) {
                 is Result.Failure -> return feeResult
                 is Result.Success -> {
-                    val transactionSize = 1661.toBigDecimal() // FIXME: Change with real value
+                    val transactionSize = transactionBuilder.estimateTransactionSize(
+                        transaction = TransactionData(
+                            amount = amount,
+                            fee = Fee.Common(Amount(amount, feeResult.data.minimalPerKb)),
+                            sourceAddress = wallet.address,
+                            destinationAddress = destination,
+                        ),
+                    ).toBigDecimal()
                     val minFee = feeResult.data.minimalPerKb.calculateFee(transactionSize)
                     val normalFee = feeResult.data.normalPerKb.calculateFee(transactionSize)
                     val priorityFee = feeResult.data.priorityPerKb.calculateFee(transactionSize)
