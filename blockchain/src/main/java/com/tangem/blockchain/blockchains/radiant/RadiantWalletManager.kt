@@ -116,9 +116,15 @@ internal class RadiantWalletManager(
 
     private fun BigDecimal.calculateFee(txSize: BigDecimal): BigDecimal = this
         .multiply(txSize)
+        .divide(BigDecimal(BYTES_IN_KB))
         .setScale(wallet.blockchain.decimals(), RoundingMode.UP)
 
     private companion object {
-        private const val REQUIRED_NUMBER_OF_CONFIRMATION_BLOCKS = 10
+        const val REQUIRED_NUMBER_OF_CONFIRMATION_BLOCKS = 10
+
+        /**
+         * We use 1000, because Electrum node return fee for per 1000 bytes.
+         */
+        const val BYTES_IN_KB = 1000
     }
 }
