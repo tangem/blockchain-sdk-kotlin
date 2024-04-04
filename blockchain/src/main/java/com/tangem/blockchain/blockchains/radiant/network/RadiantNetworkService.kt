@@ -20,9 +20,9 @@ internal class RadiantNetworkService(providers: List<ElectrumNetworkProvider>) :
 
     /**
      * Relying on answers from blockchain developers and costs from the official application (Electron-Radiant).
-     * 10000 satoshi per byte.
+     * 10000 satoshi per byte or 0.1 RXD per KB.
      */
-    private val recommendedFeePer1000Bytes = "0.0001".toBigDecimal()
+    private val recommendedFeePer1000Bytes = "0.1".toBigDecimal()
     private val normalFeeMultiplier = "1.5".toBigDecimal()
     private val priorityFeeMultiplier = 2.toBigDecimal()
 
