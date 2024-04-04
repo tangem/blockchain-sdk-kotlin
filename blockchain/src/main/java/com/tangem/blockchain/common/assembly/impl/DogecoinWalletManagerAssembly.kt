@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common.assembly.impl
 
+import com.tangem.blockchain.blockchains.bitcoin.BitcoinFeesCalculator
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.getBitcoinNetworkProviders
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
@@ -24,6 +25,7 @@ internal object DogecoinWalletManagerAssembly : WalletManagerAssembly<DogecoinWa
                     providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config),
                 ),
                 transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
+                feesCalculator = BitcoinFeesCalculator(blockchain),
             )
         }
     }
