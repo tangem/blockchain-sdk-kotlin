@@ -1,0 +1,30 @@
+package com.tangem.blockchain.blockchains.ethereum.providers
+
+import com.tangem.blockchain.blockchains.ethereum.EthereumLikeProvidersBuilder
+import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkConfig
+
+internal class FantomProvidersBuilder(
+    override val config: BlockchainSdkConfig,
+) : EthereumLikeProvidersBuilder(config) {
+
+    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Fantom, Blockchain.FantomTestnet)
+
+    override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return if (blockchain.isTestnet()) {
+            listOf(
+                EthereumJsonRpcProvider(baseUrl = "https://rpc.testnet.fantom.network/"),
+            )
+        } else {
+            listOfNotNull(
+                ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://ftm.nownodes.io/"),
+                ethereumProviderFactory.getGetBlockProvider { fantom?.jsonRpc },
+                EthereumJsonRpcProvider(baseUrl = "https://rpc.ftm.tools/"),
+                EthereumJsonRpcProvider(baseUrl = "https://rpcapi.fantom.network/"),
+                EthereumJsonRpcProvider(baseUrl = "https://fantom-mainnet.public.blastapi.io/"),
+                EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/", postfixUrl = "fantom"),
+            )
+        }
+    }
+}
