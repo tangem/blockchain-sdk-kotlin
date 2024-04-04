@@ -99,6 +99,7 @@ class EstimationFeeAddressFactory(
             Blockchain.Areon, Blockchain.AreonTestnet,
             Blockchain.PulseChain, Blockchain.PulseChainTestnet,
             Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet,
+            Blockchain.Base, Blockchain.BaseTestnet,
             Blockchain.Moonbeam, Blockchain.MoonbeamTestnet,
             Blockchain.Manta, Blockchain.MantaTestnet,
             Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet,
