@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.polkadot.network
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.tangem.blockchain.blockchains.polkadot.extensions.toBigDecimal
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
@@ -23,13 +24,12 @@ import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.math.BigInteger
 
-/**
-[REDACTED_AUTHOR]
- */
-class PolkadotCombinedProvider(
-    private val decimals: Int,
+internal class PolkadotCombinedProvider(
     override val baseUrl: String,
+    private val blockchain: Blockchain,
 ) : PolkadotNetworkProvider {
+
+    private val decimals by lazy { blockchain.decimals() }
 
     private val polkadotApi: PolkadotApi = PolkadotApi.Builder().rpcCallAdapter(rpcCallAdapter(baseUrl)).build()
     private val polkadotProvider: PolkadotJsonRpcProvider = PolkadotJsonRpcProvider(baseUrl)
