@@ -7,12 +7,11 @@ import com.tangem.blockchain.common.TransactionSender
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 
-class LitecoinWalletManager(
+internal class LitecoinWalletManager(
     wallet: Wallet,
     transactionBuilder: BitcoinTransactionBuilder,
     networkProvider: BitcoinNetworkProvider,
     transactionHistoryProvider: TransactionHistoryProvider,
-) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider), TransactionSender {
-
-    override val minimalFee = 0.00001.toBigDecimal()
-}
+    feesCalculator: LitecoinFeesCalculator,
+) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider, feesCalculator),
+    TransactionSender
