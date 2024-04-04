@@ -302,6 +302,20 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://rpc.cardona.zkevm-rpc.com/"),
         )
 
+        Blockchain.Base -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://mainnet.base.org/"),
+            EthereumJsonRpcProvider(baseUrl = "https://base.meowrpc.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://base-rpc.publicnode.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://base.drpc.org/"),
+            EthereumJsonRpcProvider(baseUrl = "https://base.llamarpc.com/"),
+        )
+
+        Blockchain.BaseTestnet -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://sepolia.base.org/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.notadegen.com/base/sepolia/"),
+            EthereumJsonRpcProvider(baseUrl = "https://base-sepolia-rpc.publicnode.com/"),
+        )
+
         Blockchain.Moonriver -> listOf(
             EthereumJsonRpcProvider(baseUrl = "https://moonriver.public.blastapi.io/"),
             EthereumJsonRpcProvider(baseUrl = "https://moonriver-rpc.dwellir.com/"),
