@@ -6,14 +6,13 @@ import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
 
-class BitcoinCashWalletManager(
+internal class BitcoinCashWalletManager(
     wallet: Wallet,
     transactionBuilder: BitcoinCashTransactionBuilder,
     transactionHistoryProvider: TransactionHistoryProvider,
+    feesCalculator: BitcoinCashFeesCalculator,
     private val networkProvider: BitcoinNetworkProvider,
-) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider) {
-
-    override val minimalFee = 0.00001.toBigDecimal()
+) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider, feesCalculator) {
 
     override suspend fun updateInternal() {
         when (val response = networkProvider.getInfo(wallet.address)) {
