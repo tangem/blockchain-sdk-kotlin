@@ -305,11 +305,11 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
         )
 
         Blockchain.Base -> listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://mainnet.base.org/"),
             EthereumJsonRpcProvider(baseUrl = "https://base.meowrpc.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://base-rpc.publicnode.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://base.drpc.org/"),
             EthereumJsonRpcProvider(baseUrl = "https://base.llamarpc.com/"),
-            EthereumJsonRpcProvider(baseUrl = "https://mainnet.base.org/"),
         )
 
         Blockchain.BaseTestnet -> listOf(
