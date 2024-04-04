@@ -136,6 +136,8 @@ enum class Blockchain(
     PolygonZkEVM("polygonZkEVM", "ETH", "Polygon zkEVM"),
     PolygonZkEVMTestnet("polygonZkEVM/test", "ETH", "Polygon zkEVM Testnet"),
     Radiant("radiant", "RXD", "Radiant"),
+    Base("base", "ETH", "Base"),
+    BaseTestnet("base/test", "ETH", "Base Testnet"),
     Moonriver("moonriver", "MOVR", "Moonriver"),
     MoonriverTestnet("moonriver/test", "MOVR", "Moonriver Testnet"),
     Mantle("mantle", "MNT", "Mantle"),
@@ -217,6 +219,7 @@ enum class Blockchain(
         Moonbeam, MoonbeamTestnet,
         Manta, MantaTestnet,
         PolygonZkEVM, PolygonZkEVMTestnet,
+        Base, BaseTestnet,
         Moonriver, MoonriverTestnet,
         Mantle, MantleTestnet,
         Flare, FlareTestnet,
@@ -281,6 +284,7 @@ enum class Blockchain(
             Moonbeam, MoonbeamTestnet,
             Manta, MantaTestnet,
             PolygonZkEVM, PolygonZkEVMTestnet,
+            Base, BaseTestnet,
             Moonriver, MoonriverTestnet,
             Mantle, MantleTestnet,
             Flare, FlareTestnet,
@@ -387,6 +391,7 @@ enum class Blockchain(
             Moonbeam, MoonbeamTestnet -> MoonbeamTestnet
             Manta, MantaTestnet -> MantaTestnet
             PolygonZkEVM, PolygonZkEVMTestnet -> PolygonTestnet
+            Base, BaseTestnet -> BaseTestnet
             Moonriver, MoonriverTestnet -> MoonriverTestnet
             Mantle, MantleTestnet -> MantleTestnet
             Flare, FlareTestnet -> FlareTestnet
@@ -450,6 +455,7 @@ enum class Blockchain(
             Manta, MantaTestnet,
             PolygonZkEVM, PolygonZkEVMTestnet,
             Radiant,
+            Base, BaseTestnet,
             Moonriver, MoonriverTestnet,
             Mantle, MantleTestnet,
             Flare, FlareTestnet,
@@ -524,6 +530,8 @@ enum class Blockchain(
             MantaTestnet -> Chain.MantaTestnet.id
             PolygonZkEVM -> Chain.PolygonZkEVM.id
             PolygonZkEVMTestnet -> Chain.PolygonZkEVMTestnet.id
+            Base -> Chain.Base.id
+            BaseTestnet -> Chain.BaseTestnet.id
             Moonriver -> Chain.Moonriver.id
             MoonriverTestnet -> Chain.MoonriverTestnet.id
             Mantle -> Chain.Mantle.id
