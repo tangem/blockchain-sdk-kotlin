@@ -2,6 +2,7 @@ package com.tangem.blockchain.common.assembly.impl
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.getBitcoinNetworkProviders
+import com.tangem.blockchain.blockchains.litecoin.LitecoinFeesCalculator
 import com.tangem.blockchain.blockchains.litecoin.LitecoinNetworkService
 import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
@@ -24,6 +25,7 @@ internal object LitecoinWalletManagerAssembly : WalletManagerAssembly<LitecoinWa
                     providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config),
                 ),
                 transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
+                feesCalculator = LitecoinFeesCalculator(blockchain),
             )
         }
     }
