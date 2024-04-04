@@ -10,21 +10,20 @@ import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
 import java.math.BigDecimal
 
-class DucatusWalletManager(
+internal class DucatusWalletManager(
     wallet: Wallet,
     transactionBuilder: BitcoinTransactionBuilder,
     networkProvider: BitcoinNetworkProvider,
     transactionHistoryProvider: TransactionHistoryProvider,
+    feesCalculator: DucatusFeesCalculator,
 ) : BitcoinWalletManager(
     wallet = wallet,
     transactionHistoryProvider = transactionHistoryProvider,
     transactionBuilder = transactionBuilder,
     networkProvider = networkProvider,
+    feesCalculator = feesCalculator,
 ),
     TransactionSender {
-
-    override val minimalFeePerKb = 0.0001.toBigDecimal()
-    override val minimalFee = 0.00001.toBigDecimal()
 
     override fun updateRecentTransactionsBasic(transactions: List<BasicTransactionData>) {
         if (transactions.isEmpty()) {
