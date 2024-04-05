@@ -14,6 +14,7 @@ data class BlockchainSdkConfig(
     val chiaFireAcademyApiKey: String? = null,
     val chiaTangemApiKey: String? = null,
     val hederaArkhiaApiKey: String? = null,
+    val polygonScanApiKey: String? = null,
 )
 
 data class BlockchairCredentials(
