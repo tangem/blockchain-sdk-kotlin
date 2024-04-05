@@ -169,7 +169,7 @@ internal class EthereumTransactionHistoryProvider(
                     .equals(walletAddress, ignoreCase = true)
 
             is TransactionHistoryRequest.FilterType.Contract -> {
-                val equalsAddress = { value: String? -> filterType.address.equals(value, true) }
+                val equalsAddress = { value: String? -> filterType.tokenInfo.contractAddress.equals(value, true) }
 
                 transaction.tokenTransfers
                     .filter { equalsAddress(it.contract) || equalsAddress(it.token) }
@@ -203,10 +203,8 @@ internal class EthereumTransactionHistoryProvider(
             is TransactionHistoryRequest.FilterType.Contract -> {
                 val transfer = tx.tokenTransfers
                     .firstOrNull {
-                        filterType.address.equals(it.contract, ignoreCase = true) || filterType.address.equals(
-                            it.token,
-                            ignoreCase = true,
-                        )
+                        filterType.tokenInfo.contractAddress.equals(it.contract, ignoreCase = true) ||
+                            filterType.tokenInfo.contractAddress.equals(it.token, ignoreCase = true)
                     }
                     .guard { return null }
                 val isOutgoing = transfer.from == walletAddress
@@ -247,10 +245,8 @@ internal class EthereumTransactionHistoryProvider(
             is TransactionHistoryRequest.FilterType.Contract -> {
                 val transfers = tx.tokenTransfers
                     .filter {
-                        filterType.address.equals(it.contract, ignoreCase = true) || filterType.address.equals(
-                            it.token,
-                            ignoreCase = true,
-                        )
+                        filterType.tokenInfo.contractAddress.equals(it.contract, ignoreCase = true) ||
+                            filterType.tokenInfo.contractAddress.equals(it.token, ignoreCase = true)
                     }
                     .filter { transfer ->
                         val otherAddress = if (isOutgoing) transfer.from else transfer.to
