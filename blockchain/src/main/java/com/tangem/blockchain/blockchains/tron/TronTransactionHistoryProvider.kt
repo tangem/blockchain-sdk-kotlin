@@ -110,7 +110,8 @@ internal class TronTransactionHistoryProvider(
             }
             is TransactionHistoryRequest.FilterType.Contract -> {
                 val token = response.trxTokens
-                    ?.find { it.matching(filterType.address) } ?: return TransactionHistoryState.Success.Empty
+                    ?.find { it.matching(filterType.tokenInfo.contractAddress) }
+                    ?: return TransactionHistoryState.Success.Empty
                 if (token.transfers != null && token.transfers > 0) {
                     TransactionHistoryState.Success.HasTransactions(token.transfers)
                 } else {
@@ -181,7 +182,7 @@ internal class TronTransactionHistoryProvider(
             }
 
             is TransactionHistoryRequest.FilterType.Contract -> {
-                val transfer = tx.getTokenTransfer(filterType.address) ?: return null
+                val transfer = tx.getTokenTransfer(filterType.tokenInfo.contractAddress) ?: return null
                 TransactionHistoryItem.DestinationType.Single(
                     addressType = TransactionHistoryItem.AddressType.User(transfer.to),
                 )
@@ -196,7 +197,7 @@ internal class TronTransactionHistoryProvider(
         val address = when (filterType) {
             TransactionHistoryRequest.FilterType.Coin -> tx.fromAddress
             is TransactionHistoryRequest.FilterType.Contract -> {
-                tx.getTokenTransfer(filterType.address)?.from
+                tx.getTokenTransfer(filterType.tokenInfo.contractAddress)?.from
             }
         }.guard { return null }
 
@@ -235,7 +236,7 @@ internal class TronTransactionHistoryProvider(
             )
 
             is TransactionHistoryRequest.FilterType.Contract -> {
-                val transfer = tx.getTokenTransfer(filterType.address) ?: return null
+                val transfer = tx.getTokenTransfer(filterType.tokenInfo.contractAddress) ?: return null
                 val transferValue = transfer.value ?: "0"
                 val token = Token(
                     name = transfer.name.orEmpty(),

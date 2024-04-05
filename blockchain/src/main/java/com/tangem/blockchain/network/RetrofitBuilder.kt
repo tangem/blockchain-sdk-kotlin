@@ -8,6 +8,7 @@ import com.tangem.blockchain.blockchains.aptos.network.response.AptosResourceBod
 import com.tangem.blockchain.common.EnumeratedEnum
 import com.tangem.blockchain.common.network.interceptors.HttpLoggingInterceptor
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
+import com.tangem.blockchain.transactionhistory.polygon.network.PolygonScanResultAdapter
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -103,6 +104,7 @@ internal val moshi: Moshi by lazy {
         .add(BigDecimal::class.java, BigDecimalAdapter)
         .add(AptosResource::class.java, AptosResourceBodyAdapter)
         .add(createEnumJsonAdapter<GetAddressResponse.Transaction.StatusType>())
+        .add(PolygonScanResultAdapter())
         .add(KotlinJsonAdapterFactory())
         .build()
 }
