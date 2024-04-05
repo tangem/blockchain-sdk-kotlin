@@ -10,8 +10,14 @@ import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.network.blockbook.config.NowNodesConfig
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 import com.tangem.blockchain.network.createRetrofitInstance
-
+import com.tangem.blockchain.transactionhistory.polygon.PolygonHistoryProviderFactory
+// [REDACTED_TODO_COMMENT]
 internal fun Blockchain.getTransactionHistoryProvider(config: BlockchainSdkConfig): TransactionHistoryProvider {
+    if (this == Blockchain.Polygon || this == Blockchain.PolygonTestnet) {
+        return PolygonHistoryProviderFactory()
+            .makeProvider(config = config, blockchain = this)
+            ?: DefaultTransactionHistoryProvider
+    }
     return if (config.nowNodeCredentials != null && config.nowNodeCredentials.apiKey.isNotBlank()) {
         when (this) {
             Blockchain.Bitcoin,
