@@ -41,11 +41,11 @@ internal object KoinosProtocol {
     @JsonClass(generateAdapter = true)
     data class TransactionHeader(
         @Json(name = "chain_id") val chainId: String,
+        @Json(name = "rc_limit") val rcLimit: Long,
         @Json(name = "nonce") val nonce: String,
         @Json(name = "operation_merkle_root") val operationMerkleRoot: String,
         @Json(name = "payer") val payer: String,
-        @Json(name = "payee") val payee: String,
-        @Json(name = "rc_limit") val rcLimit: Long,
+        @Json(name = "payee") val payee: String? = null,
     )
 
     /**
@@ -81,11 +81,11 @@ internal object KoinosProtocol {
     @JsonClass(generateAdapter = true)
     data class CallContractOperation(
         @Json(name = "contract_id")
-        val contractId: String,
+        val contractIdBase58: String,
         @Json(name = "entry_point")
         val entryPoint: Int,
         @Json(name = "args")
-        val args: String,
+        val argsBase64: String,
     )
 
     /**
