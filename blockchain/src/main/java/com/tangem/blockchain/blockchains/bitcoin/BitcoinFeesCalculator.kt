@@ -31,16 +31,22 @@ internal open class BitcoinFeesCalculator(
 
     private fun calculateFee(feePerKb: BigDecimal, transactionSize: BigDecimal): Fee.Bitcoin {
         val innerFeePerKb = maxOf(a = feePerKb, b = minimalFeePerKb)
-        val calculatedFee = innerFeePerKb
+        // Rounding up to integer
+        val satoshiPerByte = innerFeePerKb
             .divide(BigDecimal(BYTES_IN_KB))
+            .movePointRight(blockchain.decimals())
+            .setScale(INT_DECIMALS, RoundingMode.UP)
+        val calculatedFee = satoshiPerByte
+            .movePointLeft(blockchain.decimals())
             .multiply(transactionSize)
             .setScale(blockchain.decimals(), RoundingMode.DOWN)
 
         val fee = maxOf(calculatedFee, minimalFee)
-        return Fee.Bitcoin(Amount(fee, blockchain), innerFeePerKb, transactionSize)
+        return Fee.Bitcoin(Amount(fee, blockchain), satoshiPerByte, transactionSize)
     }
 
     private companion object {
         const val BYTES_IN_KB = 1024
+        const val INT_DECIMALS = 0
     }
 }
