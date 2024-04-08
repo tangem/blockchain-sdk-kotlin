@@ -3,6 +3,11 @@ package com.tangem.blockchain.blockchains.koinos.network.dto
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.tangem.blockchain.common.JsonRPCRequest
+import com.tangem.common.extensions.toByteArray
+import koinos.chain.value_type
+import okio.ByteString.Companion.decodeBase64
+import org.kethereum.extensions.toBigInteger
+import java.math.BigInteger
 
 /**
  * Koinos JSON-RPC methods
@@ -62,7 +67,15 @@ internal sealed interface KoinosMethod {
         @JsonClass(generateAdapter = true)
         data class Response(
             @Json(name = "nonce") val nonce: String,
-        )
+        ) {
+            val nonceTypeName = "koinos.chai.value_type"
+
+            fun decode(): BigInteger? {
+                return value_type.ADAPTER.decode(
+                    nonce.decodeBase64() ?: return null,
+                ).uint64_value?.toByteArray()?.toBigInteger()
+            }
+        }
     }
 
     /**
