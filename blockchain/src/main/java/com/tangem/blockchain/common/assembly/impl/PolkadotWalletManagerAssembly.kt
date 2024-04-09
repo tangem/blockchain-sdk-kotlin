@@ -12,15 +12,16 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 internal object PolkadotWalletManagerAssembly : WalletManagerAssembly<PolkadotWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): PolkadotWalletManager {
+        val healthCheckService = input.wallet.blockchain.getPolkadotExtrinsicCheckHost()?.let {
+            PolkadotAccountHealthCheckNetworkService(it)
+        }
         return PolkadotWalletManager(
             wallet = input.wallet,
             networkProvider = PolkadotNetworkService(
                 providers = input.wallet.blockchain.getPolkadotHosts()
                     .map { PolkadotCombinedProvider(input.wallet.blockchain.decimals(), it) },
             ),
-            extrinsicCheckNetworkProvider = PolkadotAccountHealthCheckNetworkService(
-                input.wallet.blockchain.getPolkadotExtrinsicCheckHost(),
-            ),
+            extrinsicCheckNetworkProvider = healthCheckService,
         )
     }
 }
