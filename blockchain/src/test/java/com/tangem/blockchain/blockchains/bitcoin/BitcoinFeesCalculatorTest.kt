@@ -36,18 +36,18 @@ internal class BitcoinFeesCalculatorTest {
         )
         val expected = TransactionFee.Choosable(
             normal = Fee.Bitcoin(
-                amount = amount.copy(value = BigDecimal("0.00004114")),
-                feeRate = normalPerKb,
+                amount = amount.copy(value = BigDecimal("0.00004218")),
+                satoshiPerByte = BigDecimal(19),
                 txSize = txSize,
             ),
             minimum = Fee.Bitcoin(
-                amount = amount.copy(value = BigDecimal("0.00002665")),
-                feeRate = minimalPerKb,
+                amount = amount.copy(value = BigDecimal("0.00002886")),
+                satoshiPerByte = BigDecimal(13),
                 txSize = txSize,
             ),
             priority = Fee.Bitcoin(
-                amount = amount.copy(value = BigDecimal("0.00007492")),
-                feeRate = priorityPerKb,
+                amount = amount.copy(value = BigDecimal("0.00007548")),
+                satoshiPerByte = BigDecimal(34),
                 txSize = txSize,
             ),
         )
@@ -70,18 +70,18 @@ internal class BitcoinFeesCalculatorTest {
         )
         val expected = TransactionFee.Choosable(
             normal = Fee.Bitcoin(
-                amount = amount.copy(value = BigDecimal("0.00604320")),
-                feeRate = normalPerKb,
+                amount = amount.copy(value = BigDecimal("0.00619476")),
+                satoshiPerByte = BigDecimal(19),
                 txSize = txSize,
             ),
             minimum = Fee.Bitcoin(
-                amount = amount.copy(value = BigDecimal("0.00391439")),
-                feeRate = minimalPerKb,
+                amount = amount.copy(value = BigDecimal("0.00423852")),
+                satoshiPerByte = BigDecimal(13),
                 txSize = txSize,
             ),
             priority = Fee.Bitcoin(
-                amount = amount.copy(value = BigDecimal("0.01100353")),
-                feeRate = priorityPerKb,
+                amount = amount.copy(value = BigDecimal("0.01108536")),
+                satoshiPerByte = BigDecimal(34),
                 txSize = txSize,
             ),
         )
@@ -105,17 +105,17 @@ internal class BitcoinFeesCalculatorTest {
         val expected = TransactionFee.Choosable(
             minimum = Fee.Bitcoin(
                 amount = amount.copy(value = BigDecimal("0.00604320")),
-                feeRate = normalPerKb,
+                satoshiPerByte = normalPerKb,
                 txSize = txSize,
             ),
             priority = Fee.Bitcoin(
                 amount = amount.copy(value = BigDecimal("0.00391439")),
-                feeRate = minimalPerKb,
+                satoshiPerByte = minimalPerKb,
                 txSize = txSize,
             ),
             normal = Fee.Bitcoin(
                 amount = amount.copy(value = BigDecimal("0.01100353")),
-                feeRate = priorityPerKb,
+                satoshiPerByte = priorityPerKb,
                 txSize = txSize,
             ),
         )
@@ -139,17 +139,17 @@ internal class BitcoinFeesCalculatorTest {
         val expected = TransactionFee.Choosable(
             normal = Fee.Bitcoin(
                 amount = amount.copy(value = BigDecimal("0.00002665")),
-                feeRate = normalPerKb,
+                satoshiPerByte = normalPerKb,
                 txSize = txSize,
             ),
             minimum = Fee.Bitcoin(
                 amount = amount.copy(value = BigDecimal("0.00004114")),
-                feeRate = minimalPerKb,
+                satoshiPerByte = minimalPerKb,
                 txSize = txSize,
             ),
             priority = Fee.Bitcoin(
                 amount = amount.copy(value = BigDecimal("0.00007492")),
-                feeRate = priorityPerKb,
+                satoshiPerByte = priorityPerKb,
                 txSize = txSize,
             ),
         )
