@@ -16,7 +16,7 @@ sealed class Fee {
 
     data class Bitcoin(
         override val amount: Amount,
-        val feeRate: BigDecimal,
+        val satoshiPerByte: BigDecimal,
         val txSize: BigDecimal,
     ) : Fee()
 
