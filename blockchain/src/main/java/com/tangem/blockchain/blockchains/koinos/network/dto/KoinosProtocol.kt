@@ -110,14 +110,14 @@ internal object KoinosProtocol {
     data class TransactionReceipt(
         @Json(name = "id") val id: String,
         @Json(name = "payer") val payer: String,
-        @Json(name = "max_payer_rc") val maxPayerRc: String,
-        @Json(name = "rc_limit") val rcLimit: String,
-        @Json(name = "rc_used") val rcUsed: String,
-        @Json(name = "disk_storage_used") val diskStorageUsed: String,
-        @Json(name = "network_bandwidth_used") val networkBandwidthUsed: String,
-        @Json(name = "compute_bandwidth_used") val computeBandwidthUsed: String,
-        @Json(name = "reverted") val reverted: Boolean = false,
-        @Json(name = "events") val events: List<EventData>,
+        @Json(name = "max_payer_rc") val maxPayerRc: Long,
+        @Json(name = "rc_limit") val rcLimit: Long,
+        @Json(name = "rc_used") val rcUsed: Long,
+        @Json(name = "disk_storage_used") val diskStorageUsed: String?,
+        @Json(name = "network_bandwidth_used") val networkBandwidthUsed: String?,
+        @Json(name = "compute_bandwidth_used") val computeBandwidthUsed: String?,
+        @Json(name = "reverted") val reverted: Boolean?,
+        @Json(name = "events") val events: List<EventData> = emptyList(),
         // field: logs
         // field: state_delta_entries
     )
@@ -194,7 +194,7 @@ internal object KoinosProtocol {
      */
     @JsonClass(generateAdapter = true)
     data class EventData(
-        @Json(name = "sequence") val sequence: Int,
+        @Json(name = "sequence") val sequence: Int?,
         @Json(name = "source") val source: String,
         @Json(name = "name") val name: String,
         @Json(name = "data") val eventData: String,
