@@ -4,11 +4,13 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
+import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.network.blockbook.BlockBookNetworkProviderFactory
 import com.tangem.blockchain.network.blockchair.BlockchairNetworkProviderFactory
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProviderFactory
 
 internal class DashProvidersBuilder(
+    override val providerTypes: List<ProviderType>,
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<BitcoinNetworkProvider>() {
 
