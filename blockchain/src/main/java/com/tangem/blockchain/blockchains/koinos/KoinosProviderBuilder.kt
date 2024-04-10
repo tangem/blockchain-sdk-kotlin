@@ -6,25 +6,21 @@ import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 
 internal object KoinosProviderBuilder : NetworkProvidersBuilder<KoinosApi>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Koinos, Blockchain.KoinosTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<KoinosApi> {
-        return with(blockchain) {
-            if (isTestnet()) {
-                listOf(
-                    provider("https://harbinger-api.koinos.io/"),
-                    provider("https://testnet.koinosblocks.com/"),
-                )
-            } else {
-                listOf(
-                    provider("https://api.koinos.io/"),
-                    provider("https://api.koinosblocks.com/"),
-                )
-            }
-        }
+        return listOf(
+            createProvider(baseUrl = "https://api.koinos.io/", isTestnet = false),
+            createProvider(baseUrl = "https://api.koinosblocks.com/", isTestnet = false),
+        )
     }
 
-    private fun Blockchain.provider(baseUrl: String, apiKey: String? = null): KoinosApi {
-        return KoinosApi(baseUrl, isTestnet = isTestnet(), apiKey = apiKey)
+    override fun createTestnetProviders(blockchain: Blockchain): List<KoinosApi> {
+        return listOf(
+            createProvider(baseUrl = "https://harbinger-api.koinos.io/", isTestnet = true),
+            createProvider(baseUrl = "https://testnet.koinosblocks.com/", isTestnet = true),
+        )
+    }
+
+    private fun createProvider(baseUrl: String, isTestnet: Boolean, apiKey: String? = null): KoinosApi {
+        return KoinosApi(baseUrl = baseUrl, isTestnet = isTestnet, apiKey = apiKey)
     }
 }

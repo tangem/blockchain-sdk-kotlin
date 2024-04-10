@@ -9,20 +9,19 @@ internal class DecimalProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Decimal, Blockchain.DecimalTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return if (blockchain.isTestnet()) {
-            listOf("https://testnet-val.decimalchain.com/web3/")
-        } else {
-            listOf(
-                "https://node.decimalchain.com/web3/",
-                "https://node1-mainnet.decimalchain.com/web3/",
-                "https://node2-mainnet.decimalchain.com/web3/",
-                "https://node3-mainnet.decimalchain.com/web3/",
-                "https://node4-mainnet.decimalchain.com/web3/",
-            )
-        }
+        return listOf(
+            "https://node.decimalchain.com/web3/",
+            "https://node1-mainnet.decimalchain.com/web3/",
+            "https://node2-mainnet.decimalchain.com/web3/",
+            "https://node3-mainnet.decimalchain.com/web3/",
+            "https://node4-mainnet.decimalchain.com/web3/",
+        )
+            .map(::EthereumJsonRpcProvider)
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOf("https://testnet-val.decimalchain.com/web3/")
             .map(::EthereumJsonRpcProvider)
     }
 }

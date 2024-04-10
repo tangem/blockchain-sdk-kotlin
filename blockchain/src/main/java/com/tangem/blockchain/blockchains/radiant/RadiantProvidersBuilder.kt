@@ -9,8 +9,6 @@ import com.tangem.blockchain.network.electrum.ElectrumNetworkProviderFactory
 
 internal object RadiantProvidersBuilder : NetworkProvidersBuilder<ElectrumNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Radiant)
-
     override fun createProviders(blockchain: Blockchain): List<ElectrumNetworkProvider> {
         return listOf(
             ElectrumNetworkProviderFactory.create(
