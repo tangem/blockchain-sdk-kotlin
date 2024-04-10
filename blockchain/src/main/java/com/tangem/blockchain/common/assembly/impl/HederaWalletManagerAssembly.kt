@@ -20,7 +20,8 @@ internal class HederaWalletManagerAssembly(
                 wallet = wallet,
                 transactionBuilder = HederaTransactionBuilder(curve = curve, wallet = wallet),
                 networkProvider = HederaNetworkService(
-                    hederaNetworkProviders = HederaProvidersBuilder(config).build(wallet.blockchain),
+                    hederaNetworkProviders = HederaProvidersBuilder(input.providerTypes, config)
+                        .build(wallet.blockchain),
                 ),
                 dataStorage = dataStorage,
                 accountCreator = accountCreator,

@@ -13,7 +13,7 @@ internal object NexaWalletManagerAssembly : WalletManagerAssembly<NexaWalletMana
             NexaWalletManager(
                 wallet = wallet,
                 networkProvider = ElectrumNetworkService(
-                    providers = NexaProvidersBuilder.build(wallet.blockchain),
+                    providers = NexaProvidersBuilder(providerTypes).build(wallet.blockchain),
                 ),
             )
         }

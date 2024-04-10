@@ -11,6 +11,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
+import com.tangem.blockchain.common.network.providers.ProviderType
 
 internal object PolkadotWalletManagerAssembly : WalletManagerAssembly<PolkadotWalletManager>() {
 
@@ -19,7 +20,7 @@ internal object PolkadotWalletManagerAssembly : WalletManagerAssembly<PolkadotWa
             PolkadotWalletManager(
                 wallet = this,
                 networkProvider = PolkadotNetworkService(
-                    providers = getNetworkProvidersBuilder(blockchain).build(blockchain),
+                    providers = getNetworkProvidersBuilder(input.providerTypes, blockchain).build(blockchain),
                 ),
                 extrinsicCheckNetworkProvider = PolkadotAccountHealthCheckNetworkService(
                     baseUrl = "https://polkadot.api.subscan.io/",
@@ -28,11 +29,14 @@ internal object PolkadotWalletManagerAssembly : WalletManagerAssembly<PolkadotWa
         }
     }
 
-    private fun getNetworkProvidersBuilder(blockchain: Blockchain): NetworkProvidersBuilder<PolkadotNetworkProvider> {
+    private fun getNetworkProvidersBuilder(
+        providerTypes: List<ProviderType>,
+        blockchain: Blockchain,
+    ): NetworkProvidersBuilder<PolkadotNetworkProvider> {
         return when (blockchain) {
-            Blockchain.Polkadot, Blockchain.PolkadotTestnet -> PolkadotProvidersBuilder()
-            Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> AlephZeroProvidersBuilder()
-            Blockchain.Kusama -> KusamaProvidersBuilder()
+            Blockchain.Polkadot, Blockchain.PolkadotTestnet -> PolkadotProvidersBuilder(providerTypes)
+            Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> AlephZeroProvidersBuilder(providerTypes)
+            Blockchain.Kusama -> KusamaProvidersBuilder(providerTypes)
             else -> error("$blockchain isn't supported")
         }
     }

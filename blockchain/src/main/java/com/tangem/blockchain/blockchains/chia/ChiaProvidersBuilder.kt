@@ -5,12 +5,14 @@ import com.tangem.blockchain.blockchains.chia.network.ChiaNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
+import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.letNotBlank
 import com.tangem.blockchain.network.API_CHIA_FIREACADEMY
 import com.tangem.blockchain.network.API_CHIA_FIREACADEMY_TESTNET
 import com.tangem.blockchain.network.API_CHIA_TANGEM
 
 internal class ChiaProvidersBuilder(
+    override val providerTypes: List<ProviderType>,
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<ChiaNetworkProvider>() {
 

@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.hedera.network.HederaNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
+import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.letNotBlank
 import com.tangem.blockchain.network.API_HEDERA_ARKHIA_MIRROR
 import com.tangem.blockchain.network.API_HEDERA_ARKHIA_MIRROR_TESTNET
@@ -12,6 +13,7 @@ import com.tangem.blockchain.network.API_HEDERA_MIRROR
 import com.tangem.blockchain.network.API_HEDERA_MIRROR_TESTNET
 
 internal class HederaProvidersBuilder(
+    override val providerTypes: List<ProviderType>,
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<HederaNetworkProvider>() {
 
