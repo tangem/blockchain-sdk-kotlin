@@ -14,7 +14,8 @@ internal object AlgorandWalletManagerAssembly : WalletManagerAssembly<AlgorandWa
             AlgorandWalletManager(
                 wallet = wallet,
                 networkService = AlgorandNetworkService(
-                    networkProviders = AlgorandProvidersBuilder(config = config).build(blockchain = wallet.blockchain),
+                    networkProviders = AlgorandProvidersBuilder(providerTypes = input.providerTypes, config = config)
+                        .build(blockchain = wallet.blockchain),
                     blockchain = wallet.blockchain,
                 ),
                 transactionHistoryProvider = wallet.blockchain.getTransactionHistoryProvider(config),

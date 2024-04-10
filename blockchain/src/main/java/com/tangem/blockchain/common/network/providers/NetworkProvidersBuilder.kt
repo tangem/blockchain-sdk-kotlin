@@ -13,6 +13,9 @@ import com.tangem.blockchain.common.NetworkProvider
  */
 internal abstract class NetworkProvidersBuilder<out T : NetworkProvider> {
 
+    /** List of [ProviderType] */
+    protected abstract val providerTypes: List<ProviderType>
+
     /** Create list of mainnet [NetworkProvider] instances */
     protected abstract fun createProviders(blockchain: Blockchain): List<T>
 

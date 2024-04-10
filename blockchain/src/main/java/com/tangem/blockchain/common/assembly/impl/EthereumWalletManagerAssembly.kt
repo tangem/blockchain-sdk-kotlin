@@ -20,7 +20,7 @@ internal object EthereumWalletManagerAssembly : WalletManagerAssembly<EthereumWa
                     blockchain = blockchain,
                 ),
                 networkProvider = EthereumNetworkService(
-                    jsonRpcProviders = EthereumProvidersBuilder(input.config).build(blockchain),
+                    jsonRpcProviders = EthereumProvidersBuilder(input.providerTypes, input.config).build(blockchain),
                     blockcypherNetworkProvider = BlockcypherNetworkProvider(
                         blockchain = blockchain,
                         tokens = input.config.blockcypherTokens,

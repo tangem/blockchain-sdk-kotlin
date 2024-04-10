@@ -16,7 +16,7 @@ internal object StellarWalletManagerAssembly : WalletManagerAssembly<StellarWall
 
             val networkService = StellarNetworkService(
                 isTestnet = isTestnet,
-                providers = StellarProvidersBuilder(input.config).build(blockchain),
+                providers = StellarProvidersBuilder(input.providerTypes, input.config).build(blockchain),
             )
 
             return StellarWalletManager(
