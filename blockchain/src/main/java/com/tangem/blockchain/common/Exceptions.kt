@@ -213,6 +213,8 @@ sealed class BlockchainSdkError(
     ) {
         class Api(code: Int, message: String) : Koinos(subCode = code, customMessage = message)
 
+        object InsufficientMana : Koinos(subCode = -32603, customMessage = "Insufficient Mana")
+
         class ProtobufDecodeError(protoType: String) : Koinos(
             subCode = 999999,
             customMessage = "Failed to decode $protoType",
