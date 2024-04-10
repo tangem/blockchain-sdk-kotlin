@@ -9,7 +9,6 @@ import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.letNotBlank
 import com.tangem.blockchain.network.API_HEDERA_ARKHIA_MIRROR
 import com.tangem.blockchain.network.API_HEDERA_ARKHIA_MIRROR_TESTNET
-import com.tangem.blockchain.network.API_HEDERA_MIRROR
 import com.tangem.blockchain.network.API_HEDERA_MIRROR_TESTNET
 
 internal class HederaProvidersBuilder(
@@ -18,22 +17,19 @@ internal class HederaProvidersBuilder(
 ) : NetworkProvidersBuilder<HederaNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<HederaNetworkProvider> {
-        return listOfNotNull(
-            createMirrorProvider(isTestnet = false),
-            createArkhiaMirrorProvider(isTestnet = false),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> HederaMirrorRestProvider(baseUrl = it.url)
+                ProviderType.Hedera.Arkhia -> createArkhiaMirrorProvider(isTestnet = false)
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<HederaNetworkProvider> {
         return listOfNotNull(
-            createMirrorProvider(isTestnet = true),
+            HederaMirrorRestProvider(baseUrl = API_HEDERA_MIRROR_TESTNET),
             createArkhiaMirrorProvider(isTestnet = true),
-        )
-    }
-
-    private fun createMirrorProvider(isTestnet: Boolean): HederaMirrorRestProvider {
-        return HederaMirrorRestProvider(
-            baseUrl = if (isTestnet) API_HEDERA_MIRROR_TESTNET else API_HEDERA_MIRROR,
         )
     }
 

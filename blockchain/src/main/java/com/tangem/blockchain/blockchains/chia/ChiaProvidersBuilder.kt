@@ -17,10 +17,13 @@ internal class ChiaProvidersBuilder(
 ) : NetworkProvidersBuilder<ChiaNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<ChiaNetworkProvider> {
-        return listOfNotNull(
-            createTangemProvider(),
-            createFireAcademyProvider(isTestnet = false),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                ProviderType.Chia.Tangem -> createTangemProvider()
+                ProviderType.Chia.FireAcademy -> createFireAcademyProvider(isTestnet = false)
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<ChiaNetworkProvider> {
