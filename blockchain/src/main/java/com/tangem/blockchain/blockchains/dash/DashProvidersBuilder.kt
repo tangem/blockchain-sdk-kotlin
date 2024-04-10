@@ -12,13 +12,19 @@ internal class DashProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<BitcoinNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Dash)
-
     private val blockBookNetworkProviderFactory by lazy { BlockBookNetworkProviderFactory(config) }
     private val blockchairNetworkProviderFactory by lazy { BlockchairNetworkProviderFactory(config) }
     private val blockcypherNetworkProviderFactory by lazy { BlockcypherNetworkProviderFactory(config) }
 
     override fun createProviders(blockchain: Blockchain): List<BitcoinNetworkProvider> {
+        return listOfNotNull(
+            blockBookNetworkProviderFactory.createNowNodesProvider(blockchain),
+            *blockchairNetworkProviderFactory.createProviders(blockchain).toTypedArray(),
+            blockcypherNetworkProviderFactory.create(blockchain),
+        )
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<BitcoinNetworkProvider> {
         return listOfNotNull(
             blockBookNetworkProviderFactory.createNowNodesProvider(blockchain),
             *blockchairNetworkProviderFactory.createProviders(blockchain).toTypedArray(),
