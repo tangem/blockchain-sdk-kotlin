@@ -1,9 +1,12 @@
 package com.tangem.blockchain.blockchains.koinos.network
 
+import android.util.Log
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.koinos.KoinContractAbi
-import com.tangem.blockchain.blockchains.koinos.network.dto.*
+import com.tangem.blockchain.blockchains.koinos.models.KoinosTransactionEntry
+import com.tangem.blockchain.blockchains.koinos.network.dto.KoinosMethod
+import com.tangem.blockchain.blockchains.koinos.network.dto.KoinosProtocol
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.JsonRPCRequest
 import com.tangem.blockchain.common.JsonRPCResponse
@@ -28,7 +31,7 @@ private interface KoinosRetrofitJsonRPCApi {
  * @see <a href="https://docs.koinos.io/rpc/json-rpc/">Koinos JSON-RPC docs</a>
  * @see <a href=https://github.com/koinos/koinos-proto/>Koinos api proto-models</a>
  */
-internal class KoinosApi(
+internal class KoinosNetworkProvier(
     override val baseUrl: String,
     isTestnet: Boolean,
     private val apiKey: String? = null,
@@ -36,12 +39,6 @@ internal class KoinosApi(
 
     private val api = createRetrofitInstance(baseUrl).create(KoinosRetrofitJsonRPCApi::class.java)
     private val koinContractAbi = KoinContractAbi(isTestnet = isTestnet)
-    private val readContractResponseAdapter by lazy { KoinosMethod_ReadContract_ResponseJsonAdapter(moshi) }
-    private val getRCResultResponseAdapter by lazy { KoinosMethod_GetAccountRC_ResponseJsonAdapter(moshi) }
-    private val getNonceResponseAdapter by lazy { KoinosMethod_GetAccountNonce_ResponseJsonAdapter(moshi) }
-    private val submitTransactionResponseJsonAdapter by lazy {
-        KoinosMethod_SubmitTransaction_ResponseJsonAdapter(moshi)
-    }
 
     suspend fun getKoinBalance(address: String): Result<Long> {
         val args = koinContractAbi.balanceOf.encodeArgs(address)
@@ -55,7 +52,7 @@ internal class KoinosApi(
 
         // Sometimes one request is not enough
         return retryCall {
-            api.send(apiKey, request).parseResult(adapter = readContractResponseAdapter)
+            api.send(apiKey, request).parseResult<KoinosMethod.ReadContract.Response>()
         }.map { response ->
             response.result?.let {
                 koinContractAbi.balanceOf.decodeResult(it)?.balance
@@ -68,9 +65,9 @@ internal class KoinosApi(
             account = address,
         ).asRequest()
 
-        return api.send(apiKey, request)
-            .parseResult(adapter = getRCResultResponseAdapter)
-            .map { it.rc }
+        return catchNetworkError {
+            api.send(apiKey, request).parseResult<KoinosMethod.GetAccountRC.Response>()
+        }.map { it.rc }
     }
 
     suspend fun getNonce(address: String): Result<BigInteger> {
@@ -78,30 +75,49 @@ internal class KoinosApi(
             account = address,
         ).asRequest()
 
-        return api.send(apiKey, request)
-            .parseResult(adapter = getNonceResponseAdapter)
-            .map {
-                it.decode() ?: return decodeFailure(it.nonceTypeName)
-            }
+        return catchNetworkError {
+            api.send(apiKey, request).parseResult<KoinosMethod.GetAccountNonce.Response>()
+        }.map {
+            it.decode() ?: return decodeFailure(it.nonceTypeName)
+        }
     }
 
-    suspend fun submitTransaction(request: TransactionRequest): Result<Unit> {
+    suspend fun submitTransaction(transaction: KoinosProtocol.Transaction): Result<KoinosTransactionEntry> {
         val jsonRequest = KoinosMethod.SubmitTransaction(
-            transaction = request.transaction,
-            broadcast = request.broadcast,
+            transaction = transaction,
+            broadcast = true,
         ).asRequest()
 
-        return api.send(apiKey, jsonRequest)
-            .parseResult(submitTransactionResponseJsonAdapter)
-            .map {
-                // TODO [REDACTED_TASK_KEY] [Koinos] TransactionBuilder
-            }
+        return catchNetworkError {
+            api.send(apiKey, jsonRequest).parseResult<KoinosMethod.SubmitTransaction.Response>()
+        }.map { response ->
+            val encodedEvent = response.receipt.events.getOrNull(0)?.eventData
+                ?: return decodeFailure(koinContractAbi.transfer.eventName)
+            val decodedEvent = koinContractAbi.transfer.decodeEvent(encodedEvent)
+                ?: return decodeFailure(koinContractAbi.transfer.eventName)
+
+            KoinosTransactionEntry(
+                id = response.receipt.id,
+                payerAddress = response.receipt.payer,
+                maxPayerRC = response.receipt.maxPayerRc,
+                rcLimit = response.receipt.rcLimit,
+                rcUsed = response.receipt.rcUsed,
+                transferEvent = KoinosTransactionEntry.KoinTransferEvent(
+                    fromAddress = decodedEvent.fromAccount,
+                    toAddress = decodedEvent.toAccount,
+                    value = decodedEvent.value,
+                ),
+            )
+        }
     }
 
-    data class TransactionRequest(
-        val transaction: KoinosProtocol.Transaction,
-        val broadcast: Boolean,
-    )
+    private inline fun <T> catchNetworkError(block: () -> Result<T>): Result<T> {
+        return runCatching {
+            block()
+        }.getOrElse {
+            Result.Failure(BlockchainSdkError.WrappedThrowable(it))
+        }
+    }
 
     private suspend fun <T> retryCall(
         times: Int = 3,
@@ -112,7 +128,9 @@ internal class KoinosApi(
     ): Result<T> {
         var currentDelay = initialDelay
         repeat(times - 1) {
-            val res = block()
+            val res = catchNetworkError {
+                block()
+            }
 
             if (res is Result.Failure && res.error is BlockchainSdkError.Koinos.Api) {
                 delay(currentDelay)
@@ -127,17 +145,26 @@ internal class KoinosApi(
     private fun decodeFailure(decoderName: String) =
         Result.Failure(BlockchainSdkError.Koinos.ProtobufDecodeError(protoType = decoderName))
 
-    private fun <T> JsonRPCResponse.parseResult(adapter: JsonAdapter<T>): Result<T> {
+    @OptIn(ExperimentalStdlibApi::class)
+    private inline fun <reified T> JsonRPCResponse.parseResult(
+        adapter: JsonAdapter<T> = moshi.adapter<T>(),
+    ): Result<T> {
         return if (error != null) {
             Result.Failure(
-                BlockchainSdkError.Koinos.Api(
-                    code = error.code,
-                    message = error.message,
-                ),
+                if (error.code == BlockchainSdkError.Koinos.InsufficientMana.code) {
+                    BlockchainSdkError.Koinos.InsufficientMana
+                } else {
+                    BlockchainSdkError.Koinos.Api(
+                        code = error.code,
+                        message = error.message,
+                    )
+                },
             )
         } else {
             runCatching {
                 adapter.fromJsonValue(result)
+            }.onFailure {
+                Log.e("KoinosApi", it.stackTraceToString())
             }.getOrNull()?.let { Result.Success(it) } ?: Result.Failure(
                 BlockchainSdkError.UnsupportedOperation(
                     "Unknown Koinos JSON-RPC response result",
