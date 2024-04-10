@@ -2,10 +2,13 @@ package com.tangem.blockchain.blockchains.nexa
 
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
+import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.network.electrum.ElectrumNetworkProvider
 import com.tangem.blockchain.network.electrum.ElectrumNetworkProviderFactory
 
-internal object NexaProvidersBuilder : NetworkProvidersBuilder<ElectrumNetworkProvider>() {
+internal class NexaProvidersBuilder(
+    override val providerTypes: List<ProviderType>,
+) : NetworkProvidersBuilder<ElectrumNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<ElectrumNetworkProvider> {
         return listOf(

@@ -6,9 +6,11 @@ import com.tangem.blockchain.blockchains.tron.network.TronNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
+import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.letNotBlank
 
 internal class TronProvidersBuilder(
+    override val providerTypes: List<ProviderType>,
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<TronNetworkProvider>() {
 

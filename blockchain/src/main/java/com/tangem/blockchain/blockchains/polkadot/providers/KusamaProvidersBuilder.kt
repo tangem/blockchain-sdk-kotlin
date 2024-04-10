@@ -4,8 +4,11 @@ import com.tangem.blockchain.blockchains.polkadot.network.PolkadotCombinedProvid
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
+import com.tangem.blockchain.common.network.providers.ProviderType
 
-internal class KusamaProvidersBuilder : NetworkProvidersBuilder<PolkadotNetworkProvider>() {
+internal class KusamaProvidersBuilder(
+    override val providerTypes: List<ProviderType>,
+) : NetworkProvidersBuilder<PolkadotNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<PolkadotNetworkProvider> {
         return listOf(
