@@ -18,7 +18,7 @@ internal object XDCWalletManagerAssembly : WalletManagerAssembly<XDCWalletManage
                     blockchain = blockchain,
                 ),
                 networkProvider = EthereumNetworkService(
-                    jsonRpcProviders = XDCProvidersBuilder(input.config).build(blockchain),
+                    jsonRpcProviders = XDCProvidersBuilder(input.providerTypes, input.config).build(blockchain),
                 ),
             )
         }

@@ -9,6 +9,6 @@ internal object RadiantWalletManagerAssembly : WalletManagerAssembly<RadiantWall
 
     override fun make(input: WalletManagerAssemblyInput): RadiantWalletManager = RadiantWalletManager(
         wallet = input.wallet,
-        networkProviders = RadiantProvidersBuilder.build(input.wallet.blockchain),
+        networkProviders = RadiantProvidersBuilder(input.providerTypes).build(input.wallet.blockchain),
     )
 }
