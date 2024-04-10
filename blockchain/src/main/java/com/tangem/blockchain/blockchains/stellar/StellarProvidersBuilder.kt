@@ -13,15 +13,21 @@ internal class StellarProvidersBuilder(
 ) : NetworkProvidersBuilder<StellarWrapperNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<StellarWrapperNetworkProvider> {
-        return listOfNotNull(
-            StellarNetwork.Horizon,
-            config.nowNodeCredentials?.apiKey.letNotBlank(StellarNetwork::Nownodes),
-        )
+        return providerTypes
+            .mapNotNull {
+                when (it) {
+                    is ProviderType.Public -> StellarNetwork.Public(it.url)
+                    ProviderType.NowNodes -> config.nowNodeCredentials?.apiKey.letNotBlank(StellarNetwork::Nownodes)
+                    else -> null
+                }
+            }
             .map(::createWrapperProvider)
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<StellarWrapperNetworkProvider> {
-        return listOf(StellarNetwork.HorizonTestnet).map(::createWrapperProvider)
+        return listOf(
+            createWrapperProvider(StellarNetwork.HorizonTestnet),
+        )
     }
 
     private fun createWrapperProvider(network: StellarNetwork): StellarWrapperNetworkProvider {
