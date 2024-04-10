@@ -7,11 +7,13 @@ import com.tangem.blockchain.common.GetBlockCredentials
 import com.tangem.blockchain.common.NowNodeCredentials
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
+import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.letNotBlank
 import okhttp3.Interceptor
 import org.p2p.solanaj.rpc.Cluster
 
 internal class SolanaProvidersBuilder(
+    override val providerTypes: List<ProviderType>,
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<SolanaRpcClient>() {
 
