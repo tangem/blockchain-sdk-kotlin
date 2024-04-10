@@ -9,24 +9,23 @@ internal class BaseProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Base, Blockchain.BaseTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return if (blockchain.isTestnet()) {
-            listOf(
-                "https://sepolia.base.org/",
-                "https://rpc.notadegen.com/base/sepolia/",
-                "https://base-sepolia-rpc.publicnode.com/",
-            )
-        } else {
-            listOf(
-                "https://mainnet.base.org/",
-                "https://base.meowrpc.com/",
-                "https://base-rpc.publicnode.com/",
-                "https://base.drpc.org/",
-                "https://base.llamarpc.com/",
-            )
-        }
+        return listOf(
+            "https://mainnet.base.org/",
+            "https://base.meowrpc.com/",
+            "https://base-rpc.publicnode.com/",
+            "https://base.drpc.org/",
+            "https://base.llamarpc.com/",
+        )
+            .map(::EthereumJsonRpcProvider)
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOf(
+            "https://sepolia.base.org/",
+            "https://rpc.notadegen.com/base/sepolia/",
+            "https://base-sepolia-rpc.publicnode.com/",
+        )
             .map(::EthereumJsonRpcProvider)
     }
 }

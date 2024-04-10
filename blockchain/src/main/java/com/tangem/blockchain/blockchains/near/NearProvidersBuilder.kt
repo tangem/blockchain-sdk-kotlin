@@ -11,32 +11,35 @@ internal class NearProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<NearNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Near, Blockchain.NearTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<NearNetworkProvider> {
-        val isTestnet = blockchain.isTestnet()
-
-        return buildList {
-            add(createNearJsonRpcProvider(isTestNet = isTestnet))
-
-            if (!isTestnet) {
-                config.nowNodeCredentials?.apiKey.letNotBlank(::createNowNodeJsonRpcProvider)?.let(::add)
-                config.getBlockCredentials?.near?.jsonRpc.letNotBlank(::createGetBlockJsonRpcProvider)?.let(::add)
-            }
-        }
-    }
-
-    private fun createNearJsonRpcProvider(isTestNet: Boolean): NearNetworkProvider {
-        return NearJsonRpcNetworkProvider(
-            baseUrl = if (isTestNet) "https://rpc.testnet.near.org/" else "https://rpc.mainnet.near.org/",
+        return listOfNotNull(
+            createNearJsonRpcProvider(isTestnet = false),
+            createNowNodeJsonRpcProvider(),
+            createGetBlockJsonRpcProvider(),
         )
     }
 
-    private fun createGetBlockJsonRpcProvider(accessToken: String): NearNetworkProvider {
-        return NearJsonRpcNetworkProvider(baseUrl = "https://go.getblock.io/$accessToken/")
+    override fun createTestnetProviders(blockchain: Blockchain): List<NearNetworkProvider> {
+        return listOf(
+            createNearJsonRpcProvider(isTestnet = true),
+        )
     }
 
-    private fun createNowNodeJsonRpcProvider(apiKey: String): NearNetworkProvider {
-        return NearJsonRpcNetworkProvider(baseUrl = "https://near.nownodes.io/$apiKey/")
+    private fun createNearJsonRpcProvider(isTestnet: Boolean): NearNetworkProvider {
+        return NearJsonRpcNetworkProvider(
+            baseUrl = if (isTestnet) "https://rpc.testnet.near.org/" else "https://rpc.mainnet.near.org/",
+        )
+    }
+
+    private fun createNowNodeJsonRpcProvider(): NearNetworkProvider? {
+        return config.nowNodeCredentials?.apiKey.letNotBlank {
+            NearJsonRpcNetworkProvider(baseUrl = "https://near.nownodes.io/$it/")
+        }
+    }
+
+    private fun createGetBlockJsonRpcProvider(): NearNetworkProvider? {
+        return config.getBlockCredentials?.near?.jsonRpc.letNotBlank {
+            NearJsonRpcNetworkProvider(baseUrl = "https://go.getblock.io/$it/")
+        }
     }
 }

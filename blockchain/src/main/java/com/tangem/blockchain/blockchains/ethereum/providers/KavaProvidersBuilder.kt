@@ -9,17 +9,15 @@ internal class KavaProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Kava, Blockchain.KavaTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return if (blockchain.isTestnet()) {
-            listOf("https://evm.testnet.kava.io/")
-        } else {
-            listOf(
-                "https://evm.kava.io/",
-                "https://evm2.kava.io/",
-            )
-        }
+        return listOf(
+            "https://evm.kava.io/",
+            "https://evm2.kava.io/",
+        )
             .map(::EthereumJsonRpcProvider)
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOf("https://evm.testnet.kava.io/").map(::EthereumJsonRpcProvider)
     }
 }

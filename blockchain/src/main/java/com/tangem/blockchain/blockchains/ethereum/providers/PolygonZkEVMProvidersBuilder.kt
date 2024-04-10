@@ -9,25 +9,21 @@ internal class PolygonZkEVMProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> =
-        listOf(Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return if (blockchain.isTestnet()) {
-            listOf(
-                "https://rpc.cardona.zkevm-rpc.com/",
-            )
-        } else {
-            listOf(
-                "https://1rpc.io/polygon/zkevm/",
-                "https://polygon-zkevm.drpc.org/",
-                "https://polygon-zkevm-mainnet.public.blastapi.io/",
-                "https://zkevm-rpc.com/",
-                "https://polygon-zkevm.blockpi.network/v1/rpc/public/",
-                "https://rpc.polygon-zkevm.gateway.fm/",
-                "https://api.zan.top/node/v1/polygonzkevm/mainnet/public/",
-            )
-        }
+        return listOf(
+            "https://1rpc.io/polygon/zkevm/",
+            "https://polygon-zkevm.drpc.org/",
+            "https://polygon-zkevm-mainnet.public.blastapi.io/",
+            "https://zkevm-rpc.com/",
+            "https://polygon-zkevm.blockpi.network/v1/rpc/public/",
+            "https://rpc.polygon-zkevm.gateway.fm/",
+            "https://api.zan.top/node/v1/polygonzkevm/mainnet/public/",
+        )
+            .map(::EthereumJsonRpcProvider)
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOf("https://rpc.cardona.zkevm-rpc.com/")
             .map(::EthereumJsonRpcProvider)
     }
 }

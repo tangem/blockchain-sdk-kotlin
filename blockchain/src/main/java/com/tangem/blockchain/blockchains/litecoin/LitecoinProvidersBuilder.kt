@@ -12,8 +12,6 @@ internal class LitecoinProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<BitcoinNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Litecoin)
-
     private val blockBookNetworkProviderFactory by lazy { BlockBookNetworkProviderFactory(config) }
     private val blockchairNetworkProviderFactory by lazy { BlockchairNetworkProviderFactory(config) }
     private val blockcypherNetworkProviderFactory by lazy { BlockcypherNetworkProviderFactory(config) }
@@ -22,6 +20,14 @@ internal class LitecoinProvidersBuilder(
         return listOfNotNull(
             blockBookNetworkProviderFactory.createNowNodesProvider(blockchain),
             blockBookNetworkProviderFactory.createGetBlockProvider(blockchain),
+            *blockchairNetworkProviderFactory.createProviders(blockchain).toTypedArray(),
+            blockcypherNetworkProviderFactory.create(blockchain),
+        )
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<BitcoinNetworkProvider> {
+        return listOfNotNull(
+            blockBookNetworkProviderFactory.createNowNodesProvider(blockchain),
             *blockchairNetworkProviderFactory.createProviders(blockchain).toTypedArray(),
             blockcypherNetworkProviderFactory.create(blockchain),
         )

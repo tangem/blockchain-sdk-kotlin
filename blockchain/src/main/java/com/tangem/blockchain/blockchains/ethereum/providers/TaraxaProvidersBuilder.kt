@@ -9,14 +9,13 @@ internal class TaraxaProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Taraxa, Blockchain.TaraxaTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return if (blockchain.isTestnet()) {
-            listOf("https://rpc.testnet.taraxa.io/")
-        } else {
-            listOf("https://rpc.mainnet.taraxa.io/") // the only existing provider
-        }
+        return listOf("https://rpc.mainnet.taraxa.io/") // the only existing provider
+            .map(::EthereumJsonRpcProvider)
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOf("https://rpc.testnet.taraxa.io/")
             .map(::EthereumJsonRpcProvider)
     }
 }

@@ -11,21 +11,21 @@ import com.tangem.blockchain.common.NetworkProvider
  *
 [REDACTED_AUTHOR]
  */
-abstract class NetworkProvidersBuilder<out T : NetworkProvider> {
+internal abstract class NetworkProvidersBuilder<out T : NetworkProvider> {
 
-    /** Supported blockchains */
-    protected abstract val supportedBlockchains: List<Blockchain>
+    /** Create list of mainnet [NetworkProvider] instances */
+    protected abstract fun createProviders(blockchain: Blockchain): List<T>
+
+    /** Create list of testnet [NetworkProvider] instances */
+    protected open fun createTestnetProviders(blockchain: Blockchain): List<T> = emptyList()
 
     /** Create list of [NetworkProvider] instances for [blockchain] */
     fun build(blockchain: Blockchain): List<T> {
-        if (blockchain !in supportedBlockchains) {
-            Log.e(NetworkProvidersBuilder::class.simpleName, "Unsupported blockchain: $blockchain")
-            return emptyList()
+        val providers = if (blockchain.isTestnet()) createTestnetProviders(blockchain) else createProviders(blockchain)
+
+        return providers.ifEmpty {
+            Log.e(NetworkProvidersBuilder::class.simpleName, "No providers found for $blockchain")
+            emptyList()
         }
-
-        return createProviders(blockchain)
     }
-
-    /** Protected method for implementation of creating of network providers for supported [blockchain] */
-    protected abstract fun createProviders(blockchain: Blockchain): List<T>
 }

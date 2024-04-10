@@ -7,8 +7,6 @@ import com.tangem.blockchain.network.electrum.ElectrumNetworkProviderFactory
 
 internal object NexaProvidersBuilder : NetworkProvidersBuilder<ElectrumNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Nexa, Blockchain.NexaTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<ElectrumNetworkProvider> {
         return listOf(
             ElectrumNetworkProviderFactory.create(

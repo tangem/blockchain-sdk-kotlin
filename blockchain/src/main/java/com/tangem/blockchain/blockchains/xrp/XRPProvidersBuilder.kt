@@ -13,8 +13,6 @@ internal class XRPProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<XrpNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.XRP)
-
     override fun createProviders(blockchain: Blockchain): List<XrpNetworkProvider> {
         return listOfNotNull(
             RippledNetworkProvider(API_XRP_LEDGER_FOUNDATION),

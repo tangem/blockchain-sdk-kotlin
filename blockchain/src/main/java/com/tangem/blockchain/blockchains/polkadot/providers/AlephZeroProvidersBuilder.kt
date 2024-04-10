@@ -7,19 +7,16 @@ import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 
 internal class AlephZeroProvidersBuilder : NetworkProvidersBuilder<PolkadotNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.AlephZero, Blockchain.AlephZeroTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<PolkadotNetworkProvider> {
-        return if (blockchain.isTestnet()) {
-            listOf(
-                "https://rpc.test.azero.dev",
-            )
-        } else {
-            listOf(
-                "https://rpc.azero.dev/",
-                "https://aleph-zero-rpc.dwellir.com/",
-            )
-        }
+        return listOf(
+            "https://rpc.azero.dev/",
+            "https://aleph-zero-rpc.dwellir.com/",
+        )
+            .map { PolkadotCombinedProvider(baseUrl = it, blockchain = blockchain) }
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<PolkadotNetworkProvider> {
+        return listOf("https://rpc.test.azero.dev")
             .map { PolkadotCombinedProvider(baseUrl = it, blockchain = blockchain) }
     }
 }

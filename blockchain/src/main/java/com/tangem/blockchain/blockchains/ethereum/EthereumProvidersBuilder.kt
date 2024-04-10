@@ -8,22 +8,18 @@ internal class EthereumProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Ethereum, Blockchain.EthereumTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return with(ethereumProviderFactory) {
-            if (blockchain.isTestnet()) {
-                listOfNotNull(
-                    getNowNodesProvider(baseUrl = "https://eth-goerli.nownodes.io/"),
-                    getInfuraProvider(baseUrl = "https://goerli.infura.io/v3/"),
-                )
-            } else {
-                listOfNotNull(
-                    getNowNodesProvider(baseUrl = "https://eth.nownodes.io/"),
-                    getGetBlockProvider { eth?.jsonRpc },
-                    getInfuraProvider(baseUrl = "https://mainnet.infura.io/v3/"),
-                )
-            }
-        }
+        return listOfNotNull(
+            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://eth.nownodes.io/"),
+            ethereumProviderFactory.getGetBlockProvider { eth?.jsonRpc },
+            ethereumProviderFactory.getInfuraProvider(baseUrl = "https://mainnet.infura.io/v3/"),
+        )
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOfNotNull(
+            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://eth-goerli.nownodes.io/"),
+            ethereumProviderFactory.getInfuraProvider(baseUrl = "https://goerli.infura.io/v3/"),
+        )
     }
 }

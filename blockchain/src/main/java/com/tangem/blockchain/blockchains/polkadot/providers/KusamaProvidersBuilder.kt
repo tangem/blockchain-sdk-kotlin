@@ -7,8 +7,6 @@ import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 
 internal class KusamaProvidersBuilder : NetworkProvidersBuilder<PolkadotNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Kusama)
-
     override fun createProviders(blockchain: Blockchain): List<PolkadotNetworkProvider> {
         return listOf(
             "https://kusama-rpc.polkadot.io/",

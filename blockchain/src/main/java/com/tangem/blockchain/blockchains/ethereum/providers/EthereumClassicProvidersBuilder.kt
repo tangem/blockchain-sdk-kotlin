@@ -9,23 +9,20 @@ internal class EthereumClassicProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> =
-        listOf(Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return if (blockchain.isTestnet()) {
-            listOf(
-                EthereumJsonRpcProvider(baseUrl = "https://etc.rivet.link/kotti/"),
-            )
-        } else {
-            listOfNotNull(
-                EthereumJsonRpcProvider(baseUrl = "https://etc.etcdesktop.com/"),
-                ethereumProviderFactory.getGetBlockProvider { etc?.jsonRpc },
-                EthereumJsonRpcProvider(baseUrl = "https://etc.rivet.link/etc/"),
-                EthereumJsonRpcProvider(baseUrl = "https://etc.mytokenpocket.vip/"),
-                EthereumJsonRpcProvider(baseUrl = "https://besu-de.etc-network.info/"),
-                EthereumJsonRpcProvider(baseUrl = "https://geth-at.etc-network.info/"),
-            )
-        }
+        return listOfNotNull(
+            EthereumJsonRpcProvider(baseUrl = "https://etc.etcdesktop.com/"),
+            ethereumProviderFactory.getGetBlockProvider { etc?.jsonRpc },
+            EthereumJsonRpcProvider(baseUrl = "https://etc.rivet.link/etc/"),
+            EthereumJsonRpcProvider(baseUrl = "https://etc.mytokenpocket.vip/"),
+            EthereumJsonRpcProvider(baseUrl = "https://besu-de.etc-network.info/"),
+            EthereumJsonRpcProvider(baseUrl = "https://geth-at.etc-network.info/"),
+        )
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://etc.rivet.link/kotti/"),
+        )
     }
 }
