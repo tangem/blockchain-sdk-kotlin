@@ -9,22 +9,19 @@ internal class MoonriverProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Moonriver, Blockchain.MoonriverTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return if (blockchain.isTestnet()) {
-            listOf(
-                "https://rpc.api.moonbase.moonbeam.network/",
-            )
-        } else {
-            listOf(
-                "https://moonriver.public.blastapi.io/",
-                "https://moonriver-rpc.dwellir.com/",
-                "https://moonriver-mainnet.gateway.pokt.network/v1/lb/62a74fdb123e6f003963642f/",
-                "https://moonriver.unitedbloc.com/",
-                "https://moonriver-rpc.publicnode.com/",
-            )
-        }
+        return listOf(
+            "https://moonriver.public.blastapi.io/",
+            "https://moonriver-rpc.dwellir.com/",
+            "https://moonriver-mainnet.gateway.pokt.network/v1/lb/62a74fdb123e6f003963642f/",
+            "https://moonriver.unitedbloc.com/",
+            "https://moonriver-rpc.publicnode.com/",
+        )
+            .map(::EthereumJsonRpcProvider)
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOf("https://rpc.api.moonbase.moonbeam.network/")
             .map(::EthereumJsonRpcProvider)
     }
 }

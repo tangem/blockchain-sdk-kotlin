@@ -15,20 +15,32 @@ internal class HederaProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<HederaNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Hedera, Blockchain.HederaTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<HederaNetworkProvider> {
-        val isTestnet = blockchain.isTestnet()
-
         return listOfNotNull(
-            HederaMirrorRestProvider(if (isTestnet) API_HEDERA_MIRROR_TESTNET else API_HEDERA_MIRROR),
-
-            config.hederaArkhiaApiKey?.letNotBlank {
-                HederaMirrorRestProvider(
-                    baseUrl = if (isTestnet) API_HEDERA_ARKHIA_MIRROR_TESTNET else API_HEDERA_ARKHIA_MIRROR,
-                    key = it,
-                )
-            },
+            createMirrorProvider(isTestnet = false),
+            createArkhiaMirrorProvider(isTestnet = false),
         )
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<HederaNetworkProvider> {
+        return listOfNotNull(
+            createMirrorProvider(isTestnet = true),
+            createArkhiaMirrorProvider(isTestnet = true),
+        )
+    }
+
+    private fun createMirrorProvider(isTestnet: Boolean): HederaMirrorRestProvider {
+        return HederaMirrorRestProvider(
+            baseUrl = if (isTestnet) API_HEDERA_MIRROR_TESTNET else API_HEDERA_MIRROR,
+        )
+    }
+
+    private fun createArkhiaMirrorProvider(isTestnet: Boolean): HederaMirrorRestProvider? {
+        return config.hederaArkhiaApiKey?.letNotBlank {
+            HederaMirrorRestProvider(
+                baseUrl = if (isTestnet) API_HEDERA_ARKHIA_MIRROR_TESTNET else API_HEDERA_ARKHIA_MIRROR,
+                key = it,
+            )
+        }
     }
 }
