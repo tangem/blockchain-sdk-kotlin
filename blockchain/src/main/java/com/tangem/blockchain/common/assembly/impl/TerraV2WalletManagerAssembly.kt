@@ -12,7 +12,7 @@ internal object TerraV2WalletManagerAssembly : WalletManagerAssembly<CosmosWalle
         return with(input) {
             CosmosWalletManager(
                 wallet = wallet,
-                networkProviders = TerraV2ProvidersBuilder(config).build(wallet.blockchain),
+                networkProviders = TerraV2ProvidersBuilder(input.providerTypes, config).build(wallet.blockchain),
                 cosmosChain = CosmosChain.TerraV2,
             )
         }
