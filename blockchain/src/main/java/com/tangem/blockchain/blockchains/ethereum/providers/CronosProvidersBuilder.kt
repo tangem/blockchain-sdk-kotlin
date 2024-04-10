@@ -9,8 +9,6 @@ internal class CronosProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Cronos)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://evm.cronos.org/"),
