@@ -1,48 +1,52 @@
 package com.tangem.blockchain.blockchains.solana
 
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.SolanaRpcClient
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.GetBlockCredentials
+import com.tangem.blockchain.common.NowNodeCredentials
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.extensions.letNotBlank
 import okhttp3.Interceptor
 import org.p2p.solanaj.rpc.Cluster
 
-internal class SolanaRpcClientBuilder(
+internal class SolanaProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<SolanaRpcClient>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Solana, Blockchain.SolanaTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<SolanaRpcClient> {
-        return if (blockchain.isTestnet()) {
-            listOf(devNet())
-        } else {
-            listOfNotNull(
-                config.nowNodeCredentials?.apiKey?.letNotBlank { getNowNodesProvider(config.nowNodeCredentials) },
-                config.quickNodeSolanaCredentials?.let(::getQuickNodeProvider),
-                mainNet(),
-            )
-        }
+        return listOfNotNull(
+            getNowNodesProvider(),
+            getQuickNodeProvider(),
+            mainNet(),
+        )
     }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<SolanaRpcClient> = listOf(devNet())
 
     private fun devNet(): SolanaRpcClient = SolanaRpcClient(Cluster.DEVNET.endpoint)
 
     private fun mainNet(): SolanaRpcClient = SolanaRpcClient(Cluster.MAINNET.endpoint)
 
-    private fun getNowNodesProvider(cred: NowNodeCredentials): SolanaRpcClient {
-        return SolanaRpcClient(
-            baseUrl = "https://sol.nownodes.io",
-            httpInterceptors = createInterceptor(NowNodeCredentials.headerApiKey, cred.apiKey),
-        )
+    private fun getNowNodesProvider(): SolanaRpcClient? {
+        return config.nowNodeCredentials?.apiKey?.letNotBlank {
+            SolanaRpcClient(
+                baseUrl = "https://sol.nownodes.io",
+                httpInterceptors = createInterceptor(NowNodeCredentials.headerApiKey, it),
+            )
+        }
     }
 
-    private fun getQuickNodeProvider(credentials: QuickNodeCredentials): SolanaRpcClient? {
-        return if (credentials.subdomain.isNotBlank() && credentials.apiKey.isNotBlank()) {
-            val baseUrl = "https://${credentials.subdomain}.solana-mainnet.discover.quiknode.pro/${credentials.apiKey}"
-            SolanaRpcClient(baseUrl = baseUrl)
-        } else {
-            null
+    private fun getQuickNodeProvider(): SolanaRpcClient? {
+        return config.quickNodeSolanaCredentials?.let { creds ->
+            if (creds.subdomain.isNotBlank() && creds.apiKey.isNotBlank()) {
+                SolanaRpcClient(
+                    baseUrl = "https://${creds.subdomain}.solana-mainnet.discover.quiknode.pro/${creds.apiKey}",
+                )
+            } else {
+                null
+            }
         }
     }
 

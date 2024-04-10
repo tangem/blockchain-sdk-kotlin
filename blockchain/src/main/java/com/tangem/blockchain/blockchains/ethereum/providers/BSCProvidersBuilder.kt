@@ -9,22 +9,20 @@ internal class BSCProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.BSC, Blockchain.BSCTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         // https://docs.fantom.foundation/api/public-api-endpoints
-        return if (blockchain.isTestnet()) {
-            listOf(
-                EthereumJsonRpcProvider(baseUrl = "https://data-seed-prebsc-1-s1.binance.org:8545/"),
-            )
-        } else {
-            listOfNotNull(
-                EthereumJsonRpcProvider(baseUrl = "https://bsc-dataseed.binance.org/"),
-                ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://bsc.nownodes.io/"),
-                ethereumProviderFactory.getGetBlockProvider { bsc?.jsonRpc },
-                createQuickNodeProvider(),
-            )
-        }
+        return listOfNotNull(
+            EthereumJsonRpcProvider(baseUrl = "https://bsc-dataseed.binance.org/"),
+            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://bsc.nownodes.io/"),
+            ethereumProviderFactory.getGetBlockProvider { bsc?.jsonRpc },
+            createQuickNodeProvider(),
+        )
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://data-seed-prebsc-1-s1.binance.org:8545/"),
+        )
     }
 
     private fun createQuickNodeProvider(): EthereumJsonRpcProvider? {

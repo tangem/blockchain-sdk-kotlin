@@ -10,18 +10,16 @@ internal class StellarProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<StellarWrapperNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Stellar, Blockchain.StellarTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<StellarWrapperNetworkProvider> {
-        return if (blockchain.isTestnet()) {
-            listOf(StellarNetwork.HorizonTestnet)
-        } else {
-            listOfNotNull(
-                StellarNetwork.Horizon,
-                config.nowNodeCredentials?.apiKey.letNotBlank(StellarNetwork::Nownodes),
-            )
-        }
+        return listOfNotNull(
+            StellarNetwork.Horizon,
+            config.nowNodeCredentials?.apiKey.letNotBlank(StellarNetwork::Nownodes),
+        )
             .map(::createWrapperProvider)
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<StellarWrapperNetworkProvider> {
+        return listOf(StellarNetwork.HorizonTestnet).map(::createWrapperProvider)
     }
 
     private fun createWrapperProvider(network: StellarNetwork): StellarWrapperNetworkProvider {

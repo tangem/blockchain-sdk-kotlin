@@ -9,19 +9,17 @@ internal class ArbitrumProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Arbitrum, Blockchain.ArbitrumTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return if (blockchain.isTestnet()) {
-            listOf(
-                EthereumJsonRpcProvider(baseUrl = "https://goerli-rollup.arbitrum.io/rpc/"),
-            )
-        } else {
-            listOfNotNull(
-                EthereumJsonRpcProvider(baseUrl = "https://arb1.arbitrum.io/rpc/"),
-                ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://arbitrum.nownodes.io/"),
-                ethereumProviderFactory.getInfuraProvider(baseUrl = "https://arbitrum-mainnet.infura.io/v3/"),
-            )
-        }
+        return listOfNotNull(
+            EthereumJsonRpcProvider(baseUrl = "https://arb1.arbitrum.io/rpc/"),
+            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://arbitrum.nownodes.io/"),
+            ethereumProviderFactory.getInfuraProvider(baseUrl = "https://arbitrum-mainnet.infura.io/v3/"),
+        )
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://goerli-rollup.arbitrum.io/rpc/"),
+        )
     }
 }
