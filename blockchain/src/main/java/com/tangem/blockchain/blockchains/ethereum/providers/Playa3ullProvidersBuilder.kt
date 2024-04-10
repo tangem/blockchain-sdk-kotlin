@@ -9,8 +9,6 @@ internal class Playa3ullProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Playa3ull)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return listOf(
             EthereumJsonRpcProvider(baseUrl = "https://api.mainnet.playa3ull.games/"),

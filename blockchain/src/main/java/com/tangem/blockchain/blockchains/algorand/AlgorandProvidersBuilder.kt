@@ -10,29 +10,32 @@ internal class AlgorandProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<AlgorandNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Algorand, Blockchain.AlgorandTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<AlgorandNetworkProvider> {
-        return buildList {
-            if (!blockchain.isTestnet()) {
-                config.nowNodeCredentials?.apiKey.letNotBlank(::createNowNodesProvider)?.let(::add)
-                config.getBlockCredentials?.algorand?.rest.letNotBlank(::createGetBlockProvider)?.let(::add)
-            }
+        return listOfNotNull(
+            createNowNodesProvider(),
+            createGetBlockProvider(),
+            createAlgonodeProvider(isTestnet = false),
+        )
+    }
 
-            add(createAlgonodeProvider(blockchain))
+    override fun createTestnetProviders(blockchain: Blockchain): List<AlgorandNetworkProvider> {
+        return listOf(createAlgonodeProvider(isTestnet = true))
+    }
+
+    private fun createNowNodesProvider(): AlgorandNetworkProvider? {
+        return config.nowNodeCredentials?.apiKey.letNotBlank {
+            AlgorandNetworkProvider(baseUrl = "https://algo.nownodes.io/$it/")
         }
     }
 
-    private fun createNowNodesProvider(apiKey: String): AlgorandNetworkProvider {
-        return AlgorandNetworkProvider(baseUrl = "https://algo.nownodes.io/$apiKey/")
+    private fun createGetBlockProvider(): AlgorandNetworkProvider? {
+        return config.getBlockCredentials?.algorand?.rest.letNotBlank {
+            AlgorandNetworkProvider(baseUrl = "https://go.getblock.io/$it/")
+        }
     }
 
-    private fun createGetBlockProvider(apiKey: String): AlgorandNetworkProvider {
-        return AlgorandNetworkProvider(baseUrl = "https://go.getblock.io/$apiKey/")
-    }
-
-    private fun createAlgonodeProvider(blockchain: Blockchain): AlgorandNetworkProvider {
-        val network = if (blockchain.isTestnet()) "testnet" else "mainnet"
+    private fun createAlgonodeProvider(isTestnet: Boolean): AlgorandNetworkProvider {
+        val network = if (isTestnet) "testnet" else "mainnet"
         return AlgorandNetworkProvider(baseUrl = "https://$network-api.algonode.cloud/")
     }
 }

@@ -9,29 +9,28 @@ internal class MoonbeamProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Moonbeam, Blockchain.MoonbeamTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return if (blockchain.isTestnet()) {
-            listOf(
-                "https://moonbase-alpha.public.blastapi.io/",
-                "https://moonbase-rpc.dwellir.com/",
-                "https://rpc.api.moonbase.moonbeam.network/",
-                "https://moonbase.unitedbloc.com/",
-                "https://moonbeam-alpha.api.onfinality.io/public/",
-            )
-        } else {
-            listOf(
-                "https://rpc.api.moonbeam.network/",
-                "https://1rpc.io/glmr/",
-                "https://moonbeam.public.blastapi.io/",
-                "https://moonbeam-rpc.dwellir.com/",
-                "https://moonbeam-mainnet.gateway.pokt.network/v1/lb/629a2b5650ec8c0039bb30f0/",
-                "https://moonbeam.unitedbloc.com/",
-                "https://moonbeam-rpc.publicnode.com/",
-                "https://rpc.ankr.com/moonbeam/",
-            )
-        }
+        return listOf(
+            "https://rpc.api.moonbeam.network/",
+            "https://1rpc.io/glmr/",
+            "https://moonbeam.public.blastapi.io/",
+            "https://moonbeam-rpc.dwellir.com/",
+            "https://moonbeam-mainnet.gateway.pokt.network/v1/lb/629a2b5650ec8c0039bb30f0/",
+            "https://moonbeam.unitedbloc.com/",
+            "https://moonbeam-rpc.publicnode.com/",
+            "https://rpc.ankr.com/moonbeam/",
+        )
+            .map(::EthereumJsonRpcProvider)
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOf(
+            "https://moonbase-alpha.public.blastapi.io/",
+            "https://moonbase-rpc.dwellir.com/",
+            "https://rpc.api.moonbase.moonbeam.network/",
+            "https://moonbase.unitedbloc.com/",
+            "https://moonbeam-alpha.api.onfinality.io/public/",
+        )
             .map(::EthereumJsonRpcProvider)
     }
 }
