@@ -12,7 +12,7 @@ internal object XRPWalletManagerAssembly : WalletManagerAssembly<XrpWalletManage
     override fun make(input: WalletManagerAssemblyInput): XrpWalletManager {
         return with(input.wallet) {
             val networkService = XrpNetworkService(
-                providers = XRPProvidersBuilder(input.config).build(blockchain),
+                providers = XRPProvidersBuilder(input.providerTypes, input.config).build(blockchain),
             )
 
             XrpWalletManager(
