@@ -99,6 +99,7 @@ class WalletManagerFactory(
                 wallet = wallet,
                 config = config,
                 curve = curve,
+                providerTypes = emptyList(),
             ),
         )
     }

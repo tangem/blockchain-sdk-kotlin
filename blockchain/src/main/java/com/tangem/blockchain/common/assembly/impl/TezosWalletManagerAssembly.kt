@@ -15,7 +15,7 @@ internal object TezosWalletManagerAssembly : WalletManagerAssembly<TezosWalletMa
                 wallet = this,
                 transactionBuilder = TezosTransactionBuilder(publicKey.blockchainKey, input.curve),
                 networkProvider = TezosNetworkService(
-                    providers = TezosProvidersBuilder.build(blockchain),
+                    providers = TezosProvidersBuilder(input.providerTypes).build(blockchain),
                 ),
                 curve = input.curve,
             )
