@@ -9,8 +9,6 @@ internal class OctaSpaceProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.OctaSpace)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return listOf(
             EthereumJsonRpcProvider(baseUrl = "https://rpc.octa.space"),
