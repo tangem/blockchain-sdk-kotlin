@@ -9,22 +9,20 @@ internal class FantomProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Fantom, Blockchain.FantomTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return if (blockchain.isTestnet()) {
-            listOf(
-                EthereumJsonRpcProvider(baseUrl = "https://rpc.testnet.fantom.network/"),
-            )
-        } else {
-            listOfNotNull(
-                ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://ftm.nownodes.io/"),
-                ethereumProviderFactory.getGetBlockProvider { fantom?.jsonRpc },
-                EthereumJsonRpcProvider(baseUrl = "https://rpc.ftm.tools/"),
-                EthereumJsonRpcProvider(baseUrl = "https://rpcapi.fantom.network/"),
-                EthereumJsonRpcProvider(baseUrl = "https://fantom-mainnet.public.blastapi.io/"),
-                EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/", postfixUrl = "fantom"),
-            )
-        }
+        return listOfNotNull(
+            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://ftm.nownodes.io/"),
+            ethereumProviderFactory.getGetBlockProvider { fantom?.jsonRpc },
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.ftm.tools/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpcapi.fantom.network/"),
+            EthereumJsonRpcProvider(baseUrl = "https://fantom-mainnet.public.blastapi.io/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/", postfixUrl = "fantom"),
+        )
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.testnet.fantom.network/"),
+        )
     }
 }
