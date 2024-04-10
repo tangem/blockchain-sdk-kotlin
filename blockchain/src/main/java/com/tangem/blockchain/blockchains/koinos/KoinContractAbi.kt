@@ -18,6 +18,8 @@ import okio.ByteString.Companion.toByteString
  * **For KOIN, we assume that the coin value in Satoshi will not reach the Long.MAX_VALUE**
  *
  * **Current total supply in Satoshi: 3833938450682459**
+ *
+ * @see <a href="https://github.com/koinos/koinos-proto/blob/master/koinos/contracts/token/token.proto">koinos/contracts/token/token.proto</a>
  */
 internal class KoinContractAbi(isTestnet: Boolean) {
 
