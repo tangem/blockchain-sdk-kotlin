@@ -18,11 +18,14 @@ internal class SolanaProvidersBuilder(
 ) : NetworkProvidersBuilder<SolanaRpcClient>() {
 
     override fun createProviders(blockchain: Blockchain): List<SolanaRpcClient> {
-        return listOfNotNull(
-            getNowNodesProvider(),
-            getQuickNodeProvider(),
-            mainNet(),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                ProviderType.NowNodes -> getNowNodesProvider()
+                ProviderType.Solana.QuickNode -> getQuickNodeProvider()
+                ProviderType.Solana.Official -> mainNet()
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<SolanaRpcClient> = listOf(devNet())
