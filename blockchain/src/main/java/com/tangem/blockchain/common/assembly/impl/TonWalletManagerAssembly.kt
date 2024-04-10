@@ -11,7 +11,7 @@ internal object TonWalletManagerAssembly : WalletManagerAssembly<TonWalletManage
         return with(input.wallet) {
             TonWalletManager(
                 wallet = this,
-                networkProviders = TonProvidersBuilder(input.config).build(blockchain),
+                networkProviders = TonProvidersBuilder(input.providerTypes, input.config).build(blockchain),
             )
         }
     }

@@ -15,7 +15,7 @@ internal object KaspaWalletManagerAssembly : WalletManagerAssembly<KaspaWalletMa
                 wallet = this,
                 transactionBuilder = KaspaTransactionBuilder(),
                 networkProvider = KaspaNetworkService(
-                    providers = KaspaProvidersBuilder(input.config).build(blockchain),
+                    providers = KaspaProvidersBuilder(input.providerTypes, input.config).build(blockchain),
                 ),
             )
         }
