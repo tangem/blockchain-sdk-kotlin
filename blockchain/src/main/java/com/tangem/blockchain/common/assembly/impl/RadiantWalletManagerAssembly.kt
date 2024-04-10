@@ -7,8 +7,12 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 
 internal object RadiantWalletManagerAssembly : WalletManagerAssembly<RadiantWalletManager>() {
 
-    override fun make(input: WalletManagerAssemblyInput): RadiantWalletManager = RadiantWalletManager(
-        wallet = input.wallet,
-        networkProviders = RadiantProvidersBuilder(input.providerTypes).build(input.wallet.blockchain),
-    )
+    override fun make(input: WalletManagerAssemblyInput): RadiantWalletManager {
+        return with(input.wallet) {
+            RadiantWalletManager(
+                wallet = this,
+                networkProviders = RadiantProvidersBuilder(input.providerTypes, blockchain).build(blockchain),
+            )
+        }
+    }
 }

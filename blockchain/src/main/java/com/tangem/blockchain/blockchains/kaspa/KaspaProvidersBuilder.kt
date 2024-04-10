@@ -7,7 +7,6 @@ import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.letNotBlank
-import com.tangem.blockchain.network.API_KASPA
 
 internal class KaspaProvidersBuilder(
     override val providerTypes: List<ProviderType>,
@@ -15,10 +14,14 @@ internal class KaspaProvidersBuilder(
 ) : NetworkProvidersBuilder<KaspaNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<KaspaNetworkProvider> {
-        return listOfNotNull(
-            API_KASPA,
-            config.kaspaSecondaryApiUrl?.letNotBlank { "$it/" },
-        )
+        return providerTypes
+            .mapNotNull { type ->
+                when (type) {
+                    is ProviderType.Public -> type.url
+                    ProviderType.Kaspa.SecondaryAPI -> config.kaspaSecondaryApiUrl?.letNotBlank { "$it/" }
+                    else -> null
+                }
+            }
             .map(::KaspaRestApiNetworkProvider)
     }
 }
