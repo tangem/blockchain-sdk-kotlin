@@ -12,23 +12,24 @@ internal class BitcoinProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<BitcoinNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Bitcoin, Blockchain.BitcoinTestnet)
-
     private val blockBookNetworkProviderFactory by lazy { BlockBookNetworkProviderFactory(config) }
     private val blockchairNetworkProviderFactory by lazy { BlockchairNetworkProviderFactory(config) }
     private val blockcypherNetworkProviderFactory by lazy { BlockcypherNetworkProviderFactory(config) }
 
     override fun createProviders(blockchain: Blockchain): List<BitcoinNetworkProvider> {
-        return buildList {
-            blockBookNetworkProviderFactory.createNowNodesProvider(blockchain)?.let(::add)
+        return listOfNotNull(
+            blockBookNetworkProviderFactory.createNowNodesProvider(blockchain),
+            blockBookNetworkProviderFactory.createGetBlockProvider(blockchain),
+            *blockchairNetworkProviderFactory.createProviders(blockchain).toTypedArray(),
+            blockcypherNetworkProviderFactory.create(blockchain),
+        )
+    }
 
-            if (!blockchain.isTestnet()) {
-                blockBookNetworkProviderFactory.createGetBlockProvider(blockchain)?.let(::add)
-            }
-
-            blockchairNetworkProviderFactory.createProviders(blockchain).let(::addAll)
-
-            blockcypherNetworkProviderFactory.create(blockchain)?.let(::add)
-        }
+    override fun createTestnetProviders(blockchain: Blockchain): List<BitcoinNetworkProvider> {
+        return listOfNotNull(
+            blockBookNetworkProviderFactory.createNowNodesProvider(blockchain),
+            *blockchairNetworkProviderFactory.createProviders(blockchain).toTypedArray(),
+            blockcypherNetworkProviderFactory.create(blockchain),
+        )
     }
 }

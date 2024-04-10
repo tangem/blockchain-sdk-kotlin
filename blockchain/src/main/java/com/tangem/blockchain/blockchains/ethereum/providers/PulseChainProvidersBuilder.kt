@@ -9,22 +9,21 @@ internal class PulseChainProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.PulseChain, Blockchain.PulseChainTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return if (blockchain.isTestnet()) {
-            listOf(
-                "https://rpc.v4.testnet.pulsechain.com/",
-                "https://pulsechain-testnet.publicnode.com/",
-                "https://rpc-testnet-pulsechain.g4mm4.io/",
-            )
-        } else {
-            listOf(
-                "https://rpc.pulsechain.com/",
-                "https://pulsechain.publicnode.com/",
-                "https://rpc-pulsechain.g4mm4.io/",
-            )
-        }
+        return listOf(
+            "https://rpc.pulsechain.com/",
+            "https://pulsechain.publicnode.com/",
+            "https://rpc-pulsechain.g4mm4.io/",
+        )
+            .map(::EthereumJsonRpcProvider)
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOf(
+            "https://rpc.v4.testnet.pulsechain.com/",
+            "https://pulsechain-testnet.publicnode.com/",
+            "https://rpc-testnet-pulsechain.g4mm4.io/",
+        )
             .map(::EthereumJsonRpcProvider)
     }
 }

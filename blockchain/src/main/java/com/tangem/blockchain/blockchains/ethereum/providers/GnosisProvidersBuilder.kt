@@ -9,8 +9,6 @@ internal class GnosisProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Gnosis)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return listOfNotNull(
             ethereumProviderFactory.getGetBlockProvider { gnosis?.jsonRpc },

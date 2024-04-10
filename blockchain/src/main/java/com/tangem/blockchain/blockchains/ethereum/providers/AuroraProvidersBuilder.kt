@@ -9,18 +9,16 @@ internal class AuroraProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Aurora, Blockchain.AuroraTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return if (blockchain.isTestnet()) {
-            listOf(
-                EthereumJsonRpcProvider(baseUrl = "https://testnet.aurora.dev/"),
-            )
-        } else {
-            listOfNotNull(
-                EthereumJsonRpcProvider(baseUrl = "https://mainnet.aurora.dev/"),
-                EthereumJsonRpcProvider(baseUrl = "https://aurora.drpc.org/"),
-            )
-        }
+        return listOfNotNull(
+            EthereumJsonRpcProvider(baseUrl = "https://mainnet.aurora.dev/"),
+            EthereumJsonRpcProvider(baseUrl = "https://aurora.drpc.org/"),
+        )
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOf(
+            EthereumJsonRpcProvider(baseUrl = "https://testnet.aurora.dev/"),
+        )
     }
 }
