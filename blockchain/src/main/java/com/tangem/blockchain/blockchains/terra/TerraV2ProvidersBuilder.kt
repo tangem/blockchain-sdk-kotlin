@@ -10,13 +10,15 @@ internal class TerraV2ProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<CosmosRestProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.TerraV2)
-
     override fun createProviders(blockchain: Blockchain): List<CosmosRestProvider> {
         return listOfNotNull(
-            config.nowNodeCredentials?.apiKey.letNotBlank { "https://luna.nownodes.io/$it/" },
+            createNowNodesProvider(),
             "https://phoenix-lcd.terra.dev/",
         )
             .map(::CosmosRestProvider)
+    }
+
+    private fun createNowNodesProvider(): String? {
+        return config.nowNodeCredentials?.apiKey.letNotBlank { "https://luna.nownodes.io/$it/" }
     }
 }

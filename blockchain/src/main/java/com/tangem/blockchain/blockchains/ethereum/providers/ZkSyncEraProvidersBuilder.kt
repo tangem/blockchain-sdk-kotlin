@@ -9,23 +9,22 @@ internal class ZkSyncEraProvidersBuilder(
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return if (blockchain.isTestnet()) {
-            listOf(
-                "https://sepolia.era.zksync.dev/",
-                "https://zksync-era-sepolia.blockpi.network/v1/rpc/public/",
-            )
-        } else {
-            listOf(
-                "https://mainnet.era.zksync.io/",
-                "https://zksync-era.blockpi.network/v1/rpc/public/",
-                "https://1rpc.io/zksync2-era/",
-                "https://zksync.meowrpc.com/",
-                "https://zksync.drpc.org/",
-            )
-        }
+        return listOf(
+            "https://mainnet.era.zksync.io/",
+            "https://zksync-era.blockpi.network/v1/rpc/public/",
+            "https://1rpc.io/zksync2-era/",
+            "https://zksync.meowrpc.com/",
+            "https://zksync.drpc.org/",
+        )
+            .map(::EthereumJsonRpcProvider)
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOf(
+            "https://sepolia.era.zksync.dev/",
+            "https://zksync-era-sepolia.blockpi.network/v1/rpc/public/",
+        )
             .map(::EthereumJsonRpcProvider)
     }
 }

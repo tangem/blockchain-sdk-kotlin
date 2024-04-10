@@ -1,6 +1,6 @@
 package com.tangem.blockchain.common.assembly.impl
 
-import com.tangem.blockchain.blockchains.solana.SolanaRpcClientBuilder
+import com.tangem.blockchain.blockchains.solana.SolanaProvidersBuilder
 import com.tangem.blockchain.blockchains.solana.SolanaWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
@@ -11,7 +11,7 @@ internal object SolanaWalletManagerAssembly : WalletManagerAssembly<SolanaWallet
         return with(input.wallet) {
             SolanaWalletManager(
                 wallet = this,
-                providers = SolanaRpcClientBuilder(input.config).build(blockchain),
+                providers = SolanaProvidersBuilder(input.config).build(blockchain),
             )
         }
     }

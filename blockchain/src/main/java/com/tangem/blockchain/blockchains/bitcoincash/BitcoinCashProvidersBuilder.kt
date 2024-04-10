@@ -12,8 +12,6 @@ internal class BitcoinCashProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<BitcoinNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.BitcoinCash)
-
     override fun createProviders(blockchain: Blockchain): List<BitcoinNetworkProvider> {
         return listOfNotNull(
             getBitcoinCashNowNodesNetworkProvider(),
