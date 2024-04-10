@@ -13,7 +13,7 @@ internal object NearWalletManagerAssembly : WalletManagerAssembly<NearWalletMana
         return with(input) {
             val networkService = NearNetworkService(
                 blockchain = wallet.blockchain,
-                providers = NearProvidersBuilder(config).build(wallet.blockchain),
+                providers = NearProvidersBuilder(input.providerTypes, config).build(wallet.blockchain),
             )
 
             NearWalletManager(
