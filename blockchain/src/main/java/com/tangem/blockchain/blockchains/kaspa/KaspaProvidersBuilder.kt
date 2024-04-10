@@ -12,8 +12,6 @@ internal class KaspaProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<KaspaNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Kaspa)
-
     override fun createProviders(blockchain: Blockchain): List<KaspaNetworkProvider> {
         return listOfNotNull(
             API_KASPA,
