@@ -21,7 +21,7 @@ internal object LitecoinWalletManagerAssembly : WalletManagerAssembly<LitecoinWa
                     isNewOutputToSendCollectionMethodEnabled = true,
                 ),
                 networkProvider = LitecoinNetworkService(
-                    providers = LitecoinProvidersBuilder(input.config).build(blockchain),
+                    providers = LitecoinProvidersBuilder(input.providerTypes, input.config).build(blockchain),
                 ),
                 transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
             )

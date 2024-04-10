@@ -10,7 +10,7 @@ internal object VeChainWalletManagerAssembly : WalletManagerAssembly<VeChainWall
         return with(input) {
             VeChainWalletManager(
                 wallet = wallet,
-                networkProviders = VeChainProvidersBuilder(config).build(wallet.blockchain),
+                networkProviders = VeChainProvidersBuilder(input.providerTypes, config).build(wallet.blockchain),
             )
         }
     }

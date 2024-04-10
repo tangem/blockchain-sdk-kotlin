@@ -11,7 +11,7 @@ internal object SolanaWalletManagerAssembly : WalletManagerAssembly<SolanaWallet
         return with(input.wallet) {
             SolanaWalletManager(
                 wallet = this,
-                providers = SolanaProvidersBuilder(input.config).build(blockchain),
+                providers = SolanaProvidersBuilder(input.providerTypes, input.config).build(blockchain),
             )
         }
     }
