@@ -21,7 +21,7 @@ internal object DogecoinWalletManagerAssembly : WalletManagerAssembly<DogecoinWa
                     isNewOutputToSendCollectionMethodEnabled = true,
                 ),
                 networkProvider = BitcoinNetworkService(
-                    providers = DogecoinProvidersBuilder(input.config).build(blockchain),
+                    providers = DogecoinProvidersBuilder(input.providerTypes, input.config).build(blockchain),
                 ),
                 transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
             )
