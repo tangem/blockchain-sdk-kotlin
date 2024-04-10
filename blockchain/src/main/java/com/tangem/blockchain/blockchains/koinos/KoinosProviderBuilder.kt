@@ -3,8 +3,11 @@ package com.tangem.blockchain.blockchains.koinos
 import com.tangem.blockchain.blockchains.koinos.network.KoinosApi
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
+import com.tangem.blockchain.common.network.providers.ProviderType
 
-internal object KoinosProviderBuilder : NetworkProvidersBuilder<KoinosApi>() {
+internal class KoinosProviderBuilder(
+    override val providerTypes: List<ProviderType>,
+) : NetworkProvidersBuilder<KoinosApi>() {
 
     override fun createProviders(blockchain: Blockchain): List<KoinosApi> {
         return listOf(

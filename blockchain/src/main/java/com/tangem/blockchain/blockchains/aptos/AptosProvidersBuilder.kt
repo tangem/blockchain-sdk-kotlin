@@ -5,9 +5,11 @@ import com.tangem.blockchain.blockchains.aptos.network.provider.AptosRestNetwork
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
+import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.letNotBlank
 
 internal class AptosProvidersBuilder(
+    override val providerTypes: List<ProviderType>,
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<AptosNetworkProvider>() {
 
