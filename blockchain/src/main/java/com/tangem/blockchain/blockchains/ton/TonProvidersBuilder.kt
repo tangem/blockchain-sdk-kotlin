@@ -12,42 +12,40 @@ internal class TonProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<TonNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.TON, Blockchain.TONTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<TonNetworkProvider> {
-        return buildList {
-            val isTestnet = blockchain.isTestnet()
-
-            config.tonCenterCredentials?.getApiKey().letNotBlank {
-                add(createTonCenterJsonRpcProvider(isTestNet = isTestnet, apiKey = it))
-            }
-
-            if (!isTestnet) {
-                config.nowNodeCredentials?.apiKey.letNotBlank {
-                    add(createNowNodeJsonRpcProvider(it))
-                }
-
-                config.getBlockCredentials?.ton?.jsonRpc.letNotBlank {
-                    add(createGetBlockJsonRpcProvider(it))
-                }
-            }
-        }
-    }
-
-    private fun createTonCenterJsonRpcProvider(isTestNet: Boolean, apiKey: String): TonJsonRpcNetworkProvider {
-        val url = if (isTestNet) "https://testnet.toncenter.com/api/v2/" else "https://toncenter.com/api/v2/"
-
-        return TonJsonRpcNetworkProvider(
-            baseUrl = url,
-            headerInterceptors = listOf(AddHeaderInterceptor(mapOf("x-api-key" to apiKey))),
+        return listOfNotNull(
+            createTonCenterJsonRpcProvider(isTestnet = false),
+            createNowNodeJsonRpcProvider(),
+            createGetBlockJsonRpcProvider(),
         )
     }
 
-    private fun createGetBlockJsonRpcProvider(accessToken: String): TonJsonRpcNetworkProvider {
-        return TonJsonRpcNetworkProvider(baseUrl = "https://go.getblock.io/$accessToken/")
+    override fun createTestnetProviders(blockchain: Blockchain): List<TonNetworkProvider> {
+        return listOfNotNull(
+            createTonCenterJsonRpcProvider(isTestnet = true),
+        )
     }
 
-    private fun createNowNodeJsonRpcProvider(apiKey: String): TonJsonRpcNetworkProvider {
-        return TonJsonRpcNetworkProvider(baseUrl = "https://ton.nownodes.io/$apiKey/")
+    private fun createTonCenterJsonRpcProvider(isTestnet: Boolean): TonJsonRpcNetworkProvider? {
+        return config.tonCenterCredentials?.getApiKey().letNotBlank {
+            val url = if (isTestnet) "https://testnet.toncenter.com/api/v2/" else "https://toncenter.com/api/v2/"
+
+            TonJsonRpcNetworkProvider(
+                baseUrl = url,
+                headerInterceptors = listOf(AddHeaderInterceptor(mapOf("x-api-key" to it))),
+            )
+        }
+    }
+
+    private fun createNowNodeJsonRpcProvider(): TonJsonRpcNetworkProvider? {
+        return config.nowNodeCredentials?.apiKey.letNotBlank {
+            TonJsonRpcNetworkProvider(baseUrl = "https://ton.nownodes.io/$it/")
+        }
+    }
+
+    private fun createGetBlockJsonRpcProvider(): TonJsonRpcNetworkProvider? {
+        return config.getBlockCredentials?.ton?.jsonRpc.letNotBlank {
+            TonJsonRpcNetworkProvider(baseUrl = "https://go.getblock.io/$it/")
+        }
     }
 }

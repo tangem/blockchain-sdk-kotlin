@@ -14,8 +14,6 @@ internal class CardanoProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<CardanoNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Cardano)
-
     override fun createProviders(blockchain: Blockchain): List<CardanoNetworkProvider> {
         return listOfNotNull(
             config.getBlockCredentials?.cardano?.rosetta.letNotBlank {

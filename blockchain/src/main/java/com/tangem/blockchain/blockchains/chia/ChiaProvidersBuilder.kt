@@ -14,18 +14,17 @@ internal class ChiaProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<ChiaNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Chia, Blockchain.ChiaTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<ChiaNetworkProvider> {
-        return buildList {
-            val isTestnet = blockchain.isTestnet()
+        return listOfNotNull(
+            createTangemProvider(),
+            createFireAcademyProvider(isTestnet = false),
+        )
+    }
 
-            if (!isTestnet) {
-                createTangemProvider()?.let(::add)
-            }
-
-            createFireAcademyProvider(isTestnet = isTestnet)?.let(::add)
-        }
+    override fun createTestnetProviders(blockchain: Blockchain): List<ChiaNetworkProvider> {
+        return listOfNotNull(
+            createFireAcademyProvider(isTestnet = true),
+        )
     }
 
     private fun createTangemProvider(): ChiaNetworkProvider? {
