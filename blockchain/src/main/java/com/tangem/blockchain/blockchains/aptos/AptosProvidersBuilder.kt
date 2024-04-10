@@ -11,27 +11,33 @@ internal class AptosProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<AptosNetworkProvider>() {
 
-    override val supportedBlockchains: List<Blockchain> = listOf(Blockchain.Aptos, Blockchain.AptosTestnet)
-
     override fun createProviders(blockchain: Blockchain): List<AptosNetworkProvider> {
         return listOfNotNull(
-            createOfficialNetworkProvider(blockchain),
-            config.getBlockCredentials?.aptos?.rest?.letNotBlank(::createGetBlockNetworkProvider),
-            config.nowNodeCredentials?.apiKey?.letNotBlank(::createNowNodesNetworkProvider),
+            createOfficialNetworkProvider(isTestnet = false),
+            createGetBlockNetworkProvider(),
+            createNowNodesNetworkProvider(),
         )
     }
 
-    private fun createOfficialNetworkProvider(blockchain: Blockchain): AptosNetworkProvider {
+    override fun createTestnetProviders(blockchain: Blockchain): List<AptosNetworkProvider> {
+        return listOf(createOfficialNetworkProvider(isTestnet = true))
+    }
+
+    private fun createOfficialNetworkProvider(isTestnet: Boolean): AptosNetworkProvider {
         return AptosRestNetworkProvider(
-            baseUrl = "https://fullnode.${if (blockchain.isTestnet()) "testnet" else "mainnet"}.aptoslabs.com/",
+            baseUrl = "https://fullnode.${if (isTestnet) "testnet" else "mainnet"}.aptoslabs.com/",
         )
     }
 
-    private fun createNowNodesNetworkProvider(apiKey: String): AptosNetworkProvider {
-        return AptosRestNetworkProvider(baseUrl = "https://apt.nownodes.io/$apiKey/")
+    private fun createGetBlockNetworkProvider(): AptosRestNetworkProvider? {
+        return config.getBlockCredentials?.aptos?.rest?.letNotBlank {
+            AptosRestNetworkProvider(baseUrl = "https://go.getblock.io/$it/")
+        }
     }
 
-    private fun createGetBlockNetworkProvider(accessToken: String): AptosRestNetworkProvider {
-        return AptosRestNetworkProvider(baseUrl = "https://go.getblock.io/$accessToken/")
+    private fun createNowNodesNetworkProvider(): AptosNetworkProvider? {
+        return config.nowNodeCredentials?.apiKey?.letNotBlank {
+            AptosRestNetworkProvider(baseUrl = "https://apt.nownodes.io/$it/")
+        }
     }
 }
