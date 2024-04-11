@@ -66,8 +66,9 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Aurora, Blockchain.AuroraTestnet -> AuroraExternalLinkProvider(isTestnet)
             Blockchain.Areon, Blockchain.AreonTestnet -> AreonExternalLinkProvider()
             Blockchain.PulseChain, Blockchain.PulseChainTestnet -> PulseChainExternalLinkProvider(isTestnet)
-            Blockchain.Nexa, Blockchain.NexaTestnet -> NexaExternalLinkProvider(isTestnet)
             Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet -> ZkSyncEraExternalLinkProvider(isTestnet)
+            Blockchain.Base, Blockchain.BaseTestnet -> BaseExternalLinkProvider(isTestnet)
+            Blockchain.Nexa, Blockchain.NexaTestnet -> NexaExternalLinkProvider(isTestnet)
             Blockchain.Moonbeam, Blockchain.MoonbeamTestnet -> MoonbeamExternalLinkProvider(isTestnet)
             Blockchain.Manta, Blockchain.MantaTestnet -> MantaExternalLinkProvider(isTestnet)
             Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet -> PolygonZkEVMExternalLinkProvider(isTestnet)
@@ -76,6 +77,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Flare, Blockchain.FlareTestnet -> FlareExternalLinkProvider(isTestnet)
             Blockchain.Taraxa, Blockchain.TaraxaTestnet -> TaraxaExternalLinkProvider(isTestnet)
             Blockchain.Radiant -> RadiantExternalLinkProvider()
+            Blockchain.Koinos, Blockchain.KoinosTestnet -> KoinosExternalLinkProvider(isTestnet)
         }
     }
 }
