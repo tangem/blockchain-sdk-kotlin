@@ -244,8 +244,10 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://rpc-testnet-pulsechain.g4mm4.io/"),
         )
 
-        Blockchain.ZkSyncEra -> listOf(
+        Blockchain.ZkSyncEra -> listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://mainnet.era.zksync.io/"),
+            getNowNodesProvider(baseUrl = "https://zksync.nownodes.io/", config = config),
+            config.getBlockCredentials?.zkSync?.jsonRpc.letNotBlank { getGetBlockProvider(accessToken = it) },
             EthereumJsonRpcProvider(baseUrl = "https://zksync-era.blockpi.network/v1/rpc/public/"),
             EthereumJsonRpcProvider(baseUrl = "https://1rpc.io/zksync2-era/"),
             EthereumJsonRpcProvider(baseUrl = "https://zksync.meowrpc.com/"),
@@ -288,11 +290,12 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://pacific-rpc.testnet.manta.network/http/"),
         )
 
-        Blockchain.PolygonZkEVM -> listOf(
+        Blockchain.PolygonZkEVM -> listOfNotNull(
+            EthereumJsonRpcProvider(baseUrl = "https://zkevm-rpc.com/"),
+            config.getBlockCredentials?.polygonZkevm?.jsonRpc.letNotBlank { getGetBlockProvider(accessToken = it) },
             EthereumJsonRpcProvider(baseUrl = "https://1rpc.io/polygon/zkevm/"),
             EthereumJsonRpcProvider(baseUrl = "https://polygon-zkevm.drpc.org/"),
             EthereumJsonRpcProvider(baseUrl = "https://polygon-zkevm-mainnet.public.blastapi.io/"),
-            EthereumJsonRpcProvider(baseUrl = "https://zkevm-rpc.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://polygon-zkevm.blockpi.network/v1/rpc/public/"),
             EthereumJsonRpcProvider(baseUrl = "https://rpc.polygon-zkevm.gateway.fm/"),
             EthereumJsonRpcProvider(baseUrl = "https://api.zan.top/node/v1/polygonzkevm/mainnet/public/"),
@@ -302,8 +305,10 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://rpc.cardona.zkevm-rpc.com/"),
         )
 
-        Blockchain.Base -> listOf(
+        Blockchain.Base -> listOfNotNull(
             EthereumJsonRpcProvider(baseUrl = "https://mainnet.base.org/"),
+            getNowNodesProvider(baseUrl = "https://base.nownodes.io/", config = config),
+            config.getBlockCredentials?.base?.jsonRpc.letNotBlank { getGetBlockProvider(accessToken = it) },
             EthereumJsonRpcProvider(baseUrl = "https://base.meowrpc.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://base-rpc.publicnode.com/"),
             EthereumJsonRpcProvider(baseUrl = "https://base.drpc.org/"),
