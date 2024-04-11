@@ -8,7 +8,6 @@ import com.tangem.blockchain.common.NowNodeCredentials
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.letNotBlank
-import com.tangem.blockchain.network.API_XRP_LEDGER_FOUNDATION
 
 internal class XRPProvidersBuilder(
     override val providerTypes: List<ProviderType>,
@@ -16,19 +15,28 @@ internal class XRPProvidersBuilder(
 ) : NetworkProvidersBuilder<XrpNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<XrpNetworkProvider> {
-        return listOfNotNull(
-            RippledNetworkProvider(API_XRP_LEDGER_FOUNDATION),
-            config.nowNodeCredentials?.apiKey?.letNotBlank { apiKey ->
-                RippledNetworkProvider(
-                    baseUrl = "https://xrp.nownodes.io/",
-                    apiKeyHeader = NowNodeCredentials.headerApiKey to apiKey,
-                )
-            },
-            config.getBlockCredentials?.xrp?.jsonRpc.letNotBlank { jsonRpcToken ->
-                RippledNetworkProvider(
-                    baseUrl = "https://go.getblock.io/$jsonRpcToken/",
-                )
-            },
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> RippledNetworkProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> createNowNodesProvider()
+                ProviderType.GetBlock -> createGetBlockProvider()
+                else -> null
+            }
+        }
+    }
+
+    private fun createNowNodesProvider(): XrpNetworkProvider? {
+        return config.nowNodeCredentials?.apiKey.letNotBlank {
+            RippledNetworkProvider(
+                baseUrl = "https://xrp.nownodes.io/",
+                apiKeyHeader = NowNodeCredentials.headerApiKey to it,
+            )
+        }
+    }
+
+    private fun createGetBlockProvider(): XrpNetworkProvider? {
+        return config.getBlockCredentials?.xrp?.jsonRpc.letNotBlank { jsonRpcToken ->
+            RippledNetworkProvider(baseUrl = "https://go.getblock.io/$jsonRpcToken/")
+        }
     }
 }
