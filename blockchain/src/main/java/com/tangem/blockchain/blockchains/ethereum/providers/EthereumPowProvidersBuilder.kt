@@ -12,10 +12,15 @@ internal class EthereumPowProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOfNotNull(
-            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://ethw.nownodes.io/"),
-            EthereumJsonRpcProvider(baseUrl = "https://mainnet.ethereumpow.org/"),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> {
+                    ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://ethw.nownodes.io/")
+                }
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
