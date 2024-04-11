@@ -1,24 +1,15 @@
 package com.tangem.blockchain.blockchains.ravencoin
 
 import com.tangem.blockchain.blockchains.ravencoin.network.RavencoinNetworkProvider
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
+import com.tangem.blockchain.common.network.providers.OnlyPublicProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
 
 internal class RavencoinProvidersBuilder(
     override val providerTypes: List<ProviderType>,
-) : NetworkProvidersBuilder<RavencoinNetworkProvider>() {
+) : OnlyPublicProvidersBuilder<RavencoinNetworkProvider>(
+    providerTypes = providerTypes,
+    testnetProviders = listOf("https://testnet.ravencoin.network/api/"),
+) {
 
-    override fun createProviders(blockchain: Blockchain): List<RavencoinNetworkProvider> {
-        return listOf(
-            "https://api.ravencoin.org/api/",
-            "https://explorer.rvn.zelcore.io/api/",
-        )
-            .map(::RavencoinNetworkProvider)
-    }
-
-    override fun createTestnetProviders(blockchain: Blockchain): List<RavencoinNetworkProvider> {
-        return listOf("https://testnet.ravencoin.network/api/")
-            .map(::RavencoinNetworkProvider)
-    }
+    override fun createProvider(url: String) = RavencoinNetworkProvider(baseUrl = url)
 }
