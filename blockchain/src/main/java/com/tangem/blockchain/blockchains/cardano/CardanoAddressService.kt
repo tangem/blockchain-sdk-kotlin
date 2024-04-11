@@ -18,7 +18,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.CRC32
 
-class CardanoAddressService(private val blockchain: Blockchain) : AddressService() {
+internal class CardanoAddressService(private val blockchain: Blockchain) : AddressService() {
     private val shelleyHeaderByte: Byte = 97
 
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {

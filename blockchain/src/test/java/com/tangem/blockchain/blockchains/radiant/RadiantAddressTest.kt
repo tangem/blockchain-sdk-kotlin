@@ -24,4 +24,17 @@ class RadiantAddressTest {
         Truth.assertThat(addresses.size).isEqualTo(expectedSize)
         Truth.assertThat(legacyAddress.value).isEqualTo(expectedLegacyAddress)
     }
+
+    @Test
+    fun testGeneratingScriptHash() {
+        val scriptHash = RadiantAddressUtils.generateAddressScriptHash(
+            walletAddress = "1vr9gJkNzTHv8DEQb4QBxAnQCxgzkFkbf",
+        )
+        Truth.assertThat("972C432D04BC6908FA2825860148B8F911AC3D19C161C68E7A6B9BEAE86E05BA").isEqualTo(scriptHash)
+
+        val scriptHash1 = RadiantAddressUtils.generateAddressScriptHash(
+            walletAddress = "166w5AGDyvMkJqfDAtLbTJeoQh6FqYCfLQ",
+        )
+        Truth.assertThat("67809980FB38F7685D46A8108A39FE38956ADE259BE1C3E6FECBDEAA20FDECA9").isEqualTo(scriptHash1)
+    }
 }

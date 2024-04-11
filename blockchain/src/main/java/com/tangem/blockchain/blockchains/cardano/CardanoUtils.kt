@@ -7,6 +7,8 @@ import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 @Suppress("MagicNumber")
 object CardanoUtils {
 
+    private const val EXTENDED_PUBLIC_KEY_LENGTH = 128
+
     // Link to the original code:
     // https://github.com/trustwallet/wallet-core/blob/aa7475536e8c5b0383b1553073139b3498a9e35f/src/HDWallet.cpp#L163
     fun extendedDerivationPath(derivationPath: DerivationPath): DerivationPath {
@@ -25,4 +27,6 @@ object CardanoUtils {
     fun extendPublicKey(publicKey: ExtendedPublicKey, extendedPublicKey: ExtendedPublicKey): ByteArray {
         return publicKey.publicKey + publicKey.chainCode + extendedPublicKey.publicKey + extendedPublicKey.chainCode
     }
+
+    fun isExtendedPublicKey(publicKey: ByteArray) = publicKey.size == EXTENDED_PUBLIC_KEY_LENGTH
 }
