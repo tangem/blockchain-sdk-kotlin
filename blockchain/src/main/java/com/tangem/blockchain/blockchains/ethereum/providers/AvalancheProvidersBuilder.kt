@@ -13,23 +13,14 @@ internal class AvalancheProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOfNotNull(
-            // postfix is required because the AVALANCHE API needs url without a last slash !!!
-            EthereumJsonRpcProvider(baseUrl = "https://api.avax.network/", postfixUrl = AVALANCHE_POSTFIX),
-            config.nowNodeCredentials?.apiKey.letNotBlank { nowNodesApiKey ->
-                EthereumJsonRpcProvider(
-                    baseUrl = "https://avax.nownodes.io/",
-                    postfixUrl = AVALANCHE_POSTFIX,
-                    nowNodesApiKey = nowNodesApiKey, // special for Avalanche
-                )
-            },
-            config.getBlockCredentials?.avalanche?.jsonRpc.letNotBlank { avalancheToken ->
-                EthereumJsonRpcProvider(
-                    baseUrl = "https://go.getblock.io/$avalancheToken/",
-                    postfixUrl = AVALANCHE_POSTFIX,
-                )
-            },
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> createNowNodesProvider()
+                ProviderType.GetBlock -> createGetBlockProvider()
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
@@ -39,6 +30,25 @@ internal class AvalancheProvidersBuilder(
                 postfixUrl = AVALANCHE_POSTFIX,
             ),
         )
+    }
+
+    private fun createNowNodesProvider(): EthereumJsonRpcProvider? {
+        return config.nowNodeCredentials?.apiKey.letNotBlank {
+            EthereumJsonRpcProvider(
+                baseUrl = "https://avax.nownodes.io/",
+                postfixUrl = AVALANCHE_POSTFIX,
+                nowNodesApiKey = it, // special for Avalanche
+            )
+        }
+    }
+
+    private fun createGetBlockProvider(): EthereumJsonRpcProvider? {
+        return config.getBlockCredentials?.avalanche?.jsonRpc.letNotBlank { avalancheToken ->
+            EthereumJsonRpcProvider(
+                baseUrl = "https://go.getblock.io/$avalancheToken/",
+                postfixUrl = AVALANCHE_POSTFIX,
+            )
+        }
     }
 
     private companion object {

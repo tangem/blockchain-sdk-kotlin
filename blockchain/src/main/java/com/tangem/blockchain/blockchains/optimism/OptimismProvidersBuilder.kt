@@ -12,12 +12,15 @@ internal class OptimismProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOfNotNull(
-            EthereumJsonRpcProvider(baseUrl = "https://mainnet.optimism.io/"),
-            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://optimism.nownodes.io/"),
-            EthereumJsonRpcProvider(baseUrl = "https://optimism-mainnet.public.blastapi.io/"),
-            EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/optimism/"),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> {
+                    ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://optimism.nownodes.io/")
+                }
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
