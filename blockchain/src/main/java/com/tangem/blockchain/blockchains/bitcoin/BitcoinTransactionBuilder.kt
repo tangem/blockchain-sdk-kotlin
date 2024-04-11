@@ -7,6 +7,7 @@ import com.tangem.blockchain.blockchains.ravencoin.RavencoinTestNetParams
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.transaction.getMinimumRequiredUTXOsToSend
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
@@ -28,6 +29,7 @@ open class BitcoinTransactionBuilder(
     private val walletPublicKey: ByteArray,
     blockchain: Blockchain,
     walletAddresses: Set<com.tangem.blockchain.common.address.Address> = emptySet(),
+    private val isNewOutputToSendCollectionMethodEnabled: Boolean = false,
 ) {
     private val walletScripts =
         walletAddresses.filterIsInstance<BitcoinScriptAddress>().map { it.script }
@@ -52,7 +54,17 @@ open class BitcoinTransactionBuilder(
             return Result.Failure(BlockchainSdkError.CustomError("Unspent outputs are missing"))
         }
 
-        val outputsToSend = getOutputsToSend(unspentOutputs!!, transactionData)
+        val outputsToSend = if (isNewOutputToSendCollectionMethodEnabled) {
+            getMinimumRequiredUTXOsToSend(
+                unspentOutputs = unspentOutputs!!,
+                transactionAmount = transactionData.amount.value!!,
+                transactionFeeAmount = transactionData.fee?.amount?.value!!,
+                unspentToAmount = { it.amount },
+            )
+        } else {
+            getOutputsToSend(unspentOutputs!!, transactionData)
+        }
+
         val change: BigDecimal = calculateChange(transactionData, outputsToSend)
         transaction =
             transactionData.toBitcoinJTransaction(networkParameters, outputsToSend, change)
@@ -184,7 +196,7 @@ open class BitcoinTransactionBuilder(
         val amount = transactionData.amount.value!! + transactionData.fee?.amount?.value!!
         var sum = BigDecimal.ZERO
         var i = 0
-        while (sum <= amount && i < unspentOutputs.size) {
+        while (sum < amount && i < unspentOutputs.size) {
             val output = unspentOutputs[i]
             sum = sum.plus(output.amount)
             outputs.add(output)
