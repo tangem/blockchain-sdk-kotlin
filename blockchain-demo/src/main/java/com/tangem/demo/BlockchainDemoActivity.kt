@@ -201,6 +201,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
         try {
             walletManager = WalletManagerFactory(
                 config = BlockchainSdkConfig(),
+                blockchainProviderTypes = emptyMap(),
                 accountCreator = DummyAccountCreator,
                 blockchainDataStorage = DummyBlockchainDataStorage,
             ).makeWalletManagerForApp(
