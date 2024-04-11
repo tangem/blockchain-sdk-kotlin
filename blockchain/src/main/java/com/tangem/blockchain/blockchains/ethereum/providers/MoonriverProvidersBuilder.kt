@@ -1,0 +1,29 @@
+package com.tangem.blockchain.blockchains.ethereum.providers
+
+import com.tangem.blockchain.blockchains.ethereum.EthereumLikeProvidersBuilder
+import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.network.providers.ProviderType
+
+internal class MoonriverProvidersBuilder(
+    override val providerTypes: List<ProviderType>,
+    override val config: BlockchainSdkConfig,
+) : EthereumLikeProvidersBuilder(config) {
+
+    override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOf(
+            "https://moonriver.public.blastapi.io/",
+            "https://moonriver-rpc.dwellir.com/",
+            "https://moonriver-mainnet.gateway.pokt.network/v1/lb/62a74fdb123e6f003963642f/",
+            "https://moonriver.unitedbloc.com/",
+            "https://moonriver-rpc.publicnode.com/",
+        )
+            .map(::EthereumJsonRpcProvider)
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
+        return listOf("https://rpc.api.moonbase.moonbeam.network/")
+            .map(::EthereumJsonRpcProvider)
+    }
+}

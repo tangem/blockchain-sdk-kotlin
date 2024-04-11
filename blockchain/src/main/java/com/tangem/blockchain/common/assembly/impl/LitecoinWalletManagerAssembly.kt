@@ -1,8 +1,8 @@
 package com.tangem.blockchain.common.assembly.impl
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
-import com.tangem.blockchain.blockchains.bitcoin.getBitcoinNetworkProviders
 import com.tangem.blockchain.blockchains.litecoin.LitecoinNetworkService
+import com.tangem.blockchain.blockchains.litecoin.LitecoinProvidersBuilder
 import com.tangem.blockchain.blockchains.litecoin.LitecoinWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
@@ -18,9 +18,10 @@ internal object LitecoinWalletManagerAssembly : WalletManagerAssembly<LitecoinWa
                     walletPublicKey = publicKey.blockchainKey,
                     blockchain = blockchain,
                     walletAddresses = addresses,
+                    isNewOutputToSendCollectionMethodEnabled = true,
                 ),
                 networkProvider = LitecoinNetworkService(
-                    providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config),
+                    providers = LitecoinProvidersBuilder(input.providerTypes, input.config).build(blockchain),
                 ),
                 transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
             )

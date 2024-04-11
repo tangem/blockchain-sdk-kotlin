@@ -1,9 +1,12 @@
 package com.tangem.blockchain.blockchains.cardano
 
 import android.util.Log
-import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
+import com.tangem.blockchain.blockchains.cardano.network.InfoInput
+import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoAddressResponse
+import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -12,57 +15,49 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
 
-class CardanoWalletManager(
+internal class CardanoWalletManager(
     wallet: Wallet,
     private val transactionBuilder: CardanoTransactionBuilder,
     private val networkProvider: CardanoNetworkProvider,
 ) : WalletManager(wallet), TransactionSender {
 
     override val dustValue: BigDecimal = BigDecimal.ONE
-    private val blockchain = wallet.blockchain
+    override val currentHost: String get() = networkProvider.baseUrl
 
-    override val currentHost: String
-        get() = networkProvider.baseUrl
+    private val decimals by lazy { wallet.blockchain.decimals() }
 
     override suspend fun updateInternal() {
-        when (val response = networkProvider.getInfo(wallet.addresses.map { it.value }.toSet())) {
+        val input = InfoInput(
+            addresses = wallet.addresses.map(Address::value).toSet(),
+            tokens = cardTokens,
+        )
+
+        when (val response = networkProvider.getInfo(input)) {
             is Result.Success -> updateWallet(response.data)
             is Result.Failure -> updateError(response.error)
         }
     }
 
-    private fun updateWallet(response: CardanoAddressResponse) {
-        Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
+        return try {
+            val dummyTransaction = TransactionData(
+                amount = amount,
+                fee = null,
+                sourceAddress = wallet.address,
+                destinationAddress = destination,
+            )
 
-        wallet.changeAmountValue(
-            amountType = AmountType.Coin,
-            newValue = response.balance.toBigDecimal().movePointLeft(blockchain.decimals()),
-        )
+            val feeValue = transactionBuilder.estimatedFee(dummyTransaction)
 
-        transactionBuilder.update(response.unspentOutputs)
-
-        wallet.recentTransactions.forEach { recentTransaction ->
-            if (response.recentTransactionsHashes.isEmpty()) { // case for Rosetta API, it lacks recent transactions
-                if (response.unspentOutputs.isEmpty() ||
-                    response.unspentOutputs.find {
-                        it.transactionHash.toHexString()
-                            .equals(recentTransaction.hash, ignoreCase = true)
-                    } != null
-                ) {
-                    recentTransaction.status = TransactionStatus.Confirmed
-                }
-            } else { // case for APIs with recent transactions
-                val recentTx = response.recentTransactionsHashes.find { it.equals(recentTransaction.hash, true) }
-                if (recentTx != null) {
-                    recentTransaction.status = TransactionStatus.Confirmed
-                }
-            }
+            val fee = Fee.Common(
+                amount.copy(
+                    value = feeValue.movePointLeft(decimals),
+                ),
+            )
+            Result.Success(TransactionFee.Single(fee))
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
         }
-    }
-
-    private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
-        if (error is BlockchainSdkError) throw error
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
@@ -87,27 +82,46 @@ class CardanoWalletManager(
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
-        return try {
-            val dummyTransaction = TransactionData(
-                amount = amount,
-                fee = null,
-                sourceAddress = wallet.address,
-                destinationAddress = destination,
-            )
+    private fun updateWallet(response: CardanoAddressResponse) {
+        wallet.setCoinValue(value = response.balance.toBigDecimal().movePointLeft(decimals))
 
-            val feeValue = transactionBuilder.estimatedFee(dummyTransaction)
+        transactionBuilder.update(response.unspentOutputs)
 
-            val fee = Fee.Common(
-                Amount(
-                    value = feeValue.movePointLeft(blockchain.decimals()),
-                    blockchain = wallet.blockchain,
-                    type = AmountType.Coin,
-                ),
-            )
-            Result.Success(TransactionFee.Single(fee))
-        } catch (e: Exception) {
-            Result.Failure(e.toBlockchainSdkError())
+        response.tokenBalances.forEach {
+            wallet.addTokenValue(value = it.value.toBigDecimal(), token = it.key)
         }
+
+        wallet.recentTransactions.forEach { recentTransaction ->
+            updateTransactionConfirmation(response, recentTransaction)
+        }
+    }
+
+    private fun updateTransactionConfirmation(response: CardanoAddressResponse, recentTransaction: TransactionData) {
+        // case for Rosetta API, it lacks recent transactions
+        val isConfirmed = if (response.recentTransactionsHashes.isEmpty()) {
+            response.unspentOutputs.isEmpty() || response.unspentOutputs.hasTransactionHash(recentTransaction.hash)
+        } else {
+            // case for APIs with recent transactions
+            response.recentTransactionsHashes.containsTransactionHash(recentTransaction.hash)
+        }
+
+        if (isConfirmed) {
+            recentTransaction.status = TransactionStatus.Confirmed
+        }
+    }
+
+    private fun List<CardanoUnspentOutput>.hasTransactionHash(hash: String?): Boolean {
+        return this
+            .map { it.transactionHash.toHexString() }
+            .containsTransactionHash(hash)
+    }
+
+    private fun List<String>.containsTransactionHash(hash: String?): Boolean {
+        return any { it.equals(hash, ignoreCase = true) }
+    }
+
+    private fun updateError(error: BlockchainError) {
+        Log.e(this::class.java.simpleName, error.customMessage)
+        if (error is BlockchainSdkError) throw error
     }
 }

@@ -11,7 +11,7 @@ import com.tangem.blockchain.network.MultiNetworkProvider
 import java.math.RoundingMode
 
 class TonNetworkService(
-    jsonRpcProviders: List<TonJsonRpcNetworkProvider>,
+    jsonRpcProviders: List<TonNetworkProvider>,
     private val blockchain: Blockchain,
 ) {
 
@@ -22,7 +22,7 @@ class TonNetworkService(
     suspend fun getWalletInformation(address: String): Result<TonWalletInfo> {
         return try {
             val addressInformation = multiJsonRpcProvider
-                .performRequest(TonJsonRpcNetworkProvider::getWalletInformation, address)
+                .performRequest(TonNetworkProvider::getWalletInformation, address)
                 .successOr { return it }
             Result.Success(
                 TonWalletInfo(
@@ -53,7 +53,7 @@ class TonNetworkService(
 
     suspend fun send(message: String): Result<String> {
         return try {
-            val hashResponse = multiJsonRpcProvider.performRequest(TonJsonRpcNetworkProvider::send, message)
+            val hashResponse = multiJsonRpcProvider.performRequest(TonNetworkProvider::send, message)
                 .successOr { return it }
             Result.Success(hashResponse.hash)
         } catch (e: Exception) {
