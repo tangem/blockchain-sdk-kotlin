@@ -13,22 +13,21 @@ internal class CosmosProvidersBuilder(
 ) : NetworkProvidersBuilder<CosmosRestProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<CosmosRestProvider> {
-        return listOfNotNull(
-            createNowNodesProvider(),
-            createGetBlockProvider(),
-            "https://cosmos-mainnet-rpc.allthatnode.com:1317/",
-            // This is a REST proxy combining the servers below (and others)
-            "https://rest.cosmos.directory/cosmoshub/",
-            "https://cosmoshub-api.lavenderfive.com/",
-            "https://rest-cosmoshub.ecostake.com/",
-            "https://lcd.cosmos.dragonstake.io/",
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> it.url
+                ProviderType.NowNodes -> createNowNodesProvider()
+                ProviderType.GetBlock -> createGetBlockProvider()
+                else -> null
+            }
+        }
             .map(::CosmosRestProvider)
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<CosmosRestProvider> {
-        return listOf("https://rest.seed-01.theta-testnet.polypore.xyz")
-            .map(::CosmosRestProvider)
+        return listOf(
+            CosmosRestProvider(baseUrl = "https://rest.seed-01.theta-testnet.polypore.xyz"),
+        )
     }
 
     private fun createNowNodesProvider(): String? {
