@@ -14,20 +14,19 @@ internal class AptosProvidersBuilder(
 ) : NetworkProvidersBuilder<AptosNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<AptosNetworkProvider> {
-        return listOfNotNull(
-            createOfficialNetworkProvider(isTestnet = false),
-            createGetBlockNetworkProvider(),
-            createNowNodesNetworkProvider(),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> AptosRestNetworkProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> createNowNodesNetworkProvider()
+                ProviderType.GetBlock -> createGetBlockNetworkProvider()
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<AptosNetworkProvider> {
-        return listOf(createOfficialNetworkProvider(isTestnet = true))
-    }
-
-    private fun createOfficialNetworkProvider(isTestnet: Boolean): AptosNetworkProvider {
-        return AptosRestNetworkProvider(
-            baseUrl = "https://fullnode.${if (isTestnet) "testnet" else "mainnet"}.aptoslabs.com/",
+        return listOf(
+            AptosRestNetworkProvider(baseUrl = "https://fullnode.testnet.aptoslabs.com/"),
         )
     }
 
