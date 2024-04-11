@@ -12,7 +12,7 @@ data class ElectrumUnspentUTXORecord(
     val txPos: Long,
     val txHash: String,
     val value: BigDecimal,
-    val outpointHash: String, // TODO is Nexa epecific?
+    val outpointHash: String?, // TODO is Nexa epecific?
 ) {
     val isConfirmed: Boolean = height != 0L
 }
