@@ -13,13 +13,16 @@ internal class PolygonProvidersBuilder(
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         // https://wiki.polygon.technology/docs/operate/network-rpc-endpoints
-        return listOfNotNull(
-            EthereumJsonRpcProvider(baseUrl = "https://polygon-rpc.com/"),
-            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://matic.nownodes.io/"),
-            ethereumProviderFactory.getGetBlockProvider { polygon?.jsonRpc },
-            EthereumJsonRpcProvider(baseUrl = "https://rpc-mainnet.maticvigil.com/"),
-            EthereumJsonRpcProvider(baseUrl = "https://rpc-mainnet.matic.quiknode.pro/"),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> {
+                    ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://matic.nownodes.io/")
+                }
+                ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { polygon?.jsonRpc }
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
