@@ -12,16 +12,13 @@ internal class PolygonZkEVMProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOf(
-            "https://1rpc.io/polygon/zkevm/",
-            "https://polygon-zkevm.drpc.org/",
-            "https://polygon-zkevm-mainnet.public.blastapi.io/",
-            "https://zkevm-rpc.com/",
-            "https://polygon-zkevm.blockpi.network/v1/rpc/public/",
-            "https://rpc.polygon-zkevm.gateway.fm/",
-            "https://api.zan.top/node/v1/polygonzkevm/mainnet/public/",
-        )
-            .map(::EthereumJsonRpcProvider)
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { polygonZkEvm?.jsonRpc }
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {

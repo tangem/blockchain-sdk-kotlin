@@ -1,19 +1,12 @@
 package com.tangem.blockchain.blockchains.ethereum.providers
 
-import com.tangem.blockchain.blockchains.ethereum.EthereumLikeProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.network.providers.OnlyPublicProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
 
 internal class DischainProvidersBuilder(
     override val providerTypes: List<ProviderType>,
-    override val config: BlockchainSdkConfig,
-) : EthereumLikeProvidersBuilder(config) {
+) : OnlyPublicProvidersBuilder<EthereumJsonRpcProvider>(providerTypes) {
 
-    override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://rpc.dischain.xyz/"),
-        )
-    }
+    override fun createProvider(url: String) = EthereumJsonRpcProvider(baseUrl = url)
 }
