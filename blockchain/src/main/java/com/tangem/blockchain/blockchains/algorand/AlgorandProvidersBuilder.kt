@@ -13,15 +13,20 @@ internal class AlgorandProvidersBuilder(
 ) : NetworkProvidersBuilder<AlgorandNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<AlgorandNetworkProvider> {
-        return listOfNotNull(
-            createNowNodesProvider(),
-            createGetBlockProvider(),
-            createAlgonodeProvider(isTestnet = false),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> AlgorandNetworkProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> createNowNodesProvider()
+                ProviderType.GetBlock -> createGetBlockProvider()
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<AlgorandNetworkProvider> {
-        return listOf(createAlgonodeProvider(isTestnet = true))
+        return listOf(
+            AlgorandNetworkProvider(baseUrl = "https://testnet-api.algonode.cloud/"),
+        )
     }
 
     private fun createNowNodesProvider(): AlgorandNetworkProvider? {
@@ -34,10 +39,5 @@ internal class AlgorandProvidersBuilder(
         return config.getBlockCredentials?.algorand?.rest.letNotBlank {
             AlgorandNetworkProvider(baseUrl = "https://go.getblock.io/$it/")
         }
-    }
-
-    private fun createAlgonodeProvider(isTestnet: Boolean): AlgorandNetworkProvider {
-        val network = if (isTestnet) "testnet" else "mainnet"
-        return AlgorandNetworkProvider(baseUrl = "https://$network-api.algonode.cloud/")
     }
 }
