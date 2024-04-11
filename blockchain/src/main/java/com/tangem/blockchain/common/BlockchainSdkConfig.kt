@@ -55,6 +55,9 @@ data class GetBlockCredentials(
     val bitcoin: GetBlockAccessToken,
     val aptos: GetBlockAccessToken?,
     val algorand: GetBlockAccessToken?,
+    val zkSyncEra: GetBlockAccessToken?,
+    val polygonZkEvm: GetBlockAccessToken?,
+    val moonbeam: GetBlockAccessToken?,
 )
 
 data class GetBlockAccessToken(
