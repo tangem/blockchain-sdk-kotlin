@@ -139,6 +139,7 @@ dependencies {
 wire {
     sourcePath {
         srcDir 'src/main/java/com/tangem/blockchain/blockchains/tron/proto'
+        srcDir 'src/main/java/com/tangem/blockchain/blockchains/koinos/proto'
     }
     kotlin {}
 }

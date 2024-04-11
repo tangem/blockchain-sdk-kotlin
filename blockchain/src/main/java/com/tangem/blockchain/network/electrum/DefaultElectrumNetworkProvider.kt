@@ -6,7 +6,9 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.network.electrum.api.ElectrumApiService
+import com.tangem.blockchain.network.electrum.api.ElectrumResponse
 import com.tangem.blockchain.network.electrum.api.WebSocketElectrumApiService
+import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.delay
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -19,7 +21,7 @@ internal class DefaultElectrumNetworkProvider(
 
     private val serverVersionRequested = AtomicBoolean(false)
 
-    override suspend fun getAccount(addressScriptHash: String): Result<ElectrumAccount> {
+    override suspend fun getAccountBalance(addressScriptHash: String): Result<ElectrumAccount> {
         firstCheckServer()?.apply { return Result.Failure(this) }
 
         return retryCall {
@@ -74,6 +76,22 @@ internal class DefaultElectrumNetworkProvider(
             service.getEstimateFee(numberConfirmationBlocks)
         }.map {
             ElectrumEstimateFee(it.feeInCoinsPer1000Bytes)
+        }
+    }
+
+    override suspend fun getTransactionInfo(txHash: String): Result<ElectrumResponse.Transaction> {
+        firstCheckServer()?.apply { return Result.Failure(this) }
+
+        return retryCall {
+            service.getTransaction(txHash = txHash)
+        }
+    }
+
+    override suspend fun broadcastTransaction(rawTx: ByteArray): Result<ElectrumResponse.TxHex> {
+        firstCheckServer()?.apply { return Result.Failure(this) }
+
+        return retryCall {
+            service.sendTransaction(rawTransactionHex = rawTx.toHexString())
         }
     }
 
