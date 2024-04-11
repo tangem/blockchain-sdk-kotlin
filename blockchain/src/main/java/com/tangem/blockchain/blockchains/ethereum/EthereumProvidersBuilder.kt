@@ -11,11 +11,18 @@ internal class EthereumProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOfNotNull(
-            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://eth.nownodes.io/"),
-            ethereumProviderFactory.getGetBlockProvider { eth?.jsonRpc },
-            ethereumProviderFactory.getInfuraProvider(baseUrl = "https://mainnet.infura.io/v3/"),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                ProviderType.NowNodes -> ethereumProviderFactory.getNowNodesProvider(
+                    baseUrl = "https://eth.nownodes.io/",
+                )
+                ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { eth?.jsonRpc }
+                ProviderType.EthereumLike.Infura -> {
+                    ethereumProviderFactory.getInfuraProvider(baseUrl = "https://mainnet.infura.io/v3/")
+                }
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {

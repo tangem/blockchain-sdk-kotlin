@@ -12,11 +12,12 @@ internal class GnosisProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOfNotNull(
-            ethereumProviderFactory.getGetBlockProvider { gnosis?.jsonRpc },
-            EthereumJsonRpcProvider(baseUrl = "https://rpc.gnosischain.com/"),
-            EthereumJsonRpcProvider(baseUrl = "https://gnosis-mainnet.public.blastapi.io/"),
-            EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/gnosis/"),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { gnosis?.jsonRpc }
+                else -> null
+            }
+        }
     }
 }

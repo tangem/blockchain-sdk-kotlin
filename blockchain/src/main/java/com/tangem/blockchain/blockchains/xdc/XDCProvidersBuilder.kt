@@ -12,16 +12,15 @@ internal class XDCProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOfNotNull(
-            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://xdc.nownodes.io/"),
-            EthereumJsonRpcProvider(baseUrl = "https://rpc.xdcrpc.com"),
-            EthereumJsonRpcProvider(baseUrl = "https://erpc.xdcrpc.com"),
-            EthereumJsonRpcProvider(baseUrl = "https://rpc.xinfin.network"),
-            EthereumJsonRpcProvider(baseUrl = "https://erpc.xinfin.network"),
-            EthereumJsonRpcProvider(baseUrl = "https://rpc.xdc.org"),
-            EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/xdc/"),
-            EthereumJsonRpcProvider(baseUrl = "https://rpc1.xinfin.network"),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> {
+                    ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://xdc.nownodes.io/")
+                }
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
