@@ -13,12 +13,17 @@ internal class BSCProvidersBuilder(
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         // https://docs.fantom.foundation/api/public-api-endpoints
-        return listOfNotNull(
-            EthereumJsonRpcProvider(baseUrl = "https://bsc-dataseed.binance.org/"),
-            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://bsc.nownodes.io/"),
-            ethereumProviderFactory.getGetBlockProvider { bsc?.jsonRpc },
-            createQuickNodeProvider(),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> {
+                    ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://bsc.nownodes.io/")
+                }
+                ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { bsc?.jsonRpc }
+                ProviderType.EthereumLike.QuickNode -> createQuickNodeProvider()
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
