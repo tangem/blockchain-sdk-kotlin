@@ -109,10 +109,10 @@ internal object KoinosProtocol {
     @JsonClass(generateAdapter = true)
     data class TransactionReceipt(
         @Json(name = "id") val id: String,
-        @Json(name = "payer") val payer: String,
-        @Json(name = "max_payer_rc") val maxPayerRc: Long,
-        @Json(name = "rc_limit") val rcLimit: Long,
-        @Json(name = "rc_used") val rcUsed: Long,
+        @Json(name = "payer") val payer: String = "",
+        @Json(name = "max_payer_rc") val maxPayerRc: Long = 0L,
+        @Json(name = "rc_limit") val rcLimit: Long = 0L,
+        @Json(name = "rc_used") val rcUsed: Long = 0L,
         @Json(name = "disk_storage_used") val diskStorageUsed: String?,
         @Json(name = "network_bandwidth_used") val networkBandwidthUsed: String?,
         @Json(name = "compute_bandwidth_used") val computeBandwidthUsed: String?,
