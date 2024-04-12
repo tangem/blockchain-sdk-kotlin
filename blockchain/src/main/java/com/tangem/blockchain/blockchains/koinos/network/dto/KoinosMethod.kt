@@ -39,7 +39,7 @@ internal sealed interface KoinosMethod {
          */
         @JsonClass(generateAdapter = true)
         data class Response(
-            @Json(name = "rc") val rc: Long,
+            @Json(name = "rc") val rc: Long = 0L,
         )
     }
 
@@ -93,8 +93,8 @@ internal sealed interface KoinosMethod {
     @JsonClass(generateAdapter = true)
     data class GetAccountHistory(
         @Json(name = "address") val address: String,
-        @Json(name = "seq_num") val offset: String? = null,
-        @Json(name = "limit") val limit: Long,
+        @Json(name = "seq_num") val seqNumber: String? = null,
+        @Json(name = "limit") val limit: String,
         @Json(name = "ascending") val ascending: Boolean,
         @Json(name = "irreversible") val irreversible: Boolean,
     ) : KoinosMethod {

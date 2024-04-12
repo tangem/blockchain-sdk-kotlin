@@ -42,4 +42,19 @@ internal class KoinosNetworkService(
     suspend fun submitTransaction(transaction: KoinosProtocol.Transaction): Result<KoinosTransactionEntry> {
         return multiNetworkProvider.performRequest(KoinosNetworkProvier::submitTransaction, transaction)
     }
+
+    suspend fun getTransactionHistory(
+        address: String,
+        pageSize: Int,
+        sequenceNum: Long,
+    ): Result<List<KoinosTransactionEntry>> {
+        return multiNetworkProvider.performRequest(
+            KoinosNetworkProvier::getTransactionHistory,
+            TransactionHistoryRequest(
+                address = address,
+                pageSize = pageSize,
+                sequenceNum = sequenceNum,
+            ),
+        )
+    }
 }
