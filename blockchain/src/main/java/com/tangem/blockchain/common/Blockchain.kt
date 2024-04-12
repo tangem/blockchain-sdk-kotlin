@@ -390,7 +390,7 @@ enum class Blockchain(
             ZkSyncEra, ZkSyncEraTestnet -> ZkSyncEraTestnet
             Moonbeam, MoonbeamTestnet -> MoonbeamTestnet
             Manta, MantaTestnet -> MantaTestnet
-            PolygonZkEVM, PolygonZkEVMTestnet -> PolygonTestnet
+            PolygonZkEVM, PolygonZkEVMTestnet -> PolygonZkEVMTestnet
             Base, BaseTestnet -> BaseTestnet
             Moonriver, MoonriverTestnet -> MoonriverTestnet
             Mantle, MantleTestnet -> MantleTestnet
