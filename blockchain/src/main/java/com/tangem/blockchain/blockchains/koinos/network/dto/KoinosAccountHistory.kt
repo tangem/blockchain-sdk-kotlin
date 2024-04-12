@@ -4,7 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 /**
- * @see <a href=https://github.com/koinos/koinos-proto/blob/master/koinos/rpc/account_history/account_history_rpc.proto>koinos/account_history/account_history.proto</a>
+ * @see <a href=https://github.com/koinos/koinos-proto/blob/master/koinos/account_history/account_history.proto>koinos/account_history/account_history.proto</a>
  */
 internal object KoinosAccountHistory {
 
@@ -24,8 +24,8 @@ internal object KoinosAccountHistory {
     @JsonClass(generateAdapter = true)
     data class AccountHistoryEntry(
         @Json(name = "seq_num")
-        val seqNum: String,
-        @Json(name = "transaction")
+        val seqNum: Long = 0L,
+        @Json(name = "trx")
         val transaction: TransactionRecord?,
         @Json(name = "block")
         val block: BlockRecord?,
