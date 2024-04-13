@@ -1,4 +1,4 @@
-package com.tangem.blockchain.blockchains.ton
+package com.tangem.blockchain.blockchains.ton.models
 
 import java.math.BigDecimal
 

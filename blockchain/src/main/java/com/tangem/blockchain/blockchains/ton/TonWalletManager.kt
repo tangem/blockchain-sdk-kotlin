@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.ton
 
 import android.util.Log
+import com.tangem.blockchain.blockchains.ton.models.TonWalletInfo
 import com.tangem.blockchain.blockchains.ton.network.TonJsonRpcNetworkProvider
 import com.tangem.blockchain.blockchains.ton.network.TonNetworkService
 import com.tangem.blockchain.common.*
@@ -13,7 +14,7 @@ import wallet.core.jni.CoinType
 import wallet.core.jni.PublicKeyType
 import wallet.core.jni.proto.TheOpenNetwork
 
-class TonWalletManager(
+internal class TonWalletManager(
     wallet: Wallet,
     networkProviders: List<TonJsonRpcNetworkProvider>,
 ) : WalletManager(wallet), TransactionSender {
