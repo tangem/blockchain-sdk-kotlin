@@ -1,6 +1,6 @@
 package com.tangem.blockchain.blockchains.ton.network
 
-import com.tangem.blockchain.blockchains.ton.TonWalletInfo
+import com.tangem.blockchain.blockchains.ton.models.TonWalletInfo
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
