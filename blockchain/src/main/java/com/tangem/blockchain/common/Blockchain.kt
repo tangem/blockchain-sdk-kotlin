@@ -17,6 +17,7 @@ import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
+import com.tangem.blockchain.blockchains.ton.TonAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.vechain.VeChainWalletManager
 import com.tangem.blockchain.blockchains.xdc.XDCAddressService
@@ -303,7 +304,7 @@ enum class Blockchain(
             Stellar, StellarTestnet -> StellarAddressService()
             Solana, SolanaTestnet -> SolanaAddressService()
             Tezos -> TezosAddressService()
-            TON, TONTestnet,
+            TON, TONTestnet -> TonAddressService(blockchain = this)
             Cosmos, CosmosTestnet,
             TerraV1,
             TerraV2,
