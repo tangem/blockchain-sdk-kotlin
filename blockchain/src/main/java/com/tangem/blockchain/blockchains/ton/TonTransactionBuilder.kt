@@ -7,7 +7,7 @@ import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.CryptoUtils
 import wallet.core.jni.proto.TheOpenNetwork
 
-class TonTransactionBuilder {
+internal class TonTransactionBuilder {
 
     private val keyPair: KeyPair by lazy { generateKeyPair() }
     private val modeTransactionConstant: Int =
