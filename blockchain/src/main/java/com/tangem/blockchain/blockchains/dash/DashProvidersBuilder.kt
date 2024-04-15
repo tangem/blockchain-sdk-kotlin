@@ -19,11 +19,18 @@ internal class DashProvidersBuilder(
     private val blockcypherNetworkProviderFactory by lazy { BlockcypherNetworkProviderFactory(config) }
 
     override fun createProviders(blockchain: Blockchain): List<BitcoinNetworkProvider> {
-        return listOfNotNull(
-            blockBookNetworkProviderFactory.createNowNodesProvider(blockchain),
-            *blockchairNetworkProviderFactory.createProviders(blockchain).toTypedArray(),
-            blockcypherNetworkProviderFactory.create(blockchain),
-        )
+        return providerTypes.flatMap {
+            when (it) {
+                ProviderType.NowNodes -> {
+                    blockBookNetworkProviderFactory.createNowNodesProvider(blockchain).let(::listOfNotNull)
+                }
+                ProviderType.BitcoinLike.Blockcypher -> {
+                    blockcypherNetworkProviderFactory.create(blockchain).let(::listOfNotNull)
+                }
+                ProviderType.BitcoinLike.Blockchair -> blockchairNetworkProviderFactory.createProviders(blockchain)
+                else -> emptyList()
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<BitcoinNetworkProvider> {

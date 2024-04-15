@@ -12,12 +12,12 @@ internal class CronosProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOfNotNull(
-            EthereumJsonRpcProvider(baseUrl = "https://evm.cronos.org/"),
-            EthereumJsonRpcProvider(baseUrl = "https://evm-cronos.crypto.org/"),
-            ethereumProviderFactory.getGetBlockProvider { cronos?.jsonRpc },
-            EthereumJsonRpcProvider(baseUrl = "https://cronos.blockpi.network/v1/rpc/public/"),
-            EthereumJsonRpcProvider(baseUrl = "https://cronos-evm.publicnode.com/"),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { cronos?.jsonRpc }
+                else -> null
+            }
+        }
     }
 }
