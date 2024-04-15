@@ -13,10 +13,14 @@ internal class TerraV2ProvidersBuilder(
 ) : NetworkProvidersBuilder<CosmosRestProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<CosmosRestProvider> {
-        return listOfNotNull(
-            createNowNodesProvider(),
-            "https://phoenix-lcd.terra.dev/",
-        )
+        return providerTypes
+            .mapNotNull {
+                when (it) {
+                    is ProviderType.Public -> it.url
+                    ProviderType.NowNodes -> createNowNodesProvider()
+                    else -> null
+                }
+            }
             .map(::CosmosRestProvider)
     }
 

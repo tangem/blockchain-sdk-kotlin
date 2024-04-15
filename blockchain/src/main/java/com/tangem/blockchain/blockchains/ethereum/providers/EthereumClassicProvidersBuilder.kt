@@ -12,14 +12,13 @@ internal class EthereumClassicProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOfNotNull(
-            EthereumJsonRpcProvider(baseUrl = "https://etc.etcdesktop.com/"),
-            ethereumProviderFactory.getGetBlockProvider { etc?.jsonRpc },
-            EthereumJsonRpcProvider(baseUrl = "https://etc.rivet.link/etc/"),
-            EthereumJsonRpcProvider(baseUrl = "https://etc.mytokenpocket.vip/"),
-            EthereumJsonRpcProvider(baseUrl = "https://besu-de.etc-network.info/"),
-            EthereumJsonRpcProvider(baseUrl = "https://geth-at.etc-network.info/"),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { etc?.jsonRpc }
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {

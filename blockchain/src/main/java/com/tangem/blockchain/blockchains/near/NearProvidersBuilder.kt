@@ -14,22 +14,19 @@ internal class NearProvidersBuilder(
 ) : NetworkProvidersBuilder<NearNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<NearNetworkProvider> {
-        return listOfNotNull(
-            createNearJsonRpcProvider(isTestnet = false),
-            createNowNodeJsonRpcProvider(),
-            createGetBlockJsonRpcProvider(),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> NearJsonRpcNetworkProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> createNowNodeJsonRpcProvider()
+                ProviderType.GetBlock -> createGetBlockJsonRpcProvider()
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<NearNetworkProvider> {
         return listOf(
-            createNearJsonRpcProvider(isTestnet = true),
-        )
-    }
-
-    private fun createNearJsonRpcProvider(isTestnet: Boolean): NearNetworkProvider {
-        return NearJsonRpcNetworkProvider(
-            baseUrl = if (isTestnet) "https://rpc.testnet.near.org/" else "https://rpc.mainnet.near.org/",
+            NearJsonRpcNetworkProvider(baseUrl = "https://rpc.testnet.near.org/"),
         )
     }
 

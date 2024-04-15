@@ -12,14 +12,16 @@ internal class FantomProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOfNotNull(
-            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://ftm.nownodes.io/"),
-            ethereumProviderFactory.getGetBlockProvider { fantom?.jsonRpc },
-            EthereumJsonRpcProvider(baseUrl = "https://rpc.ftm.tools/"),
-            EthereumJsonRpcProvider(baseUrl = "https://rpcapi.fantom.network/"),
-            EthereumJsonRpcProvider(baseUrl = "https://fantom-mainnet.public.blastapi.io/"),
-            EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/", postfixUrl = "fantom"),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> {
+                    ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://ftm.nownodes.io/")
+                }
+                ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { fantom?.jsonRpc }
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
