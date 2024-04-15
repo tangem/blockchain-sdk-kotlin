@@ -15,19 +15,19 @@ internal abstract class OnlyPublicProvidersBuilder<T : NetworkProvider>(
 ) : NetworkProvidersBuilder<T>() {
 
     /** Create public [NetworkProvider] instance by [url] */
-    abstract fun createProvider(url: String): T?
+    abstract fun createProvider(url: String, blockchain: Blockchain): T?
 
-    override fun createProviders(blockchain: Blockchain): List<T> = providerTypes.mapToProviders()
+    override fun createProviders(blockchain: Blockchain): List<T> = providerTypes.mapToProviders(blockchain)
 
     override fun createTestnetProviders(blockchain: Blockchain): List<T> {
         return testnetProviders
             .map(ProviderType::Public)
-            .mapToProviders()
+            .mapToProviders(blockchain)
     }
 
-    private fun List<ProviderType>.mapToProviders(): List<T> {
+    private fun List<ProviderType>.mapToProviders(blockchain: Blockchain): List<T> {
         return mapNotNull {
-            if (it is ProviderType.Public) createProvider(url = it.url) else null
+            if (it is ProviderType.Public) createProvider(url = it.url, blockchain = blockchain) else null
         }
     }
 }
