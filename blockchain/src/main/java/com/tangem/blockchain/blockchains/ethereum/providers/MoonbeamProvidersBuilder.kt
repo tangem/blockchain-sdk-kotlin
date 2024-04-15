@@ -18,7 +18,6 @@ internal class MoonbeamProvidersBuilder(
                 ProviderType.NowNodes -> {
                     ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://moonbeam.nownodes.io/")
                 }
-                ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { moonbeam?.jsonRpc }
                 else -> null
             }
         }
