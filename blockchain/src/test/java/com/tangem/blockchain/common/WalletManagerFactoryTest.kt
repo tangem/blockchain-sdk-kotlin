@@ -197,7 +197,6 @@ internal class WalletManagerFactoryTest {
                     bitcoin = GetBlockAccessToken(),
                     aptos = GetBlockAccessToken(),
                     algorand = GetBlockAccessToken(),
-                    moonbeam = GetBlockAccessToken(),
                     zkSyncEra = GetBlockAccessToken(),
                     polygonZkEvm = GetBlockAccessToken(),
                 ),
