@@ -12,10 +12,15 @@ internal class RSKProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOfNotNull(
-            EthereumJsonRpcProvider(baseUrl = "https://public-node.rsk.co/"),
-            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://rsk.nownodes.io/"),
-            ethereumProviderFactory.getGetBlockProvider { rsk?.jsonRpc },
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> {
+                    ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://rsk.nownodes.io/")
+                }
+                ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { rsk?.jsonRpc }
+                else -> null
+            }
+        }
     }
 }
