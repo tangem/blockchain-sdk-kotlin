@@ -15,16 +15,34 @@ internal class TronProvidersBuilder(
 ) : NetworkProvidersBuilder<TronNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<TronNetworkProvider> {
-        return listOfNotNull(
-            TronNetwork.TronGrid(apiKey = null),
-            config.tronGridApiKey.letNotBlank(TronNetwork::TronGrid),
-            config.nowNodeCredentials?.apiKey.letNotBlank(TronNetwork::NowNodes),
-            config.getBlockCredentials?.tron?.rest.letNotBlank(TronNetwork::GetBlock),
-        )
+        return providerTypes
+            .mapNotNull {
+                when (it) {
+                    is ProviderType.Public -> TronNetwork.PublicTronGrid(baseUrl = it.url)
+                    ProviderType.Tron.TronGrid -> createTronGridProvider()
+                    ProviderType.NowNodes -> createNowNodesProvider()
+                    ProviderType.GetBlock -> createGetBlockProvider()
+                    else -> null
+                }
+            }
             .map(::TronJsonRpcNetworkProvider)
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<TronNetworkProvider> {
-        return listOf(TronNetwork.Nile).map(::TronJsonRpcNetworkProvider)
+        return listOf(
+            TronJsonRpcNetworkProvider(network = TronNetwork.Nile),
+        )
+    }
+
+    private fun createTronGridProvider(): TronNetwork? {
+        return config.tronGridApiKey.letNotBlank(TronNetwork::TronGrid)
+    }
+
+    private fun createNowNodesProvider(): TronNetwork? {
+        return config.nowNodeCredentials?.apiKey.letNotBlank(TronNetwork::NowNodes)
+    }
+
+    private fun createGetBlockProvider(): TronNetwork? {
+        return config.getBlockCredentials?.tron?.rest.letNotBlank(TronNetwork::GetBlock)
     }
 }

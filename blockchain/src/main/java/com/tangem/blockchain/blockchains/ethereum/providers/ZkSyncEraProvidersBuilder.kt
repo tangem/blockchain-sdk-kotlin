@@ -12,14 +12,16 @@ internal class ZkSyncEraProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOf(
-            "https://mainnet.era.zksync.io/",
-            "https://zksync-era.blockpi.network/v1/rpc/public/",
-            "https://1rpc.io/zksync2-era/",
-            "https://zksync.meowrpc.com/",
-            "https://zksync.drpc.org/",
-        )
-            .map(::EthereumJsonRpcProvider)
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> {
+                    ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://zksync.nownodes.io")
+                }
+                ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { zkSyncEra?.jsonRpc }
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {

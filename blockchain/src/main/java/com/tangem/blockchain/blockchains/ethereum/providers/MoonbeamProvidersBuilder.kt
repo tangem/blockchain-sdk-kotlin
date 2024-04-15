@@ -12,17 +12,16 @@ internal class MoonbeamProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOf(
-            "https://rpc.api.moonbeam.network/",
-            "https://1rpc.io/glmr/",
-            "https://moonbeam.public.blastapi.io/",
-            "https://moonbeam-rpc.dwellir.com/",
-            "https://moonbeam-mainnet.gateway.pokt.network/v1/lb/629a2b5650ec8c0039bb30f0/",
-            "https://moonbeam.unitedbloc.com/",
-            "https://moonbeam-rpc.publicnode.com/",
-            "https://rpc.ankr.com/moonbeam/",
-        )
-            .map(::EthereumJsonRpcProvider)
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> {
+                    ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://moonbeam.nownodes.io/")
+                }
+                ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { moonbeam?.jsonRpc }
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {

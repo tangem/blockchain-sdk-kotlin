@@ -17,12 +17,19 @@ internal class CardanoProvidersBuilder(
 ) : NetworkProvidersBuilder<CardanoNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<CardanoNetworkProvider> {
-        return listOfNotNull(
-            config.getBlockCredentials?.cardano?.rosetta.letNotBlank {
-                RosettaNetworkProvider(RosettaNetwork.Getblock(it))
-            },
-            AdaliteNetworkProvider(API_ADALITE),
-            RosettaNetworkProvider(RosettaNetwork.Tangem),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                ProviderType.GetBlock -> createGetBlockNetworkProvider()
+                ProviderType.Cardano.Adalite -> AdaliteNetworkProvider(API_ADALITE)
+                ProviderType.Cardano.Rosetta -> RosettaNetworkProvider(RosettaNetwork.Tangem)
+                else -> null
+            }
+        }
+    }
+
+    private fun createGetBlockNetworkProvider(): CardanoNetworkProvider? {
+        return config.getBlockCredentials?.cardano?.rosetta.letNotBlank {
+            RosettaNetworkProvider(RosettaNetwork.Getblock(it))
+        }
     }
 }
