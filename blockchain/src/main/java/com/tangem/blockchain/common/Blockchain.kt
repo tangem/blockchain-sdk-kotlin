@@ -556,6 +556,9 @@ enum class Blockchain(
     }
 
     fun canHandleTokens(): Boolean {
+        // disable tokens support for Taraxa evm until it's not tested
+        if (this == Taraxa) return false
+
         if (isEvm()) return true
 
         return when (this) {
