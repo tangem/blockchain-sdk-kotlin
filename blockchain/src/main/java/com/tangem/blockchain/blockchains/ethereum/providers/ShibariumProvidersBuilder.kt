@@ -12,11 +12,15 @@ internal class ShibariumProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOfNotNull(
-            // the official api goes first due to the problems we have recently had with https://xdc.nownodes.io/
-            EthereumJsonRpcProvider(baseUrl = "https://www.shibrpc.com/"),
-            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://shib.nownodes.io/"),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> {
+                    ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://shib.nownodes.io/")
+                }
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
