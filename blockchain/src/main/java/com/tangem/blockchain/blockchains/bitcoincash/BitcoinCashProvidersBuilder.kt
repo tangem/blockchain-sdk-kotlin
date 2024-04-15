@@ -15,10 +15,15 @@ internal class BitcoinCashProvidersBuilder(
 ) : NetworkProvidersBuilder<BitcoinNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<BitcoinNetworkProvider> {
-        return listOfNotNull(
-            getBitcoinCashNowNodesNetworkProvider(),
-            *BlockchairNetworkProviderFactory(config).createProviders(blockchain).toTypedArray(),
-        )
+        return providerTypes.flatMap {
+            when (it) {
+                ProviderType.NowNodes -> getBitcoinCashNowNodesNetworkProvider().let(::listOfNotNull)
+                ProviderType.BitcoinLike.Blockchair -> {
+                    BlockchairNetworkProviderFactory(config).createProviders(blockchain)
+                }
+                else -> emptyList()
+            }
+        }
     }
 
     private fun getBitcoinCashNowNodesNetworkProvider(): BitcoinNetworkProvider? {
