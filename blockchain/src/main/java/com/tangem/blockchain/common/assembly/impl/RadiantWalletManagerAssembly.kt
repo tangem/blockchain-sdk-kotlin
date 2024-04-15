@@ -11,7 +11,7 @@ internal object RadiantWalletManagerAssembly : WalletManagerAssembly<RadiantWall
         return with(input.wallet) {
             RadiantWalletManager(
                 wallet = this,
-                networkProviders = RadiantProvidersBuilder(input.providerTypes, blockchain).build(blockchain),
+                networkProviders = RadiantProvidersBuilder(input.providerTypes).build(blockchain),
             )
         }
     }

@@ -9,7 +9,6 @@ import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.letNotBlank
-import okhttp3.Interceptor
 import org.p2p.solanaj.rpc.Cluster
 
 internal class SolanaProvidersBuilder(
@@ -21,7 +20,7 @@ internal class SolanaProvidersBuilder(
         return providerTypes.mapNotNull {
             when (it) {
                 ProviderType.NowNodes -> getNowNodesProvider()
-                ProviderType.Solana.QuickNode -> getQuickNodeProvider()
+                ProviderType.QuickNode -> getQuickNodeProvider()
                 ProviderType.Solana.Official -> mainNet()
                 else -> null
             }
@@ -38,7 +37,9 @@ internal class SolanaProvidersBuilder(
         return config.nowNodeCredentials?.apiKey?.letNotBlank {
             SolanaRpcClient(
                 baseUrl = "https://sol.nownodes.io",
-                httpInterceptors = createInterceptor(NowNodeCredentials.headerApiKey, it),
+                httpInterceptors = listOf(
+                    AddHeaderInterceptor(mapOf(NowNodeCredentials.headerApiKey to it)),
+                ),
             )
         }
     }
@@ -53,10 +54,6 @@ internal class SolanaProvidersBuilder(
                 null
             }
         }
-    }
-
-    private fun createInterceptor(key: String, value: String): List<Interceptor> {
-        return listOf(AddHeaderInterceptor(mapOf(key to value)))
     }
 
     @Suppress("UnusedPrivateMember")
