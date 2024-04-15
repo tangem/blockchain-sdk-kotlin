@@ -8,13 +8,12 @@ import com.tangem.blockchain.common.network.providers.ProviderType
 
 internal class AlephZeroProvidersBuilder(
     override val providerTypes: List<ProviderType>,
-    private val blockchain: Blockchain,
 ) : OnlyPublicProvidersBuilder<PolkadotNetworkProvider>(
     providerTypes = providerTypes,
     testnetProviders = listOf("https://rpc.test.azero.dev"),
 ) {
 
-    override fun createProvider(url: String): PolkadotNetworkProvider {
+    override fun createProvider(url: String, blockchain: Blockchain): PolkadotNetworkProvider {
         return PolkadotCombinedProvider(baseUrl = url, blockchain = blockchain)
     }
 }
