@@ -14,24 +14,33 @@ internal class DogecoinProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<BitcoinNetworkProvider>() {
 
-    private val blockBookNetworkProviderFactory by lazy { BlockBookNetworkProviderFactory(config) }
-    private val blockchairNetworkProviderFactory by lazy { BlockchairNetworkProviderFactory(config) }
-    private val blockcypherNetworkProviderFactory by lazy { BlockcypherNetworkProviderFactory(config) }
+    private val blockBookProviderFactory by lazy { BlockBookNetworkProviderFactory(config) }
+    private val blockchairProviderFactory by lazy { BlockchairNetworkProviderFactory(config) }
+    private val blockcypherProviderFactory by lazy { BlockcypherNetworkProviderFactory(config) }
 
     override fun createProviders(blockchain: Blockchain): List<BitcoinNetworkProvider> {
-        return listOfNotNull(
-            blockBookNetworkProviderFactory.createNowNodesProvider(blockchain),
-            blockBookNetworkProviderFactory.createGetBlockProvider(blockchain),
-            *blockchairNetworkProviderFactory.createProviders(blockchain).toTypedArray(),
-            blockcypherNetworkProviderFactory.create(blockchain),
-        )
+        return providerTypes.flatMap {
+            when (it) {
+                ProviderType.NowNodes -> {
+                    blockBookProviderFactory.createNowNodesProvider(blockchain).let(::listOfNotNull)
+                }
+                ProviderType.GetBlock -> {
+                    blockBookProviderFactory.createGetBlockProvider(blockchain).let(::listOfNotNull)
+                }
+                ProviderType.BitcoinLike.Blockcypher -> {
+                    blockcypherProviderFactory.create(blockchain).let(::listOfNotNull)
+                }
+                ProviderType.BitcoinLike.Blockchair -> blockchairProviderFactory.createProviders(blockchain)
+                else -> emptyList()
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<BitcoinNetworkProvider> {
         return listOfNotNull(
-            blockBookNetworkProviderFactory.createNowNodesProvider(blockchain),
-            *blockchairNetworkProviderFactory.createProviders(blockchain).toTypedArray(),
-            blockcypherNetworkProviderFactory.create(blockchain),
+            blockBookProviderFactory.createNowNodesProvider(blockchain),
+            *blockchairProviderFactory.createProviders(blockchain).toTypedArray(),
+            blockcypherProviderFactory.create(blockchain),
         )
     }
 }

@@ -13,14 +13,14 @@ internal class VeChainProvidersBuilder(
 ) : NetworkProvidersBuilder<VeChainNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<VeChainNetworkProvider> {
-        return listOfNotNull(
-            createNowNodesProvider(),
-            "https://mainnet.vecha.in/",
-            "https://sync-mainnet.vechain.org/",
-            "https://mainnet.veblocks.net/",
-            "https://mainnetc1.vechain.network/",
-            "https://us.node.vechain.energy/",
-        )
+        return providerTypes
+            .mapNotNull {
+                when (it) {
+                    is ProviderType.Public -> it.url
+                    ProviderType.NowNodes -> createNowNodesProvider()
+                    else -> null
+                }
+            }
             .map(::VeChainNetworkProvider)
     }
 
