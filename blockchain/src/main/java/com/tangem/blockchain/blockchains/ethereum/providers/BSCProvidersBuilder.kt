@@ -20,7 +20,7 @@ internal class BSCProvidersBuilder(
                     ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://bsc.nownodes.io/")
                 }
                 ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { bsc?.jsonRpc }
-                ProviderType.EthereumLike.QuickNode -> createQuickNodeProvider()
+                ProviderType.QuickNode -> createQuickNodeProvider()
                 else -> null
             }
         }
