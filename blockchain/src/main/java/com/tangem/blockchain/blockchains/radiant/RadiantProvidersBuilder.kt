@@ -10,10 +10,9 @@ import com.tangem.blockchain.network.electrum.ElectrumNetworkProviderFactory
 
 internal class RadiantProvidersBuilder(
     override val providerTypes: List<ProviderType>,
-    private val blockchain: Blockchain,
 ) : OnlyPublicProvidersBuilder<ElectrumNetworkProvider>(providerTypes) {
 
-    override fun createProvider(url: String): ElectrumNetworkProvider {
+    override fun createProvider(url: String, blockchain: Blockchain): ElectrumNetworkProvider {
         return ElectrumNetworkProviderFactory.create(
             wssUrl = url,
             blockchain = blockchain,
