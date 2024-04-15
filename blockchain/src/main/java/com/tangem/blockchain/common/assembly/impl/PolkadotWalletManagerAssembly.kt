@@ -34,9 +34,9 @@ internal object PolkadotWalletManagerAssembly : WalletManagerAssembly<PolkadotWa
         blockchain: Blockchain,
     ): NetworkProvidersBuilder<PolkadotNetworkProvider> {
         return when (blockchain) {
-            Blockchain.Polkadot, Blockchain.PolkadotTestnet -> PolkadotProvidersBuilder(providerTypes, blockchain)
-            Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> AlephZeroProvidersBuilder(providerTypes, blockchain)
-            Blockchain.Kusama -> KusamaProvidersBuilder(providerTypes, blockchain)
+            Blockchain.Polkadot, Blockchain.PolkadotTestnet -> PolkadotProvidersBuilder(providerTypes)
+            Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> AlephZeroProvidersBuilder(providerTypes)
+            Blockchain.Kusama -> KusamaProvidersBuilder(providerTypes)
             else -> error("$blockchain isn't supported")
         }
     }
