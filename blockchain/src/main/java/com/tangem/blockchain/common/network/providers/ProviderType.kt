@@ -13,18 +13,18 @@ sealed interface ProviderType {
 
     object GetBlock : ProviderType
 
+    object QuickNode : ProviderType
+
     sealed interface BitcoinLike : ProviderType {
         object Blockchair : BitcoinLike
         object Blockcypher : BitcoinLike
     }
 
     sealed interface EthereumLike : ProviderType {
-        object QuickNode : EthereumLike
         object Infura : EthereumLike
     }
 
     sealed interface Solana : ProviderType {
-        object QuickNode : Solana
         object Official : Solana
     }
 
