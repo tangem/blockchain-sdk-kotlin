@@ -17,7 +17,7 @@ internal class TonProvidersBuilder(
     override fun createProviders(blockchain: Blockchain): List<TonNetworkProvider> {
         return providerTypes.mapNotNull {
             when (it) {
-                is ProviderType.Public -> createTonCenterJsonRpcProvider(url = it.url)
+                is ProviderType.Ton.TonCentral -> createTonCenterJsonRpcProvider(isTestnet = false)
                 ProviderType.NowNodes -> createNowNodeJsonRpcProvider()
                 ProviderType.GetBlock -> createGetBlockJsonRpcProvider()
                 else -> null
@@ -27,12 +27,14 @@ internal class TonProvidersBuilder(
 
     override fun createTestnetProviders(blockchain: Blockchain): List<TonNetworkProvider> {
         return listOfNotNull(
-            createTonCenterJsonRpcProvider(url = "https://testnet.toncenter.com/api/v2/"),
+            createTonCenterJsonRpcProvider(isTestnet = true),
         )
     }
 
-    private fun createTonCenterJsonRpcProvider(url: String): TonJsonRpcNetworkProvider? {
+    private fun createTonCenterJsonRpcProvider(isTestnet: Boolean): TonJsonRpcNetworkProvider? {
         return config.tonCenterCredentials?.getApiKey().letNotBlank {
+            val url = if (isTestnet) "https://testnet.toncenter.com/api/v2/" else "https://toncenter.com/api/v2/"
+
             TonJsonRpcNetworkProvider(
                 baseUrl = url,
                 headerInterceptors = listOf(AddHeaderInterceptor(mapOf("x-api-key" to it))),
