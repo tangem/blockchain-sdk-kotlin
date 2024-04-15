@@ -12,11 +12,18 @@ internal class ArbitrumProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOfNotNull(
-            EthereumJsonRpcProvider(baseUrl = "https://arb1.arbitrum.io/rpc/"),
-            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://arbitrum.nownodes.io/"),
-            ethereumProviderFactory.getInfuraProvider(baseUrl = "https://arbitrum-mainnet.infura.io/v3/"),
-        )
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> {
+                    ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://arbitrum.nownodes.io/")
+                }
+                ProviderType.EthereumLike.Infura -> {
+                    ethereumProviderFactory.getInfuraProvider(baseUrl = "https://arbitrum-mainnet.infura.io/v3/")
+                }
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {

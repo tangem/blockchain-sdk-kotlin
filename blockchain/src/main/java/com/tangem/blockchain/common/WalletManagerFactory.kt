@@ -8,10 +8,12 @@ import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStor
 import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.logging.BlockchainSDKLogger
 import com.tangem.blockchain.common.logging.Logger
+import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.common.card.EllipticCurve
 
 class WalletManagerFactory(
     private val config: BlockchainSdkConfig = BlockchainSdkConfig(),
+    private val blockchainProviderTypes: Map<Blockchain, List<ProviderType>>,
     private val accountCreator: AccountCreator,
     blockchainDataStorage: BlockchainDataStorage,
     loggers: List<BlockchainSDKLogger> = emptyList(),
@@ -99,7 +101,7 @@ class WalletManagerFactory(
                 wallet = wallet,
                 config = config,
                 curve = curve,
-                providerTypes = emptyList(),
+                providerTypes = blockchainProviderTypes[blockchain] ?: emptyList(),
             ),
         )
     }
