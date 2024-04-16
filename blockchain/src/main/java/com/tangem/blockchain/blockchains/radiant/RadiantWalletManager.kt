@@ -44,7 +44,7 @@ internal class RadiantWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Log.e(this::class.java.simpleName, error.customMessage, error)
         if (error is BlockchainSdkError) throw error
     }
 
