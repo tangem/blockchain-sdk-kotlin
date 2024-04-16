@@ -20,7 +20,7 @@ import org.kethereum.model.createTransactionWithDefaults
 import java.math.BigDecimal
 import java.math.BigInteger
 
-class OptimismWalletManager(
+class EthereumOptimisticRollupWalletManager(
     wallet: Wallet,
     transactionBuilder: EthereumTransactionBuilder,
     networkProvider: EthereumNetworkProvider,
