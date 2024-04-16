@@ -594,6 +594,11 @@ enum class Blockchain(
         Hedera, HederaTestnet,
         PulseChain, PulseChainTestnet,
         Aurora, AuroraTestnet,
+        Manta, MantaTestnet,
+        Mantle, MantleTestnet,
+        ZkSyncEra, ZkSyncEraTestnet,
+        PolygonZkEVM, PolygonZkEVMTestnet,
+        Taraxa, TaraxaTestnet,
         -> true
 
         else -> false
