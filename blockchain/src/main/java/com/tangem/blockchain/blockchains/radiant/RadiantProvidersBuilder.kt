@@ -17,7 +17,7 @@ internal class RadiantProvidersBuilder(
             wssUrl = url,
             blockchain = blockchain,
             supportedProtocolVersion = RadiantNetworkService.SUPPORTED_SERVER_VERSION,
-            okHttpClient = BlockchainSdkRetrofitBuilder.createOkhttpClientForRadiant(),
+            okHttpClient = BlockchainSdkRetrofitBuilder.build(),
         )
     }
 }
