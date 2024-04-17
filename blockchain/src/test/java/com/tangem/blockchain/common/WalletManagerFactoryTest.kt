@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import android.util.Log
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.binance.BinanceWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
@@ -12,6 +13,7 @@ import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
 import com.tangem.blockchain.blockchains.tezos.TezosWalletManager
 import com.tangem.blockchain.blockchains.xrp.XrpWalletManager
 import com.tangem.blockchain.common.datastorage.BlockchainDataStorage
+import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.EllipticCurve
@@ -21,6 +23,8 @@ import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
 import com.tangem.common.services.InMemoryStorage
 import com.tangem.operations.read.ReadCommand
+import io.mockk.every
+import io.mockk.mockkStatic
 import org.bitcoinj.core.ECKey
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters
 import org.bouncycastle.jcajce.provider.digest.Keccak
@@ -137,6 +141,7 @@ internal class WalletManagerFactoryTest {
         val config = BlockchainSdkConfig(nowNodeCredentials = NowNodeCredentials(apiKey = "4y821489124"))
         val walletManager = WalletManagerFactory(
             config = config,
+            blockchainProviderTypes = BLOCKCHAIN_PROVIDER_TYPES,
             blockchainDataStorage = object : BlockchainDataStorage {
                 override suspend fun getOrNull(key: String): String? = null
                 override suspend fun store(key: String, value: String) = Unit
@@ -156,6 +161,9 @@ internal class WalletManagerFactoryTest {
             EllipticCurve.Ed25519 -> edDsaPublicKey
             else -> error("unsupported curve $curve")
         }
+
+        mockkStatic(Log::class)
+        every { Log.e(any(), any()) } returns 0
 
         return WalletManagerFactory(
             BlockchainSdkConfig(
@@ -189,13 +197,14 @@ internal class WalletManagerFactoryTest {
                     bitcoin = GetBlockAccessToken(),
                     aptos = GetBlockAccessToken(),
                     algorand = GetBlockAccessToken(),
-                    zkSync = GetBlockAccessToken(),
-                    polygonZkevm = GetBlockAccessToken(),
+                    zkSyncEra = GetBlockAccessToken(),
+                    polygonZkEvm = GetBlockAccessToken(),
                     base = GetBlockAccessToken(),
                 ),
                 tronGridApiKey = "",
                 chiaFireAcademyApiKey = "",
             ),
+            blockchainProviderTypes = BLOCKCHAIN_PROVIDER_TYPES,
             blockchainDataStorage = object : BlockchainDataStorage {
                 override suspend fun getOrNull(key: String): String? = null
                 override suspend fun store(key: String, value: String) = Unit
@@ -225,5 +234,19 @@ internal class WalletManagerFactoryTest {
 
         println(publicKeyBytes.toHexString())
         println(signatureBytes.toHexString())
+    }
+
+    private companion object {
+
+        val BLOCKCHAIN_PROVIDER_TYPES = mapOf(
+            Blockchain.BitcoinCash to listOf(ProviderType.NowNodes),
+            Blockchain.Cardano to listOf(ProviderType.Cardano.Adalite),
+            Blockchain.Tezos to listOf(ProviderType.Public(url = "url")),
+            Blockchain.Stellar to listOf(ProviderType.NowNodes),
+            Blockchain.Litecoin to listOf(ProviderType.NowNodes),
+            Blockchain.Ethereum to listOf(ProviderType.NowNodes),
+            Blockchain.Bitcoin to listOf(ProviderType.NowNodes),
+            Blockchain.XRP to listOf(ProviderType.NowNodes),
+        )
     }
 }
