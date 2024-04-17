@@ -201,6 +201,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
         try {
             walletManager = WalletManagerFactory(
                 config = BlockchainSdkConfig(),
+                blockchainProviderTypes = emptyMap(),
                 accountCreator = DummyAccountCreator,
                 blockchainDataStorage = DummyBlockchainDataStorage,
             ).makeWalletManagerForApp(
@@ -234,7 +235,9 @@ class BlockchainDemoActivity : AppCompatActivity() {
             walletManager.wallet.amounts[AmountType.Coin]
         }
         val stringValue = tokenAmount?.value?.stripZeroPlainString() ?: "Error"
+        val additionalInfo = walletManager.wallet.additionalInfo
         containerRecipientAddressFee.tvBalance.text = stringValue
+        containerRecipientAddressFee.addInfo.text = additionalInfo.toString()
         containerRecipientAddressFee.tilEtSumToSend.setText(stringValue)
         containerRecipientAddressFee.btnLoadFee.isEnabled = true
     }

@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.network.electrum.ElectrumUnspentUTXORecord
 import com.tangem.common.extensions.hexToBytes
@@ -29,7 +30,7 @@ class RadiantTransactionTest {
         Truth.assertThat("166w5AGDyvMkJqfDAtLbTJeoQh6FqYCfLQ").isEqualTo(address)
 
         val txBuilder = RadiantTransactionBuilder(
-            publicKey = publicKey.data(),
+            publicKey = Wallet.PublicKey(seedKey = publicKey.data(), derivationType = null),
             decimals = blockchain.decimals(),
         )
 
@@ -107,7 +108,7 @@ class RadiantTransactionTest {
 
         val signatures = hashesForSign.mapIndexed { index, digest ->
             val signature = expectedSignatures[index].hexToBytes()
-            check(!publicKey.verify(signature, digest)) {
+            check(publicKey.verify(signature, digest)) {
                 "Failed verifyAsDER for Radiant blockchain testSignRawTransaction method"
             }
             signature
