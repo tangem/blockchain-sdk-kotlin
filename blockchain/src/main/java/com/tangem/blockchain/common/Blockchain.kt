@@ -395,7 +395,7 @@ enum class Blockchain(
             ZkSyncEra, ZkSyncEraTestnet -> ZkSyncEraTestnet
             Moonbeam, MoonbeamTestnet -> MoonbeamTestnet
             Manta, MantaTestnet -> MantaTestnet
-            PolygonZkEVM, PolygonZkEVMTestnet -> PolygonTestnet
+            PolygonZkEVM, PolygonZkEVMTestnet -> PolygonZkEVMTestnet
             Base, BaseTestnet -> BaseTestnet
             Moonriver, MoonriverTestnet -> MoonriverTestnet
             Mantle, MantleTestnet -> MantleTestnet
@@ -563,6 +563,9 @@ enum class Blockchain(
     }
 
     fun canHandleTokens(): Boolean {
+        // disable tokens support for Taraxa evm until it's not tested
+        if (this == Taraxa) return false
+
         if (isEvm()) return true
 
         return when (this) {
@@ -598,6 +601,11 @@ enum class Blockchain(
         Hedera, HederaTestnet,
         PulseChain, PulseChainTestnet,
         Aurora, AuroraTestnet,
+        Manta, MantaTestnet,
+        Mantle, MantleTestnet,
+        ZkSyncEra, ZkSyncEraTestnet,
+        PolygonZkEVM, PolygonZkEVMTestnet,
+        Taraxa, TaraxaTestnet,
         -> true
 
         else -> false
