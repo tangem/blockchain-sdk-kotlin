@@ -1,7 +1,6 @@
 package com.tangem.blockchain.common.assembly.impl
 
 import com.tangem.blockchain.blockchains.polkadot.PolkadotWalletManager
-import com.tangem.blockchain.blockchains.polkadot.extensions.getPolkadotExtrinsicCheckHost
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkProvider
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkService
 import com.tangem.blockchain.blockchains.polkadot.network.accounthealthcheck.PolkadotAccountHealthCheckNetworkService
@@ -40,6 +39,13 @@ internal object PolkadotWalletManagerAssembly : WalletManagerAssembly<PolkadotWa
             Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> AlephZeroProvidersBuilder(providerTypes)
             Blockchain.Kusama -> KusamaProvidersBuilder(providerTypes)
             else -> error("$blockchain isn't supported")
+        }
+    }
+
+    private fun Blockchain.getPolkadotExtrinsicCheckHost(): String? {
+        return when (this) {
+            Blockchain.Polkadot -> "https://polkadot.api.subscan.io/"
+            else -> null
         }
     }
 }
