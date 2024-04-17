@@ -123,6 +123,7 @@ class EstimationFeeAddressFactory(
             Blockchain.VeChain, Blockchain.VeChainTestnet,
             Blockchain.Aptos, Blockchain.AptosTestnet,
             Blockchain.Algorand, Blockchain.AlgorandTestnet,
+            Blockchain.Koinos, Blockchain.KoinosTestnet,
             -> {
                 generateAddress(blockchain)
             }
