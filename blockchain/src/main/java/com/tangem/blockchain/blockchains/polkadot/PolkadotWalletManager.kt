@@ -28,7 +28,7 @@ import java.util.EnumSet
 class PolkadotWalletManager(
     wallet: Wallet,
     private val networkProvider: PolkadotNetworkProvider,
-    private val extrinsicCheckNetworkProvider: PolkadotAccountHealthCheckNetworkProvider,
+    private val extrinsicCheckNetworkProvider: PolkadotAccountHealthCheckNetworkProvider?,
 ) : WalletManager(wallet), TransactionSender, ExistentialDepositProvider, AccountCheckProvider {
 
     private lateinit var currentContext: ExtrinsicContext
@@ -121,6 +121,9 @@ class PolkadotWalletManager(
     }
 
     override suspend fun getExtrinsicList(afterExtrinsicId: Long?): ExtrinsicListResponse {
+        if (extrinsicCheckNetworkProvider == null) {
+            error("extrinsicCheckNetworkProvider is not supported")
+        }
         return extrinsicCheckNetworkProvider.getExtrinsicsList(
             address = wallet.address,
             afterExtrinsicId = afterExtrinsicId,
@@ -128,11 +131,17 @@ class PolkadotWalletManager(
     }
 
     override suspend fun getExtrinsicDetail(hash: String): ExtrinsicDetailResponse {
+        if (extrinsicCheckNetworkProvider == null) {
+            error("extrinsicCheckNetworkProvider is not supported")
+        }
         return extrinsicCheckNetworkProvider.getExtrinsicDetail(hash = hash)
             .successOr { throw it.error as BlockchainSdkError }
     }
 
     override suspend fun getAccountInfo(): AccountResponse {
+        if (extrinsicCheckNetworkProvider == null) {
+            error("extrinsicCheckNetworkProvider is not supported")
+        }
         return extrinsicCheckNetworkProvider.getAccountInfo(key = wallet.address)
             .successOr { throw it.error as BlockchainSdkError }
     }

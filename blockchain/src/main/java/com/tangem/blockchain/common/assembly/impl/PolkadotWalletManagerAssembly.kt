@@ -16,15 +16,16 @@ import com.tangem.blockchain.common.network.providers.ProviderType
 internal object PolkadotWalletManagerAssembly : WalletManagerAssembly<PolkadotWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): PolkadotWalletManager {
+        val healthCheckService = input.wallet.blockchain.getPolkadotExtrinsicCheckHost()?.let {
+            PolkadotAccountHealthCheckNetworkService(it)
+        }
         return with(input.wallet) {
             PolkadotWalletManager(
                 wallet = this,
                 networkProvider = PolkadotNetworkService(
                     providers = getNetworkProvidersBuilder(input.providerTypes, blockchain).build(blockchain),
                 ),
-                extrinsicCheckNetworkProvider = PolkadotAccountHealthCheckNetworkService(
-                    baseUrl = "https://polkadot.api.subscan.io/",
-                ),
+                extrinsicCheckNetworkProvider = healthCheckService,
             )
         }
     }
@@ -38,6 +39,13 @@ internal object PolkadotWalletManagerAssembly : WalletManagerAssembly<PolkadotWa
             Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> AlephZeroProvidersBuilder(providerTypes)
             Blockchain.Kusama -> KusamaProvidersBuilder(providerTypes)
             else -> error("$blockchain isn't supported")
+        }
+    }
+
+    private fun Blockchain.getPolkadotExtrinsicCheckHost(): String? {
+        return when (this) {
+            Blockchain.Polkadot -> "https://polkadot.api.subscan.io/"
+            else -> null
         }
     }
 }
