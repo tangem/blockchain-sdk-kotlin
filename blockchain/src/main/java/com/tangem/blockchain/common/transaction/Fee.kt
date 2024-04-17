@@ -14,6 +14,12 @@ sealed class Fee {
         val gasPrice: BigInteger,
     ) : Fee()
 
+    data class Bitcoin(
+        override val amount: Amount,
+        val satoshiPerByte: BigDecimal,
+        val txSize: BigDecimal,
+    ) : Fee()
+
     data class VeChain(
         override val amount: Amount,
         val gasPriceCoef: Int,

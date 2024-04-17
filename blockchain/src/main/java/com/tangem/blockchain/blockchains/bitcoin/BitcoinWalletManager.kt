@@ -17,19 +17,17 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 
-open class BitcoinWalletManager(
+internal open class BitcoinWalletManager(
     wallet: Wallet,
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     protected val transactionBuilder: BitcoinTransactionBuilder,
     private val networkProvider: BitcoinNetworkProvider,
+    private val feesCalculator: BitcoinFeesCalculator,
 ) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider),
     TransactionSender,
     SignatureCountValidator {
 
     protected val blockchain = wallet.blockchain
-
-    open val minimalFeePerKb = DEFAULT_MINIMAL_FEE_PER_KB.toBigDecimal()
-    open val minimalFee = 0.000001.toBigDecimal()
 
     override val currentHost: String
         get() = networkProvider.baseUrl
@@ -156,14 +154,9 @@ open class BitcoinWalletManager(
                     return when (sizeResult) {
                         is Result.Failure -> sizeResult
                         is Result.Success -> {
-                            val transactionSize = sizeResult.data.toBigDecimal()
-                            val minFee = feeResult.data.minimalPerKb.calculateFee(transactionSize)
-                            val normalFee = feeResult.data.normalPerKb.calculateFee(transactionSize)
-                            val priorityFee = feeResult.data.priorityPerKb.calculateFee(transactionSize)
-                            val fees = TransactionFee.Choosable(
-                                minimum = Fee.Common(Amount(minFee, blockchain)),
-                                normal = Fee.Common(Amount(normalFee, blockchain)),
-                                priority = Fee.Common(Amount(priorityFee, blockchain)),
+                            val fees = feesCalculator.calculateFees(
+                                sizeResult.data.toBigDecimal(),
+                                feeResult.data,
                             )
                             Result.Success(fees)
                         }
@@ -188,19 +181,7 @@ open class BitcoinWalletManager(
 
     protected open suspend fun getBitcoinFeePerKb(): Result<BitcoinFee> = networkProvider.getFee()
 
-    protected open fun BigDecimal.calculateFee(transactionSize: BigDecimal): BigDecimal {
-        val feePerKb = maxOf(a = this, b = minimalFeePerKb)
-        val calculatedFee = feePerKb
-            .divide(BigDecimal(BYTES_IN_KB))
-            .multiply(transactionSize)
-            .setScale(blockchain.decimals(), BigDecimal.ROUND_DOWN)
-
-        return maxOf(calculatedFee, minimalFee)
-    }
-
     companion object {
         const val DEFAULT_MINIMAL_FEE_PER_KB = 0.00001024
-
-        private const val BYTES_IN_KB = 1024
     }
 }
