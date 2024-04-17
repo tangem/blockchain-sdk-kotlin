@@ -11,6 +11,7 @@ import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
+import com.tangem.blockchain.blockchains.koinos.KoinosAddressService
 import com.tangem.blockchain.blockchains.nexa.NexaAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
@@ -146,11 +147,13 @@ enum class Blockchain(
     FlareTestnet("flare/test", "FLR", "Flare Testnet"),
     Taraxa("taraxa", "TARA", "Taraxa"),
     TaraxaTestnet("taraxa/test", "TARA", "Taraxa Testnet"),
+    Koinos("koinos", "KOIN", "Koinos"),
+    KoinosTestnet("koinos/test", "tKOIN", "Koinos Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
 
-    @Suppress("MagicNumber")
+    @Suppress("MagicNumber", "LongMethod")
     fun decimals(): Int = when (this) {
         Unknown -> 0
 
@@ -180,6 +183,7 @@ enum class Blockchain(
         Aptos, AptosTestnet,
         Hedera, HederaTestnet,
         Radiant,
+        Koinos, KoinosTestnet,
         -> 8
 
         Solana, SolanaTestnet,
@@ -246,7 +250,7 @@ enum class Blockchain(
 
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
-    @Suppress("CyclomaticComplexMethod")
+    @Suppress("CyclomaticComplexMethod", "LongMethod")
     private fun getAddressService(): AddressService {
         return when (this) {
             Bitcoin, BitcoinTestnet,
@@ -317,6 +321,7 @@ enum class Blockchain(
             Chia, ChiaTestnet -> ChiaAddressService(this)
             Hedera, HederaTestnet -> HederaAddressService(this.isTestnet())
             Nexa, NexaTestnet -> NexaAddressService(this.isTestnet())
+            Koinos, KoinosTestnet -> KoinosAddressService()
             Unknown -> error("unsupported blockchain")
         }
     }
@@ -396,6 +401,7 @@ enum class Blockchain(
             Mantle, MantleTestnet -> MantleTestnet
             Flare, FlareTestnet -> FlareTestnet
             Taraxa, TaraxaTestnet -> TaraxaTestnet
+            Koinos, KoinosTestnet -> KoinosTestnet
             else -> null
         }
     }
@@ -460,6 +466,7 @@ enum class Blockchain(
             Mantle, MantleTestnet,
             Flare, FlareTestnet,
             Taraxa, TaraxaTestnet,
+            Koinos, KoinosTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
