@@ -4,12 +4,12 @@ import com.tangem.blockchain.blockchains.vechain.VeChainBlockInfo
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.network.createRetrofitInstance
 import org.komputing.khex.extensions.toHexString
 
-internal class VeChainNetworkProvider(
-    override val baseUrl: String,
-    private val api: VeChainApi,
-) : NetworkProvider {
+internal class VeChainNetworkProvider(override val baseUrl: String) : NetworkProvider {
+
+    private val api by lazy { createRetrofitInstance(baseUrl).create(VeChainApi::class.java) }
 
     suspend fun getAccountInfo(address: String): Result<VeChainGetAccountResponse> {
         return try {
