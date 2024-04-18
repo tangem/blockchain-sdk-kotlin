@@ -599,6 +599,7 @@ enum class Blockchain(
         ZkSyncEra, ZkSyncEraTestnet,
         PolygonZkEVM, PolygonZkEVMTestnet,
         Taraxa, TaraxaTestnet,
+        Base, BaseTestnet,
         -> true
 
         else -> false
