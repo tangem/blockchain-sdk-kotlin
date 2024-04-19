@@ -90,7 +90,7 @@ dependencies {
     implementation files('libs/solanaj-0.0.10.jar')
     implementation files('libs/polkaj-root-0.1.5.jar')
     implementation files('libs/hedera-sdk-java-2.29.0.jar')
-    implementation "com.tangem:blst-android:0.0.2@aar"
+    implementation "com.tangem:blstlib:master-6@aar"
     implementation "com.tangem:wallet-core:4.0.21-tangem2@aar"
     implementation("com.tangem:wallet-core-proto:4.0.21-tangem2") {
         exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
