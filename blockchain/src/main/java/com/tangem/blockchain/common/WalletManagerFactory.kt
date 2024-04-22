@@ -142,7 +142,6 @@ class WalletManagerFactory(
             Blockchain.PulseChain, Blockchain.PulseChainTestnet,
             Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet,
             Blockchain.Moonbeam, Blockchain.MoonbeamTestnet,
-
             Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet,
             Blockchain.Moonriver, Blockchain.MoonriverTestnet,
             Blockchain.Mantle, Blockchain.MantleTestnet,
