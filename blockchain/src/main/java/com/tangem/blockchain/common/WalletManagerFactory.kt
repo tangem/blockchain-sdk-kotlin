@@ -142,9 +142,8 @@ class WalletManagerFactory(
             Blockchain.PulseChain, Blockchain.PulseChainTestnet,
             Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet,
             Blockchain.Moonbeam, Blockchain.MoonbeamTestnet,
-            Blockchain.Manta, Blockchain.MantaTestnet,
+
             Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet,
-            Blockchain.Base, Blockchain.BaseTestnet,
             Blockchain.Moonriver, Blockchain.MoonriverTestnet,
             Blockchain.Mantle, Blockchain.MantleTestnet,
             Blockchain.Flare, Blockchain.FlareTestnet,
@@ -155,6 +154,7 @@ class WalletManagerFactory(
             Blockchain.XDC, Blockchain.XDCTestnet -> XDCWalletManagerAssembly
             Blockchain.Optimism, Blockchain.OptimismTestnet,
             Blockchain.Base, Blockchain.BaseTestnet,
+            Blockchain.Manta, Blockchain.MantaTestnet
             -> EthereumOptimisticRollupWalletManagerAssembly
             Blockchain.Telos, Blockchain.TelosTestnet -> TelosWalletManagerAssembly
             // endregion
