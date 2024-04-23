@@ -1,7 +1,7 @@
 package com.tangem.blockchain.common.assembly.impl
 
-import com.tangem.blockchain.blockchains.bitcoin.getBitcoinNetworkProviders
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
+import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashProvidersBuilder
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashFeesCalculator
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashWalletManager
@@ -20,7 +20,8 @@ internal object BitcoinCashWalletManagerAssembly : WalletManagerAssembly<Bitcoin
                     blockchain = blockchain,
                 ),
                 networkProvider = BitcoinNetworkService(
-                    providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config),
+                    providers = BitcoinCashProvidersBuilder(providerTypes = input.providerTypes, config = input.config)
+                        .build(blockchain),
                 ),
                 transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
                 feesCalculator = BitcoinCashFeesCalculator(blockchain),
