@@ -7,11 +7,9 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
-import com.tangem.blockchain.network.electrum.ElectrumAccount
 import com.tangem.blockchain.network.electrum.ElectrumNetworkProvider
-import com.tangem.blockchain.network.electrum.ElectrumUnspentUTXORecord
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import java.math.BigDecimal
 
 internal class RadiantNetworkService(providers: List<ElectrumNetworkProvider>) : NetworkProvider {
 
@@ -20,36 +18,36 @@ internal class RadiantNetworkService(providers: List<ElectrumNetworkProvider>) :
 
     private val multiProvider = MultiNetworkProvider(providers)
 
-    private val defaultFeePer1000Bytes = "0.00001".toBigDecimal()
+    /**
+     * Relying on answers from blockchain developers and costs from the official application (Electron-Radiant).
+     * 10000 satoshi per byte or 0.1 RXD per KB.
+     */
+    private val recommendedFeePer1000Bytes = "0.1".toBigDecimal()
     private val normalFeeMultiplier = "1.5".toBigDecimal()
     private val priorityFeeMultiplier = 2.toBigDecimal()
 
     suspend fun getInfo(scriptHash: String): Result<RadiantAccountInfo> {
         return coroutineScope {
-            val balance = async { multiProvider.performRequest(ElectrumNetworkProvider::getAccountBalance, scriptHash) }
-            val unspents = async { multiProvider.performRequest(ElectrumNetworkProvider::getUnspentUTXOs, scriptHash) }
-            constructAccountInfo(balance.await(), unspents.await())
+            val balance = multiProvider.performRequest(ElectrumNetworkProvider::getAccountBalance, scriptHash)
+                .successOr { return@coroutineScope it }
+            val unspents = multiProvider.performRequest(ElectrumNetworkProvider::getUnspentUTXOs, scriptHash)
+                .successOr { return@coroutineScope it }
+
+            Result.Success(RadiantAccountInfo(balance = balance.confirmedAmount, unspentOutputs = unspents))
         }
-    }
-
-    private fun constructAccountInfo(
-        accountResult: Result<ElectrumAccount>,
-        unspentsResult: Result<List<ElectrumUnspentUTXORecord>>,
-    ): Result<RadiantAccountInfo> {
-        val account = accountResult.successOr { return it }
-        val unspents = unspentsResult.successOr { return it }
-
-        return Result.Success(RadiantAccountInfo(balance = account.confirmedAmount, unspentOutputs = unspents))
     }
 
     suspend fun getEstimatedFee(numberOfBlocks: Int): Result<BitcoinFee> {
         return multiProvider.performRequest(ElectrumNetworkProvider::getEstimateFee, numberOfBlocks)
             .map { feeResponse ->
-                val feePer1000Bytes = feeResponse.feeInCoinsPer1000Bytes ?: defaultFeePer1000Bytes
+                val sourceFee = feeResponse.feeInCoinsPer1000Bytes ?: BigDecimal.ZERO
+
+                // We will only use the server response if it is greater than the recommended one
+                val targetFee = if (sourceFee > recommendedFeePer1000Bytes) sourceFee else recommendedFeePer1000Bytes
                 BitcoinFee(
-                    minimalPerKb = feePer1000Bytes,
-                    normalPerKb = feePer1000Bytes.multiply(normalFeeMultiplier),
-                    priorityPerKb = feePer1000Bytes.multiply(priorityFeeMultiplier),
+                    minimalPerKb = targetFee,
+                    normalPerKb = targetFee.multiply(normalFeeMultiplier),
+                    priorityPerKb = targetFee.multiply(priorityFeeMultiplier),
                 )
             }
     }

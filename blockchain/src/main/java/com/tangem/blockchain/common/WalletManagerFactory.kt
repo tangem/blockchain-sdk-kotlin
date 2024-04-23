@@ -8,10 +8,12 @@ import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStor
 import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.logging.BlockchainSDKLogger
 import com.tangem.blockchain.common.logging.Logger
+import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.common.card.EllipticCurve
 
 class WalletManagerFactory(
     private val config: BlockchainSdkConfig = BlockchainSdkConfig(),
+    private val blockchainProviderTypes: Map<Blockchain, List<ProviderType>>,
     private val accountCreator: AccountCreator,
     blockchainDataStorage: BlockchainDataStorage,
     loggers: List<BlockchainSDKLogger> = emptyList(),
@@ -99,6 +101,7 @@ class WalletManagerFactory(
                 wallet = wallet,
                 config = config,
                 curve = curve,
+                providerTypes = blockchainProviderTypes[blockchain] ?: emptyList(),
             ),
         )
     }
@@ -107,9 +110,7 @@ class WalletManagerFactory(
     private fun getAssembly(blockchain: Blockchain): WalletManagerAssembly<WalletManager> {
         return when (blockchain) {
             // region BTC-like blockchains
-            Blockchain.Bitcoin,
-            Blockchain.BitcoinTestnet,
-            -> BitcoinWalletManagerAssembly
+            Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> BitcoinWalletManagerAssembly
             Blockchain.Dash -> DashWalletManagerAssembly
             Blockchain.Dogecoin -> DogecoinWalletManagerAssembly
             Blockchain.Litecoin -> LitecoinWalletManagerAssembly
@@ -121,23 +122,16 @@ class WalletManagerFactory(
             // region ETH-like blockchains
             Blockchain.Ethereum, Blockchain.EthereumClassic -> EthereumWalletManagerAssembly
 
-            Blockchain.Arbitrum,
-            Blockchain.ArbitrumTestnet,
-            Blockchain.Avalanche,
-            Blockchain.AvalancheTestnet,
-            Blockchain.EthereumTestnet,
-            Blockchain.EthereumClassicTestnet,
-            Blockchain.Fantom,
-            Blockchain.FantomTestnet,
+            Blockchain.Arbitrum, Blockchain.ArbitrumTestnet,
+            Blockchain.Avalanche, Blockchain.AvalancheTestnet,
+            Blockchain.EthereumTestnet, Blockchain.EthereumClassicTestnet,
+            Blockchain.Fantom, Blockchain.FantomTestnet,
             Blockchain.RSK,
-            Blockchain.BSC,
-            Blockchain.BSCTestnet,
-            Blockchain.Polygon,
-            Blockchain.PolygonTestnet,
+            Blockchain.BSC, Blockchain.BSCTestnet,
+            Blockchain.Polygon, Blockchain.PolygonTestnet,
             Blockchain.Gnosis,
             Blockchain.Dischain,
-            Blockchain.EthereumPow,
-            Blockchain.EthereumPowTestnet,
+            Blockchain.EthereumPow, Blockchain.EthereumPowTestnet,
             Blockchain.Kava, Blockchain.KavaTestnet,
             Blockchain.Cronos,
             Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet,
@@ -150,6 +144,7 @@ class WalletManagerFactory(
             Blockchain.Moonbeam, Blockchain.MoonbeamTestnet,
             Blockchain.Manta, Blockchain.MantaTestnet,
             Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet,
+            Blockchain.Base, Blockchain.BaseTestnet,
             Blockchain.Moonriver, Blockchain.MoonriverTestnet,
             Blockchain.Mantle, Blockchain.MantleTestnet,
             Blockchain.Flare, Blockchain.FlareTestnet,
@@ -166,7 +161,8 @@ class WalletManagerFactory(
 
             Blockchain.Solana, Blockchain.SolanaTestnet -> SolanaWalletManagerAssembly
 
-            Blockchain.Polkadot, Blockchain.PolkadotTestnet, Blockchain.Kusama,
+            Blockchain.Polkadot, Blockchain.PolkadotTestnet,
+            Blockchain.Kusama,
             Blockchain.AlephZero, Blockchain.AlephZeroTestnet,
             -> PolkadotWalletManagerAssembly
 
@@ -189,6 +185,7 @@ class WalletManagerFactory(
             Blockchain.Hedera, Blockchain.HederaTestnet -> HederaWalletManagerAssembly(dataStorage, accountCreator)
             Blockchain.Nexa, Blockchain.NexaTestnet -> NexaWalletManagerAssembly
             Blockchain.Radiant -> RadiantWalletManagerAssembly
+            Blockchain.Koinos, Blockchain.KoinosTestnet -> KoinosWalletManagerAssembly
             Blockchain.Unknown,
             -> error("Unsupported blockchain")
         }
