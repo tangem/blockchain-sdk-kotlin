@@ -2,10 +2,10 @@ package com.tangem.blockchain.blockchains.radiant
 
 import com.tangem.blockchain.blockchains.radiant.models.RadiantAmountUnspentTransaction
 import com.tangem.blockchain.blockchains.radiant.models.RadiantUnspentTransaction
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.bytes4LittleEndian
 import com.tangem.blockchain.extensions.bytes8LittleEndian
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.electrum.ElectrumUnspentUTXORecord
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toCompressedPublicKey
@@ -13,11 +13,12 @@ import org.bitcoinj.core.Sha256Hash
 import java.io.ByteArrayOutputStream
 
 internal class RadiantTransactionBuilder(
-    publicKey: ByteArray,
+    private val publicKey: Wallet.PublicKey,
     private val decimals: Int,
 ) {
 
-    private val walletPublicKey = publicKey.toCompressedPublicKey()
+    private val dummySigner by lazy { DummySigner() }
+    private val walletPublicKey = publicKey.blockchainKey.toCompressedPublicKey()
     private var utxo: List<ElectrumUnspentUTXORecord> = emptyList()
 
     fun setUnspentOutputs(unspents: List<ElectrumUnspentUTXORecord>) {
@@ -61,6 +62,14 @@ internal class RadiantTransactionBuilder(
             targetAddress = transaction.destinationAddress,
             changeAddress = transaction.sourceAddress,
         )
+    }
+
+    suspend fun estimateTransactionSize(transaction: TransactionData): Int {
+        val hashesForSign = buildForSign(transaction = transaction)
+        val signatures =
+            dummySigner.sign(hashesForSign, publicKey).successOr { throw BlockchainSdkError.FailedToLoadFee }
+        val rawTx = buildForSend(transaction = transaction, signatures = signatures)
+        return rawTx.size
     }
 
     @Suppress("MagicNumber")
