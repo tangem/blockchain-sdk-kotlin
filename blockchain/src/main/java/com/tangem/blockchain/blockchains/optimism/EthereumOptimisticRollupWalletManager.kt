@@ -15,7 +15,6 @@ import com.tangem.common.extensions.hexToBytes
 import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.extensions.transactions.encode
 import org.kethereum.model.Address
-import org.kethereum.model.SignatureData
 import org.kethereum.model.createTransactionWithDefaults
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -116,7 +115,6 @@ class EthereumOptimisticRollupWalletManager(
         lastLayer1FeeAmount = lastLayer1Fee
 
         // https://community.optimism.io/docs/developers/build/transaction-fees/#displaying-fees-to-users
-
         val lastLayer1FeeValue = requireNotNull(lastLayer1Fee.value) { "Fee must not bee null" }
         val updatedFees = layer2fee.copy(
             minimum = Fee.Ethereum(
