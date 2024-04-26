@@ -15,9 +15,9 @@ internal object TezosWalletManagerAssembly : WalletManagerAssembly<TezosWalletMa
     override fun make(input: WalletManagerAssemblyInput): TezosWalletManager {
         with(input.wallet) {
             val providers = listOf(
-                TezosJsonRpcNetworkProvider(API_TEZOS_BLOCKSCALE),
                 TezosJsonRpcNetworkProvider(API_TEZOS_SMARTPY),
                 TezosJsonRpcNetworkProvider(API_TEZOS_ECAD),
+                TezosJsonRpcNetworkProvider(API_TEZOS_BLOCKSCALE),
             )
 
             return TezosWalletManager(
