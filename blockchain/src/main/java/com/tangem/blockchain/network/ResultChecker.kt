@@ -12,12 +12,12 @@ import java.io.IOException
 
 object ResultChecker {
 
-    fun isNetworkError(result: Result<*>): Boolean {
+    fun needToSwitchProvider(result: Result<*>): Boolean {
         return when (result) {
-            is Result.Success -> isError(result)
+            is Result.Success -> needToSwitchProviderInternal(result)
             is Result.Failure ->
                 when (result.error) {
-                    is BlockchainSdkError.WrappedThrowable -> result.error.isNetworkError()
+                    is BlockchainSdkError.WrappedThrowable -> result.error.needToSwitchProvider()
                     is BlockchainSdkError.Solana.Api -> true
                     is BlockchainSdkError.Polkadot.Api -> true
                     is BlockchainSdkError.Ton.Api -> true
@@ -28,12 +28,12 @@ object ResultChecker {
         }
     }
 
-    fun isNetworkError(result: SimpleResult): Boolean {
+    fun needToSwitchProvider(result: SimpleResult): Boolean {
         return when (result) {
             is SimpleResult.Success -> false
             is SimpleResult.Failure ->
                 when (result.error) {
-                    is BlockchainSdkError.WrappedThrowable -> result.error.isNetworkError()
+                    is BlockchainSdkError.WrappedThrowable -> result.error.needToSwitchProvider()
                     is BlockchainSdkError.Solana.Api -> true
                     is BlockchainSdkError.Polkadot.Api -> true
                     is BlockchainSdkError.Ton.Api -> true
@@ -62,12 +62,12 @@ object ResultChecker {
         return (result.data as? EthereumResponse)?.error?.message
     }
 
-    private fun isError(result: Result.Success<*>): Boolean {
+    private fun needToSwitchProviderInternal(result: Result.Success<*>): Boolean {
         return result.data is EthereumResponse && result.data.error != null
             && result.data.error.code != -32000 // insufficient funds
     }
 
-    private fun BlockchainSdkError.WrappedThrowable.isNetworkError(): Boolean {
+    private fun BlockchainSdkError.WrappedThrowable.needToSwitchProvider(): Boolean {
         return cause is IOException || cause is HttpException || cause is JsonDataException || stellarNetworkError(
             cause,
         )
