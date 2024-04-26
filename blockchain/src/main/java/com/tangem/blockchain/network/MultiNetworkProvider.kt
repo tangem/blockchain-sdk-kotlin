@@ -41,7 +41,7 @@ class MultiNetworkProvider<P : NetworkProvider>(
         repeat(providers.size) {
             if (this.lastProvider == currentProvider) currentProvider = providerIterator.next()
             val result = this.performWith(currentProvider)
-            if (!isResultNetworkError(result)) {
+            if (!needToSwitchProvider(result)) {
                 return result
             } else {
                 val message = "Switchable publisher caught error: ${getErrorMessage(result)}."
@@ -123,10 +123,10 @@ class MultiNetworkProvider<P : NetworkProvider>(
         }
     }
 
-    private fun <T> isResultNetworkError(result: T): Boolean {
+    private fun <T> needToSwitchProvider(result: T): Boolean {
         return when (result) {
-            is Result<*> -> ResultChecker.isNetworkError(result = result)
-            is SimpleResult -> ResultChecker.isNetworkError(result = result)
+            is Result<*> -> ResultChecker.needToSwitchProvider(result = result)
+            is SimpleResult -> ResultChecker.needToSwitchProvider(result = result)
             else -> error("Invalid result type")
         }
     }
