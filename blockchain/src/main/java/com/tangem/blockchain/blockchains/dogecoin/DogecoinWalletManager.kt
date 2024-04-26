@@ -20,19 +20,21 @@ internal class DogecoinWalletManager(
 ) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider, feesCalculator),
     TransactionSender {
 
+    override val dustValue: BigDecimal = MINIMAL_FEE_PER_KB
+
     override suspend fun getBitcoinFeePerKb(): Result<BitcoinFee> {
         return Result.Success(
             BitcoinFee(
-                minimalPerKb = BigDecimal(MINIMAL_FEE_PER_KB),
-                normalPerKb = BigDecimal(NORMAL_FEE_PER_KB),
-                priorityPerKb = BigDecimal(PRIORITY_FEE_PER_KB),
+                minimalPerKb = MINIMAL_FEE_PER_KB,
+                normalPerKb = NORMAL_FEE_PER_KB,
+                priorityPerKb = PRIORITY_FEE_PER_KB,
             ),
         )
     }
 
     private companion object {
-        const val MINIMAL_FEE_PER_KB = 0.01
-        const val NORMAL_FEE_PER_KB = MINIMAL_FEE_PER_KB * 10
-        const val PRIORITY_FEE_PER_KB = MINIMAL_FEE_PER_KB * 100
+        val MINIMAL_FEE_PER_KB = BigDecimal("0.01")
+        val NORMAL_FEE_PER_KB = MINIMAL_FEE_PER_KB * BigDecimal("10")
+        val PRIORITY_FEE_PER_KB = MINIMAL_FEE_PER_KB * BigDecimal("100")
     }
 }
