@@ -29,6 +29,8 @@ internal open class BitcoinWalletManager(
 
     protected val blockchain = wallet.blockchain
 
+    override val dustValue: BigDecimal = feesCalculator.minimalFeePerKb
+
     override val currentHost: String
         get() = networkProvider.baseUrl
 
