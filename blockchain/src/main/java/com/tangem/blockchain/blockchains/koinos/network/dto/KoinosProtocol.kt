@@ -143,7 +143,7 @@ internal object KoinosProtocol {
         @Json(name = "previous_state_merkle_root") val previousStateMerkleRoot: String,
         @Json(name = "transaction_merkle_root") val transactionMerkleRoot: String,
         @Json(name = "signer") val signer: String,
-        @Json(name = "approved_proposals") val approvedProposals: List<String>,
+        @Json(name = "approved_proposals") val approvedProposals: List<String> = listOf(),
     )
 
     /**

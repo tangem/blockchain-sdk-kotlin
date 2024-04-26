@@ -14,14 +14,20 @@ internal object KoinosWalletManagerAssembly : WalletManagerAssembly<KoinosWallet
             KoinosWalletManager(
                 wallet = this,
                 networkService = KoinosNetworkService(
-                    providers = KoinosProviderBuilder().build(blockchain),
+                    providers = KoinosProviderBuilder(
+                        providerTypes = input.providerTypes,
+                        config = input.config,
+                    ).build(blockchain),
                 ),
                 transactionBuilder = KoinosTransactionBuilder(
                     isTestnet = blockchain.isTestnet(),
                 ),
                 // No implementation for now
                 // See KoinosTransactionHistoryProvider deprecation doc
-                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(config = input.config),
+                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(
+                    config = input.config,
+                    providerTypes = input.providerTypes,
+                ),
             )
         }
     }
