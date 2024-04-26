@@ -22,7 +22,7 @@ import retrofit2.http.POST
 import java.math.BigInteger
 
 private interface KoinosRetrofitJsonRPCApi {
-    @POST("/")
+    @POST(" ")
     suspend fun send(@Header("apikey") apiKey: String? = null, @Body body: JsonRPCRequest): JsonRPCResponse
 }
 
