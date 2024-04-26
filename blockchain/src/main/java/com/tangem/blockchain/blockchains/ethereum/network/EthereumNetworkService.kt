@@ -206,10 +206,21 @@ open class EthereumNetworkService(
         is Result.Success -> {
             this.data.result
                 ?: throw this.data.error?.let { error ->
-                    BlockchainSdkError.Ethereum.Api(
-                        code = error.code ?: 0,
-                        message = error.message ?: "No error message",
-                    )
+                    val errorCode = error.code
+                    val errorMessage = error.message ?: "No error message"
+                    when (errorCode) {
+                        -32000 -> {
+                            BlockchainSdkError.Ethereum.InsufficientFunds(
+                                code = errorCode,
+                                message = errorMessage,
+                            )
+                        }
+                        else -> BlockchainSdkError.Ethereum.Api(
+                            code = errorCode ?: 0,
+                            message = errorMessage,
+                        )
+                    }
+
                 } ?: BlockchainSdkError.CustomError("Unknown response format")
         }
         is Result.Failure -> {
