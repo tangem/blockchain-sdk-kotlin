@@ -53,4 +53,8 @@ sealed interface ProviderType {
     sealed interface Hedera : ProviderType {
         object Arkhia : Hedera
     }
+
+    sealed interface Koinos : ProviderType {
+        object KoinosPro : Koinos
+    }
 }
