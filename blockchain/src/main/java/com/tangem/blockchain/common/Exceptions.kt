@@ -174,6 +174,7 @@ sealed class BlockchainSdkError(
         cause = throwable,
     ) {
         class Api(code: Int, message: String) : Ethereum(subCode = code, customMessage = message)
+        class InsufficientFunds(code: Int, message: String) : Ethereum(subCode = code, customMessage = message)
     }
 
     sealed class Algorand(

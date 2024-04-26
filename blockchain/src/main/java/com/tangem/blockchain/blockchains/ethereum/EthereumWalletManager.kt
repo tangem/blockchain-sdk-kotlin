@@ -229,13 +229,14 @@ open class EthereumWalletManager(
         var delta = MANTLE_FEE_GAP_INITIAL_VALUE
         var newAmount = amount
 
-        for (i in 1 .. MANTLE_FEE_CALCULATION_STEPS_COUNT) {
+        for (i in 1..MANTLE_FEE_CALCULATION_STEPS_COUNT) {
             when (val result = sendGasLimitRequest(newAmount, destination, data)) {
                 is Result.Success -> {
                     return result
                 }
                 is Result.Failure -> {
-                    if (i == MANTLE_FEE_CALCULATION_STEPS_COUNT) {
+                    if (i == MANTLE_FEE_CALCULATION_STEPS_COUNT ||
+                        result.error.cause !is BlockchainSdkError.Ethereum.InsufficientFunds) {
                         return result
                     }
                 }
