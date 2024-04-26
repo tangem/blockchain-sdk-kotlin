@@ -7,20 +7,24 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionHistoryProv
 import com.tangem.blockchain.blockchains.tron.TronTransactionHistoryProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.network.blockbook.config.NowNodesConfig
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.transactionhistory.koinos.KoinosHistoryProviderFactory
 import com.tangem.blockchain.transactionhistory.polygon.PolygonHistoryProviderFactory
 // [REDACTED_TODO_COMMENT]
-internal fun Blockchain.getTransactionHistoryProvider(config: BlockchainSdkConfig): TransactionHistoryProvider {
+internal fun Blockchain.getTransactionHistoryProvider(
+    config: BlockchainSdkConfig,
+    providerTypes: List<ProviderType>? = null,
+): TransactionHistoryProvider {
     val providerFactory = when (this) {
         Blockchain.Polygon,
-        Blockchain.PolkadotTestnet,
+        Blockchain.PolygonTestnet,
         -> PolygonHistoryProviderFactory()
         Blockchain.Koinos,
         Blockchain.KoinosTestnet,
-        -> KoinosHistoryProviderFactory()
+        -> KoinosHistoryProviderFactory(providerTypes = requireNotNull(providerTypes))
         else -> null
     }
 
