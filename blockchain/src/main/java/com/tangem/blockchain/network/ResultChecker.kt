@@ -64,6 +64,7 @@ object ResultChecker {
 
     private fun isError(result: Result.Success<*>): Boolean {
         return result.data is EthereumResponse && result.data.error != null
+            && result.data.error.code != -32000 // insufficient funds
     }
 
     private fun BlockchainSdkError.WrappedThrowable.isNetworkError(): Boolean {
