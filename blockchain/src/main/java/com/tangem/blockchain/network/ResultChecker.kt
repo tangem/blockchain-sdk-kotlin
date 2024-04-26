@@ -1,6 +1,7 @@
 package com.tangem.blockchain.network
 
 import com.squareup.moshi.JsonDataException
+import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService.Companion.INSUFFICIENT_FUNDS_CODE
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumResponse
 import com.tangem.blockchain.blockchains.stellar.StellarNetworkService.Companion.HTTP_NOT_FOUND_CODE
 import com.tangem.blockchain.common.BlockchainSdkError
@@ -63,8 +64,8 @@ object ResultChecker {
     }
 
     private fun needToSwitchProviderInternal(result: Result.Success<*>): Boolean {
-        return result.data is EthereumResponse && result.data.error != null
-            && result.data.error.code != -32000 // insufficient funds
+        return result.data is EthereumResponse && result.data.error != null &&
+            result.data.error.code != INSUFFICIENT_FUNDS_CODE
     }
 
     private fun BlockchainSdkError.WrappedThrowable.needToSwitchProvider(): Boolean {
