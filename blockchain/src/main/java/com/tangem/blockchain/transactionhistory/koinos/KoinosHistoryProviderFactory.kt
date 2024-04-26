@@ -2,11 +2,15 @@ package com.tangem.blockchain.transactionhistory.koinos
 
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 
-internal class KoinosHistoryProviderFactory : TransactionHistoryProviderFactory {
+@Suppress("UnusedPrivateMember")
+internal class KoinosHistoryProviderFactory(
+    private val providerTypes: List<ProviderType>,
+) : TransactionHistoryProviderFactory {
     override fun makeProvider(config: BlockchainSdkConfig, blockchain: Blockchain): TransactionHistoryProvider {
         return DefaultTransactionHistoryProvider
 
@@ -15,7 +19,7 @@ internal class KoinosHistoryProviderFactory : TransactionHistoryProviderFactory 
         //
         // return KoinosTransactionHistoryProvider(
         //     networkService = KoinosNetworkService(
-        //         KoinosProviderBuilder().build(blockchain),
+        //         KoinosProviderBuilder(providerTypes = providerTypes, config = config).build(blockchain),
         //     ),
         // )
     }
