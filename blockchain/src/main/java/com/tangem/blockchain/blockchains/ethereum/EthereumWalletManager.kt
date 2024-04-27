@@ -236,15 +236,14 @@ open class EthereumWalletManager(
                 }
                 is Result.Failure -> {
                     if (i == MANTLE_FEE_CALCULATION_STEPS_COUNT ||
-                        result.error.cause !is BlockchainSdkError.Ethereum.InsufficientFunds
-                    ) {
+                        result.error.cause !is BlockchainSdkError.Ethereum.InsufficientFunds) {
                         return result
                     }
                 }
             }
 
             newAmount = amount.copy(value = amount.value?.minus(delta))
-            delta *= DELTA_INCREASING_STEP
+            delta *= BigDecimal(10)
         }
 
         return Result.Failure(BlockchainSdkError.FailedToLoadFee)
@@ -286,7 +285,6 @@ open class EthereumWalletManager(
 
     companion object {
         val MANTLE_FEE_GAP_INITIAL_VALUE = BigDecimal("1E-9")
-        val DELTA_INCREASING_STEP = BigDecimal(10)
         const val MANTLE_FEE_CALCULATION_STEPS_COUNT = 5
     }
 }
