@@ -209,7 +209,7 @@ open class EthereumNetworkService(
                     val errorCode = error.code
                     val errorMessage = error.message ?: "No error message"
                     when (errorCode) {
-                        INSUFFICIENT_FUNDS_CODE -> {
+                        -32000 -> {
                             BlockchainSdkError.Ethereum.InsufficientFunds(
                                 code = errorCode,
                                 message = errorMessage,
@@ -220,14 +220,11 @@ open class EthereumNetworkService(
                             message = errorMessage,
                         )
                     }
+
                 } ?: BlockchainSdkError.CustomError("Unknown response format")
         }
         is Result.Failure -> {
             throw this.error as? BlockchainSdkError ?: BlockchainSdkError.CustomError("Unknown error format")
         }
-    }
-
-    companion object {
-        const val INSUFFICIENT_FUNDS_CODE = -32000
     }
 }
