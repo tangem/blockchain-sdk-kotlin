@@ -12,6 +12,7 @@ internal sealed interface BlockchainSavedData {
     @JsonClass(generateAdapter = true)
     data class Hedera(
         @Json(name = "accountId") val accountId: String,
+        @Json(name = "associatedTokens") val associatedTokens: Set<String> = emptySet(),
 // [REDACTED_TODO_COMMENT]
         @Json(name = "cache_cleared") val isCacheCleared: Boolean = false,
     ) : BlockchainSavedData
