@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.hedera
 
+import android.os.Build
 import android.util.Log
 import com.hedera.hashgraph.sdk.AccountBalanceQuery
 import com.hedera.hashgraph.sdk.AccountId
@@ -77,6 +78,7 @@ internal class HederaWalletManager(
                     val executeResult = executeTransaction(transactionToSend)
 
                     if (executeResult is SimpleResult.Success) {
+                        transactionData.setTransactionHash(transactionToSend)
                         wallet.addOutgoingTransaction(transactionData)
                     }
                     executeResult
@@ -182,11 +184,26 @@ internal class HederaWalletManager(
         return accountCreator.createAccount(blockchain = blockchain, walletPublicKey = wallet.publicKey.blockchainKey)
     }
 
-    companion object {
+    private fun TransactionData.setTransactionHash(transactionToSend: TransferTransaction) {
+        // Uses java.time.Instant which is available from 26+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val validStart = transactionToSend.transactionId.validStart
+            hash = buildString {
+                append(wallet.address)
+                append(HEDERA_EXPLORER_LINK_DELIMITER)
+                append(validStart?.epochSecond.toString())
+                append(HEDERA_EXPLORER_LINK_DELIMITER)
+                append(validStart?.nano.toString())
+            }
+        }
+    }
+
+    private companion object {
         // https://docs.hedera.com/hedera/networks/mainnet/fees
-        private val HBAR_TRANSFER_USD_COST = BigDecimal("0.0001")
-        private val HBAR_CREATE_ACCOUNT_USD_COST = BigDecimal("0.05")
+        val HBAR_TRANSFER_USD_COST = BigDecimal("0.0001")
+        val HBAR_CREATE_ACCOUNT_USD_COST = BigDecimal("0.05")
         // Hedera fees are low, allow 10% safety margin to allow usage of not precise fee estimate
-        private val MAX_FEE_MULTIPLIER = BigDecimal("1.1")
+        val MAX_FEE_MULTIPLIER = BigDecimal("1.1")
+        const val HEDERA_EXPLORER_LINK_DELIMITER = "-"
     }
 }
