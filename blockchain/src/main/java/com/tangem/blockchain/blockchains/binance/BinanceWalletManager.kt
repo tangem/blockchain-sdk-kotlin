@@ -8,6 +8,7 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.toSimpleResult
 import com.tangem.common.CompletionResult
 
 class BinanceWalletManager(
@@ -22,8 +23,7 @@ class BinanceWalletManager(
         get() = networkProvider.host
 
     override suspend fun updateInternal() {
-        val result = networkProvider.getInfo(wallet.address)
-        when (result) {
+        when (val result = networkProvider.getInfo(wallet.address)) {
             is Result.Success -> updateWallet(result.data)
             is Result.Failure -> updateError(result.error)
         }
@@ -49,15 +49,20 @@ class BinanceWalletManager(
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val buildTransactionResult = transactionBuilder.buildToSign(transactionData)
-        return when (buildTransactionResult) {
+        return when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Failure -> SimpleResult.Failure(buildTransactionResult.error)
             is Result.Success -> {
-                val signerResponse = signer.sign(buildTransactionResult.data, wallet.publicKey)
-                when (signerResponse) {
+                when (val signerResponse = signer.sign(buildTransactionResult.data, wallet.publicKey)) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
-                        networkProvider.sendTransaction(transactionToSend)
+                        val result = networkProvider.sendTransaction(transactionToSend)
+
+                        if (result is Result.Success) {
+                            transactionData.hash = result.data
+                            wallet.addOutgoingTransaction(transactionData)
+                        }
+
+                        result.toSimpleResult()
                     }
                     is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResponse.error)
                 }
