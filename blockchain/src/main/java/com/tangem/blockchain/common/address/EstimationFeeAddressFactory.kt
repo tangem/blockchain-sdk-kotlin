@@ -111,6 +111,8 @@ class EstimationFeeAddressFactory {
                 "CsNtwDXUzMR4ZKBQrXCfA6bBXQBFU1DDbtSwLAsaVr13sGs"
             Blockchain.AlephZero, Blockchain.AlephZeroTestnet ->
                 "5DaWppqEJPc6BhFKD2NBC1ACXPDMPYfv2AQDB5uH5KT4mpef"
+            Blockchain.Joystream,
+            -> TODO("ADD")
             // Cosmos-like
             Blockchain.Cosmos, Blockchain.CosmosTestnet ->
                 "cosmos1lhjvds604fvac32j4eygpr820lyc82dlyq70m5"
