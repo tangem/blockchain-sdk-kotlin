@@ -150,6 +150,7 @@ enum class Blockchain(
     TaraxaTestnet("taraxa/test", "TARA", "Taraxa Testnet"),
     Koinos("koinos", "KOIN", "Koinos"),
     KoinosTestnet("koinos/test", "tKOIN", "Koinos Testnet"),
+    Joystream("joystream", "JOY", "Joystream"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -191,7 +192,7 @@ enum class Blockchain(
         TON, TONTestnet,
         -> 9
 
-        Polkadot -> 10
+        Polkadot, Joystream -> 10
 
         PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
         Chia, ChiaTestnet,
@@ -304,7 +305,11 @@ enum class Blockchain(
             XRP -> XrpAddressService()
             Binance -> BinanceAddressService()
             BinanceTestnet -> BinanceAddressService(true)
-            Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet -> PolkadotAddressService(this)
+            Polkadot, PolkadotTestnet,
+            Kusama,
+            AlephZero, AlephZeroTestnet,
+            Joystream,
+            -> PolkadotAddressService(this)
             Stellar, StellarTestnet -> StellarAddressService()
             Solana, SolanaTestnet -> SolanaAddressService()
             Tezos -> TezosAddressService()
@@ -472,7 +477,10 @@ enum class Blockchain(
 
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
-            Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
+            Polkadot, PolkadotTestnet,
+            Kusama,
+            AlephZero, AlephZeroTestnet,
+            Joystream,
             TON, TONTestnet,
             Near, NearTestnet,
             Aptos, AptosTestnet,
