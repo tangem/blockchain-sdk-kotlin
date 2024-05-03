@@ -2,10 +2,7 @@ package com.tangem.blockchain.blockchains.cardano
 
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.walletcore.CardanoTWTxBuilder
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.trustWalletCoinType
 import wallet.core.java.AnySigner
@@ -21,7 +18,7 @@ import kotlin.properties.Delegates
 // You can decode your CBOR transaction here: https://cbor.me
 internal class CardanoTransactionBuilder(
     private val wallet: Wallet,
-) {
+) : TransactionValidator {
 
     private val coinType: CoinType = wallet.blockchain.trustWalletCoinType
     private val decimals: Int = wallet.blockchain.decimals()
@@ -30,6 +27,31 @@ internal class CardanoTransactionBuilder(
 
     fun update(outputs: List<CardanoUnspentOutput>) {
         twTxBuilder = CardanoTWTxBuilder(wallet, outputs)
+    }
+
+    override fun validate(transaction: TransactionData): Result<Unit> {
+        return runCatching {
+            val isCoinTransaction = transaction.amount.type is AmountType.Coin
+            val transactionValue = transaction.amount.value ?: BigDecimal.ZERO
+
+            throwIf(
+                exception = BlockchainSdkError.Cardano.InsufficientSendingAdaAmount,
+                condition = isCoinTransaction && transactionValue < BigDecimal.ONE,
+            )
+
+            val plan = AnySigner.plan(
+                twTxBuilder.build(transaction),
+                coinType,
+                Cardano.TransactionPlan.parser(),
+            )
+
+            throwIf(
+                exception = BlockchainSdkError.Cardano.InsufficientMinAdaBalanceToSendToken,
+                condition = !isCoinTransaction && plan.error == Common.SigningError.Error_low_balance,
+            )
+
+            checkRemainingAdaBalance(amount = transaction.amount, change = plan.change)
+        }
     }
 
     fun estimateFee(transaction: TransactionData): Fee {
@@ -105,6 +127,52 @@ internal class CardanoTransactionBuilder(
         }
 
         return output.encoded.toByteArray()
+    }
+
+    private fun checkRemainingAdaBalance(amount: Amount, change: Long) {
+        val notZeroTokens = calculateRemainingNotZeroTokensBalances(transactionAmount = amount)
+
+        if (notZeroTokens.isEmpty()) {
+            val minChange = BigDecimal.ONE.movePointRight(decimals).toLong()
+
+            throwIf(
+                exception = BlockchainSdkError.Cardano.InsufficientRemainingBalance,
+                condition = change in 1 until minChange,
+            )
+        } else {
+            val minChange = twTxBuilder.calculateMinAdaValueToWithdrawAllTokens(tokens = wallet.getTokens())
+
+            throwIf(
+                exception = BlockchainSdkError.Cardano.InsufficientRemainingBalanceToWithdrawTokens,
+                condition = change == 0L || change in 1 until minChange,
+            )
+        }
+    }
+
+    private fun calculateRemainingNotZeroTokensBalances(transactionAmount: Amount): List<Amount> {
+        val transactionToken = (transactionAmount.type as? AmountType.Token)?.token
+
+        return wallet.amounts
+            .mapNotNull { amount ->
+                val type = amount.value.type
+
+                if (type is AmountType.Token) {
+                    // calculate remaining token balance
+                    if (type.token == transactionToken) {
+                        val transactionValue = transactionAmount.value ?: BigDecimal.ZERO
+                        amount.value - transactionValue
+                    } else {
+                        amount.value
+                    }
+                } else {
+                    null
+                }
+            }
+            .filter { it.longValueOrZero != 0L }
+    }
+
+    private fun throwIf(exception: BlockchainSdkError.Cardano, condition: Boolean) {
+        if (condition) throw exception
     }
 
     private companion object {
