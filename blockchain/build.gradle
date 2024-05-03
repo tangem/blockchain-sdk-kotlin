@@ -88,7 +88,8 @@ dependencies {
 
     implementation files('libs/ripple-core-0.0.1.jar')
     implementation files('libs/solanaj-0.0.10.jar')
-    implementation files('libs/polkaj-root-0.1.5.jar')
+    implementation files('libs/polkaj-root-0.5.0.jar')
+
     implementation files('libs/hedera-sdk-java-2.29.0.jar')
     implementation "com.tangem:blstlib:master-6@aar"
     implementation "com.tangem:wallet-core:4.0.21-tangem5@aar"
