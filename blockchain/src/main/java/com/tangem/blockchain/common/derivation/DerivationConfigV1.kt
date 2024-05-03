@@ -123,6 +123,9 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.AlephZero -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/643'/0'/0'/0'"))
             }
+            Blockchain.Joystream -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/1014'/0'/0'/0'"))
+            }
             Blockchain.Tron -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/195'/0'/0/0"))
             }

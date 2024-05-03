@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkProvide
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkService
 import com.tangem.blockchain.blockchains.polkadot.network.accounthealthcheck.PolkadotAccountHealthCheckNetworkService
 import com.tangem.blockchain.blockchains.polkadot.providers.AlephZeroProvidersBuilder
+import com.tangem.blockchain.blockchains.polkadot.providers.JoyStreamProvidersBuilder
 import com.tangem.blockchain.blockchains.polkadot.providers.KusamaProvidersBuilder
 import com.tangem.blockchain.blockchains.polkadot.providers.PolkadotProvidersBuilder
 import com.tangem.blockchain.common.Blockchain
@@ -38,6 +39,7 @@ internal object PolkadotWalletManagerAssembly : WalletManagerAssembly<PolkadotWa
             Blockchain.Polkadot, Blockchain.PolkadotTestnet -> PolkadotProvidersBuilder(providerTypes)
             Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> AlephZeroProvidersBuilder(providerTypes)
             Blockchain.Kusama -> KusamaProvidersBuilder(providerTypes)
+            Blockchain.Joystream -> JoyStreamProvidersBuilder(providerTypes)
             else -> error("$blockchain isn't supported")
         }
     }

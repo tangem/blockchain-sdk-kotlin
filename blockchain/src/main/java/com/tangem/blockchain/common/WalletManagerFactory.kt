@@ -163,6 +163,7 @@ class WalletManagerFactory(
             Blockchain.Polkadot, Blockchain.PolkadotTestnet,
             Blockchain.Kusama,
             Blockchain.AlephZero, Blockchain.AlephZeroTestnet,
+            Blockchain.Joystream,
             -> PolkadotWalletManagerAssembly
 
             Blockchain.Stellar, Blockchain.StellarTestnet -> StellarWalletManagerAssembly

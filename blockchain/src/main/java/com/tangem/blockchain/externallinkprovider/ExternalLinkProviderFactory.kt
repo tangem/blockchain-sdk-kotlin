@@ -31,6 +31,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Polkadot, Blockchain.PolkadotTestnet -> PolkadotExternalLinkProvider(isTestnet)
             Blockchain.Kava, Blockchain.KavaTestnet -> KavaExternalLinkProvider(isTestnet)
             Blockchain.Kusama -> KusamaExternalLinkProvider()
+            Blockchain.Joystream -> JoystreamExternalLinkProvider()
             Blockchain.Polygon, Blockchain.PolygonTestnet -> PolygonExternalLinkProvider(isTestnet)
             Blockchain.RSK -> RSKExternalLinkProvider()
             Blockchain.Stellar, Blockchain.StellarTestnet -> StellarExternalLinkProvider(isTestnet)
