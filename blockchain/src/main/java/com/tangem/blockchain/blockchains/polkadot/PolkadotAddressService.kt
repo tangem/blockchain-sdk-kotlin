@@ -18,6 +18,7 @@ class PolkadotAddressService(
         Blockchain.PolkadotTestnet -> SS58Type.Network.WESTEND
         Blockchain.Kusama -> SS58Type.Network.KUSAMA
         Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> SS58Type.Network.SUBSTRATE
+        Blockchain.Joystream -> SS58Type.Network.JOYSTREAM
         else -> error("$blockchain isn't supported")
     }
 
