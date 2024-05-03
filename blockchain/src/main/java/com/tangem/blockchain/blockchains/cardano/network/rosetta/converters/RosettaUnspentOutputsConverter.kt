@@ -1,7 +1,6 @@
 package com.tangem.blockchain.blockchains.cardano.network.rosetta.converters
 
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
-import com.tangem.blockchain.common.Blockchain
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.response.RosettaCoinsResponse.Coin as RosettaCoin
 
@@ -9,25 +8,17 @@ internal object RosettaUnspentOutputsConverter {
 
     fun convert(coinsMap: Map<String, List<RosettaCoin>>): List<CardanoUnspentOutput> {
         return coinsMap.flatMap { entry ->
-            entry.value
-                .filterCardanoCoin() // filter tokens while we don't support them
-                .map { coin ->
-                    val (transactionHash, outputIndex) = coin.coinIdentifier.getTransactionHashAndOutputIndex()
+            entry.value.map { coin ->
+                val (transactionHash, outputIndex) = coin.coinIdentifier.getTransactionHashAndOutputIndex()
 
-                    CardanoUnspentOutput(
-                        address = entry.key,
-                        amount = coin.amount.value.toLong(),
-                        outputIndex = outputIndex,
-                        transactionHash = transactionHash,
-                        assets = coin.metadata?.mapToAsset() ?: emptyList(),
-                    )
-                }
-        }
-    }
-
-    private fun List<RosettaCoin>.filterCardanoCoin(): List<RosettaCoin> {
-        return filter { coin ->
-            coin.amount.currency.symbol == Blockchain.Cardano.currency && coin.metadata == null
+                CardanoUnspentOutput(
+                    address = entry.key,
+                    amount = coin.amount.value.toLong(),
+                    outputIndex = outputIndex,
+                    transactionHash = transactionHash,
+                    assets = coin.metadata?.mapToAsset() ?: emptyList(),
+                )
+            }
         }
     }
 
