@@ -575,6 +575,7 @@ enum class Blockchain(
             Tron, TronTestnet,
             TerraV1,
             VeChain, VeChainTestnet,
+            Cardano,
             -> true
 
             else -> false
