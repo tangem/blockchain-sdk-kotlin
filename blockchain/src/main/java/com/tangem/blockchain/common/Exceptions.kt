@@ -221,6 +221,41 @@ sealed class BlockchainSdkError(
         )
     }
 
+    sealed class Cardano(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_CARDANO,
+        customMessage = customMessage?.let { "$ERROR_CODE_CARDANO: $subCode: $customMessage" }
+            ?: "$ERROR_CODE_CARDANO: $subCode",
+        messageResId = null,
+        cause = throwable,
+    ) {
+
+        object InsufficientRemainingBalance : Cardano(
+            subCode = 0,
+            customMessage = "Insufficient ADA balance. Make sure the balance after this transaction is at least 1 ADA.",
+        )
+
+        object InsufficientRemainingBalanceToWithdrawTokens : Cardano(
+            subCode = 1,
+            customMessage = "Insufficient ADA balance. Make sure that the balance after this transaction is " +
+                "sufficient to cover the withdrawal of all tokens.",
+        )
+
+        object InsufficientSendingAdaAmount : Cardano(
+            subCode = 2,
+            customMessage = "Insufficient sending ADA amount. Make sure the sending amount is at least 1 ADA.",
+        )
+
+        object InsufficientMinAdaBalanceToSendToken : Cardano(
+            subCode = 3,
+            customMessage = "Insufficient min-ada-value amount. In addition to network fees, the Cardano network " +
+                "charges min-ada-value. Make sure the balance is sufficient to withdraw the token.",
+        )
+    }
+
     companion object {
         const val ERROR_CODE_SOLANA = 1000
         const val ERROR_CODE_POLKADOT = 2000
@@ -234,6 +269,7 @@ sealed class BlockchainSdkError(
         const val ERROR_CODE_ALGORAND = 10000
         const val ERROR_CODE_ELECTRUM = 11000
         const val ERROR_CODE_KOINOS = 12000
+        const val ERROR_CODE_CARDANO = 13000
     }
 }
 
