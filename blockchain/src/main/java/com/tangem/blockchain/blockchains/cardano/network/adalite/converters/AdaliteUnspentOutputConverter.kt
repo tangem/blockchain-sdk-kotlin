@@ -8,18 +8,15 @@ import com.tangem.blockchain.blockchains.cardano.network.adalite.repsonse.Adalit
 internal object AdaliteUnspentOutputConverter {
 
     fun convert(response: AdaliteUnspentOutputsResponse): List<CardanoUnspentOutput> {
-        return response.successData
-            // we need to ignore unspent outputs with tokens (until we start supporting tokens)
-            .filter { it.amount.tokens.isEmpty() }
-            .map { utxo ->
-                CardanoUnspentOutput(
-                    address = utxo.address,
-                    amount = utxo.amount.value,
-                    outputIndex = utxo.outputIndex.toLong(),
-                    transactionHash = utxo.hash.hexToBytes(),
-                    assets = utxo.amount.tokens.mapToAsset(),
-                )
-            }
+        return response.successData.map { utxo ->
+            CardanoUnspentOutput(
+                address = utxo.address,
+                amount = utxo.amount.value,
+                outputIndex = utxo.outputIndex.toLong(),
+                transactionHash = utxo.hash.hexToBytes(),
+                assets = utxo.amount.tokens.mapToAsset(),
+            )
+        }
     }
 
     private fun List<AdaliteUtxoToken>.mapToAsset(): List<CardanoUnspentOutput.Asset> {
