@@ -7,7 +7,6 @@ import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoAd
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.address.Address
-import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -47,13 +46,8 @@ internal class CardanoWalletManager(
                 destinationAddress = destination,
             )
 
-            val feeValue = transactionBuilder.estimatedFee(dummyTransaction)
+            val fee = transactionBuilder.estimateFee(dummyTransaction)
 
-            val fee = Fee.Common(
-                amount.copy(
-                    value = feeValue.movePointLeft(decimals),
-                ),
-            )
             Result.Success(TransactionFee.Single(fee))
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
