@@ -1,10 +1,6 @@
 package com.tangem.blockchain.common.address
 
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.common.card.EllipticCurve
-import com.tangem.crypto.bip39.Mnemonic
-import com.tangem.crypto.hdWallet.masterkey.AnyMasterKeyFactory
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * This entity provides addresses for calculating commissions in swap scenarios.
@@ -19,18 +15,9 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * @param mnemonic to help generate addresses
  */
-class EstimationFeeAddressFactory(
-    mnemonic: Mnemonic,
-) {
+class EstimationFeeAddressFactory {
 
-    private val anyKeyMasterFactory = AnyMasterKeyFactory(
-        mnemonic = mnemonic,
-        passphrase = "",
-    )
-
-    private val addressesCache: ConcurrentHashMap<Blockchain, String> = ConcurrentHashMap()
-
-    @Suppress("LongMethod")
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     fun makeAddress(blockchain: Blockchain): String {
         return when (blockchain) {
             Blockchain.Cardano -> CARDANO_ESTIMATION_ADDRESS
@@ -66,20 +53,30 @@ class EstimationFeeAddressFactory(
             }
 
             // We have to generate a new dummy address for UTXO-like
-            Blockchain.Bitcoin, Blockchain.BitcoinTestnet,
-            Blockchain.Litecoin,
-            Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet,
-            Blockchain.Dogecoin,
-            Blockchain.Dash,
-            Blockchain.Ravencoin, Blockchain.RavencoinTestnet,
-            Blockchain.Solana,
-            Blockchain.Nexa, Blockchain.NexaTestnet,
-            Blockchain.Radiant,
+            Blockchain.Bitcoin, Blockchain.BitcoinTestnet ->
+                "bc1qkrc5kmpq546wr2xk0errg58yw9jjq7thvhdk5k"
+            Blockchain.Litecoin ->
+                "ltc1qelzg874tr0zap72ckcc9exa3lgyyt6rvfhhekc"
+            Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet ->
+                "bitcoincash:qrn96yyxa93t6sqmehvls6746qafkcsuku6zmd9460"
+            Blockchain.Dogecoin ->
+                "DRVD4B4YD9CBSjqaa3UfF42vSN6k2tJwhz"
+            Blockchain.Dash ->
+                "Xqfekbgca2HDaXhrNYP2HTnuQ5go2E8dDE"
+            Blockchain.Ravencoin, Blockchain.RavencoinTestnet ->
+                "RT5qKgXdmh9pqtz71cgfL834VfeXFVH1sG"
+            Blockchain.Solana ->
+                "9wuDg6Y4H4j86Kg5aUGrUeaBa3sAUzjMs37KbeGFnRuM"
+            Blockchain.Nexa, Blockchain.NexaTestnet -> TODO("Not implemented")
+            Blockchain.Radiant -> TODO("ADD")
             // EVM-like
+            Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet ->
+                "0xc49722a6f4Fe5A1347710dEAAa1fafF4c275689b"
+            Blockchain.Decimal, Blockchain.DecimalTestnet ->
+                "d0122a5qy59f7qge7d6hkz4u389qmd0dsrh6a7qnx"
             Blockchain.Ethereum, Blockchain.EthereumTestnet,
             Blockchain.EthereumPow, Blockchain.EthereumPowTestnet,
             Blockchain.Dischain,
-            Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet,
             Blockchain.RSK,
             Blockchain.BSC, Blockchain.BSCTestnet,
             Blockchain.Polygon, Blockchain.PolygonTestnet,
@@ -91,10 +88,9 @@ class EstimationFeeAddressFactory(
             Blockchain.Kava, Blockchain.KavaTestnet,
             Blockchain.Cronos,
             Blockchain.Telos, Blockchain.TelosTestnet,
-            Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet,
-            Blockchain.Decimal, Blockchain.DecimalTestnet,
-            Blockchain.Playa3ull,
             Blockchain.Shibarium, Blockchain.ShibariumTestnet,
+            Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet,
+            Blockchain.Playa3ull,
             Blockchain.Aurora, Blockchain.AuroraTestnet,
             Blockchain.Areon, Blockchain.AreonTestnet,
             Blockchain.PulseChain, Blockchain.PulseChainTestnet,
@@ -107,78 +103,41 @@ class EstimationFeeAddressFactory(
             Blockchain.Mantle, Blockchain.MantleTestnet,
             Blockchain.Flare, Blockchain.FlareTestnet,
             Blockchain.Taraxa, Blockchain.TaraxaTestnet,
+            -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
             // Polkadot-like
-            Blockchain.Polkadot, Blockchain.PolkadotTestnet,
-            Blockchain.Kusama,
-            Blockchain.AlephZero, Blockchain.AlephZeroTestnet,
+            Blockchain.Polkadot, Blockchain.PolkadotTestnet ->
+                "15RRtiC2akPUE9FGqqa66awoAFz6XCnZiFUf34k2CHbLWNfC"
+            Blockchain.Kusama ->
+                "CsNtwDXUzMR4ZKBQrXCfA6bBXQBFU1DDbtSwLAsaVr13sGs"
+            Blockchain.AlephZero, Blockchain.AlephZeroTestnet ->
+                "5DaWppqEJPc6BhFKD2NBC1ACXPDMPYfv2AQDB5uH5KT4mpef"
             // Cosmos-like
-            Blockchain.Cosmos, Blockchain.CosmosTestnet,
+            Blockchain.Cosmos, Blockchain.CosmosTestnet ->
+                "cosmos1lhjvds604fvac32j4eygpr820lyc82dlyq70m5"
             Blockchain.TerraV1,
             Blockchain.TerraV2,
+            -> "terra1pfamr0t2daet92grdvxqex235q58qrx6xclldg"
             // Others
-            Blockchain.Tron, Blockchain.TronTestnet,
-            Blockchain.TON, Blockchain.TONTestnet,
-            Blockchain.Near, Blockchain.NearTestnet,
-            Blockchain.XDC, Blockchain.XDCTestnet,
-            Blockchain.VeChain, Blockchain.VeChainTestnet,
-            Blockchain.Aptos, Blockchain.AptosTestnet,
-            Blockchain.Algorand, Blockchain.AlgorandTestnet,
-            -> {
-                generateAddress(blockchain)
-            }
-        }
-    }
-
-    private fun generateAddress(blockchain: Blockchain): String {
-        val primaryCurve = primaryCurve(blockchain) ?: return ""
-
-        val cachedValue = addressesCache[blockchain]
-
-        if (cachedValue == null) {
-            val masterKey = anyKeyMasterFactory.makeMasterKey(primaryCurve)
-            val extendedPublicKey = masterKey.makePublicKey(primaryCurve)
-            val publicKey = extendedPublicKey.publicKey
-            val addresses = blockchain.makeAddresses(
-                walletPublicKey = publicKey,
-                curve = primaryCurve,
-            )
-            val address = addresses.find { it.type == AddressType.Default }?.value ?: addresses.first().value
-
-            addressesCache[blockchain] = address
-
-            return address
-        } else {
-            return cachedValue
-        }
-    }
-
-    private fun primaryCurve(blockchain: Blockchain): EllipticCurve? {
-        // order is important, new curve is preferred for wallet 2
-        return when {
-            blockchain.getSupportedCurves().contains(EllipticCurve.Ed25519Slip0010) -> {
-                EllipticCurve.Ed25519Slip0010
-            }
-
-            blockchain.getSupportedCurves().contains(EllipticCurve.Secp256k1) -> {
-                EllipticCurve.Secp256k1
-            }
-
-            blockchain.getSupportedCurves().contains(EllipticCurve.Bls12381G2Aug) -> {
-                EllipticCurve.Bls12381G2Aug
-            }
-            // only for support cardano on Wallet2
-            blockchain.getSupportedCurves().contains(EllipticCurve.Ed25519) -> {
-                EllipticCurve.Ed25519
-            }
-
-            else -> {
-                null
-            }
+            Blockchain.Tron, Blockchain.TronTestnet ->
+                "TA4Tkaj2nAJjkVbDHdUQDxYCbLfsZzS8pA"
+            Blockchain.TON, Blockchain.TONTestnet ->
+                "EQAY92urFDKejoDRdi_EfRKLGB1JkGjD8z1inj_DhgBaD0Xo"
+            Blockchain.Near, Blockchain.NearTestnet ->
+                "4a9fb267a005b7e923233b59aff1b73e577347a1ab36aa231a1880a91776c416"
+            Blockchain.XDC, Blockchain.XDCTestnet ->
+                "xdc9606Af4939f6F9fb9731A39a32B00aD966348ED6"
+            Blockchain.VeChain, Blockchain.VeChainTestnet ->
+                "0x1C5B4935709583758BE5b9ECeeBaf5cD6AFecF41"
+            Blockchain.Aptos, Blockchain.AptosTestnet ->
+                "0x4626b7ef23fb2800a0e224e8249f47e0db3579070262da2a7efb0bc52c882867"
+            Blockchain.Algorand, Blockchain.AlgorandTestnet ->
+                "CW6XDCKQAZUGAIOTGE2NEPYFFVW6H6IKFOTOF3W5WDUVHH4ZIDCIKYDPXY"
+            Blockchain.Koinos, Blockchain.KoinosTestnet -> TODO("ADD")
         }
     }
 
     companion object {
         private const val CARDANO_ESTIMATION_ADDRESS =
-            "addr1q9svm389hgtksjvawpt9nfd9twk4kfckhs23wxrdfspynw9g3emv6k6njzwqvdmtff4426vy2pfg0ngu9t6pr9xmd0ass48agt"
+            "addr1q95pg4z9tf26r5dwf72vmh62u3pr9sewq2waahyhpjzm3enz43pvhh0us3z0z5xen2skq200e67eu89s5v2s0sdh3fnsm9lknu"
     }
 }
