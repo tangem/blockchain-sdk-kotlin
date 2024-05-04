@@ -14,6 +14,7 @@ data class BlockchainSdkConfig(
     val chiaFireAcademyApiKey: String? = null,
     val chiaTangemApiKey: String? = null,
     val hederaArkhiaApiKey: String? = null,
+    val polygonScanApiKey: String? = null,
 )
 
 data class BlockchairCredentials(
@@ -54,8 +55,8 @@ data class GetBlockCredentials(
     val bitcoin: GetBlockAccessToken,
     val aptos: GetBlockAccessToken?,
     val algorand: GetBlockAccessToken?,
-    val polygonZkevm: GetBlockAccessToken?,
-    val zkSync: GetBlockAccessToken?,
+    val polygonZkEvm: GetBlockAccessToken?,
+    val zkSyncEra: GetBlockAccessToken?,
     val base: GetBlockAccessToken?,
 )
 

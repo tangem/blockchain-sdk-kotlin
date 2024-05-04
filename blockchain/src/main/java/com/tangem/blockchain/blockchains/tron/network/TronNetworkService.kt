@@ -12,7 +12,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 
 class TronNetworkService(
-    rpcNetworkProviders: List<TronJsonRpcNetworkProvider>,
+    rpcNetworkProviders: List<TronNetworkProvider>,
     private val blockchain: Blockchain,
 ) {
 
@@ -30,7 +30,7 @@ class TronNetworkService(
             val confirmedTransactionsDeferred =
                 transactionIds.map { async { checkIfTransactionConfirmed(it) } }
             when (
-                val accountInfoResult = multiProvider.performRequest(TronJsonRpcNetworkProvider::getAccount, address)
+                val accountInfoResult = multiProvider.performRequest(TronNetworkProvider::getAccount, address)
             ) {
                 is Result.Failure -> Result.Failure(accountInfoResult.error)
                 is Result.Success -> {
@@ -50,11 +50,11 @@ class TronNetworkService(
     }
 
     suspend fun getNowBlock(): Result<TronBlock> {
-        return multiProvider.performRequest(TronJsonRpcNetworkProvider::getNowBlock)
+        return multiProvider.performRequest(TronNetworkProvider::getNowBlock)
     }
 
     suspend fun broadcastHex(data: ByteArray): Result<TronBroadcastResponse> {
-        return when (val result = multiProvider.performRequest(TronJsonRpcNetworkProvider::broadcastHex, data)) {
+        return when (val result = multiProvider.performRequest(TronNetworkProvider::broadcastHex, data)) {
             is Result.Failure -> Result.Failure(result.error)
             is Result.Success -> {
                 if (result.data.result) {
@@ -83,7 +83,7 @@ class TronNetworkService(
     }
 
     suspend fun getAccountResource(address: String): Result<TronGetAccountResourceResponse> {
-        return multiProvider.performRequest(TronJsonRpcNetworkProvider::getAccountResource, address)
+        return multiProvider.performRequest(TronNetworkProvider::getAccountResource, address)
     }
 
     suspend fun checkIfAccountExists(address: String): Boolean {
@@ -94,11 +94,11 @@ class TronNetworkService(
     }
 
     suspend fun getAccount(address: String): Result<TronGetAccountResponse> {
-        return multiProvider.performRequest(TronJsonRpcNetworkProvider::getAccount, address)
+        return multiProvider.performRequest(TronNetworkProvider::getAccount, address)
     }
 
     suspend fun getChainParameters(): Result<TronChainParameters> {
-        return when (val result = multiProvider.performRequest(TronJsonRpcNetworkProvider::getChainParameters)) {
+        return when (val result = multiProvider.performRequest(TronNetworkProvider::getChainParameters)) {
             is Result.Failure -> Result.Failure(result.error)
             is Result.Success -> {
                 val energyFee = result.data.chainParameters
@@ -129,7 +129,7 @@ class TronNetworkService(
     @Suppress("MagicNumber")
     private suspend fun getTokenBalance(address: String, token: Token): Result<Pair<Token, BigDecimal>> {
         val result = multiProvider.performRequest(
-            TronJsonRpcNetworkProvider::getTokenBalance,
+            TronNetworkProvider::getTokenBalance,
             TokenBalanceRequestData(address, token.contractAddress),
         )
         when (result) {
@@ -150,7 +150,7 @@ class TronNetworkService(
     }
 
     private suspend fun checkIfTransactionConfirmed(id: String): Result<String?> {
-        return multiProvider.performRequest(TronJsonRpcNetworkProvider::getTransactionInfoById, id)
+        return multiProvider.performRequest(TronNetworkProvider::getTransactionInfoById, id)
     }
 }
 
