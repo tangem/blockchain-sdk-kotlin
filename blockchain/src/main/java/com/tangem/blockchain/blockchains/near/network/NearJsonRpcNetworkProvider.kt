@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.near.network.api.*
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.network.moshi
 
 /**
@@ -13,9 +14,12 @@ import com.tangem.blockchain.network.moshi
  */
 class NearJsonRpcNetworkProvider(
     override val baseUrl: String,
-    private val api: NearApi,
     private val urlPostfix: String = "",
 ) : NearNetworkProvider {
+
+    private val api by lazy {
+        createRetrofitInstance(baseUrl = baseUrl).create(NearApi::class.java)
+    }
 
     private val protocolConfigAdapter = moshi.adapter<NearResponse<ProtocolConfigResult>>(
         Types.newParameterizedType(
@@ -126,7 +130,7 @@ class NearJsonRpcNetworkProvider(
     }
 
     @Throws(IllegalArgumentException::class)
-    private suspend fun <T> postMethod(method: NearMethod, adapter: JsonAdapter<T>): T {
+    private suspend inline fun <reified T> postMethod(method: NearMethod, adapter: JsonAdapter<T>): T {
         val responseBody = api.sendJsonRpc(method.asRequestBody(), urlPostfix)
         return requireNotNull(
             value = adapter.fromJson(responseBody.string()) as T,
