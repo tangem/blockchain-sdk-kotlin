@@ -4,12 +4,19 @@ import com.squareup.moshi.Types
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.network.moshi
+import okhttp3.Interceptor
 
 class TonJsonRpcNetworkProvider(
     override val baseUrl: String,
-    private val api: TonApi,
+    headerInterceptors: List<Interceptor> = emptyList(),
 ) : TonNetworkProvider {
+
+    private val api: TonApi by lazy {
+        createRetrofitInstance(baseUrl, headerInterceptors)
+            .create(TonApi::class.java)
+    }
 
     private val walletInfoAdapter = moshi.adapter<TonProviderResponse<TonGetWalletInfoResponse>>(
         Types.newParameterizedType(

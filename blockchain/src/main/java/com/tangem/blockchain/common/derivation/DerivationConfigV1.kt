@@ -238,6 +238,10 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Radiant -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/512'/0'/0/0"))
             }
+
+            Blockchain.Koinos, Blockchain.KoinosTestnet -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/659'/0'/0/0"))
+            }
         }
     }
 }
