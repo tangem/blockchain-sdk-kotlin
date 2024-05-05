@@ -8,6 +8,7 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.toSimpleResult
 import com.tangem.common.CompletionResult
 import java.math.BigDecimal
 
@@ -57,10 +58,11 @@ class KaspaWalletManager(
                         )
                         val sendResult = networkProvider.sendTransaction(transactionToSend)
 
-                        if (sendResult is SimpleResult.Success) {
+                        if (sendResult is Result.Success) {
+                            transactionData.hash = sendResult.data
                             wallet.addOutgoingTransaction(transactionData)
                         }
-                        sendResult
+                        sendResult.toSimpleResult()
                     }
                     is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResult.error)
                 }
