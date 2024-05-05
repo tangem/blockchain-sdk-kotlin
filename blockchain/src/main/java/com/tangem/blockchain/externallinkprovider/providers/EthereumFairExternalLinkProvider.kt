@@ -5,7 +5,7 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class EthereumFairExternalLinkProvider : ExternalLinkProvider {
 
-    override val explorerBaseUrl: String = "https://explorer.dischain.xyz/ethf/"
+    override val explorerBaseUrl: String = "https://explorer.dischain.xyz/"
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
         return explorerBaseUrl + "address/$walletAddress"
