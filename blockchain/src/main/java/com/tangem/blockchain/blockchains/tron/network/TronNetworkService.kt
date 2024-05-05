@@ -140,7 +140,10 @@ class TronNetworkService(
             is Result.Success -> {
                 val hexValue = result.data.constantResult.firstOrNull()?.ifBlank { "0" }
                     ?: return Result.Failure(BlockchainSdkError.CustomError("FailedToParseNetworkResponse"))
-                val value = BigInteger(hexValue, 16).toBigDecimal(token.decimals)
+
+                // Take the first 32 bytes of the hexadecimal string to correctly display the token balance. ([REDACTED_TASK_KEY])
+                val hexValue32 = hexValue.take(64)
+                val value = BigInteger(hexValue32, 16).toBigDecimal(token.decimals)
                 return Result.Success(token to value)
             }
         }
