@@ -3,7 +3,6 @@ package com.tangem.blockchain.blockchains.kaspa.network
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.hexToBytes
@@ -45,12 +44,12 @@ open class KaspaRestApiNetworkProvider(override val baseUrl: String) : KaspaNetw
         }
     }
 
-    override suspend fun sendTransaction(transaction: KaspaTransactionBody): SimpleResult {
+    override suspend fun sendTransaction(transaction: KaspaTransactionBody): Result<String?> {
         return try {
-            retryIO { api.sendTransaction(transaction) }
-            SimpleResult.Success
+            val result = retryIO { api.sendTransaction(transaction) }
+            Result.Success(result.transactionId)
         } catch (exception: Exception) {
-            SimpleResult.Failure(exception.toBlockchainSdkError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 }

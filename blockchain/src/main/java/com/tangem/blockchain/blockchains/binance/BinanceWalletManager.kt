@@ -8,6 +8,7 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.toSimpleResult
 import com.tangem.common.CompletionResult
 
 class BinanceWalletManager(
@@ -53,7 +54,14 @@ class BinanceWalletManager(
                 when (val signerResponse = signer.sign(buildTransactionResult.data, wallet.publicKey)) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
-                        networkProvider.sendTransaction(transactionToSend)
+                        val result = networkProvider.sendTransaction(transactionToSend)
+
+                        if (result is Result.Success) {
+                            transactionData.hash = result.data
+                            wallet.addOutgoingTransaction(transactionData)
+                        }
+
+                        result.toSimpleResult()
                     }
                     is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResponse.error)
                 }
