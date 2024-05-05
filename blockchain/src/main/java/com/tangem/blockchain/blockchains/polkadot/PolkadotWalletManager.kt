@@ -176,7 +176,7 @@ class PolkadotWalletManager(
             return SimpleResult.Failure(it.error)
         }
 
-        transactionData.hash = txHash
+        transactionData.hash = txHash.formattedHash()
         transactionData.date = Calendar.getInstance()
         wallet.addOutgoingTransaction(transactionData)
 
@@ -192,8 +192,7 @@ class PolkadotWalletManager(
     ): Result<ByteArray> {
         val builtTxForSign = txBuilder.buildForSign(destinationAddress, amount, context)
 
-        val signResult = signer.sign(builtTxForSign, wallet.publicKey)
-        return when (signResult) {
+        return when (val signResult = signer.sign(builtTxForSign, wallet.publicKey)) {
             is CompletionResult.Success -> {
                 val signature = signResult.data
                 val builtForSend = txBuilder.buildForSend(sourceAddress, destinationAddress, amount, context, signature)
@@ -208,6 +207,13 @@ class PolkadotWalletManager(
         val isUnderfunded =
             destinationBalance == BigDecimal.ZERO || destinationBalance < existentialDeposit
         return Result.Success(isUnderfunded)
+    }
+
+    /** Adds 0x prefix to Kusama transactions hashes if necessary to correctly open transaction in explorer */
+    private fun String.formattedHash() = if (wallet.blockchain == Blockchain.Kusama && !this.startsWith(HEX_PREFIX)) {
+        HEX_PREFIX.plus(this)
+    } else {
+        this
     }
 
     private companion object {

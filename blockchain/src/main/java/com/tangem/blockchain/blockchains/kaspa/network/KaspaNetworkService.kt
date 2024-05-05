@@ -1,7 +1,6 @@
 package com.tangem.blockchain.blockchains.kaspa.network
 
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
 
 class KaspaNetworkService(providers: List<KaspaNetworkProvider>) : KaspaNetworkProvider {
@@ -14,7 +13,7 @@ class KaspaNetworkService(providers: List<KaspaNetworkProvider>) : KaspaNetworkP
         return multiNetworkProvider.performRequest(KaspaNetworkProvider::getInfo, address)
     }
 
-    override suspend fun sendTransaction(transaction: KaspaTransactionBody): SimpleResult {
+    override suspend fun sendTransaction(transaction: KaspaTransactionBody): Result<String?> {
         return multiNetworkProvider.performRequest(KaspaNetworkProvider::sendTransaction, transaction)
     }
 }
