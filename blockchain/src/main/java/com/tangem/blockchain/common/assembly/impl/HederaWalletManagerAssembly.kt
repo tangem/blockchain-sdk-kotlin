@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common.assembly.impl
 
+import com.hedera.hashgraph.sdk.Client
 import com.tangem.blockchain.blockchains.hedera.HederaProvidersBuilder
 import com.tangem.blockchain.blockchains.hedera.HederaTransactionBuilder
 import com.tangem.blockchain.blockchains.hedera.HederaWalletManager
@@ -19,7 +20,8 @@ internal class HederaWalletManagerAssembly(
             HederaWalletManager(
                 wallet = wallet,
                 transactionBuilder = HederaTransactionBuilder(curve = curve, wallet = wallet),
-                networkProvider = HederaNetworkService(
+                networkService = HederaNetworkService(
+                    client = if (wallet.blockchain.isTestnet()) Client.forTestnet() else Client.forMainnet(),
                     hederaNetworkProviders = HederaProvidersBuilder(input.providerTypes, config)
                         .build(wallet.blockchain),
                 ),
