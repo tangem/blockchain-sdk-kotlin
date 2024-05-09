@@ -28,10 +28,10 @@ internal class HederaMirrorRestProvider(override val baseUrl: String, key: Strin
     override suspend fun getAccountId(publicKey: ByteArray): Result<String> {
         return try {
             val accountData = retryIO { api.getAccountsByPublicKey(publicKey.toHexString()) }
-            if (accountData.accounts.isEmpty()) {
-                Result.Failure(BlockchainSdkError.AccountNotFound())
-            } else {
+            if (accountData.accounts.size == 1) {
                 Result.Success(accountData.accounts[0].account) // we expect only one account per public key
+            } else {
+                Result.Failure(BlockchainSdkError.AccountNotFound())
             }
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
