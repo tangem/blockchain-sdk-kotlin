@@ -1,7 +1,9 @@
 package com.tangem.blockchain.blockchains.hedera
 
 import android.util.Log
-import com.hedera.hashgraph.sdk.*
+import com.hedera.hashgraph.sdk.AccountId
+import com.hedera.hashgraph.sdk.TransactionId
+import com.hedera.hashgraph.sdk.TransactionResponse
 import com.tangem.blockchain.blockchains.hedera.models.HederaAccountInfo
 import com.tangem.blockchain.blockchains.hedera.models.HederaTransactionId
 import com.tangem.blockchain.blockchains.hedera.network.HederaNetworkService
@@ -75,7 +77,7 @@ internal class HederaWalletManager(
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         return transactionBuilder.buildToSign(transactionData)
             .map { buildTransaction ->
-                val sendResult = sendTransaction(signer, buildTransaction)
+                val sendResult = signAndSendTransaction(signer, buildTransaction)
                 if (sendResult is Result.Success) {
                     transactionData.setTransactionHash(sendResult.data.transactionId)
                     wallet.addOutgoingTransaction(transactionData)
@@ -98,7 +100,7 @@ internal class HederaWalletManager(
         }
     }
 
-    private suspend fun sendTransaction(
+    private suspend fun signAndSendTransaction(
         signer: TransactionSigner,
         builtTransaction: HederaBuiltTransaction,
     ): Result<TransactionResponse> {
@@ -134,27 +136,19 @@ internal class HederaWalletManager(
     }
 
     private suspend fun getCachedAccountId(): Result<String> {
-        val cachedAccountId = dataStorage.getOrNull<BlockchainSavedData.Hedera>(wallet.publicKey)?.accountId
-
-        return if (cachedAccountId.isNullOrBlank()) {
-            return when (val fetchAccountIdResult = fetchAccountId()) {
-                is Result.Success -> {
-                    dataStorage.store(wallet.publicKey, BlockchainSavedData.Hedera(fetchAccountIdResult.data))
-
-                    fetchAccountIdResult
-                }
-                is Result.Failure -> fetchAccountIdResult
-            }
+        val cachedData = dataStorage.getOrNull<BlockchainSavedData.Hedera>(wallet.publicKey)
+        val isCacheCleared = cachedData?.isCacheCleared ?: false
+        return if (isCacheCleared) {
+            val cachedAccountId = cachedData?.accountId
+            if (cachedAccountId.isNullOrBlank()) fetchAndStoreAccountId() else Result.Success(cachedAccountId)
         } else {
-            Result.Success(cachedAccountId)
+            fetchAndStoreAccountId()
         }
     }
 
-    private suspend fun fetchAccountId(): Result<String> {
-        return when (
-            val getAccountIdResult =
-                networkService.getAccountId(wallet.publicKey.blockchainKey.toCompressedPublicKey())
-        ) {
+    private suspend fun fetchAndStoreAccountId(): Result<String> {
+        val publicKey = wallet.publicKey.blockchainKey.toCompressedPublicKey()
+        val accountIdResult = when (val getAccountIdResult = networkService.getAccountId(publicKey)) {
             is Result.Success -> getAccountIdResult
             is Result.Failure -> {
                 if (getAccountIdResult.error is BlockchainSdkError.AccountNotFound) {
@@ -164,6 +158,21 @@ internal class HederaWalletManager(
                 }
             }
         }
+        if (accountIdResult is Result.Success) {
+            storeAccountId(accountId = accountIdResult.data)
+        }
+
+        return accountIdResult
+    }
+
+    private suspend fun storeAccountId(accountId: String) {
+        dataStorage.store(
+            publicKey = wallet.publicKey,
+            value = BlockchainSavedData.Hedera(
+                accountId = accountId,
+                isCacheCleared = true, // true because this method called after clearing cache or when cache is empty.
+            ),
+        )
     }
 
     /** Used to query the status of the `receiving` (`destination`) account. */
