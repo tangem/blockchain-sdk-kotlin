@@ -204,6 +204,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
                 blockchainProviderTypes = emptyMap(),
                 accountCreator = DummyAccountCreator,
                 blockchainDataStorage = DummyBlockchainDataStorage,
+                featureToggles = BlockchainFeatureToggles(isCardanoTokenSupport = true),
             ).makeWalletManagerForApp(
                 scanResponse = scanResponse,
                 blockchain = Blockchain.fromId(selectedBlockchain.id),

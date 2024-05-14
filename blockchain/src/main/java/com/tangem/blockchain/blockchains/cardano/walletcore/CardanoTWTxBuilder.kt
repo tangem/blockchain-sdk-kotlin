@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.cardano.walletcore
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.common.extensions.toByteArray
 import wallet.core.jni.Cardano.minAdaAmount
 import wallet.core.jni.proto.Cardano
@@ -23,6 +24,12 @@ internal class CardanoTWTxBuilder(
 
     /** Build transaction input by [transaction] */
     fun build(transaction: TransactionData): Cardano.SigningInput {
+        if (transaction.amount.type is AmountType.Token &&
+            !DepsContainer.blockchainFeatureToggles.isCardanoTokenSupport
+        ) {
+            throw BlockchainSdkError.CustomError("Cardano tokens isn't supported")
+        }
+
         return Cardano.SigningInput.newBuilder()
             .setTransferMessage(createTransfer(transaction = transaction))
             .setTtl(TRANSACTION_TTL)
@@ -32,6 +39,10 @@ internal class CardanoTWTxBuilder(
 
     /** Calculate required min-ada-value to withdraw all [tokens] */
     fun calculateMinAdaValueToWithdrawAllTokens(tokens: Set<Token>): Long {
+        if (!DepsContainer.blockchainFeatureToggles.isCardanoTokenSupport) {
+            throw BlockchainSdkError.CustomError("Cardano tokens isn't supported")
+        }
+
         val assets = outputs
             .flatMap(CardanoUnspentOutput::assets)
             .filter { asset ->
