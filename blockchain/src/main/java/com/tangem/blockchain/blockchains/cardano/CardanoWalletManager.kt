@@ -81,8 +81,11 @@ internal class CardanoWalletManager(
 
         transactionBuilder.update(response.unspentOutputs)
 
-        response.tokenBalances.forEach {
-            wallet.addTokenValue(value = it.value.toBigDecimal(), token = it.key)
+        response.tokenBalances.forEach { tokenAmount ->
+            wallet.addTokenValue(
+                value = BigDecimal(tokenAmount.value).movePointLeft(tokenAmount.key.decimals),
+                token = tokenAmount.key,
+            )
         }
 
         wallet.recentTransactions.forEach { recentTransaction ->
