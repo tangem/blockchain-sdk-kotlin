@@ -15,6 +15,7 @@ class WalletManagerFactory(
     private val config: BlockchainSdkConfig = BlockchainSdkConfig(),
     private val blockchainProviderTypes: Map<Blockchain, List<ProviderType>>,
     private val accountCreator: AccountCreator,
+    featureToggles: BlockchainFeatureToggles,
     blockchainDataStorage: BlockchainDataStorage,
     loggers: List<BlockchainSDKLogger> = emptyList(),
 ) {
@@ -22,7 +23,7 @@ class WalletManagerFactory(
     private val dataStorage by lazy { AdvancedDataStorage(blockchainDataStorage) }
 
     init {
-        DepsContainer.onInit(config)
+        DepsContainer.onInit(config, featureToggles)
         Logger.addLoggers(loggers)
     }
 
