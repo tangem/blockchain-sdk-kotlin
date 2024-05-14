@@ -28,6 +28,7 @@ import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.MultisigAddressProvider
 import com.tangem.blockchain.common.address.TrustWalletAddressService
 import com.tangem.blockchain.common.derivation.DerivationStyle
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProviderFactory
 import com.tangem.blockchain.externallinkprovider.TxExploreState
@@ -577,13 +578,14 @@ enum class Blockchain(
 
         if (isEvm()) return true
 
+        if (this == Cardano) return DepsContainer.blockchainFeatureToggles.isCardanoTokenSupport
+
         return when (this) {
             Binance, BinanceTestnet,
             Solana, SolanaTestnet,
             Tron, TronTestnet,
             TerraV1,
             VeChain, VeChainTestnet,
-            Cardano,
             Hedera, HederaTestnet,
             -> true
 
