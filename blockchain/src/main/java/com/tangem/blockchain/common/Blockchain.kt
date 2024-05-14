@@ -584,6 +584,7 @@ enum class Blockchain(
             TerraV1,
             VeChain, VeChainTestnet,
             Cardano,
+            Hedera, HederaTestnet,
             -> true
 
             else -> false
