@@ -14,6 +14,10 @@ internal fun Blockchain.getEthereumJsonRpcProviders(config: BlockchainSdkConfig)
             EthereumJsonRpcProvider(baseUrl = "https://arb1.arbitrum.io/rpc/"),
             getNowNodesProvider(baseUrl = "https://arbitrum.nownodes.io/", config = config),
             getInfuraProvider(baseUrl = "https://arbitrum-mainnet.infura.io/v3/", config = config),
+            EthereumJsonRpcProvider(baseUrl = "https://1rpc.io/arb/"),
+            EthereumJsonRpcProvider(baseUrl = "https://arbitrum-one-rpc.publicnode.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://rpc.ankr.com/arbitrum/"),
+            EthereumJsonRpcProvider(baseUrl = "https://arbitrum-one.public.blastapi.io/"),
         )
 
         Blockchain.ArbitrumTestnet -> listOf(
