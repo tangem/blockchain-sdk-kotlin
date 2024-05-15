@@ -8,6 +8,7 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.network.API_TEZOS_BLOCKSCALE
 import com.tangem.blockchain.network.API_TEZOS_ECAD
+import com.tangem.blockchain.network.API_TEZOS_MARIGOLD
 import com.tangem.blockchain.network.API_TEZOS_SMARTPY
 
 internal object TezosWalletManagerAssembly : WalletManagerAssembly<TezosWalletManager>() {
@@ -17,6 +18,7 @@ internal object TezosWalletManagerAssembly : WalletManagerAssembly<TezosWalletMa
             val providers = listOf(
                 TezosJsonRpcNetworkProvider(API_TEZOS_SMARTPY),
                 TezosJsonRpcNetworkProvider(API_TEZOS_ECAD),
+                TezosJsonRpcNetworkProvider(API_TEZOS_MARIGOLD),
                 TezosJsonRpcNetworkProvider(API_TEZOS_BLOCKSCALE),
             )
 
