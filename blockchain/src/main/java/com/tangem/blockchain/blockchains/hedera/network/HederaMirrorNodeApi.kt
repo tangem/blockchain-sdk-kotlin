@@ -6,15 +6,15 @@ import retrofit2.http.Query
 
 internal interface HederaMirrorNodeApi {
 
-    @GET("api/v1/accounts")
+    @GET("accounts")
     suspend fun getAccountsByPublicKey(@Query("account.publickey") publicKey: String): HederaAccountResponse
 
-    @GET("api/v1/network/exchangerate")
+    @GET("network/exchangerate")
     suspend fun getExchangeRate(): HederaExchangeRateResponse
 
-    @GET("api/v1/balances")
+    @GET("balances")
     suspend fun getBalances(@Query("account.id") accountId: String): HederaBalancesResponse
 
-    @GET("api/v1/transactions/{transactionId}")
+    @GET("transactions/{transactionId}")
     suspend fun getTransactionInfo(@Path("transactionId") transactionId: String): HederaTransactionsResponse
 }
