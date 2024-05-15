@@ -124,14 +124,16 @@ internal class HederaWalletManager(
         return when (currencyType) {
             is CryptoCurrencyType.Coin -> SimpleResult.Success
             is CryptoCurrencyType.Token -> {
-                transactionBuilder.buildTokenAssociationForSign(
+                val transaction = transactionBuilder.buildTokenAssociationForSign(
                     tokenAssociation = TokenAssociation(
                         accountId = wallet.address,
                         contractAddress = currencyType.info.contractAddress,
                     ),
                 )
-                    .map { transaction ->
-                        val sendResult = signAndSendTransaction(signer = signer, builtTransaction = transaction)
+                when (transaction) {
+                    is Result.Failure -> transaction.toSimpleResult()
+                    is Result.Success -> {
+                        val sendResult = signAndSendTransaction(signer = signer, builtTransaction = transaction.data)
                         if (sendResult is Result.Success) {
                             wallet.addOutgoingTransaction(
                                 transactionData = TransactionData(
@@ -145,8 +147,9 @@ internal class HederaWalletManager(
                                 ),
                             )
                         }
+                        sendResult.toSimpleResult()
                     }
-                    .toSimpleResult()
+                }
             }
         }
     }
