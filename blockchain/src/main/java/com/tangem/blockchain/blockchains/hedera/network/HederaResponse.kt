@@ -36,7 +36,7 @@ internal data class HederaRate(
 )
 
 @JsonClass(generateAdapter = true)
-internal data class HederaBalancesResponse(@Json(name = "account") val balances: List<HederaBalanceResponse>)
+internal data class HederaBalancesResponse(@Json(name = "balances") val balances: List<HederaBalanceResponse>)
 
 @JsonClass(generateAdapter = true)
 internal data class HederaBalanceResponse(
