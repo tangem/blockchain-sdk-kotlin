@@ -5,7 +5,7 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class RadiantExternalLinkProvider : ExternalLinkProvider {
 
-    override val explorerBaseUrl: String = "https://explorer.radiantblockchain.org/"
+    override val explorerBaseUrl: String = "https://radiantexplorer.com/"
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
         return explorerBaseUrl + "address/$walletAddress"
