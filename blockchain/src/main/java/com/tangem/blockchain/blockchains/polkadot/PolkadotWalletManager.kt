@@ -221,8 +221,8 @@ class PolkadotWalletManager(
         return Result.Success(isUnderfunded)
     }
 
-    /** Adds 0x prefix to Kusama transactions hashes if necessary to correctly open transaction in explorer */
-    private fun String.formattedHash() = if (wallet.blockchain == Blockchain.Kusama && !this.startsWith(HEX_PREFIX)) {
+    /** Adds 0x prefix transactions hashes if necessary to correctly open transaction in explorer */
+    private fun String.formattedHash() = if (!this.startsWith(HEX_PREFIX)) {
         HEX_PREFIX.plus(this)
     } else {
         this
