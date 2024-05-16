@@ -34,6 +34,7 @@ data class TransactionHistoryItem(
     sealed interface TransactionType {
         object Transfer : TransactionType
         data class ContractMethod(val id: String) : TransactionType
+        data class ContractMethodName(val name: String) : TransactionType
     }
 
     sealed class TransactionStatus {
