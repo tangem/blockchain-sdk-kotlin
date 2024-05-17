@@ -36,7 +36,7 @@ class PolkadotWalletManager(
     private val existentialDeposit: BigDecimal = when (wallet.blockchain) {
         Blockchain.Polkadot -> BigDecimal.ONE
         Blockchain.PolkadotTestnet -> 0.01.toBigDecimal()
-        Blockchain.Kusama -> 0.000333.toBigDecimal()
+        Blockchain.Kusama -> 0.000333333333.toBigDecimal()
         Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> 0.0000000005.toBigDecimal()
         else -> error("${wallet.blockchain} isn't supported")
     }
@@ -74,6 +74,10 @@ class PolkadotWalletManager(
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         currentContext = networkProvider.extrinsicContext(wallet.address).successOr { return it }
+        val latestBlockHash = networkProvider.getLatestBlockHash().successOr { return it }
+        val blockNumber = networkProvider.getBlockNumber(latestBlockHash).successOr { return it }
+        currentContext.era = Era.Mortal.forCurrent(TRANSACTION_LIFE_PERIOD, blockNumber.toLong())
+        currentContext.eraBlockHash = Hash256(latestBlockHash.hexToBytes())
 
         val signedTransaction = sign(
             amount = amount,
