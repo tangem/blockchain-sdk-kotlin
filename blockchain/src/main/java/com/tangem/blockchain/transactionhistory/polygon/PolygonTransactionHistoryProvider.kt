@@ -132,7 +132,7 @@ internal class PolygonTransactionHistoryProvider(
                 txHash = transaction.hash,
                 timestamp = TimeUnit.SECONDS.toMillis(transaction.timeStamp.toLong()),
                 isOutgoing = isOutgoing,
-                destinationType = transaction.extractDestinationType(address = transaction.to),
+                destinationType = transaction.extractDestinationType(filterType = filterType, address = transaction.to),
                 sourceType = TransactionHistoryItem.SourceType.Single(address = sourceAddress),
                 status = transaction.extractStatus(),
                 type = transaction.extractType(filterType),
@@ -141,8 +141,11 @@ internal class PolygonTransactionHistoryProvider(
         }
     }
 
-    private fun PolygonTransaction.extractDestinationType(address: String): TransactionHistoryItem.DestinationType {
-        val addressType = if (isContractInteraction) {
+    private fun PolygonTransaction.extractDestinationType(
+        filterType: TransactionHistoryRequest.FilterType,
+        address: String,
+    ): TransactionHistoryItem.DestinationType {
+        val addressType = if (filterType is TransactionHistoryRequest.FilterType.Coin && this.isContractInteraction) {
             TransactionHistoryItem.AddressType.Contract(address = address)
         } else {
             TransactionHistoryItem.AddressType.User(address = address)
