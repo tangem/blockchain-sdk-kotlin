@@ -1,6 +1,6 @@
 package com.tangem.blockchain.blockchains.ton.network
 
-import com.tangem.blockchain.blockchains.ton.TonWalletInfo
+import com.tangem.blockchain.blockchains.ton.models.TonWalletInfo
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
@@ -10,8 +10,8 @@ import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
 import java.math.RoundingMode
 
-class TonNetworkService(
-    jsonRpcProviders: List<TonJsonRpcNetworkProvider>,
+internal class TonNetworkService(
+    jsonRpcProviders: List<TonNetworkProvider>,
     private val blockchain: Blockchain,
 ) {
 
@@ -22,7 +22,7 @@ class TonNetworkService(
     suspend fun getWalletInformation(address: String): Result<TonWalletInfo> {
         return try {
             val addressInformation = multiJsonRpcProvider
-                .performRequest(TonJsonRpcNetworkProvider::getWalletInformation, address)
+                .performRequest(TonNetworkProvider::getWalletInformation, address)
                 .successOr { return it }
             Result.Success(
                 TonWalletInfo(
@@ -53,7 +53,7 @@ class TonNetworkService(
 
     suspend fun send(message: String): Result<String> {
         return try {
-            val hashResponse = multiJsonRpcProvider.performRequest(TonJsonRpcNetworkProvider::send, message)
+            val hashResponse = multiJsonRpcProvider.performRequest(TonNetworkProvider::send, message)
                 .successOr { return it }
             Result.Success(hashResponse.hash)
         } catch (e: Exception) {
