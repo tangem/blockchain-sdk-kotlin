@@ -2,8 +2,8 @@ package com.tangem.blockchain.common.assembly.impl
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinFeesCalculator
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
-import com.tangem.blockchain.blockchains.bitcoin.getBitcoinNetworkProviders
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
+import com.tangem.blockchain.blockchains.dogecoin.DogecoinProvidersBuilder
 import com.tangem.blockchain.blockchains.dogecoin.DogecoinWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
@@ -19,10 +19,9 @@ internal object DogecoinWalletManagerAssembly : WalletManagerAssembly<DogecoinWa
                     walletPublicKey = publicKey.blockchainKey,
                     blockchain = blockchain,
                     walletAddresses = addresses,
-                    isNewOutputToSendCollectionMethodEnabled = true,
                 ),
                 networkProvider = BitcoinNetworkService(
-                    providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config),
+                    providers = DogecoinProvidersBuilder(input.providerTypes, input.config).build(blockchain),
                 ),
                 transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
                 feesCalculator = BitcoinFeesCalculator(blockchain),
