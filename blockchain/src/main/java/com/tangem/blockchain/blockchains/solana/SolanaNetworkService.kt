@@ -25,7 +25,7 @@ internal class SolanaNetworkService(
     private val provider: SolanaRpcClient,
 ) : NetworkProvider {
 
-    override val baseUrl: String = provider.host
+    override val baseUrl: String = provider.baseUrl
     val endpoint: String = provider.endpoint
 
     suspend fun getMainAccountInfo(account: PublicKey): Result<SolanaMainAccountInfo> = withContext(Dispatchers.IO) {

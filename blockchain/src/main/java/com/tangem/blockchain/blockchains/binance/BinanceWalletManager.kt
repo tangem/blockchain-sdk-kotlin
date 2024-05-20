@@ -19,8 +19,7 @@ class BinanceWalletManager(
 
     private val blockchain = wallet.blockchain
 
-    override val currentHost: String
-        get() = networkProvider.host
+    override val currentHost: String get() = networkProvider.baseUrl
 
     override suspend fun updateInternal() {
         when (val result = networkProvider.getInfo(wallet.address)) {

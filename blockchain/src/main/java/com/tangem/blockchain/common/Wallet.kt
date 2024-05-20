@@ -22,6 +22,8 @@ class Wallet(
         get() = addresses.find { it.type == AddressType.Default }?.value
             ?: error("Addresses must contain default address")
 
+    var additionalInfo: WalletAdditionalInfo = WalletAdditionalInfo.NoInfo
+
     init {
         setAmount(Amount(null, blockchain, AmountType.Coin))
         tokens.forEach { setAmount(Amount(it)) }
