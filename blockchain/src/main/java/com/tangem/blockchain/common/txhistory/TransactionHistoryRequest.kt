@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common.txhistory
 
+import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.pagination.Page
 
 data class TransactionHistoryRequest(
@@ -19,6 +20,6 @@ data class TransactionHistoryRequest(
 
     sealed class FilterType {
         object Coin : FilterType()
-        data class Contract(val address: String) : FilterType()
+        data class Contract(val tokenInfo: Token) : FilterType()
     }
 }

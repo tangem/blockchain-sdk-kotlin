@@ -186,6 +186,11 @@ interface TransactionSigner {
     suspend fun sign(hash: ByteArray, publicKey: Wallet.PublicKey): CompletionResult<ByteArray>
 }
 
+interface TransactionValidator {
+
+    fun validate(transaction: TransactionData): kotlin.Result<Unit>
+}
+
 interface SignatureCountValidator {
     suspend fun validateSignatureCount(signedHashes: Int): SimpleResult
 }
