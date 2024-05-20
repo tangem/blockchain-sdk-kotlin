@@ -1,9 +1,9 @@
 package com.tangem.blockchain.common.assembly.impl
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
-import com.tangem.blockchain.blockchains.bitcoin.getBitcoinNetworkProviders
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinFeesCalculator
+import com.tangem.blockchain.blockchains.ravencoin.RavencoinProvidersBuilder
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
@@ -21,7 +21,7 @@ internal object RavencoinWalletManagerAssembly : WalletManagerAssembly<Ravencoin
                     walletAddresses = addresses,
                 ),
                 networkProvider = BitcoinNetworkService(
-                    providers = blockchain.getBitcoinNetworkProviders(blockchain, input.config),
+                    providers = RavencoinProvidersBuilder(input.providerTypes).build(blockchain),
                 ),
                 transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
                 feesCalculator = RavencoinFeesCalculator(blockchain),
