@@ -15,10 +15,10 @@ import com.tangem.blockchain.network.createRetrofitInstance
 import java.math.BigDecimal
 
 class BinanceNetworkService(isTestNet: Boolean = false) : BinanceNetworkProvider {
-    override val host: String = if (!isTestNet) API_BINANCE else API_BINANCE_TESTNET
+    override val baseUrl: String = if (!isTestNet) API_BINANCE else API_BINANCE_TESTNET
 
     private val api: BinanceApi by lazy {
-        createRetrofitInstance(host).create(BinanceApi::class.java)
+        createRetrofitInstance(baseUrl).create(BinanceApi::class.java)
     }
     private val client: BinanceDexApiRestClient by lazy {
         BinanceDexApiClientFactory.newInstance().newRestClient(
@@ -33,7 +33,7 @@ class BinanceNetworkService(isTestNet: Boolean = false) : BinanceNetworkProvider
     override suspend fun getInfo(address: String): Result<BinanceInfoResponse> {
         return try {
             val accountData = retryIO { client.getAccount(address) }
-            val balances = accountData.balances.map { it.symbol to it.free.toBigDecimal() }.toMap()
+            val balances = accountData.balances.associate { it.symbol to it.free.toBigDecimal() }
 
             Result.Success(
                 BinanceInfoResponse(
