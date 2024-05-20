@@ -9,9 +9,7 @@ import com.tangem.common.extensions.hexToBytes
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
-open class KaspaRestApiNetworkProvider(baseUrl: String) : KaspaNetworkProvider {
-
-    override val baseUrl: String = baseUrl
+open class KaspaRestApiNetworkProvider(override val baseUrl: String) : KaspaNetworkProvider {
 
     private val api: KaspaApi by lazy {
         createRetrofitInstance(baseUrl).create(KaspaApi::class.java)
