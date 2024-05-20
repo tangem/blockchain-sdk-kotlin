@@ -48,8 +48,8 @@ internal fun Blockchain.getBitcoinNetworkProviders(
             listOf("https://testnet.ravencoin.network/api/")
         } else {
             listOf(
-                "https://api.ravencoin.org/api/",
                 "https://explorer.rvn.zelcore.io/api/",
+                "https://api.ravencoin.org/api/",
             )
         }.map(::RavencoinNetworkProvider)
         else -> error("$this isn't supported")
