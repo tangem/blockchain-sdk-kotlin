@@ -74,7 +74,7 @@ internal class CardanoTransactionBuilder(
                     minAdaValue = BigDecimal(plan.amount).movePointLeft(decimals),
                 )
             }
-            AmountType.Reserve -> throw BlockchainSdkError.CustomError("Reserve amount is not supported")
+            else -> throw BlockchainSdkError.CustomError("AmountType $type is not supported")
         }
     }
 
