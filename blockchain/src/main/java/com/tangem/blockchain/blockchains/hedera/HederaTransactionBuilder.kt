@@ -109,7 +109,7 @@ internal class HederaTransactionBuilder(
                     .addTokenTransfer(tokenId, sourceAccountId, transactionValue.unaryMinus())
                     .addTokenTransfer(tokenId, destinationAccountId, transactionValue)
             }
-            AmountType.Reserve -> throw BlockchainSdkError.FailedToBuildTx
+            else -> throw BlockchainSdkError.FailedToBuildTx
         }
     }
 
