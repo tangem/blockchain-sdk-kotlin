@@ -169,7 +169,7 @@ internal class HederaWalletManager(
         val transferFeeBase = when (amount.type) {
             AmountType.Coin -> HBAR_TRANSFER_USD_COST
             is AmountType.Token -> HBAR_TOKEN_TRANSFER_USD_COST
-            AmountType.Reserve -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+            else -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         }
         return when (val usdExchangeRateResult = networkService.getUsdExchangeRate()) {
             is Result.Success -> {
