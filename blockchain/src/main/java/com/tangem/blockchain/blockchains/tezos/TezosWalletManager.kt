@@ -153,6 +153,7 @@ class TezosWalletManager(
         return Result.Success(TransactionFee.Single(Fee.Common(Amount(defaultFee, blockchain))))
     }
 
+    @Deprecated("Will be removed in the future. Use TransactionValidator instead")
     override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
         val errors = super.validateTransaction(amount, fee)
         val total = fee?.value?.add(amount.value) ?: amount.value
