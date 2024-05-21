@@ -178,6 +178,25 @@ internal sealed interface KoinosMethod {
             @Json(name = "receipt") val receipt: KoinosProtocol.TransactionReceipt,
         )
     }
+
+    /**
+     * ```protobuf
+     * message get_resource_limits_request {}
+     * ```
+     *
+     * @see <a href=https://github.com/koinos/koinos-proto/blob/master/koinos/rpc/chain/chain_rpc.proto>koinos/rpc/chain/chain_rpc.proto</a>
+     */
+    object GetResourceLimits : KoinosMethod {
+        override fun asRequest(): JsonRPCRequest = JsonRPCRequest(
+            method = "chain.get_resource_limits",
+            params = null,
+        )
+
+        @JsonClass(generateAdapter = true)
+        data class Response(
+            @Json(name = "resource_limit_data") val resourceLimitData: KoinosChain.ResourceLimitData,
+        )
+    }
 }
 
 private fun KoinosMethod.request(method: String) = JsonRPCRequest(

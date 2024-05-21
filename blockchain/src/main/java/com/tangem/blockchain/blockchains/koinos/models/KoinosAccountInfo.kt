@@ -5,4 +5,5 @@ import java.math.BigDecimal
 internal data class KoinosAccountInfo(
     val koinBalance: BigDecimal,
     val mana: BigDecimal,
+    val maxMana: BigDecimal,
 )
