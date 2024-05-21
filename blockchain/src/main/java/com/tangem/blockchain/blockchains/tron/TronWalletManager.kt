@@ -200,8 +200,8 @@ class TronWalletManager(
     private suspend fun getEnergyFee(amount: Amount, destination: String): Result<Int> {
         val token = when (amount.type) {
             AmountType.Coin -> return Result.Success(0)
-            AmountType.Reserve -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
             is AmountType.Token -> amount.type.token
+            else -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         }
         val addressData = destination.decodeBase58(checked = true)
             ?.padLeft(BYTE_ARRAY_SIZE)
