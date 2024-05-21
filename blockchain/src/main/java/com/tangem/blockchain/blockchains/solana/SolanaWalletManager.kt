@@ -139,7 +139,7 @@ class SolanaWalletManager internal constructor(
                 is AmountType.Token -> {
                     super.createTransaction(amount, fee, destination)
                 }
-                AmountType.Reserve -> throw UnsupportedOperation()
+                else -> throw UnsupportedOperation()
             }
         }
     }
@@ -233,7 +233,7 @@ class SolanaWalletManager internal constructor(
                 val mint = PublicKey(amount.type.token.contractAddress)
                 getTokenAccountCreationRent(mint, destinationAccount)
             }
-            is AmountType.Reserve -> Result.Failure(UnsupportedOperation())
+            else -> Result.Failure(UnsupportedOperation())
         }
     }
 
