@@ -95,6 +95,7 @@ abstract class WalletManager(
     }
 
     // TODO: add decimals and currency checks?
+    @Deprecated("Will be removed in the future. Use TransactionValidator instead")
     open fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
         val errors = EnumSet.noneOf(TransactionError::class.java)
 

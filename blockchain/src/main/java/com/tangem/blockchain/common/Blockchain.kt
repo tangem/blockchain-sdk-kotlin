@@ -620,6 +620,7 @@ enum class Blockchain(
         PolygonZkEVM, PolygonZkEVMTestnet,
         Taraxa, TaraxaTestnet,
         Base, BaseTestnet,
+        Koinos, KoinosTestnet,
         -> true
 
         else -> false
@@ -628,6 +629,7 @@ enum class Blockchain(
     fun feePaidCurrency(): FeePaidCurrency = when (this) {
         VeChain, VeChainTestnet -> FeePaidCurrency.Token(VeChainWalletManager.VTHO_TOKEN)
         TerraV1 -> FeePaidCurrency.SameCurrency
+        Koinos, KoinosTestnet -> FeePaidCurrency.FeeResource("Mana")
         else -> FeePaidCurrency.Coin
     }
 
