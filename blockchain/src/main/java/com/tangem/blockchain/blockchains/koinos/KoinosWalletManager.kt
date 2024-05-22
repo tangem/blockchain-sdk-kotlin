@@ -9,7 +9,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.extensions.toSimpleResult
-import java.math.RoundingMode
+import java.math.BigDecimal
 import java.util.EnumSet
 
 internal class KoinosWalletManager(
@@ -17,7 +17,9 @@ internal class KoinosWalletManager(
     transactionHistoryProvider: TransactionHistoryProvider,
     private val networkService: KoinosNetworkService,
     private val transactionBuilder: KoinosTransactionBuilder,
-) : WalletManager(wallet = wallet, transactionHistoryProvider = transactionHistoryProvider) {
+) : WalletManager(wallet = wallet, transactionHistoryProvider = transactionHistoryProvider),
+    FeeResourceAmountProvider,
+    TransactionValidator {
 
     override val currentHost: String
         get() = networkService.baseUrl
@@ -42,42 +44,70 @@ internal class KoinosWalletManager(
             }
         }
 
-        wallet.changeAmountValue(AmountType.Coin, newValue = accountInfo.koinBalance)
-
-        // TODO maybe change interface ([REDACTED_TASK_KEY])
-        wallet.additionalInfo = WalletAdditionalInfo.Koinos(
-            mana = accountInfo.mana,
-            timeToChargeMillis = 0L,
+        wallet.setAmount(
+            value = accountInfo.koinBalance,
+            amountType = AmountType.Coin,
         )
-        // TODO [REDACTED_TASK_KEY]
-        // wallet.changeAmountValue(AmountType.KoinosMana, newValue = accountInfo.mana)
+        wallet.setAmount(
+            value = accountInfo.mana,
+            maxValue = accountInfo.maxMana,
+            amountType = AmountType.FeeResource,
+        )
     }
 
+    @Deprecated("Will be removed in the future. Use TransactionValidator instead")
     override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
-        // TODO [REDACTED_TASK_KEY] validate with mana amount
-        return super.validateTransaction(amount, fee)
+        val errors = EnumSet.noneOf(TransactionError::class.java)
+
+        if (fee?.value != null && amount.value != null) {
+            val currentMana = wallet.amounts[AmountType.FeeResource]?.value ?: BigDecimal.ZERO
+            val availableBalanceForTransfer = currentMana - fee.value
+
+            if (amount.value > availableBalanceForTransfer) {
+                errors.add(TransactionError.AmountExceedsBalance)
+            }
+            if (currentMana < fee.value) {
+                errors.add(TransactionError.FeeExceedsBalance)
+            }
+        }
+
+        return super.validateTransaction(amount, fee).apply { addAll(errors) }
+    }
+
+    override fun validate(transaction: TransactionData): kotlin.Result<Unit> {
+        val fee = transaction.fee?.amount?.value
+            ?: return kotlin.Result.failure(BlockchainSdkError.FailedToLoadFee)
+        val currentMana = wallet.amounts[AmountType.FeeResource]?.value ?: BigDecimal.ZERO
+        val amount = transaction.amount.value
+            ?: return kotlin.Result.failure(BlockchainSdkError.FailedToLoadFee)
+        val availableBalanceForTransfer = currentMana - fee
+
+        return when {
+            currentMana < fee -> {
+                val maxMana = wallet.amounts[AmountType.FeeResource]?.maxValue ?: BigDecimal.ZERO
+                kotlin.Result.failure(
+                    BlockchainSdkError.Koinos.InsufficientMana(manaBalance = currentMana, maxMana = maxMana),
+                )
+            }
+            amount > availableBalanceForTransfer -> {
+                kotlin.Result.failure(BlockchainSdkError.Koinos.ManaFeeExceedsBalance(availableBalanceForTransfer))
+            }
+            else -> kotlin.Result.success(Unit)
+        }
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+        validate(transactionData).onFailure {
+            SimpleResult.Failure(it as? BlockchainSdkError ?: BlockchainSdkError.FailedToBuildTx)
+        }
+
+        val manaLimit = transactionData.fee?.amount?.value
+            ?: return SimpleResult.fromTangemSdkError(BlockchainSdkError.FailedToBuildTx)
+
         val nonce = networkService.getCurrentNonce(wallet.address)
             .successOr { return SimpleResult.fromTangemSdkError(it.error) }
 
-        // FIXME remove after UI requirements is ready ([REDACTED_TASK_KEY])
-        val testManaLimit = (wallet.additionalInfo as WalletAdditionalInfo.Koinos)
-            .mana.multiply(0.1.toBigDecimal())
-            .setScale(Blockchain.Koinos.decimals(), RoundingMode.UP)
-
-        // val testManaLimit = wallet.amounts[AmountType.KoinosMana]!!.value!!
-        //     .multiply(0.1.toBigDecimal())
-        //     .setScale(Blockchain.Koinos.decimals(), RoundingMode.UP)
-
-        // FIXME use this instead ([REDACTED_TASK_KEY])
-        // val manaLimit = (transactionData.extras as? KoinosTransactionExtras)?.manaLimit
-        //     ?: return SimpleResult.fromTangemSdkError(BlockchainSdkError.FailedToBuildTx)
-
-        val transactionDataWithMana = transactionData.copy(
-            extras = KoinosTransactionExtras(testManaLimit),
-        )
+        val transactionDataWithMana = transactionData.copy(extras = KoinosTransactionExtras(manaLimit))
 
         val (transaction, hashToSign) = transactionBuilder.buildToSign(
             transactionData = transactionDataWithMana,
@@ -102,19 +132,38 @@ internal class KoinosWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
-        // TODO ([REDACTED_TASK_KEY])
-        // val currentMana = wallet.amounts[AmountType.KoinosMana]!!.value!!
-        //     .multiply(0.1.toBigDecimal())
-        //     .setScale(Blockchain.Koinos.decimals(), RoundingMode.UP)
-        //
-        // return Result.Success(
-        //     TransactionFee.Single(
-        //         normal = Fee.Common(
-        //             amount = Amount(currentMana, Blockchain.Koinos, AmountType.KoinosMana)
-        //         )
-        //     )
-        // )
+        val rcLimit = networkService.getRCLimit()
+            .successOr { return it }
 
-        return Result.Success(TransactionFee.Single(normal = Fee.Common(amount = Amount(Blockchain.Koinos))))
+        val feeAmount = Fee.Common(
+            amount = Amount(
+                value = rcLimit,
+                blockchain = Blockchain.Koinos,
+                type = AmountType.FeeResource,
+                currencySymbol = "Mana",
+            ),
+        )
+
+        return Result.Success(TransactionFee.Single(normal = feeAmount))
     }
+
+    override fun getFeeResource(): FeeResourceAmountProvider.FeeResource {
+        val amount = wallet.amounts[AmountType.FeeResource]
+        return FeeResourceAmountProvider.FeeResource(
+            value = amount?.value ?: BigDecimal.ZERO,
+            maxValue = amount?.maxValue ?: BigDecimal.ZERO,
+        )
+    }
+
+    override fun getFeeResourceByName(name: String): FeeResourceAmountProvider.FeeResource = getFeeResource()
+
+    override suspend fun isFeeEnough(amount: BigDecimal, feeName: String?): Boolean {
+        val rcLimit = networkService.getRCLimit()
+            .successOr { return false }
+        val currentMana = wallet.amounts[AmountType.FeeResource]?.value ?: BigDecimal.ZERO
+
+        return amount < currentMana - rcLimit && currentMana >= rcLimit
+    }
+
+    override fun isFeeSubtractableFromAmount(): Boolean = true
 }
