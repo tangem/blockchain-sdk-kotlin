@@ -57,4 +57,9 @@ sealed interface ProviderType {
     sealed interface Koinos : ProviderType {
         object KoinosPro : Koinos
     }
+
+    sealed interface Bittensor : ProviderType {
+        object Dwellir : Bittensor
+        object Onfinality : Bittensor
+    }
 }
