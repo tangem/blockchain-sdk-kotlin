@@ -126,6 +126,9 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Joystream -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/1014'/0'/0'/0'"))
             }
+            Blockchain.Bittensor -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/1005'/0'/0'/0'"))
+            }
             Blockchain.Tron -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/195'/0'/0/0"))
             }
