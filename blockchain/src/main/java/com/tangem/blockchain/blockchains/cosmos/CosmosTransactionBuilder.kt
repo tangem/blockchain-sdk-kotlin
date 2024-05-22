@@ -170,7 +170,7 @@ internal class CosmosTransactionBuilder(
                     ?: throw BlockchainSdkError.FailedToBuildTx
             }
 
-            AmountType.Reserve -> throw BlockchainSdkError.FailedToBuildTx
+            else -> throw BlockchainSdkError.FailedToBuildTx
         }
     }
 }
