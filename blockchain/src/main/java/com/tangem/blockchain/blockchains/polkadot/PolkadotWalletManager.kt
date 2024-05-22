@@ -103,6 +103,7 @@ class PolkadotWalletManager(
         }
     }
 
+    @Deprecated("Will be removed in the future. Use TransactionValidator instead")
     override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
         val errors = super.validateTransaction(amount, fee)
 

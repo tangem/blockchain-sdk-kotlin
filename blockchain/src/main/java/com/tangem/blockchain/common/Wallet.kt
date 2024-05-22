@@ -22,8 +22,6 @@ class Wallet(
         get() = addresses.find { it.type == AddressType.Default }?.value
             ?: error("Addresses must contain default address")
 
-    var additionalInfo: WalletAdditionalInfo = WalletAdditionalInfo.NoInfo
-
     init {
         setAmount(Amount(null, blockchain, AmountType.Coin))
         tokens.forEach { setAmount(Amount(it)) }
@@ -33,9 +31,13 @@ class Wallet(
         amounts[amount.type] = amount
     }
 
-    fun changeAmountValue(amountType: AmountType, newValue: BigDecimal?) {
+    fun setAmount(value: BigDecimal?, amountType: AmountType, maxValue: BigDecimal? = null) {
+        setAmount(Amount(value = value, blockchain = blockchain, type = amountType, maxValue = maxValue))
+    }
+
+    fun changeAmountValue(amountType: AmountType, newValue: BigDecimal?, newMaxValue: BigDecimal? = null) {
         amounts[amountType]?.let {
-            amounts[amountType] = it.copy(value = newValue)
+            amounts[amountType] = it.copy(value = newValue, maxValue = newMaxValue)
         }
     }
 
