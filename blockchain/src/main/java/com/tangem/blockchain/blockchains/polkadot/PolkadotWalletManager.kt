@@ -24,7 +24,7 @@ import java.util.EnumSet
 /**
 [REDACTED_AUTHOR]
  */
-class PolkadotWalletManager(
+internal class PolkadotWalletManager(
     wallet: Wallet,
     private val networkProvider: PolkadotNetworkProvider,
     private val extrinsicCheckNetworkProvider: PolkadotAccountHealthCheckNetworkProvider?,
@@ -38,6 +38,7 @@ class PolkadotWalletManager(
         Blockchain.Kusama -> 0.000333333333.toBigDecimal()
         Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> 0.0000000005.toBigDecimal()
         Blockchain.Joystream -> 0.026666656.toBigDecimal()
+        Blockchain.Bittensor -> 0.0000005.toBigDecimal()
         else -> error("${wallet.blockchain} isn't supported")
     }
 
