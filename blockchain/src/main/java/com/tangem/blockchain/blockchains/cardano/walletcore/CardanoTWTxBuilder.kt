@@ -77,7 +77,7 @@ internal class CardanoTWTxBuilder(
             is AmountType.Token -> {
                 setTokenAmount(token = type.token, amount = amount.longValueOrZero)
             }
-            is AmountType.Reserve -> throw BlockchainSdkError.CustomError("Reserve amount is not supported")
+            else -> throw BlockchainSdkError.CustomError("AmountType $type is not supported")
         }
 
         return this
