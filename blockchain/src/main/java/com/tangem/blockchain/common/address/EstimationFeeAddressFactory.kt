@@ -109,10 +109,10 @@ class EstimationFeeAddressFactory {
                 "15RRtiC2akPUE9FGqqa66awoAFz6XCnZiFUf34k2CHbLWNfC"
             Blockchain.Kusama ->
                 "CsNtwDXUzMR4ZKBQrXCfA6bBXQBFU1DDbtSwLAsaVr13sGs"
+            Blockchain.Bittensor -> TODO("ADD")
             Blockchain.AlephZero, Blockchain.AlephZeroTestnet ->
                 "5DaWppqEJPc6BhFKD2NBC1ACXPDMPYfv2AQDB5uH5KT4mpef"
-            Blockchain.Joystream,
-            -> TODO("ADD")
+            Blockchain.Joystream -> "j4SXkX46sABwjxeuziycd2e5m8gDu4ieoWHW3aggbBKkh4WvtF"
             // Cosmos-like
             Blockchain.Cosmos, Blockchain.CosmosTestnet ->
                 "cosmos1lhjvds604fvac32j4eygpr820lyc82dlyq70m5"
