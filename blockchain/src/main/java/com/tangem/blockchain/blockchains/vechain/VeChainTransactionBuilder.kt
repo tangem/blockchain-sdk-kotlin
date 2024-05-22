@@ -171,7 +171,7 @@ class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
                     .build()
             }
 
-            AmountType.Reserve -> error("Not supported")
+            else -> error("Not supported")
         }
     }
 
