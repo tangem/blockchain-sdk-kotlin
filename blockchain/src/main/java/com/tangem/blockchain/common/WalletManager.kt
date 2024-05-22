@@ -94,6 +94,7 @@ abstract class WalletManager(
         )
     }
 // [REDACTED_TODO_COMMENT]
+    @Deprecated("Will be removed in the future. Use TransactionValidator instead")
     open fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
         val errors = EnumSet.noneOf(TransactionError::class.java)
 

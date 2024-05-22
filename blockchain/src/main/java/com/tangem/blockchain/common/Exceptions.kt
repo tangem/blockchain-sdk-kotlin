@@ -213,7 +213,18 @@ sealed class BlockchainSdkError(
     ) {
         class Api(code: Int, message: String) : Koinos(subCode = code, customMessage = message)
 
-        object InsufficientMana : Koinos(subCode = -32603, customMessage = "Insufficient Mana")
+        data class InsufficientMana(
+            val manaBalance: BigDecimal? = null,
+            val maxMana: BigDecimal? = null,
+        ) : Koinos(subCode = -32603, customMessage = "Insufficient Mana")
+
+        data class ManaFeeExceedsBalance(
+            val availableKoinForTransfer: BigDecimal,
+        ) : Koinos(
+            subCode = 1,
+            customMessage = "You can transfer only $availableKoinForTransfer KOIN" +
+                " due to the Mana limit imposed by the Koinos network.",
+        )
 
         class ProtobufDecodeError(protoType: String) : Koinos(
             subCode = 999999,
