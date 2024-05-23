@@ -120,6 +120,9 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.AlephZero -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/643'/0'/0'/0'"))
             }
+            Blockchain.Joystream -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/1014'/0'/0'/0'"))
+            }
             Blockchain.Tron -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/195'/0'/0/0"))
             }
@@ -210,6 +213,10 @@ object DerivationConfigV2 : DerivationConfig() {
 
             Blockchain.Radiant -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/512'/0'/0/0"))
+            }
+
+            Blockchain.Koinos, Blockchain.KoinosTestnet -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/659'/0'/0/0"))
             }
         }
     }

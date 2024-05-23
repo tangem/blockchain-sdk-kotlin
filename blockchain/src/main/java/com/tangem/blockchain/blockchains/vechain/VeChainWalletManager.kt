@@ -36,6 +36,7 @@ internal class VeChainWalletManager(
         super.removeToken(token)
     }
 
+    @Deprecated("Will be removed in the future. Use TransactionValidator instead")
     override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
         val errors = super.validateTransaction(amount, fee)
 
@@ -92,7 +93,7 @@ internal class VeChainWalletManager(
                 amount = amount,
                 token = amount.type.token,
             )
-            AmountType.Reserve -> throw BlockchainSdkError.FailedToLoadFee
+            else -> throw BlockchainSdkError.FailedToLoadFee
         }
     }
 
