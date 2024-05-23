@@ -51,7 +51,7 @@ internal class KoinosWalletManager(
         wallet.setAmount(
             value = accountInfo.mana,
             maxValue = accountInfo.maxMana,
-            amountType = AmountType.FeeResource,
+            amountType = AmountType.FeeResource(),
         )
     }
 
@@ -60,7 +60,7 @@ internal class KoinosWalletManager(
         val errors = EnumSet.noneOf(TransactionError::class.java)
 
         if (fee?.value != null && amount.value != null) {
-            val currentMana = wallet.amounts[AmountType.FeeResource]?.value ?: BigDecimal.ZERO
+            val currentMana = wallet.amounts[AmountType.FeeResource()]?.value ?: BigDecimal.ZERO
             val availableBalanceForTransfer = currentMana - fee.value
 
             if (amount.value > availableBalanceForTransfer) {
@@ -77,14 +77,14 @@ internal class KoinosWalletManager(
     override fun validate(transaction: TransactionData): kotlin.Result<Unit> {
         val fee = transaction.fee?.amount?.value
             ?: return kotlin.Result.failure(BlockchainSdkError.FailedToLoadFee)
-        val currentMana = wallet.amounts[AmountType.FeeResource]?.value ?: BigDecimal.ZERO
+        val currentMana = wallet.amounts[AmountType.FeeResource()]?.value ?: BigDecimal.ZERO
         val amount = transaction.amount.value
             ?: return kotlin.Result.failure(BlockchainSdkError.FailedToLoadFee)
         val availableBalanceForTransfer = currentMana - fee
 
         return when {
             currentMana < fee -> {
-                val maxMana = wallet.amounts[AmountType.FeeResource]?.maxValue ?: BigDecimal.ZERO
+                val maxMana = wallet.amounts[AmountType.FeeResource()]?.maxValue ?: BigDecimal.ZERO
                 kotlin.Result.failure(
                     BlockchainSdkError.Koinos.InsufficientMana(manaBalance = currentMana, maxMana = maxMana),
                 )
@@ -139,7 +139,7 @@ internal class KoinosWalletManager(
             amount = Amount(
                 value = rcLimit,
                 blockchain = Blockchain.Koinos,
-                type = AmountType.FeeResource,
+                type = AmountType.FeeResource(),
                 currencySymbol = "Mana",
             ),
         )
@@ -148,7 +148,7 @@ internal class KoinosWalletManager(
     }
 
     override fun getFeeResource(): FeeResourceAmountProvider.FeeResource {
-        val amount = wallet.amounts[AmountType.FeeResource]
+        val amount = wallet.amounts[AmountType.FeeResource()]
         return FeeResourceAmountProvider.FeeResource(
             value = amount?.value ?: BigDecimal.ZERO,
             maxValue = amount?.maxValue ?: BigDecimal.ZERO,
@@ -160,7 +160,7 @@ internal class KoinosWalletManager(
     override suspend fun isFeeEnough(amount: BigDecimal, feeName: String?): Boolean {
         val rcLimit = networkService.getRCLimit()
             .successOr { return false }
-        val currentMana = wallet.amounts[AmountType.FeeResource]?.value ?: BigDecimal.ZERO
+        val currentMana = wallet.amounts[AmountType.FeeResource()]?.value ?: BigDecimal.ZERO
 
         return amount < currentMana - rcLimit && currentMana >= rcLimit
     }
