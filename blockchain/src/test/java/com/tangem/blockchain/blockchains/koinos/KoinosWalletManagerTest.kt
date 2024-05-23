@@ -159,7 +159,7 @@ internal class KoinosWalletManagerTest {
             value = amount.toBigDecimal().setScale(Blockchain.Koinos.decimals()),
             maxValue = maxAmount?.toBigDecimal()?.setScale(Blockchain.Koinos.decimals()),
             blockchain = Blockchain.Koinos,
-            type = AmountType.FeeResource,
+            type = AmountType.FeeResource(),
         )
     }
 
@@ -174,7 +174,7 @@ internal class KoinosWalletManagerTest {
         setAmount(
             value = mana.toBigDecimal().setScale(Blockchain.Koinos.decimals()),
             maxValue = amounts[AmountType.Coin]!!.value,
-            amountType = AmountType.FeeResource,
+            amountType = AmountType.FeeResource(),
         )
     }
 }
