@@ -63,12 +63,7 @@ data class Amount(
 
 sealed class AmountType {
     object Coin : AmountType()
-
     object Reserve : AmountType()
-
-    data class FeeResource(val name: String? = null) : AmountType() {
-        companion object : AmountType()
-    }
-
+    data class FeeResource(val name: String? = null) : AmountType()
     data class Token(val token: BlockchainToken) : AmountType()
 }
