@@ -235,7 +235,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
         } else {
             walletManager.wallet.amounts[AmountType.Coin]
         }
-        val feeResourceAmount = walletManager.wallet.amounts[AmountType.FeeResource]
+        val feeResourceAmount = walletManager.wallet.amounts[AmountType.FeeResource()]
         val stringValue = tokenAmount?.value?.stripZeroPlainString() ?: "Error"
         val feeResourceStringValue = feeResourceAmount?.value?.stripZeroPlainString()?.let { "FeeResource: $it" } ?: ""
         containerRecipientAddressFee.tvBalance.text = stringValue
