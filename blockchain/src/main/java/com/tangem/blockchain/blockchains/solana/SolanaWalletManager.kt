@@ -12,10 +12,7 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.*
 import com.tangem.blockchain.network.MultiNetworkProvider
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.rpc.Cluster
@@ -162,17 +159,29 @@ class SolanaWalletManager internal constructor(
         signedTransaction: SolanaTransaction,
         transactionData: TransactionData,
     ): SimpleResult {
-        val sendResult = multiNetworkProvider.performRequest {
-            sendTransaction(signedTransaction)
-        }.successOr {
-            return SimpleResult.Failure(it.error)
+        val sendResults = coroutineScope {
+            multiNetworkProvider.providers
+                .map { provider -> async { provider.sendTransaction(signedTransaction) } }
+                .awaitAll()
+        }
+        val firstSuccessResult = sendResults
+            .filterIsInstance<Result.Success<String>>()
+            .firstOrNull()
+
+        if (firstSuccessResult != null) {
+            feeRentHolder.clear()
+            transactionData.hash = firstSuccessResult.data
+            wallet.addOutgoingTransaction(transactionData, hashToLowercase = false)
+
+            return SimpleResult.Success
         }
 
-        feeRentHolder.clear()
-        transactionData.hash = sendResult
-        wallet.addOutgoingTransaction(transactionData, hashToLowercase = false)
-
-        return SimpleResult.Success
+        val error = sendResults
+            .filterIsInstance<Result.Failure>()
+            .firstOrNull()
+            ?.error
+            ?: BlockchainSdkError.FailedToSendException
+        return SimpleResult.Failure(error)
     }
 
     /**
