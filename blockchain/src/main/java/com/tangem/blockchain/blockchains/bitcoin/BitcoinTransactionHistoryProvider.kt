@@ -63,7 +63,7 @@ internal class BitcoinTransactionHistoryProvider(
                     )
                 }
             val txs = response.transactions
-                ?.map { tx -> tx.toTransactionHistoryItem(request.address) }
+                ?.mapNotNull { tx -> tx.toTransactionHistoryItem(request.address) }
                 ?: emptyList()
             val nextPage = if (response.page != null && request.page !is Page.LastPage) {
                 val page = response.page
@@ -82,8 +82,17 @@ internal class BitcoinTransactionHistoryProvider(
         }
     }
 
-    private fun GetAddressResponse.Transaction.toTransactionHistoryItem(walletAddress: String): TransactionHistoryItem {
+    private fun GetAddressResponse.Transaction.toTransactionHistoryItem(
+        walletAddress: String,
+    ): TransactionHistoryItem? {
         val isOutgoing = vin.any { it.addresses?.contains(walletAddress) == true }
+        val transactionAmount = extractAmount(
+            isOutgoing = isOutgoing,
+            tx = this,
+            walletAddress = walletAddress,
+            blockchain = blockchain,
+        )
+
         return TransactionHistoryItem(
             txHash = txid,
             timestamp = TimeUnit.SECONDS.toMillis(blockTime.toLong()),
@@ -92,12 +101,7 @@ internal class BitcoinTransactionHistoryProvider(
             sourceType = sourceType(tx = this, walletAddress = walletAddress),
             status = if (confirmations > 0) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed,
             type = TransactionType.Transfer,
-            amount = extractAmount(
-                isOutgoing = isOutgoing,
-                tx = this,
-                walletAddress = walletAddress,
-                blockchain = blockchain,
-            ),
+            amount = transactionAmount,
         )
     }
 

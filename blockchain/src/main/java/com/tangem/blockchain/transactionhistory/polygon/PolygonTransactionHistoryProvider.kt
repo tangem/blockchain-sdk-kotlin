@@ -56,7 +56,11 @@ internal class PolygonTransactionHistoryProvider(
                 }
             }
 
-            val historyItems = response.result.toTransactionHistoryItems(address, filterType)
+            val historyItems = response.result.toTransactionHistoryItems(
+                excludeZeroAmount = false,
+                walletAddress = address,
+                filterType = filterType,
+            )
             when {
                 historyItems.isEmpty() -> TransactionHistoryState.Success.Empty
                 else -> TransactionHistoryState.Success.HasTransactions(historyItems.size)
@@ -99,7 +103,11 @@ internal class PolygonTransactionHistoryProvider(
                 }
             }
 
-            val txs = response.result.toTransactionHistoryItems(request.address, request.filterType)
+            val txs = response.result.toTransactionHistoryItems(
+                excludeZeroAmount = true,
+                walletAddress = request.address,
+                filterType = request.filterType,
+            )
             val nextPage = if (txs.isNotEmpty()) {
                 Page.Next(pageToLoad.inc().toString())
             } else {
@@ -112,6 +120,7 @@ internal class PolygonTransactionHistoryProvider(
     }
 
     private fun PolygonScanResult.toTransactionHistoryItems(
+        excludeZeroAmount: Boolean,
         walletAddress: String,
         filterType: TransactionHistoryRequest.FilterType,
     ): List<TransactionHistoryItem> {
@@ -120,6 +129,10 @@ internal class PolygonTransactionHistoryProvider(
 
             val transactionAmount = transaction.extractAmount(filterType = filterType).guard {
                 Log.info { "Transaction with invalid value  $transaction received" }
+                return@mapNotNull null
+            }
+            if (excludeZeroAmount && shouldExcludeFromHistory(filterType, transactionAmount)) {
+                Log.info { "Transaction with zero amount is excluded from history. $transaction" }
                 return@mapNotNull null
             }
             if (isLikelySpamTransaction(amount = transactionAmount.longValue, filterType = filterType)) {
