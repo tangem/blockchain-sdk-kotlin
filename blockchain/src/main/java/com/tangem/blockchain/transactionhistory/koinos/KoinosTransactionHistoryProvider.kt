@@ -70,7 +70,7 @@ internal class KoinosTransactionHistoryProvider(
             Page.LastPage
         }
 
-        val transactionHistoryItems = transactions.map {
+        val transactionHistoryItems = transactions.mapNotNull {
             val event = when (it.event) {
                 is KoinosTransactionEntry.Event.KoinTransferEvent -> {
                     val destination = it.event.fromAddress.getDestinationAddress()
