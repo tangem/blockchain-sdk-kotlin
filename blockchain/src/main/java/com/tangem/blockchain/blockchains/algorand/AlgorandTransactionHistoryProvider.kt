@@ -75,9 +75,11 @@ internal class AlgorandTransactionHistoryProvider(
     private fun AlgorandTransactionHistoryItem.toTransactionHistoryItem(
         walletAddress: String,
     ): TransactionHistoryItem? {
-        if (paymentTransaction == null) return null
+        if (this.paymentTransaction == null) return null
 
         val isOutgoing = walletAddress.equals(sender, ignoreCase = true)
+        val transactionAmount = this.extractAmount(isOutgoing, paymentTransaction)
+
         return TransactionHistoryItem(
             txHash = this.id,
             timestamp = this.roundTime?.times(other = 1000) ?: 0L,
@@ -88,7 +90,7 @@ internal class AlgorandTransactionHistoryProvider(
             sourceType = TransactionHistoryItem.SourceType.Single(address = this.sender),
             status = this.extractStatus(),
             type = TransactionHistoryItem.TransactionType.Transfer,
-            amount = this.extractAmount(isOutgoing, paymentTransaction),
+            amount = transactionAmount,
         )
     }
 
