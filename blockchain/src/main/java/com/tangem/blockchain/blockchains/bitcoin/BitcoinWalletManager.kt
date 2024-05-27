@@ -184,6 +184,7 @@ internal open class BitcoinWalletManager(
     protected open suspend fun getBitcoinFeePerKb(): Result<BitcoinFee> = networkProvider.getFee()
 
     companion object {
-        const val DEFAULT_MINIMAL_FEE_PER_KB = 0.00001024
+        // Synced value with iOS
+        const val DEFAULT_MINIMAL_FEE_PER_KB = 0.00001
     }
 }
