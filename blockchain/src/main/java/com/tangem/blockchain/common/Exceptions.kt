@@ -226,6 +226,11 @@ sealed class BlockchainSdkError(
                 " due to the Mana limit imposed by the Koinos network.",
         )
 
+        object InsufficientBalance : Koinos(
+            subCode = 2,
+            customMessage = "Insufficient Balance. Your balance should be higher than the fee value to make a transfer",
+        )
+
         class ProtobufDecodeError(protoType: String) : Koinos(
             subCode = 999999,
             customMessage = "Failed to decode $protoType",
