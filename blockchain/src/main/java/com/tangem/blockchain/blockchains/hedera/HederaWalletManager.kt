@@ -1,65 +1,84 @@
 package com.tangem.blockchain.blockchains.hedera
 
-import android.os.Build
 import android.util.Log
-import com.hedera.hashgraph.sdk.AccountBalanceQuery
 import com.hedera.hashgraph.sdk.AccountId
-import com.hedera.hashgraph.sdk.Client
-import com.hedera.hashgraph.sdk.TransferTransaction
-import com.tangem.blockchain.blockchains.hedera.network.HederaNetworkProvider
+import com.hedera.hashgraph.sdk.Transaction
+import com.hedera.hashgraph.sdk.TransactionId
+import com.hedera.hashgraph.sdk.TransactionResponse
+import com.tangem.blockchain.blockchains.hedera.models.HederaAccountBalance
+import com.tangem.blockchain.blockchains.hedera.models.HederaAccountInfo
+import com.tangem.blockchain.blockchains.hedera.models.HederaTransactionId
+import com.tangem.blockchain.blockchains.hedera.models.TokenAssociation
+import com.tangem.blockchain.blockchains.hedera.network.HederaNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.trustlines.AssetRequirementsCondition
+import com.tangem.blockchain.common.trustlines.AssetRequirementsManager
 import com.tangem.blockchain.extensions.*
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.guard
 import com.tangem.common.extensions.toCompressedPublicKey
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.util.Calendar
 
 internal class HederaWalletManager(
     wallet: Wallet,
     private val transactionBuilder: HederaTransactionBuilder,
-    private val networkProvider: HederaNetworkProvider,
+    private val networkService: HederaNetworkService,
     private val dataStorage: AdvancedDataStorage,
     private val accountCreator: AccountCreator,
-) : WalletManager(wallet), TransactionSender {
+) : WalletManager(wallet), TransactionSender, AssetRequirementsManager {
 
     private val blockchain = wallet.blockchain
-    private val client = if (blockchain.isTestnet()) Client.forTestnet() else Client.forMainnet()
+
+    private var tokenAssociationFeeExchangeRate: BigDecimal? = null
 
     override val currentHost: String
-        get() = networkProvider.baseUrl
+        get() = networkService.baseUrl
 
     override suspend fun updateInternal() {
         when (val getAccountIdResult = getAccountId()) {
-            is Result.Success -> updateBalance(getAccountIdResult.data)
+            is Result.Success -> updateAccountInfo(getAccountIdResult.data)
             is Result.Failure -> updateError(getAccountIdResult.error)
         }
     }
 
-    private fun updateBalance(accountId: String) {
-        try {
-            val balance = AccountBalanceQuery()
-                .setAccountId(AccountId.fromString(accountId))
-                .execute(client)
-            updateWallet(balance.hbars.value)
-        } catch (exception: Exception) {
-            updateError(exception.toBlockchainSdkError())
+    private suspend fun updateAccountInfo(accountId: String) {
+        val pendingTxs = wallet.recentTransactions
+            .filter { it.status == TransactionStatus.Unconfirmed }
+            .mapNotNullTo(hashSetOf()) { it.hash?.let { hash -> HederaTransactionId.fromRawStringId(hash) } }
+        when (val balances = networkService.getAccountInfo(accountId, pendingTxs)) {
+            is Result.Success -> updateWallet(accountId, balances.data)
+            is Result.Failure -> updateError(balances.error)
         }
     }
 
-    private fun updateWallet(balance: BigDecimal) {
-        Log.d(this::class.java.simpleName, "Balance is $balance")
+    private suspend fun updateWallet(accountId: String, accountInfo: HederaAccountInfo) {
+        val balance = accountInfo.balance
+        Log.d(this::class.java.simpleName, "Balance is ${balance.hbarBalance}")
+        val associatedTokens = balance.associatedTokens()
+        cacheData(accountId = accountId, associatedTokens = associatedTokens)
 
-        if (balance != wallet.amounts[AmountType.Coin]?.value) {
-            // assume outgoing transaction has been finalized if balance has changed
-            wallet.recentTransactions.clear()
+        wallet.changeAmountValue(AmountType.Coin, balance.hbarBalance.movePointLeft(blockchain.decimals()))
+        cardTokens.forEach { token ->
+            val tokenBalance = balance.tokenBalances
+                .find { token.contractAddress == it.contractAddress }
+                ?.balance
+                ?.movePointLeft(token.decimals)
+                ?: BigDecimal.ZERO
+            wallet.addTokenValue(tokenBalance, token)
         }
-        wallet.changeAmountValue(AmountType.Coin, balance)
+        accountInfo.pendingTxsInfo.forEach { txInfo ->
+            wallet.recentTransactions.find { it.hash == txInfo.id.rawStringId }?.let { txData ->
+                txData.status = if (txInfo.isPending) TransactionStatus.Unconfirmed else TransactionStatus.Confirmed
+            }
+        }
+        requestExchangeRateIfNeeded(associatedTokens)
     }
 
     private fun updateError(error: BlockchainError) {
@@ -67,32 +86,95 @@ internal class HederaWalletManager(
         if (error is BlockchainSdkError) error("Error isn't BlockchainSdkError")
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        return transactionBuilder.buildToSign(transactionData).map { buildTransaction ->
-            return when (val signerResult = signer.sign(buildTransaction.signatures, wallet.publicKey)) {
-                is CompletionResult.Success -> {
-                    val transactionToSend = transactionBuilder.buildToSend(
-                        buildTransaction.transferTransaction,
-                        signerResult.data,
-                    )
-                    val executeResult = executeTransaction(transactionToSend)
-
-                    if (executeResult is SimpleResult.Success) {
-                        transactionData.setTransactionHash(transactionToSend)
-                        wallet.addOutgoingTransaction(transactionData)
-                    }
-                    executeResult
-                }
-                is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResult.error)
+    override suspend fun hasRequirements(currencyType: CryptoCurrencyType): Boolean {
+        return when (currencyType) {
+            is CryptoCurrencyType.Coin -> false
+            is CryptoCurrencyType.Token -> {
+                val cachedData = dataStorage.getOrNull<BlockchainSavedData.Hedera>(wallet.publicKey) ?: return false
+                val associatedTokens = cachedData.associatedTokens
+                !associatedTokens.contains(currencyType.info.contractAddress)
             }
-        }.toSimpleResult()
+        }
+    }
+
+    override suspend fun requirementsCondition(currencyType: CryptoCurrencyType): AssetRequirementsCondition? {
+        if (!hasRequirements(currencyType)) return null
+
+        return when (currencyType) {
+            is CryptoCurrencyType.Coin -> null
+            is CryptoCurrencyType.Token -> {
+                val exchangeRate = tokenAssociationFeeExchangeRate
+                if (exchangeRate == null) {
+                    AssetRequirementsCondition.PaidTransaction
+                } else {
+                    val feeValue = exchangeRate * HBAR_TOKEN_ASSOCIATE_USD_COST
+                    val feeAmount = Amount(blockchain = wallet.blockchain, value = feeValue)
+                    AssetRequirementsCondition.PaidTransactionWithFee(feeAmount)
+                }
+            }
+        }
+    }
+
+    override suspend fun fulfillRequirements(
+        currencyType: CryptoCurrencyType,
+        signer: TransactionSigner,
+    ): SimpleResult {
+        if (!hasRequirements(currencyType)) return SimpleResult.Success
+
+        return when (currencyType) {
+            is CryptoCurrencyType.Coin -> SimpleResult.Success
+            is CryptoCurrencyType.Token -> {
+                val transaction = transactionBuilder.buildTokenAssociationForSign(
+                    tokenAssociation = TokenAssociation(
+                        accountId = wallet.address,
+                        contractAddress = currencyType.info.contractAddress,
+                    ),
+                )
+                when (transaction) {
+                    is Result.Failure -> transaction.toSimpleResult()
+                    is Result.Success -> {
+                        val sendResult = signAndSendTransaction(signer = signer, builtTransaction = transaction.data)
+                        if (sendResult is Result.Success) {
+                            wallet.addOutgoingTransaction(
+                                transactionData = TransactionData(
+                                    amount = Amount(token = currencyType.info),
+                                    fee = Fee.Common(Amount(blockchain = blockchain)),
+                                    sourceAddress = wallet.address,
+                                    destinationAddress = currencyType.info.contractAddress,
+                                    date = Calendar.getInstance(),
+                                    hash = HederaTransactionId
+                                        .fromTransactionId(sendResult.data.transactionId).rawStringId,
+                                ),
+                            )
+                        }
+                        sendResult.toSimpleResult()
+                    }
+                }
+            }
+        }
+    }
+
+    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+        return transactionBuilder.buildToSign(transactionData)
+            .map { buildTransaction ->
+                val sendResult = signAndSendTransaction(signer, buildTransaction)
+                if (sendResult is Result.Success) {
+                    transactionData.setTransactionHash(sendResult.data.transactionId)
+                    wallet.addOutgoingTransaction(transactionData)
+                }
+            }.toSimpleResult()
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
-        return when (val usdExchangeRateResult = networkProvider.getUsdExchangeRate()) {
+        val transferFeeBase = when (amount.type) {
+            AmountType.Coin -> HBAR_TRANSFER_USD_COST
+            is AmountType.Token -> HBAR_TOKEN_TRANSFER_USD_COST
+            else -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+        }
+        return when (val usdExchangeRateResult = networkService.getUsdExchangeRate()) {
             is Result.Success -> {
                 val isAccountExists = isAccountExist(destination).successOr { false }
-                val feeBase = if (isAccountExists) HBAR_TRANSFER_USD_COST else HBAR_CREATE_ACCOUNT_USD_COST
+                val feeBase = if (isAccountExists) transferFeeBase else HBAR_CREATE_ACCOUNT_USD_COST
                 val fee = (feeBase * MAX_FEE_MULTIPLIER * usdExchangeRateResult.data)
                     .setScale(blockchain.decimals(), RoundingMode.UP)
                 Result.Success(TransactionFee.Single(Fee.Common(Amount(fee, blockchain))))
@@ -103,52 +185,55 @@ internal class HederaWalletManager(
         }
     }
 
-    private fun executeTransaction(transactionToSend: TransferTransaction): SimpleResult {
+    private suspend fun <T : Transaction<T>> signAndSendTransaction(
+        signer: TransactionSigner,
+        builtTransaction: HederaBuiltTransaction<T>,
+    ): Result<TransactionResponse> {
         return try {
-            transactionToSend.execute(client)
-            SimpleResult.Success
-        } catch (exception: Exception) {
-            SimpleResult.Failure(exception.toBlockchainSdkError())
+            when (val signerResult = signer.sign(builtTransaction.signatures, wallet.publicKey)) {
+                is CompletionResult.Success -> {
+                    val transactionToSend = transactionBuilder.buildToSend(
+                        transaction = builtTransaction.transaction,
+                        signatures = signerResult.data,
+                    )
+                    networkService.sendTransaction(transactionToSend)
+                }
+                is CompletionResult.Failure -> Result.fromTangemSdkError(signerResult.error)
+            }
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
         }
     }
 
     private suspend fun getAccountId(): Result<String> {
         return if (wallet.address.isBlank()) {
-            return when (val getCachedAccountIdResult = getCachedAccountId()) {
+            return when (val idResult = retrieveAccountId()) {
                 is Result.Success -> {
-                    wallet.addresses = setOf(Address(getCachedAccountIdResult.data))
+                    wallet.addresses = setOf(Address(idResult.data))
 
-                    getCachedAccountIdResult
+                    idResult
                 }
-                is Result.Failure -> getCachedAccountIdResult
+                is Result.Failure -> idResult
             }
         } else {
             Result.Success(wallet.address)
         }
     }
 
-    private suspend fun getCachedAccountId(): Result<String> {
-        val cachedAccountId = dataStorage.getOrNull<BlockchainSavedData.Hedera>(wallet.publicKey)?.accountId
-
-        return if (cachedAccountId.isNullOrBlank()) {
-            return when (val fetchAccountIdResult = fetchAccountId()) {
-                is Result.Success -> {
-                    dataStorage.store(wallet.publicKey, BlockchainSavedData.Hedera(fetchAccountIdResult.data))
-
-                    fetchAccountIdResult
-                }
-                is Result.Failure -> fetchAccountIdResult
-            }
+    private suspend fun retrieveAccountId(): Result<String> {
+        val cachedData = dataStorage.getOrNull<BlockchainSavedData.Hedera>(wallet.publicKey)
+        val isCacheCleared = cachedData?.isCacheCleared ?: false
+        return if (isCacheCleared) {
+            val cachedAccountId = cachedData?.accountId
+            if (cachedAccountId.isNullOrBlank()) fetchAndStoreAccountId() else Result.Success(cachedAccountId)
         } else {
-            Result.Success(cachedAccountId)
+            fetchAndStoreAccountId()
         }
     }
 
-    private suspend fun fetchAccountId(): Result<String> {
-        return when (
-            val getAccountIdResult =
-                networkProvider.getAccountId(wallet.publicKey.blockchainKey.toCompressedPublicKey())
-        ) {
+    private suspend fun fetchAndStoreAccountId(): Result<String> {
+        val publicKey = wallet.publicKey.blockchainKey.toCompressedPublicKey()
+        val accountIdResult = when (val getAccountIdResult = networkService.getAccountId(publicKey)) {
             is Result.Success -> getAccountIdResult
             is Result.Failure -> {
                 if (getAccountIdResult.error is BlockchainSdkError.AccountNotFound) {
@@ -158,6 +243,22 @@ internal class HederaWalletManager(
                 }
             }
         }
+        if (accountIdResult is Result.Success) {
+            cacheData(accountId = accountIdResult.data)
+        }
+
+        return accountIdResult
+    }
+
+    private suspend fun cacheData(accountId: String, associatedTokens: Set<String> = emptySet()) {
+        dataStorage.store(
+            publicKey = wallet.publicKey,
+            value = BlockchainSavedData.Hedera(
+                accountId = accountId,
+                associatedTokens = associatedTokens,
+                isCacheCleared = true,
+            ),
+        )
     }
 
     /** Used to query the status of the `receiving` (`destination`) account. */
@@ -174,7 +275,7 @@ internal class HederaWalletManager(
             return Result.Success(true)
         }
         val alias = destinationAccountId.aliasKey.guard { return Result.Success(false) }
-        return networkProvider.getAccountId(alias.toBytesRaw()).fold(
+        return networkService.getAccountId(alias.toBytesRaw()).fold(
             success = { return Result.Success(true) },
             failure = { return Result.Success(false) },
         )
@@ -184,26 +285,36 @@ internal class HederaWalletManager(
         return accountCreator.createAccount(blockchain = blockchain, walletPublicKey = wallet.publicKey.blockchainKey)
     }
 
-    private fun TransactionData.setTransactionHash(transactionToSend: TransferTransaction) {
-        // Uses java.time.Instant which is available from 26+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val validStart = transactionToSend.transactionId.validStart
-            hash = buildString {
-                append(wallet.address)
-                append(HEDERA_EXPLORER_LINK_DELIMITER)
-                append(validStart?.epochSecond.toString())
-                append(HEDERA_EXPLORER_LINK_DELIMITER)
-                append(validStart?.nano.toString())
-            }
-        }
+    private fun TransactionData.setTransactionHash(transactionId: TransactionId) {
+        hash = HederaTransactionId.fromTransactionId(transactionId).rawStringId
     }
+
+    /**
+     * We need this method to pre-load exchange rate, which will be used in associate notification
+     */
+    private suspend fun requestExchangeRateIfNeeded(alreadyAssociatedTokens: Set<String>) {
+        if (cardTokens.all { token -> alreadyAssociatedTokens.contains(token.contractAddress) }) {
+            // All added tokens(from `cardTokens`) are already associated with the current account;
+            // Therefore there is no point in requesting an exchange rate to calculate the token association fee.
+
+            return
+        }
+
+        tokenAssociationFeeExchangeRate = networkService.getUsdExchangeRate().successOr { return }
+    }
+
+    private fun HederaAccountBalance.associatedTokens(): Set<String> =
+        tokenBalances.mapTo(hashSetOf(), HederaAccountBalance.TokenBalance::contractAddress)
 
     private companion object {
         // https://docs.hedera.com/hedera/networks/mainnet/fees
         val HBAR_TRANSFER_USD_COST = BigDecimal("0.0001")
         val HBAR_CREATE_ACCOUNT_USD_COST = BigDecimal("0.05")
-        // Hedera fees are low, allow 10% safety margin to allow usage of not precise fee estimate
+        val HBAR_TOKEN_ASSOCIATE_USD_COST = BigDecimal("0.05")
+        val HBAR_TOKEN_TRANSFER_USD_COST = BigDecimal("0.001")
+        /**
+         * Hedera fees are low, allow 10% safety margin to allow usage of not precise fee estimate
+         */
         val MAX_FEE_MULTIPLIER = BigDecimal("1.1")
-        const val HEDERA_EXPLORER_LINK_DELIMITER = "-"
     }
 }
