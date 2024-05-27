@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.tangem.TangemSdk
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.databinding.ActivityBlockchainDemoBinding
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.CompletionResult
 import com.tangem.common.card.CardWallet
@@ -17,7 +18,6 @@ import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.toHexString
 import com.tangem.demo.accountcreator.DummyAccountCreator
 import com.tangem.demo.cardSdk.ScanCardAndDerive
-import com.tangem.demo.databinding.ActivityBlockchainDemoBinding
 import com.tangem.demo.datastorage.DummyBlockchainDataStorage
 import com.tangem.demo.extensions.*
 import com.tangem.demo.model.ScanResponse
