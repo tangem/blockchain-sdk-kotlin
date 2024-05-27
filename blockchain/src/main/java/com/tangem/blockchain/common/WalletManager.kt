@@ -95,6 +95,7 @@ abstract class WalletManager(
     }
 
     // TODO: add decimals and currency checks?
+    @Deprecated("Will be removed in the future. Use TransactionValidator instead")
     open fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
         val errors = EnumSet.noneOf(TransactionError::class.java)
 
@@ -184,6 +185,11 @@ interface TransactionSigner {
     suspend fun sign(hashes: List<ByteArray>, publicKey: Wallet.PublicKey): CompletionResult<List<ByteArray>>
 
     suspend fun sign(hash: ByteArray, publicKey: Wallet.PublicKey): CompletionResult<ByteArray>
+}
+
+interface TransactionValidator {
+
+    fun validate(transaction: TransactionData): kotlin.Result<Unit>
 }
 
 interface SignatureCountValidator {
