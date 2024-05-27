@@ -12,7 +12,6 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
-import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.hexToBytes
 import io.emeraldpay.polkaj.tx.Era
@@ -38,6 +37,7 @@ class PolkadotWalletManager(
         Blockchain.PolkadotTestnet -> 0.01.toBigDecimal()
         Blockchain.Kusama -> 0.000333333333.toBigDecimal()
         Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> 0.0000000005.toBigDecimal()
+        Blockchain.Joystream -> 0.026666656.toBigDecimal()
         else -> error("${wallet.blockchain} isn't supported")
     }
 
@@ -74,10 +74,13 @@ class PolkadotWalletManager(
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         currentContext = networkProvider.extrinsicContext(wallet.address).successOr { return it }
-        val latestBlockHash = networkProvider.getLatestBlockHash().successOr { return it }
-        val blockNumber = networkProvider.getBlockNumber(latestBlockHash).successOr { return it }
-        currentContext.era = Era.Mortal.forCurrent(TRANSACTION_LIFE_PERIOD, blockNumber.toLong())
-        currentContext.eraBlockHash = Hash256(latestBlockHash.hexToBytes())
+        runCatching { updateEra() }.onFailure {
+            Result.Failure(
+                BlockchainSdkError.CustomError(
+                    it.message ?: "Unknown error",
+                ),
+            )
+        }
 
         val signedTransaction = sign(
             amount = amount,
@@ -100,6 +103,7 @@ class PolkadotWalletManager(
         }
     }
 
+    @Deprecated("Will be removed in the future. Use TransactionValidator instead")
     override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
         val errors = super.validateTransaction(amount, fee)
 
@@ -114,10 +118,8 @@ class PolkadotWalletManager(
     }
 
     override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val latestBlockHash = networkProvider.getLatestBlockHash().successOr { return it.toSimpleFailure() }
-        val blockNumber = networkProvider.getBlockNumber(latestBlockHash).successOr { return it.toSimpleFailure() }
-        currentContext.era = Era.Mortal.forCurrent(TRANSACTION_LIFE_PERIOD, blockNumber.toLong())
-        currentContext.eraBlockHash = Hash256(latestBlockHash.hexToBytes())
+        runCatching { updateEra() }
+            .onFailure { return SimpleResult.Failure(BlockchainSdkError.CustomError(it.message ?: "Unknown error")) }
         return when (transactionData.amount.type) {
             AmountType.Coin -> sendCoin(transactionData, signer, currentContext)
             else -> SimpleResult.Failure(UnsupportedOperation())
@@ -148,6 +150,13 @@ class PolkadotWalletManager(
         }
         return extrinsicCheckNetworkProvider.getAccountInfo(key = wallet.address)
             .successOr { throw it.error as BlockchainSdkError }
+    }
+
+    private suspend fun updateEra() {
+        val latestBlockHash = networkProvider.getLatestBlockHash().successOr { error("latestBlockHash error") }
+        val blockNumber = networkProvider.getBlockNumber(latestBlockHash).successOr { error("blockNumber error") }
+        currentContext.era = Era.Mortal.forCurrent(TRANSACTION_LIFE_PERIOD, blockNumber.toLong())
+        currentContext.eraBlockHash = Hash256(latestBlockHash.hexToBytes())
     }
 
     private suspend fun sendCoin(
