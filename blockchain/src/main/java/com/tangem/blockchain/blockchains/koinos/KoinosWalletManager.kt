@@ -81,8 +81,12 @@ internal class KoinosWalletManager(
         val amount = transaction.amount.value
             ?: return kotlin.Result.failure(BlockchainSdkError.FailedToLoadFee)
         val availableBalanceForTransfer = currentMana - fee
+        val balance = wallet.amounts[AmountType.Coin]?.value ?: BigDecimal.ZERO
 
         return when {
+            balance < fee -> {
+                kotlin.Result.failure(BlockchainSdkError.Koinos.InsufficientBalance)
+            }
             currentMana < fee -> {
                 val maxMana = wallet.amounts[AmountType.FeeResource()]?.maxValue ?: BigDecimal.ZERO
                 kotlin.Result.failure(
