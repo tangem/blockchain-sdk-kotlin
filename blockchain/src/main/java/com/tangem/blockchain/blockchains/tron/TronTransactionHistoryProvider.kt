@@ -137,6 +137,10 @@ internal class TronTransactionHistoryProvider(
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
         }
+        if (shouldExcludeFromHistory(filterType, amount)) {
+            Log.info { "Transaction with zero amount is excluded from history. $this" }
+            return null
+        }
         val sourceType = extractSourceType(tx = this, filterType = filterType).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
