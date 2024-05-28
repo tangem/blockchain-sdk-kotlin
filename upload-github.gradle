@@ -10,7 +10,7 @@ afterEvaluate {
                 version = "$project.artifactVersion"
 
                 from components.release
-                artifact(sourceJar)
+                // artifact(sourceJar)
 
                 pom.withXml {
                     Node pomNode = asNode()
