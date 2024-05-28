@@ -110,6 +110,10 @@ internal class EthereumTransactionHistoryProvider(
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
         }
+        if (shouldExcludeFromHistory(filterType, amount)) {
+            Log.info { "Transaction with zero amount is excluded from history. $this" }
+            return null
+        }
 
         return TransactionHistoryItem(
             txHash = txid,
