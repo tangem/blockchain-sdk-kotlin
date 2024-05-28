@@ -95,6 +95,6 @@ class KaspaWalletManager(
     }
 
     companion object {
-        const val FEE_PER_UNSPENT_OUTPUT = 0.0001
+        const val FEE_PER_UNSPENT_OUTPUT = 0.2
     }
 }
