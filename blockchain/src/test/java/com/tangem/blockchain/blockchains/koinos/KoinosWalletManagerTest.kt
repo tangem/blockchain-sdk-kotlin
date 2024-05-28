@@ -68,6 +68,22 @@ internal class KoinosWalletManagerTest {
             .isInstanceOf(BlockchainSdkError.Koinos.ManaFeeExceedsBalance::class.java)
     }
 
+    @Test
+    fun transactionValidationTest_coin_balance_does_not_cover_fee() {
+        walletManager.wallet.apply {
+            setBalance(0.2f)
+            setMana(0.2f)
+        }
+
+        val errors = walletManager.validate(
+            transactionData(0.2f, 0.3f),
+        )
+
+        Truth.assertThat(errors.isFailure).isTrue()
+        Truth.assertThat(errors.exceptionOrNull())
+            .isInstanceOf(BlockchainSdkError.Koinos.InsufficientBalance::class.java)
+    }
+
     // ====Legacy
 
     @Test
