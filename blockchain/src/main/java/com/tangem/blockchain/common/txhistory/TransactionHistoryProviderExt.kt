@@ -30,8 +30,7 @@ internal fun Blockchain.getTransactionHistoryProvider(
     }
 
     if (providerFactory != null) {
-        return providerFactory.makeProvider(config = config, blockchain = this)
-            ?: DefaultTransactionHistoryProvider
+        return providerFactory.makeProvider(config = config, blockchain = this) ?: DefaultTransactionHistoryProvider
     }
 
     return if (config.nowNodeCredentials != null && config.nowNodeCredentials.apiKey.isNotBlank()) {
@@ -56,7 +55,6 @@ internal fun Blockchain.getTransactionHistoryProvider(
             Blockchain.Arbitrum,
             Blockchain.Avalanche,
             Blockchain.BSC,
-            // Blockchain.Polygon,
             Blockchain.EthereumPow,
             // Blockchain.Kava,
             -> EthereumTransactionHistoryProvider(
