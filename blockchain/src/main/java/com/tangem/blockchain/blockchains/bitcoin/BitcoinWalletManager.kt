@@ -25,11 +25,14 @@ internal open class BitcoinWalletManager(
     private val feesCalculator: BitcoinFeesCalculator,
 ) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider),
     TransactionSender,
-    SignatureCountValidator {
+    SignatureCountValidator,
+    UtxoBlockchain {
 
     protected val blockchain = wallet.blockchain
 
     override val dustValue: BigDecimal = feesCalculator.minimalFeePerKb
+
+    override val allowConsolidation: Boolean = true
 
     override val currentHost: String
         get() = networkProvider.baseUrl
@@ -115,8 +118,7 @@ internal open class BitcoinWalletManager(
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
             is Result.Success -> {
-                val signerResult = signer.sign(buildTransactionResult.data, wallet.publicKey)
-                return when (signerResult) {
+                return when (val signerResult = signer.sign(buildTransactionResult.data, wallet.publicKey)) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(
                             signerResult.data.reduce { acc, bytes -> acc + bytes },
