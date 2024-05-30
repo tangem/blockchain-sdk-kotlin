@@ -16,6 +16,8 @@ data class BlockchainSdkConfig(
     val hederaArkhiaApiKey: String? = null,
     val polygonScanApiKey: String? = null,
     val koinosProApiKey: String? = null,
+    val bittensorDwellirApiKey: String? = null,
+    val bittensorOnfinalityApiKey: String? = null,
 )
 
 data class BlockchairCredentials(
