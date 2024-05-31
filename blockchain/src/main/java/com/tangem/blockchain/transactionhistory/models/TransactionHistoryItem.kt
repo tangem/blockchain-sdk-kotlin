@@ -1,4 +1,4 @@
-package com.tangem.blockchain.common.txhistory
+package com.tangem.blockchain.transactionhistory.models
 
 import com.tangem.blockchain.common.Amount
 

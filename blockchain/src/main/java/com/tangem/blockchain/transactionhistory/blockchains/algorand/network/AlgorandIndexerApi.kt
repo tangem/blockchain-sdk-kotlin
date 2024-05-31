@@ -1,4 +1,4 @@
-package com.tangem.blockchain.blockchains.algorand.network
+package com.tangem.blockchain.transactionhistory.blockchains.algorand.network
 
 import retrofit2.http.GET
 import retrofit2.http.Query
