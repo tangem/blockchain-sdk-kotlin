@@ -1,4 +1,4 @@
-package com.tangem.blockchain.blockchains.bitcoin
+package com.tangem.blockchain.transactionhistory.blockchains.bitcoin
 
 import android.util.Log
 import com.tangem.blockchain.common.Amount
@@ -6,16 +6,16 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.pagination.Page
 import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.common.toBlockchainSdkError
-import com.tangem.blockchain.common.txhistory.TransactionHistoryItem
-import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionStatus
-import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionType
-import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
-import com.tangem.blockchain.common.txhistory.TransactionHistoryRequest
-import com.tangem.blockchain.common.txhistory.TransactionHistoryState
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.toBigDecimalOrDefault
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryState
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.TransactionStatus
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.TransactionType
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit

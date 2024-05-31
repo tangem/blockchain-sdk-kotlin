@@ -2,8 +2,8 @@ package com.tangem.blockchain.common
 
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
-import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
-import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.DebouncedInvoke
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult

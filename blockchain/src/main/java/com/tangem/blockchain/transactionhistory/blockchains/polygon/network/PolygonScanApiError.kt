@@ -1,4 +1,4 @@
-package com.tangem.blockchain.transactionhistory.polygon.network
+package com.tangem.blockchain.transactionhistory.blockchains.polygon.network
 
 internal sealed class PolygonScanApiError {
     object EndOfTransactionsReached : PolygonScanApiError()
