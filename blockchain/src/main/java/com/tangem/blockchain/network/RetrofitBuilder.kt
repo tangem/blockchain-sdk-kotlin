@@ -6,7 +6,7 @@ import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResourceBodyAdapter
 import com.tangem.blockchain.common.EnumeratedEnum
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
-import com.tangem.blockchain.transactionhistory.polygon.network.PolygonScanResultAdapter
+import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.PolygonScanResultAdapter
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
