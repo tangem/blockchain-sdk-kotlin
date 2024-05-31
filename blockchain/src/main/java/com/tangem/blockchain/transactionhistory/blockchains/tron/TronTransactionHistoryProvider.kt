@@ -1,17 +1,16 @@
-package com.tangem.blockchain.blockchains.tron
+package com.tangem.blockchain.transactionhistory.blockchains.tron
 
 import com.tangem.Log
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.pagination.Page
 import com.tangem.blockchain.common.pagination.PaginationWrapper
-import com.tangem.blockchain.common.txhistory.TransactionHistoryItem
-import com.tangem.blockchain.common.txhistory.TransactionHistoryItem.TransactionStatus
-import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
-import com.tangem.blockchain.common.txhistory.TransactionHistoryRequest
-import com.tangem.blockchain.common.txhistory.TransactionHistoryState
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryState
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import com.tangem.common.extensions.guard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -253,15 +252,19 @@ internal class TronTransactionHistoryProvider(
         }
     }
 
-    private fun extractStatus(tx: GetAddressResponse.Transaction): TransactionStatus {
+    private fun extractStatus(tx: GetAddressResponse.Transaction): TransactionHistoryItem.TransactionStatus {
         val status = tx.tronTXReceipt?.status.guard {
-            return if (tx.confirmations > 0) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed
+            return if (tx.confirmations > 0) {
+                TransactionHistoryItem.TransactionStatus.Confirmed
+            } else {
+                TransactionHistoryItem.TransactionStatus.Unconfirmed
+            }
         }
 
         return when (status) {
-            GetAddressResponse.Transaction.StatusType.PENDING -> TransactionStatus.Unconfirmed
-            GetAddressResponse.Transaction.StatusType.FAILURE -> TransactionStatus.Failed
-            GetAddressResponse.Transaction.StatusType.OK -> TransactionStatus.Confirmed
+            GetAddressResponse.Transaction.StatusType.PENDING -> TransactionHistoryItem.TransactionStatus.Unconfirmed
+            GetAddressResponse.Transaction.StatusType.FAILURE -> TransactionHistoryItem.TransactionStatus.Failed
+            GetAddressResponse.Transaction.StatusType.OK -> TransactionHistoryItem.TransactionStatus.Confirmed
         }
     }
 
