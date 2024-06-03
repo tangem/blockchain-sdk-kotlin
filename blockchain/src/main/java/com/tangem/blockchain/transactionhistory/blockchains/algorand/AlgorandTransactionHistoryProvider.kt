@@ -1,18 +1,18 @@
-package com.tangem.blockchain.blockchains.algorand
+package com.tangem.blockchain.transactionhistory.blockchains.algorand
 
-import com.tangem.blockchain.blockchains.algorand.network.AlgorandIndexerApi
-import com.tangem.blockchain.blockchains.algorand.network.AlgorandPaymentTransaction
-import com.tangem.blockchain.blockchains.algorand.network.AlgorandTransactionHistoryItem
+import com.tangem.blockchain.transactionhistory.blockchains.algorand.network.AlgorandIndexerApi
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.pagination.Page
 import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.common.toBlockchainSdkError
-import com.tangem.blockchain.common.txhistory.TransactionHistoryItem
-import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
-import com.tangem.blockchain.common.txhistory.TransactionHistoryRequest
-import com.tangem.blockchain.common.txhistory.TransactionHistoryState
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
+import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.transactionhistory.blockchains.algorand.network.AlgorandPaymentTransaction
+import com.tangem.blockchain.transactionhistory.blockchains.algorand.network.AlgorandTransactionHistoryItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

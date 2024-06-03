@@ -3,7 +3,7 @@ package com.tangem.blockchain.network.blockbook.network
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
-import com.tangem.blockchain.common.txhistory.TransactionHistoryRequest
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
 import com.tangem.blockchain.network.blockbook.config.BlockBookConfig
 import com.tangem.blockchain.network.blockbook.config.BlockBookRequest

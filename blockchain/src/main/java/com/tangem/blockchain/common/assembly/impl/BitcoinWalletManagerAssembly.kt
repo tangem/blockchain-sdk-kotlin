@@ -7,7 +7,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
-import com.tangem.blockchain.common.txhistory.getTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 
 internal object BitcoinWalletManagerAssembly : WalletManagerAssembly<BitcoinWalletManager>() {
 
@@ -24,7 +24,7 @@ internal object BitcoinWalletManagerAssembly : WalletManagerAssembly<BitcoinWall
                     providers = BitcoinProvidersBuilder(providerTypes = input.providerTypes, config = input.config)
                         .build(blockchain),
                 ),
-                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
+                transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
                 feesCalculator = BitcoinFeesCalculator(blockchain),
             )
         }
