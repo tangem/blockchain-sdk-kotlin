@@ -13,6 +13,7 @@ import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
 import com.tangem.blockchain.blockchains.nexa.NexaAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
+import com.tangem.blockchain.blockchains.radiant.RadiantAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
@@ -256,7 +257,6 @@ enum class Blockchain(
             Ducatus,
             Dash,
             Ravencoin, RavencoinTestnet,
-            Radiant,
             -> BitcoinAddressService(this)
 
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
@@ -318,6 +318,7 @@ enum class Blockchain(
             Chia, ChiaTestnet -> ChiaAddressService(this)
             Hedera, HederaTestnet -> HederaAddressService(this.isTestnet())
             Nexa, NexaTestnet -> NexaAddressService(this.isTestnet())
+            Radiant -> RadiantAddressService()
             Unknown -> error("unsupported blockchain")
         }
     }
