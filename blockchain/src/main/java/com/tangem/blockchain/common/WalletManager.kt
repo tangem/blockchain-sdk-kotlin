@@ -205,3 +205,11 @@ interface Approver {
 
     fun getApproveData(spenderAddress: String, value: Amount? = null): String
 }
+
+/**
+ * Common interface for UTXO blockchain managers
+ */
+interface UtxoBlockchainManager {
+    /** Indicates allowance of self sending */
+    val allowConsolidation: Boolean
+}
