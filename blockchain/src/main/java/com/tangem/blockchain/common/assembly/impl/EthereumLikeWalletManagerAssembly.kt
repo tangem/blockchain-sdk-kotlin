@@ -11,7 +11,7 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
-import com.tangem.blockchain.common.txhistory.getTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 
 internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<EthereumWalletManager>() {
 
@@ -27,7 +27,7 @@ internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<Ethere
                     jsonRpcProviders = getProvidersBuilder(blockchain, input.providerTypes, input.config)
                         .build(blockchain),
                 ),
-                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
+                transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
             )
         }
     }
