@@ -1,4 +1,4 @@
-package com.tangem.blockchain.transactionhistory.polygon.network
+package com.tangem.blockchain.transactionhistory.blockchains.polygon.network
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
