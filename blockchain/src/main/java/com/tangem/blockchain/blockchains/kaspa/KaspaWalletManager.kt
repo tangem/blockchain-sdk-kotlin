@@ -16,13 +16,15 @@ class KaspaWalletManager(
     wallet: Wallet,
     private val transactionBuilder: KaspaTransactionBuilder,
     private val networkProvider: KaspaNetworkProvider,
-) : WalletManager(wallet), TransactionSender, UtxoAmountLimitProvider {
+) : WalletManager(wallet), TransactionSender, UtxoAmountLimitProvider, UtxoBlockchainManager {
 
     override val currentHost: String
         get() = networkProvider.baseUrl
 
     private val blockchain = wallet.blockchain
     override val dustValue: BigDecimal = FEE_PER_UNSPENT_OUTPUT.toBigDecimal()
+
+    override val allowConsolidation: Boolean = true
 
     override suspend fun updateInternal() {
         when (val response = networkProvider.getInfo(wallet.address)) {
