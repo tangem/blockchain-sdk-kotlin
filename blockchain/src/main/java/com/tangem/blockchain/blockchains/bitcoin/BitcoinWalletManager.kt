@@ -26,7 +26,7 @@ internal open class BitcoinWalletManager(
 ) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider),
     TransactionSender,
     SignatureCountValidator,
-    UtxoBlockchain {
+    UtxoBlockchainManager {
 
     protected val blockchain = wallet.blockchain
 

@@ -207,9 +207,9 @@ interface Approver {
 }
 
 /**
- * Common interface for UTXO blockchains
+ * Common interface for UTXO blockchain managers
  */
-interface UtxoBlockchain {
+interface UtxoBlockchainManager {
     /** Indicates allowance of self sending */
     val allowConsolidation: Boolean
 }
