@@ -7,7 +7,7 @@ import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
-import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.bigIntegerValue
@@ -19,7 +19,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 
-class TronWalletManager(
+internal class TronWalletManager(
     wallet: Wallet,
     transactionHistoryProvider: TransactionHistoryProvider,
     private val transactionBuilder: TronTransactionBuilder,
