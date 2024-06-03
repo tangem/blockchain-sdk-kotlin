@@ -6,8 +6,8 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
-import com.tangem.blockchain.common.txhistory.getTransactionHistoryProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 
 internal object EthereumWalletManagerAssembly : WalletManagerAssembly<EthereumWalletManager>() {
 
@@ -26,7 +26,7 @@ internal object EthereumWalletManagerAssembly : WalletManagerAssembly<EthereumWa
                         tokens = input.config.blockcypherTokens,
                     ),
                 ),
-                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
+                transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
             )
         }
     }
