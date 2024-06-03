@@ -1,8 +1,10 @@
-package com.tangem.blockchain.common.txhistory
+package com.tangem.blockchain.transactionhistory
 
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 
 interface TransactionHistoryProvider {
 
