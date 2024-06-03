@@ -8,7 +8,7 @@ import com.tangem.blockchain.blockchains.dash.DashProvidersBuilder
 import com.tangem.blockchain.blockchains.dash.DashWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
-import com.tangem.blockchain.common.txhistory.getTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 
 internal object DashWalletManagerAssembly : WalletManagerAssembly<BitcoinWalletManager>() {
 
@@ -24,7 +24,7 @@ internal object DashWalletManagerAssembly : WalletManagerAssembly<BitcoinWalletM
                 networkProvider = BitcoinNetworkService(
                     providers = DashProvidersBuilder(input.providerTypes, input.config).build(blockchain),
                 ),
-                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(input.config),
+                transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
                 feesCalculator = BitcoinFeesCalculator(blockchain),
             )
         }
