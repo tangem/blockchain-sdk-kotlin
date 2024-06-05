@@ -16,6 +16,7 @@ import com.tangem.blockchain.common.datastorage.BlockchainSavedData
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.trustlines.AssetRequirementsCondition
 import com.tangem.blockchain.common.trustlines.AssetRequirementsManager
 import com.tangem.blockchain.extensions.*
@@ -154,15 +155,23 @@ internal class HederaWalletManager(
         }
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        return transactionBuilder.buildToSign(transactionData)
-            .map { buildTransaction ->
-                val sendResult = signAndSendTransaction(signer, buildTransaction)
-                if (sendResult is Result.Success) {
-                    transactionData.setTransactionHash(sendResult.data.transactionId)
-                    wallet.addOutgoingTransaction(transactionData)
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
+        return when (val buildTransaction = transactionBuilder.buildToSign(transactionData)) {
+            is Result.Failure -> Result.Failure(buildTransaction.error)
+            is Result.Success -> {
+                when (val sendResult = signAndSendTransaction(signer, buildTransaction.data)) {
+                    is Result.Failure -> Result.Failure(sendResult.error)
+                    is Result.Success -> {
+                        transactionData.setTransactionHash(sendResult.data.transactionId)
+                        wallet.addOutgoingTransaction(transactionData)
+                        Result.Success(TransactionSendResult(transactionData.hash ?: ""))
+                    }
                 }
-            }.toSimpleResult()
+            }
+        }
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
