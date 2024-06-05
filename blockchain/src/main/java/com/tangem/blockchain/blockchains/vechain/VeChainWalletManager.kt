@@ -5,10 +5,9 @@ import com.tangem.blockchain.blockchains.vechain.network.VeChainNetworkProvider
 import com.tangem.blockchain.blockchains.vechain.network.VeChainNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
-import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.common.CompletionResult
 import java.math.BigDecimal
 import java.util.EnumSet
@@ -97,9 +96,12 @@ internal class VeChainWalletManager(
         }
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         val blockInfo = networkService.getLatestBlock()
-            .successOr { return SimpleResult.Failure(it.error.toBlockchainSdkError()) }
+            .successOr { return it }
         val nonce = (0..Long.MAX_VALUE).random()
         val txToSign = transactionBuilder.buildForSign(transactionData, blockInfo, nonce)
         return when (val signatureResult = signer.sign(txToSign, wallet.publicKey)) {
@@ -114,15 +116,16 @@ internal class VeChainWalletManager(
                     )
                 when (val sendResult = networkService.sendTransaction(rawTx)) {
                     is Result.Success -> {
+                        val hash = sendResult.data.txId
                         transactionData.hash = sendResult.data.txId
                         wallet.addOutgoingTransaction(transactionData, hashToLowercase = false)
 
-                        SimpleResult.Success
+                        Result.Success(TransactionSendResult(hash))
                     }
-                    is Result.Failure -> sendResult.toSimpleFailure()
+                    is Result.Failure -> sendResult
                 }
             }
-            is CompletionResult.Failure -> SimpleResult.Failure(signatureResult.error.toBlockchainSdkError())
+            is CompletionResult.Failure -> Result.fromTangemSdkError(signatureResult.error)
         }
     }
 
