@@ -4,11 +4,10 @@ import com.tangem.blockchain.blockchains.koinos.network.KoinosNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
-import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
-import com.tangem.blockchain.extensions.toSimpleResult
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import java.math.BigDecimal
 import java.util.EnumSet
 
@@ -100,39 +99,44 @@ internal class KoinosWalletManager(
         }
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         validate(transactionData).onFailure {
-            SimpleResult.Failure(it as? BlockchainSdkError ?: BlockchainSdkError.FailedToBuildTx)
+            Result.Failure(it as? BlockchainSdkError ?: BlockchainSdkError.FailedToBuildTx)
         }
 
         val manaLimit = transactionData.fee?.amount?.value
-            ?: return SimpleResult.fromTangemSdkError(BlockchainSdkError.FailedToBuildTx)
+            ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx)
 
         val nonce = networkService.getCurrentNonce(wallet.address)
-            .successOr { return SimpleResult.fromTangemSdkError(it.error) }
+            .successOr { return Result.Failure(it.error) }
 
         val transactionDataWithMana = transactionData.copy(extras = KoinosTransactionExtras(manaLimit))
 
         val (transaction, hashToSign) = transactionBuilder.buildToSign(
             transactionData = transactionDataWithMana,
             currentNonce = nonce,
-        ).successOr { return SimpleResult.fromTangemSdkError(it.error) }
+        ).successOr { return Result.Failure(it.error) }
 
         val signature = signer.sign(hashToSign, wallet.publicKey)
-            .successOr { return SimpleResult.fromTangemSdkError(it.error) }
+            .successOr { return Result.fromTangemSdkError(it.error) }
 
         val signedTransaction = transactionBuilder.buildToSend(transaction, signature)
 
         val transactionRes = networkService.submitTransaction(signedTransaction)
-            .successOr { return it.toSimpleResult() }
+            .successOr { return it }
 
+        val hash = transactionRes.id
+        transactionData.hash = hash
         wallet.addOutgoingTransaction(
             transactionData.copy(
-                hash = transactionRes.id,
+                hash = hash,
             ),
         )
 
-        return SimpleResult.Success
+        return Result.Success(TransactionSendResult(hash))
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
