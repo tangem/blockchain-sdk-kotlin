@@ -89,8 +89,8 @@ dependencies {
 
     implementation files('libs/hedera-sdk-java-2.29.0.jar')
     implementation "com.tangem:blstlib:master-6@aar"
-    implementation "com.tangem:wallet-core:4.0.21-tangem5@aar"
-    implementation("com.tangem:wallet-core-proto:4.0.21-tangem5") {
+    implementation "com.tangem:wallet-core:4.0.21-tangem6@aar"
+    implementation("com.tangem:wallet-core-proto:4.0.21-tangem6") {
         exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
     }
 
@@ -118,6 +118,10 @@ dependencies {
     implementation 'io.grpc:grpc-okhttp:1.46.0'
     implementation group: 'org.bouncycastle', name: 'bcprov-jdk15to18', version: '1.76'
     implementation "com.google.protobuf:protobuf-java:3.21.9"
+
+    //dependencies for TON
+    implementation 'org.ton:ton-kotlin-tvm:0.3.1'
+    implementation 'org.ton:ton-kotlin-block-tlb:0.3.1'
 
     implementation("ru.gildor.coroutines:kotlin-coroutines-okhttp:1.0")
 
