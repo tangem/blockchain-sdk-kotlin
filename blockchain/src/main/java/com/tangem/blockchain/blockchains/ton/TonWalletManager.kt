@@ -7,8 +7,8 @@ import com.tangem.blockchain.blockchains.ton.network.TonNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import wallet.core.jni.CoinType
 import wallet.core.jni.PublicKeyType
@@ -36,20 +36,24 @@ internal class TonWalletManager(
         }
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         val input = txBuilder.buildForSign(
             sequenceNumber = sequenceNumber,
             amount = transactionData.amount,
             destination = transactionData.destinationAddress,
             extras = transactionData.extras as? TonTransactionExtras,
         )
-        val message = buildTransaction(input, signer).successOr { return SimpleResult.fromTangemSdkError(it.error) }
+        val message = buildTransaction(input, signer).successOr { return Result.fromTangemSdkError(it.error) }
 
         return when (val sendResult = networkService.send(message)) {
-            is Result.Failure -> SimpleResult.Failure(sendResult.error)
+            is Result.Failure -> Result.Failure(sendResult.error)
             is Result.Success -> {
                 wallet.addOutgoingTransaction(transactionData.copy(hash = sendResult.data))
-                SimpleResult.Success
+                transactionData.hash = sendResult.data
+                Result.Success(TransactionSendResult(sendResult.data))
             }
         }
     }
