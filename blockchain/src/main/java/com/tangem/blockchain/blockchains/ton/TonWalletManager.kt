@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.ton
 
 import android.util.Log
+import com.tangem.blockchain.blockchains.ton.TonTransactionBuilder.Companion.JETTON_TRANSFER_PROCESSING_FEE
 import com.tangem.blockchain.blockchains.ton.models.TonWalletInfo
 import com.tangem.blockchain.blockchains.ton.network.TonNetworkProvider
 import com.tangem.blockchain.blockchains.ton.network.TonNetworkService
@@ -10,9 +11,11 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
+import com.tangem.blockchain.extensions.toSimpleFailure
 import wallet.core.jni.CoinType
 import wallet.core.jni.PublicKeyType
 import wallet.core.jni.proto.TheOpenNetwork
+import java.math.BigDecimal
 
 internal class TonWalletManager(
     wallet: Wallet,
@@ -20,7 +23,7 @@ internal class TonWalletManager(
 ) : WalletManager(wallet), TransactionSender {
 
     private var sequenceNumber: Int = 0
-    private val txBuilder = TonTransactionBuilder()
+    private val txBuilder = TonTransactionBuilder(wallet.address)
     private val networkService = TonNetworkService(
         jsonRpcProviders = networkProviders,
         blockchain = wallet.blockchain,
@@ -30,7 +33,7 @@ internal class TonWalletManager(
         get() = networkService.host
 
     override suspend fun updateInternal() {
-        when (val walletInfoResult = networkService.getWalletInformation(wallet.address)) {
+        when (val walletInfoResult = networkService.getWalletInformation(wallet.address, cardTokens)) {
             is Result.Failure -> updateError(walletInfoResult.error)
             is Result.Success -> updateWallet(walletInfoResult.data)
         }
@@ -42,7 +45,8 @@ internal class TonWalletManager(
             amount = transactionData.amount,
             destination = transactionData.destinationAddress,
             extras = transactionData.extras as? TonTransactionExtras,
-        )
+        ).successOr { return it.toSimpleFailure() }
+
         val message = buildTransaction(input, signer).successOr { return SimpleResult.fromTangemSdkError(it.error) }
 
         return when (val sendResult = networkService.send(message)) {
@@ -56,11 +60,18 @@ internal class TonWalletManager(
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val input = txBuilder.buildForSign(sequenceNumber, amount, destination)
+            .successOr { return it }
         val message = buildTransaction(input, null).successOr { return it }
 
         return when (val feeResult = networkService.getFee(wallet.address, message)) {
             is Result.Failure -> feeResult
-            is Result.Success -> Result.Success(TransactionFee.Single(Fee.Common(feeResult.data)))
+            is Result.Success -> {
+                var fee = feeResult.data
+                if (amount.type is AmountType.Token) {
+                    fee += JETTON_TRANSFER_PROCESSING_FEE
+                }
+                Result.Success(TransactionFee.Single(Fee.Common(feeResult.data)))
+            }
         }
     }
 
@@ -71,6 +82,10 @@ internal class TonWalletManager(
 
         wallet.setAmount(Amount(value = info.balance, blockchain = wallet.blockchain))
         sequenceNumber = info.sequenceNumber
+        info.jettonDatas.forEach {
+            wallet.addTokenValue(it.value.balance, it.key)
+        }
+        txBuilder.update(info.jettonDatas.mapValues { it.value.jettonWalletAddress })
     }
 
     private fun updateError(error: BlockchainError) {

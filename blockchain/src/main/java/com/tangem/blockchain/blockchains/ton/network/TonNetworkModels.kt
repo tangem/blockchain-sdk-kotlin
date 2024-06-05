@@ -64,3 +64,13 @@ data class TonSourceFees(
 data class TonSendBocResponse(
     @Json(name = "hash") val hash: String,
 )
+
+/**
+ * @param stack - Stack returned from the method.
+ */
+@JsonClass(generateAdapter = true)
+data class TonRunGetMethodResponse(
+    @Json(name = "stack") val stack: List<List<Any>>,
+
+    @Json(name = "exit_code") val exitCode: Int,
+)
