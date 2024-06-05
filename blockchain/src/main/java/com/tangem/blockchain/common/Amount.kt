@@ -12,6 +12,8 @@ data class Amount(
 
     val longValue get() = value?.movePointRight(decimals)?.toLong()
 
+    val longValueOrZero: Long by lazy { value?.movePointRight(decimals)?.toLong() ?: 0L }
+
     constructor(
         value: BigDecimal?,
         blockchain: Blockchain,
