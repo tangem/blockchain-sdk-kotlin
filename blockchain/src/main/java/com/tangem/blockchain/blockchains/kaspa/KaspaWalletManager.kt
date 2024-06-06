@@ -21,7 +21,7 @@ class KaspaWalletManager(
         get() = networkProvider.baseUrl
 
     private val blockchain = wallet.blockchain
-    override val dustValue: BigDecimal = FEE_PER_UNSPENT_OUTPUT.toBigDecimal()
+    override val dustValue: BigDecimal = BigDecimal("0.2")
 
     override val allowConsolidation: Boolean = true
 
@@ -100,6 +100,6 @@ class KaspaWalletManager(
     }
 
     companion object {
-        const val FEE_PER_UNSPENT_OUTPUT = 0.2
+        const val FEE_PER_UNSPENT_OUTPUT = 0.0001
     }
 }
