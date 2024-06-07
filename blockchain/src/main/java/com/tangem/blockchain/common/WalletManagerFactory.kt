@@ -121,11 +121,11 @@ class WalletManagerFactory(
             // endregion
 
             // region ETH-like blockchains
-            Blockchain.Ethereum, Blockchain.EthereumClassic -> EthereumWalletManagerAssembly
+            Blockchain.Ethereum, Blockchain.EthereumTestnet -> EthereumWalletManagerAssembly
 
             Blockchain.Arbitrum, Blockchain.ArbitrumTestnet,
             Blockchain.Avalanche, Blockchain.AvalancheTestnet,
-            Blockchain.EthereumTestnet, Blockchain.EthereumClassicTestnet,
+            Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet,
             Blockchain.Fantom, Blockchain.FantomTestnet,
             Blockchain.RSK,
             Blockchain.BSC, Blockchain.BSCTestnet,
