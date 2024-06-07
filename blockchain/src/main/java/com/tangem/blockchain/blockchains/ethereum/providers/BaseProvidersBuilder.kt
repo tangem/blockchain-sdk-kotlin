@@ -12,14 +12,14 @@ internal class BaseProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOf(
-            "https://mainnet.base.org/",
-            "https://base.meowrpc.com/",
-            "https://base-rpc.publicnode.com/",
-            "https://base.drpc.org/",
-            "https://base.llamarpc.com/",
-        )
-            .map(::EthereumJsonRpcProvider)
+        return providerTypes.mapNotNull {
+            when (it) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(it.url)
+                ProviderType.NowNodes -> ethereumProviderFactory.getNowNodesProvider("https://base.nownodes.io/")
+                ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { base?.jsonRpc }
+                else -> null
+            }
+        }
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
