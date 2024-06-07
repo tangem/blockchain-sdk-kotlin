@@ -41,9 +41,9 @@ internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<Ethere
         return when (blockchain) {
             Blockchain.Arbitrum, Blockchain.ArbitrumTestnet -> ArbitrumProvidersBuilder(providerTypes, config)
             Blockchain.Avalanche, Blockchain.AvalancheTestnet -> AvalancheProvidersBuilder(providerTypes, config)
-            Blockchain.EthereumTestnet, Blockchain.EthereumClassicTestnet -> EthereumClassicProvidersBuilder(
-                providerTypes,
-                config,
+            Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet -> EthereumClassicProvidersBuilder(
+                providerTypes = providerTypes,
+                config = config,
             )
             Blockchain.Fantom, Blockchain.FantomTestnet -> FantomProvidersBuilder(providerTypes, config)
             Blockchain.RSK -> RSKProvidersBuilder(providerTypes, config)
@@ -62,12 +62,10 @@ internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<Ethere
             Blockchain.PulseChain, Blockchain.PulseChainTestnet -> PulseChainProvidersBuilder(providerTypes)
             Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet -> ZkSyncEraProvidersBuilder(providerTypes, config)
             Blockchain.Moonbeam, Blockchain.MoonbeamTestnet -> MoonbeamProvidersBuilder(providerTypes, config)
-            Blockchain.Manta, Blockchain.MantaTestnet -> MantaProvidersBuilder(providerTypes)
             Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet -> PolygonZkEVMProvidersBuilder(
-                providerTypes,
-                config,
+                providerTypes = providerTypes,
+                config = config,
             )
-            Blockchain.Base, Blockchain.BaseTestnet -> BaseProvidersBuilder(providerTypes, config)
             Blockchain.Moonriver, Blockchain.MoonriverTestnet -> MoonriverProvidersBuilder(providerTypes)
             Blockchain.Mantle, Blockchain.MantleTestnet -> MantleProvidersBuilder(providerTypes)
             Blockchain.Flare, Blockchain.FlareTestnet -> FlareProvidersBuilder(providerTypes)
