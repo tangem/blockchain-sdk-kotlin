@@ -14,7 +14,7 @@ internal class PolygonZkEVMProvidersBuilder(
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return providerTypes.mapNotNull {
             when (it) {
-                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                is ProviderType.Public -> createPublicProvider(url = it.url)
                 ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { polygonZkEvm?.jsonRpc }
                 else -> null
             }
@@ -24,5 +24,13 @@ internal class PolygonZkEVMProvidersBuilder(
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return listOf("https://rpc.cardona.zkevm-rpc.com/")
             .map(::EthereumJsonRpcProvider)
+    }
+
+    private fun createPublicProvider(url: String): EthereumJsonRpcProvider {
+        return EthereumJsonRpcProvider.createWithPostfixIfContained(baseUrl = url, postfixUrl = BASE_URL_LAST_PATH)
+    }
+
+    private companion object {
+        const val BASE_URL_LAST_PATH = "zkevm"
     }
 }

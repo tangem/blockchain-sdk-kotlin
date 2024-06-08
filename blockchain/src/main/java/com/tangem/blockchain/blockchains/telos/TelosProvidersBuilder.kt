@@ -12,5 +12,11 @@ internal class TelosProvidersBuilder(
     testnetProviders = listOf("https://telos-evm-testnet.rpc.thirdweb.com/"),
 ) {
 
-    override fun createProvider(url: String, blockchain: Blockchain) = EthereumJsonRpcProvider(baseUrl = url)
+    override fun createProvider(url: String, blockchain: Blockchain): EthereumJsonRpcProvider {
+        return EthereumJsonRpcProvider.createWithPostfixIfContained(baseUrl = url, postfixUrl = BASE_URL_LAST_PATH)
+    }
+
+    private companion object {
+        const val BASE_URL_LAST_PATH = "evm"
+    }
 }
