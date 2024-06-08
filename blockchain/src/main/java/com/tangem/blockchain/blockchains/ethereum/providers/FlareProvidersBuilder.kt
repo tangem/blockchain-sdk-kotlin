@@ -11,5 +11,15 @@ internal class FlareProvidersBuilder(
     providerTypes = providerTypes,
     testnetProviders = listOf("https://coston2-api.flare.network/ext/C/rpc/"),
 ) {
-    override fun createProvider(url: String, blockchain: Blockchain) = EthereumJsonRpcProvider(url)
+
+    override fun createProvider(url: String, blockchain: Blockchain): EthereumJsonRpcProvider {
+        return EthereumJsonRpcProvider.createWithPostfixIfContained(
+            url = url,
+            postfixUrl = BASE_URL_LAST_PATHS.toTypedArray(),
+        )
+    }
+
+    private companion object {
+        val BASE_URL_LAST_PATHS = listOf("ext/C/rpc", "ext/bc/C/rpc")
+    }
 }
