@@ -14,7 +14,7 @@ internal class MoonbeamProvidersBuilder(
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return providerTypes.mapNotNull {
             when (it) {
-                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                is ProviderType.Public -> createPublicProvider(url = it.url)
                 ProviderType.NowNodes -> {
                     ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://moonbeam.nownodes.io/")
                 }
@@ -32,5 +32,13 @@ internal class MoonbeamProvidersBuilder(
             "https://moonbeam-alpha.api.onfinality.io/public/",
         )
             .map(::EthereumJsonRpcProvider)
+    }
+
+    private fun createPublicProvider(url: String): EthereumJsonRpcProvider {
+        return EthereumJsonRpcProvider.createWithPostfixIfContained(baseUrl = url, postfixUrl = BASE_URL_LAST_PATH)
+    }
+
+    private companion object {
+        const val BASE_URL_LAST_PATH = "glmr"
     }
 }
