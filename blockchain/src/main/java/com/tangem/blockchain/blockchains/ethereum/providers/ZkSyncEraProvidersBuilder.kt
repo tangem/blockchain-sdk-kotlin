@@ -14,7 +14,7 @@ internal class ZkSyncEraProvidersBuilder(
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return providerTypes.mapNotNull {
             when (it) {
-                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                is ProviderType.Public -> createPublicProvider(url = it.url)
                 ProviderType.NowNodes -> {
                     ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://zksync.nownodes.io")
                 }
@@ -30,5 +30,13 @@ internal class ZkSyncEraProvidersBuilder(
             "https://zksync-era-sepolia.blockpi.network/v1/rpc/public/",
         )
             .map(::EthereumJsonRpcProvider)
+    }
+
+    private fun createPublicProvider(url: String): EthereumJsonRpcProvider {
+        return EthereumJsonRpcProvider.createWithPostfixIfContained(baseUrl = url, postfixUrl = BASE_URL_LAST_PATH)
+    }
+
+    private companion object {
+        const val BASE_URL_LAST_PATH = "zksync2-era"
     }
 }
