@@ -201,8 +201,10 @@ class BlockchainDemoActivity : AppCompatActivity() {
         try {
             walletManager = WalletManagerFactory(
                 config = BlockchainSdkConfig(),
+                blockchainProviderTypes = emptyMap(),
                 accountCreator = DummyAccountCreator,
                 blockchainDataStorage = DummyBlockchainDataStorage,
+                featureToggles = BlockchainFeatureToggles(isCardanoTokenSupport = true),
             ).makeWalletManagerForApp(
                 scanResponse = scanResponse,
                 blockchain = Blockchain.fromId(selectedBlockchain.id),
@@ -233,8 +235,11 @@ class BlockchainDemoActivity : AppCompatActivity() {
         } else {
             walletManager.wallet.amounts[AmountType.Coin]
         }
+        val feeResourceAmount = walletManager.wallet.amounts[AmountType.FeeResource()]
         val stringValue = tokenAmount?.value?.stripZeroPlainString() ?: "Error"
+        val feeResourceStringValue = feeResourceAmount?.value?.stripZeroPlainString()?.let { "FeeResource: $it" } ?: ""
         containerRecipientAddressFee.tvBalance.text = stringValue
+        containerRecipientAddressFee.addInfo.text = feeResourceStringValue
         containerRecipientAddressFee.tilEtSumToSend.setText(stringValue)
         containerRecipientAddressFee.btnLoadFee.isEnabled = true
     }
