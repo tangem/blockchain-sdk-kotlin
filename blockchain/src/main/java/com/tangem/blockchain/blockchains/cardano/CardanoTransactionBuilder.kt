@@ -1,10 +1,13 @@
 package com.tangem.blockchain.blockchains.cardano
 
+import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.walletcore.CardanoTWTxBuilder
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.extensions.hexToBigDecimal
 import com.tangem.blockchain.extensions.trustWalletCoinType
+import com.tangem.common.extensions.toHexString
 import wallet.core.java.AnySigner
 import wallet.core.jni.CoinType
 import wallet.core.jni.DataVector
@@ -50,7 +53,7 @@ internal class CardanoTransactionBuilder(
                 condition = !isCoinTransaction && plan.error == Common.SigningError.Error_low_balance,
             )
 
-            checkRemainingAdaBalance(amount = transaction.amount, change = plan.change)
+            checkRemainingAdaBalance(transaction = transaction, plan = plan)
         }
     }
 
@@ -58,19 +61,16 @@ internal class CardanoTransactionBuilder(
         val input = twTxBuilder.build(transaction)
         val plan = AnySigner.plan(input, coinType, Cardano.TransactionPlan.parser())
 
+        val feeAmount = Amount(
+            value = BigDecimal(plan.fee).movePointLeft(decimals),
+            blockchain = wallet.blockchain,
+        )
+
         return when (val type = transaction.amount.type) {
-            AmountType.Coin -> {
-                Fee.Common(
-                    amount = transaction.amount.copy(
-                        value = BigDecimal(plan.fee).movePointLeft(decimals),
-                    ),
-                )
-            }
+            AmountType.Coin -> Fee.Common(amount = feeAmount)
             is AmountType.Token -> {
                 Fee.CardanoToken(
-                    amount = transaction.amount.copy(
-                        value = BigDecimal(plan.fee).movePointLeft(type.token.decimals),
-                    ),
+                    amount = feeAmount,
                     minAdaValue = BigDecimal(plan.amount).movePointLeft(decimals),
                 )
             }
@@ -129,46 +129,44 @@ internal class CardanoTransactionBuilder(
         return output.encoded.toByteArray()
     }
 
-    private fun checkRemainingAdaBalance(amount: Amount, change: Long) {
-        val notZeroTokens = calculateRemainingNotZeroTokensBalances(transactionAmount = amount)
+    private fun checkRemainingAdaBalance(transaction: TransactionData, plan: Cardano.TransactionPlan) {
+        val hasNotZeroTokens = hasRemainingNotZeroTokensBalances(transaction, plan)
 
-        if (notZeroTokens.isEmpty()) {
+        if (!hasNotZeroTokens) {
             val minChange = BigDecimal.ONE.movePointRight(decimals).toLong()
 
             throwIf(
                 exception = BlockchainSdkError.Cardano.InsufficientRemainingBalance,
-                condition = change in 1 until minChange,
+                condition = plan.change in 1 until minChange,
             )
         } else {
-            val minChange = twTxBuilder.calculateMinAdaValueToWithdrawAllTokens(tokens = wallet.getTokens())
+            val minChange = twTxBuilder.calculateMinAdaValueToWithdrawAllTokens()
 
             throwIf(
                 exception = BlockchainSdkError.Cardano.InsufficientRemainingBalanceToWithdrawTokens,
-                condition = change == 0L || change in 1 until minChange,
+                condition = plan.change == 0L || plan.change in 1 until minChange,
             )
         }
     }
 
-    private fun calculateRemainingNotZeroTokensBalances(transactionAmount: Amount): List<Amount> {
-        val transactionToken = (transactionAmount.type as? AmountType.Token)?.token
-
-        return wallet.amounts
-            .mapNotNull { amount ->
-                val type = amount.value.type
-
-                if (type is AmountType.Token) {
-                    // calculate remaining token balance
-                    if (type.token == transactionToken) {
-                        val transactionValue = transactionAmount.value ?: BigDecimal.ZERO
-                        amount.value - transactionValue
-                    } else {
-                        amount.value
-                    }
+    private fun hasRemainingNotZeroTokensBalances(
+        transaction: TransactionData,
+        plan: Cardano.TransactionPlan,
+    ): Boolean {
+        return plan.availableTokensList
+            .map { tokenAmount ->
+                val amount = tokenAmount.amount.toLong()
+                if (transaction.contractAddress?.startsWith(tokenAmount.policyId) == true) {
+                    amount - transaction.amount.longValueOrZero
                 } else {
-                    null
+                    amount
                 }
             }
-            .filter { it.longValueOrZero != 0L }
+            .any { it > 0 }
+    }
+
+    private fun ByteString.toLong(): Long {
+        return toByteArray().toHexString().hexToBigDecimal().toLong()
     }
 
     private fun throwIf(exception: BlockchainSdkError.Cardano, condition: Boolean) {
