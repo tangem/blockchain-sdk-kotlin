@@ -1,13 +1,14 @@
 package com.tangem.blockchain.blockchains.ton.network
 
+import com.tangem.blockchain.blockchains.ton.models.GetJettonWalletAddressInput
+import com.tangem.blockchain.blockchains.ton.models.JettonData
 import com.tangem.blockchain.blockchains.ton.models.TonWalletInfo
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import java.math.RoundingMode
 
 internal class TonNetworkService(
@@ -19,17 +20,51 @@ internal class TonNetworkService(
 
     val host: String get() = multiJsonRpcProvider.currentProvider.baseUrl
 
-    suspend fun getWalletInformation(address: String): Result<TonWalletInfo> {
+    suspend fun getWalletInformation(address: String, tokens: Set<Token>): Result<TonWalletInfo> {
         return try {
-            val addressInformation = multiJsonRpcProvider
-                .performRequest(TonNetworkProvider::getWalletInformation, address)
-                .successOr { return it }
-            Result.Success(
-                TonWalletInfo(
-                    balance = addressInformation.balance.movePointLeft(blockchain.decimals()),
-                    sequenceNumber = addressInformation.seqno ?: 0,
-                ),
-            )
+            coroutineScope {
+                val jettonWalletAddressesDeferred = tokens.map { token ->
+                    token to async {
+                        multiJsonRpcProvider.performRequest(
+                            TonNetworkProvider::getJettonWalletAddress,
+                            GetJettonWalletAddressInput(address, token.contractAddress),
+                        )
+                    }
+                }.toMap()
+                val walletInformationDeferred = async {
+                    multiJsonRpcProvider.performRequest(TonNetworkProvider::getWalletInformation, address)
+                }
+
+                val jettonWalletAddresses = jettonWalletAddressesDeferred.mapValues { entry ->
+                    entry.value.await().successOr { return@coroutineScope it }
+                }
+                val jettonBalancesDeffered = jettonWalletAddresses.mapValues { entry ->
+                    async {
+                        multiJsonRpcProvider.performRequest(
+                            TonNetworkProvider::getJettonBalance,
+                            entry.value,
+                        )
+                    }
+                }
+
+                val walletInformation = walletInformationDeferred.await().successOr { return@coroutineScope it }
+                val jettonBalances = jettonBalancesDeffered.mapValues { entry ->
+                    entry.value.await().successOr { return@coroutineScope it }
+                }
+
+                Result.Success(
+                    TonWalletInfo(
+                        balance = walletInformation.balance.movePointLeft(blockchain.decimals()),
+                        sequenceNumber = walletInformation.seqno ?: 0,
+                        jettonDatas = jettonWalletAddresses.mapValues { entry ->
+                            JettonData(
+                                jettonBalances[entry.key]!!.toBigDecimal().movePointLeft(entry.key.decimals),
+                                entry.value,
+                            )
+                        },
+                    ),
+                )
+            }
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
