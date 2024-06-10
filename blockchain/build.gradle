@@ -85,7 +85,8 @@ dependencies {
 
     implementation files('libs/ripple-core-0.0.1.jar')
     implementation files('libs/solanaj-0.0.10.jar')
-    implementation files('libs/polkaj-root-0.1.5.jar')
+    implementation files('libs/polkaj-root-0.5.0-SNAPSHOT.jar')
+
     implementation files('libs/hedera-sdk-java-2.29.0.jar')
     implementation "com.tangem:blstlib:master-6@aar"
     implementation "com.tangem:wallet-core:4.0.21-tangem6@aar"
@@ -127,6 +128,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testImplementation "com.google.truth:truth:1.3.0"
     testImplementation 'org.json:json:20180813'
+    testImplementation "io.mockk:mockk:1.12.1"
     androidTestImplementation "com.google.truth:truth:1.3.0"
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
@@ -140,6 +142,7 @@ dependencies {
 wire {
     sourcePath {
         srcDir 'src/main/java/com/tangem/blockchain/blockchains/tron/proto'
+        srcDir 'src/main/java/com/tangem/blockchain/blockchains/koinos/proto'
     }
     kotlin {}
 }
