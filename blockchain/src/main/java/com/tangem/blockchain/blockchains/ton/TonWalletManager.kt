@@ -69,7 +69,7 @@ internal class TonWalletManager(
                 if (amount.type is AmountType.Token) {
                     fee += JETTON_TRANSFER_PROCESSING_FEE
                 }
-                Result.Success(TransactionFee.Single(Fee.Common(feeResult.data)))
+                Result.Success(TransactionFee.Single(Fee.Common(fee)))
             }
         }
     }
