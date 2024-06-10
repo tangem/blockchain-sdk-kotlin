@@ -4,13 +4,13 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-data class HederaAccountResponse(
+internal data class HederaAccountResponse(
     @Json(name = "accounts")
     val accounts: List<HederaAccount>,
 )
 
 @JsonClass(generateAdapter = true)
-data class HederaExchangeRateResponse(
+internal data class HederaExchangeRateResponse(
     @Json(name = "current_rate")
     val currentRate: HederaRate,
 
@@ -18,13 +18,13 @@ data class HederaExchangeRateResponse(
     val nextRate: HederaRate,
 )
 
-data class HederaAccount(
+internal data class HederaAccount(
     @Json(name = "account")
     val account: String,
 )
 
 @JsonClass(generateAdapter = true)
-data class HederaRate(
+internal data class HederaRate(
     @Json(name = "cent_equivalent")
     val centEquivalent: String,
 
@@ -33,4 +33,46 @@ data class HederaRate(
 
     @Json(name = "expiration_time")
     val expirationTime: String,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class HederaBalancesResponse(@Json(name = "balances") val balances: List<HederaBalanceResponse>)
+
+@JsonClass(generateAdapter = true)
+internal data class HederaBalanceResponse(
+    @Json(name = "account")
+    val account: String,
+
+    @Json(name = "balance")
+    val balance: Long,
+
+    @Json(name = "tokens")
+    val tokenBalances: List<HederaTokenBalanceResponse>,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class HederaTokenBalanceResponse(
+    @Json(name = "token_id")
+    val tokenId: String,
+
+    @Json(name = "balance")
+    val balance: Long,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class HederaTransactionsResponse(
+    @Json(name = "transactions")
+    val transactions: List<HederaTransactionResponse>,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class HederaTransactionResponse(
+    @Json(name = "transaction_hash")
+    val transactionHash: String,
+
+    @Json(name = "transaction_id")
+    val transactionId: String,
+
+    @Json(name = "result")
+    val result: String,
 )

@@ -6,9 +6,8 @@ import com.tangem.blockchain.blockchains.radiant.network.RadiantNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.blockchain.network.electrum.ElectrumNetworkProvider
 import com.tangem.common.CompletionResult
 import wallet.core.jni.PublicKey
@@ -25,7 +24,7 @@ internal class RadiantWalletManager(
     private val blockchain = wallet.blockchain
     private val addressScriptHash by lazy { RadiantAddressUtils.generateAddressScriptHash(wallet.address) }
     private val transactionBuilder = RadiantTransactionBuilder(
-        publicKey = wallet.publicKey.blockchainKey,
+        publicKey = wallet.publicKey,
         decimals = blockchain.decimals(),
     )
 
@@ -44,11 +43,14 @@ internal class RadiantWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Log.e(this::class.java.simpleName, error.customMessage, error)
         if (error is BlockchainSdkError) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         return try {
             val hashesForSign = transactionBuilder.buildForSign(transactionData)
             when (val signatureResult = signer.sign(hashes = hashesForSign, publicKey = wallet.publicKey)) {
@@ -68,20 +70,21 @@ internal class RadiantWalletManager(
                     val rawTx = transactionBuilder.buildForSend(transactionData, signatures)
                     when (val sendResult = networkService.sendTransaction(rawTx)) {
                         is Result.Success -> {
-                            transactionData.hash = sendResult.data
+                            val hash = sendResult.data
+                            transactionData.hash = hash
                             wallet.addOutgoingTransaction(transactionData, hashToLowercase = false)
 
-                            SimpleResult.Success
+                            Result.Success(TransactionSendResult(hash))
                         }
-                        is Result.Failure -> sendResult.toSimpleFailure()
+                        is Result.Failure -> sendResult
                     }
                 }
-                is CompletionResult.Failure -> SimpleResult.Failure(signatureResult.error.toBlockchainSdkError())
+                is CompletionResult.Failure -> Result.fromTangemSdkError(signatureResult.error)
             }
         } catch (e: BlockchainSdkError) {
-            SimpleResult.Failure(e)
+            Result.Failure(e)
         } catch (e: Exception) {
-            SimpleResult.Failure(BlockchainSdkError.FailedToSendException)
+            Result.Failure(BlockchainSdkError.FailedToSendException)
         }
     }
 
@@ -90,7 +93,14 @@ internal class RadiantWalletManager(
             when (val feeResult = networkService.getEstimatedFee(REQUIRED_NUMBER_OF_CONFIRMATION_BLOCKS)) {
                 is Result.Failure -> return feeResult
                 is Result.Success -> {
-                    val transactionSize = 1661.toBigDecimal() // FIXME: Change with real value
+                    val transactionSize = transactionBuilder.estimateTransactionSize(
+                        transaction = TransactionData(
+                            amount = amount,
+                            fee = Fee.Common(Amount(amount, feeResult.data.minimalPerKb)),
+                            sourceAddress = wallet.address,
+                            destinationAddress = destination,
+                        ),
+                    ).toBigDecimal()
                     val minFee = feeResult.data.minimalPerKb.calculateFee(transactionSize)
                     val normalFee = feeResult.data.normalPerKb.calculateFee(transactionSize)
                     val priorityFee = feeResult.data.priorityPerKb.calculateFee(transactionSize)
@@ -109,9 +119,15 @@ internal class RadiantWalletManager(
 
     private fun BigDecimal.calculateFee(txSize: BigDecimal): BigDecimal = this
         .multiply(txSize)
+        .divide(BigDecimal(BYTES_IN_KB))
         .setScale(wallet.blockchain.decimals(), RoundingMode.UP)
 
     private companion object {
-        private const val REQUIRED_NUMBER_OF_CONFIRMATION_BLOCKS = 10
+        const val REQUIRED_NUMBER_OF_CONFIRMATION_BLOCKS = 10
+
+        /**
+         * We use 1000, because Electrum node return fee for per 1000 bytes.
+         */
+        const val BYTES_IN_KB = 1000
     }
 }

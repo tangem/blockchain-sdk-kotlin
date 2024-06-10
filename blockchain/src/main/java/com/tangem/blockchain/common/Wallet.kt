@@ -31,9 +31,13 @@ class Wallet(
         amounts[amount.type] = amount
     }
 
-    fun changeAmountValue(amountType: AmountType, newValue: BigDecimal?) {
+    fun setAmount(value: BigDecimal?, amountType: AmountType, maxValue: BigDecimal? = null) {
+        setAmount(Amount(value = value, blockchain = blockchain, type = amountType, maxValue = maxValue))
+    }
+
+    fun changeAmountValue(amountType: AmountType, newValue: BigDecimal?, newMaxValue: BigDecimal? = null) {
         amounts[amountType]?.let {
-            amounts[amountType] = it.copy(value = newValue)
+            amounts[amountType] = it.copy(value = newValue, maxValue = newMaxValue)
         }
     }
 
