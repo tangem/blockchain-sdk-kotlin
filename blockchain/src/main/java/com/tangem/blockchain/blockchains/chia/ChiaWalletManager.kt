@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.chia.network.ChiaNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
@@ -48,23 +49,26 @@ class ChiaWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
-            is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
+            is Result.Failure -> return Result.Failure(buildTransactionResult.error)
             is Result.Success -> {
-                val signerResult = signer.sign(buildTransactionResult.data, wallet.publicKey)
-                return when (signerResult) {
+                return when (val signerResult = signer.sign(buildTransactionResult.data, wallet.publicKey)) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(signerResult.data)
-                        val sendResult = networkProvider.sendTransaction(transactionToSend)
-
-                        if (sendResult is SimpleResult.Success) {
-                            transactionData.hash = transactionToSend.spendBundle.aggregatedSignature
-                            wallet.addOutgoingTransaction(transactionData)
+                        when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
+                            is SimpleResult.Success -> {
+                                transactionData.hash = transactionToSend.spendBundle.aggregatedSignature
+                                wallet.addOutgoingTransaction(transactionData)
+                                Result.Success(TransactionSendResult(transactionData.hash ?: ""))
+                            }
+                            is SimpleResult.Failure -> Result.Failure(sendResult.error)
                         }
-                        sendResult
                     }
-                    is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResult.error)
+                    is CompletionResult.Failure -> Result.fromTangemSdkError(signerResult.error)
                 }
             }
         }
