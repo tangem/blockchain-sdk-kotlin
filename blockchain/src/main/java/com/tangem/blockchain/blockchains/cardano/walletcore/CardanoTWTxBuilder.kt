@@ -58,18 +58,22 @@ internal class CardanoTWTxBuilder(
         return Cardano.Transfer.newBuilder()
             .setToAddress(transaction.destinationAddress)
             .setChangeAddress(transaction.sourceAddress)
-            .setAmountByType(amount = transaction.amount)
+            .setAmountByType(transaction = transaction)
             .setUseMaxAmount(false)
             .build()
     }
 
-    private fun Cardano.Transfer.Builder.setAmountByType(amount: Amount): Cardano.Transfer.Builder {
-        when (val type = amount.type) {
+    private fun Cardano.Transfer.Builder.setAmountByType(transaction: TransactionData): Cardano.Transfer.Builder {
+        when (val type = transaction.amount.type) {
             is AmountType.Coin -> {
-                this.amount = amount.longValueOrZero
+                this.amount = transaction.amount.longValueOrZero
             }
             is AmountType.Token -> {
-                setTokenAmount(token = type.token, amount = amount.longValueOrZero)
+                setTokenAmount(
+                    token = type.token,
+                    amount = transaction.amount.longValueOrZero,
+                    fee = transaction.fee?.amount?.longValueOrZero ?: 0,
+                )
             }
             else -> throw BlockchainSdkError.CustomError("AmountType $type is not supported")
         }
@@ -77,7 +81,11 @@ internal class CardanoTWTxBuilder(
         return this
     }
 
-    private fun Cardano.Transfer.Builder.setTokenAmount(token: Token, amount: Long): Cardano.Transfer.Builder {
+    private fun Cardano.Transfer.Builder.setTokenAmount(
+        token: Token,
+        amount: Long,
+        fee: Long,
+    ): Cardano.Transfer.Builder {
         val asset = outputs
             .flatMap(CardanoUnspentOutput::assets)
             .firstOrNull { token.contractAddress.startsWith(prefix = it.policyID) }
@@ -89,7 +97,8 @@ internal class CardanoTWTxBuilder(
 
         val minAdaValue = minAdaAmount(tokenBundle.toByteArray())
         val balance = wallet.getCoinAmount().longValueOrZero
-        val remainingBalance = balance - minAdaValue
+
+        val remainingBalance = balance - minAdaValue - fee
 
         val minChange = BigDecimal.ONE.movePointRight(wallet.blockchain.decimals()).toLong()
         val adaAmount = if (remainingBalance in 1 until minChange) {
