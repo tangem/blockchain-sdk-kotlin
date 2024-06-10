@@ -592,6 +592,7 @@ enum class Blockchain(
             TerraV1,
             VeChain, VeChainTestnet,
             Hedera, HederaTestnet,
+            TON, TONTestnet,
             -> true
 
             else -> false
