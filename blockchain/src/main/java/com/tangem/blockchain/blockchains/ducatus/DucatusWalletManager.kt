@@ -6,7 +6,7 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
-import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
 import java.math.BigDecimal
 
@@ -15,7 +15,7 @@ internal class DucatusWalletManager(
     transactionBuilder: BitcoinTransactionBuilder,
     networkProvider: BitcoinNetworkProvider,
     transactionHistoryProvider: TransactionHistoryProvider,
-    feesCalculator: DucatusFeesCalculator,
+    private val feesCalculator: DucatusFeesCalculator,
 ) : BitcoinWalletManager(
     wallet = wallet,
     transactionHistoryProvider = transactionHistoryProvider,
@@ -33,7 +33,6 @@ internal class DucatusWalletManager(
         }
     }
 
-    @Suppress("MagicNumber")
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val feeValue = BigDecimal.ONE.movePointLeft(blockchain.decimals())
         val sizeResult = transactionBuilder.getEstimateSize(
@@ -43,14 +42,7 @@ internal class DucatusWalletManager(
             is Result.Failure -> sizeResult
             is Result.Success -> {
                 val transactionSize = sizeResult.data.toBigDecimal()
-                val minFee = BigDecimal.valueOf(0.00000089).multiply(transactionSize)
-                val normalFee = BigDecimal.valueOf(0.00000144).multiply(transactionSize)
-                val priorityFee = BigDecimal.valueOf(0.00000350).multiply(transactionSize)
-                val fees = TransactionFee.Choosable(
-                    minimum = Fee.Common(Amount(minFee, blockchain)),
-                    normal = Fee.Common(Amount(normalFee, blockchain)),
-                    priority = Fee.Common(Amount(priorityFee, blockchain)),
-                )
+                val fees = feesCalculator.calculateFees(transactionSize)
                 Result.Success(fees)
             }
         }

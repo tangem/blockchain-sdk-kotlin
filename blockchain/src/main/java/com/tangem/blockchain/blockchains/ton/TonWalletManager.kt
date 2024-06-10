@@ -3,22 +3,21 @@ package com.tangem.blockchain.blockchains.ton
 import android.util.Log
 import com.tangem.blockchain.blockchains.ton.TonTransactionBuilder.Companion.JETTON_TRANSFER_PROCESSING_FEE
 import com.tangem.blockchain.blockchains.ton.models.TonWalletInfo
-import com.tangem.blockchain.blockchains.ton.network.TonJsonRpcNetworkProvider
+import com.tangem.blockchain.blockchains.ton.network.TonNetworkProvider
 import com.tangem.blockchain.blockchains.ton.network.TonNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
-import com.tangem.blockchain.extensions.toSimpleFailure
 import wallet.core.jni.CoinType
 import wallet.core.jni.PublicKeyType
 import wallet.core.jni.proto.TheOpenNetwork
 
 internal class TonWalletManager(
     wallet: Wallet,
-    networkProviders: List<TonJsonRpcNetworkProvider>,
+    networkProviders: List<TonNetworkProvider>,
 ) : WalletManager(wallet), TransactionSender {
 
     private var sequenceNumber: Int = 0
@@ -38,21 +37,25 @@ internal class TonWalletManager(
         }
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         val input = txBuilder.buildForSign(
             sequenceNumber = sequenceNumber,
             amount = transactionData.amount,
             destination = transactionData.destinationAddress,
             extras = transactionData.extras as? TonTransactionExtras,
-        ).successOr { return it.toSimpleFailure() }
+        ).successOr { return it }
 
-        val message = buildTransaction(input, signer).successOr { return SimpleResult.fromTangemSdkError(it.error) }
+        val message = buildTransaction(input, signer).successOr { return Result.fromTangemSdkError(it.error) }
 
         return when (val sendResult = networkService.send(message)) {
-            is Result.Failure -> SimpleResult.Failure(sendResult.error)
+            is Result.Failure -> Result.Failure(sendResult.error)
             is Result.Success -> {
                 wallet.addOutgoingTransaction(transactionData.copy(hash = sendResult.data))
-                SimpleResult.Success
+                transactionData.hash = sendResult.data
+                Result.Success(TransactionSendResult(sendResult.data))
             }
         }
     }

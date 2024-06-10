@@ -11,8 +11,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.RoundingMode
 
-class TonNetworkService(
-    jsonRpcProviders: List<TonJsonRpcNetworkProvider>,
+internal class TonNetworkService(
+    jsonRpcProviders: List<TonNetworkProvider>,
     private val blockchain: Blockchain,
 ) {
 
@@ -88,7 +88,7 @@ class TonNetworkService(
 
     suspend fun send(message: String): Result<String> {
         return try {
-            val hashResponse = multiJsonRpcProvider.performRequest(TonJsonRpcNetworkProvider::send, message)
+            val hashResponse = multiJsonRpcProvider.performRequest(TonNetworkProvider::send, message)
                 .successOr { return it }
             Result.Success(hashResponse.hash)
         } catch (e: Exception) {
