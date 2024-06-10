@@ -39,7 +39,7 @@ internal class SolanaTransactionBuilder(
                 amount = amountToSend,
                 token = amount.type.token,
             )
-            is AmountType.Reserve -> Result.Failure(BlockchainSdkError.UnsupportedOperation())
+            else -> Result.Failure(BlockchainSdkError.UnsupportedOperation())
         }
     }
 
