@@ -112,6 +112,10 @@ class EstimationFeeAddressFactoryTest {
         Blockchain.VeChainTestnet to "0x1C5B4935709583758BE5b9ECeeBaf5cD6AFecF41",
         Blockchain.AptosTestnet to "0x4626b7ef23fb2800a0e224e8249f47e0db3579070262da2a7efb0bc52c882867",
         Blockchain.AlgorandTestnet to "CW6XDCKQAZUGAIOTGE2NEPYFFVW6H6IKFOTOF3W5WDUVHH4ZIDCIKYDPXY",
+        Blockchain.Koinos to "1C423Vbd44zjghhJR5fKJdLFS3rgVFUc9A",
+        Blockchain.Radiant to "1K8jBuCKzuwvFCjL7Qpqq69k1hnVXJ31Nc",
+        Blockchain.Joystream to "j4SXkX46sABwjxeuzicd2e5m8gDu4ieoWHW3aggbBKkh4WvtF",
+        Blockchain.Bittensor to "5HLcF8UkyCTK5oszoTxx8LKxEzmtEEfPWeAxCz5NiDjqWH9y",
     )
 
     @Test
