@@ -37,19 +37,13 @@ internal class CardanoTWTxBuilder(
             .build()
     }
 
-    /** Calculate required min-ada-value to withdraw all [tokens] */
-    fun calculateMinAdaValueToWithdrawAllTokens(tokens: Set<Token>): Long {
+    /** Calculate required min-ada-value to withdraw all tokens */
+    fun calculateMinAdaValueToWithdrawAllTokens(): Long {
         if (!DepsContainer.blockchainFeatureToggles.isCardanoTokenSupport) {
             throw BlockchainSdkError.CustomError("Cardano tokens isn't supported")
         }
 
-        val assets = outputs
-            .flatMap(CardanoUnspentOutput::assets)
-            .filter { asset ->
-                tokens.any { token ->
-                    token.contractAddress.startsWith(prefix = asset.policyID)
-                }
-            }
+        val assets = outputs.flatMap(CardanoUnspentOutput::assets)
 
         val tokenBundle = Cardano.TokenBundle.newBuilder()
             .addAllToken(
