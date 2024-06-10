@@ -3,8 +3,12 @@ package com.tangem.blockchain.blockchains.cardano
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.utils.CardanoTransactionValidatorTestFactory
+import com.tangem.blockchain.common.BlockchainFeatureToggles
+import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.di.DepsContainer
+import org.junit.Before
 import org.junit.Test
 import java.math.BigDecimal
 
@@ -14,6 +18,14 @@ class CardanoTransactionValidatorTest {
 
     init {
         System.loadLibrary("TrustWalletCore")
+    }
+
+    @Before
+    fun setup() {
+        DepsContainer.onInit(
+            config = BlockchainSdkConfig(),
+            featureToggles = BlockchainFeatureToggles(isCardanoTokenSupport = true),
+        )
     }
 
     // region Test withdraw coins 1
@@ -553,7 +565,7 @@ class CardanoTransactionValidatorTest {
      */
     @Test
     fun test_withdraw_tokens_5() {
-        val validator = createValidator(model = testModelFactory.create_1_ADA_and_WMT())
+        val validator = createValidator(model = testModelFactory.create_2_ADA_and_WMT())
 
         val result = validator.validate(
             transaction = testModelFactory.createWMTTransaction(value = BigDecimal(5)),
