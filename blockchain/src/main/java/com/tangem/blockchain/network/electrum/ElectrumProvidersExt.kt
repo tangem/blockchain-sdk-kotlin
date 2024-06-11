@@ -19,6 +19,11 @@ internal fun Blockchain.getElectrumNetworkProviders(): List<ElectrumNetworkProvi
                 supportedProtocolVersion = RadiantNetworkService.SUPPORTED_SERVER_VERSION,
                 okHttpClient = BlockchainSdkRetrofitBuilder.createOkhttpClientForRadiant(),
             ),
+            createNetworkProvider(
+                wssUrl = "wss://electrumx-02-ssl.radiant4people.com:51002",
+                supportedProtocolVersion = RadiantNetworkService.SUPPORTED_SERVER_VERSION,
+                okHttpClient = BlockchainSdkRetrofitBuilder.createOkhttpClientForRadiant(),
+            ),
         )
         else -> error("$this is not supported")
     }
