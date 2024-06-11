@@ -200,6 +200,20 @@ sealed class BlockchainSdkError(
         class Api(code: Int, message: String) : ElectrumBlockchain(subCode = code, customMessage = message)
     }
 
+    sealed class Aptos(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_APTOS,
+        customMessage = customMessage?.let { "$ERROR_CODE_APTOS: $subCode: $customMessage" }
+            ?: "$ERROR_CODE_APTOS: $subCode",
+        messageResId = null,
+        cause = throwable,
+    ) {
+        class Api(message: String) : Aptos(subCode = 0, customMessage = message)
+    }
+
     companion object {
         const val ERROR_CODE_SOLANA = 1000
         const val ERROR_CODE_POLKADOT = 2000
@@ -212,6 +226,7 @@ sealed class BlockchainSdkError(
         const val ERROR_CODE_ETHEREUM = 9000
         const val ERROR_CODE_ALGORAND = 10000
         const val ERROR_CODE_ELECTRUM = 11000
+        const val ERROR_CODE_APTOS = 12000
     }
 }
 
