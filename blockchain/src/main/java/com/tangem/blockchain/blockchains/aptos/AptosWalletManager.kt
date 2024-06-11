@@ -66,7 +66,7 @@ internal class AptosWalletManager(
         )
 
         return when (val signingResult = signer.sign(rawTx, wallet.publicKey)) {
-            is CompletionResult.Failure -> SimpleResult.Failure(signingResult.error.toBlockchainSdkError())
+            is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signingResult.error)
             is CompletionResult.Success -> {
                 val hash = txBuilder.buildForSend(
                     sequenceNumber = sequenceNumber,

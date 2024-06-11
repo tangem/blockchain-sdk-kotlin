@@ -23,6 +23,7 @@ object ResultChecker {
                     is BlockchainSdkError.Ton.Api -> true
                     is BlockchainSdkError.Cosmos.Api -> true
                     is BlockchainSdkError.ElectrumBlockchain.Api -> true
+                    is BlockchainSdkError.Aptos.Api -> true
                     else -> false
                 }
         }
@@ -39,6 +40,7 @@ object ResultChecker {
                     is BlockchainSdkError.Ton.Api -> true
                     is BlockchainSdkError.Cosmos.Api -> true
                     is BlockchainSdkError.ElectrumBlockchain.Api -> true
+                    is BlockchainSdkError.Aptos.Api -> true
                     else -> false
                 }
         }
