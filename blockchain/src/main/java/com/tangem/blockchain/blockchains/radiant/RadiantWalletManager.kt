@@ -8,10 +8,10 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.createWalletCorePublicKey
 import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.blockchain.network.electrum.ElectrumNetworkProvider
 import com.tangem.common.CompletionResult
-import wallet.core.jni.PublicKey
 import wallet.core.jni.PublicKeyType
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -54,7 +54,8 @@ internal class RadiantWalletManager(
             when (val signatureResult = signer.sign(hashes = hashesForSign, publicKey = wallet.publicKey)) {
                 is CompletionResult.Success -> {
                     val signatures = signatureResult.data
-                    val walletCorePublicKey = PublicKey(wallet.publicKey.blockchainKey, PublicKeyType.SECP256K1)
+                    val walletCorePublicKey =
+                        createWalletCorePublicKey(wallet.publicKey.blockchainKey, PublicKeyType.SECP256K1)
                     if (signatures.count() != hashesForSign.count()) {
                         throw BlockchainSdkError.FailedToBuildTx
                     }
