@@ -39,6 +39,9 @@ internal class RadiantWalletManager(
     }
 
     private fun updateWallet(accountModel: RadiantAccountInfo) {
+        if (accountModel.balance != wallet.amounts[AmountType.Coin]?.value) {
+            wallet.recentTransactions.clear()
+        }
         wallet.setCoinValue(accountModel.balance)
         transactionBuilder.setUnspentOutputs(accountModel.unspentOutputs)
     }
