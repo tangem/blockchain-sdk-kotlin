@@ -24,7 +24,7 @@ import java.math.BigInteger
 /**
 [REDACTED_AUTHOR]
  */
-class PolkadotTransactionBuilder(blockchain: Blockchain) {
+class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
 
     private val decimals = blockchain.decimals()
 
@@ -43,6 +43,8 @@ class PolkadotTransactionBuilder(blockchain: Blockchain) {
         encodeCall(codecWriter, amount, Address.from(destinationAddress))
         encodeEraNonceTip(codecWriter, context)
 
+        encodeCheckMetadataHashMode(codecWriter)
+
         codecWriter.writeUint32(context.runtimeVersion)
         codecWriter.writeUint32(context.txVersion)
         codecWriter.writeUint256(context.genesis.bytes)
@@ -51,6 +53,8 @@ class PolkadotTransactionBuilder(blockchain: Blockchain) {
         } else {
             codecWriter.writeUint256(context.eraBlockHash.bytes)
         }
+
+        encodeCheckMetadataHash(codecWriter)
 
         return buffer.toByteArray()
     }
@@ -76,6 +80,9 @@ class PolkadotTransactionBuilder(blockchain: Blockchain) {
         codecWriter.writeByteArray(signature.value.bytes)
 
         encodeEraNonceTip(codecWriter, context)
+
+        encodeCheckMetadataHashMode(codecWriter)
+
         encodeCall(codecWriter, amount, Address.from(destinationAddress))
 
         val prefixBuffer = ByteArrayOutputStream()
@@ -97,6 +104,18 @@ class PolkadotTransactionBuilder(blockchain: Blockchain) {
         codecWriter.write(EraWriter(), context.era.toInteger())
         codecWriter.write(ScaleCodecWriter.COMPACT_BIGINT, BigInteger.valueOf(context.nonce))
         codecWriter.write(ScaleCodecWriter.COMPACT_BIGINT, context.tip.value)
+    }
+
+    private fun encodeCheckMetadataHashMode(codecWriter: ScaleCodecWriter) {
+        if (blockchain == Blockchain.Kusama || blockchain == Blockchain.PolkadotTestnet) {
+            codecWriter.write(ScaleCodecWriter.BOOL, false)
+        }
+    }
+
+    private fun encodeCheckMetadataHash(codecWriter: ScaleCodecWriter) {
+        if (blockchain == Blockchain.Kusama || blockchain == Blockchain.PolkadotTestnet) {
+            codecWriter.writeByte(0x0.toByte())
+        }
     }
 }
 
