@@ -1,8 +1,11 @@
 package com.tangem.blockchain.blockchains.polkadot.network
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
 import com.tangem.blockchain.blockchains.polkadot.extensions.toBigDecimal
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
@@ -14,7 +17,7 @@ import io.emeraldpay.polkaj.api.StandardCommands
 import io.emeraldpay.polkaj.apihttp.JavaRetrofitAdapter
 import io.emeraldpay.polkaj.json.jackson.PolkadotModule
 import io.emeraldpay.polkaj.scaletypes.AccountInfo
-import io.emeraldpay.polkaj.tx.AccountRequests
+import io.emeraldpay.polkaj.tx.AccountRequests.AddressBalance
 import io.emeraldpay.polkaj.tx.ExtrinsicContext
 import io.emeraldpay.polkaj.types.Address
 import io.emeraldpay.polkaj.types.ByteData
@@ -23,17 +26,20 @@ import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.math.BigInteger
 
-/**
-[REDACTED_AUTHOR]
- */
-class PolkadotCombinedProvider(
-    private val decimals: Int,
+internal class PolkadotCombinedProvider(
     override val baseUrl: String,
+    private val blockchain: Blockchain,
+    credentials: Map<String, String>? = null,
 ) : PolkadotNetworkProvider {
 
-    private val polkadotApi: PolkadotApi = PolkadotApi.Builder().rpcCallAdapter(rpcCallAdapter(baseUrl)).build()
-    private val polkadotProvider: PolkadotJsonRpcProvider = PolkadotJsonRpcProvider(baseUrl)
+    private val decimals by lazy { blockchain.decimals() }
+
+    private val polkadotApi: PolkadotApi = PolkadotApi.Builder()
+        .rpcCallAdapter(rpcCallAdapter(baseUrl, credentials))
+        .build()
+    private val polkadotProvider: PolkadotJsonRpcProvider = PolkadotJsonRpcProvider(baseUrl, credentials)
     private val commands = StandardCommands.getInstance()
+    private val ss58Network = PolkadotAddressService(blockchain).ss58Network
 
     override suspend fun getBalance(address: String): Result<BigDecimal> = withContext(Dispatchers.IO) {
         val accountInfo = getAccountInfo(Address.from(address)).successOr { return@withContext it }
@@ -44,7 +50,7 @@ class PolkadotCombinedProvider(
 
     private suspend fun getAccountInfo(address: Address): Result<AccountInfo?> = withContext(Dispatchers.IO) {
         try {
-            val info = AccountRequests.balanceOf(address).execute(polkadotApi).get()
+            val info = AddressBalance(address, ss58Network).execute(polkadotApi).get()
             Result.Success(info)
         } catch (ex: Exception) {
             Result.Failure(BlockchainSdkError.Polkadot.Api(ex))
@@ -100,8 +106,9 @@ class PolkadotCombinedProvider(
 
     companion object {
 
-        private fun rpcCallAdapter(baseUrl: String): RpcCallAdapter {
-            val okHttpClient = BlockchainSdkRetrofitBuilder.build()
+        private fun rpcCallAdapter(baseUrl: String, credentials: Map<String, String>?): RpcCallAdapter {
+            val interceptors = if (credentials != null) listOf(AddHeaderInterceptor(credentials)) else emptyList()
+            val okHttpClient = BlockchainSdkRetrofitBuilder.build(interceptors)
             val rpcCoder = RpcCoder(ObjectMapper().apply { registerModule(PolkadotModule()) })
 
             return JavaRetrofitAdapter(baseUrl, okHttpClient, rpcCoder)
