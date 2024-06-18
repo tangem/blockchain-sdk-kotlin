@@ -53,6 +53,11 @@ internal class CardanoTransactionBuilder(
                 condition = !isCoinTransaction && plan.error == Common.SigningError.Error_low_balance,
             )
 
+            throwIf(
+                exception = BlockchainSdkError.Cardano.InsufficientRemainingBalanceToWithdrawTokens,
+                condition = checkRequiredMinAdaValue(transaction = transaction, plan = plan),
+            )
+
             checkRemainingAdaBalance(transaction = transaction, plan = plan)
         }
     }
@@ -127,6 +132,27 @@ internal class CardanoTransactionBuilder(
         }
 
         return output.encoded.toByteArray()
+    }
+
+    /**
+     * Require to check that the min-ada-value from Wallet-Core [Cardano.TransactionPlan] is equals real min-ada-value.
+     * Because Wallet-Core can hold a fee value from min-ada-value.
+     *
+     * @param transaction transaction
+     * @param plan        wallet-core transaction input
+     */
+    private fun checkRequiredMinAdaValue(transaction: TransactionData, plan: Cardano.TransactionPlan): Boolean {
+        return when (val type = transaction.amount.type) {
+            is AmountType.Token -> {
+                val minAdaValue = twTxBuilder.calculateMinAdaValueToWithdrawToken(
+                    contractAddress = type.token.contractAddress,
+                    amount = transaction.amount.longValueOrZero,
+                )
+
+                plan.amount < minAdaValue
+            }
+            else -> false // another types don't use min-ada-value
+        }
     }
 
     private fun checkRemainingAdaBalance(transaction: TransactionData, plan: Cardano.TransactionPlan) {
