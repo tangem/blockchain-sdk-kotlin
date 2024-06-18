@@ -7,8 +7,8 @@ import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
 import com.tangem.crypto.CryptoUtils
 import java.math.BigDecimal
@@ -49,8 +49,11 @@ class CosmosWalletManager(
     }
 
     // TODO think about split base "send" method to "sign" and "send" to satisfy SRP
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val accNumber = accountNumber ?: return SimpleResult.Failure(BlockchainSdkError.AccountNotFound())
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
+        val accNumber = accountNumber ?: return Result.Failure(BlockchainSdkError.AccountNotFound())
 
         val hash = txBuilder.buildForSign(
             amount = transactionData.amount,
@@ -79,24 +82,29 @@ class CosmosWalletManager(
             }
 
             is CompletionResult.Failure -> {
-                return SimpleResult.fromTangemSdkError(signature.error)
+                return Result.fromTangemSdkError(signature.error)
             }
         }
 
         return sendToNetwork(transactionData, message)
     }
 
-    private suspend fun sendToNetwork(transactionData: TransactionData, message: String): SimpleResult {
+    private suspend fun sendToNetwork(
+        transactionData: TransactionData,
+        message: String,
+    ): Result<TransactionSendResult> {
         return when (val sendResult = networkService.send(message)) {
-            is Result.Failure -> SimpleResult.Failure(sendResult.error)
+            is Result.Failure -> sendResult
             is Result.Success -> {
+                val hash = sendResult.data
                 val transaction = transactionData.copy(
-                    hash = sendResult.data,
+                    hash = hash,
                     status = TransactionStatus.Unconfirmed,
                     sourceAddress = wallet.address,
                 )
+                transactionData.hash = hash
                 wallet.recentTransactions.add(transaction)
-                SimpleResult.Success
+                Result.Success(TransactionSendResult(hash))
             }
         }
     }
