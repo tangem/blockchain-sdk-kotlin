@@ -3,7 +3,7 @@ package com.tangem.blockchain.network.blockbook.network
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
-import com.tangem.blockchain.common.txhistory.TransactionHistoryRequest
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
 import com.tangem.blockchain.network.blockbook.config.BlockBookConfig
 import com.tangem.blockchain.network.blockbook.config.BlockBookRequest
@@ -36,7 +36,7 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
             .newCall(
                 request = Request.Builder()
                     .get()
-                    .url("$requestBaseUrl/address/$address?details=txs")
+                    .url("$requestBaseUrl/address/$address")
                     .build(),
             )
             .await()
@@ -56,6 +56,20 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
                 request = Request.Builder()
                     .get()
                     .url("$requestBaseUrl/address/$address?details=txs${request.params()}")
+                    .build(),
+            )
+            .await()
+            .unpack()
+    }
+
+    suspend fun getTransaction(txId: String): GetAddressResponse.Transaction {
+        val request = BlockBookRequest.GetTxById(txId)
+        val requestBaseUrl = config.getRequestBaseUrl(request, blockchain)
+        return client
+            .newCall(
+                request = Request.Builder()
+                    .get()
+                    .url("$requestBaseUrl/tx/${request.txId}")
                     .build(),
             )
             .await()
