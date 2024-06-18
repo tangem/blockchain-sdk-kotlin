@@ -4,6 +4,7 @@ import android.util.Log
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -66,24 +67,28 @@ class StellarWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         val hash = transactionBuilder.buildToSign(transactionData, sequence).successOr {
-            return SimpleResult.Failure(it.error)
+            return Result.Failure(it.error)
         }
 
-        val signerResponse = signer.sign(hash, wallet.publicKey)
-        return when (signerResponse) {
+        return when (val signerResponse = signer.sign(hash, wallet.publicKey)) {
             is CompletionResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
-                val sendResult = networkProvider.sendTransaction(transactionToSend)
-
-                if (sendResult is SimpleResult.Success) {
-                    transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
-                    wallet.addOutgoingTransaction(transactionData)
+                when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
+                    is SimpleResult.Failure -> Result.Failure(sendResult.error)
+                    SimpleResult.Success -> {
+                        val txHash = transactionBuilder.getTransactionHash().toHexString()
+                        transactionData.hash = txHash
+                        wallet.addOutgoingTransaction(transactionData)
+                        Result.Success(TransactionSendResult(txHash))
+                    }
                 }
-                sendResult
             }
-            is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResponse.error)
+            is CompletionResult.Failure -> Result.fromTangemSdkError(signerResponse.error)
         }
     }
 
