@@ -102,7 +102,7 @@ class TronTransactionBuilder(private val blockchain: Blockchain) {
                     parameter = AnyMessage.pack(parameter),
                 )
             }
-            AmountType.Reserve -> error("Not supported")
+            else -> error("Not supported")
         }
     }
 
