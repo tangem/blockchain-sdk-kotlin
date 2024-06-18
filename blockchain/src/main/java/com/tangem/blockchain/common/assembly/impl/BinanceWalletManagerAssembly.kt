@@ -13,9 +13,9 @@ internal object BinanceWalletManagerAssembly : WalletManagerAssembly<BinanceWall
         with(input.wallet) {
             val isTestNet = blockchain == Blockchain.BinanceTestnet
             return BinanceWalletManager(
-                this,
-                BinanceTransactionBuilder(publicKey.blockchainKey, isTestNet),
-                BinanceNetworkService(isTestNet),
+                wallet = this,
+                transactionBuilder = BinanceTransactionBuilder(publicKey.blockchainKey, isTestNet),
+                networkProvider = BinanceNetworkService(blockchain.isTestnet()),
             )
         }
     }

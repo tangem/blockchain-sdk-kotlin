@@ -8,8 +8,8 @@ import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
@@ -56,7 +56,10 @@ internal class AptosWalletManager(
         )
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         val expirationTimestamp = createExpirationTimestamp()
 
         val rawTx = txBuilder.buildForSign(
@@ -66,7 +69,7 @@ internal class AptosWalletManager(
         )
 
         return when (val signingResult = signer.sign(rawTx, wallet.publicKey)) {
-            is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signingResult.error)
+            is CompletionResult.Failure -> Result.fromTangemSdkError(signingResult.error)
             is CompletionResult.Success -> {
                 val hash = txBuilder.buildForSend(
                     sequenceNumber = sequenceNumber,
@@ -76,11 +79,12 @@ internal class AptosWalletManager(
                 )
 
                 when (val result = networkService.submitTransaction(hash)) {
-                    is Result.Failure -> SimpleResult.Failure(result.error)
+                    is Result.Failure -> Result.Failure(result.error)
                     is Result.Success -> {
-                        wallet.addOutgoingTransaction(transactionData.copy(hash = result.data))
-
-                        SimpleResult.Success
+                        val txHash = result.data
+                        wallet.addOutgoingTransaction(transactionData.copy(hash = txHash))
+                        transactionData.hash = txHash
+                        Result.Success(TransactionSendResult(txHash))
                     }
                 }
             }

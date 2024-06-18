@@ -4,7 +4,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
 
-class ChiaNetworkService(chiaNetworkProviders: List<ChiaJsonRpcProvider>) : ChiaNetworkProvider {
+class ChiaNetworkService(chiaNetworkProviders: List<ChiaNetworkProvider>) : ChiaNetworkProvider {
 
     private val multiProvider = MultiNetworkProvider(chiaNetworkProviders)
 

@@ -1,8 +1,8 @@
 package com.tangem.blockchain.blockchains.hedera
 
-import com.hedera.hashgraph.sdk.TransferTransaction
+import com.hedera.hashgraph.sdk.Transaction
 
-data class HederaBuiltTransaction(
-    val transferTransaction: TransferTransaction,
+internal data class HederaBuiltTransaction<T : Transaction<T>>(
+    val transaction: T,
     val signatures: List<ByteArray>,
 )
