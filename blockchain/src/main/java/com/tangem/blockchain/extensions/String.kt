@@ -23,6 +23,11 @@ fun String.decodeBech32(): ByteArray? {
     }
 }
 
+fun String.replaceLast(oldValue: String, newValue: String, ignoreCase: Boolean = false): String {
+    val index = lastIndexOf(oldValue, ignoreCase = ignoreCase)
+    return if (index < 0) this else this.replaceRange(index, index + oldValue.length, newValue)
+}
+
 @Suppress("MagicNumber")
 fun String.hexToBigDecimal(default: BigDecimal = BigDecimal.ZERO): BigDecimal {
     return removePrefix("0x").toBigIntegerOrNull(16)?.toBigDecimal() ?: default

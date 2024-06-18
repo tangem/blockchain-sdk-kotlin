@@ -10,10 +10,10 @@ import com.tangem.blockchain.network.MultiNetworkProvider
 /**
 [REDACTED_AUTHOR]
  */
-class NearNetworkService(
-    blockchain: Blockchain,
-    private val multiJsonRpcProvider: MultiNetworkProvider<NearJsonRpcNetworkProvider>,
-) {
+class NearNetworkService(blockchain: Blockchain, providers: List<NearNetworkProvider>) {
+
+    val host: String get() = multiNetworkProvider.currentProvider.baseUrl
+    private val multiNetworkProvider = MultiNetworkProvider(providers)
 
     init {
         if (blockchain != Blockchain.Near && blockchain != Blockchain.NearTestnet) {
@@ -21,10 +21,8 @@ class NearNetworkService(
         }
     }
 
-    val host: String get() = multiJsonRpcProvider.currentProvider.baseUrl
-
     suspend fun getAccount(address: String): Result<NearAccount> {
-        return when (val result = multiJsonRpcProvider.performRequest(NearNetworkProvider::getAccount, address)) {
+        return when (val result = multiNetworkProvider.performRequest(NearNetworkProvider::getAccount, address)) {
             is Result.Success -> {
                 Result.Success(
                     NearAccount.Full(
@@ -49,7 +47,7 @@ class NearNetworkService(
 
     suspend fun getAccessKey(address: String, publicKeyEncodedToBase58: String): Result<AccessKey> {
         val accessKeyResult =
-            multiJsonRpcProvider.performRequest(
+            multiNetworkProvider.performRequest(
                 request = NearNetworkProvider::getAccessKey,
                 data = NearGetAccessKeyParams(address, publicKeyEncodedToBase58),
             ).successOr { return it }
@@ -61,7 +59,7 @@ class NearNetworkService(
     suspend fun getGas(blockHash: String?): Result<NearGasPrice> {
         val safeBlockHash = blockHash ?: getNetworkStatus()
             .successOr { return it }.latestBlockHash
-        val gasPriceResult = multiJsonRpcProvider.performRequest(NearNetworkProvider::getGas, safeBlockHash)
+        val gasPriceResult = multiNetworkProvider.performRequest(NearNetworkProvider::getGas, safeBlockHash)
             .successOr { return it }
 
         val gasPrice = NearGasPrice(
@@ -73,14 +71,14 @@ class NearNetworkService(
     }
 
     suspend fun sendTransaction(signedTxBase64: String): Result<String> {
-        val sendTxHash = multiJsonRpcProvider.performRequest(NearNetworkProvider::sendTransaction, signedTxBase64)
+        val sendTxHash = multiNetworkProvider.performRequest(NearNetworkProvider::sendTransaction, signedTxBase64)
             .successOr { return it }
 
         return Result.Success(sendTxHash)
     }
 
     suspend fun getStatus(txHash: String, senderId: String): Result<NearSentTransaction> {
-        val sendTxResult = multiJsonRpcProvider.performRequest(
+        val sendTxResult = multiNetworkProvider.performRequest(
             request = NearNetworkProvider::getTransactionStatus,
             data = NearGetTxParams(txHash, senderId),
         ).successOr { return it }
@@ -94,7 +92,7 @@ class NearNetworkService(
     }
 
     suspend fun getNetworkStatus(): Result<NearNetworkStatus> {
-        val statusResult = multiJsonRpcProvider.performRequest(NearNetworkProvider::getNetworkStatus)
+        val statusResult = multiNetworkProvider.performRequest(NearNetworkProvider::getNetworkStatus)
             .successOr { return it }
 
         val status = NearNetworkStatus(
@@ -109,7 +107,7 @@ class NearNetworkService(
     }
 
     suspend fun getProtocolConfig(): Result<ProtocolConfigResult> {
-        return multiJsonRpcProvider.performRequest(NearNetworkProvider::getProtocolConfig)
+        return multiNetworkProvider.performRequest(NearNetworkProvider::getProtocolConfig)
     }
 
     private fun Result.Failure.mapToNearError(): NearError? {
