@@ -2,9 +2,12 @@ package com.tangem.blockchain.blockchains.cardano
 
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
+import com.tangem.blockchain.blockchains.cardano.walletcore.CardanoTWTxBuilder
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.extensions.hexToBigDecimal
 import com.tangem.blockchain.extensions.trustWalletCoinType
-import com.tangem.common.extensions.toByteArray
+import com.tangem.common.extensions.toHexString
 import wallet.core.java.AnySigner
 import wallet.core.jni.CoinType
 import wallet.core.jni.DataVector
@@ -13,21 +16,70 @@ import wallet.core.jni.proto.Cardano
 import wallet.core.jni.proto.Common
 import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
 import java.math.BigDecimal
+import kotlin.properties.Delegates
 
 // You can decode your CBOR transaction here: https://cbor.me
-internal class CardanoTransactionBuilder(wallet: Wallet) {
+internal class CardanoTransactionBuilder(
+    private val wallet: Wallet,
+) : TransactionValidator {
 
     private val coinType: CoinType = wallet.blockchain.trustWalletCoinType
-    private val decimal: Int = wallet.blockchain.decimals()
+    private val decimals: Int = wallet.blockchain.decimals()
 
-    private var outputs: List<CardanoUnspentOutput> = emptyList()
+    private var twTxBuilder: CardanoTWTxBuilder by Delegates.notNull()
 
     fun update(outputs: List<CardanoUnspentOutput>) {
-        this.outputs = outputs
+        twTxBuilder = CardanoTWTxBuilder(wallet, outputs)
+    }
+
+    override fun validate(transaction: TransactionData): Result<Unit> {
+        return runCatching {
+            val isCoinTransaction = transaction.amount.type is AmountType.Coin
+            val transactionValue = transaction.amount.value ?: BigDecimal.ZERO
+
+            throwIf(
+                exception = BlockchainSdkError.Cardano.InsufficientSendingAdaAmount,
+                condition = isCoinTransaction && transactionValue < BigDecimal.ONE,
+            )
+
+            val plan = AnySigner.plan(
+                twTxBuilder.build(transaction),
+                coinType,
+                Cardano.TransactionPlan.parser(),
+            )
+
+            throwIf(
+                exception = BlockchainSdkError.Cardano.InsufficientMinAdaBalanceToSendToken,
+                condition = !isCoinTransaction && plan.error == Common.SigningError.Error_low_balance,
+            )
+
+            checkRemainingAdaBalance(transaction = transaction, plan = plan)
+        }
+    }
+
+    fun estimateFee(transaction: TransactionData): Fee {
+        val input = twTxBuilder.build(transaction)
+        val plan = AnySigner.plan(input, coinType, Cardano.TransactionPlan.parser())
+
+        val feeAmount = Amount(
+            value = BigDecimal(plan.fee).movePointLeft(decimals),
+            blockchain = wallet.blockchain,
+        )
+
+        return when (val type = transaction.amount.type) {
+            AmountType.Coin -> Fee.Common(amount = feeAmount)
+            is AmountType.Token -> {
+                Fee.CardanoToken(
+                    amount = feeAmount,
+                    minAdaValue = BigDecimal(plan.amount).movePointLeft(decimals),
+                )
+            }
+            else -> throw BlockchainSdkError.CustomError("AmountType $type is not supported")
+        }
     }
 
     fun buildForSign(transaction: TransactionData): ByteArray {
-        val input = buildCardanoSigningInput(transaction)
+        val input = twTxBuilder.build(transaction)
         val txInputData = input.toByteArray()
 
         val preImageHashes = TransactionCompiler.preImageHashes(coinType, txInputData)
@@ -41,7 +93,7 @@ internal class CardanoTransactionBuilder(wallet: Wallet) {
     }
 
     fun buildForSend(transaction: TransactionData, signatureInfo: SignatureInfo): ByteArray {
-        val input = buildCardanoSigningInput(transaction)
+        val input = twTxBuilder.build(transaction)
         val txInputData = input.toByteArray()
 
         val signatures = DataVector()
@@ -77,108 +129,51 @@ internal class CardanoTransactionBuilder(wallet: Wallet) {
         return output.encoded.toByteArray()
     }
 
-    fun estimatedFee(transaction: TransactionData): BigDecimal {
-        val input = buildCardanoSigningInput(transaction)
-        val plan = AnySigner.plan(input, coinType, Cardano.TransactionPlan.parser())
+    private fun checkRemainingAdaBalance(transaction: TransactionData, plan: Cardano.TransactionPlan) {
+        val hasNotZeroTokens = hasRemainingNotZeroTokensBalances(transaction, plan)
 
-        return BigDecimal(plan.fee)
-    }
+        if (!hasNotZeroTokens) {
+            val minChange = BigDecimal.ONE.movePointRight(decimals).toLong()
 
-    private fun buildCardanoSigningInput(transaction: TransactionData): Cardano.SigningInput {
-        if (outputs.isEmpty()) throw BlockchainSdkError.CustomError("Outputs are empty")
-
-        val transferWithoutAmount = transaction.createTransfer()
-        val inputWithoutAmount = createSigningInput(transfer = transferWithoutAmount)
-
-        val transfer = when (val type = transaction.amount.type) {
-            is AmountType.Coin -> {
-                transferWithoutAmount.setCoinAmount(
-                    change = inputWithoutAmount.plan.change,
-                    amount = transaction.amount.longValue ?: 0L,
-                )
-            }
-            is AmountType.Token -> transferWithoutAmount.setTokenAmount(token = type.token)
-            is AmountType.Reserve -> throw BlockchainSdkError.CustomError("Reserve amount is not supported")
-        }
-
-        return inputWithoutAmount.toBuilder()
-            .setTransferMessage(transfer)
-            .build()
-    }
-
-    private fun TransactionData.createTransfer(): Cardano.Transfer {
-        return Cardano.Transfer.newBuilder()
-            .setToAddress(destinationAddress)
-            .setChangeAddress(sourceAddress)
-            .setUseMaxAmount(false)
-            .build()
-    }
-
-    private fun createSigningInput(transfer: Cardano.Transfer): Cardano.SigningInput {
-        return Cardano.SigningInput.newBuilder()
-            .setTransferMessage(transfer)
-            .setTtl(TRANSACTION_TTL)
-            .addAllUtxos(outputs.map(::createTxInput))
-            .build()
-    }
-
-    private fun createTxInput(output: CardanoUnspentOutput): Cardano.TxInput {
-        return Cardano.TxInput.newBuilder()
-            .setOutPoint(
-                Cardano.OutPoint.newBuilder()
-                    .setTxHash(ByteString.copyFrom(output.transactionHash))
-                    .setOutputIndex(output.outputIndex)
-                    .build(),
+            throwIf(
+                exception = BlockchainSdkError.Cardano.InsufficientRemainingBalance,
+                condition = plan.change in 1 until minChange,
             )
-            .setAddress(output.address)
-            .setAmount(output.amount)
-            .apply {
-                if (output.assets.isNotEmpty()) {
-                    addAllTokenAmount(output.assets.map(::createTokenAmount))
+        } else {
+            val minChange = twTxBuilder.calculateMinAdaValueToWithdrawAllTokens()
+
+            throwIf(
+                exception = BlockchainSdkError.Cardano.InsufficientRemainingBalanceToWithdrawTokens,
+                condition = plan.change == 0L || plan.change in 1 until minChange,
+            )
+        }
+    }
+
+    private fun hasRemainingNotZeroTokensBalances(
+        transaction: TransactionData,
+        plan: Cardano.TransactionPlan,
+    ): Boolean {
+        return plan.availableTokensList
+            .map { tokenAmount ->
+                val amount = tokenAmount.amount.toLong()
+                if (transaction.contractAddress?.startsWith(tokenAmount.policyId) == true) {
+                    amount - transaction.amount.longValueOrZero
+                } else {
+                    amount
                 }
             }
-            .build()
+            .any { it > 0 }
     }
 
-    private fun Cardano.Transfer.setCoinAmount(change: Long, amount: Long): Cardano.Transfer {
-        // Min change is 1 ADA. It's also a dust value.
-        val minChange = decimal.toBigInteger().toLong()
-
-        if (change in 1 until minChange) throw BlockchainSdkError.FailedToBuildTx
-
-        return this
-            .toBuilder()
-            .setAmount(amount)
-            .build()
+    private fun ByteString.toLong(): Long {
+        return toByteArray().toHexString().hexToBigDecimal().toLong()
     }
 
-    private fun Cardano.Transfer.setTokenAmount(token: Token): Cardano.Transfer {
-        val asset = outputs
-            .flatMap(CardanoUnspentOutput::assets)
-            .firstOrNull { token.contractAddress.startsWith(prefix = it.policyID) }
-            ?: throw BlockchainSdkError.FailedToBuildTx
-
-        val tokenBundle = Cardano.TokenBundle.newBuilder()
-            .addToken(createTokenAmount(asset))
-            .build()
-
-        return this
-            .toBuilder()
-            .setTokenAmount(tokenBundle)
-            .build()
-    }
-
-    private fun createTokenAmount(asset: CardanoUnspentOutput.Asset): Cardano.TokenAmount {
-        return Cardano.TokenAmount.newBuilder()
-            .setPolicyId(asset.policyID)
-            .setAssetNameHex(asset.assetNameHex)
-            .setAmount(ByteString.copyFrom(asset.amount.toByteArray()))
-            .build()
+    private fun throwIf(exception: BlockchainSdkError.Cardano, condition: Boolean) {
+        if (condition) throw exception
     }
 
     private companion object {
-
         const val MISSING_LENGTH_TO_EXTENDED_KEY = 32 * 3
-        const val TRANSACTION_TTL = 190000000L
     }
 }
