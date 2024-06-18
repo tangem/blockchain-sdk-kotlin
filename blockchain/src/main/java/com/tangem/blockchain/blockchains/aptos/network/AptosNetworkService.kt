@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.aptos.network
 
 import com.tangem.blockchain.blockchains.aptos.models.AptosAccountInfo
 import com.tangem.blockchain.blockchains.aptos.models.AptosTransactionInfo
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
@@ -49,8 +50,7 @@ internal class AptosNetworkService(providers: List<AptosNetworkProvider>) : Apto
             val usedGasPriceUnit = multiJsonRpcProvider.performRequest(
                 request = AptosNetworkProvider::calculateUsedGasPriceUnit,
                 data = transaction,
-            )
-                .successOr { return it }
+            ).successOr { return Result.Failure(BlockchainSdkError.FailedToLoadFee) }
 
             Result.Success(usedGasPriceUnit)
         } catch (e: Exception) {
