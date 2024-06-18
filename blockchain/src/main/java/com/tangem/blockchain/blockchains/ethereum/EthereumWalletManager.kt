@@ -5,11 +5,12 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.TransactionFee
-import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
-import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
+import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -69,7 +70,10 @@ open class EthereumWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         return when (val signResponse = sign(transactionData, signer)) {
             is Result.Success -> {
                 val transactionToSend = transactionBuilder
@@ -80,14 +84,18 @@ open class EthereumWalletManager(
                 val sendResult = networkProvider
                     .sendTransaction(transactionToSend.toHexString())
 
-                if (sendResult is SimpleResult.Success) {
-                    transactionData.hash = transactionToSend.keccak().toHexString()
-                    wallet.addOutgoingTransaction(transactionData)
+                when (sendResult) {
+                    is SimpleResult.Success -> {
+                        val hash = transactionToSend.keccak().toHexString()
+                        transactionData.hash = hash
+                        wallet.addOutgoingTransaction(transactionData)
+                        Result.Success(TransactionSendResult(hash))
+                    }
+                    is SimpleResult.Failure -> Result.fromTangemSdkError(sendResult.error)
                 }
-                sendResult
             }
 
-            is Result.Failure -> SimpleResult.fromTangemSdkError(signResponse.error)
+            is Result.Failure -> Result.fromTangemSdkError(signResponse.error)
         }
     }
 

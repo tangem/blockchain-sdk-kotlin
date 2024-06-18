@@ -6,18 +6,19 @@ import com.tangem.blockchain.blockchains.ducatus.DucatusWalletManager
 import com.tangem.blockchain.blockchains.ducatus.network.DucatusNetworkService
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
-import com.tangem.blockchain.common.txhistory.getTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 
 internal object DucatusWalletManagerAssembly : WalletManagerAssembly<DucatusWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): DucatusWalletManager {
         return with(input) {
+            val blockchain = wallet.blockchain
             DucatusWalletManager(
                 wallet = wallet,
-                transactionBuilder = BitcoinTransactionBuilder(wallet.publicKey.blockchainKey, wallet.blockchain),
+                transactionBuilder = BitcoinTransactionBuilder(wallet.publicKey.blockchainKey, blockchain),
                 networkProvider = DucatusNetworkService(),
-                transactionHistoryProvider = wallet.blockchain.getTransactionHistoryProvider(input.config),
-                feesCalculator = DucatusFeesCalculator(wallet.blockchain),
+                transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
+                feesCalculator = DucatusFeesCalculator(blockchain),
             )
         }
     }
