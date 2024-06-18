@@ -10,7 +10,7 @@ import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
 
-class HederaMirrorRestProvider(override val baseUrl: String, key: String? = null) : HederaNetworkProvider {
+internal class HederaMirrorRestProvider(override val baseUrl: String, key: String? = null) : HederaNetworkProvider {
 
     private val api: HederaMirrorNodeApi by lazy {
         createRetrofitInstance(
@@ -28,10 +28,10 @@ class HederaMirrorRestProvider(override val baseUrl: String, key: String? = null
     override suspend fun getAccountId(publicKey: ByteArray): Result<String> {
         return try {
             val accountData = retryIO { api.getAccountsByPublicKey(publicKey.toHexString()) }
-            if (accountData.accounts.isEmpty()) {
-                Result.Failure(BlockchainSdkError.AccountNotFound())
-            } else {
+            if (accountData.accounts.size == 1) {
                 Result.Success(accountData.accounts[0].account) // we expect only one account per public key
+            } else {
+                Result.Failure(BlockchainSdkError.AccountNotFound())
             }
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
@@ -50,6 +50,24 @@ class HederaMirrorRestProvider(override val baseUrl: String, key: String? = null
             )
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    override suspend fun getBalances(accountId: String): Result<HederaBalancesResponse> {
+        return try {
+            val balances = retryIO { api.getBalances(accountId) }
+            Result.Success(balances)
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
+    override suspend fun getTransactionInfo(transactionId: String): Result<HederaTransactionResponse> {
+        return try {
+            val response = retryIO { api.getTransactionInfo(transactionId) }
+            return Result.Success(requireNotNull(response.transactions.firstOrNull()))
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
         }
     }
 
