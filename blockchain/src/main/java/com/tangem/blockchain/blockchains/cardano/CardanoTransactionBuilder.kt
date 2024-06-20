@@ -63,6 +63,7 @@ internal class CardanoTransactionBuilder(
     }
 
     fun estimateFee(transaction: TransactionData): Fee {
+        // Create input with zero fee amount
         val input = twTxBuilder.build(transaction)
         val plan = AnySigner.plan(input, coinType, Cardano.TransactionPlan.parser())
 
@@ -74,13 +75,33 @@ internal class CardanoTransactionBuilder(
         return when (val type = transaction.amount.type) {
             AmountType.Coin -> Fee.Common(amount = feeAmount)
             is AmountType.Token -> {
-                Fee.CardanoToken(
+                val tokenFee = Fee.CardanoToken(
                     amount = feeAmount,
+                    // plan amount was calculated with zero fee amount
                     minAdaValue = BigDecimal(plan.amount).movePointLeft(decimals),
+                )
+
+                tokenFee.copy(
+                    minAdaValue = estimateMinAdaValue(transaction.copy(fee = tokenFee)),
                 )
             }
             else -> throw BlockchainSdkError.CustomError("AmountType $type is not supported")
         }
+    }
+
+    /**
+     * Estimate min-ada-value for sending a token taking into account the already calculated fee.
+     * It's necessary to be sure that the remaining balance is correct.
+     *
+     * @param transaction transaction with non zero fee amount
+     *
+     * @see CardanoTWTxBuilder.setTokenAmount
+     */
+    private fun estimateMinAdaValue(transaction: TransactionData): BigDecimal {
+        val input = twTxBuilder.build(transaction)
+        val plan = AnySigner.plan(input, coinType, Cardano.TransactionPlan.parser())
+
+        return BigDecimal(plan.amount).movePointLeft(decimals)
     }
 
     fun buildForSign(transaction: TransactionData): ByteArray {
