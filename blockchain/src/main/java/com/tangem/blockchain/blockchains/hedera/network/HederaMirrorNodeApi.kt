@@ -13,8 +13,15 @@ internal interface HederaMirrorNodeApi {
     suspend fun getExchangeRate(): HederaExchangeRateResponse
 
     @GET("balances")
-    suspend fun getBalances(@Query("account.id") accountId: String): HederaBalancesResponse
+    suspend fun getBalances(
+        @Query("account.id") accountId: String,
+        @Query("limit") limit: Int = BALANCES_LIMIT,
+    ): HederaBalancesResponse
 
     @GET("transactions/{transactionId}")
     suspend fun getTransactionInfo(@Path("transactionId") transactionId: String): HederaTransactionsResponse
+
+    private companion object {
+        const val BALANCES_LIMIT = 200 // Arkhia does'nt support limit greater than 200
+    }
 }
