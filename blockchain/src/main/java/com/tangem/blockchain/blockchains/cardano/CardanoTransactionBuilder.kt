@@ -177,9 +177,9 @@ internal class CardanoTransactionBuilder(
     }
 
     private fun checkRemainingAdaBalance(transaction: TransactionData, plan: Cardano.TransactionPlan) {
-        val hasNotZeroTokens = hasRemainingNotZeroTokensBalances(transaction, plan)
+        val remainingTokens = getRemainingTokens(transaction, plan)
 
-        if (!hasNotZeroTokens) {
+        if (remainingTokens.isEmpty()) {
             val minChange = BigDecimal.ONE.movePointRight(decimals).toLong()
 
             throwIf(
@@ -187,7 +187,7 @@ internal class CardanoTransactionBuilder(
                 condition = plan.change in 1 until minChange,
             )
         } else {
-            val minChange = twTxBuilder.calculateMinAdaValueToWithdrawAllTokens()
+            val minChange = twTxBuilder.calculateMinAdaValueToWithdrawAllTokens(remainingTokens)
 
             throwIf(
                 exception = BlockchainSdkError.Cardano.InsufficientRemainingBalanceToWithdrawTokens,
@@ -196,20 +196,22 @@ internal class CardanoTransactionBuilder(
         }
     }
 
-    private fun hasRemainingNotZeroTokensBalances(
+    private fun getRemainingTokens(
         transaction: TransactionData,
         plan: Cardano.TransactionPlan,
-    ): Boolean {
+    ): Map<Cardano.TokenAmount, Long> {
         return plan.availableTokensList
-            .map { tokenAmount ->
+            .associateWith { tokenAmount ->
                 val amount = tokenAmount.amount.toLong()
-                if (transaction.contractAddress?.startsWith(tokenAmount.policyId) == true) {
+                val remainingAmount = if (transaction.contractAddress?.startsWith(tokenAmount.policyId) == true) {
                     amount - transaction.amount.longValueOrZero
                 } else {
                     amount
                 }
+
+                remainingAmount
             }
-            .any { it > 0 }
+            .filter { it.value > 0 }
     }
 
     private fun ByteString.toLong(): Long {
