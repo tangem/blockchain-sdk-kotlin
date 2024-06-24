@@ -12,5 +12,11 @@ internal class AuroraProvidersBuilder(
     testnetProviders = listOf("https://testnet.aurora.dev/"),
 ) {
 
-    override fun createProvider(url: String, blockchain: Blockchain) = EthereumJsonRpcProvider(url)
+    override fun createProvider(url: String, blockchain: Blockchain): EthereumJsonRpcProvider {
+        return EthereumJsonRpcProvider.createWithPostfixIfContained(baseUrl = url, postfixUrl = BASE_URL_LAST_PATH)
+    }
+
+    private companion object {
+        const val BASE_URL_LAST_PATH = "aurora"
+    }
 }
