@@ -7,10 +7,11 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
-import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
-import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
@@ -114,9 +115,12 @@ internal open class BitcoinWalletManager(
         (error as? BlockchainSdkError)?.let { throw it }
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
-            is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
+            is Result.Failure -> return buildTransactionResult
             is Result.Success -> {
                 return when (val signerResult = signer.sign(buildTransactionResult.data, wallet.publicKey)) {
                     is CompletionResult.Success -> {
@@ -125,13 +129,16 @@ internal open class BitcoinWalletManager(
                         )
                         val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())
 
-                        if (sendResult is SimpleResult.Success) {
-                            transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
-                            wallet.addOutgoingTransaction(transactionData)
+                        return when (sendResult) {
+                            is SimpleResult.Success -> {
+                                transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
+                                wallet.addOutgoingTransaction(transactionData)
+                                Result.Success(TransactionSendResult(transactionData.hash ?: ""))
+                            }
+                            is SimpleResult.Failure -> return Result.Failure(sendResult.error)
                         }
-                        sendResult
                     }
-                    is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResult.error)
+                    is CompletionResult.Failure -> Result.fromTangemSdkError(signerResult.error)
                 }
             }
         }
