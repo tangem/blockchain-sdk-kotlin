@@ -8,6 +8,7 @@ import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUn
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
@@ -54,7 +55,10 @@ internal class CardanoWalletManager(
         }
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         val transactionHash = transactionBuilder.buildForSign(transactionData)
 
         return when (val signatureResult = signer.sign(transactionHash, wallet.publicKey)) {
@@ -62,17 +66,18 @@ internal class CardanoWalletManager(
                 val signatureInfo = SignatureInfo(signatureResult.data, wallet.publicKey.blockchainKey)
 
                 val transactionToSend = transactionBuilder.buildForSend(transactionData, signatureInfo)
-                val sendResult = networkProvider.sendTransaction(transactionToSend)
-
-                if (sendResult is SimpleResult.Success) {
-                    transactionData.hash = transactionHash.toHexString()
-                    wallet.addOutgoingTransaction(transactionData)
+                when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
+                    is SimpleResult.Success -> {
+                        val hash = transactionHash.toHexString()
+                        transactionData.hash = hash
+                        wallet.addOutgoingTransaction(transactionData)
+                        Result.Success(TransactionSendResult(hash))
+                    }
+                    is SimpleResult.Failure -> return Result.Failure(sendResult.error)
                 }
-
-                sendResult
             }
 
-            is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signatureResult.error)
+            is CompletionResult.Failure -> Result.fromTangemSdkError(signatureResult.error)
         }
     }
 

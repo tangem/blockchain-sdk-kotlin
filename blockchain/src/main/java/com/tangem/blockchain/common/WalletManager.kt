@@ -2,6 +2,7 @@ package com.tangem.blockchain.common
 
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.DebouncedInvoke
@@ -168,7 +169,7 @@ abstract class WalletManager(
 
 interface TransactionSender {
 
-    suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult
+    suspend fun send(transactionData: TransactionData, signer: TransactionSigner): Result<TransactionSendResult>
 
     // Think about migration to different interface
     suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee>

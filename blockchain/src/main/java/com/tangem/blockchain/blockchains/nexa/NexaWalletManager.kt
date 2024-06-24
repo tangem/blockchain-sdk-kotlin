@@ -4,8 +4,8 @@ import com.tangem.blockchain.network.electrum.ElectrumNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.extensions.successOr
 import java.math.RoundingMode
@@ -47,7 +47,10 @@ internal class NexaWalletManager(
         // outputsCount = bitcoinUnspentOut.size
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         TODO()
     }
 

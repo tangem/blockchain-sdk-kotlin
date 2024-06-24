@@ -135,7 +135,7 @@ enum class Blockchain(
     NexaTestnet("NEXA/test", "NEXA", "Nexa Testnet"),
     Moonbeam("moonbeam", "GLMR", "Moonbeam"),
     MoonbeamTestnet("moonbeam/test", "GLMR", "Moonbeam Testnet"),
-    Manta("manta", "ETH", "Manta"),
+    Manta("manta-pacific", "ETH", "Manta Pacific"),
     MantaTestnet("manta/test", "ETH", "Manta Testnet"),
     PolygonZkEVM("polygonZkEVM", "ETH", "Polygon zkEVM"),
     PolygonZkEVMTestnet("polygonZkEVM/test", "ETH", "Polygon zkEVM Testnet"),
@@ -592,6 +592,7 @@ enum class Blockchain(
             TerraV1,
             VeChain, VeChainTestnet,
             Hedera, HederaTestnet,
+            TON, TONTestnet,
             -> true
 
             else -> false

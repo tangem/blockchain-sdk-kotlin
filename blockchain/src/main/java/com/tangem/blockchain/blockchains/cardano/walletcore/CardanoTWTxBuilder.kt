@@ -2,7 +2,10 @@ package com.tangem.blockchain.blockchains.cardano.walletcore
 
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.common.extensions.toByteArray
 import wallet.core.jni.Cardano.minAdaAmount
@@ -37,25 +40,36 @@ internal class CardanoTWTxBuilder(
             .build()
     }
 
-    /** Calculate required min-ada-value to withdraw all [tokens] */
-    fun calculateMinAdaValueToWithdrawAllTokens(tokens: Set<Token>): Long {
+    /** Calculate required min-ada-value to withdraw all tokens */
+    fun calculateMinAdaValueToWithdrawAllTokens(tokens: Map<Cardano.TokenAmount, Long>): Long {
         if (!DepsContainer.blockchainFeatureToggles.isCardanoTokenSupport) {
             throw BlockchainSdkError.CustomError("Cardano tokens isn't supported")
         }
 
-        val assets = outputs
-            .flatMap(CardanoUnspentOutput::assets)
-            .filter { asset ->
-                tokens.any { token ->
-                    token.contractAddress.startsWith(prefix = asset.policyID)
-                }
-            }
-
         val tokenBundle = Cardano.TokenBundle.newBuilder()
             .addAllToken(
-                assets.map(::createTokenAmountFromAsset),
+                tokens.map {
+                    val token = it.key
+
+                    Cardano.TokenAmount.newBuilder()
+                        .setPolicyId(token.policyId)
+                        .setAssetNameHex(token.assetNameHex)
+                        .setAmount(ByteString.copyFrom(it.value.toByteArray()))
+                        .build()
+                },
             )
             .build()
+
+        return minAdaAmount(tokenBundle.toByteArray())
+    }
+
+    /** Calculate required min-ada-value to withdraw [amount] token with [contractAddress] */
+    fun calculateMinAdaValueToWithdrawToken(contractAddress: String, amount: Long): Long {
+        if (!DepsContainer.blockchainFeatureToggles.isCardanoTokenSupport) {
+            throw BlockchainSdkError.CustomError("Cardano tokens isn't supported")
+        }
+
+        val tokenBundle = createTokenBundle(contractAddress = contractAddress, amount = amount)
 
         return minAdaAmount(tokenBundle.toByteArray())
     }
@@ -64,18 +78,22 @@ internal class CardanoTWTxBuilder(
         return Cardano.Transfer.newBuilder()
             .setToAddress(transaction.destinationAddress)
             .setChangeAddress(transaction.sourceAddress)
-            .setAmountByType(amount = transaction.amount)
+            .setAmountByType(transaction = transaction)
             .setUseMaxAmount(false)
             .build()
     }
 
-    private fun Cardano.Transfer.Builder.setAmountByType(amount: Amount): Cardano.Transfer.Builder {
-        when (val type = amount.type) {
+    private fun Cardano.Transfer.Builder.setAmountByType(transaction: TransactionData): Cardano.Transfer.Builder {
+        when (val type = transaction.amount.type) {
             is AmountType.Coin -> {
-                this.amount = amount.longValueOrZero
+                this.amount = transaction.amount.longValueOrZero
             }
             is AmountType.Token -> {
-                setTokenAmount(token = type.token, amount = amount.longValueOrZero)
+                setTokenAmount(
+                    contractAddress = type.token.contractAddress,
+                    amount = transaction.amount.longValueOrZero,
+                    fee = transaction.fee?.amount?.longValueOrZero ?: 0,
+                )
             }
             else -> throw BlockchainSdkError.CustomError("AmountType $type is not supported")
         }
@@ -83,19 +101,17 @@ internal class CardanoTWTxBuilder(
         return this
     }
 
-    private fun Cardano.Transfer.Builder.setTokenAmount(token: Token, amount: Long): Cardano.Transfer.Builder {
-        val asset = outputs
-            .flatMap(CardanoUnspentOutput::assets)
-            .firstOrNull { token.contractAddress.startsWith(prefix = it.policyID) }
-            ?: throw BlockchainSdkError.FailedToBuildTx
-
-        val tokenBundle = Cardano.TokenBundle.newBuilder()
-            .addToken(createTokenAmount(asset, amount))
-            .build()
+    private fun Cardano.Transfer.Builder.setTokenAmount(
+        contractAddress: String,
+        amount: Long,
+        fee: Long,
+    ): Cardano.Transfer.Builder {
+        val tokenBundle = createTokenBundle(contractAddress = contractAddress, amount = amount)
 
         val minAdaValue = minAdaAmount(tokenBundle.toByteArray())
         val balance = wallet.getCoinAmount().longValueOrZero
-        val remainingBalance = balance - minAdaValue
+
+        val remainingBalance = balance - minAdaValue - fee
 
         val minChange = BigDecimal.ONE.movePointRight(wallet.blockchain.decimals()).toLong()
         val adaAmount = if (remainingBalance in 1 until minChange) {
@@ -108,6 +124,17 @@ internal class CardanoTWTxBuilder(
         tokenAmount = tokenBundle
 
         return this
+    }
+
+    private fun createTokenBundle(contractAddress: String, amount: Long): Cardano.TokenBundle {
+        val asset = outputs
+            .flatMap(CardanoUnspentOutput::assets)
+            .firstOrNull { contractAddress.startsWith(prefix = it.policyID) }
+            ?: throw BlockchainSdkError.FailedToBuildTx
+
+        return Cardano.TokenBundle.newBuilder()
+            .addToken(createTokenAmount(asset, amount))
+            .build()
     }
 
     private fun createTokenAmount(asset: CardanoUnspentOutput.Asset, amount: Long): Cardano.TokenAmount {
