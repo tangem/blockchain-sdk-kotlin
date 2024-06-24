@@ -18,7 +18,7 @@ interface TonApi {
 @JsonClass(generateAdapter = true)
 data class TonProviderRequestBody(
     @Json(name = "method") val method: String,
-    @Json(name = "params") val params: Map<String, String?>,
+    @Json(name = "params") val params: Map<String, Any>,
     @Json(name = "id") val id: String = UUID.randomUUID().toString(),
     @Json(name = "jsonrpc") val jsonRpc: String = "2.0",
 )
@@ -27,7 +27,7 @@ sealed interface TonProviderMethod {
 
     fun asRequestBody(): TonProviderRequestBody
 
-    data class GetInfo(private val address: String) : TonProviderMethod {
+    data class GetWalletInformation(private val address: String) : TonProviderMethod {
         override fun asRequestBody(): TonProviderRequestBody = TonProviderRequestBody(
             method = "getWalletInformation",
             params = mapOf("address" to address),
@@ -48,6 +48,21 @@ sealed interface TonProviderMethod {
         override fun asRequestBody(): TonProviderRequestBody = TonProviderRequestBody(
             method = "sendBocReturnHash",
             params = mapOf("boc" to message),
+        )
+    }
+
+    data class RunGetMethod(
+        private val contractAddress: String,
+        private val method: String,
+        private val stack: List<List<String>>,
+    ) : TonProviderMethod {
+        override fun asRequestBody(): TonProviderRequestBody = TonProviderRequestBody(
+            method = "runGetMethod",
+            params = mapOf(
+                "address" to contractAddress,
+                "method" to method,
+                "stack" to stack,
+            ),
         )
     }
 }
