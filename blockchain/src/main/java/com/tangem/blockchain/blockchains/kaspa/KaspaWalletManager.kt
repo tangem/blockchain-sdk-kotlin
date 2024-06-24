@@ -6,9 +6,8 @@ import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.extensions.toSimpleResult
 import com.tangem.common.CompletionResult
 import java.math.BigDecimal
 
@@ -22,7 +21,7 @@ class KaspaWalletManager(
         get() = networkProvider.baseUrl
 
     private val blockchain = wallet.blockchain
-    override val dustValue: BigDecimal = FEE_PER_UNSPENT_OUTPUT.toBigDecimal()
+    override val dustValue: BigDecimal = BigDecimal("0.2")
 
     override val allowConsolidation: Boolean = true
 
@@ -48,25 +47,29 @@ class KaspaWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
-            is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
+            is Result.Failure -> return buildTransactionResult
             is Result.Success -> {
-                val signerResult = signer.sign(buildTransactionResult.data, wallet.publicKey)
-                return when (signerResult) {
+                return when (val signerResult = signer.sign(buildTransactionResult.data, wallet.publicKey)) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(
                             signerResult.data.reduce { acc, bytes -> acc + bytes },
                         )
-                        val sendResult = networkProvider.sendTransaction(transactionToSend)
-
-                        if (sendResult is Result.Success) {
-                            transactionData.hash = sendResult.data
-                            wallet.addOutgoingTransaction(transactionData)
+                        when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
+                            is Result.Failure -> sendResult
+                            is Result.Success -> {
+                                val hash = sendResult.data
+                                transactionData.hash = hash
+                                wallet.addOutgoingTransaction(transactionData)
+                                Result.Success(TransactionSendResult(hash ?: ""))
+                            }
                         }
-                        sendResult.toSimpleResult()
                     }
-                    is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResult.error)
+                    is CompletionResult.Failure -> Result.fromTangemSdkError(signerResult.error)
                 }
             }
         }
@@ -97,6 +100,6 @@ class KaspaWalletManager(
     }
 
     companion object {
-        const val FEE_PER_UNSPENT_OUTPUT = 0.2
+        const val FEE_PER_UNSPENT_OUTPUT = 0.0001
     }
 }
