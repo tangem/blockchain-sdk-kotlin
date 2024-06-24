@@ -109,7 +109,7 @@ private class WalletCoreSigner(
         return when (signResult) {
             is CompletionResult.Success -> {
                 if (curve == EllipticCurve.Secp256k1) {
-                    UnmarshalHelper().unmarshalSignature(signResult.data, data ?: ByteArray(0), publicKey)
+                    UnmarshalHelper().unmarshalSignatureEVMLegacy(signResult.data, data ?: ByteArray(0), publicKey)
                 } else {
                     signResult.data
                 }
