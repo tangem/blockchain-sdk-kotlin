@@ -9,8 +9,8 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.hexToBytes
@@ -118,12 +118,15 @@ internal class PolkadotWalletManager(
         return errors
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         runCatching { updateEra() }
-            .onFailure { return SimpleResult.Failure(BlockchainSdkError.CustomError(it.message ?: "Unknown error")) }
+            .onFailure { return Result.Failure(BlockchainSdkError.CustomError(it.message ?: "Unknown error")) }
         return when (transactionData.amount.type) {
             AmountType.Coin -> sendCoin(transactionData, signer, currentContext)
-            else -> SimpleResult.Failure(UnsupportedOperation())
+            else -> Result.Failure(UnsupportedOperation())
         }
     }
 
@@ -164,17 +167,17 @@ internal class PolkadotWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
         extrinsicContext: ExtrinsicContext,
-    ): SimpleResult {
+    ): Result<TransactionSendResult> {
         val destinationAddress = transactionData.destinationAddress
         val isDestinationAccountIsUnderfunded = isAccountUnderfunded(destinationAddress).successOr {
-            return SimpleResult.Failure(it.error)
+            return Result.Failure(it.error)
         }
 
         if (isDestinationAccountIsUnderfunded) {
             val amountValueToSend = transactionData.amount.value ?: BigDecimal.ZERO
             if (amountValueToSend < existentialDeposit) {
                 val minReserve = Amount(transactionData.amount, existentialDeposit)
-                return SimpleResult.Failure(BlockchainSdkError.CreateAccountUnderfunded(wallet.blockchain, minReserve))
+                return Result.Failure(BlockchainSdkError.CreateAccountUnderfunded(wallet.blockchain, minReserve))
             }
         }
 
@@ -184,17 +187,18 @@ internal class PolkadotWalletManager(
             destinationAddress = destinationAddress,
             context = extrinsicContext,
             signer = signer,
-        ).successOr { return SimpleResult.Failure(it.error) }
+        ).successOr { return Result.Failure(it.error) }
 
         val txHash = networkProvider.sendTransaction(signedTransaction).successOr {
-            return SimpleResult.Failure(it.error)
+            return Result.Failure(it.error)
         }
 
-        transactionData.hash = txHash.formattedHash()
+        val hash = txHash.formattedHash()
+        transactionData.hash = hash
         transactionData.date = Calendar.getInstance()
         wallet.addOutgoingTransaction(transactionData)
 
-        return SimpleResult.Success
+        return Result.Success(TransactionSendResult(hash))
     }
 
     private suspend fun sign(
