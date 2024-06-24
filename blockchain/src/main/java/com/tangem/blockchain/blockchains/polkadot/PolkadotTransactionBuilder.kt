@@ -24,7 +24,7 @@ import java.math.BigInteger
 /**
 [REDACTED_AUTHOR]
  */
-class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
+class PolkadotTransactionBuilder(blockchain: Blockchain) {
 
     private val decimals = blockchain.decimals()
 
@@ -43,7 +43,7 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         encodeCall(codecWriter, amount, Address.from(destinationAddress))
         encodeEraNonceTip(codecWriter, context)
 
-        encodeCheckMetadataHashMode(codecWriter)
+        encodeCheckMetadataHashMode(codecWriter, context)
 
         codecWriter.writeUint32(context.runtimeVersion)
         codecWriter.writeUint32(context.txVersion)
@@ -54,7 +54,7 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
             codecWriter.writeUint256(context.eraBlockHash.bytes)
         }
 
-        encodeCheckMetadataHash(codecWriter)
+        encodeCheckMetadataHash(codecWriter, context)
 
         return buffer.toByteArray()
     }
@@ -81,7 +81,7 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
 
         encodeEraNonceTip(codecWriter, context)
 
-        encodeCheckMetadataHashMode(codecWriter)
+        encodeCheckMetadataHashMode(codecWriter, context)
 
         encodeCall(codecWriter, amount, Address.from(destinationAddress))
 
@@ -106,16 +106,22 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         codecWriter.write(ScaleCodecWriter.COMPACT_BIGINT, context.tip.value)
     }
 
-    private fun encodeCheckMetadataHashMode(codecWriter: ScaleCodecWriter) {
-        if (blockchain == Blockchain.Kusama || blockchain == Blockchain.PolkadotTestnet) {
+    private fun encodeCheckMetadataHashMode(codecWriter: ScaleCodecWriter, context: ExtrinsicContext) {
+        if (shouldUseCheckMetadataHash(specVersion = context.runtimeVersion)) {
             codecWriter.write(ScaleCodecWriter.BOOL, false)
         }
     }
 
-    private fun encodeCheckMetadataHash(codecWriter: ScaleCodecWriter) {
-        if (blockchain == Blockchain.Kusama || blockchain == Blockchain.PolkadotTestnet) {
+    private fun encodeCheckMetadataHash(codecWriter: ScaleCodecWriter, context: ExtrinsicContext) {
+        if (shouldUseCheckMetadataHash(specVersion = context.runtimeVersion)) {
             codecWriter.writeByte(0x0.toByte())
         }
+    }
+
+    private fun shouldUseCheckMetadataHash(specVersion: Int) = specVersion >= USE_CHECK_METADATA_HASH_SPEC_VERSION
+
+    private companion object {
+        const val USE_CHECK_METADATA_HASH_SPEC_VERSION = 1002005
     }
 }
 
