@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.cardano.utils
 import com.tangem.blockchain.blockchains.cardano.CardanoTransactionValidatorTest
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.common.extensions.hexToBytes
 import java.math.BigDecimal
 
@@ -15,24 +16,6 @@ internal class CardanoTransactionValidatorTestFactory {
                 setCoinValue(value = BigDecimal(5.66))
             },
             utxos = listOf(UTXO_2_ADA, UTXO_3_66_ADA),
-        )
-    }
-
-    /** 1 ADA, [wmtValue] (default 10) WMT */
-    fun create_1_ADA_and_WMT(wmtValue: BigDecimal = BigDecimal(10)): CardanoTransactionValidatorTest.Model {
-        return CardanoTransactionValidatorTest.Model(
-            wallet = WALLET_WITH_TOKEN.apply {
-                setCoinValue(value = BigDecimal(1))
-                addTokenValue(value = wmtValue, token = WMT_TOKEN)
-            },
-            utxos = listOf(
-                UTXO_2_ADA.copy(
-                    amount = 1,
-                    assets = listOf(
-                        WMT_ASSET.copy(amount = wmtValue.movePointRight(WMT_TOKEN.decimals).toLong()),
-                    ),
-                ),
-            ),
         )
     }
 
@@ -119,7 +102,7 @@ internal class CardanoTransactionValidatorTestFactory {
     fun createCoinTransaction(value: BigDecimal): TransactionData {
         return TransactionData(
             amount = Amount(value = value, blockchain = Blockchain.Cardano, type = AmountType.Coin),
-            fee = null,
+            fee = Fee.Common(amount = Amount(BigDecimal.ONE, Blockchain.Cardano)),
             sourceAddress = "addr1vxmeqr8j5wrpz9atx8yc5jydw5wgnrpxe7whlv542a3wvrs2dy0h4",
             destinationAddress = "addr1vxmeqr8j5wrpz9atx8yc5jydw5wgnrpxe7whlv542a3wvrs2dy0h4",
         )
@@ -132,7 +115,10 @@ internal class CardanoTransactionValidatorTestFactory {
                 blockchain = Blockchain.Cardano,
                 type = AmountType.Token(token = WMT_TOKEN),
             ),
-            fee = null,
+            fee = Fee.CardanoToken(
+                amount = Amount(value = BigDecimal(0.013), blockchain = Blockchain.Cardano),
+                minAdaValue = BigDecimal.ZERO,
+            ),
             sourceAddress = "addr1vxmeqr8j5wrpz9atx8yc5jydw5wgnrpxe7whlv542a3wvrs2dy0h4",
             destinationAddress = "addr1vxmeqr8j5wrpz9atx8yc5jydw5wgnrpxe7whlv542a3wvrs2dy0h4",
         )

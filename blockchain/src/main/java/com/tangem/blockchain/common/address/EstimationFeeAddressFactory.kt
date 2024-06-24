@@ -68,7 +68,7 @@ class EstimationFeeAddressFactory {
             Blockchain.Solana ->
                 "9wuDg6Y4H4j86Kg5aUGrUeaBa3sAUzjMs37KbeGFnRuM"
             Blockchain.Nexa, Blockchain.NexaTestnet -> TODO("Not implemented")
-            Blockchain.Radiant -> TODO("ADD")
+            Blockchain.Radiant -> "1K8jBuCKzuwvFCjL7Qpqq69k1hnVXJ31Nc"
             // EVM-like
             Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet ->
                 "0xc49722a6f4Fe5A1347710dEAAa1fafF4c275689b"
@@ -109,10 +109,10 @@ class EstimationFeeAddressFactory {
                 "15RRtiC2akPUE9FGqqa66awoAFz6XCnZiFUf34k2CHbLWNfC"
             Blockchain.Kusama ->
                 "CsNtwDXUzMR4ZKBQrXCfA6bBXQBFU1DDbtSwLAsaVr13sGs"
-            Blockchain.Bittensor -> TODO("ADD")
+            Blockchain.Bittensor -> "5HLcF8UkyCTK5oszoTxx8LKxEzmtEEfPWeAxCz5NiDjqWH9y"
             Blockchain.AlephZero, Blockchain.AlephZeroTestnet ->
                 "5DaWppqEJPc6BhFKD2NBC1ACXPDMPYfv2AQDB5uH5KT4mpef"
-            Blockchain.Joystream -> "j4SXkX46sABwjxeuziycd2e5m8gDu4ieoWHW3aggbBKkh4WvtF"
+            Blockchain.Joystream -> "j4SXkX46sABwjxeuzicd2e5m8gDu4ieoWHW3aggbBKkh4WvtF"
             // Cosmos-like
             Blockchain.Cosmos, Blockchain.CosmosTestnet ->
                 "cosmos1lhjvds604fvac32j4eygpr820lyc82dlyq70m5"
@@ -134,7 +134,7 @@ class EstimationFeeAddressFactory {
                 "0x4626b7ef23fb2800a0e224e8249f47e0db3579070262da2a7efb0bc52c882867"
             Blockchain.Algorand, Blockchain.AlgorandTestnet ->
                 "CW6XDCKQAZUGAIOTGE2NEPYFFVW6H6IKFOTOF3W5WDUVHH4ZIDCIKYDPXY"
-            Blockchain.Koinos, Blockchain.KoinosTestnet -> TODO("ADD")
+            Blockchain.Koinos, Blockchain.KoinosTestnet -> "1C423Vbd44zjghhJR5fKJdLFS3rgVFUc9A"
         }
     }
 
