@@ -8,6 +8,7 @@ import com.tangem.blockchain.blockchains.tezos.network.TezosTransactionData
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -58,23 +59,26 @@ class TezosWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         if (publicKeyRevealed == null) {
             // in case of publicKeyRevealed is null, we should try request it
             val publicKeyRevealedUpdated = networkProvider.isPublicKeyRevealed(wallet.address)
             publicKeyRevealed = publicKeyRevealedUpdated.successOr {
-                return SimpleResult.Failure(BlockchainSdkError.CustomError("publicKeyRevealed is null"))
+                return Result.Failure(BlockchainSdkError.CustomError("publicKeyRevealed is null"))
             }
         }
 
         val contents =
             when (val response = transactionBuilder.buildContents(transactionData, publicKeyRevealed!!)) {
-                is Result.Failure -> return SimpleResult.Failure(response.error)
+                is Result.Failure -> return Result.Failure(response.error)
                 is Result.Success -> response.data
             }
         val header =
             when (val response = networkProvider.getHeader()) {
-                is Result.Failure -> return SimpleResult.Failure(response.error)
+                is Result.Failure -> return Result.Failure(response.error)
                 is Result.Success -> response.data
             }
         val forgedContents = transactionBuilder.forgeContents(header.hash, contents)
@@ -85,9 +89,8 @@ class TezosWalletManager(
 //                }
         val dataToSign = transactionBuilder.buildToSign(forgedContents)
 
-        val signerResponse = signer.sign(dataToSign, wallet.publicKey)
-        val signature = when (signerResponse) {
-            is CompletionResult.Failure -> return SimpleResult.fromTangemSdkError(signerResponse.error)
+        val signature = when (val signerResponse = signer.sign(dataToSign, wallet.publicKey)) {
+            is CompletionResult.Failure -> return Result.fromTangemSdkError(signerResponse.error)
             is CompletionResult.Success -> signerResponse.data
         }
         val canonicalSignature = canonicalizeSignature(signature)
@@ -97,15 +100,17 @@ class TezosWalletManager(
                 TezosTransactionData(header, contents, encodeSignature(canonicalSignature)),
             )
         ) {
-            is SimpleResult.Failure -> response
+            is SimpleResult.Failure -> Result.Failure(response.error)
             is SimpleResult.Success -> {
                 val transactionToSend = transactionBuilder.buildToSend(signature, forgedContents)
-                val sendResult = networkProvider.sendTransaction(transactionToSend)
-
-                if (sendResult is SimpleResult.Success) {
-                    wallet.addOutgoingTransaction(transactionData)
+                when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
+                    is SimpleResult.Failure -> Result.Failure(sendResult.error)
+                    SimpleResult.Success -> {
+                        transactionData.hash = transactionToSend
+                        wallet.addOutgoingTransaction(transactionData)
+                        Result.Success(TransactionSendResult(transactionToSend))
+                    }
                 }
-                sendResult
             }
         }
     }
