@@ -10,7 +10,11 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
-import com.tangem.blockchain.extensions.*
+import com.tangem.blockchain.common.transaction.TransactionSendResult
+import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.filterWith
+import com.tangem.blockchain.extensions.map
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
 import kotlinx.coroutines.*
 import org.p2p.solanaj.core.PublicKey
@@ -141,14 +145,17 @@ class SolanaWalletManager internal constructor(
         }
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         val transaction = transactionBuilder.buildUnsignedTransaction(
             destinationAddress = transactionData.destinationAddress,
             amount = transactionData.amount,
-        ).successOr { return it.toSimpleResult() }
+        ).successOr { return it }
 
         val signResult = signer.sign(transaction.getSerializedMessage(), wallet.publicKey).successOr {
-            return SimpleResult.fromTangemSdkError(it.error)
+            return Result.fromTangemSdkError(it.error)
         }
         transaction.addSignedDataSignature(signResult)
 
@@ -158,7 +165,7 @@ class SolanaWalletManager internal constructor(
     private suspend fun sendTransaction(
         signedTransaction: SolanaTransaction,
         transactionData: TransactionData,
-    ): SimpleResult {
+    ): Result<TransactionSendResult> {
         val sendResults = coroutineScope {
             multiNetworkProvider.providers
                 .map { provider -> async { provider.sendTransaction(signedTransaction) } }
@@ -170,10 +177,11 @@ class SolanaWalletManager internal constructor(
 
         if (firstSuccessResult != null) {
             feeRentHolder.clear()
-            transactionData.hash = firstSuccessResult.data
+            val hash = firstSuccessResult.data
+            transactionData.hash = hash
             wallet.addOutgoingTransaction(transactionData, hashToLowercase = false)
 
-            return SimpleResult.Success
+            return Result.Success(TransactionSendResult(hash))
         }
 
         val error = sendResults
@@ -181,7 +189,7 @@ class SolanaWalletManager internal constructor(
             .firstOrNull()
             ?.error
             ?: BlockchainSdkError.FailedToSendException
-        return SimpleResult.Failure(error)
+        return Result.Failure(error)
     }
 
     /**

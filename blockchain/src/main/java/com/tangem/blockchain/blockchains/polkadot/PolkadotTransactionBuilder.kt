@@ -47,6 +47,8 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         encodeCall(codecWriter, amount, Address.from(destinationAddress), context.runtimeVersion)
         encodeEraNonceTip(codecWriter, context)
 
+        encodeCheckMetadataHashMode(codecWriter)
+
         codecWriter.writeUint32(context.runtimeVersion)
         codecWriter.writeUint32(context.txVersion)
         codecWriter.writeUint256(context.genesis.bytes)
@@ -55,6 +57,8 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         } else {
             codecWriter.writeUint256(context.eraBlockHash.bytes)
         }
+
+        encodeCheckMetadataHash(codecWriter)
 
         return buffer.toByteArray()
     }
@@ -80,6 +84,7 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         codecWriter.writeByteArray(signature.value.bytes)
 
         encodeEraNonceTip(codecWriter, context)
+        encodeCheckMetadataHashMode(codecWriter)
         encodeCall(codecWriter, amount, Address.from(destinationAddress), context.runtimeVersion)
 
         val prefixBuffer = ByteArrayOutputStream()
@@ -105,6 +110,18 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         codecWriter.write(EraWriter(), context.era.toInteger())
         codecWriter.write(ScaleCodecWriter.COMPACT_BIGINT, BigInteger.valueOf(context.nonce))
         codecWriter.write(ScaleCodecWriter.COMPACT_BIGINT, context.tip.value)
+    }
+
+    private fun encodeCheckMetadataHashMode(codecWriter: ScaleCodecWriter) {
+        if (blockchain == Blockchain.Kusama || blockchain == Blockchain.PolkadotTestnet) {
+            codecWriter.write(ScaleCodecWriter.BOOL, false)
+        }
+    }
+
+    private fun encodeCheckMetadataHash(codecWriter: ScaleCodecWriter) {
+        if (blockchain == Blockchain.Kusama || blockchain == Blockchain.PolkadotTestnet) {
+            codecWriter.writeByte(0x0.toByte())
+        }
     }
 
     private fun encodeAddress(codecWriter: ScaleCodecWriter, address: Address, runtimeVersion: Int) {
