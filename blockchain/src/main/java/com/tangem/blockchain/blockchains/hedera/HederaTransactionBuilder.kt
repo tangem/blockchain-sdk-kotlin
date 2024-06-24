@@ -62,7 +62,7 @@ internal class HederaTransactionBuilder(
     ): Result<HederaBuiltTransaction<TokenAssociateTransaction>> {
         return try {
             val accountId = AccountId.fromString(tokenAssociation.accountId)
-            val tokenId = TokenId.fromString(tokenAssociation.contractAddress)
+            val tokenId = HederaUtils.createTokenId(tokenAssociation.contractAddress)
             val tokenAssociateTransaction = with(TokenAssociateTransaction()) {
                 setAccountId(accountId)
                 tokenIds = listOf(tokenId)
@@ -104,7 +104,7 @@ internal class HederaTransactionBuilder(
                 .addHbarTransfer(sourceAccountId, Hbar.fromTinybars(transactionValue.unaryMinus()))
                 .addHbarTransfer(destinationAccountId, Hbar.fromTinybars(transactionValue))
             is AmountType.Token -> {
-                val tokenId = TokenId.fromString(amountType.token.contractAddress)
+                val tokenId = HederaUtils.createTokenId(amountType.token.contractAddress)
                 TransferTransaction()
                     .addTokenTransfer(tokenId, sourceAccountId, transactionValue.unaryMinus())
                     .addTokenTransfer(tokenId, destinationAccountId, transactionValue)
