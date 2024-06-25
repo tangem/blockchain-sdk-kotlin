@@ -16,7 +16,7 @@ class Wallet(
     tokens: Set<Token>,
 ) {
     // we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
-    val recentTransactions: MutableList<TransactionData> = mutableListOf()
+    val recentTransactions: MutableList<TransactionData.Uncompiled> = mutableListOf()
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
     val address: String
         get() = addresses.find { it.type == AddressType.Default }?.value
