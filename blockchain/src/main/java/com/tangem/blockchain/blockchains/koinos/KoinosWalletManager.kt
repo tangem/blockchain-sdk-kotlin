@@ -123,7 +123,12 @@ internal class KoinosWalletManager(
         val signature = signer.sign(hashToSign, wallet.publicKey)
             .successOr { return Result.fromTangemSdkError(it.error) }
 
-        val signedTransaction = transactionBuilder.buildToSend(transaction, signature)
+        val signedTransaction = transactionBuilder.buildToSend(
+            transaction = transaction,
+            signature = signature,
+            hashToSign = hashToSign,
+            publicKey = wallet.publicKey,
+        )
 
         val transactionRes = networkService.submitTransaction(signedTransaction)
             .successOr { return it }
