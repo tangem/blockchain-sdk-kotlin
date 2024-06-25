@@ -189,7 +189,7 @@ internal class TronWalletManager(
                 val unmarshalledSignature = if (publicKey == dummySigner.publicKey) {
                     result.data + ByteArray(1)
                 } else {
-                    UnmarshalHelper().unmarshalSignature(result.data, transactionToSign, publicKey)
+                    UnmarshalHelper().unmarshalSignatureEVMLegacy(result.data, transactionToSign, publicKey)
                 }
                 Result.Success(unmarshalledSignature)
             }
