@@ -197,7 +197,7 @@ internal class StellarNetworkService(
         }
     }
 
-    private fun OperationResponse.toTransactionData(): TransactionData? {
+    private fun OperationResponse.toTransactionData(): TransactionData.Uncompiled? {
         return when (this) {
             is PaymentOperationResponse -> this.toTransactionData()
             is CreateAccountOperationResponse -> this.toTransactionData()
@@ -205,7 +205,7 @@ internal class StellarNetworkService(
         }
     }
 
-    private fun PaymentOperationResponse.toTransactionData(): TransactionData {
+    private fun PaymentOperationResponse.toTransactionData(): TransactionData.Uncompiled {
         val amount = when (val asset = asset) {
             is AssetTypeNative -> Amount(amount.toBigDecimal(), blockchain)
             is AssetTypeCreditAlphaNum -> Amount(
@@ -227,7 +227,7 @@ internal class StellarNetworkService(
         )
     }
 
-    private fun CreateAccountOperationResponse.toTransactionData(): TransactionData {
+    private fun CreateAccountOperationResponse.toTransactionData(): TransactionData.Uncompiled {
         return TransactionData.Uncompiled(
             amount = Amount(startingBalance.toBigDecimal(), blockchain),
             fee = null,
