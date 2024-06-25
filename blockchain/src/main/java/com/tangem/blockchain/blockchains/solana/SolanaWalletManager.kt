@@ -86,14 +86,14 @@ class SolanaWalletManager internal constructor(
             return
         }
 
-        val confirmedTxData = mutableListOf<TransactionData>()
+        val confirmedTxData = mutableListOf<TransactionData.Uncompiled>()
         val signaturesStatuses = txSignatures.zip(signatureStatuses.value)
         signaturesStatuses.forEach { pair ->
             if (pair.second?.confirmationStatus == Commitment.FINALIZED.value) {
                 val foundRecentTxData =
                     wallet.recentTransactions.firstOrNull { it.hash == pair.first }
                 foundRecentTxData?.let {
-                    confirmedTxData.add(it.updateStatus(status = TransactionStatus.Confirmed))
+                    confirmedTxData.add(it.updateStatus(status = TransactionStatus.Confirmed) as TransactionData.Uncompiled)
                 }
             }
         }

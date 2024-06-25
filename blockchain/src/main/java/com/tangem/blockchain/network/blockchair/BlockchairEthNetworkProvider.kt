@@ -32,7 +32,7 @@ class BlockchairEthNetworkProvider(
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.ROOT)
     private val blockchain = Blockchain.Ethereum
 
-    suspend fun getTransactions(address: String, tokens: Set<Token>): Result<List<TransactionData>> {
+    suspend fun getTransactions(address: String, tokens: Set<Token>): Result<List<TransactionData.Uncompiled>> {
         return try {
             coroutineScope {
                 val addressDeferred = makeRequestUsingKeyOnlyWhenNeeded {
@@ -84,7 +84,7 @@ class BlockchairEthNetworkProvider(
         }
     }
 
-    private fun BlockchairCallInfo.toTransactionData(tokens: Set<Token>): TransactionData {
+    private fun BlockchairCallInfo.toTransactionData(tokens: Set<Token>): TransactionData.Uncompiled {
         val amount = if (contractAddress == null) { // coin transaction
             val value = BigDecimal(value).movePointLeft(blockchain.decimals())
             Amount(value, blockchain)

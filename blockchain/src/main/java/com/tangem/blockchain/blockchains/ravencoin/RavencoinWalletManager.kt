@@ -38,7 +38,7 @@ internal class RavencoinWalletManager(
     private fun List<BasicTransactionData>.containsRecent(recent: TransactionData): Boolean =
         this.find { confirmed -> confirmed.hash.equals(recent.hash, true) } != null
 
-    private fun BasicTransactionData.toTransactionData(): TransactionData {
+    private fun BasicTransactionData.toTransactionData(): TransactionData.Uncompiled {
         val coinAmount = requireNotNull(wallet.amounts[AmountType.Coin]) { "Coin amount must not be null" }
         return TransactionData.Uncompiled(
             amount = Amount(coinAmount, this.balanceDif.abs()),
