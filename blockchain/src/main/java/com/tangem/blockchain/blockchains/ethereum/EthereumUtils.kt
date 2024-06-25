@@ -100,6 +100,8 @@ object EthereumUtils {
         nonce: BigInteger?,
         blockchain: Blockchain,
     ): CompiledEthereumTransaction? {
+        transactionData.requireUncompiled()
+
         val extras = transactionData.extras as? EthereumTransactionExtras
 
         val nonceValue = extras?.nonce ?: nonce ?: return null
@@ -188,6 +190,8 @@ object EthereumUtils {
         blockchain: Blockchain,
         gasLimit: BigInteger?,
     ): CompiledEthereumTransaction? {
+        transactionData.requireUncompiled()
+
         if (transactionData.amount.type == AmountType.Coin) return null
 
         val extras = transactionData.extras as? EthereumTransactionExtras
@@ -392,6 +396,8 @@ object EthereumUtils {
         blockchain: Blockchain,
         gasLimit: BigInteger?,
     ): CompiledEthereumTransaction? {
+        transactionData.requireUncompiled()
+
         val extras = transactionData.extras as? EthereumTransactionExtras
 
         val nonceValue = extras?.nonce ?: nonce ?: return null
