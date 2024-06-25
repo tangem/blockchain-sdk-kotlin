@@ -40,7 +40,7 @@ internal class RavencoinWalletManager(
 
     private fun BasicTransactionData.toTransactionData(): TransactionData {
         val coinAmount = requireNotNull(wallet.amounts[AmountType.Coin]) { "Coin amount must not be null" }
-        return TransactionData(
+        return TransactionData.Uncompiled(
             amount = Amount(coinAmount, this.balanceDif.abs()),
             fee = null,
             sourceAddress = source,
