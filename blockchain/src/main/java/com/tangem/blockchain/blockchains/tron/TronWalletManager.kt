@@ -66,6 +66,8 @@ internal class TronWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
         val signResult = signTransactionData(
             amount = transactionData.amount,
             source = wallet.address,
@@ -81,7 +83,7 @@ internal class TronWalletManager(
                     is Result.Success -> {
                         val hash = sendResult.data.txid
                         transactionData.hash = hash
-                        wallet.addOutgoingTransaction(transactionData.copy(hash = hash))
+                        wallet.addOutgoingTransaction(transactionData.updateHash(hash = hash))
                         Result.Success(TransactionSendResult(hash))
                     }
                 }
