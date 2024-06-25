@@ -62,12 +62,17 @@ internal class PolkadotWalletManager(
     private fun updateRecentTransactions() {
         val currentTimeInMillis = Calendar.getInstance().timeInMillis
         val confirmedTxData = wallet.recentTransactions
-            .filter { it.hash != null && it.date != null }
             .filter {
+                it.requireUncompiled()
+                it.hash != null && it.date != null
+            }
+            .filter {
+                it.requireUncompiled()
+
                 val txTimeInMillis = it.date?.timeInMillis ?: currentTimeInMillis
                 currentTimeInMillis - txTimeInMillis > 9999
             }.map {
-                it.copy(status = TransactionStatus.Confirmed)
+                it.updateStatus(status = TransactionStatus.Confirmed)
             }
 
         updateRecentTransactions(confirmedTxData)
@@ -122,6 +127,8 @@ internal class PolkadotWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
         runCatching { updateEra() }
             .onFailure { return Result.Failure(BlockchainSdkError.CustomError(it.message ?: "Unknown error")) }
         return when (transactionData.amount.type) {
@@ -168,6 +175,8 @@ internal class PolkadotWalletManager(
         signer: TransactionSigner,
         extrinsicContext: ExtrinsicContext,
     ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
         val destinationAddress = transactionData.destinationAddress
         val isDestinationAccountIsUnderfunded = isAccountUnderfunded(destinationAddress).successOr {
             return Result.Failure(it.error)

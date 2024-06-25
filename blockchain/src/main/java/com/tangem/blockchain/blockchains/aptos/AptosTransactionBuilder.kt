@@ -19,6 +19,8 @@ import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
 internal class AptosTransactionBuilder(private val wallet: Wallet) {
 
     fun buildForSign(sequenceNumber: Long, transactionData: TransactionData, expirationTimestamp: Long): ByteArray {
+        transactionData.requireUncompiled()
+
         val aptosFee = transactionData.fee as? Fee.Aptos ?: throw BlockchainSdkError.FailedToBuildTx
         val input = createSigningInput(sequenceNumber, transactionData, aptosFee, expirationTimestamp).toByteArray()
 
@@ -38,6 +40,8 @@ internal class AptosTransactionBuilder(private val wallet: Wallet) {
         expirationTimestamp: Long,
         signature: ByteArray,
     ): String {
+        transactionData.requireUncompiled()
+
         val aptosFee = transactionData.fee as? Fee.Aptos ?: throw BlockchainSdkError.FailedToBuildTx
         val input = createSigningInput(sequenceNumber, transactionData, aptosFee, expirationTimestamp).toByteArray()
 
@@ -69,6 +73,8 @@ internal class AptosTransactionBuilder(private val wallet: Wallet) {
         fee: Fee.Aptos,
         expirationTimestamp: Long,
     ): Aptos.SigningInput {
+        transactionData.requireUncompiled()
+
         return Aptos.SigningInput.newBuilder()
             .setChainId(1)
             .setExpirationTimestampSecs(expirationTimestamp)
