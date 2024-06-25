@@ -24,7 +24,7 @@ import java.math.BigInteger
 /**
 [REDACTED_AUTHOR]
  */
-class PolkadotTransactionBuilder(blockchain: Blockchain) {
+class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
 
     private val decimals = blockchain.decimals()
 
@@ -118,10 +118,19 @@ class PolkadotTransactionBuilder(blockchain: Blockchain) {
         }
     }
 
-    private fun shouldUseCheckMetadataHash(specVersion: Int) = specVersion >= USE_CHECK_METADATA_HASH_SPEC_VERSION
+    private fun shouldUseCheckMetadataHash(specVersion: Int): Boolean {
+        return SUPPORTED_CHECK_METADATA_HASH_BLOCKCHAINS.contains(blockchain) &&
+            specVersion >= USE_CHECK_METADATA_HASH_SPEC_VERSION
+    }
 
     private companion object {
         const val USE_CHECK_METADATA_HASH_SPEC_VERSION = 1002005
+
+        val SUPPORTED_CHECK_METADATA_HASH_BLOCKCHAINS = listOf(
+            Blockchain.Polkadot,
+            Blockchain.PolkadotTestnet,
+            Blockchain.Kusama,
+        )
     }
 }
 
