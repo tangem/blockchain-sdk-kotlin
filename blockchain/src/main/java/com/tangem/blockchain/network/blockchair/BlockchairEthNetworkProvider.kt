@@ -73,6 +73,7 @@ class BlockchairEthNetworkProvider(
                 }
 
                 val coinTransactions = calls.map { it.toTransactionData(tokens) }
+                    .filterIsInstance<TransactionData.Uncompiled>()
                     .filter { !it.amount.value!!.isZero() }
                 val tokenTransactions = tokenCalls.map { it.toTransactionData(tokens) }
 
@@ -96,7 +97,7 @@ class BlockchairEthNetworkProvider(
             if (block == -1) TransactionStatus.Unconfirmed else TransactionStatus.Confirmed
         val date = dateFormat.parse(time!!)
 
-        return TransactionData(
+        return TransactionData.Uncompiled(
             amount = amount,
             fee = null,
             sourceAddress = sender ?: "unknown",
