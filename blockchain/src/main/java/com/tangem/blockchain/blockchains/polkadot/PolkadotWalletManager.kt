@@ -63,16 +63,13 @@ internal class PolkadotWalletManager(
         val currentTimeInMillis = Calendar.getInstance().timeInMillis
         val confirmedTxData = wallet.recentTransactions
             .filter {
-                it.requireUncompiled()
                 it.hash != null && it.date != null
             }
             .filter {
-                it.requireUncompiled()
-
                 val txTimeInMillis = it.date?.timeInMillis ?: currentTimeInMillis
                 currentTimeInMillis - txTimeInMillis > 9999
             }.map {
-                it.updateStatus(status = TransactionStatus.Confirmed)
+                it.updateStatus(status = TransactionStatus.Confirmed) as TransactionData.Uncompiled
             }
 
         updateRecentTransactions(confirmedTxData)
