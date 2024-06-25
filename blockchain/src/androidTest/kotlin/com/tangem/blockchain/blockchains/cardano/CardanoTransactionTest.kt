@@ -91,7 +91,7 @@ class CardanoTransactionTest {
     @Test
     fun testBuildForSend() {
         val result = transactionBuilder.buildForSend(
-            transaction = TransactionData(
+            transactionData = TransactionData(
                 amount = Amount(
                     currencySymbol = "ADA",
                     value = BigDecimal.valueOf(1),

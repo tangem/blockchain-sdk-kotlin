@@ -66,6 +66,8 @@ class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
     }
 
     fun buildForSign(transactionData: TransactionData, blockInfo: VeChainBlockInfo, nonce: Long): ByteArray {
+        transactionData.requireUncompiled()
+
         val fee = transactionData.fee as? Fee.VeChain ?: throw BlockchainSdkError.FailedToBuildTx
         val input =
             createSigningInput(transactionData.amount, fee, transactionData.destinationAddress, blockInfo, nonce)
@@ -86,6 +88,8 @@ class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
         blockInfo: VeChainBlockInfo,
         nonce: Long,
     ): ByteArray {
+        transactionData.requireUncompiled()
+
         val fee = transactionData.fee as? Fee.VeChain ?: throw BlockchainSdkError.FailedToBuildTx
         val inputData = createSigningInput(
             transactionData.amount,
