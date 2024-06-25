@@ -93,7 +93,7 @@ class SolanaWalletManager internal constructor(
                 val foundRecentTxData =
                     wallet.recentTransactions.firstOrNull { it.hash == pair.first }
                 foundRecentTxData?.let {
-                    confirmedTxData.add(it.copy(status = TransactionStatus.Confirmed))
+                    confirmedTxData.add(it.updateStatus(status = TransactionStatus.Confirmed))
                 }
             }
         }
@@ -110,7 +110,7 @@ class SolanaWalletManager internal constructor(
                 val info = it.instructions[0].parsed.info
                 val amount = Amount(SolanaValueConverter.toSol(info.lamports), wallet.blockchain)
                 val feeAmount = Amount(SolanaValueConverter.toSol(it.fee), wallet.blockchain)
-                TransactionData(
+                TransactionData.Uncompiled(
                     amount,
                     Fee.Common(feeAmount),
                     info.source,
@@ -149,6 +149,8 @@ class SolanaWalletManager internal constructor(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
         val transaction = transactionBuilder.buildUnsignedTransaction(
             destinationAddress = transactionData.destinationAddress,
             amount = transactionData.amount,
