@@ -25,6 +25,8 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
     private var transaction: XrpSignedTransaction? = null
 
     suspend fun buildToSign(transactionData: TransactionData): Result<ByteArray> {
+        transactionData.requireUncompiled()
+
         val decodedXAddress = XrpAddressService.decodeXAddress(transactionData.destinationAddress)
         val destinationAddress = decodedXAddress?.address ?: transactionData.destinationAddress
         val xAddressDestinationTag = decodedXAddress?.destinationTag

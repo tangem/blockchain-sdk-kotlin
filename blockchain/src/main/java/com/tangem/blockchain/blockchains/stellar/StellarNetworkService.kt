@@ -216,7 +216,7 @@ internal class StellarNetworkService(
             )
             else -> error("Unknown asset type")
         }
-        return TransactionData(
+        return TransactionData.Uncompiled(
             amount = amount,
             fee = null,
             sourceAddress = from,
@@ -228,7 +228,7 @@ internal class StellarNetworkService(
     }
 
     private fun CreateAccountOperationResponse.toTransactionData(): TransactionData {
-        return TransactionData(
+        return TransactionData.Uncompiled(
             amount = Amount(startingBalance.toBigDecimal(), blockchain),
             fee = null,
             sourceAddress = funder,

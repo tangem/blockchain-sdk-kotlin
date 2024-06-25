@@ -83,7 +83,7 @@ class Wallet(
             else -> {}
         }
 
-        val transaction = TransactionData(
+        val transaction = TransactionData.Uncompiled(
             amount = Amount(null, blockchain),
             fee = null,
             sourceAddress = sourceAddress,
@@ -94,6 +94,8 @@ class Wallet(
     }
 
     fun addOutgoingTransaction(transactionData: TransactionData, hashToLowercase: Boolean = true) {
+        transactionData.requireUncompiled()
+
         transactionData.apply {
             date = Calendar.getInstance()
             if (hashToLowercase) hash = hash?.lowercase(Locale.US)
