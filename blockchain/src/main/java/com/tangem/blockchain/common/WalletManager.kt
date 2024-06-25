@@ -84,7 +84,7 @@ abstract class WalletManager(
     }
 
     open fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData {
-        return TransactionData(
+        return TransactionData.Uncompiled(
             amount = amount,
             fee = fee,
             sourceAddress = wallet.address,
@@ -149,7 +149,7 @@ abstract class WalletManager(
     }
 
     private fun BasicTransactionData.toTransactionData(): TransactionData {
-        return TransactionData(
+        return TransactionData.Uncompiled(
             amount = Amount(wallet.amounts[AmountType.Coin]!!, this.balanceDif.abs()),
             fee = null,
             sourceAddress = source,
@@ -190,7 +190,7 @@ interface TransactionSigner {
 
 interface TransactionValidator {
 
-    fun validate(transaction: TransactionData): kotlin.Result<Unit>
+    fun validate(transactionData: TransactionData): kotlin.Result<Unit>
 }
 
 interface SignatureCountValidator {
