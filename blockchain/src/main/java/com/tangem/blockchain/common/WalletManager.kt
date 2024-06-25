@@ -65,7 +65,7 @@ abstract class WalletManager(
         }
     }
 
-    protected fun updateRecentTransactions(transactions: List<TransactionData>) {
+    protected fun updateRecentTransactions(transactions: List<TransactionData.Uncompiled>) {
         val (confirmedTransactions, unconfirmedTransactions) =
             transactions.partition { it.status == TransactionStatus.Confirmed }
 
@@ -148,7 +148,7 @@ abstract class WalletManager(
         return dustValue!! <= amount.value || amount.value!!.isZero()
     }
 
-    private fun BasicTransactionData.toTransactionData(): TransactionData {
+    private fun BasicTransactionData.toTransactionData(): TransactionData.Uncompiled {
         return TransactionData.Uncompiled(
             amount = Amount(wallet.amounts[AmountType.Coin]!!, this.balanceDif.abs()),
             fee = null,
