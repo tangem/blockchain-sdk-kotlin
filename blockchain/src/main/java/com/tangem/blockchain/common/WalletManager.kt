@@ -83,7 +83,7 @@ abstract class WalletManager(
         }
     }
 
-    open fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData {
+    open fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData.Uncompiled {
         return TransactionData.Uncompiled(
             amount = amount,
             fee = fee,
