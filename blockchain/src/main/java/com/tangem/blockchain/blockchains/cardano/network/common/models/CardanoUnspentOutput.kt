@@ -10,7 +10,7 @@ internal data class CardanoUnspentOutput(
 
     data class Asset(
         val policyID: String,
-        val assetNameHex: String,
+        val assetName: String,
         val amount: Long,
     )
 }
