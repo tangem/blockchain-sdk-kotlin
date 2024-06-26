@@ -51,17 +51,6 @@ sealed class TransactionData {
         }
     }
 
-    fun <T> process(onCompiled: (Compiled) -> T, onUncompiled: (Uncompiled) -> T): T {
-        return when (this) {
-            is Compiled -> {
-                onCompiled(this)
-            }
-            is Uncompiled -> {
-                onUncompiled(this)
-            }
-        }
-    }
-
     @OptIn(ExperimentalContracts::class)
     fun requireUncompiled(): Uncompiled {
         contract {
