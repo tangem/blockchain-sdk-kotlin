@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.tron
 
-import com.google.common.primitives.Ints.max
 import com.squareup.wire.AnyMessage
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.toKeccak
 import com.tangem.blockchain.blockchains.tron.network.TronBlock
@@ -9,6 +8,7 @@ import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.bigIntegerValue
 import com.tangem.blockchain.extensions.decodeBase58
+import com.tangem.blockchain.extensions.padLeft
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
@@ -104,11 +104,6 @@ class TronTransactionBuilder(private val blockchain: Blockchain) {
             }
             else -> error("Not supported")
         }
-    }
-
-    private fun ByteArray.padLeft(length: Int): ByteArray {
-        val paddingSize = max(length - this.size, 0)
-        return ByteArray(paddingSize) + this
     }
 
     companion object {
