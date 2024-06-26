@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.cardano.walletcore
 
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
+import com.tangem.blockchain.blockchains.cardano.utils.isCardanoAsset
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
@@ -129,7 +130,9 @@ internal class CardanoTWTxBuilder(
     private fun createTokenBundle(contractAddress: String, amount: Long): Cardano.TokenBundle {
         val asset = outputs
             .flatMap(CardanoUnspentOutput::assets)
-            .firstOrNull { contractAddress.startsWith(prefix = it.policyID) }
+            .firstOrNull {
+                contractAddress.isCardanoAsset(policyId = it.policyID, assetName = it.assetName)
+            }
             ?: throw BlockchainSdkError.FailedToBuildTx
 
         return Cardano.TokenBundle.newBuilder()
@@ -140,7 +143,7 @@ internal class CardanoTWTxBuilder(
     private fun createTokenAmount(asset: CardanoUnspentOutput.Asset, amount: Long): Cardano.TokenAmount {
         return Cardano.TokenAmount.newBuilder()
             .setPolicyId(asset.policyID)
-            .setAssetNameHex(asset.assetNameHex)
+            .setAssetNameHex(asset.assetName)
             .setAmount(ByteString.copyFrom(amount.toByteArray()))
             .build()
     }
@@ -166,7 +169,7 @@ internal class CardanoTWTxBuilder(
     private fun createTokenAmountFromAsset(asset: CardanoUnspentOutput.Asset): Cardano.TokenAmount {
         return Cardano.TokenAmount.newBuilder()
             .setPolicyId(asset.policyID)
-            .setAssetNameHex(asset.assetNameHex)
+            .setAssetNameHex(asset.assetName)
             .setAmount(ByteString.copyFrom(asset.amount.toByteArray()))
             .build()
     }
