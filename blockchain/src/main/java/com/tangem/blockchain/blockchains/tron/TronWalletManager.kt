@@ -24,7 +24,7 @@ internal class TronWalletManager(
     transactionHistoryProvider: TransactionHistoryProvider,
     private val transactionBuilder: TronTransactionBuilder,
     private val networkService: TronNetworkService,
-) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider), TransactionSender {
+) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider), TransactionSender, Approver {
 
     override val currentHost: String = networkService.host
 
@@ -207,12 +207,12 @@ internal class TronWalletManager(
             else -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         }
         val addressData = destination.decodeBase58(checked = true)
-            ?.padLeft(BYTE_ARRAY_SIZE)
+            ?.padLeft(TRON_BYTE_ARRAY_PADDING_SIZE)
             ?: byteArrayOf()
 
         val amountData = amount.bigIntegerValue()
             ?.toByteArray()
-            ?.padLeft(BYTE_ARRAY_SIZE)
+            ?.padLeft(TRON_BYTE_ARRAY_PADDING_SIZE)
             ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
         val parameter = (addressData + amountData).toHexString()
@@ -255,11 +255,19 @@ internal class TronWalletManager(
         val paddingSize = Ints.max(length - this.size, 0)
         return ByteArray(paddingSize) + this
     }
+
+    override suspend fun getAllowance(spenderAddress: String, token: Token): Result<BigDecimal> {
+        return networkService.getAllowance(wallet.address, token, spenderAddress)
+    }
+
+    override fun getApproveData(spenderAddress: String, value: Amount?): String {
+        return createTrc20ApproveDataHex(spenderAddress, value)
+    }
+
+    private companion object {
+        /**
+         * Value taken from [TIP-491](https://github.com/tronprotocol/tips/issues/491)
+         */
+        const val ENERGY_FACTOR_PRECISION = 10_000
+    }
 }
-
-/**
- * Value taken from [TIP-491](https://github.com/tronprotocol/tips/issues/491)
- */
-private const val ENERGY_FACTOR_PRECISION = 10_000
-
-private const val BYTE_ARRAY_SIZE = 32
