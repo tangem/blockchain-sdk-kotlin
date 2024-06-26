@@ -74,6 +74,7 @@ internal class TronWalletManager(
             destination = transactionData.destinationAddress,
             signer = signer,
             publicKey = wallet.publicKey,
+            extras = transactionData.extras as? TronTransactionExtras,
         )
         return when (signResult) {
             is Result.Failure -> Result.Failure(signResult.error)
@@ -99,11 +100,12 @@ internal class TronWalletManager(
             val resourceDef = async { networkService.getAccountResource(wallet.address) }
             val transactionDataDef = async {
                 signTransactionData(
-                    amount,
-                    wallet.address,
-                    destination,
-                    dummySigner,
-                    dummySigner.publicKey,
+                    amount = amount,
+                    source = wallet.address,
+                    destination = destination,
+                    signer = dummySigner,
+                    publicKey = dummySigner.publicKey,
+                    extras = null,
                 )
             }
 
@@ -145,12 +147,14 @@ internal class TronWalletManager(
         }
     }
 
+    @Suppress("LongParameterList")
     private suspend fun signTransactionData(
         amount: Amount,
         source: String,
         destination: String,
         signer: TransactionSigner,
         publicKey: Wallet.PublicKey,
+        extras: TronTransactionExtras?,
     ): Result<ByteArray> {
         return when (val result = networkService.getNowBlock()) {
             is Result.Failure -> {
@@ -159,10 +163,11 @@ internal class TronWalletManager(
 
             is Result.Success -> {
                 val transactionToSign = transactionBuilder.buildForSign(
-                    amount,
-                    source,
-                    destination,
-                    result.data,
+                    amount = amount,
+                    source = source,
+                    destination = destination,
+                    block = result.data,
+                    extras = extras,
                 )
                 when (
                     val signResult =
