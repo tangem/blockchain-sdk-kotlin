@@ -93,7 +93,9 @@ class SolanaWalletManager internal constructor(
                 val foundRecentTxData =
                     wallet.recentTransactions.firstOrNull { it.hash == pair.first }
                 foundRecentTxData?.let {
-                    confirmedTxData.add(it.updateStatus(status = TransactionStatus.Confirmed) as TransactionData.Uncompiled)
+                    confirmedTxData.add(
+                        it.updateStatus(status = TransactionStatus.Confirmed) as TransactionData.Uncompiled,
+                    )
                 }
             }
         }
@@ -125,7 +127,7 @@ class SolanaWalletManager internal constructor(
         wallet.recentTransactions.addAll(newUnconfirmedTxData)
     }
 
-    override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData {
+    override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData.Uncompiled {
         val accountCreationRent = feeRentHolder[fee]
 
         return if (accountCreationRent == null) {
