@@ -18,6 +18,10 @@ interface TronNetworkProvider : NetworkProvider {
         tokenBalanceRequestData: TokenBalanceRequestData,
     ): Result<TronTriggerSmartContractResponse>
 
+    suspend fun getAllowance(
+        tokenAllowanceRequestData: TokenAllowanceRequestData,
+    ): Result<TronTriggerSmartContractResponse>
+
     suspend fun contractEnergyUsage(
         address: String,
         contractAddress: String,
