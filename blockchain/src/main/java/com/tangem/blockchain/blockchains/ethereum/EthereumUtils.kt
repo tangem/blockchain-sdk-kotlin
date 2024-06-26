@@ -121,7 +121,7 @@ object EthereumUtils {
             to = Address(transactionData.destinationAddress)
             value = bigIntegerAmount
             input = ByteArray(0)
-        } else { // token transfer
+        } else { // token transfer (or approve)
             to = Address(
                 transactionData.contractAddress
                     ?: error("Contract address is not specified!"),
@@ -141,7 +141,7 @@ object EthereumUtils {
             gasPrice = fee.divide(gasLimitToUse),
             gasLimit = gasLimitToUse,
             nonce = nonceValue,
-            input = extras?.data ?: input,
+            input = extras?.data ?: input, // use data from extras prefer (TODO refactor this)
         )
         val chainId = blockchain.getChainId()
             ?: error("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")

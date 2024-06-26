@@ -14,7 +14,7 @@ import java.math.BigDecimal
 class TronTransactionTest {
 
     private val blockchain = Blockchain.TronTestnet
-    private val transactionBuilder = TronTransactionBuilder(blockchain)
+    private val transactionBuilder = TronTransactionBuilder()
 
     val tronBlock = TronBlock(
         blockHeader = BlockHeader(
@@ -36,6 +36,7 @@ class TronTransactionTest {
             source = "TU1BRXbr6EmKmrLL4Kymv7Wp18eYFkRfAF",
             destination = "TXXxc9NsHndfQ2z9kMKyWpYa5T3QbhKGwn",
             block = tronBlock,
+            extras = null,
         )
         val signature = (
             "6b5de85a80b2f4f02351f691593fb0e49f14c5cb42451373485357e42d7890cd77ad7bfcb733555c098b992da79dabe5050f5e2" +
@@ -67,6 +68,7 @@ class TronTransactionTest {
             source = "TU1BRXbr6EmKmrLL4Kymv7Wp18eYFkRfAF",
             destination = "TXXxc9NsHndfQ2z9kMKyWpYa5T3QbhKGwn",
             block = tronBlock,
+            extras = null,
         )
         val signature = (
             "6b5de85a80b2f4f02351f691593fb0e49f14c5cb42451373485357e42d7890cd77ad7bfcb733555c098b992da79dabe5050f5e2" +
