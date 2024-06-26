@@ -24,10 +24,7 @@ import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.vechain.VeChainWalletManager
 import com.tangem.blockchain.blockchains.xdc.XDCAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
-import com.tangem.blockchain.common.address.Address
-import com.tangem.blockchain.common.address.AddressService
-import com.tangem.blockchain.common.address.MultisigAddressProvider
-import com.tangem.blockchain.common.address.TrustWalletAddressService
+import com.tangem.blockchain.common.address.*
 import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
@@ -255,6 +252,10 @@ enum class Blockchain(
     }
 
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
+
+    fun validateContractAddress(address: String): Boolean {
+        return (getAddressService() as? ContractAddressValidator)?.validateContractAddress(address) == true
+    }
 
     @Suppress("CyclomaticComplexMethod", "LongMethod")
     private fun getAddressService(): AddressService {
