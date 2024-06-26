@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.cardano.network.common.converters
 
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
+import com.tangem.blockchain.blockchains.cardano.utils.isCardanoAsset
 import com.tangem.blockchain.common.Token
 
 internal object CardanoAddressResponseConverter {
@@ -22,7 +23,9 @@ internal object CardanoAddressResponseConverter {
     private fun createTokenBalances(unspentOutputs: List<CardanoUnspentOutput>, tokens: Set<Token>): Map<Token, Long> {
         return tokens.associateWith { token ->
             unspentOutputs.flatMap(CardanoUnspentOutput::assets)
-                .filter { token.contractAddress.startsWith(prefix = it.policyID) }
+                .filter { asset ->
+                    token.contractAddress.isCardanoAsset(policyId = asset.policyID, assetName = asset.assetName)
+                }
                 .sumOf(CardanoUnspentOutput.Asset::amount)
         }
     }
