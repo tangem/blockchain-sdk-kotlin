@@ -50,10 +50,10 @@ internal class CardanoAddressServiceFacade : AddressService(), ContractAddressVa
          * PolicyID: length == CONTRACT_ADDRESS_MIN_LENGTH
          * AssetID:  length > CONTRACT_ADDRESS_MIN_LENGTH
          */
-        return address.length >= CONTRACT_ADDRESS_MIN_LENGTH
+        return address.length >= POLICY_ID_LENGTH
     }
 
     private companion object {
-        const val CONTRACT_ADDRESS_MIN_LENGTH = 56
+        const val POLICY_ID_LENGTH = 56
     }
 }
