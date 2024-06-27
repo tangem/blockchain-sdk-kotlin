@@ -1,12 +1,27 @@
 package com.tangem.blockchain.blockchains.hedera.network
 
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
-interface HederaMirrorNodeApi {
-    @GET("api/v1/accounts")
+internal interface HederaMirrorNodeApi {
+
+    @GET("accounts")
     suspend fun getAccountsByPublicKey(@Query("account.publickey") publicKey: String): HederaAccountResponse
 
-    @GET("api/v1/network/exchangerate")
+    @GET("network/exchangerate")
     suspend fun getExchangeRate(): HederaExchangeRateResponse
+
+    @GET("balances")
+    suspend fun getBalances(
+        @Query("account.id") accountId: String,
+        @Query("limit") limit: Int = BALANCES_LIMIT,
+    ): HederaBalancesResponse
+
+    @GET("transactions/{transactionId}")
+    suspend fun getTransactionInfo(@Path("transactionId") transactionId: String): HederaTransactionsResponse
+
+    private companion object {
+        const val BALANCES_LIMIT = 200 // Arkhia does'nt support limit greater than 200
+    }
 }
