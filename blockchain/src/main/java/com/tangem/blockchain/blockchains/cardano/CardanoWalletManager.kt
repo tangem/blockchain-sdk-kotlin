@@ -40,7 +40,7 @@ internal class CardanoWalletManager(
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         return try {
-            val dummyTransaction = TransactionData(
+            val dummyTransaction = TransactionData.Uncompiled(
                 amount = amount,
                 fee = null,
                 sourceAddress = wallet.address,
@@ -98,17 +98,20 @@ internal class CardanoWalletManager(
         }
     }
 
-    private fun updateTransactionConfirmation(response: CardanoAddressResponse, recentTransaction: TransactionData) {
+    private fun updateTransactionConfirmation(
+        response: CardanoAddressResponse,
+        recentTransactionData: TransactionData,
+    ) {
         // case for Rosetta API, it lacks recent transactions
         val isConfirmed = if (response.recentTransactionsHashes.isEmpty()) {
-            response.unspentOutputs.isEmpty() || response.unspentOutputs.hasTransactionHash(recentTransaction.hash)
+            response.unspentOutputs.isEmpty() || response.unspentOutputs.hasTransactionHash(recentTransactionData.hash)
         } else {
             // case for APIs with recent transactions
-            response.recentTransactionsHashes.containsTransactionHash(recentTransaction.hash)
+            response.recentTransactionsHashes.containsTransactionHash(recentTransactionData.hash)
         }
 
         if (isConfirmed) {
-            recentTransaction.status = TransactionStatus.Confirmed
+            recentTransactionData.status = TransactionStatus.Confirmed
         }
     }
 
