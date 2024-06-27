@@ -25,21 +25,23 @@ internal class RadiantTransactionBuilder(
         utxo = unspents
     }
 
-    fun buildForSign(transaction: TransactionData): List<ByteArray> {
-        val outputScript = RadiantScriptUtils.buildOutputScript(address = transaction.sourceAddress)
+    fun buildForSign(transactionData: TransactionData): List<ByteArray> {
+        transactionData.requireUncompiled()
+
+        val outputScript = RadiantScriptUtils.buildOutputScript(address = transactionData.sourceAddress)
         val unspents = buildUnspents(listOf(outputScript))
 
         val txForPreimage = RadiantAmountUnspentTransaction(
-            amount = transaction.amount,
-            fee = transaction.fee,
+            amount = transactionData.amount,
+            fee = transactionData.fee,
             unspents = unspents,
         )
 
         val hashes = List(unspents.size) { index ->
             val preImageHash = buildPreImageHashes(
                 tx = txForPreimage,
-                targetAddress = transaction.destinationAddress,
-                sourceAddress = transaction.sourceAddress,
+                targetAddress = transactionData.destinationAddress,
+                sourceAddress = transactionData.sourceAddress,
                 index = index,
             )
 
@@ -48,27 +50,29 @@ internal class RadiantTransactionBuilder(
         return hashes
     }
 
-    fun buildForSend(transaction: TransactionData, signatures: List<ByteArray>): ByteArray {
+    fun buildForSend(transactionData: TransactionData, signatures: List<ByteArray>): ByteArray {
+        transactionData.requireUncompiled()
+
         val outputScripts = RadiantScriptUtils.buildSignedScripts(signatures, walletPublicKey)
         val unspents = buildUnspents(outputScripts)
         val txForSigned = RadiantAmountUnspentTransaction(
-            amount = transaction.amount,
-            fee = transaction.fee,
+            amount = transactionData.amount,
+            fee = transactionData.fee,
             unspents = unspents,
         )
 
         return buildRawTransaction(
             tx = txForSigned,
-            targetAddress = transaction.destinationAddress,
-            changeAddress = transaction.sourceAddress,
+            targetAddress = transactionData.destinationAddress,
+            changeAddress = transactionData.sourceAddress,
         )
     }
 
-    suspend fun estimateTransactionSize(transaction: TransactionData): Int {
-        val hashesForSign = buildForSign(transaction = transaction)
+    suspend fun estimateTransactionSize(transactionData: TransactionData): Int {
+        val hashesForSign = buildForSign(transactionData = transactionData)
         val signatures =
             dummySigner.sign(hashesForSign, publicKey).successOr { throw BlockchainSdkError.FailedToLoadFee }
-        val rawTx = buildForSend(transaction = transaction, signatures = signatures)
+        val rawTx = buildForSend(transactionData = transactionData, signatures = signatures)
         return rawTx.size
     }
 

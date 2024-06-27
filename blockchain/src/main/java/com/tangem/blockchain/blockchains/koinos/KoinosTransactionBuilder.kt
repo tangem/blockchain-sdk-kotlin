@@ -20,6 +20,8 @@ internal class KoinosTransactionBuilder(isTestnet: Boolean) {
         transactionData: TransactionData,
         currentNonce: KoinosAccountNonce,
     ): Result<Pair<KoinosProtocol.Transaction, ByteArray>> {
+        transactionData.requireUncompiled()
+
         val from = transactionData.sourceAddress
         val to = transactionData.destinationAddress
         val amount = transactionData.amount.longValue!!
