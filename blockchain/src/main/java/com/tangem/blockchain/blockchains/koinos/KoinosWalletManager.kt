@@ -73,11 +73,13 @@ internal class KoinosWalletManager(
         return super.validateTransaction(amount, fee).apply { addAll(errors) }
     }
 
-    override fun validate(transaction: TransactionData): kotlin.Result<Unit> {
-        val fee = transaction.fee?.amount?.value
+    override fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
+        transactionData.requireUncompiled()
+
+        val fee = transactionData.fee?.amount?.value
             ?: return kotlin.Result.failure(BlockchainSdkError.FailedToLoadFee)
         val currentMana = wallet.amounts[AmountType.FeeResource()]?.value ?: BigDecimal.ZERO
-        val amount = transaction.amount.value
+        val amount = transactionData.amount.value
             ?: return kotlin.Result.failure(BlockchainSdkError.FailedToLoadFee)
         val availableBalanceForTransfer = currentMana - fee
         val balance = wallet.amounts[AmountType.Coin]?.value ?: BigDecimal.ZERO
@@ -103,6 +105,8 @@ internal class KoinosWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
         validate(transactionData).onFailure {
             Result.Failure(it as? BlockchainSdkError ?: BlockchainSdkError.FailedToBuildTx)
         }

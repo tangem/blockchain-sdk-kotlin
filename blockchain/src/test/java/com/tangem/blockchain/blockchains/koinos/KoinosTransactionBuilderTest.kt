@@ -13,7 +13,7 @@ internal class KoinosTransactionBuilderTest {
     private val transactionBuilder = KoinosTransactionBuilder(isTestnet = false)
     private val transactionBuilderTestnet = KoinosTransactionBuilder(isTestnet = true)
 
-    private val transactionDataForTest = TransactionData(
+    private val transactionDataForTest = TransactionData.Uncompiled(
         amount = Amount(
             value = 12.toBigDecimal().setScale(Blockchain.Koinos.decimals()),
             blockchain = Blockchain.Koinos,
