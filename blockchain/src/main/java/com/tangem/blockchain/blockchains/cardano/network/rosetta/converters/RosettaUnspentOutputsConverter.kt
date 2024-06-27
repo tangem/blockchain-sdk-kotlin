@@ -53,7 +53,7 @@ internal object RosettaUnspentOutputsConverter {
             it.tokens.mapNotNull { amount ->
                 CardanoUnspentOutput.Asset(
                     policyID = amount.currency.metadata?.policyId ?: return@mapNotNull null,
-                    assetName = amount.currency.symbol ?: return@mapNotNull null,
+                    assetNameHex = amount.currency.symbol ?: return@mapNotNull null,
                     amount = amount.value.toLong(),
                 )
             }
