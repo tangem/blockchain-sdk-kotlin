@@ -166,7 +166,7 @@ internal class CardanoTransactionValidatorTestFactory {
         val WMT_ASSET by lazy {
             CardanoUnspentOutput.Asset(
                 policyID = "1d7f33bd23d85e1a25d87d86fac4f199c3197a2f7afeb662a0f34e1e",
-                assetName = "776f726c646d6f62696c65746f6b656e",
+                assetNameHex = "776f726c646d6f62696c65746f6b656e",
                 amount = 0,
             )
         }
@@ -184,7 +184,7 @@ internal class CardanoTransactionValidatorTestFactory {
         val AGIX_ASSET by lazy {
             CardanoUnspentOutput.Asset(
                 policyID = "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535",
-                assetName = "41474958",
+                assetNameHex = "41474958",
                 amount = 0,
             )
         }
