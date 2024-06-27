@@ -4,6 +4,10 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.dash.DashMainNetParams
+import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
+import com.tangem.blockchain.blockchains.ravencoin.RavencoinMainNetParams
+import com.tangem.blockchain.blockchains.ravencoin.RavencoinTestNetParams
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
@@ -13,11 +17,16 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.toBigDecimalOrDefault
 import com.tangem.blockchain.network.blockbook.config.BlockBookConfig
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
-import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponseItem
 import com.tangem.common.extensions.hexToBytes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.bitcoinj.core.Address
+import org.bitcoinj.params.MainNetParams
+import org.bitcoinj.params.TestNet3Params
+import org.bitcoinj.script.ScriptBuilder
+import org.libdohj.params.DogecoinMainNetParams
+import org.libdohj.params.LitecoinMainNetParams
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Calendar
@@ -31,6 +40,18 @@ class BlockBookNetworkProvider(
 
     private val api: BlockBookApi = BlockBookApi(config, blockchain)
 
+    private var networkParameters = when (blockchain) {
+        Blockchain.Bitcoin, Blockchain.BitcoinCash -> MainNetParams()
+        Blockchain.BitcoinTestnet, Blockchain.BitcoinCashTestnet -> TestNet3Params()
+        Blockchain.Litecoin -> LitecoinMainNetParams()
+        Blockchain.Dogecoin -> DogecoinMainNetParams()
+        Blockchain.Ducatus -> DucatusMainNetParams()
+        Blockchain.Dash -> DashMainNetParams()
+        Blockchain.Ravencoin -> RavencoinMainNetParams()
+        Blockchain.RavencoinTestnet -> RavencoinTestNetParams()
+        else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
+    }
+
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         return try {
             val getAddressResponse = withContext(Dispatchers.IO) { api.getAddress(address) }
@@ -42,11 +63,10 @@ class BlockBookNetworkProvider(
                     balance = balance.movePointLeft(blockchain.decimals()),
                     unspentOutputs = createUnspentOutputs(
                         getUtxoResponseItems = getUtxoResponseItems,
-                        transactions = getAddressResponse.transactions.orEmpty(),
                         address = address,
                     ),
                     recentTransactions = createRecentTransactions(
-                        transactions = getAddressResponse.transactions.orEmpty(),
+                        utxoResponseItems = getUtxoResponseItems,
                         address = address,
                     ),
                     hasUnconfirmed = getAddressResponse.unconfirmedTxs != 0,
@@ -95,12 +115,10 @@ class BlockBookNetworkProvider(
 
     private fun createUnspentOutputs(
         getUtxoResponseItems: List<GetUtxoResponseItem>,
-        transactions: List<GetAddressResponse.Transaction>,
         address: String,
     ): List<BitcoinUnspentOutput> {
-        val outputScript = transactions.firstNotNullOfOrNull { transaction ->
-            transaction.vout.firstOrNull { it.addresses?.contains(address) == true }?.hex
-        } ?: return emptyList()
+        val addressBitcoinJ = Address.fromString(networkParameters, address)
+        val outputScript = ScriptBuilder.createOutputScript(addressBitcoinJ).program
 
         return getUtxoResponseItems.mapNotNull {
             val amount = it.value.toBigDecimalOrNull()?.movePointLeft(blockchain.decimals())
@@ -110,18 +128,19 @@ class BlockBookNetworkProvider(
                 amount = amount,
                 outputIndex = it.vout.toLong(),
                 transactionHash = it.txid.hexToBytes(),
-                outputScript = outputScript.hexToBytes(),
+                outputScript = outputScript,
             )
         }
     }
 
-    private fun createRecentTransactions(
-        transactions: List<GetAddressResponse.Transaction>,
+    private suspend fun createRecentTransactions(
+        utxoResponseItems: List<GetUtxoResponseItem>,
         address: String,
     ): List<BasicTransactionData> {
-        return transactions
+        return utxoResponseItems
             .filter { it.confirmations == 0 }
-            .map { transaction ->
+            .map { utxo ->
+                val transaction = api.getTransaction(utxo.txid)
                 val isIncoming = transaction.vin.any { it.addresses?.contains(address) == false }
                 var source = "unknown"
                 var destination = "unknown"
