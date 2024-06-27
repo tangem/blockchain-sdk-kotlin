@@ -9,7 +9,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import org.stellar.sdk.*
+import org.stellar.sdk.AssetTypeCreditAlphaNum
+import org.stellar.sdk.AssetTypeNative
+import org.stellar.sdk.Network
+import org.stellar.sdk.Transaction
 import org.stellar.sdk.requests.ErrorResponse
 import org.stellar.sdk.responses.FeeStatsResponse
 import org.stellar.sdk.responses.operations.CreateAccountOperationResponse
@@ -22,8 +25,8 @@ import java.util.Locale
 
 internal const val RECORD_LIMIT = 200
 
-class StellarNetworkService(
-    hosts: List<StellarNetwork>,
+internal class StellarNetworkService(
+    providers: List<StellarWrapperNetworkProvider>,
     isTestnet: Boolean,
 ) : StellarNetworkProvider {
 
@@ -32,14 +35,7 @@ class StellarNetworkService(
     private val decimals = blockchain.decimals()
 
     val network: Network = if (isTestnet) Network.TESTNET else Network.PUBLIC
-    private val stellarMultiProvider = MultiNetworkProvider(
-        providers = hosts.map {
-            StellarWrapperNetworkProvider(
-                server = Server(it.url),
-                url = it.url,
-            )
-        },
-    )
+    private val stellarMultiProvider = MultiNetworkProvider(providers = providers)
 
     override val baseUrl: String = stellarMultiProvider.currentProvider.baseUrl
 
