@@ -1,6 +1,6 @@
 package com.tangem.blockchain.blockchains.cardano.network.common.models
 
-internal class CardanoUnspentOutput(
+internal data class CardanoUnspentOutput(
     val address: String,
     val amount: Long,
     val outputIndex: Long,
