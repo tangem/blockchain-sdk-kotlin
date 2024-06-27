@@ -49,6 +49,8 @@ open class BitcoinTransactionBuilder(
     var unspentOutputs: List<BitcoinUnspentOutput>? = null
 
     open fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
+        transactionData.requireUncompiled()
+
         if (unspentOutputs.isNullOrEmpty()) {
             return Result.Failure(BlockchainSdkError.CustomError("Unspent outputs are missing"))
         }
@@ -166,6 +168,8 @@ open class BitcoinTransactionBuilder(
     }
 
     fun calculateChange(transactionData: TransactionData, unspentOutputs: List<BitcoinUnspentOutput>): BigDecimal {
+        transactionData.requireUncompiled()
+
         val fullAmount = unspentOutputs.map { it.amount }.reduce { acc, number -> acc + number }
         return fullAmount - (
             transactionData.amount.value!! + (
@@ -203,6 +207,8 @@ internal fun TransactionData.toBitcoinJTransaction(
     unspentOutputs: List<BitcoinUnspentOutput>,
     change: BigDecimal,
 ): Transaction {
+    requireUncompiled()
+
     val transaction = Transaction(networkParameters)
     for (utxo in unspentOutputs) {
         transaction.addInput(

@@ -32,10 +32,12 @@ internal class CardanoTransactionBuilder(
         twTxBuilder = CardanoTWTxBuilder(wallet, outputs)
     }
 
-    override fun validate(transaction: TransactionData): Result<Unit> {
+    override fun validate(transactionData: TransactionData): Result<Unit> {
         return runCatching {
-            val isCoinTransaction = transaction.amount.type is AmountType.Coin
-            val transactionValue = transaction.amount.value ?: BigDecimal.ZERO
+            transactionData.requireUncompiled()
+
+            val isCoinTransaction = transactionData.amount.type is AmountType.Coin
+            val transactionValue = transactionData.amount.value ?: BigDecimal.ZERO
 
             throwIf(
                 exception = BlockchainSdkError.Cardano.InsufficientSendingAdaAmount,
@@ -43,7 +45,7 @@ internal class CardanoTransactionBuilder(
             )
 
             val plan = AnySigner.plan(
-                twTxBuilder.build(transaction),
+                twTxBuilder.build(transactionData),
                 coinType,
                 Cardano.TransactionPlan.parser(),
             )
@@ -55,16 +57,18 @@ internal class CardanoTransactionBuilder(
 
             throwIf(
                 exception = BlockchainSdkError.Cardano.InsufficientRemainingBalanceToWithdrawTokens,
-                condition = checkRequiredMinAdaValue(transaction = transaction, plan = plan),
+                condition = checkRequiredMinAdaValue(transactionData = transactionData, plan = plan),
             )
 
-            checkRemainingAdaBalance(transaction = transaction, plan = plan)
+            checkRemainingAdaBalance(transactionData = transactionData, plan = plan)
         }
     }
 
-    fun estimateFee(transaction: TransactionData): Fee {
+    fun estimateFee(transactionData: TransactionData): Fee {
+        transactionData.requireUncompiled()
+
         // Create input with zero fee amount
-        val input = twTxBuilder.build(transaction)
+        val input = twTxBuilder.build(transactionData)
         val plan = AnySigner.plan(input, coinType, Cardano.TransactionPlan.parser())
 
         val feeAmount = Amount(
@@ -72,7 +76,7 @@ internal class CardanoTransactionBuilder(
             blockchain = wallet.blockchain,
         )
 
-        return when (val type = transaction.amount.type) {
+        return when (val type = transactionData.amount.type) {
             AmountType.Coin -> Fee.Common(amount = feeAmount)
             is AmountType.Token -> {
                 val tokenFee = Fee.CardanoToken(
@@ -82,7 +86,7 @@ internal class CardanoTransactionBuilder(
                 )
 
                 tokenFee.copy(
-                    minAdaValue = estimateMinAdaValue(transaction.copy(fee = tokenFee)),
+                    minAdaValue = estimateMinAdaValue(transactionData.copy(fee = tokenFee)),
                 )
             }
             else -> throw BlockchainSdkError.CustomError("AmountType $type is not supported")
@@ -93,19 +97,19 @@ internal class CardanoTransactionBuilder(
      * Estimate min-ada-value for sending a token taking into account the already calculated fee.
      * It's necessary to be sure that the remaining balance is correct.
      *
-     * @param transaction transaction with non zero fee amount
+     * @param transactionData transaction with non zero fee amount
      *
      * @see CardanoTWTxBuilder.setTokenAmount
      */
-    private fun estimateMinAdaValue(transaction: TransactionData): BigDecimal {
-        val input = twTxBuilder.build(transaction)
+    private fun estimateMinAdaValue(transactionData: TransactionData): BigDecimal {
+        val input = twTxBuilder.build(transactionData)
         val plan = AnySigner.plan(input, coinType, Cardano.TransactionPlan.parser())
 
         return BigDecimal(plan.amount).movePointLeft(decimals)
     }
 
-    fun buildForSign(transaction: TransactionData): ByteArray {
-        val input = twTxBuilder.build(transaction)
+    fun buildForSign(transactionData: TransactionData): ByteArray {
+        val input = twTxBuilder.build(transactionData)
         val txInputData = input.toByteArray()
 
         val preImageHashes = TransactionCompiler.preImageHashes(coinType, txInputData)
@@ -118,8 +122,8 @@ internal class CardanoTransactionBuilder(
         return preSigningOutput.dataHash.toByteArray()
     }
 
-    fun buildForSend(transaction: TransactionData, signatureInfo: SignatureInfo): ByteArray {
-        val input = twTxBuilder.build(transaction)
+    fun buildForSend(transactionData: TransactionData, signatureInfo: SignatureInfo): ByteArray {
+        val input = twTxBuilder.build(transactionData)
         val txInputData = input.toByteArray()
 
         val signatures = DataVector()
@@ -159,15 +163,17 @@ internal class CardanoTransactionBuilder(
      * Require to check that the min-ada-value from Wallet-Core [Cardano.TransactionPlan] is equals real min-ada-value.
      * Because Wallet-Core can hold a fee value from min-ada-value.
      *
-     * @param transaction transaction
+     * @param transactionData transaction
      * @param plan        wallet-core transaction input
      */
-    private fun checkRequiredMinAdaValue(transaction: TransactionData, plan: Cardano.TransactionPlan): Boolean {
-        return when (val type = transaction.amount.type) {
+    private fun checkRequiredMinAdaValue(transactionData: TransactionData, plan: Cardano.TransactionPlan): Boolean {
+        transactionData.requireUncompiled()
+
+        return when (val type = transactionData.amount.type) {
             is AmountType.Token -> {
                 val minAdaValue = twTxBuilder.calculateMinAdaValueToWithdrawToken(
                     contractAddress = type.token.contractAddress,
-                    amount = transaction.amount.longValueOrZero,
+                    amount = transactionData.amount.longValueOrZero,
                 )
 
                 plan.amount < minAdaValue
@@ -176,8 +182,8 @@ internal class CardanoTransactionBuilder(
         }
     }
 
-    private fun checkRemainingAdaBalance(transaction: TransactionData, plan: Cardano.TransactionPlan) {
-        val remainingTokens = getRemainingTokens(transaction, plan)
+    private fun checkRemainingAdaBalance(transactionData: TransactionData, plan: Cardano.TransactionPlan) {
+        val remainingTokens = getRemainingTokens(transactionData, plan)
 
         if (remainingTokens.isEmpty()) {
             val minChange = BigDecimal.ONE.movePointRight(decimals).toLong()
@@ -197,14 +203,16 @@ internal class CardanoTransactionBuilder(
     }
 
     private fun getRemainingTokens(
-        transaction: TransactionData,
+        transactionData: TransactionData,
         plan: Cardano.TransactionPlan,
     ): Map<Cardano.TokenAmount, Long> {
+        transactionData.requireUncompiled()
+
         return plan.availableTokensList
             .associateWith { tokenAmount ->
                 val amount = tokenAmount.amount.toLong()
-                val remainingAmount = if (transaction.contractAddress?.startsWith(tokenAmount.policyId) == true) {
-                    amount - transaction.amount.longValueOrZero
+                val remainingAmount = if (transactionData.contractAddress?.startsWith(tokenAmount.policyId) == true) {
+                    amount - transactionData.amount.longValueOrZero
                 } else {
                     amount
                 }

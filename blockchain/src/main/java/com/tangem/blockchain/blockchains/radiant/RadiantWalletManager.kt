@@ -98,7 +98,7 @@ internal class RadiantWalletManager(
                 is Result.Failure -> return feeResult
                 is Result.Success -> {
                     val transactionSize = transactionBuilder.estimateTransactionSize(
-                        transaction = TransactionData(
+                        transactionData = TransactionData.Uncompiled(
                             amount = amount,
                             fee = Fee.Common(Amount(amount, feeResult.data.minimalPerKb)),
                             sourceAddress = wallet.address,

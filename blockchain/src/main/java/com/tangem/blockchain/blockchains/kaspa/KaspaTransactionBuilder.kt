@@ -21,6 +21,8 @@ class KaspaTransactionBuilder {
     var unspentOutputs: List<KaspaUnspentOutput>? = null
 
     fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
+        transactionData.requireUncompiled()
+
         if (unspentOutputs.isNullOrEmpty()) {
             return Result.Failure(
                 BlockchainSdkError.CustomError("Unspent outputs are missing"),
@@ -115,6 +117,8 @@ internal fun TransactionData.toKaspaTransaction(
     unspentOutputs: List<KaspaUnspentOutput>,
     change: BigDecimal,
 ): KaspaTransaction {
+    requireUncompiled()
+
     val transaction = KaspaTransaction(
         networkParameters,
     )
