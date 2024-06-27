@@ -7,8 +7,10 @@ import com.tangem.blockchain.common.HEX_PREFIX
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
+import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.network.moshi
 import io.ktor.util.*
+import okhttp3.Interceptor
 import org.ton.block.MsgAddressInt
 import org.ton.boc.BagOfCells
 import org.ton.cell.CellBuilder
@@ -17,8 +19,13 @@ import java.math.BigInteger
 
 class TonJsonRpcNetworkProvider(
     override val baseUrl: String,
-    private val api: TonApi,
+    headerInterceptors: List<Interceptor> = emptyList(),
 ) : TonNetworkProvider {
+
+    private val api: TonApi by lazy {
+        createRetrofitInstance(baseUrl, headerInterceptors)
+            .create(TonApi::class.java)
+    }
 
     private val walletInfoAdapter = moshi.adapter<TonProviderResponse<TonGetWalletInfoResponse>>(
         Types.newParameterizedType(
