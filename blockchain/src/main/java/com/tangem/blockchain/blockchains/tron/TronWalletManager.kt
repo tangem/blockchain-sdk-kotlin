@@ -7,11 +7,11 @@ import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
-import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.bigIntegerValue
 import com.tangem.blockchain.extensions.decodeBase58
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toHexString
@@ -19,7 +19,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 
-class TronWalletManager(
+internal class TronWalletManager(
     wallet: Wallet,
     transactionHistoryProvider: TransactionHistoryProvider,
     private val transactionBuilder: TronTransactionBuilder,
@@ -62,7 +62,10 @@ class TronWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         val signResult = signTransactionData(
             amount = transactionData.amount,
             source = wallet.address,
@@ -71,15 +74,15 @@ class TronWalletManager(
             publicKey = wallet.publicKey,
         )
         return when (signResult) {
-            is Result.Failure -> SimpleResult.Failure(signResult.error)
+            is Result.Failure -> Result.Failure(signResult.error)
             is Result.Success -> {
                 when (val sendResult = networkService.broadcastHex(signResult.data)) {
-                    is Result.Failure -> SimpleResult.Failure(sendResult.error)
+                    is Result.Failure -> Result.Failure(sendResult.error)
                     is Result.Success -> {
-                        wallet.addOutgoingTransaction(
-                            transactionData.copy(hash = sendResult.data.txid),
-                        )
-                        SimpleResult.Success
+                        val hash = sendResult.data.txid
+                        transactionData.hash = hash
+                        wallet.addOutgoingTransaction(transactionData.copy(hash = hash))
+                        Result.Success(TransactionSendResult(hash))
                     }
                 }
             }
@@ -200,8 +203,8 @@ class TronWalletManager(
     private suspend fun getEnergyFee(amount: Amount, destination: String): Result<Int> {
         val token = when (amount.type) {
             AmountType.Coin -> return Result.Success(0)
-            AmountType.Reserve -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
             is AmountType.Token -> amount.type.token
+            else -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         }
         val addressData = destination.decodeBase58(checked = true)
             ?.padLeft(BYTE_ARRAY_SIZE)

@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.cardano.network.rosetta.converters
 
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.blockchain.blockchains.cardano.network.rosetta.response.RosettaCoinsResponse.Coin as RosettaCoin
 
@@ -10,7 +11,14 @@ internal object RosettaUnspentOutputsConverter {
     fun convert(coinsMap: Map<String, List<RosettaCoin>>): List<CardanoUnspentOutput> {
         return coinsMap.flatMap { entry ->
             entry.value
-                .filterCardanoCoin() // filter tokens while we don't support them
+                .let {
+                    if (DepsContainer.blockchainFeatureToggles.isCardanoTokenSupport) {
+                        it
+                    } else {
+                        // filter tokens while we don't support them
+                        it.filterCardanoCoin()
+                    }
+                }
                 .map { coin ->
                     val (transactionHash, outputIndex) = coin.coinIdentifier.getTransactionHashAndOutputIndex()
 
