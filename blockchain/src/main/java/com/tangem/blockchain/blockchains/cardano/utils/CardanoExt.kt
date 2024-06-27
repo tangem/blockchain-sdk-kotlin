@@ -2,8 +2,8 @@ package com.tangem.blockchain.blockchains.cardano.utils
 
 import com.tangem.blockchain.blockchains.cardano.CardanoTokenAddressConverter
 
-internal fun String.isCardanoAsset(policyId: String, assetName: String): Boolean {
-    val assetFingerprint = CardanoTokenAddressConverter().convertToFingerprint(address = policyId + assetName)
+internal fun String.matchesCardanoAsset(policyId: String, assetNameHex: String): Boolean {
+    val assetFingerprint = CardanoTokenAddressConverter().convertToFingerprint(address = policyId + assetNameHex)
 
-    return this == assetFingerprint || this.startsWith(prefix = policyId)
+    return this == assetFingerprint
 }
