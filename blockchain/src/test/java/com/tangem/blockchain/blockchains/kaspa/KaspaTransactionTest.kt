@@ -61,7 +61,7 @@ class KaspaTransactionTest {
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
         val fee = Fee.Common(Amount(amountToSend, feeValue))
-        val transactionData = TransactionData(
+        val transactionData = TransactionData.Uncompiled(
             sourceAddress = sourceAddress,
             destinationAddress = destinationAddress,
             amount = amountToSend,
@@ -170,7 +170,7 @@ class KaspaTransactionTest {
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
         val fee = Fee.Common(Amount(amountToSend, feeValue))
-        val transactionData = TransactionData(
+        val transactionData = TransactionData.Uncompiled(
             sourceAddress = sourceAddress,
             destinationAddress = destinationAddress,
             amount = amountToSend,
