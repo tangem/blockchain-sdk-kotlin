@@ -33,7 +33,7 @@ class TezosTransactionTest {
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
         val fee = Fee.Common(Amount(amountToSend, feeValue))
-        val transactionData = TransactionData(
+        val transactionData = TransactionData.Uncompiled(
             sourceAddress = walletAddress,
             destinationAddress = destinationAddress,
             amount = amountToSend,
