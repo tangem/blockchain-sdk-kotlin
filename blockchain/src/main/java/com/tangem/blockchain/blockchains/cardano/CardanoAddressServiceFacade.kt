@@ -1,12 +1,11 @@
 package com.tangem.blockchain.blockchains.cardano
 
+import com.tangem.blockchain.blockchains.cardano.utils.CardanoContractAddressRecognizer
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.ContractAddressValidator
 import com.tangem.blockchain.common.address.TrustWalletAddressService
-import com.tangem.blockchain.extensions.decodeBech32
-import com.tangem.blockchain.extensions.isValidHex
 import com.tangem.common.card.EllipticCurve
 
 internal class CardanoAddressServiceFacade : AddressService(), ContractAddressValidator {
@@ -41,19 +40,6 @@ internal class CardanoAddressServiceFacade : AddressService(), ContractAddressVa
      * cid=GMXC6PP71">Algorithm</a>
      */
     override fun validateContractAddress(address: String): Boolean {
-        // is fingerprint?
-        if (address.decodeBech32() != null) return true
-
-        if (!address.isValidHex()) return false
-
-        /*
-         * PolicyID: length == CONTRACT_ADDRESS_MIN_LENGTH
-         * AssetID:  length > CONTRACT_ADDRESS_MIN_LENGTH
-         */
-        return address.length >= POLICY_ID_LENGTH
-    }
-
-    private companion object {
-        const val POLICY_ID_LENGTH = 56
+        return CardanoContractAddressRecognizer.recognize(address) != null
     }
 }
