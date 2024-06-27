@@ -86,14 +86,16 @@ class SolanaWalletManager internal constructor(
             return
         }
 
-        val confirmedTxData = mutableListOf<TransactionData>()
+        val confirmedTxData = mutableListOf<TransactionData.Uncompiled>()
         val signaturesStatuses = txSignatures.zip(signatureStatuses.value)
         signaturesStatuses.forEach { pair ->
             if (pair.second?.confirmationStatus == Commitment.FINALIZED.value) {
                 val foundRecentTxData =
                     wallet.recentTransactions.firstOrNull { it.hash == pair.first }
                 foundRecentTxData?.let {
-                    confirmedTxData.add(it.copy(status = TransactionStatus.Confirmed))
+                    confirmedTxData.add(
+                        it.updateStatus(status = TransactionStatus.Confirmed) as TransactionData.Uncompiled,
+                    )
                 }
             }
         }
@@ -110,7 +112,7 @@ class SolanaWalletManager internal constructor(
                 val info = it.instructions[0].parsed.info
                 val amount = Amount(SolanaValueConverter.toSol(info.lamports), wallet.blockchain)
                 val feeAmount = Amount(SolanaValueConverter.toSol(it.fee), wallet.blockchain)
-                TransactionData(
+                TransactionData.Uncompiled(
                     amount,
                     Fee.Common(feeAmount),
                     info.source,
@@ -125,7 +127,7 @@ class SolanaWalletManager internal constructor(
         wallet.recentTransactions.addAll(newUnconfirmedTxData)
     }
 
-    override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData {
+    override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData.Uncompiled {
         val accountCreationRent = feeRentHolder[fee]
 
         return if (accountCreationRent == null) {
@@ -149,6 +151,8 @@ class SolanaWalletManager internal constructor(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
         val transaction = transactionBuilder.buildUnsignedTransaction(
             destinationAddress = transactionData.destinationAddress,
             amount = transactionData.amount,
