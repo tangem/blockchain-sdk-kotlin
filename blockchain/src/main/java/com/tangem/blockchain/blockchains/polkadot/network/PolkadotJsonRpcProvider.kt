@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.polkadot.network
 
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.retryIO
@@ -14,11 +15,17 @@ import org.komputing.khex.model.HexString
 import java.math.BigDecimal
 import java.math.BigInteger
 
-class PolkadotJsonRpcProvider(baseUrl: String) {
+internal class PolkadotJsonRpcProvider(
+    baseUrl: String,
+    credentials: Map<String, String>?,
+) {
 
     val host: String = baseUrl
 
-    private val api = createRetrofitInstance(baseUrl).create(PolkadotApi::class.java)
+    private val api = createRetrofitInstance(
+        baseUrl = baseUrl,
+        headerInterceptors = if (credentials != null) listOf(AddHeaderInterceptor(credentials)) else emptyList(),
+    ).create(PolkadotApi::class.java)
 
     @Throws
     suspend fun getFee(transaction: ByteArray, decimals: Int): BigDecimal {

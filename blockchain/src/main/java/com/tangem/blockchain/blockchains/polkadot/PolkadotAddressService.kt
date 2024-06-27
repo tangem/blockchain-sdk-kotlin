@@ -9,15 +9,15 @@ import io.emeraldpay.polkaj.types.Address
 /**
  * Created by Anton Zhilenkov on 10/06/2022.
  */
-class PolkadotAddressService(
-    blockchain: Blockchain,
-) : AddressService() {
+internal class PolkadotAddressService(blockchain: Blockchain) : AddressService() {
 
-    private val ss58Network = when (blockchain) {
+    val ss58Network = when (blockchain) {
         Blockchain.Polkadot -> SS58Type.Network.POLKADOT
         Blockchain.PolkadotTestnet -> SS58Type.Network.WESTEND
         Blockchain.Kusama -> SS58Type.Network.KUSAMA
         Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> SS58Type.Network.SUBSTRATE
+        Blockchain.Joystream -> SS58Type.Network.JOYSTREAM
+        Blockchain.Bittensor -> SS58Type.Network.BITTENSOR
         else -> error("$blockchain isn't supported")
     }
 
