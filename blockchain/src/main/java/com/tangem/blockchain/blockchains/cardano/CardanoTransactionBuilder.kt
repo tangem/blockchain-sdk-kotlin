@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.cardano
 
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
+import com.tangem.blockchain.blockchains.cardano.utils.matchesCardanoAsset
 import com.tangem.blockchain.blockchains.cardano.walletcore.CardanoTWTxBuilder
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
@@ -203,7 +204,12 @@ internal class CardanoTransactionBuilder(
         return plan.availableTokensList
             .associateWith { tokenAmount ->
                 val amount = tokenAmount.amount.toLong()
-                val remainingAmount = if (transaction.contractAddress?.startsWith(tokenAmount.policyId) == true) {
+                val isTransactionToken = transaction.contractAddress?.matchesCardanoAsset(
+                    policyId = tokenAmount.policyId,
+                    assetNameHex = tokenAmount.assetName,
+                )
+
+                val remainingAmount = if (isTransactionToken == true) {
                     amount - transaction.amount.longValueOrZero
                 } else {
                     amount
