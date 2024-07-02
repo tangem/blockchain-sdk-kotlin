@@ -221,6 +221,7 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.Filecoin -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/461'/0'/0/0"))
             }
+            Blockchain.InternetComputer -> mapOf(AddressType.Default to DerivationPath("m/44'/223'/0'/0/0"))
         }
     }
 }

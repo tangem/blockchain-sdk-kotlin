@@ -135,6 +135,7 @@ class EstimationFeeAddressFactory {
             Blockchain.Filecoin -> {
                 TODO("https://tangem.atlassian.net/browse/AND-7719")
             }
+            Blockchain.InternetComputer -> TODO("Need to generate")
         }
     }
 
