@@ -89,8 +89,8 @@ dependencies {
 
     implementation files('libs/hedera-sdk-java-2.29.0.jar')
     implementation "com.tangem:blstlib:master-6@aar"
-    implementation "com.tangem:wallet-core:4.0.21-tangem6@aar"
-    implementation("com.tangem:wallet-core-proto:4.0.21-tangem6") {
+    implementation "com.tangem:wallet-core:4.0.46-tangem1@aar"
+    implementation("com.tangem:wallet-core-proto:4.0.46-tangem1") {
         exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
     }
 
