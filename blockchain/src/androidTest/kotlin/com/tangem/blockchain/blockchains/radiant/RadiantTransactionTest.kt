@@ -77,7 +77,7 @@ class RadiantTransactionTest {
         val amountValue = Amount(blockchain = blockchain, value = amountValueDecimal)
         val feeValue = Amount(blockchain = blockchain, value = "0.1".toBigDecimal())
 
-        val transaction = TransactionData(
+        val transaction = TransactionData.Uncompiled(
             amount = amountValue,
             fee = Fee.Common(feeValue),
             sourceAddress = address,
