@@ -100,7 +100,7 @@ internal class CardanoTransactionValidatorTestFactory {
     }
 
     fun createCoinTransaction(value: BigDecimal): TransactionData {
-        return TransactionData(
+        return TransactionData.Uncompiled(
             amount = Amount(value = value, blockchain = Blockchain.Cardano, type = AmountType.Coin),
             fee = Fee.Common(amount = Amount(BigDecimal.ONE, Blockchain.Cardano)),
             sourceAddress = "addr1vxmeqr8j5wrpz9atx8yc5jydw5wgnrpxe7whlv542a3wvrs2dy0h4",
@@ -109,7 +109,7 @@ internal class CardanoTransactionValidatorTestFactory {
     }
 
     fun createWMTTransaction(value: BigDecimal): TransactionData {
-        return TransactionData(
+        return TransactionData.Uncompiled(
             amount = Amount(
                 value = value,
                 blockchain = Blockchain.Cardano,
