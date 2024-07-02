@@ -157,7 +157,7 @@ class SolanaWalletManager internal constructor(
                     transactionData.value.drop(SIGNATURE_PLACEHOLDER_LENGTH).toByteArray()
 
                 val transaction = transactionBuilder.buildUnsignedTransaction(
-                    builtTransaction = transactionWithoutSignaturePlaceholder
+                    builtTransaction = transactionWithoutSignaturePlaceholder,
                 )
 
                 val signResult = signer.sign(transactionWithoutSignaturePlaceholder, wallet.publicKey).successOr {
@@ -165,7 +165,7 @@ class SolanaWalletManager internal constructor(
                 }
 
                 val patchedTransactionData = TransactionData.Compiled(
-                    value = byteArrayOf(1) + signResult + transactionWithoutSignaturePlaceholder
+                    value = byteArrayOf(1) + signResult + transactionWithoutSignaturePlaceholder,
                 )
 
                 sendTransaction(transaction, patchedTransactionData)
