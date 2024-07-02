@@ -76,15 +76,9 @@ internal class CardanoTransactionBuilder(
         return when (val type = transaction.amount.type) {
             AmountType.Coin -> Fee.Common(amount = feeAmount)
             is AmountType.Token -> {
-                val tokenFee = Fee.CardanoToken(
-                    amount = feeAmount,
-                    // plan amount was calculated with zero fee amount
-                    minAdaValue = BigDecimal(plan.amount).movePointLeft(decimals),
-                )
+                val transactionWithNotZeroFee = transaction.copy(fee = plan.createTokenFee())
 
-                tokenFee.copy(
-                    minAdaValue = estimateMinAdaValue(transaction.copy(fee = tokenFee)),
-                )
+                estimateTokenFee(transaction = transactionWithNotZeroFee)
             }
             else -> throw BlockchainSdkError.CustomError("AmountType $type is not supported")
         }
@@ -98,11 +92,21 @@ internal class CardanoTransactionBuilder(
      *
      * @see CardanoTWTxBuilder.setTokenAmount
      */
-    private fun estimateMinAdaValue(transaction: TransactionData): BigDecimal {
+    private fun estimateTokenFee(transaction: TransactionData): Fee.CardanoToken {
         val input = twTxBuilder.build(transaction)
         val plan = AnySigner.plan(input, coinType, Cardano.TransactionPlan.parser())
 
-        return BigDecimal(plan.amount).movePointLeft(decimals)
+        return plan.createTokenFee()
+    }
+
+    private fun Cardano.TransactionPlan.createTokenFee(): Fee.CardanoToken {
+        return Fee.CardanoToken(
+            amount = Amount(
+                value = BigDecimal(fee).movePointLeft(decimals),
+                blockchain = wallet.blockchain,
+            ),
+            minAdaValue = BigDecimal(amount).movePointLeft(decimals),
+        )
     }
 
     fun buildForSign(transaction: TransactionData): ByteArray {
