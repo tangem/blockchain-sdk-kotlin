@@ -3,13 +3,13 @@ package com.tangem.blockchain.blockchains.cardano
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressService
-import com.tangem.blockchain.common.address.TrustWalletAddressService
+import com.tangem.blockchain.common.address.WalletCoreAddressService
 import com.tangem.common.card.EllipticCurve
 
 internal class CardanoAddressServiceFacade : AddressService() {
 
     private val legacyService = CardanoAddressService(Blockchain.Cardano)
-    private val trustWalletService = TrustWalletAddressService(Blockchain.Cardano)
+    private val trustWalletService = WalletCoreAddressService(Blockchain.Cardano)
 
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         return if (CardanoUtils.isExtendedPublicKey(walletPublicKey)) {

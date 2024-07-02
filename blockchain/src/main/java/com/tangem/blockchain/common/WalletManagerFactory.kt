@@ -188,6 +188,7 @@ class WalletManagerFactory(
             Blockchain.Nexa, Blockchain.NexaTestnet -> NexaWalletManagerAssembly
             Blockchain.Radiant -> RadiantWalletManagerAssembly
             Blockchain.Koinos, Blockchain.KoinosTestnet -> KoinosWalletManagerAssembly
+            Blockchain.InternetComputer -> InternetComputerWalletManagerAssembly
             Blockchain.Unknown,
             -> error("Unsupported blockchain")
         }

@@ -27,7 +27,7 @@ import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.MultisigAddressProvider
-import com.tangem.blockchain.common.address.TrustWalletAddressService
+import com.tangem.blockchain.common.address.WalletCoreAddressService
 import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
@@ -154,6 +154,7 @@ enum class Blockchain(
     KoinosTestnet("koinos/test", "tKOIN", "Koinos Testnet"),
     Joystream("joystream", "JOY", "Joystream"),
     Bittensor("bittensor", "TAO", "Bittensor"),
+    InternetComputer("internet-computer", "ICP", "Internet Computer"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -189,6 +190,7 @@ enum class Blockchain(
         Hedera, HederaTestnet,
         Radiant,
         Koinos, KoinosTestnet,
+        InternetComputer,
         -> 8
 
         Solana, SolanaTestnet,
@@ -323,7 +325,8 @@ enum class Blockchain(
             TerraV2,
             Near, NearTestnet,
             Algorand, AlgorandTestnet,
-            -> TrustWalletAddressService(blockchain = this)
+            InternetComputer,
+            -> WalletCoreAddressService(blockchain = this)
 
             Aptos, AptosTestnet -> AptosAddressService(isTestnet())
             Tron, TronTestnet -> TronAddressService()
@@ -478,6 +481,7 @@ enum class Blockchain(
             Flare, FlareTestnet,
             Taraxa, TaraxaTestnet,
             Koinos, KoinosTestnet,
+            InternetComputer,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,

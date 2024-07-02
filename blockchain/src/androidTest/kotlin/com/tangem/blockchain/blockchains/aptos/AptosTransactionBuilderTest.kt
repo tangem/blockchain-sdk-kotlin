@@ -38,7 +38,7 @@ internal class AptosTransactionBuilderTest {
 
         val actual = txBuilder.buildForSign(
             sequenceNumber = 1,
-            transactionData = TransactionData(
+            transactionData = TransactionData.Uncompiled(
                 amount = APT_AMOUNT.copy(value = BigDecimal(1)),
                 fee = Fee.Aptos(
                     amount = APT_AMOUNT.copy(value = BigDecimal(9).movePointLeft(8)),
@@ -84,7 +84,7 @@ internal class AptosTransactionBuilderTest {
 
         val actual = txBuilder.buildForSend(
             sequenceNumber = 1,
-            transactionData = TransactionData(
+            transactionData = TransactionData.Uncompiled(
                 amount = APT_AMOUNT.copy(value = BigDecimal(1)),
                 fee = Fee.Aptos(
                     amount = APT_AMOUNT.copy(value = BigDecimal(9).movePointLeft(8)),

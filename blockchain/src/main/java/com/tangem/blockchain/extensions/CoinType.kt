@@ -19,6 +19,7 @@ internal val Blockchain.trustWalletCoinType: CoinType
         Blockchain.VeChain, Blockchain.VeChainTestnet -> CoinType.VECHAIN
         Blockchain.Aptos, Blockchain.AptosTestnet -> CoinType.APTOS
         Blockchain.Algorand, Blockchain.AlgorandTestnet -> CoinType.ALGORAND
+        Blockchain.InternetComputer -> CoinType.INTERNETCOMPUTER
         else -> error("Unsupported blockchain: $this")
     }
 
