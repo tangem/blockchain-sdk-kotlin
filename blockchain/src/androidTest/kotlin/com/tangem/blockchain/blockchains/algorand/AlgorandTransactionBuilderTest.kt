@@ -35,7 +35,7 @@ class AlgorandTransactionBuilderTest {
             blockchain = Blockchain.Algorand,
         )
 
-        val transaction = TransactionData(
+        val transaction = TransactionData.Uncompiled(
             amount = amount,
             fee = fee,
             sourceAddress = "M7H2BRILLJDKH73P2OGLNVXEK4S6VSJXU6PDKKFBHJY3YADPQ57HN4EI64",
