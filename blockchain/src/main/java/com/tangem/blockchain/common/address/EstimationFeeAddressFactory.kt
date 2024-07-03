@@ -12,8 +12,6 @@ import com.tangem.blockchain.common.Blockchain
  *
  * If the fee does not depend on the amount or destination, or if the fee is fixed, an empty address can be set to
  * avoid wasting resources on address generation.
- *
- * @param mnemonic to help generate addresses
  */
 class EstimationFeeAddressFactory {
 
@@ -53,20 +51,19 @@ class EstimationFeeAddressFactory {
             }
 
             // We have to generate a new dummy address for UTXO-like
-            Blockchain.Bitcoin, Blockchain.BitcoinTestnet ->
-                "bc1qkrc5kmpq546wr2xk0errg58yw9jjq7thvhdk5k"
-            Blockchain.Litecoin ->
-                "ltc1qelzg874tr0zap72ckcc9exa3lgyyt6rvfhhekc"
-            Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet ->
-                "bitcoincash:qrn96yyxa93t6sqmehvls6746qafkcsuku6zmd9460"
-            Blockchain.Dogecoin ->
-                "DRVD4B4YD9CBSjqaa3UfF42vSN6k2tJwhz"
-            Blockchain.Dash ->
-                "Xqfekbgca2HDaXhrNYP2HTnuQ5go2E8dDE"
-            Blockchain.Ravencoin, Blockchain.RavencoinTestnet ->
-                "RT5qKgXdmh9pqtz71cgfL834VfeXFVH1sG"
-            Blockchain.Solana ->
-                "9wuDg6Y4H4j86Kg5aUGrUeaBa3sAUzjMs37KbeGFnRuM"
+            Blockchain.Bitcoin,
+            Blockchain.BitcoinTestnet,
+            -> "bc1qkrc5kmpq546wr2xk0errg58yw9jjq7thvhdk5k"
+            Blockchain.Litecoin -> "MSqjXH6toL4kHqsRo3mWaWMkhmiH9GQxLR"
+            Blockchain.BitcoinCash,
+            Blockchain.BitcoinCashTestnet,
+            -> "bitcoincash:qrn96yyxa93t6sqmehvls6746qafkcsuku6zmd9460"
+            Blockchain.Dogecoin -> "DRVD4B4YD9CBSjqaa3UfF42vSN6k2tJwhz"
+            Blockchain.Dash -> "Xqfekbgca2HDaXhrNYP2HTnuQ5go2E8dDE"
+            Blockchain.Ravencoin,
+            Blockchain.RavencoinTestnet,
+            -> "RT5qKgXdmh9pqtz71cgfL834VfeXFVH1sG"
+            Blockchain.Solana -> "9wuDg6Y4H4j86Kg5aUGrUeaBa3sAUzjMs37KbeGFnRuM"
             Blockchain.Nexa, Blockchain.NexaTestnet -> TODO("Not implemented")
             Blockchain.Radiant -> "1K8jBuCKzuwvFCjL7Qpqq69k1hnVXJ31Nc"
             // EVM-like
