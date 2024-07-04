@@ -94,15 +94,17 @@ class Wallet(
     }
 
     fun addOutgoingTransaction(transactionData: TransactionData, hashToLowercase: Boolean = true) {
-        transactionData.requireUncompiled()
+        if (transactionData is TransactionData.Uncompiled) {
+            transactionData.apply {
+                date = Calendar.getInstance()
+                if (hashToLowercase) hash = hash?.lowercase(Locale.US)
+            }
+            if (recentTransactions.any { it.hash == transactionData.hash }) return
 
-        transactionData.apply {
-            date = Calendar.getInstance()
-            if (hashToLowercase) hash = hash?.lowercase(Locale.US)
+            recentTransactions.add(transactionData)
+        } else {
+            // TODO staking [REDACTED_TASK_KEY]
         }
-        if (recentTransactions.any { it.hash == transactionData.hash }) return
-
-        recentTransactions.add(transactionData)
     }
 
     fun fundsAvailable(amountType: AmountType): BigDecimal {
