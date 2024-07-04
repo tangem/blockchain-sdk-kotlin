@@ -48,13 +48,12 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
 
     @Throws(RpcException::class)
     fun sendSignedTransaction(
-        transaction: SolanaTransaction,
+        signedTransaction: ByteArray,
         maxRetries: Int = 12,
         skipPreflight: Boolean = false,
         commitment: Commitment = Commitment.FINALIZED,
     ): String {
-        val serializedTransaction = transaction.serialize()
-        val base64Trx = Base64.encodeToString(serializedTransaction, Base64.NO_WRAP)
+        val base64Trx = Base64.encodeToString(signedTransaction, Base64.NO_WRAP)
         val params = buildList {
             add(base64Trx)
 
