@@ -26,13 +26,13 @@ class CardanoTokenAddressConverterTest(private val model: Model) {
 
     sealed interface Model {
 
-        val actual: String
+        val actual: String?
 
-        data class PolicyID(val policyId: String, val assetName: String?, override val actual: String) : Model
+        data class PolicyID(val policyId: String, val assetName: String?, override val actual: String?) : Model
 
-        data class AssetID(val policyId: String, val assetNameHex: String, override val actual: String) : Model
+        data class AssetID(val policyId: String, val assetNameHex: String, override val actual: String?) : Model
 
-        data class Fingerprint(val value: String, override val actual: String) : Model
+        data class Fingerprint(val value: String, override val actual: String?) : Model
     }
 
     private companion object {
@@ -88,6 +88,10 @@ class CardanoTokenAddressConverterTest(private val model: Model) {
                 policyId = "8fef2d34078659493ce161a6c7fba4b56afefa8535296a5743f69587",
                 assetName = "AADA",
                 actual = "asset1khk46tdfsknze9k84ae0ee0k2x8mcwhz93k70d",
+            ),
+            Model.Fingerprint(
+                value = "4.123)(=-",
+                actual = null,
             ),
         )
     }
