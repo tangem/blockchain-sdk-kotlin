@@ -210,7 +210,7 @@ internal class CardanoTransactionBuilder(
                 val amount = tokenAmount.amount.toLong()
                 val isTransactionToken = transaction.contractAddress?.matchesCardanoAsset(
                     policyId = tokenAmount.policyId,
-                    assetNameHex = tokenAmount.assetName,
+                    assetNameHex = tokenAmount.assetNameHex,
                 )
 
                 val remainingAmount = if (isTransactionToken == true) {
