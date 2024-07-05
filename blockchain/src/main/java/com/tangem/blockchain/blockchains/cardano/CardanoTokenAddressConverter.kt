@@ -16,14 +16,14 @@ import com.tangem.blockchain.blockchains.cardano.utils.CardanoContractAddressRec
 class CardanoTokenAddressConverter {
 
     /**
-     * Convert to single format of cardano token address
+     * Convert to single format of cardano token address or null if address is not valid
      *
      * @param address token contract address (PolicyID or Fingerprint or AssetID)
      * @param symbol  token symbol, aka asset name
      */
     @Suppress("MagicNumber")
-    fun convertToFingerprint(address: String, symbol: String? = null): String {
-        val recognizedAddress = CardanoContractAddressRecognizer.recognize(address)
+    fun convertToFingerprint(address: String, symbol: String? = null): String? {
+        val recognizedAddress = CardanoContractAddressRecognizer.recognize(address) ?: return null
 
         if (recognizedAddress is CardanoContractAddress.Fingerprint) return address
 
