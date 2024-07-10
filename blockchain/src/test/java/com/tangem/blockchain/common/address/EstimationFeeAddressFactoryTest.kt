@@ -24,7 +24,7 @@ class EstimationFeeAddressFactoryTest {
         Blockchain.Ducatus to "",
         Blockchain.Bitcoin to "bc1qkrc5kmpq546wr2xk0errg58yw9jjq7thvhdk5k",
         Blockchain.BitcoinTestnet to "bc1qkrc5kmpq546wr2xk0errg58yw9jjq7thvhdk5k",
-        Blockchain.Litecoin to "ltc1qelzg874tr0zap72ckcc9exa3lgyyt6rvfhhekc",
+        Blockchain.Litecoin to "MSqjXH6toL4kHqsRo3mWaWMkhmiH9GQxLR",
         Blockchain.BitcoinCash to "bitcoincash:qrn96yyxa93t6sqmehvls6746qafkcsuku6zmd9460",
         Blockchain.BitcoinCashTestnet to "bitcoincash:qrn96yyxa93t6sqmehvls6746qafkcsuku6zmd9460",
         Blockchain.Dogecoin to "DRVD4B4YD9CBSjqaa3UfF42vSN6k2tJwhz",

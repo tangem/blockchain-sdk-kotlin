@@ -7,6 +7,8 @@ import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 @Suppress("MagicNumber")
 object CardanoUtils {
 
+    const val CARDANO_FINGERPRINT_ADDRESS_PREFIX = "asset"
+
     private const val EXTENDED_PUBLIC_KEY_LENGTH = 128
 
     // Link to the original code:

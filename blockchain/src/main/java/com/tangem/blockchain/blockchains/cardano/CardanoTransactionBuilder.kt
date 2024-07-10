@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.cardano
 
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
+import com.tangem.blockchain.blockchains.cardano.utils.matchesCardanoAsset
 import com.tangem.blockchain.blockchains.cardano.walletcore.CardanoTWTxBuilder
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
@@ -79,15 +80,9 @@ internal class CardanoTransactionBuilder(
         return when (val type = transactionData.amount.type) {
             AmountType.Coin -> Fee.Common(amount = feeAmount)
             is AmountType.Token -> {
-                val tokenFee = Fee.CardanoToken(
-                    amount = feeAmount,
-                    // plan amount was calculated with zero fee amount
-                    minAdaValue = BigDecimal(plan.amount).movePointLeft(decimals),
-                )
+                val transactionWithNotZeroFee = transactionData.copy(fee = plan.createTokenFee())
 
-                tokenFee.copy(
-                    minAdaValue = estimateMinAdaValue(transactionData.copy(fee = tokenFee)),
-                )
+                estimateTokenFee(transactionData = transactionWithNotZeroFee)
             }
             else -> throw BlockchainSdkError.CustomError("AmountType $type is not supported")
         }
@@ -101,11 +96,21 @@ internal class CardanoTransactionBuilder(
      *
      * @see CardanoTWTxBuilder.setTokenAmount
      */
-    private fun estimateMinAdaValue(transactionData: TransactionData): BigDecimal {
+    private fun estimateTokenFee(transactionData: TransactionData): Fee.CardanoToken {
         val input = twTxBuilder.build(transactionData)
         val plan = AnySigner.plan(input, coinType, Cardano.TransactionPlan.parser())
 
-        return BigDecimal(plan.amount).movePointLeft(decimals)
+        return plan.createTokenFee()
+    }
+
+    private fun Cardano.TransactionPlan.createTokenFee(): Fee.CardanoToken {
+        return Fee.CardanoToken(
+            amount = Amount(
+                value = BigDecimal(fee).movePointLeft(decimals),
+                blockchain = wallet.blockchain,
+            ),
+            minAdaValue = BigDecimal(amount).movePointLeft(decimals),
+        )
     }
 
     fun buildForSign(transactionData: TransactionData): ByteArray {
@@ -211,7 +216,12 @@ internal class CardanoTransactionBuilder(
         return plan.availableTokensList
             .associateWith { tokenAmount ->
                 val amount = tokenAmount.amount.toLong()
-                val remainingAmount = if (transactionData.contractAddress?.startsWith(tokenAmount.policyId) == true) {
+                val isTransactionToken = transactionData.contractAddress?.matchesCardanoAsset(
+                    policyId = tokenAmount.policyId,
+                    assetNameHex = tokenAmount.assetNameHex,
+                )
+
+                val remainingAmount = if (isTransactionToken == true) {
                     amount - transactionData.amount.longValueOrZero
                 } else {
                     amount
