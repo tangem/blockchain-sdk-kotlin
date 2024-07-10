@@ -15,7 +15,7 @@ internal object TronWalletManagerAssembly : WalletManagerAssembly<TronWalletMana
             return TronWalletManager(
                 wallet = this,
                 transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
-                transactionBuilder = TronTransactionBuilder(blockchain),
+                transactionBuilder = TronTransactionBuilder(),
                 networkService = TronNetworkService(
                     rpcNetworkProviders = TronProvidersBuilder(input.providerTypes, input.config).build(blockchain),
                     blockchain = input.wallet.blockchain,
