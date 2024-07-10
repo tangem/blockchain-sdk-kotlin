@@ -61,6 +61,8 @@ internal fun TransactionData.toBitcoinCashTransaction(
     change: BigDecimal,
     blockchain: Blockchain,
 ): BitcoinCashTransaction {
+    requireUncompiled()
+
     val transaction = BitcoinCashTransaction(networkParameters)
     for (utxo in unspentOutputs) {
         transaction.addInput(Sha256Hash.wrap(utxo.transactionHash), utxo.outputIndex, Script(utxo.outputScript))
