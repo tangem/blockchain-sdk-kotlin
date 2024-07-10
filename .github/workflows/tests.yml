@@ -10,6 +10,8 @@ on:
 
 env:
   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_DVELOPMENT_ANDROID }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_ACTOR: ${{ secrets.GITHUB_ACTOR }}
 
 jobs:
   test:
@@ -25,19 +27,30 @@ jobs:
       with:
         distribution: 'adopt'
         java-version: '17'
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: 3.2.3
-    - name: Bundle Install
-      run: bundle install
-    - name: Tests
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GITHUB_ACTOR: ${{ secrets.GITHUB_ACTOR }}
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+    - name: Configure local.properties file
+      run: echo sdk.dir = $ANDROID_HOME > local.properties
+    - name: Enable KVM
       run: |
-        echo sdk.dir = $ANDROID_HOME > local.properties
-        bundle exec fastlane test
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+    - name: Check codestyle
+      run: |
+        ./gradlew clean detekt
+    - name: Build tests
+      run: |
+        ./gradlew assembleAndroidTest
+    - name: Run unit tests
+      run: ./gradlew test
+    - name: Run Android tests
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 30
+        target: google_apis
+        arch: x86
+        script: ./gradlew connectedAndroidTest
     - name: Build notification
       if: failure()
       uses: adamkdean/simple-slack-notify@master
