@@ -36,7 +36,7 @@ internal class DucatusWalletManager(
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val feeValue = BigDecimal.ONE.movePointLeft(blockchain.decimals())
         val sizeResult = transactionBuilder.getEstimateSize(
-            TransactionData(amount, Fee.Common(Amount(amount, feeValue)), wallet.address, destination),
+            TransactionData.Uncompiled(amount, Fee.Common(Amount(amount, feeValue)), wallet.address, destination),
         )
         return when (sizeResult) {
             is Result.Failure -> sizeResult
