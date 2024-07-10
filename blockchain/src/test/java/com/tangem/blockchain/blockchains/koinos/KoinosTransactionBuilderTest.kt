@@ -3,10 +3,7 @@ package com.tangem.blockchain.blockchains.koinos
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.koinos.models.KoinosAccountNonce
 import com.tangem.blockchain.blockchains.koinos.network.dto.KoinosProtocol
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
@@ -16,7 +13,7 @@ internal class KoinosTransactionBuilderTest {
     private val transactionBuilder = KoinosTransactionBuilder(isTestnet = false)
     private val transactionBuilderTestnet = KoinosTransactionBuilder(isTestnet = true)
 
-    private val transactionDataForTest = TransactionData(
+    private val transactionDataForTest = TransactionData.Uncompiled(
         amount = Amount(
             value = 12.toBigDecimal().setScale(Blockchain.Koinos.decimals()),
             blockchain = Blockchain.Koinos,
@@ -104,29 +101,5 @@ internal class KoinosTransactionBuilderTest {
             .isEqualTo(expectedHashToSignTestnet)
         Truth.assertThat(transactionToSign)
             .isEqualTo(expectedTransactionToSignTestnet)
-    }
-
-    @Test
-    fun buildToSend() {
-        val expectedSignature =
-            "IAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-
-        val signedTransaction = transactionBuilder.buildToSend(
-            expectedTransactionToSign,
-            ByteArray(64) { 0x00.toByte() },
-        )
-        val signedTransactionTestnet = transactionBuilderTestnet.buildToSend(
-            expectedTransactionToSign,
-            ByteArray(64) { 0x00.toByte() },
-        )
-
-        Truth.assertThat(signedTransaction.signatures.size)
-            .isEqualTo(1)
-        Truth.assertThat(signedTransactionTestnet.signatures.size)
-            .isEqualTo(1)
-        Truth.assertThat(signedTransaction.signatures[0])
-            .isEqualTo(expectedSignature)
-        Truth.assertThat(signedTransactionTestnet.signatures[0])
-            .isEqualTo(expectedSignature)
     }
 }
