@@ -32,7 +32,7 @@ class BlockchairEthNetworkProvider(
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.ROOT)
     private val blockchain = Blockchain.Ethereum
 
-    suspend fun getTransactions(address: String, tokens: Set<Token>): Result<List<TransactionData>> {
+    suspend fun getTransactions(address: String, tokens: Set<Token>): Result<List<TransactionData.Uncompiled>> {
         return try {
             coroutineScope {
                 val addressDeferred = makeRequestUsingKeyOnlyWhenNeeded {
@@ -73,6 +73,7 @@ class BlockchairEthNetworkProvider(
                 }
 
                 val coinTransactions = calls.map { it.toTransactionData(tokens) }
+                    .filterIsInstance<TransactionData.Uncompiled>()
                     .filter { !it.amount.value!!.isZero() }
                 val tokenTransactions = tokenCalls.map { it.toTransactionData(tokens) }
 
@@ -83,7 +84,7 @@ class BlockchairEthNetworkProvider(
         }
     }
 
-    private fun BlockchairCallInfo.toTransactionData(tokens: Set<Token>): TransactionData {
+    private fun BlockchairCallInfo.toTransactionData(tokens: Set<Token>): TransactionData.Uncompiled {
         val amount = if (contractAddress == null) { // coin transaction
             val value = BigDecimal(value).movePointLeft(blockchain.decimals())
             Amount(value, blockchain)
@@ -96,7 +97,7 @@ class BlockchairEthNetworkProvider(
             if (block == -1) TransactionStatus.Unconfirmed else TransactionStatus.Confirmed
         val date = dateFormat.parse(time!!)
 
-        return TransactionData(
+        return TransactionData.Uncompiled(
             amount = amount,
             fee = null,
             sourceAddress = sender ?: "unknown",
