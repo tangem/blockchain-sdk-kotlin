@@ -22,7 +22,7 @@ data class StellarResponse(
     val baseFee: BigDecimal,
     val baseReserve: BigDecimal,
     val sequence: Long,
-    val recentTransactions: List<TransactionData>,
+    val recentTransactions: List<TransactionData.Uncompiled>,
     val subEntryCount: Int,
 )
 

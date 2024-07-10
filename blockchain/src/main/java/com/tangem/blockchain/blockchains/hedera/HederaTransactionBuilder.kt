@@ -23,6 +23,8 @@ internal class HederaTransactionBuilder(
 
     fun buildToSign(transactionData: TransactionData): Result<HederaBuiltTransaction<TransferTransaction>> {
         return try {
+            transactionData.requireUncompiled()
+
             val maxFeeValue = transactionData.fee?.amount?.value ?: return Result.Failure(
                 BlockchainSdkError.NPError("transactionData.fee"),
             )
