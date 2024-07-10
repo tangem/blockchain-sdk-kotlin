@@ -27,6 +27,8 @@ class TezosTransactionBuilder(
         transactionData: TransactionData,
         publicKeyRevealed: Boolean,
     ): Result<List<TezosOperationContent>> {
+        transactionData.requireUncompiled()
+
         if (counter == null) return Result.Failure(BlockchainSdkError.CustomError("counter is null"))
         var counter = counter!!
 
