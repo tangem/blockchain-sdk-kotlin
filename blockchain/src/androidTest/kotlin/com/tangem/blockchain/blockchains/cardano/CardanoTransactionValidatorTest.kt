@@ -38,7 +38,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA())
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal.ONE),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal.ONE),
         )
 
         Truth.assertThat(result).isEqualTo(Result.success(Unit))
@@ -53,7 +53,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(wmtValue = BigDecimal.ZERO))
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal.ONE),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal.ONE),
         )
 
         Truth.assertThat(result).isEqualTo(Result.success(Unit))
@@ -68,7 +68,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT())
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal.ONE),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal.ONE),
         )
 
         Truth.assertThat(result).isEqualTo(Result.success(Unit))
@@ -83,7 +83,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT_and_AGIX())
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal.ONE),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal.ONE),
         )
 
         Truth.assertThat(result).isEqualTo(Result.success(Unit))
@@ -100,7 +100,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA())
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal(5)),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal(5)),
         )
 
         result
@@ -120,7 +120,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(wmtValue = BigDecimal.ZERO))
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal(5)),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal(5)),
         )
 
         result
@@ -140,7 +140,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(wmtValue = BigDecimal(10)))
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal(5)),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal(5)),
         )
 
         result
@@ -160,7 +160,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_2_ADA_and_WMT_and_AGIX())
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal(5)),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal(5)),
         )
 
         result
@@ -182,7 +182,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA())
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal(0.99)),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal(0.99)),
         )
 
         result
@@ -202,7 +202,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(wmtValue = BigDecimal.ZERO))
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal(0.99)),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal(0.99)),
         )
 
         result
@@ -222,7 +222,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(wmtValue = BigDecimal(10)))
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal(0.99)),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal(0.99)),
         )
 
         result
@@ -242,7 +242,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT_and_AGIX())
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal(0.99)),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal(0.99)),
         )
 
         result
@@ -264,7 +264,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA())
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal(5.66)),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal(5.66)),
         )
 
         Truth.assertThat(result).isEqualTo(Result.success(Unit))
@@ -279,7 +279,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(wmtValue = BigDecimal.ZERO))
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal(5.66)),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal(5.66)),
         )
 
         Truth.assertThat(result).isEqualTo(Result.success(Unit))
@@ -294,7 +294,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(wmtValue = BigDecimal(10)))
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal(5.66)),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal(5.66)),
         )
 
         result
@@ -314,7 +314,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT_and_AGIX())
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal(5.66)),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal(5.66)),
         )
 
         result
@@ -336,7 +336,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA())
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal(4.5)),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal(4.5)),
         )
 
         result
@@ -356,7 +356,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(wmtValue = BigDecimal.ZERO))
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal(4.5)),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal(4.5)),
         )
 
         result
@@ -376,7 +376,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(BigDecimal(10)))
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal(4.5)),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal(4.5)),
         )
 
         result
@@ -396,7 +396,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT_and_AGIX())
 
         val result = validator.validate(
-            transaction = testModelFactory.createCoinTransaction(value = BigDecimal(4.5)),
+            transactionData = testModelFactory.createCoinTransaction(value = BigDecimal(4.5)),
         )
 
         result
@@ -418,7 +418,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(BigDecimal.ZERO))
 
         val result = validator.validate(
-            transaction = testModelFactory.createWMTTransaction(value = BigDecimal(5)),
+            transactionData = testModelFactory.createWMTTransaction(value = BigDecimal(5)),
         )
 
         result
@@ -438,7 +438,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT())
 
         val result = validator.validate(
-            transaction = testModelFactory.createWMTTransaction(value = BigDecimal(5)),
+            transactionData = testModelFactory.createWMTTransaction(value = BigDecimal(5)),
         )
 
         Truth.assertThat(result).isEqualTo(Result.success(Unit))
@@ -453,7 +453,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT_and_AGIX())
 
         val result = validator.validate(
-            transaction = testModelFactory.createWMTTransaction(value = BigDecimal(5)),
+            transactionData = testModelFactory.createWMTTransaction(value = BigDecimal(5)),
         )
 
         Truth.assertThat(result).isEqualTo(Result.success(Unit))
@@ -469,7 +469,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_2_ADA_and_WMT())
 
         val result = validator.validate(
-            transaction = testModelFactory.createWMTTransaction(value = BigDecimal(10)),
+            transactionData = testModelFactory.createWMTTransaction(value = BigDecimal(10)),
         )
 
         Truth.assertThat(result).isEqualTo(Result.success(Unit))
@@ -485,7 +485,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_2_ADA_and_WMT())
 
         val result = validator.validate(
-            transaction = testModelFactory.createWMTTransaction(value = BigDecimal(5)),
+            transactionData = testModelFactory.createWMTTransaction(value = BigDecimal(5)),
         )
 
         result
@@ -507,7 +507,7 @@ class CardanoTransactionValidatorTest {
         )
 
         val result = validator.validate(
-            transaction = testModelFactory.createWMTTransaction(value = BigDecimal(5)),
+            transactionData = testModelFactory.createWMTTransaction(value = BigDecimal(5)),
         )
 
         result
@@ -527,7 +527,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_2_ADA_and_WMT_and_AGIX())
 
         val result = validator.validate(
-            transaction = testModelFactory.createWMTTransaction(value = BigDecimal(5)),
+            transactionData = testModelFactory.createWMTTransaction(value = BigDecimal(5)),
         )
 
         result
@@ -548,7 +548,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_2_ADA_and_WMT_and_AGIX())
 
         val result = validator.validate(
-            transaction = testModelFactory.createWMTTransaction(value = BigDecimal(10)),
+            transactionData = testModelFactory.createWMTTransaction(value = BigDecimal(10)),
         )
 
         result
@@ -568,7 +568,7 @@ class CardanoTransactionValidatorTest {
         val validator = createValidator(model = testModelFactory.create_2_ADA_and_WMT())
 
         val result = validator.validate(
-            transaction = testModelFactory.createWMTTransaction(value = BigDecimal(5)),
+            transactionData = testModelFactory.createWMTTransaction(value = BigDecimal(5)),
         )
 
         result

@@ -41,6 +41,8 @@ internal class TonWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
         val input = txBuilder.buildForSign(
             sequenceNumber = sequenceNumber,
             amount = transactionData.amount,
