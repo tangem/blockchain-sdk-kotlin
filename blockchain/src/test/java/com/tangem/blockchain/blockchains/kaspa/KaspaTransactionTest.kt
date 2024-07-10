@@ -19,6 +19,117 @@ class KaspaTransactionTest {
 
     @Suppress("LongMethod")
     @Test
+    fun buildCorrectTransactionToSchnorrAddress1() {
+        // arrange
+        val walletPublicKey = (
+            "04EB30400CE9D1DEED12B84D4161A1FA922EF4185A155EF3EC208078B3807B126FA22C335081AAEBF161095C11C7D8BD550EF88" +
+                "82A3125B0EE9AE96DDDE1AE743F"
+            ).hexToBytes()
+        val signature = (
+            "E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D377878E83F25FD2E258B2E918EF79E151337D7F3BD0798D66FDCE04B07C" +
+                "30984424B13344F0A7CC401654BF71C43DF96FC6B46766CAE30E97BD9018E9B98BB2C3645744A696AD26ECC780157EA9D44" +
+                "DC41D0BCB420175A5D3F543079F4263AA2DBDE0EE2D33A877FC583E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D3" +
+                "77878E83F25FD2E258B2E918EF79E151337D7F3BD0798D66FDCE04B07C30984424B13344F0A7CC40168"
+            ).hexToBytes()
+        val sendValue = 500000000.toBigDecimal().movePointLeft(decimals)
+        val feeValue = "0.0003".toBigDecimal()
+        val destinationAddress = "kaspa:qpsqw2aamda868dlgqczeczd28d5nc3rlrj3t87vu9q58l2tugpjs2psdm4fv"
+
+        val sourceAddress = addressService.makeAddress(walletPublicKey)
+
+        val transactionBuilder = KaspaTransactionBuilder()
+        transactionBuilder.unspentOutputs = listOf(
+            KaspaUnspentOutput(
+                transactionHash = "deb88e7dd734437c6232a636085ef917d1d13cc549fe14749765508b2782f2fb".hexToBytes(),
+                outputIndex = 0,
+                amount = 10000000.toBigDecimal().movePointLeft(decimals),
+                outputScript = "21034c88a1a83469ddf20d0c07e5c4a1e7b83734e721e60d642b94a53222c47c670dab".hexToBytes(),
+            ),
+            KaspaUnspentOutput(
+                transactionHash = "304db39069dc409acedf544443dcd4a4f02bfad4aeb67116f8bf087822c456af".hexToBytes(),
+                outputIndex = 0,
+                amount = 10000000.toBigDecimal().movePointLeft(decimals),
+                outputScript = "21034c88a1a83469ddf20d0c07e5c4a1e7b83734e721e60d642b94a53222c47c670dab".hexToBytes(),
+            ),
+            KaspaUnspentOutput(
+                transactionHash = "ae96e819429e9da538e84cb213f62fbc8ad32e932d7c7f1fb9bd2fedf8fd7b4a".hexToBytes(),
+                outputIndex = 0,
+                amount = 500000000.toBigDecimal().movePointLeft(decimals),
+                outputScript = "21034c88a1a83469ddf20d0c07e5c4a1e7b83734e721e60d642b94a53222c47c670dab".hexToBytes(),
+            ),
+        )
+
+        val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
+        val fee = Fee.Common(Amount(amountToSend, feeValue))
+        val transactionData = TransactionData.Uncompiled(
+            sourceAddress = sourceAddress,
+            destinationAddress = destinationAddress,
+            amount = amountToSend,
+            fee = fee,
+        )
+
+        val expectedHashToSign1 = "947EF2C73041E64D1525D5B1C0B0EEA9537B91057EB68E02B554763BBEF83A6A"
+            .hexToBytes().toList()
+        val expectedHashToSign2 = "F0063A1C23F56764AA656D8EAB4816BC0AD45E39E41DEBEE36AB9AA49874BF66"
+            .hexToBytes().toList()
+        val expectedSignedTransaction = KaspaTransactionBody(
+            KaspaTransactionData(
+                version = 0,
+                inputs = listOf(
+                    KaspaInput(
+                        previousOutpoint = KaspaPreviousOutpoint(
+                            transactionId = "ae96e819429e9da538e84cb213f62fbc8ad32e932d7c7f1fb9bd2fedf8fd7b4a",
+                            index = 0,
+                        ),
+                        signatureScript = "41E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D377878E83F25FD2E258B2E918EF" +
+                            "79E151337D7F3BD0798D66FDCE04B07C30984424B13344F0A7CC4016501",
+                        sequence = 0,
+                        sigOpCount = 1,
+                    ),
+                    KaspaInput(
+                        previousOutpoint = KaspaPreviousOutpoint(
+                            transactionId = "deb88e7dd734437c6232a636085ef917d1d13cc549fe14749765508b2782f2fb",
+                            index = 0,
+                        ),
+                        signatureScript = "414BF71C43DF96FC6B46766CAE30E97BD9018E9B98BB2C3645744A696AD26ECC780157EA9" +
+                            "D44DC41D0BCB420175A5D3F543079F4263AA2DBDE0EE2D33A877FC58301",
+                        sequence = 0,
+                        sigOpCount = 1,
+                    ),
+                ),
+                outputs = listOf(
+                    KaspaOutput(
+                        amount = 500000000,
+                        scriptPublicKey = KaspaScriptPublicKey(
+                            scriptPublicKey = "2060072BBDDB7A7D1DBF40302CE04D51DB49E223F8E5159FCCE14143FD4BE20328AC",
+                            version = 0,
+                        ),
+                    ),
+                    KaspaOutput(
+                        amount = 9970000,
+                        scriptPublicKey = KaspaScriptPublicKey(
+                            scriptPublicKey = "2103EB30400CE9D1DEED12B84D4161A1FA922EF4185A155EF3EC208078B3807B126FAB",
+                            version = 0,
+                        ),
+                    ),
+                ),
+                lockTime = 0,
+                subnetworkId = "0000000000000000000000000000000000000000",
+            ),
+        )
+
+        // act
+        val buildToSignResult = transactionBuilder.buildToSign(transactionData) as Result.Success
+        val signedTransaction = transactionBuilder.buildToSend(signature)
+
+        // assert
+        Truth.assertThat(buildToSignResult.data.map { it.toList() })
+            .containsExactly(expectedHashToSign1, expectedHashToSign2)
+        Truth.assertThat(signedTransaction).isEqualTo(expectedSignedTransaction)
+    }
+
+    @Suppress("LongMethod")
+    @Test
     fun buildCorrectTransactionToSchnorrAddress() {
         // arrange
         val walletPublicKey = (
@@ -68,11 +179,7 @@ class KaspaTransactionTest {
             fee = fee,
         )
 
-        val expectedHashToSign1 = "F5080102132C6DAB382DE67A427F1DF560BA7F5F0D7FA4DFA535C474761423C2"
-            .hexToBytes().toList()
-        val expectedHashToSign2 = "90767E75D102556256E4B3C76F341292FDDBEF1683C49E3C03AC16A83FD1FB83"
-            .hexToBytes().toList()
-        val expectedHashToSign3 = "F9738FE93426667581DB4BA1AE4F432F384C393D0F098D3A9AA6087C4F62C4A4"
+        val expectedHashToSign = "90B94D04BD7EBF0EDADA8230A3181176BDDF017FD730020D2DFB7A2F8DBF03F3"
             .hexToBytes().toList()
         val expectedSignedTransaction = KaspaTransactionBody(
             KaspaTransactionData(
@@ -80,31 +187,12 @@ class KaspaTransactionTest {
                 inputs = listOf(
                     KaspaInput(
                         previousOutpoint = KaspaPreviousOutpoint(
-                            transactionId = "ae96e819429e9da538e84cb213f62fbc8ad32e932d7c7f1fb9bd2fedf8fd7b4a",
-                            index = 0,
-                        ),
-                        signatureScript = "41E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D377878E83F25FD2E258B2E918EF" +
-                            "79E151337D7F3BD0798D66FDCE04B07C30984424B13344F0A7CC4016501",
-                        sequence = 0,
-                        sigOpCount = 1,
-                    ),
-                    KaspaInput(
-                        previousOutpoint = KaspaPreviousOutpoint(
                             transactionId = "deb88e7dd734437c6232a636085ef917d1d13cc549fe14749765508b2782f2fb",
                             index = 0,
                         ),
-                        signatureScript = "414BF71C43DF96FC6B46766CAE30E97BD9018E9B98BB2C3645744A696AD26ECC780157EA9" +
-                            "D44DC41D0BCB420175A5D3F543079F4263AA2DBDE0EE2D33A877FC58301",
-                        sequence = 0,
-                        sigOpCount = 1,
-                    ),
-                    KaspaInput(
-                        previousOutpoint = KaspaPreviousOutpoint(
-                            transactionId = "304db39069dc409acedf544443dcd4a4f02bfad4aeb67116f8bf087822c456af",
-                            index = 0,
-                        ),
-                        signatureScript = "41E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D377878E83F25FD2E258B2E918EF" +
-                            "79E151337D7F3BD0798D66FDCE04B07C30984424B13344F0A7CC4016801",
+                        signatureScript =
+                        "41E2747D4E00C55D69FA0B8ADFAFD07F41144F888E322D377878E83F25FD2E258B2E918EF79E151337D7F3B" +
+                            "D0798D66FDCE04B07C30984424B13344F0A7CC4016501",
                         sequence = 0,
                         sigOpCount = 1,
                     ),
@@ -118,7 +206,7 @@ class KaspaTransactionTest {
                         ),
                     ),
                     KaspaOutput(
-                        amount = 519870000,
+                        amount = 9870000,
                         scriptPublicKey = KaspaScriptPublicKey(
                             scriptPublicKey = "2103EB30400CE9D1DEED12B84D4161A1FA922EF4185A155EF3EC208078B3807B126FAB",
                             version = 0,
@@ -135,8 +223,7 @@ class KaspaTransactionTest {
         val signedTransaction = transactionBuilder.buildToSend(signature)
 
         // assert
-        Truth.assertThat(buildToSignResult.data.map { it.toList() })
-            .containsExactly(expectedHashToSign1, expectedHashToSign2, expectedHashToSign3)
+        Truth.assertThat(buildToSignResult.data.map { it.toList() }).containsExactly(expectedHashToSign)
         Truth.assertThat(signedTransaction).isEqualTo(expectedSignedTransaction)
     }
 
