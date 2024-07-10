@@ -61,6 +61,8 @@ internal class AlgorandWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
         val txParams = networkService.getTransactionParams().successOr { return it }
         val txToSign = transactionBuilder.buildForSign(transactionData, txParams)
         return when (val signatureResult = signer.sign(txToSign, wallet.publicKey)) {
