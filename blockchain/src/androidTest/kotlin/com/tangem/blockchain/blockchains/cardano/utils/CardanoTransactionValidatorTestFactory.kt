@@ -157,7 +157,7 @@ internal class CardanoTransactionValidatorTestFactory {
             Token(
                 name = "World Mobile Token",
                 symbol = "WMT",
-                contractAddress = "1d7f33bd23d85e1a25d87d86fac4f199c3197a2f7afeb662a0f34e1e776f726c646d6f62696c65746f6b656e",
+                contractAddress = "asset1h7jsujzt4s8pup6nrzthr9nhajl0gmwhlzcqw7",
                 decimals = 6,
                 id = "world-mobile-token",
             )
@@ -175,7 +175,7 @@ internal class CardanoTransactionValidatorTestFactory {
             Token(
                 name = "SingularityNET",
                 symbol = "AGIX",
-                contractAddress = "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535",
+                contractAddress = "asset1wwyy88f8u937hz7kunlkss7gu446p6ed5gdfp6",
                 decimals = 8,
                 id = "singularitynet",
             )
