@@ -1,6 +1,7 @@
 package com.tangem.blockchain.extensions
 
 import android.util.Base64
+import com.google.common.primitives.Ints
 import com.tangem.blockchain.blockchains.cardano.crypto.Blake2b
 import com.tangem.blockchain.blockchains.tron.libs.Base58Check
 import org.bitcoinj.core.Base58
@@ -40,4 +41,9 @@ fun ByteArray.toCanonicalECDSASignature(): ECKey.ECDSASignature {
     val r = BigInteger(1, this.copyOfRange(0, 32))
     val s = BigInteger(1, this.copyOfRange(32, 64))
     return ECKey.ECDSASignature(r, s).toCanonicalised()
+}
+
+fun ByteArray.padLeft(length: Int): ByteArray {
+    val paddingSize = Ints.max(length - this.size, 0)
+    return ByteArray(paddingSize) + this
 }

@@ -100,6 +100,8 @@ object EthereumUtils {
         nonce: BigInteger?,
         blockchain: Blockchain,
     ): CompiledEthereumTransaction? {
+        transactionData.requireUncompiled()
+
         val extras = transactionData.extras as? EthereumTransactionExtras
 
         val nonceValue = extras?.nonce ?: nonce ?: return null
@@ -119,7 +121,7 @@ object EthereumUtils {
             to = Address(transactionData.destinationAddress)
             value = bigIntegerAmount
             input = ByteArray(0)
-        } else { // token transfer
+        } else { // token transfer (or approve)
             to = Address(
                 transactionData.contractAddress
                     ?: error("Contract address is not specified!"),
@@ -139,7 +141,7 @@ object EthereumUtils {
             gasPrice = fee.divide(gasLimitToUse),
             gasLimit = gasLimitToUse,
             nonce = nonceValue,
-            input = extras?.data ?: input,
+            input = extras?.data ?: input, // use data from extras prefer (TODO refactor this)
         )
         val chainId = blockchain.getChainId()
             ?: error("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
@@ -188,6 +190,8 @@ object EthereumUtils {
         blockchain: Blockchain,
         gasLimit: BigInteger?,
     ): CompiledEthereumTransaction? {
+        transactionData.requireUncompiled()
+
         if (transactionData.amount.type == AmountType.Coin) return null
 
         val extras = transactionData.extras as? EthereumTransactionExtras
@@ -392,6 +396,8 @@ object EthereumUtils {
         blockchain: Blockchain,
         gasLimit: BigInteger?,
     ): CompiledEthereumTransaction? {
+        transactionData.requireUncompiled()
+
         val extras = transactionData.extras as? EthereumTransactionExtras
 
         val nonceValue = extras?.nonce ?: nonce ?: return null

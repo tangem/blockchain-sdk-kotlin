@@ -154,7 +154,7 @@ internal open class BitcoinWalletManager(
                     val newAmount = amount.copy(value = amount.value!! - feeValue)
 
                     val sizeResult = transactionBuilder.getEstimateSize(
-                        TransactionData(
+                        TransactionData.Uncompiled(
                             amount = newAmount,
                             fee = Fee.Common(Amount(newAmount, feeValue)),
                             sourceAddress = wallet.address,
