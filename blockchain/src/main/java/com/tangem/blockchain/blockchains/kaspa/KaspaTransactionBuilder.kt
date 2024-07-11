@@ -5,7 +5,6 @@ import com.tangem.blockchain.blockchains.kaspa.kaspacashaddr.KaspaCashAddr
 import com.tangem.blockchain.blockchains.kaspa.network.*
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.transaction.getMinimumRequiredUTXOsToSend
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.isZero
 import com.tangem.common.extensions.toHexString
@@ -30,16 +29,11 @@ class KaspaTransactionBuilder {
             )
         }
 
-        val unspentsToSpend = getMinimumRequiredUTXOsToSend(
-            unspentOutputs = unspentOutputs!!,
-            transactionAmount = transactionData.amount.value!!,
-            transactionFeeAmount = transactionData.fee?.amount?.value!!,
-            unspentToAmount = { it.amount },
-        )
+        val unspentsToSpend = getUnspentsToSpend()
 
         val change = calculateChange(
             amount = requireNotNull(transactionData.amount.value) { "Transaction amount is null" },
-            fee = transactionData.fee.amount.value ?: BigDecimal.ZERO,
+            fee = transactionData.fee?.amount?.value ?: BigDecimal.ZERO,
             unspentOutputs = unspentsToSpend,
         )
         if (change < BigDecimal.ZERO) { // unspentsToSpend not enough to cover transaction amount
