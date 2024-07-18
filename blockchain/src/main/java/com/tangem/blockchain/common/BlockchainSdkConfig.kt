@@ -61,6 +61,7 @@ data class GetBlockCredentials(
     val polygonZkEvm: GetBlockAccessToken?,
     val zkSyncEra: GetBlockAccessToken?,
     val base: GetBlockAccessToken?,
+    val blast: GetBlockAccessToken?,
 )
 
 data class GetBlockAccessToken(
