@@ -23,7 +23,7 @@ sealed interface CosmosChain {
     // Default multiplier value is 1
     val feeMultiplier: BigDecimal
     val tokenDenominationByContractAddress: Map<String, String> get() = emptyMap()
-    val taxPercentByContractAddress: Map<String, BigDecimal> get() = emptyMap()
+    val taxRateByContractAddress: Map<String, BigDecimal> get() = emptyMap()
     val coin: CoinType
     val allowsFeeSelection: FeeSelectionState get() = FeeSelectionState.Unspecified
 
@@ -68,7 +68,7 @@ sealed interface CosmosChain {
         override val coin: CoinType = CoinType.TERRA
         override val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Forbids
         override val tokenDenominationByContractAddress: Map<String, String> = mapOf("uusd" to "uusd")
-        override val taxPercentByContractAddress: Map<String, BigDecimal> = mapOf("uusd" to BigDecimal("0.2"))
+        override val taxRateByContractAddress: Map<String, BigDecimal> = mapOf("uusd" to BigDecimal("0.002")) // 0.2%
 
         // Stability or "spread" fee. Applied to both main currency and tokens
         // https://classic-docs.terra.money/docs/learn/fees.html#spread-fee
