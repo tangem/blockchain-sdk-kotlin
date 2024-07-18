@@ -41,6 +41,7 @@ class AvalancheProvidersBuilderTest {
             polygonZkEvm = null,
             zkSyncEra = null,
             base = null,
+            blast = null,
         ),
     )
 
