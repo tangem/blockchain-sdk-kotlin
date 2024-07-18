@@ -196,7 +196,7 @@ class CosmosWalletManager(
         return when (amount.type) {
             is AmountType.Token -> {
                 val taxPercent =
-                    cosmosChain.taxPercentByContractAddress[amount.type.token.contractAddress] ?: return null
+                    cosmosChain.taxRateByContractAddress[amount.type.token.contractAddress] ?: return null
                 val amountValue = requireNotNull(amount.value) { "Amount must not be null" }
                 return amountValue * taxPercent
             }
