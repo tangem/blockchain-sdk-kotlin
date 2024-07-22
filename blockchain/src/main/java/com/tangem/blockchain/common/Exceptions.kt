@@ -107,6 +107,19 @@ sealed class BlockchainSdkError(
         class Api(code: Int, message: String) : Ton(subCode = code, customMessage = message)
     }
 
+    sealed class Tron(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_TRON + subCode,
+        customMessage = customMessage ?: "${ERROR_CODE_TRON + subCode}",
+        messageResId = null,
+        cause = throwable,
+    ) {
+        class AccountActivationError(code: Int) : Ton(subCode = code, customMessage = null)
+    }
+
     sealed class Cosmos(
         subCode: Int,
         customMessage: String? = null,
@@ -301,6 +314,7 @@ sealed class BlockchainSdkError(
         const val ERROR_CODE_KOINOS = 12000
         const val ERROR_CODE_CARDANO = 13000
         const val ERROR_CODE_APTOS = 14000
+        const val ERROR_CODE_TRON = 15000
     }
 }
 
