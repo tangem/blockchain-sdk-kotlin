@@ -1,7 +1,9 @@
 package com.tangem.blockchain.blockchains.tron.network
 
+import com.squareup.moshi.JsonDataException
 import com.tangem.blockchain.blockchains.tron.TRON_ENCODED_BYTE_ARRAY_LENGTH
 import com.tangem.blockchain.blockchains.tron.TronAddressService
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.NowNodeCredentials
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.common.toBlockchainSdkError
@@ -48,6 +50,8 @@ class TronJsonRpcNetworkProvider(override val network: TronNetwork) : TronNetwor
         return try {
             val response = api.getAccountResource(requestBody = TronGetAccountRequest(address, true))
             Result.Success(response)
+        } catch (e: JsonDataException) {
+            Result.Failure(BlockchainSdkError.Tron.AccountActivationError(ACCOUNT_ACTIVATION_ERROR_CODE))
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
@@ -166,5 +170,7 @@ class TronJsonRpcNetworkProvider(override val network: TronNetwork) : TronNetwor
         const val ALLOWANCE_FUNCTION = "allowance(address,address)"
         const val BALANCE_FUNCTION = "balanceOf(address)"
         const val TRANSFER_FUNCTION = "transfer(address,uint256)"
+
+        const val ACCOUNT_ACTIVATION_ERROR_CODE = 1
     }
 }
