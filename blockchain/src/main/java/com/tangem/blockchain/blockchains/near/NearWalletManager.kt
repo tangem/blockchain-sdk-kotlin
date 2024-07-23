@@ -65,6 +65,9 @@ class NearWalletManager(
 
     private suspend fun updateTransactions() {
         wallet.recentTransactions.firstOrNull()?.let {
+            it.requireUncompiled()
+
+            // TODO staking
             val status = networkService.getStatus(requireNotNull(it.hash), it.sourceAddress).successOr { return }
             if (status.isSuccessful) {
                 it.status = TransactionStatus.Confirmed
@@ -104,12 +107,14 @@ class NearWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
         val accessKey =
             networkService.getAccessKey(wallet.address, wallet.publicKey.blockchainKey.encodeToBase58String())
                 .successOr { return it }
 
         val txToSign = txBuilder.buildForSign(
-            transaction = transactionData,
+            transactionData = transactionData,
             nonce = accessKey.nextNonce,
             blockHash = accessKey.blockHash,
         )
@@ -117,7 +122,7 @@ class NearWalletManager(
         return when (val signatureResult = signer.sign(txToSign, wallet.publicKey)) {
             is CompletionResult.Success -> {
                 val txToSend = txBuilder.buildForSend(
-                    transaction = transactionData,
+                    transactionData = transactionData,
                     signature = signatureResult.data,
                     nonce = accessKey.nextNonce,
                     blockHash = accessKey.blockHash,
