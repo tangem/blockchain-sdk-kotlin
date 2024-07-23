@@ -103,26 +103,16 @@ open class EthereumWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
+        val ethereumTxCountInfo = networkProvider.getTxCountInfo(wallet.address)
+            .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) }
         val transactionToSign = transactionBuilder.buildToSign(
-            transactionData,
-            txCount.toBigInteger(),
+            transactionData = transactionData,
+            nonce = ethereumTxCountInfo.pendingTxCount.toBigInteger(),
         ) ?: return Result.Failure(BlockchainSdkError.CustomError("Not enough data"))
 
         return when (val signResponse = signer.sign(transactionToSign.hash, wallet.publicKey)) {
             is CompletionResult.Success -> Result.Success(signResponse.data to transactionToSign)
             is CompletionResult.Failure -> Result.fromTangemSdkError(signResponse.error)
-        }
-    }
-
-    suspend fun signAndSend(transactionToSign: CompiledEthereumTransaction, signer: TransactionSigner): SimpleResult {
-        return when (val signerResponse = signer.sign(transactionToSign.hash, wallet.publicKey)) {
-            is CompletionResult.Success -> {
-                val transactionToSend = transactionBuilder.buildToSend(signerResponse.data, transactionToSign)
-                val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())
-                sendResult
-            }
-
-            is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResponse.error)
         }
     }
 
