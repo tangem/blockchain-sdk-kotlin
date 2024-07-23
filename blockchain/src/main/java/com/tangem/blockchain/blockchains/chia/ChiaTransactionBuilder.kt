@@ -33,6 +33,8 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
     private var coinSpends: List<ChiaCoinSpend> = emptyList()
 
     fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
+        transactionData.requireUncompiled()
+
         if (unspentCoins.isEmpty()) {
             return Result.Failure(
                 BlockchainSdkError.CustomError("Unspent coins are missing"),
@@ -106,6 +108,8 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
     }
 
     private fun TransactionData.toChiaCoinSpends(unspentCoins: List<ChiaCoin>, change: Long): List<ChiaCoinSpend> {
+        requireUncompiled()
+
         val coinSpends = unspentCoins.map {
             ChiaCoinSpend(
                 coin = it,
