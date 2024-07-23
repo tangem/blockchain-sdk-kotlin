@@ -43,6 +43,12 @@ internal class SolanaTransactionBuilder(
         }
     }
 
+    fun buildUnsignedTransaction(builtTransaction: ByteArray): SolanaTransaction {
+        return SolanaTransaction(account).apply {
+            setSerializedMessage(builtTransaction)
+        }
+    }
+
     private suspend fun buildUnsignedCoinTransaction(
         destinationAddress: String,
         amount: BigDecimal,
