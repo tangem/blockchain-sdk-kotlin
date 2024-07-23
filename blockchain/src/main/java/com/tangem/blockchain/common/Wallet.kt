@@ -16,7 +16,7 @@ class Wallet(
     tokens: Set<Token>,
 ) {
     // we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
-    val recentTransactions: MutableList<TransactionData> = mutableListOf()
+    val recentTransactions: MutableList<TransactionData.Uncompiled> = mutableListOf()
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
     val address: String
         get() = addresses.find { it.type == AddressType.Default }?.value
@@ -83,7 +83,7 @@ class Wallet(
             else -> {}
         }
 
-        val transaction = TransactionData(
+        val transaction = TransactionData.Uncompiled(
             amount = Amount(null, blockchain),
             fee = null,
             sourceAddress = sourceAddress,
@@ -94,13 +94,17 @@ class Wallet(
     }
 
     fun addOutgoingTransaction(transactionData: TransactionData, hashToLowercase: Boolean = true) {
-        transactionData.apply {
-            date = Calendar.getInstance()
-            if (hashToLowercase) hash = hash?.lowercase(Locale.US)
-        }
-        if (recentTransactions.any { it.hash == transactionData.hash }) return
+        if (transactionData is TransactionData.Uncompiled) {
+            transactionData.apply {
+                date = Calendar.getInstance()
+                if (hashToLowercase) hash = hash?.lowercase(Locale.US)
+            }
+            if (recentTransactions.any { it.hash == transactionData.hash }) return
 
-        recentTransactions.add(transactionData)
+            recentTransactions.add(transactionData)
+        } else {
+            // TODO staking [REDACTED_TASK_KEY]
+        }
     }
 
     fun fundsAvailable(amountType: AmountType): BigDecimal {

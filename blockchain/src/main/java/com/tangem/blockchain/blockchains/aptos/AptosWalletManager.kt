@@ -82,7 +82,7 @@ internal class AptosWalletManager(
                     is Result.Failure -> Result.Failure(result.error)
                     is Result.Success -> {
                         val txHash = result.data
-                        wallet.addOutgoingTransaction(transactionData.copy(hash = txHash))
+                        wallet.addOutgoingTransaction(transactionData.updateHash(hash = txHash))
                         transactionData.hash = txHash
                         Result.Success(TransactionSendResult(txHash))
                     }
