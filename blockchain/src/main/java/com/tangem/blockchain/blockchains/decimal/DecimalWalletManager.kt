@@ -43,6 +43,7 @@ internal class DecimalWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
         return super.send(convertTransactionDataAddress(transactionData), signer)
     }
 
@@ -50,10 +51,11 @@ internal class DecimalWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
+        transactionData.requireUncompiled()
         return super.sign(convertTransactionDataAddress(transactionData), signer)
     }
 
-    private fun convertTransactionDataAddress(transactionData: TransactionData) = transactionData.copy(
+    private fun convertTransactionDataAddress(transactionData: TransactionData.Uncompiled) = transactionData.copy(
         destinationAddress = convertAddress(transactionData.destinationAddress),
     )
 
