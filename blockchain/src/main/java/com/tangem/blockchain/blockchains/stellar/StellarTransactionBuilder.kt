@@ -22,6 +22,8 @@ class StellarTransactionBuilder(
 
     @Suppress("LongMethod", "CyclomaticComplexMethod")
     suspend fun buildToSign(transactionData: TransactionData, sequence: Long): Result<ByteArray> {
+        transactionData.requireUncompiled()
+
         val amount = transactionData.amount
         val fee = requireNotNull(transactionData.fee?.amount?.longValue).toInt()
         val destinationKeyPair = KeyPair.fromAccountId(transactionData.destinationAddress)
@@ -120,6 +122,8 @@ class StellarTransactionBuilder(
 
     @Suppress("MagicNumber")
     private fun getTimeBounds(transactionData: TransactionData): TimeBounds {
+        transactionData.requireUncompiled()
+
         val calendar = transactionData.date ?: Calendar.getInstance()
         val minTime = 0L
         val maxTime = calendar.timeInMillis / 1000 + 120
