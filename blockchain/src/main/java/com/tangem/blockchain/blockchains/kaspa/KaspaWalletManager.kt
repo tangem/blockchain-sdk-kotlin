@@ -81,8 +81,16 @@ class KaspaWalletManager(
         return if (unspentOutputCount == 0) {
             Result.Failure(Exception("No unspent outputs found").toBlockchainSdkError()) // shouldn't happen
         } else {
-            val fee = FEE_PER_UNSPENT_OUTPUT.toBigDecimal().multiply(unspentOutputCount.toBigDecimal())
-            Result.Success(TransactionFee.Single(Fee.Common(Amount(fee, blockchain))))
+            val fee = FEE_PER_UNSPENT_OUTPUT.multiply(unspentOutputCount.toBigDecimal())
+            Result.Success(
+                TransactionFee.Single(
+                    Fee.Kaspa(
+                        amount = Amount(fee, blockchain),
+                        valuePerUtxo = FEE_PER_UNSPENT_OUTPUT,
+                        utxoCount = unspentOutputCount,
+                    ),
+                ),
+            )
         }
     }
 
@@ -100,6 +108,6 @@ class KaspaWalletManager(
     }
 
     companion object {
-        const val FEE_PER_UNSPENT_OUTPUT = 0.0001
+        private val FEE_PER_UNSPENT_OUTPUT = 0.0001.toBigDecimal()
     }
 }
