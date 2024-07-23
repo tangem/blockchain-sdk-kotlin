@@ -24,14 +24,14 @@ sealed class BlockchainSdkError(
     class NPError(forValue: String) : BlockchainSdkError(-1, "$forValue must be not NULL")
     class UnsupportedOperation(message: String = "Unsupported operation") : BlockchainSdkError(0, message)
 
-    object FailedToSendException : BlockchainSdkError(1, "Failed to send transaction")
+    data object FailedToSendException : BlockchainSdkError(1, "Failed to send transaction")
     data class AccountNotFound(val amountToCreateAccount: BigDecimal? = null) : BlockchainSdkError(
         2,
         "Account not found",
     )
 
     class CreateAccountUnderfunded(val blockchain: Blockchain, val minReserve: Amount) : BlockchainSdkError(3)
-    object FailedToLoadFee : BlockchainSdkError(4, "Failed to load fee")
+    data object FailedToLoadFee : BlockchainSdkError(4, "Failed to load fee")
     class CustomError(message: String) : BlockchainSdkError(5, message)
 
     class WrappedThrowable(throwable: Throwable) : BlockchainSdkError(
@@ -41,11 +41,11 @@ sealed class BlockchainSdkError(
         cause = throwable,
     )
 
-    object FailedToBuildTx : BlockchainSdkError(7, "Failed to build transaction")
+    data object FailedToBuildTx : BlockchainSdkError(7, "Failed to build transaction")
 
-    object FailedToCreateAccount : BlockchainSdkError(8, "Failed to create account")
+    data object FailedToCreateAccount : BlockchainSdkError(8, "Failed to create account")
 
-    object SignatureCountNotMatched : BlockchainSdkError(100)
+    data object SignatureCountNotMatched : BlockchainSdkError(100)
 
     sealed class Solana(
         subCode: Int,
@@ -58,9 +58,9 @@ sealed class BlockchainSdkError(
         cause = throwable,
     ) {
         class Api(ex: Exception) : Solana(1, ex.localizedMessage ?: "Unknown api exception", ex)
-        object FailedToCreateAssociatedAccount : Solana(2, "Public key conversion failed")
-        object SameSourceAndDestinationAddress : Solana(3, "Same source and destination address")
-        object UnsupportedTokenDestinationAddress : Solana(4)
+        data object FailedToCreateAssociatedAccount : Solana(2, "Public key conversion failed")
+        data object SameSourceAndDestinationAddress : Solana(3, "Same source and destination address")
+        data object UnsupportedTokenDestinationAddress : Solana(4)
     }
 
     sealed class Polkadot(
@@ -105,6 +105,19 @@ sealed class BlockchainSdkError(
         cause = throwable,
     ) {
         class Api(code: Int, message: String) : Ton(subCode = code, customMessage = message)
+    }
+
+    sealed class Tron(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_TRON + subCode,
+        customMessage = customMessage ?: "${ERROR_CODE_TRON + subCode}",
+        messageResId = null,
+        cause = throwable,
+    ) {
+        class AccountActivationError(code: Int) : Ton(subCode = code, customMessage = null)
     }
 
     sealed class Cosmos(
@@ -226,7 +239,7 @@ sealed class BlockchainSdkError(
                 " due to the Mana limit imposed by the Koinos network.",
         )
 
-        object InsufficientBalance : Koinos(
+        data object InsufficientBalance : Koinos(
             subCode = 2,
             customMessage = "Insufficient Balance. Your balance should be higher than the fee value to make a transfer",
         )
@@ -249,23 +262,23 @@ sealed class BlockchainSdkError(
         cause = throwable,
     ) {
 
-        object InsufficientRemainingBalance : Cardano(
+        data object InsufficientRemainingBalance : Cardano(
             subCode = 0,
             customMessage = "Insufficient ADA balance. Make sure the balance after this transaction is at least 1 ADA.",
         )
 
-        object InsufficientRemainingBalanceToWithdrawTokens : Cardano(
+        data object InsufficientRemainingBalanceToWithdrawTokens : Cardano(
             subCode = 1,
             customMessage = "Insufficient ADA balance. Make sure that the balance after this transaction is " +
                 "sufficient to cover the withdrawal of all tokens.",
         )
 
-        object InsufficientSendingAdaAmount : Cardano(
+        data object InsufficientSendingAdaAmount : Cardano(
             subCode = 2,
             customMessage = "Insufficient sending ADA amount. Make sure the sending amount is at least 1 ADA.",
         )
 
-        object InsufficientMinAdaBalanceToSendToken : Cardano(
+        data object InsufficientMinAdaBalanceToSendToken : Cardano(
             subCode = 3,
             customMessage = "Insufficient min-ada-value amount. In addition to network fees, the Cardano network " +
                 "charges min-ada-value. Make sure the balance is sufficient to withdraw the token.",
@@ -301,6 +314,7 @@ sealed class BlockchainSdkError(
         const val ERROR_CODE_KOINOS = 12000
         const val ERROR_CODE_CARDANO = 13000
         const val ERROR_CODE_APTOS = 14000
+        const val ERROR_CODE_TRON = 15000
     }
 }
 

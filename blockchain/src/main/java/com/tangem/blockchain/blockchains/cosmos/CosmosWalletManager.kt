@@ -53,6 +53,8 @@ class CosmosWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
         val accNumber = accountNumber ?: return Result.Failure(BlockchainSdkError.AccountNotFound())
 
         val hash = txBuilder.buildForSign(
@@ -93,6 +95,8 @@ class CosmosWalletManager(
         transactionData: TransactionData,
         message: String,
     ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
         return when (val sendResult = networkService.send(message)) {
             is Result.Failure -> sendResult
             is Result.Success -> {

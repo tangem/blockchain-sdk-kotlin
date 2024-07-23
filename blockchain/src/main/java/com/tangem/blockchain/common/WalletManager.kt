@@ -65,7 +65,7 @@ abstract class WalletManager(
         }
     }
 
-    protected fun updateRecentTransactions(transactions: List<TransactionData>) {
+    protected fun updateRecentTransactions(transactions: List<TransactionData.Uncompiled>) {
         val (confirmedTransactions, unconfirmedTransactions) =
             transactions.partition { it.status == TransactionStatus.Confirmed }
 
@@ -83,8 +83,8 @@ abstract class WalletManager(
         }
     }
 
-    open fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData {
-        return TransactionData(
+    open fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData.Uncompiled {
+        return TransactionData.Uncompiled(
             amount = amount,
             fee = fee,
             sourceAddress = wallet.address,
@@ -148,8 +148,8 @@ abstract class WalletManager(
         return dustValue!! <= amount.value || amount.value!!.isZero()
     }
 
-    private fun BasicTransactionData.toTransactionData(): TransactionData {
-        return TransactionData(
+    private fun BasicTransactionData.toTransactionData(): TransactionData.Uncompiled {
+        return TransactionData.Uncompiled(
             amount = Amount(wallet.amounts[AmountType.Coin]!!, this.balanceDif.abs()),
             fee = null,
             sourceAddress = source,
@@ -190,7 +190,7 @@ interface TransactionSigner {
 
 interface TransactionValidator {
 
-    fun validate(transaction: TransactionData): kotlin.Result<Unit>
+    fun validate(transactionData: TransactionData): kotlin.Result<Unit>
 }
 
 interface SignatureCountValidator {

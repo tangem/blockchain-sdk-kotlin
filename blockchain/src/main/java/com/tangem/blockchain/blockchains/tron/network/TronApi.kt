@@ -22,7 +22,15 @@ interface TronApi {
 
     @Headers("Content-Type: application/json", "Accept: application/json")
     @POST("wallet/triggerconstantcontract")
-    suspend fun getTokenBalance(@Body requestBody: TronTriggerSmartContractRequest): TronTriggerSmartContractResponse
+    suspend fun triggerConstantContract(
+        @Body requestBody: TronTriggerSmartContractRequest,
+    ): TronTriggerSmartContractResponse
+
+    @Headers("Content-Type: application/json", "Accept: application/json")
+    @POST("wallet/triggersmartcontract")
+    suspend fun triggerSmartContract(
+        @Body requestBody: TronTriggerSmartContractRequest,
+    ): TronTriggerSmartContractResponse
 
     @Headers("Content-Type: application/json", "Accept: application/json")
     @POST("walletsolidity/gettransactioninfobyid")
