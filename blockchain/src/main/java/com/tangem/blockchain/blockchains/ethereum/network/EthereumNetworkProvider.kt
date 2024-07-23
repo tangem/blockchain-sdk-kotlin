@@ -11,6 +11,7 @@ import java.math.BigInteger
 
 interface EthereumNetworkProvider : NetworkProvider {
     suspend fun getInfo(address: String, tokens: Set<Token>): Result<EthereumInfoResponse>
+    suspend fun getTxCountInfo(address: String): Result<EthereumTxCountInfo>
     suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<BigDecimal>
     suspend fun sendTransaction(transaction: String): SimpleResult
     suspend fun getSignatureCount(address: String): Result<Int>
@@ -28,4 +29,9 @@ class EthereumInfoResponse(
     val txCount: Long,
     val pendingTxCount: Long,
     val recentTransactions: List<TransactionData.Uncompiled>?,
+)
+
+data class EthereumTxCountInfo(
+    val pendingTxCount: Long,
+    val txCount: Long,
 )
