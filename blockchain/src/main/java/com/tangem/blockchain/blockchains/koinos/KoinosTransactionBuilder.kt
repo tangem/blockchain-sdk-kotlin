@@ -2,19 +2,14 @@ package com.tangem.blockchain.blockchains.koinos
 
 import com.tangem.blockchain.blockchains.koinos.models.KoinosAccountNonce
 import com.tangem.blockchain.blockchains.koinos.network.dto.KoinosProtocol
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionExtras
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.decodeBase58
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.toByteString
-import org.bitcoinj.core.ECKey
-import org.bitcoinj.core.Utils
+import org.kethereum.extensions.removeLeadingZero
 import java.math.BigDecimal
-import java.math.BigInteger
 
 internal class KoinosTransactionBuilder(isTestnet: Boolean) {
 
@@ -25,6 +20,8 @@ internal class KoinosTransactionBuilder(isTestnet: Boolean) {
         transactionData: TransactionData,
         currentNonce: KoinosAccountNonce,
     ): Result<Pair<KoinosProtocol.Transaction, ByteArray>> {
+        transactionData.requireUncompiled()
+
         val from = transactionData.sourceAddress
         val to = transactionData.destinationAddress
         val amount = transactionData.amount.longValue!!
@@ -91,16 +88,24 @@ internal class KoinosTransactionBuilder(isTestnet: Boolean) {
     }
 
     @Suppress("MagicNumber")
-    fun buildToSend(transaction: KoinosProtocol.Transaction, signature: ByteArray): KoinosProtocol.Transaction {
-        val r = BigInteger(1, signature.copyOfRange(0, 32))
-        val s = BigInteger(1, signature.copyOfRange(32, 64))
-        val canonicalS = ECKey.ECDSASignature(r, s).toCanonicalised().s
+    fun buildToSend(
+        transaction: KoinosProtocol.Transaction,
+        signature: ByteArray,
+        hashToSign: ByteArray,
+        publicKey: Wallet.PublicKey,
+    ): KoinosProtocol.Transaction {
+        val extendedSignature = UnmarshalHelper()
+            .unmarshalSignatureExtended(signature = signature, hash = hashToSign, publicKey = publicKey)
 
-        val canonicalSignature =
-            Utils.bigIntegerToBytes(r, 32) + Utils.bigIntegerToBytes(canonicalS, 32)
+        val v = extendedSignature.recId + 31
+
+        val rsSignature = extendedSignature.r.toByteArray().removeLeadingZero() +
+            extendedSignature.s.toByteArray().removeLeadingZero()
+
+        val finalSignature = byteArrayOf(v.toByte()) + rsSignature
 
         return transaction.copy(
-            signatures = listOf(byteArrayOf(0x20, *canonicalSignature).toByteString().base64Url()),
+            signatures = listOf(finalSignature.toByteString().base64Url()),
         )
     }
 }
