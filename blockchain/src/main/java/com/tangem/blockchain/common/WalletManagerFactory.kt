@@ -188,6 +188,7 @@ class WalletManagerFactory(
             Blockchain.Nexa, Blockchain.NexaTestnet -> NexaWalletManagerAssembly
             Blockchain.Radiant -> RadiantWalletManagerAssembly
             Blockchain.Koinos, Blockchain.KoinosTestnet -> KoinosWalletManagerAssembly
+            Blockchain.Filecoin -> TODO("https://tangem.atlassian.net/browse/AND-7716")
             Blockchain.Unknown,
             -> error("Unsupported blockchain")
         }
