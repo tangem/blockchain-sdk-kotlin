@@ -5,7 +5,7 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class BittensorExternalLinkProvider : ExternalLinkProvider {
 
-    override val explorerBaseUrl: String = "https://taostats.io/"
+    override val explorerBaseUrl: String = "https://x.taostats.io/"
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
         return explorerBaseUrl + "account/$walletAddress"
