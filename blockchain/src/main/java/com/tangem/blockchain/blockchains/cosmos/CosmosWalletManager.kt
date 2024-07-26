@@ -70,7 +70,7 @@ class CosmosWalletManager(
             }
             is TransactionData.Compiled -> {
                 txBuilder.buildForSign(
-                    value = transactionData.value,
+                    compiledTransaction = transactionData.value,
                     accountNumber = accNumber,
                     sequenceNumber = sequenceNumber,
                 )
@@ -95,7 +95,7 @@ class CosmosWalletManager(
                     }
                     is TransactionData.Compiled -> {
                         txBuilder.buildForSend(
-                            value = transactionData.value,
+                            compiledTransaction = transactionData.value,
                             accountNumber = accNumber,
                             sequenceNumber = sequenceNumber,
                             signature = signature.data,
