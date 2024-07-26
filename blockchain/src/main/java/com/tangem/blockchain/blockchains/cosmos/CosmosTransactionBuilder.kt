@@ -50,8 +50,8 @@ internal class CosmosTransactionBuilder(
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun buildForSign(accountNumber: Long, sequenceNumber: Long, value: ByteArray): ByteArray {
-        val serialized = ProtoBuf.decodeFromByteArray<CosmosProtoMessage>(value)
+    fun buildForSign(accountNumber: Long, sequenceNumber: Long, compiledTransaction: ByteArray): ByteArray {
+        val serialized = ProtoBuf.decodeFromByteArray<CosmosProtoMessage>(compiledTransaction)
         val txInputData = makeInput(
             protoMessage = serialized,
             accountNumber = accountNumber,
@@ -88,8 +88,13 @@ internal class CosmosTransactionBuilder(
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun buildForSend(value: ByteArray, accountNumber: Long, sequenceNumber: Long, signature: ByteArray): String {
-        val serialized = ProtoBuf.decodeFromByteArray<CosmosProtoMessage>(value)
+    fun buildForSend(
+        compiledTransaction: ByteArray,
+        accountNumber: Long,
+        sequenceNumber: Long,
+        signature: ByteArray,
+    ): String {
+        val serialized = ProtoBuf.decodeFromByteArray<CosmosProtoMessage>(compiledTransaction)
         val txInputData = makeInput(
             protoMessage = serialized,
             accountNumber = accountNumber,
