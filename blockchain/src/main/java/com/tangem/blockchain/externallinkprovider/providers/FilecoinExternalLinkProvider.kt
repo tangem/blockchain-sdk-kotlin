@@ -5,7 +5,7 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class FilecoinExternalLinkProvider : ExternalLinkProvider {
 
-    override val explorerBaseUrl = "https://filfox.info/en/"
+    override val explorerBaseUrl = "https://filfox.info/"
 
     override val testNetTopUpUrl = "https://faucet.calibnet.chainsafe-fil.io/"
 
