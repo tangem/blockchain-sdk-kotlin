@@ -248,6 +248,9 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Koinos, Blockchain.KoinosTestnet -> {
                 mapOf(AddressType.Default to DerivationPath("m/44'/659'/0'/0/0"))
             }
+            Blockchain.Filecoin -> {
+                mapOf(AddressType.Default to DerivationPath("m/44'/461'/0'/0/0"))
+            }
         }
     }
 }
