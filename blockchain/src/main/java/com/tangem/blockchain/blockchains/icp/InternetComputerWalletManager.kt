@@ -1,5 +1,7 @@
 package com.tangem.blockchain.blockchains.icp
 
+import com.tangem.blockchain.blockchains.icp.network.InternetComputerNetworkProvider
+import com.tangem.blockchain.blockchains.icp.network.InternetComputerNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -7,11 +9,14 @@ import com.tangem.blockchain.extensions.Result
 
 internal class InternetComputerWalletManager(
     wallet: Wallet,
+    networkProviders: List<InternetComputerNetworkProvider>,
 ) : WalletManager(wallet) {
 
-    override val currentHost: String = ""
+    private val networkService = InternetComputerNetworkService(networkProviders = networkProviders)
+    override val currentHost: String get() = networkService.host
 
     override suspend fun updateInternal() {
+        networkService.getBalance(wallet.address)
     }
 
     override suspend fun send(

@@ -134,6 +134,22 @@ dependencies {
     implementation 'org.ton:ton-kotlin-tvm:0.3.1'
     implementation 'org.ton:ton-kotlin-block-tlb:0.3.1'
 
+    // dependencies for ICP
+    implementation("org.ic4j:ic4j-agent:0.0.1") {
+        // exclude group: 'com.fasterxml.jackson.core'
+        // exclude group: 'com.fasterxml.jackson.datatype'
+        // exclude group: 'com.fasterxml.jackson.dataformat'
+    }
+    implementation("org.ic4j:ic4j-candid:0.7.1") {
+        // exclude group: 'com.fasterxml.jackson.core'
+        // exclude group: 'com.fasterxml.jackson.datatype'
+        // exclude group: 'com.fasterxml.jackson.dataformat'
+    }
+    def jacksonVersion = '2.17.2'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
+    implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jdk8', version: jacksonVersion
+    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-cbor', version: jacksonVersion
+
     implementation("ru.gildor.coroutines:kotlin-coroutines-okhttp:1.0")
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
