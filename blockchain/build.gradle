@@ -147,6 +147,7 @@ dependencies {
     implementation 'org.slf4j:slf4j-log4j12:1.7.26'
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.5.1")
 }
 
 //Protobuf
