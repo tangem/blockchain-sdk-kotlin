@@ -151,6 +151,7 @@ enum class Blockchain(
     KoinosTestnet("koinos/test", "tKOIN", "Koinos Testnet"),
     Joystream("joystream", "JOY", "Joystream"),
     Bittensor("bittensor", "TAO", "Bittensor"),
+    Filecoin("filecoin", "FIL", "Filecoin"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -231,6 +232,7 @@ enum class Blockchain(
         Mantle, MantleTestnet,
         Flare, FlareTestnet,
         Taraxa, TaraxaTestnet,
+        Filecoin,
         -> 18
 
         Near, NearTestnet,
@@ -324,6 +326,7 @@ enum class Blockchain(
             TerraV2,
             Near, NearTestnet,
             Algorand, AlgorandTestnet,
+            Filecoin,
             -> TrustWalletAddressService(blockchain = this)
 
             Aptos, AptosTestnet -> AptosAddressService(isTestnet())
@@ -479,6 +482,7 @@ enum class Blockchain(
             Flare, FlareTestnet,
             Taraxa, TaraxaTestnet,
             Koinos, KoinosTestnet,
+            Filecoin,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
