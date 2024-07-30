@@ -18,7 +18,7 @@ internal class KaspaProvidersBuilder(
             .mapNotNull { type ->
                 when (type) {
                     is ProviderType.Public -> type.url
-                    ProviderType.Kaspa.SecondaryAPI -> config.kaspaSecondaryApiUrl?.letNotBlank { "$it/" }
+                    ProviderType.Kaspa.SecondaryAPI -> config.kaspaSecondaryApiUrl?.letNotBlank { it }
                     else -> null
                 }
             }
