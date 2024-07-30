@@ -2,8 +2,9 @@ package com.tangem.blockchain.common
 
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
-import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
-import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
+import com.tangem.blockchain.common.transaction.TransactionSendResult
+import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.DebouncedInvoke
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -64,7 +65,7 @@ abstract class WalletManager(
         }
     }
 
-    protected fun updateRecentTransactions(transactions: List<TransactionData>) {
+    protected fun updateRecentTransactions(transactions: List<TransactionData.Uncompiled>) {
         val (confirmedTransactions, unconfirmedTransactions) =
             transactions.partition { it.status == TransactionStatus.Confirmed }
 
@@ -82,8 +83,8 @@ abstract class WalletManager(
         }
     }
 
-    open fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData {
-        return TransactionData(
+    open fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData.Uncompiled {
+        return TransactionData.Uncompiled(
             amount = amount,
             fee = fee,
             sourceAddress = wallet.address,
@@ -95,6 +96,7 @@ abstract class WalletManager(
     }
 
     // TODO: add decimals and currency checks?
+    @Deprecated("Will be removed in the future. Use TransactionValidator instead")
     open fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
         val errors = EnumSet.noneOf(TransactionError::class.java)
 
@@ -146,8 +148,8 @@ abstract class WalletManager(
         return dustValue!! <= amount.value || amount.value!!.isZero()
     }
 
-    private fun BasicTransactionData.toTransactionData(): TransactionData {
-        return TransactionData(
+    private fun BasicTransactionData.toTransactionData(): TransactionData.Uncompiled {
+        return TransactionData.Uncompiled(
             amount = Amount(wallet.amounts[AmountType.Coin]!!, this.balanceDif.abs()),
             fee = null,
             sourceAddress = source,
@@ -167,7 +169,7 @@ abstract class WalletManager(
 
 interface TransactionSender {
 
-    suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult
+    suspend fun send(transactionData: TransactionData, signer: TransactionSigner): Result<TransactionSendResult>
 
     // Think about migration to different interface
     suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee>
@@ -186,6 +188,11 @@ interface TransactionSigner {
     suspend fun sign(hash: ByteArray, publicKey: Wallet.PublicKey): CompletionResult<ByteArray>
 }
 
+interface TransactionValidator {
+
+    fun validate(transactionData: TransactionData): kotlin.Result<Unit>
+}
+
 interface SignatureCountValidator {
     suspend fun validateSignatureCount(signedHashes: Int): SimpleResult
 }
@@ -198,4 +205,12 @@ interface Approver {
     suspend fun getAllowance(spenderAddress: String, token: Token): Result<BigDecimal>
 
     fun getApproveData(spenderAddress: String, value: Amount? = null): String
+}
+
+/**
+ * Common interface for UTXO blockchain managers
+ */
+interface UtxoBlockchainManager {
+    /** Indicates allowance of self sending */
+    val allowConsolidation: Boolean
 }

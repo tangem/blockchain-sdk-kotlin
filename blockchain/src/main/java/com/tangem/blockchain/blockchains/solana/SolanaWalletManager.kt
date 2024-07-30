@@ -10,12 +10,13 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
-import com.tangem.blockchain.extensions.*
+import com.tangem.blockchain.common.transaction.TransactionSendResult
+import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.filterWith
+import com.tangem.blockchain.extensions.map
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.rpc.Cluster
@@ -85,14 +86,16 @@ class SolanaWalletManager internal constructor(
             return
         }
 
-        val confirmedTxData = mutableListOf<TransactionData>()
+        val confirmedTxData = mutableListOf<TransactionData.Uncompiled>()
         val signaturesStatuses = txSignatures.zip(signatureStatuses.value)
         signaturesStatuses.forEach { pair ->
             if (pair.second?.confirmationStatus == Commitment.FINALIZED.value) {
                 val foundRecentTxData =
                     wallet.recentTransactions.firstOrNull { it.hash == pair.first }
                 foundRecentTxData?.let {
-                    confirmedTxData.add(it.copy(status = TransactionStatus.Confirmed))
+                    confirmedTxData.add(
+                        it.updateStatus(status = TransactionStatus.Confirmed) as TransactionData.Uncompiled,
+                    )
                 }
             }
         }
@@ -109,7 +112,7 @@ class SolanaWalletManager internal constructor(
                 val info = it.instructions[0].parsed.info
                 val amount = Amount(SolanaValueConverter.toSol(info.lamports), wallet.blockchain)
                 val feeAmount = Amount(SolanaValueConverter.toSol(it.fee), wallet.blockchain)
-                TransactionData(
+                TransactionData.Uncompiled(
                     amount,
                     Fee.Common(feeAmount),
                     info.source,
@@ -124,7 +127,7 @@ class SolanaWalletManager internal constructor(
         wallet.recentTransactions.addAll(newUnconfirmedTxData)
     }
 
-    override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData {
+    override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData.Uncompiled {
         val accountCreationRent = feeRentHolder[fee]
 
         return if (accountCreationRent == null) {
@@ -139,40 +142,86 @@ class SolanaWalletManager internal constructor(
                 is AmountType.Token -> {
                     super.createTransaction(amount, fee, destination)
                 }
-                AmountType.Reserve -> throw UnsupportedOperation()
+                else -> throw UnsupportedOperation()
             }
         }
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val transaction = transactionBuilder.buildUnsignedTransaction(
-            destinationAddress = transactionData.destinationAddress,
-            amount = transactionData.amount,
-        ).successOr { return it.toSimpleResult() }
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
+        return when (transactionData) {
+            is TransactionData.Compiled -> {
+                val transactionWithoutSignaturePlaceholder =
+                    transactionData.value.drop(SIGNATURE_PLACEHOLDER_LENGTH).toByteArray()
 
-        val signResult = signer.sign(transaction.getSerializedMessage(), wallet.publicKey).successOr {
-            return SimpleResult.fromTangemSdkError(it.error)
+                val transaction = transactionBuilder.buildUnsignedTransaction(
+                    builtTransaction = transactionWithoutSignaturePlaceholder,
+                )
+
+                val signResult = signer.sign(transactionWithoutSignaturePlaceholder, wallet.publicKey).successOr {
+                    return Result.fromTangemSdkError(it.error)
+                }
+
+                val patchedTransactionData = TransactionData.Compiled(
+                    value = byteArrayOf(1) + signResult + transactionWithoutSignaturePlaceholder,
+                )
+
+                sendTransaction(transaction, patchedTransactionData)
+            }
+            is TransactionData.Uncompiled -> {
+                val transaction = transactionBuilder.buildUnsignedTransaction(
+                    destinationAddress = transactionData.destinationAddress,
+                    amount = transactionData.amount,
+                ).successOr { return it }
+
+                val signResult = signer.sign(transaction.getSerializedMessage(), wallet.publicKey).successOr {
+                    return Result.fromTangemSdkError(it.error)
+                }
+                transaction.addSignedDataSignature(signResult)
+
+                sendTransaction(transaction, transactionData)
+            }
         }
-        transaction.addSignedDataSignature(signResult)
-
-        return sendTransaction(transaction, transactionData)
     }
 
     private suspend fun sendTransaction(
         signedTransaction: SolanaTransaction,
         transactionData: TransactionData,
-    ): SimpleResult {
-        val sendResult = multiNetworkProvider.performRequest {
-            sendTransaction(signedTransaction)
-        }.successOr {
-            return SimpleResult.Failure(it.error)
+    ): Result<TransactionSendResult> {
+        val sendResults = coroutineScope {
+            multiNetworkProvider.providers
+                .map { provider ->
+                    async {
+                        val serializedTransaction = when (transactionData) {
+                            is TransactionData.Compiled -> transactionData.value
+                            is TransactionData.Uncompiled -> signedTransaction.serialize()
+                        }
+                        provider.sendTransaction(serializedTransaction)
+                    }
+                }
+                .awaitAll()
+        }
+        val firstSuccessResult = sendResults
+            .filterIsInstance<Result.Success<String>>()
+            .firstOrNull()
+
+        if (firstSuccessResult != null) {
+            feeRentHolder.clear()
+            val hash = firstSuccessResult.data
+            transactionData.hash = hash
+            wallet.addOutgoingTransaction(transactionData, hashToLowercase = false)
+
+            return Result.Success(TransactionSendResult(hash))
         }
 
-        feeRentHolder.clear()
-        transactionData.hash = sendResult
-        wallet.addOutgoingTransaction(transactionData, hashToLowercase = false)
-
-        return SimpleResult.Success
+        val error = sendResults
+            .filterIsInstance<Result.Failure>()
+            .firstOrNull()
+            ?.error
+            ?: BlockchainSdkError.FailedToSendException
+        return Result.Failure(error)
     }
 
     /**
@@ -233,7 +282,7 @@ class SolanaWalletManager internal constructor(
                 val mint = PublicKey(amount.type.token.contractAddress)
                 getTokenAccountCreationRent(mint, destinationAccount)
             }
-            is AmountType.Reserve -> Result.Failure(UnsupportedOperation())
+            else -> Result.Failure(UnsupportedOperation())
         }
     }
 
@@ -330,6 +379,7 @@ class SolanaWalletManager internal constructor(
 
     private companion object {
         const val MIN_ACCOUNT_DATA_SIZE = 0L
+        const val SIGNATURE_PLACEHOLDER_LENGTH = 65
 
         const val ACCOUNT_METADATA_SIZE = 128L
         const val RENT_PER_EPOCH_IN_LAMPORTS = 19.055441478439427

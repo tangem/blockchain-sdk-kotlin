@@ -4,6 +4,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.hexToBigDecimal
 import com.tangem.blockchain.network.MultiNetworkProvider
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -45,6 +46,21 @@ class TronNetworkService(
                         ),
                     )
                 }
+            }
+        }
+    }
+
+    suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<BigDecimal> {
+        val allowanceRequest = multiProvider.performRequest(
+            TronNetworkProvider::getAllowance,
+            TokenAllowanceRequestData(ownerAddress, token.contractAddress, spenderAddress),
+        )
+        return when (allowanceRequest) {
+            is Result.Failure -> Result.Failure(allowanceRequest.error)
+            is Result.Success -> {
+                val allowance = allowanceRequest.data.constantResult.firstOrNull()
+                    ?: return Result.Failure(BlockchainSdkError.CustomError("Failed to get allowance"))
+                Result.Success(allowance.hexToBigDecimal())
             }
         }
     }
@@ -140,7 +156,10 @@ class TronNetworkService(
             is Result.Success -> {
                 val hexValue = result.data.constantResult.firstOrNull()?.ifBlank { "0" }
                     ?: return Result.Failure(BlockchainSdkError.CustomError("FailedToParseNetworkResponse"))
-                val value = BigInteger(hexValue, 16).toBigDecimal(token.decimals)
+
+                // Take the first 32 bytes of the hexadecimal string to correctly display the token balance. ([REDACTED_TASK_KEY])
+                val hexValue32 = hexValue.take(64)
+                val value = BigInteger(hexValue32, 16).toBigDecimal(token.decimals)
                 return Result.Success(token to value)
             }
         }

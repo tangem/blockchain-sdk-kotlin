@@ -29,7 +29,6 @@ open class BitcoinTransactionBuilder(
     private val walletPublicKey: ByteArray,
     blockchain: Blockchain,
     walletAddresses: Set<com.tangem.blockchain.common.address.Address> = emptySet(),
-    private val isNewOutputToSendCollectionMethodEnabled: Boolean = false,
 ) {
     private val walletScripts =
         walletAddresses.filterIsInstance<BitcoinScriptAddress>().map { it.script }
@@ -50,20 +49,18 @@ open class BitcoinTransactionBuilder(
     var unspentOutputs: List<BitcoinUnspentOutput>? = null
 
     open fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
+        transactionData.requireUncompiled()
+
         if (unspentOutputs.isNullOrEmpty()) {
             return Result.Failure(BlockchainSdkError.CustomError("Unspent outputs are missing"))
         }
 
-        val outputsToSend = if (isNewOutputToSendCollectionMethodEnabled) {
-            getMinimumRequiredUTXOsToSend(
-                unspentOutputs = unspentOutputs!!,
-                transactionAmount = transactionData.amount.value!!,
-                transactionFeeAmount = transactionData.fee?.amount?.value!!,
-                unspentToAmount = { it.amount },
-            )
-        } else {
-            getOutputsToSend(unspentOutputs!!, transactionData)
-        }
+        val outputsToSend = getMinimumRequiredUTXOsToSend(
+            unspentOutputs = unspentOutputs!!,
+            transactionAmount = transactionData.amount.value!!,
+            transactionFeeAmount = transactionData.fee?.amount?.value!!,
+            unspentToAmount = { it.amount },
+        )
 
         val change: BigDecimal = calculateChange(transactionData, outputsToSend)
         transaction =
@@ -171,6 +168,8 @@ open class BitcoinTransactionBuilder(
     }
 
     fun calculateChange(transactionData: TransactionData, unspentOutputs: List<BitcoinUnspentOutput>): BigDecimal {
+        transactionData.requireUncompiled()
+
         val fullAmount = unspentOutputs.map { it.amount }.reduce { acc, number -> acc + number }
         return fullAmount - (
             transactionData.amount.value!! + (
@@ -186,23 +185,6 @@ open class BitcoinTransactionBuilder(
         val s = BigInteger(1, signatures.copyOfRange(32 + index * 64, 64 + index * 64))
         val canonicalS = ECKey.ECDSASignature(r, s).toCanonicalised().s
         return TransactionSignature(r, canonicalS)
-    }
-
-    private fun getOutputsToSend(
-        unspentOutputs: List<BitcoinUnspentOutput>,
-        transactionData: TransactionData,
-    ): List<BitcoinUnspentOutput> {
-        val outputs = mutableListOf<BitcoinUnspentOutput>()
-        val amount = transactionData.amount.value!! + transactionData.fee?.amount?.value!!
-        var sum = BigDecimal.ZERO
-        var i = 0
-        while (sum < amount && i < unspentOutputs.size) {
-            val output = unspentOutputs[i]
-            sum = sum.plus(output.amount)
-            outputs.add(output)
-            i++
-        }
-        return outputs
     }
 
     @Suppress("MagicNumber")
@@ -225,6 +207,8 @@ internal fun TransactionData.toBitcoinJTransaction(
     unspentOutputs: List<BitcoinUnspentOutput>,
     change: BigDecimal,
 ): Transaction {
+    requireUncompiled()
+
     val transaction = Transaction(networkParameters)
     for (utxo in unspentOutputs) {
         transaction.addInput(

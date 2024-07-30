@@ -16,13 +16,11 @@ class Wallet(
     tokens: Set<Token>,
 ) {
     // we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
-    val recentTransactions: MutableList<TransactionData> = mutableListOf()
+    val recentTransactions: MutableList<TransactionData.Uncompiled> = mutableListOf()
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
     val address: String
         get() = addresses.find { it.type == AddressType.Default }?.value
             ?: error("Addresses must contain default address")
-
-    var additionalInfo: WalletAdditionalInfo = WalletAdditionalInfo.NoInfo
 
     init {
         setAmount(Amount(null, blockchain, AmountType.Coin))
@@ -33,9 +31,13 @@ class Wallet(
         amounts[amount.type] = amount
     }
 
-    fun changeAmountValue(amountType: AmountType, newValue: BigDecimal?) {
+    fun setAmount(value: BigDecimal?, amountType: AmountType, maxValue: BigDecimal? = null) {
+        setAmount(Amount(value = value, blockchain = blockchain, type = amountType, maxValue = maxValue))
+    }
+
+    fun changeAmountValue(amountType: AmountType, newValue: BigDecimal?, newMaxValue: BigDecimal? = null) {
         amounts[amountType]?.let {
-            amounts[amountType] = it.copy(value = newValue)
+            amounts[amountType] = it.copy(value = newValue, maxValue = newMaxValue)
         }
     }
 
@@ -81,7 +83,7 @@ class Wallet(
             else -> {}
         }
 
-        val transaction = TransactionData(
+        val transaction = TransactionData.Uncompiled(
             amount = Amount(null, blockchain),
             fee = null,
             sourceAddress = sourceAddress,
@@ -92,13 +94,17 @@ class Wallet(
     }
 
     fun addOutgoingTransaction(transactionData: TransactionData, hashToLowercase: Boolean = true) {
-        transactionData.apply {
-            date = Calendar.getInstance()
-            if (hashToLowercase) hash = hash?.lowercase(Locale.US)
-        }
-        if (recentTransactions.any { it.hash == transactionData.hash }) return
+        if (transactionData is TransactionData.Uncompiled) {
+            transactionData.apply {
+                date = Calendar.getInstance()
+                if (hashToLowercase) hash = hash?.lowercase(Locale.US)
+            }
+            if (recentTransactions.any { it.hash == transactionData.hash }) return
 
-        recentTransactions.add(transactionData)
+            recentTransactions.add(transactionData)
+        } else {
+            // TODO staking [REDACTED_TASK_KEY]
+        }
     }
 
     fun fundsAvailable(amountType: AmountType): BigDecimal {

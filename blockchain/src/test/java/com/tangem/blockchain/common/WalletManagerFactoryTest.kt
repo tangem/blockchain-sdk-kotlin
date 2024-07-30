@@ -147,6 +147,7 @@ internal class WalletManagerFactoryTest {
                 override suspend fun store(key: String, value: String) = Unit
             },
             accountCreator = accountCreator,
+            featureToggles = BlockchainFeatureToggles(isCardanoTokenSupport = true),
         ).createTwinWalletManager(
             walletPublicKey = card.wallets.first().publicKey,
             pairPublicKey = pairPublicKey.hexToBytes(),
@@ -200,6 +201,7 @@ internal class WalletManagerFactoryTest {
                     zkSyncEra = GetBlockAccessToken(),
                     polygonZkEvm = GetBlockAccessToken(),
                     base = GetBlockAccessToken(),
+                    blast = GetBlockAccessToken(),
                 ),
                 tronGridApiKey = "",
                 chiaFireAcademyApiKey = "",
@@ -210,6 +212,7 @@ internal class WalletManagerFactoryTest {
                 override suspend fun store(key: String, value: String) = Unit
             },
             accountCreator = accountCreator,
+            featureToggles = BlockchainFeatureToggles(isCardanoTokenSupport = true),
         ).createLegacyWalletManager(
             blockchain,
             publicKey,

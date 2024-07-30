@@ -7,8 +7,8 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvide
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 
 internal class XDCWalletManager(
     wallet: Wallet,
@@ -16,7 +16,11 @@ internal class XDCWalletManager(
     networkProvider: EthereumNetworkProvider,
 ) : EthereumWalletManager(wallet, transactionBuilder, networkProvider) {
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
         return super.send(convertTransactionDataAddress(transactionData), signer)
     }
 
@@ -24,10 +28,11 @@ internal class XDCWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
+        transactionData.requireUncompiled()
         return super.sign(convertTransactionDataAddress(transactionData), signer)
     }
 
-    private fun convertTransactionDataAddress(transactionData: TransactionData) = transactionData.copy(
+    private fun convertTransactionDataAddress(transactionData: TransactionData.Uncompiled) = transactionData.copy(
         sourceAddress = XDCAddressService.formatWith0xPrefix(transactionData.sourceAddress),
         destinationAddress = XDCAddressService.formatWith0xPrefix(transactionData.destinationAddress),
         contractAddress = transactionData.contractAddress?.let {

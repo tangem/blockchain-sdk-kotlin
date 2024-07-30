@@ -24,7 +24,7 @@ class EstimationFeeAddressFactoryTest {
         Blockchain.Ducatus to "",
         Blockchain.Bitcoin to "bc1qkrc5kmpq546wr2xk0errg58yw9jjq7thvhdk5k",
         Blockchain.BitcoinTestnet to "bc1qkrc5kmpq546wr2xk0errg58yw9jjq7thvhdk5k",
-        Blockchain.Litecoin to "ltc1qelzg874tr0zap72ckcc9exa3lgyyt6rvfhhekc",
+        Blockchain.Litecoin to "MSqjXH6toL4kHqsRo3mWaWMkhmiH9GQxLR",
         Blockchain.BitcoinCash to "bitcoincash:qrn96yyxa93t6sqmehvls6746qafkcsuku6zmd9460",
         Blockchain.BitcoinCashTestnet to "bitcoincash:qrn96yyxa93t6sqmehvls6746qafkcsuku6zmd9460",
         Blockchain.Dogecoin to "DRVD4B4YD9CBSjqaa3UfF42vSN6k2tJwhz",
@@ -112,6 +112,10 @@ class EstimationFeeAddressFactoryTest {
         Blockchain.VeChainTestnet to "0x1C5B4935709583758BE5b9ECeeBaf5cD6AFecF41",
         Blockchain.AptosTestnet to "0x4626b7ef23fb2800a0e224e8249f47e0db3579070262da2a7efb0bc52c882867",
         Blockchain.AlgorandTestnet to "CW6XDCKQAZUGAIOTGE2NEPYFFVW6H6IKFOTOF3W5WDUVHH4ZIDCIKYDPXY",
+        Blockchain.Koinos to "1C423Vbd44zjghhJR5fKJdLFS3rgVFUc9A",
+        Blockchain.Radiant to "1K8jBuCKzuwvFCjL7Qpqq69k1hnVXJ31Nc",
+        Blockchain.Joystream to "j4SXkX46sABwjxeuzicd2e5m8gDu4ieoWHW3aggbBKkh4WvtF",
+        Blockchain.Bittensor to "5HLcF8UkyCTK5oszoTxx8LKxEzmtEEfPWeAxCz5NiDjqWH9y",
     )
 
     @Test
