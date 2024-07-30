@@ -1,6 +1,6 @@
 package com.tangem.blockchain.network.blockbook.config
 
-import com.tangem.blockchain.common.txhistory.TransactionHistoryRequest
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 
 sealed class BlockBookRequest {
     data class GetAddress(
