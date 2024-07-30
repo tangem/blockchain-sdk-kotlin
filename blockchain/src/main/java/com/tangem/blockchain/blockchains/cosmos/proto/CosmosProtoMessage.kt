@@ -42,7 +42,7 @@ data class CosmosProtoMessage(
     data class DelegateData(
         val delegatorAddress: String,
         val validatorAddress: String,
-        val delegateAmount: DelegateAmount,
+        val delegateAmount: DelegateAmount? = null,
     )
 
     @Serializable
