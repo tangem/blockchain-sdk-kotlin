@@ -4,7 +4,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import java.math.BigDecimal
 
 internal class RavencoinWalletManager(
@@ -38,9 +38,9 @@ internal class RavencoinWalletManager(
     private fun List<BasicTransactionData>.containsRecent(recent: TransactionData): Boolean =
         this.find { confirmed -> confirmed.hash.equals(recent.hash, true) } != null
 
-    private fun BasicTransactionData.toTransactionData(): TransactionData {
+    private fun BasicTransactionData.toTransactionData(): TransactionData.Uncompiled {
         val coinAmount = requireNotNull(wallet.amounts[AmountType.Coin]) { "Coin amount must not be null" }
-        return TransactionData(
+        return TransactionData.Uncompiled(
             amount = Amount(coinAmount, this.balanceDif.abs()),
             fee = null,
             sourceAddress = source,

@@ -26,31 +26,15 @@ object DerivationConfigV3 : DerivationConfig() {
     @Suppress("LongMethod", "CyclomaticComplexMethod")
     override fun derivations(blockchain: Blockchain): Map<AddressType, DerivationPath> {
         return when (blockchain) {
-            Blockchain.Bitcoin -> {
-                mapOf(AddressType.Default to DerivationPath("m/84'/0'/0'/0/0"))
-            }
-            Blockchain.Litecoin -> {
-                mapOf(AddressType.Default to DerivationPath("m/84'/2'/0'/0/0"))
-            }
-
-            Blockchain.Stellar -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/148'/0'"))
-            }
-
-            Blockchain.Solana -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/501'/0'"))
-            }
-
-            Blockchain.Cardano -> {
-                mapOf(AddressType.Default to DerivationPath("m/1852'/1815'/0'/0/0"))
-            }
-            Blockchain.BitcoinCash -> {
-                mapOf(
-                    AddressType.Default to DerivationPath("m/44'/145'/0'/0/0"),
-                    AddressType.Legacy to DerivationPath("m/44'/145'/0'/0/0"),
-                )
-            }
-
+            Blockchain.Bitcoin -> mapOf(AddressType.Default to DerivationPath("m/84'/0'/0'/0/0"))
+            Blockchain.Litecoin -> mapOf(AddressType.Default to DerivationPath("m/84'/2'/0'/0/0"))
+            Blockchain.Stellar -> mapOf(AddressType.Default to DerivationPath("m/44'/148'/0'"))
+            Blockchain.Solana -> mapOf(AddressType.Default to DerivationPath("m/44'/501'/0'"))
+            Blockchain.Cardano -> mapOf(AddressType.Default to DerivationPath("m/1852'/1815'/0'/0/0"))
+            Blockchain.BitcoinCash -> mapOf(
+                AddressType.Default to DerivationPath("m/44'/145'/0'/0/0"),
+                AddressType.Legacy to DerivationPath("m/44'/145'/0'/0/0"),
+            )
             Blockchain.Ethereum,
             Blockchain.EthereumPow,
             Blockchain.Dischain,
@@ -81,76 +65,36 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.Mantle,
             Blockchain.Flare,
             Blockchain.Taraxa,
-            -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
-            }
-
-            Blockchain.XDC -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
-            }
-
-            Blockchain.EthereumClassic -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))
-            }
-            Blockchain.Binance -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/714'/0'/0/0"))
-            }
-            Blockchain.XRP -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/144'/0'/0/0"))
-            }
-            Blockchain.Ducatus -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/0'/0'/0/0"))
-            }
-            Blockchain.Tezos -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/1729'/0'/0'"))
-            }
-            Blockchain.Dogecoin -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/3'/0'/0/0"))
-            }
-            Blockchain.Polkadot -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/354'/0'/0'/0'"))
-            }
-            Blockchain.Kusama -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/434'/0'/0'/0'"))
-            }
-            Blockchain.AlephZero -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/643'/0'/0'/0'"))
-            }
-            Blockchain.Tron -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/195'/0'/0/0"))
-            }
-            Blockchain.Dash -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/5'/0'/0/0"))
-            }
-            Blockchain.TON -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/607'/0'"))
-            }
-            Blockchain.Kaspa -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/111111'/0'/0/0"))
-            }
-            Blockchain.Ravencoin -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/175'/0'/0/0"))
-            }
-            Blockchain.Cosmos -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/118'/0'/0/0"))
-            }
-            Blockchain.TerraV1, Blockchain.TerraV2 -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/330'/0'/0/0"))
-            }
-            Blockchain.Near -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/397'/0'"))
-            }
-            Blockchain.VeChain, Blockchain.VeChainTestnet -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/818'/0'/0/0"))
-            }
-            Blockchain.Algorand, Blockchain.AlgorandTestnet -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/283'/0'/0'/0'"))
-            }
-            Blockchain.Hedera -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/3030'/0'/0'/0'"))
-            }
+            Blockchain.Blast,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
+            Blockchain.XDC -> mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
+            Blockchain.EthereumClassic -> mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))
+            Blockchain.Binance -> mapOf(AddressType.Default to DerivationPath("m/44'/714'/0'/0/0"))
+            Blockchain.XRP -> mapOf(AddressType.Default to DerivationPath("m/44'/144'/0'/0/0"))
+            Blockchain.Ducatus -> mapOf(AddressType.Default to DerivationPath("m/44'/0'/0'/0/0"))
+            Blockchain.Tezos -> mapOf(AddressType.Default to DerivationPath("m/44'/1729'/0'/0'"))
+            Blockchain.Dogecoin -> mapOf(AddressType.Default to DerivationPath("m/44'/3'/0'/0/0"))
+            Blockchain.Polkadot -> mapOf(AddressType.Default to DerivationPath("m/44'/354'/0'/0'/0'"))
+            Blockchain.Kusama -> mapOf(AddressType.Default to DerivationPath("m/44'/434'/0'/0'/0'"))
+            Blockchain.AlephZero -> mapOf(AddressType.Default to DerivationPath("m/44'/643'/0'/0'/0'"))
+            Blockchain.Joystream -> mapOf(AddressType.Default to DerivationPath("m/44'/1014'/0'/0'/0'"))
+            Blockchain.Bittensor -> mapOf(AddressType.Default to DerivationPath("m/44'/1005'/0'/0'/0'"))
+            Blockchain.Tron -> mapOf(AddressType.Default to DerivationPath("m/44'/195'/0'/0/0"))
+            Blockchain.Dash -> mapOf(AddressType.Default to DerivationPath("m/44'/5'/0'/0/0"))
+            Blockchain.TON -> mapOf(AddressType.Default to DerivationPath("m/44'/607'/0'"))
+            Blockchain.Kaspa -> mapOf(AddressType.Default to DerivationPath("m/44'/111111'/0'/0/0"))
+            Blockchain.Ravencoin -> mapOf(AddressType.Default to DerivationPath("m/44'/175'/0'/0/0"))
+            Blockchain.Cosmos -> mapOf(AddressType.Default to DerivationPath("m/44'/118'/0'/0/0"))
+            Blockchain.TerraV1, Blockchain.TerraV2 -> mapOf(AddressType.Default to DerivationPath("m/44'/330'/0'/0/0"))
+            Blockchain.Near -> mapOf(AddressType.Default to DerivationPath("m/44'/397'/0'"))
+            Blockchain.VeChain,
+            Blockchain.VeChainTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/818'/0'/0/0"))
+            Blockchain.Algorand,
+            Blockchain.AlgorandTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/283'/0'/0'/0'"))
+            Blockchain.Hedera -> mapOf(AddressType.Default to DerivationPath("m/44'/3030'/0'/0'/0'"))
             Blockchain.Chia, Blockchain.ChiaTestnet -> mapOf(AddressType.Default to DerivationPath(""))
-
             Blockchain.Unknown,
             Blockchain.ArbitrumTestnet,
             Blockchain.AvalancheTestnet,
@@ -192,26 +136,19 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.MantleTestnet,
             Blockchain.FlareTestnet,
             Blockchain.TaraxaTestnet,
-
-            -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
-            }
-
-            Blockchain.Aptos, Blockchain.AptosTestnet -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/637'/0'/0'/0'"))
-            }
-
-            Blockchain.Nexa, Blockchain.NexaTestnet -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/29223'/0'/0/0"))
-            }
-
-            Blockchain.Radiant -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/512'/0'/0/0"))
-            }
-
-            Blockchain.Koinos, Blockchain.KoinosTestnet -> {
-                mapOf(AddressType.Default to DerivationPath("m/44'/659'/0'/0/0"))
-            }
+            Blockchain.BlastTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
+            Blockchain.Aptos,
+            Blockchain.AptosTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/637'/0'/0'/0'"))
+            Blockchain.Nexa,
+            Blockchain.NexaTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/29223'/0'/0/0"))
+            Blockchain.Radiant -> mapOf(AddressType.Default to DerivationPath("m/44'/512'/0'/0/0"))
+            Blockchain.Koinos,
+            Blockchain.KoinosTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/659'/0'/0/0"))
+            Blockchain.Filecoin -> mapOf(AddressType.Default to DerivationPath("m/44'/461'/0'/0/0"))
         }
     }
 }

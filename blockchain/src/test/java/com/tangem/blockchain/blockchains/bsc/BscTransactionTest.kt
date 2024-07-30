@@ -35,7 +35,7 @@ class BscTransactionTest {
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
         val fee = Fee.Ethereum(Amount(amountToSend, feeValue), DEFAULT_GAS_LIMIT, DEFAULT_GAS_PRICE)
-        val transactionData = TransactionData(
+        val transactionData = TransactionData.Uncompiled(
             sourceAddress = walletAddress,
             destinationAddress = destinationAddress,
             amount = amountToSend,
@@ -85,7 +85,7 @@ class BscTransactionTest {
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Token(token))
         val fee = Fee.Ethereum(Amount(feeValue, blockchain, AmountType.Coin), DEFAULT_GAS_LIMIT, DEFAULT_GAS_PRICE)
-        val transactionData = TransactionData(
+        val transactionData = TransactionData.Uncompiled(
             sourceAddress = walletAddress,
             destinationAddress = destinationAddress,
             amount = amountToSend,

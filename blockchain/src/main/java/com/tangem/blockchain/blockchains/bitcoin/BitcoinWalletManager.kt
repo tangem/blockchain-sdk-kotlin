@@ -7,10 +7,11 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
-import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
-import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
@@ -25,9 +26,14 @@ internal open class BitcoinWalletManager(
     private val feesCalculator: BitcoinFeesCalculator,
 ) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider),
     TransactionSender,
-    SignatureCountValidator {
+    SignatureCountValidator,
+    UtxoBlockchainManager {
 
     protected val blockchain = wallet.blockchain
+
+    override val dustValue: BigDecimal = feesCalculator.minimalFeePerKb
+
+    override val allowConsolidation: Boolean = true
 
     override val currentHost: String
         get() = networkProvider.baseUrl
@@ -109,25 +115,30 @@ internal open class BitcoinWalletManager(
         (error as? BlockchainSdkError)?.let { throw it }
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
-            is Result.Failure -> return SimpleResult.Failure(buildTransactionResult.error)
+            is Result.Failure -> return buildTransactionResult
             is Result.Success -> {
-                val signerResult = signer.sign(buildTransactionResult.data, wallet.publicKey)
-                return when (signerResult) {
+                return when (val signerResult = signer.sign(buildTransactionResult.data, wallet.publicKey)) {
                     is CompletionResult.Success -> {
                         val transactionToSend = transactionBuilder.buildToSend(
                             signerResult.data.reduce { acc, bytes -> acc + bytes },
                         )
                         val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())
 
-                        if (sendResult is SimpleResult.Success) {
-                            transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
-                            wallet.addOutgoingTransaction(transactionData)
+                        return when (sendResult) {
+                            is SimpleResult.Success -> {
+                                transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
+                                wallet.addOutgoingTransaction(transactionData)
+                                Result.Success(TransactionSendResult(transactionData.hash ?: ""))
+                            }
+                            is SimpleResult.Failure -> return Result.Failure(sendResult.error)
                         }
-                        sendResult
                     }
-                    is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResult.error)
+                    is CompletionResult.Failure -> Result.fromTangemSdkError(signerResult.error)
                 }
             }
         }
@@ -143,7 +154,7 @@ internal open class BitcoinWalletManager(
                     val newAmount = amount.copy(value = amount.value!! - feeValue)
 
                     val sizeResult = transactionBuilder.getEstimateSize(
-                        TransactionData(
+                        TransactionData.Uncompiled(
                             amount = newAmount,
                             fee = Fee.Common(Amount(newAmount, feeValue)),
                             sourceAddress = wallet.address,
@@ -182,6 +193,7 @@ internal open class BitcoinWalletManager(
     protected open suspend fun getBitcoinFeePerKb(): Result<BitcoinFee> = networkProvider.getFee()
 
     companion object {
-        const val DEFAULT_MINIMAL_FEE_PER_KB = 0.00001024
+        // Synced value with iOS
+        const val DEFAULT_MINIMAL_FEE_PER_KB = 0.00001
     }
 }

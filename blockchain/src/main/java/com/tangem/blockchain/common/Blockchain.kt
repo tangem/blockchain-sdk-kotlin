@@ -14,6 +14,7 @@ import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
 import com.tangem.blockchain.blockchains.koinos.KoinosAddressService
 import com.tangem.blockchain.blockchains.nexa.NexaAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
+import com.tangem.blockchain.blockchains.radiant.RadiantAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
@@ -23,11 +24,9 @@ import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.vechain.VeChainWalletManager
 import com.tangem.blockchain.blockchains.xdc.XDCAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
-import com.tangem.blockchain.common.address.Address
-import com.tangem.blockchain.common.address.AddressService
-import com.tangem.blockchain.common.address.MultisigAddressProvider
-import com.tangem.blockchain.common.address.TrustWalletAddressService
+import com.tangem.blockchain.common.address.*
 import com.tangem.blockchain.common.derivation.DerivationStyle
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProviderFactory
 import com.tangem.blockchain.externallinkprovider.TxExploreState
@@ -91,7 +90,7 @@ enum class Blockchain(
     EthereumPow("ETH-Pow", "ETHW", "EthereumPoW"),
     EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW Testnet"),
     Kaspa("KAS", "KAS", "Kaspa"),
-    Telos("TELOS", "TLOS", "Telos"),
+    Telos("TELOS", "TLOS", "Telos EVM"),
     TelosTestnet("TELOS/test", "TLOS", "Telos Testnet"),
     TON("The-Open-Network", "TON", "Ton"),
     TONTestnet("The-Open-Network/test", "TON", "Ton Testnet"),
@@ -99,7 +98,7 @@ enum class Blockchain(
     RavencoinTestnet("ravencoin/test", "RVN", "Ravencoin Testnet"),
     TerraV1("terra", "LUNC", "Terra Classic"),
     TerraV2("terra-2", "LUNA", "Terra"),
-    Cronos("cronos", "CRO", "Cronos"),
+    Cronos("cronos", "CRO", "Cronos EVM"),
     AlephZero("aleph-zero", "AZERO", "Aleph Zero"),
     AlephZeroTestnet("aleph-zero/test", "TZERO", "Aleph Zero Testnet"),
     OctaSpace("octaspace", "OCTA", "OctaSpace"),
@@ -133,7 +132,7 @@ enum class Blockchain(
     NexaTestnet("NEXA/test", "NEXA", "Nexa Testnet"),
     Moonbeam("moonbeam", "GLMR", "Moonbeam"),
     MoonbeamTestnet("moonbeam/test", "GLMR", "Moonbeam Testnet"),
-    Manta("manta", "ETH", "Manta"),
+    Manta("manta-pacific", "ETH", "Manta Pacific"),
     MantaTestnet("manta/test", "ETH", "Manta Testnet"),
     PolygonZkEVM("polygonZkEVM", "ETH", "Polygon zkEVM"),
     PolygonZkEVMTestnet("polygonZkEVM/test", "ETH", "Polygon zkEVM Testnet"),
@@ -150,6 +149,11 @@ enum class Blockchain(
     TaraxaTestnet("taraxa/test", "TARA", "Taraxa Testnet"),
     Koinos("koinos", "KOIN", "Koinos"),
     KoinosTestnet("koinos/test", "tKOIN", "Koinos Testnet"),
+    Joystream("joystream", "JOY", "Joystream"),
+    Bittensor("bittensor", "TAO", "Bittensor"),
+    Filecoin("filecoin", "FIL", "Filecoin"),
+    Blast("blast", "ETH", "Blast"),
+    BlastTestnet("blast/test", "ETH", "Blast Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -189,9 +193,10 @@ enum class Blockchain(
 
         Solana, SolanaTestnet,
         TON, TONTestnet,
+        Bittensor,
         -> 9
 
-        Polkadot -> 10
+        Polkadot, Joystream -> 10
 
         PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
         Chia, ChiaTestnet,
@@ -229,6 +234,8 @@ enum class Blockchain(
         Mantle, MantleTestnet,
         Flare, FlareTestnet,
         Taraxa, TaraxaTestnet,
+        Filecoin,
+        Blast, BlastTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -251,6 +258,10 @@ enum class Blockchain(
 
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
+    fun validateContractAddress(address: String): Boolean {
+        return (getAddressService() as? ContractAddressValidator)?.validateContractAddress(address) == true
+    }
+
     @Suppress("CyclomaticComplexMethod", "LongMethod")
     private fun getAddressService(): AddressService {
         return when (this) {
@@ -260,7 +271,6 @@ enum class Blockchain(
             Ducatus,
             Dash,
             Ravencoin, RavencoinTestnet,
-            Radiant,
             -> BitcoinAddressService(this)
 
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
@@ -294,6 +304,7 @@ enum class Blockchain(
             Mantle, MantleTestnet,
             Flare, FlareTestnet,
             Taraxa, TaraxaTestnet,
+            Blast, BlastTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -304,7 +315,12 @@ enum class Blockchain(
             XRP -> XrpAddressService()
             Binance -> BinanceAddressService()
             BinanceTestnet -> BinanceAddressService(true)
-            Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet -> PolkadotAddressService(this)
+            Polkadot, PolkadotTestnet,
+            Kusama,
+            AlephZero, AlephZeroTestnet,
+            Joystream,
+            Bittensor,
+            -> PolkadotAddressService(this)
             Stellar, StellarTestnet -> StellarAddressService()
             Solana, SolanaTestnet -> SolanaAddressService()
             Tezos -> TezosAddressService()
@@ -314,6 +330,7 @@ enum class Blockchain(
             TerraV2,
             Near, NearTestnet,
             Algorand, AlgorandTestnet,
+            Filecoin,
             -> TrustWalletAddressService(blockchain = this)
 
             Aptos, AptosTestnet -> AptosAddressService(isTestnet())
@@ -323,6 +340,7 @@ enum class Blockchain(
             Hedera, HederaTestnet -> HederaAddressService(this.isTestnet())
             Nexa, NexaTestnet -> NexaAddressService(this.isTestnet())
             Koinos, KoinosTestnet -> KoinosAddressService()
+            Radiant -> RadiantAddressService()
             Unknown -> error("unsupported blockchain")
         }
     }
@@ -403,6 +421,7 @@ enum class Blockchain(
             Flare, FlareTestnet -> FlareTestnet
             Taraxa, TaraxaTestnet -> TaraxaTestnet
             Koinos, KoinosTestnet -> KoinosTestnet
+            Blast, BlastTestnet -> BlastTestnet
             else -> null
         }
     }
@@ -468,11 +487,17 @@ enum class Blockchain(
             Flare, FlareTestnet,
             Taraxa, TaraxaTestnet,
             Koinos, KoinosTestnet,
+            Filecoin,
+            Blast, BlastTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
-            Polkadot, PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
+            Polkadot, PolkadotTestnet,
+            Kusama,
+            AlephZero, AlephZeroTestnet,
+            Joystream,
+            Bittensor,
             TON, TONTestnet,
             Near, NearTestnet,
             Aptos, AptosTestnet,
@@ -548,6 +573,8 @@ enum class Blockchain(
             FlareTestnet -> Chain.FlareTestnet.id
             Taraxa -> Chain.Taraxa.id
             TaraxaTestnet -> Chain.TaraxaTestnet.id
+            Blast -> Chain.Blast.id
+            BlastTestnet -> Chain.BlastTestnet.id
             else -> null
         }
     }
@@ -569,12 +596,16 @@ enum class Blockchain(
 
         if (isEvm()) return true
 
+        if (this == Cardano) return DepsContainer.blockchainFeatureToggles.isCardanoTokenSupport
+
         return when (this) {
             Binance, BinanceTestnet,
             Solana, SolanaTestnet,
             Tron, TronTestnet,
             TerraV1,
             VeChain, VeChainTestnet,
+            Hedera, HederaTestnet,
+            TON, TONTestnet,
             -> true
 
             else -> false
@@ -607,6 +638,8 @@ enum class Blockchain(
         ZkSyncEra, ZkSyncEraTestnet,
         PolygonZkEVM, PolygonZkEVMTestnet,
         Taraxa, TaraxaTestnet,
+        Base, BaseTestnet,
+        Koinos, KoinosTestnet,
         -> true
 
         else -> false
@@ -615,6 +648,7 @@ enum class Blockchain(
     fun feePaidCurrency(): FeePaidCurrency = when (this) {
         VeChain, VeChainTestnet -> FeePaidCurrency.Token(VeChainWalletManager.VTHO_TOKEN)
         TerraV1 -> FeePaidCurrency.SameCurrency
+        Koinos, KoinosTestnet -> FeePaidCurrency.FeeResource("Mana")
         else -> FeePaidCurrency.Coin
     }
 

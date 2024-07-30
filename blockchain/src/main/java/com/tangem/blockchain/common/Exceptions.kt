@@ -24,14 +24,14 @@ sealed class BlockchainSdkError(
     class NPError(forValue: String) : BlockchainSdkError(-1, "$forValue must be not NULL")
     class UnsupportedOperation(message: String = "Unsupported operation") : BlockchainSdkError(0, message)
 
-    object FailedToSendException : BlockchainSdkError(1, "Failed to send transaction")
+    data object FailedToSendException : BlockchainSdkError(1, "Failed to send transaction")
     data class AccountNotFound(val amountToCreateAccount: BigDecimal? = null) : BlockchainSdkError(
         2,
         "Account not found",
     )
 
     class CreateAccountUnderfunded(val blockchain: Blockchain, val minReserve: Amount) : BlockchainSdkError(3)
-    object FailedToLoadFee : BlockchainSdkError(4, "Failed to load fee")
+    data object FailedToLoadFee : BlockchainSdkError(4, "Failed to load fee")
     class CustomError(message: String) : BlockchainSdkError(5, message)
 
     class WrappedThrowable(throwable: Throwable) : BlockchainSdkError(
@@ -41,11 +41,11 @@ sealed class BlockchainSdkError(
         cause = throwable,
     )
 
-    object FailedToBuildTx : BlockchainSdkError(7, "Failed to build transaction")
+    data object FailedToBuildTx : BlockchainSdkError(7, "Failed to build transaction")
 
-    object FailedToCreateAccount : BlockchainSdkError(8, "Failed to create account")
+    data object FailedToCreateAccount : BlockchainSdkError(8, "Failed to create account")
 
-    object SignatureCountNotMatched : BlockchainSdkError(100)
+    data object SignatureCountNotMatched : BlockchainSdkError(100)
 
     sealed class Solana(
         subCode: Int,
@@ -58,9 +58,9 @@ sealed class BlockchainSdkError(
         cause = throwable,
     ) {
         class Api(ex: Exception) : Solana(1, ex.localizedMessage ?: "Unknown api exception", ex)
-        object FailedToCreateAssociatedAccount : Solana(2, "Public key conversion failed")
-        object SameSourceAndDestinationAddress : Solana(3, "Same source and destination address")
-        object UnsupportedTokenDestinationAddress : Solana(4)
+        data object FailedToCreateAssociatedAccount : Solana(2, "Public key conversion failed")
+        data object SameSourceAndDestinationAddress : Solana(3, "Same source and destination address")
+        data object UnsupportedTokenDestinationAddress : Solana(4)
     }
 
     sealed class Polkadot(
@@ -105,6 +105,19 @@ sealed class BlockchainSdkError(
         cause = throwable,
     ) {
         class Api(code: Int, message: String) : Ton(subCode = code, customMessage = message)
+    }
+
+    sealed class Tron(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_TRON + subCode,
+        customMessage = customMessage ?: "${ERROR_CODE_TRON + subCode}",
+        messageResId = null,
+        cause = throwable,
+    ) {
+        class AccountActivationError(code: Int) : Ton(subCode = code, customMessage = null)
     }
 
     sealed class Cosmos(
@@ -214,12 +227,77 @@ sealed class BlockchainSdkError(
     ) {
         class Api(code: Int, message: String) : Koinos(subCode = code, customMessage = message)
 
-        object InsufficientMana : Koinos(subCode = -32603, customMessage = "Insufficient Mana")
+        data class InsufficientMana(
+            val manaBalance: BigDecimal? = null,
+            val maxMana: BigDecimal? = null,
+        ) : Koinos(subCode = -32603, customMessage = "Insufficient Mana")
+
+        data class ManaFeeExceedsBalance(
+            val availableKoinForTransfer: BigDecimal,
+        ) : Koinos(
+            subCode = 1,
+            customMessage = "You can transfer only $availableKoinForTransfer KOIN" +
+                " due to the Mana limit imposed by the Koinos network.",
+        )
+
+        data object InsufficientBalance : Koinos(
+            subCode = 2,
+            customMessage = "Insufficient Balance. Your balance should be higher than the fee value to make a transfer",
+        )
 
         class ProtobufDecodeError(protoType: String) : Koinos(
             subCode = 999999,
             customMessage = "Failed to decode $protoType",
         )
+    }
+
+    sealed class Cardano(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_CARDANO,
+        customMessage = customMessage?.let { "$ERROR_CODE_CARDANO: $subCode: $customMessage" }
+            ?: "$ERROR_CODE_CARDANO: $subCode",
+        messageResId = null,
+        cause = throwable,
+    ) {
+
+        data object InsufficientRemainingBalance : Cardano(
+            subCode = 0,
+            customMessage = "Insufficient ADA balance. Make sure the balance after this transaction is at least 1 ADA.",
+        )
+
+        data object InsufficientRemainingBalanceToWithdrawTokens : Cardano(
+            subCode = 1,
+            customMessage = "Insufficient ADA balance. Make sure that the balance after this transaction is " +
+                "sufficient to cover the withdrawal of all tokens.",
+        )
+
+        data object InsufficientSendingAdaAmount : Cardano(
+            subCode = 2,
+            customMessage = "Insufficient sending ADA amount. Make sure the sending amount is at least 1 ADA.",
+        )
+
+        data object InsufficientMinAdaBalanceToSendToken : Cardano(
+            subCode = 3,
+            customMessage = "Insufficient min-ada-value amount. In addition to network fees, the Cardano network " +
+                "charges min-ada-value. Make sure the balance is sufficient to withdraw the token.",
+        )
+    }
+
+    sealed class Aptos(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_APTOS,
+        customMessage = customMessage?.let { "$ERROR_CODE_APTOS: $subCode: $customMessage" }
+            ?: "$ERROR_CODE_APTOS: $subCode",
+        messageResId = null,
+        cause = throwable,
+    ) {
+        class Api(message: String) : Aptos(subCode = 0, customMessage = message)
     }
 
     companion object {
@@ -235,6 +313,9 @@ sealed class BlockchainSdkError(
         const val ERROR_CODE_ALGORAND = 10000
         const val ERROR_CODE_ELECTRUM = 11000
         const val ERROR_CODE_KOINOS = 12000
+        const val ERROR_CODE_CARDANO = 13000
+        const val ERROR_CODE_APTOS = 14000
+        const val ERROR_CODE_TRON = 15000
     }
 }
 
