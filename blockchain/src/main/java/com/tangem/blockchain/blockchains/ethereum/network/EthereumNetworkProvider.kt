@@ -27,5 +27,5 @@ class EthereumInfoResponse(
     val tokenBalances: Map<Token, BigDecimal>,
     val txCount: Long,
     val pendingTxCount: Long,
-    val recentTransactions: List<TransactionData>?,
+    val recentTransactions: List<TransactionData.Uncompiled>?,
 )
