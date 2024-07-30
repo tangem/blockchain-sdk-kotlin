@@ -6,7 +6,7 @@ import com.tangem.blockchain.blockchains.koinos.KoinosWalletManager
 import com.tangem.blockchain.blockchains.koinos.network.KoinosNetworkService
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
-import com.tangem.blockchain.common.txhistory.getTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 
 internal object KoinosWalletManagerAssembly : WalletManagerAssembly<KoinosWalletManager>() {
     override fun make(input: WalletManagerAssemblyInput): KoinosWalletManager {
@@ -14,14 +14,17 @@ internal object KoinosWalletManagerAssembly : WalletManagerAssembly<KoinosWallet
             KoinosWalletManager(
                 wallet = this,
                 networkService = KoinosNetworkService(
-                    providers = KoinosProviderBuilder().build(blockchain),
+                    providers = KoinosProviderBuilder(
+                        providerTypes = input.providerTypes,
+                        config = input.config,
+                    ).build(blockchain),
                 ),
                 transactionBuilder = KoinosTransactionBuilder(
                     isTestnet = blockchain.isTestnet(),
                 ),
                 // No implementation for now
                 // See KoinosTransactionHistoryProvider deprecation doc
-                transactionHistoryProvider = blockchain.getTransactionHistoryProvider(config = input.config),
+                transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
             )
         }
     }

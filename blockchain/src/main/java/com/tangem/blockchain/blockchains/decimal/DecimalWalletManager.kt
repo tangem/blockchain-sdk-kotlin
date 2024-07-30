@@ -9,8 +9,8 @@ import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import java.math.BigInteger
 
 internal class DecimalWalletManager(
@@ -39,7 +39,11 @@ internal class DecimalWalletManager(
         return super.getGasLimit(amount, convertAddress(destination), data)
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
         return super.send(convertTransactionDataAddress(transactionData), signer)
     }
 
@@ -47,10 +51,11 @@ internal class DecimalWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
+        transactionData.requireUncompiled()
         return super.sign(convertTransactionDataAddress(transactionData), signer)
     }
 
-    private fun convertTransactionDataAddress(transactionData: TransactionData) = transactionData.copy(
+    private fun convertTransactionDataAddress(transactionData: TransactionData.Uncompiled) = transactionData.copy(
         destinationAddress = convertAddress(transactionData.destinationAddress),
     )
 
