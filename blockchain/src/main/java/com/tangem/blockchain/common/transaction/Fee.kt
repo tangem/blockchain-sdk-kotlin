@@ -50,5 +50,16 @@ sealed class Fee {
         val gasLimit: Long,
     ) : Fee()
 
+    data class CardanoToken(
+        override val amount: Amount,
+        val minAdaValue: BigDecimal,
+    ) : Fee()
+
+    data class Kaspa(
+        override val amount: Amount,
+        val valuePerUtxo: BigDecimal,
+        val utxoCount: Int,
+    ) : Fee()
+
     data class Common(override val amount: Amount) : Fee()
 }
