@@ -15,6 +15,7 @@ class WalletManagerFactory(
     private val config: BlockchainSdkConfig = BlockchainSdkConfig(),
     private val blockchainProviderTypes: Map<Blockchain, List<ProviderType>>,
     private val accountCreator: AccountCreator,
+    featureToggles: BlockchainFeatureToggles,
     blockchainDataStorage: BlockchainDataStorage,
     loggers: List<BlockchainSDKLogger> = emptyList(),
 ) {
@@ -22,7 +23,7 @@ class WalletManagerFactory(
     private val dataStorage by lazy { AdvancedDataStorage(blockchainDataStorage) }
 
     init {
-        DepsContainer.onInit(config)
+        DepsContainer.onInit(config, featureToggles)
         Logger.addLoggers(loggers)
     }
 
@@ -120,11 +121,11 @@ class WalletManagerFactory(
             // endregion
 
             // region ETH-like blockchains
-            Blockchain.Ethereum, Blockchain.EthereumClassic -> EthereumWalletManagerAssembly
+            Blockchain.Ethereum, Blockchain.EthereumTestnet -> EthereumWalletManagerAssembly
 
             Blockchain.Arbitrum, Blockchain.ArbitrumTestnet,
             Blockchain.Avalanche, Blockchain.AvalancheTestnet,
-            Blockchain.EthereumTestnet, Blockchain.EthereumClassicTestnet,
+            Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet,
             Blockchain.Fantom, Blockchain.FantomTestnet,
             Blockchain.RSK,
             Blockchain.BSC, Blockchain.BSCTestnet,
@@ -154,6 +155,7 @@ class WalletManagerFactory(
             Blockchain.Optimism, Blockchain.OptimismTestnet,
             Blockchain.Base, Blockchain.BaseTestnet,
             Blockchain.Manta, Blockchain.MantaTestnet,
+            Blockchain.Blast, Blockchain.BlastTestnet,
             -> EthereumOptimisticRollupWalletManagerAssembly
             Blockchain.Telos, Blockchain.TelosTestnet -> TelosWalletManagerAssembly
             // endregion
@@ -163,6 +165,8 @@ class WalletManagerFactory(
             Blockchain.Polkadot, Blockchain.PolkadotTestnet,
             Blockchain.Kusama,
             Blockchain.AlephZero, Blockchain.AlephZeroTestnet,
+            Blockchain.Joystream,
+            Blockchain.Bittensor,
             -> PolkadotWalletManagerAssembly
 
             Blockchain.Stellar, Blockchain.StellarTestnet -> StellarWalletManagerAssembly
@@ -185,6 +189,7 @@ class WalletManagerFactory(
             Blockchain.Nexa, Blockchain.NexaTestnet -> NexaWalletManagerAssembly
             Blockchain.Radiant -> RadiantWalletManagerAssembly
             Blockchain.Koinos, Blockchain.KoinosTestnet -> KoinosWalletManagerAssembly
+            Blockchain.Filecoin -> TODO("[REDACTED_JIRA]")
             Blockchain.Unknown,
             -> error("Unsupported blockchain")
         }

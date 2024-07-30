@@ -9,10 +9,9 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
-import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.hexToBytes
 import io.emeraldpay.polkaj.tx.Era
@@ -25,7 +24,7 @@ import java.util.EnumSet
 /**
 [REDACTED_AUTHOR]
  */
-class PolkadotWalletManager(
+internal class PolkadotWalletManager(
     wallet: Wallet,
     private val networkProvider: PolkadotNetworkProvider,
     private val extrinsicCheckNetworkProvider: PolkadotAccountHealthCheckNetworkProvider?,
@@ -36,8 +35,10 @@ class PolkadotWalletManager(
     private val existentialDeposit: BigDecimal = when (wallet.blockchain) {
         Blockchain.Polkadot -> BigDecimal.ONE
         Blockchain.PolkadotTestnet -> 0.01.toBigDecimal()
-        Blockchain.Kusama -> 0.000333.toBigDecimal()
+        Blockchain.Kusama -> 0.000333333333.toBigDecimal()
         Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> 0.0000000005.toBigDecimal()
+        Blockchain.Joystream -> 0.026666656.toBigDecimal()
+        Blockchain.Bittensor -> 0.0000005.toBigDecimal()
         else -> error("${wallet.blockchain} isn't supported")
     }
 
@@ -61,12 +62,14 @@ class PolkadotWalletManager(
     private fun updateRecentTransactions() {
         val currentTimeInMillis = Calendar.getInstance().timeInMillis
         val confirmedTxData = wallet.recentTransactions
-            .filter { it.hash != null && it.date != null }
+            .filter {
+                it.hash != null && it.date != null
+            }
             .filter {
                 val txTimeInMillis = it.date?.timeInMillis ?: currentTimeInMillis
                 currentTimeInMillis - txTimeInMillis > 9999
             }.map {
-                it.copy(status = TransactionStatus.Confirmed)
+                it.updateStatus(status = TransactionStatus.Confirmed) as TransactionData.Uncompiled
             }
 
         updateRecentTransactions(confirmedTxData)
@@ -74,6 +77,13 @@ class PolkadotWalletManager(
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         currentContext = networkProvider.extrinsicContext(wallet.address).successOr { return it }
+        runCatching { updateEra() }.onFailure {
+            Result.Failure(
+                BlockchainSdkError.CustomError(
+                    it.message ?: "Unknown error",
+                ),
+            )
+        }
 
         val signedTransaction = sign(
             amount = amount,
@@ -89,13 +99,14 @@ class PolkadotWalletManager(
         return Result.Success(TransactionFee.Single(Fee.Common(feeAmount)))
     }
 
-    override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData {
+    override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData.Uncompiled {
         return when (amount.type) {
             AmountType.Coin -> super.createTransaction(amount, fee, destination)
             else -> throw UnsupportedOperation()
         }
     }
 
+    @Deprecated("Will be removed in the future. Use TransactionValidator instead")
     override fun validateTransaction(amount: Amount, fee: Amount?): EnumSet<TransactionError> {
         val errors = super.validateTransaction(amount, fee)
 
@@ -109,14 +120,17 @@ class PolkadotWalletManager(
         return errors
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val latestBlockHash = networkProvider.getLatestBlockHash().successOr { return it.toSimpleFailure() }
-        val blockNumber = networkProvider.getBlockNumber(latestBlockHash).successOr { return it.toSimpleFailure() }
-        currentContext.era = Era.Mortal.forCurrent(TRANSACTION_LIFE_PERIOD, blockNumber.toLong())
-        currentContext.eraBlockHash = Hash256(latestBlockHash.hexToBytes())
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
+        runCatching { updateEra() }
+            .onFailure { return Result.Failure(BlockchainSdkError.CustomError(it.message ?: "Unknown error")) }
         return when (transactionData.amount.type) {
             AmountType.Coin -> sendCoin(transactionData, signer, currentContext)
-            else -> SimpleResult.Failure(UnsupportedOperation())
+            else -> Result.Failure(UnsupportedOperation())
         }
     }
 
@@ -146,21 +160,30 @@ class PolkadotWalletManager(
             .successOr { throw it.error as BlockchainSdkError }
     }
 
+    private suspend fun updateEra() {
+        val latestBlockHash = networkProvider.getLatestBlockHash().successOr { error("latestBlockHash error") }
+        val blockNumber = networkProvider.getBlockNumber(latestBlockHash).successOr { error("blockNumber error") }
+        currentContext.era = Era.Mortal.forCurrent(TRANSACTION_LIFE_PERIOD, blockNumber.toLong())
+        currentContext.eraBlockHash = Hash256(latestBlockHash.hexToBytes())
+    }
+
     private suspend fun sendCoin(
         transactionData: TransactionData,
         signer: TransactionSigner,
         extrinsicContext: ExtrinsicContext,
-    ): SimpleResult {
+    ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
         val destinationAddress = transactionData.destinationAddress
         val isDestinationAccountIsUnderfunded = isAccountUnderfunded(destinationAddress).successOr {
-            return SimpleResult.Failure(it.error)
+            return Result.Failure(it.error)
         }
 
         if (isDestinationAccountIsUnderfunded) {
             val amountValueToSend = transactionData.amount.value ?: BigDecimal.ZERO
             if (amountValueToSend < existentialDeposit) {
                 val minReserve = Amount(transactionData.amount, existentialDeposit)
-                return SimpleResult.Failure(BlockchainSdkError.CreateAccountUnderfunded(wallet.blockchain, minReserve))
+                return Result.Failure(BlockchainSdkError.CreateAccountUnderfunded(wallet.blockchain, minReserve))
             }
         }
 
@@ -170,17 +193,18 @@ class PolkadotWalletManager(
             destinationAddress = destinationAddress,
             context = extrinsicContext,
             signer = signer,
-        ).successOr { return SimpleResult.Failure(it.error) }
+        ).successOr { return Result.Failure(it.error) }
 
         val txHash = networkProvider.sendTransaction(signedTransaction).successOr {
-            return SimpleResult.Failure(it.error)
+            return Result.Failure(it.error)
         }
 
-        transactionData.hash = txHash
+        val hash = txHash.formattedHash()
+        transactionData.hash = hash
         transactionData.date = Calendar.getInstance()
         wallet.addOutgoingTransaction(transactionData)
 
-        return SimpleResult.Success
+        return Result.Success(TransactionSendResult(hash))
     }
 
     private suspend fun sign(
@@ -192,8 +216,7 @@ class PolkadotWalletManager(
     ): Result<ByteArray> {
         val builtTxForSign = txBuilder.buildForSign(destinationAddress, amount, context)
 
-        val signResult = signer.sign(builtTxForSign, wallet.publicKey)
-        return when (signResult) {
+        return when (val signResult = signer.sign(builtTxForSign, wallet.publicKey)) {
             is CompletionResult.Success -> {
                 val signature = signResult.data
                 val builtForSend = txBuilder.buildForSend(sourceAddress, destinationAddress, amount, context, signature)
@@ -208,6 +231,13 @@ class PolkadotWalletManager(
         val isUnderfunded =
             destinationBalance == BigDecimal.ZERO || destinationBalance < existentialDeposit
         return Result.Success(isUnderfunded)
+    }
+
+    /** Adds 0x prefix transactions hashes if necessary to correctly open transaction in explorer */
+    private fun String.formattedHash() = if (!this.startsWith(HEX_PREFIX)) {
+        HEX_PREFIX.plus(this)
+    } else {
+        this
     }
 
     private companion object {

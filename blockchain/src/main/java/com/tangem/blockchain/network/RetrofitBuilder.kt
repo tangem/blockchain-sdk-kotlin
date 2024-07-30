@@ -4,9 +4,11 @@ import com.squareup.moshi.*
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResourceBodyAdapter
+import com.tangem.blockchain.blockchains.filecoin.network.response.FilecoinRpcResponse
+import com.tangem.blockchain.blockchains.filecoin.network.response.FilecoinRpcResponseAdapter
 import com.tangem.blockchain.common.EnumeratedEnum
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
-import com.tangem.blockchain.transactionhistory.polygon.network.PolygonScanResultAdapter
+import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.PolygonScanResultAdapter
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -69,6 +71,7 @@ internal val moshi: Moshi by lazy {
     Moshi.Builder()
         .add(BigDecimal::class.java, BigDecimalAdapter)
         .add(AptosResource::class.java, AptosResourceBodyAdapter)
+        .add(FilecoinRpcResponse::class.java, FilecoinRpcResponseAdapter)
         .add(createEnumJsonAdapter<GetAddressResponse.Transaction.StatusType>())
         .add(PolygonScanResultAdapter())
         .add(KotlinJsonAdapterFactory())
@@ -109,13 +112,13 @@ const val API_BLOCKCHAIR = "https://api.blockchair.com/"
 const val API_TEZOS_BLOCKSCALE = "https://rpc.tzbeta.net/"
 const val API_TEZOS_SMARTPY = "https://mainnet.smartpy.io/"
 const val API_TEZOS_ECAD = "https://api.tez.ie/rpc/mainnet/"
+const val API_TEZOS_MARIGOLD = "https://mainnet.tezos.marigold.dev"
 const val API_DUCATUS = "https://ducapi.rocknblock.io/"
 const val API_BITCOINFEES_EARN = "https://bitcoinfees.earn.com/"
 const val API_KASPA = "https://api.kaspa.org/"
 const val API_CHIA_FIREACADEMY = "https://kraken.fireacademy.io/leaflet/"
 const val API_CHIA_FIREACADEMY_TESTNET = "https://kraken.fireacademy.io/leaflet-testnet10/"
 const val API_CHIA_TANGEM = "https://chia.tangem.com/"
-const val API_HEDERA_MIRROR = "https://mainnet-public.mirrornode.hedera.com/"
-const val API_HEDERA_MIRROR_TESTNET = "https://testnet.mirrornode.hedera.com/"
+const val API_HEDERA_MIRROR_TESTNET = "https://testnet.mirrornode.hedera.com/api/v1/"
 const val API_HEDERA_ARKHIA_MIRROR = "https://pool.arkhia.io/hedera/mainnet/api/v1/"
 const val API_HEDERA_ARKHIA_MIRROR_TESTNET = "https://pool.arkhia.io/hedera/testnet/api/v1/"

@@ -15,7 +15,7 @@ internal class AvalancheProvidersBuilder(
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return providerTypes.mapNotNull {
             when (it) {
-                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                is ProviderType.Public -> createPublicProvider(url = it.url)
                 ProviderType.NowNodes -> createNowNodesProvider()
                 ProviderType.GetBlock -> createGetBlockProvider()
                 else -> null
@@ -27,16 +27,20 @@ internal class AvalancheProvidersBuilder(
         return listOf(
             EthereumJsonRpcProvider(
                 baseUrl = "https://api.avax-test.network/",
-                postfixUrl = AVALANCHE_POSTFIX,
+                postfixUrl = BASE_URL_LAST_PATH,
             ),
         )
+    }
+
+    private fun createPublicProvider(url: String): EthereumJsonRpcProvider {
+        return EthereumJsonRpcProvider.createWithPostfixIfContained(baseUrl = url, postfixUrl = BASE_URL_LAST_PATH)
     }
 
     private fun createNowNodesProvider(): EthereumJsonRpcProvider? {
         return config.nowNodeCredentials?.apiKey.letNotBlank {
             EthereumJsonRpcProvider(
                 baseUrl = "https://avax.nownodes.io/",
-                postfixUrl = AVALANCHE_POSTFIX,
+                postfixUrl = BASE_URL_LAST_PATH,
                 nowNodesApiKey = it, // special for Avalanche
             )
         }
@@ -46,12 +50,12 @@ internal class AvalancheProvidersBuilder(
         return config.getBlockCredentials?.avalanche?.jsonRpc.letNotBlank { avalancheToken ->
             EthereumJsonRpcProvider(
                 baseUrl = "https://go.getblock.io/$avalancheToken/",
-                postfixUrl = AVALANCHE_POSTFIX,
+                postfixUrl = BASE_URL_LAST_PATH,
             )
         }
     }
 
     private companion object {
-        const val AVALANCHE_POSTFIX = "ext/bc/C/rpc"
+        const val BASE_URL_LAST_PATH = "ext/bc/C/rpc"
     }
 }

@@ -22,9 +22,9 @@ internal class KoinosExternalLinkProvider(private val isTestnet: Boolean) : Exte
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
         return TxExploreState.Url(
             if (isTestnet) {
-                "$explorerBaseUrl/tx/$transactionHash"
+                "${explorerBaseUrl}tx/$transactionHash"
             } else {
-                "$explorerBaseUrl/transactions/$transactionHash"
+                "${explorerBaseUrl}mobile/transactions/$transactionHash"
             },
         )
     }

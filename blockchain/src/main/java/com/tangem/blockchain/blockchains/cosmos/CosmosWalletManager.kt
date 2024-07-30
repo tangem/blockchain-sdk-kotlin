@@ -7,8 +7,8 @@ import com.tangem.blockchain.blockchains.cosmos.network.CosmosRestProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.common.CompletionResult
 import com.tangem.crypto.CryptoUtils
 import java.math.BigDecimal
@@ -49,23 +49,15 @@ class CosmosWalletManager(
     }
 
     // TODO think about split base "send" method to "sign" and "send" to satisfy SRP
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
-        val accNumber = accountNumber ?: return SimpleResult.Failure(BlockchainSdkError.AccountNotFound())
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
+        val accNumber = accountNumber ?: return Result.Failure(BlockchainSdkError.AccountNotFound())
 
-        val hash = txBuilder.buildForSign(
-            amount = transactionData.amount,
-            source = wallet.address,
-            destination = transactionData.destinationAddress,
-            accountNumber = accNumber,
-            sequenceNumber = sequenceNumber,
-            feeAmount = transactionData.fee?.amount,
-            gas = gas?.toLong(),
-            extras = transactionData.extras as? CosmosTransactionExtras,
-        )
-
-        val message = when (val signature = signer.sign(hash, wallet.publicKey)) {
-            is CompletionResult.Success -> {
-                txBuilder.buildForSend(
+        val hash = when (transactionData) {
+            is TransactionData.Uncompiled -> {
+                txBuilder.buildForSign(
                     amount = transactionData.amount,
                     source = wallet.address,
                     destination = transactionData.destinationAddress,
@@ -74,29 +66,79 @@ class CosmosWalletManager(
                     feeAmount = transactionData.fee?.amount,
                     gas = gas?.toLong(),
                     extras = transactionData.extras as? CosmosTransactionExtras,
-                    signature = signature.data,
                 )
+            }
+            is TransactionData.Compiled -> {
+                txBuilder.buildForSign(
+                    compiledTransaction = transactionData.value,
+                    accountNumber = accNumber,
+                    sequenceNumber = sequenceNumber,
+                )
+            }
+        }
+
+        val message = when (val signature = signer.sign(hash, wallet.publicKey)) {
+            is CompletionResult.Success -> {
+                when (transactionData) {
+                    is TransactionData.Uncompiled -> {
+                        txBuilder.buildForSend(
+                            amount = transactionData.amount,
+                            source = wallet.address,
+                            destination = transactionData.destinationAddress,
+                            accountNumber = accNumber,
+                            sequenceNumber = sequenceNumber,
+                            feeAmount = transactionData.fee?.amount,
+                            gas = gas?.toLong(),
+                            extras = transactionData.extras as? CosmosTransactionExtras,
+                            signature = signature.data,
+                        )
+                    }
+                    is TransactionData.Compiled -> {
+                        txBuilder.buildForSend(
+                            compiledTransaction = transactionData.value,
+                            accountNumber = accNumber,
+                            sequenceNumber = sequenceNumber,
+                            signature = signature.data,
+                        )
+                    }
+                }
             }
 
             is CompletionResult.Failure -> {
-                return SimpleResult.fromTangemSdkError(signature.error)
+                return Result.fromTangemSdkError(signature.error)
             }
         }
 
         return sendToNetwork(transactionData, message)
     }
 
-    private suspend fun sendToNetwork(transactionData: TransactionData, message: String): SimpleResult {
+    private suspend fun sendToNetwork(
+        transactionData: TransactionData,
+        message: String,
+    ): Result<TransactionSendResult> {
         return when (val sendResult = networkService.send(message)) {
-            is Result.Failure -> SimpleResult.Failure(sendResult.error)
+            is Result.Failure -> sendResult
             is Result.Success -> {
-                val transaction = transactionData.copy(
-                    hash = sendResult.data,
-                    status = TransactionStatus.Unconfirmed,
-                    sourceAddress = wallet.address,
-                )
-                wallet.recentTransactions.add(transaction)
-                SimpleResult.Success
+                val hash = sendResult.data
+
+                val transaction = when (transactionData) {
+                    is TransactionData.Uncompiled -> {
+                        transactionData.copy(
+                            hash = hash,
+                            status = TransactionStatus.Unconfirmed,
+                            sourceAddress = wallet.address,
+                        )
+                    }
+                    is TransactionData.Compiled -> {
+                        transactionData.copy(
+                            hash = hash,
+                            status = TransactionStatus.Unconfirmed,
+                        )
+                    }
+                }
+                transactionData.hash = hash
+                wallet.addOutgoingTransaction(transaction)
+                Result.Success(TransactionSendResult(hash))
             }
         }
     }
@@ -131,7 +173,11 @@ class CosmosWalletManager(
                         .setScale(wallet.blockchain.decimals(), RoundingMode.DOWN)
                     tax(amount)?.let { feeValue += it }
                     cosmosChain.getExtraFee(amount)?.let { feeValue += it }
-                    Amount(value = feeValue, blockchain = wallet.blockchain)
+
+                    when (wallet.blockchain) {
+                        Blockchain.TerraV1 -> Amount(value = feeValue, amount = amount)
+                        else -> Amount(value = feeValue, blockchain = wallet.blockchain)
+                    }
                 }
 
                 when (amounts.size) {
@@ -184,7 +230,7 @@ class CosmosWalletManager(
         return when (amount.type) {
             is AmountType.Token -> {
                 val taxPercent =
-                    cosmosChain.taxPercentByContractAddress[amount.type.token.contractAddress] ?: return null
+                    cosmosChain.taxRateByContractAddress[amount.type.token.contractAddress] ?: return null
                 val amountValue = requireNotNull(amount.value) { "Amount must not be null" }
                 return amountValue * taxPercent
             }

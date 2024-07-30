@@ -24,12 +24,16 @@ import java.math.BigInteger
 /**
 [REDACTED_AUTHOR]
  */
-class PolkadotTransactionBuilder(blockchain: Blockchain) {
+class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
 
     private val decimals = blockchain.decimals()
 
     private val balanceTransferCallIndex: ByteArray = when (blockchain) {
-        Blockchain.Polkadot, Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> "0500".hexToBytes()
+        Blockchain.Polkadot,
+        Blockchain.AlephZero, Blockchain.AlephZeroTestnet,
+        Blockchain.Joystream,
+        Blockchain.Bittensor,
+        -> "0500".hexToBytes()
         Blockchain.PolkadotTestnet, Blockchain.Kusama -> "0400".hexToBytes()
         else -> error(
             "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}",
@@ -40,8 +44,10 @@ class PolkadotTransactionBuilder(blockchain: Blockchain) {
         val buffer = ByteArrayOutputStream()
         val codecWriter = ScaleCodecWriter(buffer)
 
-        encodeCall(codecWriter, amount, Address.from(destinationAddress))
+        encodeCall(codecWriter, amount, Address.from(destinationAddress), context.runtimeVersion)
         encodeEraNonceTip(codecWriter, context)
+
+        encodeCheckMetadataHashMode(codecWriter, context)
 
         codecWriter.writeUint32(context.runtimeVersion)
         codecWriter.writeUint32(context.txVersion)
@@ -51,6 +57,8 @@ class PolkadotTransactionBuilder(blockchain: Blockchain) {
         } else {
             codecWriter.writeUint256(context.eraBlockHash.bytes)
         }
+
+        encodeCheckMetadataHash(codecWriter, context)
 
         return buffer.toByteArray()
     }
@@ -68,7 +76,7 @@ class PolkadotTransactionBuilder(blockchain: Blockchain) {
 
         val type = Extrinsic.TYPE_BIT_SIGNED + (Extrinsic.TYPE_UNMASK_VERSION and 4)
         codecWriter.writeByte(type)
-        codecWriter.write(MultiAddressWriter(), Address.from(sourceAddress).toUnionAddress())
+        encodeAddress(codecWriter, Address.from(sourceAddress), context.runtimeVersion)
 
         val hash512 = Hash512(signedPayload)
         val signature = Extrinsic.ED25519Signature(hash512)
@@ -76,18 +84,23 @@ class PolkadotTransactionBuilder(blockchain: Blockchain) {
         codecWriter.writeByteArray(signature.value.bytes)
 
         encodeEraNonceTip(codecWriter, context)
-        encodeCall(codecWriter, amount, Address.from(destinationAddress))
+        encodeCheckMetadataHashMode(codecWriter, context)
+        encodeCall(codecWriter, amount, Address.from(destinationAddress), context.runtimeVersion)
 
         val prefixBuffer = ByteArrayOutputStream()
         ScaleCodecWriter(prefixBuffer).write(ScaleCodecWriter.COMPACT_UINT, txBuffer.size())
 
-        val transactionData = prefixBuffer.toByteArray() + txBuffer.toByteArray()
-        return transactionData
+        return prefixBuffer.toByteArray() + txBuffer.toByteArray()
     }
 
-    private fun encodeCall(codecWriter: ScaleCodecWriter, amount: Amount, destinationAddress: Address) {
+    private fun encodeCall(
+        codecWriter: ScaleCodecWriter,
+        amount: Amount,
+        destinationAddress: Address,
+        runtimeVersion: Int,
+    ) {
         codecWriter.writeByteArray(balanceTransferCallIndex)
-        codecWriter.write(MultiAddressWriter(), destinationAddress.toUnionAddress())
+        encodeAddress(codecWriter, destinationAddress, runtimeVersion)
 
         val amountToSend = amount.value?.movePointRight(decimals)?.toBigInteger() ?: BigInteger.ZERO
         codecWriter.write(ScaleCodecWriter.COMPACT_BIGINT, amountToSend)
@@ -97,6 +110,53 @@ class PolkadotTransactionBuilder(blockchain: Blockchain) {
         codecWriter.write(EraWriter(), context.era.toInteger())
         codecWriter.write(ScaleCodecWriter.COMPACT_BIGINT, BigInteger.valueOf(context.nonce))
         codecWriter.write(ScaleCodecWriter.COMPACT_BIGINT, context.tip.value)
+    }
+
+    private fun encodeCheckMetadataHashMode(codecWriter: ScaleCodecWriter, context: ExtrinsicContext) {
+        if (shouldUseCheckMetadataHash(specVersion = context.runtimeVersion)) {
+            codecWriter.write(ScaleCodecWriter.BOOL, false)
+        }
+    }
+
+    private fun encodeCheckMetadataHash(codecWriter: ScaleCodecWriter, context: ExtrinsicContext) {
+        if (shouldUseCheckMetadataHash(specVersion = context.runtimeVersion)) {
+            codecWriter.writeByte(0x0.toByte())
+        }
+    }
+
+    private fun shouldUseCheckMetadataHash(specVersion: Int): Boolean {
+        return SUPPORTED_CHECK_METADATA_HASH_BLOCKCHAINS.contains(blockchain) &&
+            specVersion >= USE_CHECK_METADATA_HASH_SPEC_VERSION
+    }
+
+    private fun encodeAddress(codecWriter: ScaleCodecWriter, address: Address, runtimeVersion: Int) {
+        if (needEncodeRawAddress(blockchain, runtimeVersion)) {
+            codecWriter.writeByteArray(address.pubkey)
+        } else {
+            codecWriter.write(MultiAddressWriter(), address.toUnionAddress())
+        }
+    }
+
+    private fun needEncodeRawAddress(blockchain: Blockchain, runtimeVersion: Int): Boolean {
+        return when (blockchain) {
+            Blockchain.Polkadot -> runtimeVersion < POLKA_RAW_ADDRESS_RUNTIME_VERSION
+            Blockchain.Kusama -> runtimeVersion < KUSAMA_RAW_ADDRESS_RUNTIME_VERSION
+            Blockchain.Joystream -> true
+            else -> false
+        }
+    }
+
+    private companion object {
+        const val POLKA_RAW_ADDRESS_RUNTIME_VERSION = 28
+        const val KUSAMA_RAW_ADDRESS_RUNTIME_VERSION = 2028
+
+        const val USE_CHECK_METADATA_HASH_SPEC_VERSION = 1002005
+
+        val SUPPORTED_CHECK_METADATA_HASH_BLOCKCHAINS = listOf(
+            Blockchain.Polkadot,
+            Blockchain.PolkadotTestnet,
+            Blockchain.Kusama,
+        )
     }
 }
 

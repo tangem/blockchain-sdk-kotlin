@@ -6,12 +6,11 @@ import com.tangem.blockchain.blockchains.radiant.network.RadiantNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.extensions.toSimpleFailure
+import com.tangem.blockchain.extensions.createWalletCorePublicKey
 import com.tangem.blockchain.network.electrum.ElectrumNetworkProvider
 import com.tangem.common.CompletionResult
-import wallet.core.jni.PublicKey
 import wallet.core.jni.PublicKeyType
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -39,6 +38,9 @@ internal class RadiantWalletManager(
     }
 
     private fun updateWallet(accountModel: RadiantAccountInfo) {
+        if (accountModel.balance != wallet.amounts[AmountType.Coin]?.value) {
+            wallet.recentTransactions.clear()
+        }
         wallet.setCoinValue(accountModel.balance)
         transactionBuilder.setUnspentOutputs(accountModel.unspentOutputs)
     }
@@ -48,13 +50,17 @@ internal class RadiantWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         return try {
             val hashesForSign = transactionBuilder.buildForSign(transactionData)
             when (val signatureResult = signer.sign(hashes = hashesForSign, publicKey = wallet.publicKey)) {
                 is CompletionResult.Success -> {
                     val signatures = signatureResult.data
-                    val walletCorePublicKey = PublicKey(wallet.publicKey.blockchainKey, PublicKeyType.SECP256K1)
+                    val walletCorePublicKey =
+                        createWalletCorePublicKey(wallet.publicKey.blockchainKey, PublicKeyType.SECP256K1)
                     if (signatures.count() != hashesForSign.count()) {
                         throw BlockchainSdkError.FailedToBuildTx
                     }
@@ -68,20 +74,21 @@ internal class RadiantWalletManager(
                     val rawTx = transactionBuilder.buildForSend(transactionData, signatures)
                     when (val sendResult = networkService.sendTransaction(rawTx)) {
                         is Result.Success -> {
-                            transactionData.hash = sendResult.data
+                            val hash = sendResult.data
+                            transactionData.hash = hash
                             wallet.addOutgoingTransaction(transactionData, hashToLowercase = false)
 
-                            SimpleResult.Success
+                            Result.Success(TransactionSendResult(hash))
                         }
-                        is Result.Failure -> sendResult.toSimpleFailure()
+                        is Result.Failure -> sendResult
                     }
                 }
-                is CompletionResult.Failure -> SimpleResult.Failure(signatureResult.error.toBlockchainSdkError())
+                is CompletionResult.Failure -> Result.fromTangemSdkError(signatureResult.error)
             }
         } catch (e: BlockchainSdkError) {
-            SimpleResult.Failure(e)
+            Result.Failure(e)
         } catch (e: Exception) {
-            SimpleResult.Failure(BlockchainSdkError.FailedToSendException)
+            Result.Failure(BlockchainSdkError.FailedToSendException)
         }
     }
 
@@ -91,7 +98,7 @@ internal class RadiantWalletManager(
                 is Result.Failure -> return feeResult
                 is Result.Success -> {
                     val transactionSize = transactionBuilder.estimateTransactionSize(
-                        transaction = TransactionData(
+                        transactionData = TransactionData.Uncompiled(
                             amount = amount,
                             fee = Fee.Common(Amount(amount, feeResult.data.minimalPerKb)),
                             sourceAddress = wallet.address,

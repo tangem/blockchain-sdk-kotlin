@@ -7,11 +7,11 @@ import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
-import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.bigIntegerValue
 import com.tangem.blockchain.extensions.decodeBase58
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toHexString
@@ -19,12 +19,12 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 
-class TronWalletManager(
+internal class TronWalletManager(
     wallet: Wallet,
     transactionHistoryProvider: TransactionHistoryProvider,
     private val transactionBuilder: TronTransactionBuilder,
     private val networkService: TronNetworkService,
-) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider), TransactionSender {
+) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider), TransactionSender, Approver {
 
     override val currentHost: String = networkService.host
 
@@ -62,24 +62,30 @@ class TronWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
         val signResult = signTransactionData(
             amount = transactionData.amount,
             source = wallet.address,
             destination = transactionData.destinationAddress,
             signer = signer,
             publicKey = wallet.publicKey,
+            extras = transactionData.extras as? TronTransactionExtras,
         )
         return when (signResult) {
-            is Result.Failure -> SimpleResult.Failure(signResult.error)
+            is Result.Failure -> Result.Failure(signResult.error)
             is Result.Success -> {
                 when (val sendResult = networkService.broadcastHex(signResult.data)) {
-                    is Result.Failure -> SimpleResult.Failure(sendResult.error)
+                    is Result.Failure -> Result.Failure(sendResult.error)
                     is Result.Success -> {
-                        wallet.addOutgoingTransaction(
-                            transactionData.copy(hash = sendResult.data.txid),
-                        )
-                        SimpleResult.Success
+                        val hash = sendResult.data.txid
+                        transactionData.hash = hash
+                        wallet.addOutgoingTransaction(transactionData.updateHash(hash = hash))
+                        Result.Success(TransactionSendResult(hash))
                     }
                 }
             }
@@ -94,11 +100,12 @@ class TronWalletManager(
             val resourceDef = async { networkService.getAccountResource(wallet.address) }
             val transactionDataDef = async {
                 signTransactionData(
-                    amount,
-                    wallet.address,
-                    destination,
-                    dummySigner,
-                    dummySigner.publicKey,
+                    amount = amount,
+                    source = wallet.address,
+                    destination = destination,
+                    signer = dummySigner,
+                    publicKey = dummySigner.publicKey,
+                    extras = null,
                 )
             }
 
@@ -140,12 +147,14 @@ class TronWalletManager(
         }
     }
 
+    @Suppress("LongParameterList")
     private suspend fun signTransactionData(
         amount: Amount,
         source: String,
         destination: String,
         signer: TransactionSigner,
         publicKey: Wallet.PublicKey,
+        extras: TronTransactionExtras?,
     ): Result<ByteArray> {
         return when (val result = networkService.getNowBlock()) {
             is Result.Failure -> {
@@ -154,10 +163,11 @@ class TronWalletManager(
 
             is Result.Success -> {
                 val transactionToSign = transactionBuilder.buildForSign(
-                    amount,
-                    source,
-                    destination,
-                    result.data,
+                    amount = amount,
+                    source = source,
+                    destination = destination,
+                    block = result.data,
+                    extras = extras,
                 )
                 when (
                     val signResult =
@@ -186,7 +196,7 @@ class TronWalletManager(
                 val unmarshalledSignature = if (publicKey == dummySigner.publicKey) {
                     result.data + ByteArray(1)
                 } else {
-                    UnmarshalHelper().unmarshalSignature(result.data, transactionToSign, publicKey)
+                    UnmarshalHelper().unmarshalSignatureEVMLegacy(result.data, transactionToSign, publicKey)
                 }
                 Result.Success(unmarshalledSignature)
             }
@@ -200,16 +210,16 @@ class TronWalletManager(
     private suspend fun getEnergyFee(amount: Amount, destination: String): Result<Int> {
         val token = when (amount.type) {
             AmountType.Coin -> return Result.Success(0)
-            AmountType.Reserve -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
             is AmountType.Token -> amount.type.token
+            else -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         }
         val addressData = destination.decodeBase58(checked = true)
-            ?.padLeft(BYTE_ARRAY_SIZE)
+            ?.padLeft(TRON_BYTE_ARRAY_PADDING_SIZE)
             ?: byteArrayOf()
 
         val amountData = amount.bigIntegerValue()
             ?.toByteArray()
-            ?.padLeft(BYTE_ARRAY_SIZE)
+            ?.padLeft(TRON_BYTE_ARRAY_PADDING_SIZE)
             ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
         val parameter = (addressData + amountData).toHexString()
@@ -252,11 +262,19 @@ class TronWalletManager(
         val paddingSize = Ints.max(length - this.size, 0)
         return ByteArray(paddingSize) + this
     }
+
+    override suspend fun getAllowance(spenderAddress: String, token: Token): Result<BigDecimal> {
+        return networkService.getAllowance(wallet.address, token, spenderAddress)
+    }
+
+    override fun getApproveData(spenderAddress: String, value: Amount?): String {
+        return createTrc20ApproveDataHex(spenderAddress, value)
+    }
+
+    private companion object {
+        /**
+         * Value taken from [TIP-491](https://github.com/tronprotocol/tips/issues/491)
+         */
+        const val ENERGY_FACTOR_PRECISION = 10_000
+    }
 }
-
-/**
- * Value taken from [TIP-491](https://github.com/tronprotocol/tips/issues/491)
- */
-private const val ENERGY_FACTOR_PRECISION = 10_000
-
-private const val BYTE_ARRAY_SIZE = 32

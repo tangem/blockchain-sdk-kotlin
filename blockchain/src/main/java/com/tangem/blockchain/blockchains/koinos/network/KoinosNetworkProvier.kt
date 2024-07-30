@@ -5,6 +5,7 @@ import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.koinos.KoinContractAbi
 import com.tangem.blockchain.blockchains.koinos.models.KoinosTransactionEntry
+import com.tangem.blockchain.blockchains.koinos.network.dto.KoinosChain
 import com.tangem.blockchain.blockchains.koinos.network.dto.KoinosMethod
 import com.tangem.blockchain.blockchains.koinos.network.dto.KoinosProtocol
 import com.tangem.blockchain.common.BlockchainSdkError
@@ -22,7 +23,7 @@ import retrofit2.http.POST
 import java.math.BigInteger
 
 private interface KoinosRetrofitJsonRPCApi {
-    @POST("/")
+    @POST(" ")
     suspend fun send(@Header("apikey") apiKey: String? = null, @Body body: JsonRPCRequest): JsonRPCResponse
 }
 
@@ -83,6 +84,16 @@ internal class KoinosNetworkProvier(
             api.send(apiKey, request).parseResult<KoinosMethod.GetAccountNonce.Response>()
         }.map {
             it.decode() ?: return decodeFailure(it.nonceTypeName)
+        }
+    }
+
+    suspend fun getResourceLimits(): Result<KoinosChain.ResourceLimitData> {
+        val request = KoinosMethod.GetResourceLimits.asRequest()
+
+        return catchNetworkError {
+            api.send(apiKey, request).parseResult<KoinosMethod.GetResourceLimits.Response>()
+        }.map {
+            it.resourceLimitData
         }
     }
 
@@ -255,8 +266,8 @@ internal class KoinosNetworkProvier(
     ): Result<T> {
         return if (error != null) {
             Result.Failure(
-                if (error.code == BlockchainSdkError.Koinos.InsufficientMana.code) {
-                    BlockchainSdkError.Koinos.InsufficientMana
+                if (error.code == BlockchainSdkError.Koinos.InsufficientMana().code) {
+                    BlockchainSdkError.Koinos.InsufficientMana()
                 } else {
                     BlockchainSdkError.Koinos.Api(
                         code = error.code,
