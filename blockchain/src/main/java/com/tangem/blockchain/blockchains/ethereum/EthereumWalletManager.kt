@@ -5,12 +5,11 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.TransactionFee
-import com.tangem.blockchain.common.transaction.TransactionSendResult
+import com.tangem.blockchain.common.txhistory.DefaultTransactionHistoryProvider
+import com.tangem.blockchain.common.txhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
-import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
-import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -70,10 +69,7 @@ open class EthereumWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    override suspend fun send(
-        transactionData: TransactionData,
-        signer: TransactionSigner,
-    ): Result<TransactionSendResult> {
+    override suspend fun send(transactionData: TransactionData, signer: TransactionSigner): SimpleResult {
         return when (val signResponse = sign(transactionData, signer)) {
             is Result.Success -> {
                 val transactionToSend = transactionBuilder
@@ -84,18 +80,14 @@ open class EthereumWalletManager(
                 val sendResult = networkProvider
                     .sendTransaction(transactionToSend.toHexString())
 
-                when (sendResult) {
-                    is SimpleResult.Success -> {
-                        val hash = transactionToSend.keccak().toHexString()
-                        transactionData.hash = hash
-                        wallet.addOutgoingTransaction(transactionData)
-                        Result.Success(TransactionSendResult(hash))
-                    }
-                    is SimpleResult.Failure -> Result.fromTangemSdkError(sendResult.error)
+                if (sendResult is SimpleResult.Success) {
+                    transactionData.hash = transactionToSend.keccak().toHexString()
+                    wallet.addOutgoingTransaction(transactionData)
                 }
+                sendResult
             }
 
-            is Result.Failure -> Result.fromTangemSdkError(signResponse.error)
+            is Result.Failure -> SimpleResult.fromTangemSdkError(signResponse.error)
         }
     }
 
@@ -230,38 +222,6 @@ open class EthereumWalletManager(
         destination: String,
         data: String? = null,
     ): Result<BigInteger> {
-        if (!calculateIteratively()) {
-            return sendGasLimitRequest(amount, destination, data)
-        }
-
-        var delta = MANTLE_FEE_GAP_INITIAL_VALUE
-        var newAmount = amount
-
-        for (i in 1..MANTLE_FEE_CALCULATION_STEPS_COUNT) {
-            when (val result = sendGasLimitRequest(newAmount, destination, data)) {
-                is Result.Success -> {
-                    return result
-                }
-                is Result.Failure -> {
-                    if (i == MANTLE_FEE_CALCULATION_STEPS_COUNT ||
-                        result.error.cause !is BlockchainSdkError.Ethereum.InsufficientFunds) {
-                        return result
-                    }
-                }
-            }
-
-            newAmount = amount.copy(value = amount.value?.minus(delta))
-            delta *= BigDecimal(10)
-        }
-
-        return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-    }
-
-    private suspend fun sendGasLimitRequest(
-        amount: Amount,
-        destination: String,
-        data: String? = null,
-    ): Result<BigInteger> {
         val from = wallet.address
         var to = destination
         var value: String? = null
@@ -285,14 +245,5 @@ open class EthereumWalletManager(
         }
 
         return networkProvider.getGasLimit(to, from, value, finalData)
-    }
-
-    private fun calculateIteratively(): Boolean {
-        return wallet.blockchain == Blockchain.Mantle || wallet.blockchain == Blockchain.MantleTestnet
-    }
-
-    companion object {
-        val MANTLE_FEE_GAP_INITIAL_VALUE = BigDecimal("1E-9")
-        const val MANTLE_FEE_CALCULATION_STEPS_COUNT = 5
     }
 }
