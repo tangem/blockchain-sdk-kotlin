@@ -76,30 +76,15 @@ open class EthereumNetworkService(
         }
     }
 
-    override suspend fun getTxCountInfo(address: String): Result<EthereumTxCountInfo> {
+    override suspend fun getPendingTxCount(address: String): Result<Long> {
         return try {
-            coroutineScope {
-                val txCountResponseDeferred = async {
-                    multiJsonRpcProvider.performRequest(EthereumJsonRpcProvider::getTxCount, address)
-                }
-                val pendingTxCountResponseDeferred = async {
-                    multiJsonRpcProvider.performRequest(EthereumJsonRpcProvider::getPendingTxCount, address)
-                }
-                Result.Success(
-                    EthereumTxCountInfo(
-                        pendingTxCount = pendingTxCountResponseDeferred
-                            .await()
-                            .extractResult()
-                            .responseToBigInteger()
-                            .toLong(),
-                        txCount = txCountResponseDeferred
-                            .await()
-                            .extractResult()
-                            .responseToBigInteger()
-                            .toLong(),
-                    ),
-                )
-            }
+            val response = multiJsonRpcProvider.performRequest(EthereumJsonRpcProvider::getPendingTxCount, address)
+            Result.Success(
+                response
+                    .extractResult()
+                    .responseToBigInteger()
+                    .toLong(),
+            )
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
