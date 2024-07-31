@@ -167,22 +167,11 @@ internal class CosmosTransactionBuilder(
         accountNumber: Long,
         sequenceNumber: Long,
     ): Cosmos.SigningInput {
-        val delegatorMessage = protoMessage.delegateContainer.delegate.delegateData
-        val amountMessage = delegatorMessage.delegateAmount
         val feeMessage = protoMessage.feeAndKeyContainer.feeContainer
         val feeValue = feeMessage.feeAmount
 
-        val sendCoinsMessage = Cosmos.Message.Delegate.newBuilder()
-            .setAmount(
-                Cosmos.Amount.newBuilder()
-                    .setAmount(amountMessage.amount)
-                    .setDenom(amountMessage.denomination),
-            )
-            .setDelegatorAddress(delegatorMessage.delegatorAddress)
-            .setValidatorAddress(delegatorMessage.validatorAddress)
-            .build()
         val message = Cosmos.Message.newBuilder()
-            .setStakeMessage(sendCoinsMessage)
+            .createStakeMessage(protoMessage.delegateContainer.delegate)
             .build()
         val fee = Cosmos.Fee.newBuilder()
             .setGas(feeMessage.gas)
@@ -244,6 +233,52 @@ internal class CosmosTransactionBuilder(
         return output.serialized
     }
 
+    private fun Cosmos.Message.Builder.createStakeMessage(
+        message: CosmosProtoMessage.CosmosMessageDelegate,
+    ): Cosmos.Message.Builder {
+        val type = message.messageType
+
+        return when {
+            type.contains(COSMOS_DELEGATE_MESSAGE) -> {
+                message.delegateData.delegateAmount?.let { delegateAmount ->
+                    val sendCoinsMessage = Cosmos.Message.Delegate.newBuilder()
+                        .setAmount(
+                            Cosmos.Amount.newBuilder()
+                                .setAmount(delegateAmount.amount)
+                                .setDenom(delegateAmount.denomination),
+                        )
+                        .setDelegatorAddress(message.delegateData.delegatorAddress)
+                        .setValidatorAddress(message.delegateData.validatorAddress)
+                        .build()
+                    this.setStakeMessage(sendCoinsMessage)
+                } ?: this
+            }
+            type.contains(COSMOS_WITHDRAW_MESSAGE) -> {
+                val withdrawMessage = Cosmos.Message.WithdrawDelegationReward.newBuilder()
+                    .setDelegatorAddress(message.delegateData.delegatorAddress)
+                    .setValidatorAddress(message.delegateData.validatorAddress)
+                    .build()
+
+                this.setWithdrawStakeRewardMessage(withdrawMessage)
+            }
+            type.contains(COSMOS_UNDELEGATE_MESSAGE) -> {
+                message.delegateData.delegateAmount?.let { delegateAmount ->
+                    val undelegateMessage = Cosmos.Message.Undelegate.newBuilder()
+                        .setAmount(
+                            Cosmos.Amount.newBuilder()
+                                .setAmount(delegateAmount.amount)
+                                .setDenom(delegateAmount.denomination),
+                        )
+                        .setDelegatorAddress(message.delegateData.delegatorAddress)
+                        .setValidatorAddress(message.delegateData.validatorAddress)
+                        .build()
+                    this.setUnstakeMessage(undelegateMessage)
+                } ?: this
+            }
+            else -> this
+        }
+    }
+
     private fun denomination(amount: Amount): String {
         return when (amount.type) {
             AmountType.Coin -> cosmosChain.smallestDenomination
@@ -254,5 +289,11 @@ internal class CosmosTransactionBuilder(
 
             else -> throw BlockchainSdkError.FailedToBuildTx
         }
+    }
+
+    private companion object {
+        const val COSMOS_DELEGATE_MESSAGE = "MsgDelegate"
+        const val COSMOS_WITHDRAW_MESSAGE = "MsgWithdrawDelegatorReward"
+        const val COSMOS_UNDELEGATE_MESSAGE = "MsgUndelegate"
     }
 }
