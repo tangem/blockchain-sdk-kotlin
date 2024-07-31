@@ -103,11 +103,11 @@ open class EthereumWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
-        val ethereumTxCountInfo = networkProvider.getTxCountInfo(wallet.address)
+        val pendingTxCount = networkProvider.getPendingTxCount(wallet.address)
             .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) }
         val transactionToSign = transactionBuilder.buildToSign(
             transactionData = transactionData,
-            nonce = ethereumTxCountInfo.pendingTxCount.toBigInteger(),
+            nonce = pendingTxCount.toBigInteger(),
         ) ?: return Result.Failure(BlockchainSdkError.CustomError("Not enough data"))
 
         return when (val signResponse = signer.sign(transactionToSign.hash, wallet.publicKey)) {
