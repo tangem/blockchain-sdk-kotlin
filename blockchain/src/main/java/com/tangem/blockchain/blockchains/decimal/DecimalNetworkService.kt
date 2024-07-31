@@ -3,7 +3,6 @@ package com.tangem.blockchain.blockchains.decimal
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
-import com.tangem.blockchain.blockchains.ethereum.network.EthereumTxCountInfo
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.blockchair.BlockchairToken
@@ -18,8 +17,8 @@ class DecimalNetworkService(
         return super.getInfo(convertAddress(address), tokens)
     }
 
-    override suspend fun getTxCountInfo(address: String): Result<EthereumTxCountInfo> {
-        return super.getTxCountInfo(convertAddress(address))
+    override suspend fun getPendingTxCount(address: String): Result<Long> {
+        return super.getPendingTxCount(convertAddress(address))
     }
 
     override suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<BigDecimal> {
