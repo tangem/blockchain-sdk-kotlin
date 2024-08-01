@@ -220,7 +220,6 @@ open class EthereumNetworkService(
                             message = errorMessage,
                         )
                     }
-
                 } ?: BlockchainSdkError.CustomError("Unknown response format")
         }
         is Result.Failure -> {
