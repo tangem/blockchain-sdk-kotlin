@@ -145,10 +145,12 @@ class WalletManagerFactory(
             Blockchain.Moonbeam, Blockchain.MoonbeamTestnet,
             Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet,
             Blockchain.Moonriver, Blockchain.MoonriverTestnet,
-            Blockchain.Mantle, Blockchain.MantleTestnet,
             Blockchain.Flare, Blockchain.FlareTestnet,
             Blockchain.Taraxa, Blockchain.TaraxaTestnet,
             -> EthereumLikeWalletManagerAssembly
+
+            Blockchain.Mantle, Blockchain.MantleTestnet,
+            -> MantleWalletManagerAssembly
 
             Blockchain.Decimal, Blockchain.DecimalTestnet -> DecimalWalletManagerAssembly
             Blockchain.XDC, Blockchain.XDCTestnet -> XDCWalletManagerAssembly
