@@ -176,7 +176,7 @@ internal class SolanaNetworkService(
         }
     }
 
-    suspend fun sendTransaction(signedTransaction: SolanaTransaction): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun sendTransaction(signedTransaction: ByteArray): Result<String> = withContext(Dispatchers.IO) {
         try {
             val result = provider.api.sendSignedTransaction(signedTransaction)
             Result.Success(result)

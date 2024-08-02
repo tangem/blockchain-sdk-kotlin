@@ -22,6 +22,10 @@ class SolanaTransaction(
         throw UnsupportedOperationException()
     }
 
+    fun setSerializedMessage(serializedMessage: ByteArray) {
+        this.serializedMessage = serializedMessage
+    }
+
     fun getSerializedMessage(): ByteArray {
         serializedMessage = message.serialize()
         return serializedMessage
