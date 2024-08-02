@@ -202,6 +202,7 @@ internal class WalletManagerFactoryTest {
                     polygonZkEvm = GetBlockAccessToken(),
                     base = GetBlockAccessToken(),
                     blast = GetBlockAccessToken(),
+                    filecoin = GetBlockAccessToken(),
                 ),
                 tronGridApiKey = "",
                 chiaFireAcademyApiKey = "",
