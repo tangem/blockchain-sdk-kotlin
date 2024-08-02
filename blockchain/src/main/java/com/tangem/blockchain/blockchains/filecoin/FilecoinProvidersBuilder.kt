@@ -30,7 +30,7 @@ internal class FilecoinProvidersBuilder(
     private fun createPublicNetworkProvider(baseUrl: String): FilecoinNetworkProvider {
         return createWithPostfixIfContained(
             baseUrl = baseUrl,
-            postfixUrl = BASE_URL_LAST_PATH,
+            postfixUrl = POSTFIX_URL,
             create = ::FilecoinRpcNetworkProvider,
         )
     }
@@ -39,7 +39,7 @@ internal class FilecoinProvidersBuilder(
         return config.nowNodeCredentials?.apiKey?.letNotBlank {
             FilecoinRpcNetworkProvider(
                 baseUrl = "https://fil.nownodes.io/",
-                postfixUrl = BASE_URL_LAST_PATH,
+                postfixUrl = POSTFIX_URL,
                 headerInterceptors = listOf(
                     AddHeaderInterceptor(mapOf(NowNodeCredentials.headerApiKey to it)),
                 ),
@@ -49,11 +49,11 @@ internal class FilecoinProvidersBuilder(
 
     private fun createGetBlockNetworkProvider(): FilecoinNetworkProvider? {
         return config.getBlockCredentials?.filecoin?.jsonRpc?.letNotBlank {
-            FilecoinRpcNetworkProvider(baseUrl = "https://go.getblock.io/$it/", postfixUrl = BASE_URL_LAST_PATH)
+            FilecoinRpcNetworkProvider(baseUrl = "https://go.getblock.io/$it/", postfixUrl = POSTFIX_URL)
         }
     }
 
     private companion object {
-        const val BASE_URL_LAST_PATH = "rpc/v1"
+        const val POSTFIX_URL = "rpc/v1"
     }
 }
