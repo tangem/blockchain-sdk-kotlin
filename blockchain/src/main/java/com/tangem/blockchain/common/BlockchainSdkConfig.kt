@@ -62,6 +62,7 @@ data class GetBlockCredentials(
     val zkSyncEra: GetBlockAccessToken?,
     val base: GetBlockAccessToken?,
     val blast: GetBlockAccessToken?,
+    val filecoin: GetBlockAccessToken?,
 )
 
 data class GetBlockAccessToken(
