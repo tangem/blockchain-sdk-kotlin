@@ -60,7 +60,6 @@ class MantleWalletManager(
 
                 super.sign(
                     transactionData = transactionData.copy(
-                        amount = transactionData.amount.minus(ONE_WEI),
                         fee = patchedFee,
                         // Presence of extras is a workaround for correct gasPrice calculation in EthereumUtils
                         // This scenario needs to be reworked
