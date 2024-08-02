@@ -154,7 +154,7 @@ internal class KoinosWalletManagerTest {
     }
 
     private fun transactionData(amount: Float, fee: Float): TransactionData {
-        return TransactionData(
+        return TransactionData.Uncompiled(
             amount = coinAmount(amount),
             fee = Common(manaAmount(fee)),
             sourceAddress = "",

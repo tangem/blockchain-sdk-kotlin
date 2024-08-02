@@ -141,6 +141,8 @@ class EthereumOptimisticRollupWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
+        transactionData.requireUncompiled()
+
         // We need to subtract layer 1 fee, because it is deducted automatically
         // and should not be included into transaction for signing
         // https://help.optimism.io/hc/en-us/articles/4411895794715
