@@ -137,7 +137,7 @@ internal class HederaWalletManager(
                         val sendResult = signAndSendTransaction(signer = signer, builtTransaction = transaction.data)
                         if (sendResult is Result.Success) {
                             wallet.addOutgoingTransaction(
-                                transactionData = TransactionData(
+                                transactionData = TransactionData.Uncompiled(
                                     amount = Amount(token = currencyType.info),
                                     fee = Fee.Common(Amount(blockchain = blockchain)),
                                     sourceAddress = wallet.address,
