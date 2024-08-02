@@ -6,6 +6,9 @@ import com.tangem.blockchain.blockchains.filecoin.network.converters.FilecoinTra
 /**
  * Factory for creating [FilecoinRpcBody]
  *
+ * @see <a href="https://github.com/filecoin-project/lotus/tree/master/node/impl/full">Filecoin JSON-RPC
+ * implementations</a>
+ *
 [REDACTED_AUTHOR]
  */
 internal object FilecoinRpcBodyFactory {
@@ -21,28 +24,15 @@ internal object FilecoinRpcBodyFactory {
     )
 
     /**
-     * Create get gas unit price body
+     * Create get message gas body
      *
      * @param transactionInfo transaction info
      */
-    fun createGetGasUnitPriceBody(transactionInfo: FilecoinTxInfo) = create(
-        method = FilecoinRpcBody.Method.GetGasUnitPrice,
+    fun createGetMessageGasBody(transactionInfo: FilecoinTxInfo) = create(
+        method = FilecoinRpcBody.Method.GetMessageGas,
         params = listOf<Any?>(
             FilecoinTransactionBodyConverter.convert(from = transactionInfo),
             null,
-            null,
-        ),
-    )
-
-    /**
-     * Create get gas limit body
-     *
-     * @param transactionInfo transaction info
-     */
-    fun createGetGasLimitBody(transactionInfo: FilecoinTxInfo) = create(
-        method = FilecoinRpcBody.Method.GetGasLimit,
-        params = listOf<Any?>(
-            FilecoinTransactionBodyConverter.convert(from = transactionInfo),
             null,
         ),
     )
