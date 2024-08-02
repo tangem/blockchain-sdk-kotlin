@@ -2,9 +2,11 @@ package com.tangem.blockchain.blockchains.filecoin.network.provider
 
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.filecoin.models.FilecoinAccountInfo
+import com.tangem.blockchain.blockchains.filecoin.models.FilecoinTxGasInfo
 import com.tangem.blockchain.blockchains.filecoin.models.FilecoinTxInfo
 import com.tangem.blockchain.blockchains.filecoin.network.FilecoinApi
 import com.tangem.blockchain.blockchains.filecoin.network.FilecoinNetworkProvider
+import com.tangem.blockchain.blockchains.filecoin.network.converters.FilecoinTxGasInfoConverter
 import com.tangem.blockchain.blockchains.filecoin.network.request.FilecoinRpcBody
 import com.tangem.blockchain.blockchains.filecoin.network.request.FilecoinRpcBodyFactory
 import com.tangem.blockchain.blockchains.filecoin.network.request.FilecoinSignedTransactionBody
@@ -30,7 +32,7 @@ import java.math.BigDecimal
 internal class FilecoinRpcNetworkProvider(
     override val baseUrl: String,
     private val postfixUrl: String,
-    headerInterceptors: List<Interceptor>,
+    headerInterceptors: List<Interceptor> = emptyList(),
 ) : FilecoinNetworkProvider {
 
     private val api = createRetrofitInstance(baseUrl, headerInterceptors).create(FilecoinApi::class.java)
@@ -47,17 +49,10 @@ internal class FilecoinRpcNetworkProvider(
         )
     }
 
-    override suspend fun estimateGasUnitPrice(transactionInfo: FilecoinTxInfo): Result<Long> {
+    override suspend fun estimateMessageGas(transactionInfo: FilecoinTxInfo): Result<FilecoinTxGasInfo> {
         return post(
-            body = FilecoinRpcBodyFactory.createGetGasUnitPriceBody(transactionInfo),
-            onSuccess = String::toLong,
-        )
-    }
-
-    override suspend fun estimateGasLimit(transactionInfo: FilecoinTxInfo): Result<Long> {
-        return post(
-            body = FilecoinRpcBodyFactory.createGetGasLimitBody(transactionInfo),
-            onSuccess = Double::toLong,
+            body = FilecoinRpcBodyFactory.createGetMessageGasBody(transactionInfo),
+            onSuccess = FilecoinTxGasInfoConverter::convert,
         )
     }
 
