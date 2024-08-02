@@ -29,15 +29,8 @@ import java.math.BigInteger
 @Suppress("MagicNumber", "LargeClass", "LongParameterList")
 object EthereumUtils {
     private val tokenApproveSignature = "approve(address,uint256)".toByteArray().toKeccak().copyOf(4)
-    private val setSpendLimitSignature = "setSpendLimit(address,uint256)".toByteArray().toKeccak().copyOf(4)
-    private val initOTPSignature = "initOTP(bytes16,uint16)".toByteArray().toKeccak().copyOf(4) // 0x0ac81ec3
-    private val setWalletSignature = "setWallet(address)".toByteArray().toKeccak().copyOf(4) // 0xdeaa59df
     private val processSignature =
         "process(address,uint256,bytes16,uint16)".toByteArray().toKeccak().copyOf(4) // 0x960cab120
-    private val tokenTransferFromSignature =
-        "transferFrom(address,address,uint256)".toByteArray().toKeccak().copyOf(
-            4,
-        )
 
     private const val HEX_PREFIX = "0x"
     private const val HEX_F = "f"
@@ -100,6 +93,8 @@ object EthereumUtils {
         nonce: BigInteger?,
         blockchain: Blockchain,
     ): CompiledEthereumTransaction? {
+        transactionData.requireUncompiled()
+
         val extras = transactionData.extras as? EthereumTransactionExtras
 
         val nonceValue = extras?.nonce ?: nonce ?: return null
@@ -119,7 +114,7 @@ object EthereumUtils {
             to = Address(transactionData.destinationAddress)
             value = bigIntegerAmount
             input = ByteArray(0)
-        } else { // token transfer
+        } else { // token transfer (or approve)
             to = Address(
                 transactionData.contractAddress
                     ?: error("Contract address is not specified!"),
@@ -139,7 +134,7 @@ object EthereumUtils {
             gasPrice = fee.divide(gasLimitToUse),
             gasLimit = gasLimitToUse,
             nonce = nonceValue,
-            input = extras?.data ?: input,
+            input = extras?.data ?: input, // use data from extras prefer (TODO refactor this)
         )
         val chainId = blockchain.getChainId()
             ?: error("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
@@ -182,266 +177,6 @@ object EthereumUtils {
         return transactionToSign.transaction.encode(signatureData)
     }
 
-    fun buildApproveToSign(
-        transactionData: TransactionData,
-        nonce: BigInteger?,
-        blockchain: Blockchain,
-        gasLimit: BigInteger?,
-    ): CompiledEthereumTransaction? {
-        if (transactionData.amount.type == AmountType.Coin) return null
-
-        val extras = transactionData.extras as? EthereumTransactionExtras
-        val nonceValue = extras?.nonce ?: nonce ?: return null
-        val amount: BigDecimal = transactionData.amount.value ?: return null
-        val transactionFee: BigDecimal = transactionData.fee?.amount?.value ?: return null
-
-        val fee = transactionFee.movePointRight(transactionData.fee.amount.decimals).toBigInteger()
-        val bigIntegerAmount = amount.movePointRight(transactionData.amount.decimals).toBigInteger()
-
-        val to = Address(
-            transactionData.contractAddress
-                ?: error("Contract address is not specified!"),
-        )
-        val value = BigInteger.ZERO
-        val input = createErc20ApproveData(transactionData.destinationAddress, bigIntegerAmount)
-
-        val gasLimitToUse = extras?.gasLimit ?: gasLimit ?: return null
-
-        val transaction = createTransactionWithDefaults(
-            from = Address(transactionData.sourceAddress),
-            to = to,
-            value = value,
-            gasPrice = fee.divide(gasLimitToUse),
-            gasLimit = extras?.gasLimit ?: gasLimitToUse,
-            nonce = nonceValue,
-            input = extras?.data ?: input,
-        )
-        val chainId = blockchain.getChainId()
-            ?: error("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
-
-        val hash = transaction
-            .encode(SignatureData(v = chainId.toBigInteger()))
-            .keccak()
-
-        return CompiledEthereumTransaction(transaction, hash)
-    }
-
-    fun buildSetSpendLimitToSign(
-        processorContractAddress: String,
-        cardAddress: String,
-        amount: Amount,
-        transactionFee: Amount?,
-        blockchain: Blockchain,
-        gasLimit: BigInteger?,
-        nonce: BigInteger?,
-    ): CompiledEthereumTransaction? {
-        if (transactionFee?.value == null) return null
-        val fee = transactionFee.value.movePointRight(transactionFee.decimals)?.toBigInteger() ?: return null
-        val bigIntegerAmount = amount.value?.movePointRight(amount.decimals)?.toBigInteger() ?: return null
-        val nonceValue = nonce ?: return null
-
-        val to = Address(processorContractAddress)
-        val value = BigInteger.ZERO
-        val input: ByteArray = createSetSpendLimitData(cardAddress, bigIntegerAmount)
-
-        val gasLimitToUse = gasLimit ?: return null
-
-        val transaction = createTransactionWithDefaults(
-            from = Address(cardAddress),
-            to = to,
-            value = value,
-            gasPrice = fee.divide(gasLimit),
-            gasLimit = gasLimitToUse,
-            nonce = nonceValue,
-            input = input,
-        )
-        val chainId = blockchain.getChainId()
-            ?: error("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
-
-        val hash = transaction
-            .encode(SignatureData(v = chainId.toBigInteger()))
-            .keccak()
-
-        return CompiledEthereumTransaction(transaction, hash)
-    }
-
-    fun buildInitOTPToSign(
-        processorContractAddress: String,
-        cardAddress: String,
-        otp: ByteArray,
-        otpCounter: Int,
-        transactionFee: Amount?,
-        blockchain: Blockchain,
-        gasLimit: BigInteger?,
-        nonce: BigInteger?,
-    ): CompiledEthereumTransaction? {
-        if (transactionFee?.value == null) return null
-        val fee = transactionFee.value.movePointRight(transactionFee.decimals)?.toBigInteger() ?: return null
-        val nonceValue = nonce ?: return null
-
-        val to = Address(processorContractAddress)
-        val value = BigInteger.ZERO
-        val input: ByteArray = createInitOTPData(otp, otpCounter)
-
-        val gasLimitToUse = gasLimit ?: return null
-
-        val transaction = createTransactionWithDefaults(
-            from = Address(cardAddress),
-            to = to,
-            value = value,
-            gasPrice = fee.divide(gasLimit),
-            gasLimit = gasLimitToUse,
-            nonce = nonceValue,
-            input = input,
-        )
-
-        val chainId = blockchain.getChainId()
-            ?: error("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
-
-        val hash = transaction
-            .encode(SignatureData(v = chainId.toBigInteger()))
-            .keccak()
-
-        return CompiledEthereumTransaction(transaction, hash)
-    }
-
-    fun buildSetWalletToSign(
-        processorContractAddress: String,
-        cardAddress: String,
-        transactionFee: Amount?,
-        blockchain: Blockchain,
-        gasLimit: BigInteger?,
-        nonce: BigInteger?,
-    ): CompiledEthereumTransaction? {
-        val fee = transactionFee?.value?.movePointRight(transactionFee.decimals)?.toBigInteger() ?: return null
-        val nonceValue = nonce ?: return null
-
-        val to = Address(processorContractAddress)
-        val value = BigInteger.ZERO
-        val input: ByteArray = createSetWalletData(cardAddress)
-
-        val gasLimitToUse = gasLimit ?: return null
-
-        val transaction = createTransactionWithDefaults(
-            from = Address(cardAddress),
-            to = to,
-            value = value,
-            gasPrice = fee.divide(gasLimit),
-            gasLimit = gasLimitToUse,
-            nonce = nonceValue,
-            input = input,
-        )
-
-        val chainId = blockchain.getChainId()
-            ?: error("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
-
-        val hash = transaction
-            .encode(SignatureData(v = chainId.toBigInteger()))
-            .keccak()
-
-        return CompiledEthereumTransaction(transaction, hash)
-    }
-
-    @Suppress("LongParameterList")
-    fun buildProcessToSign(
-        processorContractAddress: String,
-        processorAddress: String,
-        cardAddress: String,
-        amount: Amount,
-        transactionFee: Amount,
-        otp: ByteArray,
-        otpCounter: Int,
-        blockchain: Blockchain,
-        gasLimit: BigInteger?,
-        nonce: BigInteger?,
-    ): CompiledEthereumTransaction? {
-        val fee = transactionFee.value?.movePointRight(transactionFee.decimals)?.toBigInteger() ?: return null
-        val bigIntegerAmount = amount.value?.movePointRight(amount.decimals)?.toBigInteger() ?: return null
-        val nonceValue = nonce ?: return null
-
-        val to = Address(processorContractAddress)
-        val value = BigInteger.ZERO
-
-        val gasLimitToUse = gasLimit ?: return null
-
-        val input: ByteArray = createProcessData(cardAddress, bigIntegerAmount, otp, otpCounter.and(0xFFFF))
-
-        val transaction = createTransactionWithDefaults(
-            from = Address(processorAddress),
-            to = to,
-            value = value,
-            gasPrice = fee.divide(gasLimit),
-            gasLimit = gasLimitToUse,
-            nonce = nonceValue,
-            input = input,
-        )
-
-        val chainId = blockchain.getChainId()
-            ?: error("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
-
-        val hash = transaction
-            .encode(SignatureData(v = chainId.toBigInteger()))
-            .keccak()
-
-        return CompiledEthereumTransaction(transaction, hash)
-    }
-
-    fun buildTransferFromToSign(
-        transactionData: TransactionData,
-        nonce: BigInteger?,
-        blockchain: Blockchain,
-        gasLimit: BigInteger?,
-    ): CompiledEthereumTransaction? {
-        val extras = transactionData.extras as? EthereumTransactionExtras
-
-        val nonceValue = extras?.nonce ?: nonce ?: return null
-
-        val amount: BigDecimal = transactionData.amount.value ?: return null
-        val transactionFee: BigDecimal = transactionData.fee?.amount?.value ?: return null
-
-        val fee = transactionFee.movePointRight(transactionData.fee.amount.decimals).toBigInteger()
-        val bigIntegerAmount =
-            amount.movePointRight(transactionData.amount.decimals).toBigInteger()
-
-        val to: Address
-        val value: BigInteger
-        val input: ByteArray // data for smart contract
-
-        if (transactionData.amount.type == AmountType.Coin) { // coin transfer
-            return null
-        } else { // token transfer from
-            to = Address(
-                transactionData.contractAddress
-                    ?: error("Contract address is not specified!"),
-            )
-            value = BigInteger.ZERO
-            input =
-                createErc20TransferFromData(
-                    transactionData.sourceAddress,
-                    transactionData.destinationAddress,
-                    bigIntegerAmount,
-                )
-        }
-
-        val gasLimitToUse = extras?.gasLimit ?: gasLimit ?: return null
-
-        val transaction = createTransactionWithDefaults(
-            from = Address(transactionData.destinationAddress),
-            to = to,
-            value = value,
-            gasPrice = fee.divide(gasLimitToUse),
-            gasLimit = extras?.gasLimit ?: gasLimitToUse,
-            nonce = nonceValue,
-            input = extras?.data ?: input,
-        )
-        val chainId = blockchain.getChainId()
-            ?: error("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
-        val hash = transaction
-            .encode(SignatureData(v = chainId.toBigInteger()))
-            .keccak()
-        return CompiledEthereumTransaction(transaction, hash)
-    }
-
     // TODO: [REDACTED_JIRA] Replace with SmartContractMethod interface implementations
     fun createErc20ApproveDataHex(spender: String, amount: Amount?): String = createErc20ApproveData(
         spender = spender,
@@ -461,28 +196,6 @@ object EthereumUtils {
     private fun createErc20ApproveData(spender: String, amount: BigInteger?): ByteArray = tokenApproveSignature +
         spender.substring(2).hexToBytes().toFixedLengthByteArray(32) +
         (amount?.toBytesPadded(32) ?: HEX_F.repeat(64).hexToBytes())
-
-    private fun createSetSpendLimitData(cardAddress: String, amount: BigInteger) = setSpendLimitSignature +
-        cardAddress.substring(2).hexToBytes().toFixedLengthByteArray(32) +
-        amount.toBytesPadded(32)
-
-    internal fun createSetSpendLimitData(cardAddress: String, amount: Amount) = createSetSpendLimitData(
-        cardAddress = cardAddress,
-        amount = amount.value!!.movePointRight(amount.decimals).toBigInteger(),
-    )
-
-    internal fun createInitOTPData(otp: ByteArray, otpCounter: Int) = initOTPSignature +
-        otp.copyOf(16) + ByteArray(16 + 30) +
-        otpCounter.toByteArray(2)
-
-    fun createSetWalletData(address: String) = setWalletSignature +
-        address.substring(2).hexToBytes().toFixedLengthByteArray(32)
-
-    private fun createErc20TransferFromData(source: String, destination: String, amount: BigInteger) =
-        tokenTransferFromSignature +
-            source.substring(2).hexToBytes().toFixedLengthByteArray(32) +
-            destination.substring(2).hexToBytes().toFixedLengthByteArray(32) +
-            amount.toBytesPadded(32)
 
     fun createProcessData(cardAddress: String, amount: BigInteger, otp: ByteArray, sequence: Int): ByteArray {
         val cardAddressBytes = cardAddress.substring(2).hexToBytes().toFixedLengthByteArray(32)
