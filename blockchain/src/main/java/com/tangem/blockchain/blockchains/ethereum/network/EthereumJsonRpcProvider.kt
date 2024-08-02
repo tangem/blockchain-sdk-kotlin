@@ -163,6 +163,7 @@ class EthereumJsonRpcProvider(
             }
         }
 
+        // TODO: https://tangem.atlassian.net/browse/AND-7816
         /**
          * Create instance [EthereumJsonRpcProvider].
          * If [baseUrl] contains any [postfixUrl] then instance is created with modified [baseUrl]
