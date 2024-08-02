@@ -61,5 +61,12 @@ sealed class Fee {
         val utxoCount: Int,
     ) : Fee()
 
+    data class Filecoin(
+        override val amount: Amount,
+        val gasUnitPrice: Long,
+        val gasLimit: Long,
+        val gasPremium: Long,
+    ) : Fee()
+
     data class Common(override val amount: Amount) : Fee()
 }
