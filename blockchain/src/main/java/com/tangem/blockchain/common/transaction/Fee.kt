@@ -55,5 +55,11 @@ sealed class Fee {
         val minAdaValue: BigDecimal,
     ) : Fee()
 
+    data class Kaspa(
+        override val amount: Amount,
+        val valuePerUtxo: BigDecimal,
+        val utxoCount: Int,
+    ) : Fee()
+
     data class Common(override val amount: Amount) : Fee()
 }
