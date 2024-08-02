@@ -18,7 +18,7 @@ internal class AlgorandTransactionBuilder(blockchain: Blockchain, private val pu
 
     private val coinType = blockchain.trustWalletCoinType
 
-    fun buildForSign(transactionData: TransactionData, params: AlgorandTransactionBuildParams): ByteArray {
+    fun buildForSign(transactionData: TransactionData.Uncompiled, params: AlgorandTransactionBuildParams): ByteArray {
         val input = buildInput(transactionData, params)
         val txInputData = input.toByteArray()
 
@@ -42,6 +42,8 @@ internal class AlgorandTransactionBuilder(blockchain: Blockchain, private val pu
         params: AlgorandTransactionBuildParams,
         signature: ByteArray,
     ): ByteArray {
+        transactionData.requireUncompiled()
+
         val input = buildInput(transactionData, params)
         val txInputData = input.toByteArray()
 
@@ -75,6 +77,8 @@ internal class AlgorandTransactionBuilder(blockchain: Blockchain, private val pu
         transactionData: TransactionData,
         params: AlgorandTransactionBuildParams,
     ): Algorand.SigningInput {
+        transactionData.requireUncompiled()
+
         val transfer = Algorand.Transfer.newBuilder()
             .setToAddress(transactionData.destinationAddress)
             .setAmount(transactionData.amount.longValue ?: 0L)

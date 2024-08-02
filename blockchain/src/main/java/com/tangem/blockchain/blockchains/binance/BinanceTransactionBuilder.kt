@@ -30,6 +30,8 @@ class BinanceTransactionBuilder(
     private var transferMessage: TransferMessage? = null
 
     fun buildToSign(transactionData: TransactionData): Result<ByteArray> {
+        transactionData.requireUncompiled()
+
         val amount = transactionData.amount
 
         if (!amount.isAboveZero()) {

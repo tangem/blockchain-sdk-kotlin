@@ -3,18 +3,63 @@ package com.tangem.blockchain.common
 import com.tangem.blockchain.common.transaction.Fee
 import java.math.BigDecimal
 import java.util.Calendar
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
-data class TransactionData(
-    val amount: Amount,
-    val fee: Fee?,
-    val sourceAddress: String,
-    val destinationAddress: String,
-    var status: TransactionStatus = TransactionStatus.Unconfirmed,
-    var date: Calendar? = null,
-    var hash: String? = null,
-    val extras: TransactionExtras? = null,
-    val contractAddress: String? = (amount.type as? AmountType.Token)?.token?.contractAddress,
-)
+sealed class TransactionData {
+
+    open var status: TransactionStatus = TransactionStatus.Unconfirmed
+    open var hash: String? = null
+
+    data class Uncompiled(
+        val amount: Amount,
+        val fee: Fee?,
+        val sourceAddress: String,
+        val destinationAddress: String,
+        override var status: TransactionStatus = TransactionStatus.Unconfirmed,
+        override var hash: String? = null,
+        var date: Calendar? = null,
+        val extras: TransactionExtras? = null,
+        val contractAddress: String? = (amount.type as? AmountType.Token)?.token?.contractAddress,
+    ) : TransactionData()
+
+    data class Compiled(
+        val value: ByteArray,
+        override var status: TransactionStatus = TransactionStatus.Unconfirmed,
+        override var hash: String? = null,
+    ) : TransactionData()
+
+    fun updateHash(hash: String): TransactionData {
+        return when (this) {
+            is Uncompiled -> {
+                copy(hash = hash)
+            }
+            is Compiled -> {
+                copy(hash = hash)
+            }
+        }
+    }
+
+    fun updateStatus(status: TransactionStatus): TransactionData {
+        return when (this) {
+            is Uncompiled -> {
+                copy(status = status)
+            }
+            is Compiled -> {
+                copy(status = status)
+            }
+        }
+    }
+
+    @OptIn(ExperimentalContracts::class)
+    fun requireUncompiled(): Uncompiled {
+        contract {
+            returns() implies (this@TransactionData is Uncompiled)
+        }
+        return this as? Uncompiled
+            ?: error("This blockchain doesn't support compiled transactions processing")
+    }
+}
 
 enum class TransactionStatus { Confirmed, Unconfirmed }
 
