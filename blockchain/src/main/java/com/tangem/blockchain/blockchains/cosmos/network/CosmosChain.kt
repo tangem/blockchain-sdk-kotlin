@@ -63,7 +63,7 @@ sealed interface CosmosChain {
         override val blockchain: Blockchain = Blockchain.TerraV1
         override val chainId: String = "columbus-5"
         override val smallestDenomination: String = "uluna"
-        override val gasMultiplier: BigDecimal = BigDecimal(4)
+        override val gasMultiplier: BigDecimal = BigDecimal(5)
         override val feeMultiplier: BigDecimal = BigDecimal(1.5)
         override val coin: CoinType = CoinType.TERRA
         override val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Forbids
