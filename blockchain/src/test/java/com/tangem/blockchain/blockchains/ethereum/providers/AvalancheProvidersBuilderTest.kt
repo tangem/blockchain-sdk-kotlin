@@ -42,6 +42,7 @@ class AvalancheProvidersBuilderTest {
             zkSyncEra = null,
             base = null,
             blast = null,
+            filecoin = null,
         ),
     )
 
