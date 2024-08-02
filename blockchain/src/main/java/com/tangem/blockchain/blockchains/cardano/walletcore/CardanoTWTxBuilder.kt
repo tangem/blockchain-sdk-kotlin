@@ -26,16 +26,18 @@ internal class CardanoTWTxBuilder(
     private val outputs: List<CardanoUnspentOutput>,
 ) {
 
-    /** Build transaction input by [transaction] */
-    fun build(transaction: TransactionData): Cardano.SigningInput {
-        if (transaction.amount.type is AmountType.Token &&
+    /** Build transaction input by [transactionData] */
+    fun build(transactionData: TransactionData): Cardano.SigningInput {
+        transactionData.requireUncompiled()
+
+        if (transactionData.amount.type is AmountType.Token &&
             !DepsContainer.blockchainFeatureToggles.isCardanoTokenSupport
         ) {
             throw BlockchainSdkError.CustomError("Cardano tokens isn't supported")
         }
 
         return Cardano.SigningInput.newBuilder()
-            .setTransferMessage(createTransfer(transaction = transaction))
+            .setTransferMessage(createTransfer(transactionData = transactionData))
             .setTtl(TRANSACTION_TTL)
             .addAllUtxos(outputs.map(::createTxInput))
             .build()
@@ -75,25 +77,29 @@ internal class CardanoTWTxBuilder(
         return minAdaAmount(tokenBundle.toByteArray())
     }
 
-    private fun createTransfer(transaction: TransactionData): Cardano.Transfer {
+    private fun createTransfer(transactionData: TransactionData): Cardano.Transfer {
+        transactionData.requireUncompiled()
+
         return Cardano.Transfer.newBuilder()
-            .setToAddress(transaction.destinationAddress)
-            .setChangeAddress(transaction.sourceAddress)
-            .setAmountByType(transaction = transaction)
+            .setToAddress(transactionData.destinationAddress)
+            .setChangeAddress(transactionData.sourceAddress)
+            .setAmountByType(transactionData = transactionData)
             .setUseMaxAmount(false)
             .build()
     }
 
-    private fun Cardano.Transfer.Builder.setAmountByType(transaction: TransactionData): Cardano.Transfer.Builder {
-        when (val type = transaction.amount.type) {
+    private fun Cardano.Transfer.Builder.setAmountByType(transactionData: TransactionData): Cardano.Transfer.Builder {
+        transactionData.requireUncompiled()
+
+        when (val type = transactionData.amount.type) {
             is AmountType.Coin -> {
-                this.amount = transaction.amount.longValueOrZero
+                this.amount = transactionData.amount.longValueOrZero
             }
             is AmountType.Token -> {
                 setTokenAmount(
                     contractAddress = type.token.contractAddress,
-                    amount = transaction.amount.longValueOrZero,
-                    fee = transaction.fee?.amount?.longValueOrZero ?: 0,
+                    amount = transactionData.amount.longValueOrZero,
+                    fee = transactionData.fee?.amount?.longValueOrZero ?: 0,
                 )
             }
             else -> throw BlockchainSdkError.CustomError("AmountType $type is not supported")
