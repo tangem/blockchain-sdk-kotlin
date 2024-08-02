@@ -8,6 +8,7 @@ import com.squareup.moshi.JsonClass
  *
  * @author Andrew Khokhlov on 24/07/2024
  */
+// TODO: https://tangem.atlassian.net/browse/AND-7811
 @JsonClass(generateAdapter = true)
 internal data class FilecoinRpcBody(
     @Json(name = "id") val id: Int,
