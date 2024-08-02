@@ -191,7 +191,7 @@ class WalletManagerFactory(
             Blockchain.Nexa, Blockchain.NexaTestnet -> NexaWalletManagerAssembly
             Blockchain.Radiant -> RadiantWalletManagerAssembly
             Blockchain.Koinos, Blockchain.KoinosTestnet -> KoinosWalletManagerAssembly
-            Blockchain.Filecoin -> TODO("[REDACTED_JIRA]")
+            Blockchain.Filecoin -> FilecoinWalletManagerAssembly
             Blockchain.Unknown,
             -> error("Unsupported blockchain")
         }
