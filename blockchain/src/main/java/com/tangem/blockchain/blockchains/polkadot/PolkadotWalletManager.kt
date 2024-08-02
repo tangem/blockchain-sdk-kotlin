@@ -62,12 +62,14 @@ internal class PolkadotWalletManager(
     private fun updateRecentTransactions() {
         val currentTimeInMillis = Calendar.getInstance().timeInMillis
         val confirmedTxData = wallet.recentTransactions
-            .filter { it.hash != null && it.date != null }
+            .filter {
+                it.hash != null && it.date != null
+            }
             .filter {
                 val txTimeInMillis = it.date?.timeInMillis ?: currentTimeInMillis
                 currentTimeInMillis - txTimeInMillis > 9999
             }.map {
-                it.copy(status = TransactionStatus.Confirmed)
+                it.updateStatus(status = TransactionStatus.Confirmed) as TransactionData.Uncompiled
             }
 
         updateRecentTransactions(confirmedTxData)
@@ -97,7 +99,7 @@ internal class PolkadotWalletManager(
         return Result.Success(TransactionFee.Single(Fee.Common(feeAmount)))
     }
 
-    override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData {
+    override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData.Uncompiled {
         return when (amount.type) {
             AmountType.Coin -> super.createTransaction(amount, fee, destination)
             else -> throw UnsupportedOperation()
@@ -122,6 +124,8 @@ internal class PolkadotWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
         runCatching { updateEra() }
             .onFailure { return Result.Failure(BlockchainSdkError.CustomError(it.message ?: "Unknown error")) }
         return when (transactionData.amount.type) {
@@ -168,6 +172,8 @@ internal class PolkadotWalletManager(
         signer: TransactionSigner,
         extrinsicContext: ExtrinsicContext,
     ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
         val destinationAddress = transactionData.destinationAddress
         val isDestinationAccountIsUnderfunded = isAccountUnderfunded(destinationAddress).successOr {
             return Result.Failure(it.error)
