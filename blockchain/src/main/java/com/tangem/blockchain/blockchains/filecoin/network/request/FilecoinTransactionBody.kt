@@ -19,6 +19,7 @@ internal data class FilecoinTransactionBody(
     @Json(name = "From") val sourceAddress: String,
     @Json(name = "To") val destinationAddress: String,
     @Json(name = "Value") val amount: String,
+    @Json(name = "Nonce") val nonce: Long?,
     @Json(name = "GasFeeCap") val gasUnitPrice: String?,
     @Json(name = "GasLimit") val gasLimit: Long?,
     @Json(name = "GasPremium") val gasPremium: String?,
