@@ -22,11 +22,8 @@ internal data class FilecoinRpcBody(
         @Json(name = "Filecoin.StateGetActor")
         GetActorInfo,
 
-        @Json(name = "Filecoin.GasEstimateFeeCap")
-        GetGasUnitPrice,
-
-        @Json(name = "Filecoin.GasEstimateGasLimit")
-        GetGasLimit,
+        @Json(name = "Filecoin.GasEstimateMessageGas")
+        GetMessageGas,
 
         @Json(name = "Filecoin.MpoolPush")
         SubmitTransaction,
