@@ -33,7 +33,7 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 
-@Suppress("LargeClass")
+@Suppress("LargeClass", "TooManyFunctions")
 enum class Blockchain(
     val id: String,
     val currency: String,
@@ -650,6 +650,23 @@ enum class Blockchain(
         TerraV1 -> FeePaidCurrency.SameCurrency
         Koinos, KoinosTestnet -> FeePaidCurrency.FeeResource("Mana")
         else -> FeePaidCurrency.Coin
+    }
+
+    /**
+     * List of supported blockchains for generating XPUB with BIP44 derivation.
+     * @see <a href="https://iancoleman.io/bip39/">bip39</a>
+     */
+    fun isBip44DerivationStyleXPUB(): Boolean = when (this) {
+        Bitcoin, BitcoinTestnet,
+        BitcoinCash, BitcoinCashTestnet,
+        Litecoin,
+        Dogecoin,
+        Dash,
+        Kaspa,
+        Ravencoin, RavencoinTestnet,
+        Ducatus,
+        -> true
+        else -> false
     }
 
     companion object {
