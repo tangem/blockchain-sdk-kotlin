@@ -13,6 +13,13 @@ internal sealed interface FilecoinRpcResponseResult {
     ) : FilecoinRpcResponseResult
 
     @JsonClass(generateAdapter = true)
+    data class GetMessageGas(
+        @Json(name = "GasFeeCap") val gasUnitPrice: String,
+        @Json(name = "GasLimit") val gasLimit: Long,
+        @Json(name = "GasPremium") val gasPremium: String,
+    ) : FilecoinRpcResponseResult
+
+    @JsonClass(generateAdapter = true)
     data class SubmitTransaction(
         @Json(name = "/") val hash: String,
     ) : FilecoinRpcResponseResult
