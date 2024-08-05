@@ -14,5 +14,5 @@ internal data class FilecoinTxInfo(
     val sourceAddress: String,
     val destinationAddress: String,
     val amount: Long,
-    val nonce: Long,
+    val nonce: Long?,
 )
