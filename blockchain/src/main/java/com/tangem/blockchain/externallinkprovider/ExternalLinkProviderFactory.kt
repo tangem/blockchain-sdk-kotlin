@@ -82,6 +82,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Koinos, Blockchain.KoinosTestnet -> KoinosExternalLinkProvider(isTestnet)
             Blockchain.Filecoin -> FilecoinExternalLinkProvider()
             Blockchain.Blast, Blockchain.BlastTestnet -> BlastLinkProvider(isTestnet)
+            Blockchain.Cyber, Blockchain.CyberTestnet -> CyberExternalLinkProvider(isTestnet)
         }
     }
 }
