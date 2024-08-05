@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumLikeProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.createWithPostfixIfContained
 import com.tangem.blockchain.common.network.providers.ProviderType
 
 internal class PolygonZkEVMProvidersBuilder(
@@ -27,10 +28,14 @@ internal class PolygonZkEVMProvidersBuilder(
     }
 
     private fun createPublicProvider(url: String): EthereumJsonRpcProvider {
-        return EthereumJsonRpcProvider.createWithPostfixIfContained(baseUrl = url, postfixUrl = BASE_URL_LAST_PATH)
+        return createWithPostfixIfContained(
+            baseUrl = url,
+            postfixUrl = POSTFIX_URL,
+            create = ::EthereumJsonRpcProvider,
+        )
     }
 
     private companion object {
-        const val BASE_URL_LAST_PATH = "zkevm"
+        const val POSTFIX_URL = "zkevm"
     }
 }
