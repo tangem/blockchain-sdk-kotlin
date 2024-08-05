@@ -142,49 +142,6 @@ class EthereumJsonRpcProvider(
         private const val CALL_DATA_SEPARATOR = "000000000000000000000000"
 
         private const val ETH_VALUABLE_ADDRESS_PART_LENGTH = 40
-
-        /**
-         * Create instance [EthereumJsonRpcProvider].
-
-         * and [postfixUrl] will be put in each request.
-         *
-         * This mechanism helps to support urls without '/' in the end.
-         * Example: https://base-url/postfix-url        – isn't working
-         *          https://base-url/   +   postfix-url – is working
-         */
-        fun createWithPostfixIfContained(baseUrl: String, postfixUrl: String): EthereumJsonRpcProvider {
-            return if (baseUrl.endsWith(suffix = "/$postfixUrl/")) {
-                EthereumJsonRpcProvider(
-                    baseUrl = baseUrl.substringBeforeLast(delimiter = "$postfixUrl/"),
-                    postfixUrl = postfixUrl,
-                )
-            } else {
-                EthereumJsonRpcProvider(baseUrl)
-            }
-        }
-
-        // TODO: [REDACTED_JIRA]
-        /**
-         * Create instance [EthereumJsonRpcProvider].
-
-         * and [postfixUrl] will be put in each request.
-         *
-         * This mechanism helps to support urls without '/' in the end.
-         * Example: https://base-url/postfix-url        – isn't working
-         *          https://base-url/   +   postfix-url – is working
-         */
-        fun createWithPostfixIfContained(url: String, vararg postfixUrl: String): EthereumJsonRpcProvider {
-            val postfix = postfixUrl.toList().firstOrNull { url.endsWith(suffix = "/$it/") }
-
-            return if (postfix != null) {
-                EthereumJsonRpcProvider(
-                    baseUrl = url.substringBeforeLast(delimiter = "$postfix/"),
-                    postfixUrl = postfix,
-                )
-            } else {
-                EthereumJsonRpcProvider(url)
-            }
-        }
     }
 }
 
