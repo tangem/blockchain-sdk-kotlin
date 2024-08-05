@@ -154,6 +154,8 @@ enum class Blockchain(
     Filecoin("filecoin", "FIL", "Filecoin"),
     Blast("blast", "ETH", "Blast"),
     BlastTestnet("blast/test", "ETH", "Blast Testnet"),
+    Cyber("cyber", "ETH", "Cyber"),
+    CyberTestnet("cyber/test", "ETH", "Cyber Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -236,6 +238,7 @@ enum class Blockchain(
         Taraxa, TaraxaTestnet,
         Filecoin,
         Blast, BlastTestnet,
+        Cyber, CyberTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -305,6 +308,7 @@ enum class Blockchain(
             Flare, FlareTestnet,
             Taraxa, TaraxaTestnet,
             Blast, BlastTestnet,
+            Cyber, CyberTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -422,6 +426,7 @@ enum class Blockchain(
             Taraxa, TaraxaTestnet -> TaraxaTestnet
             Koinos, KoinosTestnet -> KoinosTestnet
             Blast, BlastTestnet -> BlastTestnet
+            Cyber, CyberTestnet -> CyberTestnet
             else -> null
         }
     }
@@ -489,6 +494,7 @@ enum class Blockchain(
             Koinos, KoinosTestnet,
             Filecoin,
             Blast, BlastTestnet,
+            Cyber, CyberTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -575,6 +581,8 @@ enum class Blockchain(
             TaraxaTestnet -> Chain.TaraxaTestnet.id
             Blast -> Chain.Blast.id
             BlastTestnet -> Chain.BlastTestnet.id
+            Cyber -> Chain.Cyber.id
+            CyberTestnet -> Chain.CyberTestnet.id
             else -> null
         }
     }
