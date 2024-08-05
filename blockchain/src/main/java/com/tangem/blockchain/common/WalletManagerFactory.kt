@@ -158,6 +158,7 @@ class WalletManagerFactory(
             Blockchain.Base, Blockchain.BaseTestnet,
             Blockchain.Manta, Blockchain.MantaTestnet,
             Blockchain.Blast, Blockchain.BlastTestnet,
+            Blockchain.Cyber, Blockchain.CyberTestnet,
             -> EthereumOptimisticRollupWalletManagerAssembly
             Blockchain.Telos, Blockchain.TelosTestnet -> TelosWalletManagerAssembly
             // endregion
