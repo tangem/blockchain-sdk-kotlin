@@ -57,6 +57,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Flare,
             Blockchain.Taraxa,
             Blockchain.Blast,
+            Blockchain.Cyber,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.XDC -> mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
             Blockchain.EthereumClassic -> mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))
@@ -141,6 +142,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.FlareTestnet,
             Blockchain.TaraxaTestnet,
             Blockchain.BlastTestnet,
+            Blockchain.CyberTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             Blockchain.Aptos,
             Blockchain.AptosTestnet,
