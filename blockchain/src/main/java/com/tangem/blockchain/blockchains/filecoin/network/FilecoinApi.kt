@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.filecoin.network
 
-import com.tangem.blockchain.blockchains.filecoin.network.request.FilecoinRpcBody
 import com.tangem.blockchain.blockchains.filecoin.network.response.FilecoinRpcResponse
+import com.tangem.blockchain.common.JsonRPCRequest
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Url
@@ -16,11 +16,11 @@ import retrofit2.http.Url
 internal interface FilecoinApi {
 
     /**
-     * Get data by body [FilecoinRpcBody]
+     * Get data by body [JsonRPCRequest]
      *
      * @param postfixUrl postfix url for supports base url without '/'
      * @param body       rpc body
      */
     @POST
-    suspend fun post(@Url postfixUrl: String, @Body body: FilecoinRpcBody): FilecoinRpcResponse
+    suspend fun post(@Url postfixUrl: String, @Body body: JsonRPCRequest): FilecoinRpcResponse
 }
