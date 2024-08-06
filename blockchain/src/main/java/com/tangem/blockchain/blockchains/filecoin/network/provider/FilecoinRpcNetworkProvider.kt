@@ -7,12 +7,12 @@ import com.tangem.blockchain.blockchains.filecoin.models.FilecoinTxInfo
 import com.tangem.blockchain.blockchains.filecoin.network.FilecoinApi
 import com.tangem.blockchain.blockchains.filecoin.network.FilecoinNetworkProvider
 import com.tangem.blockchain.blockchains.filecoin.network.converters.FilecoinTxGasInfoConverter
-import com.tangem.blockchain.blockchains.filecoin.network.request.FilecoinRpcBody
 import com.tangem.blockchain.blockchains.filecoin.network.request.FilecoinRpcBodyFactory
 import com.tangem.blockchain.blockchains.filecoin.network.request.FilecoinSignedTransactionBody
 import com.tangem.blockchain.blockchains.filecoin.network.response.FilecoinRpcResponse
 import com.tangem.blockchain.blockchains.filecoin.network.response.FilecoinRpcResponseResult
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.JsonRPCRequest
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.createRetrofitInstance
@@ -66,7 +66,7 @@ internal class FilecoinRpcNetworkProvider(
     private fun FilecoinRpcResponse.Failure.isNoActorError() = message.endsWith("actor not found")
 
     private suspend inline fun <reified Data, Domain> post(
-        body: FilecoinRpcBody,
+        body: JsonRPCRequest,
         onSuccess: (Data) -> Domain,
         onFailure: (FilecoinRpcResponse.Failure) -> BlockchainSdkError = ::toDefaultError,
     ): Result<Domain> {
