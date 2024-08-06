@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.ethereum.providers
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.common.network.providers.getAllNonpublicProviderTypes
 import org.junit.Test
@@ -45,6 +46,13 @@ class AvalancheProvidersBuilderTest {
             filecoin = null,
         ),
     )
+
+    init {
+        DepsContainer.onInit(
+            config = blockchainSdkConfig,
+            featureToggles = BlockchainFeatureToggles(isCardanoTokenSupport = true),
+        )
+    }
 
     @Test
     fun test_provider_types() {
