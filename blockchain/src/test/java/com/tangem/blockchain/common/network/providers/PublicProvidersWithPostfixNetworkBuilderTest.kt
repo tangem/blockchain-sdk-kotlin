@@ -5,7 +5,9 @@ import com.tangem.blockchain.blockchains.ethereum.providers.*
 import com.tangem.blockchain.blockchains.filecoin.FilecoinProvidersBuilder
 import com.tangem.blockchain.blockchains.telos.TelosProvidersBuilder
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainFeatureToggles
 import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.network.providers.PublicProvidersWithPostfixNetworkBuilderTest.Companion.data
 import com.tangem.blockchain.common.network.providers.PublicProvidersWithPostfixNetworkBuilderTest.Model
 import org.junit.Test
@@ -24,6 +26,13 @@ import org.junit.runners.Parameterized
  */
 @RunWith(Parameterized::class)
 internal class PublicProvidersWithPostfixNetworkBuilderTest(private val model: Model) {
+
+    init {
+        DepsContainer.onInit(
+            config = BlockchainSdkConfig(),
+            featureToggles = BlockchainFeatureToggles(isCardanoTokenSupport = true),
+        )
+    }
 
     @Test
     fun test() {
