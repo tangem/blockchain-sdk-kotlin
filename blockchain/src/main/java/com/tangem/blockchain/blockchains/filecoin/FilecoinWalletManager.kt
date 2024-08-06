@@ -11,15 +11,7 @@ import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
-import com.tangem.common.extensions.toDecompressedPublicKey
-import org.kethereum.crypto.api.ec.ECDSASignature
-import org.kethereum.crypto.determineRecId
-import org.kethereum.crypto.impl.ec.canonicalise
-import org.kethereum.extensions.removeLeadingZero
-import org.kethereum.model.PublicKey
-import org.kethereum.model.SignatureData
 import java.math.BigDecimal
-import java.math.BigInteger
 
 /**
  * Filecoin [WalletManager]
@@ -77,15 +69,21 @@ internal class FilecoinWalletManager(
     ): Result<TransactionSendResult> {
         return try {
             val txBuilder = FilecoinTransactionBuilder(wallet)
-            val rawTx = txBuilder.buildForSign(nonce = nonce, transactionData = transactionData)
+            val hash = txBuilder.buildForSign(nonce = nonce, transactionData = transactionData)
 
-            when (val signingResult = signer.sign(rawTx, wallet.publicKey)) {
+            when (val signingResult = signer.sign(hash, wallet.publicKey)) {
                 is CompletionResult.Failure -> Result.fromTangemSdkError(signingResult.error)
                 is CompletionResult.Success -> {
+                    val signature = UnmarshalHelper().unmarshalSignatureExtended(
+                        signature = signingResult.data,
+                        hash = hash,
+                        publicKey = wallet.publicKey,
+                    )
+
                     val signedTransactionBody = txBuilder.buildForSend(
                         nonce = nonce,
                         transactionData = transactionData,
-                        signature = unmarshalSignature(signingResult.data, rawTx, wallet.publicKey),
+                        signature = signature.asRSV(),
                     )
 
                     val result = networkService.submitTransaction(signedTransactionBody = signedTransactionBody)
@@ -119,27 +117,5 @@ internal class FilecoinWalletManager(
     private fun updateError(error: BlockchainError) {
         Log.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
-    }
-
-    // TODO: [REDACTED_JIRA]
-    @Suppress("MagicNumber")
-    private fun unmarshalSignature(signature: ByteArray, hash: ByteArray, publicKey: Wallet.PublicKey): ByteArray {
-        val r = BigInteger(1, signature.copyOfRange(fromIndex = 0, toIndex = 32))
-        val s = BigInteger(1, signature.copyOfRange(fromIndex = 32, toIndex = 64))
-
-        val ecdsaSignature = ECDSASignature(r, s).canonicalise()
-
-        val recId = ecdsaSignature.determineRecId(
-            hash,
-            PublicKey(
-                publicKey = publicKey.blockchainKey.toDecompressedPublicKey()
-                    .sliceArray(1..64),
-            ),
-        )
-        val signatureData = SignatureData(r = ecdsaSignature.r, s = ecdsaSignature.s, v = recId.toBigInteger())
-
-        return signatureData.r.toByteArray().removeLeadingZero() +
-            signatureData.s.toByteArray().removeLeadingZero() +
-            signatureData.v.toByteArray()
     }
 }
