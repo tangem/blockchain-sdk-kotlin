@@ -2,9 +2,10 @@ package com.tangem.blockchain.blockchains.filecoin.network.request
 
 import com.tangem.blockchain.blockchains.filecoin.models.FilecoinTxInfo
 import com.tangem.blockchain.blockchains.filecoin.network.converters.FilecoinTransactionBodyConverter
+import com.tangem.blockchain.common.JsonRPCRequest
 
 /**
- * Factory for creating [FilecoinRpcBody]
+ * Factory for creating [JsonRPCRequest]
  *
  * @see <a href="https://github.com/filecoin-project/lotus/tree/master/node/impl/full">Filecoin JSON-RPC
  * implementations</a>
@@ -19,7 +20,7 @@ internal object FilecoinRpcBodyFactory {
      * @param address address
      */
     fun createGetActorInfoBody(address: String) = create(
-        method = FilecoinRpcBody.Method.GetActorInfo,
+        method = FilecoinRpcMethod.GetActorInfo,
         params = listOf<Any?>(address, null),
     )
 
@@ -29,7 +30,7 @@ internal object FilecoinRpcBodyFactory {
      * @param transactionInfo transaction info
      */
     fun createGetMessageGasBody(transactionInfo: FilecoinTxInfo) = create(
-        method = FilecoinRpcBody.Method.GetMessageGas,
+        method = FilecoinRpcMethod.GetMessageGas,
         params = listOf<Any?>(
             FilecoinTransactionBodyConverter.convert(from = transactionInfo),
             null,
@@ -43,15 +44,15 @@ internal object FilecoinRpcBodyFactory {
      * @param signedTransactionBody signed transaction body
      */
     fun createSubmitTransactionBody(signedTransactionBody: FilecoinSignedTransactionBody) = create(
-        method = FilecoinRpcBody.Method.SubmitTransaction,
+        method = FilecoinRpcMethod.SubmitTransaction,
         params = listOf<Any?>(signedTransactionBody),
     )
 
-    private fun create(method: FilecoinRpcBody.Method, params: List<Any?>): FilecoinRpcBody {
-        return FilecoinRpcBody(
-            id = 1,
-            jsonrpc = "2.0",
-            method = method,
+    private fun create(method: FilecoinRpcMethod, params: List<Any?>): JsonRPCRequest {
+        return JsonRPCRequest(
+            id = "1",
+            jsonRpc = "2.0",
+            method = method.name,
             params = params,
         )
     }
