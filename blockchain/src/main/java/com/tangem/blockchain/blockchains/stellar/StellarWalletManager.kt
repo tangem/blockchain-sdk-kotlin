@@ -95,15 +95,15 @@ class StellarWalletManager(
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val feeStats = networkProvider.getFeeStats().successOr { return it }
 
-        val maxChargedFee = feeStats.feeCharged.max.toBigDecimal().movePointLeft(blockchain.decimals())
-        val minChargedFee = feeStats.feeCharged.min.toBigDecimal().movePointLeft(blockchain.decimals())
-        val averageChargedFee = (maxChargedFee - minChargedFee).divide(2.toBigDecimal()) + minChargedFee
+        val minChargedFee = feeStats.feeCharged.mode.toBigDecimal().movePointLeft(blockchain.decimals())
+        val normalChargedFee = feeStats.feeCharged.p80.toBigDecimal().movePointLeft(blockchain.decimals())
+        val priorityChargedFee = feeStats.feeCharged.p99.toBigDecimal().movePointLeft(blockchain.decimals())
 
         return Result.Success(
             TransactionFee.Choosable(
                 minimum = Fee.Common(Amount(minChargedFee, blockchain)),
-                normal = Fee.Common(Amount(averageChargedFee, blockchain)),
-                priority = Fee.Common(Amount(maxChargedFee, blockchain)),
+                normal = Fee.Common(Amount(normalChargedFee, blockchain)),
+                priority = Fee.Common(Amount(priorityChargedFee, blockchain)),
             ),
         )
     }
