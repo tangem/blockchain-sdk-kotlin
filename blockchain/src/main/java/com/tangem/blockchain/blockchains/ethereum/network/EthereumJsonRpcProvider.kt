@@ -163,6 +163,7 @@ class EthereumJsonRpcProvider(
             }
         }
 
+        // TODO: [REDACTED_JIRA]
         /**
          * Create instance [EthereumJsonRpcProvider].
 
