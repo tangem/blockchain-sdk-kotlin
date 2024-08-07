@@ -76,6 +76,20 @@ open class EthereumNetworkService(
         }
     }
 
+    override suspend fun getPendingTxCount(address: String): Result<Long> {
+        return try {
+            val response = multiJsonRpcProvider.performRequest(EthereumJsonRpcProvider::getPendingTxCount, address)
+            Result.Success(
+                response
+                    .extractResult()
+                    .responseToBigInteger()
+                    .toLong(),
+            )
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
     override suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<BigDecimal> {
         return try {
             val requestData = EthereumTokenAllowanceRequestData(ownerAddress, token.contractAddress, spenderAddress)
