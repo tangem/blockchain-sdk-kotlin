@@ -2,6 +2,7 @@ package com.tangem.blockchain.common.network.providers
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.ethereum.providers.*
+import com.tangem.blockchain.blockchains.filecoin.FilecoinProvidersBuilder
 import com.tangem.blockchain.blockchains.telos.TelosProvidersBuilder
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
@@ -69,6 +70,9 @@ internal class PublicProvidersWithPostfixNetworkBuilderTest(private val model: M
 
             createZkSyncEra(baseUrl = "https://zksync.com/", expectedUrl = "https://zksync.com/"),
             createZkSyncEra(baseUrl = "https://zksync.com/zksync2-era/", expectedUrl = "https://zksync.com/"),
+
+            createFilecoin(baseUrl = "https://fil.io/", expectedUrl = "https://fil.io/"),
+            createFilecoin(baseUrl = "https://fil.io/rpc/v1/", expectedUrl = "https://fil.io/"),
         )
 
         private fun createArbitrum(baseUrl: String, expectedUrl: String): Model {
@@ -140,6 +144,15 @@ internal class PublicProvidersWithPostfixNetworkBuilderTest(private val model: M
                 expectedUrl = expectedUrl,
                 blockchain = Blockchain.ZkSyncEra,
                 builder = { ZkSyncEraProvidersBuilder(providerTypes = it, config = BlockchainSdkConfig()) },
+            )
+        }
+
+        private fun createFilecoin(baseUrl: String, expectedUrl: String): Model {
+            return Model(
+                baseUrl = baseUrl,
+                expectedUrl = expectedUrl,
+                blockchain = Blockchain.Filecoin,
+                builder = { FilecoinProvidersBuilder(providerTypes = it, config = BlockchainSdkConfig()) },
             )
         }
     }
