@@ -53,24 +53,11 @@ class CosmosWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        transactionData.requireUncompiled()
-
         val accNumber = accountNumber ?: return Result.Failure(BlockchainSdkError.AccountNotFound())
 
-        val hash = txBuilder.buildForSign(
-            amount = transactionData.amount,
-            source = wallet.address,
-            destination = transactionData.destinationAddress,
-            accountNumber = accNumber,
-            sequenceNumber = sequenceNumber,
-            feeAmount = transactionData.fee?.amount,
-            gas = gas?.toLong(),
-            extras = transactionData.extras as? CosmosTransactionExtras,
-        )
-
-        val message = when (val signature = signer.sign(hash, wallet.publicKey)) {
-            is CompletionResult.Success -> {
-                txBuilder.buildForSend(
+        val hash = when (transactionData) {
+            is TransactionData.Uncompiled -> {
+                txBuilder.buildForSign(
                     amount = transactionData.amount,
                     source = wallet.address,
                     destination = transactionData.destinationAddress,
@@ -79,8 +66,42 @@ class CosmosWalletManager(
                     feeAmount = transactionData.fee?.amount,
                     gas = gas?.toLong(),
                     extras = transactionData.extras as? CosmosTransactionExtras,
-                    signature = signature.data,
                 )
+            }
+            is TransactionData.Compiled -> {
+                txBuilder.buildForSign(
+                    compiledTransaction = transactionData.value,
+                    accountNumber = accNumber,
+                    sequenceNumber = sequenceNumber,
+                )
+            }
+        }
+
+        val message = when (val signature = signer.sign(hash, wallet.publicKey)) {
+            is CompletionResult.Success -> {
+                when (transactionData) {
+                    is TransactionData.Uncompiled -> {
+                        txBuilder.buildForSend(
+                            amount = transactionData.amount,
+                            source = wallet.address,
+                            destination = transactionData.destinationAddress,
+                            accountNumber = accNumber,
+                            sequenceNumber = sequenceNumber,
+                            feeAmount = transactionData.fee?.amount,
+                            gas = gas?.toLong(),
+                            extras = transactionData.extras as? CosmosTransactionExtras,
+                            signature = signature.data,
+                        )
+                    }
+                    is TransactionData.Compiled -> {
+                        txBuilder.buildForSend(
+                            compiledTransaction = transactionData.value,
+                            accountNumber = accNumber,
+                            sequenceNumber = sequenceNumber,
+                            signature = signature.data,
+                        )
+                    }
+                }
             }
 
             is CompletionResult.Failure -> {
@@ -95,19 +116,28 @@ class CosmosWalletManager(
         transactionData: TransactionData,
         message: String,
     ): Result<TransactionSendResult> {
-        transactionData.requireUncompiled()
-
         return when (val sendResult = networkService.send(message)) {
             is Result.Failure -> sendResult
             is Result.Success -> {
                 val hash = sendResult.data
-                val transaction = transactionData.copy(
-                    hash = hash,
-                    status = TransactionStatus.Unconfirmed,
-                    sourceAddress = wallet.address,
-                )
+
+                val transaction = when (transactionData) {
+                    is TransactionData.Uncompiled -> {
+                        transactionData.copy(
+                            hash = hash,
+                            status = TransactionStatus.Unconfirmed,
+                            sourceAddress = wallet.address,
+                        )
+                    }
+                    is TransactionData.Compiled -> {
+                        transactionData.copy(
+                            hash = hash,
+                            status = TransactionStatus.Unconfirmed,
+                        )
+                    }
+                }
                 transactionData.hash = hash
-                wallet.recentTransactions.add(transaction)
+                wallet.addOutgoingTransaction(transaction)
                 Result.Success(TransactionSendResult(hash))
             }
         }
