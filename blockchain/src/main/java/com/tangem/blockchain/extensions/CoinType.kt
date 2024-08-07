@@ -2,6 +2,7 @@ package com.tangem.blockchain.extensions
 
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.common.extensions.toCompressedPublicKey
+import com.tangem.common.extensions.toDecompressedPublicKey
 import wallet.core.jni.CoinType
 import wallet.core.jni.PublicKeyType
 
@@ -19,9 +20,14 @@ internal val Blockchain.trustWalletCoinType: CoinType
         Blockchain.VeChain, Blockchain.VeChainTestnet -> CoinType.VECHAIN
         Blockchain.Aptos, Blockchain.AptosTestnet -> CoinType.APTOS
         Blockchain.Algorand, Blockchain.AlgorandTestnet -> CoinType.ALGORAND
+        Blockchain.Filecoin -> CoinType.FILECOIN
         else -> error("Unsupported blockchain: $this")
     }
 
-internal fun CoinType.compressPublicKeyIfNeeded(data: ByteArray): ByteArray {
-    return if (this.publicKeyType() == PublicKeyType.SECP256K1) data.toCompressedPublicKey() else data
+internal fun CoinType.preparePublicKeyByType(data: ByteArray): ByteArray {
+    return when (publicKeyType()) {
+        PublicKeyType.SECP256K1 -> data.toCompressedPublicKey()
+        PublicKeyType.SECP256K1EXTENDED -> data.toDecompressedPublicKey()
+        else -> data
+    }
 }
