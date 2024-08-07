@@ -145,16 +145,19 @@ class WalletManagerFactory(
             Blockchain.Moonbeam, Blockchain.MoonbeamTestnet,
             Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet,
             Blockchain.Moonriver, Blockchain.MoonriverTestnet,
-            Blockchain.Mantle, Blockchain.MantleTestnet,
             Blockchain.Flare, Blockchain.FlareTestnet,
             Blockchain.Taraxa, Blockchain.TaraxaTestnet,
             -> EthereumLikeWalletManagerAssembly
+
+            Blockchain.Mantle, Blockchain.MantleTestnet,
+            -> MantleWalletManagerAssembly
 
             Blockchain.Decimal, Blockchain.DecimalTestnet -> DecimalWalletManagerAssembly
             Blockchain.XDC, Blockchain.XDCTestnet -> XDCWalletManagerAssembly
             Blockchain.Optimism, Blockchain.OptimismTestnet,
             Blockchain.Base, Blockchain.BaseTestnet,
             Blockchain.Manta, Blockchain.MantaTestnet,
+            Blockchain.Blast, Blockchain.BlastTestnet,
             -> EthereumOptimisticRollupWalletManagerAssembly
             Blockchain.Telos, Blockchain.TelosTestnet -> TelosWalletManagerAssembly
             // endregion
@@ -188,6 +191,7 @@ class WalletManagerFactory(
             Blockchain.Nexa, Blockchain.NexaTestnet -> NexaWalletManagerAssembly
             Blockchain.Radiant -> RadiantWalletManagerAssembly
             Blockchain.Koinos, Blockchain.KoinosTestnet -> KoinosWalletManagerAssembly
+            Blockchain.Filecoin -> TODO("[REDACTED_JIRA]")
             Blockchain.Unknown,
             -> error("Unsupported blockchain")
         }
