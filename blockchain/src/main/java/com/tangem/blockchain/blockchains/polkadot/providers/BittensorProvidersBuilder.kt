@@ -17,6 +17,7 @@ internal class BittensorProvidersBuilder(
             when (it) {
                 is ProviderType.Bittensor.Dwellir -> createDwellirProvider(blockchain)
                 is ProviderType.Bittensor.Onfinality -> createOnfinalityProvider(blockchain)
+                is ProviderType.Public -> createPublicProvider(it.url, blockchain)
                 else -> null
             }
         }
@@ -40,5 +41,9 @@ internal class BittensorProvidersBuilder(
                 credentials = mapOf("apikey" to it),
             )
         }
+    }
+
+    private fun createPublicProvider(url: String, blockchain: Blockchain): PolkadotNetworkProvider {
+        return PolkadotCombinedProvider(baseUrl = url, blockchain = blockchain)
     }
 }
