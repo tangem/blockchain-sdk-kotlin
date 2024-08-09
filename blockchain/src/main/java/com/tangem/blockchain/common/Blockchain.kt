@@ -33,7 +33,7 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 
-@Suppress("LargeClass")
+@Suppress("LargeClass", "TooManyFunctions")
 enum class Blockchain(
     val id: String,
     val currency: String,
@@ -154,6 +154,13 @@ enum class Blockchain(
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
+
+    fun getNetworkName(): String {
+        return when (this) {
+            TON -> "TON"
+            else -> this.fullName
+        }
+    }
 
     @Suppress("MagicNumber", "LongMethod")
     fun decimals(): Int = when (this) {
