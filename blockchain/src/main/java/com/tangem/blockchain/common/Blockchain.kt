@@ -92,7 +92,7 @@ enum class Blockchain(
     Kaspa("KAS", "KAS", "Kaspa"),
     Telos("TELOS", "TLOS", "Telos EVM"),
     TelosTestnet("TELOS/test", "TLOS", "Telos Testnet"),
-    TON("The-Open-Network", "TON", "Ton"),
+    TON("The-Open-Network", "TON", "Toncoin"),
     TONTestnet("The-Open-Network/test", "TON", "Ton Testnet"),
     Ravencoin("ravencoin", "RVN", "Ravencoin"),
     RavencoinTestnet("ravencoin/test", "RVN", "Ravencoin Testnet"),
