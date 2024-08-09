@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.ethereum.providers
 
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.createWithPostfixIfContained
 import com.tangem.blockchain.common.network.providers.OnlyPublicProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
 
@@ -13,13 +14,14 @@ internal class FlareProvidersBuilder(
 ) {
 
     override fun createProvider(url: String, blockchain: Blockchain): EthereumJsonRpcProvider {
-        return EthereumJsonRpcProvider.createWithPostfixIfContained(
-            url = url,
-            postfixUrl = BASE_URL_LAST_PATHS.toTypedArray(),
+        return createWithPostfixIfContained(
+            baseUrl = url,
+            postfixUrl = POSTFIX_URLS.toTypedArray(),
+            create = ::EthereumJsonRpcProvider,
         )
     }
 
     private companion object {
-        val BASE_URL_LAST_PATHS = listOf("ext/C/rpc", "ext/bc/C/rpc")
+        val POSTFIX_URLS = listOf("ext/C/rpc", "ext/bc/C/rpc")
     }
 }
