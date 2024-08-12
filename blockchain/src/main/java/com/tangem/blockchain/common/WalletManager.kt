@@ -202,7 +202,7 @@ interface TokenFinder {
 }
 
 interface Approver {
-    suspend fun getAllowance(spenderAddress: String, token: Token): Result<BigDecimal>
+    suspend fun getAllowance(spenderAddress: String, token: Token): kotlin.Result<BigDecimal>
 
     fun getApproveData(spenderAddress: String, value: Amount? = null): String
 }
