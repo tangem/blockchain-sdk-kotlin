@@ -69,8 +69,13 @@ class CosmosWalletManager(
                 )
             }
             is TransactionData.Compiled -> {
+                val compiledTransaction = if (transactionData.value is TransactionData.Compiled.Data.Bytes) {
+                    transactionData.value.data
+                } else {
+                    return Result.Failure(BlockchainSdkError.CustomError("Compiled transaction must be in bytes"))
+                }
                 txBuilder.buildForSign(
-                    compiledTransaction = transactionData.value,
+                    compiledTransaction = compiledTransaction,
                     accountNumber = accNumber,
                     sequenceNumber = sequenceNumber,
                 )
@@ -94,8 +99,15 @@ class CosmosWalletManager(
                         )
                     }
                     is TransactionData.Compiled -> {
+                        val compiledTransaction = if (transactionData.value is TransactionData.Compiled.Data.Bytes) {
+                            transactionData.value.data
+                        } else {
+                            return Result.Failure(
+                                BlockchainSdkError.CustomError("Compiled transaction must be in bytes"),
+                            )
+                        }
                         txBuilder.buildForSend(
-                            compiledTransaction = transactionData.value,
+                            compiledTransaction = compiledTransaction,
                             accountNumber = accNumber,
                             sequenceNumber = sequenceNumber,
                             signature = signature.data,
