@@ -27,6 +27,7 @@ import java.math.BigDecimal
 [REDACTED_AUTHOR]
  */
 // FIXME: Refactor with wallet-core: [REDACTED_JIRA]
+@Suppress("LargeClass")
 class SolanaWalletManager internal constructor(
     wallet: Wallet,
     providers: List<SolanaRpcClient>,
@@ -153,8 +154,13 @@ class SolanaWalletManager internal constructor(
     ): Result<TransactionSendResult> {
         return when (transactionData) {
             is TransactionData.Compiled -> {
+                val compiledTransaction = if (transactionData.value is TransactionData.Compiled.Data.Bytes) {
+                    transactionData.value.data
+                } else {
+                    return Result.Failure(BlockchainSdkError.CustomError("Compiled transaction must be in bytes"))
+                }
                 val transactionWithoutSignaturePlaceholder =
-                    transactionData.value.drop(SIGNATURE_PLACEHOLDER_LENGTH).toByteArray()
+                    compiledTransaction.drop(SIGNATURE_PLACEHOLDER_LENGTH).toByteArray()
 
                 val transaction = transactionBuilder.buildUnsignedTransaction(
                     builtTransaction = transactionWithoutSignaturePlaceholder,
@@ -165,7 +171,9 @@ class SolanaWalletManager internal constructor(
                 }
 
                 val patchedTransactionData = TransactionData.Compiled(
-                    value = byteArrayOf(1) + signResult + transactionWithoutSignaturePlaceholder,
+                    value = TransactionData.Compiled.Data.Bytes(
+                        data = byteArrayOf(1) + signResult + transactionWithoutSignaturePlaceholder,
+                    ),
                 )
 
                 sendTransaction(transaction, patchedTransactionData)
@@ -195,7 +203,15 @@ class SolanaWalletManager internal constructor(
                 .map { provider ->
                     async {
                         val serializedTransaction = when (transactionData) {
-                            is TransactionData.Compiled -> transactionData.value
+                            is TransactionData.Compiled -> {
+                                if (transactionData.value is TransactionData.Compiled.Data.Bytes) {
+                                    transactionData.value.data
+                                } else {
+                                    return@async Result.Failure(
+                                        BlockchainSdkError.CustomError("Compiled transaction must be in bytes"),
+                                    )
+                                }
+                            }
                             is TransactionData.Uncompiled -> signedTransaction.serialize()
                         }
                         provider.sendTransaction(serializedTransaction)
