@@ -106,7 +106,7 @@ object EthereumUtils {
     }
 
     private fun buildCompiledTransactionToSign(transactionData: TransactionData.Compiled): Transaction? {
-        val compiledTransaction = if (transactionData.value is TransactionData.Compiled.Data.Hex) {
+        val compiledTransaction = if (transactionData.value is TransactionData.Compiled.Data.RawString) {
             transactionData.value.data
         } else {
             error("Compiled transaction must be in hex format")
