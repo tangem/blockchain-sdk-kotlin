@@ -32,7 +32,7 @@ sealed class TransactionData {
     ) : TransactionData() {
 
         sealed class Data {
-            data class Hex(
+            data class RawString(
                 val data: String,
             ) : Data()
 
