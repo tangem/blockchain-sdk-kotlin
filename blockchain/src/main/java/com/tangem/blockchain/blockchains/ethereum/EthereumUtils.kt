@@ -37,6 +37,8 @@ object EthereumUtils {
     // ERC-20 standard defines balanceOf function as returning uint256. Don't accept anything else.
     private const val UInt256Size = 32
 
+    private val compiledTransactionAdapter = moshi.adapter(EthereumCompiledTransaction::class.java)
+
     fun ByteArray.toKeccak(): ByteArray {
         return this.keccak()
     }
@@ -105,31 +107,36 @@ object EthereumUtils {
         return CompiledEthereumTransaction(transaction, hash)
     }
 
-    private fun buildCompiledTransactionToSign(transactionData: TransactionData.Compiled): Transaction? {
+    private fun buildCompiledTransactionToSign(transactionData: TransactionData.Compiled): Transaction {
         val compiledTransaction = if (transactionData.value is TransactionData.Compiled.Data.RawString) {
             transactionData.value.data
         } else {
             error("Compiled transaction must be in hex format")
         }
 
-        val parsed = moshi.adapter(EthereumCompiledTransaction::class.java).fromJson(compiledTransaction) ?: return null
+        val parsed = compiledTransactionAdapter.fromJson(compiledTransaction)
+            ?: error("Unable to parse compiled transaction")
 
         val amount = if (transactionData.amount?.type == AmountType.Coin) { // coin transfer
             transactionData.amount.value
                 ?.movePointRight(transactionData.amount.decimals)
-                ?.toBigInteger() ?: BigInteger.ZERO
+                ?.toBigInteger() ?: error("Sending amount for coin must be specified")
         } else { // token transfer (or approve)
             BigInteger.ZERO
         }
-        val gasLimit = parsed.gasLimit.hexToBigDecimal().toBigInteger()
+
+        val gasLimit = parsed.gasLimit.hexToBigDecimal().toBigInteger().takeIf {
+            it > BigInteger.ZERO
+        } ?: error("Transaction fee must be specified")
         val fee = transactionData.fee?.amount?.value
             ?.movePointRight(transactionData.fee.amount.decimals)
-            ?.toBigInteger()
+            ?.toBigInteger()?.takeIf { it > BigInteger.ZERO }
+            ?: error("Transaction fee must be specified")
 
         return createTransactionWithDefaults(
             from = Address(parsed.from),
             to = Address(parsed.to),
-            gasPrice = fee?.divide(gasLimit),
+            gasPrice = fee.divide(gasLimit),
             value = amount,
             gasLimit = gasLimit,
             nonce = parsed.nonce.toBigInteger(),
