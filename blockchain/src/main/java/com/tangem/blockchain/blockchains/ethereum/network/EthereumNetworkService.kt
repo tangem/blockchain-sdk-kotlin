@@ -90,7 +90,11 @@ open class EthereumNetworkService(
         }
     }
 
-    override suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<BigDecimal> {
+    override suspend fun getAllowance(
+        ownerAddress: String,
+        token: Token,
+        spenderAddress: String,
+    ): kotlin.Result<BigDecimal> {
         return try {
             val requestData = EthereumTokenAllowanceRequestData(ownerAddress, token.contractAddress, spenderAddress)
             val amountValue = multiJsonRpcProvider.performRequest(
@@ -98,9 +102,9 @@ open class EthereumNetworkService(
                 data = requestData,
             ).extractResult().parseAmount(token.decimals)
 
-            Result.Success(amountValue)
+            kotlin.Result.success(amountValue)
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainSdkError())
+            kotlin.Result.failure(exception.toBlockchainSdkError())
         }
     }
 
