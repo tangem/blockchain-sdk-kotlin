@@ -50,17 +50,17 @@ class TronNetworkService(
         }
     }
 
-    suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<BigDecimal> {
+    suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): kotlin.Result<BigDecimal> {
         val allowanceRequest = multiProvider.performRequest(
             TronNetworkProvider::getAllowance,
             TokenAllowanceRequestData(ownerAddress, token.contractAddress, spenderAddress),
         )
         return when (allowanceRequest) {
-            is Result.Failure -> Result.Failure(allowanceRequest.error)
+            is Result.Failure -> kotlin.Result.failure(allowanceRequest.error)
             is Result.Success -> {
                 val allowance = allowanceRequest.data.constantResult.firstOrNull()
-                    ?: return Result.Failure(BlockchainSdkError.CustomError("Failed to get allowance"))
-                Result.Success(allowance.hexToBigDecimal())
+                    ?: return kotlin.Result.failure(BlockchainSdkError.CustomError("Failed to get allowance"))
+                kotlin.Result.success(allowance.hexToBigDecimal())
             }
         }
     }
