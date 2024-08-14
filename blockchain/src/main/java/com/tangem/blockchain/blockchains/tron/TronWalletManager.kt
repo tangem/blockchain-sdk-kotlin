@@ -208,8 +208,7 @@ internal class TronWalletManager(
         val rawData = raw.ADAPTER.decode(hexString.decodeHex())
 
         return when (
-            val signResult =
-                sign(rawData.encode().calculateSha256(), signer, publicKey)
+            val signResult = sign(rawData.encode().calculateSha256(), signer, publicKey)
         ) {
             is Result.Failure -> Result.Failure(signResult.error)
             is Result.Success -> {
