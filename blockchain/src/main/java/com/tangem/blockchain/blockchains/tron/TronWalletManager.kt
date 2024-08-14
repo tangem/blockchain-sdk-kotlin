@@ -17,6 +17,8 @@ import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import okio.ByteString.Companion.decodeHex
+import org.tron.protos.Transaction.raw
 import java.math.BigDecimal
 
 internal class TronWalletManager(
@@ -66,16 +68,29 @@ internal class TronWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        transactionData.requireUncompiled()
+        val signResult = when (transactionData) {
+            is TransactionData.Compiled -> {
+                val hexString = (transactionData.value as TransactionData.Compiled.Data.RawString).data
 
-        val signResult = signTransactionData(
-            amount = transactionData.amount,
-            source = wallet.address,
-            destination = transactionData.destinationAddress,
-            signer = signer,
-            publicKey = wallet.publicKey,
-            extras = transactionData.extras as? TronTransactionExtras,
-        )
+                signCompiledTransactionData(
+                    hexString = hexString,
+                    signer = signer,
+                    publicKey = wallet.publicKey,
+                )
+            }
+
+            is TransactionData.Uncompiled -> {
+                signUncompiledTransactionData(
+                    amount = transactionData.amount,
+                    source = wallet.address,
+                    destination = transactionData.destinationAddress,
+                    signer = signer,
+                    publicKey = wallet.publicKey,
+                    extras = transactionData.extras as? TronTransactionExtras,
+                )
+            }
+        }
+
         return when (signResult) {
             is Result.Failure -> Result.Failure(signResult.error)
             is Result.Success -> {
@@ -99,7 +114,7 @@ internal class TronWalletManager(
             val destinationExistsDef = async { networkService.checkIfAccountExists(destination) }
             val resourceDef = async { networkService.getAccountResource(wallet.address) }
             val transactionDataDef = async {
-                signTransactionData(
+                signUncompiledTransactionData(
                     amount = amount,
                     source = wallet.address,
                     destination = destination,
@@ -148,7 +163,7 @@ internal class TronWalletManager(
     }
 
     @Suppress("LongParameterList")
-    private suspend fun signTransactionData(
+    private suspend fun signUncompiledTransactionData(
         amount: Amount,
         source: String,
         destination: String,
@@ -170,8 +185,7 @@ internal class TronWalletManager(
                     extras = extras,
                 )
                 when (
-                    val signResult =
-                        sign(transactionToSign.encode().calculateSha256(), signer, publicKey)
+                    val signResult = sign(transactionToSign.encode().calculateSha256(), signer, publicKey)
                 ) {
                     is Result.Failure -> Result.Failure(signResult.error)
                     is Result.Success -> {
@@ -182,6 +196,28 @@ internal class TronWalletManager(
                         Result.Success(transactionToSend.encode())
                     }
                 }
+            }
+        }
+    }
+
+    private suspend fun signCompiledTransactionData(
+        hexString: String,
+        signer: TransactionSigner,
+        publicKey: Wallet.PublicKey,
+    ): Result<ByteArray> {
+        val rawData = raw.ADAPTER.decode(hexString.decodeHex())
+
+        return when (
+            val signResult =
+                sign(rawData.encode().calculateSha256(), signer, publicKey)
+        ) {
+            is Result.Failure -> Result.Failure(signResult.error)
+            is Result.Success -> {
+                val transactionToSend = transactionBuilder.buildForSend(
+                    rawData = rawData,
+                    signature = signResult.data,
+                )
+                Result.Success(transactionToSend.encode())
             }
         }
     }
