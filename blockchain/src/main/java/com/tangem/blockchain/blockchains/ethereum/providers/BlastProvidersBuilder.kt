@@ -15,7 +15,7 @@ internal class BlastProvidersBuilder(
         return providerTypes.mapNotNull {
             when (it) {
                 is ProviderType.Public -> EthereumJsonRpcProvider(it.url)
-                ProviderType.NowNodes -> ethereumProviderFactory.getNowNodesProvider("https://base.nownodes.io/")
+                ProviderType.NowNodes -> ethereumProviderFactory.getNowNodesProvider("https://blast.nownodes.io/")
                 ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { blast?.jsonRpc }
                 else -> null
             }
