@@ -4,7 +4,10 @@ import com.squareup.moshi.*
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResourceBodyAdapter
+import com.tangem.blockchain.blockchains.filecoin.network.response.FilecoinRpcResponse
+import com.tangem.blockchain.blockchains.filecoin.network.response.FilecoinRpcResponseAdapter
 import com.tangem.blockchain.common.EnumeratedEnum
+import com.tangem.blockchain.common.network.interceptors.HttpLoggingInterceptor
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.PolygonScanResultAdapter
 import okhttp3.Interceptor
@@ -29,7 +32,9 @@ object BlockchainSdkRetrofitBuilder {
     internal fun build(internalInterceptors: List<Interceptor> = emptyList()): OkHttpClient {
         val builder = OkHttpClient.Builder()
 
-        (interceptors + internalInterceptors).forEach { builder.addInterceptor(it) }
+        val loggingInterceptors = listOf(HttpLoggingInterceptor)
+
+        (interceptors + loggingInterceptors + internalInterceptors).forEach { builder.addInterceptor(it) }
         timeoutConfig?.let {
             builder.callTimeout(it.call.time, it.call.unit)
             builder.connectTimeout(it.connect.time, it.connect.unit)
@@ -69,6 +74,7 @@ internal val moshi: Moshi by lazy {
     Moshi.Builder()
         .add(BigDecimal::class.java, BigDecimalAdapter)
         .add(AptosResource::class.java, AptosResourceBodyAdapter)
+        .add(FilecoinRpcResponse::class.java, FilecoinRpcResponseAdapter)
         .add(createEnumJsonAdapter<GetAddressResponse.Transaction.StatusType>())
         .add(PolygonScanResultAdapter())
         .add(KotlinJsonAdapterFactory())

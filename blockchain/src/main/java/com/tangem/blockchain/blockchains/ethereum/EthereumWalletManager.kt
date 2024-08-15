@@ -208,7 +208,7 @@ open class EthereumWalletManager(
         return getGasLimitInternal(amount, destination, data)
     }
 
-    override suspend fun getAllowance(spenderAddress: String, token: Token): Result<BigDecimal> {
+    override suspend fun getAllowance(spenderAddress: String, token: Token): kotlin.Result<BigDecimal> {
         return networkProvider.getAllowance(wallet.address, token, spenderAddress)
     }
 
