@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumLikeProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.createWithPostfixIfContained
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.letNotBlank
 
@@ -27,20 +28,24 @@ internal class AvalancheProvidersBuilder(
         return listOf(
             EthereumJsonRpcProvider(
                 baseUrl = "https://api.avax-test.network/",
-                postfixUrl = BASE_URL_LAST_PATH,
+                postfixUrl = POSTFIX_URL,
             ),
         )
     }
 
     private fun createPublicProvider(url: String): EthereumJsonRpcProvider {
-        return EthereumJsonRpcProvider.createWithPostfixIfContained(baseUrl = url, postfixUrl = BASE_URL_LAST_PATH)
+        return createWithPostfixIfContained(
+            baseUrl = url,
+            postfixUrl = POSTFIX_URL,
+            create = ::EthereumJsonRpcProvider,
+        )
     }
 
     private fun createNowNodesProvider(): EthereumJsonRpcProvider? {
         return config.nowNodeCredentials?.apiKey.letNotBlank {
             EthereumJsonRpcProvider(
                 baseUrl = "https://avax.nownodes.io/",
-                postfixUrl = BASE_URL_LAST_PATH,
+                postfixUrl = POSTFIX_URL,
                 nowNodesApiKey = it, // special for Avalanche
             )
         }
@@ -50,12 +55,12 @@ internal class AvalancheProvidersBuilder(
         return config.getBlockCredentials?.avalanche?.jsonRpc.letNotBlank { avalancheToken ->
             EthereumJsonRpcProvider(
                 baseUrl = "https://go.getblock.io/$avalancheToken/",
-                postfixUrl = BASE_URL_LAST_PATH,
+                postfixUrl = POSTFIX_URL,
             )
         }
     }
 
     private companion object {
-        const val BASE_URL_LAST_PATH = "ext/bc/C/rpc"
+        const val POSTFIX_URL = "ext/bc/C/rpc"
     }
 }

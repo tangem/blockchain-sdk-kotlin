@@ -263,7 +263,7 @@ internal class TronWalletManager(
         return ByteArray(paddingSize) + this
     }
 
-    override suspend fun getAllowance(spenderAddress: String, token: Token): Result<BigDecimal> {
+    override suspend fun getAllowance(spenderAddress: String, token: Token): kotlin.Result<BigDecimal> {
         return networkService.getAllowance(wallet.address, token, spenderAddress)
     }
 

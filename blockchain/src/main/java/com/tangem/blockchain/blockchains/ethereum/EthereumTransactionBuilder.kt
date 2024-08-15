@@ -92,4 +92,8 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     FlareTestnet(id = 114, blockchain = Blockchain.FlareTestnet),
     Taraxa(id = 841, blockchain = Blockchain.Taraxa),
     TaraxaTestnet(id = 842, blockchain = Blockchain.TaraxaTestnet),
+    Blast(id = 81457, blockchain = Blockchain.Blast),
+    BlastTestnet(id = 168587773, blockchain = Blockchain.BlastTestnet),
+    Cyber(id = 7560, blockchain = Blockchain.Cyber),
+    CyberTestnet(id = 111557560, blockchain = Blockchain.CyberTestnet),
 }

@@ -1,13 +1,15 @@
 package com.tangem.blockchain.blockchains.ethereum
 
 import com.tangem.blockchain.blockchains.ethereum.eip712.EthEip712Util
+import com.tangem.blockchain.blockchains.ethereum.models.EthereumCompiledTransaction
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.extensions.hexToBigDecimal
 import com.tangem.blockchain.extensions.isValidHex
 import com.tangem.blockchain.extensions.toBigDecimalOrDefault
+import com.tangem.blockchain.network.moshi
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.remove
-import com.tangem.common.extensions.toByteArray
 import com.tangem.common.extensions.toDecompressedPublicKey
 import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.crypto.api.ec.ECDSASignature
@@ -18,10 +20,7 @@ import org.kethereum.extensions.toFixedLengthByteArray
 import org.kethereum.extensions.transactions.encode
 import org.kethereum.extensions.transactions.tokenTransferSignature
 import org.kethereum.keccakshortcut.keccak
-import org.kethereum.model.Address
-import org.kethereum.model.PublicKey
-import org.kethereum.model.SignatureData
-import org.kethereum.model.createTransactionWithDefaults
+import org.kethereum.model.*
 import org.komputing.khex.extensions.toHexString
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -37,6 +36,8 @@ object EthereumUtils {
 
     // ERC-20 standard defines balanceOf function as returning uint256. Don't accept anything else.
     private const val UInt256Size = 32
+
+    private val compiledTransactionAdapter = moshi.adapter(EthereumCompiledTransaction::class.java)
 
     fun ByteArray.toKeccak(): ByteArray {
         return this.keccak()
@@ -92,9 +93,64 @@ object EthereumUtils {
         transactionData: TransactionData,
         nonce: BigInteger?,
         blockchain: Blockchain,
-    ): CompiledEthereumTransaction? {
-        transactionData.requireUncompiled()
+    ): CompiledEthereumTransaction {
+        val transaction = when (transactionData) {
+            is TransactionData.Uncompiled -> buildUncompiledTransactionToSign(transactionData, nonce)
+            is TransactionData.Compiled -> buildCompiledTransactionToSign(transactionData)
+        } ?: error("Error while building transaction to sign")
 
+        val chainId = blockchain.getChainId()
+            ?: error("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
+        val hash = transaction
+            .encode(SignatureData(v = chainId.toBigInteger()))
+            .keccak()
+        return CompiledEthereumTransaction(transaction, hash)
+    }
+
+    private fun buildCompiledTransactionToSign(transactionData: TransactionData.Compiled): Transaction {
+        val compiledTransaction = if (transactionData.value is TransactionData.Compiled.Data.RawString) {
+            transactionData.value.data
+        } else {
+            error("Compiled transaction must be in hex format")
+        }
+
+        val parsed = compiledTransactionAdapter.fromJson(compiledTransaction)
+            ?: error("Unable to parse compiled transaction")
+
+        val amount = if (transactionData.amount?.type == AmountType.Coin) { // coin transfer
+            transactionData.amount.value
+                ?.movePointRight(transactionData.amount.decimals)
+                ?.toBigInteger() ?: error("Sending amount for coin must be specified")
+        } else { // token transfer (or approve)
+            BigInteger.ZERO
+        }
+
+        val gasLimit = parsed.gasLimit.hexToBigDecimal().toBigInteger().takeIf {
+            it > BigInteger.ZERO
+        } ?: error("Transaction fee must be specified")
+        val fee = transactionData.fee?.amount?.value
+            ?.movePointRight(transactionData.fee.amount.decimals)
+            ?.toBigInteger()?.takeIf { it > BigInteger.ZERO }
+            ?: error("Transaction fee must be specified")
+
+        return createTransactionWithDefaults(
+            from = Address(parsed.from),
+            to = Address(parsed.to),
+            gasPrice = fee.divide(gasLimit),
+            value = amount,
+            gasLimit = gasLimit,
+            nonce = parsed.nonce.toBigInteger(),
+            input = parsed.data.hexToBytes(),
+            chain = ChainId(parsed.chainId.toBigInteger()),
+            maxPriorityFeePerGas = parsed.maxPriorityFeePerGas.hexToBigDecimal().toBigInteger(),
+            maxFeePerGas = parsed.maxFeePerGas.hexToBigDecimal().toBigInteger(),
+        )
+    }
+
+    private fun buildUncompiledTransactionToSign(
+        transactionData: TransactionData.Uncompiled,
+        nonce: BigInteger?,
+    ): Transaction? {
         val extras = transactionData.extras as? EthereumTransactionExtras
 
         val nonceValue = extras?.nonce ?: nonce ?: return null
@@ -127,7 +183,7 @@ object EthereumUtils {
         val gasLimitToUse =
             extras?.gasLimit ?: (transactionData.fee as? Fee.Ethereum)?.gasLimit ?: DEFAULT_GAS_LIMIT
 
-        val transaction = createTransactionWithDefaults(
+        return createTransactionWithDefaults(
             from = Address(transactionData.sourceAddress),
             to = to,
             value = value,
@@ -136,12 +192,6 @@ object EthereumUtils {
             nonce = nonceValue,
             input = extras?.data ?: input, // use data from extras prefer (TODO refactor this)
         )
-        val chainId = blockchain.getChainId()
-            ?: error("${blockchain.fullName} blockchain is not supported by Ethereum Wallet Manager")
-        val hash = transaction
-            .encode(SignatureData(v = chainId.toBigInteger()))
-            .keccak()
-        return CompiledEthereumTransaction(transaction, hash)
     }
 
     fun prepareTransactionToSend(
