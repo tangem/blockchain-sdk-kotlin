@@ -118,10 +118,11 @@ internal class StellarNetworkService(
                         throw it.error
                     }
                 }
-                val paymentsResponseDeferred = async(Dispatchers.IO) {
+                val paymentsRecordsResponseDeferred = async(Dispatchers.IO) {
                     stellarMultiProvider.performRequest(StellarWrapperNetworkProvider::paymentsCall, accountId)
                         .successOr {
-                            throw it.error
+                            // sometimes returns 404 on existing addresses
+                            emptyList()
                         }
                 }
 
@@ -144,7 +145,7 @@ internal class StellarNetworkService(
                 val baseFee = ledgerResponse.baseFeeInStroops.toBigDecimal().movePointLeft(decimals)
                 val baseReserve = ledgerResponse.baseReserveInStroops.toBigDecimal().movePointLeft(decimals)
 
-                val recentTransactions = paymentsResponseDeferred.await().records.mapNotNull { it.toTransactionData() }
+                val recentTransactions = paymentsRecordsResponseDeferred.await().mapNotNull { it.toTransactionData() }
 
                 Result.Success(
                     StellarResponse(
