@@ -7,12 +7,6 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.trustWalletCoinType
 import com.tangem.common.extensions.toDecompressedPublicKey
-import org.kethereum.crypto.api.ec.ECDSASignature
-import org.kethereum.crypto.determineRecId
-import org.kethereum.crypto.impl.ec.canonicalise
-import org.kethereum.extensions.removeLeadingZero
-import org.kethereum.model.PublicKey
-import org.kethereum.model.SignatureData
 import wallet.core.jni.DataVector
 import wallet.core.jni.TransactionCompiler
 import wallet.core.jni.proto.Common
@@ -103,7 +97,7 @@ class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
         publicKeys.add(publicKey.blockchainKey.toDecompressedPublicKey())
 
         val signatures = DataVector()
-        signatures.add(unmarshalSignature(signature, hash, publicKey))
+        signatures.add(UnmarshalHelper().unmarshalSignatureExtended(signature, hash, publicKey).asRSV())
 
         val compileWithSignatures = TransactionCompiler.compileWithSignatures(
             coinType,
@@ -179,26 +173,6 @@ class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
         }
     }
 
-    private fun unmarshalSignature(signature: ByteArray, hash: ByteArray, publicKey: Wallet.PublicKey): ByteArray {
-        val r = BigInteger(1, signature.copyOfRange(fromIndex = 0, toIndex = 32))
-        val s = BigInteger(1, signature.copyOfRange(fromIndex = 32, toIndex = 64))
-
-        val ecdsaSignature = ECDSASignature(r, s).canonicalise()
-
-        val recId = ecdsaSignature.determineRecId(
-            hash,
-            PublicKey(
-                publicKey = publicKey.blockchainKey.toDecompressedPublicKey()
-                    .sliceArray(1..PUBLIC_KEY_LENGTH),
-            ),
-        )
-        val signatureData = SignatureData(ecdsaSignature.r, ecdsaSignature.s, recId.toBigInteger())
-
-        return signatureData.r.toByteArray().removeLeadingZero() +
-            signatureData.s.toByteArray().removeLeadingZero() +
-            signatureData.v.toByteArray()
-    }
-
     private companion object {
         const val TX_GAS = 5_000L
         const val CLAUSE_GAS = 16_000L
@@ -208,7 +182,5 @@ class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
         const val NZ_GAS = 68L
 
         const val EXPIRATION_BLOCKS = 180
-
-        const val PUBLIC_KEY_LENGTH = 64
     }
 }
