@@ -22,6 +22,18 @@ class MantleWalletManager(
 ) : EthereumWalletManager(wallet, transactionBuilder, networkProvider, transactionHistoryProvider) {
 
     override suspend fun getFeeInternal(amount: Amount, destination: String, data: String?): Result<TransactionFee> {
+        return when (amount.type) {
+            is AmountType.Coin -> getFeeForCoinTransaction(amount, destination, data)
+            is AmountType.Token -> super.getFeeInternal(amount, destination, data)
+            else -> Result.Failure(BlockchainSdkError.UnsupportedOperation())
+        }
+    }
+
+    private suspend fun getFeeForCoinTransaction(
+        amount: Amount,
+        destination: String,
+        data: String?,
+    ): Result<TransactionFee> {
         val patchedAmount = amount.minus(ONE_WEI)
         return super.getFeeInternal(patchedAmount, destination, data)
             .map {
@@ -51,32 +63,47 @@ class MantleWalletManager(
     ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
         return when (transactionData) {
             is TransactionData.Uncompiled -> {
-                val fee = requireEthereumFee(transactionData.fee)
-
-                val patchedFee = fee.copy(
-                    amount = fee.amount.copy(value = fee.amount.value?.multiply(FEE_SEND_MULTIPLIER)),
-                    gasLimit = fee.gasLimit.toBigDecimal().multiply(FEE_SEND_MULTIPLIER).toBigInteger(),
-                )
-
-                super.sign(
-                    transactionData = transactionData.copy(
-                        fee = patchedFee,
-                        // Presence of extras is a workaround for correct gasPrice calculation in EthereumUtils
-                        // This scenario needs to be reworked
-                        // [REDACTED_JIRA]
-                        extras = EthereumTransactionExtras(
-                            gasLimit = fee.gasLimit.toBigDecimal().multiply(FEE_SEND_MULTIPLIER).toBigInteger(),
-                            data = ByteArray(0), // intentionally is zero
-                            nonce = null, // intentionally is null
-                        ),
-                    ),
-                    signer = signer,
-                )
+                when (transactionData.amount.type) {
+                    is AmountType.Coin -> {
+                        signCoinTransaction(transactionData, signer)
+                    }
+                    is AmountType.Token -> {
+                        super.sign(transactionData, signer)
+                    }
+                    else -> Result.Failure(BlockchainSdkError.UnsupportedOperation())
+                }
             }
             is TransactionData.Compiled -> {
                 super.sign(transactionData, signer)
             }
         }
+    }
+
+    private suspend fun signCoinTransaction(
+        transactionData: TransactionData.Uncompiled,
+        signer: TransactionSigner,
+    ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
+        val fee = requireEthereumFee(transactionData.fee)
+
+        val patchedFee = fee.copy(
+            amount = fee.amount.copy(value = fee.amount.value?.multiply(FEE_SEND_MULTIPLIER)),
+            gasLimit = fee.gasLimit.toBigDecimal().multiply(FEE_SEND_MULTIPLIER).toBigInteger(),
+        )
+
+        return super.sign(
+            transactionData = transactionData.copy(
+                fee = patchedFee,
+                // Presence of extras is a workaround for correct gasPrice calculation in EthereumUtils
+                // This scenario needs to be reworked
+                // [REDACTED_JIRA]
+                extras = EthereumTransactionExtras(
+                    gasLimit = fee.gasLimit.toBigDecimal().multiply(FEE_SEND_MULTIPLIER).toBigInteger(),
+                    data = ByteArray(0), // intentionally is zero
+                    nonce = null, // intentionally is null
+                ),
+            ),
+            signer = signer,
+        )
     }
 
     private fun mapFeeForEstimate(fee: Fee.Ethereum): Fee {
