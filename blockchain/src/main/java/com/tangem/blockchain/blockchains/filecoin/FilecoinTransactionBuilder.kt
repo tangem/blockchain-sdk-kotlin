@@ -75,11 +75,17 @@ internal class FilecoinTransactionBuilder(private val wallet: Wallet) {
         val filecoinSignedTransactionBody = moshi.adapter<FilecoinSignedTransactionBody>().fromJson(output.json)
             ?: throw BlockchainSdkError.FailedToBuildTx
 
-        return filecoinSignedTransactionBody.copy(
-            transactionBody = filecoinSignedTransactionBody.transactionBody.copy(
-                nonce = nonce,
-            ),
-        )
+        // If it is new account without outgoing transaction (nonce = 1)
+        // Then don't put nonce value in SignedTransactionBody
+        return if (nonce != 0L) {
+            filecoinSignedTransactionBody.copy(
+                transactionBody = filecoinSignedTransactionBody.transactionBody.copy(
+                    nonce = nonce,
+                ),
+            )
+        } else {
+            filecoinSignedTransactionBody
+        }
     }
 
     private fun createSigningInput(
