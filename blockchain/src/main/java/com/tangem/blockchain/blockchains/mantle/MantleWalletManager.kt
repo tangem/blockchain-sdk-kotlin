@@ -13,7 +13,6 @@ import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import java.math.BigDecimal
-import java.math.BigInteger
 
 class MantleWalletManager(
     wallet: Wallet,
@@ -80,21 +79,6 @@ class MantleWalletManager(
         }
     }
 
-    override suspend fun getGasLimit(amount: Amount, destination: String): Result<BigInteger> {
-        return super.getGasLimit(amount, destination).increaseBy(FEE_ESTIMATE_MULTIPLIER)
-    }
-
-    override suspend fun getGasLimit(amount: Amount, destination: String, data: String): Result<BigInteger> {
-        return super.getGasLimit(amount, destination, data).increaseBy(FEE_ESTIMATE_MULTIPLIER)
-    }
-
-    private fun Result<BigInteger>.increaseBy(multiplier: BigDecimal): Result<BigInteger> {
-        return when (this) {
-            is Result.Failure -> this
-            is Result.Success -> Result.Success(this.data.toBigDecimal().multiply(multiplier).toBigInteger())
-        }
-    }
-
     private suspend fun signCoinTransaction(
         transactionData: TransactionData.Uncompiled,
         signer: TransactionSigner,
@@ -103,6 +87,7 @@ class MantleWalletManager(
 
         val patchedFee = fee.copy(
             amount = fee.amount.copy(value = fee.amount.value?.multiply(FEE_SEND_MULTIPLIER)),
+            gasLimit = fee.gasLimit.toBigDecimal().multiply(FEE_SEND_MULTIPLIER).toBigInteger(),
         )
 
         return super.sign(
@@ -112,7 +97,7 @@ class MantleWalletManager(
                 // This scenario needs to be reworked
                 // [REDACTED_JIRA]
                 extras = EthereumTransactionExtras(
-                    gasLimit = fee.gasLimit,
+                    gasLimit = fee.gasLimit.toBigDecimal().multiply(FEE_SEND_MULTIPLIER).toBigInteger(),
                     data = ByteArray(0), // intentionally is zero
                     nonce = null, // intentionally is null
                 ),
@@ -124,6 +109,7 @@ class MantleWalletManager(
     private fun mapFeeForEstimate(fee: Fee.Ethereum): Fee {
         return fee.copy(
             amount = fee.amount.copy(value = fee.amount.value?.multiply(FEE_ESTIMATE_MULTIPLIER)),
+            gasLimit = fee.gasLimit.toBigDecimal().multiply(FEE_ESTIMATE_MULTIPLIER).toBigInteger(),
         )
     }
 
