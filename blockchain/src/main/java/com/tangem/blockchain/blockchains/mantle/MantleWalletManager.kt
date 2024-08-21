@@ -105,6 +105,7 @@ class MantleWalletManager(
             amount = fee.amount.copy(value = fee.amount.value?.multiply(FEE_SEND_MULTIPLIER)),
         )
 
+        val txExtras = transactionData.extras as? EthereumTransactionExtras
         return super.sign(
             transactionData = transactionData.copy(
                 fee = patchedFee,
@@ -113,7 +114,7 @@ class MantleWalletManager(
                 // [REDACTED_JIRA]
                 extras = EthereumTransactionExtras(
                     gasLimit = fee.gasLimit,
-                    data = ByteArray(0), // intentionally is zero
+                    data = txExtras?.data ?: ByteArray(0),
                     nonce = null, // intentionally is null
                 ),
             ),
