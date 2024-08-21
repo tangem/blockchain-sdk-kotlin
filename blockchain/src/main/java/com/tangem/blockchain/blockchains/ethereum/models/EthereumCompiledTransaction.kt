@@ -12,6 +12,8 @@ data class EthereumCompiledTransaction(
     val from: String,
     @SerializedName("gasLimit")
     val gasLimit: String,
+    @SerializedName("value")
+    val value: String?,
     @SerializedName("to")
     val to: String,
     @SerializedName("data")
@@ -20,10 +22,12 @@ data class EthereumCompiledTransaction(
     val nonce: Int,
     @SerializedName("type")
     val type: Int,
+    @SerializedName("gasPrice")
+    val gasPrice: String?,
     @SerializedName("maxFeePerGas")
-    val maxFeePerGas: String,
+    val maxFeePerGas: String?,
     @SerializedName("maxPriorityFeePerGas")
-    val maxPriorityFeePerGas: String,
+    val maxPriorityFeePerGas: String?,
     @SerializedName("chainId")
     val chainId: Int,
 )
