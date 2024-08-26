@@ -35,10 +35,17 @@ internal class TronWalletManager(
     private val dummySigner = DummySigner()
 
     override suspend fun updateInternal() {
-        val transactionIds =
-            wallet.recentTransactions.filter { it.status == TransactionStatus.Unconfirmed }.mapNotNull { it.hash }
+        val transactionIds = wallet.recentTransactions
+            .filter { it.status == TransactionStatus.Unconfirmed }
+            .mapNotNull { it.hash }
 
-        when (val response = networkService.getAccountInfo(wallet.address, cardTokens, transactionIds)) {
+        when (
+            val response = networkService.getAccountInfo(
+                address = wallet.address,
+                tokens = cardTokens,
+                transactionIds = transactionIds,
+            )
+        ) {
             is Result.Success -> updateWallet(response.data)
             is Result.Failure -> updateError(response.error)
         }
