@@ -5,7 +5,7 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 
-class SeiWalletManager(
+internal class SeiWalletManager(
     wallet: Wallet,
 ) : WalletManager(wallet), TransactionSender {
 
