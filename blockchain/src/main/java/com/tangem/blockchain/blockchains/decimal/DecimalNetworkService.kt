@@ -21,7 +21,11 @@ class DecimalNetworkService(
         return super.getPendingTxCount(convertAddress(address))
     }
 
-    override suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<BigDecimal> {
+    override suspend fun getAllowance(
+        ownerAddress: String,
+        token: Token,
+        spenderAddress: String,
+    ): kotlin.Result<BigDecimal> {
         return super.getAllowance(convertAddress(ownerAddress), token, spenderAddress)
     }
 
