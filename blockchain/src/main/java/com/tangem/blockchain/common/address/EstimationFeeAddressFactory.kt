@@ -100,6 +100,8 @@ class EstimationFeeAddressFactory {
             Blockchain.Mantle, Blockchain.MantleTestnet,
             Blockchain.Flare, Blockchain.FlareTestnet,
             Blockchain.Taraxa, Blockchain.TaraxaTestnet,
+            Blockchain.Blast, Blockchain.BlastTestnet,
+            Blockchain.Cyber, Blockchain.CyberTestnet,
             -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
             // Polkadot-like
             Blockchain.Polkadot, Blockchain.PolkadotTestnet ->
@@ -132,6 +134,7 @@ class EstimationFeeAddressFactory {
             Blockchain.Algorand, Blockchain.AlgorandTestnet ->
                 "CW6XDCKQAZUGAIOTGE2NEPYFFVW6H6IKFOTOF3W5WDUVHH4ZIDCIKYDPXY"
             Blockchain.Koinos, Blockchain.KoinosTestnet -> "1C423Vbd44zjghhJR5fKJdLFS3rgVFUc9A"
+            Blockchain.Filecoin -> "f1wxdu6d25dc4hmebdfgriswooum22plhmmpxibzq"
         }
     }
 

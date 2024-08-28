@@ -6,7 +6,7 @@ import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.transaction.Fee
-import com.tangem.blockchain.extensions.compressPublicKeyIfNeeded
+import com.tangem.blockchain.extensions.preparePublicKeyByType
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
 import org.junit.Test
@@ -29,7 +29,7 @@ class AlgorandTransactionBuilderTest {
 
         val walletPublicKey = "67CFA0C50B5A46A3FF6FD38CB6D6E45725EAC937A79E3528A13A71BC006F877E".hexToBytes()
         val coinType = CoinType.ALGORAND
-        val publicKey = PublicKey(coinType.compressPublicKeyIfNeeded(walletPublicKey), coinType.publicKeyType())
+        val publicKey = PublicKey(coinType.preparePublicKeyByType(walletPublicKey), coinType.publicKeyType())
         val transactionBuilder = AlgorandTransactionBuilder(
             publicKey = publicKey.data(),
             blockchain = Blockchain.Algorand,
