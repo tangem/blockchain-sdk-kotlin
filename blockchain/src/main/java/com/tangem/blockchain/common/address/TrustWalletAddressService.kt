@@ -1,7 +1,7 @@
 package com.tangem.blockchain.common.address
 
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.extensions.compressPublicKeyIfNeeded
+import com.tangem.blockchain.extensions.preparePublicKeyByType
 import com.tangem.blockchain.extensions.trustWalletCoinType
 import com.tangem.common.card.EllipticCurve
 import wallet.core.jni.AnyAddress
@@ -16,7 +16,7 @@ internal open class TrustWalletAddressService(
     private val coinType: CoinType = blockchain.trustWalletCoinType
 
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-        val publicKey = PublicKey(coinType.compressPublicKeyIfNeeded(walletPublicKey), coinType.publicKeyType())
+        val publicKey = PublicKey(coinType.preparePublicKeyByType(walletPublicKey), coinType.publicKeyType())
         return AnyAddress(publicKey, coinType).description()
     }
 
