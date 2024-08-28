@@ -4,6 +4,8 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.blockchains.ethereum.providers.BaseProvidersBuilder
+import com.tangem.blockchain.blockchains.ethereum.providers.BlastProvidersBuilder
+import com.tangem.blockchain.blockchains.ethereum.providers.CyberProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.providers.MantaProvidersBuilder
 import com.tangem.blockchain.blockchains.optimism.EthereumOptimisticRollupWalletManager
 import com.tangem.blockchain.blockchains.optimism.OptimismProvidersBuilder
@@ -42,6 +44,8 @@ internal object EthereumOptimisticRollupWalletManagerAssembly :
             Blockchain.Optimism, Blockchain.OptimismTestnet -> OptimismProvidersBuilder(providerTypes, config)
             Blockchain.Base, Blockchain.BaseTestnet -> BaseProvidersBuilder(providerTypes, config)
             Blockchain.Manta, Blockchain.MantaTestnet -> MantaProvidersBuilder(providerTypes)
+            Blockchain.Blast, Blockchain.BlastTestnet -> BlastProvidersBuilder(providerTypes, config)
+            Blockchain.Cyber, Blockchain.CyberTestnet -> CyberProvidersBuilder(providerTypes)
             else -> error("Unsupported blockchain: $blockchain")
         }
     }

@@ -35,7 +35,7 @@ class TezosWalletManager(
         get() = networkProvider.baseUrl
 
     private val blockchain = wallet.blockchain
-    private var publicKeyRevealed: Boolean? = null
+    private var isPublicKeyRevealed: Boolean? = null
 
     override suspend fun updateInternal() {
         when (val response = networkProvider.getInfo(wallet.address)) {
@@ -63,16 +63,16 @@ class TezosWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        if (publicKeyRevealed == null) {
+        if (isPublicKeyRevealed == null) {
             // in case of publicKeyRevealed is null, we should try request it
             val publicKeyRevealedUpdated = networkProvider.isPublicKeyRevealed(wallet.address)
-            publicKeyRevealed = publicKeyRevealedUpdated.successOr {
+            isPublicKeyRevealed = publicKeyRevealedUpdated.successOr {
                 return Result.Failure(BlockchainSdkError.CustomError("publicKeyRevealed is null"))
             }
         }
 
         val contents =
-            when (val response = transactionBuilder.buildContents(transactionData, publicKeyRevealed!!)) {
+            when (val response = transactionBuilder.buildContents(transactionData, isPublicKeyRevealed!!)) {
                 is Result.Failure -> return Result.Failure(response.error)
                 is Result.Success -> response.data
             }
@@ -127,8 +127,9 @@ class TezosWalletManager(
             when (val result = publicKeyRevealedDeferred.await()) {
                 is Result.Failure -> error = result
                 is Result.Success -> {
-                    publicKeyRevealed = result.data
-                    if (!publicKeyRevealed!!) {
+                    val isPublicKeyRevealedData = result.data
+                    isPublicKeyRevealed = isPublicKeyRevealedData
+                    if (!isPublicKeyRevealedData) {
                         fee += BigDecimal.valueOf(TezosConstants.REVEAL_FEE)
                     }
                 }
@@ -153,9 +154,10 @@ class TezosWalletManager(
     override suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee> {
         // we should update publicKeyRevealed on every fee estimation
         val publicKeyRevealedUpdated = networkProvider.isPublicKeyRevealed(wallet.address)
-        publicKeyRevealed = publicKeyRevealedUpdated.successOr { null }
-        val defaultFee = BigDecimal.valueOf(TezosConstants.TRANSACTION_FEE)
-        return Result.Success(TransactionFee.Single(Fee.Common(Amount(defaultFee, blockchain))))
+        isPublicKeyRevealed = publicKeyRevealedUpdated.successOr { null }
+        val transactionFee = BigDecimal.valueOf(TezosConstants.TRANSACTION_FEE)
+        val allocationFee = BigDecimal.valueOf(TezosConstants.ALLOCATION_FEE)
+        return Result.Success(TransactionFee.Single(Fee.Common(Amount(transactionFee + allocationFee, blockchain))))
     }
 
     @Deprecated("Will be removed in the future. Use TransactionValidator instead")
