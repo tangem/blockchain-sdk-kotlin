@@ -151,6 +151,11 @@ enum class Blockchain(
     KoinosTestnet("koinos/test", "tKOIN", "Koinos Testnet"),
     Joystream("joystream", "JOY", "Joystream"),
     Bittensor("bittensor", "TAO", "Bittensor"),
+    Filecoin("filecoin", "FIL", "Filecoin"),
+    Blast("blast", "ETH", "Blast"),
+    BlastTestnet("blast/test", "ETH", "Blast Testnet"),
+    Cyber("cyber", "ETH", "Cyber"),
+    CyberTestnet("cyber/test", "ETH", "Cyber Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -238,6 +243,9 @@ enum class Blockchain(
         Mantle, MantleTestnet,
         Flare, FlareTestnet,
         Taraxa, TaraxaTestnet,
+        Filecoin,
+        Blast, BlastTestnet,
+        Cyber, CyberTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -306,6 +314,8 @@ enum class Blockchain(
             Mantle, MantleTestnet,
             Flare, FlareTestnet,
             Taraxa, TaraxaTestnet,
+            Blast, BlastTestnet,
+            Cyber, CyberTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -331,6 +341,7 @@ enum class Blockchain(
             TerraV2,
             Near, NearTestnet,
             Algorand, AlgorandTestnet,
+            Filecoin,
             -> TrustWalletAddressService(blockchain = this)
 
             Aptos, AptosTestnet -> AptosAddressService(isTestnet())
@@ -421,6 +432,8 @@ enum class Blockchain(
             Flare, FlareTestnet -> FlareTestnet
             Taraxa, TaraxaTestnet -> TaraxaTestnet
             Koinos, KoinosTestnet -> KoinosTestnet
+            Blast, BlastTestnet -> BlastTestnet
+            Cyber, CyberTestnet -> CyberTestnet
             else -> null
         }
     }
@@ -486,6 +499,9 @@ enum class Blockchain(
             Flare, FlareTestnet,
             Taraxa, TaraxaTestnet,
             Koinos, KoinosTestnet,
+            Filecoin,
+            Blast, BlastTestnet,
+            Cyber, CyberTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -570,6 +586,10 @@ enum class Blockchain(
             FlareTestnet -> Chain.FlareTestnet.id
             Taraxa -> Chain.Taraxa.id
             TaraxaTestnet -> Chain.TaraxaTestnet.id
+            Blast -> Chain.Blast.id
+            BlastTestnet -> Chain.BlastTestnet.id
+            Cyber -> Chain.Cyber.id
+            CyberTestnet -> Chain.CyberTestnet.id
             else -> null
         }
     }
@@ -645,6 +665,23 @@ enum class Blockchain(
         TerraV1 -> FeePaidCurrency.SameCurrency
         Koinos, KoinosTestnet -> FeePaidCurrency.FeeResource("Mana")
         else -> FeePaidCurrency.Coin
+    }
+
+    /**
+     * List of supported blockchains for generating XPUB with BIP44 derivation.
+     * @see <a href="https://iancoleman.io/bip39/">bip39</a>
+     */
+    fun isBip44DerivationStyleXPUB(): Boolean = when (this) {
+        Bitcoin, BitcoinTestnet,
+        BitcoinCash, BitcoinCashTestnet,
+        Litecoin,
+        Dogecoin,
+        Dash,
+        Kaspa,
+        Ravencoin, RavencoinTestnet,
+        Ducatus,
+        -> true
+        else -> false
     }
 
     companion object {

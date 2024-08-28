@@ -5,38 +5,38 @@ import org.kethereum.crypto.api.ec.ECDSASignature
 import org.kethereum.crypto.determineRecId
 import org.kethereum.crypto.impl.ec.canonicalise
 import org.kethereum.extensions.removeLeadingZero
+import org.kethereum.model.PublicKey
 import org.kethereum.model.SignatureData
 import java.math.BigInteger
 
 internal class UnmarshalHelper {
 
-    @Suppress("MagicNumber")
     fun unmarshalSignatureEVMLegacy(signature: ByteArray, hash: ByteArray, publicKey: Wallet.PublicKey): ByteArray {
-        val extendedSignature = unmarshalSignatureExtended(signature, hash, publicKey)
-        val v = (extendedSignature.recId + 27).toBigInteger()
-        val signatureData = SignatureData(extendedSignature.r, extendedSignature.s, v)
-
-        return signatureData.r.toByteArray().removeLeadingZero() +
-            signatureData.s.toByteArray().removeLeadingZero() +
-            signatureData.v.toByteArray().removeLeadingZero()
+        return unmarshalSignatureExtended(signature, hash, publicKey).asRSV(recIdOffset = EVM_LEGACY_REC_ID_OFFSET)
     }
 
-    @Suppress("MagicNumber")
     fun unmarshalSignatureExtended(
         signature: ByteArray,
         hash: ByteArray,
         publicKey: Wallet.PublicKey,
     ): ExtendedSecp256k1Signature {
-        val r = BigInteger(1, signature.copyOfRange(0, 32))
-        val s = BigInteger(1, signature.copyOfRange(32, 64))
+        val r = BigInteger(
+            1,
+            signature.copyOfRange(
+                fromIndex = COMPRESSED_CURVE_POINT_START_INDEX,
+                toIndex = COMPRESSED_CURVE_POINT_END_INDEX,
+            ),
+        )
+
+        val s = BigInteger(1, signature.copyOfRange(SCALAR_START_INDEX, SCALAR_END_INDEX))
 
         val ecdsaSignature = ECDSASignature(r, s).canonicalise()
 
         val recId = ecdsaSignature.determineRecId(
             messageHash = hash,
-            publicKey = org.kethereum.model.PublicKey(
+            publicKey = PublicKey(
                 publicKey.blockchainKey.toDecompressedPublicKey()
-                    .sliceArray(1..64),
+                    .sliceArray(1..PUBLIC_KEY_SIZE),
             ),
         )
 
@@ -46,10 +46,29 @@ internal class UnmarshalHelper {
             recId = recId,
         )
     }
+
+    private companion object {
+        const val PUBLIC_KEY_SIZE = 64
+
+        // R
+        const val COMPRESSED_CURVE_POINT_START_INDEX = 0
+        const val COMPRESSED_CURVE_POINT_END_INDEX = 32
+
+        // S
+        const val SCALAR_START_INDEX = 32
+        const val SCALAR_END_INDEX = 64
+
+        const val EVM_LEGACY_REC_ID_OFFSET = 27
+    }
 }
 
-data class ExtendedSecp256k1Signature(
-    val r: BigInteger,
-    val s: BigInteger,
-    val recId: Int,
-)
+internal data class ExtendedSecp256k1Signature(val r: BigInteger, val s: BigInteger, val recId: Int) {
+
+    fun asRSV(recIdOffset: Int = 0): ByteArray {
+        val signatureData = SignatureData(r = r, s = s, v = (recId + recIdOffset).toBigInteger())
+
+        return signatureData.r.toByteArray().removeLeadingZero() +
+            signatureData.s.toByteArray().removeLeadingZero() +
+            signatureData.v.toByteArray().removeLeadingZero()
+    }
+}
