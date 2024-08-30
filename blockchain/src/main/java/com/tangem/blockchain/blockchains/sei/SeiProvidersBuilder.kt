@@ -20,6 +20,7 @@ internal class SeiProvidersBuilder(
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<CosmosRestProvider> {
+        // see https://github.com/sei-protocol/chain-registry/blob/main/chains.json
         return listOf(
             "https://rest-testnet.sei-apis.com",
             "https://sei-testnet-api.polkachu.com",
