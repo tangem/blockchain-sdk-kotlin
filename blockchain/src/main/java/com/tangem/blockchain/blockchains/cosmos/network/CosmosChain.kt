@@ -107,6 +107,7 @@ sealed interface CosmosChain {
         override val feeMultiplier: BigDecimal = BigDecimal(1)
         override val coin: CoinType = CoinType.SEI
 
+        // see https://github.com/cosmos/chain-registry/blob/master/sei/chain.json#L17-L27
         @Suppress("MagicNumber")
         override fun gasPrices(amountType: AmountType): List<BigDecimal> = listOf(
             BigDecimal(0.02),
