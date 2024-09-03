@@ -15,8 +15,8 @@ import okio.ByteString.Companion.EMPTY
 import okio.ByteString.Companion.toByteString
 import org.tron.protos.BlockHeader
 import org.tron.protos.Transaction
-import protocol.TransferContract
-import protocol.TriggerSmartContract
+import org.tron.protos.contract.TransferContract
+import org.tron.protos.contract.TriggerSmartContract
 
 class TronTransactionBuilder {
 
