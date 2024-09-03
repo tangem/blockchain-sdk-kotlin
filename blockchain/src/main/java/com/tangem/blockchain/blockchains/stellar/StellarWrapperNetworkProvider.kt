@@ -1,7 +1,6 @@
 package com.tangem.blockchain.blockchains.stellar
 
 import com.tangem.blockchain.blockchains.stellar.StellarNetworkService.Companion.HTTP_NOT_FOUND_CODE
-import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
@@ -42,7 +41,7 @@ internal class StellarWrapperNetworkProvider(
     }
 
     fun paymentsCall(accountId: String): Result<List<OperationResponse>> {
-        return runWithErrorHandling {
+        return runWithErrorHandling(throwExceptionWhenNotFound = false) {
             server
                 .payments()
                 .forAccount(accountId)
@@ -65,13 +64,13 @@ internal class StellarWrapperNetworkProvider(
         }
     }
 
-    private fun <T> runWithErrorHandling(block: () -> T): Result<T> {
+    private fun <T> runWithErrorHandling(throwExceptionWhenNotFound: Boolean = true, block: () -> T): Result<T> {
         return try {
             val result = block()
             Result.Success(result)
         } catch (exception: Exception) {
-            if (exception is ErrorResponse && exception.code == HTTP_NOT_FOUND_CODE) {
-                Result.Failure(BlockchainSdkError.AccountNotFound())
+            if (exception is ErrorResponse && exception.code == HTTP_NOT_FOUND_CODE && throwExceptionWhenNotFound) {
+                throw exception // handled in NetworkService
             } else {
                 Result.Failure(exception.toBlockchainSdkError())
             }
