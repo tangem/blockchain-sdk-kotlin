@@ -74,6 +74,8 @@ enum class Blockchain(
     Polygon("POLYGON", "POL", "Polygon"),
     PolygonTestnet("POLYGON/test", "MATIC", "Polygon Testnet"),
     RSK("RSK", "RBTC", "RSK"),
+    Sei("sei", "SEI", "Sei"),
+    SeiTestnet("sei/test", "SEI", "Sei Testnet"),
     Stellar("XLM", "XLM", "Stellar"),
     StellarTestnet("XLM/test", "XLM", "Stellar Testnet"),
     Solana("SOLANA", "SOL", "Solana"),
@@ -198,6 +200,7 @@ enum class Blockchain(
         Hedera, HederaTestnet,
         Radiant,
         Koinos, KoinosTestnet,
+        Sei, SeiTestnet,
         -> 8
 
         Solana, SolanaTestnet,
@@ -342,6 +345,7 @@ enum class Blockchain(
             Near, NearTestnet,
             Algorand, AlgorandTestnet,
             Filecoin,
+            Sei, SeiTestnet,
             -> TrustWalletAddressService(blockchain = this)
 
             Aptos, AptosTestnet -> AptosAddressService(isTestnet())
@@ -434,6 +438,7 @@ enum class Blockchain(
             Koinos, KoinosTestnet -> KoinosTestnet
             Blast, BlastTestnet -> BlastTestnet
             Cyber, CyberTestnet -> CyberTestnet
+            Sei, SeiTestnet -> SeiTestnet
             else -> null
         }
     }
@@ -502,6 +507,7 @@ enum class Blockchain(
             Filecoin,
             Blast, BlastTestnet,
             Cyber, CyberTestnet,
+            Sei, SeiTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
