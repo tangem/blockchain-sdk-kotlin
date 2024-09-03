@@ -103,7 +103,7 @@ sealed interface CosmosChain {
         override val blockchain: Blockchain = Blockchain.Sei
         override val chainId: String = if (testnet) "atlantic-2" else "pacific-1"
         override val smallestDenomination: String = "usei"
-        override val gasMultiplier: BigDecimal = BigDecimal(1)
+        override val gasMultiplier: BigDecimal = BigDecimal(2)
         override val feeMultiplier: BigDecimal = BigDecimal(1)
         override val coin: CoinType = CoinType.SEI
 
