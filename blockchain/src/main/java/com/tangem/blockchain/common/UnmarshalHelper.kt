@@ -29,7 +29,6 @@ internal class UnmarshalHelper {
         )
 
         val s = BigInteger(1, signature.copyOfRange(SCALAR_START_INDEX, SCALAR_END_INDEX))
-
         val ecdsaSignature = ECDSASignature(r, s).canonicalise()
 
         val recId = ecdsaSignature.determineRecId(
@@ -39,7 +38,6 @@ internal class UnmarshalHelper {
                     .sliceArray(1..PUBLIC_KEY_SIZE),
             ),
         )
-
         return ExtendedSecp256k1Signature(
             r = ecdsaSignature.r,
             s = ecdsaSignature.s,
@@ -65,10 +63,16 @@ internal class UnmarshalHelper {
 internal data class ExtendedSecp256k1Signature(val r: BigInteger, val s: BigInteger, val recId: Int) {
 
     fun asRSV(recIdOffset: Int = 0): ByteArray {
-        val signatureData = SignatureData(r = r, s = s, v = (recId + recIdOffset).toBigInteger())
+        val v = recId + recIdOffset
+        val signatureData = SignatureData(r = r, s = s, v = v.toBigInteger())
 
+        val partV = if (v == 0) {
+            signatureData.v.toByteArray()
+        } else {
+            signatureData.v.toByteArray().removeLeadingZero()
+        }
         return signatureData.r.toByteArray().removeLeadingZero() +
             signatureData.s.toByteArray().removeLeadingZero() +
-            signatureData.v.toByteArray().removeLeadingZero()
+            partV
     }
 }
