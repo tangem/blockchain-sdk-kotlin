@@ -155,6 +155,9 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.KoinosTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/659'/0'/0/0"))
             Blockchain.Filecoin -> mapOf(AddressType.Default to DerivationPath("m/44'/461'/0'/0/0"))
+            Blockchain.Sei,
+            Blockchain.SeiTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/118'/0'/0/0"))
         }
     }
 }
