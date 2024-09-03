@@ -13,5 +13,7 @@ internal class FilecoinExternalLinkProvider : ExternalLinkProvider {
         return explorerBaseUrl + "address/$walletAddress"
     }
 
-    override fun getExplorerTxUrl(transactionHash: String) = TxExploreState.Unsupported
+    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+        return TxExploreState.Url(url = explorerBaseUrl + "message/$transactionHash")
+    }
 }

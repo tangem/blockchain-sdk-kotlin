@@ -193,6 +193,7 @@ class WalletManagerFactory(
             Blockchain.Radiant -> RadiantWalletManagerAssembly
             Blockchain.Koinos, Blockchain.KoinosTestnet -> KoinosWalletManagerAssembly
             Blockchain.Filecoin -> FilecoinWalletManagerAssembly
+            Blockchain.Sei, Blockchain.SeiTestnet -> SeiWalletManagerAssembly
             Blockchain.Unknown,
             -> error("Unsupported blockchain")
         }
