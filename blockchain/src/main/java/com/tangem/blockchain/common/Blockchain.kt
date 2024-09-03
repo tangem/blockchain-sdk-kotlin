@@ -183,6 +183,7 @@ enum class Blockchain(
         Cosmos, CosmosTestnet,
         TerraV1, TerraV2,
         Algorand, AlgorandTestnet,
+        Sei, SeiTestnet,
         -> 6
 
         Stellar, StellarTestnet -> 7
@@ -200,7 +201,6 @@ enum class Blockchain(
         Hedera, HederaTestnet,
         Radiant,
         Koinos, KoinosTestnet,
-        Sei, SeiTestnet,
         -> 8
 
         Solana, SolanaTestnet,
