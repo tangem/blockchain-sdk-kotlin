@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.solana
 
+import android.os.SystemClock
 import android.util.Log
 import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaMainAccountInfo
@@ -27,6 +28,7 @@ import java.math.BigDecimal
  * Created by Anton Zhilenkov on 21/01/2022.
  */
 // FIXME: Refactor with wallet-core: https://tangem.atlassian.net/browse/AND-5706
+@Suppress("LargeClass")
 class SolanaWalletManager internal constructor(
     wallet: Wallet,
     providers: List<SolanaRpcClient>,
@@ -153,8 +155,15 @@ class SolanaWalletManager internal constructor(
     ): Result<TransactionSendResult> {
         return when (transactionData) {
             is TransactionData.Compiled -> {
+                val startSendingTimestamp = SystemClock.elapsedRealtime()
+
+                val compiledTransaction = if (transactionData.value is TransactionData.Compiled.Data.Bytes) {
+                    transactionData.value.data
+                } else {
+                    return Result.Failure(BlockchainSdkError.CustomError("Compiled transaction must be in bytes"))
+                }
                 val transactionWithoutSignaturePlaceholder =
-                    transactionData.value.drop(SIGNATURE_PLACEHOLDER_LENGTH).toByteArray()
+                    compiledTransaction.drop(SIGNATURE_PLACEHOLDER_LENGTH).toByteArray()
 
                 val transaction = transactionBuilder.buildUnsignedTransaction(
                     builtTransaction = transactionWithoutSignaturePlaceholder,
@@ -165,10 +174,12 @@ class SolanaWalletManager internal constructor(
                 }
 
                 val patchedTransactionData = TransactionData.Compiled(
-                    value = byteArrayOf(1) + signResult + transactionWithoutSignaturePlaceholder,
+                    value = TransactionData.Compiled.Data.Bytes(
+                        data = byteArrayOf(1) + signResult + transactionWithoutSignaturePlaceholder,
+                    ),
                 )
 
-                sendTransaction(transaction, patchedTransactionData)
+                sendTransaction(transaction, patchedTransactionData, startSendingTimestamp)
             }
             is TransactionData.Uncompiled -> {
                 val transaction = transactionBuilder.buildUnsignedTransaction(
@@ -176,12 +187,14 @@ class SolanaWalletManager internal constructor(
                     amount = transactionData.amount,
                 ).successOr { return it }
 
+                val startSendingTimestamp = SystemClock.elapsedRealtime()
+
                 val signResult = signer.sign(transaction.getSerializedMessage(), wallet.publicKey).successOr {
                     return Result.fromTangemSdkError(it.error)
                 }
                 transaction.addSignedDataSignature(signResult)
 
-                sendTransaction(transaction, transactionData)
+                sendTransaction(transaction, transactionData, startSendingTimestamp)
             }
         }
     }
@@ -189,16 +202,25 @@ class SolanaWalletManager internal constructor(
     private suspend fun sendTransaction(
         signedTransaction: SolanaTransaction,
         transactionData: TransactionData,
+        startSendingTimestamp: Long,
     ): Result<TransactionSendResult> {
         val sendResults = coroutineScope {
             multiNetworkProvider.providers
                 .map { provider ->
                     async {
                         val serializedTransaction = when (transactionData) {
-                            is TransactionData.Compiled -> transactionData.value
+                            is TransactionData.Compiled -> {
+                                if (transactionData.value is TransactionData.Compiled.Data.Bytes) {
+                                    transactionData.value.data
+                                } else {
+                                    return@async Result.Failure(
+                                        BlockchainSdkError.CustomError("Compiled transaction must be in bytes"),
+                                    )
+                                }
+                            }
                             is TransactionData.Uncompiled -> signedTransaction.serialize()
                         }
-                        provider.sendTransaction(serializedTransaction)
+                        provider.sendTransaction(serializedTransaction, startSendingTimestamp)
                     }
                 }
                 .awaitAll()

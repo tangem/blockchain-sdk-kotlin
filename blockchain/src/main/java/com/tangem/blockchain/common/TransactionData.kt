@@ -24,10 +24,23 @@ sealed class TransactionData {
     ) : TransactionData()
 
     data class Compiled(
-        val value: ByteArray,
+        val value: Data,
+        val fee: Fee? = null,
+        val amount: Amount? = null,
         override var status: TransactionStatus = TransactionStatus.Unconfirmed,
         override var hash: String? = null,
-    ) : TransactionData()
+    ) : TransactionData() {
+
+        sealed class Data {
+            data class RawString(
+                val data: String,
+            ) : Data()
+
+            data class Bytes(
+                val data: ByteArray,
+            ) : Data()
+        }
+    }
 
     fun updateHash(hash: String): TransactionData {
         return when (this) {
@@ -58,6 +71,15 @@ sealed class TransactionData {
         }
         return this as? Uncompiled
             ?: error("This blockchain doesn't support compiled transactions processing")
+    }
+
+    @OptIn(ExperimentalContracts::class)
+    fun requireCompiled(): Compiled {
+        contract {
+            returns() implies (this@TransactionData is Compiled)
+        }
+        return this as? Compiled
+            ?: error("There should be compiled transaction")
     }
 }
 

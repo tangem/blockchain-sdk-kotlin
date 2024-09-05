@@ -33,7 +33,7 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 
-@Suppress("LargeClass")
+@Suppress("LargeClass", "TooManyFunctions")
 enum class Blockchain(
     val id: String,
     val currency: String,
@@ -71,9 +71,11 @@ enum class Blockchain(
     Kava("KAVA", "KAVA", "Kava EVM"),
     KavaTestnet("KAVA/test", "KAVA", "Kava EVM Testnet"),
     Kusama("Kusama", "KSM", "Kusama"),
-    Polygon("POLYGON", "MATIC", "Polygon"),
+    Polygon("POLYGON", "POL", "Polygon"),
     PolygonTestnet("POLYGON/test", "MATIC", "Polygon Testnet"),
     RSK("RSK", "RBTC", "RSK"),
+    Sei("sei", "SEI", "Sei"),
+    SeiTestnet("sei/test", "SEI", "Sei Testnet"),
     Stellar("XLM", "XLM", "Stellar"),
     StellarTestnet("XLM/test", "XLM", "Stellar Testnet"),
     Solana("SOLANA", "SOL", "Solana"),
@@ -92,7 +94,7 @@ enum class Blockchain(
     Kaspa("KAS", "KAS", "Kaspa"),
     Telos("TELOS", "TLOS", "Telos EVM"),
     TelosTestnet("TELOS/test", "TLOS", "Telos Testnet"),
-    TON("The-Open-Network", "TON", "Ton"),
+    TON("The-Open-Network", "TON", "Toncoin"),
     TONTestnet("The-Open-Network/test", "TON", "Ton Testnet"),
     Ravencoin("ravencoin", "RVN", "Ravencoin"),
     RavencoinTestnet("ravencoin/test", "RVN", "Ravencoin Testnet"),
@@ -152,10 +154,21 @@ enum class Blockchain(
     Joystream("joystream", "JOY", "Joystream"),
     Bittensor("bittensor", "TAO", "Bittensor"),
     Filecoin("filecoin", "FIL", "Filecoin"),
+    Blast("blast", "ETH", "Blast"),
+    BlastTestnet("blast/test", "ETH", "Blast Testnet"),
+    Cyber("cyber", "ETH", "Cyber"),
+    CyberTestnet("cyber/test", "ETH", "Cyber Testnet"),
     InternetComputer("internet-computer", "ICP", "Internet Computer"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
+
+    fun getNetworkName(): String {
+        return when (this) {
+            TON -> "TON"
+            else -> this.fullName
+        }
+    }
 
     @Suppress("MagicNumber", "LongMethod")
     fun decimals(): Int = when (this) {
@@ -171,6 +184,7 @@ enum class Blockchain(
         Cosmos, CosmosTestnet,
         TerraV1, TerraV2,
         Algorand, AlgorandTestnet,
+        Sei, SeiTestnet,
         -> 6
 
         Stellar, StellarTestnet -> 7
@@ -235,6 +249,8 @@ enum class Blockchain(
         Flare, FlareTestnet,
         Taraxa, TaraxaTestnet,
         Filecoin,
+        Blast, BlastTestnet,
+        Cyber, CyberTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -303,6 +319,8 @@ enum class Blockchain(
             Mantle, MantleTestnet,
             Flare, FlareTestnet,
             Taraxa, TaraxaTestnet,
+            Blast, BlastTestnet,
+            Cyber, CyberTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -330,7 +348,8 @@ enum class Blockchain(
             Algorand, AlgorandTestnet,
             InternetComputer,
             Filecoin,
-            -> WalletCoreAddressService(blockchain = this)
+            Sei, SeiTestnet,
+            -> TrustWalletAddressService(blockchain = this)
 
             Aptos, AptosTestnet -> AptosAddressService(isTestnet())
             Tron, TronTestnet -> TronAddressService()
@@ -420,6 +439,9 @@ enum class Blockchain(
             Flare, FlareTestnet -> FlareTestnet
             Taraxa, TaraxaTestnet -> TaraxaTestnet
             Koinos, KoinosTestnet -> KoinosTestnet
+            Blast, BlastTestnet -> BlastTestnet
+            Cyber, CyberTestnet -> CyberTestnet
+            Sei, SeiTestnet -> SeiTestnet
             else -> null
         }
     }
@@ -486,6 +508,9 @@ enum class Blockchain(
             Taraxa, TaraxaTestnet,
             Koinos, KoinosTestnet,
             Filecoin,
+            Blast, BlastTestnet,
+            Cyber, CyberTestnet,
+            Sei, SeiTestnet,
             InternetComputer,
             -> listOf(EllipticCurve.Secp256k1)
 
@@ -571,6 +596,10 @@ enum class Blockchain(
             FlareTestnet -> Chain.FlareTestnet.id
             Taraxa -> Chain.Taraxa.id
             TaraxaTestnet -> Chain.TaraxaTestnet.id
+            Blast -> Chain.Blast.id
+            BlastTestnet -> Chain.BlastTestnet.id
+            Cyber -> Chain.Cyber.id
+            CyberTestnet -> Chain.CyberTestnet.id
             else -> null
         }
     }
@@ -646,6 +675,23 @@ enum class Blockchain(
         TerraV1 -> FeePaidCurrency.SameCurrency
         Koinos, KoinosTestnet -> FeePaidCurrency.FeeResource("Mana")
         else -> FeePaidCurrency.Coin
+    }
+
+    /**
+     * List of supported blockchains for generating XPUB with BIP44 derivation.
+     * @see <a href="https://iancoleman.io/bip39/">bip39</a>
+     */
+    fun isBip44DerivationStyleXPUB(): Boolean = when (this) {
+        Bitcoin, BitcoinTestnet,
+        BitcoinCash, BitcoinCashTestnet,
+        Litecoin,
+        Dogecoin,
+        Dash,
+        Kaspa,
+        Ravencoin, RavencoinTestnet,
+        Ducatus,
+        -> true
+        else -> false
     }
 
     companion object {

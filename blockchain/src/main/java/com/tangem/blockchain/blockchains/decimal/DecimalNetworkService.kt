@@ -9,7 +9,7 @@ import com.tangem.blockchain.network.blockchair.BlockchairToken
 import java.math.BigDecimal
 import java.math.BigInteger
 
-internal class DecimalNetworkService(
+class DecimalNetworkService(
     jsonRpcProviders: List<EthereumJsonRpcProvider>,
 ) : EthereumNetworkService(jsonRpcProviders, blockcypherNetworkProvider = null, blockchairEthNetworkProvider = null) {
 
@@ -17,7 +17,15 @@ internal class DecimalNetworkService(
         return super.getInfo(convertAddress(address), tokens)
     }
 
-    override suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): Result<BigDecimal> {
+    override suspend fun getPendingTxCount(address: String): Result<Long> {
+        return super.getPendingTxCount(convertAddress(address))
+    }
+
+    override suspend fun getAllowance(
+        ownerAddress: String,
+        token: Token,
+        spenderAddress: String,
+    ): kotlin.Result<BigDecimal> {
         return super.getAllowance(convertAddress(ownerAddress), token, spenderAddress)
     }
 

@@ -40,9 +40,14 @@ internal class StellarWrapperNetworkProvider(
         return runWithErrorHandling { server.ledgers().ledger(ledgerSeq) }
     }
 
-    fun paymentsCall(accountId: String): Result<Page<OperationResponse>> {
-        return runWithErrorHandling {
-            server.payments().forAccount(accountId).order(RequestBuilder.Order.DESC).execute()
+    fun paymentsCall(accountId: String): Result<List<OperationResponse>> {
+        return runWithErrorHandling(throwExceptionWhenNotFound = false) {
+            server
+                .payments()
+                .forAccount(accountId)
+                .order(RequestBuilder.Order.DESC)
+                .execute()
+                .records
         }
     }
 
@@ -59,12 +64,12 @@ internal class StellarWrapperNetworkProvider(
         }
     }
 
-    private fun <T> runWithErrorHandling(block: () -> T): Result<T> {
+    private fun <T> runWithErrorHandling(throwExceptionWhenNotFound: Boolean = true, block: () -> T): Result<T> {
         return try {
             val result = block()
             Result.Success(result)
         } catch (exception: Exception) {
-            if (exception is ErrorResponse && exception.code == HTTP_NOT_FOUND_CODE) {
+            if (exception is ErrorResponse && exception.code == HTTP_NOT_FOUND_CODE && throwExceptionWhenNotFound) {
                 throw exception // handled in NetworkService
             } else {
                 Result.Failure(exception.toBlockchainSdkError())

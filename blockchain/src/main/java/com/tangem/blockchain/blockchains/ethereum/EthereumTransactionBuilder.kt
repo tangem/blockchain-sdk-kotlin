@@ -2,7 +2,6 @@
 
 package com.tangem.blockchain.blockchains.ethereum
 
-import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.common.extensions.toDecompressedPublicKey
@@ -20,114 +19,6 @@ class EthereumTransactionBuilder(
             transactionData = transactionData,
             nonce = nonce,
             blockchain = blockchain,
-        )
-    }
-
-    fun buildApproveToSign(
-        transactionData: TransactionData,
-        nonce: BigInteger?,
-        gasLimit: BigInteger?,
-    ): CompiledEthereumTransaction? {
-        return EthereumUtils.buildApproveToSign(
-            transactionData = transactionData,
-            nonce = nonce,
-            blockchain = blockchain,
-            gasLimit = gasLimit,
-        )
-    }
-
-    fun buildSetSpendLimitToSign(
-        processorContractAddress: String,
-        cardAddress: String,
-        amount: Amount,
-        transactionFee: Amount?,
-        gasLimit: BigInteger?,
-        nonce: BigInteger?,
-    ): CompiledEthereumTransaction? {
-        return EthereumUtils.buildSetSpendLimitToSign(
-            processorContractAddress,
-            cardAddress,
-            amount,
-            transactionFee,
-            blockchain,
-            gasLimit,
-            nonce,
-        )
-    }
-
-    fun buildInitOTPToSign(
-        processorContractAddress: String,
-        cardAddress: String,
-        otp: ByteArray,
-        otpCounter: Int,
-        transactionFee: Amount?,
-        gasLimit: BigInteger?,
-        nonce: BigInteger?,
-    ): CompiledEthereumTransaction? {
-        return EthereumUtils.buildInitOTPToSign(
-            processorContractAddress,
-            cardAddress,
-            otp,
-            otpCounter,
-            transactionFee,
-            blockchain,
-            gasLimit,
-            nonce,
-        )
-    }
-
-    fun buildSetWalletToSign(
-        processorContractAddress: String,
-        cardAddress: String,
-        transactionFee: Amount?,
-        gasLimit: BigInteger?,
-        nonce: BigInteger,
-    ): CompiledEthereumTransaction? {
-        return EthereumUtils.buildSetWalletToSign(
-            processorContractAddress,
-            cardAddress,
-            transactionFee,
-            blockchain,
-            gasLimit,
-            nonce,
-        )
-    }
-
-    fun buildProcessToSign(
-        processorContractAddress: String,
-        processorAddress: String,
-        cardAddress: String,
-        amount: Amount,
-        transactionFee: Amount,
-        otp: ByteArray,
-        otpCounter: Int,
-        gasLimit: BigInteger?,
-        nonceValue: BigInteger,
-    ): CompiledEthereumTransaction? {
-        return EthereumUtils.buildProcessToSign(
-            processorContractAddress = processorContractAddress,
-            processorAddress = processorAddress,
-            cardAddress = cardAddress,
-            amount = amount,
-            transactionFee = transactionFee,
-            otp = otp,
-            otpCounter = otpCounter,
-            blockchain = blockchain,
-            gasLimit = gasLimit,
-            nonce = nonceValue,
-        )
-    }
-
-    fun buildTransferFromToSign(
-        transactionData: TransactionData,
-        nonce: BigInteger?,
-        gasLimit: BigInteger?,
-    ): CompiledEthereumTransaction? {
-        return EthereumUtils.buildTransferFromToSign(
-            transactionData = transactionData,
-            nonce = nonce,
-            blockchain = blockchain,
-            gasLimit = gasLimit,
         )
     }
 
@@ -201,4 +92,8 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     FlareTestnet(id = 114, blockchain = Blockchain.FlareTestnet),
     Taraxa(id = 841, blockchain = Blockchain.Taraxa),
     TaraxaTestnet(id = 842, blockchain = Blockchain.TaraxaTestnet),
+    Blast(id = 81457, blockchain = Blockchain.Blast),
+    BlastTestnet(id = 168587773, blockchain = Blockchain.BlastTestnet),
+    Cyber(id = 7560, blockchain = Blockchain.Cyber),
+    CyberTestnet(id = 111557560, blockchain = Blockchain.CyberTestnet),
 }
