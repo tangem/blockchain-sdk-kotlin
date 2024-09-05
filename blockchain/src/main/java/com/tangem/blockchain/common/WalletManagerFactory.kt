@@ -189,7 +189,7 @@ class WalletManagerFactory(
             Blockchain.Radiant -> RadiantWalletManagerAssembly
             Blockchain.Koinos, Blockchain.KoinosTestnet -> KoinosWalletManagerAssembly
             Blockchain.Filecoin -> TODO("https://tangem.atlassian.net/browse/AND-7716")
-            Blockchain.InternetComputer -> InternetComputerWalletManagerAssembly
+            Blockchain.InternetComputer -> ICPWalletManagerAssembly
             Blockchain.Unknown,
             -> error("Unsupported blockchain")
         }
