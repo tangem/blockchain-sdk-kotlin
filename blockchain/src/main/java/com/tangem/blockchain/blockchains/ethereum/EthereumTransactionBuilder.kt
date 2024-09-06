@@ -7,14 +7,13 @@ import com.tangem.blockchain.common.TransactionData
 import com.tangem.common.extensions.toDecompressedPublicKey
 import java.math.BigInteger
 
-@Suppress("LongParameterList")
 class EthereumTransactionBuilder(
     walletPublicKey: ByteArray,
     private val blockchain: Blockchain,
 ) {
     private val walletPublicKey: ByteArray = walletPublicKey.toDecompressedPublicKey().sliceArray(1..64)
 
-    fun buildToSign(transactionData: TransactionData, nonce: BigInteger?): CompiledEthereumTransaction? {
+    fun buildToSign(transactionData: TransactionData, nonce: BigInteger?): CompiledEthereumTransaction {
         return EthereumUtils.buildTransactionToSign(
             transactionData = transactionData,
             nonce = nonce,
