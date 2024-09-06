@@ -35,9 +35,9 @@ class EthereumOptimisticRollupWalletManager(
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
-        val minimumFee = layer2fee.minimum as Fee.Ethereum
-        val normalFee = layer2fee.normal as Fee.Ethereum
-        val priorityFee = layer2fee.priority as Fee.Ethereum
+        val minimumFee = layer2fee.minimum as Fee.Ethereum.Legacy
+        val normalFee = layer2fee.normal as Fee.Ethereum.Legacy
+        val priorityFee = layer2fee.priority as Fee.Ethereum.Legacy
 
         val serializedTransaction = createTransactionWithDefaults(
             from = Address(wallet.address),
@@ -58,17 +58,17 @@ class EthereumOptimisticRollupWalletManager(
         val lastLayer1FeeValue = requireNotNull(lastLayer1Fee.value) { "Fee must not bee null" }
 
         val updatedFees = layer2fee.copy(
-            minimum = Fee.Ethereum(
+            minimum = Fee.Ethereum.Legacy(
                 amount = minimumFee.amount + lastLayer1FeeValue,
                 gasLimit = minimumFee.gasLimit,
                 gasPrice = minimumFee.gasPrice,
             ),
-            normal = Fee.Ethereum(
+            normal = Fee.Ethereum.Legacy(
                 amount = normalFee.amount + lastLayer1FeeValue,
                 gasLimit = normalFee.gasLimit,
                 gasPrice = normalFee.gasPrice,
             ),
-            priority = Fee.Ethereum(
+            priority = Fee.Ethereum.Legacy(
                 amount = priorityFee.amount + lastLayer1FeeValue,
                 gasLimit = priorityFee.gasLimit,
                 gasPrice = priorityFee.gasPrice,
@@ -87,7 +87,7 @@ class EthereumOptimisticRollupWalletManager(
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
-        val extras = layer2fee.minimum as Fee.Ethereum
+        val extras = layer2fee.minimum as Fee.Ethereum.Legacy
 
         val preparedAmount = Amount(
             value = BigDecimal.valueOf(0.1),
@@ -117,18 +117,18 @@ class EthereumOptimisticRollupWalletManager(
         // https://community.optimism.io/docs/developers/build/transaction-fees/#displaying-fees-to-users
         val lastLayer1FeeValue = requireNotNull(lastLayer1Fee.value) { "Fee must not bee null" }
         val updatedFees = layer2fee.copy(
-            minimum = Fee.Ethereum(
+            minimum = Fee.Ethereum.Legacy(
                 amount = layer2fee.minimum.amount + lastLayer1FeeValue,
                 gasLimit = layer2fee.minimum.gasLimit,
                 gasPrice = layer2fee.minimum.gasPrice,
             ),
-            normal = Fee.Ethereum(
-                amount = (layer2fee.normal as Fee.Ethereum).amount + lastLayer1FeeValue,
+            normal = Fee.Ethereum.Legacy(
+                amount = (layer2fee.normal as Fee.Ethereum.Legacy).amount + lastLayer1FeeValue,
                 gasLimit = layer2fee.normal.gasLimit,
                 gasPrice = layer2fee.normal.gasPrice,
             ),
-            priority = Fee.Ethereum(
-                amount = (layer2fee.priority as Fee.Ethereum).amount + lastLayer1FeeValue,
+            priority = Fee.Ethereum.Legacy(
+                amount = (layer2fee.priority as Fee.Ethereum.Legacy).amount + lastLayer1FeeValue,
                 gasLimit = layer2fee.priority.gasLimit,
                 gasPrice = layer2fee.priority.gasPrice,
             ),
@@ -150,11 +150,11 @@ class EthereumOptimisticRollupWalletManager(
             (lastLayer1FeeAmount?.value ?: BigDecimal.ZERO)
 
         val gasLimit = (transactionData.extras as? EthereumTransactionExtras)?.gasLimit
-            ?: (transactionData.fee as? Fee.Ethereum)?.gasLimit
+            ?: (transactionData.fee as? Fee.Ethereum.Legacy)?.gasLimit
             ?: DEFAULT_GAS_LIMIT
 
         val updatedTransactionData = transactionData.copy(
-            fee = Fee.Ethereum(
+            fee = Fee.Ethereum.Legacy(
                 amount = Amount(value = calculatedTransactionFee, blockchain = wallet.blockchain),
                 gasLimit = gasLimit,
                 gasPrice = BigInteger.ONE,
