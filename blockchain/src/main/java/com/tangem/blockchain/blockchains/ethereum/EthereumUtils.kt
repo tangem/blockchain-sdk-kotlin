@@ -186,8 +186,9 @@ object EthereumUtils {
                 createErc20TransferData(transactionData.destinationAddress, bigIntegerAmount)
         }
 
-        val gasLimitToUse =
-            extras?.gasLimit ?: (transactionData.fee as? Fee.Ethereum)?.gasLimit ?: DEFAULT_GAS_LIMIT
+        val gasLimitToUse = extras?.gasLimit
+            ?: (transactionData.fee as? Fee.Ethereum.Legacy)?.gasLimit
+            ?: DEFAULT_GAS_LIMIT
 
         return createTransactionWithDefaults(
             from = Address(transactionData.sourceAddress),
