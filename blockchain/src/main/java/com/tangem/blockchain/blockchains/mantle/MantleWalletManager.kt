@@ -107,15 +107,15 @@ class MantleWalletManager(
         )
     }
 
-    private fun mapFeeForEstimate(fee: Fee.Ethereum): Fee {
+    private fun mapFeeForEstimate(fee: Fee.Ethereum.Legacy): Fee {
         return fee.copy(
             amount = fee.amount.copy(value = fee.amount.value?.multiply(FEE_ESTIMATE_MULTIPLIER)),
             gasLimit = fee.gasLimit.toBigDecimal().multiply(FEE_ESTIMATE_MULTIPLIER).toBigInteger(),
         )
     }
 
-    private fun requireEthereumFee(fee: Fee?): Fee.Ethereum {
-        return fee as? Fee.Ethereum ?: error("Fee should be Fee.Ethereum")
+    private fun requireEthereumFee(fee: Fee?): Fee.Ethereum.Legacy {
+        return fee as? Fee.Ethereum.Legacy ?: error("Fee should be Fee.Ethereum")
     }
 
     companion object {
