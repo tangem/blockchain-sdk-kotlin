@@ -7,7 +7,6 @@ import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.common.extensions.toByteArray
 import wallet.core.jni.Cardano.minAdaAmount
 import wallet.core.jni.proto.Cardano
@@ -30,12 +29,6 @@ internal class CardanoTWTxBuilder(
     fun build(transactionData: TransactionData): Cardano.SigningInput {
         transactionData.requireUncompiled()
 
-        if (transactionData.amount.type is AmountType.Token &&
-            !DepsContainer.blockchainFeatureToggles.isCardanoTokenSupport
-        ) {
-            throw BlockchainSdkError.CustomError("Cardano tokens isn't supported")
-        }
-
         return Cardano.SigningInput.newBuilder()
             .setTransferMessage(createTransfer(transactionData = transactionData))
             .setTtl(TRANSACTION_TTL)
@@ -45,10 +38,6 @@ internal class CardanoTWTxBuilder(
 
     /** Calculate required min-ada-value to withdraw all tokens */
     fun calculateMinAdaValueToWithdrawAllTokens(tokens: Map<Cardano.TokenAmount, Long>): Long {
-        if (!DepsContainer.blockchainFeatureToggles.isCardanoTokenSupport) {
-            throw BlockchainSdkError.CustomError("Cardano tokens isn't supported")
-        }
-
         val tokenBundle = Cardano.TokenBundle.newBuilder()
             .addAllToken(
                 tokens.map {
@@ -68,10 +57,6 @@ internal class CardanoTWTxBuilder(
 
     /** Calculate required min-ada-value to withdraw [amount] token with [contractAddress] */
     fun calculateMinAdaValueToWithdrawToken(contractAddress: String, amount: Long): Long {
-        if (!DepsContainer.blockchainFeatureToggles.isCardanoTokenSupport) {
-            throw BlockchainSdkError.CustomError("Cardano tokens isn't supported")
-        }
-
         val tokenBundle = createTokenBundle(contractAddress = contractAddress, amount = amount)
 
         return minAdaAmount(tokenBundle.toByteArray())
