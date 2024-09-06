@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.ton
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.address.WalletCoreAddressService
+import com.tangem.blockchain.common.address.TrustWalletAddressService
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 import wallet.core.jni.TheOpenNetworkAddress
@@ -16,7 +16,7 @@ internal class TonAddressTest {
     private val blockchain = Blockchain.TON
     private val publicKey = "993E12F27E3EA3BC0FDDA4DD09664C52FEDDC0A1191675089B7B59BACE4C1AE1".hexToBytes()
     private val tonAddressService = TonAddressService(blockchain)
-    private val legacyAddressService = WalletCoreAddressService(blockchain)
+    private val legacyAddressService = TrustWalletAddressService(blockchain)
 
     @Test
     fun checkEqualityWithLegacyAddressService() {

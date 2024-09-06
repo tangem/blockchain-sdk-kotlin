@@ -33,23 +33,25 @@ class ICPTransferRequest(
 )
 
 class ICPAmount() {
-    constructor(value: Long) : this() {
-        this.value = value
-    }
 
     @Name("e8s")
     @Field(Type.NAT64)
     var value: Long? = null
+
+    constructor(value: Long) : this() {
+        this.value = value
+    }
 }
 
 class ICPTimestamp() {
-    constructor(timestampNanos: Long) : this() {
-        this.timestampNanos = timestampNanos
-    }
 
     @Name("timestamp_nanos")
     @Field(Type.NAT64)
     var timestampNanos: Long? = null
+
+    constructor(timestampNanos: Long) : this() {
+        this.timestampNanos = timestampNanos
+    }
 }
 
 enum class ICPTransferResponse {
@@ -87,23 +89,23 @@ enum class ICPTransferError {
 class BadFeeError {
     @Name("expected_fee")
     @Field(Type.RECORD)
-    var expectedFee : ICPAmount? = null
+    var expectedFee: ICPAmount? = null
 }
 
 class InsufficientFundsError {
     @Name("balance")
     @Field(Type.RECORD)
-    var balance : ICPAmount? = null
+    var balance: ICPAmount? = null
 }
 
 class TxTooOldError {
     @Name("allowed_window_nanos")
     @Field(Type.NAT64)
-    var allowedWindowNanos : Long? = null
+    var allowedWindowNanos: Long? = null
 }
 
 class TxDuplicateError {
     @Name("duplicate_of")
     @Field(Type.NAT64)
-    var blockIndex : Long? = null
+    var blockIndex: Long? = null
 }

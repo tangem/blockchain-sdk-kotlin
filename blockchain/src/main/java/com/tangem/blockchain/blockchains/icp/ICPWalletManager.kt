@@ -8,13 +8,12 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import org.joda.time.DateTime
 import java.math.BigDecimal
 
 internal class ICPWalletManager(
     wallet: Wallet,
     private val networkProvider: ICPNetworkProvider,
-    private val transactionBuilder: ICPTransactionBuilder
+    private val transactionBuilder: ICPTransactionBuilder,
 ) : WalletManager(wallet) {
 
     override val currentHost: String get() = networkProvider.baseUrl
@@ -43,7 +42,8 @@ internal class ICPWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        val nowNanos = DateTime.now().millis * NANOSECONDS_IN_MILLISECOND
+        val nowMillis = System.currentTimeMillis()
+        val nowNanos = nowMillis * NANOSECONDS_IN_MILLISECOND
         val transferRequest = transactionBuilder.buildForSign(transactionData, nowNanos)
         val transferWithSigner = ICPTransferWithSigner(transferRequest, signer)
 

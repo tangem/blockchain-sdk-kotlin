@@ -1,11 +1,9 @@
 package com.tangem.blockchain.blockchains.icp.network
 
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.hexToBytes
-import com.tangem.common.extensions.toDecompressedPublicKey
 import io.github.andreypfau.kotlinx.crypto.sha2.sha256
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -20,8 +18,6 @@ import org.ic4j.agent.ReplicaTransport
 import org.ic4j.agent.http.ReplicaOkHttpTransport
 import org.ic4j.agent.icp.IcpSystemCanisters
 import org.ic4j.agent.identity.ExternalMultiSignIdentity
-import org.ic4j.candid.parser.IDLType
-import org.ic4j.candid.types.Type
 import java.math.BigDecimal
 
 internal class ICPIc4jAgentNetworkProvider(
@@ -29,25 +25,27 @@ internal class ICPIc4jAgentNetworkProvider(
     private val publicKey: Wallet.PublicKey,
 ) : ICPNetworkProvider {
 
-    var transport: ReplicaTransport = ReplicaOkHttpTransport.create(baseUrl)
-    var anonymousAgent: Agent = AgentBuilder().transport(transport).build()
+    private var transport: ReplicaTransport = ReplicaOkHttpTransport.create(baseUrl)
+    private var anonymousAgent: Agent = AgentBuilder().transport(transport).build()
 
     override suspend fun getBalance(address: String): Result<BigDecimal> {
         return try {
             withContext(Dispatchers.IO) {
                 val icpLedger: ICPLedgerProxy = ProxyBuilder.create(anonymousAgent, IcpSystemCanisters.LEDGER)
                     .getProxy(ICPLedgerProxy::class.java)
-                val value =
-                    icpLedger.getBalance(ICPBalanceRequest(address.hexToBytes())).value
+                val value = icpLedger.getBalance(ICPBalanceRequest(address.hexToBytes())).value
+                    ?: return@withContext Result.Failure(
+                        IllegalStateException("balance value is null").toBlockchainSdkError(),
+                    )
 
-                Result.Success(value!!.toBigDecimal().movePointLeft(Blockchain.InternetComputer.decimals()))
+                Result.Success(value.toBigDecimal().movePointLeft(Blockchain.InternetComputer.decimals()))
             }
         } catch (exception: Throwable) {
             Result.Failure(Exception(exception.message).toBlockchainSdkError())
         }
     }
 
-    // icp4j-agent is hard to disassemble to sign and send as different actions, so we do it their way
+    // ic4j-agent is hard to disassemble to sign and send as different actions, so we do it their way
     override suspend fun signAndSendTransaction(transferWithSigner: ICPTransferWithSigner): Result<Long?> {
         return try {
             withContext(Dispatchers.IO) {
@@ -85,6 +83,7 @@ internal class ICPIc4jAgentNetworkProvider(
         }
     }
 
+    @Suppress("CyclomaticComplexMethod")
     private fun ICPTransferError?.toBlockchainSdkError(): BlockchainSdkError {
         val message = when (this) {
             ICPTransferError.InsufficientFunds ->
@@ -94,8 +93,9 @@ internal class ICPIc4jAgentNetworkProvider(
                 this.badFeeError?.expectedFee?.value?.let { "Invalid fee, expected - $it" }
                     ?: "Invalid fee"
             ICPTransferError.TxTooOld ->
-                this.txTooOldError?.allowedWindowNanos?.let { "Transaction too old, allowed window - $it" }
-                    ?: "Transaction too old"
+                this.txTooOldError?.allowedWindowNanos?.let {
+                    "Transaction too old, allowed window - $it. Try setting system clock to the correct time"
+                } ?: "Transaction too old. Try setting system clock to the correct time"
             ICPTransferError.TxDuplicate ->
                 this.txDuplicateError?.blockIndex?.let { "Duplicate transaction, previous block index - $it" }
                     ?: "Duplicate transaction"

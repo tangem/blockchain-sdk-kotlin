@@ -17,7 +17,7 @@ internal class ICPTransactionBuilder(blockchain: Blockchain) {
             amount = ICPAmount(transactionData.amount.longValue!!),
             fee = ICPAmount(transactionData.fee?.amount?.longValue ?: 0),
             memo = (transactionData.extras as? ICPTransactionExtras)?.memo ?: 0,
-            createdAtTime = ICPTimestamp(timestampNanos)
+            createdAtTime = ICPTimestamp(timestampNanos),
         )
     }
 }

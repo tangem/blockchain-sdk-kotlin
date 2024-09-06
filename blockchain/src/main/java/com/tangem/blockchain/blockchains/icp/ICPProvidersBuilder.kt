@@ -9,7 +9,7 @@ import com.tangem.blockchain.common.network.providers.ProviderType
 
 internal class ICPProvidersBuilder(
     override val providerTypes: List<ProviderType>,
-    val walletPublicKey: Wallet.PublicKey
+    val walletPublicKey: Wallet.PublicKey,
 ) : OnlyPublicProvidersBuilder<ICPNetworkProvider>(providerTypes) {
 
     override fun createProvider(url: String, blockchain: Blockchain): ICPNetworkProvider =

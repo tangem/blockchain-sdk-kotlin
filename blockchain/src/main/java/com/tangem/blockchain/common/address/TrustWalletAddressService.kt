@@ -9,7 +9,7 @@ import wallet.core.jni.Cardano
 import wallet.core.jni.CoinType
 import wallet.core.jni.PublicKey
 
-internal open class WalletCoreAddressService(
+internal open class TrustWalletAddressService(
     private val blockchain: Blockchain,
 ) : AddressService() {
 

@@ -10,7 +10,7 @@ interface ICPLedgerProxy {
     @Name("account_balance")
     fun getBalance(
         @Argument(Type.RECORD)
-        balanceRequest: ICPBalanceRequest
+        balanceRequest: ICPBalanceRequest,
     ): ICPAmount
 
     @UPDATE
@@ -18,6 +18,6 @@ interface ICPLedgerProxy {
     @Waiter(timeout = 10, sleep = 1)
     fun transfer(
         @Argument(Type.RECORD)
-        transferRequest: ICPTransferRequest
+        transferRequest: ICPTransferRequest,
     ): CompletableFuture<ICPTransferResponse>
 }
