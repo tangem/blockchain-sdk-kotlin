@@ -147,7 +147,7 @@ internal class WalletManagerFactoryTest {
                 override suspend fun store(key: String, value: String) = Unit
             },
             accountCreator = accountCreator,
-            featureToggles = BlockchainFeatureToggles(isCardanoTokenSupport = true),
+            featureToggles = BlockchainFeatureToggles(isEthereumEIP1559Enabled = true),
         ).createTwinWalletManager(
             walletPublicKey = card.wallets.first().publicKey,
             pairPublicKey = pairPublicKey.hexToBytes(),
@@ -213,7 +213,7 @@ internal class WalletManagerFactoryTest {
                 override suspend fun store(key: String, value: String) = Unit
             },
             accountCreator = accountCreator,
-            featureToggles = BlockchainFeatureToggles(isCardanoTokenSupport = true),
+            featureToggles = BlockchainFeatureToggles(isEthereumEIP1559Enabled = true),
         ).createLegacyWalletManager(
             blockchain,
             publicKey,
