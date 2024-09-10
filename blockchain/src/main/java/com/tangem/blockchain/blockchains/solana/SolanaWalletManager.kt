@@ -12,6 +12,7 @@ import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
+import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.filterWith
 import com.tangem.blockchain.extensions.map
@@ -197,6 +198,64 @@ class SolanaWalletManager internal constructor(
                 sendTransaction(transaction, transactionData, startSendingTimestamp)
             }
         }
+    }
+
+    override suspend fun sendMultiple(
+        transactionDataList: List<TransactionData>,
+        signer: TransactionSigner,
+    ): Result<TransactionsSendResult> {
+        val startSendingTimestamp = SystemClock.elapsedRealtime()
+
+        val withoutSignatureTransactions = transactionDataList.map {
+            it.requireCompiled()
+
+            val compiled = (it.value as? TransactionData.Compiled.Data.Bytes)?.data
+                ?: return Result.Failure(UnsupportedOperation("Compiled transaction must be in bytes"))
+
+            compiled.drop(SIGNATURE_PLACEHOLDER_LENGTH).toByteArray()
+        }
+
+        val unsignedTransactions = withoutSignatureTransactions.map(transactionBuilder::buildUnsignedTransaction)
+
+        val sendResults = signMultipleCompiledTransactions(withoutSignatureTransactions, signer)
+            .successOr { return it }
+            .mapIndexed { index, transaction ->
+                when (val result = sendTransaction(unsignedTransactions[index], transaction, startSendingTimestamp)) {
+                    is Result.Failure -> result
+                    is Result.Success -> {
+                        val hash = result.data.hash
+                        transactionDataList[index].hash = hash
+                        wallet.addOutgoingTransaction(transactionDataList[index].updateHash(hash = hash))
+                        Result.Success(TransactionSendResult(hash))
+                    }
+                }
+            }
+
+        val failedResult = sendResults.firstOrNull { it is Result.Failure }
+        return if (failedResult != null) {
+            Result.Failure((failedResult as Result.Failure).error)
+        } else {
+            Result.Success(TransactionsSendResult(sendResults.mapNotNull { (it as? Result.Success)?.data?.hash }))
+        }
+    }
+
+    private suspend fun signMultipleCompiledTransactions(
+        transactionToSign: List<ByteArray>,
+        signer: TransactionSigner,
+    ): Result<List<TransactionData.Compiled>> {
+        val signResults = signer.sign(transactionToSign, wallet.publicKey).successOr {
+            return Result.fromTangemSdkError(it.error)
+        }
+
+        return Result.Success(
+            signResults.mapIndexed { index, signResult ->
+                TransactionData.Compiled(
+                    value = TransactionData.Compiled.Data.Bytes(
+                        data = byteArrayOf(1) + signResult + transactionToSign[index],
+                    ),
+                )
+            },
+        )
     }
 
     private suspend fun sendTransaction(
