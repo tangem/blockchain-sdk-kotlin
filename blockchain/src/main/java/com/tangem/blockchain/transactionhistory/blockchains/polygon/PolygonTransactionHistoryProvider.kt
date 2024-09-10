@@ -180,7 +180,7 @@ internal class PolygonTransactionHistoryProvider(
     ): TransactionHistoryItem.TransactionType {
         return if (filterType is TransactionHistoryRequest.FilterType.Coin && this.isContractInteraction) {
             val fnName = this.functionName?.substringBefore("(")
-            TransactionHistoryItem.TransactionType.ContractMethodName(fnName ?: this.contractAddress ?: UNKNOWN)
+            TransactionHistoryItem.TransactionType.ContractMethodName(fnName ?: this.functionName ?: UNKNOWN)
         } else {
             // All token transactions are considered simple & plain transfers
             TransactionHistoryItem.TransactionType.Transfer
