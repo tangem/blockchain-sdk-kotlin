@@ -125,8 +125,8 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
     }
 
     private fun shouldUseCheckMetadataHash(specVersion: Int): Boolean {
-        return SUPPORTED_CHECK_METADATA_HASH_BLOCKCHAINS.contains(blockchain) &&
-            specVersion >= USE_CHECK_METADATA_HASH_SPEC_VERSION
+        val metadataSpecVersion = SUPPORTED_CHECK_METADATA_HASH_BLOCKCHAINS[blockchain] ?: return false
+        return specVersion >= metadataSpecVersion
     }
 
     private fun encodeAddress(codecWriter: ScaleCodecWriter, address: Address, runtimeVersion: Int) {
@@ -150,12 +150,14 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         const val POLKA_RAW_ADDRESS_RUNTIME_VERSION = 28
         const val KUSAMA_RAW_ADDRESS_RUNTIME_VERSION = 2028
 
-        const val USE_CHECK_METADATA_HASH_SPEC_VERSION = 1002005
+        const val USE_CHECK_METADATA_HASH_SPEC_VERSION_POLKADOT = 1002005
+        const val USE_CHECK_METADATA_HASH_SPEC_VERSION_BITTENSOR = 198
 
-        val SUPPORTED_CHECK_METADATA_HASH_BLOCKCHAINS = listOf(
-            Blockchain.Polkadot,
-            Blockchain.PolkadotTestnet,
-            Blockchain.Kusama,
+        val SUPPORTED_CHECK_METADATA_HASH_BLOCKCHAINS = mapOf(
+            Blockchain.Polkadot to USE_CHECK_METADATA_HASH_SPEC_VERSION_POLKADOT,
+            Blockchain.PolkadotTestnet to USE_CHECK_METADATA_HASH_SPEC_VERSION_POLKADOT,
+            Blockchain.Kusama to USE_CHECK_METADATA_HASH_SPEC_VERSION_POLKADOT,
+            Blockchain.Bittensor to USE_CHECK_METADATA_HASH_SPEC_VERSION_BITTENSOR,
         )
     }
 }
