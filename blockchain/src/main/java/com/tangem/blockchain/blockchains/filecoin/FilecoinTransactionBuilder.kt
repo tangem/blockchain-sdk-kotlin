@@ -95,10 +95,15 @@ internal class FilecoinTransactionBuilder(private val wallet: Wallet) {
     ): Filecoin.SigningInput {
         transactionData.requireUncompiled()
 
+        val value = transactionData.amount.value?.movePointRight(transactionData.amount.decimals)
+            ?.toBigInteger()
+            ?.toByteArray()
+            ?: throw BlockchainSdkError.CustomError("Fail to parse amount")
+
         return Filecoin.SigningInput.newBuilder()
             .setTo(transactionData.destinationAddress)
             .setNonce(nonce)
-            .setValue(ByteString.copyFrom(transactionData.amount.longValueOrZero.toByteArray()))
+            .setValue(ByteString.copyFrom(value))
             .setGasFeeCap(ByteString.copyFrom(fee.gasUnitPrice.toByteArray()))
             .setGasLimit(fee.gasLimit)
             .setGasPremium(ByteString.copyFrom(fee.gasPremium.toByteArray()))
