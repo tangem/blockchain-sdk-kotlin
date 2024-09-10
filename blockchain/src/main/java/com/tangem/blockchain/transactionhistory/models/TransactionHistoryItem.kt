@@ -32,14 +32,20 @@ data class TransactionHistoryItem(
     }
 
     sealed interface TransactionType {
-        object Transfer : TransactionType
+        data object Transfer : TransactionType
         data class ContractMethod(val id: String) : TransactionType
         data class ContractMethodName(val name: String) : TransactionType
+
+        // tron-specific
+        data object FreezeBalanceV2Contract : TransactionType
+        data object UnfreezeBalanceV2Contract : TransactionType
+        data object VoteWitnessContract : TransactionType
+        data object WithdrawBalanceContract : TransactionType
     }
 
     sealed class TransactionStatus {
-        object Failed : TransactionStatus()
-        object Unconfirmed : TransactionStatus()
-        object Confirmed : TransactionStatus()
+        data object Failed : TransactionStatus()
+        data object Unconfirmed : TransactionStatus()
+        data object Confirmed : TransactionStatus()
     }
 }
