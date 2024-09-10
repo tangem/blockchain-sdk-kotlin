@@ -213,10 +213,24 @@ internal class TronTransactionHistoryProvider(
     ): TransactionHistoryItem.TransactionType {
         return when (filterType) {
             TransactionHistoryRequest.FilterType.Coin -> {
-                if (tx.isContractInteraction()) {
-                    TransactionHistoryItem.TransactionType.ContractMethod(id = tx.contractAddress.orEmpty())
-                } else {
-                    TransactionHistoryItem.TransactionType.Transfer
+                when (tx.contractType) {
+                    TRANSFER_CONTRACT_TYPE, TRANSFER_ASSET_CONTRACT_TYPE -> {
+                        TransactionHistoryItem.TransactionType.Transfer
+                    }
+
+                    VOTE_WITNESS_CONTRACT_TYPE -> {
+                        TransactionHistoryItem.TransactionType.VoteWitnessContract
+                    }
+                    WITHDRAW_BALANCE_CONTRACT_TYPE -> {
+                        TransactionHistoryItem.TransactionType.WithdrawBalanceContract
+                    }
+                    FREEZE_BALANCE_V2_CONTRACT_TYPE -> {
+                        TransactionHistoryItem.TransactionType.FreezeBalanceV2Contract
+                    }
+                    UNFREEZE_BALANCE_V2_CONTRACT_TYPE -> {
+                        TransactionHistoryItem.TransactionType.UnfreezeBalanceV2Contract
+                    }
+                    else -> TransactionHistoryItem.TransactionType.ContractMethod(id = tx.contractName.orEmpty())
                 }
             }
             is TransactionHistoryRequest.FilterType.Contract -> {
@@ -274,12 +288,12 @@ internal class TronTransactionHistoryProvider(
         return tokenTransfers.firstOrNull { contractAddress.equals(it.token, ignoreCase = true) }
     }
 
-    private fun GetAddressResponse.Transaction.isContractInteraction(): Boolean = contractType != null &&
-        contractType != TRANSFER_CONTRACT_TYPE &&
-        contractType != TRANSFER_ASSET_CONTRACT_TYPE
-
     private companion object {
         private const val TRANSFER_CONTRACT_TYPE = 1
         private const val TRANSFER_ASSET_CONTRACT_TYPE = 2
+        private const val VOTE_WITNESS_CONTRACT_TYPE = 4
+        private const val WITHDRAW_BALANCE_CONTRACT_TYPE = 13
+        private const val FREEZE_BALANCE_V2_CONTRACT_TYPE = 54
+        private const val UNFREEZE_BALANCE_V2_CONTRACT_TYPE = 55
     }
 }
