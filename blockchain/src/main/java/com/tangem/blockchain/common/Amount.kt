@@ -11,8 +11,10 @@ data class Amount(
     val type: AmountType = AmountType.Coin,
 ) {
 
+    // Be careful! The property may overflow if the decimals are much larger than the long value.
     val longValue get() = value?.movePointRight(decimals)?.toLong()
 
+    // Be careful! The property may overflow if the decimals are much larger than the long value.
     val longValueOrZero: Long by lazy { value?.movePointRight(decimals)?.toLong() ?: 0L }
 
     constructor(
@@ -29,32 +31,29 @@ data class Amount(
         type = type,
     )
 
-    constructor(token: BlockchainToken, value: BigDecimal? = null) :
-        this(
-            currencySymbol = token.symbol,
-            value = value,
-            maxValue = null,
-            decimals = token.decimals,
-            type = AmountType.Token(token),
-        )
+    constructor(token: BlockchainToken, value: BigDecimal? = null) : this(
+        currencySymbol = token.symbol,
+        value = value,
+        maxValue = null,
+        decimals = token.decimals,
+        type = AmountType.Token(token),
+    )
 
-    constructor(amount: Amount, value: BigDecimal) :
-        this(
-            currencySymbol = amount.currencySymbol,
-            value = value,
-            maxValue = null,
-            decimals = amount.decimals,
-            type = amount.type,
-        )
+    constructor(amount: Amount, value: BigDecimal) : this(
+        currencySymbol = amount.currencySymbol,
+        value = value,
+        maxValue = null,
+        decimals = amount.decimals,
+        type = amount.type,
+    )
 
-    constructor(blockchain: Blockchain) :
-        this(
-            currencySymbol = blockchain.currency,
-            value = BigDecimal.ZERO,
-            maxValue = null,
-            decimals = blockchain.decimals(),
-            type = AmountType.Coin,
-        )
+    constructor(blockchain: Blockchain) : this(
+        currencySymbol = blockchain.currency,
+        value = BigDecimal.ZERO,
+        maxValue = null,
+        decimals = blockchain.decimals(),
+        type = AmountType.Coin,
+    )
 
     operator fun plus(add: BigDecimal): Amount = copy(value = (value ?: BigDecimal.ZERO).plus(add))
 
