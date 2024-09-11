@@ -144,25 +144,48 @@ internal class TronTransactionHistoryProvider(
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
         }
+        val type = extractType(filterType = filterType, tx = this)
         return TransactionHistoryItem(
             txHash = txid.removePrefix(PREFIX),
             timestamp = TimeUnit.SECONDS.toMillis(blockTime.toLong()),
-            isOutgoing = isOutgoing(walletAddress, sourceType),
+            isOutgoing = isOutgoing(type, walletAddress, sourceType),
             destinationType = destinationType,
             sourceType = sourceType,
             status = extractStatus(tx = this),
-            type = extractType(filterType = filterType, tx = this),
+            type = type,
             amount = amount,
         )
     }
 
-    private fun isOutgoing(walletAddress: String, sourceType: TransactionHistoryItem.SourceType): Boolean {
+    private fun isOutgoing(
+        type: TransactionHistoryItem.TransactionType,
+        walletAddress: String,
+        sourceType: TransactionHistoryItem.SourceType
+    ): Boolean {
+        checkForStakingOutgoingTransaction(type)?.let { return it }
+
         return when (sourceType) {
             is TransactionHistoryItem.SourceType.Multiple -> {
                 sourceType.addresses.any { it.equals(walletAddress, ignoreCase = true) }
             }
             is TransactionHistoryItem.SourceType.Single -> {
                 sourceType.address.equals(walletAddress, ignoreCase = true)
+            }
+        }
+    }
+
+    private fun checkForStakingOutgoingTransaction(type: TransactionHistoryItem.TransactionType) : Boolean? {
+        return when(type) {
+            TransactionHistoryItem.TransactionType.VoteWitnessContract,
+            TransactionHistoryItem.TransactionType.FreezeBalanceV2Contract -> {
+                true
+            }
+            TransactionHistoryItem.TransactionType.WithdrawBalanceContract,
+            TransactionHistoryItem.TransactionType.UnfreezeBalanceV2Contract -> {
+                false
+            }
+            else -> {
+                null
             }
         }
     }
