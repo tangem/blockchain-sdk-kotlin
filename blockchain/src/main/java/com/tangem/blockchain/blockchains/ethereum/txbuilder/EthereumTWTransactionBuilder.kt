@@ -1,6 +1,7 @@
-package com.tangem.blockchain.blockchains.ethereum
+package com.tangem.blockchain.blockchains.ethereum.txbuilder
 
 import com.google.protobuf.ByteString
+import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.UnmarshalHelper.Companion.EVM_LEGACY_REC_ID_OFFSET
 import com.tangem.blockchain.common.transaction.Fee
@@ -14,16 +15,31 @@ import wallet.core.jni.proto.Ethereum
 import java.math.BigDecimal
 import wallet.core.jni.proto.TransactionCompiler as ProtoTransactionCompiler
 
-class EthereumTWTransactionBuilder(private val wallet: Wallet) {
+/**
+ * Ethereum TW transaction builder
+ *
+ * @property wallet wallet
+ */
+internal class EthereumTWTransactionBuilder(private val wallet: Wallet) : EthereumTransactionBuilder(wallet = wallet) {
 
     private val coinType = CoinType.ETHEREUM
     private val chainId = wallet.blockchain.getChainId()
         ?: error("Invalid chain id for ${wallet.blockchain.name} blockchain")
 
-    fun buildForSign(transaction: TransactionData): ByteArray {
+    override fun buildForSign(transaction: TransactionData): EthereumCompiledTxInfo.TWInfo {
         val input = buildSigningInput(transaction)
         val preSigningOutput = buildTxCompilerPreSigningOutput(input)
-        return preSigningOutput.dataHash.toByteArray()
+        return EthereumCompiledTxInfo.TWInfo(hash = preSigningOutput.dataHash.toByteArray())
+    }
+
+    override fun buildForSend(
+        transaction: TransactionData,
+        signature: ByteArray,
+        compiledTransaction: EthereumCompiledTxInfo,
+    ): ByteArray {
+        val input = buildSigningInput(transaction)
+        val output = buildSigningOutput(input = input, hash = compiledTransaction.hash, signature = signature)
+        return output.encoded.toByteArray()
     }
 
     fun buildForSend(transaction: TransactionData, hash: ByteArray, signature: ByteArray): ByteArray {
@@ -197,7 +213,7 @@ class EthereumTWTransactionBuilder(private val wallet: Wallet) {
         val txInputData = input.toByteArray()
 
         val publicKeys = DataVector()
-        publicKeys.add(wallet.publicKey.blockchainKey)
+        publicKeys.add(publicKey)
 
         val signatures = DataVector()
         signatures.add(unmarshalSignature)
