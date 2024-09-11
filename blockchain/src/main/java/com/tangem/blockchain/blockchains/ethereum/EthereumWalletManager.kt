@@ -1,11 +1,13 @@
 package com.tangem.blockchain.blockchains.ethereum
 
 import android.util.Log
+import com.tangem.blockchain.blockchains.ethereum.eip1559.isSupportEIP1559
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
@@ -93,7 +95,6 @@ open class EthereumWalletManager(
                     is SimpleResult.Failure -> Result.fromTangemSdkError(sendResult.error)
                 }
             }
-
             is Result.Failure -> Result.fromTangemSdkError(signResponse.error)
         }
     }
@@ -136,34 +137,11 @@ open class EthereumWalletManager(
         destination: String,
         data: String? = null,
     ): Result<TransactionFee> {
-        return try {
-            coroutineScope {
-                val gasLimitResponsesDeferred = async {
-                    if (data != null) {
-                        getGasLimit(amount, destination, data)
-                    } else {
-                        getGasLimit(amount, destination)
-                    }
-                }
-                val gasPriceResponsesDeferred = async { getGasPrice() }
-
-                val gLimit = gasLimitResponsesDeferred.await().successOr {
-                    return@coroutineScope Result.Failure(it.error)
-                }
-                val gPrice = gasPriceResponsesDeferred.await().successOr {
-                    return@coroutineScope Result.Failure(it.error)
-                }
-
-                val fees = feesCalculator.calculateFees(
-                    amountParams = getAmountParams(),
-                    gasLimit = gLimit,
-                    gasPrice = gPrice,
-                )
-
-                Result.Success(fees)
-            }
-        } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainSdkError())
+        val isEthereumEIP1559Enabled = DepsContainer.blockchainFeatureToggles.isEthereumEIP1559Enabled
+        return if (isEthereumEIP1559Enabled && wallet.blockchain.isSupportEIP1559) {
+            getEIP1559Fee(amount, destination, data)
+        } else {
+            getLegacyFee(amount, destination, data)
         }
     }
 
@@ -250,5 +228,79 @@ open class EthereumWalletManager(
         }
 
         return networkProvider.getGasLimit(to, from, value, finalData)
+    }
+
+    private suspend fun getEIP1559Fee(
+        amount: Amount,
+        destination: String,
+        data: String?,
+    ): Result<TransactionFee.Choosable> {
+        return try {
+            coroutineScope {
+                val gasLimitResponsesDeferred = async {
+                    if (data != null) {
+                        getGasLimit(amount, destination, data)
+                    } else {
+                        getGasLimit(amount, destination)
+                    }
+                }
+
+                val feeHistoryResponseDeferred = async { networkProvider.getFeeHistory() }
+
+                val gLimit = gasLimitResponsesDeferred.await().successOr {
+                    return@coroutineScope Result.Failure(it.error)
+                }
+
+                val feeHistory = feeHistoryResponseDeferred.await().successOr {
+                    return@coroutineScope Result.Failure(it.error)
+                }
+
+                val fees = feesCalculator.calculateEip1559Fees(
+                    amountParams = getAmountParams(),
+                    gasLimit = gLimit,
+                    feeHistory = feeHistory,
+                )
+
+                Result.Success(fees)
+            }
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    private suspend fun getLegacyFee(
+        amount: Amount,
+        destination: String,
+        data: String?,
+    ): Result<TransactionFee.Choosable> {
+        return try {
+            coroutineScope {
+                val gasLimitResponsesDeferred = async {
+                    if (data != null) {
+                        getGasLimit(amount, destination, data)
+                    } else {
+                        getGasLimit(amount, destination)
+                    }
+                }
+                val gasPriceResponsesDeferred = async { getGasPrice() }
+
+                val gLimit = gasLimitResponsesDeferred.await().successOr {
+                    return@coroutineScope Result.Failure(it.error)
+                }
+                val gPrice = gasPriceResponsesDeferred.await().successOr {
+                    return@coroutineScope Result.Failure(it.error)
+                }
+
+                val fees = feesCalculator.calculateFees(
+                    amountParams = getAmountParams(),
+                    gasLimit = gLimit,
+                    gasPrice = gPrice,
+                )
+
+                Result.Success(fees)
+            }
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
     }
 }
