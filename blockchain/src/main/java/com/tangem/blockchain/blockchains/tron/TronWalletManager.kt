@@ -18,6 +18,7 @@ import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import okio.ByteString.Companion.decodeHex
 import org.tron.protos.Transaction.raw
 import java.math.BigDecimal
@@ -137,6 +138,10 @@ internal class TronWalletManager(
             is Result.Success -> {
                 coroutineScope {
                     val sendResults = signResult.data.mapIndexed { index, signedData ->
+                        if (index != 0) {
+                            delay(SEND_TRANSACTIONS_DELAY)
+                        }
+
                         when (val sendResult = networkService.broadcastHex(signedData)) {
                             is Result.Failure -> sendResult
                             is Result.Success -> {
@@ -413,5 +418,7 @@ internal class TronWalletManager(
          * Value taken from [TIP-491](https://github.com/tronprotocol/tips/issues/491)
          */
         const val ENERGY_FACTOR_PRECISION = 10_000
+
+        const val SEND_TRANSACTIONS_DELAY = 5_000L
     }
 }
