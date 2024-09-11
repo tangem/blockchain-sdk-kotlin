@@ -10,6 +10,7 @@ import com.tangem.blockchain.network.blockbook.network.responses.GetAddressRespo
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.TransactionType.TronStakingTransactionType
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import com.tangem.common.extensions.guard
 import kotlinx.coroutines.Dispatchers
@@ -160,7 +161,7 @@ internal class TronTransactionHistoryProvider(
     private fun isOutgoing(
         type: TransactionHistoryItem.TransactionType,
         walletAddress: String,
-        sourceType: TransactionHistoryItem.SourceType
+        sourceType: TransactionHistoryItem.SourceType,
     ): Boolean {
         checkForStakingOutgoingTransaction(type)?.let { return it }
 
@@ -174,14 +175,16 @@ internal class TronTransactionHistoryProvider(
         }
     }
 
-    private fun checkForStakingOutgoingTransaction(type: TransactionHistoryItem.TransactionType) : Boolean? {
-        return when(type) {
-            TransactionHistoryItem.TransactionType.VoteWitnessContract,
-            TransactionHistoryItem.TransactionType.FreezeBalanceV2Contract -> {
+    private fun checkForStakingOutgoingTransaction(type: TransactionHistoryItem.TransactionType): Boolean? {
+        return when (type) {
+            TronStakingTransactionType.VoteWitnessContract,
+            TronStakingTransactionType.FreezeBalanceV2Contract,
+            -> {
                 true
             }
-            TransactionHistoryItem.TransactionType.WithdrawBalanceContract,
-            TransactionHistoryItem.TransactionType.UnfreezeBalanceV2Contract -> {
+            TronStakingTransactionType.WithdrawBalanceContract,
+            TronStakingTransactionType.UnfreezeBalanceV2Contract,
+            -> {
                 false
             }
             else -> {
@@ -242,16 +245,16 @@ internal class TronTransactionHistoryProvider(
                     }
 
                     VOTE_WITNESS_CONTRACT_TYPE -> {
-                        TransactionHistoryItem.TransactionType.VoteWitnessContract
+                        TronStakingTransactionType.VoteWitnessContract
                     }
                     WITHDRAW_BALANCE_CONTRACT_TYPE -> {
-                        TransactionHistoryItem.TransactionType.WithdrawBalanceContract
+                        TronStakingTransactionType.WithdrawBalanceContract
                     }
                     FREEZE_BALANCE_V2_CONTRACT_TYPE -> {
-                        TransactionHistoryItem.TransactionType.FreezeBalanceV2Contract
+                        TronStakingTransactionType.FreezeBalanceV2Contract
                     }
                     UNFREEZE_BALANCE_V2_CONTRACT_TYPE -> {
-                        TransactionHistoryItem.TransactionType.UnfreezeBalanceV2Contract
+                        TronStakingTransactionType.UnfreezeBalanceV2Contract
                     }
                     else -> TransactionHistoryItem.TransactionType.ContractMethod(id = tx.contractName.orEmpty())
                 }
