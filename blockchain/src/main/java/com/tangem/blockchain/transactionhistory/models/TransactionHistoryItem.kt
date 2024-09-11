@@ -36,11 +36,12 @@ data class TransactionHistoryItem(
         data class ContractMethod(val id: String) : TransactionType
         data class ContractMethodName(val name: String) : TransactionType
 
-        // tron-specific
-        data object FreezeBalanceV2Contract : TransactionType
-        data object UnfreezeBalanceV2Contract : TransactionType
-        data object VoteWitnessContract : TransactionType
-        data object WithdrawBalanceContract : TransactionType
+        sealed interface TronStakingTransactionType : TransactionType {
+            data object FreezeBalanceV2Contract : TronStakingTransactionType
+            data object UnfreezeBalanceV2Contract : TronStakingTransactionType
+            data object VoteWitnessContract : TronStakingTransactionType
+            data object WithdrawBalanceContract : TronStakingTransactionType
+        }
     }
 
     sealed class TransactionStatus {
