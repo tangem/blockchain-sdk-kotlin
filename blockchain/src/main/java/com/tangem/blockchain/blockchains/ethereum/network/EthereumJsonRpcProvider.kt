@@ -20,26 +20,28 @@ class EthereumJsonRpcProvider(
     private val api = createRetrofitInstance(baseUrl).create(EthereumApi::class.java)
 
     suspend fun getBalance(address: String) = createEthereumBody(
-        EthereumMethod.GET_BALANCE,
+        method = EthereumMethod.GET_BALANCE,
         address,
         EthBlockParam.LATEST.value,
     ).post()
 
     suspend fun getTokenBalance(data: EthereumTokenBalanceRequestData) = createEthereumBody(
-        EthereumMethod.CALL,
-        createTokenBalanceCallObject(data.address, data.contractAddress),
+        method = EthereumMethod.CALL,
+        createTokenBalanceCallObject(address = data.address, contractAddress = data.contractAddress),
         EthBlockParam.LATEST.value,
     ).post()
 
     suspend fun getTokenAllowance(data: EthereumTokenAllowanceRequestData) = createEthereumBody(
-        EthereumMethod.CALL,
+        method = EthereumMethod.CALL,
         createTokenAllowanceCallObject(data.ownerAddress, data.contractAddress, data.spenderAddress),
         EthBlockParam.LATEST.value,
     ).post()
 
-    suspend fun call(data: Any): Result<EthereumResponse> {
-        return createEthereumBody(EthereumMethod.CALL, data, EthBlockParam.LATEST.value).post()
-    }
+    suspend fun call(data: Any): Result<EthereumResponse> = createEthereumBody(
+        method = EthereumMethod.CALL,
+        data,
+        EthBlockParam.LATEST.value,
+    ).post()
 
     @Suppress("LongParameterList")
     suspend fun callProcess(
@@ -50,32 +52,51 @@ class EthereumJsonRpcProvider(
         otp: ByteArray,
         otpCounter: Int,
     ) = createEthereumBody(
-        EthereumMethod.CALL,
+        method = EthereumMethod.CALL,
         createProcessCallObject(contractAddress, amount, decimals, cardAddress, otp, otpCounter),
         EthBlockParam.LATEST.value,
     ).post()
 
     suspend fun getTxCount(address: String) = createEthereumBody(
-        EthereumMethod.GET_TRANSACTION_COUNT,
+        method = EthereumMethod.GET_TRANSACTION_COUNT,
         address,
         EthBlockParam.LATEST.value,
     ).post()
 
     suspend fun getPendingTxCount(address: String) = createEthereumBody(
-        EthereumMethod.GET_TRANSACTION_COUNT,
+        method = EthereumMethod.GET_TRANSACTION_COUNT,
         address,
         EthBlockParam.PENDING.value,
     ).post()
 
-    suspend fun sendTransaction(transaction: String) =
-        createEthereumBody(EthereumMethod.SEND_RAW_TRANSACTION, transaction).post()
+    suspend fun sendTransaction(transaction: String) = createEthereumBody(
+        method = EthereumMethod.SEND_RAW_TRANSACTION,
+        transaction,
+    ).post()
 
-    suspend fun getGasLimit(call: EthCallObject) = createEthereumBody(EthereumMethod.ESTIMATE_GAS, call).post()
+    suspend fun getGasLimit(call: EthCallObject) = createEthereumBody(
+        method = EthereumMethod.ESTIMATE_GAS,
+        call,
+    ).post()
 
-    suspend fun getGasPrice() = createEthereumBody(EthereumMethod.GAS_PRICE).post()
+    suspend fun getGasPrice() = createEthereumBody(method = EthereumMethod.GAS_PRICE).post()
 
-    private fun createEthereumBody(method: EthereumMethod, vararg params: Any) =
-        EthereumBody(method.value, params.toList())
+    /**
+     * Get fee history for 5 blocks (around a minute) with 25,50,75 percentiles (selected empirically)
+     *
+     * @see <a href = https://www.quicknode.com/docs/ethereum/eth_feeHistory>API DOC<a/>
+     */
+    @Suppress("MagicNumber")
+    suspend fun getFeeHistory() = createEthereumBody(
+        method = EthereumMethod.FEE_HISTORY,
+        5, // blockCount
+        EthBlockParam.LATEST.value, // newestBlock
+        listOf(25, 50, 75), // rewardPercentiles
+    ).post()
+
+    private fun createEthereumBody(method: EthereumMethod, vararg params: Any): EthereumBody {
+        return EthereumBody(method = method.value, params = params.toList())
+    }
 
     // TODO: [REDACTED_JIRA] Replace with SmartContractMethod interface implementations
     private fun createTokenBalanceCallObject(address: String, contractAddress: String) = EthCallObject(
@@ -154,10 +175,4 @@ data class EthereumTokenAllowanceRequestData(
     val ownerAddress: String,
     val contractAddress: String,
     val spenderAddress: String,
-)
-
-data class EthereumGasLimitRequestData(
-    val to: String,
-    val from: String,
-    val data: String?,
 )
