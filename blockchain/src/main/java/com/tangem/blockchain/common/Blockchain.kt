@@ -157,6 +157,7 @@ enum class Blockchain(
     BlastTestnet("blast/test", "ETH", "Blast Testnet"),
     Cyber("cyber", "ETH", "Cyber"),
     CyberTestnet("cyber/test", "ETH", "Cyber Testnet"),
+    InternetComputer("internet-computer", "ICP", "Internet Computer"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -200,6 +201,7 @@ enum class Blockchain(
         Hedera, HederaTestnet,
         Radiant,
         Koinos, KoinosTestnet,
+        InternetComputer,
         -> 8
 
         Solana, SolanaTestnet,
@@ -343,6 +345,7 @@ enum class Blockchain(
             TerraV2,
             Near, NearTestnet,
             Algorand, AlgorandTestnet,
+            InternetComputer,
             Filecoin,
             Sei, SeiTestnet,
             -> TrustWalletAddressService(blockchain = this)
@@ -507,6 +510,7 @@ enum class Blockchain(
             Blast, BlastTestnet,
             Cyber, CyberTestnet,
             Sei, SeiTestnet,
+            InternetComputer,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
