@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.ethereum.network
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
+// TODO(https://tangem.atlassian.net/browse/AND-8313): Use JsonRPCResponse
 @JsonClass(generateAdapter = true)
 data class EthereumResponse(
     @Json(name = "jsonrpc")
@@ -12,7 +13,7 @@ data class EthereumResponse(
     val id: Int? = null,
 
     @Json(name = "result")
-    val result: String? = null,
+    val result: Any? = null,
 
     @Json(name = "error")
     val error: EthereumError? = null,
