@@ -18,6 +18,7 @@ interface EthereumNetworkProvider : NetworkProvider {
     suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>>
     suspend fun getGasPrice(): Result<BigInteger>
     suspend fun getGasLimit(to: String, from: String, value: String?, data: String?): Result<BigInteger>
+    suspend fun getFeeHistory(): Result<EthereumFeeHistory>
     suspend fun getTokensBalance(address: String, tokens: Set<Token>): Result<Map<Token, BigDecimal>>
 
     suspend fun callContractForFee(data: ContractCallData): Result<BigInteger>
@@ -29,4 +30,11 @@ class EthereumInfoResponse(
     val txCount: Long,
     val pendingTxCount: Long,
     val recentTransactions: List<TransactionData.Uncompiled>?,
+)
+
+data class EthereumFeeHistory(
+    val baseFee: BigDecimal, // for pending block
+    val lowPriorityFee: BigDecimal,
+    val marketPriorityFee: BigDecimal,
+    val fastPriorityFee: BigDecimal,
 )
