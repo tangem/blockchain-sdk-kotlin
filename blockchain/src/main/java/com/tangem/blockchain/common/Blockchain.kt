@@ -26,7 +26,6 @@ import com.tangem.blockchain.blockchains.xdc.XDCAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.*
 import com.tangem.blockchain.common.derivation.DerivationStyle
-import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProviderFactory
 import com.tangem.blockchain.externallinkprovider.TxExploreState
@@ -74,6 +73,8 @@ enum class Blockchain(
     Polygon("POLYGON", "POL", "Polygon"),
     PolygonTestnet("POLYGON/test", "MATIC", "Polygon Testnet"),
     RSK("RSK", "RBTC", "RSK"),
+    Sei("sei", "SEI", "Sei"),
+    SeiTestnet("sei/test", "SEI", "Sei Testnet"),
     Stellar("XLM", "XLM", "Stellar"),
     StellarTestnet("XLM/test", "XLM", "Stellar Testnet"),
     Solana("SOLANA", "SOL", "Solana"),
@@ -156,6 +157,7 @@ enum class Blockchain(
     BlastTestnet("blast/test", "ETH", "Blast Testnet"),
     Cyber("cyber", "ETH", "Cyber"),
     CyberTestnet("cyber/test", "ETH", "Cyber Testnet"),
+    InternetComputer("internet-computer", "ICP", "Internet Computer"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -181,6 +183,7 @@ enum class Blockchain(
         Cosmos, CosmosTestnet,
         TerraV1, TerraV2,
         Algorand, AlgorandTestnet,
+        Sei, SeiTestnet,
         -> 6
 
         Stellar, StellarTestnet -> 7
@@ -198,6 +201,7 @@ enum class Blockchain(
         Hedera, HederaTestnet,
         Radiant,
         Koinos, KoinosTestnet,
+        InternetComputer,
         -> 8
 
         Solana, SolanaTestnet,
@@ -341,7 +345,9 @@ enum class Blockchain(
             TerraV2,
             Near, NearTestnet,
             Algorand, AlgorandTestnet,
+            InternetComputer,
             Filecoin,
+            Sei, SeiTestnet,
             -> TrustWalletAddressService(blockchain = this)
 
             Aptos, AptosTestnet -> AptosAddressService(isTestnet())
@@ -434,6 +440,7 @@ enum class Blockchain(
             Koinos, KoinosTestnet -> KoinosTestnet
             Blast, BlastTestnet -> BlastTestnet
             Cyber, CyberTestnet -> CyberTestnet
+            Sei, SeiTestnet -> SeiTestnet
             else -> null
         }
     }
@@ -502,6 +509,8 @@ enum class Blockchain(
             Filecoin,
             Blast, BlastTestnet,
             Cyber, CyberTestnet,
+            Sei, SeiTestnet,
+            InternetComputer,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -611,8 +620,6 @@ enum class Blockchain(
 
         if (isEvm()) return true
 
-        if (this == Cardano) return DepsContainer.blockchainFeatureToggles.isCardanoTokenSupport
-
         return when (this) {
             Binance, BinanceTestnet,
             Solana, SolanaTestnet,
@@ -621,6 +628,7 @@ enum class Blockchain(
             VeChain, VeChainTestnet,
             Hedera, HederaTestnet,
             TON, TONTestnet,
+            Cardano,
             -> true
 
             else -> false
