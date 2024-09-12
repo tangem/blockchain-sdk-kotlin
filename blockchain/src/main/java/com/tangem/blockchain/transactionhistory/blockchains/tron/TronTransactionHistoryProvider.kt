@@ -10,7 +10,6 @@ import com.tangem.blockchain.network.blockbook.network.responses.GetAddressRespo
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
-import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.TransactionType.TronStakingTransactionType
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import com.tangem.common.extensions.guard
 import kotlinx.coroutines.Dispatchers
@@ -145,50 +144,25 @@ internal class TronTransactionHistoryProvider(
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
         }
-        val type = extractType(filterType = filterType, tx = this)
         return TransactionHistoryItem(
             txHash = txid.removePrefix(PREFIX),
             timestamp = TimeUnit.SECONDS.toMillis(blockTime.toLong()),
-            isOutgoing = isOutgoing(type, walletAddress, sourceType),
+            isOutgoing = isOutgoing(walletAddress, sourceType),
             destinationType = destinationType,
             sourceType = sourceType,
             status = extractStatus(tx = this),
-            type = type,
+            type = extractType(filterType = filterType, tx = this),
             amount = amount,
         )
     }
 
-    private fun isOutgoing(
-        type: TransactionHistoryItem.TransactionType,
-        walletAddress: String,
-        sourceType: TransactionHistoryItem.SourceType,
-    ): Boolean {
-        checkForStakingOutgoingTransaction(type)?.let { return it }
-
+    private fun isOutgoing(walletAddress: String, sourceType: TransactionHistoryItem.SourceType): Boolean {
         return when (sourceType) {
             is TransactionHistoryItem.SourceType.Multiple -> {
                 sourceType.addresses.any { it.equals(walletAddress, ignoreCase = true) }
             }
             is TransactionHistoryItem.SourceType.Single -> {
                 sourceType.address.equals(walletAddress, ignoreCase = true)
-            }
-        }
-    }
-
-    private fun checkForStakingOutgoingTransaction(type: TransactionHistoryItem.TransactionType): Boolean? {
-        return when (type) {
-            TronStakingTransactionType.VoteWitnessContract,
-            TronStakingTransactionType.FreezeBalanceV2Contract,
-            -> {
-                true
-            }
-            TronStakingTransactionType.WithdrawBalanceContract,
-            TronStakingTransactionType.UnfreezeBalanceV2Contract,
-            -> {
-                false
-            }
-            else -> {
-                null
             }
         }
     }
@@ -239,24 +213,10 @@ internal class TronTransactionHistoryProvider(
     ): TransactionHistoryItem.TransactionType {
         return when (filterType) {
             TransactionHistoryRequest.FilterType.Coin -> {
-                when (tx.contractType) {
-                    TRANSFER_CONTRACT_TYPE, TRANSFER_ASSET_CONTRACT_TYPE -> {
-                        TransactionHistoryItem.TransactionType.Transfer
-                    }
-
-                    VOTE_WITNESS_CONTRACT_TYPE -> {
-                        TronStakingTransactionType.VoteWitnessContract
-                    }
-                    WITHDRAW_BALANCE_CONTRACT_TYPE -> {
-                        TronStakingTransactionType.WithdrawBalanceContract
-                    }
-                    FREEZE_BALANCE_V2_CONTRACT_TYPE -> {
-                        TronStakingTransactionType.FreezeBalanceV2Contract
-                    }
-                    UNFREEZE_BALANCE_V2_CONTRACT_TYPE -> {
-                        TronStakingTransactionType.UnfreezeBalanceV2Contract
-                    }
-                    else -> TransactionHistoryItem.TransactionType.ContractMethod(id = tx.contractName.orEmpty())
+                if (tx.isContractInteraction()) {
+                    TransactionHistoryItem.TransactionType.ContractMethod(id = tx.contractAddress.orEmpty())
+                } else {
+                    TransactionHistoryItem.TransactionType.Transfer
                 }
             }
             is TransactionHistoryRequest.FilterType.Contract -> {
@@ -314,12 +274,12 @@ internal class TronTransactionHistoryProvider(
         return tokenTransfers.firstOrNull { contractAddress.equals(it.token, ignoreCase = true) }
     }
 
+    private fun GetAddressResponse.Transaction.isContractInteraction(): Boolean = contractType != null &&
+        contractType != TRANSFER_CONTRACT_TYPE &&
+        contractType != TRANSFER_ASSET_CONTRACT_TYPE
+
     private companion object {
         private const val TRANSFER_CONTRACT_TYPE = 1
         private const val TRANSFER_ASSET_CONTRACT_TYPE = 2
-        private const val VOTE_WITNESS_CONTRACT_TYPE = 4
-        private const val WITHDRAW_BALANCE_CONTRACT_TYPE = 13
-        private const val FREEZE_BALANCE_V2_CONTRACT_TYPE = 54
-        private const val UNFREEZE_BALANCE_V2_CONTRACT_TYPE = 55
     }
 }
