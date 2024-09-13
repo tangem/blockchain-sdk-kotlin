@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.tron
 import android.util.Log
 import com.google.common.primitives.Ints
 import com.tangem.blockchain.blockchains.tron.network.TronAccountInfo
+import com.tangem.blockchain.blockchains.tron.network.TronEnergyFeeData
 import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
@@ -196,7 +197,7 @@ internal class TronWalletManager(
                 )
             }
 
-            val energyFee = when (val energyFeeResult = getEnergyFee(amount, destination)) {
+            val energyFeeParameters = when (val energyFeeResult = getEnergyFeeParameters(amount, destination)) {
                 is Result.Failure -> return@coroutineScope Result.Failure(energyFeeResult.error)
                 is Result.Success -> energyFeeResult.data
             }
@@ -211,14 +212,26 @@ internal class TronWalletManager(
 
             val sunPerBandwidthPoint = 1000
             val additionalDataSize = 64
-            val remainingBandwidthInSun = (resource.freeNetLimit - (resource.freeNetUsed ?: 0)) * sunPerBandwidthPoint
-            val transactionSizeFee = sunPerBandwidthPoint * (transactionData.size + additionalDataSize)
-            val consumedBandwidthFee = if (transactionSizeFee <= remainingBandwidthInSun) 0 else transactionSizeFee
-            val totalFee = consumedBandwidthFee + energyFee
+            val remainingBandwidth = resource.freeNetLimit - (resource.freeNetUsed ?: 0)
+            val transactionSizeFee = transactionData.size + additionalDataSize
+            val consumedBandwidthFee = if (transactionSizeFee <= remainingBandwidth) 0 else transactionSizeFee *
+                sunPerBandwidthPoint
 
-            val value = BigDecimal(totalFee).movePointLeft(blockchain.decimals())
+            val remainingEnergy = resource.energyLimit - resource.energyUsed
+            val consumedEnergyFee = max(
+                BigDecimal.ZERO,
+            BigDecimal(energyFeeParameters.energyFee) - remainingEnergy
+            ) * BigDecimal(energyFeeParameters.sunPerEnergyUnit)
+
+            val totalFee = BigDecimal(consumedBandwidthFee) + consumedEnergyFee
+
+            val value = totalFee.movePointLeft(blockchain.decimals())
             Result.Success(TransactionFee.Single(Fee.Common(Amount(value, blockchain))))
         }
+    }
+
+    private fun max(a: BigDecimal, b: BigDecimal): BigDecimal {
+        return if (a > b) a else b
     }
 
     @Suppress("LongParameterList")
@@ -349,9 +362,9 @@ internal class TronWalletManager(
         }
     }
 
-    private suspend fun getEnergyFee(amount: Amount, destination: String): Result<Int> {
+    private suspend fun getEnergyFeeParameters(amount: Amount, destination: String): Result<TronEnergyFeeData> {
         val token = when (amount.type) {
-            AmountType.Coin -> return Result.Success(0)
+            AmountType.Coin -> return Result.Success(TronEnergyFeeData(energyFee = 0, sunPerEnergyUnit = 0))
             is AmountType.Token -> amount.type.token
             else -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         }
@@ -387,13 +400,18 @@ internal class TronWalletManager(
 
             // Contract's energy fee changes every maintenance period (6 hours) and since we don't know what period
             // the transaction is going to be executed in we increase the fee just in case by 20%
-            val sunPerEnergyUnit = chainParameters.sunPerEnergyUnit
-            val energyFee = (energyUse * sunPerEnergyUnit).toDouble()
+            // val sunPerEnergyUnit = chainParameters.sunPerEnergyUnit
+            // val energyFee = (energyUse * sunPerEnergyUnit).toDouble()
             val dynamicEnergyIncreaseFactor =
                 chainParameters.dynamicIncreaseFactor.toDouble() / ENERGY_FACTOR_PRECISION
-            val conservativeEnergyFee = (energyFee * (1 + dynamicEnergyIncreaseFactor)).toInt()
+            val conservativeEnergyFee = (energyUse.toDouble() * (1 + dynamicEnergyIncreaseFactor)).toInt()
 
-            Result.Success(conservativeEnergyFee)
+            Result.Success(
+                TronEnergyFeeData(
+                    energyFee = conservativeEnergyFee,
+                    sunPerEnergyUnit = chainParameters.sunPerEnergyUnit
+                )
+            )
         }
     }
 
