@@ -42,7 +42,7 @@ data class TronGetAccountResourceResponse(
     val freeNetUsed: Int?,
     val freeNetLimit: Int,
     @Json(name = "EnergyLimit") val energyLimit: BigDecimal,
-    @Json(name = "EnergyUsed") val energyUsed: BigDecimal,
+    @Json(name = "EnergyUsed") val energyUsed: BigDecimal?,
 )
 
 @JsonClass(generateAdapter = true)
