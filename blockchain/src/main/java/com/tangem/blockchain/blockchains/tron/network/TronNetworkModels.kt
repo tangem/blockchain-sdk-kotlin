@@ -24,6 +24,12 @@ data class TronGetAccountRequest(
 )
 
 @JsonClass(generateAdapter = true)
+data class TronEnergyFeeData(
+    val energyFee: Int,
+    val sunPerEnergyUnit: Long,
+)
+
+@JsonClass(generateAdapter = true)
 data class TronGetAccountResponse(
     val balance: Long?,
     // We use [address] field to distinguish this response from
@@ -35,6 +41,8 @@ data class TronGetAccountResponse(
 data class TronGetAccountResourceResponse(
     val freeNetUsed: Int?,
     val freeNetLimit: Int,
+    @Json(name = "EnergyLimit") val energyLimit: BigDecimal,
+    @Json(name = "EnergyUsed") val energyUsed: BigDecimal,
 )
 
 @JsonClass(generateAdapter = true)
