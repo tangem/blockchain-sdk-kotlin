@@ -6,9 +6,12 @@ import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.GetBlockCredentials
 import com.tangem.blockchain.common.NowNodeCredentials
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
+import com.tangem.blockchain.common.network.interceptors.HttpLoggingInterceptor
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.letNotBlank
+import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
+import okhttp3.Interceptor
 import org.p2p.solanaj.rpc.Cluster
 
 internal class SolanaProvidersBuilder(
@@ -31,7 +34,10 @@ internal class SolanaProvidersBuilder(
 
     private fun devNet(): SolanaRpcClient = SolanaRpcClient(Cluster.DEVNET.endpoint)
 
-    private fun mainNet(): SolanaRpcClient = SolanaRpcClient(Cluster.MAINNET.endpoint)
+    private fun mainNet(): SolanaRpcClient = SolanaRpcClient(
+        baseUrl = Cluster.MAINNET.endpoint,
+        httpInterceptors = createLoggingInterceptors(),
+    )
 
     private fun getNowNodesProvider(): SolanaRpcClient? {
         return config.nowNodeCredentials?.apiKey?.letNotBlank {
@@ -39,6 +45,7 @@ internal class SolanaProvidersBuilder(
                 baseUrl = "https://sol.nownodes.io",
                 httpInterceptors = listOf(
                     AddHeaderInterceptor(mapOf(NowNodeCredentials.headerApiKey to it)),
+                    *createLoggingInterceptors().toTypedArray(),
                 ),
             )
         }
@@ -49,11 +56,19 @@ internal class SolanaProvidersBuilder(
             if (creds.subdomain.isNotBlank() && creds.apiKey.isNotBlank()) {
                 SolanaRpcClient(
                     baseUrl = "https://${creds.subdomain}.solana-mainnet.discover.quiknode.pro/${creds.apiKey}",
+                    httpInterceptors = createLoggingInterceptors(),
                 )
             } else {
                 null
             }
         }
+    }
+
+    private fun createLoggingInterceptors(): List<Interceptor> {
+        return listOf(
+            *BlockchainSdkRetrofitBuilder.interceptors.toTypedArray(),
+            HttpLoggingInterceptor,
+        )
     }
 
     @Suppress("UnusedPrivateMember")
