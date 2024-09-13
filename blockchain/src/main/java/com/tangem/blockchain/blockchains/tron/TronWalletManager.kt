@@ -13,6 +13,7 @@ import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.bigIntegerValue
 import com.tangem.blockchain.extensions.decodeBase58
+import com.tangem.blockchain.extensions.max
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.calculateSha256
@@ -214,13 +215,16 @@ internal class TronWalletManager(
             val additionalDataSize = 64
             val remainingBandwidth = resource.freeNetLimit - (resource.freeNetUsed ?: 0)
             val transactionSizeFee = transactionData.size + additionalDataSize
-            val consumedBandwidthFee = if (transactionSizeFee <= remainingBandwidth) 0 else transactionSizeFee *
-                sunPerBandwidthPoint
+            val consumedBandwidthFee = if (transactionSizeFee <= remainingBandwidth) {
+                0
+            } else {
+                transactionSizeFee * sunPerBandwidthPoint
+            }
 
-            val remainingEnergy = resource.energyLimit - resource.energyUsed
+            val remainingEnergy = resource.energyLimit - (resource.energyUsed ?: BigDecimal.ZERO)
             val consumedEnergyFee = max(
-                BigDecimal.ZERO,
-            BigDecimal(energyFeeParameters.energyFee) - remainingEnergy
+                a = BigDecimal.ZERO,
+                b = BigDecimal(energyFeeParameters.energyFee) - remainingEnergy,
             ) * BigDecimal(energyFeeParameters.sunPerEnergyUnit)
 
             val totalFee = BigDecimal(consumedBandwidthFee) + consumedEnergyFee
@@ -228,10 +232,6 @@ internal class TronWalletManager(
             val value = totalFee.movePointLeft(blockchain.decimals())
             Result.Success(TransactionFee.Single(Fee.Common(Amount(value, blockchain))))
         }
-    }
-
-    private fun max(a: BigDecimal, b: BigDecimal): BigDecimal {
-        return if (a > b) a else b
     }
 
     @Suppress("LongParameterList")
@@ -400,8 +400,6 @@ internal class TronWalletManager(
 
             // Contract's energy fee changes every maintenance period (6 hours) and since we don't know what period
             // the transaction is going to be executed in we increase the fee just in case by 20%
-            // val sunPerEnergyUnit = chainParameters.sunPerEnergyUnit
-            // val energyFee = (energyUse * sunPerEnergyUnit).toDouble()
             val dynamicEnergyIncreaseFactor =
                 chainParameters.dynamicIncreaseFactor.toDouble() / ENERGY_FACTOR_PRECISION
             val conservativeEnergyFee = (energyUse.toDouble() * (1 + dynamicEnergyIncreaseFactor)).toInt()
@@ -409,8 +407,8 @@ internal class TronWalletManager(
             Result.Success(
                 TronEnergyFeeData(
                     energyFee = conservativeEnergyFee,
-                    sunPerEnergyUnit = chainParameters.sunPerEnergyUnit
-                )
+                    sunPerEnergyUnit = chainParameters.sunPerEnergyUnit,
+                ),
             )
         }
     }
