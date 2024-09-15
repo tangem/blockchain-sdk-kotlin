@@ -2,6 +2,8 @@ package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.toKeccak
+import com.tangem.blockchain.common.JsonRPCRequest
+import com.tangem.blockchain.common.JsonRPCResponse
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
@@ -10,7 +12,7 @@ import com.tangem.blockchain.network.createRetrofitInstance
 import org.komputing.khex.extensions.toHexString
 import java.math.BigDecimal
 
-class EthereumJsonRpcProvider(
+internal class EthereumJsonRpcProvider(
     override val baseUrl: String,
     private val postfixUrl: String = "",
     private val authToken: String? = null,
@@ -37,7 +39,7 @@ class EthereumJsonRpcProvider(
         EthBlockParam.LATEST.value,
     ).post()
 
-    suspend fun call(data: Any): Result<EthereumResponse> = createEthereumBody(
+    suspend fun call(data: Any) = createEthereumBody(
         method = EthereumMethod.CALL,
         data,
         EthBlockParam.LATEST.value,
@@ -94,8 +96,8 @@ class EthereumJsonRpcProvider(
         listOf(25, 50, 75), // rewardPercentiles
     ).post()
 
-    private fun createEthereumBody(method: EthereumMethod, vararg params: Any): EthereumBody {
-        return EthereumBody(method = method.value, params = params.toList())
+    private fun createEthereumBody(method: EthereumMethod, vararg params: Any): JsonRPCRequest {
+        return JsonRPCRequest(method = method.value, params = params, id = "67")
     }
 
     // TODO: [REDACTED_JIRA] Replace with SmartContractMethod interface implementations
@@ -136,7 +138,7 @@ class EthereumJsonRpcProvider(
         return EthCallObject(to = contractAddress, data = data)
     }
 
-    private suspend fun EthereumBody.post(): Result<EthereumResponse> {
+    private suspend fun JsonRPCRequest.post(): Result<JsonRPCResponse> {
         return try {
             val result = retryIO {
                 api.post(
