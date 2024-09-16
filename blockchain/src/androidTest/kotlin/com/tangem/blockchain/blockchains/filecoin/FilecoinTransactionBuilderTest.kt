@@ -100,7 +100,7 @@ internal class FilecoinTransactionBuilderTest {
 
     private companion object {
         const val PUBLIC_KEY = "0374D0F81F42DDFE34114D533E95E6AE5FE6EA271C96F1FA505199FDC365AE9720"
-        const val SOURCE_ADDRESS = "f1hbyibpq4mea6l3no7aag24hxpwgf4zwp6msepwi"
+        const val SOURCE_ADDRESS = "f1flbddhx4vwox3y3ux5bwgsgq2frzeiuvvdrjo7i"
         const val DESTINATION_ADDRESS = "f1rluskhwvv5b3z36skltu4noszbc5stfihevbf2i"
 
         val FIL_AMOUNT = Amount(currencySymbol = "FIL", value = null, decimals = 18, type = AmountType.Coin)

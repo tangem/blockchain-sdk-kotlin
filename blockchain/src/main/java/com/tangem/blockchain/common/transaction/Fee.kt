@@ -8,11 +8,22 @@ sealed class Fee {
 
     abstract val amount: Amount
 
-    data class Ethereum(
-        override val amount: Amount,
-        val gasLimit: BigInteger,
-        val gasPrice: BigInteger,
-    ) : Fee()
+    sealed class Ethereum : Fee() {
+        abstract val gasLimit: BigInteger
+
+        data class Legacy(
+            override val amount: Amount,
+            override val gasLimit: BigInteger,
+            val gasPrice: BigInteger,
+        ) : Ethereum()
+
+        data class EIP1559(
+            override val amount: Amount,
+            override val gasLimit: BigInteger,
+            val maxFeePerGas: BigInteger,
+            val priorityFee: BigInteger,
+        ) : Ethereum()
+    }
 
     data class Bitcoin(
         override val amount: Amount,

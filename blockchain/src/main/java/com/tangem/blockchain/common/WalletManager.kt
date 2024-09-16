@@ -3,12 +3,11 @@ package com.tangem.blockchain.common
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
+import com.tangem.blockchain.common.transaction.TransactionsSendResult
+import com.tangem.blockchain.extensions.*
+import com.tangem.blockchain.extensions.DebouncedInvoke
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
-import com.tangem.blockchain.extensions.DebouncedInvoke
-import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.extensions.isAboveZero
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.isZero
 import java.math.BigDecimal
@@ -168,6 +167,16 @@ abstract class WalletManager(
 }
 
 interface TransactionSender {
+
+    suspend fun sendMultiple(
+        transactionDataList: List<TransactionData>,
+        signer: TransactionSigner,
+    ): Result<TransactionsSendResult> {
+        return send(transactionDataList[0], signer).fold(
+            success = { Result.Success(TransactionsSendResult(hashes = listOf(it.hash))) },
+            failure = { Result.Failure(it) },
+        )
+    }
 
     suspend fun send(transactionData: TransactionData, signer: TransactionSigner): Result<TransactionSendResult>
 
