@@ -7,6 +7,7 @@ import java.math.BigDecimal
 interface KaspaNetworkProvider : NetworkProvider {
     suspend fun getInfo(address: String): Result<KaspaInfoResponse>
     suspend fun sendTransaction(transaction: KaspaTransactionBody): Result<String?>
+    suspend fun calculateFee(transactionData: KaspaTransactionData): Result<KaspaFeeEstimation>
 }
 
 data class KaspaInfoResponse(
@@ -19,4 +20,11 @@ class KaspaUnspentOutput(
     val outputIndex: Long,
     val transactionHash: ByteArray,
     val outputScript: ByteArray,
+)
+
+data class KaspaFeeEstimation(
+    val mass: Long,
+    val priorityBucket: KaspaFeeBucketResponse,
+    val normalBuckets: List<KaspaFeeBucketResponse>,
+    val lowBuckets: List<KaspaFeeBucketResponse>,
 )

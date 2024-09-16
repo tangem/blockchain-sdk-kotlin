@@ -16,4 +16,8 @@ class KaspaNetworkService(providers: List<KaspaNetworkProvider>) : KaspaNetworkP
     override suspend fun sendTransaction(transaction: KaspaTransactionBody): Result<String?> {
         return multiNetworkProvider.performRequest(KaspaNetworkProvider::sendTransaction, transaction)
     }
+
+    override suspend fun calculateFee(transactionData: KaspaTransactionData): Result<KaspaFeeEstimation> {
+        return multiNetworkProvider.performRequest(KaspaNetworkProvider::calculateFee, transactionData)
+    }
 }
