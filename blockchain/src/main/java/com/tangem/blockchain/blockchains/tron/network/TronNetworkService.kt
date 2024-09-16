@@ -86,7 +86,7 @@ class TronNetworkService(
         }
     }
 
-    suspend fun getMaxEnergyUse(address: String, contractAddress: String, parameter: String): Result<Int> {
+    suspend fun getMaxEnergyUse(address: String, contractAddress: String, parameter: String): Result<Long> {
         val result =
             multiProvider.performRequest { contractEnergyUsage(address, contractAddress, parameter) }
         return when (result) {
