@@ -25,7 +25,7 @@ data class TronGetAccountRequest(
 
 @JsonClass(generateAdapter = true)
 data class TronEnergyFeeData(
-    val energyFee: Int,
+    val energyFee: Long,
     val sunPerEnergyUnit: Long,
 )
 
@@ -39,10 +39,10 @@ data class TronGetAccountResponse(
 
 @JsonClass(generateAdapter = true)
 data class TronGetAccountResourceResponse(
-    val freeNetUsed: Int?,
-    val freeNetLimit: Int,
-    @Json(name = "EnergyLimit") val energyLimit: BigDecimal,
-    @Json(name = "EnergyUsed") val energyUsed: BigDecimal?,
+    val freeNetUsed: Long?,
+    val freeNetLimit: Long,
+    @Json(name = "EnergyLimit") val energyLimit: Long,
+    @Json(name = "EnergyUsed") val energyUsed: Long?,
 )
 
 @JsonClass(generateAdapter = true)
@@ -129,5 +129,5 @@ data class TronTriggerSmartContractResponse(
     @Json(name = "constant_result")
     val constantResult: List<String>,
     @Json(name = "energy_used")
-    val energyUsed: Int,
+    val energyUsed: Long,
 )
