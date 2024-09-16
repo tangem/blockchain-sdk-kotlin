@@ -40,11 +40,6 @@ class EstimationFeeAddressFactory {
                 ""
             }
 
-            Blockchain.Kaspa -> {
-                // Doesn't depend on destination
-                ""
-            }
-
             Blockchain.Ducatus, Blockchain.Unknown -> {
                 // Unsupported
                 ""
@@ -135,6 +130,7 @@ class EstimationFeeAddressFactory {
                 "CW6XDCKQAZUGAIOTGE2NEPYFFVW6H6IKFOTOF3W5WDUVHH4ZIDCIKYDPXY"
             Blockchain.Koinos, Blockchain.KoinosTestnet -> "1C423Vbd44zjghhJR5fKJdLFS3rgVFUc9A"
             Blockchain.Filecoin -> "f1wxdu6d25dc4hmebdfgriswooum22plhmmpxibzq"
+            Blockchain.Kaspa -> "kaspa:qyp2f0ust8wyvuvqrzajvehx5jyh43vcjgessjdkw9vyw6rww4fdlsgzysspfuq"
         }
     }
 
