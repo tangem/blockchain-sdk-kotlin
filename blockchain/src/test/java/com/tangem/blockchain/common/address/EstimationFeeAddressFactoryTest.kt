@@ -117,6 +117,8 @@ class EstimationFeeAddressFactoryTest {
         Blockchain.Joystream to "j4SXkX46sABwjxeuzicd2e5m8gDu4ieoWHW3aggbBKkh4WvtF",
         Blockchain.Bittensor to "5HLcF8UkyCTK5oszoTxx8LKxEzmtEEfPWeAxCz5NiDjqWH9y",
         Blockchain.Filecoin to "f1wxdu6d25dc4hmebdfgriswooum22plhmmpxibzq",
+        Blockchain.Sei to "sei1lhjvds604fvac32j4eygpr820lyc82dlfv0ea4",
+        Blockchain.SeiTestnet to "sei1lhjvds604fvac32j4eygpr820lyc82dlfv0ea4",
     )
 
     @Test
