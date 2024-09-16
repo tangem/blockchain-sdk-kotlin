@@ -13,6 +13,13 @@ interface KaspaApi {
     @Headers("Content-Type: application/json")
     @POST("transactions")
     suspend fun sendTransaction(@Body transaction: KaspaTransactionBody): KaspaSendTransactionResponse
+
+    @Headers("Content-Type: application/json")
+    @POST("transactions/mass")
+    suspend fun transactionMass(@Body transactionData: KaspaTransactionData): KaspaMassResponse
+
+    @GET("info/fee-estimate")
+    suspend fun getFeeEstimate(): KaspaFeeEstimateResponse
 }
 
 @JsonClass(generateAdapter = true)
