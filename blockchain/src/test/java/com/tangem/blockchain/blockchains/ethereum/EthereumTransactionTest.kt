@@ -32,7 +32,11 @@ class EthereumTransactionTest {
         val transactionBuilder = EthereumTransactionBuilder(walletPublicKey, blockchain)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
-        val fee = Fee.Ethereum(Amount(amountToSend, feeValue), DEFAULT_GAS_LIMIT, DEFAULT_GAS_PRICE)
+        val fee = Fee.Ethereum.Legacy(
+            amount = Amount(amountToSend, feeValue),
+            gasLimit = DEFAULT_GAS_LIMIT,
+            gasPrice = DEFAULT_GAS_PRICE,
+        )
         val transactionData = TransactionData.Uncompiled(
             sourceAddress = walletAddress,
             destinationAddress = destinationAddress,
@@ -49,7 +53,7 @@ class EthereumTransactionTest {
 
         // act
         val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce)
-        val signedTransaction = transactionBuilder.buildToSend(signature, transactionToSign!!)
+        val signedTransaction = transactionBuilder.buildToSend(signature, transactionToSign)
 
         // assert
         Truth.assertThat(transactionToSign.hash).isEqualTo(expectedHashToSign)
@@ -82,7 +86,11 @@ class EthereumTransactionTest {
         val transactionBuilder = EthereumTransactionBuilder(walletPublicKey, blockchain)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Token(token))
-        val fee = Fee.Ethereum(Amount(feeValue, blockchain, AmountType.Coin), DEFAULT_GAS_LIMIT, DEFAULT_GAS_PRICE)
+        val fee = Fee.Ethereum.Legacy(
+            amount = Amount(feeValue, blockchain, AmountType.Coin),
+            gasLimit = DEFAULT_GAS_LIMIT,
+            gasPrice = DEFAULT_GAS_PRICE,
+        )
         val transactionData = TransactionData.Uncompiled(
             sourceAddress = walletAddress,
             destinationAddress = destinationAddress,
@@ -100,7 +108,7 @@ class EthereumTransactionTest {
 
         // act
         val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce)
-        val signedTransaction = transactionBuilder.buildToSend(signature, transactionToSign!!)
+        val signedTransaction = transactionBuilder.buildToSend(signature, transactionToSign)
 
         // assert
         Truth.assertThat(transactionToSign.hash).isEqualTo(expectedHashToSign)

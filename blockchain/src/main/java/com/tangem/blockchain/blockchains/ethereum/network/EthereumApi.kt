@@ -37,6 +37,7 @@ enum class EthereumMethod(val value: String) {
     SEND_RAW_TRANSACTION("eth_sendRawTransaction"),
     ESTIMATE_GAS("eth_estimateGas"),
     GAS_PRICE("eth_gasPrice"),
+    FEE_HISTORY("eth_feeHistory"),
 }
 
 enum class EthBlockParam(val value: String) {

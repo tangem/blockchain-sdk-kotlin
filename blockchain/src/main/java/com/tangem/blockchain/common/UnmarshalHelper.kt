@@ -45,16 +45,16 @@ internal class UnmarshalHelper {
         )
     }
 
-    private companion object {
-        const val PUBLIC_KEY_SIZE = 64
+    companion object {
+        private const val PUBLIC_KEY_SIZE = 64
 
         // R
-        const val COMPRESSED_CURVE_POINT_START_INDEX = 0
-        const val COMPRESSED_CURVE_POINT_END_INDEX = 32
+        private const val COMPRESSED_CURVE_POINT_START_INDEX = 0
+        private const val COMPRESSED_CURVE_POINT_END_INDEX = 32
 
         // S
-        const val SCALAR_START_INDEX = 32
-        const val SCALAR_END_INDEX = 64
+        private const val SCALAR_START_INDEX = 32
+        private const val SCALAR_END_INDEX = 64
 
         const val EVM_LEGACY_REC_ID_OFFSET = 27
     }

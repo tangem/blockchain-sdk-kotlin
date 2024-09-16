@@ -26,7 +26,6 @@ import com.tangem.blockchain.blockchains.xdc.XDCAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
 import com.tangem.blockchain.common.address.*
 import com.tangem.blockchain.common.derivation.DerivationStyle
-import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProviderFactory
 import com.tangem.blockchain.externallinkprovider.TxExploreState
@@ -40,7 +39,7 @@ enum class Blockchain(
     val fullName: String,
 ) {
     Unknown("", "", ""),
-    Arbitrum("ARBITRUM-ONE", "ETH", "Arbitrum One"),
+    Arbitrum("ARBITRUM-ONE", "ETH", "Arbitrum One (ETH)"),
     ArbitrumTestnet("ARBITRUM/test", "ETH", "Arbitrum Testnet"),
     Avalanche("AVALANCHE", "AVAX", "Avalanche C-Chain"),
     AvalancheTestnet("AVALANCHE/test", "AVAX", "Avalanche C-Chain Testnet"),
@@ -74,6 +73,8 @@ enum class Blockchain(
     Polygon("POLYGON", "POL", "Polygon"),
     PolygonTestnet("POLYGON/test", "MATIC", "Polygon Testnet"),
     RSK("RSK", "RBTC", "RSK"),
+    Sei("sei", "SEI", "Sei"),
+    SeiTestnet("sei/test", "SEI", "Sei Testnet"),
     Stellar("XLM", "XLM", "Stellar"),
     StellarTestnet("XLM/test", "XLM", "Stellar Testnet"),
     Solana("SOLANA", "SOL", "Solana"),
@@ -84,7 +85,7 @@ enum class Blockchain(
     XRP("XRP", "XRP", "XRP Ledger"),
     Gnosis("GNO", "xDAI", "Gnosis Chain"),
     Dash("DASH", "DASH", "Dash"),
-    Optimism("OPTIMISM", "ETH", "Optimistic Ethereum"),
+    Optimism("OPTIMISM", "ETH", "Optimistic Ethereum (ETH)"),
     OptimismTestnet("OPTIMISM", "ETH", "Optimistic Ethereum Testnet"),
     Dischain("dischain", "DIS", "DisChain (ETHF)"),
     EthereumPow("ETH-Pow", "ETHW", "EthereumPoW"),
@@ -120,24 +121,24 @@ enum class Blockchain(
     AlgorandTestnet("algorand/test", "ALGO", "Algorand Testnet"),
     Hedera("hedera", "HBAR", "Hedera"),
     HederaTestnet("hedera/test", "HBAR", "Hedera Testnet"),
-    Aurora("aurora", "ETH", "Aurora"),
+    Aurora("aurora", "ETH", "Aurora (ETH)"),
     AuroraTestnet("aurora/test", "ETH", "Aurora Testnet"),
     Areon("areon", "AREA", "Areon Network"),
     AreonTestnet("areon/test", "TAREA", "Areon Network Testnet"),
     PulseChain("pls", "PLS", "PulseChain"),
     PulseChainTestnet("pls/test", "tPLS", "PulseChain Testnet v4"),
-    ZkSyncEra("zkSyncEra", "ETH", "ZkSync Era"),
+    ZkSyncEra("zkSyncEra", "ETH", "ZkSync Era (ETH)"),
     ZkSyncEraTestnet("zkSyncEra/test", "ETH", "ZkSync Era Testnet"),
     Nexa("NEXA", "NEXA", "Nexa"),
     NexaTestnet("NEXA/test", "NEXA", "Nexa Testnet"),
     Moonbeam("moonbeam", "GLMR", "Moonbeam"),
     MoonbeamTestnet("moonbeam/test", "GLMR", "Moonbeam Testnet"),
-    Manta("manta-pacific", "ETH", "Manta Pacific"),
+    Manta("manta-pacific", "ETH", "Manta Pacific (ETH)"),
     MantaTestnet("manta/test", "ETH", "Manta Testnet"),
-    PolygonZkEVM("polygonZkEVM", "ETH", "Polygon zkEVM"),
+    PolygonZkEVM("polygonZkEVM", "ETH", "Polygon zkEVM (ETH)"),
     PolygonZkEVMTestnet("polygonZkEVM/test", "ETH", "Polygon zkEVM Testnet"),
     Radiant("radiant", "RXD", "Radiant"),
-    Base("base", "ETH", "Base"),
+    Base("base", "ETH", "Base (ETH)"),
     BaseTestnet("base/test", "ETH", "Base Testnet"),
     Moonriver("moonriver", "MOVR", "Moonriver"),
     MoonriverTestnet("moonriver/test", "MOVR", "Moonriver Testnet"),
@@ -152,10 +153,11 @@ enum class Blockchain(
     Joystream("joystream", "JOY", "Joystream"),
     Bittensor("bittensor", "TAO", "Bittensor"),
     Filecoin("filecoin", "FIL", "Filecoin"),
-    Blast("blast", "ETH", "Blast"),
+    Blast("blast", "ETH", "Blast (ETH)"),
     BlastTestnet("blast/test", "ETH", "Blast Testnet"),
-    Cyber("cyber", "ETH", "Cyber"),
+    Cyber("cyber", "ETH", "Cyber (ETH)"),
     CyberTestnet("cyber/test", "ETH", "Cyber Testnet"),
+    InternetComputer("internet-computer", "ICP", "Internet Computer"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -181,6 +183,7 @@ enum class Blockchain(
         Cosmos, CosmosTestnet,
         TerraV1, TerraV2,
         Algorand, AlgorandTestnet,
+        Sei, SeiTestnet,
         -> 6
 
         Stellar, StellarTestnet -> 7
@@ -198,6 +201,7 @@ enum class Blockchain(
         Hedera, HederaTestnet,
         Radiant,
         Koinos, KoinosTestnet,
+        InternetComputer,
         -> 8
 
         Solana, SolanaTestnet,
@@ -341,7 +345,9 @@ enum class Blockchain(
             TerraV2,
             Near, NearTestnet,
             Algorand, AlgorandTestnet,
+            InternetComputer,
             Filecoin,
+            Sei, SeiTestnet,
             -> TrustWalletAddressService(blockchain = this)
 
             Aptos, AptosTestnet -> AptosAddressService(isTestnet())
@@ -434,6 +440,7 @@ enum class Blockchain(
             Koinos, KoinosTestnet -> KoinosTestnet
             Blast, BlastTestnet -> BlastTestnet
             Cyber, CyberTestnet -> CyberTestnet
+            Sei, SeiTestnet -> SeiTestnet
             else -> null
         }
     }
@@ -502,6 +509,8 @@ enum class Blockchain(
             Filecoin,
             Blast, BlastTestnet,
             Cyber, CyberTestnet,
+            Sei, SeiTestnet,
+            InternetComputer,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -611,8 +620,6 @@ enum class Blockchain(
 
         if (isEvm()) return true
 
-        if (this == Cardano) return DepsContainer.blockchainFeatureToggles.isCardanoTokenSupport
-
         return when (this) {
             Binance, BinanceTestnet,
             Solana, SolanaTestnet,
@@ -621,6 +628,7 @@ enum class Blockchain(
             VeChain, VeChainTestnet,
             Hedera, HederaTestnet,
             TON, TONTestnet,
+            Cardano,
             -> true
 
             else -> false

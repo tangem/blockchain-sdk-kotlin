@@ -6,5 +6,5 @@ package com.tangem.blockchain.common
 [REDACTED_AUTHOR]
  */
 data class BlockchainFeatureToggles(
-    val isCardanoTokenSupport: Boolean,
+    val isEthereumEIP1559Enabled: Boolean,
 )

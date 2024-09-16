@@ -24,7 +24,7 @@ class CardanoTransactionValidatorTest {
     fun setup() {
         DepsContainer.onInit(
             config = BlockchainSdkConfig(),
-            featureToggles = BlockchainFeatureToggles(isCardanoTokenSupport = true),
+            featureToggles = BlockchainFeatureToggles(isEthereumEIP1559Enabled = true),
         )
     }
 
