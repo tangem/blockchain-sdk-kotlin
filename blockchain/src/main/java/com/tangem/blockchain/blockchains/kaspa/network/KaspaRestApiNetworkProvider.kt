@@ -52,4 +52,27 @@ open class KaspaRestApiNetworkProvider(override val baseUrl: String) : KaspaNetw
             Result.Failure(exception.toBlockchainSdkError())
         }
     }
+
+    override suspend fun calculateFee(transactionData: KaspaTransactionData): Result<KaspaFeeEstimation> {
+        return try {
+            coroutineScope {
+                val massDataDeferred = retryIO { async { api.transactionMass(transactionData) } }
+                val feeRateDataDeferred = retryIO { async { api.getFeeEstimate() } }
+
+                val massData = massDataDeferred.await()
+                val feeRateData = feeRateDataDeferred.await()
+
+                Result.Success(
+                    KaspaFeeEstimation(
+                        mass = massData.mass,
+                        priorityBucket = feeRateData.priorityBucket,
+                        normalBuckets = feeRateData.normalBuckets,
+                        lowBuckets = feeRateData.lowBuckets,
+                    ),
+                )
+            }
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
 }
