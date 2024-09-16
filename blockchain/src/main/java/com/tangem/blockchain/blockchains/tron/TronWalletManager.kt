@@ -13,7 +13,6 @@ import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.bigIntegerValue
 import com.tangem.blockchain.extensions.decodeBase58
-import com.tangem.blockchain.extensions.max
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.calculateSha256
@@ -221,16 +220,22 @@ internal class TronWalletManager(
                 transactionSizeFee * sunPerBandwidthPoint
             }
 
-            val remainingEnergy = resource.energyLimit - (resource.energyUsed ?: BigDecimal.ZERO)
-            val consumedEnergyFee = max(
-                a = BigDecimal.ZERO,
-                b = BigDecimal(energyFeeParameters.energyFee) - remainingEnergy,
-            ) * BigDecimal(energyFeeParameters.sunPerEnergyUnit)
+            val remainingEnergy = resource.energyLimit - (resource.energyUsed ?: 0)
+            val consumedEnergy = kotlin.math.max(0, energyFeeParameters.energyFee - remainingEnergy)
+            val consumedEnergyFee = BigDecimal(energyFeeParameters.sunPerEnergyUnit) * BigDecimal(consumedEnergy)
 
             val totalFee = BigDecimal(consumedBandwidthFee) + consumedEnergyFee
 
             val value = totalFee.movePointLeft(blockchain.decimals())
-            Result.Success(TransactionFee.Single(Fee.Common(Amount(value, blockchain))))
+            Result.Success(
+                TransactionFee.Single(
+                    Fee.Tron(
+                        remainingEnergy = remainingEnergy,
+                        feeEnergy = energyFeeParameters.energyFee,
+                        amount = Amount(value, blockchain),
+                    ),
+                ),
+            )
         }
     }
 
@@ -402,7 +407,7 @@ internal class TronWalletManager(
             // the transaction is going to be executed in we increase the fee just in case by 20%
             val dynamicEnergyIncreaseFactor =
                 chainParameters.dynamicIncreaseFactor.toDouble() / ENERGY_FACTOR_PRECISION
-            val conservativeEnergyFee = (energyUse.toDouble() * (1 + dynamicEnergyIncreaseFactor)).toInt()
+            val conservativeEnergyFee = (energyUse.toDouble() * (1 + dynamicEnergyIncreaseFactor)).toLong()
 
             Result.Success(
                 TronEnergyFeeData(
