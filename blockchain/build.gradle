@@ -34,6 +34,12 @@ android {
         jvmTarget = '17'
     }
 
+    packagingOptions {
+        exclude("META-INF/DEPENDENCIES")
+        exclude("META-INF/LICENSE.md")
+        exclude("META-INF/NOTICE.md")
+    }
+
     testOptions {
         managedDevices {
             localDevices {
@@ -133,6 +139,19 @@ dependencies {
     //dependencies for TON
     implementation 'org.ton:ton-kotlin-tvm:0.3.1'
     implementation 'org.ton:ton-kotlin-block-tlb:0.3.1'
+
+    // region dependencies for ICP
+    implementation("com.tangem.ic4j:ic4j-agent:master-2") {
+        exclude group: 'org.bouncycastle'
+    }
+    implementation("org.ic4j:ic4j-candid:0.7.1") {
+        exclude group: 'org.bouncycastle'
+    }
+    def jacksonVersion = '2.17.2'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
+    implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jdk8', version: jacksonVersion
+    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-cbor', version: jacksonVersion
+    // end region
 
     implementation("ru.gildor.coroutines:kotlin-coroutines-okhttp:1.0")
 
