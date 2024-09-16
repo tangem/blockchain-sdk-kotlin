@@ -57,8 +57,8 @@ sealed class Fee {
 
     data class Kaspa(
         override val amount: Amount,
-        val valuePerUtxo: BigDecimal,
-        val utxoCount: Int,
+        val mass: BigInteger,
+        val feeRate: BigInteger,
     ) : Fee()
 
     data class Filecoin(
