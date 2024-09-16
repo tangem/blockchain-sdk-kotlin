@@ -79,5 +79,11 @@ sealed class Fee {
         val gasPremium: Long,
     ) : Fee()
 
+    data class Tron(
+        override val amount: Amount,
+        val remainingEnergy: Long,
+        val feeEnergy: Long,
+    ) : Fee()
+
     data class Common(override val amount: Amount) : Fee()
 }
