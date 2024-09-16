@@ -72,6 +72,15 @@ sealed class TransactionData {
         return this as? Uncompiled
             ?: error("This blockchain doesn't support compiled transactions processing")
     }
+
+    @OptIn(ExperimentalContracts::class)
+    fun requireCompiled(): Compiled {
+        contract {
+            returns() implies (this@TransactionData is Compiled)
+        }
+        return this as? Compiled
+            ?: error("There should be compiled transaction")
+    }
 }
 
 enum class TransactionStatus { Confirmed, Unconfirmed }
@@ -99,4 +108,10 @@ data class BasicTransactionData(
     val source: String = "unknown",
 )
 
+/**
+ * Transaction extras. In blockchain-sdk-swift this is called TransactionParams.
+ *
+ * @see <a href="https://github.com/tangem/blockchain-sdk-swift/blob/e940dfe9d7ef860f0ef24b320ba8d9de4f344af6/BlockchainSdk/Common/Transaction.swift#L11"
+ * >Transaction extras</a>
+ */
 interface TransactionExtras
