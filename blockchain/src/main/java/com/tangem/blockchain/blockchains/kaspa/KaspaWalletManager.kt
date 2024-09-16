@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.kaspa
 
 import android.util.Log
+import com.tangem.blockchain.blockchains.kaspa.network.KaspaFeeBucketResponse
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaInfoResponse
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkProvider
 import com.tangem.blockchain.common.*
@@ -10,6 +11,7 @@ import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.CompletionResult
 import java.math.BigDecimal
+import java.math.BigInteger
 
 class KaspaWalletManager(
     wallet: Wallet,
@@ -22,6 +24,8 @@ class KaspaWalletManager(
 
     private val blockchain = wallet.blockchain
     override val dustValue: BigDecimal = BigDecimal("0.2")
+
+    private val dummySigner = DummySigner()
 
     override val allowConsolidation: Boolean = true
 
@@ -81,16 +85,49 @@ class KaspaWalletManager(
         return if (unspentOutputCount == 0) {
             Result.Failure(Exception("No unspent outputs found").toBlockchainSdkError()) // shouldn't happen
         } else {
-            val fee = FEE_PER_UNSPENT_OUTPUT.multiply(unspentOutputCount.toBigDecimal())
-            Result.Success(
-                TransactionFee.Single(
-                    Fee.Kaspa(
-                        amount = Amount(fee, blockchain),
-                        valuePerUtxo = FEE_PER_UNSPENT_OUTPUT,
-                        utxoCount = unspentOutputCount,
-                    ),
-                ),
+            val source = wallet.address
+
+            val transactionData = TransactionData.Uncompiled(
+                sourceAddress = source,
+                destinationAddress = destination,
+                amount = amount,
+                fee = null,
             )
+
+            when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
+                is Result.Failure -> return buildTransactionResult
+                is Result.Success -> {
+                    return when (val signerResult = dummySigner.sign(buildTransactionResult.data, wallet.publicKey)) {
+                        is CompletionResult.Success -> {
+                            val transactionToSend = transactionBuilder.buildToSend(
+                                signerResult.data.reduce { acc, bytes -> acc + bytes },
+                            )
+                            when (val sendResult = networkProvider.calculateFee(transactionToSend.transaction)) {
+                                is Result.Failure -> sendResult
+                                is Result.Success -> {
+                                    val data = sendResult.data
+                                    val mass = BigInteger.valueOf(data.mass)
+
+                                    val allBuckets = (
+                                        listOf(data.priorityBucket) +
+                                            data.normalBuckets +
+                                            data.lowBuckets
+                                        ).sortedByDescending { it.feeRate }
+
+                                    Result.Success(
+                                        TransactionFee.Choosable(
+                                            priority = allBuckets[0].toFee(mass),
+                                            normal = allBuckets[1].toFee(mass),
+                                            minimum = allBuckets[2].toFee(mass),
+                                        ),
+                                    )
+                                }
+                            }
+                        }
+                        is CompletionResult.Failure -> Result.fromTangemSdkError(signerResult.error)
+                    }
+                }
+            }
         }
     }
 
@@ -107,7 +144,16 @@ class KaspaWalletManager(
         }
     }
 
-    companion object {
-        private val FEE_PER_UNSPENT_OUTPUT = 0.0001.toBigDecimal()
+    private fun KaspaFeeBucketResponse.toFee(mass: BigInteger): Fee.Kaspa {
+        val feeRate = feeRate.toBigInteger()
+        val value = (mass * feeRate).toBigDecimal().movePointLeft(blockchain.decimals())
+        return Fee.Kaspa(
+            amount = Amount(
+                value = value,
+                blockchain = blockchain,
+            ),
+            mass = mass,
+            feeRate = feeRate,
+        )
     }
 }
