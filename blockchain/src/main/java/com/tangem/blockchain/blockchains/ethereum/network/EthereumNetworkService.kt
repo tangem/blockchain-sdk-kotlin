@@ -1,6 +1,10 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
+import com.tangem.blockchain.blockchains.ethereum.converters.EthereumFeeHistoryConverter
+import com.tangem.blockchain.blockchains.ethereum.models.EthereumFeeHistoryResponse
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.Token
@@ -11,22 +15,27 @@ import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairToken
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
+import com.tangem.blockchain.network.moshi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 import java.math.BigInteger
 
+@OptIn(ExperimentalStdlibApi::class)
 open class EthereumNetworkService(
     jsonRpcProviders: List<EthereumJsonRpcProvider>,
     private val blockcypherNetworkProvider: BlockcypherNetworkProvider? = null,
     private val blockchairEthNetworkProvider: BlockchairEthNetworkProvider? = null,
 ) : EthereumNetworkProvider {
 
+    override val baseUrl get() = multiJsonRpcProvider.currentProvider.baseUrl
+
     private val multiJsonRpcProvider = MultiNetworkProvider(jsonRpcProviders)
-    override val baseUrl
-        get() = multiJsonRpcProvider.currentProvider.baseUrl
 
     private val decimals = Blockchain.Ethereum.decimals()
+
+    private val stringAdapter by lazy { moshi.adapter<String>() }
+    private val feeHistoryAdapter by lazy { moshi.adapter<EthereumFeeHistoryResponse>() }
 
     override suspend fun getInfo(address: String, tokens: Set<Token>): Result<EthereumInfoResponse> {
         return try {
@@ -119,17 +128,6 @@ open class EthereumNetworkService(
         }
     }
 
-    suspend fun sendRawTransaction(transaction: String): Result<String> {
-        return try {
-            val txId = multiJsonRpcProvider
-                .performRequest(EthereumJsonRpcProvider::sendTransaction, transaction)
-                .extractResult()
-            Result.Success(txId)
-        } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainSdkError())
-        }
-    }
-
     override suspend fun getSignatureCount(address: String): Result<Int> {
         return blockcypherNetworkProvider?.getSignatureCount(address)
             ?: Result.Failure(BlockchainSdkError.CustomError("No signature count provider found"))
@@ -205,6 +203,18 @@ open class EthereumNetworkService(
         }
     }
 
+    override suspend fun getFeeHistory(): Result<EthereumFeeHistory> {
+        return try {
+            val result = multiJsonRpcProvider.performRequest(EthereumJsonRpcProvider::getFeeHistory)
+
+            val feeHistory = EthereumFeeHistoryConverter.convert(response = result.extractResult(feeHistoryAdapter))
+
+            Result.Success(feeHistory)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
     override suspend fun callContractForFee(data: ContractCallData): Result<BigInteger> {
         return try {
             val result = multiJsonRpcProvider.performRequest(EthereumJsonRpcProvider::call, data)
@@ -220,18 +230,22 @@ open class EthereumNetworkService(
 
     private fun String.parseAmount(decimals: Int) = this.responseToBigInteger().toBigDecimal().movePointLeft(decimals)
 
-    private fun Result<EthereumResponse>.extractResult(): String = when (this) {
-        is Result.Success -> {
-            this.data.result
-                ?: throw this.data.error?.let { error ->
-                    BlockchainSdkError.Ethereum.Api(
-                        code = error.code ?: 0,
-                        message = error.message ?: "No error message",
-                    )
-                } ?: BlockchainSdkError.CustomError("Unknown response format")
-        }
-        is Result.Failure -> {
-            throw this.error as? BlockchainSdkError ?: BlockchainSdkError.CustomError("Unknown error format")
+    private fun Result<EthereumResponse>.extractResult(): String = extractResult(adapter = stringAdapter)
+
+    private fun <Body> Result<EthereumResponse>.extractResult(adapter: JsonAdapter<Body>): Body {
+        return when (this) {
+            is Result.Success -> {
+                runCatching { adapter.fromJsonValue(data.result) }.getOrNull()
+                    ?: throw data.error?.let { error ->
+                        BlockchainSdkError.Ethereum.Api(
+                            code = error.code ?: 0,
+                            message = error.message ?: "No error message",
+                        )
+                    } ?: BlockchainSdkError.CustomError("Unknown response format")
+            }
+            is Result.Failure -> {
+                throw error as? BlockchainSdkError ?: BlockchainSdkError.CustomError("Unknown error format")
+            }
         }
     }
 }
