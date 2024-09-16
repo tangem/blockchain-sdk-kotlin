@@ -41,7 +41,7 @@ data class GetAddressResponse(
         @Json(name = "fromAddress") val fromAddress: String?,
         @Json(name = "toAddress") val toAddress: String?,
         @Json(name = "contract_type") val contractType: Int?,
-        @Json(name = "contract_name") val contractAddress: String?,
+        @Json(name = "contract_name") val contractName: String?,
     ) {
 
         /**

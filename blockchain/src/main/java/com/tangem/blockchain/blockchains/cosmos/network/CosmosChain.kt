@@ -98,4 +98,21 @@ sealed interface CosmosChain {
             BigDecimal(0.040),
         )
     }
+
+    data class Sei(val testnet: Boolean) : CosmosChain {
+        override val blockchain: Blockchain = Blockchain.Sei
+        override val chainId: String = if (testnet) "atlantic-2" else "pacific-1"
+        override val smallestDenomination: String = "usei"
+        override val gasMultiplier: BigDecimal = BigDecimal(2)
+        override val feeMultiplier: BigDecimal = BigDecimal(1)
+        override val coin: CoinType = CoinType.SEI
+
+        // see https://github.com/cosmos/chain-registry/blob/master/sei/chain.json#L17-L27
+        @Suppress("MagicNumber")
+        override fun gasPrices(amountType: AmountType): List<BigDecimal> = listOf(
+            BigDecimal(0.02),
+            BigDecimal(0.02),
+            BigDecimal(0.04),
+        )
+    }
 }
