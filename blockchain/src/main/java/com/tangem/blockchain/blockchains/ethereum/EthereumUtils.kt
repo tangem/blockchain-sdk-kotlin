@@ -117,6 +117,8 @@ object EthereumUtils {
         val parsed = compiledTransactionAdapter.fromJson(compiledTransaction)
             ?: error("Unable to parse compiled transaction")
 
+        val value = parsed.value?.hexToBigDecimal()?.toBigInteger()
+
         val amount = if (transactionData.amount?.type == AmountType.Coin) { // coin transfer
             transactionData.amount.value
                 ?.movePointRight(transactionData.amount.decimals)
@@ -125,9 +127,13 @@ object EthereumUtils {
             BigInteger.ZERO
         }
 
-        val gasLimit = parsed.gasLimit.hexToBigDecimal().toBigInteger().takeIf {
-            it > BigInteger.ZERO
-        } ?: error("Transaction fee must be specified")
+        val gasLimit = parsed.gasLimit.hexToBigDecimal().toBigInteger().takeIf { it > BigInteger.ZERO }
+            ?: error("Transaction fee must be specified")
+
+        val gasPrice = parsed.gasPrice?.hexToBigDecimal()?.toBigInteger()
+        val maxPriorityFeePerGas = parsed.maxPriorityFeePerGas?.hexToBigDecimal()?.toBigInteger()
+        val maxFeePerGas = parsed.maxFeePerGas?.hexToBigDecimal()?.toBigInteger()
+
         val fee = transactionData.fee?.amount?.value
             ?.movePointRight(transactionData.fee.amount.decimals)
             ?.toBigInteger()?.takeIf { it > BigInteger.ZERO }
@@ -136,14 +142,14 @@ object EthereumUtils {
         return createTransactionWithDefaults(
             from = Address(parsed.from),
             to = Address(parsed.to),
-            gasPrice = fee.divide(gasLimit),
-            value = amount,
+            gasPrice = gasPrice ?: fee.divide(gasLimit),
+            value = value ?: amount,
             gasLimit = gasLimit,
             nonce = parsed.nonce.toBigInteger(),
             input = parsed.data.hexToBytes(),
             chain = ChainId(parsed.chainId.toBigInteger()),
-            maxPriorityFeePerGas = parsed.maxPriorityFeePerGas.hexToBigDecimal().toBigInteger(),
-            maxFeePerGas = parsed.maxFeePerGas.hexToBigDecimal().toBigInteger(),
+            maxPriorityFeePerGas = maxPriorityFeePerGas,
+            maxFeePerGas = maxFeePerGas,
         )
     }
 
@@ -180,8 +186,9 @@ object EthereumUtils {
                 createErc20TransferData(transactionData.destinationAddress, bigIntegerAmount)
         }
 
-        val gasLimitToUse =
-            extras?.gasLimit ?: (transactionData.fee as? Fee.Ethereum)?.gasLimit ?: DEFAULT_GAS_LIMIT
+        val gasLimitToUse = extras?.gasLimit
+            ?: (transactionData.fee as? Fee.Ethereum.Legacy)?.gasLimit
+            ?: DEFAULT_GAS_LIMIT
 
         return createTransactionWithDefaults(
             from = Address(transactionData.sourceAddress),
