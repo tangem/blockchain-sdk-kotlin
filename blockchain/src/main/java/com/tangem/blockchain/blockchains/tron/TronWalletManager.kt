@@ -8,6 +8,7 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
+import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.bigIntegerValue
 import com.tangem.blockchain.extensions.decodeBase58
@@ -17,8 +18,12 @@ import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import okio.ByteString.Companion.decodeHex
+import org.tron.protos.Transaction.raw
 import java.math.BigDecimal
 
+@Suppress("LargeClass")
 internal class TronWalletManager(
     wallet: Wallet,
     transactionHistoryProvider: TransactionHistoryProvider,
@@ -36,8 +41,11 @@ internal class TronWalletManager(
             .mapNotNull { it.hash }
 
         when (
-            val response =
-                networkService.getAccountInfo(wallet.address, cardTokens, transactionIds)
+            val response = networkService.getAccountInfo(
+                address = wallet.address,
+                tokens = cardTokens,
+                transactionIds = transactionIds,
+            )
         ) {
             is Result.Success -> updateWallet(response.data)
             is Result.Failure -> updateError(response.error)
@@ -66,16 +74,31 @@ internal class TronWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        transactionData.requireUncompiled()
+        val signResult = when (transactionData) {
+            is TransactionData.Compiled -> {
+                val hexString =
+                    (transactionData.value as? TransactionData.Compiled.Data.RawString)?.data ?: return Result.Failure(
+                        BlockchainSdkError.UnsupportedOperation("Can't retrieve tron raw transaction"),
+                    )
 
-        val signResult = signTransactionData(
-            amount = transactionData.amount,
-            source = wallet.address,
-            destination = transactionData.destinationAddress,
-            signer = signer,
-            publicKey = wallet.publicKey,
-            extras = transactionData.extras as? TronTransactionExtras,
-        )
+                signCompiledTransactionData(
+                    hexString = hexString,
+                    signer = signer,
+                    publicKey = wallet.publicKey,
+                )
+            }
+            is TransactionData.Uncompiled -> {
+                signUncompiledTransactionData(
+                    amount = transactionData.amount,
+                    source = wallet.address,
+                    destination = transactionData.destinationAddress,
+                    signer = signer,
+                    publicKey = wallet.publicKey,
+                    extras = transactionData.extras as? TronTransactionExtras,
+                )
+            }
+        }
+
         return when (signResult) {
             is Result.Failure -> Result.Failure(signResult.error)
             is Result.Success -> {
@@ -92,6 +115,57 @@ internal class TronWalletManager(
         }
     }
 
+    override suspend fun sendMultiple(
+        transactionDataList: List<TransactionData>,
+        signer: TransactionSigner,
+    ): Result<TransactionsSendResult> {
+        val hexStringList = transactionDataList.map {
+            it.requireCompiled()
+
+            (it.value as? TransactionData.Compiled.Data.RawString)?.data ?: return Result.Failure(
+                BlockchainSdkError.UnsupportedOperation("Can't retrieve tron raw transaction"),
+            )
+        }
+
+        val signResult = signMultipleCompiledTransactionData(
+            hexStringList = hexStringList,
+            signer = signer,
+            publicKey = wallet.publicKey,
+        )
+
+        return when (signResult) {
+            is Result.Failure -> Result.Failure(signResult.error)
+            is Result.Success -> {
+                coroutineScope {
+                    val sendResults = signResult.data.mapIndexed { index, signedData ->
+                        if (index != 0) {
+                            delay(SEND_TRANSACTIONS_DELAY)
+                        }
+
+                        when (val sendResult = networkService.broadcastHex(signedData)) {
+                            is Result.Failure -> sendResult
+                            is Result.Success -> {
+                                val hash = sendResult.data.txid
+                                transactionDataList[index].hash = hash
+                                wallet.addOutgoingTransaction(transactionDataList[index].updateHash(hash = hash))
+                                Result.Success(TransactionSendResult(hash))
+                            }
+                        }
+                    }
+
+                    val failedResult = sendResults.firstOrNull { it is Result.Failure }
+                    if (failedResult != null) {
+                        Result.Failure((failedResult as Result.Failure).error)
+                    } else {
+                        Result.Success(
+                            TransactionsSendResult(sendResults.mapNotNull { (it as? Result.Success)?.data?.hash }),
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     @Suppress("MagicNumber")
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val blockchain = wallet.blockchain
@@ -99,7 +173,7 @@ internal class TronWalletManager(
             val destinationExistsDef = async { networkService.checkIfAccountExists(destination) }
             val resourceDef = async { networkService.getAccountResource(wallet.address) }
             val transactionDataDef = async {
-                signTransactionData(
+                signUncompiledTransactionData(
                     amount = amount,
                     source = wallet.address,
                     destination = destination,
@@ -148,7 +222,7 @@ internal class TronWalletManager(
     }
 
     @Suppress("LongParameterList")
-    private suspend fun signTransactionData(
+    private suspend fun signUncompiledTransactionData(
         amount: Amount,
         source: String,
         destination: String,
@@ -169,10 +243,7 @@ internal class TronWalletManager(
                     block = result.data,
                     extras = extras,
                 )
-                when (
-                    val signResult =
-                        sign(transactionToSign.encode().calculateSha256(), signer, publicKey)
-                ) {
+                when (val signResult = sign(transactionToSign.encode().calculateSha256(), signer, publicKey)) {
                     is Result.Failure -> Result.Failure(signResult.error)
                     is Result.Success -> {
                         val transactionToSend = transactionBuilder.buildForSend(
@@ -186,17 +257,88 @@ internal class TronWalletManager(
         }
     }
 
-    private suspend fun sign(
-        transactionToSign: ByteArray,
+    private suspend fun signCompiledTransactionData(
+        hexString: String,
         signer: TransactionSigner,
         publicKey: Wallet.PublicKey,
     ): Result<ByteArray> {
-        return when (val result = signer.sign(transactionToSign, publicKey)) {
+        val rawData = raw.ADAPTER.decode(hexString.decodeHex())
+
+        return when (val signResult = sign(rawData.encode().calculateSha256(), signer, publicKey)) {
+            is Result.Failure -> Result.Failure(signResult.error)
+            is Result.Success -> {
+                val transactionToSend = transactionBuilder.buildForSend(
+                    rawData = rawData,
+                    signature = signResult.data,
+                )
+                Result.Success(transactionToSend.encode())
+            }
+        }
+    }
+
+    private suspend fun signMultipleCompiledTransactionData(
+        hexStringList: List<String>,
+        signer: TransactionSigner,
+        publicKey: Wallet.PublicKey,
+    ): Result<List<ByteArray>> {
+        val rawDataList = hexStringList.map { raw.ADAPTER.decode(it.decodeHex()) }
+
+        return when (
+            val signResults = signMultiple(
+                rawDataList.map { it.encode().calculateSha256() },
+                signer,
+                publicKey,
+            )
+        ) {
+            is Result.Failure -> Result.Failure(signResults.error)
+            is Result.Success -> {
+                val encodedTransactions = signResults.data.mapIndexed { index, signResult ->
+                    transactionBuilder.buildForSend(
+                        rawData = rawDataList[index],
+                        signature = signResult,
+                    ).encode()
+                }
+
+                Result.Success(encodedTransactions)
+            }
+        }
+    }
+
+    private suspend fun signMultiple(
+        transactionHashes: List<ByteArray>,
+        signer: TransactionSigner,
+        publicKey: Wallet.PublicKey,
+    ): Result<List<ByteArray>> {
+        return when (val result = signer.sign(transactionHashes, publicKey)) {
+            is CompletionResult.Success -> {
+                val unmarshalledSignatures = result.data.mapIndexed { index, hash ->
+                    if (publicKey == dummySigner.publicKey) {
+                        hash + ByteArray(1)
+                    } else {
+                        UnmarshalHelper().unmarshalSignatureEVMLegacy(hash, transactionHashes[index], publicKey)
+                    }
+                }
+
+                Result.Success(unmarshalledSignatures)
+            }
+
+            is CompletionResult.Failure -> {
+                Result.fromTangemSdkError(result.error)
+            }
+        }
+    }
+
+    private suspend fun sign(
+        transactionHash: ByteArray,
+        signer: TransactionSigner,
+        publicKey: Wallet.PublicKey,
+    ): Result<ByteArray> {
+        return when (val result = signer.sign(transactionHash, publicKey)) {
             is CompletionResult.Success -> {
                 val unmarshalledSignature = if (publicKey == dummySigner.publicKey) {
                     result.data + ByteArray(1)
                 } else {
-                    UnmarshalHelper().unmarshalSignatureEVMLegacy(result.data, transactionToSign, publicKey)
+                    UnmarshalHelper().unmarshalSignatureEVMLegacy(result.data, transactionHash, publicKey)
                 }
                 Result.Success(unmarshalledSignature)
             }
@@ -276,5 +418,7 @@ internal class TronWalletManager(
          * Value taken from [TIP-491](https://github.com/tronprotocol/tips/issues/491)
          */
         const val ENERGY_FACTOR_PRECISION = 10_000
+
+        const val SEND_TRANSACTIONS_DELAY = 5_000L
     }
 }
