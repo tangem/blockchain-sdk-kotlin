@@ -1,8 +1,8 @@
 package com.tangem.blockchain.common.assembly.impl
 
-import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.blockchains.ethereum.providers.MantleProvidersBuilder
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.mantle.MantleWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
@@ -14,10 +14,7 @@ internal object MantleWalletManagerAssembly : WalletManagerAssembly<MantleWallet
         return with(input.wallet) {
             MantleWalletManager(
                 wallet = this,
-                transactionBuilder = EthereumTransactionBuilder(
-                    walletPublicKey = publicKey.blockchainKey,
-                    blockchain = blockchain,
-                ),
+                transactionBuilder = EthereumTransactionBuilder.create(wallet = input.wallet),
                 networkProvider = EthereumNetworkService(
                     jsonRpcProviders = MantleProvidersBuilder(input.providerTypes).build(blockchain),
                 ),
