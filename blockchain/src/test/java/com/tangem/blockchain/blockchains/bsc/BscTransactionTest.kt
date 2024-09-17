@@ -2,10 +2,13 @@ package com.tangem.blockchain.blockchains.bsc
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
-import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
+import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.common.extensions.hexToBytes
+import org.junit.Before
 import org.junit.Test
 import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.DEFAULT_GAS_PRICE
@@ -14,13 +17,33 @@ class BscTransactionTest {
 
     val blockchain = Blockchain.BSC
 
+    private val walletPublicKey = (
+        "04332F99A76D0ABB06356945CAF02C23B25297D05A2557B0968904792EEB1C88B8C70BCD72258F540C8B76BE1C51C9BC24DC069" +
+            "48758001C5BF17016336652D336"
+        ).hexToBytes()
+
+    private val transactionBuilder by lazy {
+        EthereumTransactionBuilder.create(
+            wallet = Wallet(
+                blockchain = blockchain,
+                addresses = setOf(),
+                publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivationType = null),
+                tokens = setOf(),
+            ),
+        )
+    }
+
+    @Before
+    fun setup() {
+        DepsContainer.onInit(
+            config = BlockchainSdkConfig(),
+            featureToggles = BlockchainFeatureToggles(isEthereumEIP1559Enabled = false),
+        )
+    }
+
     @Test
     fun buildCorrectCoinTransaction() {
         // arrange
-        val walletPublicKey = (
-            "04332F99A76D0ABB06356945CAF02C23B25297D05A2557B0968904792EEB1C88B8C70BCD72258F540C8B76BE1C51C9BC24DC069" +
-                "48758001C5BF17016336652D336"
-            ).hexToBytes()
         val signature = (
             "BABE797847D1BD14A9A8BF8704D9BB10456C27A39E714A0FB40B668EEF8A79F72D65F9C65735DC38EB5D8DCB26755DDA794FC0F" +
                 "9156135B97C3A3993C75BAFDE"
@@ -31,7 +54,6 @@ class BscTransactionTest {
         val nonce = 15.toBigInteger()
 
         val walletAddress = EthereumAddressService().makeAddress(walletPublicKey)
-        val transactionBuilder = EthereumTransactionBuilder(walletPublicKey, blockchain)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
         val fee = Fee.Ethereum.Legacy(
@@ -44,6 +66,7 @@ class BscTransactionTest {
             destinationAddress = destinationAddress,
             amount = amountToSend,
             fee = fee,
+            extras = EthereumTransactionExtras(nonce = nonce),
         )
 
         val expectedHashToSign = "166A2BF5E57A4732331F876327803E1D35559D8A4F7BEBF6356EA30BC52F0258".hexToBytes()
@@ -54,8 +77,8 @@ class BscTransactionTest {
             ).hexToBytes()
 
         // act
-        val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce)
-        val signedTransaction = transactionBuilder.buildToSend(signature, transactionToSign)
+        val transactionToSign = transactionBuilder.buildForSign(transactionData)
+        val signedTransaction = transactionBuilder.buildForSend(transactionData, signature, transactionToSign)
 
         // assert
         Truth.assertThat(transactionToSign.hash).isEqualTo(expectedHashToSign)
@@ -65,10 +88,6 @@ class BscTransactionTest {
     @Test
     fun buildCorrectTokenTransaction() {
         // arrange
-        val walletPublicKey = (
-            "04332F99A76D0ABB06356945CAF02C23B25297D05A2557B0968904792EEB1C88B8C70BCD72258F540C8B76BE1C51C9BC24DC069" +
-                "48758001C5BF17016336652D336"
-            ).hexToBytes()
         val signature = (
             "F87F35C5F5EEAD78722315FC7F4CF303BB985479F082550DFC859A45BC39693E5254F458E65EC802EDD725A312AE2A967D6B761" +
                 "CB0708DFF0EC5F08901033CA4"
@@ -85,7 +104,6 @@ class BscTransactionTest {
         )
 
         val walletAddress = EthereumAddressService().makeAddress(walletPublicKey)
-        val transactionBuilder = EthereumTransactionBuilder(walletPublicKey, blockchain)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Token(token))
         val fee = Fee.Ethereum.Legacy(
@@ -98,6 +116,7 @@ class BscTransactionTest {
             destinationAddress = destinationAddress,
             amount = amountToSend,
             fee = fee,
+            extras = EthereumTransactionExtras(nonce = nonce),
         )
 
         val expectedHashToSign = "95DB218B4288E60DA2807FC42EFBB2BFEF0A19607EC1D701AF54704DC5A253F6".hexToBytes()
@@ -109,8 +128,8 @@ class BscTransactionTest {
             ).hexToBytes()
 
         // act
-        val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce)
-        val signedTransaction = transactionBuilder.buildToSend(signature, transactionToSign)
+        val transactionToSign = transactionBuilder.buildForSign(transactionData)
+        val signedTransaction = transactionBuilder.buildForSend(transactionData, signature, transactionToSign)
 
         // assert
         Truth.assertThat(transactionToSign.hash).isEqualTo(expectedHashToSign)
