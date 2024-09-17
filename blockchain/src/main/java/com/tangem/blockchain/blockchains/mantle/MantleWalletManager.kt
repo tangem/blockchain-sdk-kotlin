@@ -1,10 +1,10 @@
 package com.tangem.blockchain.blockchains.mantle
 
-import com.tangem.blockchain.blockchains.ethereum.CompiledEthereumTransaction
-import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -60,7 +60,7 @@ class MantleWalletManager(
     override suspend fun sign(
         transactionData: TransactionData,
         signer: TransactionSigner,
-    ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
+    ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
         return when (transactionData) {
             is TransactionData.Uncompiled -> {
                 when (transactionData.amount.type) {
@@ -82,7 +82,7 @@ class MantleWalletManager(
     private suspend fun signCoinTransaction(
         transactionData: TransactionData.Uncompiled,
         signer: TransactionSigner,
-    ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
+    ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
         val fee = requireEthereumFee(transactionData.fee)
 
         val patchedFee = fee.copy(
