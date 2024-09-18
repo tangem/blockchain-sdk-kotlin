@@ -3,7 +3,6 @@ package com.tangem.blockchain.blockchains.ethereum.txbuilder
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.UnmarshalHelper.Companion.EVM_LEGACY_REC_ID_OFFSET
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.common.extensions.toByteArray
 import org.kethereum.extensions.toByteArray
@@ -12,15 +11,15 @@ import wallet.core.jni.DataVector
 import wallet.core.jni.TransactionCompiler
 import wallet.core.jni.proto.Common
 import wallet.core.jni.proto.Ethereum
+import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
 import java.math.BigDecimal
-import wallet.core.jni.proto.TransactionCompiler as ProtoTransactionCompiler
 
 /**
  * Ethereum TW transaction builder
  *
  * @property wallet wallet
  */
-internal class EthereumTWTransactionBuilder(private val wallet: Wallet) : EthereumTransactionBuilder(wallet = wallet) {
+internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactionBuilder(wallet = wallet) {
 
     private val coinType = CoinType.ETHEREUM
     private val chainId = wallet.blockchain.getChainId()
@@ -181,12 +180,10 @@ internal class EthereumTWTransactionBuilder(private val wallet: Wallet) : Ethere
         )
     }
 
-    private fun buildTxCompilerPreSigningOutput(
-        input: Ethereum.SigningInput,
-    ): ProtoTransactionCompiler.PreSigningOutput {
+    private fun buildTxCompilerPreSigningOutput(input: Ethereum.SigningInput): PreSigningOutput {
         val txInputData = input.toByteArray()
         val preImageHashes = TransactionCompiler.preImageHashes(coinType, txInputData)
-        val preSigningOutput = ProtoTransactionCompiler.PreSigningOutput.parseFrom(preImageHashes)
+        val preSigningOutput = PreSigningOutput.parseFrom(preImageHashes)
 
         if (preSigningOutput.error != Common.SigningError.OK) {
             throw BlockchainSdkError.CustomError("Error while parse preImageHashes")
@@ -202,18 +199,18 @@ internal class EthereumTWTransactionBuilder(private val wallet: Wallet) : Ethere
     ): Ethereum.SigningOutput {
         if (signature.size != SIGNATURE_SIZE) throw BlockchainSdkError.CustomError("Invalid signature size")
 
-        val unmarshal = UnmarshalHelper().unmarshalSignatureExtended(
-            signature = signature,
-            hash = hash,
-            publicKey = wallet.publicKey,
-        )
-
-        val unmarshalSignature = unmarshal.asRSV(recIdOffset = -1 * EVM_LEGACY_REC_ID_OFFSET)
+        val unmarshalSignature = UnmarshalHelper()
+            .unmarshalSignatureExtended(
+                signature = signature,
+                hash = hash,
+                publicKey = decompressedPublicKey,
+            )
+            .asRSV()
 
         val txInputData = input.toByteArray()
 
         val publicKeys = DataVector()
-        publicKeys.add(publicKey)
+        publicKeys.add(decompressedPublicKey)
 
         val signatures = DataVector()
         signatures.add(unmarshalSignature)
