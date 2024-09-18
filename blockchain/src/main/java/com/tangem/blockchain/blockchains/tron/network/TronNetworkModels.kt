@@ -41,7 +41,7 @@ data class TronGetAccountResponse(
 data class TronGetAccountResourceResponse(
     val freeNetUsed: Long?,
     val freeNetLimit: Long,
-    @Json(name = "EnergyLimit") val energyLimit: Long,
+    @Json(name = "EnergyLimit") val energyLimit: Long?,
     @Json(name = "EnergyUsed") val energyUsed: Long?,
 )
 
