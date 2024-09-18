@@ -77,6 +77,19 @@ open class EthereumWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        val nonce = networkProvider.getPendingTxCount(wallet.address)
+            .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) }
+
+        val transactionData = when (transactionData) {
+            is TransactionData.Uncompiled -> transactionData.copy(
+                extras = when (val extras = transactionData.extras) {
+                    is EthereumTransactionExtras -> extras.copy(nonce = nonce.toBigInteger())
+                    else -> EthereumTransactionExtras(nonce = nonce.toBigInteger())
+                },
+            )
+            is TransactionData.Compiled -> transactionData
+        }
+
         return when (val signResponse = sign(transactionData, signer)) {
             is Result.Success -> {
                 val transactionToSend = transactionBuilder.buildForSend(
@@ -103,20 +116,7 @@ open class EthereumWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
-        val nonce = networkProvider.getPendingTxCount(wallet.address)
-            .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) }
-
-        val transaction = when (transactionData) {
-            is TransactionData.Uncompiled -> transactionData.copy(
-                extras = when (val extras = transactionData.extras) {
-                    is EthereumTransactionExtras -> extras.copy(nonce = nonce.toBigInteger())
-                    else -> EthereumTransactionExtras(nonce = nonce.toBigInteger())
-                },
-            )
-            is TransactionData.Compiled -> transactionData
-        }
-
-        val transactionToSign = transactionBuilder.buildForSign(transaction = transaction)
+        val transactionToSign = transactionBuilder.buildForSign(transaction = transactionData)
 
         return when (val signResponse = signer.sign(transactionToSign.hash, wallet.publicKey)) {
             is CompletionResult.Success -> Result.Success(signResponse.data to transactionToSign)
