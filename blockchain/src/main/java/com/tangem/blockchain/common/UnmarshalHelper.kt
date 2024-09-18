@@ -20,6 +20,18 @@ internal class UnmarshalHelper {
         hash: ByteArray,
         publicKey: Wallet.PublicKey,
     ): ExtendedSecp256k1Signature {
+        return unmarshalSignatureExtended(
+            signature = signature,
+            hash = hash,
+            publicKey = publicKey.blockchainKey.toDecompressedPublicKey(),
+        )
+    }
+
+    fun unmarshalSignatureExtended(
+        signature: ByteArray,
+        hash: ByteArray,
+        publicKey: ByteArray,
+    ): ExtendedSecp256k1Signature {
         val r = BigInteger(
             1,
             signature.copyOfRange(
@@ -34,7 +46,7 @@ internal class UnmarshalHelper {
         val recId = ecdsaSignature.determineRecId(
             messageHash = hash,
             publicKey = PublicKey(
-                publicKey.blockchainKey.toDecompressedPublicKey()
+                publicKey.toDecompressedPublicKey()
                     .sliceArray(1..PUBLIC_KEY_SIZE),
             ),
         )
