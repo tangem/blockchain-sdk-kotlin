@@ -66,6 +66,7 @@ internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<Ethere
             Blockchain.Moonriver, Blockchain.MoonriverTestnet -> MoonriverProvidersBuilder(providerTypes)
             Blockchain.Flare, Blockchain.FlareTestnet -> FlareProvidersBuilder(providerTypes)
             Blockchain.Taraxa, Blockchain.TaraxaTestnet -> TaraxaProvidersBuilder(providerTypes)
+            Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet -> EnergyWebProvidersBuilder(providerTypes)
             else -> error("Unsupported blockchain: $blockchain")
         }
     }
