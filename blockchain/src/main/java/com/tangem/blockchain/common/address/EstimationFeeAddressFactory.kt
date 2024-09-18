@@ -97,6 +97,7 @@ class EstimationFeeAddressFactory {
             Blockchain.Taraxa, Blockchain.TaraxaTestnet,
             Blockchain.Blast, Blockchain.BlastTestnet,
             Blockchain.Cyber, Blockchain.CyberTestnet,
+            Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet,
             -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
             // Polkadot-like
             Blockchain.Polkadot, Blockchain.PolkadotTestnet ->
