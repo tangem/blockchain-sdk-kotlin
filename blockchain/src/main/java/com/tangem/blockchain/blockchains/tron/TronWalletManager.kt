@@ -220,7 +220,7 @@ internal class TronWalletManager(
                 transactionSizeFee * sunPerBandwidthPoint
             }
 
-            val remainingEnergy = resource.energyLimit - (resource.energyUsed ?: 0)
+            val remainingEnergy = (resource.energyLimit ?: 0) - (resource.energyUsed ?: 0)
             val consumedEnergy = kotlin.math.max(0, energyFeeParameters.energyFee - remainingEnergy)
             val consumedEnergyFee = BigDecimal(energyFeeParameters.sunPerEnergyUnit) * BigDecimal(consumedEnergy)
 
