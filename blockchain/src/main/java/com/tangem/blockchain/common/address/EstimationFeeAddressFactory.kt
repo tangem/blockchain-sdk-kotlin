@@ -136,6 +136,9 @@ class EstimationFeeAddressFactory {
                 // Doesn't depend on amount and destination
                 ""
             }
+            Blockchain.Sui,
+            Blockchain.SuiTestnet,
+            -> "0xd185afd5171875605562a1bf7d2216c4bec2fcaea0be7e23cfb80ac5819e4617"
         }
     }
 
