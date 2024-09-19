@@ -158,6 +158,8 @@ enum class Blockchain(
     Cyber("cyber", "ETH", "Cyber (ETH)"),
     CyberTestnet("cyber/test", "ETH", "Cyber Testnet"),
     InternetComputer("internet-computer", "ICP", "Internet Computer"),
+    Sui("sui", "SUI", "SUI"),
+    SuiTestnet("sui/test", "SUI", "SUI Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -207,6 +209,7 @@ enum class Blockchain(
         Solana, SolanaTestnet,
         TON, TONTestnet,
         Bittensor,
+        Sui, SuiTestnet,
         -> 9
 
         Polkadot, Joystream -> 10
@@ -348,6 +351,7 @@ enum class Blockchain(
             InternetComputer,
             Filecoin,
             Sei, SeiTestnet,
+            Sui, SuiTestnet,
             -> TrustWalletAddressService(blockchain = this)
 
             Aptos, AptosTestnet -> AptosAddressService(isTestnet())
@@ -441,6 +445,7 @@ enum class Blockchain(
             Blast, BlastTestnet -> BlastTestnet
             Cyber, CyberTestnet -> CyberTestnet
             Sei, SeiTestnet -> SeiTestnet
+            Sui, SuiTestnet -> SuiTestnet
             else -> null
         }
     }
@@ -527,7 +532,10 @@ enum class Blockchain(
             Hedera, HederaTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
 
-            Cardano -> listOf(EllipticCurve.Ed25519) // todo until cardano support in wallet 2
+            Cardano,
+            Sui, SuiTestnet,
+            -> listOf(EllipticCurve.Ed25519) // todo until cardano support in wallet 2
+
             Chia, ChiaTestnet,
             -> listOf(EllipticCurve.Bls12381G2Aug)
         }
@@ -605,9 +613,10 @@ enum class Blockchain(
 
     fun derivationPath(style: DerivationStyle?): DerivationPath? {
         if (style == null) return null
-        if (!getSupportedCurves().contains(EllipticCurve.Secp256k1) &&
-            !getSupportedCurves().contains(EllipticCurve.Ed25519) &&
-            !getSupportedCurves().contains(EllipticCurve.Ed25519Slip0010)
+        val supportedCurves = getSupportedCurves()
+        if (EllipticCurve.Secp256k1 !in supportedCurves &&
+            EllipticCurve.Ed25519 !in supportedCurves &&
+            EllipticCurve.Ed25519Slip0010 !in supportedCurves
         ) {
             return null
         }

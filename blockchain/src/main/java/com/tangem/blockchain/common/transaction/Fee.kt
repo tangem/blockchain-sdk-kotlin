@@ -85,5 +85,11 @@ sealed class Fee {
         val feeEnergy: Long,
     ) : Fee()
 
+    data class Sui(
+        override val amount: Amount,
+        val gasBudget: Long,
+        val gasPrice: Long,
+    ) : Fee()
+
     data class Common(override val amount: Amount) : Fee()
 }
