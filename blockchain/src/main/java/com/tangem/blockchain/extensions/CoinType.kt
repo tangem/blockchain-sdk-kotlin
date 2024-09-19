@@ -23,6 +23,7 @@ internal val Blockchain.trustWalletCoinType: CoinType
         Blockchain.Filecoin -> CoinType.FILECOIN
         Blockchain.Sei, Blockchain.SeiTestnet -> CoinType.SEI
         Blockchain.InternetComputer -> CoinType.INTERNETCOMPUTER
+        Blockchain.Sui, Blockchain.SuiTestnet -> CoinType.SUI
         else -> error("Unsupported blockchain: $this")
     }
 
