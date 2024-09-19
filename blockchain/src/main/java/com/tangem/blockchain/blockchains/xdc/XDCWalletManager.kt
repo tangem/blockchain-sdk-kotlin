@@ -1,9 +1,9 @@
 package com.tangem.blockchain.blockchains.xdc
 
-import com.tangem.blockchain.blockchains.ethereum.CompiledEthereumTransaction
-import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
@@ -27,7 +27,7 @@ internal class XDCWalletManager(
     override suspend fun sign(
         transactionData: TransactionData,
         signer: TransactionSigner,
-    ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
+    ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
         transactionData.requireUncompiled()
         return super.sign(convertTransactionDataAddress(transactionData), signer)
     }
