@@ -3,6 +3,8 @@ package com.tangem.blockchain.blockchains.ethereum
 import android.util.Log
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -34,10 +36,9 @@ open class EthereumWalletManager(
     // move to constructor later
     protected val feesCalculator = EthereumFeesCalculator()
 
-    var pendingTxCount = -1L
-        private set
-    var txCount = -1L
-        private set
+    private var pendingTxCount = -1L
+
+    private var txCount = -1L
 
     override val currentHost: String
         get() = networkProvider.baseUrl
@@ -76,15 +77,13 @@ open class EthereumWalletManager(
     ): Result<TransactionSendResult> {
         return when (val signResponse = sign(transactionData, signer)) {
             is Result.Success -> {
-                val transactionToSend = transactionBuilder
-                    .buildToSend(
-                        signature = signResponse.data.first,
-                        transactionToSign = signResponse.data.second,
-                    )
-                val sendResult = networkProvider
-                    .sendTransaction(transactionToSend.toHexString())
+                val transactionToSend = transactionBuilder.buildForSend(
+                    transaction = transactionData,
+                    signature = signResponse.data.first,
+                    compiledTransaction = signResponse.data.second,
+                )
 
-                when (sendResult) {
+                when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())) {
                     is SimpleResult.Success -> {
                         val hash = transactionToSend.keccak().toHexString()
                         transactionData.hash = hash
@@ -99,16 +98,24 @@ open class EthereumWalletManager(
         }
     }
 
-    open suspend fun sign(
+    protected open suspend fun sign(
         transactionData: TransactionData,
         signer: TransactionSigner,
-    ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
-        val pendingTxCount = networkProvider.getPendingTxCount(wallet.address)
+    ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
+        val nonce = networkProvider.getPendingTxCount(wallet.address)
             .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) }
-        val transactionToSign = transactionBuilder.buildToSign(
-            transactionData = transactionData,
-            nonce = pendingTxCount.toBigInteger(),
-        ) ?: return Result.Failure(BlockchainSdkError.CustomError("Not enough data"))
+
+        val transaction = when (transactionData) {
+            is TransactionData.Uncompiled -> transactionData.copy(
+                extras = when (val extras = transactionData.extras) {
+                    is EthereumTransactionExtras -> extras.copy(nonce = nonce.toBigInteger())
+                    else -> EthereumTransactionExtras(nonce = nonce.toBigInteger())
+                },
+            )
+            is TransactionData.Compiled -> transactionData
+        }
+
+        val transactionToSign = transactionBuilder.buildForSign(transaction = transaction)
 
         return when (val signResponse = signer.sign(transactionToSign.hash, wallet.publicKey)) {
             is CompletionResult.Success -> Result.Success(signResponse.data to transactionToSign)
