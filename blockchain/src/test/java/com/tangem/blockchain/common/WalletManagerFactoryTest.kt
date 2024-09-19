@@ -203,6 +203,7 @@ internal class WalletManagerFactoryTest {
                     base = GetBlockAccessToken(),
                     blast = GetBlockAccessToken(),
                     filecoin = GetBlockAccessToken(),
+                    sui = GetBlockAccessToken(),
                 ),
                 tronGridApiKey = "",
                 chiaFireAcademyApiKey = "",
