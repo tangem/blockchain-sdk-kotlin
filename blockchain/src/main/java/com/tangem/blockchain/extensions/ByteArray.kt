@@ -4,6 +4,7 @@ import android.util.Base64
 import com.google.common.primitives.Ints
 import com.tangem.blockchain.blockchains.cardano.crypto.Blake2b
 import com.tangem.blockchain.blockchains.tron.libs.Base58Check
+import com.tangem.common.extensions.hexToBytes
 import org.bitcoinj.core.Base58
 import org.bitcoinj.core.ECKey
 import org.spongycastle.crypto.util.DigestFactory
@@ -47,3 +48,6 @@ fun ByteArray.padLeft(length: Int): ByteArray {
     val paddingSize = Ints.max(length - this.size, 0)
     return ByteArray(paddingSize) + this
 }
+
+/** Convert hex string to byte array or null if exception is thrown */
+fun String.hexToBytesOrNull(): ByteArray? = runCatching(String::hexToBytes).getOrNull()
