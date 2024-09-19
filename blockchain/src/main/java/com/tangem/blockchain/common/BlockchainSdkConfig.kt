@@ -63,6 +63,7 @@ data class GetBlockCredentials(
     val base: GetBlockAccessToken?,
     val blast: GetBlockAccessToken?,
     val filecoin: GetBlockAccessToken?,
+    val sui: GetBlockAccessToken?,
 )
 
 data class GetBlockAccessToken(
