@@ -41,6 +41,8 @@ internal class CardanoContractAddressValidatorTest(private val model: Model) {
             Model(address = "asset1rjklcrnsdzqp65wjgrg55sy9723kw09mlgvlc3", actual = true),
             // Invalid
             Model(address = "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc53", actual = false),
+            // Random string
+            Model(address = "asse", actual = false),
         )
     }
 }
