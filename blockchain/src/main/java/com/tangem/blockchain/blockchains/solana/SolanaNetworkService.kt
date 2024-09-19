@@ -188,7 +188,7 @@ internal class SolanaNetworkService(
             val result = provider.api.sendSignedTransaction(signedTransaction)
             Result.Success(result)
         } catch (e: Exception) {
-            if (!e.isBlockhashNotFound()) { // retry only if blockchain not found
+            if (e.isBlockhashNotFound()) { // retry only if blockchain not found
                 delay(RETRY_DELAY)
                 if (repeat > 1) { // limit retry count
                     trySend(signedTransaction, repeat - 1)
