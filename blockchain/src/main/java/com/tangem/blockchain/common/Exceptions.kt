@@ -299,6 +299,37 @@ sealed class BlockchainSdkError(
         class Api(message: String) : Aptos(subCode = 0, customMessage = message)
     }
 
+    sealed class Sui(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_SUI,
+        customMessage = customMessage?.let { "$ERROR_CODE_SUI: $subCode: $customMessage" }
+            ?: "$ERROR_CODE_SUI: $subCode",
+        messageResId = null,
+        cause = throwable,
+    ) {
+
+        class Api(code: Int, message: String) : Sui(subCode = code, customMessage = message)
+
+        @Suppress("UnusedPrivateMember")
+        data object GasCoinNotFound : Sui(
+            subCode = 0,
+            customMessage = "Gas coin not found",
+        ) {
+            private fun readResolve(): Any = GasCoinNotFound
+        }
+
+        @Suppress("UnusedPrivateMember")
+        data object TokenNotFound : Sui(
+            subCode = 1,
+            customMessage = "Token not found",
+        ) {
+            private fun readResolve(): Any = TokenNotFound
+        }
+    }
+
     companion object {
         const val ERROR_CODE_SOLANA = 1000
         const val ERROR_CODE_POLKADOT = 2000
@@ -315,6 +346,7 @@ sealed class BlockchainSdkError(
         const val ERROR_CODE_CARDANO = 13000
         const val ERROR_CODE_APTOS = 14000
         const val ERROR_CODE_TRON = 15000
+        const val ERROR_CODE_SUI = 16000
     }
 }
 
