@@ -44,6 +44,7 @@ class AvalancheProvidersBuilderTest {
             base = null,
             blast = null,
             filecoin = null,
+            sui = null,
         ),
     )
 
