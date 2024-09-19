@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.ethereum
 
 import com.tangem.blockchain.blockchains.ethereum.eip712.EthEip712Util
 import com.tangem.blockchain.blockchains.ethereum.models.EthereumCompiledTransaction
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.hexToBigDecimal
@@ -91,11 +92,10 @@ object EthereumUtils {
 
     fun buildTransactionToSign(
         transactionData: TransactionData,
-        nonce: BigInteger?,
         blockchain: Blockchain,
-    ): CompiledEthereumTransaction {
+    ): EthereumCompiledTxInfo.Legacy {
         val transaction = when (transactionData) {
-            is TransactionData.Uncompiled -> buildUncompiledTransactionToSign(transactionData, nonce)
+            is TransactionData.Uncompiled -> buildUncompiledTransactionToSign(transactionData)
             is TransactionData.Compiled -> buildCompiledTransactionToSign(transactionData)
         } ?: error("Error while building transaction to sign")
 
@@ -104,7 +104,11 @@ object EthereumUtils {
         val hash = transaction
             .encode(SignatureData(v = chainId.toBigInteger()))
             .keccak()
-        return CompiledEthereumTransaction(transaction, hash)
+
+        return EthereumCompiledTxInfo.Legacy(
+            hash = hash,
+            transaction = transaction,
+        )
     }
 
     private fun buildCompiledTransactionToSign(transactionData: TransactionData.Compiled): Transaction {
@@ -153,13 +157,10 @@ object EthereumUtils {
         )
     }
 
-    private fun buildUncompiledTransactionToSign(
-        transactionData: TransactionData.Uncompiled,
-        nonce: BigInteger?,
-    ): Transaction? {
+    private fun buildUncompiledTransactionToSign(transactionData: TransactionData.Uncompiled): Transaction? {
         val extras = transactionData.extras as? EthereumTransactionExtras
 
-        val nonceValue = extras?.nonce ?: nonce ?: return null
+        val nonceValue = extras?.nonce ?: return null
 
         val amount: BigDecimal = transactionData.amount.value ?: return null
         val transactionFee: BigDecimal = transactionData.fee?.amount?.value ?: return null
@@ -186,7 +187,7 @@ object EthereumUtils {
                 createErc20TransferData(transactionData.destinationAddress, bigIntegerAmount)
         }
 
-        val gasLimitToUse = extras?.gasLimit
+        val gasLimitToUse = extras.gasLimit
             ?: (transactionData.fee as? Fee.Ethereum.Legacy)?.gasLimit
             ?: DEFAULT_GAS_LIMIT
 
@@ -197,13 +198,13 @@ object EthereumUtils {
             gasPrice = fee.divide(gasLimitToUse),
             gasLimit = gasLimitToUse,
             nonce = nonceValue,
-            input = extras?.data ?: input, // use data from extras prefer (TODO refactor this)
+            input = extras.data ?: input, // use data from extras prefer (TODO refactor this)
         )
     }
 
     fun prepareTransactionToSend(
         signature: ByteArray,
-        transactionToSign: CompiledEthereumTransaction,
+        transactionToSign: EthereumCompiledTxInfo.Legacy,
         walletPublicKey: Wallet.PublicKey,
         blockchain: Blockchain,
     ): ByteArray {
@@ -213,7 +214,7 @@ object EthereumUtils {
 
     fun prepareTransactionToSend(
         signature: ByteArray,
-        transactionToSign: CompiledEthereumTransaction,
+        transactionToSign: EthereumCompiledTxInfo.Legacy,
         walletPublicKey: ByteArray,
         blockchain: Blockchain,
     ): ByteArray {
