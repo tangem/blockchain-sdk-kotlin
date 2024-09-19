@@ -71,7 +71,7 @@ enum class Blockchain(
     KavaTestnet("KAVA/test", "KAVA", "Kava EVM Testnet"),
     Kusama("Kusama", "KSM", "Kusama"),
     Polygon("POLYGON", "POL", "Polygon"),
-    PolygonTestnet("POLYGON/test", "MATIC", "Polygon Testnet"),
+    PolygonTestnet("POLYGON/test", "POL", "Polygon Testnet"),
     RSK("RSK", "RBTC", "RSK"),
     Sei("sei", "SEI", "Sei"),
     SeiTestnet("sei/test", "SEI", "Sei Testnet"),
