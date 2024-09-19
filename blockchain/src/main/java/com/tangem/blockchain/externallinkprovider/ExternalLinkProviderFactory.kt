@@ -85,6 +85,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Cyber, Blockchain.CyberTestnet -> CyberExternalLinkProvider(isTestnet)
             Blockchain.Sei, Blockchain.SeiTestnet -> SeiExternalLinkProvider(isTestnet)
             Blockchain.InternetComputer -> InternetComputerExternalLinkProvider()
+            Blockchain.Sui, Blockchain.SuiTestnet -> SuiExternalLinkProvider(isTestnet)
         }
     }
 }
