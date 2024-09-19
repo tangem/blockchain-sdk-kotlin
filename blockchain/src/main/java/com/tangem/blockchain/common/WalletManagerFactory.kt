@@ -195,6 +195,7 @@ class WalletManagerFactory(
             Blockchain.Filecoin -> FilecoinWalletManagerAssembly
             Blockchain.Sei, Blockchain.SeiTestnet -> SeiWalletManagerAssembly
             Blockchain.InternetComputer -> ICPWalletManagerAssembly
+            Blockchain.Sui, Blockchain.SuiTestnet -> SuiteWalletManagerAssembly
             Blockchain.Unknown,
             -> error("Unsupported blockchain")
         }
