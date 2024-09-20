@@ -3,7 +3,7 @@ package com.tangem.blockchain.externallinkprovider.providers
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.TxExploreState
 
-internal class EnergyWebExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
+internal class EnergyWebChainExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
     override val explorerBaseUrl = if (isTestnet) {
         "https://volta-explorer.energyweb.org/"
