@@ -3,21 +3,19 @@ package com.tangem.blockchain.externallinkprovider.providers
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.TxExploreState
 
-internal class EnergyWebExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
+internal class EnergyWebXExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
     override val explorerBaseUrl = if (isTestnet) {
-        "https://volta-explorer.energyweb.org/"
+        "https://energywebx-testnet.subscan.io/"
     } else {
-        "https://explorer.energyweb.org/"
+        "https://energywebx.subscan.io/"
     }
 
-    override val testNetTopUpUrl: String = "https://voltafaucet.energyweb.org/"
-
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
-        return "${explorerBaseUrl}address/$walletAddress"
+        return "${explorerBaseUrl}account/$walletAddress"
     }
 
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
-        return TxExploreState.Url(url = "${explorerBaseUrl}tx/$transactionHash")
+        return TxExploreState.Url(url = "${explorerBaseUrl}extrinsic/$transactionHash")
     }
 }

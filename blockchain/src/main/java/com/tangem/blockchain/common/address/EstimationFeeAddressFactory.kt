@@ -134,6 +134,7 @@ class EstimationFeeAddressFactory {
             Blockchain.Kaspa -> "kaspa:qyp2f0ust8wyvuvqrzajvehx5jyh43vcjgessjdkw9vyw6rww4fdlsgzysspfuq"
             Blockchain.Sei, Blockchain.SeiTestnet -> "sei1lhjvds604fvac32j4eygpr820lyc82dlfv0ea4"
             Blockchain.InternetComputer -> TODO("Need to generate")
+            Blockchain.EnergyWebX, Blockchain.EnergyWebXTestnet -> TODO("Need to generate")
         }
     }
 
