@@ -5,7 +5,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.network.providers.OnlyPublicProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
 
-internal class EnergyWebProvidersBuilder(
+internal class EnergyWebChainProvidersBuilder(
     override val providerTypes: List<ProviderType>,
 ) : OnlyPublicProvidersBuilder<EthereumJsonRpcProvider>(
     providerTypes = providerTypes,
