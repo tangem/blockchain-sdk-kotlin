@@ -47,7 +47,7 @@ internal class UnmarshalHelper {
             messageHash = hash,
             publicKey = PublicKey(
                 publicKey.toDecompressedPublicKey()
-                    .sliceArray(1..PUBLIC_KEY_SIZE),
+                    .sliceArray(1..publicKey.lastIndex),
             ),
         )
         return ExtendedSecp256k1Signature(
@@ -58,8 +58,6 @@ internal class UnmarshalHelper {
     }
 
     companion object {
-        private const val PUBLIC_KEY_SIZE = 64
-
         // R
         private const val COMPRESSED_CURVE_POINT_START_INDEX = 0
         private const val COMPRESSED_CURVE_POINT_END_INDEX = 32
