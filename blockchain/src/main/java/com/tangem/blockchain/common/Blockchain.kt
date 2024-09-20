@@ -160,6 +160,8 @@ enum class Blockchain(
     InternetComputer("internet-computer", "ICP", "Internet Computer"),
     EnergyWebChain("energy-web-chain", "EWT", "Energy Web Chain"),
     EnergyWebChainTestnet("energy-web-chain/test", "VT", "Energy Web Chain Volta Testnet"),
+    EnergyWebX("energy-web-x", "EWT", "Energy Web X"),
+    EnergyWebXTestnet("energy-web-x/test", "VT", "Energy Web X Paseo Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -209,6 +211,7 @@ enum class Blockchain(
         Solana, SolanaTestnet,
         TON, TONTestnet,
         Bittensor,
+        EnergyWebX, EnergyWebXTestnet,
         -> 9
 
         Polkadot, Joystream -> 10
@@ -339,6 +342,7 @@ enum class Blockchain(
             AlephZero, AlephZeroTestnet,
             Joystream,
             Bittensor,
+            EnergyWebX, EnergyWebXTestnet,
             -> PolkadotAddressService(this)
             Stellar, StellarTestnet -> StellarAddressService()
             Solana, SolanaTestnet -> SolanaAddressService()
@@ -530,6 +534,7 @@ enum class Blockchain(
             Aptos, AptosTestnet,
             Algorand, AlgorandTestnet,
             Hedera, HederaTestnet,
+            EnergyWebX, EnergyWebXTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
 
             Cardano -> listOf(EllipticCurve.Ed25519) // todo until cardano support in wallet 2
