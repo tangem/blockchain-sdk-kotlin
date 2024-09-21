@@ -14,9 +14,7 @@ import com.tangem.common.extensions.toDecompressedPublicKey
 abstract class EthereumTransactionBuilder(wallet: Wallet) {
 
     /** Decompressed wallet public key */
-    protected val publicKey by lazy {
-        wallet.publicKey.blockchainKey.toDecompressedPublicKey().sliceArray(1..64)
-    }
+    protected val decompressedPublicKey by lazy { wallet.publicKey.blockchainKey.toDecompressedPublicKey() }
 
     /** Blockchain */
     protected val blockchain by lazy(wallet::blockchain)
