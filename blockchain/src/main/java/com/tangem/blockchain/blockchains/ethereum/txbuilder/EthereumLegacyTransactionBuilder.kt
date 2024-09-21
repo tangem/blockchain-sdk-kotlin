@@ -23,8 +23,12 @@ internal class EthereumLegacyTransactionBuilder(wallet: Wallet) : EthereumTransa
         return EthereumUtils.prepareTransactionToSend(
             signature = signature,
             transactionToSign = compiledTransaction as EthereumCompiledTxInfo.Legacy,
-            walletPublicKey = publicKey,
+            walletPublicKey = decompressedPublicKey.sliceArray(1..PUBLIC_KEY_SIZE),
             blockchain = blockchain,
         )
+    }
+
+    private companion object {
+        const val PUBLIC_KEY_SIZE = 64
     }
 }
