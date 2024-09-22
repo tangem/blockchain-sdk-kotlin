@@ -1,6 +1,8 @@
 package com.tangem.blockchain.blockchains.polkadot.network
 
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.JsonRPCRequest
+import com.tangem.blockchain.common.JsonRPCResponse
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
@@ -29,32 +31,39 @@ internal class PolkadotJsonRpcProvider(
 
     @Throws
     suspend fun getFee(transaction: ByteArray, decimals: Int): BigDecimal {
-        val response = RpcBody(
-            PolkadotMethod.GET_FEE.method,
-            listOf("0x" + transaction.toHexString()),
+        val response = createRpcBody(
+            method = PolkadotMethod.GET_FEE.method,
+            params = listOf("0x" + transaction.toHexString()),
         ).post()
+
         return response.extractResult().getFee(decimals)
     }
 
     @Throws
     suspend fun getLatestBlockHash(): Result<String> {
-        val latestBlockHash = RpcBody(
-            CHAIN_GET_BLOCK_HASH,
-        ).postWithStringResult().successOr { return it }.result
+        val latestBlockHash = createRpcBody(method = CHAIN_GET_BLOCK_HASH)
+            .post()
+            .successOr { return it }
+            .result as? String
             ?: return Result.Failure(BlockchainSdkError.CustomError("hash is null"))
+
         return Result.Success(latestBlockHash)
     }
 
     suspend fun getBlockNumber(blockhash: String): Result<BigInteger> {
-        val blockNumber = RpcBody(
-            CHAIN_GET_HEADER,
-            params = listOf(blockhash),
-        ).post().extractResult()["number"] as? String
+        val blockNumber = createRpcBody(method = CHAIN_GET_HEADER, params = listOf(blockhash))
+            .post()
+            .extractResult()["number"] as? String
             ?: return Result.Failure(BlockchainSdkError.CustomError("wrong block number"))
+
         return Result.Success(HexString(blockNumber).hexToBigInteger())
     }
 
-    private suspend fun RpcBody.post(): Result<RpcMapResponse> {
+    private fun createRpcBody(method: String, params: List<Any> = emptyList()): JsonRPCRequest {
+        return JsonRPCRequest(method = method, params = params, id = "4")
+    }
+
+    private suspend fun JsonRPCRequest.post(): Result<JsonRPCResponse> {
         return try {
             val result = retryIO { api.post(this) }
             Result.Success(result)
@@ -63,24 +72,13 @@ internal class PolkadotJsonRpcProvider(
         }
     }
 
-    private suspend fun RpcBody.postWithStringResult(): Result<RpcStringResponse> {
-        return try {
-            val result = retryIO { api.postWithStringResult(this) }
-            Result.Success(result)
-        } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainSdkError())
-        }
-    }
-
-    private fun Result<RpcMapResponse>.extractResult(): Map<String, Any> = when (this) {
+    private fun Result<JsonRPCResponse>.extractResult(): Map<String, Any> = when (this) {
         is Result.Success -> {
-            this.data.result
-                ?: throw this.data.error?.let { error ->
-                    BlockchainSdkError.Polkadot.ApiWithCode(
-                        code = error.code ?: 0,
-                        message = error.message ?: "No error message",
-                    )
-                } ?: BlockchainSdkError.CustomError("Unknown response format")
+            data.result as? Map<String, Any>
+                ?: throw data.error?.let { error ->
+                    BlockchainSdkError.Polkadot.ApiWithCode(code = error.code, message = error.message)
+                }
+                    ?: BlockchainSdkError.CustomError("Unknown response format")
         }
         is Result.Failure -> {
             throw this.error as? BlockchainSdkError ?: BlockchainSdkError.CustomError("Unknown error format")
