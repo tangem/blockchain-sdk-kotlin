@@ -61,9 +61,11 @@ class BitcoinCashNowNodesNetworkProvider(
         return try {
             val getFeeResponse = withContext(Dispatchers.IO) { api.getFee() }
 
-            if (getFeeResponse.result <= 0) throw BlockchainSdkError.FailedToLoadFee
+            val result = getFeeResponse.result as Double
 
-            val fee = getFeeResponse.result
+            if (result <= 0) throw BlockchainSdkError.FailedToLoadFee
+
+            val fee = result
                 .toBigDecimal()
                 .setScale(Blockchain.BitcoinCash.decimals(), RoundingMode.UP)
 
@@ -76,7 +78,10 @@ class BitcoinCashNowNodesNetworkProvider(
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
             val response = withContext(Dispatchers.IO) { api.sendTransaction(transaction) }
-            if (response.result.isNotBlank()) {
+
+            val result = response.result as String
+
+            if (result.isNotBlank()) {
                 SimpleResult.Success
             } else {
                 SimpleResult.Failure(BlockchainSdkError.FailedToSendException)
