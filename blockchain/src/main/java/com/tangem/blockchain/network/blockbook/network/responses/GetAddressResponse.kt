@@ -42,6 +42,7 @@ data class GetAddressResponse(
         @Json(name = "toAddress") val toAddress: String?,
         @Json(name = "contract_type") val contractType: Int?,
         @Json(name = "contract_name") val contractName: String?,
+        @Json(name = "voteList") val voteList: Map<String, Int>?,
     ) {
 
         /**
