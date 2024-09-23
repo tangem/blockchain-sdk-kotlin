@@ -245,7 +245,7 @@ internal class TronTransactionHistoryProvider(
                     }
 
                     VOTE_WITNESS_CONTRACT_TYPE -> {
-                        TronStakingTransactionType.VoteWitnessContract(tx.voteList?.keys?.first())
+                        TronStakingTransactionType.VoteWitnessContract(tx.voteList?.keys?.first().orEmpty())
                     }
                     WITHDRAW_BALANCE_CONTRACT_TYPE -> {
                         TronStakingTransactionType.WithdrawBalanceContract
