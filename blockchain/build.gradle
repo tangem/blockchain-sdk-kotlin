@@ -34,12 +34,6 @@ android {
         jvmTarget = '17'
     }
 
-    packagingOptions {
-        exclude("META-INF/DEPENDENCIES")
-        exclude("META-INF/LICENSE.md")
-        exclude("META-INF/NOTICE.md")
-    }
-
     testOptions {
         managedDevices {
             localDevices {
@@ -141,11 +135,16 @@ dependencies {
     implementation 'org.ton:ton-kotlin-block-tlb:0.3.1'
 
     // region dependencies for ICP
-    implementation("com.tangem.ic4j:ic4j-agent:master-2") {
+    api("com.tangem.ic4j:ic4j-agent:master-2") {
         exclude group: 'org.bouncycastle'
+        exclude group: 'org.apache.httpcomponents.client5', module: 'httpclient5'
+        exclude group: 'jakarta.xml.bind', module: 'jakarta.xml.bind-api'
     }
-    implementation("org.ic4j:ic4j-candid:0.7.1") {
+    api("org.ic4j:ic4j-candid:0.7.1") {
         exclude group: 'org.bouncycastle'
+        exclude group: 'jakarta.xml.bind', module: 'jakarta.xml.bind-api'
+        exclude group: 'commons-codec', module: 'commons-codec'
+        exclude group: 'org.apache.commons', module: 'commons-lang3'
     }
     def jacksonVersion = '2.17.2'
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
