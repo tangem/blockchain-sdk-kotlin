@@ -177,7 +177,7 @@ internal class TronTransactionHistoryProvider(
 
     private fun checkForStakingOutgoingTransaction(type: TransactionHistoryItem.TransactionType): Boolean? {
         return when (type) {
-            TronStakingTransactionType.VoteWitnessContract,
+            is TronStakingTransactionType.VoteWitnessContract,
             TronStakingTransactionType.FreezeBalanceV2Contract,
             -> {
                 true
@@ -245,7 +245,7 @@ internal class TronTransactionHistoryProvider(
                     }
 
                     VOTE_WITNESS_CONTRACT_TYPE -> {
-                        TronStakingTransactionType.VoteWitnessContract
+                        TronStakingTransactionType.VoteWitnessContract(tx.voteList?.keys?.first())
                     }
                     WITHDRAW_BALANCE_CONTRACT_TYPE -> {
                         TronStakingTransactionType.WithdrawBalanceContract
