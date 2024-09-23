@@ -39,7 +39,7 @@ data class TransactionHistoryItem(
         sealed interface TronStakingTransactionType : TransactionType {
             data object FreezeBalanceV2Contract : TronStakingTransactionType
             data object UnfreezeBalanceV2Contract : TronStakingTransactionType
-            data object VoteWitnessContract : TronStakingTransactionType
+            data class VoteWitnessContract(val validatorAddress: String?) : TronStakingTransactionType
             data object WithdrawBalanceContract : TronStakingTransactionType
         }
     }
