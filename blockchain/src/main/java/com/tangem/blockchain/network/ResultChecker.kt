@@ -1,9 +1,9 @@
 package com.tangem.blockchain.network
 
 import com.squareup.moshi.JsonDataException
-import com.tangem.blockchain.blockchains.ethereum.network.EthereumResponse
 import com.tangem.blockchain.blockchains.stellar.StellarNetworkService.Companion.HTTP_NOT_FOUND_CODE
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.JsonRPCResponse
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import org.stellar.sdk.requests.ErrorResponse
@@ -61,11 +61,11 @@ object ResultChecker {
     }
 
     private fun extractEthereumErrorMessage(result: Result.Success<*>): String? {
-        return (result.data as? EthereumResponse)?.error?.message
+        return (result.data as? JsonRPCResponse)?.error?.message
     }
 
     private fun isError(result: Result.Success<*>): Boolean {
-        return result.data is EthereumResponse && result.data.error != null
+        return result.data is JsonRPCResponse && result.data.error != null
     }
 
     private fun BlockchainSdkError.WrappedThrowable.isNetworkError(): Boolean {
