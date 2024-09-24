@@ -48,6 +48,7 @@ internal object PolkadotWalletManagerAssembly : WalletManagerAssembly<PolkadotWa
             Blockchain.Kusama -> KusamaProvidersBuilder(providerTypes)
             Blockchain.Joystream -> JoyStreamProvidersBuilder(providerTypes)
             Blockchain.Bittensor -> BittensorProvidersBuilder(providerTypes, config)
+            Blockchain.EnergyWebX, Blockchain.EnergyWebXTestnet -> EnergyWebXProvidersBuilder(providerTypes)
             else -> error("$blockchain isn't supported")
         }
     }
