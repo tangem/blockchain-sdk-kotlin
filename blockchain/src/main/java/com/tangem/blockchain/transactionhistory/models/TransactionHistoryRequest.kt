@@ -19,7 +19,7 @@ data class TransactionHistoryRequest(
         }
 
     sealed class FilterType {
-        object Coin : FilterType()
+        data object Coin : FilterType()
         data class Contract(val tokenInfo: Token) : FilterType()
     }
 }
