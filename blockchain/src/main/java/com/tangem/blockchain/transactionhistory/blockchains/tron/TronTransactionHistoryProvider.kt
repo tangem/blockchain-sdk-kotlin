@@ -183,6 +183,7 @@ internal class TronTransactionHistoryProvider(
                 true
             }
             TronStakingTransactionType.WithdrawBalanceContract,
+            TronStakingTransactionType.WithdrawExpireUnfreezeContract,
             TronStakingTransactionType.UnfreezeBalanceV2Contract,
             -> {
                 false
@@ -256,6 +257,9 @@ internal class TronTransactionHistoryProvider(
                     UNFREEZE_BALANCE_V2_CONTRACT_TYPE -> {
                         TronStakingTransactionType.UnfreezeBalanceV2Contract
                     }
+                    WITHDRAW_EXPIRE_UNFREEZE_CONTRACT_TYPE -> {
+                        TronStakingTransactionType.WithdrawExpireUnfreezeContract
+                    }
                     else -> TransactionHistoryItem.TransactionType.ContractMethod(id = tx.contractName.orEmpty())
                 }
             }
@@ -321,5 +325,6 @@ internal class TronTransactionHistoryProvider(
         private const val WITHDRAW_BALANCE_CONTRACT_TYPE = 13
         private const val FREEZE_BALANCE_V2_CONTRACT_TYPE = 54
         private const val UNFREEZE_BALANCE_V2_CONTRACT_TYPE = 55
+        private const val WITHDRAW_EXPIRE_UNFREEZE_CONTRACT_TYPE = 56
     }
 }
