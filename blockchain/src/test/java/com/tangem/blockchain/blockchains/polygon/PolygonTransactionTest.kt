@@ -2,10 +2,13 @@ package com.tangem.blockchain.blockchains.polygon
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
-import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
+import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.common.extensions.hexToBytes
+import org.junit.Before
 import org.junit.Test
 import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.DEFAULT_GAS_PRICE
@@ -14,13 +17,33 @@ class PolygonTransactionTest {
 
     val blockchain = Blockchain.Polygon
 
+    val walletPublicKey = (
+        "04332F99A76D0ABB06356945CAF02C23B25297D05A2557B0968904792EEB1C88B8C70BCD72258F540C8B76BE1C51C9BC24DC069" +
+            "48758001C5BF17016336652D336"
+        ).hexToBytes()
+
+    private val transactionBuilder by lazy {
+        EthereumTransactionBuilder.create(
+            wallet = Wallet(
+                blockchain = blockchain,
+                addresses = setOf(),
+                publicKey = Wallet.PublicKey(seedKey = walletPublicKey, derivationType = null),
+                tokens = setOf(),
+            ),
+        )
+    }
+
+    @Before
+    fun setup() {
+        DepsContainer.onInit(
+            config = BlockchainSdkConfig(),
+            featureToggles = BlockchainFeatureToggles(isEthereumEIP1559Enabled = false),
+        )
+    }
+
     @Test
     fun buildCorrectCoinTransaction() {
         // arrange
-        val walletPublicKey = (
-            "04332F99A76D0ABB06356945CAF02C23B25297D05A2557B0968904792EEB1C88B8C70BCD72258F540C8B76BE1C51C9BC24DC069" +
-                "48758001C5BF17016336652D336"
-            ).hexToBytes()
         val signature = (
             "BE3E2E3BDDF118DA63522EFE218F1CDE7D4657974D6FAFC6FF8D7CD3E72ACE8868409168421B4DE78F5FCE10494AF215028386A" +
                 "57678C81B06A772865431C48D"
@@ -31,7 +54,6 @@ class PolygonTransactionTest {
         val nonce = 15.toBigInteger()
 
         val walletAddress = EthereumAddressService().makeAddress(walletPublicKey)
-        val transactionBuilder = EthereumTransactionBuilder(walletPublicKey, blockchain)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
         val fee = Fee.Ethereum.Legacy(
@@ -44,6 +66,7 @@ class PolygonTransactionTest {
             destinationAddress = destinationAddress,
             amount = amountToSend,
             fee = fee,
+            extras = EthereumTransactionExtras(nonce = nonce),
         )
 
         val expectedHashToSign = "9786CAD43696FBFF7024A2707B0A060F54F233708F0A4B4003A42D20A536B39D".hexToBytes()
@@ -54,8 +77,8 @@ class PolygonTransactionTest {
             ).hexToBytes()
 
         // act
-        val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce)
-        val signedTransaction = transactionBuilder.buildToSend(signature, transactionToSign)
+        val transactionToSign = transactionBuilder.buildForSign(transactionData)
+        val signedTransaction = transactionBuilder.buildForSend(transactionData, signature, transactionToSign)
 
         // assert
         Truth.assertThat(transactionToSign.hash).isEqualTo(expectedHashToSign)
@@ -65,10 +88,6 @@ class PolygonTransactionTest {
     @Test
     fun buildCorrectTokenTransaction() {
         // arrange
-        val walletPublicKey = (
-            "04332F99A76D0ABB06356945CAF02C23B25297D05A2557B0968904792EEB1C88B8C70BCD72258F540C8B76BE1C51C9BC24DC069" +
-                "48758001C5BF17016336652D336"
-            ).hexToBytes()
         val signature = (
             "1D0FD2B5E7501533D2D3831D6CDB317BFAE015C85E4A06C6AC7966807487BBD02532612650BC3543AC5D592D13D37BD1F3677F5" +
                 "8A3D605C6CFE94D95761BB429"
@@ -85,7 +104,6 @@ class PolygonTransactionTest {
         )
 
         val walletAddress = EthereumAddressService().makeAddress(walletPublicKey)
-        val transactionBuilder = EthereumTransactionBuilder(walletPublicKey, blockchain)
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Token(token))
         val fee = Fee.Ethereum.Legacy(
@@ -98,6 +116,7 @@ class PolygonTransactionTest {
             destinationAddress = destinationAddress,
             amount = amountToSend,
             fee = fee,
+            extras = EthereumTransactionExtras(nonce = nonce),
         )
 
         val expectedHashToSign = "3964E9A149904C6A84E06396968E7C0448937C9DEE270AAC9B6622BA7B6CB246".hexToBytes()
@@ -109,8 +128,8 @@ class PolygonTransactionTest {
             ).hexToBytes()
 
         // act
-        val transactionToSign = transactionBuilder.buildToSign(transactionData, nonce)
-        val signedTransaction = transactionBuilder.buildToSend(signature, transactionToSign)
+        val transactionToSign = transactionBuilder.buildForSign(transactionData)
+        val signedTransaction = transactionBuilder.buildForSend(transactionData, signature, transactionToSign)
 
         // assert
         Truth.assertThat(transactionToSign.hash).isEqualTo(expectedHashToSign)
