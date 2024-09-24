@@ -177,12 +177,13 @@ internal class TronTransactionHistoryProvider(
 
     private fun checkForStakingOutgoingTransaction(type: TransactionHistoryItem.TransactionType): Boolean? {
         return when (type) {
-            TronStakingTransactionType.VoteWitnessContract,
+            is TronStakingTransactionType.VoteWitnessContract,
             TronStakingTransactionType.FreezeBalanceV2Contract,
             -> {
                 true
             }
             TronStakingTransactionType.WithdrawBalanceContract,
+            TronStakingTransactionType.WithdrawExpireUnfreezeContract,
             TronStakingTransactionType.UnfreezeBalanceV2Contract,
             -> {
                 false
@@ -243,18 +244,20 @@ internal class TronTransactionHistoryProvider(
                     TRANSFER_CONTRACT_TYPE, TRANSFER_ASSET_CONTRACT_TYPE -> {
                         TransactionHistoryItem.TransactionType.Transfer
                     }
-
-                    VOTE_WITNESS_CONTRACT_TYPE -> {
-                        TronStakingTransactionType.VoteWitnessContract
+                    VOTE_WITNESS_CONTRACT_TYPE -> { // vote
+                        TronStakingTransactionType.VoteWitnessContract(tx.voteList?.keys?.first().orEmpty())
                     }
-                    WITHDRAW_BALANCE_CONTRACT_TYPE -> {
+                    WITHDRAW_BALANCE_CONTRACT_TYPE -> { // claim rewards
                         TronStakingTransactionType.WithdrawBalanceContract
                     }
-                    FREEZE_BALANCE_V2_CONTRACT_TYPE -> {
+                    FREEZE_BALANCE_V2_CONTRACT_TYPE -> { // freeze/stake
                         TronStakingTransactionType.FreezeBalanceV2Contract
                     }
-                    UNFREEZE_BALANCE_V2_CONTRACT_TYPE -> {
+                    UNFREEZE_BALANCE_V2_CONTRACT_TYPE -> { // unfreeze/unstake
                         TronStakingTransactionType.UnfreezeBalanceV2Contract
+                    }
+                    WITHDRAW_EXPIRE_UNFREEZE_CONTRACT_TYPE -> { // withdraw
+                        TronStakingTransactionType.WithdrawExpireUnfreezeContract
                     }
                     else -> TransactionHistoryItem.TransactionType.ContractMethod(id = tx.contractName.orEmpty())
                 }
@@ -317,9 +320,10 @@ internal class TronTransactionHistoryProvider(
     private companion object {
         private const val TRANSFER_CONTRACT_TYPE = 1
         private const val TRANSFER_ASSET_CONTRACT_TYPE = 2
-        private const val VOTE_WITNESS_CONTRACT_TYPE = 4
-        private const val WITHDRAW_BALANCE_CONTRACT_TYPE = 13
-        private const val FREEZE_BALANCE_V2_CONTRACT_TYPE = 54
-        private const val UNFREEZE_BALANCE_V2_CONTRACT_TYPE = 55
+        private const val VOTE_WITNESS_CONTRACT_TYPE = 4 // vote
+        private const val WITHDRAW_BALANCE_CONTRACT_TYPE = 13 // claim rewards
+        private const val FREEZE_BALANCE_V2_CONTRACT_TYPE = 54 // freeze/stake
+        private const val UNFREEZE_BALANCE_V2_CONTRACT_TYPE = 55 // unfreeze/unstake
+        private const val WITHDRAW_EXPIRE_UNFREEZE_CONTRACT_TYPE = 56 // withdraw
     }
 }
