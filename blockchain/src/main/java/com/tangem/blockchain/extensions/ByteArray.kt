@@ -9,9 +9,20 @@ import org.bitcoinj.core.Base58
 import org.bitcoinj.core.ECKey
 import org.spongycastle.crypto.util.DigestFactory
 import java.math.BigInteger
+import java.nio.ByteBuffer
 
 fun ByteArray.encodeBase58(checked: Boolean = false): String {
     return if (checked) Base58Check.bytesToBase58(this) else Base58.encode(this)
+}
+
+fun ByteArray.isValidUtf8(): Boolean {
+    val cs = Charsets.UTF_8.newDecoder()
+    return try {
+        cs.decode(ByteBuffer.wrap(this))
+        true
+    } catch (e: Exception) {
+        false
+    }
 }
 
 fun ByteArray.encodeBase64NoWrap(): String {
