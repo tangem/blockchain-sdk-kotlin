@@ -93,6 +93,10 @@ class CardanoTokenAddressConverterTest(private val model: Model) {
                 value = "4.123)(=-",
                 actual = null,
             ),
+            Model.Fingerprint(
+                value = "1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df20p", // Invalid hex
+                actual = null,
+            ),
         )
     }
 }
