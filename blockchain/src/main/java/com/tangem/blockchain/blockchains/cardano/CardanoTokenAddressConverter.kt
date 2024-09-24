@@ -4,7 +4,7 @@ import com.tangem.blockchain.blockchains.binance.client.encoding.Bech32
 import com.tangem.blockchain.blockchains.binance.client.encoding.Crypto
 import com.tangem.blockchain.blockchains.cardano.utils.CardanoContractAddressRecognizer
 import com.tangem.blockchain.extensions.calculateBlake2b
-import com.tangem.common.extensions.hexToBytes
+import com.tangem.blockchain.extensions.hexToBytesOrNull
 import com.tangem.common.extensions.toHexString
 import com.tangem.blockchain.blockchains.cardano.utils.CardanoContractAddressRecognizer.Address as CardanoContractAddress
 
@@ -33,7 +33,9 @@ class CardanoTokenAddressConverter {
             address
         }
 
-        val hash = preparedAddress.hexToBytes().calculateBlake2b(digestByteSize = 20)
+        val hash = preparedAddress.hexToBytesOrNull()
+            ?.calculateBlake2b(digestByteSize = 20)
+            ?: return null
 
         val convertedAddressBytes = Crypto.convertBits(hash, 0, hash.size, 8, 5, true)
 

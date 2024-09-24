@@ -21,7 +21,6 @@ internal class FilecoinRpcBodyFactoryTest {
 
         val expected = JsonRPCRequest(
             id = "1",
-            jsonRpc = "2.0",
             method = FilecoinRpcMethod.GetActorInfo.name,
             params = listOf<Any?>(address, null),
         )
@@ -35,7 +34,6 @@ internal class FilecoinRpcBodyFactoryTest {
     fun test_create_GetMessageGas_body() {
         val expected = JsonRPCRequest(
             id = "1",
-            jsonRpc = "2.0",
             method = FilecoinRpcMethod.GetMessageGas.name,
             params = listOf<Any?>(
                 FilecoinTransactionBodyConverter.convert(from = txInfo),
@@ -53,7 +51,6 @@ internal class FilecoinRpcBodyFactoryTest {
     fun test_create_SubmitTransaction_body() {
         val expected = JsonRPCRequest(
             id = "1",
-            jsonRpc = "2.0",
             method = FilecoinRpcMethod.SubmitTransaction.name,
             params = listOf<Any?>(signedTransactionBody),
         )
