@@ -51,7 +51,6 @@ internal object FilecoinRpcBodyFactory {
     private fun create(method: FilecoinRpcMethod, params: List<Any?>): JsonRPCRequest {
         return JsonRPCRequest(
             id = "1",
-            jsonRpc = "2.0",
             method = method.name,
             params = params,
         )
