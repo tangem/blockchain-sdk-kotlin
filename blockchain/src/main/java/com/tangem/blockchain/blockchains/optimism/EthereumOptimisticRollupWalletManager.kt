@@ -1,11 +1,11 @@
 package com.tangem.blockchain.blockchains.optimism
 
-import com.tangem.blockchain.blockchains.ethereum.CompiledEthereumTransaction
-import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.network.ContractCallData
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -140,7 +140,7 @@ class EthereumOptimisticRollupWalletManager(
     override suspend fun sign(
         transactionData: TransactionData,
         signer: TransactionSigner,
-    ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
+    ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
         transactionData.requireUncompiled()
 
         // We need to subtract layer 1 fee, because it is deducted automatically

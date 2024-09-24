@@ -1,10 +1,10 @@
 package com.tangem.blockchain.common.assembly.impl
 
-import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.blockchains.ethereum.providers.*
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
@@ -19,10 +19,7 @@ internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<Ethere
         with(input.wallet) {
             return EthereumWalletManager(
                 wallet = this,
-                transactionBuilder = EthereumTransactionBuilder(
-                    walletPublicKey = publicKey.blockchainKey,
-                    blockchain = blockchain,
-                ),
+                transactionBuilder = EthereumTransactionBuilder.create(wallet = input.wallet),
                 networkProvider = EthereumNetworkService(
                     jsonRpcProviders = getProvidersBuilder(blockchain, input.providerTypes, input.config)
                         .build(blockchain),
@@ -69,6 +66,7 @@ internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<Ethere
             Blockchain.Moonriver, Blockchain.MoonriverTestnet -> MoonriverProvidersBuilder(providerTypes)
             Blockchain.Flare, Blockchain.FlareTestnet -> FlareProvidersBuilder(providerTypes)
             Blockchain.Taraxa, Blockchain.TaraxaTestnet -> TaraxaProvidersBuilder(providerTypes)
+            Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet -> EnergyWebChainProvidersBuilder(providerTypes)
             else -> error("Unsupported blockchain: $blockchain")
         }
     }
