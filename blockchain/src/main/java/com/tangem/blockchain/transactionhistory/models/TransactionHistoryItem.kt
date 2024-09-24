@@ -42,6 +42,7 @@ data class TransactionHistoryItem(
             data object UnfreezeBalanceV2Contract : TronStakingTransactionType
             data class VoteWitnessContract(val validatorAddress: String) : TronStakingTransactionType
             data object WithdrawBalanceContract : TronStakingTransactionType
+            data object WithdrawExpireUnfreezeContract : TronStakingTransactionType
         }
     }
 
