@@ -53,6 +53,10 @@ internal class SuiWalletManager(
             signature = transactionOutput.signature,
         ).successOr { return it }
 
+        if (!txResponse.effects.status.isSuccess) {
+            return Result.Failure(BlockchainSdkError.FailedToSendException)
+        }
+
         wallet.addOutgoingTransaction(transactionData.updateHash(txResponse.digest), hashToLowercase = false)
 
         return Result.Success(TransactionSendResult(txResponse.digest))
@@ -64,24 +68,22 @@ internal class SuiWalletManager(
             .successOr { return it }
         val txResponse = networkService.dryRunTransaction(transactionHash)
             .successOr { return it }
+
         if (!txResponse.effects.status.isSuccess) {
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         }
 
         val gasUsed = txResponse.effects.gasUsed
-        val grossTotalGasMist = with(gasUsed) {
-            computationCost + storageCost
-        }
-        val netTotalGasMist = grossTotalGasMist - gasUsed.storageRebate
+        val totalGasMist = gasUsed.computationCost + gasUsed.storageCost
 
         val feeAmount = Amount(
             blockchain = Blockchain.Sui,
-            value = netTotalGasMist.movePointLeft(SuiConstants.MIST_SCALE),
+            value = totalGasMist.movePointLeft(SuiConstants.MIST_SCALE),
         )
         val fee = Fee.Sui(
             amount = feeAmount,
             gasPrice = txResponse.input.gasData.price.toLong(),
-            gasBudget = (grossTotalGasMist + gasUsed.computationCost).toLong(),
+            gasBudget = totalGasMist.toLong(),
         )
 
         return Result.Success(TransactionFee.Single(fee))
@@ -90,7 +92,7 @@ internal class SuiWalletManager(
     private suspend fun updateWallet(info: SuiWalletInfo) {
         walletInfo = info
 
-        wallet.setAmount(Amount(info.totalBalance, wallet.blockchain))
+        wallet.setAmount(Amount(info.suiTotalBalance, wallet.blockchain))
 
         checkUncompletedTransactions()
     }
