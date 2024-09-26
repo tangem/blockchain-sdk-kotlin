@@ -138,7 +138,7 @@ class EstimationFeeAddressFactory {
             }
             Blockchain.Sui,
             Blockchain.SuiTestnet,
-            -> "0xd185afd5171875605562a1bf7d2216c4bec2fcaea0be7e23cfb80ac5819e4617"
+            -> "0xbca45e36a271e106546c89984108685215724e488570a0049a187c473cd521bc"
         }
     }
 
