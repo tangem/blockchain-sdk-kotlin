@@ -24,13 +24,12 @@ internal class SuiTransactionBuilder(
     suspend fun buildForDryRun(walletInfo: SuiWalletInfo, amount: Amount, destination: String): Result<String> {
         val amountValue = amount.value
             ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-
         val gasPrice = networkService.getReferenceGasPrice()
             .successOr { return it }
 
         val coins = getCoinObjects(walletInfo)
-        val reducedBalance = getReducedBalanceInMist(walletInfo.totalBalance, amountValue)
-        val isPayAll = reducedBalance <= MIN_GAS_BUDGET
+        val availableBudget = getMaxAvailableBudget(walletInfo.totalBalance, amountValue)
+        val isPayAll = availableBudget <= MIN_GAS_BUDGET
 
         val input = Sui.SigningInput.newBuilder().apply {
             if (isPayAll) {
@@ -41,9 +40,11 @@ internal class SuiTransactionBuilder(
 
             signer = walletAddress
             gasBudget = if (isPayAll) {
-                walletInfo.totalBalance.movePointRight(SuiConstants.MIST_SCALE).toLong()
+                walletInfo.totalBalance
+                    .movePointRight(SuiConstants.MIST_SCALE)
+                    .toLong()
             } else {
-                maxOf(MIN_GAS_BUDGET, reducedBalance)
+                maxOf(MIN_GAS_BUDGET, availableBudget)
             }
             referenceGasPrice = gasPrice.toLong()
         }.build()
@@ -55,9 +56,15 @@ internal class SuiTransactionBuilder(
             /* signatures = */ signatureMask.let(::DataVector),
             /* publicKeys = */ publicKey.blockchainKey.let(::DataVector),
         )
-        val output = Sui.SigningOutput.parseFrom(compiled)
+        val compiledOutput = Sui.SigningOutput.parseFrom(compiled)
 
-        return Result.Success(output.unsignedTx)
+        if (compiledOutput.error != Common.SigningError.OK) {
+            return Result.Failure(
+                error = BlockchainSdkError.CustomError("Error while parse compiled dry transaction"),
+            )
+        }
+
+        return Result.Success(compiledOutput.unsignedTx)
     }
 
     suspend fun buildForSend(
@@ -84,7 +91,7 @@ internal class SuiTransactionBuilder(
 
             signer = walletAddress
             gasBudget = suiFee.gasBudget.coerceIn(
-                range = MIN_GAS_BUDGET..getReducedBalanceInMist(walletInfo.totalBalance, amountValue),
+                range = MIN_GAS_BUDGET..getMaxAvailableBudget(walletInfo.totalBalance, amountValue),
             )
             referenceGasPrice = suiFee.gasPrice
         }.build()
@@ -146,14 +153,14 @@ internal class SuiTransactionBuilder(
         }
     }
 
-    private fun getReducedBalanceInMist(totalBalance: BigDecimal, amount: BigDecimal): Long = (totalBalance - amount)
+    private fun getMaxAvailableBudget(totalBalance: BigDecimal, amount: BigDecimal): Long = (totalBalance - amount)
         .movePointRight(SuiConstants.MIST_SCALE)
         .toLong()
         .coerceAtMost(MAX_GAS_BUDGET)
 
     private companion object {
 
-        const val MIN_GAS_BUDGET = 1_000_000L // 0.01 SUI
+        const val MIN_GAS_BUDGET = 1_075_000L // ~0.01 SUI
         const val MAX_GAS_BUDGET = 50_000_000_000L // 50 SUI
     }
 }
