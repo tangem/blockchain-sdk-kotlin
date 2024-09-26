@@ -64,6 +64,9 @@ internal class SuiWalletManager(
             .successOr { return it }
         val txResponse = networkService.dryRunTransaction(transactionHash)
             .successOr { return it }
+        if (!txResponse.effects.status.isSuccess) {
+            return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+        }
 
         val gasUsed = txResponse.effects.gasUsed
         val grossTotalGasMist = with(gasUsed) {
