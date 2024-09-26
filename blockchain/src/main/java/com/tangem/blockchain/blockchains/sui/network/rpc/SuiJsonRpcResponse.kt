@@ -41,6 +41,8 @@ data class SuiDryRunTransactionResponse(
     data class Effects(
         @Json(name = "gasUsed")
         val gasUsed: GasUsed,
+        @Json(name = "status")
+        val status: Status,
     ) {
 
         data class GasUsed(
@@ -53,6 +55,15 @@ data class SuiDryRunTransactionResponse(
             @Json(name = "storageRebate")
             val storageRebate: BigDecimal,
         )
+
+        data class Status(
+            @Json(name = "status")
+            val value: String,
+        ) {
+
+            val isSuccess: Boolean
+                get() = value == "success"
+        }
     }
 
     data class Input(
