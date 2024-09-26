@@ -5,7 +5,6 @@ import com.tangem.blockchain.blockchains.sui.model.SuiWalletInfo
 import com.tangem.blockchain.blockchains.sui.network.rpc.SuiDryRunTransactionResponse
 import com.tangem.blockchain.blockchains.sui.network.rpc.SuiExecuteTransactionBlockResponse
 import com.tangem.blockchain.blockchains.sui.network.rpc.SuiJsonRpcProvider
-import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
@@ -24,16 +23,15 @@ internal class SuiNetworkService(
             .performRequest(SuiJsonRpcProvider::getCoins, address)
             .successOr { return it }
 
-        var totalBalance = BigDecimal.ZERO
+        var totalSuiBalance = BigDecimal.ZERO
         val coins = mutableListOf<SuiCoin>()
 
         for (coin in response.data) {
-            val balance = formatBalance(coin.balance)
-            totalBalance += balance
+            totalSuiBalance += coin.balance.movePointLeft(SuiConstants.MIST_SCALE)
 
             val suiCoin = SuiCoin(
                 objectId = coin.coinObjectId,
-                balance = balance,
+                mistBalance = coin.balance,
                 version = coin.version.toLong(),
                 digest = coin.digest,
             )
@@ -41,8 +39,8 @@ internal class SuiNetworkService(
         }
 
         val info = SuiWalletInfo(
-            totalBalance = totalBalance,
-            suiCoins = coins,
+            suiTotalBalance = totalSuiBalance,
+            coins = coins,
         )
 
         return Result.Success(info)
@@ -77,9 +75,5 @@ internal class SuiNetworkService(
             .successOr { return false }
 
         return true
-    }
-
-    private fun formatBalance(balanceString: String, decimals: Int = Blockchain.Sui.decimals()): BigDecimal {
-        return BigDecimal(balanceString).movePointLeft(decimals)
     }
 }
