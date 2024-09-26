@@ -6,5 +6,5 @@ internal data class SuiCoin(
     val objectId: String,
     val version: Long,
     val digest: String,
-    val balance: BigDecimal,
+    val mistBalance: BigDecimal,
 )
