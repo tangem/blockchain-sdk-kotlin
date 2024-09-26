@@ -130,7 +130,7 @@ internal class SuiJsonRpcProvider(override val baseUrl: String) : NetworkProvide
             override val params: List<Any> = listOf(
                 transactionHash,
                 listOf(signature),
-                TransactionBlockResponseOptions(),
+                TransactionBlockResponseOptions(showEffects = true),
             )
         }
 

@@ -22,7 +22,7 @@ internal data class SuiCoinsResponse(
 ) {
 
     data class Data(
-        @Json(name = "balance") val balance: String,
+        @Json(name = "balance") val balance: BigDecimal,
         @Json(name = "coinObjectId") val coinObjectId: String,
         @Json(name = "coinType") val coinType: String,
         @Json(name = "digest") val digest: String,
@@ -97,7 +97,25 @@ data class SuiDryRunTransactionResponse(
 internal data class SuiExecuteTransactionBlockResponse(
     @Json(name = "digest")
     val digest: String,
-)
+    @Json(name = "effects")
+    val effects: Effects,
+) {
+
+    data class Effects(
+        @Json(name = "status")
+        val status: Status,
+    ) {
+
+        data class Status(
+            @Json(name = "status")
+            val value: String,
+        ) {
+
+            val isSuccess: Boolean
+                get() = value == "success"
+        }
+    }
+}
 
 internal data class SuiGetTransactionBlockResponse(
     @Json(name = "digest")
