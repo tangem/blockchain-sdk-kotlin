@@ -161,7 +161,7 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.InternetComputer -> mapOf(AddressType.Default to DerivationPath("m/44'/223'/0'/0/0"))
             Blockchain.Sui,
             Blockchain.SuiTestnet,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/784'/0'/0/0"))
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/784'/0'/0'/0'"))
         }
     }
 }
