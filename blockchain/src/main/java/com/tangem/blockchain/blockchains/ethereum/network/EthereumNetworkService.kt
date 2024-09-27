@@ -5,10 +5,7 @@ import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
 import com.tangem.blockchain.blockchains.ethereum.converters.EthereumFeeHistoryConverter
 import com.tangem.blockchain.blockchains.ethereum.models.EthereumFeeHistoryResponse
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.Token
-import com.tangem.blockchain.common.toBlockchainSdkError
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
@@ -22,7 +19,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 
 @OptIn(ExperimentalStdlibApi::class)
-open class EthereumNetworkService(
+internal open class EthereumNetworkService(
     jsonRpcProviders: List<EthereumJsonRpcProvider>,
     private val blockcypherNetworkProvider: BlockcypherNetworkProvider? = null,
     private val blockchairEthNetworkProvider: BlockchairEthNetworkProvider? = null,
@@ -230,17 +227,14 @@ open class EthereumNetworkService(
 
     private fun String.parseAmount(decimals: Int) = this.responseToBigInteger().toBigDecimal().movePointLeft(decimals)
 
-    private fun Result<EthereumResponse>.extractResult(): String = extractResult(adapter = stringAdapter)
+    private fun Result<JsonRPCResponse>.extractResult(): String = extractResult(adapter = stringAdapter)
 
-    private fun <Body> Result<EthereumResponse>.extractResult(adapter: JsonAdapter<Body>): Body {
+    private fun <Body> Result<JsonRPCResponse>.extractResult(adapter: JsonAdapter<Body>): Body {
         return when (this) {
             is Result.Success -> {
                 runCatching { adapter.fromJsonValue(data.result) }.getOrNull()
                     ?: throw data.error?.let { error ->
-                        BlockchainSdkError.Ethereum.Api(
-                            code = error.code ?: 0,
-                            message = error.message ?: "No error message",
-                        )
+                        BlockchainSdkError.Ethereum.Api(code = error.code, message = error.message)
                     } ?: BlockchainSdkError.CustomError("Unknown response format")
             }
             is Result.Failure -> {
