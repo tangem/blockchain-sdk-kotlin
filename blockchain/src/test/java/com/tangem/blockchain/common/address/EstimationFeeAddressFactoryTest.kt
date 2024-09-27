@@ -120,6 +120,7 @@ class EstimationFeeAddressFactoryTest {
         Blockchain.Kaspa to "kaspa:qyp2f0ust8wyvuvqrzajvehx5jyh43vcjgessjdkw9vyw6rww4fdlsgzysspfuq",
         Blockchain.Sei to "sei1lhjvds604fvac32j4eygpr820lyc82dlfv0ea4",
         Blockchain.SeiTestnet to "sei1lhjvds604fvac32j4eygpr820lyc82dlfv0ea4",
+        Blockchain.InternetComputer to "",
     )
 
     @Test
