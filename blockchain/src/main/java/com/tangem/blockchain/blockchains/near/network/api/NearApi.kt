@@ -13,7 +13,7 @@ import retrofit2.http.Url
  *
 [REDACTED_AUTHOR]
  */
-interface NearApi {
+internal interface NearApi {
 
     @Headers("Content-Type: application/json", "Accept: application/json")
     @POST
