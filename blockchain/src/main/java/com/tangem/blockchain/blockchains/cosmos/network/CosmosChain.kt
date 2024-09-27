@@ -104,7 +104,7 @@ sealed interface CosmosChain {
         override val chainId: String = if (testnet) "atlantic-2" else "pacific-1"
         override val smallestDenomination: String = "usei"
         override val gasMultiplier: BigDecimal = BigDecimal(2)
-        override val feeMultiplier: BigDecimal = BigDecimal(1)
+        override val feeMultiplier: BigDecimal = BigDecimal(1.5)
         override val coin: CoinType = CoinType.SEI
 
         // see https://github.com/cosmos/chain-registry/blob/master/sei/chain.json#L17-L27
