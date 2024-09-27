@@ -17,7 +17,7 @@ buildscript {
     }
 }
 
-configurations.all {
+configurations.configureEach {
     resolutionStrategy.cacheDynamicVersionsFor 1, 'seconds'
 }
 
