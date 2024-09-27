@@ -72,6 +72,7 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.Taraxa,
             Blockchain.Blast,
             Blockchain.Cyber,
+            Blockchain.EnergyWebChain,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.XDC -> mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
             Blockchain.Binance -> mapOf(AddressType.Default to DerivationPath("m/44'/714'/0'/0/0"))
@@ -143,6 +144,7 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.TaraxaTestnet,
             Blockchain.BlastTestnet,
             Blockchain.CyberTestnet,
+            Blockchain.EnergyWebChainTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             Blockchain.Aptos,
             Blockchain.AptosTestnet,
@@ -159,6 +161,9 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.SeiTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/118'/0'/0/0"))
             Blockchain.InternetComputer -> mapOf(AddressType.Default to DerivationPath("m/44'/223'/0'/0/0"))
+            Blockchain.EnergyWebX,
+            Blockchain.EnergyWebXTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/246'/0'/0'/0'"))
         }
     }
 }
