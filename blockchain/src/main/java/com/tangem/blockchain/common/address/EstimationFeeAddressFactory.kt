@@ -132,7 +132,10 @@ class EstimationFeeAddressFactory {
             Blockchain.Filecoin -> "f1wxdu6d25dc4hmebdfgriswooum22plhmmpxibzq"
             Blockchain.Kaspa -> "kaspa:qyp2f0ust8wyvuvqrzajvehx5jyh43vcjgessjdkw9vyw6rww4fdlsgzysspfuq"
             Blockchain.Sei, Blockchain.SeiTestnet -> "sei1lhjvds604fvac32j4eygpr820lyc82dlfv0ea4"
-            Blockchain.InternetComputer -> TODO("Need to generate")
+            Blockchain.InternetComputer -> {
+                // Doesn't depend on amount and destination
+                ""
+            }
         }
     }
 
