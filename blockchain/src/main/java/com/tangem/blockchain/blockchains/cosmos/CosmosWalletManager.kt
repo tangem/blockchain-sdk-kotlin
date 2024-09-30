@@ -220,8 +220,10 @@ class CosmosWalletManager(
     }
 
     private fun updateWallet(cosmosAccountInfo: CosmosAccountInfo) {
-        wallet.recentTransactions.forEach {
-            if (cosmosAccountInfo.confirmedTransactionHashes.contains(it.hash)) it.status = TransactionStatus.Confirmed
+        wallet.recentTransactions.forEach { transaction ->
+            if (cosmosAccountInfo.confirmedTransactionHashes.any { it.equals(transaction.hash, ignoreCase = true) }) {
+                transaction.status = TransactionStatus.Confirmed
+            }
         }
         wallet.setAmount(cosmosAccountInfo.amount)
         accountNumber = cosmosAccountInfo.accountNumber
