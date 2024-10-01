@@ -135,6 +135,7 @@ class EstimationFeeAddressFactory {
             Blockchain.Sei, Blockchain.SeiTestnet -> "sei1lhjvds604fvac32j4eygpr820lyc82dlfv0ea4"
             Blockchain.InternetComputer -> TODO("Need to generate")
             Blockchain.EnergyWebX, Blockchain.EnergyWebXTestnet -> TODO("Need to generate")
+            Blockchain.Casper, Blockchain.CasperTestnet -> TODO("Need to generate") // [REDACTED_TASK_KEY]
         }
     }
 
