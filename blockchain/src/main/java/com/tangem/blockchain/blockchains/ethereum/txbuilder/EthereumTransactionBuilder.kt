@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.ethereum.txbuilder
 
-import com.tangem.blockchain.blockchains.ethereum.eip1559.isSupportEIP1559
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.di.DepsContainer
@@ -45,7 +44,7 @@ abstract class EthereumTransactionBuilder(wallet: Wallet) {
         fun create(wallet: Wallet): EthereumTransactionBuilder {
             val isEthereumEIP1559Enabled = DepsContainer.blockchainFeatureToggles.isEthereumEIP1559Enabled
 
-            return if (isEthereumEIP1559Enabled && wallet.blockchain.isSupportEIP1559) {
+            return if (isEthereumEIP1559Enabled) {
                 EthereumTWTransactionBuilder(wallet)
             } else {
                 EthereumLegacyTransactionBuilder(wallet)
