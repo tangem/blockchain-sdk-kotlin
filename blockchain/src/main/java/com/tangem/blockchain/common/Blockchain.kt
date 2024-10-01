@@ -162,6 +162,8 @@ enum class Blockchain(
     EnergyWebChainTestnet("energy-web-chain/test", "VT", "Energy Web Chain Volta Testnet"),
     EnergyWebX("energy-web-x", "EWT", "Energy Web X"),
     EnergyWebXTestnet("energy-web-x/test", "VT", "Energy Web X Paseo Testnet"),
+    Casper("casper", "CSPR", "Casper"),
+    CasperTestnet("casper/test", "CSPR", "Casper Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -212,6 +214,7 @@ enum class Blockchain(
         TON, TONTestnet,
         Bittensor,
         EnergyWebX, EnergyWebXTestnet,
+        Casper, CasperTestnet,
         -> 9
 
         Polkadot, Joystream -> 10
@@ -366,6 +369,7 @@ enum class Blockchain(
             Nexa, NexaTestnet -> NexaAddressService(this.isTestnet())
             Koinos, KoinosTestnet -> KoinosAddressService()
             Radiant -> RadiantAddressService()
+            Casper, CasperTestnet -> TODO() // [REDACTED_TASK_KEY]
             Unknown -> error("unsupported blockchain")
         }
     }
@@ -449,6 +453,7 @@ enum class Blockchain(
             Blast, BlastTestnet -> BlastTestnet
             Cyber, CyberTestnet -> CyberTestnet
             Sei, SeiTestnet -> SeiTestnet
+            Casper, CasperTestnet -> CasperTestnet
             else -> null
         }
     }
@@ -458,6 +463,7 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
+            Casper, CasperTestnet,
             -> listOf(
                 EllipticCurve.Secp256k1,
                 EllipticCurve.Ed25519,
