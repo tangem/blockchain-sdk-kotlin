@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
-import com.tangem.common.extensions.toByteArray
 import org.kethereum.extensions.toByteArray
 import wallet.core.jni.CoinType
 import wallet.core.jni.DataVector
@@ -12,7 +11,6 @@ import wallet.core.jni.TransactionCompiler
 import wallet.core.jni.proto.Common
 import wallet.core.jni.proto.Ethereum
 import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
-import java.math.BigDecimal
 
 /**
  * Ethereum TW transaction builder
@@ -50,7 +48,11 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
     private fun buildSigningInput(transaction: TransactionData): Ethereum.SigningInput {
         transaction.requireUncompiled()
 
-        val amountValue = transaction.amount.value ?: throw BlockchainSdkError.CustomError("Invalid amount")
+        val amountValue = transaction.amount.value?.movePointRight(transaction.amount.decimals)
+            ?.toBigInteger()
+            ?.toByteArray()
+            ?: throw BlockchainSdkError.CustomError("Fail to parse amount")
+
         val ethereumFee = transaction.fee as? Fee.Ethereum ?: throw BlockchainSdkError.CustomError("Invalid fee")
         val extras = transaction.extras as? EthereumTransactionExtras
 
@@ -151,7 +153,7 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
 
         return setTransfer(
             Ethereum.Transaction.Transfer.newBuilder()
-                .setAmount(ByteString.copyFrom(user.value.toLong().toByteArray()))
+                .setAmount(ByteString.copyFrom(user.value))
                 .setData(ByteString.copyFrom(data))
                 .build(),
         )
@@ -163,7 +165,7 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
     ): Ethereum.Transaction.Builder {
         return setContractGeneric(
             Ethereum.Transaction.ContractGeneric.newBuilder()
-                .setAmount(ByteString.copyFrom(contract.value.toLong().toByteArray()))
+                .setAmount(ByteString.copyFrom(contract.value))
                 .setData(ByteString.copyFrom(data))
                 .build(),
         )
@@ -174,7 +176,7 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
     ): Ethereum.Transaction.Builder {
         return setErc20Transfer(
             Ethereum.Transaction.ERC20Transfer.newBuilder()
-                .setAmount(ByteString.copyFrom(contract.value.toLong().toByteArray()))
+                .setAmount(ByteString.copyFrom(contract.value))
                 .setTo(contract.destinationAddress)
                 .build(),
         )
@@ -233,13 +235,13 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
 
     sealed interface DestinationType {
         val destinationAddress: String
-        val value: BigDecimal
+        val value: ByteArray
 
-        data class User(override val destinationAddress: String, override val value: BigDecimal) : DestinationType
+        data class User(override val destinationAddress: String, override val value: ByteArray) : DestinationType
 
         data class Contract(
             override val destinationAddress: String,
-            override val value: BigDecimal,
+            override val value: ByteArray,
             val contract: String,
         ) : DestinationType
     }
