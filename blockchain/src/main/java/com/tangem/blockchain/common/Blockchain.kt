@@ -162,6 +162,8 @@ enum class Blockchain(
     EnergyWebChainTestnet("energy-web-chain/test", "VT", "Energy Web Chain Volta Testnet"),
     EnergyWebX("energy-web-x", "EWT", "Energy Web X"),
     EnergyWebXTestnet("energy-web-x/test", "VT", "Energy Web X Paseo Testnet"),
+    Core("core", "CORE", "Core"),
+    CoreTestnet("core/test", "tCORE", "Core Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -256,6 +258,7 @@ enum class Blockchain(
         Blast, BlastTestnet,
         Cyber, CyberTestnet,
         EnergyWebChain, EnergyWebChainTestnet,
+        Core, CoreTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -327,6 +330,7 @@ enum class Blockchain(
             Blast, BlastTestnet,
             Cyber, CyberTestnet,
             EnergyWebChain, EnergyWebChainTestnet,
+            Core, CoreTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -449,6 +453,7 @@ enum class Blockchain(
             Blast, BlastTestnet -> BlastTestnet
             Cyber, CyberTestnet -> CyberTestnet
             Sei, SeiTestnet -> SeiTestnet
+            Core, CoreTestnet -> CoreTestnet
             else -> null
         }
     }
@@ -520,6 +525,7 @@ enum class Blockchain(
             Sei, SeiTestnet,
             InternetComputer,
             EnergyWebChain, EnergyWebChainTestnet,
+            Core, CoreTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -611,6 +617,8 @@ enum class Blockchain(
             CyberTestnet -> Chain.CyberTestnet.id
             EnergyWebChain -> Chain.EnergyWebChain.id
             EnergyWebChainTestnet -> Chain.EnergyWebChainTestnet.id
+            Core -> Chain.Core.id
+            CoreTestnet -> Chain.CoreTestnet.id
             else -> null
         }
     }
