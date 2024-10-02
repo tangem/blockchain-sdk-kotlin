@@ -530,11 +530,10 @@ enum class Blockchain(
             Aptos, AptosTestnet,
             Algorand, AlgorandTestnet,
             Hedera, HederaTestnet,
+            Sui, SuiTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
 
-            Cardano,
-            Sui, SuiTestnet,
-            -> listOf(EllipticCurve.Ed25519) // todo until cardano support in wallet 2
+            Cardano -> listOf(EllipticCurve.Ed25519) // todo until cardano support in wallet 2
 
             Chia, ChiaTestnet,
             -> listOf(EllipticCurve.Bls12381G2Aug)
