@@ -543,7 +543,7 @@ enum class Blockchain(
         }
     }
 
-    @Suppress("CyclomaticComplexMethod")
+    @Suppress("CyclomaticComplexMethod", "LongMethod")
     fun getChainId(): Int? {
         return when (this) {
             Arbitrum -> Chain.Arbitrum.id
@@ -609,6 +609,8 @@ enum class Blockchain(
             BlastTestnet -> Chain.BlastTestnet.id
             Cyber -> Chain.Cyber.id
             CyberTestnet -> Chain.CyberTestnet.id
+            EnergyWebChain -> Chain.EnergyWebChain.id
+            EnergyWebChainTestnet -> Chain.EnergyWebChainTestnet.id
             else -> null
         }
     }
