@@ -1,8 +1,10 @@
 package com.tangem.blockchain.blockchains.ethereum.txbuilder
 
+import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.di.DepsContainer
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.common.extensions.toDecompressedPublicKey
 
 /**
@@ -36,6 +38,21 @@ abstract class EthereumTransactionBuilder(wallet: Wallet) {
         transaction: TransactionData,
         signature: ByteArray,
         compiledTransaction: EthereumCompiledTxInfo,
+    ): ByteArray
+
+    /**
+     * Build dummy transaction for getting l1 fee
+     *
+     * @param amount      amount
+     * @param destination destination
+     * @param data        transaction hash
+     * @param fee         ethereum fee
+     */
+    abstract fun buildDummyTransactionForL1(
+        amount: Amount,
+        destination: String,
+        data: String?,
+        fee: Fee.Ethereum,
     ): ByteArray
 
     companion object {
