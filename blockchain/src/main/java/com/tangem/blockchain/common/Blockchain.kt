@@ -71,7 +71,7 @@ enum class Blockchain(
     KavaTestnet("KAVA/test", "KAVA", "Kava EVM Testnet"),
     Kusama("Kusama", "KSM", "Kusama"),
     Polygon("POLYGON", "POL", "Polygon"),
-    PolygonTestnet("POLYGON/test", "MATIC", "Polygon Testnet"),
+    PolygonTestnet("POLYGON/test", "POL", "Polygon Testnet"),
     RSK("RSK", "RBTC", "RSK"),
     Sei("sei", "SEI", "Sei"),
     SeiTestnet("sei/test", "SEI", "Sei Testnet"),
@@ -160,6 +160,12 @@ enum class Blockchain(
     InternetComputer("internet-computer", "ICP", "Internet Computer"),
     Sui("sui", "SUI", "SUI"),
     SuiTestnet("sui/test", "SUI", "SUI Testnet"),
+    EnergyWebChain("energy-web-chain", "EWT", "Energy Web Chain"),
+    EnergyWebChainTestnet("energy-web-chain/test", "VT", "Energy Web Chain Volta Testnet"),
+    EnergyWebX("energy-web-x", "EWT", "Energy Web X"),
+    EnergyWebXTestnet("energy-web-x/test", "VT", "Energy Web X Paseo Testnet"),
+    Casper("casper", "CSPR", "Casper"),
+    CasperTestnet("casper/test", "CSPR", "Casper Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -210,6 +216,8 @@ enum class Blockchain(
         TON, TONTestnet,
         Bittensor,
         Sui, SuiTestnet,
+        EnergyWebX, EnergyWebXTestnet,
+        Casper, CasperTestnet,
         -> 9
 
         Polkadot, Joystream -> 10
@@ -253,6 +261,7 @@ enum class Blockchain(
         Filecoin,
         Blast, BlastTestnet,
         Cyber, CyberTestnet,
+        EnergyWebChain, EnergyWebChainTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -323,6 +332,7 @@ enum class Blockchain(
             Taraxa, TaraxaTestnet,
             Blast, BlastTestnet,
             Cyber, CyberTestnet,
+            EnergyWebChain, EnergyWebChainTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -338,6 +348,7 @@ enum class Blockchain(
             AlephZero, AlephZeroTestnet,
             Joystream,
             Bittensor,
+            EnergyWebX, EnergyWebXTestnet,
             -> PolkadotAddressService(this)
             Stellar, StellarTestnet -> StellarAddressService()
             Solana, SolanaTestnet -> SolanaAddressService()
@@ -362,6 +373,7 @@ enum class Blockchain(
             Nexa, NexaTestnet -> NexaAddressService(this.isTestnet())
             Koinos, KoinosTestnet -> KoinosAddressService()
             Radiant -> RadiantAddressService()
+            Casper, CasperTestnet -> TODO() // [REDACTED_TASK_KEY]
             Unknown -> error("unsupported blockchain")
         }
     }
@@ -446,6 +458,7 @@ enum class Blockchain(
             Cyber, CyberTestnet -> CyberTestnet
             Sei, SeiTestnet -> SeiTestnet
             Sui, SuiTestnet -> SuiTestnet
+            Casper, CasperTestnet -> CasperTestnet
             else -> null
         }
     }
@@ -455,6 +468,7 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
+            Casper, CasperTestnet,
             -> listOf(
                 EllipticCurve.Secp256k1,
                 EllipticCurve.Ed25519,
@@ -516,6 +530,7 @@ enum class Blockchain(
             Cyber, CyberTestnet,
             Sei, SeiTestnet,
             InternetComputer,
+            EnergyWebChain, EnergyWebChainTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -531,6 +546,7 @@ enum class Blockchain(
             Algorand, AlgorandTestnet,
             Hedera, HederaTestnet,
             Sui, SuiTestnet,
+            EnergyWebX, EnergyWebXTestnet,
             -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
 
             Cardano -> listOf(EllipticCurve.Ed25519) // todo until cardano support in wallet 2
@@ -540,7 +556,7 @@ enum class Blockchain(
         }
     }
 
-    @Suppress("CyclomaticComplexMethod")
+    @Suppress("CyclomaticComplexMethod", "LongMethod")
     fun getChainId(): Int? {
         return when (this) {
             Arbitrum -> Chain.Arbitrum.id
@@ -606,6 +622,8 @@ enum class Blockchain(
             BlastTestnet -> Chain.BlastTestnet.id
             Cyber -> Chain.Cyber.id
             CyberTestnet -> Chain.CyberTestnet.id
+            EnergyWebChain -> Chain.EnergyWebChain.id
+            EnergyWebChainTestnet -> Chain.EnergyWebChainTestnet.id
             else -> null
         }
     }

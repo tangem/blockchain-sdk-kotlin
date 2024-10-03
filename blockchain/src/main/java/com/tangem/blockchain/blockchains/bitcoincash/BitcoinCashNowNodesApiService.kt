@@ -2,13 +2,11 @@ package com.tangem.blockchain.blockchains.bitcoincash
 
 import com.tangem.blockchain.blockchains.bitcoincash.api.BitcoinCashApi
 import com.tangem.blockchain.blockchains.bitcoincash.api.BitcoinCashBlockBookApi
-import com.tangem.blockchain.blockchains.bitcoincash.network.BitconCashGetFeeResponse
-import com.tangem.blockchain.blockchains.bitcoincash.network.SendTransactionRequest
+import com.tangem.blockchain.common.JsonRPCRequest
+import com.tangem.blockchain.common.JsonRPCResponse
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
-import com.tangem.blockchain.network.blockbook.network.requests.GetFeeRequest
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponseItem
-import com.tangem.blockchain.network.blockbook.network.responses.SendTransactionResponse
 import com.tangem.blockchain.network.createRetrofitInstance
 import retrofit2.Response
 import java.io.IOException
@@ -35,18 +33,13 @@ internal class BitcoinCashNowNodesApiService(
         return response.unpack()
     }
 
-    suspend fun getFee(): BitconCashGetFeeResponse {
-        val request = GetFeeRequest.getFee(
-            paramsList = emptyList(),
-            method = "estimatefee",
-        )
-        val response = bchService.getFee(request)
+    suspend fun getFee(): JsonRPCResponse {
+        val response = bchService.getFee(request = getFeeRequest())
         return response.unpack()
     }
 
-    suspend fun sendTransaction(txHex: String): SendTransactionResponse {
-        val request = SendTransactionRequest.getSendRequest(txHex)
-        val response = bchService.sendTransaction(request)
+    suspend fun sendTransaction(txHex: String): JsonRPCResponse {
+        val response = bchService.sendTransaction(request = getSendRequest(txHex))
         return response.unpack()
     }
 
@@ -55,6 +48,22 @@ internal class BitcoinCashNowNodesApiService(
         return response.unpack<List<GetUtxoResponseItem>>().filter {
             it.confirmations > 0 // filter unconfirmed UTXOs, to not block sending tx
         }
+    }
+
+    private fun getFeeRequest(): JsonRPCRequest {
+        return JsonRPCRequest(
+            method = "estimatefee",
+            params = emptyList<Int>(),
+            id = "id",
+        )
+    }
+
+    private fun getSendRequest(signedTransaction: String): JsonRPCRequest {
+        return JsonRPCRequest(
+            method = "sendrawtransaction",
+            params = listOf(signedTransaction),
+            id = "id",
+        )
     }
 
     private inline fun <reified T> Response<T>.unpack(): T {
