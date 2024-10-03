@@ -158,8 +158,8 @@ enum class Blockchain(
     Cyber("cyber", "ETH", "Cyber (ETH)"),
     CyberTestnet("cyber/test", "ETH", "Cyber Testnet"),
     InternetComputer("internet-computer", "ICP", "Internet Computer"),
-    Sui("sui", "SUI", "SUI"),
-    SuiTestnet("sui/test", "SUI", "SUI Testnet"),
+    Sui("sui", "SUI", "Sui"),
+    SuiTestnet("sui/test", "SUI", "Sui Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
