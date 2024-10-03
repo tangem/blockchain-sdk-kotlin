@@ -148,6 +148,7 @@ class WalletManagerFactory(
             Blockchain.Flare, Blockchain.FlareTestnet,
             Blockchain.Taraxa, Blockchain.TaraxaTestnet,
             Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet,
+            Blockchain.Core, Blockchain.CoreTestnet,
             -> EthereumLikeWalletManagerAssembly
 
             Blockchain.Mantle, Blockchain.MantleTestnet,
