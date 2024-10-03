@@ -17,12 +17,9 @@ class EthereumFeesCalculator {
         gasLimit: BigInteger,
         gasPrice: BigInteger,
     ): TransactionFee.Choosable {
-        val gasPriceDecimal = BigDecimal(gasPrice)
         val gasLimitDecimal = BigDecimal(gasLimit)
 
-        val minGasPrice = gasPriceDecimal * minimalMultiplier
-        val normalGasPrice = gasPriceDecimal * normalMultiplier
-        val priorityGasPrice = gasPriceDecimal * priorityMultiplier
+        val (minGasPrice, normalGasPrice, priorityGasPrice) = gasPrice.calculateByPriority()
 
         val minFee = minGasPrice * gasLimitDecimal
         val normalFee = normalGasPrice * gasLimitDecimal
@@ -58,9 +55,14 @@ class EthereumFeesCalculator {
     ): TransactionFee.Choosable {
         val gasLimitDecimal = BigDecimal(gasLimit)
 
-        val minMaxFeePerGas = feeHistory.baseFee * minimalMultiplier + feeHistory.lowPriorityFee
-        val normalMaxFeePerGas = feeHistory.baseFee * normalMultiplier + feeHistory.marketPriorityFee
-        val priorityMaxFeePerGas = feeHistory.baseFee * priorityMultiplier + feeHistory.fastPriorityFee
+        val (lowPriorityFee, marketPriorityFee, fastPriorityFee) = when (feeHistory) {
+            is EthereumFeeHistory.Common -> feeHistory.toTriple()
+            is EthereumFeeHistory.Fallback -> feeHistory.gasPrice.calculateByPriority()
+        }
+
+        val minMaxFeePerGas = feeHistory.baseFee * minimalMultiplier + lowPriorityFee
+        val normalMaxFeePerGas = feeHistory.baseFee * normalMultiplier + marketPriorityFee
+        val priorityMaxFeePerGas = feeHistory.baseFee * priorityMultiplier + fastPriorityFee
 
         val minFee = minMaxFeePerGas * gasLimitDecimal
         val normalFee = normalMaxFeePerGas * gasLimitDecimal
@@ -75,19 +77,19 @@ class EthereumFeesCalculator {
                 amount = createFee(amountParams, minimalFeeBigInt),
                 gasLimit = gasLimit,
                 maxFeePerGas = minMaxFeePerGas.toBigInteger(),
-                priorityFee = feeHistory.lowPriorityFee.toBigInteger(),
+                priorityFee = lowPriorityFee.toBigInteger(),
             ),
             normal = Fee.Ethereum.EIP1559(
                 amount = createFee(amountParams, normalFeeBigInt),
                 gasLimit = gasLimit,
                 maxFeePerGas = normalMaxFeePerGas.toBigInteger(),
-                priorityFee = feeHistory.marketPriorityFee.toBigInteger(),
+                priorityFee = marketPriorityFee.toBigInteger(),
             ),
             priority = Fee.Ethereum.EIP1559(
                 amount = createFee(amountParams, priorityFeeBigInt),
                 gasLimit = gasLimit,
                 maxFeePerGas = priorityMaxFeePerGas.toBigInteger(),
-                priorityFee = feeHistory.fastPriorityFee.toBigInteger(),
+                priorityFee = fastPriorityFee.toBigInteger(),
             ),
         )
     }
@@ -118,7 +120,12 @@ class EthereumFeesCalculator {
     ): TransactionFee.Single {
         val gasLimitDecimal = BigDecimal(gasLimit)
 
-        val normalMaxFeePerGas = feeHistory.baseFee * normalMultiplier + feeHistory.marketPriorityFee
+        val marketPriorityFee = when (feeHistory) {
+            is EthereumFeeHistory.Common -> feeHistory.marketPriorityFee
+            is EthereumFeeHistory.Fallback -> BigDecimal(feeHistory.gasPrice) * normalMultiplier
+        }
+
+        val normalMaxFeePerGas = feeHistory.baseFee * normalMultiplier + marketPriorityFee
 
         val normalFee = normalMaxFeePerGas * gasLimitDecimal
 
@@ -127,9 +134,19 @@ class EthereumFeesCalculator {
                 amount = createFee(amountParams, normalFee.toBigInteger()),
                 gasLimit = gasLimit,
                 maxFeePerGas = normalMaxFeePerGas.toBigInteger(),
-                priorityFee = feeHistory.marketPriorityFee.toBigInteger(),
+                priorityFee = marketPriorityFee.toBigInteger(),
             ),
         )
+    }
+
+    private fun BigInteger.calculateByPriority(): Triple<BigDecimal, BigDecimal, BigDecimal> {
+        val gasPriceDecimal = BigDecimal(this)
+
+        val minGasPrice = gasPriceDecimal * minimalMultiplier
+        val normalGasPrice = gasPriceDecimal * normalMultiplier
+        val priorityGasPrice = gasPriceDecimal * priorityMultiplier
+
+        return Triple(first = minGasPrice, second = normalGasPrice, third = priorityGasPrice)
     }
 
     private fun createFee(amountParams: Amount, value: BigInteger): Amount {
