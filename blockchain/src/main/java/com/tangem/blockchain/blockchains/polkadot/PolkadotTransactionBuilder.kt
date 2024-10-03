@@ -33,6 +33,7 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         Blockchain.AlephZero, Blockchain.AlephZeroTestnet,
         Blockchain.Joystream,
         Blockchain.Bittensor,
+        Blockchain.EnergyWebX,
         -> "0500".hexToBytes()
         Blockchain.PolkadotTestnet, Blockchain.Kusama -> "0400".hexToBytes()
         else -> error(
