@@ -43,6 +43,7 @@ internal val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Taraxa,
             Blockchain.Cyber,
             Blockchain.Blast,
+            Blockchain.Core, // base fee is zero
             -> false
             else -> error("Don't forget about evm here")
         }
