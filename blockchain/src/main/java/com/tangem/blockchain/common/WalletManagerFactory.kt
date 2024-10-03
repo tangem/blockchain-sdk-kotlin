@@ -147,6 +147,7 @@ class WalletManagerFactory(
             Blockchain.Moonriver, Blockchain.MoonriverTestnet,
             Blockchain.Flare, Blockchain.FlareTestnet,
             Blockchain.Taraxa, Blockchain.TaraxaTestnet,
+            Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet,
             -> EthereumLikeWalletManagerAssembly
 
             Blockchain.Mantle, Blockchain.MantleTestnet,
@@ -170,6 +171,7 @@ class WalletManagerFactory(
             Blockchain.AlephZero, Blockchain.AlephZeroTestnet,
             Blockchain.Joystream,
             Blockchain.Bittensor,
+            Blockchain.EnergyWebX, Blockchain.EnergyWebXTestnet,
             -> PolkadotWalletManagerAssembly
 
             Blockchain.Stellar, Blockchain.StellarTestnet -> StellarWalletManagerAssembly
@@ -196,6 +198,7 @@ class WalletManagerFactory(
             Blockchain.Sei, Blockchain.SeiTestnet -> SeiWalletManagerAssembly
             Blockchain.InternetComputer -> ICPWalletManagerAssembly
             Blockchain.Sui, Blockchain.SuiTestnet -> SuiteWalletManagerAssembly
+            Blockchain.Casper, Blockchain.CasperTestnet -> TODO() // [REDACTED_TASK_KEY]
             Blockchain.Unknown,
             -> error("Unsupported blockchain")
         }
