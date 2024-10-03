@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.common.extensions.toByteArray
 import org.kethereum.extensions.toByteArray
 import wallet.core.jni.CoinType
 import wallet.core.jni.DataVector
@@ -11,6 +12,7 @@ import wallet.core.jni.TransactionCompiler
 import wallet.core.jni.proto.Common
 import wallet.core.jni.proto.Ethereum
 import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
+import java.math.BigInteger
 
 /**
  * Ethereum TW transaction builder
@@ -37,6 +39,46 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
         val input = buildSigningInput(transaction)
         val output = buildSigningOutput(input = input, hash = compiledTransaction.hash, signature = signature)
         return output.encoded.toByteArray()
+    }
+
+    override fun buildDummyTransactionForL1(
+        amount: Amount,
+        destination: String,
+        data: String?,
+        fee: Fee.Ethereum,
+    ): ByteArray {
+        val eip1559Fee = fee as Fee.Ethereum.EIP1559
+        val extras = EthereumTransactionExtras(data = data?.toByteArray(), nonce = BigInteger.ONE)
+
+        val input = when (amount.type) {
+            AmountType.Coin -> {
+                buildSigningInput(
+                    destinationType = DestinationType.User(
+                        destinationAddress = destination,
+                        value = amount.longValueOrZero.toByteArray(),
+                    ),
+                    fee = eip1559Fee,
+                    extras = extras,
+                )
+            }
+            is AmountType.Token -> {
+                buildSigningInput(
+                    destinationType = DestinationType.Contract(
+                        destinationAddress = destination,
+                        value = amount.longValueOrZero.toByteArray(),
+                        contract = amount.type.token.contractAddress,
+                    ),
+                    fee = eip1559Fee,
+                    extras = extras,
+                )
+            }
+            is AmountType.FeeResource,
+            AmountType.Reserve,
+            -> error("Invalid amount type: ${amount.type}")
+        }
+
+        val preSigningOutput = buildTxCompilerPreSigningOutput(input)
+        return preSigningOutput.dataHash.toByteArray()
     }
 
     fun buildForSend(transaction: TransactionData, hash: ByteArray, signature: ByteArray): ByteArray {
