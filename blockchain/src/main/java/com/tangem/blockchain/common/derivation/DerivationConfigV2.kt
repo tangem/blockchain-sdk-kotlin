@@ -161,6 +161,9 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.SeiTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/118'/0'/0/0"))
             Blockchain.InternetComputer -> mapOf(AddressType.Default to DerivationPath("m/44'/223'/0'/0/0"))
+            Blockchain.Sui,
+            Blockchain.SuiTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/784'/0'/0'/0'"))
             Blockchain.EnergyWebX,
             Blockchain.EnergyWebXTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/246'/0'/0'/0'"))
