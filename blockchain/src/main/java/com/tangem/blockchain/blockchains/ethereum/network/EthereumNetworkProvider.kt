@@ -32,9 +32,21 @@ class EthereumInfoResponse(
     val recentTransactions: List<TransactionData.Uncompiled>?,
 )
 
-data class EthereumFeeHistory(
-    val baseFee: BigDecimal, // for pending block
-    val lowPriorityFee: BigDecimal,
-    val marketPriorityFee: BigDecimal,
-    val fastPriorityFee: BigDecimal,
-)
+sealed interface EthereumFeeHistory {
+
+    val baseFee: BigDecimal
+
+    data class Common(
+        override val baseFee: BigDecimal,
+        val lowPriorityFee: BigDecimal,
+        val marketPriorityFee: BigDecimal,
+        val fastPriorityFee: BigDecimal,
+    ) : EthereumFeeHistory {
+
+        fun toTriple() = Triple(lowPriorityFee, marketPriorityFee, fastPriorityFee)
+    }
+
+    data class Fallback(val gasPrice: BigInteger) : EthereumFeeHistory {
+        override val baseFee: BigDecimal = BigDecimal.ZERO
+    }
+}
