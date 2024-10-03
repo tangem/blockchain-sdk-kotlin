@@ -3,28 +3,6 @@
 package com.tangem.blockchain.blockchains.ethereum
 
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.common.extensions.toDecompressedPublicKey
-import java.math.BigInteger
-
-class EthereumTransactionBuilder(
-    walletPublicKey: ByteArray,
-    private val blockchain: Blockchain,
-) {
-    private val walletPublicKey: ByteArray = walletPublicKey.toDecompressedPublicKey().sliceArray(1..64)
-
-    fun buildToSign(transactionData: TransactionData, nonce: BigInteger?): CompiledEthereumTransaction {
-        return EthereumUtils.buildTransactionToSign(
-            transactionData = transactionData,
-            nonce = nonce,
-            blockchain = blockchain,
-        )
-    }
-
-    fun buildToSend(signature: ByteArray, transactionToSign: CompiledEthereumTransaction): ByteArray {
-        return EthereumUtils.prepareTransactionToSend(signature, transactionToSign, walletPublicKey, blockchain)
-    }
-}
 
 enum class Chain(val id: Int, val blockchain: Blockchain?) {
     Mainnet(id = 1, blockchain = Blockchain.Ethereum),
@@ -95,4 +73,6 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     BlastTestnet(id = 168587773, blockchain = Blockchain.BlastTestnet),
     Cyber(id = 7560, blockchain = Blockchain.Cyber),
     CyberTestnet(id = 111557560, blockchain = Blockchain.CyberTestnet),
+    EnergyWebChain(id = 246, blockchain = Blockchain.EnergyWebChain),
+    EnergyWebChainTestnet(id = 73799, blockchain = Blockchain.EnergyWebChainTestnet),
 }
