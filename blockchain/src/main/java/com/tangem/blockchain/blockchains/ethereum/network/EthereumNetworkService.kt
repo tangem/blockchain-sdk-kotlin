@@ -8,6 +8,7 @@ import com.tangem.blockchain.blockchains.ethereum.models.EthereumFeeHistoryRespo
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairToken
@@ -202,9 +203,15 @@ internal open class EthereumNetworkService(
 
     override suspend fun getFeeHistory(): Result<EthereumFeeHistory> {
         return try {
-            val result = multiJsonRpcProvider.performRequest(EthereumJsonRpcProvider::getFeeHistory)
+            val response = multiJsonRpcProvider.performRequest(EthereumJsonRpcProvider::getFeeHistory)
+                .extractResult(feeHistoryAdapter)
 
-            val feeHistory = EthereumFeeHistoryConverter.convert(response = result.extractResult(feeHistoryAdapter))
+            val feeHistory = runCatching { EthereumFeeHistoryConverter.convert(response) }
+                .getOrElse {
+                    val gasPrice = getGasPrice().successOr { return it }
+
+                    EthereumFeeHistory.Fallback(gasPrice)
+                }
 
             Result.Success(feeHistory)
         } catch (exception: Exception) {
