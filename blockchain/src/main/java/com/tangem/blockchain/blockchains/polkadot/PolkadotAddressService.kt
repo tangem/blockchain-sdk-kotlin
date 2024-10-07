@@ -15,7 +15,11 @@ internal class PolkadotAddressService(blockchain: Blockchain) : AddressService()
         Blockchain.Polkadot -> SS58Type.Network.POLKADOT
         Blockchain.PolkadotTestnet -> SS58Type.Network.WESTEND
         Blockchain.Kusama -> SS58Type.Network.KUSAMA
-        Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> SS58Type.Network.SUBSTRATE
+        Blockchain.AlephZero,
+        Blockchain.AlephZeroTestnet,
+        Blockchain.EnergyWebX,
+        Blockchain.EnergyWebXTestnet,
+        -> SS58Type.Network.SUBSTRATE
         Blockchain.Joystream -> SS58Type.Network.JOYSTREAM
         Blockchain.Bittensor -> SS58Type.Network.BITTENSOR
         else -> error("$blockchain isn't supported")
