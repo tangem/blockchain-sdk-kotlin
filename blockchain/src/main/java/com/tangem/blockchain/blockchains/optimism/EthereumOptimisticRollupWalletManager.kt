@@ -1,21 +1,20 @@
 package com.tangem.blockchain.blockchains.optimism
 
-import com.tangem.blockchain.blockchains.ethereum.CompiledEthereumTransaction
-import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
+import com.tangem.blockchain.blockchains.ethereum.eip1559.isSupportEIP1559
 import com.tangem.blockchain.blockchains.ethereum.network.ContractCallData
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
-import com.tangem.common.extensions.hexToBytes
 import org.kethereum.DEFAULT_GAS_LIMIT
-import org.kethereum.extensions.transactions.encode
 import org.kethereum.model.Address
-import org.kethereum.model.createTransactionWithDefaults
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -27,7 +26,6 @@ class EthereumOptimisticRollupWalletManager(
 
     private var lastLayer1FeeAmount: Amount? = null
 
-    @Suppress("MagicNumber")
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee.Choosable> {
         lastLayer1FeeAmount = null
 
@@ -35,18 +33,47 @@ class EthereumOptimisticRollupWalletManager(
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
+        return if (DepsContainer.blockchainFeatureToggles.isEthereumEIP1559Enabled &&
+            wallet.blockchain.isSupportEIP1559
+        ) {
+            getEIP1559Fee(amount = amount, destination = destination, data = null, layer2fee = layer2fee)
+        } else {
+            getLegacyFee(amount = amount, destination = destination, data = null, layer2fee = layer2fee)
+        }
+    }
+
+    override suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee.Choosable> {
+        lastLayer1FeeAmount = null
+
+        val layer2fee = super.getFee(amount, destination, data).successOr {
+            return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+        } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+
+        return if (DepsContainer.blockchainFeatureToggles.isEthereumEIP1559Enabled &&
+            wallet.blockchain.isSupportEIP1559
+        ) {
+            getEIP1559Fee(amount = amount, destination = destination, data = data, layer2fee = layer2fee)
+        } else {
+            getLegacyFee(amount = amount, destination = destination, data = data, layer2fee = layer2fee)
+        }
+    }
+
+    private suspend fun getLegacyFee(
+        amount: Amount,
+        destination: String,
+        data: String?,
+        layer2fee: TransactionFee.Choosable,
+    ): Result<TransactionFee.Choosable> {
         val minimumFee = layer2fee.minimum as Fee.Ethereum.Legacy
         val normalFee = layer2fee.normal as Fee.Ethereum.Legacy
         val priorityFee = layer2fee.priority as Fee.Ethereum.Legacy
 
-        val serializedTransaction = createTransactionWithDefaults(
-            from = Address(wallet.address),
-            to = Address(destination),
-            value = BigInteger.valueOf(1), // value is not important for dummy transactions
-            gasPrice = normalFee.gasPrice,
-            gasLimit = normalFee.gasLimit,
-            nonce = BigInteger.ONE,
-        ).encode()
+        val serializedTransaction = transactionBuilder.buildDummyTransactionForL1(
+            amount = amount,
+            destination = destination,
+            data = data,
+            fee = normalFee,
+        )
 
         val lastLayer1Fee = getLayer1Fee(serializedTransaction).successOr {
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
@@ -78,36 +105,22 @@ class EthereumOptimisticRollupWalletManager(
         return Result.Success(updatedFees)
     }
 
-    @Suppress("MagicNumber")
-    override suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee.Choosable> {
-        lastLayer1FeeAmount = null
+    private suspend fun getEIP1559Fee(
+        amount: Amount,
+        destination: String,
+        data: String?,
+        layer2fee: TransactionFee.Choosable,
+    ): Result<TransactionFee.Choosable> {
+        val minimumFee = layer2fee.minimum as Fee.Ethereum.EIP1559
+        val normalFee = layer2fee.normal as Fee.Ethereum.EIP1559
+        val priorityFee = layer2fee.priority as Fee.Ethereum.EIP1559
 
-        val blockchain = wallet.blockchain
-        val layer2fee = super.getFee(amount, destination, data).successOr {
-            return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-        } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-
-        val extras = layer2fee.minimum as Fee.Ethereum.Legacy
-
-        val preparedAmount = Amount(
-            value = BigDecimal.valueOf(0.1),
-            blockchain = blockchain,
+        val serializedTransaction = transactionBuilder.buildDummyTransactionForL1(
+            amount = amount,
+            destination = destination,
+            data = data,
+            fee = normalFee,
         )
-
-        val gasPriceL2 = extras.gasPrice
-        val gasLimitL2 = extras.gasLimit
-        val value = preparedAmount.value?.movePointRight(preparedAmount.decimals)?.toBigInteger() ?: BigInteger.ZERO
-
-        // creating sample transaction that hash should be send to optimism contract to determine layer1Fee
-        val serializedTransaction = createTransactionWithDefaults(
-            from = Address(wallet.address),
-            to = Address(destination),
-            value = value,
-            gasPrice = gasPriceL2,
-            gasLimit = gasLimitL2,
-            nonce = BigInteger.ONE,
-            input = data.removePrefix(HEX_PREFIX).hexToBytes(),
-        ).encode()
 
         val lastLayer1Fee = getLayer1Fee(serializedTransaction).successOr {
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
@@ -115,22 +128,27 @@ class EthereumOptimisticRollupWalletManager(
         lastLayer1FeeAmount = lastLayer1Fee
 
         // https://community.optimism.io/docs/developers/build/transaction-fees/#displaying-fees-to-users
+
         val lastLayer1FeeValue = requireNotNull(lastLayer1Fee.value) { "Fee must not bee null" }
+
         val updatedFees = layer2fee.copy(
-            minimum = Fee.Ethereum.Legacy(
-                amount = layer2fee.minimum.amount + lastLayer1FeeValue,
-                gasLimit = layer2fee.minimum.gasLimit,
-                gasPrice = layer2fee.minimum.gasPrice,
+            minimum = Fee.Ethereum.EIP1559(
+                amount = minimumFee.amount + lastLayer1FeeValue,
+                gasLimit = minimumFee.gasLimit,
+                maxFeePerGas = minimumFee.maxFeePerGas,
+                priorityFee = minimumFee.priorityFee,
             ),
-            normal = Fee.Ethereum.Legacy(
-                amount = (layer2fee.normal as Fee.Ethereum.Legacy).amount + lastLayer1FeeValue,
-                gasLimit = layer2fee.normal.gasLimit,
-                gasPrice = layer2fee.normal.gasPrice,
+            normal = Fee.Ethereum.EIP1559(
+                amount = normalFee.amount + lastLayer1FeeValue,
+                gasLimit = normalFee.gasLimit,
+                maxFeePerGas = normalFee.maxFeePerGas,
+                priorityFee = normalFee.priorityFee,
             ),
-            priority = Fee.Ethereum.Legacy(
-                amount = (layer2fee.priority as Fee.Ethereum.Legacy).amount + lastLayer1FeeValue,
-                gasLimit = layer2fee.priority.gasLimit,
-                gasPrice = layer2fee.priority.gasPrice,
+            priority = Fee.Ethereum.EIP1559(
+                amount = priorityFee.amount + lastLayer1FeeValue,
+                gasLimit = priorityFee.gasLimit,
+                maxFeePerGas = priorityFee.maxFeePerGas,
+                priorityFee = priorityFee.priorityFee,
             ),
         )
 
@@ -140,7 +158,7 @@ class EthereumOptimisticRollupWalletManager(
     override suspend fun sign(
         transactionData: TransactionData,
         signer: TransactionSigner,
-    ): Result<Pair<ByteArray, CompiledEthereumTransaction>> {
+    ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
         transactionData.requireUncompiled()
 
         // We need to subtract layer 1 fee, because it is deducted automatically
@@ -187,6 +205,5 @@ class EthereumOptimisticRollupWalletManager(
     companion object {
         private const val OPTIMISM_FEE_CONTRACT_ADDRESS = "0x420000000000000000000000000000000000000F"
         private const val OPTIMISM_FEE_MULTIPLIER = 1.1
-        private const val HEX_PREFIX = "0x"
     }
 }

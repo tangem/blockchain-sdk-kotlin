@@ -1,7 +1,7 @@
 package com.tangem.blockchain.common.assembly.impl
 
-import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.xdc.XDCProvidersBuilder
 import com.tangem.blockchain.blockchains.xdc.XDCWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
@@ -13,10 +13,7 @@ internal object XDCWalletManagerAssembly : WalletManagerAssembly<XDCWalletManage
         return with(input.wallet) {
             XDCWalletManager(
                 wallet = this,
-                transactionBuilder = EthereumTransactionBuilder(
-                    walletPublicKey = publicKey.blockchainKey,
-                    blockchain = blockchain,
-                ),
+                transactionBuilder = EthereumTransactionBuilder.create(wallet = input.wallet),
                 networkProvider = EthereumNetworkService(
                     jsonRpcProviders = XDCProvidersBuilder(input.providerTypes, input.config).build(blockchain),
                 ),
