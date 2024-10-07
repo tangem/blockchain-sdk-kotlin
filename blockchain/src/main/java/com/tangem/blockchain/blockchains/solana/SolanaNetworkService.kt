@@ -114,46 +114,46 @@ internal class SolanaNetworkService(
         }
     }
 
-    private suspend fun getAccountInfo(account: PublicKey): Result<NewSolanaAccountInfo.Value?> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val params = mapOf("commitment" to Commitment.FINALIZED)
-                val accountInfo = provider.api.getAccountInfoNew(account, params)
+    private fun getAccountInfo(account: PublicKey): Result<NewSolanaAccountInfo.Value?> {
+        return try {
+            val params = mapOf("commitment" to Commitment.FINALIZED)
+            val accountInfo = provider.api.getAccountInfoNew(account, params)
 
-                Result.Success(accountInfo.value)
-            } catch (ex: Exception) {
-                Result.Failure(Solana.Api(ex))
-            }
+            Result.Success(accountInfo.value)
+        } catch (ex: Exception) {
+            Result.Failure(Solana.Api(ex))
         }
     }
 
     private suspend fun accountTokensInfo(account: PublicKey): Result<List<NewSolanaTokenAccountInfo.Value>> =
         withContext(Dispatchers.IO) {
-            try {
-                val tokensAccountsInfoDefault = async {
-                    tokenAccountInfo(account, SolanaTokenProgram.ID.TOKEN.value)
-                }
-                val tokensAccountsInfo2022 = async {
-                    tokenAccountInfo(account, SolanaTokenProgram.ID.TOKEN_2022.value)
-                }
-
-                val tokensAccountsInfo = awaitAll(tokensAccountsInfoDefault, tokensAccountsInfo2022)
-                    .flatMap { it.value }
-                    .distinct()
-
-                Result.Success(tokensAccountsInfo)
-            } catch (ex: Exception) {
-                Result.Failure(Solana.Api(ex))
+            val tokensAccountsInfoDefault = async {
+                tokenAccountInfo(account, SolanaTokenProgram.ID.TOKEN.value)
             }
+            val tokensAccountsInfo2022 = async {
+                tokenAccountInfo(account, SolanaTokenProgram.ID.TOKEN_2022.value)
+            }
+
+            val tokensAccountsInfo = awaitAll(tokensAccountsInfoDefault, tokensAccountsInfo2022)
+                .flatMap { info ->
+                    info.successOr { return@withContext it }.value
+                }.distinct()
+
+            Result.Success(tokensAccountsInfo)
         }
 
-    private fun tokenAccountInfo(account: PublicKey, programId: PublicKey): NewSolanaTokenAccountInfo {
+    private fun tokenAccountInfo(account: PublicKey, programId: PublicKey): Result<NewSolanaTokenAccountInfo> {
         val params = buildMap {
             put("programId", programId)
             put("commitment", Commitment.RECENT.value)
         }
 
-        return provider.api.getTokenAccountsByOwnerNew(account, params)
+        return try {
+            val result = provider.api.getTokenAccountsByOwnerNew(account, params)
+            Result.Success(result)
+        } catch (e: Exception) {
+            Result.Failure(Solana.Api(e))
+        }
     }
 
     suspend fun getFeeForMessage(transaction: SolanaTransaction): Result<FeeInfo> = withContext(Dispatchers.IO) {

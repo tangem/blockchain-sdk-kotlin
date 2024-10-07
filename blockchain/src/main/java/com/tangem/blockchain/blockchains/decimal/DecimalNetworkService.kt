@@ -9,7 +9,7 @@ import com.tangem.blockchain.network.blockchair.BlockchairToken
 import java.math.BigDecimal
 import java.math.BigInteger
 
-class DecimalNetworkService(
+internal class DecimalNetworkService(
     jsonRpcProviders: List<EthereumJsonRpcProvider>,
 ) : EthereumNetworkService(jsonRpcProviders, blockcypherNetworkProvider = null, blockchairEthNetworkProvider = null) {
 
