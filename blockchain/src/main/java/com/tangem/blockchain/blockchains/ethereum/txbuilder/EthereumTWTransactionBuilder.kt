@@ -1,8 +1,8 @@
-package com.tangem.blockchain.blockchains.ethereum
+package com.tangem.blockchain.blockchains.ethereum.txbuilder
 
 import com.google.protobuf.ByteString
+import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.UnmarshalHelper.Companion.EVM_LEGACY_REC_ID_OFFSET
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.common.extensions.toByteArray
 import org.kethereum.extensions.toByteArray
@@ -11,17 +11,72 @@ import wallet.core.jni.DataVector
 import wallet.core.jni.TransactionCompiler
 import wallet.core.jni.proto.Common
 import wallet.core.jni.proto.Ethereum
-import java.math.BigDecimal
-import wallet.core.jni.proto.TransactionCompiler as ProtoTransactionCompiler
+import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
+import java.math.BigInteger
 
-class EthereumTWTransactionBuilder(private val wallet: Wallet) {
+/**
+ * Ethereum TW transaction builder
+ *
+ * @property wallet wallet
+ */
+internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactionBuilder(wallet = wallet) {
 
     private val coinType = CoinType.ETHEREUM
     private val chainId = wallet.blockchain.getChainId()
         ?: error("Invalid chain id for ${wallet.blockchain.name} blockchain")
 
-    fun buildForSign(transaction: TransactionData): ByteArray {
+    override fun buildForSign(transaction: TransactionData): EthereumCompiledTxInfo.TWInfo {
         val input = buildSigningInput(transaction)
+        val preSigningOutput = buildTxCompilerPreSigningOutput(input)
+        return EthereumCompiledTxInfo.TWInfo(hash = preSigningOutput.dataHash.toByteArray())
+    }
+
+    override fun buildForSend(
+        transaction: TransactionData,
+        signature: ByteArray,
+        compiledTransaction: EthereumCompiledTxInfo,
+    ): ByteArray {
+        val input = buildSigningInput(transaction)
+        val output = buildSigningOutput(input = input, hash = compiledTransaction.hash, signature = signature)
+        return output.encoded.toByteArray()
+    }
+
+    override fun buildDummyTransactionForL1(
+        amount: Amount,
+        destination: String,
+        data: String?,
+        fee: Fee.Ethereum,
+    ): ByteArray {
+        val eip1559Fee = fee as Fee.Ethereum.EIP1559
+        val extras = EthereumTransactionExtras(data = data?.toByteArray(), nonce = BigInteger.ONE)
+
+        val input = when (amount.type) {
+            AmountType.Coin -> {
+                buildSigningInput(
+                    destinationType = DestinationType.User(
+                        destinationAddress = destination,
+                        value = amount.longValueOrZero.toByteArray(),
+                    ),
+                    fee = eip1559Fee,
+                    extras = extras,
+                )
+            }
+            is AmountType.Token -> {
+                buildSigningInput(
+                    destinationType = DestinationType.Contract(
+                        destinationAddress = destination,
+                        value = amount.longValueOrZero.toByteArray(),
+                        contract = amount.type.token.contractAddress,
+                    ),
+                    fee = eip1559Fee,
+                    extras = extras,
+                )
+            }
+            is AmountType.FeeResource,
+            AmountType.Reserve,
+            -> error("Invalid amount type: ${amount.type}")
+        }
+
         val preSigningOutput = buildTxCompilerPreSigningOutput(input)
         return preSigningOutput.dataHash.toByteArray()
     }
@@ -35,7 +90,11 @@ class EthereumTWTransactionBuilder(private val wallet: Wallet) {
     private fun buildSigningInput(transaction: TransactionData): Ethereum.SigningInput {
         transaction.requireUncompiled()
 
-        val amountValue = transaction.amount.value ?: throw BlockchainSdkError.CustomError("Invalid amount")
+        val amountValue = transaction.amount.value?.movePointRight(transaction.amount.decimals)
+            ?.toBigInteger()
+            ?.toByteArray()
+            ?: throw BlockchainSdkError.CustomError("Fail to parse amount")
+
         val ethereumFee = transaction.fee as? Fee.Ethereum ?: throw BlockchainSdkError.CustomError("Invalid fee")
         val extras = transaction.extras as? EthereumTransactionExtras
 
@@ -136,7 +195,7 @@ class EthereumTWTransactionBuilder(private val wallet: Wallet) {
 
         return setTransfer(
             Ethereum.Transaction.Transfer.newBuilder()
-                .setAmount(ByteString.copyFrom(user.value.toLong().toByteArray()))
+                .setAmount(ByteString.copyFrom(user.value))
                 .setData(ByteString.copyFrom(data))
                 .build(),
         )
@@ -148,7 +207,7 @@ class EthereumTWTransactionBuilder(private val wallet: Wallet) {
     ): Ethereum.Transaction.Builder {
         return setContractGeneric(
             Ethereum.Transaction.ContractGeneric.newBuilder()
-                .setAmount(ByteString.copyFrom(contract.value.toLong().toByteArray()))
+                .setAmount(ByteString.copyFrom(contract.value))
                 .setData(ByteString.copyFrom(data))
                 .build(),
         )
@@ -159,18 +218,16 @@ class EthereumTWTransactionBuilder(private val wallet: Wallet) {
     ): Ethereum.Transaction.Builder {
         return setErc20Transfer(
             Ethereum.Transaction.ERC20Transfer.newBuilder()
-                .setAmount(ByteString.copyFrom(contract.value.toLong().toByteArray()))
+                .setAmount(ByteString.copyFrom(contract.value))
                 .setTo(contract.destinationAddress)
                 .build(),
         )
     }
 
-    private fun buildTxCompilerPreSigningOutput(
-        input: Ethereum.SigningInput,
-    ): ProtoTransactionCompiler.PreSigningOutput {
+    private fun buildTxCompilerPreSigningOutput(input: Ethereum.SigningInput): PreSigningOutput {
         val txInputData = input.toByteArray()
         val preImageHashes = TransactionCompiler.preImageHashes(coinType, txInputData)
-        val preSigningOutput = ProtoTransactionCompiler.PreSigningOutput.parseFrom(preImageHashes)
+        val preSigningOutput = PreSigningOutput.parseFrom(preImageHashes)
 
         if (preSigningOutput.error != Common.SigningError.OK) {
             throw BlockchainSdkError.CustomError("Error while parse preImageHashes")
@@ -186,18 +243,18 @@ class EthereumTWTransactionBuilder(private val wallet: Wallet) {
     ): Ethereum.SigningOutput {
         if (signature.size != SIGNATURE_SIZE) throw BlockchainSdkError.CustomError("Invalid signature size")
 
-        val unmarshal = UnmarshalHelper().unmarshalSignatureExtended(
-            signature = signature,
-            hash = hash,
-            publicKey = wallet.publicKey,
-        )
-
-        val unmarshalSignature = unmarshal.asRSV(recIdOffset = -1 * EVM_LEGACY_REC_ID_OFFSET)
+        val unmarshalSignature = UnmarshalHelper()
+            .unmarshalSignatureExtended(
+                signature = signature,
+                hash = hash,
+                publicKey = decompressedPublicKey,
+            )
+            .asRSV()
 
         val txInputData = input.toByteArray()
 
         val publicKeys = DataVector()
-        publicKeys.add(wallet.publicKey.blockchainKey)
+        publicKeys.add(decompressedPublicKey)
 
         val signatures = DataVector()
         signatures.add(unmarshalSignature)
@@ -220,13 +277,13 @@ class EthereumTWTransactionBuilder(private val wallet: Wallet) {
 
     sealed interface DestinationType {
         val destinationAddress: String
-        val value: BigDecimal
+        val value: ByteArray
 
-        data class User(override val destinationAddress: String, override val value: BigDecimal) : DestinationType
+        data class User(override val destinationAddress: String, override val value: ByteArray) : DestinationType
 
         data class Contract(
             override val destinationAddress: String,
-            override val value: BigDecimal,
+            override val value: ByteArray,
             val contract: String,
         ) : DestinationType
     }
