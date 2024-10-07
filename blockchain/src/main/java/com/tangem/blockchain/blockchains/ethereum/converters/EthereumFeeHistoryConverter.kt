@@ -28,7 +28,7 @@ internal object EthereumFeeHistoryConverter {
         val marketRewards = response.reward.mapNotNull { it.getOrNull(1) }
         val fastRewards = response.reward.mapNotNull { it.getOrNull(2) }
 
-        return EthereumFeeHistory(
+        return EthereumFeeHistory.Common(
             baseFee = pendingBaseFeeString.toBigDecimal(),
             lowPriorityFee = getAverageReward(lowRewards),
             marketPriorityFee = getAverageReward(marketRewards),
