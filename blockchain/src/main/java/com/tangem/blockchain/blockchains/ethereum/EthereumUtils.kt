@@ -121,8 +121,6 @@ object EthereumUtils {
         val parsed = compiledTransactionAdapter.fromJson(compiledTransaction)
             ?: error("Unable to parse compiled transaction")
 
-        val value = parsed.value?.hexToBigDecimal()?.toBigInteger()
-
         val amount = if (transactionData.amount?.type == AmountType.Coin) { // coin transfer
             transactionData.amount.value
                 ?.movePointRight(transactionData.amount.decimals)
@@ -131,23 +129,25 @@ object EthereumUtils {
             BigInteger.ZERO
         }
 
-        val gasLimit = parsed.gasLimit.hexToBigDecimal().toBigInteger().takeIf { it > BigInteger.ZERO }
-            ?: error("Transaction fee must be specified")
-
-        val gasPrice = parsed.gasPrice?.hexToBigDecimal()?.toBigInteger()
-        val maxPriorityFeePerGas = parsed.maxPriorityFeePerGas?.hexToBigDecimal()?.toBigInteger()
-        val maxFeePerGas = parsed.maxFeePerGas?.hexToBigDecimal()?.toBigInteger()
+        val value = parsed.value?.hexToBigDecimal()?.toBigInteger() ?: amount
 
         val fee = transactionData.fee?.amount?.value
             ?.movePointRight(transactionData.fee.amount.decimals)
             ?.toBigInteger()?.takeIf { it > BigInteger.ZERO }
             ?: error("Transaction fee must be specified")
 
+        val gasLimit = parsed.gasLimit.hexToBigDecimal().toBigInteger().takeIf { it > BigInteger.ZERO }
+            ?: error("Transaction fee must be specified")
+
+        val gasPrice = parsed.gasPrice?.hexToBigDecimal()?.toBigInteger() ?: fee.divide(gasLimit)
+        val maxPriorityFeePerGas = parsed.maxPriorityFeePerGas?.hexToBigDecimal()?.toBigInteger()
+        val maxFeePerGas = parsed.maxFeePerGas?.hexToBigDecimal()?.toBigInteger()
+
         return createTransactionWithDefaults(
             from = Address(parsed.from),
             to = Address(parsed.to),
-            gasPrice = gasPrice ?: fee.divide(gasLimit),
-            value = value ?: amount,
+            gasPrice = gasPrice,
+            value = value,
             gasLimit = gasLimit,
             nonce = parsed.nonce.toBigInteger(),
             input = parsed.data.hexToBytes(),
