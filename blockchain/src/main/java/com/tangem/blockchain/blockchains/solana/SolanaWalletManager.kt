@@ -204,6 +204,10 @@ class SolanaWalletManager internal constructor(
         transactionDataList: List<TransactionData>,
         signer: TransactionSigner,
     ): Result<TransactionsSendResult> {
+        if (transactionDataList.size == 1) {
+            return super<TransactionSender>.sendMultiple(transactionDataList, signer)
+        }
+
         val startSendingTimestamp = SystemClock.elapsedRealtime()
 
         val withoutSignatureTransactions = transactionDataList.map {
