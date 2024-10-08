@@ -2,8 +2,11 @@ package com.tangem.blockchain.blockchains.ethereum.txbuilder
 
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
+import com.tangem.blockchain.blockchains.ethereum.models.EthereumCompiledTransaction
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.extensions.hexToBigDecimal
+import com.tangem.blockchain.network.moshi
 import com.tangem.common.extensions.toByteArray
 import org.kethereum.extensions.toByteArray
 import wallet.core.jni.CoinType
@@ -12,6 +15,7 @@ import wallet.core.jni.TransactionCompiler
 import wallet.core.jni.proto.Common
 import wallet.core.jni.proto.Ethereum
 import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
+import java.math.BigDecimal
 import java.math.BigInteger
 
 /**
@@ -24,6 +28,8 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
     private val coinType = CoinType.ETHEREUM
     private val chainId = wallet.blockchain.getChainId()
         ?: error("Invalid chain id for ${wallet.blockchain.name} blockchain")
+
+    private val compiledTransactionAdapter = moshi.adapter(EthereumCompiledTransaction::class.java)
 
     override fun buildForSign(transaction: TransactionData): EthereumCompiledTxInfo.TWInfo {
         val input = buildSigningInput(transaction)
@@ -88,8 +94,13 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
     }
 
     private fun buildSigningInput(transaction: TransactionData): Ethereum.SigningInput {
-        transaction.requireUncompiled()
+        return when (transaction) {
+            is TransactionData.Compiled -> buildCompiledSingingInput(transaction)
+            is TransactionData.Uncompiled -> buildUncompiledSigningInput(transaction)
+        }
+    }
 
+    private fun buildUncompiledSigningInput(transaction: TransactionData.Uncompiled): Ethereum.SigningInput {
         val amountValue = transaction.amount.value?.movePointRight(transaction.amount.decimals)
             ?.toBigInteger()
             ?.toByteArray()
@@ -114,6 +125,69 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
                     value = amountValue,
                 ),
                 fee = transaction.fee,
+                extras = extras,
+            )
+            else -> throw BlockchainSdkError.CustomError("Not implemented")
+        }
+    }
+
+    private fun buildCompiledSingingInput(transaction: TransactionData.Compiled): Ethereum.SigningInput {
+        val amountType = transaction.amount?.type
+
+        val compiledTransaction = if (transaction.value is TransactionData.Compiled.Data.RawString) {
+            transaction.value.data
+        } else {
+            error("Compiled transaction must be in hex format")
+        }
+        val parsed = compiledTransactionAdapter.fromJson(compiledTransaction)
+            ?: error("Unable to parse compiled transaction")
+
+        val amountValue = if (amountType == AmountType.Coin) { // coin transfer
+            transaction.amount.value
+                ?.movePointRight(transaction.amount.decimals)
+                ?.toBigInteger()
+                ?: error("Sending amount for coin must be specified")
+        } else { // token transfer (or approve)
+            BigInteger.ZERO
+        }.toByteArray()
+
+        val maxPriorityFeePerGas = parsed.maxPriorityFeePerGas?.hexToBigDecimal()?.toBigInteger()
+            ?: error("Transaction maxPriorityFeePerGas must be specified")
+        val maxFeePerGas = parsed.maxFeePerGas?.hexToBigDecimal()?.toBigInteger()
+            ?: error("Transaction maxFeePerGas must be specified")
+        val gasLimit = parsed.gasLimit.hexToBigDecimal().toBigInteger().takeIf { it > BigInteger.ZERO }
+            ?: error("Transaction gasLimit must be specified")
+        val fee = transaction.fee?.amount ?: error("Transaction fee must be specified")
+        if (fee.value != null && fee.value <= BigDecimal.ZERO) error("Transaction fee must be specified")
+
+        val ethereumFee = Fee.Ethereum.EIP1559(
+            amount = fee,
+            gasLimit = gasLimit,
+            maxFeePerGas = maxFeePerGas,
+            priorityFee = maxPriorityFeePerGas,
+        )
+        val extras = EthereumTransactionExtras(
+            data = parsed.data.toByteArray(),
+            gasLimit = gasLimit,
+            nonce = parsed.nonce.toBigInteger(),
+        )
+
+        return when (amountType) {
+            AmountType.Coin -> buildSigningInput(
+                destinationType = DestinationType.User(
+                    destinationAddress = parsed.to,
+                    value = amountValue,
+                ),
+                fee = ethereumFee,
+                extras = extras,
+            )
+            is AmountType.Token -> buildSigningInput(
+                destinationType = DestinationType.Contract(
+                    destinationAddress = parsed.to,
+                    contract = amountType.token.contractAddress,
+                    value = amountValue,
+                ),
+                fee = ethereumFee,
                 extras = extras,
             )
             else -> throw BlockchainSdkError.CustomError("Not implemented")
