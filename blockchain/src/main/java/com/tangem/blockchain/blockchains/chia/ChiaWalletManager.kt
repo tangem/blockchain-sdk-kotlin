@@ -17,7 +17,7 @@ class ChiaWalletManager(
     wallet: Wallet,
     private val transactionBuilder: ChiaTransactionBuilder,
     private val networkProvider: ChiaNetworkProvider,
-) : WalletManager(wallet), TransactionSender, UtxoAmountLimitProvider {
+) : WalletManager(wallet), UtxoAmountLimitProvider {
 
     override val currentHost: String
         get() = networkProvider.baseUrl
