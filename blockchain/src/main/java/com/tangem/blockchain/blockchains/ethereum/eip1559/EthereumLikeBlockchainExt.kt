@@ -44,6 +44,7 @@ internal val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Cyber,
             Blockchain.Blast,
             Blockchain.Core, // base fee is zero
+            Blockchain.EnergyWebChain,
             -> false
             else -> error("Don't forget about evm here")
         }
