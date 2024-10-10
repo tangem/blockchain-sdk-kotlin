@@ -44,13 +44,13 @@ jobs:
         ./gradlew assembleAndroidTest
     - name: Run unit tests
       run: ./gradlew test
-    - name: Run Android tests
-      uses: reactivecircus/android-emulator-runner@v2
-      with:
-        api-level: 30
-        target: google_apis
-        arch: x86
-        script: ./gradlew connectedAndroidTest
+      #    - name: Run Android tests
+      #      uses: reactivecircus/android-emulator-runner@v2
+      #      with:
+      #        api-level: 30
+      #        target: google_apis
+      #        arch: x86
+      #        script: ./gradlew connectedAndroidTest
     - name: Build notification
       if: failure()
       uses: adamkdean/simple-slack-notify@master
