@@ -163,12 +163,14 @@ abstract class WalletManager(
         )
     }
 
-    companion object
-}
+    override suspend fun sendMultiple(
+        transactionDataList: List<TransactionData>,
+        signer: TransactionSigner,
+    ): Result<TransactionsSendResult> {
+        return sendSingleTransaction(transactionDataList, signer)
+    }
 
-interface TransactionSender {
-
-    suspend fun sendMultiple(
+    protected suspend fun sendSingleTransaction(
         transactionDataList: List<TransactionData>,
         signer: TransactionSigner,
     ): Result<TransactionsSendResult> {
@@ -177,6 +179,16 @@ interface TransactionSender {
             failure = { Result.Failure(it) },
         )
     }
+
+    companion object
+}
+
+interface TransactionSender {
+
+    suspend fun sendMultiple(
+        transactionDataList: List<TransactionData>,
+        signer: TransactionSigner,
+    ): Result<TransactionsSendResult>
 
     suspend fun send(transactionData: TransactionData, signer: TransactionSigner): Result<TransactionSendResult>
 
