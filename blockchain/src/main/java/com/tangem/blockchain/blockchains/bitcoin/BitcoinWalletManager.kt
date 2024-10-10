@@ -25,7 +25,6 @@ internal open class BitcoinWalletManager(
     private val networkProvider: BitcoinNetworkProvider,
     private val feesCalculator: BitcoinFeesCalculator,
 ) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider),
-    TransactionSender,
     SignatureCountValidator,
     UtxoBlockchainManager {
 
