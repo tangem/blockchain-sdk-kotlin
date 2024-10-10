@@ -17,7 +17,7 @@ class KaspaWalletManager(
     wallet: Wallet,
     private val transactionBuilder: KaspaTransactionBuilder,
     private val networkProvider: KaspaNetworkProvider,
-) : WalletManager(wallet), TransactionSender, UtxoAmountLimitProvider, UtxoBlockchainManager {
+) : WalletManager(wallet), UtxoAmountLimitProvider, UtxoBlockchainManager {
 
     override val currentHost: String
         get() = networkProvider.baseUrl
