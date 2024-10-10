@@ -19,7 +19,7 @@ internal class CardanoWalletManager(
     wallet: Wallet,
     private val transactionBuilder: CardanoTransactionBuilder,
     private val networkProvider: CardanoNetworkProvider,
-) : WalletManager(wallet), TransactionSender, TransactionValidator by transactionBuilder {
+) : WalletManager(wallet), TransactionValidator by transactionBuilder {
 
     override val dustValue: BigDecimal = BigDecimal.ONE
     override val currentHost: String get() = networkProvider.baseUrl

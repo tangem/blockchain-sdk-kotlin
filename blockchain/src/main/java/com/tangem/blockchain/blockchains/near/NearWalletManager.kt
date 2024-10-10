@@ -22,7 +22,7 @@ class NearWalletManager(
     wallet: Wallet,
     private val networkService: NearNetworkService,
     private val txBuilder: NearTransactionBuilder,
-) : WalletManager(wallet), TransactionSender {
+) : WalletManager(wallet) {
 
     override val currentHost: String
         get() = networkService.host
