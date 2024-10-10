@@ -39,7 +39,7 @@ internal class PolkadotWalletManager(
         Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> 0.0000000005.toBigDecimal()
         Blockchain.Joystream -> 0.026666656.toBigDecimal()
         Blockchain.Bittensor -> 0.0000005.toBigDecimal()
-        Blockchain.EnergyWebX, Blockchain.EnergyWebXTestnet -> BigDecimal.ZERO
+        Blockchain.EnergyWebX, Blockchain.EnergyWebXTestnet -> 0.000000000000000001.toBigDecimal()
         else -> error("${wallet.blockchain} isn't supported")
     }
 
