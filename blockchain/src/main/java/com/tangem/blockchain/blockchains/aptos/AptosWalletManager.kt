@@ -19,7 +19,7 @@ import java.math.BigDecimal
 internal class AptosWalletManager(
     wallet: Wallet,
     private val networkService: AptosNetworkService,
-) : WalletManager(wallet), TransactionSender {
+) : WalletManager(wallet) {
 
     override val currentHost: String get() = networkService.baseUrl
 
