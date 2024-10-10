@@ -218,7 +218,6 @@ enum class Blockchain(
         TON, TONTestnet,
         Bittensor,
         Sui, SuiTestnet,
-        EnergyWebX, EnergyWebXTestnet,
         Casper, CasperTestnet,
         -> 9
 
@@ -264,6 +263,7 @@ enum class Blockchain(
         Blast, BlastTestnet,
         Cyber, CyberTestnet,
         EnergyWebChain, EnergyWebChainTestnet,
+        EnergyWebX, EnergyWebXTestnet,
         Core, CoreTestnet,
         -> 18
 
