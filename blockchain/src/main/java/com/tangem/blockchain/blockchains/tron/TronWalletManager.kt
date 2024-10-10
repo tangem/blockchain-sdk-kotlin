@@ -30,7 +30,7 @@ internal class TronWalletManager(
     transactionHistoryProvider: TransactionHistoryProvider,
     private val transactionBuilder: TronTransactionBuilder,
     private val networkService: TronNetworkService,
-) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider), TransactionSender, Approver {
+) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider), Approver {
 
     override val currentHost: String = networkService.host
 
@@ -121,7 +121,7 @@ internal class TronWalletManager(
         signer: TransactionSigner,
     ): Result<TransactionsSendResult> {
         if (transactionDataList.size == 1) {
-            return super<TransactionSender>.sendMultiple(transactionDataList, signer)
+            return sendSingleTransaction(transactionDataList, signer)
         }
 
         val hexStringList = transactionDataList.map {
