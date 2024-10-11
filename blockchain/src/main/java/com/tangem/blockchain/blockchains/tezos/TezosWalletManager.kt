@@ -29,7 +29,7 @@ class TezosWalletManager(
     private val transactionBuilder: TezosTransactionBuilder,
     private val networkProvider: TezosNetworkProvider,
     private val curve: EllipticCurve,
-) : WalletManager(wallet), TransactionSender {
+) : WalletManager(wallet) {
 
     override val currentHost: String
         get() = networkProvider.baseUrl
