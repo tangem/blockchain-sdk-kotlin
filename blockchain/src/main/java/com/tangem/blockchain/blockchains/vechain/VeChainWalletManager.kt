@@ -15,7 +15,7 @@ import java.util.EnumSet
 internal class VeChainWalletManager(
     wallet: Wallet,
     networkProviders: List<VeChainNetworkProvider>,
-) : WalletManager(wallet), TransactionSender {
+) : WalletManager(wallet) {
 
     private val networkService = VeChainNetworkService(
         networkProviders = networkProviders,
