@@ -13,8 +13,7 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.transaction.TransactionsSendResult
-import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.filterWith
+import com.tangem.blockchain.extensions.*
 import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
@@ -33,7 +32,7 @@ import java.math.BigDecimal
 class SolanaWalletManager internal constructor(
     wallet: Wallet,
     providers: List<SolanaRpcClient>,
-) : WalletManager(wallet), TransactionSender, RentProvider {
+) : WalletManager(wallet), RentProvider {
 
     private val account = PublicKey(wallet.address)
     private val networkServices = providers.map { SolanaNetworkService(it) }
@@ -204,6 +203,10 @@ class SolanaWalletManager internal constructor(
         transactionDataList: List<TransactionData>,
         signer: TransactionSigner,
     ): Result<TransactionsSendResult> {
+        if (transactionDataList.size == 1) {
+            return sendSingleTransaction(transactionDataList, signer)
+        }
+
         val startSendingTimestamp = SystemClock.elapsedRealtime()
 
         val withoutSignatureTransactions = transactionDataList.map {

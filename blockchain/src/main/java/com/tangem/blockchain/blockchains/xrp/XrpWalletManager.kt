@@ -17,7 +17,7 @@ class XrpWalletManager(
     wallet: Wallet,
     private val transactionBuilder: XrpTransactionBuilder,
     private val networkProvider: XrpNetworkProvider,
-) : WalletManager(wallet), TransactionSender, ReserveAmountProvider {
+) : WalletManager(wallet), ReserveAmountProvider {
 
     override val currentHost: String
         get() = networkProvider.baseUrl
