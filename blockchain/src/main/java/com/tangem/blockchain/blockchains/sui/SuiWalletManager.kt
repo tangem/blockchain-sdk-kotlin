@@ -18,7 +18,7 @@ import kotlinx.coroutines.coroutineScope
 internal class SuiWalletManager(
     wallet: Wallet,
     networkProviders: List<SuiJsonRpcProvider>,
-) : WalletManager(wallet), TransactionSender {
+) : WalletManager(wallet) {
 
     private val networkService: SuiNetworkService = SuiNetworkService(
         providers = networkProviders,
