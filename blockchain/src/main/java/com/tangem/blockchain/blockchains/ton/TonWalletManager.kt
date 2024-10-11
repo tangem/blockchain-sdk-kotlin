@@ -18,7 +18,7 @@ import wallet.core.jni.proto.TheOpenNetwork
 internal class TonWalletManager(
     wallet: Wallet,
     networkProviders: List<TonNetworkProvider>,
-) : WalletManager(wallet), TransactionSender {
+) : WalletManager(wallet) {
 
     private var sequenceNumber: Int = 0
     private val txBuilder = TonTransactionBuilder(wallet.address)

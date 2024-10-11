@@ -28,7 +28,7 @@ internal class PolkadotWalletManager(
     wallet: Wallet,
     private val networkProvider: PolkadotNetworkProvider,
     private val extrinsicCheckNetworkProvider: PolkadotAccountHealthCheckNetworkProvider?,
-) : WalletManager(wallet), TransactionSender, ExistentialDepositProvider, AccountCheckProvider {
+) : WalletManager(wallet), ExistentialDepositProvider, AccountCheckProvider {
 
     private lateinit var currentContext: ExtrinsicContext
 
