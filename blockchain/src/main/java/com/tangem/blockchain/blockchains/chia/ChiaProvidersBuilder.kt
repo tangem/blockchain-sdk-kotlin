@@ -34,7 +34,11 @@ internal class ChiaProvidersBuilder(
 
     private fun createTangemProvider(): ChiaNetworkProvider? {
         return config.chiaTangemApiKey?.letNotBlank {
-            ChiaJsonRpcProvider(baseUrl = API_CHIA_TANGEM, key = it)
+            ChiaJsonRpcProvider(
+                baseUrl = API_CHIA_TANGEM,
+                key = it,
+                isRequiredHexPrefixForTx = false,
+            )
         }
     }
 
@@ -43,6 +47,7 @@ internal class ChiaProvidersBuilder(
             ChiaJsonRpcProvider(
                 baseUrl = if (isTestnet) API_CHIA_FIREACADEMY_TESTNET else API_CHIA_FIREACADEMY,
                 key = config.chiaFireAcademyApiKey,
+                isRequiredHexPrefixForTx = true,
             )
         }
     }
