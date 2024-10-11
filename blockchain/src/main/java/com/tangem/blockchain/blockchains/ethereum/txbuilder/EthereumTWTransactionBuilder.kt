@@ -255,7 +255,7 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
                         is DestinationType.User -> setTransfer(user = destinationType, extras = extras)
                         is DestinationType.Contract -> {
                             if (extras?.data != null) {
-                                setContractGeneric(contract = destinationType, data = extras.data)
+                                setContractGeneric(data = extras.data)
                             } else {
                                 setErc20Transfer(contract = destinationType)
                             }
@@ -280,13 +280,9 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
         )
     }
 
-    private fun Ethereum.Transaction.Builder.setContractGeneric(
-        contract: DestinationType.Contract,
-        data: ByteArray,
-    ): Ethereum.Transaction.Builder {
+    private fun Ethereum.Transaction.Builder.setContractGeneric(data: ByteArray): Ethereum.Transaction.Builder {
         return setContractGeneric(
             Ethereum.Transaction.ContractGeneric.newBuilder()
-                .setAmount(ByteString.copyFrom(contract.value))
                 .setData(ByteString.copyFrom(data))
                 .build(),
         )
