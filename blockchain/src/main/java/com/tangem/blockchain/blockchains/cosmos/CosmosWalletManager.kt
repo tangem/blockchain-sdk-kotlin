@@ -18,7 +18,7 @@ class CosmosWalletManager(
     wallet: Wallet,
     networkProviders: List<CosmosRestProvider>,
     private val cosmosChain: CosmosChain,
-) : WalletManager(wallet), TransactionSender {
+) : WalletManager(wallet) {
 
     private val networkService: CosmosNetworkService = CosmosNetworkService(
         providers = networkProviders,
