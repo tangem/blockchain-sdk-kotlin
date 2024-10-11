@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.chia.network
 
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.HEX_PREFIX
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
@@ -11,7 +12,12 @@ import com.tangem.blockchain.network.createRetrofitInstance
 import java.math.BigDecimal
 import java.math.RoundingMode
 
-open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : ChiaNetworkProvider {
+open class ChiaJsonRpcProvider(
+    override val baseUrl: String,
+    private val isRequiredHexPrefixForTx: Boolean,
+    key: String,
+) :
+    ChiaNetworkProvider {
 
     private val api: ChiaApi by lazy {
         createRetrofitInstance(
@@ -62,7 +68,13 @@ open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : Chia
 
     override suspend fun sendTransaction(transaction: ChiaTransactionBody): SimpleResult {
         return try {
-            val sendResponse = retryIO { api.sendTransaction(transaction) }
+            val tx = if (isRequiredHexPrefixForTx) {
+                transaction.appendHexPrefix()
+            } else {
+                transaction
+            }
+
+            val sendResponse = retryIO { api.sendTransaction(tx) }
             if (sendResponse.success) {
                 if (sendResponse.status == SUCCESS_STATUS) {
                     SimpleResult.Success
@@ -79,6 +91,23 @@ open class ChiaJsonRpcProvider(override val baseUrl: String, key: String) : Chia
         } catch (exception: Exception) {
             SimpleResult.Failure(exception.toBlockchainSdkError())
         }
+    }
+
+    private fun ChiaTransactionBody.appendHexPrefix(): ChiaTransactionBody {
+        val aggregatedSignature = spendBundle.aggregatedSignature
+        val coinSpends = spendBundle.coinSpends
+        return copy(
+            spendBundle = spendBundle.copy(
+                aggregatedSignature = "$HEX_PREFIX$aggregatedSignature",
+                coinSpends = coinSpends.map {
+                    ChiaCoinSpend(
+                        coin = it.coin,
+                        puzzleReveal = "$HEX_PREFIX${it.puzzleReveal}",
+                        solution = "$HEX_PREFIX${it.solution}",
+                    )
+                },
+            ),
+        )
     }
 
     companion object {
