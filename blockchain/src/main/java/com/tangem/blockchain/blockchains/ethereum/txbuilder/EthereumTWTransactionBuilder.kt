@@ -231,10 +231,15 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
                     .setMaxInclusionFeePerGas(ByteString.copyFrom(fee.priorityFee.toByteArray()))
             }
             is Fee.Ethereum.Legacy -> {
+                val feeAmount = fee.amount.value?.movePointRight(fee.amount.decimals)
+                    ?.toBigInteger()
+                    ?: return this
+                val feePrice = feeAmount.divide(fee.gasLimit)
+
                 this
                     .setTxMode(Ethereum.TransactionMode.Legacy)
                     .setGasLimit(ByteString.copyFrom(fee.gasLimit.toByteArray()))
-                    .setGasPrice(ByteString.copyFrom(fee.gasPrice.toByteArray()))
+                    .setGasPrice(ByteString.copyFrom(feePrice.toByteArray()))
             }
         }
     }
