@@ -33,7 +33,7 @@ internal class HederaWalletManager(
     private val networkService: HederaNetworkService,
     private val dataStorage: AdvancedDataStorage,
     private val accountCreator: AccountCreator,
-) : WalletManager(wallet), TransactionSender, AssetRequirementsManager {
+) : WalletManager(wallet), AssetRequirementsManager {
 
     private val blockchain = wallet.blockchain
 
