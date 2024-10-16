@@ -8,8 +8,8 @@ import com.tangem.blockchain.common.Wallet
  * @property wallet wallet
  *
  */
+@Suppress("UnusedPrivateMember")
 internal class CasperTransactionBuilder(private val wallet: Wallet) {
 
     var minReserve = 2.5.toBigDecimal()
-
 }
