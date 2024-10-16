@@ -1,6 +1,6 @@
 package com.tangem.blockchain.blockchains.casper
 
-import com.tangem.blockchain.blockchains.casper.cashaddr.CasperAddressUtils.checksum
+import com.tangem.blockchain.blockchains.casper.utils.CasperAddressUtils.checksum
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.extensions.isSameCase
 import com.tangem.common.card.EllipticCurve
