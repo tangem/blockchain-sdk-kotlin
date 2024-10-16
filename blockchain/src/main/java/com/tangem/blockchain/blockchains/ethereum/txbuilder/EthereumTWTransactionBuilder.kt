@@ -1,14 +1,17 @@
 package com.tangem.blockchain.blockchains.ethereum.txbuilder
 
 import com.google.protobuf.ByteString
+import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.createErc20TransferData
 import com.tangem.blockchain.blockchains.ethereum.models.EthereumCompiledTransaction
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.hexToBigDecimal
 import com.tangem.blockchain.network.moshi
-import com.tangem.common.extensions.toByteArray
+import com.tangem.common.extensions.hexToBytes
 import org.kethereum.extensions.toByteArray
+import org.ton.bigint.isZero
 import wallet.core.jni.CoinType
 import wallet.core.jni.DataVector
 import wallet.core.jni.TransactionCompiler
@@ -29,7 +32,8 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
     private val chainId = wallet.blockchain.getChainId()
         ?: error("Invalid chain id for ${wallet.blockchain.name} blockchain")
 
-    private val compiledTransactionAdapter = moshi.adapter(EthereumCompiledTransaction::class.java)
+    @OptIn(ExperimentalStdlibApi::class)
+    private val compiledTransactionAdapter by lazy { moshi.adapter<EthereumCompiledTransaction>() }
 
     override fun buildForSign(transaction: TransactionData): EthereumCompiledTxInfo.TWInfo {
         val input = buildSigningInput(transaction)
@@ -54,28 +58,29 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
         fee: Fee.Ethereum,
     ): ByteArray {
         val eip1559Fee = fee as Fee.Ethereum.EIP1559
-        val extras = EthereumTransactionExtras(data = data?.toByteArray(), nonce = BigInteger.ONE)
 
-        val input = when (amount.type) {
+        val input = when (val amountType = amount.type) {
             AmountType.Coin -> {
                 buildSigningInput(
-                    destinationType = DestinationType.User(
-                        destinationAddress = destination,
-                        value = amount.longValueOrZero.toByteArray(),
-                    ),
+                    chainId = chainId,
+                    destinationAddress = destination,
+                    coinAmount = amount.value?.toBigInteger() ?: BigInteger.ZERO,
                     fee = eip1559Fee,
-                    extras = extras,
+                    extras = EthereumTransactionExtras(data = data?.toByteArray(), nonce = BigInteger.ONE),
                 )
             }
             is AmountType.Token -> {
+                val transferData = createErc20TransferData(
+                    recipient = destination,
+                    amount = amount.value?.toBigInteger() ?: BigInteger.ZERO,
+                )
+
                 buildSigningInput(
-                    destinationType = DestinationType.Contract(
-                        destinationAddress = destination,
-                        value = amount.longValueOrZero.toByteArray(),
-                        contract = amount.type.token.contractAddress,
-                    ),
+                    chainId = chainId,
+                    destinationAddress = amountType.token.contractAddress,
+                    coinAmount = BigInteger.ZERO,
                     fee = eip1559Fee,
-                    extras = extras,
+                    extras = EthereumTransactionExtras(data = transferData, nonce = BigInteger.ONE),
                 )
             }
             is AmountType.FeeResource,
@@ -103,7 +108,6 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
     private fun buildUncompiledSigningInput(transaction: TransactionData.Uncompiled): Ethereum.SigningInput {
         val amountValue = transaction.amount.value?.movePointRight(transaction.amount.decimals)
             ?.toBigInteger()
-            ?.toByteArray()
             ?: throw BlockchainSdkError.CustomError("Fail to parse amount")
 
         val ethereumFee = transaction.fee as? Fee.Ethereum ?: throw BlockchainSdkError.CustomError("Invalid fee")
@@ -111,45 +115,50 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
 
         return when (transaction.amount.type) {
             AmountType.Coin -> buildSigningInput(
-                destinationType = DestinationType.User(
-                    destinationAddress = transaction.destinationAddress,
-                    value = amountValue,
-                ),
+                chainId = chainId,
+                destinationAddress = transaction.destinationAddress,
+                coinAmount = amountValue,
                 fee = ethereumFee,
                 extras = extras,
             )
-            is AmountType.Token -> buildSigningInput(
-                destinationType = DestinationType.Contract(
-                    destinationAddress = transaction.destinationAddress,
-                    contract = transaction.contractAddress ?: transaction.amount.type.token.contractAddress,
-                    value = amountValue,
-                ),
-                fee = transaction.fee,
-                extras = extras,
-            )
+            is AmountType.Token -> {
+                buildSigningInput(
+                    chainId = chainId,
+                    destinationAddress = transaction.amount.type.token.contractAddress,
+                    coinAmount = BigInteger.ZERO,
+                    fee = ethereumFee,
+                    extras = if (extras != null && extras.data == null) {
+                        val transferData = createErc20TransferData(
+                            recipient = transaction.destinationAddress,
+                            amount = amountValue,
+                        )
+
+                        EthereumTransactionExtras(data = transferData, nonce = extras.nonce)
+                    } else {
+                        extras
+                    },
+                )
+            }
             else -> throw BlockchainSdkError.CustomError("Not implemented")
         }
     }
 
     private fun buildCompiledSingingInput(transaction: TransactionData.Compiled): Ethereum.SigningInput {
-        val amountType = transaction.amount?.type
+        val compiledTransaction = (transaction.value as? TransactionData.Compiled.Data.RawString)?.data
+            ?: error("Compiled transaction must be in hex format")
 
-        val compiledTransaction = if (transaction.value is TransactionData.Compiled.Data.RawString) {
-            transaction.value.data
-        } else {
-            error("Compiled transaction must be in hex format")
-        }
         val parsed = compiledTransactionAdapter.fromJson(compiledTransaction)
             ?: error("Unable to parse compiled transaction")
 
-        val amountValue = if (amountType == AmountType.Coin) { // coin transfer
+        val amountType = transaction.amount?.type
+        val amount = if (amountType == AmountType.Coin) { // coin transfer
             transaction.amount.value
                 ?.movePointRight(transaction.amount.decimals)
                 ?.toBigInteger()
                 ?: error("Sending amount for coin must be specified")
         } else { // token transfer (or approve)
             BigInteger.ZERO
-        }.toByteArray()
+        }
 
         val maxPriorityFeePerGas = parsed.maxPriorityFeePerGas?.hexToBigDecimal()?.toBigInteger()
             ?: error("Transaction maxPriorityFeePerGas must be specified")
@@ -167,35 +176,24 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
             priorityFee = maxPriorityFeePerGas,
         )
         val extras = EthereumTransactionExtras(
-            data = parsed.data.toByteArray(),
+            data = parsed.data.hexToBytes(),
             gasLimit = gasLimit,
             nonce = parsed.nonce.toBigInteger(),
         )
 
-        return when (amountType) {
-            AmountType.Coin -> buildSigningInput(
-                destinationType = DestinationType.User(
-                    destinationAddress = parsed.to,
-                    value = amountValue,
-                ),
-                fee = ethereumFee,
-                extras = extras,
-            )
-            is AmountType.Token -> buildSigningInput(
-                destinationType = DestinationType.Contract(
-                    destinationAddress = parsed.to,
-                    contract = amountType.token.contractAddress,
-                    value = amountValue,
-                ),
-                fee = ethereumFee,
-                extras = extras,
-            )
-            else -> throw BlockchainSdkError.CustomError("Not implemented")
-        }
+        return buildSigningInput(
+            chainId = parsed.chainId,
+            destinationAddress = parsed.to,
+            coinAmount = parsed.value?.hexToBigDecimal()?.toBigInteger() ?: amount,
+            fee = ethereumFee,
+            extras = extras,
+        )
     }
 
     private fun buildSigningInput(
-        destinationType: DestinationType,
+        chainId: Int,
+        destinationAddress: String,
+        coinAmount: BigInteger,
         fee: Fee.Ethereum,
         extras: EthereumTransactionExtras?,
     ): Ethereum.SigningInput {
@@ -204,21 +202,14 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
         return Ethereum.SigningInput.newBuilder()
             .setChainId(ByteString.copyFrom(chainId.toByteArray()))
             .setNonce(ByteString.copyFrom(nonce.toByteArray()))
-            .setDestinationAddress(destinationType = destinationType)
+            .setDestinationAddress(address = destinationAddress)
             .setFeeParams(fee = fee)
-            .setTransaction(destinationType = destinationType, extras = extras)
+            .setTransaction(coinAmount = coinAmount, extras = extras)
             .build()
     }
 
-    private fun Ethereum.SigningInput.Builder.setDestinationAddress(
-        destinationType: DestinationType,
-    ): Ethereum.SigningInput.Builder {
-        return setToAddress(
-            when (destinationType) {
-                is DestinationType.User -> destinationType.destinationAddress
-                is DestinationType.Contract -> destinationType.contract
-            },
-        )
+    private fun Ethereum.SigningInput.Builder.setDestinationAddress(address: String): Ethereum.SigningInput.Builder {
+        return setToAddress(address)
     }
 
     private fun Ethereum.SigningInput.Builder.setFeeParams(fee: Fee.Ethereum): Ethereum.SigningInput.Builder {
@@ -231,69 +222,48 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
                     .setMaxInclusionFeePerGas(ByteString.copyFrom(fee.priorityFee.toByteArray()))
             }
             is Fee.Ethereum.Legacy -> {
+                val calculateGasPrise = {
+                    val feeValue = fee.amount.value
+                        ?.movePointRight(fee.amount.decimals)
+                        ?.toBigInteger()
+                        ?: error("Transaction fee must be specified")
+
+                    feeValue.divide(fee.gasLimit)
+                }
+
+                val gasPrice = fee.gasPrice.takeUnless(BigInteger::isZero) ?: calculateGasPrise()
+
                 this
                     .setTxMode(Ethereum.TransactionMode.Legacy)
                     .setGasLimit(ByteString.copyFrom(fee.gasLimit.toByteArray()))
-                    .setGasPrice(ByteString.copyFrom(fee.gasPrice.toByteArray()))
+                    .setGasPrice(ByteString.copyFrom(gasPrice.toByteArray()))
             }
         }
     }
 
     private fun Ethereum.SigningInput.Builder.setTransaction(
-        destinationType: DestinationType,
+        coinAmount: BigInteger,
         extras: EthereumTransactionExtras?,
     ): Ethereum.SigningInput.Builder {
         return setTransaction(
             Ethereum.Transaction.newBuilder()
-                .apply {
-                    when (destinationType) {
-                        is DestinationType.User -> setTransfer(user = destinationType, extras = extras)
-                        is DestinationType.Contract -> {
-                            if (extras?.data != null) {
-                                setContractGeneric(contract = destinationType, data = extras.data)
-                            } else {
-                                setErc20Transfer(contract = destinationType)
-                            }
-                        }
-                    }
-                }
-                .build(),
-        )
-    }
-
-    private fun Ethereum.Transaction.Builder.setTransfer(
-        user: DestinationType.User,
-        extras: EthereumTransactionExtras?,
-    ): Ethereum.Transaction.Builder {
-        val data = extras?.data ?: ByteArray(0)
-
-        return setTransfer(
-            Ethereum.Transaction.Transfer.newBuilder()
-                .setAmount(ByteString.copyFrom(user.value))
-                .setData(ByteString.copyFrom(data))
+                .setContractGeneric(coinAmount = coinAmount, data = extras?.data)
                 .build(),
         )
     }
 
     private fun Ethereum.Transaction.Builder.setContractGeneric(
-        contract: DestinationType.Contract,
-        data: ByteArray,
+        coinAmount: BigInteger,
+        data: ByteArray?,
     ): Ethereum.Transaction.Builder {
         return setContractGeneric(
             Ethereum.Transaction.ContractGeneric.newBuilder()
-                .setAmount(ByteString.copyFrom(contract.value))
-                .setData(ByteString.copyFrom(data))
-                .build(),
-        )
-    }
-
-    private fun Ethereum.Transaction.Builder.setErc20Transfer(
-        contract: DestinationType.Contract,
-    ): Ethereum.Transaction.Builder {
-        return setErc20Transfer(
-            Ethereum.Transaction.ERC20Transfer.newBuilder()
-                .setAmount(ByteString.copyFrom(contract.value))
-                .setTo(contract.destinationAddress)
+                .setAmount(ByteString.copyFrom(coinAmount.toByteArray()))
+                .apply {
+                    if (data != null) {
+                        setData(ByteString.copyFrom(data))
+                    }
+                }
                 .build(),
         )
     }
@@ -347,19 +317,6 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
         }
 
         return output
-    }
-
-    sealed interface DestinationType {
-        val destinationAddress: String
-        val value: ByteArray
-
-        data class User(override val destinationAddress: String, override val value: ByteArray) : DestinationType
-
-        data class Contract(
-            override val destinationAddress: String,
-            override val value: ByteArray,
-            val contract: String,
-        ) : DestinationType
     }
 
     private companion object {
