@@ -4,6 +4,8 @@ import com.squareup.moshi.*
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResourceBodyAdapter
+import com.tangem.blockchain.blockchains.casper.network.response.CasperRpcResponse
+import com.tangem.blockchain.blockchains.casper.network.response.CasperRpcResponseAdapter
 import com.tangem.blockchain.blockchains.filecoin.network.response.FilecoinRpcResponse
 import com.tangem.blockchain.blockchains.filecoin.network.response.FilecoinRpcResponseAdapter
 import com.tangem.blockchain.common.EnumeratedEnum
@@ -75,6 +77,7 @@ internal val moshi: Moshi by lazy {
         .add(BigDecimal::class.java, BigDecimalAdapter)
         .add(AptosResource::class.java, AptosResourceBodyAdapter)
         .add(FilecoinRpcResponse::class.java, FilecoinRpcResponseAdapter)
+        .add(CasperRpcResponse::class.java, CasperRpcResponseAdapter)
         .add(createEnumJsonAdapter<GetAddressResponse.Transaction.StatusType>())
         .add(PolygonScanResultAdapter())
         .add(KotlinJsonAdapterFactory())
