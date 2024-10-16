@@ -1,4 +1,4 @@
-package com.tangem.blockchain.blockchains.casper.cashaddr
+package com.tangem.blockchain.blockchains.casper.utils
 
 import org.bouncycastle.jcajce.provider.digest.Blake2b
 
