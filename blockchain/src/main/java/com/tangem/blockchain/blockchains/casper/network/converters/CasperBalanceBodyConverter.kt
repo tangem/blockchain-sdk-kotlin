@@ -11,8 +11,8 @@ internal object CasperBalanceBodyConverter {
     fun convert(address: String): CasperQueryBalanceBody {
         return CasperQueryBalanceBody(
             purseIdentifier = CasperQueryBalanceBody.PurseIdentifier(
-                mainPurseUnderPublicKey = address
-            )
+                mainPurseUnderPublicKey = address,
+            ),
         )
     }
 }
