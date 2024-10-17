@@ -30,7 +30,7 @@ internal object CasperRpcResponseAdapter : JsonAdapter<CasperRpcResponse>() {
                 }
                 1 -> {
                     casperRpcResponse = runCatching { failureAdapter.fromJson(reader) }
-                        .mapCatching { CasperRpcResponse.Failure(message = requireNotNull(it).message) }
+                        .mapCatching { requireNotNull(it) }
                         .getOrElse { parsingResponseFailure }
                 }
                 -1 -> reader.skipNameAndValue()
