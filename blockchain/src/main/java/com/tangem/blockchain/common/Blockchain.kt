@@ -474,7 +474,6 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
-            Casper, CasperTestnet,
             -> listOf(
                 EllipticCurve.Secp256k1,
                 EllipticCurve.Ed25519,
@@ -538,6 +537,7 @@ enum class Blockchain(
             InternetComputer,
             EnergyWebChain, EnergyWebChainTestnet,
             Core, CoreTestnet,
+            Casper, CasperTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
