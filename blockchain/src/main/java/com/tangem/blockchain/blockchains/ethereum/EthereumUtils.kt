@@ -241,7 +241,7 @@ object EthereumUtils {
         amount = amount?.value?.movePointRight(amount.decimals)?.toBigInteger(),
     ).toHexString()
 
-    private fun createErc20TransferData(recipient: String, amount: BigInteger) = tokenTransferSignature.toByteArray() +
+    internal fun createErc20TransferData(recipient: String, amount: BigInteger) = tokenTransferSignature.toByteArray() +
         recipient.substring(2).hexToBytes().toFixedLengthByteArray(32) +
         amount.toBytesPadded(32)
 
