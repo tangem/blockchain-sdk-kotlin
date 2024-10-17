@@ -30,17 +30,20 @@ internal class CasperRpcNetworkProvider(
         onSuccess = { response: CasperRpcResponseResult.Balance ->
             CasperBalance(balance = BigDecimal(response.balance))
         },
-        onFailure = { response ->
-            if (response.isNoActorError()) BlockchainSdkError.AccountNotFound() else toDefaultError(response)
+        onFailure = {
+            // Account is not funded yet
+            if (it.code == ERROR_CODE_QUERY_FAILED) {
+                Result.Success(CasperBalance(balance = BigDecimal.ZERO))
+            } else {
+                Result.Failure(toDefaultError(it))
+            }
         },
     )
-
-    private fun CasperRpcResponse.Failure.isNoActorError() = code == ERROR_CODE_QUERY_FAILED
 
     private suspend inline fun <reified Data, Domain> post(
         body: JsonRPCRequest,
         onSuccess: (Data) -> Domain,
-        onFailure: (CasperRpcResponse.Failure) -> BlockchainSdkError = ::toDefaultError,
+        onFailure: (CasperRpcResponse.Failure) -> Result<Domain>,
     ): Result<Domain> {
         return try {
             when (val response = api.post(body = body, postfixUrl = postfixUrl)) {
@@ -51,7 +54,7 @@ internal class CasperRpcNetworkProvider(
                         ),
                     )
                 }
-                is CasperRpcResponse.Failure -> Result.Failure(error = onFailure(response))
+                is CasperRpcResponse.Failure -> onFailure(response)
             }
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
