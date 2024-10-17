@@ -222,16 +222,7 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
                     .setMaxInclusionFeePerGas(ByteString.copyFrom(fee.priorityFee.toByteArray()))
             }
             is Fee.Ethereum.Legacy -> {
-                val calculateGasPrise = {
-                    val feeValue = fee.amount.value
-                        ?.movePointRight(fee.amount.decimals)
-                        ?.toBigInteger()
-                        ?: error("Transaction fee must be specified")
-
-                    feeValue.divide(fee.gasLimit)
-                }
-
-                val gasPrice = fee.gasPrice.takeUnless(BigInteger::isZero) ?: calculateGasPrise()
+                val gasPrice = fee.gasPrice.takeUnless(BigInteger::isZero) ?: fee.calculateGasPrice()
 
                 this
                     .setTxMode(Ethereum.TransactionMode.Legacy)
@@ -239,6 +230,15 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
                     .setGasPrice(ByteString.copyFrom(gasPrice.toByteArray()))
             }
         }
+    }
+
+    private fun Fee.Ethereum.Legacy.calculateGasPrice(): BigInteger {
+        val feeValue = amount.value
+            ?.movePointRight(amount.decimals)
+            ?.toBigInteger()
+            ?: error("Transaction fee must be specified")
+
+        return feeValue.divide(gasLimit)
     }
 
     private fun Ethereum.SigningInput.Builder.setTransaction(
@@ -259,13 +259,15 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
         return setContractGeneric(
             Ethereum.Transaction.ContractGeneric.newBuilder()
                 .setAmount(ByteString.copyFrom(coinAmount.toByteArray()))
-                .apply {
-                    if (data != null) {
-                        setData(ByteString.copyFrom(data))
-                    }
-                }
+                .setInputIfNotNull(data)
                 .build(),
         )
+    }
+
+    private fun Ethereum.Transaction.ContractGeneric.Builder.setInputIfNotNull(
+        data: ByteArray?,
+    ): Ethereum.Transaction.ContractGeneric.Builder {
+        return if (data != null) setData(ByteString.copyFrom(data)) else this
     }
 
     private fun buildTxCompilerPreSigningOutput(input: Ethereum.SigningInput): PreSigningOutput {
