@@ -462,6 +462,8 @@ enum class Blockchain(
             Cyber, CyberTestnet -> CyberTestnet
             Sei, SeiTestnet -> SeiTestnet
             Sui, SuiTestnet -> SuiTestnet
+            EnergyWebChain, EnergyWebChainTestnet -> EnergyWebChainTestnet
+            EnergyWebX, EnergyWebXTestnet -> EnergyWebXTestnet
             Casper, CasperTestnet -> CasperTestnet
             Core, CoreTestnet -> CoreTestnet
             else -> null
