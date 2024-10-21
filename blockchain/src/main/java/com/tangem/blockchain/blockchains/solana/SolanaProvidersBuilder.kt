@@ -55,7 +55,7 @@ internal class SolanaProvidersBuilder(
         return config.quickNodeSolanaCredentials?.let { creds ->
             if (creds.subdomain.isNotBlank() && creds.apiKey.isNotBlank()) {
                 SolanaRpcClient(
-                    baseUrl = "https://${creds.subdomain}.solana-mainnet.discover.quiknode.pro/${creds.apiKey}",
+                    baseUrl = "https://${creds.subdomain}/${creds.apiKey}",
                     httpInterceptors = createLoggingInterceptors(),
                 )
             } else {
