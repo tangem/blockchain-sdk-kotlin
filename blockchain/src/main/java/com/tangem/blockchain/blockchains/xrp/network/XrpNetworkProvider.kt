@@ -17,6 +17,7 @@ data class XrpInfoResponse(
     val sequence: Long = 0,
     val hasUnconfirmed: Boolean = false,
     val reserveBase: BigDecimal,
+    val reserveTotal: BigDecimal,
     val accountFound: Boolean = true,
 )
 

@@ -50,13 +50,20 @@ class RippledNetworkProvider(
                 val unconfirmedData = unconfirmedDeferred.await()
                 val serverState = stateDeferred.await()
 
-                val reserveBase = serverState.result!!.state!!.validatedLedger!!.reserveBase!!
+                val validatedLedger = serverState.result!!.state!!.validatedLedger!!
+                val reserveBase = validatedLedger.reserveBase!!
                     .toBigDecimal().movePointLeft(decimals)
+
+                val ownerCount = accountData.result?.accountData?.ownerCount ?: 0
+                val reserveTotal = (validatedLedger.reserveBase!! + validatedLedger.reserveInc!! * ownerCount)
+                    .toBigDecimal()
+                    .movePointLeft(decimals)
 
                 if (accountData.result!!.errorCode == ERROR_CODE) {
                     Result.Success(
                         XrpInfoResponse(
                             reserveBase = reserveBase,
+                            reserveTotal = reserveTotal,
                             accountFound = false,
                         ),
                     )
@@ -73,6 +80,7 @@ class RippledNetworkProvider(
                             balance = confirmedBalance,
                             sequence = accountData.result!!.accountData!!.sequence!!,
                             hasUnconfirmed = confirmedBalance != unconfirmedBalance,
+                            reserveTotal = reserveTotal,
                             reserveBase = reserveBase,
                         ),
                     )
