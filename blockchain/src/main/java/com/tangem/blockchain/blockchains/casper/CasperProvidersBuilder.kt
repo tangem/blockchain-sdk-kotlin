@@ -14,6 +14,7 @@ import com.tangem.blockchain.extensions.letNotBlank
 internal class CasperProvidersBuilder(
     override val providerTypes: List<ProviderType>,
     private val config: BlockchainSdkConfig,
+    private val blockchain: Blockchain,
 ) : NetworkProvidersBuilder<CasperNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<CasperNetworkProvider> {
@@ -30,7 +31,13 @@ internal class CasperProvidersBuilder(
         return createWithPostfixIfContained(
             baseUrl = baseUrl,
             postfixUrl = POSTFIX_URL,
-            create = ::CasperRpcNetworkProvider,
+            create = { baseUrl, postfixUrl ->
+                CasperRpcNetworkProvider(
+                    baseUrl = baseUrl,
+                    postfixUrl = postfixUrl,
+                    blockchain = blockchain,
+                )
+            },
         )
     }
 
@@ -42,6 +49,7 @@ internal class CasperProvidersBuilder(
                 headerInterceptors = listOf(
                     AddHeaderInterceptor(mapOf(NowNodeCredentials.headerApiKey to it)),
                 ),
+                blockchain = blockchain,
             )
         }
     }

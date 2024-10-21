@@ -21,6 +21,7 @@ internal class CasperRpcNetworkProvider(
     override val baseUrl: String,
     private val postfixUrl: String,
     headerInterceptors: List<Interceptor> = emptyList(),
+    private val blockchain: Blockchain,
 ) : CasperNetworkProvider {
 
     private val api = createRetrofitInstance(baseUrl, headerInterceptors).create(CasperApi::class.java)
@@ -28,12 +29,12 @@ internal class CasperRpcNetworkProvider(
     override suspend fun getBalance(address: String): Result<CasperBalance> = post(
         body = CasperRpcBodyFactory.createQueryBalanceBody(address),
         onSuccess = { response: CasperRpcResponseResult.Balance ->
-            CasperBalance(balance = BigDecimal(response.balance))
+            CasperBalance(value = BigDecimal(response.balance).movePointLeft(blockchain.decimals()))
         },
         onFailure = {
             // Account is not funded yet
             if (it.code == ERROR_CODE_QUERY_FAILED) {
-                Result.Success(CasperBalance(balance = BigDecimal.ZERO))
+                Result.Success(CasperBalance(value = BigDecimal.ZERO))
             } else {
                 Result.Failure(toDefaultError(it))
             }
@@ -48,9 +49,11 @@ internal class CasperRpcNetworkProvider(
         return try {
             when (val response = api.post(body = body, postfixUrl = postfixUrl)) {
                 is CasperRpcResponse.Success -> {
-                    Result.Success(
-                        data = onSuccess(
-                            moshi.adapter<Data>().fromJsonValue(response.result)!!,
+                    runCatching {
+                        moshi.adapter<Data>().fromJsonValue(response.result)
+                    }.getOrNull()?.let { Result.Success(onSuccess(it)) } ?: Result.Failure(
+                        BlockchainSdkError.UnsupportedOperation(
+                            "Unknown Casper JSON-RPC response result",
                         ),
                     )
                 }
