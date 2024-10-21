@@ -20,6 +20,7 @@ internal object CasperWalletManagerAssembly : WalletManagerAssembly<CasperWallet
                     providers = CasperProvidersBuilder(
                         providerTypes = input.providerTypes,
                         config = input.config,
+                        blockchain = blockchain,
                     ).build(blockchain),
                 ),
                 transactionBuilder = CasperTransactionBuilder(this),

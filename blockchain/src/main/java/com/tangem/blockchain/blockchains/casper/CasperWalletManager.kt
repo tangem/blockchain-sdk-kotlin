@@ -17,7 +17,7 @@ internal class CasperWalletManager(
 ) : WalletManager(wallet), ReserveAmountProvider {
 
     override val currentHost: String get() = networkProvider.baseUrl
-    val blockchain = wallet.blockchain
+    private val blockchain = wallet.blockchain
 
     override suspend fun updateInternal() {
         when (val result = networkProvider.getBalance(wallet.address)) {
@@ -27,10 +27,10 @@ internal class CasperWalletManager(
     }
 
     private fun updateWallet(balance: CasperBalance) {
-        if (balance.balance != wallet.amounts[AmountType.Coin]?.value) {
+        if (balance.value != wallet.amounts[AmountType.Coin]?.value) {
             wallet.recentTransactions.clear()
         }
-        wallet.setCoinValue(balance.balance.movePointLeft(wallet.blockchain.decimals()))
+        wallet.setCoinValue(balance.value)
     }
 
     private fun updateError(error: BlockchainError) {
@@ -55,7 +55,7 @@ internal class CasperWalletManager(
         networkProvider.getBalance(destinationAddress) is Result.Success
 
     companion object {
-        // according to Casper wallet for nowx
+        // according to Casper Wallet
         private val FEE = 0.1.toBigDecimal()
     }
 }
