@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.dash;
 
+import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.params.AbstractBitcoinNetParams;
@@ -264,5 +265,10 @@ public class DashMainNetParams extends AbstractBitcoinNetParams {
     @Override
     public String getPaymentProtocolId() {
         return PAYMENT_PROTOCOL_ID_MAINNET;
+    }
+
+    @Override
+    public Block getGenesisBlock() {
+        return null;
     }
 }
