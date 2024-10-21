@@ -30,12 +30,12 @@ public class DucatusMainNetParams extends AbstractBitcoinNetParams {
         spendableCoinbaseDepth = 100;
         subsidyDecreaseBlockCount = 840000;
 
-        genesisBlock.setTime(1317972665L);
-        genesisBlock.setDifficultyTarget(0x1e0ffff0L);
-        genesisBlock.setNonce(2084524493);
-
-        String genesisHash = genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("5155a7ed2219a75c0735c58b5d459c6d07d97917570e27b9d1d4546fb8431381"));
+//        genesisBlock.setTime(1317972665L);
+//        genesisBlock.setDifficultyTarget(0x1e0ffff0L);
+//        genesisBlock.setNonce(2084524493);
+//
+//        String genesisHash = genesisBlock.getHashAsString();
+//        checkState(genesisHash.equals("5155a7ed2219a75c0735c58b5d459c6d07d97917570e27b9d1d4546fb8431381"));
 
         majorityEnforceBlockUpgrade = MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
         majorityRejectBlockOutdated = MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED;
