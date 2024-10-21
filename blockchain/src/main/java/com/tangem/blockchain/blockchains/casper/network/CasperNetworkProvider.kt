@@ -4,6 +4,6 @@ import com.tangem.blockchain.blockchains.casper.models.CasperBalance
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.extensions.Result
 
-interface CasperNetworkProvider : NetworkProvider {
+internal interface CasperNetworkProvider : NetworkProvider {
     suspend fun getBalance(address: String): Result<CasperBalance>
 }
