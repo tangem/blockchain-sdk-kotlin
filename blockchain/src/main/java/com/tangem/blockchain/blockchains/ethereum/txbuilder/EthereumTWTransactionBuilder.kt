@@ -38,7 +38,7 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
     override fun buildForSign(transaction: TransactionData): EthereumCompiledTxInfo.TWInfo {
         val input = buildSigningInput(transaction)
         val preSigningOutput = buildTxCompilerPreSigningOutput(input)
-        return EthereumCompiledTxInfo.TWInfo(hash = preSigningOutput.dataHash.toByteArray())
+        return EthereumCompiledTxInfo.TWInfo(hash = preSigningOutput.dataHash.toByteArray(), input = input)
     }
 
     override fun buildForSend(
@@ -46,8 +46,13 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
         signature: ByteArray,
         compiledTransaction: EthereumCompiledTxInfo,
     ): ByteArray {
-        val input = buildSigningInput(transaction)
-        val output = buildSigningOutput(input = input, hash = compiledTransaction.hash, signature = signature)
+        val output = buildSigningOutput(
+            // TODO: It's required to use input that we build for signing cause bad EthereumWalletManager's architecture
+            input = (compiledTransaction as EthereumCompiledTxInfo.TWInfo).input,
+            hash = compiledTransaction.hash,
+            signature = signature,
+        )
+
         return output.encoded.toByteArray()
     }
 
@@ -59,34 +64,13 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
     ): ByteArray {
         val eip1559Fee = fee as Fee.Ethereum.EIP1559
 
-        val input = when (val amountType = amount.type) {
-            AmountType.Coin -> {
-                buildSigningInput(
-                    chainId = chainId,
-                    destinationAddress = destination,
-                    coinAmount = amount.value?.toBigInteger() ?: BigInteger.ZERO,
-                    fee = eip1559Fee,
-                    extras = EthereumTransactionExtras(data = data?.toByteArray(), nonce = BigInteger.ONE),
-                )
-            }
-            is AmountType.Token -> {
-                val transferData = createErc20TransferData(
-                    recipient = destination,
-                    amount = amount.value?.toBigInteger() ?: BigInteger.ZERO,
-                )
-
-                buildSigningInput(
-                    chainId = chainId,
-                    destinationAddress = amountType.token.contractAddress,
-                    coinAmount = BigInteger.ZERO,
-                    fee = eip1559Fee,
-                    extras = EthereumTransactionExtras(data = transferData, nonce = BigInteger.ONE),
-                )
-            }
-            is AmountType.FeeResource,
-            AmountType.Reserve,
-            -> error("Invalid amount type: ${amount.type}")
-        }
+        val input = buildSigningInput(
+            chainId = chainId,
+            destinationAddress = destination,
+            coinAmount = BigInteger.ONE,
+            fee = eip1559Fee,
+            extras = EthereumTransactionExtras(nonce = BigInteger.ONE),
+        )
 
         val preSigningOutput = buildTxCompilerPreSigningOutput(input)
         return preSigningOutput.dataHash.toByteArray()
