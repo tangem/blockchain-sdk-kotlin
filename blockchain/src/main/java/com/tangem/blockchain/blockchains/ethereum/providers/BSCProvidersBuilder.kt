@@ -36,7 +36,7 @@ internal class BSCProvidersBuilder(
         return config.quickNodeBscCredentials?.let { credentials ->
             if (credentials.subdomain.isNotBlank() && credentials.apiKey.isNotBlank()) {
                 EthereumJsonRpcProvider(
-                    "https://${credentials.subdomain}.bsc.discover.quiknode.pro/${credentials.apiKey}/",
+                    "https://${credentials.subdomain}/${credentials.apiKey}/",
                 )
             } else {
                 null
