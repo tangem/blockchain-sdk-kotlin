@@ -6,7 +6,7 @@ import com.tangem.blockchain.blockchains.ethereum.providers.BaseProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.providers.BlastProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.providers.CyberProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.providers.MantaProvidersBuilder
-import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumLegacyTransactionBuilder
 import com.tangem.blockchain.blockchains.optimism.EthereumOptimisticRollupWalletManager
 import com.tangem.blockchain.blockchains.optimism.OptimismProvidersBuilder
 import com.tangem.blockchain.common.Blockchain
@@ -23,7 +23,8 @@ internal object EthereumOptimisticRollupWalletManagerAssembly :
         with(input.wallet) {
             return EthereumOptimisticRollupWalletManager(
                 wallet = this,
-                transactionBuilder = EthereumTransactionBuilder.create(wallet = input.wallet),
+                // TODO: [REDACTED_JIRA]
+                transactionBuilder = EthereumLegacyTransactionBuilder(wallet = input.wallet),
                 networkProvider = EthereumNetworkService(
                     jsonRpcProviders = getProvidersBuilder(blockchain, input.providerTypes, input.config)
                         .build(blockchain),
