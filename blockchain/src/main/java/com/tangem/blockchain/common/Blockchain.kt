@@ -463,6 +463,8 @@ enum class Blockchain(
             Cyber, CyberTestnet -> CyberTestnet
             Sei, SeiTestnet -> SeiTestnet
             Sui, SuiTestnet -> SuiTestnet
+            EnergyWebChain, EnergyWebChainTestnet -> EnergyWebChainTestnet
+            EnergyWebX, EnergyWebXTestnet -> EnergyWebXTestnet
             Casper, CasperTestnet -> CasperTestnet
             Core, CoreTestnet -> CoreTestnet
             else -> null
@@ -651,7 +653,7 @@ enum class Blockchain(
 
     fun canHandleTokens(): Boolean {
         // disable tokens support for Taraxa evm until it's not tested
-        if (this == Taraxa) return false
+        if (this == Taraxa || this == EnergyWebChain) return false
 
         if (isEvm()) return true
 
