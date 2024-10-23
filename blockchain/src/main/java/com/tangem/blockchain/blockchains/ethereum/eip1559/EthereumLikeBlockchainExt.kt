@@ -15,16 +15,17 @@ internal val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Fantom,
             Blockchain.Arbitrum,
             Blockchain.Gnosis,
-            Blockchain.Optimism,
+            // TODO: [REDACTED_JIRA]
+            // Blockchain.Optimism,
+            // Blockchain.Manta,
+            // Blockchain.Base,
             Blockchain.Cronos,
             Blockchain.Decimal,
             Blockchain.Areon,
             Blockchain.Playa3ull,
             Blockchain.PulseChain,
-            Blockchain.Manta,
             Blockchain.Mantle,
             Blockchain.Flare,
-            Blockchain.Base,
             -> true
             Blockchain.EthereumClassic, // eth_feeHistory all zeroes
             Blockchain.EthereumPow, // eth_feeHistory with zeros
@@ -41,6 +42,9 @@ internal val Blockchain.isSupportEIP1559: Boolean
             Blockchain.PolygonZkEVM,
             Blockchain.Moonriver,
             Blockchain.Taraxa,
+            Blockchain.Optimism,
+            Blockchain.Manta,
+            Blockchain.Base,
             Blockchain.Cyber,
             Blockchain.Blast,
             Blockchain.Core, // base fee is zero
