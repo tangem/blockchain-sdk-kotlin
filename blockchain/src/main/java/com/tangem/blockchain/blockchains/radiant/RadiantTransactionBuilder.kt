@@ -2,7 +2,11 @@ package com.tangem.blockchain.blockchains.radiant
 
 import com.tangem.blockchain.blockchains.radiant.models.RadiantAmountUnspentTransaction
 import com.tangem.blockchain.blockchains.radiant.models.RadiantUnspentTransaction
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.DummySigner
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.transaction.getMinimumRequiredUTXOsToSend
 import com.tangem.blockchain.extensions.bytes4LittleEndian
 import com.tangem.blockchain.extensions.bytes8LittleEndian
 import com.tangem.blockchain.extensions.successOr
@@ -29,7 +33,10 @@ internal class RadiantTransactionBuilder(
         transactionData.requireUncompiled()
 
         val outputScript = RadiantScriptUtils.buildOutputScript(address = transactionData.sourceAddress)
-        val unspents = buildUnspents(listOf(outputScript))
+        val unspents = buildUnspents(
+            transactionData = transactionData,
+            outputScripts = listOf(outputScript),
+        )
 
         val txForPreimage = RadiantAmountUnspentTransaction(
             amount = transactionData.amount,
@@ -54,7 +61,10 @@ internal class RadiantTransactionBuilder(
         transactionData.requireUncompiled()
 
         val outputScripts = RadiantScriptUtils.buildSignedScripts(signatures, walletPublicKey)
-        val unspents = buildUnspents(outputScripts)
+        val unspents = buildUnspents(
+            transactionData = transactionData,
+            outputScripts = outputScripts,
+        )
         val txForSigned = RadiantAmountUnspentTransaction(
             amount = transactionData.amount,
             fee = transactionData.fee,
@@ -195,8 +205,18 @@ internal class RadiantTransactionBuilder(
         return txBody
     }
 
-    private fun buildUnspents(outputScripts: List<ByteArray>): List<RadiantUnspentTransaction> {
-        return utxo.mapIndexed { index, txRef ->
+    private fun buildUnspents(
+        transactionData: TransactionData.Uncompiled,
+        outputScripts: List<ByteArray>,
+    ): List<RadiantUnspentTransaction> {
+        val outputsToSend = getMinimumRequiredUTXOsToSend(
+            unspentOutputs = utxo,
+            transactionAmount = transactionData.amount.value!!,
+            transactionFeeAmount = transactionData.fee?.amount?.value!!,
+            unspentToAmount = { it.value },
+        )
+
+        return outputsToSend.mapIndexed { index, txRef ->
             val outputScript = if (outputScripts.count() == 1) outputScripts.first() else outputScripts.getOrNull(index)
             outputScript ?: throw BlockchainSdkError.FailedToBuildTx
             RadiantUnspentTransaction(
