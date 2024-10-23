@@ -2,13 +2,11 @@ package com.tangem.blockchain.blockchains.optimism
 
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
-import com.tangem.blockchain.blockchains.ethereum.eip1559.isSupportEIP1559
 import com.tangem.blockchain.blockchains.ethereum.network.ContractCallData
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -33,13 +31,15 @@ class EthereumOptimisticRollupWalletManager(
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
-        return if (DepsContainer.blockchainFeatureToggles.isEthereumEIP1559Enabled &&
-            wallet.blockchain.isSupportEIP1559
-        ) {
-            getEIP1559Fee(amount = amount, destination = destination, data = null, layer2fee = layer2fee)
-        } else {
-            getLegacyFee(amount = amount, destination = destination, data = null, layer2fee = layer2fee)
-        }
+        return getLegacyFee(amount = amount, destination = destination, data = null, layer2fee = layer2fee)
+        // TODO: [REDACTED_JIRA]
+        // return if (DepsContainer.blockchainFeatureToggles.isEthereumEIP1559Enabled &&
+        //     wallet.blockchain.isSupportEIP1559
+        // ) {
+        //     getEIP1559Fee(amount = amount, destination = destination, data = null, layer2fee = layer2fee)
+        // } else {
+        //     getLegacyFee(amount = amount, destination = destination, data = null, layer2fee = layer2fee)
+        // }
     }
 
     override suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee.Choosable> {
@@ -49,13 +49,15 @@ class EthereumOptimisticRollupWalletManager(
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
-        return if (DepsContainer.blockchainFeatureToggles.isEthereumEIP1559Enabled &&
-            wallet.blockchain.isSupportEIP1559
-        ) {
-            getEIP1559Fee(amount = amount, destination = destination, data = data, layer2fee = layer2fee)
-        } else {
-            getLegacyFee(amount = amount, destination = destination, data = data, layer2fee = layer2fee)
-        }
+        // TODO: [REDACTED_JIRA]
+        return getLegacyFee(amount = amount, destination = destination, data = data, layer2fee = layer2fee)
+        // return if (DepsContainer.blockchainFeatureToggles.isEthereumEIP1559Enabled &&
+        //     wallet.blockchain.isSupportEIP1559
+        // ) {
+        //     getEIP1559Fee(amount = amount, destination = destination, data = data, layer2fee = layer2fee)
+        // } else {
+        //     getLegacyFee(amount = amount, destination = destination, data = data, layer2fee = layer2fee)
+        // }
     }
 
     private suspend fun getLegacyFee(
@@ -105,55 +107,55 @@ class EthereumOptimisticRollupWalletManager(
         return Result.Success(updatedFees)
     }
 
-    private suspend fun getEIP1559Fee(
-        amount: Amount,
-        destination: String,
-        data: String?,
-        layer2fee: TransactionFee.Choosable,
-    ): Result<TransactionFee.Choosable> {
-        val minimumFee = layer2fee.minimum as Fee.Ethereum.EIP1559
-        val normalFee = layer2fee.normal as Fee.Ethereum.EIP1559
-        val priorityFee = layer2fee.priority as Fee.Ethereum.EIP1559
-
-        val serializedTransaction = transactionBuilder.buildDummyTransactionForL1(
-            amount = amount,
-            destination = destination,
-            data = data,
-            fee = normalFee,
-        )
-
-        val lastLayer1Fee = getLayer1Fee(serializedTransaction).successOr {
-            return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-        }
-        lastLayer1FeeAmount = lastLayer1Fee
-
-        // https://community.optimism.io/docs/developers/build/transaction-fees/#displaying-fees-to-users
-
-        val lastLayer1FeeValue = requireNotNull(lastLayer1Fee.value) { "Fee must not bee null" }
-
-        val updatedFees = layer2fee.copy(
-            minimum = Fee.Ethereum.EIP1559(
-                amount = minimumFee.amount + lastLayer1FeeValue,
-                gasLimit = minimumFee.gasLimit,
-                maxFeePerGas = minimumFee.maxFeePerGas,
-                priorityFee = minimumFee.priorityFee,
-            ),
-            normal = Fee.Ethereum.EIP1559(
-                amount = normalFee.amount + lastLayer1FeeValue,
-                gasLimit = normalFee.gasLimit,
-                maxFeePerGas = normalFee.maxFeePerGas,
-                priorityFee = normalFee.priorityFee,
-            ),
-            priority = Fee.Ethereum.EIP1559(
-                amount = priorityFee.amount + lastLayer1FeeValue,
-                gasLimit = priorityFee.gasLimit,
-                maxFeePerGas = priorityFee.maxFeePerGas,
-                priorityFee = priorityFee.priorityFee,
-            ),
-        )
-
-        return Result.Success(updatedFees)
-    }
+    // private suspend fun getEIP1559Fee(
+    //     amount: Amount,
+    //     destination: String,
+    //     data: String?,
+    //     layer2fee: TransactionFee.Choosable,
+    // ): Result<TransactionFee.Choosable> {
+    //     val minimumFee = layer2fee.minimum as Fee.Ethereum.EIP1559
+    //     val normalFee = layer2fee.normal as Fee.Ethereum.EIP1559
+    //     val priorityFee = layer2fee.priority as Fee.Ethereum.EIP1559
+    //
+    //     val serializedTransaction = transactionBuilder.buildDummyTransactionForL1(
+    //         amount = amount,
+    //         destination = destination,
+    //         data = data,
+    //         fee = normalFee,
+    //     )
+    //
+    //     val lastLayer1Fee = getLayer1Fee(serializedTransaction).successOr {
+    //         return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+    //     }
+    //     lastLayer1FeeAmount = lastLayer1Fee
+    //
+    //     // https://community.optimism.io/docs/developers/build/transaction-fees/#displaying-fees-to-users
+    //
+    //     val lastLayer1FeeValue = requireNotNull(lastLayer1Fee.value) { "Fee must not bee null" }
+    //
+    //     val updatedFees = layer2fee.copy(
+    //         minimum = Fee.Ethereum.EIP1559(
+    //             amount = minimumFee.amount + lastLayer1FeeValue,
+    //             gasLimit = minimumFee.gasLimit,
+    //             maxFeePerGas = minimumFee.maxFeePerGas,
+    //             priorityFee = minimumFee.priorityFee,
+    //         ),
+    //         normal = Fee.Ethereum.EIP1559(
+    //             amount = normalFee.amount + lastLayer1FeeValue,
+    //             gasLimit = normalFee.gasLimit,
+    //             maxFeePerGas = normalFee.maxFeePerGas,
+    //             priorityFee = normalFee.priorityFee,
+    //         ),
+    //         priority = Fee.Ethereum.EIP1559(
+    //             amount = priorityFee.amount + lastLayer1FeeValue,
+    //             gasLimit = priorityFee.gasLimit,
+    //             maxFeePerGas = priorityFee.maxFeePerGas,
+    //             priorityFee = priorityFee.priorityFee,
+    //         ),
+    //     )
+    //
+    //     return Result.Success(updatedFees)
+    // }
 
     override suspend fun sign(
         transactionData: TransactionData,
