@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.txbuilder
 
 import org.kethereum.model.Transaction
+import wallet.core.jni.proto.Ethereum
 
 /** Ethereum compiled transaction */
 sealed interface EthereumCompiledTxInfo {
@@ -22,7 +23,11 @@ sealed interface EthereumCompiledTxInfo {
     /**
      * Compiled transaction info for building transaction by TW
      *
-     * @property hash hash
+     * @property hash  hash
+     * @property input transaction input
      */
-    data class TWInfo(override val hash: ByteArray) : EthereumCompiledTxInfo
+    data class TWInfo(
+        override val hash: ByteArray,
+        val input: Ethereum.SigningInput,
+    ) : EthereumCompiledTxInfo
 }
