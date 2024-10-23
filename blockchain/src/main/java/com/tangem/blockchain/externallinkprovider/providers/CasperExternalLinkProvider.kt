@@ -10,10 +10,10 @@ internal class CasperExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProv
     override val testNetTopUpUrl = "https://testnet.cspr.live/tools/faucet/"
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
-        return explorerBaseUrl + "deploy/$walletAddress"
+        return explorerBaseUrl + "account/$walletAddress"
     }
 
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
-        return TxExploreState.Url(url = "${explorerBaseUrl}transactions/$transactionHash")
+        return TxExploreState.Url(url = "${explorerBaseUrl}deploy/$transactionHash")
     }
 }
