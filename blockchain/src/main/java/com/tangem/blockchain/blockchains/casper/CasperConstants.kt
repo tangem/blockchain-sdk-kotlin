@@ -23,4 +23,18 @@ internal object CasperConstants {
         EllipticCurve.Bip0340,
         -> error("${curve.curve} is not supported")
     }
+
+    fun getSignaturePrefix(curve: EllipticCurve) = when (curve) {
+        EllipticCurve.Ed25519,
+        EllipticCurve.Ed25519Slip0010,
+        -> ED25519_PREFIX
+        EllipticCurve.Secp256k1 -> SECP256K1_PREFIX
+        // added as unsupported for now, need to research
+        EllipticCurve.Secp256r1,
+        EllipticCurve.Bls12381G2,
+        EllipticCurve.Bls12381G2Aug,
+        EllipticCurve.Bls12381G2Pop,
+        EllipticCurve.Bip0340,
+        -> error("${curve.curve} is not supported")
+    }
 }
