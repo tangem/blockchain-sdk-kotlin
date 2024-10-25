@@ -8,12 +8,17 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
+import com.tangem.common.CompletionResult
+import com.tangem.common.card.EllipticCurve
+import com.tangem.common.extensions.calculateSha256
+import com.tangem.common.extensions.hexToBytes
 import java.math.BigDecimal
 
 internal class CasperWalletManager(
     wallet: Wallet,
     private val networkProvider: CasperNetworkProvider,
     private val transactionBuilder: CasperTransactionBuilder,
+    private val curve: EllipticCurve,
 ) : WalletManager(wallet), ReserveAmountProvider {
 
     override val currentHost: String get() = networkProvider.baseUrl
@@ -42,20 +47,54 @@ internal class CasperWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        TODO("Not yet implemented")
+        return try {
+            val unsignedBody = transactionBuilder.buildForSign(transactionData = transactionData)
+            val hashSha256 = unsignedBody.hash.hexToBytes().calculateSha256()
+
+            when (val signingResult = signer.sign(hashSha256, wallet.publicKey)) {
+                is CompletionResult.Failure -> Result.fromTangemSdkError(signingResult.error)
+                is CompletionResult.Success -> {
+                    val signedTransactionBody = transactionBuilder.buildForSend(
+                        unsignedTransactionBody = unsignedBody,
+                        signature = encodeSignature(signingResult.data),
+                    )
+
+                    val result = networkProvider.putDeploy(body = signedTransactionBody)
+
+                    when (result) {
+                        is Result.Failure -> Result.Failure(result.error)
+                        is Result.Success -> {
+                            val txHash = result.data.deployHash
+                            wallet.addOutgoingTransaction(transactionData.updateHash(hash = txHash))
+                            transactionData.hash = txHash
+                            Result.Success(TransactionSendResult(txHash))
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(this::class.java.simpleName, e.toBlockchainSdkError().customMessage)
+            throw e
+        }
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         return Result.Success(TransactionFee.Single(Fee.Common(Amount(FEE, blockchain))))
     }
 
-    override fun getReserveAmount(): BigDecimal = transactionBuilder.minReserve
+    override fun getReserveAmount(): BigDecimal = MIN_RESERVE
 
     override suspend fun isAccountFunded(destinationAddress: String): Boolean =
         networkProvider.getBalance(destinationAddress) is Result.Success
 
+    private fun encodeSignature(signature: ByteArray): ByteArray {
+        return CasperConstants.getSignaturePrefix(curve).hexToBytes() + signature
+    }
+
     companion object {
         // according to Casper Wallet
         private val FEE = 0.1.toBigDecimal()
+
+        private val MIN_RESERVE = 2.5.toBigDecimal()
     }
 }
