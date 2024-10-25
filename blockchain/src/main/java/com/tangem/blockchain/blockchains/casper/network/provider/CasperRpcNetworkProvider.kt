@@ -2,9 +2,11 @@ package com.tangem.blockchain.blockchains.casper.network.provider
 
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.casper.models.CasperBalance
+import com.tangem.blockchain.blockchains.casper.models.CasperTransaction
 import com.tangem.blockchain.blockchains.casper.network.CasperApi
 import com.tangem.blockchain.blockchains.casper.network.CasperNetworkProvider
 import com.tangem.blockchain.blockchains.casper.network.request.CasperRpcBodyFactory
+import com.tangem.blockchain.blockchains.casper.network.request.CasperTransactionBody
 import com.tangem.blockchain.blockchains.casper.network.response.CasperRpcResponse
 import com.tangem.blockchain.blockchains.casper.network.response.CasperRpcResponseResult
 import com.tangem.blockchain.common.*
@@ -38,6 +40,16 @@ internal class CasperRpcNetworkProvider(
             } else {
                 Result.Failure(toDefaultError(it))
             }
+        },
+    )
+
+    override suspend fun putDeploy(body: CasperTransactionBody): Result<CasperTransaction> = post(
+        body = CasperRpcBodyFactory.createAccountPutDeployBody(body),
+        onSuccess = { response: CasperRpcResponseResult.Deploy ->
+            CasperTransaction(response.deployHash)
+        },
+        onFailure = {
+            Result.Failure(toDefaultError(it))
         },
     )
 
