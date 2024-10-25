@@ -5,7 +5,7 @@ import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
-class CasperAddressTest {
+internal class CasperAddressTest {
 
     private val addressService = CasperAddressService()
 
