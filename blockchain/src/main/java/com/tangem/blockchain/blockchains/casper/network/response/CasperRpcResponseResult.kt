@@ -10,4 +10,9 @@ internal sealed interface CasperRpcResponseResult {
     data class Balance(
         @Json(name = "balance") val balance: String,
     ) : CasperRpcResponseResult
+
+    @JsonClass(generateAdapter = true)
+    data class Deploy(
+        @Json(name = "deploy_hash") val deployHash: String,
+    ) : CasperRpcResponseResult
 }

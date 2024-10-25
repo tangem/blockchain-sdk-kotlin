@@ -21,6 +21,11 @@ internal object CasperRpcBodyFactory {
         params = CasperBalanceBodyConverter.convert(address),
     )
 
+    fun createAccountPutDeployBody(body: CasperTransactionBody) = create(
+        method = CasperRpcMethod.AccountPutDeploy,
+        params = listOf(body),
+    )
+
     private fun create(method: CasperRpcMethod, params: Any?): JsonRPCRequest {
         return JsonRPCRequest(
             id = "1",
