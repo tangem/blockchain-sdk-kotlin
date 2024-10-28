@@ -9,6 +9,7 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.bigIntegerValue
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import java.math.BigDecimal
@@ -42,7 +43,7 @@ internal class FilecoinWalletManager(
         val transactionInfo = FilecoinTxInfo(
             sourceAddress = wallet.address,
             destinationAddress = destination,
-            amount = amount.longValueOrZero,
+            amount = requireNotNull(amount.bigIntegerValue()),
             nonce = nonce,
         )
 
