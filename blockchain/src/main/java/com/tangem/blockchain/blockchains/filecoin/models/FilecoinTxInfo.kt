@@ -1,5 +1,7 @@
 package com.tangem.blockchain.blockchains.filecoin.models
 
+import java.math.BigInteger
+
 /**
  * Filecoin transaction info
  *
@@ -13,6 +15,6 @@ package com.tangem.blockchain.blockchains.filecoin.models
 internal data class FilecoinTxInfo(
     val sourceAddress: String,
     val destinationAddress: String,
-    val amount: Long,
+    val amount: BigInteger,
     val nonce: Long?,
 )
