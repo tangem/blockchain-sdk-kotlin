@@ -18,7 +18,6 @@ import wallet.core.jni.TransactionCompiler
 import wallet.core.jni.proto.Common
 import wallet.core.jni.proto.Ethereum
 import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
-import java.math.BigDecimal
 import java.math.BigInteger
 
 /**
@@ -134,44 +133,16 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
         val parsed = compiledTransactionAdapter.fromJson(compiledTransaction)
             ?: error("Unable to parse compiled transaction")
 
-        val amountType = transaction.amount?.type
-        val amount = if (amountType == AmountType.Coin) { // coin transfer
-            transaction.amount.value
-                ?.movePointRight(transaction.amount.decimals)
-                ?.toBigInteger()
-                ?: error("Sending amount for coin must be specified")
-        } else { // token transfer (or approve)
-            BigInteger.ZERO
-        }
+        val amount = parsed.value?.hexToBigDecimal()?.toBigInteger() ?: BigInteger.ZERO
+        val nonce = parsed.nonce.toBigInteger()
 
-        val maxPriorityFeePerGas = parsed.maxPriorityFeePerGas?.hexToBigDecimal()?.toBigInteger()
-            ?: error("Transaction maxPriorityFeePerGas must be specified")
-        val maxFeePerGas = parsed.maxFeePerGas?.hexToBigDecimal()?.toBigInteger()
-            ?: error("Transaction maxFeePerGas must be specified")
-        val gasLimit = parsed.gasLimit.hexToBigDecimal().toBigInteger().takeIf { it > BigInteger.ZERO }
-            ?: error("Transaction gasLimit must be specified")
-        val fee = transaction.fee?.amount ?: error("Transaction fee must be specified")
-        if (fee.value != null && fee.value <= BigDecimal.ZERO) error("Transaction fee must be specified")
-
-        val ethereumFee = Fee.Ethereum.EIP1559(
-            amount = fee,
-            gasLimit = gasLimit,
-            maxFeePerGas = maxFeePerGas,
-            priorityFee = maxPriorityFeePerGas,
-        )
-        val extras = EthereumTransactionExtras(
-            data = parsed.data.hexToBytes(),
-            gasLimit = gasLimit,
-            nonce = parsed.nonce.toBigInteger(),
-        )
-
-        return buildSigningInput(
-            chainId = parsed.chainId,
-            destinationAddress = parsed.to,
-            coinAmount = parsed.value?.hexToBigDecimal()?.toBigInteger() ?: amount,
-            fee = ethereumFee,
-            extras = extras,
-        )
+        return Ethereum.SigningInput.newBuilder()
+            .setChainId(ByteString.copyFrom(chainId.toByteArray()))
+            .setNonce(ByteString.copyFrom(nonce.toByteArray()))
+            .setDestinationAddress(address = parsed.to)
+            .setFeeParams(parsed = parsed)
+            .setTransaction(coinAmount = amount, data = parsed.data.hexToBytes())
+            .build()
     }
 
     private fun buildSigningInput(
@@ -216,6 +187,31 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
         }
     }
 
+    private fun Ethereum.SigningInput.Builder.setFeeParams(
+        parsed: EthereumCompiledTransaction,
+    ): Ethereum.SigningInput.Builder {
+        val maxPriorityFeePerGas = parsed.maxPriorityFeePerGas
+        val maxFeePerGas = parsed.maxFeePerGas
+        val gasPrice = parsed.gasPrice
+
+        return when {
+            maxFeePerGas != null && maxPriorityFeePerGas != null -> {
+                this
+                    .setTxMode(Ethereum.TransactionMode.Enveloped)
+                    .setGasLimit(ByteString.copyFrom(parsed.gasLimit.hexToBytes()))
+                    .setMaxFeePerGas(ByteString.copyFrom(maxFeePerGas.hexToBytes()))
+                    .setMaxInclusionFeePerGas(ByteString.copyFrom(maxPriorityFeePerGas.hexToBytes()))
+            }
+            gasPrice != null -> {
+                this
+                    .setTxMode(Ethereum.TransactionMode.Legacy)
+                    .setGasLimit(ByteString.copyFrom(parsed.gasLimit.hexToBytes()))
+                    .setGasPrice(ByteString.copyFrom(gasPrice.hexToBytes()))
+            }
+            else -> error("Transaction fee must be specified")
+        }
+    }
+
     private fun Fee.Ethereum.Legacy.calculateGasPrice(): BigInteger {
         val feeValue = amount.value
             ?.movePointRight(amount.decimals)
@@ -232,6 +228,17 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
         return setTransaction(
             Ethereum.Transaction.newBuilder()
                 .setContractGeneric(coinAmount = coinAmount, data = extras?.data)
+                .build(),
+        )
+    }
+
+    private fun Ethereum.SigningInput.Builder.setTransaction(
+        coinAmount: BigInteger,
+        data: ByteArray?,
+    ): Ethereum.SigningInput.Builder {
+        return setTransaction(
+            Ethereum.Transaction.newBuilder()
+                .setContractGeneric(coinAmount = coinAmount, data = data)
                 .build(),
         )
     }
