@@ -199,7 +199,7 @@ class WalletManagerFactory(
             Blockchain.Sei, Blockchain.SeiTestnet -> SeiWalletManagerAssembly
             Blockchain.InternetComputer -> ICPWalletManagerAssembly
             Blockchain.Sui, Blockchain.SuiTestnet -> SuiteWalletManagerAssembly
-            Blockchain.Casper, Blockchain.CasperTestnet -> TODO() // [REDACTED_TASK_KEY]
+            Blockchain.Casper, Blockchain.CasperTestnet -> CasperWalletManagerAssembly
             Blockchain.Unknown,
             -> error("Unsupported blockchain")
         }
