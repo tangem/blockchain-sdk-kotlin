@@ -174,6 +174,8 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Casper,
             Blockchain.CasperTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/506'/0'/0/0"))
+            Blockchain.Xodex,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/2415'/0'/0/0"))
         }
     }
 }
