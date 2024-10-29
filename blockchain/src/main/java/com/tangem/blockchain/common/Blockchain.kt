@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressServiceFacade
+import com.tangem.blockchain.blockchains.casper.CasperAddressService
 import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.decimal.DecimalAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
@@ -377,7 +378,7 @@ enum class Blockchain(
             Nexa, NexaTestnet -> NexaAddressService(this.isTestnet())
             Koinos, KoinosTestnet -> KoinosAddressService()
             Radiant -> RadiantAddressService()
-            Casper, CasperTestnet -> TODO() // [REDACTED_TASK_KEY]
+            Casper, CasperTestnet -> CasperAddressService()
             Unknown -> error("unsupported blockchain")
         }
     }
@@ -475,7 +476,6 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
-            Casper, CasperTestnet,
             -> listOf(
                 EllipticCurve.Secp256k1,
                 EllipticCurve.Ed25519,
@@ -539,6 +539,7 @@ enum class Blockchain(
             InternetComputer,
             EnergyWebChain, EnergyWebChainTestnet,
             Core, CoreTestnet,
+            Casper, CasperTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
