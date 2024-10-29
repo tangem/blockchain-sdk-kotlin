@@ -77,4 +77,5 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     EnergyWebChainTestnet(id = 73799, blockchain = Blockchain.EnergyWebChainTestnet),
     Core(id = 1116, blockchain = Blockchain.Core),
     CoreTestnet(id = 1115, blockchain = Blockchain.CoreTestnet),
+    Xodex(id = 2415, blockchain = Blockchain.Xodex),
 }
