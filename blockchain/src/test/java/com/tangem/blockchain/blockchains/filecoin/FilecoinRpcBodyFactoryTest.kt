@@ -7,6 +7,7 @@ import com.tangem.blockchain.blockchains.filecoin.network.request.FilecoinRpcBod
 import com.tangem.blockchain.blockchains.filecoin.network.request.FilecoinRpcMethod
 import com.tangem.blockchain.blockchains.filecoin.network.request.FilecoinSignedTransactionBody
 import com.tangem.blockchain.blockchains.filecoin.network.request.FilecoinTransactionBody
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.JsonRPCRequest
 import org.junit.Test
 
@@ -65,7 +66,7 @@ internal class FilecoinRpcBodyFactoryTest {
         val txInfo = FilecoinTxInfo(
             sourceAddress = "inimicus",
             destinationAddress = "sadipscing",
-            amount = 4135,
+            amount = 4135.toBigDecimal().movePointRight(Blockchain.Filecoin.decimals()).toBigInteger(),
             nonce = 7532,
         )
 
