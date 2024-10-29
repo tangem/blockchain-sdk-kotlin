@@ -26,6 +26,9 @@ data class RippledAccountData(
 
     @Json(name = "Sequence")
     var sequence: Long? = null,
+
+    @Json(name = "OwnerCount")
+    var ownerCount: Long? = null,
 )
 
 // Rippled state
@@ -51,6 +54,8 @@ data class RippledState(
 data class RippledLedger(
     @Json(name = "reserve_base")
     var reserveBase: Long? = null,
+    @Json(name = "reserve_inc")
+    var reserveInc: Long? = null,
 )
 
 // Rippled fee
