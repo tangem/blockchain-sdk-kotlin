@@ -91,6 +91,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Casper, Blockchain.CasperTestnet -> CasperExternalLinkProvider(isTestnet)
             Blockchain.Core, Blockchain.CoreTestnet -> CoreExternalLinkProvider(isTestnet)
             Blockchain.Xodex -> XodexExternalLinkProvider()
+            Blockchain.Canxium -> CanxiumExternalLinkProvider()
         }
     }
 }
