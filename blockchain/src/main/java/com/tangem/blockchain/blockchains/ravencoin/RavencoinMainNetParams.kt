@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.ravencoin
 
+import org.bitcoinj.core.Block
 import org.bitcoinj.core.Utils
 import org.bitcoinj.params.AbstractBitcoinNetParams
 
@@ -29,6 +30,10 @@ class RavencoinMainNetParams : AbstractBitcoinNetParams() {
 
     override fun getPaymentProtocolId(): String {
         return PAYMENT_PROTOCOL_ID_MAINNET
+    }
+
+    override fun getGenesisBlock(): Block {
+        return Block.createGenesis(this) // Stub genesis block
     }
 
     private companion object {
