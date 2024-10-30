@@ -176,6 +176,8 @@ object DerivationConfigV1 : DerivationConfig() {
             -> mapOf(AddressType.Default to DerivationPath("m/44'/506'/0'/0/0"))
             Blockchain.Xodex,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/2415'/0'/0/0"))
+            Blockchain.Canxium,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/3003'/0'/0/0"))
         }
     }
 }
