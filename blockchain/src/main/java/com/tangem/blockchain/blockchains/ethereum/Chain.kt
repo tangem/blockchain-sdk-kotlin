@@ -78,4 +78,5 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     Core(id = 1116, blockchain = Blockchain.Core),
     CoreTestnet(id = 1115, blockchain = Blockchain.CoreTestnet),
     Xodex(id = 2415, blockchain = Blockchain.Xodex),
+    Canxium(id = 3003, blockchain = Blockchain.Canxium),
 }
