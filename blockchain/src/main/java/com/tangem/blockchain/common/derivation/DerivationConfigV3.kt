@@ -70,6 +70,7 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.EnergyWebChain,
             Blockchain.Core,
             Blockchain.Xodex,
+            Blockchain.Canxium,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.XDC -> mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
             Blockchain.EthereumClassic -> mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))
