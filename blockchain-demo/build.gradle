@@ -36,6 +36,8 @@ android {
         exclude 'lib/x86_64/darwin/libscrypt.dylib'
         exclude 'lib/x86_64/freebsd/libscrypt.so'
         exclude 'lib/x86_64/linux/libscrypt.so'
+
+        merges += "paymentrequest.proto"
     }
 
     viewBinding {
