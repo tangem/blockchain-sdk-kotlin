@@ -5,11 +5,12 @@ import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.extensions.isSameCase
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
+import com.tangem.common.extensions.toCompressedPublicKey
 
 internal class CasperAddressService : AddressService() {
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
-        val prefix = CasperConstants.getAddressPrefix(curve!!)
-        val bytes = prefix.hexToBytes() + walletPublicKey
+        val prefix = CasperConstants.getAddressPrefix(requireNotNull(curve))
+        val bytes = prefix.hexToBytes() + walletPublicKey.toCompressedPublicKey()
         return bytes.checksum()
     }
 
