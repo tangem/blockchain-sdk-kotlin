@@ -19,7 +19,7 @@ internal class CasperWalletManager(
     private val networkProvider: CasperNetworkProvider,
     private val transactionBuilder: CasperTransactionBuilder,
     private val curve: EllipticCurve,
-) : WalletManager(wallet), ReserveAmountProvider {
+) : WalletManager(wallet), MinimumSendAmountProvider {
 
     override val currentHost: String get() = networkProvider.baseUrl
     private val blockchain = wallet.blockchain
@@ -82,10 +82,7 @@ internal class CasperWalletManager(
         return Result.Success(TransactionFee.Single(Fee.Common(Amount(FEE, blockchain))))
     }
 
-    override fun getReserveAmount(): BigDecimal = MIN_RESERVE
-
-    override suspend fun isAccountFunded(destinationAddress: String): Boolean =
-        networkProvider.getBalance(destinationAddress) is Result.Success
+    override fun getMinimumSendAmount(): BigDecimal = MIN_SEND_AMOUNT
 
     private fun encodeSignature(signature: ByteArray): ByteArray {
         return CasperConstants.getSignaturePrefix(curve).hexToBytes() + signature
@@ -95,6 +92,6 @@ internal class CasperWalletManager(
         // according to Casper Wallet
         private val FEE = 0.1.toBigDecimal()
 
-        private val MIN_RESERVE = 2.5.toBigDecimal()
+        private val MIN_SEND_AMOUNT = 2.5.toBigDecimal()
     }
 }
