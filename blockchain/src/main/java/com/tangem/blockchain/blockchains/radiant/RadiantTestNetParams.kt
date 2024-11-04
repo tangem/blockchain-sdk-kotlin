@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.radiant
 
+import org.bitcoinj.core.Block
 import org.bitcoinj.core.NetworkParameters
 import org.bitcoinj.core.Utils
 import org.bitcoinj.params.AbstractBitcoinNetParams
@@ -33,6 +34,9 @@ internal class RadiantTestNetParams : AbstractBitcoinNetParams() {
     }
 
     override fun getPaymentProtocolId(): String = NetworkParameters.PAYMENT_PROTOCOL_ID_MAINNET
+    override fun getGenesisBlock(): Block {
+        return Block.createGenesis(this) // Stub genesis block
+    }
 
     private companion object {
         const val MAINNET_MAJORITY_WINDOW = 1000
