@@ -410,7 +410,12 @@ internal class TronWalletManager(
             // Contract's energy fee changes every maintenance period (6 hours) and since we don't know what period
             // the transaction is going to be executed in we increase the fee just in case by 20%
             val dynamicEnergyIncreaseFactor =
-                chainParameters.dynamicIncreaseFactor.toDouble() / ENERGY_FACTOR_PRECISION
+                if (amount.type.token.contractAddress == USDT_CONTRACT_ADDRESS) {
+                    0.0
+                } else {
+                    chainParameters.dynamicIncreaseFactor.toDouble() / ENERGY_FACTOR_PRECISION
+                }
+
             val conservativeEnergyFee = (energyUse.toDouble() * (1 + dynamicEnergyIncreaseFactor)).toLong()
 
             Result.Success(
@@ -445,5 +450,7 @@ internal class TronWalletManager(
         const val ENERGY_FACTOR_PRECISION = 10_000
 
         const val SEND_TRANSACTIONS_DELAY = 5_000L
+
+        const val USDT_CONTRACT_ADDRESS = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
     }
 }
