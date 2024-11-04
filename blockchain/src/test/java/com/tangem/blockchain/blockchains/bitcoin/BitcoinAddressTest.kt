@@ -69,4 +69,11 @@ class BitcoinAddressTest {
 
         Truth.assertThat(addressService.validate(address)).isTrue()
     }
+
+    @Test
+    fun validateCorrectTaprootAddress() {
+        val address = "bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8ztwac72sfr9rusxg3297"
+
+        Truth.assertThat(addressService.validate(address)).isTrue()
+    }
 }
