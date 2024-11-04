@@ -100,7 +100,7 @@ class MantleWalletManager(
                 extras = EthereumTransactionExtras(
                     gasLimit = fee.gasLimit.toBigDecimal().multiply(FEE_SEND_MULTIPLIER).toBigInteger(),
                     data = extras?.data ?: ByteArray(0),
-                    nonce = null, // intentionally is null
+                    nonce = extras?.nonce,
                 ),
             ),
             signer = signer,
