@@ -34,6 +34,10 @@ android {
         jvmTarget = '17'
     }
 
+    packagingOptions {
+        merges += "paymentrequest.proto"
+    }
+
     testOptions {
         managedDevices {
             localDevices {
@@ -52,6 +56,10 @@ tasks.register('sourceJar', Jar) {
     archiveClassifier.set("sources")
 }
 
+configurations {
+    all*.exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
+}
+
 dependencies {
     implementation 'com.tangem.tangem-sdk-kotlin:core:develop-287'
     implementation 'com.tangem.tangem-sdk-kotlin:android:develop-287'
@@ -68,9 +76,9 @@ dependencies {
 
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0'
 
-    implementation 'org.bitcoinj:bitcoinj-core:0.15.10'
+    implementation 'org.bitcoinj:bitcoinj-core:0.16.3'
     implementation 'com.github.stellar:java-stellar-sdk:0.40.0'
-    implementation 'com.github.dogecoin:libdohj:v0.15'
+    implementation 'com.github.dogecoin:libdohj:3dd6d7548843fe1891366e0325a05587eb21d1aa'
 
     implementation "com.madgag.spongycastle:core:1.58.0.0"
     implementation "com.madgag.spongycastle:prov:1.58.0.0"
