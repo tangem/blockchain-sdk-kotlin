@@ -24,7 +24,6 @@ internal val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Areon,
             Blockchain.Playa3ull,
             Blockchain.PulseChain,
-            Blockchain.Mantle,
             Blockchain.Flare,
             Blockchain.Canxium,
             -> true
@@ -50,6 +49,7 @@ internal val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Blast,
             Blockchain.Core, // base fee is zero
             Blockchain.EnergyWebChain,
+            Blockchain.Mantle,
             Blockchain.Xodex,
             -> false
             else -> error("Don't forget about evm here")
