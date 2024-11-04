@@ -38,6 +38,8 @@ fun String?.toBigDecimalOrDefault(default: BigDecimal = BigDecimal.ZERO): BigDec
 
 fun String.isValidHex(): Boolean = this.all { it.isAscii() }
 
+fun String.isSameCase(): Boolean = this.lowercase() == this || this.uppercase() == this
+
 inline fun <R> String?.letNotBlank(block: (String) -> R): R? {
     if (isNullOrBlank()) return null
 
