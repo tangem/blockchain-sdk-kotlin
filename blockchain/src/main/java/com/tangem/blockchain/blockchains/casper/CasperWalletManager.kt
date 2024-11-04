@@ -19,7 +19,7 @@ internal class CasperWalletManager(
     private val networkProvider: CasperNetworkProvider,
     private val transactionBuilder: CasperTransactionBuilder,
     private val curve: EllipticCurve,
-) : WalletManager(wallet), MinimumSendAmountProvider {
+) : WalletManager(wallet), MinimumSendAmountProvider, TransactionValidator {
 
     override val currentHost: String get() = networkProvider.baseUrl
     private val blockchain = wallet.blockchain
@@ -83,6 +83,21 @@ internal class CasperWalletManager(
     }
 
     override fun getMinimumSendAmount(): BigDecimal = MIN_SEND_AMOUNT
+
+    override fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
+        transactionData.requireUncompiled()
+
+        val amount = requireNotNull(transactionData.amount.value)
+        return if (amount < MIN_SEND_AMOUNT) {
+            kotlin.Result.failure(
+                BlockchainSdkError.TransactionAmountInsufficient(
+                    minAmount = Amount(MIN_SEND_AMOUNT, wallet.blockchain),
+                ),
+            )
+        } else {
+            kotlin.Result.success(Unit)
+        }
+    }
 
     private fun encodeSignature(signature: ByteArray): ByteArray {
         return CasperConstants.getSignaturePrefix(curve).hexToBytes() + signature
