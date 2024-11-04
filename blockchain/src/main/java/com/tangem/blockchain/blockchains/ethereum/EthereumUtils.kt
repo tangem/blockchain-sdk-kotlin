@@ -121,15 +121,7 @@ object EthereumUtils {
         val parsed = compiledTransactionAdapter.fromJson(compiledTransaction)
             ?: error("Unable to parse compiled transaction")
 
-        val amount = if (transactionData.amount?.type == AmountType.Coin) { // coin transfer
-            transactionData.amount.value
-                ?.movePointRight(transactionData.amount.decimals)
-                ?.toBigInteger() ?: error("Sending amount for coin must be specified")
-        } else { // token transfer (or approve)
-            BigInteger.ZERO
-        }
-
-        val value = parsed.value?.hexToBigDecimal()?.toBigInteger() ?: amount
+        val value = parsed.value?.hexToBigDecimal()?.toBigInteger() ?: BigInteger.ZERO
 
         val fee = transactionData.fee?.amount?.value
             ?.movePointRight(transactionData.fee.amount.decimals)
