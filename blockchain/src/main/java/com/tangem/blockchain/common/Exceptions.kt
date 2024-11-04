@@ -45,6 +45,11 @@ sealed class BlockchainSdkError(
 
     data object FailedToCreateAccount : BlockchainSdkError(8, "Failed to create account")
 
+    data class TransactionAmountInsufficient(val minAmount: Amount) : BlockchainSdkError(
+        9,
+        "Transaction amount is less than a minimum value",
+    )
+
     data object SignatureCountNotMatched : BlockchainSdkError(100)
 
     sealed class Solana(
