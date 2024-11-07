@@ -171,8 +171,8 @@ enum class Blockchain(
     CoreTestnet("core/test", "tCORE", "Core Testnet"),
     Xodex("xodex", "XODEX", "Xodex"),
     Canxium("canxium", "CAU", "Canxium"),
-    Chiliz("сhiliz", "CHZ", "Chiliz"),
-    ChilizTestnet("сhiliz/test", "CHZ", "Chiliz Spicy Testnet"),
+    Chiliz("chiliz", "CHZ", "Chiliz"),
+    ChilizTestnet("chiliz/test", "CHZ", "Chiliz Spicy Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
