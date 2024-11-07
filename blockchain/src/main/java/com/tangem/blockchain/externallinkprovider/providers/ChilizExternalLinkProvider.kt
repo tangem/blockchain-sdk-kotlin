@@ -11,6 +11,8 @@ internal class ChilizExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProv
         "https://chiliscan.com/"
     }
 
+    override val testNetTopUpUrl: String = "https://tatum.io/faucets/chiliz/"
+
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
         return "${explorerBaseUrl}address/$walletAddress"
     }
