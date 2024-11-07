@@ -171,6 +171,8 @@ enum class Blockchain(
     CoreTestnet("core/test", "tCORE", "Core Testnet"),
     Xodex("xodex", "XODEX", "Xodex"),
     Canxium("canxium", "CAU", "Canxium"),
+    Chiliz("сhiliz", "CHZ", "Chiliz"),
+    ChilizTestnet("сhiliz/test", "CHZ", "Chiliz Spicy Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -268,6 +270,7 @@ enum class Blockchain(
         EnergyWebChain, EnergyWebChainTestnet,
         EnergyWebX, EnergyWebXTestnet,
         Core, CoreTestnet,
+        Chiliz, ChilizTestnet,
         Xodex,
         Canxium,
         -> 18
@@ -342,6 +345,7 @@ enum class Blockchain(
             Cyber, CyberTestnet,
             EnergyWebChain, EnergyWebChainTestnet,
             Core, CoreTestnet,
+            Chiliz, ChilizTestnet,
             Xodex,
             Canxium,
             -> EthereumAddressService()
@@ -473,6 +477,7 @@ enum class Blockchain(
             EnergyWebX, EnergyWebXTestnet -> EnergyWebXTestnet
             Casper, CasperTestnet -> CasperTestnet
             Core, CoreTestnet -> CoreTestnet
+            Chiliz, ChilizTestnet -> ChilizTestnet
             else -> null
         }
     }
@@ -546,6 +551,7 @@ enum class Blockchain(
             EnergyWebChain, EnergyWebChainTestnet,
             Core, CoreTestnet,
             Casper, CasperTestnet,
+            Chiliz, ChilizTestnet,
             Xodex,
             Canxium,
             -> listOf(EllipticCurve.Secp256k1)
@@ -645,6 +651,8 @@ enum class Blockchain(
             CoreTestnet -> Chain.CoreTestnet.id
             Xodex -> Chain.Xodex.id
             Canxium -> Chain.Canxium.id
+            Chiliz -> Chain.Chiliz.id
+            ChilizTestnet -> Chain.ChilizTestnet.id
             else -> null
         }
     }
