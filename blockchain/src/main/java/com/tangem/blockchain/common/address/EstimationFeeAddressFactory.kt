@@ -99,6 +99,8 @@ class EstimationFeeAddressFactory {
             Blockchain.Cyber, Blockchain.CyberTestnet,
             Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet,
             Blockchain.Core, Blockchain.CoreTestnet,
+            Blockchain.Xodex,
+            Blockchain.Canxium,
             -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
             // Polkadot-like
             Blockchain.Polkadot, Blockchain.PolkadotTestnet ->
@@ -143,7 +145,7 @@ class EstimationFeeAddressFactory {
             -> "0xbca45e36a271e106546c89984108685215724e488570a0049a187c473cd521bc"
             Blockchain.EnergyWebX, Blockchain.EnergyWebXTestnet,
             -> "5CogUCbb5PYYbEHhDVGDN6JRRYBkd4sFRVc4wwP8oy5Su34Z"
-            Blockchain.Casper, Blockchain.CasperTestnet -> TODO("Need to generate") // [REDACTED_TASK_KEY]
+            Blockchain.Casper, Blockchain.CasperTestnet -> ""
         }
     }
 
