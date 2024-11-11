@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.ducatus;
 
+import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.params.AbstractBitcoinNetParams;
 import org.bitcoinj.params.MainNetParams;
@@ -29,13 +30,12 @@ public class DucatusMainNetParams extends AbstractBitcoinNetParams {
         spendableCoinbaseDepth = 100;
         subsidyDecreaseBlockCount = 840000;
 
-        genesisBlock.setTime(1317972665L);
-        genesisBlock.setDifficultyTarget(0x1e0ffff0L);
-        genesisBlock.setNonce(2084524493);
-
-        String genesisHash = genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("5155a7ed2219a75c0735c58b5d459c6d07d97917570e27b9d1d4546fb8431381"));
-        alertSigningKey = Hex.decode("040184710fa689ad5023690c80f3a49c8f13f8d45b8c857fbcbc8bc4a8e4d3eb4b10f4d4604fa08dce601aaf0f470216fe1b51850b4acf21b179c45070ac7b03a9");
+//        genesisBlock.setTime(1317972665L);
+//        genesisBlock.setDifficultyTarget(0x1e0ffff0L);
+//        genesisBlock.setNonce(2084524493);
+//
+//        String genesisHash = genesisBlock.getHashAsString();
+//        checkState(genesisHash.equals("5155a7ed2219a75c0735c58b5d459c6d07d97917570e27b9d1d4546fb8431381"));
 
         majorityEnforceBlockUpgrade = MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
         majorityRejectBlockOutdated = MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED;
@@ -55,6 +55,11 @@ public class DucatusMainNetParams extends AbstractBitcoinNetParams {
     @Override
     public String getPaymentProtocolId() {
         return PAYMENT_PROTOCOL_ID_MAINNET;
+    }
+
+    @Override
+    public Block getGenesisBlock() {
+        return Block.createGenesis(this); // Stub genesis block
     }
 
 
