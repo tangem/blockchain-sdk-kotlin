@@ -10,6 +10,7 @@ import org.p2p.solanaj.core.Transaction
 import org.p2p.solanaj.rpc.RpcApi
 import org.p2p.solanaj.rpc.RpcClient
 import org.p2p.solanaj.rpc.RpcException
+import org.p2p.solanaj.rpc.types.RecentBlockhash
 import org.p2p.solanaj.rpc.types.config.Commitment
 import org.p2p.solanaj.ws.listeners.NotificationEventListener
 
@@ -191,5 +192,13 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
                 prioritizationFee = (item["prioritizationFee"] as? Double)?.toLong() ?: return@mapNotNull null,
             )
         }
+    }
+
+    fun getLatestBlockhash(commitment: Commitment): String {
+        val params = buildList {
+            add(mapOf("commitment" to commitment.value))
+        }
+
+        return client.call("getLatestBlockhash", params, RecentBlockhash::class.java).value.blockhash
     }
 }

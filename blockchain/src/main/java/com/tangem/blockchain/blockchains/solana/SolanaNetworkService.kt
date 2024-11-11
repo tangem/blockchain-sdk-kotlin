@@ -201,10 +201,10 @@ internal class SolanaNetworkService(
         }
     }
 
-    suspend fun getRecentBlockhash(commitment: Commitment = Commitment.CONFIRMED): Result<String> {
+    suspend fun getLatestBlockhash(commitment: Commitment = Commitment.CONFIRMED): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
-                Result.Success(provider.api.getRecentBlockhash(commitment))
+                Result.Success(provider.api.getLatestBlockhash(commitment))
             } catch (ex: Exception) {
                 Result.Failure(Solana.Api(ex))
             }
