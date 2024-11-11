@@ -4,6 +4,10 @@ import com.squareup.moshi.*
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResourceBodyAdapter
+import com.tangem.blockchain.blockchains.casper.network.CasperCLTypeAdapter
+import com.tangem.blockchain.blockchains.casper.network.request.CasperTransactionBody
+import com.tangem.blockchain.blockchains.casper.network.response.CasperRpcResponse
+import com.tangem.blockchain.blockchains.casper.network.response.CasperRpcResponseAdapter
 import com.tangem.blockchain.blockchains.filecoin.network.response.FilecoinRpcResponse
 import com.tangem.blockchain.blockchains.filecoin.network.response.FilecoinRpcResponseAdapter
 import com.tangem.blockchain.common.EnumeratedEnum
@@ -15,6 +19,7 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.util.concurrent.TimeUnit
 
 fun createRetrofitInstance(baseUrl: String, headerInterceptors: List<Interceptor> = emptyList()): Retrofit =
@@ -73,8 +78,11 @@ data class Timeout(
 internal val moshi: Moshi by lazy {
     Moshi.Builder()
         .add(BigDecimal::class.java, BigDecimalAdapter)
+        .add(BigInteger::class.java, BigIntegerAdapter)
         .add(AptosResource::class.java, AptosResourceBodyAdapter)
         .add(FilecoinRpcResponse::class.java, FilecoinRpcResponseAdapter)
+        .add(CasperRpcResponse::class.java, CasperRpcResponseAdapter)
+        .add(CasperTransactionBody.CLType::class.java, CasperCLTypeAdapter)
         .add(createEnumJsonAdapter<GetAddressResponse.Transaction.StatusType>())
         .add(PolygonScanResultAdapter())
         .add(KotlinJsonAdapterFactory())
