@@ -128,6 +128,8 @@ internal object HttpLoggingInterceptor : Interceptor {
             "<-- END HTTP"
         } else if (bodyHasUnknownEncoding(response.headers)) {
             "<-- END HTTP (encoded body omitted)"
+        } else if (contentLength > WRITE_LOG_THRESHOLD_BYTES_SIZE) {
+            "Response size to large: $contentLength bytes \n<-- END HTTP"
         } else {
             val source = responseBody.source()
             source.request(Long.MAX_VALUE)

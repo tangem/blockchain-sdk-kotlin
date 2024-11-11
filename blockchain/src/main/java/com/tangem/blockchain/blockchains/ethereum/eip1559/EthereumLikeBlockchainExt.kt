@@ -25,6 +25,7 @@ internal val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Playa3ull,
             Blockchain.PulseChain,
             Blockchain.Flare,
+            Blockchain.Canxium,
             -> true
             Blockchain.EthereumClassic, // eth_feeHistory all zeroes
             Blockchain.EthereumPow, // eth_feeHistory with zeros
@@ -49,6 +50,7 @@ internal val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Core, // base fee is zero
             Blockchain.EnergyWebChain,
             Blockchain.Mantle,
+            Blockchain.Xodex,
             -> false
             else -> error("Don't forget about evm here")
         }
