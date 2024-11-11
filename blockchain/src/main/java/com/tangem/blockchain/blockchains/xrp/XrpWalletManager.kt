@@ -38,10 +38,10 @@ class XrpWalletManager(
             updateError(BlockchainSdkError.AccountNotFound())
             return
         }
-        wallet.setCoinValue(response.balance - response.reserveBase)
-        wallet.setReserveValue(response.reserveBase)
+        wallet.setCoinValue(response.balance - response.reserveTotal)
+        wallet.setReserveValue(response.reserveTotal)
         transactionBuilder.sequence = response.sequence
-        transactionBuilder.minReserve = response.reserveBase
+        transactionBuilder.minReserve = response.reserveTotal
 
         if (response.hasUnconfirmed) {
             if (wallet.recentTransactions.isEmpty()) wallet.addTransactionDummy()
