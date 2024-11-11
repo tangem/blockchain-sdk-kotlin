@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.cardano.CardanoAddressServiceFacade
+import com.tangem.blockchain.blockchains.casper.CasperAddressService
 import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.decimal.DecimalAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
@@ -168,6 +169,8 @@ enum class Blockchain(
     CasperTestnet("casper/test", "CSPR", "Casper Testnet"),
     Core("core", "CORE", "Core"),
     CoreTestnet("core/test", "tCORE", "Core Testnet"),
+    Xodex("xodex", "XODEX", "Xodex"),
+    Canxium("canxium", "CAU", "Canxium"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -265,6 +268,8 @@ enum class Blockchain(
         EnergyWebChain, EnergyWebChainTestnet,
         EnergyWebX, EnergyWebXTestnet,
         Core, CoreTestnet,
+        Xodex,
+        Canxium,
         -> 18
 
         Near, NearTestnet,
@@ -337,6 +342,8 @@ enum class Blockchain(
             Cyber, CyberTestnet,
             EnergyWebChain, EnergyWebChainTestnet,
             Core, CoreTestnet,
+            Xodex,
+            Canxium,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -377,7 +384,7 @@ enum class Blockchain(
             Nexa, NexaTestnet -> NexaAddressService(this.isTestnet())
             Koinos, KoinosTestnet -> KoinosAddressService()
             Radiant -> RadiantAddressService()
-            Casper, CasperTestnet -> TODO() // [REDACTED_TASK_KEY]
+            Casper, CasperTestnet -> CasperAddressService()
             Unknown -> error("unsupported blockchain")
         }
     }
@@ -475,7 +482,6 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
-            Casper, CasperTestnet,
             -> listOf(
                 EllipticCurve.Secp256k1,
                 EllipticCurve.Ed25519,
@@ -539,6 +545,9 @@ enum class Blockchain(
             InternetComputer,
             EnergyWebChain, EnergyWebChainTestnet,
             Core, CoreTestnet,
+            Casper, CasperTestnet,
+            Xodex,
+            Canxium,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -634,6 +643,8 @@ enum class Blockchain(
             EnergyWebChainTestnet -> Chain.EnergyWebChainTestnet.id
             Core -> Chain.Core.id
             CoreTestnet -> Chain.CoreTestnet.id
+            Xodex -> Chain.Xodex.id
+            Canxium -> Chain.Canxium.id
             else -> null
         }
     }
