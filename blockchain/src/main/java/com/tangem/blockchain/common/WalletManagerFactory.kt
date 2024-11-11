@@ -149,6 +149,8 @@ class WalletManagerFactory(
             Blockchain.Taraxa, Blockchain.TaraxaTestnet,
             Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet,
             Blockchain.Core, Blockchain.CoreTestnet,
+            Blockchain.Xodex,
+            Blockchain.Canxium,
             -> EthereumLikeWalletManagerAssembly
 
             Blockchain.Mantle, Blockchain.MantleTestnet,
@@ -199,7 +201,7 @@ class WalletManagerFactory(
             Blockchain.Sei, Blockchain.SeiTestnet -> SeiWalletManagerAssembly
             Blockchain.InternetComputer -> ICPWalletManagerAssembly
             Blockchain.Sui, Blockchain.SuiTestnet -> SuiteWalletManagerAssembly
-            Blockchain.Casper, Blockchain.CasperTestnet -> TODO() // [REDACTED_TASK_KEY]
+            Blockchain.Casper, Blockchain.CasperTestnet -> CasperWalletManagerAssembly
             Blockchain.Unknown,
             -> error("Unsupported blockchain")
         }
