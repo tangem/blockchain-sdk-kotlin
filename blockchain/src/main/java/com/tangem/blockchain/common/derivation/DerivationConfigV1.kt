@@ -145,6 +145,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.CyberTestnet,
             Blockchain.EnergyWebChainTestnet,
             Blockchain.CoreTestnet,
+            Blockchain.ChilizTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             Blockchain.Aptos,
             Blockchain.AptosTestnet,
@@ -178,6 +179,8 @@ object DerivationConfigV1 : DerivationConfig() {
             -> mapOf(AddressType.Default to DerivationPath("m/44'/2415'/0'/0/0"))
             Blockchain.Canxium,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/3003'/0'/0/0"))
+            Blockchain.Chiliz,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/88888'/0'/0/0"))
         }
     }
 }
