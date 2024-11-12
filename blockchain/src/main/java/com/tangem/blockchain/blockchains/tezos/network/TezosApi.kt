@@ -29,7 +29,9 @@ interface TezosApi {
 
 @JsonClass(generateAdapter = true)
 data class TezosForgeBody(
+    @Json(name = "branch")
     val branch: String,
+    @Json(name = "contents")
     val contents: List<TezosOperationContent>,
 )
 
@@ -48,8 +50,12 @@ data class TezosOperationContent(
 
 @JsonClass(generateAdapter = true)
 data class TezosPreapplyBody(
+    @Json(name = "protocol")
     val protocol: String,
+    @Json(name = "branch")
     val branch: String,
+    @Json(name = "contents")
     val contents: List<TezosOperationContent>,
+    @Json(name = "signature")
     val signature: String,
 )
