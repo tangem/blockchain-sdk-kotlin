@@ -1,5 +1,6 @@
 package com.tangem.blockchain.network.blockchair
 
+import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.tangem.blockchain.network.blockchair.response.SendTransactionResponse
 import retrofit2.http.*
@@ -53,4 +54,7 @@ interface BlockchairApi {
 }
 
 @JsonClass(generateAdapter = true)
-data class BlockchairBody(val data: String)
+data class BlockchairBody(
+    @Json(name = "data")
+    val data: String,
+)

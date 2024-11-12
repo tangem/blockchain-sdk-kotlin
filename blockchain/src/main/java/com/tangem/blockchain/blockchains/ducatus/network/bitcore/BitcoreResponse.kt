@@ -6,29 +6,29 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class BitcoreBalance(
     @Json(name = "confirmed")
-    var confirmed: Long? = null,
+    val confirmed: Long? = null,
 
     @Json(name = "unconfirmed")
-    var unconfirmed: Long? = null,
+    val unconfirmed: Long? = null,
 )
 
 @JsonClass(generateAdapter = true)
 data class BitcoreUtxo(
     @Json(name = "mintTxid")
-    var transactionHash: String? = null,
+    val transactionHash: String? = null,
 
     @Json(name = "mintIndex")
-    var index: Int? = null,
+    val index: Int? = null,
 
     @Json(name = "value")
-    var amount: Long? = null,
+    val amount: Long? = null,
 
     @Json(name = "script")
-    var script: String? = null,
+    val script: String? = null,
 )
 
 @JsonClass(generateAdapter = true)
 data class BitcoreSendResponse(
     @Json(name = "txid")
-    var txid: String? = null,
+    val txid: String? = null,
 )
