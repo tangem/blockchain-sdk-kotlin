@@ -1,8 +1,10 @@
 package com.tangem.blockchain.blockchains.sui.network.rpc
 
 import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import java.math.BigDecimal
 
+@JsonClass(generateAdapter = true)
 internal data class SuiJsonRpcResponse<T : Any>(
     @Json(name = "jsonrpc") val jsonRpc: String,
     @Json(name = "id") val id: String,
@@ -10,17 +12,20 @@ internal data class SuiJsonRpcResponse<T : Any>(
     @Json(name = "error") val error: SuiJsonRpcError?,
 )
 
+@JsonClass(generateAdapter = true)
 internal data class SuiJsonRpcError(
     @Json(name = "code") val code: Int,
     @Json(name = "message") val message: String,
 )
 
+@JsonClass(generateAdapter = true)
 internal data class SuiCoinsResponse(
     @Json(name = "data") val data: List<Data>,
     @Json(name = "hasNextPage") val hasNextPage: Boolean,
     @Json(name = "nextCursor") val nextCursor: String?,
 ) {
 
+    @JsonClass(generateAdapter = true)
     data class Data(
         @Json(name = "balance") val balance: BigDecimal,
         @Json(name = "coinObjectId") val coinObjectId: String,
@@ -31,6 +36,7 @@ internal data class SuiCoinsResponse(
     )
 }
 
+@JsonClass(generateAdapter = true)
 data class SuiDryRunTransactionResponse(
     @Json(name = "effects")
     val effects: Effects,
@@ -38,6 +44,7 @@ data class SuiDryRunTransactionResponse(
     val input: Input,
 ) {
 
+    @JsonClass(generateAdapter = true)
     data class Effects(
         @Json(name = "gasUsed")
         val gasUsed: GasUsed,
@@ -45,6 +52,7 @@ data class SuiDryRunTransactionResponse(
         val status: Status,
     ) {
 
+        @JsonClass(generateAdapter = true)
         data class GasUsed(
             @Json(name = "computationCost")
             val computationCost: BigDecimal,
@@ -56,6 +64,7 @@ data class SuiDryRunTransactionResponse(
             val storageRebate: BigDecimal,
         )
 
+        @JsonClass(generateAdapter = true)
         data class Status(
             @Json(name = "status")
             val value: String,
@@ -66,11 +75,13 @@ data class SuiDryRunTransactionResponse(
         }
     }
 
+    @JsonClass(generateAdapter = true)
     data class Input(
         @Json(name = "gasData")
         val gasData: GasData,
     ) {
 
+        @JsonClass(generateAdapter = true)
         data class GasData(
             @Json(name = "budget")
             val budget: BigDecimal,
@@ -82,6 +93,7 @@ data class SuiDryRunTransactionResponse(
             val price: BigDecimal,
         ) {
 
+            @JsonClass(generateAdapter = true)
             data class Payment(
                 @Json(name = "digest")
                 val digest: String,
@@ -94,6 +106,7 @@ data class SuiDryRunTransactionResponse(
     }
 }
 
+@JsonClass(generateAdapter = true)
 internal data class SuiExecuteTransactionBlockResponse(
     @Json(name = "digest")
     val digest: String,
@@ -101,11 +114,13 @@ internal data class SuiExecuteTransactionBlockResponse(
     val effects: Effects,
 ) {
 
+    @JsonClass(generateAdapter = true)
     data class Effects(
         @Json(name = "status")
         val status: Status,
     ) {
 
+        @JsonClass(generateAdapter = true)
         data class Status(
             @Json(name = "status")
             val value: String,
@@ -117,6 +132,7 @@ internal data class SuiExecuteTransactionBlockResponse(
     }
 }
 
+@JsonClass(generateAdapter = true)
 internal data class SuiGetTransactionBlockResponse(
     @Json(name = "digest")
     val digest: String,
