@@ -1,14 +1,20 @@
 package com.tangem.blockchain.common
 
+import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import java.util.Locale
 
 @JsonClass(generateAdapter = true)
 data class Token(
+    @Json(name = "name")
     val name: String,
+    @Json(name = "symbol")
     val symbol: String,
+    @Json(name = "contractAddress")
     val contractAddress: String,
+    @Json(name = "decimals")
     val decimals: Int,
+    @Json(name = "id")
     val id: String? = null,
 ) {
     constructor(
