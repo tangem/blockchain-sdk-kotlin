@@ -5,36 +5,46 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class KaspaBalanceResponse(
-    var balance: Long? = null,
+    @Json(name = "balance")
+    val balance: Long? = null,
 )
 
 @JsonClass(generateAdapter = true)
 data class KaspaUnspentOutputResponse(
-    var outpoint: KaspaOutpoint? = null,
-    var utxoEntry: KaspaUtxoEntry? = null,
+    @Json(name = "outpoint")
+    val outpoint: KaspaOutpoint? = null,
+    @Json(name = "utxoEntry")
+    val utxoEntry: KaspaUtxoEntry? = null,
 )
 
 @JsonClass(generateAdapter = true)
 data class KaspaSendTransactionResponse(
-    var transactionId: String? = null,
-    var error: String? = null,
+    @Json(name = "transactionId")
+    val transactionId: String? = null,
+    @Json(name = "error")
+    val error: String? = null,
 )
 
 @JsonClass(generateAdapter = true)
 data class KaspaOutpoint(
-    var transactionId: String? = null,
-    var index: Long? = null,
+    @Json(name = "transactionId")
+    val transactionId: String? = null,
+    @Json(name = "index")
+    val index: Long? = null,
 )
 
 @JsonClass(generateAdapter = true)
 data class KaspaUtxoEntry(
-    var amount: String? = null,
-    var scriptPublicKey: KaspaScriptPublicKeyResponse? = null,
+    @Json(name = "amount")
+    val amount: String? = null,
+    @Json(name = "scriptPublicKey")
+    val scriptPublicKey: KaspaScriptPublicKeyResponse? = null,
 )
 
 @JsonClass(generateAdapter = true)
 data class KaspaScriptPublicKeyResponse(
-    var scriptPublicKey: String? = null,
+    @Json(name = "scriptPublicKey")
+    val scriptPublicKey: String? = null,
 )
 
 @JsonClass(generateAdapter = true)
