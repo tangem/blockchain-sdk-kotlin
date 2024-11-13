@@ -6,7 +6,6 @@ import java.math.BigDecimal
 internal data class SolanaMainAccountInfo(
     val value: NewSolanaAccountInfo.Value?,
     val tokensByMint: Map<String, SolanaTokenAccountInfo>,
-    val txsInProgress: List<TransactionInfo>,
 ) {
     val balance: Long
         get() = value?.lamports ?: 0
