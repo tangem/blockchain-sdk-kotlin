@@ -66,6 +66,8 @@ sealed class BlockchainSdkError(
         data object FailedToCreateAssociatedAccount : Solana(2, "Public key conversion failed")
         data object SameSourceAndDestinationAddress : Solana(3, "Same source and destination address")
         data object UnsupportedTokenDestinationAddress : Solana(4)
+        data object OwnerAccountShouldBeNotNull : Solana(5, "Request owner account info before")
+        data object UnknownDestinationAddress : Solana(6, "Invalid destination address")
     }
 
     sealed class Polkadot(
