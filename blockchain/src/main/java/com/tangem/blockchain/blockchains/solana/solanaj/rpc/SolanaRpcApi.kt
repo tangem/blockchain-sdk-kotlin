@@ -173,6 +173,27 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
         ) as NewSplTokenAccountInfo
     }
 
+    /**
+     * Same as [RpcApi.getSplTokenAccountInfo] but returns response [EmptyDataSplTokenAccountInfo] without data
+     * */
+    fun getSplTokenAccountInfoWithEmptyData(account: PublicKey): EmptyDataSplTokenAccountInfo {
+        val params = buildList {
+            add(account.toString())
+
+            val paramsMap = buildMap {
+                this["encoding"] = "jsonParsed"
+            }
+
+            add(paramsMap)
+        }
+
+        return client.call(
+            "getAccountInfo",
+            params,
+            EmptyDataSplTokenAccountInfo::class.java,
+        ) as EmptyDataSplTokenAccountInfo
+    }
+
     @Suppress("UNCHECKED_CAST")
     fun getRecentPrioritizationFees(accounts: List<PublicKey>): List<PrioritizationFee> {
         val params = buildList {
