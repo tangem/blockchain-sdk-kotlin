@@ -34,6 +34,7 @@ internal class CasperTransactionBuilderTest {
     fun buildForSign() {
         val expected = "951f30645f15e5955750d7aa3b50cadd8ca4044f46aa49cfe389d90825f8122f".hexToBytes()
 
+        DateTimeUtils.setCurrentMillisFixed(DateTime.parse(TIMESTAMP).millis)
         val actual = buildUnsigned().hash.hexToBytes()
 
         Truth.assertThat(actual).isEqualTo(expected)

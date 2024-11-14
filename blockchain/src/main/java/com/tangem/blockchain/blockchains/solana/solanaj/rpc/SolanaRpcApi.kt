@@ -10,6 +10,7 @@ import org.p2p.solanaj.core.Transaction
 import org.p2p.solanaj.rpc.RpcApi
 import org.p2p.solanaj.rpc.RpcClient
 import org.p2p.solanaj.rpc.RpcException
+import org.p2p.solanaj.rpc.types.RecentBlockhash
 import org.p2p.solanaj.rpc.types.config.Commitment
 import org.p2p.solanaj.ws.listeners.NotificationEventListener
 
@@ -172,6 +173,27 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
         ) as NewSplTokenAccountInfo
     }
 
+    /**
+     * Same as [RpcApi.getSplTokenAccountInfo] but returns response [EmptyDataSplTokenAccountInfo] without data
+     * */
+    fun getSplTokenAccountInfoWithEmptyData(account: PublicKey): EmptyDataSplTokenAccountInfo {
+        val params = buildList {
+            add(account.toString())
+
+            val paramsMap = buildMap {
+                this["encoding"] = "jsonParsed"
+            }
+
+            add(paramsMap)
+        }
+
+        return client.call(
+            "getAccountInfo",
+            params,
+            EmptyDataSplTokenAccountInfo::class.java,
+        ) as EmptyDataSplTokenAccountInfo
+    }
+
     @Suppress("UNCHECKED_CAST")
     fun getRecentPrioritizationFees(accounts: List<PublicKey>): List<PrioritizationFee> {
         val params = buildList {
@@ -191,5 +213,13 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
                 prioritizationFee = (item["prioritizationFee"] as? Double)?.toLong() ?: return@mapNotNull null,
             )
         }
+    }
+
+    fun getLatestBlockhash(commitment: Commitment): String {
+        val params = buildList {
+            add(mapOf("commitment" to commitment.value))
+        }
+
+        return client.call("getLatestBlockhash", params, RecentBlockhash::class.java).value.blockhash
     }
 }
