@@ -26,6 +26,7 @@ internal val Blockchain.isSupportEIP1559: Boolean
             Blockchain.PulseChain,
             Blockchain.Flare,
             Blockchain.Canxium,
+            Blockchain.Chiliz,
             -> true
             Blockchain.EthereumClassic, // eth_feeHistory all zeroes
             Blockchain.EthereumPow, // eth_feeHistory with zeros
