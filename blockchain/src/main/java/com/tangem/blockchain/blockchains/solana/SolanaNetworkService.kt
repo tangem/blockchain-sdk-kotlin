@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.solana
 
 import android.os.SystemClock
+import com.squareup.moshi.JsonDataException
 import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
 import com.tangem.blockchain.blockchains.solana.solanaj.model.*
 import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgram
@@ -8,6 +9,7 @@ import com.tangem.blockchain.blockchains.solana.solanaj.rpc.SolanaRpcClient
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.BlockchainSdkError.Solana
 import com.tangem.blockchain.common.NetworkProvider
+import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import kotlinx.coroutines.*
@@ -26,50 +28,30 @@ internal class SolanaNetworkService(
     override val baseUrl: String = provider.baseUrl
     val endpoint: String = provider.endpoint
 
-    suspend fun getMainAccountInfo(account: PublicKey): Result<SolanaMainAccountInfo> = withContext(Dispatchers.IO) {
-        val accountInfo = getAccountInfo(account).successOr { return@withContext it }
-        val tokenAccounts = accountTokensInfo(account).successOr { return@withContext it }
-
-        val tokensByMint = tokenAccounts.map {
-            SolanaTokenAccountInfo(
-                value = it,
-                address = it.pubkey,
-                mint = it.account.data.parsed.info.mint,
-                solAmount = it.account.data.parsed.info.tokenAmount.uiAmount.toBigDecimal(),
-            )
-        }.associateBy { it.mint }
-
-        val txsInProgress = getTransactionsInProgressInfo(account).successOr { listOf() }
-        Result.Success(
-            SolanaMainAccountInfo(
-                value = accountInfo,
-                tokensByMint = tokensByMint,
-                txsInProgress = txsInProgress,
-            ),
-        )
-    }
-
-    @Suppress("MagicNumber")
-    private suspend fun getTransactionsInProgressInfo(account: PublicKey): Result<List<TransactionInfo>> =
+    suspend fun getMainAccountInfo(account: PublicKey, cardTokens: Set<Token>): Result<SolanaMainAccountInfo> =
         withContext(Dispatchers.IO) {
-            try {
-                val allSignatures = provider.api.getSignaturesForAddress(account.toBase58(), Commitment.CONFIRMED, 20)
-                val confirmedCommitmentSignatures = allSignatures
-                    .filter { it.confirmationStatus == Commitment.CONFIRMED.value }
-
-                val txInProgress = confirmedCommitmentSignatures.mapNotNull { addressSignature ->
-                    provider.api.getTransaction(addressSignature.signature, Commitment.CONFIRMED)?.let { transaction ->
-                        TransactionInfo(
-                            addressSignature.signature,
-                            transaction.meta.fee,
-                            transaction.transaction.message.instructions,
-                        )
-                    }
-                }
-                Result.Success(txInProgress)
-            } catch (ex: Exception) {
-                Result.Failure(Solana.Api(ex))
+            val accountInfo = getAccountInfo(account).successOr { return@withContext it }
+            val tokenAccounts = if (cardTokens.isNotEmpty()) {
+                accountTokensInfo(account).successOr { return@withContext it }
+            } else {
+                emptyList()
             }
+
+            val tokensByMint = tokenAccounts.map {
+                SolanaTokenAccountInfo(
+                    value = it,
+                    address = it.pubkey,
+                    mint = it.account.data.parsed.info.mint,
+                    solAmount = it.account.data.parsed.info.tokenAmount.uiAmount.toBigDecimal(),
+                )
+            }.associateBy { it.mint }
+
+            Result.Success(
+                SolanaMainAccountInfo(
+                    value = accountInfo,
+                    tokensByMint = tokensByMint,
+                ),
+            )
         }
 
     suspend fun getSignatureStatuses(signatures: List<String>): Result<SignatureStatuses> =
@@ -101,6 +83,51 @@ internal class SolanaNetworkService(
     suspend fun getTokenAccountInfoIfExist(associatedAccount: PublicKey): Result<SolanaSplAccountInfo> {
         return withContext(Dispatchers.IO) {
             try {
+                val splAccountInfo = provider.api.getSplTokenAccountInfoNew(associatedAccount)
+
+                if (splAccountInfo.value == null) {
+                    Result.Failure(BlockchainSdkError.AccountNotFound())
+                } else {
+                    Result.Success(SolanaSplAccountInfo(splAccountInfo.value, associatedAccount))
+                }
+            } catch (e: JsonDataException) {
+                val emptyDataSplAccountInfo = provider.api.getSplTokenAccountInfoWithEmptyData(associatedAccount)
+
+                if (emptyDataSplAccountInfo.value == null) {
+                    Result.Failure(BlockchainSdkError.AccountNotFound())
+                } else {
+                    val splAccountInfoValue = NewSolanaTokenResultObjects.Value(
+                        emptyDataSplAccountInfo.value.isExecutable,
+                        emptyDataSplAccountInfo.value.lamports,
+                        emptyDataSplAccountInfo.value.owner,
+                    )
+                    Result.Success(SolanaSplAccountInfo(splAccountInfoValue, associatedAccount))
+                }
+            } catch (ex: Exception) {
+                Result.Failure(Solana.Api(ex))
+            }
+        }
+    }
+
+    /**
+     * The same as getTokenAccountInfoIfExist but should be used for destination account to optimize requests count
+     */
+    suspend fun getDestinationTokenAccountInfoIfExist(associatedAccount: PublicKey): Result<SolanaSplAccountInfo> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val emptyDataSplAccountInfo = provider.api.getSplTokenAccountInfoWithEmptyData(associatedAccount)
+
+                if (emptyDataSplAccountInfo.value == null) {
+                    Result.Failure(BlockchainSdkError.AccountNotFound())
+                } else {
+                    val splAccountInfoValue = NewSolanaTokenResultObjects.Value(
+                        emptyDataSplAccountInfo.value.isExecutable,
+                        emptyDataSplAccountInfo.value.lamports,
+                        emptyDataSplAccountInfo.value.owner,
+                    )
+                    Result.Success(SolanaSplAccountInfo(splAccountInfoValue, associatedAccount))
+                }
+            } catch (e: JsonDataException) {
                 val splAccountInfo = provider.api.getSplTokenAccountInfoNew(associatedAccount)
 
                 if (splAccountInfo.value == null) {
@@ -201,10 +228,10 @@ internal class SolanaNetworkService(
         }
     }
 
-    suspend fun getRecentBlockhash(commitment: Commitment = Commitment.CONFIRMED): Result<String> {
+    suspend fun getLatestBlockhash(commitment: Commitment = Commitment.CONFIRMED): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
-                Result.Success(provider.api.getRecentBlockhash(commitment))
+                Result.Success(provider.api.getLatestBlockhash(commitment))
             } catch (ex: Exception) {
                 Result.Failure(Solana.Api(ex))
             }

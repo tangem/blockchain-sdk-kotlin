@@ -58,6 +58,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Taraxa,
             Blockchain.Blast,
             Blockchain.Cyber,
+            Blockchain.Canxium,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.XDC -> mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
             Blockchain.EthereumClassic -> mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))
@@ -177,8 +178,6 @@ object DerivationConfigV1 : DerivationConfig() {
             -> mapOf(AddressType.Default to DerivationPath("m/44'/506'/0'/0/0"))
             Blockchain.Xodex,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/2415'/0'/0/0"))
-            Blockchain.Canxium,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/3003'/0'/0/0"))
             Blockchain.Chiliz,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/88888'/0'/0/0"))
         }
