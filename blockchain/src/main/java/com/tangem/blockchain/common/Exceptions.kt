@@ -45,6 +45,11 @@ sealed class BlockchainSdkError(
 
     data object FailedToCreateAccount : BlockchainSdkError(8, "Failed to create account")
 
+    data class TransactionAmountInsufficient(val minAmount: Amount) : BlockchainSdkError(
+        9,
+        "Transaction amount is less than a minimum value",
+    )
+
     data object SignatureCountNotMatched : BlockchainSdkError(100)
 
     sealed class Solana(
@@ -61,6 +66,8 @@ sealed class BlockchainSdkError(
         data object FailedToCreateAssociatedAccount : Solana(2, "Public key conversion failed")
         data object SameSourceAndDestinationAddress : Solana(3, "Same source and destination address")
         data object UnsupportedTokenDestinationAddress : Solana(4)
+        data object OwnerAccountShouldBeNotNull : Solana(5, "Request owner account info before")
+        data object UnknownDestinationAddress : Solana(6, "Invalid destination address")
     }
 
     sealed class Polkadot(
