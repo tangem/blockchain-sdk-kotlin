@@ -6,7 +6,9 @@ import org.p2p.solanaj.rpc.types.TokenResultObjects;
 
 import java.util.AbstractMap;
 
-/** Same as [org.p2p.solanaj.rpc.types.TokenResultObjects] but without rentEpoch field */
+/**
+ * Same as [org.p2p.solanaj.rpc.types.TokenResultObjects] but without rentEpoch field
+ */
 public class NewSolanaTokenResultObjects {
 
     public NewSolanaTokenResultObjects() {
@@ -31,6 +33,12 @@ public class NewSolanaTokenResultObjects {
         private String owner;
 
         public Value() {
+        }
+
+        public Value(boolean executable, long lamports, String owner) {
+            this.executable = executable;
+            this.lamports = lamports;
+            this.owner = owner;
         }
 
         public TokenResultObjects.Data getData() {
@@ -172,7 +180,7 @@ public class NewSolanaTokenResultObjects {
 
         public TokenAccount(AbstractMap am) {
             super(am);
-            this.address = (String)am.get("address");
+            this.address = (String) am.get("address");
         }
 
         public String getAddress() {
@@ -206,10 +214,10 @@ public class NewSolanaTokenResultObjects {
         private String uiAmountString;
 
         public TokenAmountInfo(AbstractMap am) {
-            this.amount = (String)am.get("amount");
-            this.decimals = (int)am.get("decimals");
-            this.uiAmount = (Double)am.get("uiAmount");
-            this.uiAmountString = (String)am.get("uiAmountString");
+            this.amount = (String) am.get("amount");
+            this.decimals = (int) am.get("decimals");
+            this.uiAmount = (Double) am.get("uiAmount");
+            this.uiAmountString = (String) am.get("uiAmountString");
         }
 
         public String getAmount() {
@@ -236,4 +244,37 @@ public class NewSolanaTokenResultObjects {
         }
     }
 
+    public static class EmptyDataValue {
+        @Json(
+                name = "executable"
+        )
+        private boolean executable;
+        @Json(
+                name = "lamports"
+        )
+        private long lamports;
+        @Json(
+                name = "owner"
+        )
+        private String owner;
+
+        public EmptyDataValue() {
+        }
+
+        public boolean isExecutable() {
+            return this.executable;
+        }
+
+        public long getLamports() {
+            return this.lamports;
+        }
+
+        public String getOwner() {
+            return this.owner;
+        }
+
+        public String toString() {
+            return "TokenResultObjects.Value(executable=" + this.isExecutable() + ", lamports=" + this.getLamports() + ", owner=" + this.getOwner() + ")";
+        }
+    }
 }
