@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.solana
 
 import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
 import com.tangem.blockchain.blockchains.solana.solanaj.core.createAssociatedSolanaTokenAddress
+import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaSplAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaComputeBudgetProgram
 import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgram
 import com.tangem.blockchain.common.Amount
@@ -23,10 +24,13 @@ import java.math.BigDecimal
 internal class SolanaTransactionBuilder(
     private val account: PublicKey,
     private val multiNetworkProvider: MultiNetworkProvider<SolanaNetworkService>,
-    private val tokenProgramFinder: SolanaTokenAccountInfoFinder,
 ) {
 
-    suspend fun buildUnsignedTransaction(destinationAddress: String, amount: Amount): Result<SolanaTransaction> {
+    suspend fun buildUnsignedTransaction(
+        destinationAddress: String,
+        amount: Amount,
+        ownerAccountInfo: Pair<SolanaSplAccountInfo, SolanaTokenProgram.ID>?,
+    ): Result<SolanaTransaction> {
         val amountToSend = amount.value ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx)
 
         return when (amount.type) {
@@ -38,6 +42,7 @@ internal class SolanaTransactionBuilder(
                 destinationAddress = destinationAddress,
                 amount = amountToSend,
                 token = amount.type.token,
+                ownerAccountInfo = ownerAccountInfo,
             )
             else -> Result.Failure(BlockchainSdkError.UnsupportedOperation())
         }
@@ -54,7 +59,7 @@ internal class SolanaTransactionBuilder(
         amount: BigDecimal,
     ): Result<SolanaTransaction> {
         val recentBlockHash = multiNetworkProvider.performRequest {
-            getRecentBlockhash()
+            getLatestBlockhash()
         }.successOr { return Result.Failure(it.error) }
         val destinationAccount = PublicKey(destinationAddress)
         val lamports = SolanaValueConverter.toLamports(amount)
@@ -79,19 +84,19 @@ internal class SolanaTransactionBuilder(
         destinationAddress: String,
         amount: BigDecimal,
         token: Token,
+        ownerAccountInfo: Pair<SolanaSplAccountInfo, SolanaTokenProgram.ID>?,
     ): Result<SolanaTransaction> {
         val destinationAccount = PublicKey(destinationAddress)
         val mint = PublicKey(token.contractAddress)
+        if (ownerAccountInfo == null) {
+            return Result.Failure(BlockchainSdkError.Solana.OwnerAccountShouldBeNotNull)
+        }
+        val (tokenInfo, tokenProgramId) = ownerAccountInfo.first to ownerAccountInfo.second
 
-        val (tokenInfo, tokenProgramId) = tokenProgramFinder.getTokenAccountInfoAndTokenProgramId(
-            account = account,
-            mint = mint,
-        ).successOr { return it }
-
-        val destinationAssociatedAccount = createAssociatedSolanaTokenAddress(
-            account = destinationAccount,
-            mint = mint,
-            tokenProgramId = tokenProgramId,
+        val destinationAssociatedAccount = getDestinationAssociatedSolanaTokenAddressIfNeeded(
+            destinationAccount,
+            mint,
+            tokenProgramId,
         ).getOrElse {
             return Result.Failure(BlockchainSdkError.Solana.FailedToCreateAssociatedAccount)
         }
@@ -112,12 +117,42 @@ internal class SolanaTransactionBuilder(
             ).successOr { return Result.Failure(it.error) }
 
             val recentBlockHash = multiNetworkProvider.performRequest {
-                getRecentBlockhash()
+                getLatestBlockhash()
             }.successOr { return it }
             setRecentBlockHash(recentBlockHash)
         }
 
         return Result.Success(transaction)
+    }
+
+    private suspend fun getDestinationAssociatedSolanaTokenAddressIfNeeded(
+        destinationAccount: PublicKey,
+        mint: PublicKey,
+        tokenProgramId: SolanaTokenProgram.ID,
+    ): kotlin.Result<PublicKey> {
+        val accountInfo = multiNetworkProvider.performRequest {
+            getDestinationTokenAccountInfoIfExist(destinationAccount)
+        }.successOr {
+            // 1. fail if account is not exist
+            return kotlin.Result.failure(it.error)
+        }
+
+        val systemProgramId = Program.Id.system.toBase58()
+        if (SolanaTokenProgram.isTokenProgram(accountInfo.value.owner) &&
+            mint.toBase58() == accountInfo.value.data.parsed.info.mint
+        ) {
+            // 2. detect if destination address is already a SPLToken address
+            return kotlin.Result.success(destinationAccount)
+        } else if (accountInfo.value.owner == systemProgramId) {
+            // 3. if not and owner is system program -> create spl address
+            return createAssociatedSolanaTokenAddress(
+                account = destinationAccount,
+                mint = mint,
+                tokenProgramId = tokenProgramId,
+            )
+        }
+
+        return kotlin.Result.failure(BlockchainSdkError.Solana.UnknownDestinationAddress)
     }
 
     @Suppress("LongParameterList")
@@ -176,7 +211,7 @@ internal class SolanaTransactionBuilder(
     private suspend fun isTokenAccountExist(associatedAccount: PublicKey): Result<Boolean> {
         return withContext(Dispatchers.IO) {
             val infoResult = multiNetworkProvider.performRequest {
-                getTokenAccountInfoIfExist(associatedAccount)
+                getDestinationTokenAccountInfoIfExist(associatedAccount)
             }
 
             when {

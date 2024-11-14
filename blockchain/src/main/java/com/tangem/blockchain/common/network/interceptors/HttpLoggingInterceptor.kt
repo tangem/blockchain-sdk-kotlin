@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common.network.interceptors
 
+import android.util.Log
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.di.DepsContainer
@@ -122,6 +123,7 @@ internal object HttpLoggingInterceptor : Interceptor {
         val responseBody = response.body!!
         val contentLength = responseBody.contentLength()
 
+        Log.e("logg--", "contentLength: $contentLength")
         val message = if (!response.promisesBody()) {
             "<-- END HTTP"
         } else if (bodyHasUnknownEncoding(response.headers)) {
@@ -132,35 +134,39 @@ internal object HttpLoggingInterceptor : Interceptor {
             val source = responseBody.source()
             source.request(Long.MAX_VALUE)
             var buffer = source.buffer
-
-            var gzippedLength: Long? = null
-            if ("gzip".equals(responseHeaders["Content-Encoding"], ignoreCase = true)) {
-                gzippedLength = buffer.size
-                GzipSource(buffer.clone()).use { gzippedResponseBody ->
-                    buffer = Buffer()
-                    buffer.writeAll(gzippedResponseBody)
-                }
-            }
-
-            val contentType = responseBody.contentType()
-            val charset: Charset = contentType?.charset(StandardCharsets.UTF_8) ?: StandardCharsets.UTF_8
-
-            if (!buffer.isProbablyUtf8()) {
-                "<-- END HTTP (binary ${buffer.size}-byte body omitted)"
+            if (buffer.size > WRITE_LOG_THRESHOLD_BYTES_SIZE) {
+                "Response size to large: $contentLength bytes \n<-- END HTTP"
             } else {
-                val json = if (contentLength != 0L) {
-                    buffer.clone().readString(charset).beautifyJson()
-                } else {
-                    ""
+                var gzippedLength: Long? = null
+                if ("gzip".equals(responseHeaders["Content-Encoding"], ignoreCase = true)) {
+                    gzippedLength = buffer.size
+                    GzipSource(buffer.clone()).use { gzippedResponseBody ->
+                        buffer = Buffer()
+                        buffer.writeAll(gzippedResponseBody)
+                    }
                 }
 
-                val end = if (gzippedLength != null) {
-                    "<-- END HTTP (${buffer.size}-byte, $gzippedLength-gzipped-byte body)"
-                } else {
-                    "<-- END HTTP (${buffer.size}-byte body)"
-                }
+                val contentType = responseBody.contentType()
+                val charset: Charset = contentType?.charset(StandardCharsets.UTF_8) ?: StandardCharsets.UTF_8
 
-                "$json\n$end"
+                if (!buffer.isProbablyUtf8()) {
+                    "<-- END HTTP (binary ${buffer.size}-byte body omitted)"
+                } else {
+                    Log.e("logg--", "${buffer.size}")
+                    val json = if (contentLength != 0L) {
+                        buffer.clone().readString(charset).beautifyJson()
+                    } else {
+                        ""
+                    }
+
+                    val end = if (gzippedLength != null) {
+                        "<-- END HTTP (${buffer.size}-byte, $gzippedLength-gzipped-byte body)"
+                    } else {
+                        "<-- END HTTP (${buffer.size}-byte body)"
+                    }
+
+                    "$json\n$end"
+                }
             }
         }
 
