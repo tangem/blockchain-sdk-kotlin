@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
+import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
@@ -32,11 +33,26 @@ internal class XDCWalletManager(
         return super.sign(convertTransactionDataAddress(transactionData), signer)
     }
 
-    private fun convertTransactionDataAddress(transactionData: TransactionData.Uncompiled) = transactionData.copy(
-        sourceAddress = XDCAddressService.formatWith0xPrefix(transactionData.sourceAddress),
-        destinationAddress = XDCAddressService.formatWith0xPrefix(transactionData.destinationAddress),
-        contractAddress = transactionData.contractAddress?.let {
-            XDCAddressService.formatWith0xPrefix(it)
-        },
-    )
+    private fun convertTransactionDataAddress(transactionData: TransactionData.Uncompiled): TransactionData {
+        val amountType = transactionData.amount.type
+        val amount = if (amountType is AmountType.Token) {
+            transactionData.amount.copy(
+                type = amountType.copy(
+                    token = amountType.token.copy(
+                        contractAddress = XDCAddressService.formatWith0xPrefix(amountType.token.contractAddress),
+                    ),
+                ),
+            )
+        } else {
+            transactionData.amount
+        }
+        return transactionData.copy(
+            sourceAddress = XDCAddressService.formatWith0xPrefix(transactionData.sourceAddress),
+            destinationAddress = XDCAddressService.formatWith0xPrefix(transactionData.destinationAddress),
+            contractAddress = transactionData.contractAddress?.let {
+                XDCAddressService.formatWith0xPrefix(it)
+            },
+            amount = amount,
+        )
+    }
 }
