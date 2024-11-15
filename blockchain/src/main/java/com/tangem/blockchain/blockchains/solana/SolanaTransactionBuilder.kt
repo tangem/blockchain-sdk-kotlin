@@ -133,8 +133,16 @@ internal class SolanaTransactionBuilder(
         val accountInfo = multiNetworkProvider.performRequest {
             getTokenAccountInfoIfExist(destinationAccount)
         }.successOr {
-            // 1. fail if account is not exist
-            return kotlin.Result.failure(it.error)
+            if (it.error is BlockchainSdkError.AccountNotFound) {
+                // 1. create token account if it's not exist
+                return createAssociatedSolanaTokenAddress(
+                    account = destinationAccount,
+                    mint = mint,
+                    tokenProgramId = tokenProgramId,
+                )
+            } else {
+                return kotlin.Result.failure(it.error)
+            }
         }
 
         val systemProgramId = Program.Id.system.toBase58()
