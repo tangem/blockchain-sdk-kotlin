@@ -4,6 +4,10 @@ import com.tangem.blockchain.blockchains.binance.client.encoding.Bech32
 import com.tangem.blockchain.blockchains.binance.client.encoding.Crypto
 import org.bitcoinj.core.Base58
 import java.math.BigDecimal
+import java.math.BigInteger
+
+private const val RADIX_FORMAT = 16
+private const val HEX_PREFIX = "0x"
 
 fun String.decodeBase58(checked: Boolean = false): ByteArray? {
     return try {
@@ -28,9 +32,16 @@ fun String.replaceLast(oldValue: String, newValue: String, ignoreCase: Boolean =
     return if (index < 0) this else this.replaceRange(index, index + oldValue.length, newValue)
 }
 
-@Suppress("MagicNumber")
 fun String.hexToBigDecimal(default: BigDecimal = BigDecimal.ZERO): BigDecimal {
-    return removePrefix("0x").toBigIntegerOrNull(16)?.toBigDecimal() ?: default
+    return removePrefix(HEX_PREFIX).toBigIntegerOrNull(RADIX_FORMAT)?.toBigDecimal() ?: default
+}
+
+fun String.hexToBigInteger(default: BigInteger = BigInteger.ZERO): BigInteger {
+    return removePrefix(HEX_PREFIX).toBigIntegerOrNull(radix = RADIX_FORMAT) ?: default
+}
+
+fun String.hexToInt(default: Int = 0): Int {
+    return removePrefix(HEX_PREFIX).toIntOrNull(radix = RADIX_FORMAT) ?: default
 }
 
 fun String?.toBigDecimalOrDefault(default: BigDecimal = BigDecimal.ZERO): BigDecimal =
