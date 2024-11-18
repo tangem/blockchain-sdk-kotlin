@@ -7,6 +7,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.orZero
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
 import com.tangem.common.extensions.toHexString
@@ -41,11 +42,29 @@ internal class PolkadotCombinedProvider(
     private val commands = StandardCommands.getInstance()
     private val ss58Network = PolkadotAddressService(blockchain).ss58Network
 
+    /**
+     * **Free** is the balance that can be used for on-chain activity like staking,
+     * participating in governance etc. but is not necessarily spendable (or transferrable)
+     *
+     * **Spendable** is the free balance that can be spent
+     *
+     * spendable = free - max(frozen - on_hold, ED)
+     * In our case Existential deposit (ED) will be calculated via ExistentialDepositProvider
+     *
+     * For more info https://wiki.polkadot.network/docs/learn-account-balances
+     */
     override suspend fun getBalance(address: String): Result<BigDecimal> = withContext(Dispatchers.IO) {
         val accountInfo = getAccountInfo(Address.from(address)).successOr { return@withContext it }
 
-        val amount = accountInfo?.data?.free?.toBigDecimal(decimals) ?: BigDecimal.ZERO
-        Result.Success(amount)
+        val balance = accountInfo?.data?.let { data ->
+            val freeAmount = data.free?.toBigDecimal(decimals).orZero()
+            val frozenAmount = data.miscFrozen?.toBigDecimal(decimals).orZero()
+            val heldAmount = data.reserved?.toBigDecimal(decimals).orZero()
+
+            (freeAmount - (frozenAmount - heldAmount)).coerceAtLeast(BigDecimal.ZERO)
+        } ?: BigDecimal.ZERO
+
+        Result.Success(balance)
     }
 
     private suspend fun getAccountInfo(address: Address): Result<AccountInfo?> = withContext(Dispatchers.IO) {
