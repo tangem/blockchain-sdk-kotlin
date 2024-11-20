@@ -3,7 +3,6 @@ package com.tangem.blockchain.blockchains.solana
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.SolanaRpcClient
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
-import com.tangem.blockchain.common.GetBlockCredentials
 import com.tangem.blockchain.common.NowNodeCredentials
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.common.network.interceptors.HttpLoggingInterceptor
@@ -24,6 +23,7 @@ internal class SolanaProvidersBuilder(
             when (it) {
                 ProviderType.NowNodes -> getNowNodesProvider()
                 ProviderType.QuickNode -> getQuickNodeProvider()
+                ProviderType.GetBlock -> getGetBlock()
                 ProviderType.Solana.Official -> mainNet()
                 else -> null
             }
@@ -64,6 +64,19 @@ internal class SolanaProvidersBuilder(
         }
     }
 
+    private fun getGetBlock(): SolanaRpcClient? {
+        return config.getBlockCredentials?.solana?.jsonRpc?.let { accessToken ->
+            if (accessToken.isNotBlank()) {
+                SolanaRpcClient(
+                    baseUrl = "https://go.getblock.io/$accessToken",
+                    httpInterceptors = createLoggingInterceptors(),
+                )
+            } else {
+                null
+            }
+        }
+    }
+
     private fun createLoggingInterceptors(): List<Interceptor> {
         return listOf(
             *BlockchainSdkRetrofitBuilder.interceptors.toTypedArray(),
@@ -78,12 +91,6 @@ internal class SolanaProvidersBuilder(
     @Suppress("UnusedPrivateMember")
     private fun ankr(): SolanaRpcClient {
         return SolanaRpcClient(baseUrl = "https://rpc.ankr.com/solana")
-    }
-
-    // unstable
-    @Suppress("UnusedPrivateMember")
-    private fun getBlock(cred: GetBlockCredentials): SolanaRpcClient {
-        return SolanaRpcClient(baseUrl = "https://go.getblock.io/${cred.solana}")
     }
 
     // zero uptime
