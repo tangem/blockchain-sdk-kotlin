@@ -3,7 +3,6 @@ package com.tangem.blockchain.network.blockbook.network
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.JsonRPCRequest
-import com.tangem.blockchain.common.JsonRPCResponse
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
 import com.tangem.blockchain.network.blockbook.config.BlockBookConfig
@@ -11,6 +10,7 @@ import com.tangem.blockchain.network.blockbook.config.BlockBookRequest
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import com.tangem.blockchain.network.blockbook.network.responses.GetFeeResponse
 import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponseItem
+import com.tangem.blockchain.network.blockbook.network.responses.SendTransactionResponse
 import com.tangem.blockchain.network.moshi
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -92,7 +92,7 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
             .unpack()
     }
 
-    suspend fun sendTransaction(txHex: String): JsonRPCResponse {
+    suspend fun sendTransaction(txHex: String): SendTransactionResponse {
         val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.SendTransaction, blockchain)
         return client
             .newCall(
