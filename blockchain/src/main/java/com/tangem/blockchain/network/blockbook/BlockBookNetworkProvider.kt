@@ -95,7 +95,7 @@ class BlockBookNetworkProvider(
         return try {
             val response = withContext(Dispatchers.IO) { api.sendTransaction(transaction) }
 
-            if ((response.result as String).isNotBlank()) {
+            if (response.result.isNotBlank()) {
                 SimpleResult.Success
             } else {
                 SimpleResult.Failure(BlockchainSdkError.FailedToSendException)
