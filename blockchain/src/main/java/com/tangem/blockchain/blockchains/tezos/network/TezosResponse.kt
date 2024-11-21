@@ -6,17 +6,17 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class TezosAddressResponse(
     @Json(name = "balance")
-    var balance: Long? = null,
+    val balance: Long? = null,
 
     @Json(name = "counter")
-    var counter: Long? = null,
+    val counter: Long? = null,
 )
 
 @JsonClass(generateAdapter = true)
 data class TezosHeaderResponse(
     @Json(name = "protocol")
-    var protocol: String? = null,
+    val protocol: String? = null,
 
     @Json(name = "hash")
-    var hash: String? = null,
+    val hash: String? = null,
 )
