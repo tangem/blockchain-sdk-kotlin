@@ -5,6 +5,7 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaMainAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaSplAccountInfo
+import com.tangem.blockchain.blockchains.solana.solanaj.model.TransactionInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgram
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.SolanaRpcClient
 import com.tangem.blockchain.common.*
@@ -14,12 +15,15 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.filterWith
 import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
 import kotlinx.coroutines.*
 import org.p2p.solanaj.core.PublicKey
+import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.rpc.Cluster
+import org.p2p.solanaj.rpc.types.config.Commitment
 import java.math.BigDecimal
 
 /**
@@ -56,9 +60,12 @@ class SolanaWalletManager internal constructor(
         updateInternal(accountInfo)
     }
 
-    private fun updateInternal(accountInfo: SolanaMainAccountInfo) {
+    private suspend fun updateInternal(accountInfo: SolanaMainAccountInfo) {
         accountSize = accountInfo.value?.space ?: MIN_ACCOUNT_DATA_SIZE
         wallet.setCoinValue(SolanaValueConverter.toSol(accountInfo.balance))
+
+        updateRecentTransactions()
+        addToRecentTransactions(accountInfo.txsInProgress)
 
         cardTokens.forEach { cardToken ->
             val tokenBalance =
@@ -72,6 +79,56 @@ class SolanaWalletManager internal constructor(
 
         wallet.removeAllTokens()
         throw error
+    }
+
+    private suspend fun updateRecentTransactions() {
+        val txSignatures = wallet.recentTransactions.mapNotNull { it.hash }
+        val signatureStatuses = multiNetworkProvider.performRequest {
+            getSignatureStatuses(txSignatures)
+        }.successOr {
+            Log.e(this.javaClass.simpleName, it.error.customMessage)
+            return
+        }
+
+        val confirmedTxData = mutableListOf<TransactionData.Uncompiled>()
+        val signaturesStatuses = txSignatures.zip(signatureStatuses.value)
+        signaturesStatuses.forEach { pair ->
+            if (pair.second?.confirmationStatus == Commitment.FINALIZED.value) {
+                val foundRecentTxData =
+                    wallet.recentTransactions.firstOrNull { it.hash == pair.first }
+                foundRecentTxData?.let {
+                    confirmedTxData.add(
+                        it.updateStatus(status = TransactionStatus.Confirmed) as TransactionData.Uncompiled,
+                    )
+                }
+            }
+        }
+        updateRecentTransactions(confirmedTxData)
+    }
+
+    private fun addToRecentTransactions(txsInProgress: List<TransactionInfo>) {
+        if (txsInProgress.isEmpty()) return
+
+        val newTxsInProgress =
+            txsInProgress.filterWith(wallet.recentTransactions) { a, b -> a.signature != b.hash }
+        val newUnconfirmedTxData = newTxsInProgress.mapNotNull {
+            if (it.instructions.isNotEmpty() && it.instructions[0].programId == Program.Id.system.toBase58()) {
+                val info = it.instructions[0].parsed.info
+                val amount = Amount(SolanaValueConverter.toSol(info.lamports), wallet.blockchain)
+                val feeAmount = Amount(SolanaValueConverter.toSol(it.fee), wallet.blockchain)
+                TransactionData.Uncompiled(
+                    amount,
+                    Fee.Common(feeAmount),
+                    info.source,
+                    info.destination,
+                    TransactionStatus.Unconfirmed,
+                    hash = it.signature,
+                )
+            } else {
+                null
+            }
+        }
+        wallet.recentTransactions.addAll(newUnconfirmedTxData)
     }
 
     override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData.Uncompiled {
