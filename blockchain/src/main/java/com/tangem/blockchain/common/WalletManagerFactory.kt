@@ -210,6 +210,7 @@ class WalletManagerFactory(
             Blockchain.InternetComputer -> ICPWalletManagerAssembly
             Blockchain.Sui, Blockchain.SuiTestnet -> SuiteWalletManagerAssembly
             Blockchain.Casper, Blockchain.CasperTestnet -> CasperWalletManagerAssembly
+            Blockchain.Alephium, Blockchain.AlephiumTestnet -> AlephiumWalletManagerAssembly
             Blockchain.Unknown,
             -> error("Unsupported blockchain")
         }
