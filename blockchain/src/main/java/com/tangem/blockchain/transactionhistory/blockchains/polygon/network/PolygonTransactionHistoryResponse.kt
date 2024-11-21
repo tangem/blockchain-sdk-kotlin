@@ -15,7 +15,10 @@ internal sealed class PolygonScanResult {
     internal data class Description(val description: String) : PolygonScanResult()
 
     @JsonClass(generateAdapter = true)
-    internal data class Transactions(val txs: List<PolygonTransaction>) : PolygonScanResult()
+    internal data class Transactions(
+        @Json(name = "txs")
+        val txs: List<PolygonTransaction>,
+    ) : PolygonScanResult()
 
     val transactions: List<PolygonTransaction>?
         get() = when (this) {
