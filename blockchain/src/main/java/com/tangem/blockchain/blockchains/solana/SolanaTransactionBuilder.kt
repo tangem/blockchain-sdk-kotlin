@@ -131,10 +131,18 @@ internal class SolanaTransactionBuilder(
         tokenProgramId: SolanaTokenProgram.ID,
     ): kotlin.Result<PublicKey> {
         val accountInfo = multiNetworkProvider.performRequest {
-            getDestinationTokenAccountInfoIfExist(destinationAccount)
+            getTokenAccountInfoIfExist(destinationAccount)
         }.successOr {
-            // 1. fail if account is not exist
-            return kotlin.Result.failure(it.error)
+            if (it.error is BlockchainSdkError.AccountNotFound) {
+                // 1. create token account if it's not exist
+                return createAssociatedSolanaTokenAddress(
+                    account = destinationAccount,
+                    mint = mint,
+                    tokenProgramId = tokenProgramId,
+                )
+            } else {
+                return kotlin.Result.failure(it.error)
+            }
         }
 
         val systemProgramId = Program.Id.system.toBase58()
@@ -211,7 +219,7 @@ internal class SolanaTransactionBuilder(
     private suspend fun isTokenAccountExist(associatedAccount: PublicKey): Result<Boolean> {
         return withContext(Dispatchers.IO) {
             val infoResult = multiNetworkProvider.performRequest {
-                getDestinationTokenAccountInfoIfExist(associatedAccount)
+                getTokenAccountInfoIfExist(associatedAccount)
             }
 
             when {
