@@ -61,7 +61,7 @@ class BitcoinCashNowNodesNetworkProvider(
         return try {
             val getFeeResponse = withContext(Dispatchers.IO) { api.getFee() }
 
-            val result = getFeeResponse.result as Double
+            val result = getFeeResponse.result
 
             if (result <= 0) throw BlockchainSdkError.FailedToLoadFee
 
