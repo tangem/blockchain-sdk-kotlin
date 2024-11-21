@@ -2,11 +2,12 @@ package com.tangem.blockchain.blockchains.bitcoincash
 
 import com.tangem.blockchain.blockchains.bitcoincash.api.BitcoinCashApi
 import com.tangem.blockchain.blockchains.bitcoincash.api.BitcoinCashBlockBookApi
+import com.tangem.blockchain.blockchains.bitcoincash.network.BitconCashGetFeeResponse
 import com.tangem.blockchain.common.JsonRPCRequest
-import com.tangem.blockchain.common.JsonRPCResponse
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponseItem
+import com.tangem.blockchain.network.blockbook.network.responses.SendTransactionResponse
 import com.tangem.blockchain.network.createRetrofitInstance
 import retrofit2.Response
 import java.io.IOException
@@ -33,12 +34,12 @@ internal class BitcoinCashNowNodesApiService(
         return response.unpack()
     }
 
-    suspend fun getFee(): JsonRPCResponse {
+    suspend fun getFee(): BitconCashGetFeeResponse {
         val response = bchService.getFee(request = getFeeRequest())
         return response.unpack()
     }
 
-    suspend fun sendTransaction(txHex: String): JsonRPCResponse {
+    suspend fun sendTransaction(txHex: String): SendTransactionResponse {
         val response = bchService.sendTransaction(request = getSendRequest(txHex))
         return response.unpack()
     }
