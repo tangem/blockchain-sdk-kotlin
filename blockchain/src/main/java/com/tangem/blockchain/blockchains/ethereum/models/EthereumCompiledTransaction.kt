@@ -1,33 +1,33 @@
 package com.tangem.blockchain.blockchains.ethereum.models
 
-import kotlinx.serialization.Serializable
-import shadow.com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Model of filled Ethereum transaction used in staking
  */
-@Serializable
+@JsonClass(generateAdapter = true)
 data class EthereumCompiledTransaction(
-    @SerializedName("from")
+    @Json(name = "from")
     val from: String,
-    @SerializedName("gasLimit")
+    @Json(name = "gasLimit")
     val gasLimit: String,
-    @SerializedName("value")
+    @Json(name = "value")
     val value: String?,
-    @SerializedName("to")
+    @Json(name = "to")
     val to: String,
-    @SerializedName("data")
+    @Json(name = "data")
     val data: String,
-    @SerializedName("nonce")
+    @Json(name = "nonce")
     val nonce: Int,
-    @SerializedName("type")
+    @Json(name = "type")
     val type: Int,
-    @SerializedName("gasPrice")
+    @Json(name = "gasPrice")
     val gasPrice: String?,
-    @SerializedName("maxFeePerGas")
+    @Json(name = "maxFeePerGas")
     val maxFeePerGas: String?,
-    @SerializedName("maxPriorityFeePerGas")
+    @Json(name = "maxPriorityFeePerGas")
     val maxPriorityFeePerGas: String?,
-    @SerializedName("chainId")
+    @Json(name = "chainId")
     val chainId: Int,
 )

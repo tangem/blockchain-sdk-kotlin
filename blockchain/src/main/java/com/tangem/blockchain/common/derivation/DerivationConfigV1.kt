@@ -14,6 +14,8 @@ import com.tangem.crypto.hdWallet.DerivationPath
  * https://cips.cardano.org/cips/cip1852/
  * - `All else`. According to `BIP44`
  * https://github.com/satoshilabs/slips/blob/master/slip-0044.md
+ *
+ * For EVM if not found in slip-0044.md -> use 60 coin type
  */
 
 object DerivationConfigV1 : DerivationConfig() {
@@ -59,6 +61,8 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Blast,
             Blockchain.Cyber,
             Blockchain.Canxium,
+            Blockchain.Chiliz,
+            Blockchain.Xodex,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.XDC -> mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
             Blockchain.EthereumClassic -> mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))
@@ -146,6 +150,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.CyberTestnet,
             Blockchain.EnergyWebChainTestnet,
             Blockchain.CoreTestnet,
+            Blockchain.ChilizTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             Blockchain.Aptos,
             Blockchain.AptosTestnet,
@@ -175,8 +180,6 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Casper,
             Blockchain.CasperTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/506'/0'/0/0"))
-            Blockchain.Xodex,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/2415'/0'/0/0"))
         }
     }
 }
