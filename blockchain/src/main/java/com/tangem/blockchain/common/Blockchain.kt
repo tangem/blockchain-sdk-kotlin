@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.blockchains.alephium.AlephiumAddressService
 import com.tangem.blockchain.blockchains.aptos.AptosAddressService
 import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
@@ -180,6 +181,8 @@ enum class Blockchain(
     Canxium("canxium", "CAU", "Canxium"),
     Chiliz("chiliz", "CHZ", "Chiliz"),
     ChilizTestnet("chiliz/test", "CHZ", "Chiliz Spicy Testnet"),
+    Alephium("alephium", "ALPH", "Alephium"),
+    AlephiumTestnet("alephium/test", "ALPH", "Alephium Testnet"),
     Clore("clore-ai", "CLORE", "Clore"),
     VanarChain("vanar-chain", "VANRY", "Vanar Chain"),
     VanarChainTestnet("vanar-chain/test", "VG", "Vanar Vanguard Testnet"),
@@ -314,6 +317,7 @@ enum class Blockchain(
         Core, CoreTestnet,
         Chiliz, ChilizTestnet,
         VanarChain, VanarChainTestnet,
+        Alephium, AlephiumTestnet,
         Xodex,
         Canxium,
         OdysseyChain, OdysseyChainTestnet,
@@ -443,6 +447,7 @@ enum class Blockchain(
             Radiant -> RadiantAddressService()
             Fact0rn -> Fact0rnAddressService()
             Casper, CasperTestnet -> CasperAddressService()
+            Alephium, AlephiumTestnet -> AlephiumAddressService()
             Unknown -> error("unsupported blockchain")
         }
     }
@@ -532,6 +537,7 @@ enum class Blockchain(
             Casper, CasperTestnet -> CasperTestnet
             Core, CoreTestnet -> CoreTestnet
             Chiliz, ChilizTestnet -> ChilizTestnet
+            Alephium, AlephiumTestnet -> AlephiumTestnet
             VanarChain, VanarChainTestnet -> VanarChainTestnet
             OdysseyChain, OdysseyChainTestnet -> OdysseyChainTestnet
             Bitrock, BitrockTestnet -> BitrockTestnet
@@ -613,6 +619,7 @@ enum class Blockchain(
             Core, CoreTestnet,
             Casper, CasperTestnet,
             Chiliz, ChilizTestnet,
+            Alephium, AlephiumTestnet,
             VanarChain, VanarChainTestnet,
             Xodex,
             Canxium,
