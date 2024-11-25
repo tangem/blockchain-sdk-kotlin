@@ -198,6 +198,7 @@ class WalletManagerFactory(
             Blockchain.Hedera, Blockchain.HederaTestnet -> HederaWalletManagerAssembly(dataStorage, accountCreator)
             Blockchain.Nexa, Blockchain.NexaTestnet -> NexaWalletManagerAssembly
             Blockchain.Radiant -> RadiantWalletManagerAssembly
+            Blockchain.Fact0rn -> Fact0rnWalletManagerAssembly
             Blockchain.Koinos, Blockchain.KoinosTestnet -> KoinosWalletManagerAssembly
             Blockchain.Filecoin -> FilecoinWalletManagerAssembly
             Blockchain.Sei, Blockchain.SeiTestnet -> SeiWalletManagerAssembly
