@@ -10,6 +10,7 @@ import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.decimal.DecimalAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.factorn.Fact0rnAddressService
 import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
 import com.tangem.blockchain.blockchains.koinos.KoinosAddressService
@@ -145,6 +146,7 @@ enum class Blockchain(
     MoonriverTestnet("moonriver/test", "MOVR", "Moonriver Testnet"),
     Mantle("mantle", "MNT", "Mantle"),
     MantleTestnet("mantle/test", "MNT", "Mantle Testnet"),
+    Fact0rn("fact0rn", "FACT", "Fact0rn"),
     Flare("flare", "FLR", "Flare"),
     FlareTestnet("flare/test", "FLR", "Flare Testnet"),
     Taraxa("taraxa", "TARA", "Taraxa"),
@@ -216,6 +218,7 @@ enum class Blockchain(
         Aptos, AptosTestnet,
         Hedera, HederaTestnet,
         Radiant,
+        Fact0rn,
         Koinos, KoinosTestnet,
         InternetComputer,
         Clore,
@@ -391,6 +394,7 @@ enum class Blockchain(
             Nexa, NexaTestnet -> NexaAddressService(this.isTestnet())
             Koinos, KoinosTestnet -> KoinosAddressService()
             Radiant -> RadiantAddressService()
+            Fact0rn -> Fact0rnAddressService()
             Casper, CasperTestnet -> CasperAddressService()
             Unknown -> error("unsupported blockchain")
         }
@@ -540,6 +544,7 @@ enum class Blockchain(
             Manta, MantaTestnet,
             PolygonZkEVM, PolygonZkEVMTestnet,
             Radiant,
+            Fact0rn,
             Base, BaseTestnet,
             Moonriver, MoonriverTestnet,
             Mantle, MantleTestnet,
