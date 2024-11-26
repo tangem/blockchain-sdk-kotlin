@@ -37,7 +37,7 @@ internal class ChiaProvidersBuilder(
             ChiaJsonRpcProvider(
                 baseUrl = API_CHIA_TANGEM,
                 key = it,
-                isRequiredHexPrefixForTx = false,
+                isRequiredHexPrefixForTx = true,
             )
         }
     }
