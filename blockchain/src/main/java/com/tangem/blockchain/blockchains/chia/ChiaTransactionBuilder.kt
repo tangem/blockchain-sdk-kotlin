@@ -9,7 +9,10 @@ import com.tangem.blockchain.blockchains.chia.network.ChiaCoin
 import com.tangem.blockchain.blockchains.chia.network.ChiaCoinSpend
 import com.tangem.blockchain.blockchains.chia.network.ChiaSpendBundle
 import com.tangem.blockchain.blockchains.chia.network.ChiaTransactionBody
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blstlib.generated.P2
 import com.tangem.blstlib.generated.P2_Affine
@@ -68,7 +71,7 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
     }
 
     fun buildToSend(signatures: List<ByteArray>) = ChiaTransactionBody(
-        ChiaSpendBundle(aggregateSignatures(signatures).toHexString().addHexPrefix(), coinSpends),
+        ChiaSpendBundle(aggregateSignatures(signatures).toHexString(), coinSpends),
     )
 
     fun getTransactionCost(amount: Amount): Long {
@@ -110,7 +113,7 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
         val coinSpends = unspentCoins.map {
             ChiaCoinSpend(
                 coin = it,
-                puzzleReveal = ChiaAddressService.getPuzzle(walletPublicKey).toHexString().addHexPrefix(),
+                puzzleReveal = ChiaAddressService.getPuzzle(walletPublicKey).toHexString(),
                 solution = "",
             )
         }
@@ -128,10 +131,10 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
             null
         }
 
-        coinSpends[0].solution = listOfNotNull(sendCondition, changeCondition).toSolution().toHexString().addHexPrefix()
+        coinSpends[0].solution = listOfNotNull(sendCondition, changeCondition).toSolution().toHexString()
 
         for (coinSpend in coinSpends.drop(1)) {
-            coinSpend.solution = listOf(RemarkCondition()).toSolution().toHexString().addHexPrefix()
+            coinSpend.solution = listOf(RemarkCondition()).toSolution().toHexString()
         }
 
         return coinSpends
@@ -155,15 +158,6 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
 
     private fun ByteArray.hashAugScheme(): ByteArray {
         return P2().hash_to(walletPublicKey + this, AUG_SCHEME_DST, ByteArray(0)).compress()
-    }
-
-    private fun String.addHexPrefix(): String {
-        if (this.isEmpty()) return this
-        return if (this.startsWith(HEX_PREFIX)) {
-            this
-        } else {
-            HEX_PREFIX + this
-        }
     }
 
     companion object {
