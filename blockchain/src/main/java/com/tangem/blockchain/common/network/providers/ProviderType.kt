@@ -47,6 +47,7 @@ sealed interface ProviderType {
 
     sealed interface Chia : ProviderType {
         object Tangem : Chia
+        object TangemNew : Chia
         object FireAcademy : Chia
     }
 
