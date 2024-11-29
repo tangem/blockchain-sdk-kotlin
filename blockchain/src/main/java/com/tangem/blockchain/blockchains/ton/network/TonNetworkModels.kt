@@ -24,6 +24,7 @@ data class TonGetWalletInfoResponse(
     @Json(name = "seqno") val seqno: Int?,
 )
 
+@JsonClass(generateAdapter = false)
 enum class TonAccountState {
     @Json(name = "active")
     ACTIVE,

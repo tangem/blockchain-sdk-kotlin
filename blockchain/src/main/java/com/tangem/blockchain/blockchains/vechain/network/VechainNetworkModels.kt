@@ -24,6 +24,7 @@ internal data class VeChainCommitTransactionResponse(@Json(name = "id") val txId
 @JsonClass(generateAdapter = true)
 internal data class VeChainTransactionInfoResponse(@Json(name = "id") val txId: String)
 
+@JsonClass(generateAdapter = true)
 internal data class VeChainContractCallRequest(
     @Json(name = "clauses") val clauses: List<VeChainClause>,
     @Json(name = "caller") val caller: String?,
@@ -37,6 +38,7 @@ internal data class VeChainClause(
     @Json(name = "data") val data: String,
 )
 
+@JsonClass(generateAdapter = true)
 internal data class VeChainContractCallResponse(
     @Json(name = "data") val data: String?,
     @Json(name = "gasUsed") val gasUsed: Long?,
