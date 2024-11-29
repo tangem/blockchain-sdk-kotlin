@@ -12,4 +12,7 @@ interface BlockchainDataStorage {
 
     /** Store [value] in JSON format by [key] */
     suspend fun store(key: String, value: String)
+
+    /** Remove [value] from storage by [key] */
+    suspend fun remove(key: String)
 }

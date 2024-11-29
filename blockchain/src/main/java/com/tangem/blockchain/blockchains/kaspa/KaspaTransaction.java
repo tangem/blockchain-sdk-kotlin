@@ -24,6 +24,7 @@ import com.tangem.blockchain.blockchains.cardano.crypto.Blake2b;
 // based on BitcoinCashTransaction
 public class KaspaTransaction extends Transaction {
     private final byte[] TRANSACTION_SIGNING_DOMAIN = "TransactionSigningHash".getBytes(StandardCharsets.UTF_8);
+    private final byte[] TRANSACTION_ID = "TransactionID".getBytes(StandardCharsets.UTF_8);
     private final byte[] TRANSACTION_SIGNING_ECDSA_DOMAIN_HASH =
             Sha256Hash.of("TransactionSigningHashECDSA".getBytes(StandardCharsets.UTF_8)).getBytes();
     private final int BLAKE2B_DIGEST_LENGTH = 32;
@@ -128,6 +129,41 @@ public class KaspaTransaction extends Transaction {
         }
 
         return Sha256Hash.of(finalBos.toByteArray()).getBytes();
+    }
+
+    public synchronized byte[] transactionHash() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(256);
+        try {
+            List<TransactionInput> inputs = getInputs();
+            List<TransactionOutput> outputs = getOutputs();
+
+            uint16ToByteStreamLE(0, bos);
+
+            uint64ToByteStreamLE(BigInteger.valueOf(inputs.size()), bos);
+            for (TransactionInput input: inputs) {
+                bos.write(input.getOutpoint().getHash().getBytes());
+                uint32ToByteStreamLE(input.getOutpoint().getIndex(), bos);
+                uint64ToByteStreamLE(BigInteger.valueOf(0), bos);
+                uint64ToByteStreamLE(BigInteger.valueOf(0), bos);
+            }
+            uint64ToByteStreamLE(BigInteger.valueOf(outputs.size()), bos);
+            for (TransactionOutput output : outputs) {
+                byte[] scriptBytes = output.getScriptBytes();
+                uint64ToByteStreamLE(BigInteger.valueOf(output.getValue().value), bos);
+                uint16ToByteStreamLE(0, bos); // version
+                uint64ToByteStreamLE(BigInteger.valueOf(scriptBytes.length), bos);
+                bos.write(scriptBytes);
+            }
+            uint64ToByteStreamLE(BigInteger.valueOf(getLockTime()), bos); // lock time
+            bos.write(new byte[20]); // subnetwork id
+            uint64ToByteStreamLE(BigInteger.valueOf(0), bos); // gas
+            uint64ToByteStreamLE(BigInteger.valueOf(0), bos); // payload size
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        Blake2b.Mac digest = Blake2b.Mac.newInstance(TRANSACTION_ID, BLAKE2B_DIGEST_LENGTH);
+        return digest.digest(bos.toByteArray());
     }
 
     private byte[] blake2bDigestOf(byte[] input) {
