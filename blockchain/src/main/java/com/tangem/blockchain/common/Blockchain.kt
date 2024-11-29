@@ -688,6 +688,7 @@ enum class Blockchain(
             Hedera, HederaTestnet,
             TON, TONTestnet,
             Cardano,
+            Kaspa,
             -> true
 
             else -> false
