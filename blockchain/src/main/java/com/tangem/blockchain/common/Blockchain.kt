@@ -747,6 +747,17 @@ enum class Blockchain(
         else -> false
     }
 
+    /**
+     * Returns is fee in given network is zero
+     * For now actual only for one network
+     */
+    fun isNetworkFeeZero(): Boolean {
+        return when (this) {
+            Xodex -> true
+            else -> false
+        }
+    }
+
     companion object {
         private val values = values()
 
