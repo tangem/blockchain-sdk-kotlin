@@ -49,11 +49,21 @@ data class GetAddressResponse(
          * Tron blockchain specific info.
          * There are many more fields in this response, but we map only the required ones.
          */
-        data class TronTXReceipt(val status: StatusType?)
+        @JsonClass(generateAdapter = true)
+        data class TronTXReceipt(
+            @Json(name = "status")
+            val status: StatusType?,
+        )
 
+        @JsonClass(generateAdapter = false)
         enum class StatusType(override val value: Int) : EnumeratedEnum {
+            @Json(name = "PENDING")
             PENDING(-1),
+
+            @Json(name = "FAILURE")
             FAILURE(0),
+
+            @Json(name = "OK")
             OK(1),
             ;
         }
