@@ -24,4 +24,9 @@ internal class ElectrumNetworkService(providers: List<ElectrumNetworkProvider>) 
 
     override suspend fun broadcastTransaction(rawTx: ByteArray): Result<ElectrumResponse.TxHex> =
         multiProvider.performRequest(ElectrumNetworkProvider::broadcastTransaction, rawTx)
+
+    override suspend fun getTransactionHistory(
+        addressScriptHash: String,
+    ): Result<List<ElectrumResponse.TxHistoryEntry>> =
+        multiProvider.performRequest(ElectrumNetworkProvider::getTransactionHistory, addressScriptHash)
 }

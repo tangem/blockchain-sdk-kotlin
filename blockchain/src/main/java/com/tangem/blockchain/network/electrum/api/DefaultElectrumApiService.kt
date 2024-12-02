@@ -7,27 +7,13 @@ import com.tangem.blockchain.common.JsonRPCRequest
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.fold
 import com.tangem.blockchain.extensions.map
-import com.tangem.blockchain.network.jsonrpc.DefaultJsonRPCWebsocketService
+import com.tangem.blockchain.network.jsonrpc.JsonRPCService
 import com.tangem.blockchain.network.moshi
-import okhttp3.OkHttpClient
 import java.math.BigDecimal
 
-internal class WebSocketElectrumApiService(
-    wssUrl: String,
-    okHttpClient: OkHttpClient,
+internal class DefaultElectrumApiService(
+    val rpcService: JsonRPCService,
 ) : ElectrumApiService {
-
-    private val service = DefaultJsonRPCWebsocketService(
-        wssUrl = wssUrl,
-        pingPongRequestFactory = {
-            JsonRPCRequest(
-                method = "server.ping",
-                id = "keepAlive",
-                params = emptyList<String>(),
-            )
-        },
-        okHttpClient = okHttpClient,
-    )
 
     private val blockTipAdapter: JsonAdapter<ElectrumResponse.BlockTip> by lazy {
         moshi.adapter(ElectrumResponse.BlockTip::class.java)
@@ -143,7 +129,7 @@ internal class WebSocketElectrumApiService(
         params: List<Any> = emptyList(),
         adapter: JsonAdapter<T> = moshi.adapter<T>(),
     ): Result<T> {
-        return service.call(
+        return rpcService.call(
             JsonRPCRequest(
                 method = method,
                 params = params,
