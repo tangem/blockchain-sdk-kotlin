@@ -93,6 +93,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Chiliz, Blockchain.ChilizTestnet -> ChilizExternalLinkProvider(isTestnet)
             Blockchain.Xodex -> XodexExternalLinkProvider()
             Blockchain.Canxium -> CanxiumExternalLinkProvider()
+            Blockchain.Clore -> CloreExternalLinkProvider()
         }
     }
 }
