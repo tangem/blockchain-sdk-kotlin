@@ -173,6 +173,7 @@ enum class Blockchain(
     Canxium("canxium", "CAU", "Canxium"),
     Chiliz("chiliz", "CHZ", "Chiliz"),
     ChilizTestnet("chiliz/test", "CHZ", "Chiliz Spicy Testnet"),
+    Clore("clore-ai", "CLORE", "Clore"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -217,6 +218,7 @@ enum class Blockchain(
         Radiant,
         Koinos, KoinosTestnet,
         InternetComputer,
+        Clore,
         -> 8
 
         Solana, SolanaTestnet,
@@ -308,6 +310,7 @@ enum class Blockchain(
             Ducatus,
             Dash,
             Ravencoin, RavencoinTestnet,
+            Clore,
             -> BitcoinAddressService(this)
 
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
@@ -554,6 +557,7 @@ enum class Blockchain(
             Chiliz, ChilizTestnet,
             Xodex,
             Canxium,
+            Clore,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
