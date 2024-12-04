@@ -7,10 +7,7 @@ import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
 import com.tangem.blockchain.network.blockbook.config.BlockBookConfig
 import com.tangem.blockchain.network.blockbook.config.BlockBookRequest
-import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
-import com.tangem.blockchain.network.blockbook.network.responses.GetFeeResponse
-import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponseItem
-import com.tangem.blockchain.network.blockbook.network.responses.SendTransactionResponse
+import com.tangem.blockchain.network.blockbook.network.responses.*
 import com.tangem.blockchain.network.moshi
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -86,6 +83,24 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
                             .toRequestBody(APPLICATION_JSON_MEDIA_TYPE.toMediaTypeOrNull()),
                     )
                     .url(config.getRequestBaseUrl(BlockBookRequest.GetFee, blockchain))
+                    .build(),
+            )
+            .await()
+            .unpack()
+    }
+
+    /**
+     * It is also a request to receive a fee for confirmation blocks.
+     * Some blockchains use this method. Such blockchains:
+     * - CloreAI
+     */
+    suspend fun getFees(param: Int): GetFeesResponse {
+        val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.GetFee, blockchain)
+        return client
+            .newCall(
+                request = Request.Builder()
+                    .get()
+                    .url("$requestBaseUrl/estimatefee/$param")
                     .build(),
             )
             .await()
