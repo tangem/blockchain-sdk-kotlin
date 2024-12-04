@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.extensions.letNotBlank
+import com.tangem.blockchain.network.blockbook.config.CloreBlockBookConfig
 import com.tangem.blockchain.network.blockbook.config.GetBlockConfig
 import com.tangem.blockchain.network.blockbook.config.NowNodesConfig
 
@@ -41,5 +42,14 @@ internal class BlockBookNetworkProviderFactory(
         } else {
             null
         }
+    }
+
+    fun createCloreBlockProvider(blockchain: Blockchain, baseHost: String): BitcoinNetworkProvider {
+        return BlockBookNetworkProvider(
+            config = CloreBlockBookConfig(
+                baseHost = baseHost,
+            ),
+            blockchain = blockchain,
+        )
     }
 }
