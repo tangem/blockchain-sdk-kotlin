@@ -133,6 +133,7 @@ class EstimationFeeAddressFactory {
             -> "0xbca45e36a271e106546c89984108685215724e488570a0049a187c473cd521bc"
             Blockchain.EnergyWebX, Blockchain.EnergyWebXTestnet,
             -> "5CogUCbb5PYYbEHhDVGDN6JRRYBkd4sFRVc4wwP8oy5Su34Z"
+            Blockchain.Clore -> "AJfAu7RJxiTowM9qVaTbVuS5JCPCpV3p7M"
         }
     }
 
