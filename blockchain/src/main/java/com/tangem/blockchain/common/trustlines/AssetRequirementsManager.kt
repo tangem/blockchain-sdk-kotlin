@@ -10,5 +10,5 @@ interface AssetRequirementsManager {
 
     suspend fun fulfillRequirements(currencyType: CryptoCurrencyType, signer: TransactionSigner): SimpleResult
 
-    suspend fun discardRequirements(currencyType: CryptoCurrencyType) { }
+    suspend fun discardRequirements(currencyType: CryptoCurrencyType): SimpleResult
 }
