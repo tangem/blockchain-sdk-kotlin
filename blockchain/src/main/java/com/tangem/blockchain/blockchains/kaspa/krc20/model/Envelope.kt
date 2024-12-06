@@ -4,7 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-data class Envelope(
+internal data class Envelope(
     @Json(name = "p") val p: String,
     @Json(name = "op") val op: String,
     @Json(name = "amt") val amt: String,
