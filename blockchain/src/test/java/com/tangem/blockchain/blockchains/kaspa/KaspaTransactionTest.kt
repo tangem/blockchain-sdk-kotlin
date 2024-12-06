@@ -138,10 +138,11 @@ class KaspaTransactionTest {
 
         // act
         val buildToSignResult = transactionBuilder.buildToSign(transactionData) as Result.Success
-        val signedTransaction = transactionBuilder.buildToSend(signature)
+        val hashes = transactionBuilder.getHashesForSign(buildToSignResult.data)
+        val signedTransaction = transactionBuilder.buildToSend(signature, buildToSignResult.data)
 
         // assert
-        Truth.assertThat(buildToSignResult.data.map { it.toList() })
+        Truth.assertThat(hashes.map { it.toList() })
             .containsExactly(expectedHashToSign1, expectedHashToSign2, expectedHashToSign3)
         Truth.assertThat(signedTransaction).isEqualTo(expectedSignedTransaction)
     }
@@ -228,10 +229,11 @@ class KaspaTransactionTest {
 
         // act
         val buildToSignResult = transactionBuilder.buildToSign(transactionData) as Result.Success
-        val signedTransaction = transactionBuilder.buildToSend(signature)
+        val hashes = transactionBuilder.getHashesForSign(buildToSignResult.data)
+        val signedTransaction = transactionBuilder.buildToSend(signature, buildToSignResult.data)
 
         // assert
-        Truth.assertThat(buildToSignResult.data.map { it.toList() }).containsExactly(expectedHashToSign1)
+        Truth.assertThat(hashes.map { it.toList() }).containsExactly(expectedHashToSign1)
         Truth.assertThat(signedTransaction).isEqualTo(expectedSignedTransaction)
     }
 
