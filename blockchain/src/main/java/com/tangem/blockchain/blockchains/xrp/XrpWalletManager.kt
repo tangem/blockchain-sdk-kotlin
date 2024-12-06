@@ -41,7 +41,7 @@ class XrpWalletManager(
         wallet.setCoinValue(response.balance - response.reserveTotal)
         wallet.setReserveValue(response.reserveTotal)
         transactionBuilder.sequence = response.sequence
-        transactionBuilder.minReserve = response.reserveTotal
+        transactionBuilder.minReserve = response.reserveBase
 
         if (response.hasUnconfirmed) {
             if (wallet.recentTransactions.isEmpty()) wallet.addTransactionDummy()
