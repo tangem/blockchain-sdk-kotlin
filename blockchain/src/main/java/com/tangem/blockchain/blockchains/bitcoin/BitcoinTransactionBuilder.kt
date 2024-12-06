@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
+import com.tangem.blockchain.blockchains.clore.CloreMainNetParams
 import com.tangem.blockchain.blockchains.dash.DashMainNetParams
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinMainNetParams
@@ -44,6 +45,7 @@ open class BitcoinTransactionBuilder(
         Blockchain.Dash -> DashMainNetParams()
         Blockchain.Ravencoin -> RavencoinMainNetParams()
         Blockchain.RavencoinTestnet -> RavencoinTestNetParams()
+        Blockchain.Clore -> CloreMainNetParams()
         else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
     var unspentOutputs: List<BitcoinUnspentOutput>? = null
