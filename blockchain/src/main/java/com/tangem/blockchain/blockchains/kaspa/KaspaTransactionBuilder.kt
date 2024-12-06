@@ -24,7 +24,6 @@ import java.math.BigInteger
 class KaspaTransactionBuilder(
     private val publicKey: Wallet.PublicKey,
 ) {
-    private lateinit var transaction: KaspaTransaction
     private var networkParameters = KaspaMainNetParams()
     var unspentOutputs: List<KaspaUnspentOutput>? = null
 
@@ -34,7 +33,7 @@ class KaspaTransactionBuilder(
     private val envelopeAdapter by lazy { moshi.adapter<Envelope>() }
 
     @Suppress("MagicNumber")
-    fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
+    fun buildToSign(transactionData: TransactionData): Result<KaspaTransaction> {
         transactionData.requireUncompiled()
 
         if (unspentOutputs.isNullOrEmpty()) {
@@ -74,7 +73,7 @@ class KaspaTransactionBuilder(
             null -> error("Null script type") // should never happen
         }
 
-        transaction = createKaspaTransaction(
+        val transaction = createKaspaTransaction(
             networkParameters = networkParameters,
             unspentOutputs = unspentsToSpend,
             transformer = { kaspaTransaction ->
@@ -92,10 +91,10 @@ class KaspaTransactionBuilder(
             },
         )
 
-        return Result.Success(getHashesForSign(transaction))
+        return Result.Success(transaction)
     }
 
-    fun buildToSend(signatures: ByteArray, transaction: KaspaTransaction = this.transaction): KaspaTransactionBody {
+    fun buildToSend(signatures: ByteArray, transaction: KaspaTransaction): KaspaTransactionBody {
         for (index in transaction.inputs.indices) {
             val signature = extractSignature(index, signatures)
             transaction.inputs[index].scriptSig = ScriptBuilder().data(signature).build()
@@ -103,7 +102,7 @@ class KaspaTransactionBuilder(
         return buildForSendInternal(transaction)
     }
 
-    fun buildKRC20RevealToSend(
+    internal fun buildKRC20RevealToSend(
         signatures: ByteArray,
         redeemScript: RedeemScript,
         transaction: KaspaTransaction,
@@ -123,14 +122,20 @@ class KaspaTransactionBuilder(
     }
 
     @Suppress("LongMethod", "MagicNumber")
-    fun buildKRC20CommitTransactionToSign(
+    internal fun buildKRC20CommitTransactionToSign(
         transactionData: TransactionData,
-        dust: BigDecimal,
+        dust: BigDecimal?,
         includeFee: Boolean = true,
     ): Result<CommitTransaction> {
         transactionData.requireUncompiled()
 
         require(transactionData.amount.type is AmountType.Token)
+
+        if (unspentOutputs.isNullOrEmpty()) {
+            return Result.Failure(
+                BlockchainSdkError.CustomError("Unspent outputs are missing"),
+            )
+        }
 
         val unspentsToSpend = getUnspentsToSpend()
 
@@ -151,7 +156,7 @@ class KaspaTransactionBuilder(
         val revealFeeParams = (transactionData.fee as? Fee.Kaspa)?.revealTransactionFee?.takeIf { includeFee }
         // if we don't know the commission, commission for reveal transaction will be set to zero
         val feeEstimationRevealTransactionValue = revealFeeParams?.value ?: BigDecimal.ZERO
-        val targetOutputAmountValue = feeEstimationRevealTransactionValue + dust
+        val targetOutputAmountValue = feeEstimationRevealTransactionValue + (dust ?: BigDecimal.ZERO)
 
         val resultChange = calculateChange(
             amount = targetOutputAmountValue,
@@ -173,7 +178,7 @@ class KaspaTransactionBuilder(
             envelope = envelope,
         )
 
-        transaction = createKaspaTransaction(
+        val transaction = createKaspaTransaction(
             networkParameters = networkParameters,
             unspentOutputs = unspentsToSpend,
             transformer = { kaspaTransaction ->
@@ -197,7 +202,7 @@ class KaspaTransactionBuilder(
         )
         val commitTransaction = CommitTransaction(
             transaction = transaction,
-            hashes = getHashesForSign(),
+            hashes = getHashesForSign(transaction),
             redeemScript = redeemScript,
             sourceAddress = transactionData.sourceAddress,
             params = IncompleteTokenTransactionParams(
@@ -301,7 +306,7 @@ class KaspaTransactionBuilder(
 
     fun getUnspentsToSpend() = unspentOutputs!!.sortedByDescending { it.amount }.take(getUnspentsToSpendCount())
 
-    private fun getHashesForSign(transaction: KaspaTransaction = this.transaction): List<ByteArray> {
+    fun getHashesForSign(transaction: KaspaTransaction): List<ByteArray> {
         val hashesForSign: MutableList<ByteArray> = MutableList(transaction.inputs.size) { byteArrayOf() }
         for (input in transaction.inputs) {
             val index = input.index
