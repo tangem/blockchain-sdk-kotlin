@@ -158,6 +158,10 @@ internal class HederaWalletManager(
         }
     }
 
+    override suspend fun discardRequirements(currencyType: CryptoCurrencyType): SimpleResult {
+        return SimpleResult.Success
+    }
+
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
