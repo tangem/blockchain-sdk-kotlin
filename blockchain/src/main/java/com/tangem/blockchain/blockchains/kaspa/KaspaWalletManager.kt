@@ -3,8 +3,6 @@ package com.tangem.blockchain.blockchains.kaspa
 import android.util.Log
 import com.tangem.blockchain.blockchains.kaspa.krc20.KaspaKRC20InfoResponse
 import com.tangem.blockchain.blockchains.kaspa.krc20.KaspaKRC20NetworkProvider
-import com.tangem.blockchain.blockchains.kaspa.krc20.KaspaKRC20TransactionExtras
-import com.tangem.blockchain.blockchains.kaspa.krc20.model.IncompleteTokenTransactionParams
 import com.tangem.blockchain.blockchains.kaspa.krc20.model.RedeemScript
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaFeeBucketResponse
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaInfoResponse
@@ -19,6 +17,7 @@ import com.tangem.blockchain.common.trustlines.AssetRequirementsCondition
 import com.tangem.blockchain.common.trustlines.AssetRequirementsManager
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.map
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
@@ -99,11 +98,20 @@ internal class KaspaWalletManager(
     ): Result<TransactionSendResult> {
         transactionData.requireUncompiled()
 
-        return when (transactionData.amount.type) {
+        return when (val type = transactionData.amount.type) {
             is AmountType.Coin -> sendCoinTransaction(transactionData, signer)
             is AmountType.Token -> {
-                if (transactionData.extras as? KaspaKRC20TransactionExtras != null) {
-                    sendKRC20RevealOnlyTransaction(transactionData, signer)
+                updateUnspentOutputs()
+                val incompleteTokenTransaction = getIncompleteTokenTransaction(type.token)
+                if (incompleteTokenTransaction != null &&
+                    incompleteTokenTransaction.amountValue == transactionData.amount.value &&
+                    incompleteTokenTransaction.envelope.to == transactionData.destinationAddress
+                ) {
+                    sendKRC20RevealOnlyTransaction(
+                        transactionData = transactionData,
+                        signer = signer,
+                        incompleteTokenTransactionParams = incompleteTokenTransaction,
+                    )
                 } else {
                     sendKRC20Transaction(transactionData, signer)
                 }
@@ -130,9 +138,10 @@ internal class KaspaWalletManager(
 
             val buildTransactionResult = when (amount.type) {
                 is AmountType.Coin -> transactionBuilder.buildToSign(transactionData)
-                is AmountType.Token -> transactionBuilder.buildKRC20CommitTransactionToSign(
+                is AmountType.Token -> transactionBuilder.buildToSignKRC20Commit(
                     transactionData = transactionData,
                     dust = dustValue,
+                    includeFee = false,
                 ).let {
                     when (it) {
                         is Result.Failure -> it
@@ -157,11 +166,7 @@ internal class KaspaWalletManager(
                                 is Result.Failure -> sendResult
                                 is Result.Success -> {
                                     val data = sendResult.data
-                                    val mass = when (amount.type) {
-                                        is AmountType.Coin -> BigInteger.valueOf(data.mass)
-                                        is AmountType.Token -> REVEAL_TRANSACTION_MASS
-                                        else -> error("unknown amount type for fee estimation")
-                                    }
+                                    val mass = BigInteger.valueOf(data.mass)
 
                                     val allBuckets = (
                                         listOf(data.priorityBucket) +
@@ -231,12 +236,11 @@ internal class KaspaWalletManager(
                     ?: return SimpleResult.Success
 
                 val result = sendKRC20RevealOnlyTransaction(
-                    transactionData = incompleteTokenTransaction
-                        .toIncompleteTokenTransactionParams()
-                        .toTransactionData(
-                            type = AmountType.Token(currencyType.info),
-                        ),
+                    transactionData = incompleteTokenTransaction.toTransactionData(
+                        type = AmountType.Token(currencyType.info),
+                    ),
                     signer = signer,
+                    incompleteTokenTransactionParams = incompleteTokenTransaction,
                 )
 
                 when (result) {
@@ -294,18 +298,19 @@ internal class KaspaWalletManager(
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
         transactionData.requireUncompiled()
+
         val token = (transactionData.amount.type as AmountType.Token).token
         return when (
-            val commitTransaction = transactionBuilder.buildKRC20CommitTransactionToSign(
+            val commitTransaction = transactionBuilder.buildToSignKRC20Commit(
                 transactionData = transactionData,
                 dust = dustValue,
             )
         ) {
             is Result.Success -> {
-                val revealTransaction = transactionBuilder.buildKRC20RevealTransactionToSign(
+                val revealTransaction = transactionBuilder.buildToSignKRC20Reveal(
                     sourceAddress = transactionData.sourceAddress,
                     redeemScript = commitTransaction.data.redeemScript,
-                    feeAmountValue = transactionData.fee?.amount?.value!!,
+                    revealFeeAmountValue = (transactionData.fee as Fee.Kaspa).revealTransactionFee?.value!!,
                     params = commitTransaction.data.params,
                 )
 
@@ -322,7 +327,7 @@ internal class KaspaWalletManager(
                                     signatures = commitSignatures.reduce { acc, bytes -> acc + bytes },
                                     transaction = commitTransaction.data.transaction,
                                 )
-                                val revealTransactionToSend = transactionBuilder.buildKRC20RevealToSend(
+                                val revealTransactionToSend = transactionBuilder.buildToSendKRC20Reveal(
                                     signatures = revealSignatures.reduce { acc, bytes -> acc + bytes },
                                     redeemScript = commitTransaction.data.redeemScript,
                                     transaction = revealTransaction.data.transaction,
@@ -334,9 +339,7 @@ internal class KaspaWalletManager(
                                     is Result.Success -> {
                                         storeIncompleteTokenTransaction(
                                             token = token,
-                                            data = commitTransaction.data
-                                                .params
-                                                .toBlockchainSavedData(),
+                                            data = commitTransaction.data.params,
                                         )
                                         delay(REVEAL_TRANSACTION_DELAY)
 
@@ -345,8 +348,12 @@ internal class KaspaWalletManager(
                                                 revealTransactionToSend,
                                             )
                                         ) {
-                                            is Result.Failure -> sendRevealResult
+                                            is Result.Failure -> {
+                                                updateUnspentOutputs()
+                                                sendRevealResult
+                                            }
                                             is Result.Success -> {
+                                                updateUnspentOutputs()
                                                 val hash = sendRevealResult.data
                                                 transactionData.hash = hash
                                                 wallet.addOutgoingTransaction(transactionData)
@@ -367,7 +374,59 @@ internal class KaspaWalletManager(
         }
     }
 
-    private fun IncompleteTokenTransactionParams.toTransactionData(type: AmountType.Token): TransactionData.Uncompiled {
+    private suspend fun sendKRC20RevealOnlyTransaction(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+        incompleteTokenTransactionParams: BlockchainSavedData.KaspaKRC20IncompleteTokenTransaction,
+    ): Result<TransactionSendResult> {
+        transactionData.requireUncompiled()
+
+        val token = (transactionData.amount.type as AmountType.Token).token
+        val revealFeeAmountValue = (transactionData.fee as Fee.Kaspa).revealTransactionFee?.value ?: BigDecimal.ZERO
+        val redeemScript = RedeemScript(
+            wallet.publicKey.blockchainKey.toCompressedPublicKey(),
+            incompleteTokenTransactionParams.envelope,
+        )
+        val transaction = transactionBuilder.buildToSignKRC20Reveal(
+            sourceAddress = transactionData.sourceAddress,
+            redeemScript = redeemScript,
+            params = incompleteTokenTransactionParams,
+            revealFeeAmountValue = revealFeeAmountValue,
+        )
+        return when (transaction) {
+            is Result.Success -> {
+                return when (val signerResult = signer.sign(transaction.data.hashes, wallet.publicKey)) {
+                    is CompletionResult.Success -> {
+                        val transactionToSend = transactionBuilder.buildToSendKRC20Reveal(
+                            signatures = signerResult.data.reduce { acc, bytes -> acc + bytes },
+                            redeemScript = redeemScript,
+                            transaction = transaction.data.transaction,
+                        )
+                        when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
+                            is Result.Failure -> {
+                                updateUnspentOutputs()
+                                sendResult
+                            }
+                            is Result.Success -> {
+                                updateUnspentOutputs()
+                                val hash = sendResult.data
+                                transactionData.hash = hash
+                                wallet.addOutgoingTransaction(transactionData)
+                                removeIncompleteTokenTransaction(token)
+                                Result.Success(TransactionSendResult(hash ?: ""))
+                            }
+                        }
+                    }
+                    is CompletionResult.Failure -> Result.fromTangemSdkError(signerResult.error)
+                }
+            }
+            is Result.Failure -> transaction
+        }
+    }
+
+    private fun BlockchainSavedData.KaspaKRC20IncompleteTokenTransaction.toTransactionData(
+        type: AmountType.Token,
+    ): TransactionData.Uncompiled {
         val token = type.token
         val tokenValue = BigDecimal(envelope.amt)
 
@@ -393,78 +452,41 @@ internal class KaspaWalletManager(
             sourceAddress = wallet.address,
             destinationAddress = envelope.to,
             status = TransactionStatus.Unconfirmed,
-            extras = KaspaKRC20TransactionExtras(
-                incompleteTokenTransactionParams = this,
-            ),
             contractAddress = token.contractAddress,
         )
     }
 
-    private suspend fun sendKRC20RevealOnlyTransaction(
-        transactionData: TransactionData,
-        signer: TransactionSigner,
-    ): Result<TransactionSendResult> {
-        transactionData.requireUncompiled()
-        val token = (transactionData.amount.type as AmountType.Token).token
-        val incompleteTokenTransactionParams =
-            (transactionData.extras as KaspaKRC20TransactionExtras).incompleteTokenTransactionParams
-        val feeAmount = (transactionData.fee as Fee.Kaspa).revealTransactionFee
-        val redeemScript = RedeemScript(
-            wallet.publicKey.blockchainKey.toCompressedPublicKey(),
-            incompleteTokenTransactionParams.envelope,
-        )
-        val transaction = transactionBuilder.buildKRC20RevealTransactionToSign(
-            sourceAddress = transactionData.sourceAddress,
-            redeemScript = redeemScript,
-            params = incompleteTokenTransactionParams,
-            feeAmountValue = feeAmount?.value!!,
-        )
-        return when (transaction) {
-            is Result.Success -> {
-                return when (val signerResult = signer.sign(transaction.data.hashes, wallet.publicKey)) {
-                    is CompletionResult.Success -> {
-                        val transactionToSend = transactionBuilder.buildKRC20RevealToSend(
-                            signatures = signerResult.data.reduce { acc, bytes -> acc + bytes },
-                            redeemScript = redeemScript,
-                            transaction = transaction.data.transaction,
-                        )
-                        when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
-                            is Result.Failure -> sendResult
-                            is Result.Success -> {
-                                val hash = sendResult.data
-                                transactionData.hash = hash
-                                wallet.addOutgoingTransaction(transactionData)
-                                removeIncompleteTokenTransaction(token)
-                                Result.Success(TransactionSendResult(hash ?: ""))
-                            }
-                        }
-                    }
-                    is CompletionResult.Failure -> Result.fromTangemSdkError(signerResult.error)
-                }
-            }
-            is Result.Failure -> transaction
-        }
-    }
-
     private fun KaspaFeeBucketResponse.toFee(mass: BigInteger, type: AmountType): Fee.Kaspa {
         val feeRate = feeRate.toBigInteger()
-        val value = (mass * feeRate).toBigDecimal().movePointLeft(blockchain.decimals())
+        val resultMass = if (type is AmountType.Token) {
+            mass + REVEAL_TRANSACTION_MASS
+        } else {
+            mass
+        }
+        val value = (resultMass * feeRate).toBigDecimal().movePointLeft(blockchain.decimals())
         return Fee.Kaspa(
             amount = Amount(
                 value = value,
                 blockchain = blockchain,
-                type = type,
             ),
             mass = mass,
             feeRate = feeRate,
             revealTransactionFee = type.takeIf { it is AmountType.Token }.let {
                 Amount(
-                    value = (mass * feeRate).toBigDecimal().movePointLeft(blockchain.decimals()),
+                    value = (REVEAL_TRANSACTION_MASS * feeRate).toBigDecimal().movePointLeft(blockchain.decimals()),
                     blockchain = blockchain,
-                    type = type,
                 )
             },
         )
+    }
+
+    // we should update unspent outputs as soon as possible before create a new token transaction
+    private suspend fun updateUnspentOutputs() {
+        coroutineScope {
+            networkProvider.getInfo(wallet.address).map {
+                transactionBuilder.unspentOutputs = it.unspentOutputs
+            }
+        }
     }
 
     private suspend fun getIncompleteTokenTransaction(
@@ -487,22 +509,6 @@ internal class KaspaWalletManager(
     private fun Token.createKey(): String {
         return "$symbol-${wallet.publicKey.blockchainKey.toCompressedPublicKey().toHexString()}"
     }
-
-    private fun IncompleteTokenTransactionParams.toBlockchainSavedData() =
-        BlockchainSavedData.KaspaKRC20IncompleteTokenTransaction(
-            transactionId = transactionId,
-            amountValue = amountValue,
-            feeAmountValue = feeAmountValue,
-            envelope = envelope,
-        )
-
-    private fun BlockchainSavedData.KaspaKRC20IncompleteTokenTransaction.toIncompleteTokenTransactionParams() =
-        IncompleteTokenTransactionParams(
-            transactionId = transactionId,
-            amountValue = amountValue,
-            feeAmountValue = feeAmountValue,
-            envelope = envelope,
-        )
 
     companion object {
         private val REVEAL_TRANSACTION_MASS: BigInteger = 4100.toBigInteger()
