@@ -6,11 +6,13 @@ import com.tangem.blockchain.blockchains.kaspa.kaspacashaddr.KaspaCashAddr
 import com.tangem.blockchain.blockchains.kaspa.krc20.model.*
 import com.tangem.blockchain.blockchains.kaspa.network.*
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.datastorage.BlockchainSavedData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.moshi
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.isZero
+import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
 import org.bitcoinj.core.*
 import org.bitcoinj.core.Transaction.SigHash
@@ -102,7 +104,7 @@ class KaspaTransactionBuilder(
         return buildForSendInternal(transaction)
     }
 
-    internal fun buildKRC20RevealToSend(
+    internal fun buildToSendKRC20Reveal(
         signatures: ByteArray,
         redeemScript: RedeemScript,
         transaction: KaspaTransaction,
@@ -122,7 +124,7 @@ class KaspaTransactionBuilder(
     }
 
     @Suppress("LongMethod", "MagicNumber")
-    internal fun buildKRC20CommitTransactionToSign(
+    internal fun buildToSignKRC20Commit(
         transactionData: TransactionData,
         dust: BigDecimal?,
         includeFee: Boolean = true,
@@ -141,30 +143,26 @@ class KaspaTransactionBuilder(
 
         val transactionFeeAmountValue = transactionData.fee?.amount?.value ?: BigDecimal.ZERO
 
-        val change = calculateChange(
-            amount = requireNotNull(transactionData.amount.value) { "Transaction amount is null" },
-            fee = transactionFeeAmountValue,
-            unspentOutputs = unspentsToSpend,
-        )
+        val revealFeeAmount = (transactionData.fee as? Fee.Kaspa)
+            ?.revealTransactionFee
+            ?.takeIf { includeFee }
+            ?.value
+            ?: BigDecimal.ZERO
 
-        if (change < BigDecimal.ZERO) { // unspentsToSpend not enough to cover transaction amount
-            val maxAmount = transactionData.amount.value + change
-            return Result.Failure(BlockchainSdkError.Kaspa.UtxoAmountError(MAX_INPUT_COUNT, maxAmount))
+        val commitFeeAmount = if (includeFee) {
+            transactionFeeAmountValue - revealFeeAmount
+        } else {
+            transactionFeeAmountValue
         }
 
-        // We determine the commission value for reveal transaction,
-        val revealFeeParams = (transactionData.fee as? Fee.Kaspa)?.revealTransactionFee?.takeIf { includeFee }
-        // if we don't know the commission, commission for reveal transaction will be set to zero
-        val feeEstimationRevealTransactionValue = revealFeeParams?.value ?: BigDecimal.ZERO
-        val targetOutputAmountValue = feeEstimationRevealTransactionValue + (dust ?: BigDecimal.ZERO)
+        val targetOutputAmountValue = revealFeeAmount + (dust ?: BigDecimal.ZERO)
 
         val resultChange = calculateChange(
             amount = targetOutputAmountValue,
-            fee = transactionFeeAmountValue,
+            fee = commitFeeAmount,
             unspentOutputs = getUnspentsToSpend(),
         )
 
-        // The envelope will be used to create the RedeemScript and saved for use when building the Reveal transaction
         val envelope = Envelope(
             p = "krc-20",
             op = "transfer",
@@ -174,7 +172,7 @@ class KaspaTransactionBuilder(
         )
 
         val redeemScript = RedeemScript(
-            publicKey = publicKey.blockchainKey,
+            publicKey = publicKey.blockchainKey.toCompressedPublicKey(),
             envelope = envelope,
         )
 
@@ -205,9 +203,9 @@ class KaspaTransactionBuilder(
             hashes = getHashesForSign(transaction),
             redeemScript = redeemScript,
             sourceAddress = transactionData.sourceAddress,
-            params = IncompleteTokenTransactionParams(
+            params = BlockchainSavedData.KaspaKRC20IncompleteTokenTransaction(
                 transactionId = transaction.transactionHash().toHexString(),
-                amountValue = transactionData.amount.value,
+                amountValue = transactionData.amount.value ?: BigDecimal.ZERO,
                 feeAmountValue = targetOutputAmountValue,
                 envelope = envelope,
             ),
@@ -216,11 +214,11 @@ class KaspaTransactionBuilder(
         return Result.Success(commitTransaction)
     }
 
-    internal fun buildKRC20RevealTransactionToSign(
+    internal fun buildToSignKRC20Reveal(
         sourceAddress: String,
         redeemScript: RedeemScript,
-        params: IncompleteTokenTransactionParams,
-        feeAmountValue: BigDecimal,
+        params: BlockchainSavedData.KaspaKRC20IncompleteTokenTransaction,
+        revealFeeAmountValue: BigDecimal,
     ): Result<RevealTransaction> {
         val utxo = listOf(
             KaspaUnspentOutput(
@@ -233,7 +231,7 @@ class KaspaTransactionBuilder(
 
         val change = calculateChange(
             amount = BigDecimal.ZERO,
-            fee = feeAmountValue,
+            fee = revealFeeAmountValue,
             unspentOutputs = utxo,
         )
 
