@@ -2,12 +2,12 @@ package com.tangem.blockchain.extensions
 
 import com.tangem.blockchain.blockchains.binance.client.encoding.Bech32
 import com.tangem.blockchain.blockchains.binance.client.encoding.Crypto
+import com.tangem.blockchain.common.HEX_PREFIX
 import org.bitcoinj.core.Base58
 import java.math.BigDecimal
 import java.math.BigInteger
 
-private const val RADIX_FORMAT = 16
-private const val HEX_PREFIX = "0x"
+private const val HEX_RADIX = 16
 
 fun String.decodeBase58(checked: Boolean = false): ByteArray? {
     return try {
@@ -33,15 +33,15 @@ fun String.replaceLast(oldValue: String, newValue: String, ignoreCase: Boolean =
 }
 
 fun String.hexToBigDecimal(default: BigDecimal = BigDecimal.ZERO): BigDecimal {
-    return removePrefix(HEX_PREFIX).toBigIntegerOrNull(RADIX_FORMAT)?.toBigDecimal() ?: default
+    return removePrefix(HEX_PREFIX).toBigIntegerOrNull(HEX_RADIX)?.toBigDecimal() ?: default
 }
 
 fun String.hexToBigInteger(default: BigInteger = BigInteger.ZERO): BigInteger {
-    return removePrefix(HEX_PREFIX).toBigIntegerOrNull(radix = RADIX_FORMAT) ?: default
+    return removePrefix(HEX_PREFIX).toBigIntegerOrNull(radix = HEX_RADIX) ?: default
 }
 
 fun String.hexToInt(default: Int = 0): Int {
-    return removePrefix(HEX_PREFIX).toIntOrNull(radix = RADIX_FORMAT) ?: default
+    return removePrefix(HEX_PREFIX).toIntOrNull(radix = HEX_RADIX) ?: default
 }
 
 fun String?.toBigDecimalOrDefault(default: BigDecimal = BigDecimal.ZERO): BigDecimal =

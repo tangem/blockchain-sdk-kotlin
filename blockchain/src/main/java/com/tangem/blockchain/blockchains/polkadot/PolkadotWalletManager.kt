@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.polkadot
 
+import com.tangem.blockchain.blockchains.polkadot.extensions.makeEraFromBlockNumber
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkProvider
 import com.tangem.blockchain.blockchains.polkadot.network.accounthealthcheck.AccountResponse
 import com.tangem.blockchain.blockchains.polkadot.network.accounthealthcheck.ExtrinsicDetailResponse
@@ -15,7 +16,6 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.hexToBytes
-import io.emeraldpay.polkaj.tx.Era
 import io.emeraldpay.polkaj.tx.ExtrinsicContext
 import io.emeraldpay.polkaj.types.Hash256
 import kotlinx.coroutines.coroutineScope
@@ -213,7 +213,7 @@ internal class PolkadotWalletManager(
     private suspend fun updateEra() {
         val latestBlockHash = networkProvider.getLatestBlockHash().successOr { error("latestBlockHash error") }
         val blockNumber = networkProvider.getBlockNumber(latestBlockHash).successOr { error("blockNumber error") }
-        currentContext.era = Era.Mortal.forCurrent(TRANSACTION_LIFE_PERIOD, blockNumber.toLong())
+        currentContext.era = makeEraFromBlockNumber(blockNumber.toLong())
         currentContext.eraBlockHash = Hash256(latestBlockHash.hexToBytes())
     }
 
@@ -317,9 +317,6 @@ internal class PolkadotWalletManager(
     }
 
     private companion object {
-
-        const val TRANSACTION_LIFE_PERIOD = 128L
-
         const val SEND_TRANSACTIONS_DELAY = 5_000L
     }
 }
