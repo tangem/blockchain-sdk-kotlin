@@ -10,7 +10,10 @@ class KaspaKRC20NetworkService(providers: List<KaspaKRC20NetworkProvider>) : Kas
     override val baseUrl: String
         get() = multiNetworkProvider.currentProvider.baseUrl
 
-    override suspend fun getBalances(address: String, tokens: List<Token>): Result<List<KaspaKRC20InfoResponse>> {
+    override suspend fun getBalances(
+        address: String,
+        tokens: List<Token>,
+    ): Result<Map<Token, Result<KaspaKRC20InfoResponse>>> {
         return multiNetworkProvider.performRequest { getBalances(address, tokens) }
     }
 }
