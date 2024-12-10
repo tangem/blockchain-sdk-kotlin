@@ -15,8 +15,7 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.trustlines.AssetRequirementsCondition
 import com.tangem.blockchain.common.trustlines.AssetRequirementsManager
-import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.*
 import com.tangem.blockchain.extensions.map
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toCompressedPublicKey
@@ -53,7 +52,7 @@ internal class KaspaWalletManager(
             val tokensBalances = if (cardTokens.isNotEmpty()) {
                 async { krc20NetworkProvider.getBalances(wallet.address, cardTokens.toList()) }.await()
             } else {
-                Result.Success(emptyList())
+                Result.Success(emptyMap())
             }
 
             val coinBalance = coinBalanceDeferred.await()
@@ -79,11 +78,19 @@ internal class KaspaWalletManager(
         transactionBuilder.unspentOutputs = response.unspentOutputs
     }
 
-    private fun updateWalletTokens(tokensInfo: List<KaspaKRC20InfoResponse>) {
+    private fun updateWalletTokens(tokensInfo: Map<Token, Result<KaspaKRC20InfoResponse>>) {
         tokensInfo.forEach { result ->
-            val token = result.token
-            val balance = result.balance
-            wallet.setAmount(balance, amountType = AmountType.Token(token))
+            val token = result.key
+            val amountType = AmountType.Token(token)
+            when (val response = result.value) {
+                is Result.Success -> {
+                    val balance = response.data.balance
+                    wallet.setAmount(balance, amountType)
+                }
+                is Result.Failure -> {
+                    wallet.changeAmountValue(amountType, null, null)
+                }
+            }
         }
     }
 
@@ -101,7 +108,6 @@ internal class KaspaWalletManager(
         return when (val type = transactionData.amount.type) {
             is AmountType.Coin -> sendCoinTransaction(transactionData, signer)
             is AmountType.Token -> {
-                updateUnspentOutputs()
                 val incompleteTokenTransaction = getIncompleteTokenTransaction(type.token)
                 if (incompleteTokenTransaction != null &&
                     incompleteTokenTransaction.amountValue == transactionData.amount.value &&
