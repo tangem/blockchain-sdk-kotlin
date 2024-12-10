@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
  * Model of filled Polkadot transaction used in staking
  */
 @JsonClass(generateAdapter = true)
-data class PolkadotCompiledTransaction(
+internal data class PolkadotCompiledTransaction(
     @Json(name = "tx")
     val tx: Inner,
     @Json(name = "specName")
