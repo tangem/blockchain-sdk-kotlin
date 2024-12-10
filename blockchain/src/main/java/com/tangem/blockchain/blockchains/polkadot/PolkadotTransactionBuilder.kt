@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.polkadot
 
 import com.squareup.moshi.adapter
+import com.tangem.blockchain.blockchains.polkadot.extensions.makeEraFromBlockNumber
 import com.tangem.blockchain.blockchains.polkadot.models.PolkadotCompiledTransaction
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.hexToBigInteger
@@ -17,7 +18,6 @@ import io.emeraldpay.polkaj.scaletypes.EraWriter
 import io.emeraldpay.polkaj.scaletypes.Extrinsic
 import io.emeraldpay.polkaj.scaletypes.MultiAddress
 import io.emeraldpay.polkaj.scaletypes.MultiAddressWriter
-import io.emeraldpay.polkaj.tx.Era
 import io.emeraldpay.polkaj.tx.ExtrinsicContext
 import io.emeraldpay.polkaj.types.Address
 import io.emeraldpay.polkaj.types.Hash512
@@ -57,7 +57,7 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         encodeCall(codecWriter, amount, Address.from(destinationAddress), context.runtimeVersion)
         encodeEraNonceTip(codecWriter, context)
 
-        encodeCheckMetadataHashMode(codecWriter, context)
+        encodeCheckMetadataHashMode(codecWriter, context.runtimeVersion)
 
         codecWriter.writeUint32(context.runtimeVersion)
         codecWriter.writeUint32(context.txVersion)
@@ -68,7 +68,7 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
             codecWriter.writeUint256(context.eraBlockHash.bytes)
         }
 
-        encodeCheckMetadataHash(codecWriter, context)
+        encodeCheckMetadataHash(codecWriter, context.runtimeVersion)
 
         return buffer.toByteArray()
     }
@@ -117,7 +117,7 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         codecWriter.writeByteArray(signature.value.bytes)
 
         encodeEraNonceTip(codecWriter, context)
-        encodeCheckMetadataHashMode(codecWriter, context)
+        encodeCheckMetadataHashMode(codecWriter, context.runtimeVersion)
         encodeCall(codecWriter, amount, Address.from(destinationAddress), context.runtimeVersion)
 
         val prefixBuffer = ByteArrayOutputStream()
@@ -177,27 +177,15 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
     }
 
     private fun encodeEraNonceTip(codecWriter: ScaleCodecWriter, compiledTx: PolkadotCompiledTransaction.Inner) {
-        val era = Era.Mortal.forCurrent(TRANSACTION_LIFE_PERIOD, compiledTx.blockNumber.hexToBigInteger().toLong())
+        val era = makeEraFromBlockNumber(compiledTx.blockNumber.hexToBigInteger().toLong())
         codecWriter.write(EraWriter(), era.toInteger())
         codecWriter.write(ScaleCodecWriter.COMPACT_BIGINT, compiledTx.nonce.hexToBigInteger())
         codecWriter.write(ScaleCodecWriter.COMPACT_BIGINT, compiledTx.tip.hexToBigInteger())
     }
 
-    private fun encodeCheckMetadataHashMode(codecWriter: ScaleCodecWriter, context: ExtrinsicContext) {
-        if (shouldUseCheckMetadataHash(specVersion = context.runtimeVersion)) {
-            codecWriter.write(ScaleCodecWriter.BOOL, false)
-        }
-    }
-
     private fun encodeCheckMetadataHashMode(codecWriter: ScaleCodecWriter, specVersion: Int) {
         if (shouldUseCheckMetadataHash(specVersion = specVersion)) {
             codecWriter.write(ScaleCodecWriter.BOOL, false)
-        }
-    }
-
-    private fun encodeCheckMetadataHash(codecWriter: ScaleCodecWriter, context: ExtrinsicContext) {
-        if (shouldUseCheckMetadataHash(specVersion = context.runtimeVersion)) {
-            codecWriter.writeByte(0x0.toByte())
         }
     }
 
@@ -230,8 +218,6 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
     }
 
     private companion object {
-        const val TRANSACTION_LIFE_PERIOD = 128L
-
         const val POLKA_RAW_ADDRESS_RUNTIME_VERSION = 28
         const val KUSAMA_RAW_ADDRESS_RUNTIME_VERSION = 2028
 
