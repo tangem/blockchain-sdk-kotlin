@@ -131,7 +131,7 @@ internal class KaspaWalletManager(
         val unspentOutputCount = transactionBuilder.getUnspentsToSpendCount()
 
         return if (unspentOutputCount == 0) {
-            Result.Failure(Exception("No unspent outputs found").toBlockchainSdkError()) // shouldn't happen
+            Result.Failure(BlockchainSdkError.Kaspa.ZeroUtxoError)
         } else {
             val source = wallet.address
 
