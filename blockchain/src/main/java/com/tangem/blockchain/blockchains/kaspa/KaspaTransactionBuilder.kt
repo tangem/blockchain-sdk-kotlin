@@ -293,7 +293,7 @@ class KaspaTransactionBuilder(
     }
 
     fun calculateChange(amount: BigDecimal, fee: BigDecimal, unspentOutputs: List<KaspaUnspentOutput>): BigDecimal {
-        val fullAmount = unspentOutputs.map { it.amount }.reduce { acc, number -> acc + number }
+        val fullAmount = unspentOutputs.sumOf { it.amount }
         return fullAmount - (amount + fee)
     }
 

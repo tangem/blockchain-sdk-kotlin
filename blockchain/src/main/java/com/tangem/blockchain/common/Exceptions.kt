@@ -99,6 +99,7 @@ sealed class BlockchainSdkError(
             "Due to Kaspa limitations only $maxOutputs UTXOs can fit in a single transaction. This means you can only" +
                 " send ${maxAmount.toPlainString()}. You need to reduce the amount",
         )
+        data object ZeroUtxoError : Kaspa(3)
     }
 
     sealed class Ton(
