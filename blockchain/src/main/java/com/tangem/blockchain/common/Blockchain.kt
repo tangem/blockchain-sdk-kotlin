@@ -176,6 +176,8 @@ enum class Blockchain(
     Chiliz("chiliz", "CHZ", "Chiliz"),
     ChilizTestnet("chiliz/test", "CHZ", "Chiliz Spicy Testnet"),
     Clore("clore-ai", "CLORE", "Clore"),
+    VanarChain("vanar-chain", "VANRY", "Vanar Chain"),
+    VanarChainTestnet("vanar-chain/test", "VG", "Vanar Vanguard Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -276,6 +278,7 @@ enum class Blockchain(
         EnergyWebX, EnergyWebXTestnet,
         Core, CoreTestnet,
         Chiliz, ChilizTestnet,
+        VanarChain, VanarChainTestnet,
         Xodex,
         Canxium,
         -> 18
@@ -352,6 +355,7 @@ enum class Blockchain(
             EnergyWebChain, EnergyWebChainTestnet,
             Core, CoreTestnet,
             Chiliz, ChilizTestnet,
+            VanarChain, VanarChainTestnet,
             Xodex,
             Canxium,
             -> EthereumAddressService()
@@ -485,6 +489,7 @@ enum class Blockchain(
             Casper, CasperTestnet -> CasperTestnet
             Core, CoreTestnet -> CoreTestnet
             Chiliz, ChilizTestnet -> ChilizTestnet
+            VanarChain, VanarChainTestnet -> VanarChainTestnet
             else -> null
         }
     }
@@ -560,6 +565,7 @@ enum class Blockchain(
             Core, CoreTestnet,
             Casper, CasperTestnet,
             Chiliz, ChilizTestnet,
+            VanarChain, VanarChainTestnet,
             Xodex,
             Canxium,
             Clore,
@@ -662,6 +668,8 @@ enum class Blockchain(
             Canxium -> Chain.Canxium.id
             Chiliz -> Chain.Chiliz.id
             ChilizTestnet -> Chain.ChilizTestnet.id
+            VanarChain -> Chain.VanarChain.id
+            VanarChainTestnet -> Chain.VanarChainTestnet.id
             else -> null
         }
     }
