@@ -69,6 +69,7 @@ internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<Ethere
             Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet -> EnergyWebChainProvidersBuilder(providerTypes)
             Blockchain.Core, Blockchain.CoreTestnet -> CoreProvidersBuilder(providerTypes)
             Blockchain.Chiliz, Blockchain.ChilizTestnet -> ChilizProvidersBuilder(providerTypes)
+            Blockchain.VanarChain, Blockchain.VanarChainTestnet -> VanarChainProvidersBuilder(providerTypes)
             Blockchain.Xodex -> XodexProvidersBuilder(providerTypes)
             Blockchain.Canxium -> CanxiumProvidersBuilder(providerTypes)
             else -> error("Unsupported blockchain: $blockchain")
