@@ -91,6 +91,7 @@ class EstimationFeeAddressFactory {
             Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet,
             Blockchain.Core, Blockchain.CoreTestnet,
             Blockchain.Chiliz, Blockchain.ChilizTestnet,
+            Blockchain.VanarChain, Blockchain.VanarChainTestnet,
             Blockchain.Xodex,
             Blockchain.Canxium,
             -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
