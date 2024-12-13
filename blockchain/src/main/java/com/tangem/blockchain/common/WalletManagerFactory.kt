@@ -151,6 +151,7 @@ class WalletManagerFactory(
             Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet,
             Blockchain.Core, Blockchain.CoreTestnet,
             Blockchain.Chiliz, Blockchain.ChilizTestnet,
+            Blockchain.VanarChain, Blockchain.VanarChainTestnet,
             Blockchain.Xodex,
             Blockchain.Canxium,
             -> EthereumLikeWalletManagerAssembly

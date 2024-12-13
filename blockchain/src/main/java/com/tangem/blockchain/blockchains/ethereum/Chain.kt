@@ -81,4 +81,6 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     Canxium(id = 3003, blockchain = Blockchain.Canxium),
     Chiliz(id = 88888, blockchain = Blockchain.Chiliz),
     ChilizTestnet(id = 88882, blockchain = Blockchain.ChilizTestnet),
+    VanarChain(id = 2040, blockchain = Blockchain.VanarChain),
+    VanarChainTestnet(id = 78600, blockchain = Blockchain.VanarChainTestnet),
 }
