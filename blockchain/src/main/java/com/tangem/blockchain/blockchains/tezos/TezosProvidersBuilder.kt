@@ -18,6 +18,7 @@ internal class TezosProvidersBuilder(
             when (it) {
                 is ProviderType.Public -> createPublicProvider(url = it.url)
                 ProviderType.GetBlock -> createGetBlockProvider()
+                ProviderType.NowNodes -> createNowNodesProvider()
                 else -> null
             }
         }
@@ -28,6 +29,12 @@ internal class TezosProvidersBuilder(
     private fun createGetBlockProvider(): TezosJsonRpcNetworkProvider? {
         return config.getBlockCredentials?.tezos?.rest.letNotBlank {
             TezosJsonRpcNetworkProvider(baseUrl = "https://go.getblock.io/$it/")
+        }
+    }
+
+    private fun createNowNodesProvider(): TezosJsonRpcNetworkProvider? {
+        return config.nowNodeCredentials?.apiKey.letNotBlank {
+            TezosJsonRpcNetworkProvider(baseUrl = "https://xtz.nownodes.io/$it/")
         }
     }
 }
