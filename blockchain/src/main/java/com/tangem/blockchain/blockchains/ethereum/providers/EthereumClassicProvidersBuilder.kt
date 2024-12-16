@@ -16,6 +16,7 @@ internal class EthereumClassicProvidersBuilder(
             when (it) {
                 is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
                 ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { etc?.jsonRpc }
+                ProviderType.NowNodes -> ethereumProviderFactory.getNowNodesProvider("https://etc.nownodes.io/")
                 else -> null
             }
         }
