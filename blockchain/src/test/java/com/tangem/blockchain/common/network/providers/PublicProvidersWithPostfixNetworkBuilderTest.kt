@@ -143,7 +143,7 @@ internal class PublicProvidersWithPostfixNetworkBuilderTest(private val model: M
                 baseUrl = baseUrl,
                 expectedUrl = expectedUrl,
                 blockchain = Blockchain.Telos,
-                builder = ::TelosProvidersBuilder,
+                builder = { TelosProvidersBuilder(it, BlockchainSdkConfig()) },
             )
         }
 
