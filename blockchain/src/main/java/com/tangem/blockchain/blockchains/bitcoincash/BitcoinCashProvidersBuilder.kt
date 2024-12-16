@@ -7,6 +7,7 @@ import com.tangem.blockchain.common.NowNodeCredentials
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.letNotBlank
+import com.tangem.blockchain.network.blockbook.BlockBookNetworkProviderFactory
 import com.tangem.blockchain.network.blockchair.BlockchairNetworkProviderFactory
 
 internal class BitcoinCashProvidersBuilder(
@@ -14,10 +15,15 @@ internal class BitcoinCashProvidersBuilder(
     private val config: BlockchainSdkConfig,
 ) : NetworkProvidersBuilder<BitcoinNetworkProvider>() {
 
+    private val blockBookProviderFactory by lazy { BlockBookNetworkProviderFactory(config) }
+
     override fun createProviders(blockchain: Blockchain): List<BitcoinNetworkProvider> {
         return providerTypes.flatMap {
             when (it) {
                 ProviderType.NowNodes -> getBitcoinCashNowNodesNetworkProvider().let(::listOfNotNull)
+                ProviderType.GetBlock -> {
+                    blockBookProviderFactory.createGetBlockProvider(blockchain).let(::listOfNotNull)
+                }
                 ProviderType.BitcoinLike.Blockchair -> {
                     BlockchairNetworkProviderFactory(config).createProviders(blockchain)
                 }
