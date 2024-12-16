@@ -36,8 +36,8 @@ internal class CasperTransactionBuilder(private val wallet: Wallet) {
     private fun buildTransaction(transactionData: TransactionData): CasperTransactionBody {
         transactionData.requireUncompiled()
 
-        val amount = transactionData.amount.longValueOrZero.toBigInteger()
-        val fee = (transactionData.fee as Fee.Common).amount.longValueOrZero.toBigInteger()
+        val amount = transactionData.amount.longValue.toBigInteger()
+        val fee = (transactionData.fee as Fee.Common).amount.longValue.toBigInteger()
         val id = (transactionData.extras as? CasperTransactionExtras)?.memo
 
         val session = CasperTransactionBody.Session(
