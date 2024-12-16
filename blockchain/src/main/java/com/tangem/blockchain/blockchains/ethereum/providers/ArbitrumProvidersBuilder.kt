@@ -22,6 +22,9 @@ internal class ArbitrumProvidersBuilder(
                 ProviderType.EthereumLike.Infura -> {
                     ethereumProviderFactory.getInfuraProvider(baseUrl = "https://arbitrum-mainnet.infura.io/v3/")
                 }
+                ProviderType.GetBlock -> {
+                    ethereumProviderFactory.getGetBlockProvider { arbitrum?.jsonRpc }
+                }
                 else -> null
             }
         }
