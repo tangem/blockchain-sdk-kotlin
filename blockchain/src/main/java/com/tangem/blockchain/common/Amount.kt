@@ -17,6 +17,8 @@ data class Amount(
     // Be careful! The property may overflow if the decimals are much larger than the long value.
     val longValueOrZero: Long by lazy { value?.movePointRight(decimals)?.toLong() ?: 0L }
 
+    val byteArrayValue: ByteArray? by lazy { value?.movePointRight(decimals)?.toBigInteger()?.toByteArray() }
+
     constructor(
         value: BigDecimal?,
         blockchain: Blockchain,
