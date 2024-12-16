@@ -2,11 +2,11 @@ package com.tangem.blockchain.blockchains.ton
 
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.extensions.Result
 import com.tangem.common.KeyPair
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.CryptoUtils
 import wallet.core.jni.proto.TheOpenNetwork
-import com.tangem.blockchain.extensions.Result
 
 internal class TonTransactionBuilder(private val walletAddress: String) {
 
@@ -73,7 +73,7 @@ internal class TonTransactionBuilder(private val walletAddress: String) {
 
         val jettonTransfer = TheOpenNetwork.JettonTransfer.newBuilder()
             .setTransfer(transfer)
-            .setJettonAmount(amount.longValueOrZero)
+            .setJettonAmount(ByteString.copyFrom(amount.byteArrayValue))
             .setToOwner(destination)
             .setResponseAddress(walletAddress)
             .setForwardAmount(1) // some amount needed to send "jetton transfer notification", use minimum
