@@ -17,6 +17,7 @@ internal class KusamaProvidersBuilder(
         return providerTypes.mapNotNull {
             when (it) {
                 is ProviderType.GetBlock -> createGetBlockProvider(blockchain)
+                is ProviderType.NowNodes -> createNowNodesProvider(blockchain)
                 is ProviderType.Public -> createPublicProvider(it.url, blockchain)
                 else -> null
             }
@@ -30,6 +31,12 @@ internal class KusamaProvidersBuilder(
     private fun createGetBlockProvider(blockchain: Blockchain): PolkadotNetworkProvider? {
         return config.getBlockCredentials?.kusama?.jsonRpc.letNotBlank { jsonRpcToken ->
             PolkadotCombinedProvider(baseUrl = "https://go.getblock.io/$jsonRpcToken/", blockchain = blockchain)
+        }
+    }
+
+    private fun createNowNodesProvider(blockchain: Blockchain): PolkadotNetworkProvider? {
+        return config.nowNodeCredentials?.apiKey.letNotBlank {
+            PolkadotCombinedProvider(baseUrl = "https://ksm.nownodes.io/$it/", blockchain = blockchain)
         }
     }
 }

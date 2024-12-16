@@ -17,6 +17,7 @@ internal class SuiNetworkProvidersBuilder(
             when (type) {
                 is ProviderType.Public -> SuiJsonRpcProvider(type.url)
                 is ProviderType.GetBlock -> createGetBlockProvider()
+                is ProviderType.NowNodes -> createNowNodesProvider()
                 else -> null
             }
         }
@@ -25,6 +26,12 @@ internal class SuiNetworkProvidersBuilder(
     private fun createGetBlockProvider(): SuiJsonRpcProvider? {
         return config.getBlockCredentials?.sui?.jsonRpc.letNotBlank { jsonRpcToken ->
             SuiJsonRpcProvider(baseUrl = "https://go.getblock.io/$jsonRpcToken/")
+        }
+    }
+
+    private fun createNowNodesProvider(): SuiJsonRpcProvider? {
+        return config.nowNodeCredentials?.apiKey.letNotBlank {
+            SuiJsonRpcProvider(baseUrl = "https://sui.nownodes.io/$it/")
         }
     }
 
