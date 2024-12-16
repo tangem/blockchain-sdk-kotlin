@@ -116,7 +116,7 @@ internal class TonTransactionBuilder(
     ): TheOpenNetwork.Transfer {
         return TheOpenNetwork.Transfer.newBuilder()
             .setDest(destination)
-            .setAmount(amount.longValueOrZero)
+            .setAmount(amount.longValue)
             .setMode(modeTransactionConstant)
             .setBounceable(false)
             .setComment(comment)
