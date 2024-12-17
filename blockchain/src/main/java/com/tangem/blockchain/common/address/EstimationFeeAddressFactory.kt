@@ -25,16 +25,16 @@ class EstimationFeeAddressFactory {
             Blockchain.Chia, Blockchain.ChiaTestnet, // doesn't depend on destination
             Blockchain.InternetComputer, // fixed
             Blockchain.Casper, Blockchain.CasperTestnet, // fixed
+            Blockchain.XRP,
+            Blockchain.Stellar, Blockchain.StellarTestnet,
+            Blockchain.Binance, Blockchain.BinanceTestnet,
+            Blockchain.SolanaTestnet,
             -> ""
 
             Blockchain.Nexa, Blockchain.NexaTestnet,
             -> TODO("Not implemented")
 
             Blockchain.Cardano -> CARDANO_ESTIMATION_ADDRESS
-            Blockchain.XRP,
-            Blockchain.Stellar, Blockchain.StellarTestnet,
-            Blockchain.Binance, Blockchain.BinanceTestnet,
-            Blockchain.SolanaTestnet,
 
             // We have to generate a new dummy address for UTXO-like
             Blockchain.Bitcoin,
