@@ -15,4 +15,6 @@ internal interface ElectrumNetworkProvider : NetworkProvider {
     suspend fun getTransactionInfo(txHash: String): Result<ElectrumResponse.Transaction>
 
     suspend fun broadcastTransaction(rawTx: ByteArray): Result<ElectrumResponse.TxHex>
+
+    suspend fun getTransactionHistory(addressScriptHash: String): Result<List<ElectrumResponse.TxHistoryEntry>>
 }
