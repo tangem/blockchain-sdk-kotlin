@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
  * When connecting with keepAlive == false, the connection will be held until the timer expires
  * Otherwise, the connection will be active until the disconnect method is called or any connection error occurs.
  */
-internal interface JsonRPCWebsocketService {
+internal interface JsonRPCWebsocketService : JsonRPCService {
 
     /**
      * Represents current connection state
@@ -47,5 +47,5 @@ internal interface JsonRPCWebsocketService {
      * @param jsonRPCRequest JsonRPC request
      * @return the result of the request or websocket connection error
      */
-    suspend fun call(jsonRPCRequest: JsonRPCRequest): Result<JsonRPCResponse>
+    override suspend fun call(jsonRPCRequest: JsonRPCRequest): Result<JsonRPCResponse>
 }
