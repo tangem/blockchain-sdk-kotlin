@@ -11,6 +11,7 @@ import java.math.BigDecimal
  * Original: https://bitcoincash.network/electrum/protocol-methods.html
  * Rostrum (Nexa): https://bitcoinunlimited.gitlab.io/rostrum/
  * Radiant: https://electrumx.readthedocs.io/en/latest/
+ * Fact0rn: https://electrumx-spesmilo.readthedocs.io/en/latest//
  */
 internal object ElectrumResponse {
 
