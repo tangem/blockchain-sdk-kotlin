@@ -145,6 +145,7 @@ internal class WalletManagerFactoryTest {
             blockchainDataStorage = object : BlockchainDataStorage {
                 override suspend fun getOrNull(key: String): String? = null
                 override suspend fun store(key: String, value: String) = Unit
+                override suspend fun remove(key: String) = Unit
             },
             accountCreator = accountCreator,
             featureToggles = BlockchainFeatureToggles(isEthereumEIP1559Enabled = true),
@@ -211,6 +212,7 @@ internal class WalletManagerFactoryTest {
             blockchainDataStorage = object : BlockchainDataStorage {
                 override suspend fun getOrNull(key: String): String? = null
                 override suspend fun store(key: String, value: String) = Unit
+                override suspend fun remove(key: String) = Unit
             },
             accountCreator = accountCreator,
             featureToggles = BlockchainFeatureToggles(isEthereumEIP1559Enabled = true),

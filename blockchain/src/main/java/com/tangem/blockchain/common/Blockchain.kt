@@ -171,6 +171,9 @@ enum class Blockchain(
     CoreTestnet("core/test", "tCORE", "Core Testnet"),
     Xodex("xodex", "XODEX", "Xodex"),
     Canxium("canxium", "CAU", "Canxium"),
+    Chiliz("chiliz", "CHZ", "Chiliz"),
+    ChilizTestnet("chiliz/test", "CHZ", "Chiliz Spicy Testnet"),
+    Clore("clore-ai", "CLORE", "Clore"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -215,6 +218,7 @@ enum class Blockchain(
         Radiant,
         Koinos, KoinosTestnet,
         InternetComputer,
+        Clore,
         -> 8
 
         Solana, SolanaTestnet,
@@ -268,6 +272,7 @@ enum class Blockchain(
         EnergyWebChain, EnergyWebChainTestnet,
         EnergyWebX, EnergyWebXTestnet,
         Core, CoreTestnet,
+        Chiliz, ChilizTestnet,
         Xodex,
         Canxium,
         -> 18
@@ -305,6 +310,7 @@ enum class Blockchain(
             Ducatus,
             Dash,
             Ravencoin, RavencoinTestnet,
+            Clore,
             -> BitcoinAddressService(this)
 
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
@@ -342,6 +348,7 @@ enum class Blockchain(
             Cyber, CyberTestnet,
             EnergyWebChain, EnergyWebChainTestnet,
             Core, CoreTestnet,
+            Chiliz, ChilizTestnet,
             Xodex,
             Canxium,
             -> EthereumAddressService()
@@ -473,6 +480,7 @@ enum class Blockchain(
             EnergyWebX, EnergyWebXTestnet -> EnergyWebXTestnet
             Casper, CasperTestnet -> CasperTestnet
             Core, CoreTestnet -> CoreTestnet
+            Chiliz, ChilizTestnet -> ChilizTestnet
             else -> null
         }
     }
@@ -546,8 +554,10 @@ enum class Blockchain(
             EnergyWebChain, EnergyWebChainTestnet,
             Core, CoreTestnet,
             Casper, CasperTestnet,
+            Chiliz, ChilizTestnet,
             Xodex,
             Canxium,
+            Clore,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -645,6 +655,8 @@ enum class Blockchain(
             CoreTestnet -> Chain.CoreTestnet.id
             Xodex -> Chain.Xodex.id
             Canxium -> Chain.Canxium.id
+            Chiliz -> Chain.Chiliz.id
+            ChilizTestnet -> Chain.ChilizTestnet.id
             else -> null
         }
     }
@@ -676,6 +688,7 @@ enum class Blockchain(
             Hedera, HederaTestnet,
             TON, TONTestnet,
             Cardano,
+            Kaspa,
             -> true
 
             else -> false
@@ -737,6 +750,17 @@ enum class Blockchain(
         Ducatus,
         -> true
         else -> false
+    }
+
+    /**
+     * Returns is fee in given network is zero
+     * For now actual only for one network
+     */
+    fun isNetworkFeeZero(): Boolean {
+        return when (this) {
+            Xodex -> true
+            else -> false
+        }
     }
 
     companion object {

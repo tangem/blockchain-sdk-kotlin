@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.clore.CloreMainNetParams
 import com.tangem.blockchain.blockchains.dash.DashMainNetParams
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinMainNetParams
@@ -49,6 +50,7 @@ class BlockBookNetworkProvider(
         Blockchain.Dash -> DashMainNetParams()
         Blockchain.Ravencoin -> RavencoinMainNetParams()
         Blockchain.RavencoinTestnet -> RavencoinTestNetParams()
+        Blockchain.Clore -> CloreMainNetParams()
         else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
 
@@ -189,11 +191,16 @@ class BlockBookNetworkProvider(
     }
 
     private suspend fun getFeePerKb(param: Int): BigDecimal {
-        val getFeeResponse = withContext(Dispatchers.IO) { api.getFee(param) }
+        val feeRate = withContext(Dispatchers.IO) {
+            when (blockchain) {
+                Blockchain.Clore -> api.getFees(param).result
+                else -> api.getFee(param).result.feerate
+            }
+        }
 
-        if (getFeeResponse.result.feerate <= 0) throw BlockchainSdkError.FailedToLoadFee
+        if (feeRate <= 0) throw BlockchainSdkError.FailedToLoadFee
 
-        return getFeeResponse.result.feerate
+        return feeRate
             .toBigDecimal()
             .setScale(blockchain.decimals(), RoundingMode.UP)
     }

@@ -43,6 +43,17 @@ internal class AdvancedDataStorage(
         blockchainDataStorage.store(key = T::class.java.createKey(publicKey), value = adapter.toJson(value))
     }
 
+    /** Store [value] by [key] */
+    suspend inline fun <reified T : BlockchainSavedData> store(key: String, value: T) {
+        val adapter = moshi.adapter(T::class.java)
+        blockchainDataStorage.store(key = key, value = adapter.toJson(value))
+    }
+
+    /** Remove [value] from storage by [key] */
+    suspend inline fun remove(key: String) {
+        blockchainDataStorage.remove(key = key)
+    }
+
     /**
      * Create a unique key by [publicKey] for [BlockchainSavedData].
      * Example, Hedera-7BD63F5DE1BF539525C33367592949AE9B99D518BF78F26F3904BCD30CFCF018
