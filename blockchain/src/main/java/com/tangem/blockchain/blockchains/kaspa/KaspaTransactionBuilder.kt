@@ -1,26 +1,41 @@
 package com.tangem.blockchain.blockchains.kaspa
 
+import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.kaspa.kaspacashaddr.KaspaAddressType
 import com.tangem.blockchain.blockchains.kaspa.kaspacashaddr.KaspaCashAddr
+import com.tangem.blockchain.blockchains.kaspa.krc20.model.*
 import com.tangem.blockchain.blockchains.kaspa.network.*
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.datastorage.BlockchainSavedData
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.network.moshi
+import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.isZero
+import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
 import org.bitcoinj.core.*
 import org.bitcoinj.core.Transaction.SigHash
+import org.bitcoinj.script.Script
 import org.bitcoinj.script.ScriptBuilder
 import org.bitcoinj.script.ScriptOpCodes.*
+import org.bouncycastle.jcajce.provider.digest.Blake2b
 import java.math.BigDecimal
 import java.math.BigInteger
 
-class KaspaTransactionBuilder {
-    private lateinit var transaction: KaspaTransaction
+class KaspaTransactionBuilder(
+    private val publicKey: Wallet.PublicKey,
+) {
     private var networkParameters = KaspaMainNetParams()
     var unspentOutputs: List<KaspaUnspentOutput>? = null
 
-    fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
+    private val addressService = KaspaAddressService()
+
+    @OptIn(ExperimentalStdlibApi::class)
+    private val envelopeAdapter by lazy { moshi.adapter<Envelope>() }
+
+    @Suppress("MagicNumber")
+    fun buildToSign(transactionData: TransactionData): Result<KaspaTransaction> {
         transactionData.requireUncompiled()
 
         if (unspentOutputs.isNullOrEmpty()) {
@@ -41,47 +56,230 @@ class KaspaTransactionBuilder {
             return Result.Failure(BlockchainSdkError.Kaspa.UtxoAmountError(MAX_INPUT_COUNT, maxAmount))
         }
 
-        transaction = transactionData.toKaspaTransaction(networkParameters, unspentsToSpend, change)
+        val addressService = KaspaAddressService()
+        val sourceScript = ScriptBuilder().data(addressService.getPublicKey(transactionData.sourceAddress)).op(
+            OP_CODESEPARATOR,
+        ).build()
 
-        val hashesForSign: MutableList<ByteArray> = MutableList(transaction.inputs.size) { byteArrayOf() }
-        for (input in transaction.inputs) {
-            val index = input.index
-            hashesForSign[index] = transaction.hashForSignatureWitness(
-                index,
-                input.scriptBytes,
-                input.value,
-                SigHash.ALL,
-                false,
-            )
+        val destinationAddressDecoded = KaspaCashAddr.decodeCashAddress(transactionData.destinationAddress)
+        val destinationScript = when (destinationAddressDecoded.addressType) {
+            KaspaAddressType.P2PK_SCHNORR ->
+                ScriptBuilder.createP2PKOutputScript(destinationAddressDecoded.hash)
+            KaspaAddressType.P2PK_ECDSA ->
+                ScriptBuilder().data(destinationAddressDecoded.hash).op(OP_CODESEPARATOR).build()
+            KaspaAddressType.P2SH -> {
+                // known P2SH addresses won't throw
+                if (destinationAddressDecoded.hash.size != 32) error("Invalid hash length in P2SH address")
+                ScriptBuilder().op(OP_HASH256).data(destinationAddressDecoded.hash).op(OP_EQUAL).build()
+            }
+            null -> error("Null script type") // should never happen
         }
-        return Result.Success(hashesForSign)
+
+        val transaction = createKaspaTransaction(
+            networkParameters = networkParameters,
+            unspentOutputs = unspentsToSpend,
+            transformer = { kaspaTransaction ->
+                kaspaTransaction.addOutput(
+                    Coin.parseCoin(transactionData.amount.value.toPlainString()),
+                    destinationScript,
+                )
+                if (!change.isZero()) {
+                    kaspaTransaction.addOutput(
+                        Coin.parseCoin(change.toPlainString()),
+                        sourceScript,
+                    )
+                }
+                kaspaTransaction
+            },
+        )
+
+        return Result.Success(transaction)
     }
 
-    fun buildToSend(signatures: ByteArray): KaspaTransactionBody {
+    fun buildToSend(signatures: ByteArray, transaction: KaspaTransaction): KaspaTransactionBody {
         for (index in transaction.inputs.indices) {
             val signature = extractSignature(index, signatures)
             transaction.inputs[index].scriptSig = ScriptBuilder().data(signature).build()
         }
-        return KaspaTransactionBody(
-            KaspaTransactionData(
-                inputs = transaction.inputs.map {
-                    KaspaInput(
-                        previousOutpoint = KaspaPreviousOutpoint(
-                            transactionId = it.outpoint.hash.toString(),
-                            index = it.outpoint.index,
-                        ),
-                        signatureScript = it.scriptBytes.toHexString(),
+        return buildForSendInternal(transaction)
+    }
+
+    internal fun buildToSendKRC20Reveal(
+        signatures: ByteArray,
+        redeemScript: RedeemScript,
+        transaction: KaspaTransaction,
+    ): KaspaTransactionBody {
+        for (index in transaction.inputs.indices) {
+            val signature = extractSignature(index, signatures)
+            if (index == 0) {
+                transaction.inputs[index].scriptSig = ScriptBuilder()
+                    .data(signature)
+                    .data(redeemScript.script().program)
+                    .build()
+            } else {
+                transaction.inputs[index].scriptSig = ScriptBuilder().data(signature).build()
+            }
+        }
+        return buildForSendInternal(transaction)
+    }
+
+    @Suppress("LongMethod", "MagicNumber")
+    internal fun buildToSignKRC20Commit(
+        transactionData: TransactionData,
+        dust: BigDecimal?,
+        includeFee: Boolean = true,
+    ): Result<CommitTransaction> {
+        transactionData.requireUncompiled()
+
+        require(transactionData.amount.type is AmountType.Token)
+
+        if (unspentOutputs.isNullOrEmpty()) {
+            return Result.Failure(
+                BlockchainSdkError.CustomError("Unspent outputs are missing"),
+            )
+        }
+
+        val unspentsToSpend = getUnspentsToSpend()
+
+        val transactionFeeAmountValue = transactionData.fee?.amount?.value ?: BigDecimal.ZERO
+
+        val revealFeeAmount = (transactionData.fee as? Fee.Kaspa)
+            ?.revealTransactionFee
+            ?.takeIf { includeFee }
+            ?.value
+            ?: BigDecimal.ZERO
+
+        val commitFeeAmount = if (includeFee) {
+            transactionFeeAmountValue - revealFeeAmount
+        } else {
+            transactionFeeAmountValue
+        }
+
+        val targetOutputAmountValue = revealFeeAmount + (dust ?: BigDecimal.ZERO)
+
+        val resultChange = calculateChange(
+            amount = targetOutputAmountValue,
+            fee = commitFeeAmount,
+            unspentOutputs = getUnspentsToSpend(),
+        )
+
+        val envelope = Envelope(
+            p = "krc-20",
+            op = "transfer",
+            amt = transactionData.amount.longValueOrZero.toString(),
+            to = transactionData.destinationAddress,
+            tick = transactionData.amount.type.token.contractAddress,
+        )
+
+        val redeemScript = RedeemScript(
+            publicKey = publicKey.blockchainKey.toCompressedPublicKey(),
+            envelope = envelope,
+        )
+
+        val transaction = createKaspaTransaction(
+            networkParameters = networkParameters,
+            unspentOutputs = unspentsToSpend,
+            transformer = { kaspaTransaction ->
+                kaspaTransaction.addOutput(
+                    Coin.parseCoin(targetOutputAmountValue.toPlainString()),
+                    redeemScript.scriptHash(),
+                )
+                if (!resultChange.isZero()) {
+                    val addressService = KaspaAddressService()
+                    val sourceScript = ScriptBuilder()
+                        .data(addressService.getPublicKey(transactionData.sourceAddress))
+                        .op(OP_CODESEPARATOR)
+                        .build()
+                    kaspaTransaction.addOutput(
+                        Coin.parseCoin(resultChange.toPlainString()),
+                        sourceScript,
                     )
-                },
-                outputs = transaction.outputs.map {
-                    KaspaOutput(
-                        amount = it.value.getValue(),
-                        scriptPublicKey = KaspaScriptPublicKey(it.scriptBytes.toHexString()),
-                    )
-                },
+                }
+                kaspaTransaction
+            },
+        )
+        val commitTransaction = CommitTransaction(
+            transaction = transaction,
+            hashes = getHashesForSign(transaction),
+            redeemScript = redeemScript,
+            sourceAddress = transactionData.sourceAddress,
+            params = BlockchainSavedData.KaspaKRC20IncompleteTokenTransaction(
+                transactionId = transaction.transactionHash().toHexString(),
+                amountValue = transactionData.amount.value ?: BigDecimal.ZERO,
+                feeAmountValue = targetOutputAmountValue,
+                envelope = envelope,
             ),
         )
+
+        return Result.Success(commitTransaction)
     }
+
+    internal fun buildToSignKRC20Reveal(
+        sourceAddress: String,
+        redeemScript: RedeemScript,
+        params: BlockchainSavedData.KaspaKRC20IncompleteTokenTransaction,
+        revealFeeAmountValue: BigDecimal,
+    ): Result<RevealTransaction> {
+        val utxo = listOf(
+            KaspaUnspentOutput(
+                amount = params.feeAmountValue,
+                outputIndex = 0,
+                transactionHash = params.transactionId.hexToBytes(),
+                outputScript = redeemScript.scriptHash().program,
+            ),
+        )
+
+        val change = calculateChange(
+            amount = BigDecimal.ZERO,
+            fee = revealFeeAmountValue,
+            unspentOutputs = utxo,
+        )
+
+        val transaction = createKaspaTransaction(
+            networkParameters = networkParameters,
+            unspentOutputs = utxo,
+            transformer = { kaspaTransaction ->
+                val sourceScript = ScriptBuilder()
+                    .data(addressService.getPublicKey(sourceAddress))
+                    .op(OP_CODESEPARATOR)
+                    .build()
+                kaspaTransaction.addOutput(
+                    Coin.parseCoin(change.toPlainString()),
+                    sourceScript,
+                )
+                kaspaTransaction
+            },
+        )
+
+        val revealTransaction = RevealTransaction(
+            transaction = transaction,
+            hashes = getHashesForSign(transaction),
+            redeemScript = redeemScript,
+        )
+
+        return Result.Success(revealTransaction)
+    }
+
+    private fun buildForSendInternal(transaction: KaspaTransaction) = KaspaTransactionBody(
+        KaspaTransactionData(
+            inputs = transaction.inputs.map {
+                it.scriptSig.program
+                KaspaInput(
+                    previousOutpoint = KaspaPreviousOutpoint(
+                        transactionId = it.outpoint.hash.toString(),
+                        index = it.outpoint.index,
+                    ),
+                    signatureScript = it.scriptBytes.toHexString(),
+                )
+            },
+            outputs = transaction.outputs.map {
+                KaspaOutput(
+                    amount = it.value.getValue(),
+                    scriptPublicKey = KaspaScriptPublicKey(it.scriptBytes.toHexString()),
+                )
+            },
+        ),
+    )
 
     @Suppress("MagicNumber")
     private fun extractSignature(index: Int, signatures: ByteArray): ByteArray {
@@ -95,7 +293,7 @@ class KaspaTransactionBuilder {
     }
 
     fun calculateChange(amount: BigDecimal, fee: BigDecimal, unspentOutputs: List<KaspaUnspentOutput>): BigDecimal {
-        val fullAmount = unspentOutputs.map { it.amount }.reduce { acc, number -> acc + number }
+        val fullAmount = unspentOutputs.sumOf { it.amount }
         return fullAmount - (amount + fee)
     }
 
@@ -106,19 +304,55 @@ class KaspaTransactionBuilder {
 
     fun getUnspentsToSpend() = unspentOutputs!!.sortedByDescending { it.amount }.take(getUnspentsToSpendCount())
 
+    fun getHashesForSign(transaction: KaspaTransaction): List<ByteArray> {
+        val hashesForSign: MutableList<ByteArray> = MutableList(transaction.inputs.size) { byteArrayOf() }
+        for (input in transaction.inputs) {
+            val index = input.index
+            hashesForSign[index] = transaction.hashForSignatureWitness(
+                index,
+                input.scriptBytes,
+                input.value,
+                SigHash.ALL,
+                false,
+            )
+        }
+        return hashesForSign
+    }
+
+    private fun RedeemScript.script(): Script {
+        val kasplexId = "kasplex".toByteArray()
+        val payload = envelopeAdapter.toJson(envelope).toByteArray()
+
+        return ScriptBuilder()
+            .data(publicKey)
+            .op(OP_CODESEPARATOR)
+            .opFalse()
+            .op(OP_IF)
+            .data(kasplexId)
+            .opTrue()
+            .opFalse()
+            .opFalse()
+            .data(payload)
+            .op(OP_ENDIF)
+            .build()
+    }
+
+    private fun RedeemScript.scriptHash(): Script = ScriptBuilder()
+        .op(OP_HASH256)
+        .data(Blake2b.Blake2b256().digest(script().program))
+        .op(OP_EQUAL)
+        .build()
+
     companion object {
         const val MAX_INPUT_COUNT = 84 // Kaspa rejects transactions with more inputs
     }
 }
 
-@Suppress("MagicNumber")
-internal fun TransactionData.toKaspaTransaction(
+internal fun createKaspaTransaction(
     networkParameters: NetworkParameters?,
     unspentOutputs: List<KaspaUnspentOutput>,
-    change: BigDecimal,
+    transformer: (KaspaTransaction) -> KaspaTransaction,
 ): KaspaTransaction {
-    requireUncompiled()
-
     val transaction = KaspaTransaction(
         networkParameters,
     )
@@ -138,33 +372,5 @@ internal fun TransactionData.toKaspaTransaction(
         input.sequenceNumber = 0
     }
 
-    val addressService = KaspaAddressService()
-    val sourceScript = ScriptBuilder().data(addressService.getPublicKey(this.sourceAddress)).op(OP_CODESEPARATOR)
-        .build()
-
-    val destinationAddressDecoded = KaspaCashAddr.decodeCashAddress(this.destinationAddress)
-    val destinationScript = when (destinationAddressDecoded.addressType) {
-        KaspaAddressType.P2PK_SCHNORR ->
-            ScriptBuilder.createP2PKOutputScript(destinationAddressDecoded.hash)
-        KaspaAddressType.P2PK_ECDSA ->
-            ScriptBuilder().data(destinationAddressDecoded.hash).op(OP_CODESEPARATOR).build()
-        KaspaAddressType.P2SH -> {
-            // known P2SH addresses won't throw
-            if (destinationAddressDecoded.hash.size != 32) error("Invalid hash length in P2SH address")
-            ScriptBuilder().op(OP_HASH256).data(destinationAddressDecoded.hash).op(OP_EQUAL).build()
-        }
-        null -> error("Null script type") // should never happen
-    }
-
-    transaction.addOutput(
-        Coin.parseCoin(this.amount.value!!.toPlainString()),
-        destinationScript,
-    )
-    if (!change.isZero()) {
-        transaction.addOutput(
-            Coin.parseCoin(change.toPlainString()),
-            sourceScript,
-        )
-    }
-    return transaction
+    return transformer(transaction)
 }

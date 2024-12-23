@@ -2,18 +2,19 @@ package com.tangem.blockchain.blockchains.kaspa
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.kaspa.network.*
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.hexToBytes
+import org.bitcoinj.core.Coin
+import org.bitcoinj.core.TransactionOutput
 import org.junit.Test
+import java.math.BigDecimal
 
 class KaspaTransactionTest {
 
     private val blockchain = Blockchain.Kaspa
+    private val networkParameters = KaspaMainNetParams()
     private val decimals = blockchain.decimals()
     private val addressService = KaspaAddressService()
 
@@ -37,7 +38,12 @@ class KaspaTransactionTest {
 
         val sourceAddress = addressService.makeAddress(walletPublicKey)
 
-        val transactionBuilder = KaspaTransactionBuilder()
+        val transactionBuilder = KaspaTransactionBuilder(
+            publicKey = Wallet.PublicKey(
+                seedKey = walletPublicKey,
+                derivationType = null,
+            ),
+        )
         transactionBuilder.unspentOutputs = listOf(
             KaspaUnspentOutput(
                 transactionHash = "deb88e7dd734437c6232a636085ef917d1d13cc549fe14749765508b2782f2fb".hexToBytes(),
@@ -132,10 +138,11 @@ class KaspaTransactionTest {
 
         // act
         val buildToSignResult = transactionBuilder.buildToSign(transactionData) as Result.Success
-        val signedTransaction = transactionBuilder.buildToSend(signature)
+        val hashes = transactionBuilder.getHashesForSign(buildToSignResult.data)
+        val signedTransaction = transactionBuilder.buildToSend(signature, buildToSignResult.data)
 
         // assert
-        Truth.assertThat(buildToSignResult.data.map { it.toList() })
+        Truth.assertThat(hashes.map { it.toList() })
             .containsExactly(expectedHashToSign1, expectedHashToSign2, expectedHashToSign3)
         Truth.assertThat(signedTransaction).isEqualTo(expectedSignedTransaction)
     }
@@ -158,7 +165,12 @@ class KaspaTransactionTest {
 
         val sourceAddress = addressService.makeAddress(walletPublicKey)
 
-        val transactionBuilder = KaspaTransactionBuilder()
+        val transactionBuilder = KaspaTransactionBuilder(
+            publicKey = Wallet.PublicKey(
+                seedKey = walletPublicKey,
+                derivationType = null,
+            ),
+        )
         transactionBuilder.unspentOutputs = listOf(
             KaspaUnspentOutput(
                 transactionHash = "ae96e819429e9da538e84cb213f62fbc8ad32e932d7c7f1fb9bd2fedf8fd7b4a".hexToBytes(),
@@ -217,10 +229,49 @@ class KaspaTransactionTest {
 
         // act
         val buildToSignResult = transactionBuilder.buildToSign(transactionData) as Result.Success
-        val signedTransaction = transactionBuilder.buildToSend(signature)
+        val hashes = transactionBuilder.getHashesForSign(buildToSignResult.data)
+        val signedTransaction = transactionBuilder.buildToSend(signature, buildToSignResult.data)
 
         // assert
-        Truth.assertThat(buildToSignResult.data.map { it.toList() }).containsExactly(expectedHashToSign1)
+        Truth.assertThat(hashes.map { it.toList() }).containsExactly(expectedHashToSign1)
         Truth.assertThat(signedTransaction).isEqualTo(expectedSignedTransaction)
+    }
+
+    @Test
+    fun buildCorrectKaspaKRC20Transaction() {
+        val commitTransaction = createKaspaTransaction(
+            networkParameters = networkParameters,
+            unspentOutputs = listOf(
+                KaspaUnspentOutput(
+                    transactionHash = "4DF1F7923708F6FA98F8D192CDB511666FC93C858D86FB7BC61BC7C13D54C9F4".hexToBytes(),
+                    outputIndex = 2,
+                    amount = BigDecimal.ZERO,
+                    outputScript = "415BFC0DDE408A06EC6A39AE850986B49C2D0D5B83E47233B43012DE3AEDCECDE75EBC239008060BD50633E8E1AEBA891300CA74E8279DD591D8CEDA60609AFA6001".hexToBytes(),
+                ),
+            ),
+            transformer = {
+                it.addOutput(
+                    TransactionOutput(
+                        networkParameters,
+                        null,
+                        Coin.valueOf(500003000),
+                        "AA207B1CFEE1AA9CB2AB4EFF9FF9593F88D3F0453F02E02790AC493F8EB712DCE17787".hexToBytes(),
+                    ),
+                )
+                it.addOutput(
+                    TransactionOutput(
+                        networkParameters,
+                        null,
+                        Coin.valueOf(3764387352),
+                        "2035C82AA416591A1AFB84D10B6D225899F27CE6B51381C03B8CF104C3906258D3AC".hexToBytes(),
+                    ),
+                )
+                it
+            },
+        )
+
+        Truth
+            .assertThat(commitTransaction.transactionHash())
+            .isEqualTo("C2CB9D865F5085CD6F7F23365545C68D1EACA7E3CDE9D231A64812BE2C989A30".hexToBytes())
     }
 }

@@ -8,20 +8,22 @@ class EstimationFeeAddressFactoryTest {
 
     private val factory = EstimationFeeAddressFactory()
     private val hardcodedAddressesForBlockchain = mapOf(
-        Blockchain.Cardano to "addr1q95pg4z9tf26r5dwf72vmh62u3pr9sewq2waahyhpjzm3enz43pvhh0us3z0z5xen2skq200e67eu89s5v2s0sdh3fnsm9lknu",
         Blockchain.Chia to "",
         Blockchain.ChiaTestnet to "",
+        Blockchain.Hedera to "",
+        Blockchain.HederaTestnet to "",
+        Blockchain.Tezos to "",
+        Blockchain.Ducatus to "",
+        Blockchain.InternetComputer to "",
+        Blockchain.Casper to "",
+        Blockchain.CasperTestnet to "",
+        Blockchain.Cardano to "addr1q95pg4z9tf26r5dwf72vmh62u3pr9sewq2waahyhpjzm3enz43pvhh0us3z0z5xen2skq200e67eu89s5v2s0sdh3fnsm9lknu",
         Blockchain.XRP to "",
         Blockchain.Stellar to "",
         Blockchain.StellarTestnet to "",
         Blockchain.Binance to "",
         Blockchain.BinanceTestnet to "",
         Blockchain.SolanaTestnet to "",
-        Blockchain.Hedera to "",
-        Blockchain.HederaTestnet to "",
-        Blockchain.Tezos to "",
-        Blockchain.Kaspa to "",
-        Blockchain.Ducatus to "",
         Blockchain.Bitcoin to "bc1qkrc5kmpq546wr2xk0errg58yw9jjq7thvhdk5k",
         Blockchain.BitcoinTestnet to "bc1qkrc5kmpq546wr2xk0errg58yw9jjq7thvhdk5k",
         Blockchain.Litecoin to "MSqjXH6toL4kHqsRo3mWaWMkhmiH9GQxLR",
@@ -120,7 +122,6 @@ class EstimationFeeAddressFactoryTest {
         Blockchain.Kaspa to "kaspa:qyp2f0ust8wyvuvqrzajvehx5jyh43vcjgessjdkw9vyw6rww4fdlsgzysspfuq",
         Blockchain.Sei to "sei1lhjvds604fvac32j4eygpr820lyc82dlfv0ea4",
         Blockchain.SeiTestnet to "sei1lhjvds604fvac32j4eygpr820lyc82dlfv0ea4",
-        Blockchain.InternetComputer to "",
         Blockchain.Sui to "0xbca45e36a271e106546c89984108685215724e488570a0049a187c473cd521bc",
     )
 

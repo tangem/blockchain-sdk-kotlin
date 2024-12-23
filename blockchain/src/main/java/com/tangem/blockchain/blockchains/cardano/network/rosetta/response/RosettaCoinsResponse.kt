@@ -34,8 +34,11 @@ internal data class RosettaCoinsResponse(
 
             @JsonClass(generateAdapter = true)
             data class Currency(
+                @Json(name = "symbol")
                 val symbol: String?,
+                @Json(name = "decimals")
                 val decimals: Int?,
+                @Json(name = "metadata")
                 val metadata: Metadata?,
             ) {
 

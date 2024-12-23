@@ -7,7 +7,11 @@ import com.squareup.moshi.JsonClass
 internal sealed interface CasperRpcResponse {
 
     /** Success response with [result] */
-    data class Success(val result: Any) : CasperRpcResponse
+    @JsonClass(generateAdapter = true)
+    data class Success(
+        @Json(name = "result")
+        val result: Any,
+    ) : CasperRpcResponse
 
     /** Failure response with error [message] */
     @JsonClass(generateAdapter = true)
