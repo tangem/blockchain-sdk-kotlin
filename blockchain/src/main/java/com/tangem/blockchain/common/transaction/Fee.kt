@@ -70,6 +70,7 @@ sealed class Fee {
         override val amount: Amount,
         val mass: BigInteger,
         val feeRate: BigInteger,
+        val revealTransactionFee: Amount? = null,
     ) : Fee()
 
     data class Filecoin(
