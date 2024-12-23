@@ -18,7 +18,7 @@ import com.ripple.core.coretypes.Amount as XrpAmount
 class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, publicKey: ByteArray) {
     var sequence: Long? = null
     // https://xrpl.org/blog/2021/reserves-lowered.html
-    var minReserve = 10.toBigDecimal()
+    var minReserve = 1.toBigDecimal()
     val blockchain = Blockchain.XRP
 
     private val canonicalPublicKey = XrpAddressService.canonizePublicKey(publicKey)
