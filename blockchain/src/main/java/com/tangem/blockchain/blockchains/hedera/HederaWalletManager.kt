@@ -87,7 +87,7 @@ internal class HederaWalletManager(
         if (error is BlockchainSdkError) error("Error isn't BlockchainSdkError")
     }
 
-    override suspend fun hasRequirements(currencyType: CryptoCurrencyType): Boolean {
+    private suspend fun assetRequiresAssociation(currencyType: CryptoCurrencyType): Boolean {
         return when (currencyType) {
             is CryptoCurrencyType.Coin -> false
             is CryptoCurrencyType.Token -> {
@@ -99,7 +99,7 @@ internal class HederaWalletManager(
     }
 
     override suspend fun requirementsCondition(currencyType: CryptoCurrencyType): AssetRequirementsCondition? {
-        if (!hasRequirements(currencyType)) return null
+        if (!assetRequiresAssociation(currencyType)) return null
 
         return when (currencyType) {
             is CryptoCurrencyType.Coin -> null
@@ -110,7 +110,10 @@ internal class HederaWalletManager(
                 } else {
                     val feeValue = exchangeRate * HBAR_TOKEN_ASSOCIATE_USD_COST
                     val feeAmount = Amount(blockchain = wallet.blockchain, value = feeValue)
-                    AssetRequirementsCondition.PaidTransactionWithFee(feeAmount)
+                    AssetRequirementsCondition.PaidTransactionWithFee(
+                        blockchain = blockchain,
+                        feeAmount = feeAmount,
+                    )
                 }
             }
         }
@@ -120,7 +123,7 @@ internal class HederaWalletManager(
         currencyType: CryptoCurrencyType,
         signer: TransactionSigner,
     ): SimpleResult {
-        if (!hasRequirements(currencyType)) return SimpleResult.Success
+        if (!assetRequiresAssociation(currencyType)) return SimpleResult.Success
 
         return when (currencyType) {
             is CryptoCurrencyType.Coin -> SimpleResult.Success
@@ -153,6 +156,10 @@ internal class HederaWalletManager(
                 }
             }
         }
+    }
+
+    override suspend fun discardRequirements(currencyType: CryptoCurrencyType): SimpleResult {
+        return SimpleResult.Success
     }
 
     override suspend fun send(

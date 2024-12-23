@@ -118,6 +118,7 @@ class WalletManagerFactory(
             Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet -> BitcoinCashWalletManagerAssembly
             Blockchain.Ravencoin, Blockchain.RavencoinTestnet -> RavencoinWalletManagerAssembly
             Blockchain.Ducatus -> DucatusWalletManagerAssembly
+            Blockchain.Clore -> CloreWalletManagerAssembly
             // endregion
 
             // region ETH-like blockchains
@@ -149,6 +150,7 @@ class WalletManagerFactory(
             Blockchain.Taraxa, Blockchain.TaraxaTestnet,
             Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet,
             Blockchain.Core, Blockchain.CoreTestnet,
+            Blockchain.Chiliz, Blockchain.ChilizTestnet,
             Blockchain.Xodex,
             Blockchain.Canxium,
             -> EthereumLikeWalletManagerAssembly
@@ -183,7 +185,7 @@ class WalletManagerFactory(
             Blockchain.Binance, Blockchain.BinanceTestnet -> BinanceWalletManagerAssembly
             Blockchain.Tezos -> TezosWalletManagerAssembly
             Blockchain.Tron, Blockchain.TronTestnet -> TronWalletManagerAssembly
-            Blockchain.Kaspa -> KaspaWalletManagerAssembly
+            Blockchain.Kaspa -> KaspaWalletManagerAssembly(dataStorage)
             Blockchain.TON, Blockchain.TONTestnet -> TonWalletManagerAssembly
             Blockchain.Cosmos, Blockchain.CosmosTestnet -> CosmosWalletManagerAssembly
             Blockchain.TerraV1 -> TerraV1WalletManagerAssembly
