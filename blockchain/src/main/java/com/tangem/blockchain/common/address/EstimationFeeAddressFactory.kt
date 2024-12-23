@@ -18,32 +18,23 @@ class EstimationFeeAddressFactory {
     @Suppress("LongMethod", "CyclomaticComplexMethod")
     fun makeAddress(blockchain: Blockchain): String {
         return when (blockchain) {
-            Blockchain.Cardano -> CARDANO_ESTIMATION_ADDRESS
-
-            Blockchain.Chia, Blockchain.ChiaTestnet -> {
-                // Can not generate and doesn't depend on destination
-                ""
-            }
-
+            Blockchain.Unknown, // shouldn't get there
+            Blockchain.Ducatus, // doesn't depend on destination
+            Blockchain.Tezos, // doesn't depend on destination
+            Blockchain.Hedera, Blockchain.HederaTestnet, // doesn't depend on destination
+            Blockchain.Chia, Blockchain.ChiaTestnet, // doesn't depend on destination
+            Blockchain.InternetComputer, // fixed
+            Blockchain.Casper, Blockchain.CasperTestnet, // fixed
             Blockchain.XRP,
             Blockchain.Stellar, Blockchain.StellarTestnet,
             Blockchain.Binance, Blockchain.BinanceTestnet,
             Blockchain.SolanaTestnet,
-            Blockchain.Hedera, Blockchain.HederaTestnet,
-            -> {
-                // Doesn't depend on amount and destination
-                ""
-            }
+            -> ""
 
-            Blockchain.Tezos -> {
-                // Tezos has a fixed fee.
-                ""
-            }
+            Blockchain.Nexa, Blockchain.NexaTestnet,
+            -> TODO("Not implemented")
 
-            Blockchain.Ducatus, Blockchain.Unknown -> {
-                // Unsupported
-                ""
-            }
+            Blockchain.Cardano -> CARDANO_ESTIMATION_ADDRESS
 
             // We have to generate a new dummy address for UTXO-like
             Blockchain.Bitcoin,
@@ -59,7 +50,6 @@ class EstimationFeeAddressFactory {
             Blockchain.RavencoinTestnet,
             -> "RT5qKgXdmh9pqtz71cgfL834VfeXFVH1sG"
             Blockchain.Solana -> "9wuDg6Y4H4j86Kg5aUGrUeaBa3sAUzjMs37KbeGFnRuM"
-            Blockchain.Nexa, Blockchain.NexaTestnet -> TODO("Not implemented")
             Blockchain.Radiant -> "1K8jBuCKzuwvFCjL7Qpqq69k1hnVXJ31Nc"
             // EVM-like
             Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet ->
@@ -99,6 +89,7 @@ class EstimationFeeAddressFactory {
             Blockchain.Cyber, Blockchain.CyberTestnet,
             Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet,
             Blockchain.Core, Blockchain.CoreTestnet,
+            Blockchain.Chiliz, Blockchain.ChilizTestnet,
             Blockchain.Xodex,
             Blockchain.Canxium,
             -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
@@ -132,20 +123,17 @@ class EstimationFeeAddressFactory {
                 "0x4626b7ef23fb2800a0e224e8249f47e0db3579070262da2a7efb0bc52c882867"
             Blockchain.Algorand, Blockchain.AlgorandTestnet ->
                 "CW6XDCKQAZUGAIOTGE2NEPYFFVW6H6IKFOTOF3W5WDUVHH4ZIDCIKYDPXY"
-            Blockchain.Koinos, Blockchain.KoinosTestnet -> "1C423Vbd44zjghhJR5fKJdLFS3rgVFUc9A"
+            Blockchain.Koinos, Blockchain.KoinosTestnet,
+            -> "1C423Vbd44zjghhJR5fKJdLFS3rgVFUc9A"
             Blockchain.Filecoin -> "f1wxdu6d25dc4hmebdfgriswooum22plhmmpxibzq"
             Blockchain.Kaspa -> "kaspa:qyp2f0ust8wyvuvqrzajvehx5jyh43vcjgessjdkw9vyw6rww4fdlsgzysspfuq"
-            Blockchain.Sei, Blockchain.SeiTestnet -> "sei1lhjvds604fvac32j4eygpr820lyc82dlfv0ea4"
-            Blockchain.InternetComputer -> {
-                // Doesn't depend on amount and destination
-                ""
-            }
-            Blockchain.Sui,
-            Blockchain.SuiTestnet,
+            Blockchain.Sei, Blockchain.SeiTestnet,
+            -> "sei1lhjvds604fvac32j4eygpr820lyc82dlfv0ea4"
+            Blockchain.Sui, Blockchain.SuiTestnet,
             -> "0xbca45e36a271e106546c89984108685215724e488570a0049a187c473cd521bc"
             Blockchain.EnergyWebX, Blockchain.EnergyWebXTestnet,
             -> "5CogUCbb5PYYbEHhDVGDN6JRRYBkd4sFRVc4wwP8oy5Su34Z"
-            Blockchain.Casper, Blockchain.CasperTestnet -> ""
+            Blockchain.Clore -> "AJfAu7RJxiTowM9qVaTbVuS5JCPCpV3p7M"
         }
     }
 

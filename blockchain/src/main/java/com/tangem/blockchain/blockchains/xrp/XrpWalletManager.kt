@@ -34,14 +34,14 @@ class XrpWalletManager(
     private fun updateWallet(response: XrpInfoResponse) {
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
 
+        wallet.setReserveValue(response.reserveTotal)
         if (!response.accountFound) {
-            updateError(BlockchainSdkError.AccountNotFound())
+            updateError(BlockchainSdkError.AccountNotFound(response.reserveTotal))
             return
         }
         wallet.setCoinValue(response.balance - response.reserveTotal)
-        wallet.setReserveValue(response.reserveTotal)
         transactionBuilder.sequence = response.sequence
-        transactionBuilder.minReserve = response.reserveTotal
+        transactionBuilder.minReserve = response.reserveBase
 
         if (response.hasUnconfirmed) {
             if (wallet.recentTransactions.isEmpty()) wallet.addTransactionDummy()
