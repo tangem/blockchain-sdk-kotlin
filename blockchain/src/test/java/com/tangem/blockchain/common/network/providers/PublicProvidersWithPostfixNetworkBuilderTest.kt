@@ -98,7 +98,7 @@ internal class PublicProvidersWithPostfixNetworkBuilderTest(private val model: M
                 baseUrl = baseUrl,
                 expectedUrl = expectedUrl,
                 blockchain = Blockchain.Aurora,
-                builder = ::AuroraProvidersBuilder,
+                builder = { AuroraProvidersBuilder(it, BlockchainSdkConfig()) },
             )
         }
 
@@ -116,7 +116,7 @@ internal class PublicProvidersWithPostfixNetworkBuilderTest(private val model: M
                 baseUrl = baseUrl,
                 expectedUrl = expectedUrl,
                 blockchain = Blockchain.Flare,
-                builder = ::FlareProvidersBuilder,
+                builder = { FlareProvidersBuilder(it, BlockchainSdkConfig()) },
             )
         }
 
@@ -143,7 +143,7 @@ internal class PublicProvidersWithPostfixNetworkBuilderTest(private val model: M
                 baseUrl = baseUrl,
                 expectedUrl = expectedUrl,
                 blockchain = Blockchain.Telos,
-                builder = ::TelosProvidersBuilder,
+                builder = { TelosProvidersBuilder(it, BlockchainSdkConfig()) },
             )
         }
 

@@ -18,6 +18,9 @@ internal class ShibariumProvidersBuilder(
                 ProviderType.NowNodes -> {
                     ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://shib.nownodes.io/")
                 }
+                ProviderType.GetBlock -> {
+                    ethereumProviderFactory.getGetBlockProvider { shibarium?.jsonRpc }
+                }
                 else -> null
             }
         }
