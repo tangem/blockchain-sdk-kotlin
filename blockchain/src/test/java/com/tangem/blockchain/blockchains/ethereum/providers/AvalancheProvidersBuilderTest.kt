@@ -44,6 +44,16 @@ class AvalancheProvidersBuilderTest {
             base = null,
             blast = null,
             filecoin = null,
+            arbitrum = null,
+            bitcoinCash = null,
+            kusama = null,
+            moonbeam = null,
+            optimism = null,
+            polkadot = null,
+            shibarium = null,
+            sui = null,
+            telos = null,
+            tezos = null,
         ),
     )
 
