@@ -17,6 +17,7 @@ internal object TelosWalletManagerAssembly : WalletManagerAssembly<TelosWalletMa
                 networkProvider = EthereumNetworkService(
                     jsonRpcProviders = TelosProvidersBuilder(
                         input.providerTypes,
+                        input.config,
                     ).build(blockchain),
                 ),
             )
