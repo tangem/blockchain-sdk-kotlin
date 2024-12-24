@@ -9,7 +9,7 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 internal object SuiteWalletManagerAssembly : WalletManagerAssembly<WalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): WalletManager = with(input) {
-        val providersBuilder = SuiNetworkProvidersBuilder(providerTypes)
+        val providersBuilder = SuiNetworkProvidersBuilder(providerTypes, config)
 
         SuiWalletManager(
             wallet = wallet,
