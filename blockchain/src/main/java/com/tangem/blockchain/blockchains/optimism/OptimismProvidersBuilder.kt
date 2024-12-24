@@ -18,6 +18,9 @@ internal class OptimismProvidersBuilder(
                 ProviderType.NowNodes -> {
                     ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://optimism.nownodes.io/")
                 }
+                ProviderType.GetBlock -> {
+                    ethereumProviderFactory.getGetBlockProvider { optimism?.jsonRpc }
+                }
                 else -> null
             }
         }
