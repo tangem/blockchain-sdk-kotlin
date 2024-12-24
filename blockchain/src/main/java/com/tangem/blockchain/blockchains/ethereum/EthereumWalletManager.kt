@@ -92,11 +92,15 @@ open class EthereumWalletManager(
 
         return when (val signResponse = sign(transactionData, signer)) {
             is Result.Success -> {
-                val transactionToSend = transactionBuilder.buildForSend(
-                    transaction = transactionData,
-                    signature = signResponse.data.first,
-                    compiledTransaction = signResponse.data.second,
-                )
+                val transactionToSend = try {
+                    transactionBuilder.buildForSend(
+                        transaction = transactionData,
+                        signature = signResponse.data.first,
+                        compiledTransaction = signResponse.data.second,
+                    )
+                } catch (e: BlockchainSdkError.FailedToBuildTx) {
+                    return Result.Failure(e)
+                }
 
                 when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())) {
                     is SimpleResult.Success -> {

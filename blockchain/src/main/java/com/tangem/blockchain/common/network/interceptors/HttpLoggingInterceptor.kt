@@ -1,6 +1,5 @@
 package com.tangem.blockchain.common.network.interceptors
 
-import android.util.Log
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.di.DepsContainer
@@ -123,7 +122,6 @@ internal object HttpLoggingInterceptor : Interceptor {
         val responseBody = response.body!!
         val contentLength = responseBody.contentLength()
 
-        Log.e("logg--", "contentLength: $contentLength")
         val message = if (!response.promisesBody()) {
             "<-- END HTTP"
         } else if (bodyHasUnknownEncoding(response.headers)) {
@@ -152,7 +150,6 @@ internal object HttpLoggingInterceptor : Interceptor {
                 if (!buffer.isProbablyUtf8()) {
                     "<-- END HTTP (binary ${buffer.size}-byte body omitted)"
                 } else {
-                    Log.e("logg--", "${buffer.size}")
                     val json = if (contentLength != 0L) {
                         buffer.clone().readString(charset).beautifyJson()
                     } else {
