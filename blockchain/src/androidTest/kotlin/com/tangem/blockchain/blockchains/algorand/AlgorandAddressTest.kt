@@ -2,14 +2,14 @@ package com.tangem.blockchain.blockchains.algorand
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.address.TrustWalletAddressService
+import com.tangem.blockchain.common.address.WalletCoreAddressService
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
 class AlgorandAddressTest {
 
-    private val addressService = TrustWalletAddressService(Blockchain.Algorand)
+    private val addressService = WalletCoreAddressService(Blockchain.Algorand)
 
     init {
         System.loadLibrary("TrustWalletCore")
