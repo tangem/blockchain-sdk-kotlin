@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.icp
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.address.TrustWalletAddressService
+import com.tangem.blockchain.common.address.WalletCoreAddressService
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
 import org.junit.Test
@@ -15,7 +15,7 @@ class InternetComputerAddressTest {
         System.loadLibrary("TrustWalletCore")
     }
 
-    private val addressService = TrustWalletAddressService(Blockchain.InternetComputer)
+    private val addressService = WalletCoreAddressService(Blockchain.InternetComputer)
     private val coinType = CoinType.INTERNETCOMPUTER
 
     @Test
