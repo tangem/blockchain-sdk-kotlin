@@ -1,16 +1,13 @@
 package com.tangem.blockchain.blockchains.cardano
 
 import com.google.protobuf.ByteString
-import com.tangem.Log
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.utils.matchesCardanoAsset
 import com.tangem.blockchain.blockchains.cardano.walletcore.CardanoTWTxBuilder
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.hexToBigDecimal
-import com.tangem.blockchain.extensions.isValidUtf8
 import com.tangem.blockchain.extensions.trustWalletCoinType
-import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
 import wallet.core.java.AnySigner
 import wallet.core.jni.CoinType
@@ -33,20 +30,7 @@ internal class CardanoTransactionBuilder(
     private var twTxBuilder: CardanoTWTxBuilder by Delegates.notNull()
 
     fun update(outputs: List<CardanoUnspentOutput>) {
-        twTxBuilder = CardanoTWTxBuilder(
-            wallet = wallet,
-            outputs = outputs.filter { output ->
-                val containsIncorrectAssetNameHex = output.assets.any { asset ->
-                    asset.assetNameHex.hexToBytes().isValidUtf8().not()
-                }
-
-                if (containsIncorrectAssetNameHex) {
-                    Log.debug { "CardanoTransactionBuilder will exclude output: $output" }
-                }
-
-                !containsIncorrectAssetNameHex
-            },
-        )
+        twTxBuilder = CardanoTWTxBuilder(wallet = wallet, outputs = outputs)
     }
 
     override fun validate(transactionData: TransactionData): Result<Unit> {
