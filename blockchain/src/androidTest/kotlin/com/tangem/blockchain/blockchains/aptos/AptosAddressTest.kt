@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.aptos
 
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.address.TrustWalletAddressService
+import com.tangem.blockchain.common.address.WalletCoreAddressService
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import junit.framework.TestCase.assertEquals
@@ -9,7 +9,7 @@ import org.junit.Test
 
 internal class AptosAddressTest {
 
-    private val addressService = TrustWalletAddressService(Blockchain.Aptos)
+    private val addressService = WalletCoreAddressService(Blockchain.Aptos)
 
     init {
         System.loadLibrary("TrustWalletCore")

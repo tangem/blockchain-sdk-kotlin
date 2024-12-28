@@ -2,17 +2,17 @@ package com.tangem.blockchain.blockchains.aptos
 
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.HEX_PREFIX
-import com.tangem.blockchain.common.address.TrustWalletAddressService
+import com.tangem.blockchain.common.address.WalletCoreAddressService
 import com.tangem.common.card.EllipticCurve
 
 /**
- * Address service implementation for [Blockchain.Aptos] based on [TrustWalletAddressService]
+ * Address service implementation for [Blockchain.Aptos] based on [WalletCoreAddressService]
  *
  * @property isTestnet flag that indicates if current network is testnet
  *
 [REDACTED_AUTHOR]
  */
-internal class AptosAddressService(private val isTestnet: Boolean) : TrustWalletAddressService(
+internal class AptosAddressService(private val isTestnet: Boolean) : WalletCoreAddressService(
     blockchain = if (isTestnet) Blockchain.AptosTestnet else Blockchain.Aptos,
 ) {
 
