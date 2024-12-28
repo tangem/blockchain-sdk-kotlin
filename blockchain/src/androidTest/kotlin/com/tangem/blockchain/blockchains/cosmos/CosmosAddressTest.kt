@@ -1,14 +1,14 @@
 package com.tangem.blockchain.blockchains.cosmos
 
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.address.TrustWalletAddressService
+import com.tangem.blockchain.common.address.WalletCoreAddressService
 import com.tangem.common.extensions.hexToBytes
 import junit.framework.TestCase.assertEquals
 import org.junit.Test
 
 class CosmosAddressTest {
 
-    private val addressService = TrustWalletAddressService(Blockchain.Cosmos)
+    private val addressService = WalletCoreAddressService(Blockchain.Cosmos)
 
     init {
         System.loadLibrary("TrustWalletCore")
