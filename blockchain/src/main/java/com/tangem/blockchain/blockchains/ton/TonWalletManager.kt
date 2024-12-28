@@ -11,9 +11,6 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
-import wallet.core.jni.CoinType
-import wallet.core.jni.PublicKeyType
-import wallet.core.jni.proto.TheOpenNetwork
 
 internal class TonWalletManager(
     wallet: Wallet,
@@ -21,7 +18,7 @@ internal class TonWalletManager(
 ) : WalletManager(wallet) {
 
     private var sequenceNumber: Int = 0
-    private val txBuilder = TonTransactionBuilder(wallet.address)
+    private val txBuilder = TonTransactionBuilder(wallet.publicKey, wallet.address)
     private val networkService = TonNetworkService(
         jsonRpcProviders = networkProviders,
         blockchain = wallet.blockchain,
@@ -40,19 +37,32 @@ internal class TonWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
-    ): Result<TransactionSendResult> {
+    ): Result<TransactionSendResult> = try {
         transactionData.requireUncompiled()
 
-        val input = txBuilder.buildForSign(
+        val expireAt = createExpirationTimestampSecs()
+        val txToSign = txBuilder.buildForSign(
             sequenceNumber = sequenceNumber,
             amount = transactionData.amount,
             destination = transactionData.destinationAddress,
             extras = transactionData.extras as? TonTransactionExtras,
-        ).successOr { return it }
+            expireAt = expireAt,
+        )
 
-        val message = buildTransaction(input, signer).successOr { return Result.fromTangemSdkError(it.error) }
+        val signatureResult = signer.sign(hash = txToSign, publicKey = wallet.publicKey).successOr {
+            return Result.fromTangemSdkError(it.error)
+        }
 
-        return when (val sendResult = networkService.send(message)) {
+        val txToSend = txBuilder.buildForSend(
+            signature = signatureResult,
+            sequenceNumber = sequenceNumber,
+            amount = transactionData.amount,
+            destination = transactionData.destinationAddress,
+            expireAt = expireAt,
+            extras = transactionData.extras as? TonTransactionExtras,
+        )
+
+        when (val sendResult = networkService.send(txToSend)) {
             is Result.Failure -> Result.Failure(sendResult.error)
             is Result.Success -> {
                 wallet.addOutgoingTransaction(transactionData.copy(hash = sendResult.data))
@@ -60,14 +70,24 @@ internal class TonWalletManager(
                 Result.Success(TransactionSendResult(sendResult.data))
             }
         }
+    } catch (e: BlockchainSdkError) {
+        Result.Failure(e)
+    } catch (e: Exception) {
+        Result.Failure(e.toBlockchainSdkError())
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
-        val input = txBuilder.buildForSign(sequenceNumber, amount, destination)
-            .successOr { return it }
-        val message = buildTransaction(input, null).successOr { return it }
+    @Suppress("MagicNumber")
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> = try {
+        val message = txBuilder.buildForSend(
+            signature = ByteArray(64),
+            sequenceNumber = sequenceNumber,
+            amount = amount,
+            destination = destination,
+            expireAt = createExpirationTimestampSecs(),
+            extras = null,
+        )
 
-        return when (val feeResult = networkService.getFee(wallet.address, message)) {
+        when (val feeResult = networkService.getFee(wallet.address, message)) {
             is Result.Failure -> feeResult
             is Result.Success -> {
                 var fee = feeResult.data
@@ -77,6 +97,10 @@ internal class TonWalletManager(
                 Result.Success(TransactionFee.Single(Fee.Common(fee)))
             }
         }
+    } catch (e: BlockchainSdkError) {
+        Result.Failure(e)
+    } catch (e: Exception) {
+        Result.Failure(e.toBlockchainSdkError())
     }
 
     private fun updateWallet(info: TonWalletInfo) {
@@ -97,19 +121,12 @@ internal class TonWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
-    private fun buildTransaction(input: TheOpenNetwork.SigningInput, signer: TransactionSigner?): Result<String> {
-        val outputResult: Result<TheOpenNetwork.SigningOutput> = AnySignerWrapper().sign(
-            walletPublicKey = wallet.publicKey,
-            publicKeyType = PublicKeyType.ED25519,
-            input = input,
-            coin = CoinType.TON,
-            parser = TheOpenNetwork.SigningOutput.parser(),
-            signer = signer,
-            curve = wallet.blockchain.getSupportedCurves().first(),
-        )
-        return when (outputResult) {
-            is Result.Failure -> outputResult
-            is Result.Success -> Result.Success(txBuilder.buildForSend(outputResult.data))
-        }
+    @Suppress("MagicNumber")
+    private fun createExpirationTimestampSecs(): Int {
+        return (System.currentTimeMillis() / 1000 + TRANSACTION_LIFETIME).toInt()
+    }
+
+    private companion object {
+        const val TRANSACTION_LIFETIME = 60L
     }
 }
