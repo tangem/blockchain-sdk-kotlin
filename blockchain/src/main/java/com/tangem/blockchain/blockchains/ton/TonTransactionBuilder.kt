@@ -128,8 +128,14 @@ internal class TonTransactionBuilder(
         val token = (amount.type as? AmountType.Token)?.token ?: throw BlockchainSdkError.FailedToBuildTx
         val jettonWalletAddress = jettonWalletAddresses[token] ?: throw BlockchainSdkError.FailedToBuildTx
 
+        val amountValue = requireNotNull(amount.value) { "Amount value must not be null" }
+        val jettonAmount = amountValue
+            .movePointRight(amount.decimals)
+            .toBigInteger()
+            .toByteArray()
+            .let(ByteString::copyFrom)
         val jettonTransfer = TheOpenNetwork.JettonTransfer.newBuilder()
-            .setJettonAmount(amount.longValueOrZero)
+            .setJettonAmount(jettonAmount)
             .setToOwner(destination)
             .setResponseAddress(walletAddress)
             .setForwardAmount(1L) // needs some amount to send "jetton transfer notification", use minimum
