@@ -108,15 +108,14 @@ dependencies {
 
     implementation files('libs/hedera-sdk-java-2.29.0.jar')
     implementation "com.tangem:blstlib:master-6@aar"
-    implementation "com.tangem:wallet-core:4.1.20-tangem3@aar"
-    implementation("com.tangem:wallet-core-proto:4.1.20-tangem3") {
+    implementation "com.tangem:wallet-core:4.1.20-tangem4@aar"
+    implementation("com.tangem:wallet-core-proto:4.1.20-tangem4") {
         exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
     }
 
     implementation 'net.i2p.crypto:eddsa:0.3.0'
 
     //dependencies for binance
-    implementation 'com.google.protobuf:protobuf-java:3.6.1'
     implementation 'io.grpc:grpc-protobuf:1.17.1'
     implementation 'io.grpc:grpc-stub:1.17.1'
     implementation 'commons-codec:commons-codec:1.10'
