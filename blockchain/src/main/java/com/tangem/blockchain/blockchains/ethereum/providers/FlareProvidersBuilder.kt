@@ -18,7 +18,10 @@ internal class FlareProvidersBuilder(
             when (it) {
                 is ProviderType.Public -> createPublickProvider(url = it.url)
                 ProviderType.NowNodes -> config.nowNodeCredentials?.apiKey.letNotBlank { nowNodesApiKey ->
-                    EthereumJsonRpcProvider(baseUrl = "https://flr.nownodes.io/$nowNodesApiKey/ext/bc/C/rpc")
+                    EthereumJsonRpcProvider(
+                        baseUrl = "https://flr.nownodes.io/$nowNodesApiKey/",
+                        postfixUrl = POSTFIX_WITH_BC,
+                    )
                 }
                 else -> null
             }
@@ -38,6 +41,7 @@ internal class FlareProvidersBuilder(
     }
 
     private companion object {
-        val POSTFIX_URLS = listOf("ext/C/rpc", "ext/bc/C/rpc")
+        const val POSTFIX_WITH_BC = "ext/bc/C/rpc"
+        val POSTFIX_URLS = listOf("ext/C/rpc", POSTFIX_WITH_BC)
     }
 }
