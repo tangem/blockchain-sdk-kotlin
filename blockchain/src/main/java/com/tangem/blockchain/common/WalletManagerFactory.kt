@@ -154,6 +154,7 @@ class WalletManagerFactory(
             Blockchain.VanarChain, Blockchain.VanarChainTestnet,
             Blockchain.Xodex,
             Blockchain.Canxium,
+            Blockchain.OdysseyChain, Blockchain.OdysseyChainTestnet,
             -> EthereumLikeWalletManagerAssembly
 
             Blockchain.Mantle, Blockchain.MantleTestnet,
