@@ -11,7 +11,9 @@ import java.util.Arrays;
  * or http://www.opensource.org/licenses/mit-license.php.
  */
 
-
+/**
+ * Detailed info can be found here https://reference.cash/protocol/blockchain/encoding/cashaddr
+ */
 public class CashAddr {
 
     public static final String SEPARATOR = ":";
@@ -84,6 +86,14 @@ public class CashAddr {
         throw new RuntimeException("Unknown version byte: " + versionByte);
     }
 
+    private static Boolean checkAddressPrefix(String bitcoinCashAddress) {
+        for (BitcoinCashAddressType addressType : BitcoinCashAddressType.values()) {
+            if (bitcoinCashAddress.startsWith(addressType.getAddressPrefix())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public boolean isValidCashAddress(String bitcoinCashAddress) {
         try {
@@ -103,9 +113,10 @@ public class CashAddr {
             } else {
                 prefix = networkPrefix;
             }
-            if (!bitcoinCashAddress.startsWith("q")) {
+
+            if (!checkAddressPrefix(bitcoinCashAddress)) {
                 return false;
-            } //for now we use P2PKH addresses only
+            }
 
             byte[] checksumData = concatenateByteArrays(
                     concatenateByteArrays(getPrefixBytes(prefix), new byte[]{0x00}),
@@ -123,11 +134,7 @@ public class CashAddr {
         if (bitcoinCashAddress.equals(bitcoinCashAddress.toLowerCase())) {
             return true;
         }
-        if (bitcoinCashAddress.equals(bitcoinCashAddress.toUpperCase())) {
-            return true;
-        }
-
-        return false;
+        return bitcoinCashAddress.equals(bitcoinCashAddress.toUpperCase());
     }
 
     /**
