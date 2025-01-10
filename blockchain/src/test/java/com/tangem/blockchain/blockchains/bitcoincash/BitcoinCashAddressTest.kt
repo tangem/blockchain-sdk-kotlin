@@ -27,4 +27,18 @@ class BitcoinCashAddressTest {
 
         Truth.assertThat(addressService.validate(address)).isTrue()
     }
+
+    @Test
+    fun validateCorrectScriptHashAddress() {
+        val address = "bitcoincash:ppm2qsznhks23z7629mms6s4cwef74vcwvn0h829pq"
+
+        Truth.assertThat(addressService.validate(address)).isTrue()
+    }
+
+    @Test
+    fun validateIncorrectAddress() {
+        val address = "bitcoincash:cpm2qsznhks23z7629mms6s4cwef74vcwvn0h829pq"
+
+        Truth.assertThat(addressService.validate(address)).isFalse()
+    }
 }
