@@ -214,6 +214,7 @@ internal class RadiantTransactionBuilder(
             transactionAmount = transactionData.amount.value!!,
             transactionFeeAmount = transactionData.fee?.amount?.value!!,
             unspentToAmount = { it.value },
+            dustValue = null,
         )
 
         return outputsToSend.mapIndexed { index, txRef ->

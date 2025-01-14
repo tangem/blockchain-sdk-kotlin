@@ -11,6 +11,8 @@ class UTXOCollectionUtilsTest {
 
     private data class UnspentSatoshiOutput(val amountSatoshi: Long)
 
+    private val dustValue = 0.00001.toBigDecimal()
+
     private val unspentOutputs = listOf(
         UnspentOutput(amount = 1.10.toBigDecimal()),
         UnspentOutput(amount = 4.10.toBigDecimal()),
@@ -39,6 +41,7 @@ class UTXOCollectionUtilsTest {
             unspentOutputs = unspentOutputs,
             transactionAmount = 12.10.toBigDecimal(),
             transactionFeeAmount = BigDecimal.ZERO,
+            dustValue = dustValue,
             unspentToAmount = { it.amount },
         )
 
@@ -55,6 +58,7 @@ class UTXOCollectionUtilsTest {
             unspentOutputs = unspentOutputs,
             transactionAmount = 10.10.toBigDecimal(),
             transactionFeeAmount = 2.0.toBigDecimal(),
+            dustValue = dustValue,
             unspentToAmount = { it.amount },
         )
 
@@ -72,6 +76,7 @@ class UTXOCollectionUtilsTest {
             unspentOutputs = unspentOutputs,
             transactionAmount = 14.10.toBigDecimal(),
             transactionFeeAmount = 2.10.toBigDecimal(),
+            dustValue = dustValue,
             unspentToAmount = { it.amount },
         )
 
@@ -89,6 +94,7 @@ class UTXOCollectionUtilsTest {
             unspentOutputs = unspentOutputs,
             transactionAmount = 14.10.toBigDecimal(),
             transactionFeeAmount = 2.0.toBigDecimal(),
+            dustValue = dustValue,
             unspentToAmount = { it.amount },
         )
 
@@ -103,6 +109,7 @@ class UTXOCollectionUtilsTest {
             unspentOutputs = unspentOutputs,
             transactionAmount = 30.10.toBigDecimal(),
             transactionFeeAmount = 2.0.toBigDecimal(),
+            dustValue = dustValue,
             unspentToAmount = { it.amount },
         )
 
@@ -117,6 +124,25 @@ class UTXOCollectionUtilsTest {
             unspentOutputs = unspentOutputs,
             transactionAmount = 31.10.toBigDecimal(),
             transactionFeeAmount = 2.0.toBigDecimal(),
+            dustValue = dustValue,
+            unspentToAmount = { it.amount },
+        )
+
+        Truth.assertThat(resOutputs).isEqualTo(expectedOutputs)
+    }
+
+    @Test
+    fun sufficientAmountWithDust() {
+        val expectedOutputs = listOf(
+            UnspentOutput(amount = 12.10.toBigDecimal()),
+            UnspentOutput(amount = 1.10.toBigDecimal()),
+        )
+
+        val resOutputs = getMinimumRequiredUTXOsToSend(
+            unspentOutputs = unspentOutputs,
+            transactionAmount = 10.toBigDecimal(),
+            transactionFeeAmount = 2.0999999.toBigDecimal(),
+            dustValue = dustValue,
             unspentToAmount = { it.amount },
         )
 
@@ -130,6 +156,7 @@ class UTXOCollectionUtilsTest {
                 unspentOutputs = unspentOutputs,
                 transactionAmount = (-31.10).toBigDecimal(),
                 transactionFeeAmount = 2.0.toBigDecimal(),
+                dustValue = dustValue,
                 unspentToAmount = { it.amount },
             )
         }
@@ -138,6 +165,7 @@ class UTXOCollectionUtilsTest {
                 unspentOutputs = unspentOutputs,
                 transactionAmount = 31.10.toBigDecimal(),
                 transactionFeeAmount = (-2.0).toBigDecimal(),
+                dustValue = dustValue,
                 unspentToAmount = { it.amount },
             )
         }
@@ -146,6 +174,7 @@ class UTXOCollectionUtilsTest {
                 unspentOutputs = unspentOutputs,
                 transactionAmount = (-31.10).toBigDecimal(),
                 transactionFeeAmount = (-2.0).toBigDecimal(),
+                dustValue = dustValue,
                 unspentToAmount = { it.amount },
             )
         }
@@ -161,6 +190,7 @@ class UTXOCollectionUtilsTest {
             unspentOutputs = unspentSatoshiOutputs,
             transactionSatoshiAmount = 1210,
             transactionSatoshiFeeAmount = 0,
+            dustSatoshiValue = 0,
             unspentToSatoshiAmount = { it.amountSatoshi },
         )
 
@@ -177,6 +207,7 @@ class UTXOCollectionUtilsTest {
             unspentOutputs = unspentSatoshiOutputs,
             transactionSatoshiAmount = 1010,
             transactionSatoshiFeeAmount = 200,
+            dustSatoshiValue = 0,
             unspentToSatoshiAmount = { it.amountSatoshi },
         )
 
@@ -194,6 +225,7 @@ class UTXOCollectionUtilsTest {
             unspentOutputs = unspentSatoshiOutputs,
             transactionSatoshiAmount = 1410,
             transactionSatoshiFeeAmount = 210,
+            dustSatoshiValue = 0,
             unspentToSatoshiAmount = { it.amountSatoshi },
         )
 
@@ -211,6 +243,7 @@ class UTXOCollectionUtilsTest {
             unspentOutputs = unspentSatoshiOutputs,
             transactionSatoshiAmount = 1410,
             transactionSatoshiFeeAmount = 200,
+            dustSatoshiValue = 0,
             unspentToSatoshiAmount = { it.amountSatoshi },
         )
 
@@ -225,6 +258,7 @@ class UTXOCollectionUtilsTest {
             unspentOutputs = unspentSatoshiOutputs,
             transactionSatoshiAmount = 3010,
             transactionSatoshiFeeAmount = 200,
+            dustSatoshiValue = 0,
             unspentToSatoshiAmount = { it.amountSatoshi },
         )
 
@@ -239,6 +273,25 @@ class UTXOCollectionUtilsTest {
             unspentOutputs = unspentSatoshiOutputs,
             transactionSatoshiAmount = 3110,
             transactionSatoshiFeeAmount = 200,
+            dustSatoshiValue = 0,
+            unspentToSatoshiAmount = { it.amountSatoshi },
+        )
+
+        Truth.assertThat(resOutputs).isEqualTo(expectedOutputs)
+    }
+
+    @Test
+    fun sufficientAmountWithDust_satoshi() {
+        val expectedOutputs = listOf(
+            UnspentSatoshiOutput(amountSatoshi = 1210),
+            UnspentSatoshiOutput(amountSatoshi = 110),
+        )
+
+        val resOutputs = getMinimumRequiredUTXOsToSendSatoshi(
+            unspentOutputs = unspentSatoshiOutputs,
+            transactionSatoshiAmount = 1000,
+            transactionSatoshiFeeAmount = 209,
+            dustSatoshiValue = 2,
             unspentToSatoshiAmount = { it.amountSatoshi },
         )
 
@@ -252,6 +305,7 @@ class UTXOCollectionUtilsTest {
                 unspentOutputs = unspentSatoshiOutputs,
                 transactionSatoshiAmount = -3010,
                 transactionSatoshiFeeAmount = 200,
+                dustSatoshiValue = 0,
                 unspentToSatoshiAmount = { it.amountSatoshi },
             )
         }
@@ -260,6 +314,7 @@ class UTXOCollectionUtilsTest {
                 unspentOutputs = unspentSatoshiOutputs,
                 transactionSatoshiAmount = 3010,
                 transactionSatoshiFeeAmount = -200,
+                dustSatoshiValue = 0,
                 unspentToSatoshiAmount = { it.amountSatoshi },
             )
         }
@@ -268,6 +323,7 @@ class UTXOCollectionUtilsTest {
                 unspentOutputs = unspentSatoshiOutputs,
                 transactionSatoshiAmount = -3010,
                 transactionSatoshiFeeAmount = -200,
+                dustSatoshiValue = 0,
                 unspentToSatoshiAmount = { it.amountSatoshi },
             )
         }
