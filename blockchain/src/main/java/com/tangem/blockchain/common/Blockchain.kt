@@ -177,6 +177,8 @@ enum class Blockchain(
     Clore("clore-ai", "CLORE", "Clore"),
     VanarChain("vanar-chain", "VANRY", "Vanar Chain"),
     VanarChainTestnet("vanar-chain/test", "VG", "Vanar Vanguard Testnet"),
+    OdysseyChain("odyssey", "DIONE", "Dione"),
+    OdysseyChainTestnet("odyssey/test", "DIONE", "Dione Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -184,6 +186,8 @@ enum class Blockchain(
     fun getNetworkName(): String {
         return when (this) {
             TON -> "TON"
+            OdysseyChain -> "Odyssey Chain"
+            OdysseyChainTestnet -> "Odyssey Chain Testnet"
             else -> this.fullName
         }
     }
@@ -280,6 +284,7 @@ enum class Blockchain(
         VanarChain, VanarChainTestnet,
         Xodex,
         Canxium,
+        OdysseyChain, OdysseyChainTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -357,6 +362,7 @@ enum class Blockchain(
             VanarChain, VanarChainTestnet,
             Xodex,
             Canxium,
+            OdysseyChain, OdysseyChainTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -489,6 +495,7 @@ enum class Blockchain(
             Core, CoreTestnet -> CoreTestnet
             Chiliz, ChilizTestnet -> ChilizTestnet
             VanarChain, VanarChainTestnet -> VanarChainTestnet
+            OdysseyChain, OdysseyChainTestnet -> OdysseyChainTestnet
             else -> null
         }
     }
@@ -568,6 +575,7 @@ enum class Blockchain(
             Xodex,
             Canxium,
             Clore,
+            OdysseyChain, OdysseyChainTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -666,9 +674,11 @@ enum class Blockchain(
             Xodex -> Chain.Xodex.id
             Canxium -> Chain.Canxium.id
             Chiliz -> Chain.Chiliz.id
-            ChilizTestnet -> Chain.ChilizTestnet.id
             VanarChain -> Chain.VanarChain.id
             VanarChainTestnet -> Chain.VanarChainTestnet.id
+            ChilizTestnet -> Chain.ChilizTestnet.id
+            OdysseyChain -> Chain.OdysseyChain.id
+            OdysseyChainTestnet -> Chain.OdysseyChainTestnet.id
             else -> null
         }
     }
