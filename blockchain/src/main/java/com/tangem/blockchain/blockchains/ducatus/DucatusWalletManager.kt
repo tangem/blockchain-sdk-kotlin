@@ -6,8 +6,8 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
-import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import java.math.BigDecimal
 
 internal class DucatusWalletManager(
@@ -36,7 +36,13 @@ internal class DucatusWalletManager(
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val feeValue = BigDecimal.ONE.movePointLeft(blockchain.decimals())
         val sizeResult = transactionBuilder.getEstimateSize(
-            TransactionData.Uncompiled(amount, Fee.Common(Amount(amount, feeValue)), wallet.address, destination),
+            transactionData = TransactionData.Uncompiled(
+                amount = amount,
+                fee = Fee.Common(Amount(amount, feeValue)),
+                sourceAddress = wallet.address,
+                destinationAddress = destination,
+            ),
+            dustValue = dustValue,
         )
         return when (sizeResult) {
             is Result.Failure -> sizeResult

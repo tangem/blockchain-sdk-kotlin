@@ -52,7 +52,7 @@ open class BitcoinTransactionBuilder(
     }
     var unspentOutputs: List<BitcoinUnspentOutput>? = null
 
-    open fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
+    open fun buildToSign(transactionData: TransactionData, dustValue: BigDecimal?): Result<List<ByteArray>> {
         transactionData.requireUncompiled()
 
         if (unspentOutputs.isNullOrEmpty()) {
@@ -64,6 +64,7 @@ open class BitcoinTransactionBuilder(
             transactionAmount = transactionData.amount.value!!,
             transactionFeeAmount = transactionData.fee?.amount?.value!!,
             unspentToAmount = { it.amount },
+            dustValue = dustValue,
         )
 
         val change: BigDecimal = calculateChange(transactionData, outputsToSend)
@@ -153,8 +154,8 @@ open class BitcoinTransactionBuilder(
     fun getTransactionHash() = transaction.txId.bytes
 
     @Suppress("MagicNumber")
-    fun getEstimateSize(transactionData: TransactionData): Result<Int> {
-        return when (val buildTransactionResult = buildToSign(transactionData)) {
+    fun getEstimateSize(transactionData: TransactionData, dustValue: BigDecimal?): Result<Int> {
+        return when (val buildTransactionResult = buildToSign(transactionData, dustValue)) {
             is Result.Failure -> buildTransactionResult
             is Result.Success -> {
                 val hashes = buildTransactionResult.data
