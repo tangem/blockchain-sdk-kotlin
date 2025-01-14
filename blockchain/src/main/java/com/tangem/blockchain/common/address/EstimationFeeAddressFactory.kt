@@ -94,6 +94,7 @@ class EstimationFeeAddressFactory {
             Blockchain.VanarChain, Blockchain.VanarChainTestnet,
             Blockchain.Xodex,
             Blockchain.Canxium,
+            Blockchain.OdysseyChain, Blockchain.OdysseyChainTestnet,
             -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
             // Polkadot-like
             Blockchain.Polkadot, Blockchain.PolkadotTestnet ->
