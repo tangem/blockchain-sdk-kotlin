@@ -24,6 +24,7 @@ object ResultChecker {
                     is BlockchainSdkError.Cosmos.Api -> true
                     is BlockchainSdkError.ElectrumBlockchain.Api -> true
                     is BlockchainSdkError.Aptos.Api -> true
+                    is BlockchainSdkError.Algorand.Send -> true
                     else -> false
                 }
         }
@@ -41,6 +42,7 @@ object ResultChecker {
                     is BlockchainSdkError.Cosmos.Api -> true
                     is BlockchainSdkError.ElectrumBlockchain.Api -> true
                     is BlockchainSdkError.Aptos.Api -> true
+                    is BlockchainSdkError.Algorand.Send -> true
                     else -> false
                 }
         }
