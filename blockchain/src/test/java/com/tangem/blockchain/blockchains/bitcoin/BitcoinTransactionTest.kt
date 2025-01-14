@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import com.google.common.truth.Truth
+import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager.Companion.DEFAULT_MINIMAL_FEE_PER_KB
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
@@ -34,6 +35,7 @@ class BitcoinTransactionTest {
             ).hexToBytes()
         val sendValue = "0.1".toBigDecimal()
         val feeValue = "0.01".toBigDecimal()
+        val dustValue = DEFAULT_MINIMAL_FEE_PER_KB.toBigDecimal()
         val destinationAddress = "34gJYef7yHBmRhnmKzrXKJddWMzCuFkbBY"
 
         val addresses = BitcoinAddressService(blockchain).makeAddresses(walletPublicKey)
@@ -64,7 +66,7 @@ class BitcoinTransactionTest {
             ).hexToBytes()
 
         // act
-        val buildToSignResult = transactionBuilder.buildToSign(transactionData) as Result.Success
+        val buildToSignResult = transactionBuilder.buildToSign(transactionData, dustValue) as Result.Success
         val signedTransaction = transactionBuilder.buildToSend(signature)
 
         // assert
@@ -102,6 +104,7 @@ class BitcoinTransactionTest {
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
         val fee = Fee.Common(Amount(amountToSend, feeValue))
+        val dustValue = DEFAULT_MINIMAL_FEE_PER_KB.toBigDecimal()
         val transactionData = TransactionData.Uncompiled(
             sourceAddress = segwitAddress,
             destinationAddress = destinationAddress,
@@ -126,7 +129,7 @@ class BitcoinTransactionTest {
             ).hexToBytes()
 
         // act
-        val buildToSignResult = transactionBuilder.buildToSign(transactionData) as Result.Success
+        val buildToSignResult = transactionBuilder.buildToSign(transactionData, dustValue) as Result.Success
         val signedTransaction = transactionBuilder.buildToSend(signature)
 
         // assert
