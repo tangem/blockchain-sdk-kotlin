@@ -76,6 +76,7 @@ internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<Ethere
                 providerTypes = providerTypes,
                 config = config,
             )
+            Blockchain.Bitrock, Blockchain.BitrockTestnet -> BitrockProvidersBuilder(providerTypes)
             else -> error("Unsupported blockchain: $blockchain")
         }
     }
