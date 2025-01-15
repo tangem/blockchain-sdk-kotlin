@@ -97,6 +97,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Canxium -> CanxiumExternalLinkProvider()
             Blockchain.Clore -> CloreExternalLinkProvider()
             Blockchain.OdysseyChain, Blockchain.OdysseyChainTestnet -> OdysseyChainExternalLinkProvider(isTestnet)
+            Blockchain.Bitrock, Blockchain.BitrockTestnet -> BitrockExternalLinkProvider(isTestnet)
         }
     }
 }
