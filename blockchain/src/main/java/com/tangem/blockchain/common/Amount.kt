@@ -1,6 +1,7 @@
 package com.tangem.blockchain.common
 
 import java.math.BigDecimal
+import java.math.RoundingMode
 import com.tangem.blockchain.common.Token as BlockchainToken
 
 data class Amount(
@@ -11,11 +12,19 @@ data class Amount(
     val type: AmountType = AmountType.Coin,
 ) {
 
-    // Be careful! The property may overflow if the decimals are much larger than the long value.
-    val longValue get() = value?.movePointRight(decimals)?.toLong()
-
-    // Be careful! The property may overflow if the decimals are much larger than the long value.
-    val longValueOrZero: Long by lazy { value?.movePointRight(decimals)?.toLong() ?: 0L }
+    /**
+     * Get value as long
+     *
+     * IMPORTANT!
+     * If the value after the { movePointRight(decimals) } operation has a fractional part, the result will be 0.
+     *
+     * @see {AmountTests}
+     */
+    val longValue: Long
+        get() = requireNotNull(value = value, lazyMessage = { "Amount value is null" })
+            .movePointRight(decimals)
+            .setScale(0, RoundingMode.DOWN) // remove fractional part
+            .longValueExact()
 
     constructor(
         value: BigDecimal?,
