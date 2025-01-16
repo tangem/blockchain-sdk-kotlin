@@ -14,6 +14,7 @@ import com.tangem.blockchain.network.electrum.ElectrumNetworkProvider
 import com.tangem.blockchain.network.electrum.ElectrumUnspentUTXORecord
 import com.tangem.blockchain.network.electrum.api.ElectrumResponse
 import com.tangem.common.extensions.hexToBytes
+import com.tangem.common.extensions.isZero
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -49,7 +50,7 @@ internal class Fact0rnNetworkService(
                 utxoResponseItems = unspentsUTXOs,
                 address = address,
             ),
-            hasUnconfirmed = balance.unconfirmedAmount != BigDecimal.ZERO,
+            hasUnconfirmed = !balance.unconfirmedAmount.isZero(),
         )
         Result.Success(info)
     }
@@ -146,8 +147,7 @@ internal class Fact0rnNetworkService(
                         .map { it.value.toBigDecimal() }
                         .sumOf { it }
                     val fee = transaction.fee?.toBigDecimal() ?: BigDecimal.ZERO
-                    val feeSatoshi = transaction.feeSatoshi?.toBigDecimal() ?: BigDecimal.ZERO
-                    outputs + fee + feeSatoshi
+                    outputs + fee
                 }.movePointLeft(blockchain.decimals())
 
                 BasicTransactionData(
