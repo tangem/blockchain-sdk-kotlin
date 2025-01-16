@@ -11,6 +11,7 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.transaction.getMinimumRequiredUTXOsToSend
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.isZero
@@ -65,7 +66,9 @@ open class BitcoinTransactionBuilder(
             transactionFeeAmount = transactionData.fee?.amount?.value!!,
             unspentToAmount = { it.amount },
             dustValue = dustValue,
-        )
+        ).successOr { failure ->
+            return failure
+        }
 
         val change: BigDecimal = calculateChange(transactionData, outputsToSend)
         transaction =
