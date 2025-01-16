@@ -1,6 +1,8 @@
 package com.tangem.blockchain.common.transaction
 
 import com.google.common.truth.Truth
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.extensions.Result
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 import java.math.BigDecimal
@@ -22,8 +24,10 @@ class UTXOCollectionUtilsTest {
 
     @Test
     fun sufficientAmountExact() {
-        val expectedOutputs = listOf(
-            UnspentOutput(amount = 12.10.toBigDecimal()),
+        val expectedOutputs = Result.Success(
+            listOf(
+                UnspentOutput(amount = 12.10.toBigDecimal()),
+            ),
         )
 
         val resOutputs = getMinimumRequiredUTXOsToSend(
@@ -39,8 +43,10 @@ class UTXOCollectionUtilsTest {
 
     @Test
     fun sufficientAmountExactWithFee() {
-        val expectedOutputs = listOf(
-            UnspentOutput(amount = 12.10.toBigDecimal()),
+        val expectedOutputs = Result.Success(
+            listOf(
+                UnspentOutput(amount = 12.10.toBigDecimal()),
+            ),
         )
 
         val resOutputs = getMinimumRequiredUTXOsToSend(
@@ -56,9 +62,11 @@ class UTXOCollectionUtilsTest {
 
     @Test
     fun sufficientAmountExactMany() {
-        val expectedOutputs = listOf(
-            UnspentOutput(amount = 12.10.toBigDecimal()),
-            UnspentOutput(amount = 4.10.toBigDecimal()),
+        val expectedOutputs = Result.Success(
+            listOf(
+                UnspentOutput(amount = 12.10.toBigDecimal()),
+                UnspentOutput(amount = 4.10.toBigDecimal()),
+            ),
         )
 
         val resOutputs = getMinimumRequiredUTXOsToSend(
@@ -74,9 +82,11 @@ class UTXOCollectionUtilsTest {
 
     @Test
     fun sufficientAmountMany() {
-        val expectedOutputs = listOf(
-            UnspentOutput(amount = 12.10.toBigDecimal()),
-            UnspentOutput(amount = 4.10.toBigDecimal()),
+        val expectedOutputs = Result.Success(
+            listOf(
+                UnspentOutput(amount = 12.10.toBigDecimal()),
+                UnspentOutput(amount = 4.10.toBigDecimal()),
+            ),
         )
 
         val resOutputs = getMinimumRequiredUTXOsToSend(
@@ -92,7 +102,7 @@ class UTXOCollectionUtilsTest {
 
     @Test
     fun sufficientAmountMany2() {
-        val expectedOutputs = unspentOutputs.sortedByDescending { it.amount }
+        val expectedOutputs = Result.Success(unspentOutputs.sortedByDescending { it.amount })
 
         val resOutputs = getMinimumRequiredUTXOsToSend(
             unspentOutputs = unspentOutputs,
@@ -107,7 +117,7 @@ class UTXOCollectionUtilsTest {
 
     @Test
     fun insufficientAmountMany() {
-        val expectedOutputs = unspentOutputs.sortedByDescending { it.amount }
+        val expectedOutputs = Result.Success(unspentOutputs.sortedByDescending { it.amount })
 
         val resOutputs = getMinimumRequiredUTXOsToSend(
             unspentOutputs = unspentOutputs,
@@ -122,15 +132,32 @@ class UTXOCollectionUtilsTest {
 
     @Test
     fun sufficientAmountWithDust() {
-        val expectedOutputs = listOf(
-            UnspentOutput(amount = 12.10.toBigDecimal()),
-            UnspentOutput(amount = 1.10.toBigDecimal()),
+        val expectedOutputs = Result.Success(
+            listOf(
+                UnspentOutput(amount = 12.10.toBigDecimal()),
+                UnspentOutput(amount = 1.10.toBigDecimal()),
+            ),
         )
 
         val resOutputs = getMinimumRequiredUTXOsToSend(
             unspentOutputs = unspentOutputs,
             transactionAmount = 10.toBigDecimal(),
             transactionFeeAmount = 2.0999999.toBigDecimal(),
+            dustValue = dustValue,
+            unspentToAmount = { it.amount },
+        )
+
+        Truth.assertThat(resOutputs).isEqualTo(expectedOutputs)
+    }
+
+    @Test
+    fun insufficientAmountWithDust() {
+        val expectedOutputs = Result.Failure(BlockchainSdkError.TransactionDustChangeError)
+
+        val resOutputs = getMinimumRequiredUTXOsToSend(
+            unspentOutputs = unspentOutputs,
+            transactionAmount = 32.toBigDecimal(),
+            transactionFeeAmount = 0.5999999.toBigDecimal(),
             dustValue = dustValue,
             unspentToAmount = { it.amount },
         )
