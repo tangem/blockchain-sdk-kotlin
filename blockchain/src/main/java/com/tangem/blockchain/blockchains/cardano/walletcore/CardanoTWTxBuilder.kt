@@ -78,13 +78,13 @@ internal class CardanoTWTxBuilder(
 
         when (val type = transactionData.amount.type) {
             is AmountType.Coin -> {
-                this.amount = transactionData.amount.longValueOrZero
+                this.amount = transactionData.amount.longValue
             }
             is AmountType.Token -> {
                 setTokenAmount(
                     contractAddress = type.token.contractAddress,
-                    amount = transactionData.amount.longValueOrZero,
-                    fee = transactionData.fee?.amount?.longValueOrZero ?: 0,
+                    amount = transactionData.amount.longValue,
+                    fee = transactionData.fee?.amount?.longValue ?: 0L,
                 )
             }
             else -> throw BlockchainSdkError.CustomError("AmountType $type is not supported")
@@ -101,7 +101,7 @@ internal class CardanoTWTxBuilder(
         val tokenBundle = createTokenBundle(contractAddress = contractAddress, amount = amount)
 
         val minAdaValue = minAdaAmount(tokenBundle.toByteArray())
-        val balance = wallet.getCoinAmount().longValueOrZero
+        val balance = wallet.getCoinAmount().longValue
 
         val remainingBalance = balance - minAdaValue - fee
 
