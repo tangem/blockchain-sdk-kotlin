@@ -1,7 +1,9 @@
 package com.tangem.blockchain.common.transaction
 
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.common.extensions.isZero
 import java.math.BigDecimal
+import com.tangem.blockchain.extensions.Result
 
 /**
  * Method for collecting minimum required UTXOs for transaction (based on binary search)
@@ -31,7 +33,7 @@ internal inline fun <T> getMinimumRequiredUTXOsToSend(
     transactionFeeAmount: BigDecimal,
     dustValue: BigDecimal?,
     crossinline unspentToAmount: (T) -> BigDecimal,
-): List<T> {
+): Result<List<T>> {
     require(transactionAmount >= BigDecimal.ZERO)
     require(transactionFeeAmount >= BigDecimal.ZERO)
 
@@ -39,7 +41,7 @@ internal inline fun <T> getMinimumRequiredUTXOsToSend(
 
     // insufficient balance
     if (unspentOutputs.sumOf { unspentToAmount(it) } < amount) {
-        return unspentOutputs.sortedByDescending { unspentToAmount(it) }
+        return Result.Success(unspentOutputs.sortedByDescending { unspentToAmount(it) })
     }
 
     val sortedUnspent = unspentOutputs.sortedBy { unspentToAmount(it) }
@@ -63,14 +65,15 @@ internal inline fun <T> getMinimumRequiredUTXOsToSend(
     // In that case add smallest UTXO so output UTXO was greater than dust.
     val change = currentTotal - amount
     if (!change.isZero() && dustValue != null && change < dustValue) {
-        val utxo = unusedSortedUnspent.first()
+        val utxo = unusedSortedUnspent.firstOrNull()
+            ?: return Result.Failure(BlockchainSdkError.TransactionDustChangeError)
 
         currentTotal += unspentToAmount(utxo)
         outputsRes.add(utxo)
         unusedSortedUnspent.remove(utxo)
     }
 
-    return outputsRes
+    return Result.Success(outputsRes)
 }
 
 private fun getUtxoIndex(binRes: Int, size: Int) = when {
