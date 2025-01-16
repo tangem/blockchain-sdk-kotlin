@@ -178,7 +178,7 @@ internal class CardanoTransactionBuilder(
             is AmountType.Token -> {
                 val minAdaValue = twTxBuilder.calculateMinAdaValueToWithdrawToken(
                     contractAddress = type.token.contractAddress,
-                    amount = transactionData.amount.longValueOrZero,
+                    amount = transactionData.amount.longValue,
                 )
 
                 plan.amount < minAdaValue
@@ -222,7 +222,7 @@ internal class CardanoTransactionBuilder(
                 )
 
                 val remainingAmount = if (isTransactionToken == true) {
-                    amount - transactionData.amount.longValueOrZero
+                    amount - transactionData.amount.longValue
                 } else {
                     amount
                 }
