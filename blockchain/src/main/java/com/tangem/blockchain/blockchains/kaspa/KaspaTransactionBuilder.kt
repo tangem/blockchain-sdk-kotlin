@@ -166,7 +166,7 @@ class KaspaTransactionBuilder(
         val envelope = Envelope(
             p = "krc-20",
             op = "transfer",
-            amt = transactionData.amount.longValueOrZero.toString(),
+            amt = transactionData.amount.longValue.toString(),
             to = transactionData.destinationAddress,
             tick = transactionData.amount.type.token.contractAddress,
         )
