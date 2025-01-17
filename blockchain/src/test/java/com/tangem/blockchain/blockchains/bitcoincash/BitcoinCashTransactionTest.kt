@@ -18,6 +18,7 @@ class BitcoinCashTransactionTest {
     private val blockchain = Blockchain.BitcoinCash
     private val networkParameters = MainNetParams()
     private val addressService = BitcoinCashAddressService(Blockchain.BitcoinCash)
+    private val dustValue = 0.00001.toBigDecimal()
 
     @Test
     fun buildCorrectTransaction() {
@@ -69,7 +70,7 @@ class BitcoinCashTransactionTest {
             ).hexToBytes()
 
         // act
-        val buildToSignResult = transactionBuilder.buildToSign(transactionData) as Result.Success
+        val buildToSignResult = transactionBuilder.buildToSign(transactionData, dustValue) as Result.Success
         val signedTransaction = transactionBuilder.buildToSend(signature)
 
         // assert
