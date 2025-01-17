@@ -17,7 +17,7 @@ import java.math.BigInteger
 class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, private val blockchain: Blockchain) :
     BitcoinTransactionBuilder(walletPublicKey.toCompressedPublicKey(), blockchain) {
 
-    override fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
+    override fun buildToSign(transactionData: TransactionData, dustValue: BigDecimal?): Result<List<ByteArray>> {
         if (unspentOutputs.isNullOrEmpty()) {
             return Result.Failure(
                 BlockchainSdkError.CustomError("Unspent outputs are missing"),
