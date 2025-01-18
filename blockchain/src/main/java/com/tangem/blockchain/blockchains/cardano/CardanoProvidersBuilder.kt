@@ -20,6 +20,7 @@ internal class CardanoProvidersBuilder(
         return providerTypes.mapNotNull {
             when (it) {
                 ProviderType.GetBlock -> createGetBlockNetworkProvider()
+                ProviderType.NowNodes -> createNowNodesNetworkProvider()
                 ProviderType.Cardano.Adalite -> AdaliteNetworkProvider(API_ADALITE)
                 ProviderType.Cardano.Rosetta -> RosettaNetworkProvider(RosettaNetwork.Tangem)
                 else -> null
@@ -30,6 +31,12 @@ internal class CardanoProvidersBuilder(
     private fun createGetBlockNetworkProvider(): CardanoNetworkProvider? {
         return config.getBlockCredentials?.cardano?.rosetta.letNotBlank {
             RosettaNetworkProvider(RosettaNetwork.Getblock(it))
+        }
+    }
+
+    private fun createNowNodesNetworkProvider(): CardanoNetworkProvider? {
+        return config.nowNodeCredentials?.apiKey.letNotBlank {
+            RosettaNetworkProvider(RosettaNetwork.Nownodes(it))
         }
     }
 }

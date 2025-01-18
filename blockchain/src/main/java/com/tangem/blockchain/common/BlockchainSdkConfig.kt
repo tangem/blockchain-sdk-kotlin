@@ -63,6 +63,16 @@ data class GetBlockCredentials(
     val base: GetBlockAccessToken?,
     val blast: GetBlockAccessToken?,
     val filecoin: GetBlockAccessToken?,
+    val arbitrum: GetBlockAccessToken?,
+    val bitcoinCash: GetBlockAccessToken?,
+    val kusama: GetBlockAccessToken?,
+    val moonbeam: GetBlockAccessToken?,
+    val optimism: GetBlockAccessToken?,
+    val polkadot: GetBlockAccessToken?,
+    val shibarium: GetBlockAccessToken?,
+    val sui: GetBlockAccessToken?,
+    val telos: GetBlockAccessToken?,
+    val tezos: GetBlockAccessToken?,
 )
 
 data class GetBlockAccessToken(

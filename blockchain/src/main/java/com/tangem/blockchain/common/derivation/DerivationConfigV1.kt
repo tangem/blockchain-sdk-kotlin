@@ -62,8 +62,10 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Cyber,
             Blockchain.Canxium,
             Blockchain.Chiliz,
+            Blockchain.VanarChain,
             Blockchain.Xodex,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
+            Blockchain.OdysseyChain -> mapOf(AddressType.Default to DerivationPath("m/44'/695'/0'/0/0"))
             Blockchain.XDC -> mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
             Blockchain.EthereumClassic -> mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))
             Blockchain.RSK -> mapOf(AddressType.Default to DerivationPath("m/44'/137'/0'/0/0"))
@@ -151,6 +153,8 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.EnergyWebChainTestnet,
             Blockchain.CoreTestnet,
             Blockchain.ChilizTestnet,
+            Blockchain.VanarChainTestnet,
+            Blockchain.OdysseyChainTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             Blockchain.Aptos,
             Blockchain.AptosTestnet,
@@ -159,6 +163,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.NexaTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/29223'/0'/0/0"))
             Blockchain.Radiant -> mapOf(AddressType.Default to DerivationPath("m/44'/512'/0'/0/0"))
+            Blockchain.Fact0rn -> mapOf(AddressType.Default to DerivationPath("m/44'/42069'/0'/0/0"))
             Blockchain.Koinos,
             Blockchain.KoinosTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/659'/0'/0/0"))
@@ -181,6 +186,9 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.CasperTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/506'/0'/0/0"))
             Blockchain.Clore -> mapOf(AddressType.Default to DerivationPath("m/44'/1313'/0'/0/0"))
+            Blockchain.Bitrock,
+            Blockchain.BitrockTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/7171666'/0'/0/0"))
         }
     }
 }
