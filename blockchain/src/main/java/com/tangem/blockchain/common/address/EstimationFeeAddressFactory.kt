@@ -51,6 +51,7 @@ class EstimationFeeAddressFactory {
             -> "RT5qKgXdmh9pqtz71cgfL834VfeXFVH1sG"
             Blockchain.Solana -> "9wuDg6Y4H4j86Kg5aUGrUeaBa3sAUzjMs37KbeGFnRuM"
             Blockchain.Radiant -> "1K8jBuCKzuwvFCjL7Qpqq69k1hnVXJ31Nc"
+            Blockchain.Fact0rn -> "fact1q69h3nzh7rl2uv09zp5pw26vw58wdcl2j4lyag0"
             // EVM-like
             Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet ->
                 "0xc49722a6f4Fe5A1347710dEAAa1fafF4c275689b"
@@ -90,8 +91,11 @@ class EstimationFeeAddressFactory {
             Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet,
             Blockchain.Core, Blockchain.CoreTestnet,
             Blockchain.Chiliz, Blockchain.ChilizTestnet,
+            Blockchain.VanarChain, Blockchain.VanarChainTestnet,
             Blockchain.Xodex,
             Blockchain.Canxium,
+            Blockchain.OdysseyChain, Blockchain.OdysseyChainTestnet,
+            Blockchain.Bitrock, Blockchain.BitrockTestnet,
             -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
             // Polkadot-like
             Blockchain.Polkadot, Blockchain.PolkadotTestnet ->
