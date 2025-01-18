@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.filecoin
 
 import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.address.TrustWalletAddressService
+import com.tangem.blockchain.common.address.WalletCoreAddressService
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toDecompressedPublicKey
@@ -10,7 +10,7 @@ import org.junit.Test
 
 internal class FilecoinAddressTest {
 
-    private val addressService = TrustWalletAddressService(Blockchain.Filecoin)
+    private val addressService = WalletCoreAddressService(Blockchain.Filecoin)
 
     init {
         System.loadLibrary("TrustWalletCore")

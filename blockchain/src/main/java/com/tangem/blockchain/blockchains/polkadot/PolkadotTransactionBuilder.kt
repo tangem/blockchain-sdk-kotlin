@@ -1,9 +1,12 @@
 package com.tangem.blockchain.blockchains.polkadot
 
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.Wallet
+import com.squareup.moshi.adapter
+import com.tangem.blockchain.blockchains.polkadot.extensions.makeEraFromBlockNumber
+import com.tangem.blockchain.blockchains.polkadot.models.PolkadotCompiledTransaction
+import com.tangem.blockchain.common.*
+import com.tangem.blockchain.extensions.hexToBigInteger
+import com.tangem.blockchain.extensions.hexToInt
+import com.tangem.blockchain.network.moshi
 import com.tangem.common.CompletionResult
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
@@ -44,6 +47,9 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         )
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
+    private val compiledTransactionAdapter by lazy { moshi.adapter<PolkadotCompiledTransaction>() }
+
     fun buildForSign(destinationAddress: String, amount: Amount, context: ExtrinsicContext): ByteArray {
         val buffer = ByteArrayOutputStream()
         val codecWriter = ScaleCodecWriter(buffer)
@@ -51,7 +57,7 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         encodeCall(codecWriter, amount, Address.from(destinationAddress), context.runtimeVersion)
         encodeEraNonceTip(codecWriter, context)
 
-        encodeCheckMetadataHashMode(codecWriter, context)
+        encodeCheckMetadataHashMode(codecWriter, context.runtimeVersion)
 
         codecWriter.writeUint32(context.runtimeVersion)
         codecWriter.writeUint32(context.txVersion)
@@ -62,7 +68,30 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
             codecWriter.writeUint256(context.eraBlockHash.bytes)
         }
 
-        encodeCheckMetadataHash(codecWriter, context)
+        encodeCheckMetadataHash(codecWriter, context.runtimeVersion)
+
+        return buffer.toByteArray()
+    }
+
+    fun buildForSignCompiled(transaction: TransactionData.Compiled): ByteArray {
+        val compiledTransaction = (transaction.value as? TransactionData.Compiled.Data.RawString)?.data
+            ?: error("Compiled transaction must be in hex format")
+
+        val parsed = compiledTransactionAdapter.fromJson(compiledTransaction)
+            ?: error("Unable to parse compiled transaction")
+        val tx = parsed.tx
+
+        val buffer = ByteArrayOutputStream()
+        val codecWriter = ScaleCodecWriter(buffer)
+
+        codecWriter.writeByteArray(tx.method.hexToBytes())
+        encodeEraNonceTip(codecWriter, tx)
+        encodeCheckMetadataHashMode(codecWriter, tx.specVersion.hexToInt())
+        codecWriter.writeUint32(tx.specVersion.hexToInt())
+        codecWriter.writeUint32(tx.transactionVersion.hexToInt())
+        codecWriter.writeByteArray(tx.genesisHash.hexToBytes())
+        codecWriter.writeByteArray(tx.blockHash.hexToBytes())
+        encodeCheckMetadataHash(codecWriter, tx.specVersion.hexToInt())
 
         return buffer.toByteArray()
     }
@@ -88,13 +117,44 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         codecWriter.writeByteArray(signature.value.bytes)
 
         encodeEraNonceTip(codecWriter, context)
-        encodeCheckMetadataHashMode(codecWriter, context)
+        encodeCheckMetadataHashMode(codecWriter, context.runtimeVersion)
         encodeCall(codecWriter, amount, Address.from(destinationAddress), context.runtimeVersion)
 
         val prefixBuffer = ByteArrayOutputStream()
         ScaleCodecWriter(prefixBuffer).write(ScaleCodecWriter.COMPACT_UINT, txBuffer.size())
 
         return prefixBuffer.toByteArray() + txBuffer.toByteArray()
+    }
+
+    @Suppress("MagicNumber")
+    fun buildForSendCompiled(transaction: TransactionData.Compiled, signedPayload: ByteArray): ByteArray {
+        val compiledTransaction = (transaction.value as? TransactionData.Compiled.Data.RawString)?.data
+            ?: error("Compiled transaction must be in hex format")
+
+        val parsed = compiledTransactionAdapter.fromJson(compiledTransaction)
+            ?: error("Unable to parse compiled transaction")
+
+        val tx = parsed.tx
+
+        val type = Extrinsic.TYPE_BIT_SIGNED + (Extrinsic.TYPE_UNMASK_VERSION and 4)
+        val hash512 = Hash512(signedPayload)
+        val signature = Extrinsic.ED25519Signature(hash512)
+
+        val buffer = ByteArrayOutputStream()
+        val codecWriter = ScaleCodecWriter(buffer)
+
+        codecWriter.writeByte(type)
+        encodeAddress(codecWriter, Address.from(tx.address), tx.specVersion.hexToInt())
+        codecWriter.writeByte(signature.type.code)
+        codecWriter.writeByteArray(signature.value.bytes)
+        encodeEraNonceTip(codecWriter, tx)
+        encodeCheckMetadataHashMode(codecWriter, tx.specVersion.hexToInt())
+        codecWriter.writeByteArray(tx.method.hexToBytes())
+
+        val prefixBuffer = ByteArrayOutputStream()
+        ScaleCodecWriter(prefixBuffer).write(ScaleCodecWriter.COMPACT_UINT, buffer.size())
+
+        return prefixBuffer.toByteArray() + buffer.toByteArray()
     }
 
     private fun encodeCall(
@@ -116,14 +176,21 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         codecWriter.write(ScaleCodecWriter.COMPACT_BIGINT, context.tip.value)
     }
 
-    private fun encodeCheckMetadataHashMode(codecWriter: ScaleCodecWriter, context: ExtrinsicContext) {
-        if (shouldUseCheckMetadataHash(specVersion = context.runtimeVersion)) {
+    private fun encodeEraNonceTip(codecWriter: ScaleCodecWriter, compiledTx: PolkadotCompiledTransaction.Inner) {
+        val era = makeEraFromBlockNumber(compiledTx.blockNumber.hexToBigInteger().toLong())
+        codecWriter.write(EraWriter(), era.toInteger())
+        codecWriter.write(ScaleCodecWriter.COMPACT_BIGINT, compiledTx.nonce.hexToBigInteger())
+        codecWriter.write(ScaleCodecWriter.COMPACT_BIGINT, compiledTx.tip.hexToBigInteger())
+    }
+
+    private fun encodeCheckMetadataHashMode(codecWriter: ScaleCodecWriter, specVersion: Int) {
+        if (shouldUseCheckMetadataHash(specVersion = specVersion)) {
             codecWriter.write(ScaleCodecWriter.BOOL, false)
         }
     }
 
-    private fun encodeCheckMetadataHash(codecWriter: ScaleCodecWriter, context: ExtrinsicContext) {
-        if (shouldUseCheckMetadataHash(specVersion = context.runtimeVersion)) {
+    private fun encodeCheckMetadataHash(codecWriter: ScaleCodecWriter, specVersion: Int) {
+        if (shouldUseCheckMetadataHash(specVersion = specVersion)) {
             codecWriter.writeByte(0x0.toByte())
         }
     }

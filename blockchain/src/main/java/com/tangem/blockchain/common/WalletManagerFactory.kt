@@ -151,8 +151,11 @@ class WalletManagerFactory(
             Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet,
             Blockchain.Core, Blockchain.CoreTestnet,
             Blockchain.Chiliz, Blockchain.ChilizTestnet,
+            Blockchain.VanarChain, Blockchain.VanarChainTestnet,
             Blockchain.Xodex,
             Blockchain.Canxium,
+            Blockchain.OdysseyChain, Blockchain.OdysseyChainTestnet,
+            Blockchain.Bitrock, Blockchain.BitrockTestnet,
             -> EthereumLikeWalletManagerAssembly
 
             Blockchain.Mantle, Blockchain.MantleTestnet,
@@ -198,6 +201,7 @@ class WalletManagerFactory(
             Blockchain.Hedera, Blockchain.HederaTestnet -> HederaWalletManagerAssembly(dataStorage, accountCreator)
             Blockchain.Nexa, Blockchain.NexaTestnet -> NexaWalletManagerAssembly
             Blockchain.Radiant -> RadiantWalletManagerAssembly
+            Blockchain.Fact0rn -> Fact0rnWalletManagerAssembly
             Blockchain.Koinos, Blockchain.KoinosTestnet -> KoinosWalletManagerAssembly
             Blockchain.Filecoin -> FilecoinWalletManagerAssembly
             Blockchain.Sei, Blockchain.SeiTestnet -> SeiWalletManagerAssembly

@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.polkadot
 
+import com.tangem.blockchain.blockchains.polkadot.extensions.makeEraFromBlockNumber
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkProvider
 import com.tangem.blockchain.blockchains.polkadot.network.accounthealthcheck.AccountResponse
 import com.tangem.blockchain.blockchains.polkadot.network.accounthealthcheck.ExtrinsicDetailResponse
@@ -10,13 +11,15 @@ import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
+import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.hexToBytes
-import io.emeraldpay.polkaj.tx.Era
 import io.emeraldpay.polkaj.tx.ExtrinsicContext
 import io.emeraldpay.polkaj.types.Hash256
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import java.math.BigDecimal
 import java.util.Calendar
 import java.util.EnumSet
@@ -135,6 +138,52 @@ internal class PolkadotWalletManager(
         }
     }
 
+    override suspend fun sendMultiple(
+        transactionDataList: List<TransactionData>,
+        signer: TransactionSigner,
+    ): Result<TransactionsSendResult> {
+        val compiledTransactionList = transactionDataList.map {
+            it.requireCompiled()
+        }
+
+        val signResult = signMultipleCompiledTransactionData(
+            compiledTransactionList = compiledTransactionList,
+            signer = signer,
+            publicKey = wallet.publicKey,
+        )
+
+        return when (signResult) {
+            is Result.Failure -> Result.Failure(signResult.error)
+            is Result.Success -> {
+                coroutineScope {
+                    val sendResults = signResult.data.mapIndexed { index, signedData ->
+                        if (index != 0) {
+                            delay(SEND_TRANSACTIONS_DELAY)
+                        }
+
+                        when (val sendResult = networkProvider.sendTransaction(signedData)) {
+                            is Result.Failure -> sendResult
+                            is Result.Success -> {
+                                val hash = sendResult.data.formattedHash()
+                                transactionDataList[index].hash = hash
+                                wallet.addOutgoingTransaction(transactionDataList[index].updateHash(hash = hash))
+                                Result.Success(TransactionSendResult(hash))
+                            }
+                        }
+                    }
+                    val failedResult = sendResults.firstOrNull { it is Result.Failure }
+                    if (failedResult != null) {
+                        Result.Failure((failedResult as Result.Failure).error)
+                    } else {
+                        Result.Success(
+                            TransactionsSendResult(sendResults.mapNotNull { (it as? Result.Success)?.data?.hash }),
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     override suspend fun getExtrinsicList(afterExtrinsicId: Long?): ExtrinsicListResponse {
         if (extrinsicCheckNetworkProvider == null) {
             error("extrinsicCheckNetworkProvider is not supported")
@@ -164,7 +213,7 @@ internal class PolkadotWalletManager(
     private suspend fun updateEra() {
         val latestBlockHash = networkProvider.getLatestBlockHash().successOr { error("latestBlockHash error") }
         val blockNumber = networkProvider.getBlockNumber(latestBlockHash).successOr { error("blockNumber error") }
-        currentContext.era = Era.Mortal.forCurrent(TRANSACTION_LIFE_PERIOD, blockNumber.toLong())
+        currentContext.era = makeEraFromBlockNumber(blockNumber.toLong())
         currentContext.eraBlockHash = Hash256(latestBlockHash.hexToBytes())
     }
 
@@ -227,6 +276,32 @@ internal class PolkadotWalletManager(
         }
     }
 
+    private suspend fun signMultipleCompiledTransactionData(
+        compiledTransactionList: List<TransactionData.Compiled>,
+        signer: TransactionSigner,
+        publicKey: Wallet.PublicKey,
+    ): Result<List<ByteArray>> {
+        val builtTxForSignList = compiledTransactionList.map {
+            txBuilder.buildForSignCompiled(it)
+        }
+
+        return when (val signResults = signer.sign(builtTxForSignList, publicKey)) {
+            is CompletionResult.Success -> {
+                val builtForSend = signResults.data.mapIndexed { index, hash ->
+                    txBuilder.buildForSendCompiled(
+                        transaction = compiledTransactionList[index],
+                        signedPayload = hash,
+                    )
+                }
+                Result.Success(builtForSend)
+            }
+
+            is CompletionResult.Failure -> {
+                Result.fromTangemSdkError(signResults.error)
+            }
+        }
+    }
+
     private suspend fun isAccountUnderfunded(address: String): Result<Boolean> {
         val destinationBalance = networkProvider.getBalance(address).successOr { return it }
         val isUnderfunded =
@@ -242,7 +317,6 @@ internal class PolkadotWalletManager(
     }
 
     private companion object {
-
-        const val TRANSACTION_LIFE_PERIOD = 128L
+        const val SEND_TRANSACTIONS_DELAY = 5_000L
     }
 }
