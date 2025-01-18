@@ -214,7 +214,10 @@ internal class RadiantTransactionBuilder(
             transactionAmount = transactionData.amount.value!!,
             transactionFeeAmount = transactionData.fee?.amount?.value!!,
             unspentToAmount = { it.value },
-        )
+            dustValue = null,
+        ).successOr { failure ->
+            throw failure.error
+        }
 
         return outputsToSend.mapIndexed { index, txRef ->
             val outputScript = if (outputScripts.count() == 1) outputScripts.first() else outputScripts.getOrNull(index)
