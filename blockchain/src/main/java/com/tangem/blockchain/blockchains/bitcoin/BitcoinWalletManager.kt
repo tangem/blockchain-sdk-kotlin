@@ -118,7 +118,7 @@ internal open class BitcoinWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
+        when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData, dustValue)) {
             is Result.Failure -> return buildTransactionResult
             is Result.Success -> {
                 return when (val signerResult = signer.sign(buildTransactionResult.data, wallet.publicKey)) {
@@ -153,12 +153,13 @@ internal open class BitcoinWalletManager(
                     val newAmount = amount.copy(value = amount.value!! - feeValue)
 
                     val sizeResult = transactionBuilder.getEstimateSize(
-                        TransactionData.Uncompiled(
+                        transactionData = TransactionData.Uncompiled(
                             amount = newAmount,
                             fee = Fee.Common(Amount(newAmount, feeValue)),
                             sourceAddress = wallet.address,
                             destinationAddress = destination,
                         ),
+                        dustValue = dustValue,
                     )
 
                     return when (sizeResult) {

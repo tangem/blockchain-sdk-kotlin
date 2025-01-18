@@ -50,6 +50,11 @@ sealed class BlockchainSdkError(
         "Transaction amount is less than a minimum value",
     )
 
+    data object TransactionDustChangeError : BlockchainSdkError(
+        10,
+        "Transaction change is less than a dust",
+    )
+
     data object SignatureCountNotMatched : BlockchainSdkError(100)
 
     sealed class Solana(

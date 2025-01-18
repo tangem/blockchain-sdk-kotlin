@@ -2,19 +2,22 @@ package com.tangem.blockchain.blockchains.ton
 
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.common.*
-import com.tangem.common.KeyPair
-import com.tangem.common.card.EllipticCurve
-import com.tangem.crypto.CryptoUtils
+import wallet.core.jni.CoinType
+import wallet.core.jni.DataVector
+import wallet.core.jni.TransactionCompiler
+import wallet.core.jni.proto.Common
 import wallet.core.jni.proto.TheOpenNetwork
-import com.tangem.blockchain.extensions.Result
+import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
 
-internal class TonTransactionBuilder(private val walletAddress: String) {
+internal class TonTransactionBuilder(
+    private val publicKey: Wallet.PublicKey,
+    private val walletAddress: String,
+) {
 
-    private val keyPair: KeyPair by lazy { generateKeyPair() }
+    private val coinType = CoinType.TON
+    private var jettonWalletAddresses: Map<Token, String> = emptyMap()
     private val modeTransactionConstant: Int =
         TheOpenNetwork.SendMode.PAY_FEES_SEPARATELY_VALUE.or(TheOpenNetwork.SendMode.IGNORE_ACTION_PHASE_ERRORS_VALUE)
-
-    private var jettonWalletAddresses: Map<Token, String> = emptyMap()
 
     fun updateJettonAdresses(fetchedJettonWalletAddresses: Map<Token, String>) {
         jettonWalletAddresses = fetchedJettonWalletAddresses
@@ -24,95 +27,126 @@ internal class TonTransactionBuilder(private val walletAddress: String) {
         sequenceNumber: Int,
         amount: Amount,
         destination: String,
+        expireAt: Int,
         extras: TonTransactionExtras? = null,
-    ): Result<TheOpenNetwork.SigningInput> {
-        return when (amount.type) {
-            is AmountType.Coin -> buildCoinTransferInput(sequenceNumber, amount, destination, extras?.memo.orEmpty())
-            is AmountType.Token -> buildTokenTransferInput(sequenceNumber, amount, destination, extras?.memo.orEmpty())
-            else -> return Result.Failure(BlockchainSdkError.FailedToBuildTx)
+    ): ByteArray {
+        val input = buildInput(
+            sequenceNumber = sequenceNumber,
+            amount = amount,
+            destination = destination,
+            comment = extras?.memo.orEmpty(),
+            expireAt = expireAt,
+        )
+        val preImageHashes = TransactionCompiler.preImageHashes(coinType, input.toByteArray())
+        val preSigningOutput = PreSigningOutput.parseFrom(preImageHashes)
+
+        if (preSigningOutput.error != Common.SigningError.OK) {
+            throw BlockchainSdkError.FailedToBuildTx
         }
+
+        return preSigningOutput.data.toByteArray()
     }
 
-    fun buildForSend(output: TheOpenNetwork.SigningOutput): String {
+    fun buildForSend(
+        signature: ByteArray,
+        sequenceNumber: Int,
+        amount: Amount,
+        destination: String,
+        expireAt: Int,
+        extras: TonTransactionExtras? = null,
+    ): String {
+        val input = buildInput(
+            sequenceNumber = sequenceNumber,
+            amount = amount,
+            destination = destination,
+            comment = extras?.memo.orEmpty(),
+            expireAt = expireAt,
+        )
+        val txInputData = input.toByteArray()
+
+        val signatures = DataVector()
+        signatures.add(signature)
+
+        val publicKeys = DataVector()
+        publicKeys.add(publicKey.blockchainKey)
+
+        val compileWithSignatures = TransactionCompiler.compileWithSignatures(
+            coinType,
+            txInputData,
+            signatures,
+            publicKeys,
+        )
+
+        val output = TheOpenNetwork.SigningOutput.parseFrom(compileWithSignatures)
+        if (output.error != Common.SigningError.OK) {
+            error("something went wrong")
+        }
+
         return output.encoded
     }
 
-    private fun buildCoinTransferInput(
+    private fun buildInput(
         sequenceNumber: Int,
         amount: Amount,
         destination: String,
         comment: String,
-    ): Result<TheOpenNetwork.SigningInput> {
-        val transfer = buildTransfer(sequenceNumber, amount, destination, comment)
+        expireAt: Int,
+    ): TheOpenNetwork.SigningInput {
+        val transfer = when (amount.type) {
+            is AmountType.Coin -> makeTransfer(amount = amount, destination = destination, comment = comment)
+            is AmountType.Token -> makeJettonTransfer(amount = amount, destination = destination, comment = comment)
+            else -> throw BlockchainSdkError.FailedToBuildTx
+        }
 
-        return Result.Success(
-            TheOpenNetwork.SigningInput
-                .newBuilder()
-                .setTransfer(transfer)
-                .setPrivateKey(ByteString.copyFrom(keyPair.privateKey))
-                .build(),
-        )
+        return TheOpenNetwork.SigningInput
+            .newBuilder()
+            .addMessages(transfer)
+            .setWalletVersion(TheOpenNetwork.WalletVersion.WALLET_V4_R2)
+            .setSequenceNumber(sequenceNumber)
+            .setExpireAt(expireAt)
+            .setPublicKey(ByteString.copyFrom(publicKey.blockchainKey))
+            .build()
     }
 
-    private fun buildTokenTransferInput(
-        sequenceNumber: Int,
+    private fun makeTransfer(
         amount: Amount,
         destination: String,
         comment: String,
-    ): Result<TheOpenNetwork.SigningInput> {
-        val token = (amount.type as AmountType.Token).token
-        val jettonWalletAddress = jettonWalletAddresses[token]
-            ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx)
-        val transfer = buildTransfer(
-            sequenceNumber = sequenceNumber,
+        jettonTransfer: TheOpenNetwork.JettonTransfer? = null,
+    ): TheOpenNetwork.Transfer {
+        return TheOpenNetwork.Transfer.newBuilder()
+            .setDest(destination)
+            .setAmount(amount.longValue)
+            .setMode(modeTransactionConstant)
+            .setBounceable(false)
+            .setComment(comment)
+            .also { transfer -> if (jettonTransfer != null) transfer.setJettonTransfer(jettonTransfer) }
+            .build()
+    }
+
+    private fun makeJettonTransfer(amount: Amount, destination: String, comment: String): TheOpenNetwork.Transfer {
+        val token = (amount.type as? AmountType.Token)?.token ?: throw BlockchainSdkError.FailedToBuildTx
+        val jettonWalletAddress = jettonWalletAddresses[token] ?: throw BlockchainSdkError.FailedToBuildTx
+
+        val amountValue = requireNotNull(amount.value) { "Amount value must not be null" }
+        val jettonAmount = amountValue
+            .movePointRight(amount.decimals)
+            .toBigInteger()
+            .toByteArray()
+            .let(ByteString::copyFrom)
+        val jettonTransfer = TheOpenNetwork.JettonTransfer.newBuilder()
+            .setJettonAmount(jettonAmount)
+            .setToOwner(destination)
+            .setResponseAddress(walletAddress)
+            .setForwardAmount(1L) // needs some amount to send "jetton transfer notification", use minimum
+            .build()
+
+        return makeTransfer(
             amount = Amount(JETTON_TRANSFER_PROCESSING_FEE, Blockchain.TON),
             destination = jettonWalletAddress,
             comment = comment,
-            bounceable = true,
+            jettonTransfer = jettonTransfer,
         )
-
-        val jettonTransfer = TheOpenNetwork.JettonTransfer.newBuilder()
-            .setTransfer(transfer)
-            .setJettonAmount(amount.longValueOrZero)
-            .setToOwner(destination)
-            .setResponseAddress(walletAddress)
-            .setForwardAmount(1) // some amount needed to send "jetton transfer notification", use minimum
-            .build()
-
-        return Result.Success(
-            TheOpenNetwork.SigningInput
-                .newBuilder()
-                .setJettonTransfer(jettonTransfer)
-                .setPrivateKey(ByteString.copyFrom(keyPair.privateKey))
-                .build(),
-        )
-    }
-
-    private fun buildTransfer(
-        sequenceNumber: Int,
-        amount: Amount,
-        destination: String,
-        comment: String,
-        bounceable: Boolean = false,
-    ): TheOpenNetwork.Transfer.Builder? {
-        return TheOpenNetwork.Transfer.newBuilder()
-            .setWalletVersion(TheOpenNetwork.WalletVersion.WALLET_V4_R2)
-            .setDest(destination)
-            .setAmount(amount.longValueOrZero)
-            .setSequenceNumber(sequenceNumber)
-            .setMode(modeTransactionConstant)
-            .setBounceable(bounceable)
-            .setComment(comment)
-    }
-
-    @Suppress("MagicNumber")
-    private fun generateKeyPair(): KeyPair {
-        val privateKey = CryptoUtils.generateRandomBytes(32)
-        /* todo use Ed25519Slip0010 or Ed25519 depends on wallet manager
-         * [REDACTED_JIRA]
-         */
-        val publicKey = CryptoUtils.generatePublicKey(privateKey, EllipticCurve.Ed25519)
-        return KeyPair(publicKey, privateKey)
     }
 
     internal companion object {

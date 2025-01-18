@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.bitcoin
 import com.tangem.blockchain.blockchains.clore.CloreMainNetParams
 import com.tangem.blockchain.blockchains.dash.DashMainNetParams
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
+import com.tangem.blockchain.blockchains.factorn.Fact0rnMainNetParams
 import com.tangem.blockchain.blockchains.radiant.RadiantMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinTestNetParams
@@ -40,6 +41,7 @@ open class BitcoinAddressService(
         Blockchain.Ravencoin -> RavencoinMainNetParams()
         Blockchain.RavencoinTestnet -> RavencoinTestNetParams()
         Blockchain.Radiant -> RadiantMainNetParams()
+        Blockchain.Fact0rn -> Fact0rnMainNetParams()
         Blockchain.Clore -> CloreMainNetParams()
         else -> error(
             "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}",
@@ -70,13 +72,13 @@ open class BitcoinAddressService(
         return Address(address, AddressType.Legacy)
     }
 
-    private fun makeSegwitAddress(walletPublicKey: ByteArray): Address {
+    internal fun makeSegwitAddress(walletPublicKey: ByteArray): Address {
         val compressedPublicKey = ECKey.fromPublicOnly(walletPublicKey.toCompressedPublicKey())
         val address = SegwitAddress.fromKey(networkParameters, compressedPublicKey).toBech32()
         return Address(address, AddressType.Default)
     }
 
-    private fun validateSegwitAddress(address: String): Boolean {
+    internal fun validateSegwitAddress(address: String): Boolean {
         return try {
             if (blockchain == Blockchain.Ducatus) return false
             SegwitAddress.fromBech32(networkParameters, address)

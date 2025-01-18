@@ -18,6 +18,9 @@ internal class KaspaProvidersBuilder(
             .mapNotNull { type ->
                 when (type) {
                     is ProviderType.Public -> type.url
+                    is ProviderType.NowNodes -> config.nowNodeCredentials?.apiKey.letNotBlank { nowNodesApiKey ->
+                        "https://kas.nownodes.io/$nowNodesApiKey/"
+                    }
                     ProviderType.Kaspa.SecondaryAPI -> config.kaspaSecondaryApiUrl?.letNotBlank { it }
                     else -> null
                 }

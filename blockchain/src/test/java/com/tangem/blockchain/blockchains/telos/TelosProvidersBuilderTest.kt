@@ -28,7 +28,10 @@ class TelosProvidersBuilderTest {
         val publicUrl = "https://telos.com/"
         val providerTypes = allProviderTypes + ProviderType.Public(url = publicUrl)
 
-        val actual = TelosProvidersBuilder(providerTypes).build(Blockchain.Telos)
+        val actual = TelosProvidersBuilder(
+            providerTypes = providerTypes,
+            config = BlockchainSdkConfig(),
+        ).build(Blockchain.Telos)
 
         Truth.assertThat(actual).hasSize(1)
         Truth.assertThat(actual.first().baseUrl).isEqualTo(publicUrl)
