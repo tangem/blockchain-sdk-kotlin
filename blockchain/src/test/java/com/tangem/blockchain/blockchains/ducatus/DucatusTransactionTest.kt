@@ -18,6 +18,7 @@ class DucatusTransactionTest {
 
     private val blockchain = Blockchain.Ducatus
     private val networkParameters = DucatusMainNetParams()
+    private val dustValue = 0.00001.toBigDecimal()
 
     @Test
     fun buildCorrectTransaction() {
@@ -67,7 +68,7 @@ class DucatusTransactionTest {
             ).hexToBytes()
 
         // act
-        val buildToSignResult = transactionBuilder.buildToSign(transactionData) as Result.Success
+        val buildToSignResult = transactionBuilder.buildToSign(transactionData, dustValue) as Result.Success
         val signedTransaction = transactionBuilder.buildToSend(signature)
 
         // assert
