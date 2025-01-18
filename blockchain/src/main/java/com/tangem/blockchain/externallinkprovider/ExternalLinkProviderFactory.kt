@@ -79,6 +79,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Flare, Blockchain.FlareTestnet -> FlareExternalLinkProvider(isTestnet)
             Blockchain.Taraxa, Blockchain.TaraxaTestnet -> TaraxaExternalLinkProvider(isTestnet)
             Blockchain.Radiant -> RadiantExternalLinkProvider()
+            Blockchain.Fact0rn -> Fact0rnExternalLinkProvider()
             Blockchain.Koinos, Blockchain.KoinosTestnet -> KoinosExternalLinkProvider(isTestnet)
             Blockchain.Filecoin -> FilecoinExternalLinkProvider()
             Blockchain.Blast, Blockchain.BlastTestnet -> BlastLinkProvider(isTestnet)
@@ -91,9 +92,12 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Casper, Blockchain.CasperTestnet -> CasperExternalLinkProvider(isTestnet)
             Blockchain.Core, Blockchain.CoreTestnet -> CoreExternalLinkProvider(isTestnet)
             Blockchain.Chiliz, Blockchain.ChilizTestnet -> ChilizExternalLinkProvider(isTestnet)
+            Blockchain.VanarChain, Blockchain.VanarChainTestnet -> VanarChainExternalLinkProvider(isTestnet)
             Blockchain.Xodex -> XodexExternalLinkProvider()
             Blockchain.Canxium -> CanxiumExternalLinkProvider()
             Blockchain.Clore -> CloreExternalLinkProvider()
+            Blockchain.OdysseyChain, Blockchain.OdysseyChainTestnet -> OdysseyChainExternalLinkProvider(isTestnet)
+            Blockchain.Bitrock, Blockchain.BitrockTestnet -> BitrockExternalLinkProvider(isTestnet)
         }
     }
 }
