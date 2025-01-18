@@ -4,22 +4,24 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainError
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.network.electrum.api.ElectrumApiService
 import com.tangem.blockchain.network.electrum.api.ElectrumResponse
-import com.tangem.blockchain.network.electrum.api.WebSocketElectrumApiService
 import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.delay
-import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 
 internal class DefaultElectrumNetworkProvider(
     override val baseUrl: String,
     private val blockchain: Blockchain,
-    private val service: WebSocketElectrumApiService,
+    private val service: ElectrumApiService,
     private val supportedProtocolVersion: String,
 ) : ElectrumNetworkProvider {
 
-    private val serverVersionRequested = AtomicBoolean(false)
+    private val serverVersionRequested = MutableStateFlow<VersionRequestState>(VersionRequestState.NotRequested)
 
     override suspend fun getAccountBalance(addressScriptHash: String): Result<ElectrumAccount> {
         firstCheckServer()?.apply { return Result.Failure(this) }
@@ -79,6 +81,16 @@ internal class DefaultElectrumNetworkProvider(
         }
     }
 
+    override suspend fun getTransactionHistory(
+        addressScriptHash: String,
+    ): Result<List<ElectrumResponse.TxHistoryEntry>> {
+        firstCheckServer()?.apply { return Result.Failure(this) }
+
+        return retryCall {
+            service.getTransactionHistory(addressScriptHash = addressScriptHash)
+        }
+    }
+
     override suspend fun getTransactionInfo(txHash: String): Result<ElectrumResponse.Transaction> {
         firstCheckServer()?.apply { return Result.Failure(this) }
 
@@ -96,14 +108,25 @@ internal class DefaultElectrumNetworkProvider(
     }
 
     private suspend fun firstCheckServer(): BlockchainError? {
-        if (serverVersionRequested.get()) {
-            return null
+        return when (val state = serverVersionRequested.value) {
+            VersionRequestState.NotRequested -> getServerVersion()
+            is VersionRequestState.Requested -> if (state.result is SimpleResult.Success) null else getServerVersion()
+            VersionRequestState.Requesting -> {
+                val requestedState = serverVersionRequested
+                    .filterIsInstance<VersionRequestState.Requested>()
+                    .first()
+                if (requestedState.result is SimpleResult.Success) null else getServerVersion()
+            }
         }
+    }
 
-        return when (val serverInfo = service.getServerVersion(supportedProtocolVersion = supportedProtocolVersion)) {
+    private suspend fun getServerVersion(): BlockchainError? {
+        serverVersionRequested.value = VersionRequestState.Requesting
+        val serverInfo = service.getServerVersion(supportedProtocolVersion = supportedProtocolVersion)
+
+        val error: BlockchainError? = when (serverInfo) {
             is Result.Success -> {
                 if (serverInfo.data.versionNumber == supportedProtocolVersion) {
-                    serverVersionRequested.set(true)
                     null
                 } else { // node doesn't support requested electrum protocol version
                     BlockchainSdkError.UnsupportedOperation(
@@ -118,6 +141,9 @@ internal class DefaultElectrumNetworkProvider(
                 serverInfo.error
             }
         }
+        val requestedState = if (error == null) SimpleResult.Success else SimpleResult.Failure(error)
+        serverVersionRequested.value = VersionRequestState.Requested(requestedState)
+        return error
     }
 
     private suspend fun <T> retryCall(
@@ -139,5 +165,11 @@ internal class DefaultElectrumNetworkProvider(
             }
         }
         return block() // last attempt
+    }
+
+    private sealed interface VersionRequestState {
+        data object NotRequested : VersionRequestState
+        data object Requesting : VersionRequestState
+        data class Requested(val result: SimpleResult) : VersionRequestState
     }
 }

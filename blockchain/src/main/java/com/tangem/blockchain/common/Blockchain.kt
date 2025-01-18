@@ -10,6 +10,7 @@ import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.decimal.DecimalAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.factorn.Fact0rnAddressService
 import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
 import com.tangem.blockchain.blockchains.koinos.KoinosAddressService
@@ -20,7 +21,6 @@ import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
-import com.tangem.blockchain.blockchains.ton.TonAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.vechain.VeChainWalletManager
 import com.tangem.blockchain.blockchains.xdc.XDCAddressService
@@ -145,6 +145,7 @@ enum class Blockchain(
     MoonriverTestnet("moonriver/test", "MOVR", "Moonriver Testnet"),
     Mantle("mantle", "MNT", "Mantle"),
     MantleTestnet("mantle/test", "MNT", "Mantle Testnet"),
+    Fact0rn("fact0rn", "FACT", "Fact0rn"),
     Flare("flare", "FLR", "Flare"),
     FlareTestnet("flare/test", "FLR", "Flare Testnet"),
     Taraxa("taraxa", "TARA", "Taraxa"),
@@ -174,6 +175,12 @@ enum class Blockchain(
     Chiliz("chiliz", "CHZ", "Chiliz"),
     ChilizTestnet("chiliz/test", "CHZ", "Chiliz Spicy Testnet"),
     Clore("clore-ai", "CLORE", "Clore"),
+    VanarChain("vanar-chain", "VANRY", "Vanar Chain"),
+    VanarChainTestnet("vanar-chain/test", "VG", "Vanar Vanguard Testnet"),
+    OdysseyChain("odyssey", "DIONE", "Dione"),
+    OdysseyChainTestnet("odyssey/test", "DIONE", "Dione Testnet"),
+    Bitrock("bitrock", "BROCK", "Bitrock"),
+    BitrockTestnet("bitrock/test", "BROCK", "Bitrock Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -181,6 +188,8 @@ enum class Blockchain(
     fun getNetworkName(): String {
         return when (this) {
             TON -> "TON"
+            OdysseyChain -> "Odyssey Chain"
+            OdysseyChainTestnet -> "Odyssey Chain Testnet"
             else -> this.fullName
         }
     }
@@ -216,6 +225,7 @@ enum class Blockchain(
         Aptos, AptosTestnet,
         Hedera, HederaTestnet,
         Radiant,
+        Fact0rn,
         Koinos, KoinosTestnet,
         InternetComputer,
         Clore,
@@ -273,8 +283,11 @@ enum class Blockchain(
         EnergyWebX, EnergyWebXTestnet,
         Core, CoreTestnet,
         Chiliz, ChilizTestnet,
+        VanarChain, VanarChainTestnet,
         Xodex,
         Canxium,
+        OdysseyChain, OdysseyChainTestnet,
+        Bitrock, BitrockTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -349,8 +362,11 @@ enum class Blockchain(
             EnergyWebChain, EnergyWebChainTestnet,
             Core, CoreTestnet,
             Chiliz, ChilizTestnet,
+            VanarChain, VanarChainTestnet,
             Xodex,
             Canxium,
+            OdysseyChain, OdysseyChainTestnet,
+            Bitrock, BitrockTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -371,7 +387,6 @@ enum class Blockchain(
             Stellar, StellarTestnet -> StellarAddressService()
             Solana, SolanaTestnet -> SolanaAddressService()
             Tezos -> TezosAddressService()
-            TON, TONTestnet -> TonAddressService(blockchain = this)
             Cosmos, CosmosTestnet,
             TerraV1,
             TerraV2,
@@ -381,7 +396,8 @@ enum class Blockchain(
             Filecoin,
             Sei, SeiTestnet,
             Sui, SuiTestnet,
-            -> TrustWalletAddressService(blockchain = this)
+            TON, TONTestnet,
+            -> WalletCoreAddressService(blockchain = this)
 
             Aptos, AptosTestnet -> AptosAddressService(isTestnet())
             Tron, TronTestnet -> TronAddressService()
@@ -391,6 +407,7 @@ enum class Blockchain(
             Nexa, NexaTestnet -> NexaAddressService(this.isTestnet())
             Koinos, KoinosTestnet -> KoinosAddressService()
             Radiant -> RadiantAddressService()
+            Fact0rn -> Fact0rnAddressService()
             Casper, CasperTestnet -> CasperAddressService()
             Unknown -> error("unsupported blockchain")
         }
@@ -481,6 +498,9 @@ enum class Blockchain(
             Casper, CasperTestnet -> CasperTestnet
             Core, CoreTestnet -> CoreTestnet
             Chiliz, ChilizTestnet -> ChilizTestnet
+            VanarChain, VanarChainTestnet -> VanarChainTestnet
+            OdysseyChain, OdysseyChainTestnet -> OdysseyChainTestnet
+            Bitrock, BitrockTestnet -> BitrockTestnet
             else -> null
         }
     }
@@ -540,6 +560,7 @@ enum class Blockchain(
             Manta, MantaTestnet,
             PolygonZkEVM, PolygonZkEVMTestnet,
             Radiant,
+            Fact0rn,
             Base, BaseTestnet,
             Moonriver, MoonriverTestnet,
             Mantle, MantleTestnet,
@@ -555,9 +576,12 @@ enum class Blockchain(
             Core, CoreTestnet,
             Casper, CasperTestnet,
             Chiliz, ChilizTestnet,
+            VanarChain, VanarChainTestnet,
             Xodex,
             Canxium,
             Clore,
+            OdysseyChain, OdysseyChainTestnet,
+            Bitrock, BitrockTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -656,7 +680,13 @@ enum class Blockchain(
             Xodex -> Chain.Xodex.id
             Canxium -> Chain.Canxium.id
             Chiliz -> Chain.Chiliz.id
+            VanarChain -> Chain.VanarChain.id
+            VanarChainTestnet -> Chain.VanarChainTestnet.id
             ChilizTestnet -> Chain.ChilizTestnet.id
+            OdysseyChain -> Chain.OdysseyChain.id
+            OdysseyChainTestnet -> Chain.OdysseyChainTestnet.id
+            Bitrock -> Chain.Bitrock.id
+            BitrockTestnet -> Chain.BitrockTestnet.id
             else -> null
         }
     }

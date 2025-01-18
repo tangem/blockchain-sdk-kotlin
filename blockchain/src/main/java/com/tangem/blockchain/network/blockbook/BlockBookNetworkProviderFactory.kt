@@ -25,6 +25,7 @@ internal class BlockBookNetworkProviderFactory(
         val credentials = config.getBlockCredentials ?: return null
         val accessToken = when (blockchain) {
             Blockchain.Bitcoin -> credentials.bitcoin
+            Blockchain.BitcoinCash -> credentials.bitcoinCash
             Blockchain.Dash -> credentials.dash
             Blockchain.Dogecoin -> credentials.dogecoin
             Blockchain.Litecoin -> credentials.litecoin

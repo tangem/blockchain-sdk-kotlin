@@ -54,6 +54,7 @@ internal class NowNodesConfig(nowNodesCredentials: NowNodeCredentials) : BlockBo
             Blockchain.Ethereum,
             Blockchain.EthereumClassic,
             Blockchain.Avalanche,
+            Blockchain.Ravencoin,
             Blockchain.EthereumPow,
             Blockchain.Tron,
             -> {
