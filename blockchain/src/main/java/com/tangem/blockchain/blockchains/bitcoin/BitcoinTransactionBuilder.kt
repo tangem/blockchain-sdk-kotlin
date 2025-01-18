@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.bitcoin
 import com.tangem.blockchain.blockchains.clore.CloreMainNetParams
 import com.tangem.blockchain.blockchains.dash.DashMainNetParams
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
+import com.tangem.blockchain.blockchains.factorn.Fact0rnMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinTestNetParams
 import com.tangem.blockchain.common.Blockchain
@@ -10,6 +11,7 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.transaction.getMinimumRequiredUTXOsToSend
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.isZero
@@ -45,12 +47,13 @@ open class BitcoinTransactionBuilder(
         Blockchain.Dash -> DashMainNetParams()
         Blockchain.Ravencoin -> RavencoinMainNetParams()
         Blockchain.RavencoinTestnet -> RavencoinTestNetParams()
+        Blockchain.Fact0rn -> Fact0rnMainNetParams()
         Blockchain.Clore -> CloreMainNetParams()
         else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
     var unspentOutputs: List<BitcoinUnspentOutput>? = null
 
-    open fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
+    open fun buildToSign(transactionData: TransactionData, dustValue: BigDecimal?): Result<List<ByteArray>> {
         transactionData.requireUncompiled()
 
         if (unspentOutputs.isNullOrEmpty()) {
@@ -62,7 +65,10 @@ open class BitcoinTransactionBuilder(
             transactionAmount = transactionData.amount.value!!,
             transactionFeeAmount = transactionData.fee?.amount?.value!!,
             unspentToAmount = { it.amount },
-        )
+            dustValue = dustValue,
+        ).successOr { failure ->
+            return failure
+        }
 
         val change: BigDecimal = calculateChange(transactionData, outputsToSend)
         transaction =
@@ -151,8 +157,8 @@ open class BitcoinTransactionBuilder(
     fun getTransactionHash() = transaction.txId.bytes
 
     @Suppress("MagicNumber")
-    fun getEstimateSize(transactionData: TransactionData): Result<Int> {
-        return when (val buildTransactionResult = buildToSign(transactionData)) {
+    fun getEstimateSize(transactionData: TransactionData, dustValue: BigDecimal?): Result<Int> {
+        return when (val buildTransactionResult = buildToSign(transactionData, dustValue)) {
             is Result.Failure -> buildTransactionResult
             is Result.Success -> {
                 val hashes = buildTransactionResult.data

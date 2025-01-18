@@ -49,14 +49,14 @@ internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<Ethere
             Blockchain.Gnosis -> GnosisProvidersBuilder(providerTypes, config)
             Blockchain.Dischain -> DischainProvidersBuilder(providerTypes)
             Blockchain.EthereumPow, Blockchain.EthereumPowTestnet -> EthereumPowProvidersBuilder(providerTypes, config)
-            Blockchain.Kava, Blockchain.KavaTestnet -> KavaProvidersBuilder(providerTypes)
+            Blockchain.Kava, Blockchain.KavaTestnet -> KavaProvidersBuilder(providerTypes, config)
             Blockchain.Cronos -> CronosProvidersBuilder(providerTypes, config)
             Blockchain.OctaSpace -> OctaSpaceProvidersBuilder(providerTypes)
             Blockchain.Playa3ull -> Playa3ullProvidersBuilder(providerTypes)
             Blockchain.Shibarium, Blockchain.ShibariumTestnet -> ShibariumProvidersBuilder(providerTypes, config)
-            Blockchain.Aurora, Blockchain.AuroraTestnet -> AuroraProvidersBuilder(providerTypes)
+            Blockchain.Aurora, Blockchain.AuroraTestnet -> AuroraProvidersBuilder(providerTypes, config)
             Blockchain.Areon, Blockchain.AreonTestnet -> AreonProvidersBuilder(providerTypes)
-            Blockchain.PulseChain, Blockchain.PulseChainTestnet -> PulseChainProvidersBuilder(providerTypes)
+            Blockchain.PulseChain, Blockchain.PulseChainTestnet -> PulseChainProvidersBuilder(providerTypes, config)
             Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet -> ZkSyncEraProvidersBuilder(providerTypes, config)
             Blockchain.Moonbeam, Blockchain.MoonbeamTestnet -> MoonbeamProvidersBuilder(providerTypes, config)
             Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet -> PolygonZkEVMProvidersBuilder(
@@ -64,13 +64,19 @@ internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<Ethere
                 config = config,
             )
             Blockchain.Moonriver, Blockchain.MoonriverTestnet -> MoonriverProvidersBuilder(providerTypes)
-            Blockchain.Flare, Blockchain.FlareTestnet -> FlareProvidersBuilder(providerTypes)
+            Blockchain.Flare, Blockchain.FlareTestnet -> FlareProvidersBuilder(providerTypes, config)
             Blockchain.Taraxa, Blockchain.TaraxaTestnet -> TaraxaProvidersBuilder(providerTypes)
             Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet -> EnergyWebChainProvidersBuilder(providerTypes)
             Blockchain.Core, Blockchain.CoreTestnet -> CoreProvidersBuilder(providerTypes)
             Blockchain.Chiliz, Blockchain.ChilizTestnet -> ChilizProvidersBuilder(providerTypes)
+            Blockchain.VanarChain, Blockchain.VanarChainTestnet -> VanarChainProvidersBuilder(providerTypes)
             Blockchain.Xodex -> XodexProvidersBuilder(providerTypes)
             Blockchain.Canxium -> CanxiumProvidersBuilder(providerTypes)
+            Blockchain.OdysseyChain, Blockchain.OdysseyChainTestnet -> OdysseyChainProvidersBuilder(
+                providerTypes = providerTypes,
+                config = config,
+            )
+            Blockchain.Bitrock, Blockchain.BitrockTestnet -> BitrockProvidersBuilder(providerTypes)
             else -> error("Unsupported blockchain: $blockchain")
         }
     }

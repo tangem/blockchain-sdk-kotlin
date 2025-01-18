@@ -24,6 +24,9 @@ internal class DashProvidersBuilder(
                 ProviderType.NowNodes -> {
                     blockBookNetworkProviderFactory.createNowNodesProvider(blockchain).let(::listOfNotNull)
                 }
+                ProviderType.GetBlock -> {
+                    blockBookNetworkProviderFactory.createGetBlockProvider(blockchain).let(::listOfNotNull)
+                }
                 ProviderType.BitcoinLike.Blockcypher -> {
                     blockcypherNetworkProviderFactory.create(blockchain).let(::listOfNotNull)
                 }
