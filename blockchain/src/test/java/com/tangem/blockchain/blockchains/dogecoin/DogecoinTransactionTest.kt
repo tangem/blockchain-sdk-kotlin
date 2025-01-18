@@ -19,6 +19,7 @@ class DogecoinTransactionTest {
 
     private val blockchain = Blockchain.Dogecoin
     private val networkParameters = DogecoinMainNetParams()
+    private val dustValue = 0.01.toBigDecimal()
 
     @Test
     fun buildCorrectTransaction() {
@@ -68,7 +69,7 @@ class DogecoinTransactionTest {
             ).hexToBytes()
 
         // act
-        val buildToSignResult = transactionBuilder.buildToSign(transactionData) as Result.Success
+        val buildToSignResult = transactionBuilder.buildToSign(transactionData, dustValue) as Result.Success
         val signedTransaction = transactionBuilder.buildToSend(signature)
 
         // assert

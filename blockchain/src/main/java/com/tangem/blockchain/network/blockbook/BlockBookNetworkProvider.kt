@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.bitcoincash.BitcoinCashAddressService
 import com.tangem.blockchain.blockchains.clore.CloreMainNetParams
 import com.tangem.blockchain.blockchains.dash.DashMainNetParams
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
@@ -23,6 +24,7 @@ import com.tangem.common.extensions.hexToBytes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.bitcoinj.core.Address
+import org.bitcoinj.core.LegacyAddress
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.params.TestNet3Params
 import org.bitcoinj.script.ScriptBuilder
@@ -120,7 +122,13 @@ class BlockBookNetworkProvider(
         getUtxoResponseItems: List<GetUtxoResponseItem>,
         address: String,
     ): List<BitcoinUnspentOutput> {
-        val addressBitcoinJ = Address.fromString(networkParameters, address)
+        val addressBitcoinJ = when (blockchain) {
+            Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet -> {
+                val addressService = BitcoinCashAddressService(blockchain)
+                LegacyAddress.fromPubKeyHash(networkParameters, addressService.getPublicKeyHash(address))
+            }
+            else -> Address.fromString(networkParameters, address)
+        }
         val outputScript = ScriptBuilder.createOutputScript(addressBitcoinJ).program
 
         return getUtxoResponseItems.mapNotNull {
