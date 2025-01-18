@@ -21,7 +21,7 @@ internal object RavencoinWalletManagerAssembly : WalletManagerAssembly<Ravencoin
                     walletAddresses = addresses,
                 ),
                 networkProvider = BitcoinNetworkService(
-                    providers = RavencoinProvidersBuilder(input.providerTypes).build(blockchain),
+                    providers = RavencoinProvidersBuilder(input.providerTypes, input.config).build(blockchain),
                 ),
                 transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
                 feesCalculator = RavencoinFeesCalculator(blockchain),
