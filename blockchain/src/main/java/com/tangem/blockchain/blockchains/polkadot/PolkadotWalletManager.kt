@@ -142,6 +142,10 @@ internal class PolkadotWalletManager(
         transactionDataList: List<TransactionData>,
         signer: TransactionSigner,
     ): Result<TransactionsSendResult> {
+        if (transactionDataList.size == 1) {
+            return sendSingleTransaction(transactionDataList, signer)
+        }
+
         val compiledTransactionList = transactionDataList.map {
             it.requireCompiled()
         }
