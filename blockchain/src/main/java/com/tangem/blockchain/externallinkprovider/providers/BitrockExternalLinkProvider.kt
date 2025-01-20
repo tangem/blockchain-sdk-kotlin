@@ -8,7 +8,7 @@ internal class BitrockExternalLinkProvider(isTestnet: Boolean) : ExternalLinkPro
     override val explorerBaseUrl: String = if (isTestnet) {
         "https://testnetscan.bit-rock.io/"
     } else {
-        "https://scan.bit-rock.io/"
+        "https://explorer.bit-rock.io/"
     }
 
     override val testNetTopUpUrl: String = "https://faucet.bit-rock.io/"
