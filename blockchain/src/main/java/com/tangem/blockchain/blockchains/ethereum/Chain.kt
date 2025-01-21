@@ -87,4 +87,6 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     OdysseyChainTestnet(id = 131313, blockchain = Blockchain.OdysseyChainTestnet),
     Bitrock(id = 7171, blockchain = Blockchain.Bitrock),
     BitrockTestnet(id = 7771, blockchain = Blockchain.BitrockTestnet),
+    Sonic(id = 146, blockchain = Blockchain.Sonic),
+    SonicTestnet(id = 57054, blockchain = Blockchain.SonicTestnet),
 }
