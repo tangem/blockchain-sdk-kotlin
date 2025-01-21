@@ -55,6 +55,7 @@ internal val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Chiliz,
             Blockchain.VanarChain,
             Blockchain.Bitrock,
+            Blockchain.Sonic,
             -> false
             else -> error("Don't forget about evm here")
         }
