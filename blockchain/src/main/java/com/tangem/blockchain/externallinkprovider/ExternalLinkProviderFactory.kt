@@ -98,6 +98,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Clore -> CloreExternalLinkProvider()
             Blockchain.OdysseyChain, Blockchain.OdysseyChainTestnet -> OdysseyChainExternalLinkProvider(isTestnet)
             Blockchain.Bitrock, Blockchain.BitrockTestnet -> BitrockExternalLinkProvider(isTestnet)
+            Blockchain.Sonic, Blockchain.SonicTestnet -> SonicExternalLinkProvider(isTestnet)
         }
     }
 }
