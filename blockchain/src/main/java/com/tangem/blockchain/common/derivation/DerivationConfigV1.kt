@@ -155,6 +155,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.ChilizTestnet,
             Blockchain.VanarChainTestnet,
             Blockchain.OdysseyChainTestnet,
+            Blockchain.SonicTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             Blockchain.Aptos,
             Blockchain.AptosTestnet,
@@ -189,6 +190,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Bitrock,
             Blockchain.BitrockTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/7171666'/0'/0/0"))
+            Blockchain.Sonic -> mapOf(AddressType.Default to DerivationPath("m/44'/10007'/0'/0/0"))
         }
     }
 }
