@@ -28,6 +28,7 @@ internal val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Canxium,
             Blockchain.OdysseyChain,
             Blockchain.Sonic,
+            Blockchain.ApeChain,
             -> true
             Blockchain.EthereumClassic, // eth_feeHistory all zeroes
             Blockchain.EthereumPow, // eth_feeHistory with zeros
