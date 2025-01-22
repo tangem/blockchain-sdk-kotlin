@@ -157,6 +157,7 @@ class WalletManagerFactory(
             Blockchain.OdysseyChain, Blockchain.OdysseyChainTestnet,
             Blockchain.Bitrock, Blockchain.BitrockTestnet,
             Blockchain.Sonic, Blockchain.SonicTestnet,
+            Blockchain.ApeChain, Blockchain.ApeChainTestnet,
             -> EthereumLikeWalletManagerAssembly
 
             Blockchain.Mantle, Blockchain.MantleTestnet,
