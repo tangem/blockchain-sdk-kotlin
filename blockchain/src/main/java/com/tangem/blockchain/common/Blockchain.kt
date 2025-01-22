@@ -183,6 +183,8 @@ enum class Blockchain(
     BitrockTestnet("bitrock/test", "BROCK", "Bitrock Testnet"),
     Sonic("sonic", "S", "Sonic"),
     SonicTestnet("sonic/test", "S", "Sonic Blaze Testnet"),
+    ApeChain("apechain", "APE", "ApeChain"),
+    ApeChainTestnet("apechain/test", "APE", "Curtis Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -291,6 +293,7 @@ enum class Blockchain(
         OdysseyChain, OdysseyChainTestnet,
         Bitrock, BitrockTestnet,
         Sonic, SonicTestnet,
+        ApeChain, ApeChainTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -371,6 +374,7 @@ enum class Blockchain(
             OdysseyChain, OdysseyChainTestnet,
             Bitrock, BitrockTestnet,
             Sonic, SonicTestnet,
+            ApeChain, ApeChainTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -506,6 +510,7 @@ enum class Blockchain(
             OdysseyChain, OdysseyChainTestnet -> OdysseyChainTestnet
             Bitrock, BitrockTestnet -> BitrockTestnet
             Sonic, SonicTestnet -> SonicTestnet
+            ApeChain, ApeChainTestnet -> ApeChainTestnet
             else -> null
         }
     }
@@ -588,6 +593,7 @@ enum class Blockchain(
             OdysseyChain, OdysseyChainTestnet,
             Bitrock, BitrockTestnet,
             Sonic, SonicTestnet,
+            ApeChain, ApeChainTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -695,6 +701,8 @@ enum class Blockchain(
             BitrockTestnet -> Chain.BitrockTestnet.id
             Sonic -> Chain.Sonic.id
             SonicTestnet -> Chain.SonicTestnet.id
+            ApeChain -> Chain.ApeChain.id
+            ApeChainTestnet -> Chain.ApeChainTestnet.id
             else -> null
         }
     }
