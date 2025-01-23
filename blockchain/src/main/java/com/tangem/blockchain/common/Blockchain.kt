@@ -183,7 +183,7 @@ enum class Blockchain(
     BitrockTestnet("bitrock/test", "BROCK", "Bitrock Testnet"),
     Sonic("sonic", "S", "Sonic"),
     SonicTestnet("sonic/test", "S", "Sonic Blaze Testnet"),
-    ApeChain("apechain", "APE", "ApeChain"),
+    ApeChain("apechain", "APE", "ApeCoin"),
     ApeChainTestnet("apechain/test", "APE", "Curtis Testnet"),
     ;
 
@@ -194,6 +194,7 @@ enum class Blockchain(
             TON -> "TON"
             OdysseyChain -> "Odyssey Chain"
             OdysseyChainTestnet -> "Odyssey Chain Testnet"
+            ApeChain -> "ApeChain"
             else -> this.fullName
         }
     }
