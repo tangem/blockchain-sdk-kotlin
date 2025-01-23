@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.factorn.Fact0rnAddressService
 import com.tangem.blockchain.blockchains.factorn.Fact0rnAddressService.Companion.addressToScript
 import com.tangem.blockchain.blockchains.factorn.Fact0rnAddressService.Companion.addressToScriptHash
 import com.tangem.blockchain.common.BasicTransactionData
@@ -118,44 +119,53 @@ internal class Fact0rnNetworkService(
                 val transaction: ElectrumResponse.Transaction = result.data
                 val vin = transaction.vin ?: listOf()
                 val vout = transaction.vout ?: listOf()
-                val isIncoming = vin.any { it.addresses?.contains(address) == false }
+                val addressService = Fact0rnAddressService()
+                val isIncoming = vin.any {
+                    val publicKey = it.txinwitness?.getOrNull(1) ?: return@any false
+                    val vinAddress = addressService.makeAddress(publicKey.hexToBytes())
+                    vinAddress != address
+                }
                 var source = "unknown"
                 var destination = "unknown"
                 val amount = if (isIncoming) {
                     destination = address
                     vin.firstOrNull()
-                        ?.addresses
-                        ?.firstOrNull()
-                        ?.let { source = it }
+                        ?.txinwitness?.getOrNull(1)
+                        ?.let { publicKey -> source = addressService.makeAddress(publicKey.hexToBytes()) }
                     val outputs = vout
-                        .find { it.scriptPublicKey?.addresses?.contains(address) == true }
-                        ?.value?.toBigDecimal() ?: BigDecimal.ZERO
+                        .find {
+                            val destAddress = it.scriptPublicKey?.address
+                            destAddress == address
+                        }?.value?.toBigDecimal() ?: BigDecimal.ZERO
                     val inputs = vin
-                        .find { it.addresses?.contains(address) == true }
+                        .find {
+                            val publicKey = it.txinwitness?.getOrNull(1) ?: return@find false
+                            addressService.makeAddress(publicKey.hexToBytes()) == address
+                        }
                         ?.value?.toBigDecimal() ?: BigDecimal.ZERO
                     outputs - inputs
                 } else {
                     source = address
                     vout.firstOrNull()
                         ?.scriptPublicKey
-                        ?.addresses
-                        ?.firstOrNull()
+                        ?.address
                         ?.let { destination = it }
                     val outputs = vout
                         .asSequence()
-                        .filter { it.scriptPublicKey?.addresses?.contains(address) == false }
+                        .filter {
+                            val destAddress = it.scriptPublicKey?.address
+                            destAddress != address
+                        }
                         .map { it.value.toBigDecimal() }
                         .sumOf { it }
                     val fee = transaction.fee?.toBigDecimal() ?: BigDecimal.ZERO
                     outputs + fee
-                }.movePointLeft(blockchain.decimals())
+                }
 
                 BasicTransactionData(
                     balanceDif = if (isIncoming) amount else amount.negate(),
                     hash = transaction.txid,
-                    date = Calendar.getInstance().apply {
-                        timeInMillis = transaction.blockTime
-                    },
+                    date = Calendar.getInstance(),
                     isConfirmed = false,
                     destination = destination,
                     source = source,
