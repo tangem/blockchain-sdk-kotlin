@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.factorn.Fact0rnAddressService
 import com.tangem.blockchain.blockchains.factorn.Fact0rnAddressService.Companion.addressToScript
 import com.tangem.blockchain.blockchains.factorn.Fact0rnAddressService.Companion.addressToScriptHash
 import com.tangem.blockchain.common.BasicTransactionData
@@ -30,6 +31,7 @@ internal class Fact0rnNetworkService(
         get() = multiProvider.currentProvider.baseUrl
 
     private val multiProvider = MultiNetworkProvider(providers)
+    private val addressService = Fact0rnAddressService()
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> = coroutineScope {
         val scriptHash = addressToScriptHash(address)
@@ -48,7 +50,7 @@ internal class Fact0rnNetworkService(
             ),
             recentTransactions = createRecentTransactions(
                 utxoResponseItems = unspentsUTXOs,
-                address = address,
+                walletAddress = address,
             ),
             hasUnconfirmed = !balance.unconfirmedAmount.isZero(),
         )
@@ -107,7 +109,7 @@ internal class Fact0rnNetworkService(
 
     private suspend fun createRecentTransactions(
         utxoResponseItems: List<ElectrumUnspentUTXORecord>,
-        address: String,
+        walletAddress: String,
     ): List<BasicTransactionData> = coroutineScope {
         utxoResponseItems
             .filter { !it.isConfirmed }
@@ -118,47 +120,47 @@ internal class Fact0rnNetworkService(
                 val transaction: ElectrumResponse.Transaction = result.data
                 val vin = transaction.vin ?: listOf()
                 val vout = transaction.vout ?: listOf()
-                val isIncoming = vin.any { it.addresses?.contains(address) == false }
-                var source = "unknown"
-                var destination = "unknown"
-                val amount = if (isIncoming) {
-                    destination = address
-                    vin.firstOrNull()
-                        ?.addresses
-                        ?.firstOrNull()
-                        ?.let { source = it }
-                    val outputs = vout
-                        .find { it.scriptPublicKey?.addresses?.contains(address) == true }
-                        ?.value?.toBigDecimal() ?: BigDecimal.ZERO
-                    val inputs = vin
-                        .find { it.addresses?.contains(address) == true }
-                        ?.value?.toBigDecimal() ?: BigDecimal.ZERO
-                    outputs - inputs
-                } else {
-                    source = address
-                    vout.firstOrNull()
-                        ?.scriptPublicKey
-                        ?.addresses
-                        ?.firstOrNull()
-                        ?.let { destination = it }
-                    val outputs = vout
-                        .asSequence()
-                        .filter { it.scriptPublicKey?.addresses?.contains(address) == false }
+                val isIncoming = vin.any {
+                    val publicKey = it.txinwitness?.getOrNull(1) ?: return@any false
+                    val vinAddress = addressService.makeAddress(publicKey.hexToBytes())
+                    vinAddress != walletAddress
+                }
+                val otherAddress = vout
+                    .firstOrNull { output ->
+                        val outputAddress = output.scriptPublicKey?.address ?: return@firstOrNull false
+                        outputAddress != walletAddress
+                    }
+                    ?.scriptPublicKey
+                    ?.address ?: "unknown"
+
+                val balanceDiff = if (isIncoming) {
+                    val outputs = vout.filter { output ->
+                        val outputAddress = output.scriptPublicKey?.address ?: return@filter false
+                        outputAddress == walletAddress
+                    }
+                    outputs
                         .map { it.value.toBigDecimal() }
-                        .sumOf { it }
+                        .fold(BigDecimal.ZERO) { acc, bigDecimal -> acc + bigDecimal }
+                } else {
                     val fee = transaction.fee?.toBigDecimal() ?: BigDecimal.ZERO
-                    outputs + fee
-                }.movePointLeft(blockchain.decimals())
+                    val outputs = vout.filter { output ->
+                        val outputAddress = output.scriptPublicKey?.address ?: return@filter false
+                        outputAddress != walletAddress
+                    }
+                    outputs
+                        .map { it.value.toBigDecimal() }
+                        .fold(BigDecimal.ZERO) { acc, bigDecimal -> acc + bigDecimal }
+                        .plus(fee)
+                        .negate()
+                }
 
                 BasicTransactionData(
-                    balanceDif = if (isIncoming) amount else amount.negate(),
+                    balanceDif = balanceDiff,
                     hash = transaction.txid,
-                    date = Calendar.getInstance().apply {
-                        timeInMillis = transaction.blockTime
-                    },
+                    date = Calendar.getInstance(),
                     isConfirmed = false,
-                    destination = destination,
-                    source = source,
+                    destination = if (isIncoming) walletAddress else otherAddress,
+                    source = if (isIncoming) otherAddress else walletAddress,
                 )
             }
     }
