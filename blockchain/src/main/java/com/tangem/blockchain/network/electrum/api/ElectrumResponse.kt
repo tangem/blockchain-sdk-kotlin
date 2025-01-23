@@ -66,16 +66,16 @@ internal object ElectrumResponse {
 
     @JsonClass(generateAdapter = true)
     data class Transaction(
-        @Json(name = "blockhash") val blockHash: String,
-        @Json(name = "blocktime") val blockTime: Long,
-        @Json(name = "confirmations") val confirmations: Int,
+        @Json(name = "blockhash") val blockHash: String?,
+        @Json(name = "blocktime") val blockTime: Long?,
+        @Json(name = "confirmations") val confirmations: Int?,
         @Json(name = "fee") val fee: Double?,
         @Json(name = "fee_satoshi") val feeSatoshi: Long?,
         @Json(name = "hash") val hash: String,
         @Json(name = "hex") val hex: String, // The serialized, hex-encoded data for 'txid'
         @Json(name = "locktime") val lockTime: Long,
         @Json(name = "size") val size: Long,
-        @Json(name = "time") val time: Long,
+        @Json(name = "time") val time: Long?,
         @Json(name = "txid") val txid: String, // the transaction id (same as provided)
         @Json(name = "txidem") val txidem: String?, // Nexa specific
         @Json(name = "version") val version: Int,
@@ -89,6 +89,7 @@ internal object ElectrumResponse {
             @Json(name = "value_coins") val valueCoins: Double?, // rostrum specific (ex. Nexa)
             @Json(name = "value_satoshi") val valueSatoshi: Double?, // rostrum specific (ex. Nexa)
             @Json(name = "addresses") val addresses: List<String>? = emptyList(),
+            @Json(name = "txinwitness") val txinwitness: List<String>? = emptyList(),
         )
 
         @JsonClass(generateAdapter = true)
@@ -103,6 +104,7 @@ internal object ElectrumResponse {
         @JsonClass(generateAdapter = true)
         data class ScriptPublicKey(
             @Json(name = "addresses") val addresses: List<String> = emptyList(),
+            @Json(name = "address") val address: String?,
             @Json(name = "hex") val hex: String,
             @Json(name = "scriptHash") val scriptHash: String?,
         )
