@@ -61,8 +61,8 @@ configurations {
 }
 
 dependencies {
-    implementation 'com.tangem.tangem-sdk-kotlin:core:develop-287'
-    implementation 'com.tangem.tangem-sdk-kotlin:android:develop-287'
+    implementation 'com.tangem.tangem-sdk-kotlin:core:develop-2'
+    implementation 'com.tangem.tangem-sdk-kotlin:android:develop-2'
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.core:core-ktx:1.13.1'
@@ -107,7 +107,7 @@ dependencies {
     implementation files('libs/polkaj-root-0.5.1-SNAPSHOT.jar')
 
     implementation files('libs/hedera-sdk-java-2.29.0.jar')
-    implementation "com.tangem:blstlib:master-6@aar"
+    implementation "com.tangem:blstlib:master-1@aar"
     implementation "com.tangem:wallet-core:4.1.20-tangem4@aar"
     implementation("com.tangem:wallet-core-proto:4.1.20-tangem4") {
         exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
@@ -142,7 +142,7 @@ dependencies {
     implementation 'org.ton:ton-kotlin-block-tlb:0.3.1'
 
     // region dependencies for ICP
-    api("com.tangem.ic4j:ic4j-agent:master-22") {
+    api("com.tangem.ic4j:ic4j-agent:master-11") {
         exclude group: 'org.bouncycastle'
         exclude group: 'org.apache.httpcomponents.client5', module: 'httpclient5'
         exclude group: 'jakarta.xml.bind', module: 'jakarta.xml.bind-api'
