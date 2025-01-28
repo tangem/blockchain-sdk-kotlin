@@ -33,6 +33,11 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 
+/**
+ * @param id sdk blockchain id
+ * @param currency currency symbol
+ * @param fullName network name
+ */
 @Suppress("LargeClass", "TooManyFunctions")
 enum class Blockchain(
     val id: String,
@@ -40,7 +45,7 @@ enum class Blockchain(
     val fullName: String,
 ) {
     Unknown("", "", ""),
-    Arbitrum("ARBITRUM-ONE", "ETH", "Arbitrum One (ETH)"),
+    Arbitrum("ARBITRUM-ONE", "ETH", "Arbitrum One"),
     ArbitrumTestnet("ARBITRUM/test", "ETH", "Arbitrum Testnet"),
     Avalanche("AVALANCHE", "AVAX", "Avalanche C-Chain"),
     AvalancheTestnet("AVALANCHE/test", "AVAX", "Avalanche C-Chain Testnet"),
@@ -61,13 +66,13 @@ enum class Blockchain(
     EthereumTestnet("ETH/test", "ETH", "Ethereum Testnet"),
     EthereumClassic("ETC", "ETC", "Ethereum Classic"),
     EthereumClassicTestnet("ETC/test", "ETC", "Ethereum Classic Testnet"),
-    Fantom("FTM", "FTM", "Fantom"),
+    Fantom("FTM", "FTM", "Fantom Opera"),
     FantomTestnet("FTM/test", "FTM", "Fantom Testnet"),
     Litecoin("LTC", "LTC", "Litecoin"),
     Near("NEAR", "NEAR", "NEAR Protocol"),
     NearTestnet("NEAR/test", "NEAR", "NEAR Protocol Testnet"),
     Polkadot("Polkadot", "DOT", "Polkadot"),
-    PolkadotTestnet("Polkadot", "WND", "Polkadot Western Testnet"),
+    PolkadotTestnet("Polkadot", "WND", "Polkadot Westend Testnet"),
     Kava("KAVA", "KAVA", "Kava EVM"),
     KavaTestnet("KAVA/test", "KAVA", "Kava EVM Testnet"),
     Kusama("Kusama", "KSM", "Kusama"),
@@ -86,15 +91,15 @@ enum class Blockchain(
     XRP("XRP", "XRP", "XRP Ledger"),
     Gnosis("GNO", "xDAI", "Gnosis Chain"),
     Dash("DASH", "DASH", "Dash"),
-    Optimism("OPTIMISM", "ETH", "Optimistic Ethereum (ETH)"),
+    Optimism("OPTIMISM", "ETH", "Optimistic Ethereum"),
     OptimismTestnet("OPTIMISM", "ETH", "Optimistic Ethereum Testnet"),
     Dischain("dischain", "DIS", "DisChain (ETHF)"),
-    EthereumPow("ETH-Pow", "ETHW", "EthereumPoW"),
+    EthereumPow("ETH-Pow", "ETHW", "Ethereum PoW"),
     EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW Testnet"),
     Kaspa("KAS", "KAS", "Kaspa"),
     Telos("TELOS", "TLOS", "Telos EVM"),
     TelosTestnet("TELOS/test", "TLOS", "Telos Testnet"),
-    TON("The-Open-Network", "TON", "Toncoin"),
+    TON("The-Open-Network", "TON", "TON"),
     TONTestnet("The-Open-Network/test", "TON", "Ton Testnet"),
     Ravencoin("ravencoin", "RVN", "Ravencoin"),
     RavencoinTestnet("ravencoin/test", "RVN", "Ravencoin Testnet"),
@@ -122,24 +127,24 @@ enum class Blockchain(
     AlgorandTestnet("algorand/test", "ALGO", "Algorand Testnet"),
     Hedera("hedera", "HBAR", "Hedera"),
     HederaTestnet("hedera/test", "HBAR", "Hedera Testnet"),
-    Aurora("aurora", "ETH", "Aurora (ETH)"),
+    Aurora("aurora", "ETH", "Aurora"),
     AuroraTestnet("aurora/test", "ETH", "Aurora Testnet"),
     Areon("areon", "AREA", "Areon Network"),
     AreonTestnet("areon/test", "TAREA", "Areon Network Testnet"),
     PulseChain("pls", "PLS", "PulseChain"),
     PulseChainTestnet("pls/test", "tPLS", "PulseChain Testnet v4"),
-    ZkSyncEra("zkSyncEra", "ETH", "ZkSync Era (ETH)"),
+    ZkSyncEra("zkSyncEra", "ETH", "ZkSync Era"),
     ZkSyncEraTestnet("zkSyncEra/test", "ETH", "ZkSync Era Testnet"),
     Nexa("NEXA", "NEXA", "Nexa"),
     NexaTestnet("NEXA/test", "NEXA", "Nexa Testnet"),
     Moonbeam("moonbeam", "GLMR", "Moonbeam"),
     MoonbeamTestnet("moonbeam/test", "GLMR", "Moonbeam Testnet"),
-    Manta("manta-pacific", "ETH", "Manta Pacific (ETH)"),
+    Manta("manta-pacific", "ETH", "Manta Pacific"),
     MantaTestnet("manta/test", "ETH", "Manta Testnet"),
-    PolygonZkEVM("polygonZkEVM", "ETH", "Polygon zkEVM (ETH)"),
+    PolygonZkEVM("polygonZkEVM", "ETH", "Polygon zkEVM"),
     PolygonZkEVMTestnet("polygonZkEVM/test", "ETH", "Polygon zkEVM Testnet"),
     Radiant("radiant", "RXD", "Radiant"),
-    Base("base", "ETH", "Base (ETH)"),
+    Base("base", "ETH", "Base"),
     BaseTestnet("base/test", "ETH", "Base Testnet"),
     Moonriver("moonriver", "MOVR", "Moonriver"),
     MoonriverTestnet("moonriver/test", "MOVR", "Moonriver Testnet"),
@@ -155,9 +160,9 @@ enum class Blockchain(
     Joystream("joystream", "JOY", "Joystream"),
     Bittensor("bittensor", "TAO", "Bittensor"),
     Filecoin("filecoin", "FIL", "Filecoin"),
-    Blast("blast", "ETH", "Blast (ETH)"),
+    Blast("blast", "ETH", "Blast"),
     BlastTestnet("blast/test", "ETH", "Blast Testnet"),
-    Cyber("cyber", "ETH", "Cyber (ETH)"),
+    Cyber("cyber", "ETH", "Cyber"),
     CyberTestnet("cyber/test", "ETH", "Cyber Testnet"),
     InternetComputer("internet-computer", "ICP", "Internet Computer"),
     Sui("sui", "SUI", "Sui"),
@@ -177,20 +182,39 @@ enum class Blockchain(
     Clore("clore-ai", "CLORE", "Clore"),
     VanarChain("vanar-chain", "VANRY", "Vanar Chain"),
     VanarChainTestnet("vanar-chain/test", "VG", "Vanar Vanguard Testnet"),
-    OdysseyChain("odyssey", "DIONE", "Dione"),
-    OdysseyChainTestnet("odyssey/test", "DIONE", "Dione Testnet"),
+    OdysseyChain("odyssey", "DIONE", "Odyssey Chain"),
+    OdysseyChainTestnet("odyssey/test", "DIONE", "Odyssey Chain Testnet"),
     Bitrock("bitrock", "BROCK", "Bitrock"),
     BitrockTestnet("bitrock/test", "BROCK", "Bitrock Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
 
-    fun getNetworkName(): String {
+    fun getCoinName(): String {
+        val l2Suffix = if (isL2EthereumNetwork()) " (ETH)" else ""
         return when (this) {
-            TON -> "TON"
-            OdysseyChain -> "Odyssey Chain"
-            OdysseyChainTestnet -> "Odyssey Chain Testnet"
-            else -> this.fullName
+            Chia -> "Chia"
+            Fantom -> "Fantom"
+            TON -> "Toncoin"
+            OdysseyChain -> "Dione"
+            OdysseyChainTestnet -> "Dione Testnet"
+            else -> this.fullName + l2Suffix
+        }
+    }
+
+    fun isL2EthereumNetwork(): Boolean {
+        return when (this) {
+            Arbitrum,
+            Optimism,
+            Aurora,
+            ZkSyncEra,
+            Manta,
+            PolygonZkEVM,
+            Base,
+            Blast,
+            Cyber,
+            -> true
+            else -> false
         }
     }
 
