@@ -3,15 +3,15 @@ package com.tangem.blockchain.externallinkprovider.providers
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.TxExploreState
 
-internal class BitrockExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
+internal class SonicExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
     override val explorerBaseUrl: String = if (isTestnet) {
-        "https://testnetscan.bit-rock.io/"
+        "https://testnet.sonicscan.org/"
     } else {
-        "https://explorer.bit-rock.io/"
+        "https://sonicscan.org/"
     }
 
-    override val testNetTopUpUrl: String = "https://faucet.bit-rock.io/"
+    override val testNetTopUpUrl: String = "https://testnet.soniclabs.com/account"
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
         return "${explorerBaseUrl}address/$walletAddress"
