@@ -51,3 +51,13 @@ fun ByteArray.padLeft(length: Int): ByteArray {
 
 /** Convert hex string to byte array or null if exception is thrown */
 fun String.hexToBytesOrNull(): ByteArray? = runCatching(String::hexToBytes).getOrNull()
+
+/** Removes all zeros from start */
+fun ByteArray.removeLeadingZeros(): ByteArray {
+    val firstNonZero = indexOfFirst { it != 0.toByte() }
+    if (firstNonZero == -1) {
+        return byteArrayOf()
+    }
+
+    return copyOfRange(firstNonZero, size)
+}
