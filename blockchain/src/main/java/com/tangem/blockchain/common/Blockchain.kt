@@ -768,34 +768,22 @@ enum class Blockchain(
 
     fun isEvm(): Boolean = getChainId() != null
 
-    fun isFeeApproximate(amountType: AmountType): Boolean = when (this) {
-        Fantom, FantomTestnet,
-        Tron, TronTestnet,
-        Avalanche, AvalancheTestnet,
-        EthereumPow,
-        Cronos,
-        VeChain, VeChainTestnet,
-        XDC, XDCTestnet,
-        -> amountType is AmountType.Token
-
-        Arbitrum, ArbitrumTestnet,
-        Stellar, StellarTestnet,
-        Optimism, OptimismTestnet,
-        TON, TONTestnet,
-        Near, NearTestnet,
-        Aptos, AptosTestnet,
-        Hedera, HederaTestnet,
-        PulseChain, PulseChainTestnet,
-        Aurora, AuroraTestnet,
-        Manta, MantaTestnet,
-        Mantle, MantleTestnet,
-        ZkSyncEra, ZkSyncEraTestnet,
-        PolygonZkEVM, PolygonZkEVMTestnet,
-        Taraxa, TaraxaTestnet,
-        Base, BaseTestnet,
-        Koinos, KoinosTestnet,
-        -> true
-
+    fun isFeeApproximate(amountType: AmountType): Boolean = when {
+        this in listOf(
+            Stellar, StellarTestnet,
+            TON, TONTestnet,
+            Near, NearTestnet,
+            Aptos, AptosTestnet,
+            Hedera, HederaTestnet,
+            Koinos, KoinosTestnet,
+        ) -> true
+        this in listOf(
+            Tron,
+            TronTestnet,
+            VeChain,
+            VeChainTestnet,
+        ) -> amountType is AmountType.Token
+        isEvm() -> true
         else -> false
     }
 
