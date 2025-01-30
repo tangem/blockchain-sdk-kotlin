@@ -38,35 +38,27 @@ internal class TonWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> = try {
-        transactionData.requireUncompiled()
-
-        val expireAt = createExpirationTimestampSecs()
-        val txToSign = txBuilder.buildForSign(
-            sequenceNumber = sequenceNumber,
-            amount = transactionData.amount,
-            destination = transactionData.destinationAddress,
-            extras = transactionData.extras as? TonTransactionExtras,
-            expireAt = expireAt,
-        )
-
-        val signatureResult = signer.sign(hash = txToSign, publicKey = wallet.publicKey).successOr {
+        val txToSign = when (transactionData) {
+            is TransactionData.Compiled -> txBuilder.buildCompiledForSign(
+                transactionData = transactionData,
+                expireAt = createExpirationTimestampSecs(),
+            )
+            is TransactionData.Uncompiled -> txBuilder.buildForSign(
+                sequenceNumber = sequenceNumber,
+                amount = transactionData.amount,
+                destination = transactionData.destinationAddress,
+                extras = transactionData.extras as? TonTransactionExtras,
+                expireAt = createExpirationTimestampSecs(),
+            )
+        }
+        val signatureResult = signer.sign(hash = txToSign.hashToSign, publicKey = wallet.publicKey).successOr {
             return Result.fromTangemSdkError(it.error)
         }
-
-        val txToSend = txBuilder.buildForSend(
-            signature = signatureResult,
-            sequenceNumber = sequenceNumber,
-            amount = transactionData.amount,
-            destination = transactionData.destinationAddress,
-            expireAt = expireAt,
-            extras = transactionData.extras as? TonTransactionExtras,
-        )
-
+        val txToSend = txBuilder.buildForSend(signature = signatureResult, preSignStructure = txToSign)
         when (val sendResult = networkService.send(txToSend)) {
             is Result.Failure -> Result.Failure(sendResult.error)
             is Result.Success -> {
-                wallet.addOutgoingTransaction(transactionData.copy(hash = sendResult.data))
-                transactionData.hash = sendResult.data
+                wallet.addOutgoingTransaction(transactionData.updateHash(sendResult.data))
                 Result.Success(TransactionSendResult(sendResult.data))
             }
         }
