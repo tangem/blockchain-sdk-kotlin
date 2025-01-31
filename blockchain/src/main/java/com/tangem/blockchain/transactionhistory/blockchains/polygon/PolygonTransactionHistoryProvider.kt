@@ -13,6 +13,7 @@ import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.*
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import com.tangem.common.extensions.guard
+import com.tangem.common.extensions.isZero
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
@@ -135,7 +136,7 @@ internal class PolygonTransactionHistoryProvider(
                 Log.info { "Transaction with zero amount is excluded from history. $transaction" }
                 return@mapNotNull null
             }
-            if (isLikelySpamTransaction(amount = transactionAmount.longValue, filterType = filterType)) {
+            if (isLikelySpamTransaction(amount = transactionAmount, filterType = filterType)) {
                 return@mapNotNull null
             }
 
@@ -228,8 +229,8 @@ internal class PolygonTransactionHistoryProvider(
     /**
      * Zero token transfers are most likely spam transactions, for [example](https://polygonscan.com/tx/0x227a8dc404acb8659d87c75a2ac2427a1f86f802f2f9a8376dcfa2537a9abdf0).
      */
-    private fun isLikelySpamTransaction(amount: Long?, filterType: TransactionHistoryRequest.FilterType): Boolean =
-        filterType is TransactionHistoryRequest.FilterType.Contract && amount == 0L
+    private fun isLikelySpamTransaction(amount: Amount, filterType: TransactionHistoryRequest.FilterType): Boolean =
+        filterType is TransactionHistoryRequest.FilterType.Contract && amount.value?.isZero() == true
 
     /**
      * API returns "1" in status field, if request were successful.
