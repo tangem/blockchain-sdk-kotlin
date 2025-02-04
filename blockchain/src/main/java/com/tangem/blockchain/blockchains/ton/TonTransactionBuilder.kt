@@ -1,7 +1,19 @@
 package com.tangem.blockchain.blockchains.ton
 
 import com.google.protobuf.ByteString
+import com.squareup.moshi.adapter
+import com.tangem.blockchain.blockchains.ton.models.TonCompiledTransactionData
+import com.tangem.blockchain.blockchains.ton.models.TonPreSignStructure
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.extensions.removeLeadingZeros
+import com.tangem.blockchain.network.moshi
+import org.ton.block.CommonMsgInfoRelaxed
+import org.ton.block.Either
+import org.ton.block.MessageRelaxed
+import org.ton.block.MsgAddressInt
+import org.ton.boc.BagOfCells
+import org.ton.cell.Cell
+import wallet.core.jni.Base64
 import wallet.core.jni.CoinType
 import wallet.core.jni.DataVector
 import wallet.core.jni.TransactionCompiler
@@ -14,6 +26,9 @@ internal class TonTransactionBuilder(
     private val walletAddress: String,
 ) {
 
+    @OptIn(ExperimentalStdlibApi::class)
+    private val compiledTransactionAdapter by lazy { moshi.adapter<TonCompiledTransactionData>() }
+    private val messageRelaxedCodec = MessageRelaxed.tlbCodec(CellTlbConstructorFixed)
     private val coinType = CoinType.TON
     private var jettonWalletAddresses: Map<Token, String> = emptyMap()
     private val modeTransactionConstant: Int =
@@ -29,7 +44,7 @@ internal class TonTransactionBuilder(
         destination: String,
         expireAt: Int,
         extras: TonTransactionExtras? = null,
-    ): ByteArray {
+    ): TonPreSignStructure {
         val input = buildInput(
             sequenceNumber = sequenceNumber,
             amount = amount,
@@ -37,14 +52,77 @@ internal class TonTransactionBuilder(
             comment = extras?.memo.orEmpty(),
             expireAt = expireAt,
         )
-        val preImageHashes = TransactionCompiler.preImageHashes(coinType, input.toByteArray())
+        val inputData = input.toByteArray()
+        val preImageHashes = TransactionCompiler.preImageHashes(coinType, inputData)
         val preSigningOutput = PreSigningOutput.parseFrom(preImageHashes)
 
         if (preSigningOutput.error != Common.SigningError.OK) {
             throw BlockchainSdkError.FailedToBuildTx
         }
 
-        return preSigningOutput.data.toByteArray()
+        return TonPreSignStructure(
+            hashToSign = preSigningOutput.data.toByteArray(),
+            inputData = inputData,
+        )
+    }
+
+    fun buildCompiledForSign(transactionData: TransactionData.Compiled, expireAt: Int): TonPreSignStructure {
+        val compiledTransaction = (transactionData.value as? TransactionData.Compiled.Data.RawString)?.data
+            ?: error("Compiled transaction must be in hex format")
+        val parsed = compiledTransactionAdapter.fromJson(compiledTransaction)
+            ?: error("Unable to parse compiled transaction")
+        val messageRelaxed = parseMessage(parsed)
+        val info = messageRelaxed.info as CommonMsgInfoRelaxed.IntMsgInfoRelaxed
+        val transfer = TheOpenNetwork.Transfer.newBuilder()
+            .setDest(MsgAddressInt.toString(address = info.dest))
+            .setAmount(info.value.coins.amount.value.toLong())
+            .setMode(modeTransactionConstant)
+            .setComment(messageRelaxed.extractComment())
+            .setBounceable(info.bounce)
+            .build()
+        val input = TheOpenNetwork.SigningInput
+            .newBuilder()
+            .addMessages(transfer)
+            .setWalletVersion(TheOpenNetwork.WalletVersion.WALLET_V4_R2)
+            .setSequenceNumber(parsed.seqno)
+            .setExpireAt(expireAt)
+            .setPublicKey(ByteString.copyFrom(publicKey.blockchainKey))
+            .build()
+
+        val inputData = input.toByteArray()
+        val preImageHashes = TransactionCompiler.preImageHashes(coinType, inputData)
+        val preSigningOutput = PreSigningOutput.parseFrom(preImageHashes)
+
+        if (preSigningOutput.error != Common.SigningError.OK) {
+            throw BlockchainSdkError.FailedToBuildTx
+        }
+
+        return TonPreSignStructure(
+            hashToSign = preSigningOutput.data.toByteArray(),
+            inputData = inputData,
+        )
+    }
+
+    fun buildForSend(signature: ByteArray, preSignStructure: TonPreSignStructure): String {
+        val signatures = DataVector()
+        signatures.add(signature)
+
+        val publicKeys = DataVector()
+        publicKeys.add(publicKey.blockchainKey)
+
+        val compileWithSignatures = TransactionCompiler.compileWithSignatures(
+            coinType,
+            preSignStructure.inputData,
+            signatures,
+            publicKeys,
+        )
+
+        val output = TheOpenNetwork.SigningOutput.parseFrom(compileWithSignatures)
+        if (output.error != Common.SigningError.OK) {
+            error("something went wrong")
+        }
+
+        return output.encoded
     }
 
     fun buildForSend(
@@ -147,6 +225,20 @@ internal class TonTransactionBuilder(
             comment = comment,
             jettonTransfer = jettonTransfer,
         )
+    }
+
+    private fun parseMessage(transactionData: TonCompiledTransactionData): MessageRelaxed<Cell> {
+        val decoded = Base64.decode(transactionData.message)
+        val deserialized = BagOfCells.of(decoded).first()
+        return messageRelaxedCodec.loadTlb(deserialized)
+    }
+
+    private fun MessageRelaxed<Cell>.extractComment(): String {
+        val bodyCell = when (val body = this.body) {
+            is Either.Left -> body.value
+            is Either.Right -> body.value.value
+        }
+        return String(bodyCell.bits.toByteArray().removeLeadingZeros())
     }
 
     internal companion object {
