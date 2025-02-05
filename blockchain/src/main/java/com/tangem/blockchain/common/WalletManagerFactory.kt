@@ -190,7 +190,7 @@ class WalletManagerFactory(
             Blockchain.Binance, Blockchain.BinanceTestnet -> BinanceWalletManagerAssembly
             Blockchain.Tezos -> TezosWalletManagerAssembly
             Blockchain.Tron, Blockchain.TronTestnet -> TronWalletManagerAssembly
-            Blockchain.Kaspa -> KaspaWalletManagerAssembly(dataStorage)
+            Blockchain.Kaspa, Blockchain.KaspaTestnet -> KaspaWalletManagerAssembly(dataStorage)
             Blockchain.TON, Blockchain.TONTestnet -> TonWalletManagerAssembly
             Blockchain.Cosmos, Blockchain.CosmosTestnet -> CosmosWalletManagerAssembly
             Blockchain.TerraV1 -> TerraV1WalletManagerAssembly
