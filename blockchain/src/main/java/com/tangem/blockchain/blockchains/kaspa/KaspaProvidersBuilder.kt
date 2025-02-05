@@ -27,4 +27,8 @@ internal class KaspaProvidersBuilder(
             }
             .map(::KaspaRestApiNetworkProvider)
     }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<KaspaNetworkProvider> {
+        return listOf(KaspaRestApiNetworkProvider("https://api-tn11.kaspa.org/"))
+    }
 }
