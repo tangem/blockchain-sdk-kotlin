@@ -141,6 +141,7 @@ internal class PolkadotWalletManager(
     override suspend fun sendMultiple(
         transactionDataList: List<TransactionData>,
         signer: TransactionSigner,
+        sendMode: TransactionSender.MultipleTransactionSendMode,
     ): Result<TransactionsSendResult> {
         if (transactionDataList.size == 1) {
             return sendSingleTransaction(transactionDataList, signer)
