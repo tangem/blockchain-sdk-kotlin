@@ -16,7 +16,7 @@ class KaspaTransactionTest {
     private val blockchain = Blockchain.Kaspa
     private val networkParameters = KaspaMainNetParams()
     private val decimals = blockchain.decimals()
-    private val addressService = KaspaAddressService()
+    private val addressService = KaspaAddressService(isTestnet = false)
 
     @Suppress("LongMethod")
     @Test
@@ -43,6 +43,7 @@ class KaspaTransactionTest {
                 seedKey = walletPublicKey,
                 derivationType = null,
             ),
+            isTestnet = false,
         )
         transactionBuilder.unspentOutputs = listOf(
             KaspaUnspentOutput(
@@ -170,6 +171,7 @@ class KaspaTransactionTest {
                 seedKey = walletPublicKey,
                 derivationType = null,
             ),
+            isTestnet = false,
         )
         transactionBuilder.unspentOutputs = listOf(
             KaspaUnspentOutput(
