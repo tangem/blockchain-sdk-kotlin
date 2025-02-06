@@ -25,11 +25,12 @@ import java.math.BigInteger
 
 class KaspaTransactionBuilder(
     private val publicKey: Wallet.PublicKey,
+    private val isTestnet: Boolean,
 ) {
     private var networkParameters = KaspaMainNetParams()
     var unspentOutputs: List<KaspaUnspentOutput>? = null
 
-    private val addressService = KaspaAddressService()
+    private val addressService = KaspaAddressService(isTestnet)
 
     @OptIn(ExperimentalStdlibApi::class)
     private val envelopeAdapter by lazy { moshi.adapter<Envelope>() }
@@ -56,12 +57,12 @@ class KaspaTransactionBuilder(
             return Result.Failure(BlockchainSdkError.Kaspa.UtxoAmountError(MAX_INPUT_COUNT, maxAmount))
         }
 
-        val addressService = KaspaAddressService()
+        val addressService = KaspaAddressService(isTestnet)
         val sourceScript = ScriptBuilder().data(addressService.getPublicKey(transactionData.sourceAddress)).op(
             OP_CODESEPARATOR,
         ).build()
 
-        val destinationAddressDecoded = KaspaCashAddr.decodeCashAddress(transactionData.destinationAddress)
+        val destinationAddressDecoded = KaspaCashAddr(isTestnet).decodeCashAddress(transactionData.destinationAddress)
         val destinationScript = when (destinationAddressDecoded.addressType) {
             KaspaAddressType.P2PK_SCHNORR ->
                 ScriptBuilder.createP2PKOutputScript(destinationAddressDecoded.hash)
@@ -185,7 +186,7 @@ class KaspaTransactionBuilder(
                     redeemScript.scriptHash(),
                 )
                 if (!resultChange.isZero()) {
-                    val addressService = KaspaAddressService()
+                    val addressService = KaspaAddressService(isTestnet)
                     val sourceScript = ScriptBuilder()
                         .data(addressService.getPublicKey(transactionData.sourceAddress))
                         .op(OP_CODESEPARATOR)
