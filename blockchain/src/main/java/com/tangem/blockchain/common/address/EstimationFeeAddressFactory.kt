@@ -29,6 +29,7 @@ class EstimationFeeAddressFactory {
             Blockchain.Stellar, Blockchain.StellarTestnet,
             Blockchain.Binance, Blockchain.BinanceTestnet,
             Blockchain.SolanaTestnet,
+            Blockchain.KaspaTestnet,
             -> ""
 
             Blockchain.Nexa, Blockchain.NexaTestnet,
