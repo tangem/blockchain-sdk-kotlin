@@ -45,7 +45,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Optimism, Blockchain.OptimismTestnet -> OptimismExternalLinkProvider(isTestnet)
             Blockchain.Dischain -> EthereumFairExternalLinkProvider()
             Blockchain.EthereumPow, Blockchain.EthereumPowTestnet -> EthereumPowExternalLinkProvider(isTestnet)
-            Blockchain.Kaspa -> KaspaExternalLinkProvider()
+            Blockchain.Kaspa, Blockchain.KaspaTestnet -> KaspaExternalLinkProvider(isTestnet)
             Blockchain.Telos, Blockchain.TelosTestnet -> TelosExternalLinkProvider(isTestnet)
             Blockchain.TON, Blockchain.TONTestnet -> TONExternalLinkProvider(isTestnet)
             Blockchain.Ravencoin, Blockchain.RavencoinTestnet -> RavencoinExternalLinkProvider(isTestnet)
