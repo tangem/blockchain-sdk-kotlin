@@ -20,6 +20,7 @@ internal class KaspaWalletManagerAssembly(
                 wallet = this,
                 transactionBuilder = KaspaTransactionBuilder(
                     publicKey = publicKey,
+                    isTestnet = blockchain.isTestnet(),
                 ),
                 networkProvider = KaspaNetworkService(
                     providers = KaspaProvidersBuilder(input.providerTypes, input.config).build(blockchain),
