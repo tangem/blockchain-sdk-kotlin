@@ -3,9 +3,10 @@ package com.tangem.blockchain.externallinkprovider.providers
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.TxExploreState
 
-internal class KaspaExternalLinkProvider : ExternalLinkProvider {
+internal class KaspaExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
-    override val explorerBaseUrl: String = "https://explorer.kaspa.org/"
+    override val explorerBaseUrl: String =
+        if (isTestnet) "https://explorer-tn11.kaspa.org/" else "https://explorer.kaspa.org/"
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
         return explorerBaseUrl + "addresses/$walletAddress"
