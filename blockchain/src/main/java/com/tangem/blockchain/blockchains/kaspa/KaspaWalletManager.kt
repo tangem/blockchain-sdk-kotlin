@@ -4,7 +4,6 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.kaspa.krc20.KaspaKRC20InfoResponse
 import com.tangem.blockchain.blockchains.kaspa.krc20.KaspaKRC20NetworkProvider
 import com.tangem.blockchain.blockchains.kaspa.krc20.model.RedeemScript
-import com.tangem.blockchain.blockchains.kaspa.network.KaspaFeeBucketResponse
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaInfoResponse
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkProvider
 import com.tangem.blockchain.common.*
@@ -16,7 +15,6 @@ import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.trustlines.AssetRequirementsCondition
 import com.tangem.blockchain.common.trustlines.AssetRequirementsManager
 import com.tangem.blockchain.extensions.*
-import com.tangem.blockchain.extensions.map
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
@@ -41,8 +39,12 @@ internal class KaspaWalletManager(
     private val blockchain = wallet.blockchain
     override val dustValue: BigDecimal = BigDecimal("0.2")
 
-    private val dummySigner = DummySigner()
-
+    private val kaspaFeesCalculator = KaspaFeesCalculator(
+        blockchain = blockchain,
+        transactionBuilder,
+        networkProvider,
+        wallet.publicKey,
+    )
     override val allowConsolidation: Boolean = true
 
     override suspend fun updateInternal() {
@@ -129,84 +131,55 @@ internal class KaspaWalletManager(
     @Suppress("CyclomaticComplexMethod", "NestedBlockDepth")
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val unspentOutputCount = transactionBuilder.getUnspentsToSpendCount()
+        val unspentsToSpendAmount = transactionBuilder.getUnspentsToSpendAmount()
 
         return if (unspentOutputCount == 0) {
             Result.Failure(BlockchainSdkError.Kaspa.ZeroUtxoError)
         } else {
             val source = wallet.address
 
+            val availableToSpend = if (amount.type == AmountType.Coin) {
+                val minAmount = minOf(amount.value.orZero(), unspentsToSpendAmount)
+                amount.copy(value = minAmount)
+            } else {
+                amount
+            }
+
             val transactionData = TransactionData.Uncompiled(
                 sourceAddress = source,
                 destinationAddress = destination,
-                amount = amount,
+                amount = availableToSpend, // If amount is greater than MAX UTXO, cap to MAX UTXO
                 fee = null,
             )
 
-            val buildTransactionResult = when (amount.type) {
-                is AmountType.Coin -> transactionBuilder.buildToSign(transactionData)
-                is AmountType.Token -> transactionBuilder.buildToSignKRC20Commit(
-                    transactionData = transactionData,
-                    dust = dustValue,
-                    includeFee = false,
-                ).let {
-                    when (it) {
-                        is Result.Failure -> it
-                        is Result.Success -> Result.Success(it.data.transaction)
-                    }
-                }
-                else -> error("unknown amount type for fee estimation")
+            val feeEstimation = kaspaFeesCalculator.estimateFee(amount, transactionData, dustValue).successOr {
+                return it
             }
 
-            when (buildTransactionResult) {
-                is Result.Failure -> return buildTransactionResult
-                is Result.Success -> {
-                    val transaction = buildTransactionResult.data
-                    val hashesToSign = transactionBuilder.getHashesForSign(transaction)
-                    return when (val signerResult = dummySigner.sign(hashesToSign, wallet.publicKey)) {
-                        is CompletionResult.Success -> {
-                            val transactionToSend = transactionBuilder.buildToSend(
-                                signatures = signerResult.data.reduce { acc, bytes -> acc + bytes },
-                                transaction = transaction,
-                            )
-                            when (val sendResult = networkProvider.calculateFee(transactionToSend.transaction)) {
-                                is Result.Failure -> sendResult
-                                is Result.Success -> {
-                                    val data = sendResult.data
-                                    val mass = BigInteger.valueOf(data.mass)
-
-                                    val allBuckets = (
-                                        listOf(data.priorityBucket) +
-                                            data.normalBuckets +
-                                            data.lowBuckets
-                                        ).sortedByDescending { it.feeRate }
-
-                                    Result.Success(
-                                        TransactionFee.Choosable(
-                                            priority = allBuckets[0].toFee(mass, amount.type),
-                                            normal = allBuckets[1].toFee(mass, amount.type),
-                                            minimum = allBuckets[2].toFee(mass, amount.type),
-                                        ),
-                                    )
-                                }
-                            }
-                        }
-                        is CompletionResult.Failure -> Result.fromTangemSdkError(signerResult.error)
-                    }
-                }
-            }
+            return Result.Success(
+                kaspaFeesCalculator.toTransactionFee(
+                    feeEstimation = feeEstimation,
+                    amountType = amount.type,
+                ),
+            )
         }
     }
 
-    override fun checkUtxoAmountLimit(amount: BigDecimal, fee: BigDecimal): UtxoAmountLimit? {
+    override fun checkUtxoAmountLimit(amount: BigDecimal, fee: BigDecimal): UtxoAmountLimit {
         val unspents = transactionBuilder.getUnspentsToSpend()
-        val change = transactionBuilder.calculateChange(amount, fee, unspents)
-        return if (change < BigDecimal.ZERO) { // unspentsToSpend not enough to cover transaction amount
-            UtxoAmountLimit(
-                KaspaTransactionBuilder.MAX_INPUT_COUNT.toBigDecimal(),
-                amount + change,
-            )
+        val amountLimit = UtxoAmountLimit(
+            limit = KaspaTransactionBuilder.MAX_INPUT_COUNT.toBigDecimal(),
+            availableToSpend = transactionBuilder.getUnspentsToSpendAmount(),
+            availableToSend = null,
+        )
+        val fullAmount = unspents.sumOf { it.amount }
+        val change = fullAmount - (amount + fee)
+
+        // unspentsToSpend not enough to cover transaction amount
+        return if (change < BigDecimal.ZERO || change > BigDecimal.ZERO && change < dustValue) {
+            amountLimit.copy(availableToSend = amount + change - dustValue)
         } else {
-            null
+            amountLimit
         }
     }
 
@@ -271,7 +244,7 @@ internal class KaspaWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
+        when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData, dustValue)) {
             is Result.Failure -> return buildTransactionResult
             is Result.Success -> {
                 val transaction = buildTransactionResult.data
@@ -309,7 +282,7 @@ internal class KaspaWalletManager(
         return when (
             val commitTransaction = transactionBuilder.buildToSignKRC20Commit(
                 transactionData = transactionData,
-                dust = dustValue,
+                dustValue = dustValue,
             )
         ) {
             is Result.Success -> {
@@ -318,6 +291,7 @@ internal class KaspaWalletManager(
                     redeemScript = commitTransaction.data.redeemScript,
                     revealFeeAmountValue = (transactionData.fee as Fee.Kaspa).revealTransactionFee?.value!!,
                     params = commitTransaction.data.params,
+                    dustValue = dustValue,
                 )
 
                 when (revealTransaction) {
@@ -398,6 +372,7 @@ internal class KaspaWalletManager(
             redeemScript = redeemScript,
             params = incompleteTokenTransactionParams,
             revealFeeAmountValue = revealFeeAmountValue,
+            dustValue = dustValue,
         )
         return when (transaction) {
             is Result.Success -> {
@@ -462,30 +437,6 @@ internal class KaspaWalletManager(
         )
     }
 
-    private fun KaspaFeeBucketResponse.toFee(mass: BigInteger, type: AmountType): Fee.Kaspa {
-        val feeRate = feeRate.toBigInteger()
-        val resultMass = if (type is AmountType.Token) {
-            mass + REVEAL_TRANSACTION_MASS
-        } else {
-            mass
-        }
-        val value = (resultMass * feeRate).toBigDecimal().movePointLeft(blockchain.decimals())
-        return Fee.Kaspa(
-            amount = Amount(
-                value = value,
-                blockchain = blockchain,
-            ),
-            mass = mass,
-            feeRate = feeRate,
-            revealTransactionFee = type.takeIf { it is AmountType.Token }.let {
-                Amount(
-                    value = (REVEAL_TRANSACTION_MASS * feeRate).toBigDecimal().movePointLeft(blockchain.decimals()),
-                    blockchain = blockchain,
-                )
-            },
-        )
-    }
-
     // we should update unspent outputs as soon as possible before create a new token transaction
     private suspend fun updateUnspentOutputs() {
         coroutineScope {
@@ -517,7 +468,6 @@ internal class KaspaWalletManager(
     }
 
     companion object {
-        private val REVEAL_TRANSACTION_MASS: BigInteger = 4100.toBigInteger()
         private const val REVEAL_TRANSACTION_DELAY: Long = 2_000
     }
 }
