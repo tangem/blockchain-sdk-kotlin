@@ -97,6 +97,7 @@ enum class Blockchain(
     EthereumPow("ETH-Pow", "ETHW", "Ethereum PoW"),
     EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW Testnet"),
     Kaspa("KAS", "KAS", "Kaspa"),
+    KaspaTestnet("KAS/test", "KAS", "Kaspa Testnet"),
     Telos("TELOS", "TLOS", "Telos EVM"),
     TelosTestnet("TELOS/test", "TLOS", "Telos Testnet"),
     TON("The-Open-Network", "TON", "TON"),
@@ -249,7 +250,7 @@ enum class Blockchain(
         Ducatus,
         Dogecoin,
         Dash,
-        Kaspa,
+        Kaspa, KaspaTestnet,
         Ravencoin, RavencoinTestnet,
         Aptos, AptosTestnet,
         Hedera, HederaTestnet,
@@ -434,7 +435,7 @@ enum class Blockchain(
 
             Aptos, AptosTestnet -> AptosAddressService(isTestnet())
             Tron, TronTestnet -> TronAddressService()
-            Kaspa -> KaspaAddressService()
+            Kaspa, KaspaTestnet -> KaspaAddressService(this.isTestnet())
             Chia, ChiaTestnet -> ChiaAddressService(this)
             Hedera, HederaTestnet -> HederaAddressService(this.isTestnet())
             Nexa, NexaTestnet -> NexaAddressService(this.isTestnet())
@@ -536,6 +537,7 @@ enum class Blockchain(
             Bitrock, BitrockTestnet -> BitrockTestnet
             Sonic, SonicTestnet -> SonicTestnet
             ApeChain, ApeChainTestnet -> ApeChainTestnet
+            Kaspa, KaspaTestnet -> KaspaTestnet
             else -> null
         }
     }
@@ -575,7 +577,7 @@ enum class Blockchain(
             Dash,
             Optimism, OptimismTestnet,
             Dischain, EthereumPow, EthereumPowTestnet,
-            Kaspa,
+            Kaspa, KaspaTestnet,
             Ravencoin, RavencoinTestnet,
             Cosmos, CosmosTestnet,
             TerraV1, TerraV2,
@@ -759,7 +761,7 @@ enum class Blockchain(
             Hedera, HederaTestnet,
             TON, TONTestnet,
             Cardano,
-            Kaspa,
+            Kaspa, KaspaTestnet,
             -> true
 
             else -> false
@@ -804,7 +806,7 @@ enum class Blockchain(
         Litecoin,
         Dogecoin,
         Dash,
-        Kaspa,
+        Kaspa, KaspaTestnet,
         Ravencoin, RavencoinTestnet,
         Ducatus,
         -> true
