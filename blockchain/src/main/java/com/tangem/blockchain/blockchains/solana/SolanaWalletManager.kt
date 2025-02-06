@@ -259,17 +259,19 @@ class SolanaWalletManager internal constructor(
         val remainingSignedTransactions = signedTransactions.dropIfNeeded(shouldDropFirst)
         val remainingTransactionData = transactionDataList.dropIfNeeded(shouldDropFirst)
 
-        val otherSendResults = remainingUnsignedTransactions.zip(remainingSignedTransactions).mapIndexed { index, (unsignedTx, signedTx) ->
-            when (val result = sendTransaction(unsignedTx, signedTx, startSendingTimestamp)) {
-                is Result.Success -> {
-                    val originalTx = remainingTransactionData[index]
-                    originalTx.hash = result.data.hash
-                    wallet.addOutgoingTransaction(originalTx.updateHash(hash = result.data.hash))
-                    Result.Success(TransactionSendResult(result.data.hash))
+        val otherSendResults = remainingUnsignedTransactions
+            .zip(remainingSignedTransactions)
+            .mapIndexed { index, (unsignedTx, signedTx) ->
+                when (val result = sendTransaction(unsignedTx, signedTx, startSendingTimestamp)) {
+                    is Result.Success -> {
+                        val originalTx = remainingTransactionData[index]
+                        originalTx.hash = result.data.hash
+                        wallet.addOutgoingTransaction(originalTx.updateHash(hash = result.data.hash))
+                        Result.Success(TransactionSendResult(result.data.hash))
+                    }
+                    is Result.Failure -> result
                 }
-                is Result.Failure -> result
             }
-        }
 
         sendResults.addAll(otherSendResults)
 
@@ -280,7 +282,6 @@ class SolanaWalletManager internal constructor(
             Result.Success(TransactionsSendResult(sendResults.mapNotNull { (it as? Result.Success)?.data?.hash }))
         }
     }
-
 
     private suspend fun signMultipleCompiledTransactions(
         transactionToSign: List<ByteArray>,
