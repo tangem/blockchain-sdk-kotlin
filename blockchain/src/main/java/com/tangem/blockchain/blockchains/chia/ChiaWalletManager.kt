@@ -91,17 +91,19 @@ class ChiaWalletManager(
         }
     }
 
-    override fun checkUtxoAmountLimit(amount: BigDecimal, fee: BigDecimal): UtxoAmountLimit? {
+    override fun checkUtxoAmountLimit(amount: BigDecimal, fee: BigDecimal): UtxoAmountLimit {
         val unspents = transactionBuilder.getUnspentsToSpend()
         val change = transactionBuilder.calculateChange(amount, fee, unspents)
         val changeDecimal = change.toBigDecimal().movePointLeft(blockchain.decimals())
+        val amountLimit = UtxoAmountLimit(
+            limit = ChiaTransactionBuilder.MAX_INPUT_COUNT.toBigDecimal(),
+            availableToSpend = transactionBuilder.getUnspentsToSpendAmount().toBigDecimal(),
+            availableToSend = null,
+        )
         return if (changeDecimal < BigDecimal.ZERO) { // unspentsToSpend not enough to cover transaction amount
-            UtxoAmountLimit(
-                maxLimit = ChiaTransactionBuilder.MAX_INPUT_COUNT.toBigDecimal(),
-                maxAmount = amount + changeDecimal,
-            )
+            amountLimit.copy(availableToSend = amount + changeDecimal)
         } else {
-            null
+            amountLimit
         }
     }
 }
