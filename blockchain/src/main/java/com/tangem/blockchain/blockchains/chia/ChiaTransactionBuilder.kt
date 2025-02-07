@@ -91,6 +91,8 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
         return balance - (amount.toMojo() + fee.toMojo())
     }
 
+    fun getUnspentsToSpendAmount() = getUnspentsToSpend().sumOf { it.amount }
+
     private fun getUnspentsToSpendCount(): Int = unspentCoins.size.coerceAtMost(MAX_INPUT_COUNT)
 
     private fun aggregateSignatures(signatures: List<ByteArray>): ByteArray {
