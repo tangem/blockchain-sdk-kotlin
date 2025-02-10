@@ -255,9 +255,9 @@ class SolanaWalletManager internal constructor(
 
         val shouldDropFirst = sendMode == TransactionSender.MultipleTransactionSendMode.WAIT_AFTER_FIRST
 
-        val remainingUnsignedTransactions = unsignedTransactions.dropIfNeeded(shouldDropFirst)
-        val remainingSignedTransactions = signedTransactions.dropIfNeeded(shouldDropFirst)
-        val remainingTransactionData = transactionDataList.dropIfNeeded(shouldDropFirst)
+        val remainingUnsignedTransactions = unsignedTransactions.dropFirstIfNeeded(shouldDropFirst)
+        val remainingSignedTransactions = signedTransactions.dropFirstIfNeeded(shouldDropFirst)
+        val remainingTransactionData = transactionDataList.dropFirstIfNeeded(shouldDropFirst)
 
         val otherSendResults = remainingUnsignedTransactions
             .zip(remainingSignedTransactions)
@@ -531,15 +531,18 @@ class SolanaWalletManager internal constructor(
         else -> RENT_PER_EPOCH_IN_LAMPORTS
     }
 
-    private fun <T> List<T>.dropIfNeeded(condition: Boolean) = if (condition) drop(1) else this
+    private fun <T> List<T>.dropFirstIfNeeded(condition: Boolean) = if (condition) drop(1) else this
 
     private companion object {
         const val MIN_ACCOUNT_DATA_SIZE = 0L
         const val SIGNATURE_PLACEHOLDER_LENGTH = 65
-        const val DELAY_AFTER_SPLIT_TRANSACTION = 5000L
 
         const val ACCOUNT_METADATA_SIZE = 128L
         const val RENT_PER_EPOCH_IN_LAMPORTS = 19.055441478439427
         const val RENT_PER_EPOCH_IN_LAMPORTS_DEV_NET = 0.359375
+
+        // delay between SPLIT transaction (if any) and other (usually UNSTAKE)
+        // SPLIT transaction is not executed immediately, so we should wait for 5 seconds to send UNSTAKE transactions
+        const val DELAY_AFTER_SPLIT_TRANSACTION = 5000L
     }
 }
