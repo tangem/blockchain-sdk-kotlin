@@ -36,9 +36,9 @@ internal interface MoralisEvmApi {
         @Body request: MoralisEvmNFTGetAssetsRequest,
     ): List<MoralisEvmNFTAssetResponse>
 
-    @GET("api/v2.2/nft/{address}/{token_id}/price")
+    @GET("api/v2.2/nft/{contract_address}/{token_id}/price")
     suspend fun getNFTPrice(
-        @Path("address") address: String,
+        @Path("contract_address") contractAddress: String,
         @Path("token_id") tokenId: String,
         @Query("chain") chain: String,
         @Query("days") days: Int = 7,
