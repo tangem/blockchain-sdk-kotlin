@@ -20,7 +20,7 @@ internal data class MoralisEvmNFTAssetResponse(
     @Json(name = "token_hash") val tokenHash: String?,
     @Json(name = "token_uri") val tokenUri: String?,
     @Json(name = "minter_address") val minterAddress: String?,
-    @Json(name = "rarity_rank") val rarityRank: Int?,
+    @Json(name = "rarity_rank") val rarityRank: Double?,
     @Json(name = "rarity_percentage") val rarityPercentage: Double?,
     @Json(name = "rarity_label") val rarityLabel: String?,
     @Json(name = "verified_collection") val verifiedCollection: Boolean?,
