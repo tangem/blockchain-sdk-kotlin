@@ -2,13 +2,13 @@ package com.tangem.blockchain.blockchains.alephium.source
 
 import kotlinx.io.bytestring.ByteString
 
-internal data class TransactionId constructor(val value: Blake2b) {
+internal data class TransactionId constructor(val value: Blake2b256) {
 
     fun bytes(): ByteArray {
         return value.bytes()
     }
 
     companion object {
-        fun hash(bytes: ByteString): TransactionId = TransactionId(Blake2bUtils.hash(bytes))
+        fun hash(bytes: ByteString): TransactionId = TransactionId(Blake2b256Utils.hash(bytes))
     }
 }
