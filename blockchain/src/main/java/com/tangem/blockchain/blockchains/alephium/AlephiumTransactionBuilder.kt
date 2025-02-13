@@ -38,7 +38,7 @@ internal class AlephiumTransactionBuilder(
             AssetOutputInfo(
                 ref = AssetOutputRef(
                     hint = Hint(it.ref.hint),
-                    key = TxOutputRef.Key(Blake2b(ByteString(it.ref.key.hexToBytes()))),
+                    key = TxOutputRef.Key(Blake2b256(ByteString(it.ref.key.hexToBytes()))),
                 ),
                 outputType = UnpersistedBlockOutput,
                 output = AssetOutput(
@@ -85,7 +85,7 @@ internal class AlephiumTransactionBuilder(
             ?: return Result.Failure(BlockchainSdkError.AccountNotFound())
         val decodeAddressWithoutPrefix = ByteString(decodeAddress).substring(1)
         val outputInfos = TxOutputInfo(
-            lockupScript = LockupScript.P2PKH(Blake2b(decodeAddressWithoutPrefix)),
+            lockupScript = LockupScript.P2PKH(Blake2b256(decodeAddressWithoutPrefix)),
             attoAlphAmount = innerAmount,
             tokens = listOf(),
             lockTime = null,
