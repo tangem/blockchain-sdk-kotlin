@@ -2,7 +2,6 @@ package com.tangem.blockchain.blockchains.alephium
 
 import com.tangem.blockchain.blockchains.alephium.network.AlephiumNetworkProvider
 import com.tangem.blockchain.blockchains.alephium.source.dustUtxoAmount
-import com.tangem.blockchain.blockchains.alephium.source.nonCoinbaseMinGasPrice
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -12,6 +11,7 @@ import com.tangem.blockchain.extensions.fold
 import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
 import kotlin.math.max
@@ -74,10 +74,10 @@ internal class AlephiumWalletManager(
         var gasPrice = networkService.getFee(
             amount = dustValue.movePointRight(wallet.blockchain.decimals()),
             destination = destination,
-            publicKey = wallet.publicKey.blockchainKey.toHexString(),
+            publicKey = wallet.publicKey.blockchainKey.toCompressedPublicKey().toHexString(),
         )
             .map { it.gasPrice }
-            .successOr { nonCoinbaseMinGasPrice.value.v.toBigDecimal() }
+            .successOr { return it }
         var gasAmount = calculateGasAmount().successOr { return it }
         val fee = Fee.Alephium(amount, gasPrice, gasAmount)
 

@@ -11,7 +11,7 @@ internal object TxUtils {
         fromUnlockScript: UnlockScript,
         outputInfos: TxOutputInfo,
         gasOpt: GasBox,
-        gasPrice: GasPrice = nonCoinbaseMinGasPrice,
+        gasPrice: GasPrice,
         utxos: List<AssetOutputInfo>,
         networkId: NetworkId,
     ): Result<UnsignedTransaction> {
