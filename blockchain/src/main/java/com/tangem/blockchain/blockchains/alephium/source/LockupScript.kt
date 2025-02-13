@@ -14,12 +14,12 @@ internal sealed interface LockupScript {
     }
 
     data class P2PKH(
-        val pkHash: Blake2b,
+        val pkHash: Blake2b256,
     ) : Asset {
         override val scriptHint: ScriptHint = ScriptHint.fromHash(pkHash)
 
         companion object {
-            val serde = Blake2b.serde
+            val serde = Blake2b256.serde
         }
     }
 
@@ -42,7 +42,7 @@ internal sealed interface LockupScript {
         }
 
         fun p2pkh(publicKey: ByteString): P2PKH {
-            return P2PKH(Blake2bUtils.hash(publicKey))
+            return P2PKH(Blake2b256Utils.hash(publicKey))
         }
     }
 }
