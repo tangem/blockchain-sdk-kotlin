@@ -137,7 +137,7 @@ class AlephiumTransactionTest {
             AssetOutputInfo(
                 ref = AssetOutputRef(
                     hint = Hint(it.ref.hint),
-                    key = TxOutputRef.Key(Blake2b(ByteString(it.ref.key.hexToBytes()))),
+                    key = TxOutputRef.Key(Blake2b256(ByteString(it.ref.key.hexToBytes()))),
                 ),
                 outputType = UnpersistedBlockOutput,
                 output = AssetOutput(
@@ -163,7 +163,7 @@ class AlephiumTransactionTest {
                 TxInput(
                     outputRef = AssetOutputRef(
                         hint = Hint(utxo.ref.hint),
-                        key = TxOutputRef.Key(Blake2b(ByteString(utxo.ref.key.hexToBytes()))),
+                        key = TxOutputRef.Key(Blake2b256(ByteString(utxo.ref.key.hexToBytes()))),
                     ),
                     unlockScript = if (index == 0) unlockScript else UnlockScript.SameAsPrevious,
                 )
@@ -171,7 +171,7 @@ class AlephiumTransactionTest {
             fixedOutputs = listOf(
                 AssetOutput(
                     amount = U256(BigInteger("4966000000000000000")),
-                    lockupScript = LockupScript.P2PKH(Blake2b(decodeAddressWithoutPrefix)),
+                    lockupScript = LockupScript.P2PKH(Blake2b256(decodeAddressWithoutPrefix)),
                     lockTime = TimeStamp(0),
                     tokens = listOf(),
                     additionalData = ByteString(),
