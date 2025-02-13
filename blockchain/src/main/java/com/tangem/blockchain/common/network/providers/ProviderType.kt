@@ -63,4 +63,8 @@ sealed interface ProviderType {
         object Dwellir : Bittensor
         object Onfinality : Bittensor
     }
+
+    sealed interface Alephium : ProviderType {
+        object Tangem : Alephium
+    }
 }
