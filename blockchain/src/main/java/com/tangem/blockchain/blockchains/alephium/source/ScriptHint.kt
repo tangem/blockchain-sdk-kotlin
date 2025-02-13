@@ -3,7 +3,7 @@ package com.tangem.blockchain.blockchains.alephium.source
 internal data class ScriptHint(val value: Int) {
 
     companion object {
-        fun fromHash(hash: Blake2b): ScriptHint {
+        fun fromHash(hash: Blake2b256): ScriptHint {
             return fromHash(DjbHash.intHash(hash.bytes()))
         }
 

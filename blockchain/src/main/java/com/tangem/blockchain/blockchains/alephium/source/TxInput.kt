@@ -24,9 +24,9 @@ internal sealed interface TxOutputRef {
     val isAssetType: Boolean
     val isContractType: Boolean
 
-    data class Key(val value: Blake2b) {
+    data class Key(val value: Blake2b256) {
         companion object {
-            val keySerde: Serde<Key> = Blake2b.serde.xmap(::Key) { it.value }
+            val keySerde: Serde<Key> = Blake2b256.serde.xmap(::Key) { it.value }
         }
     }
 
