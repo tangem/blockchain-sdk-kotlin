@@ -1,16 +1,20 @@
 package com.tangem.blockchain.blockchains.alephium.network
 
 import com.tangem.blockchain.blockchains.alephium.models.AlephiumFee
-import com.tangem.blockchain.blockchains.alephium.source.*
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.createRetrofitInstance
+import okhttp3.Interceptor
 import java.math.BigDecimal
 
-class AlephiumRestNetworkService(override val baseUrl: String) : AlephiumNetworkProvider {
+class AlephiumRestNetworkService(
+    override val baseUrl: String,
+    headerInterceptors: List<Interceptor> = emptyList(),
+) : AlephiumNetworkProvider {
 
-    private val api = createRetrofitInstance(baseUrl = baseUrl).create(AlephiumApi::class.java)
+    private val api = createRetrofitInstance(baseUrl = baseUrl, headerInterceptors = headerInterceptors)
+        .create(AlephiumApi::class.java)
 
     override suspend fun getInfo(address: String): Result<AlephiumResponse.Utxos> {
         return try {
