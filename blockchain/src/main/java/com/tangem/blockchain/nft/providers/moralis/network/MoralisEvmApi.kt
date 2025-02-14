@@ -12,7 +12,7 @@ internal interface MoralisEvmApi {
     suspend fun getNFTCollections(
         @Path("address") address: String,
         @Query("chain") chain: String,
-        @Query("cursor") cursor: String,
+        @Query("cursor") cursor: String?,
         @Query("limit") limit: Int,
         @Query("exclude_spam") excludeSpam: Boolean = true,
         @Query("token_counts") tokenCounts: Boolean = true,
@@ -23,7 +23,7 @@ internal interface MoralisEvmApi {
         @Path("address") address: String,
         @Query("token_addresses[]") contractAddresses: List<String>,
         @Query("chain") chain: String,
-        @Query("cursor") cursor: String,
+        @Query("cursor") cursor: String?,
         @Query("limit") limit: Int,
         @Query("format") format: String = "decimal",
         @Query("normalizeMetadata") normalizeMetadata: Boolean = true,
