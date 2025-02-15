@@ -5,9 +5,7 @@ import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.nft.NFTProvider
 import com.tangem.blockchain.nft.models.*
-import com.tangem.blockchain.nft.providers.moralis.network.MoralisEvmApi
-import com.tangem.blockchain.nft.providers.moralis.network.MoralisEvmNFTAssetResponse
-import com.tangem.blockchain.nft.providers.moralis.network.MoralisEvmNFTCollectionResponse
+import com.tangem.blockchain.nft.providers.moralis.network.*
 import okhttp3.internal.toHexString
 import java.math.BigDecimal
 
@@ -46,8 +44,8 @@ internal class MoralisEvmNFTProvider(
             .mapNotNull {
                 it.tokenAddress?.let { tokenAddress ->
                     NFTCollection(
-                        contractName = it.name.orEmpty(),
-                        contractAddress = tokenAddress,
+                        name = it.name.orEmpty(),
+                        identifier = NFTCollection.Identifier.EVM(tokenAddress),
                         blockchain = blockchain,
                         description = null,
                         logoUrl = it.collectionLogo,
@@ -57,7 +55,11 @@ internal class MoralisEvmNFTProvider(
             }
     }
 
-    override suspend fun getAssets(walletAddress: String, contractAddress: String): List<NFTAsset> {
+    override suspend fun getAssets(
+        walletAddress: String,
+        collectionIdentifier: NFTCollection.Identifier,
+    ): List<NFTAsset> {
+        require(collectionIdentifier is NFTCollection.Identifier.EVM)
         val accumulator = mutableListOf<MoralisEvmNFTAssetResponse>()
         var cursor: String? = null
         // implement pagination internally
@@ -65,7 +67,7 @@ internal class MoralisEvmNFTProvider(
             val response = moralisEvmApi.getNFTAssets(
                 address = walletAddress,
                 chain = blockchain.toQueryParam(),
-                contractAddresses = listOf(contractAddress),
+                tokenAddresses = listOf(collectionIdentifier.tokenAddress),
                 limit = PAGINATION_LIMIT,
                 cursor = cursor,
             )
@@ -73,51 +75,37 @@ internal class MoralisEvmNFTProvider(
             cursor = response.cursor
         } while (cursor != null)
 
-        return accumulator
-            .map {
-                val rarity = if (it.rarityLabel != null && it.rarityRank != null) {
-                    NFTAssetRarity(it.rarityRank.toString(), it.rarityLabel)
-                } else {
-                    null
-                }
-
+        return accumulator.mapNotNull {
+            it.tokenId?.let { tokenId ->
                 NFTAsset(
-                    tokenId = it.tokenId.orEmpty(),
-                    tokenAddress = it.tokenAddress,
-                    contractAddress = contractAddress,
+                    identifier = NFTAsset.Identifier.EVM(tokenId),
+                    collectionIdentifier = collectionIdentifier,
                     contractType = it.contractType.orEmpty(),
                     blockchain = blockchain,
                     owner = it.ownerOf,
                     name = it.normalizedMetadata?.name,
                     description = it.normalizedMetadata?.description,
                     salePrice = null,
-                    rarity = rarity,
-                    media = it.media?.let {
-                        if (it.mimeType != null && it.mediaCollection?.high?.url != null) {
-                            NFTAssetMedia(it.mimeType, it.mediaCollection.high.url)
-                        } else {
-                            null
-                        }
-                    },
+                    rarity = it.toNFTAssetRarity(),
+                    media = it.media?.toNFTAssetMedia(),
                     traits = it.normalizedMetadata?.attributes?.mapNotNull {
-                        if (it.traitType != null && it.value != null) {
-                            NFTAssetTrait(it.traitType, it.value)
-                        } else {
-                            null
-                        }
+                        it.toNFTAssetTrait()
                     }.orEmpty(),
                 )
             }
+        }
     }
 
     override suspend fun getSalePrice(
         walletAddress: String,
-        contractAddress: String,
-        tokenId: String,
-    ): NFTAssetSalePrice? {
+        collectionIdentifier: NFTCollection.Identifier,
+        assetIdentifier: NFTAsset.Identifier,
+    ): NFTAsset.SalePrice? {
+        require(collectionIdentifier is NFTCollection.Identifier.EVM)
+        require(assetIdentifier is NFTAsset.Identifier.EVM)
         val response = moralisEvmApi.getNFTPrice(
-            contractAddress = contractAddress,
-            tokenId = tokenId,
+            tokenAddress = collectionIdentifier.tokenAddress,
+            tokenId = assetIdentifier.tokenId,
             chain = blockchain.toQueryParam(),
             days = LAST_SALE_PRICE_DAYS,
         )
@@ -131,7 +119,7 @@ internal class MoralisEvmNFTProvider(
         val tokenSymbol = response.lastSale?.paymentToken?.tokenSymbol
 
         return if (price != null && tokenSymbol != null) {
-            NFTAssetSalePrice(
+            NFTAsset.SalePrice(
                 value = price,
                 symbol = tokenSymbol,
             )
@@ -141,6 +129,27 @@ internal class MoralisEvmNFTProvider(
     }
 
     private fun Blockchain.toQueryParam(): String = this.getChainId()?.toHexString().orEmpty()
+
+    private fun MoralisEvmNFTMediaResponse.toNFTAssetMedia(): NFTAsset.Media? =
+        if (mimeType != null && mediaCollection?.high?.url != null) {
+            NFTAsset.Media(mimeType, mediaCollection.high.url)
+        } else {
+            null
+        }
+
+    private fun MoralisEvmNFTAttributeResponse.toNFTAssetTrait(): NFTAsset.Trait? =
+        if (traitType != null && value != null) {
+            NFTAsset.Trait(traitType, value)
+        } else {
+            null
+        }
+
+    private fun MoralisEvmNFTAssetResponse.toNFTAssetRarity(): NFTAsset.Rarity? =
+        if (rarityLabel != null && rarityRank != null) {
+            NFTAsset.Rarity(rarityRank.toString(), rarityLabel)
+        } else {
+            null
+        }
 
     private companion object {
         const val LAST_SALE_PRICE_DAYS = 365
