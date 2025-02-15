@@ -2,6 +2,7 @@ package com.tangem.blockchain.nft
 
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.nft.providers.moralis.MoralisEvmNFTProvider
+import com.tangem.blockchain.nft.providers.nftscan.NFTScanTonNFTProvider
 
 class NFTProviderFactory(
     private val config: NFTSdkConfig = NFTSdkConfig(),
@@ -27,6 +28,11 @@ class NFTProviderFactory(
         -> MoralisEvmNFTProvider(
             blockchain = blockchain,
             apiKey = config.moralisApiKey,
+        )
+
+        Blockchain.TON,
+        -> NFTScanTonNFTProvider(
+            apiKey = config.nftScanApiKey,
         )
 
         else -> NFTEmptyProvider()
