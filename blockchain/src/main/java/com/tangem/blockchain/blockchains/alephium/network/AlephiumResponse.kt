@@ -18,6 +18,7 @@ object AlephiumResponse {
         @Json(name = "tokens") val tokens: List<Token>?,
     ) {
         val isConfirmed get() = lockTime != 0L
+        fun isNotFromFuture(nowMillis: Long) = lockTime <= nowMillis
 
         @JsonClass(generateAdapter = true)
         data class Ref(
