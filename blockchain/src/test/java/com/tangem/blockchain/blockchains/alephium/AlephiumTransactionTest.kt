@@ -133,7 +133,8 @@ class AlephiumTransactionTest {
     )
 
     private fun buildAssetOutputInfo(utxos: AlephiumResponse.Utxos): List<AssetOutputInfo> {
-        return utxos.utxos.filter { it.isConfirmed }.map {
+        val nowMillis = System.currentTimeMillis()
+        return utxos.utxos.filter { it.isNotFromFuture(nowMillis) }.map {
             AssetOutputInfo(
                 ref = AssetOutputRef(
                     hint = Hint(it.ref.hint),
