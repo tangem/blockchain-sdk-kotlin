@@ -93,6 +93,13 @@ internal class SuiWalletManager(
         walletInfo = info
 
         wallet.setAmount(Amount(info.suiTotalBalance, wallet.blockchain))
+        cardTokens.forEach { token ->
+            val tokenBalance = info.coins
+                .filter { it.coinType == token.contractAddress }
+                .sumOf { it.mistBalance }
+                .movePointLeft(token.decimals)
+            wallet.addTokenValue(tokenBalance, token)
+        }
 
         checkUncompletedTransactions()
     }
