@@ -91,4 +91,8 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     SonicTestnet(id = 57054, blockchain = Blockchain.SonicTestnet),
     ApeChain(id = 33139, blockchain = Blockchain.ApeChain),
     ApeChainTestnet(id = 33111, blockchain = Blockchain.ApeChainTestnet),
+    Scroll(id = 534352, blockchain = Blockchain.Scroll),
+    ScrollTestnet(id = 534351, blockchain = Blockchain.ScrollTestnet),
+    ZkLinkNova(id = 810180, blockchain = Blockchain.ZkLinkNova),
+    ZkLinkNovaTestnet(id = 810181, blockchain = Blockchain.ZkLinkNovaTestnet),
 }

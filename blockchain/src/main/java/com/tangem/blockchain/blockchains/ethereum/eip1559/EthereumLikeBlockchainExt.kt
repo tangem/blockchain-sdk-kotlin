@@ -57,6 +57,8 @@ internal val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Chiliz,
             Blockchain.VanarChain,
             Blockchain.Bitrock,
+            Blockchain.Scroll,
+            Blockchain.ZkLinkNova,
             -> false
             else -> error("Don't forget about evm here")
         }
