@@ -158,6 +158,8 @@ class WalletManagerFactory(
             Blockchain.Bitrock, Blockchain.BitrockTestnet,
             Blockchain.Sonic, Blockchain.SonicTestnet,
             Blockchain.ApeChain, Blockchain.ApeChainTestnet,
+            Blockchain.Scroll, Blockchain.ScrollTestnet,
+            Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet,
             -> EthereumLikeWalletManagerAssembly
 
             Blockchain.Mantle, Blockchain.MantleTestnet,
