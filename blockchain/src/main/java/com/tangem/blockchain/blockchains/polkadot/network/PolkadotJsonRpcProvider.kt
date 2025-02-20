@@ -2,8 +2,6 @@ package com.tangem.blockchain.blockchains.polkadot.network
 
 import com.tangem.blockchain.blockchains.polkadot.models.PolkadotRuntimeDispatchInfo
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.JsonRPCRequest
-import com.tangem.blockchain.common.JsonRPCResponse
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.bytes4LittleEndian
@@ -45,12 +43,17 @@ internal class PolkadotJsonRpcProvider(
         return when (response) {
             is Result.Success -> {
                 val result = response.data.result.toString().remove(HEX_PREFIX)
-                val reader = ScaleCodecReader(result.decodeFromHex().toByteArray())
+                val bytesToParse = result.decodeFromHex().toByteArray()
+                val reader = ScaleCodecReader(bytesToParse)
                 val parsedData = PolkadotRuntimeDispatchInfo(
                     refTime = reader.readCompactInt(),
                     proofSize = reader.readCompactInt(),
                     classType = reader.readByte(),
-                    partialFee = reader.readUint128(),
+                    partialFee = if (bytesToParse.size == SHORT_FEE_RESPONSE_LENGTH) {
+                        reader.readUInt64()
+                    } else {
+                        reader.readUint128()
+                    },
                 )
                 parsedData.partialFee.toBigDecimal().movePointLeft(decimals) ?: BigDecimal.ZERO
             }
@@ -102,5 +105,11 @@ internal class PolkadotJsonRpcProvider(
         is Result.Failure -> {
             throw this.error as? BlockchainSdkError ?: BlockchainSdkError.CustomError("Unknown error format")
         }
+    }
+
+    private companion object {
+        // RPC Apis for Bittensor are returning shortened response to TransactionPaymentApi_query_info
+        // Which result value partialFee be not UINT128 but UINT64
+        const val SHORT_FEE_RESPONSE_LENGTH = 15
     }
 }
