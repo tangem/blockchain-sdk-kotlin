@@ -101,6 +101,8 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Bitrock, Blockchain.BitrockTestnet -> BitrockExternalLinkProvider(isTestnet)
             Blockchain.Sonic, Blockchain.SonicTestnet -> SonicExternalLinkProvider(isTestnet)
             Blockchain.ApeChain, Blockchain.ApeChainTestnet -> ApeChainExternalLinkProvider(isTestnet)
+            Blockchain.Scroll, Blockchain.ScrollTestnet -> ScrollExternalLinkProvider(isTestnet)
+            Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet -> ZkLinkNovaExternalLinkProvider(isTestnet)
         }
     }
 }
