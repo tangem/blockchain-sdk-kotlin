@@ -29,13 +29,16 @@ internal class AlephiumWalletManager(
     override suspend fun updateInternal() {
         val info = networkService.getInfo(wallet.address).successOr { return }
         var hasUnconfirmed = false
+        val nowMillis = System.currentTimeMillis()
         val amount = info
             .utxos
             .filter {
                 if (!it.isConfirmed) hasUnconfirmed = true
-                it.isConfirmed
+                it.isNotFromFuture(nowMillis)
             }
-            .sumOf { it.amount.toBigDecimal() }
+            .sumOf {
+                it.amount.toBigDecimal()
+            }
             .movePointLeft(wallet.blockchain.decimals())
         transactionBuilder.updateUnspentOutputs(info)
         if (!hasUnconfirmed) wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
