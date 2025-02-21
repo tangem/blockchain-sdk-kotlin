@@ -34,7 +34,8 @@ internal class AlephiumTransactionBuilder(
     }
 
     fun updateUnspentOutputs(utxos: AlephiumResponse.Utxos) {
-        unspentOutputs = utxos.utxos.filter { it.isConfirmed }.map {
+        val nowMillis = System.currentTimeMillis()
+        unspentOutputs = utxos.utxos.filter { it.isNotFromFuture(nowMillis) }.map {
             AssetOutputInfo(
                 ref = AssetOutputRef(
                     hint = Hint(it.ref.hint),
