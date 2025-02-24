@@ -542,7 +542,7 @@ class SolanaWalletManager internal constructor(
         const val RENT_PER_EPOCH_IN_LAMPORTS_DEV_NET = 0.359375
 
         // delay between SPLIT transaction (if any) and other (usually UNSTAKE)
-        // SPLIT transaction is not executed immediately, so we should wait for 5 seconds to send UNSTAKE transactions
-        const val DELAY_AFTER_SPLIT_TRANSACTION = 5000L
+        // SPLIT transaction is not executed immediately, so we should wait for 15 seconds to send UNSTAKE transactions
+        const val DELAY_AFTER_SPLIT_TRANSACTION = 15000L
     }
 }
