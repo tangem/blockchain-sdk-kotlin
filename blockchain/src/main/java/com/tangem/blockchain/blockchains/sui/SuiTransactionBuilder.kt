@@ -2,13 +2,12 @@ package com.tangem.blockchain.blockchains.sui
 
 import com.tangem.blockchain.blockchains.sui.model.SuiCoin
 import com.tangem.blockchain.blockchains.sui.model.SuiWalletInfo
-import com.tangem.blockchain.blockchains.sui.network.SuiConstants
 import com.tangem.blockchain.blockchains.sui.network.SuiConstants.COIN_TYPE
-import com.tangem.blockchain.blockchains.sui.network.SuiConstants.suiGasBudgetMaxValue
-import com.tangem.blockchain.blockchains.sui.network.SuiNetworkService
+import com.tangem.blockchain.blockchains.sui.network.SuiConstants.SUI_GAS_BUDGET_MAX_VALUE
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.fold
 import com.tangem.blockchain.extensions.successOr
 import wallet.core.jni.CoinType
 import wallet.core.jni.DataVector
@@ -21,13 +20,14 @@ import java.math.BigDecimal
 internal class SuiTransactionBuilder(
     private val walletAddress: String,
     private val publicKey: Wallet.PublicKey,
-    private val networkService: SuiNetworkService,
 ) {
 
-    suspend fun buildForDryRun(walletInfo: SuiWalletInfo, amount: Amount, destination: String): Result<String> {
-        val gasPrice = networkService.getReferenceGasPrice()
-            .successOr { return it }
-
+    fun buildForDryRun(
+        walletInfo: SuiWalletInfo,
+        amount: Amount,
+        destination: String,
+        gasPrice: BigDecimal,
+    ): Result<String> {
         return when (amount.type) {
             AmountType.Coin -> buildForInspectCoinTransaction(
                 walletInfo = walletInfo,
@@ -41,8 +41,27 @@ internal class SuiTransactionBuilder(
                 destination = destination,
                 referenceGasPrice = gasPrice,
                 suiWallet = walletInfo,
-            )
+            ).fold(success = { Result.Success(it) }, failure = {
+                val isLessThenOne = isCoinGasLessThenOneForTokenTransaction(walletInfo, amount)
+                if (isLessThenOne) Result.Failure(BlockchainSdkError.Sui.OneSuiRequired) else Result.Failure(it)
+            },)
             else -> Result.Failure(BlockchainSdkError.FailedToBuildTx)
+        }
+    }
+
+    fun checkOnFailureFeeLoad(walletInfo: SuiWalletInfo, amount: Amount): Result.Failure {
+        val isLessThenOne = isCoinGasLessThenOneForTokenTransaction(walletInfo, amount)
+        val error = if (isLessThenOne) BlockchainSdkError.Sui.OneSuiRequired else BlockchainSdkError.FailedToLoadFee
+        return Result.Failure(error)
+    }
+
+    private fun isCoinGasLessThenOneForTokenTransaction(walletInfo: SuiWalletInfo, amount: Amount): Boolean {
+        return when (amount.type) {
+            is AmountType.Token -> {
+                val coinGas = findCoinGas(walletInfo)?.mistBalance ?: return true
+                coinGas < BigDecimal.ONE.movePointRight(Blockchain.Sui.decimals())
+            }
+            else -> false
         }
     }
 
@@ -53,17 +72,17 @@ internal class SuiTransactionBuilder(
         gasPrice: BigDecimal,
     ): Result<String> {
         val amountMist = amount.value
-            ?.movePointRight(SuiConstants.MIST_SCALE)
+            ?.movePointRight(Blockchain.Sui.decimals())
             ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
-        val totalBalanceMist = walletInfo.suiTotalBalance.movePointRight(SuiConstants.MIST_SCALE)
+        val totalBalanceMist = walletInfo.suiTotalBalance.movePointRight(Blockchain.Sui.decimals())
         val isPayAll = amountMist == totalBalanceMist
         val availableBudget = if (isPayAll) {
             totalBalanceMist - BigDecimal.ONE
         } else {
             totalBalanceMist - amountMist
         }
-        val budget = minOf(availableBudget, BigDecimal.valueOf(MAX_GAS_BUDGET))
+        val budget = minOf(availableBudget, SUI_GAS_BUDGET_MAX_VALUE)
 
         val input = buildSigningInputObject(
             walletInfo = walletInfo,
@@ -111,7 +130,7 @@ internal class SuiTransactionBuilder(
                 walletInfo = walletInfo,
                 destinationAddress = txData.destinationAddress,
                 amountMist = amount.value
-                    ?.movePointRight(SuiConstants.MIST_SCALE)
+                    ?.movePointRight(Blockchain.Sui.decimals())
                     ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx),
                 fee = txData.fee as? Fee.Sui
                     ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx),
@@ -214,8 +233,11 @@ internal class SuiTransactionBuilder(
     ): Result<String> {
         val decimalAmount = amount.value?.movePointRight(token.decimals)
             ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-        val availableBudget = suiWallet.coins.maxByOrNull { it.mistBalance }?.mistBalance ?: BigDecimal.ZERO
-        val budget = availableBudget.min(suiGasBudgetMaxValue)
+        val availableBudget = suiWallet.coins
+            .filter { it.coinType == token.contractAddress }
+            .maxByOrNull { it.mistBalance }
+            ?.mistBalance ?: BigDecimal.ZERO
+        val budget = minOf(availableBudget, SUI_GAS_BUDGET_MAX_VALUE)
 
         val input = makeTokenInput(
             decimalAmount = decimalAmount,
@@ -251,10 +273,7 @@ internal class SuiTransactionBuilder(
     ): Sui.SigningInput? {
         val coinToUse = getCoins(decimalAmount, token, suiWallet)
 
-        val coinGas = suiWallet.coins
-            .filter { it.coinType == COIN_TYPE }
-            .maxByOrNull { it.mistBalance }
-            ?: return null
+        val coinGas = findCoinGas(suiWallet) ?: return null
 
         return Sui.SigningInput.newBuilder().apply {
             val inputCoins = coinToUse.map { coin ->
@@ -282,6 +301,10 @@ internal class SuiTransactionBuilder(
         }.build()
     }
 
+    private fun findCoinGas(suiWallet: SuiWalletInfo): SuiCoin? = suiWallet.coins
+        .filter { it.coinType == COIN_TYPE }
+        .maxByOrNull { it.mistBalance }
+
     private fun getCoins(amount: BigDecimal, token: Token, suiWallet: SuiWalletInfo): List<SuiCoin> {
         val inputs = mutableListOf<SuiCoin>()
         var total = BigDecimal.ZERO
@@ -297,10 +320,5 @@ internal class SuiTransactionBuilder(
         }
 
         return inputs
-    }
-
-    private companion object {
-
-        const val MAX_GAS_BUDGET = 50_000_000_000L // 50 SUI
     }
 }
