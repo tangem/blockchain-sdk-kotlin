@@ -17,7 +17,11 @@ data class NFTAsset(
     val traits: List<Trait>,
 ) {
     sealed class Identifier {
-        data class EVM(val tokenId: String) : Identifier()
+        data class EVM(
+            val tokenId: String,
+            val tokenAddress: String,
+        ) : Identifier()
+
         data class TON(val tokenAddress: String) : Identifier()
     }
 

@@ -77,23 +77,39 @@ internal class MoralisEvmNFTProvider(
 
         return accumulator.mapNotNull {
             it.tokenId?.let { tokenId ->
-                NFTAsset(
-                    identifier = NFTAsset.Identifier.EVM(tokenId),
+                it.toNFTAsset(
+                    assetIdentifier = NFTAsset.Identifier.EVM(
+                        tokenId = tokenId,
+                        tokenAddress = collectionIdentifier.tokenAddress,
+                    ),
                     collectionIdentifier = collectionIdentifier,
-                    contractType = it.contractType.orEmpty(),
-                    blockchain = blockchain,
-                    owner = it.ownerOf,
-                    name = it.normalizedMetadata?.name,
-                    description = it.normalizedMetadata?.description,
-                    salePrice = null,
-                    rarity = it.toNFTAssetRarity(),
-                    media = it.media?.toNFTAssetMedia(),
-                    traits = it.normalizedMetadata?.attributes?.mapNotNull {
-                        it.toNFTAssetTrait()
-                    }.orEmpty(),
                 )
             }
         }
+    }
+
+    override suspend fun getAsset(
+        collectionIdentifier: NFTCollection.Identifier,
+        assetIdentifier: NFTAsset.Identifier,
+    ): NFTAsset? {
+        require(collectionIdentifier is NFTCollection.Identifier.EVM)
+        require(assetIdentifier is NFTAsset.Identifier.EVM)
+        val request = MoralisEvmNFTGetAssetsRequest(
+            tokens = listOf(
+                MoralisEvmNFTGetAssetsTokenRequest(
+                    tokenAddress = assetIdentifier.tokenAddress,
+                    tokenId = assetIdentifier.tokenId,
+                ),
+            ),
+        )
+
+        return moralisEvmApi
+            .getNFTAssets(request)
+            .firstOrNull()
+            ?.toNFTAsset(
+                assetIdentifier = assetIdentifier,
+                collectionIdentifier = collectionIdentifier,
+            )
     }
 
     override suspend fun getSalePrice(
@@ -129,6 +145,25 @@ internal class MoralisEvmNFTProvider(
     }
 
     private fun Blockchain.toQueryParam(): String = this.getChainId()?.toHexString().orEmpty()
+
+    private fun MoralisEvmNFTAssetResponse.toNFTAsset(
+        assetIdentifier: NFTAsset.Identifier,
+        collectionIdentifier: NFTCollection.Identifier.EVM,
+    ): NFTAsset = NFTAsset(
+        identifier = assetIdentifier,
+        collectionIdentifier = collectionIdentifier,
+        contractType = contractType.orEmpty(),
+        blockchain = blockchain,
+        owner = ownerOf,
+        name = normalizedMetadata?.name,
+        description = normalizedMetadata?.description,
+        salePrice = null,
+        rarity = toNFTAssetRarity(),
+        media = media?.toNFTAssetMedia(),
+        traits = normalizedMetadata?.attributes?.mapNotNull {
+            it.toNFTAssetTrait()
+        }.orEmpty(),
+    )
 
     private fun MoralisEvmNFTMediaResponse.toNFTAssetMedia(): NFTAsset.Media? =
         if (mimeType != null && mediaCollection?.high?.url != null) {
