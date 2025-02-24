@@ -12,6 +12,7 @@ import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.sign
+import com.tangem.operations.sign.SignData
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter
 import io.emeraldpay.polkaj.scale.UnionValue
 import io.emeraldpay.polkaj.scaletypes.EraWriter
@@ -251,5 +252,16 @@ internal class DummyPolkadotTransactionSigner : TransactionSigner {
 
     override suspend fun sign(hash: ByteArray, publicKey: Wallet.PublicKey): CompletionResult<ByteArray> {
         return CompletionResult.Success(hash.sign(privateKey, EllipticCurve.Ed25519))
+    }
+
+    override suspend fun multiSign(
+        dataToSign: List<SignData>,
+        publicKey: Wallet.PublicKey,
+    ): CompletionResult<Map<ByteArray, ByteArray>> {
+        return CompletionResult.Success(
+            dataToSign.associate {
+                it.hash to it.hash.sign(privateKey, EllipticCurve.Ed25519)
+            },
+        )
     }
 }
