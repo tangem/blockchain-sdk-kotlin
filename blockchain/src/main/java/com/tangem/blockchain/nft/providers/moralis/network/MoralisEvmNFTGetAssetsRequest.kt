@@ -13,5 +13,5 @@ internal data class MoralisEvmNFTGetAssetsRequest(
 @JsonClass(generateAdapter = true)
 internal data class MoralisEvmNFTGetAssetsTokenRequest(
     @Json(name = "token_address") val tokenAddress: String,
-    @Json(name = "token_id") val tokenId: Int,
+    @Json(name = "token_id") val tokenId: String,
 )
