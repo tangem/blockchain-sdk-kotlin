@@ -74,6 +74,19 @@ internal class NFTScanTonNFTProvider(
         }
     }
 
+    override suspend fun getAsset(
+        collectionIdentifier: NFTCollection.Identifier,
+        assetIdentifier: NFTAsset.Identifier,
+    ): NFTAsset? {
+        require(assetIdentifier is NFTAsset.Identifier.TON)
+        val response = nftScanTonApi.getNFTAsset(
+            tokenAddress = assetIdentifier.tokenAddress,
+        )
+        return response.data?.toNFTAsset(
+            collectionIdentifier = collectionIdentifier,
+        )
+    }
+
     override suspend fun getSalePrice(
         walletAddress: String,
         collectionIdentifier: NFTCollection.Identifier,
