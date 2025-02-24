@@ -8,6 +8,11 @@ interface NFTProvider {
 
     suspend fun getAssets(walletAddress: String, collectionIdentifier: NFTCollection.Identifier): List<NFTAsset>
 
+    suspend fun getAsset(
+        collectionIdentifier: NFTCollection.Identifier,
+        assetIdentifier: NFTAsset.Identifier,
+    ): NFTAsset?
+
     suspend fun getSalePrice(
         walletAddress: String,
         collectionIdentifier: NFTCollection.Identifier,
