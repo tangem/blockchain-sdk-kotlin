@@ -11,6 +11,11 @@ internal class NFTEmptyProvider : NFTProvider {
         collectionIdentifier: NFTCollection.Identifier,
     ): List<NFTAsset> = emptyList()
 
+    override suspend fun getAsset(
+        collectionIdentifier: NFTCollection.Identifier,
+        assetIdentifier: NFTAsset.Identifier,
+    ): NFTAsset? = null
+
     override suspend fun getSalePrice(
         walletAddress: String,
         collectionIdentifier: NFTCollection.Identifier,
