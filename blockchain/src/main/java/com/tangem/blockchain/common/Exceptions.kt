@@ -342,6 +342,15 @@ sealed class BlockchainSdkError(
         ) {
             private fun readResolve(): Any = TokenNotFound
         }
+
+        @Suppress("UnusedPrivateMember")
+        data object OneSuiRequired : Sui(
+            subCode = 3,
+            customMessage = "Insufficient funds. An incoming transaction of " +
+                "at least 1 Sui is required to proceed",
+        ) {
+            private fun readResolve(): Any = OneSuiRequired
+        }
     }
 
     sealed class Alephium(

@@ -2,7 +2,6 @@ package com.tangem.blockchain.blockchains.sui
 
 import android.util.Log
 import com.tangem.blockchain.blockchains.sui.model.SuiWalletInfo
-import com.tangem.blockchain.blockchains.sui.network.SuiConstants
 import com.tangem.blockchain.blockchains.sui.network.SuiNetworkService
 import com.tangem.blockchain.blockchains.sui.network.rpc.SuiJsonRpcProvider
 import com.tangem.blockchain.common.*
@@ -18,7 +17,7 @@ import kotlinx.coroutines.coroutineScope
 internal class SuiWalletManager(
     wallet: Wallet,
     networkProviders: List<SuiJsonRpcProvider>,
-) : WalletManager(wallet) {
+) : WalletManager(wallet), UtxoBlockchainManager {
 
     private val networkService: SuiNetworkService = SuiNetworkService(
         providers = networkProviders,
@@ -26,10 +25,11 @@ internal class SuiWalletManager(
     private val txBuilder = SuiTransactionBuilder(
         walletAddress = wallet.address,
         publicKey = wallet.publicKey,
-        networkService = networkService,
     )
 
     override val currentHost: String get() = networkService.host
+
+    override val allowConsolidation: Boolean = true
 
     private var walletInfo: SuiWalletInfo? = null
 
@@ -64,13 +64,15 @@ internal class SuiWalletManager(
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val info = walletInfo ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-        val transactionHash = txBuilder.buildForDryRun(info, amount, destination)
+        val gasPrice = networkService.getReferenceGasPrice()
+            .successOr { return it }
+        val transactionHash = txBuilder.buildForDryRun(info, amount, destination, gasPrice)
             .successOr { return it }
         val txResponse = networkService.dryRunTransaction(transactionHash)
             .successOr { return it }
 
         if (!txResponse.effects.status.isSuccess) {
-            return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+            return txBuilder.checkOnFailureFeeLoad(info, amount)
         }
 
         val gasUsed = txResponse.effects.gasUsed
@@ -78,7 +80,7 @@ internal class SuiWalletManager(
 
         val feeAmount = Amount(
             blockchain = Blockchain.Sui,
-            value = totalGasMist.movePointLeft(SuiConstants.MIST_SCALE),
+            value = totalGasMist.movePointLeft(Blockchain.Sui.decimals()),
         )
         val fee = Fee.Sui(
             amount = feeAmount,
