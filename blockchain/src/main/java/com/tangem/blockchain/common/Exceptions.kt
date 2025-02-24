@@ -296,6 +296,7 @@ sealed class BlockchainSdkError(
             customMessage = "Insufficient min-ada-value amount. In addition to network fees, the Cardano network " +
                 "charges min-ada-value. Make sure the balance is sufficient to withdraw the token.",
         )
+        data object InvalidDerivationType : Cardano(subCode = 4)
     }
 
     sealed class Aptos(
