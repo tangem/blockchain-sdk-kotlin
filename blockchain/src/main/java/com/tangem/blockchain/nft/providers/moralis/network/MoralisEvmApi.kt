@@ -31,10 +31,7 @@ internal interface MoralisEvmApi {
     ): MoralisEvmNFTResponse<MoralisEvmNFTAssetResponse>
 
     @POST("api/v2.2/nft/getMultipleNFTs")
-    suspend fun getNFTAssets(
-        @Query("token_addresses[]") tokenAddresses: List<String>,
-        @Body request: MoralisEvmNFTGetAssetsRequest,
-    ): List<MoralisEvmNFTAssetResponse>
+    suspend fun getNFTAssets(@Body request: MoralisEvmNFTGetAssetsRequest): List<MoralisEvmNFTAssetResponse>
 
     @GET("api/v2.2/nft/{token_address}/{token_id}/price")
     suspend fun getNFTPrice(
