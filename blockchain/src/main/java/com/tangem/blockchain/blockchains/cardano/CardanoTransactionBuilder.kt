@@ -128,27 +128,33 @@ internal class CardanoTransactionBuilder(
     }
 
     fun buildForSend(transactionData: TransactionData, signatureInfo: SignatureInfo): ByteArray {
+        return buildForSend(transactionData, listOf(signatureInfo))
+    }
+
+    fun buildForSend(transactionData: TransactionData, signaturesInfo: List<SignatureInfo>): ByteArray {
         val input = twTxBuilder.build(transactionData)
         val txInputData = input.toByteArray()
 
         val signatures = DataVector()
-        signatures.add(signatureInfo.signature)
-
         val publicKeys = DataVector()
 
-        // WalletCore used here `.ed25519Cardano` curve with 128 bytes publicKey.
-        // Calculated as: chainCode + secondPubKey + chainCode
-        // The number of bytes in a Cardano public key (two ed25519 public key + chain code).
-        // We should add dummy chain code in publicKey if we use old 32 byte key to get 128 bytes in total
-        val publicKey = if (CardanoUtils.isExtendedPublicKey(signatureInfo.publicKey)) {
-            signatureInfo.publicKey
-        } else {
-            signatureInfo.publicKey + ByteArray(MISSING_LENGTH_TO_EXTENDED_KEY)
+        signaturesInfo.forEach { signatureInfo ->
+            signatures.add(signatureInfo.signature)
+
+            // WalletCore used here `.ed25519Cardano` curve with 128 bytes publicKey.
+            // Calculated as: chainCode + secondPubKey + chainCode
+            // The number of bytes in a Cardano public key (two ed25519 public key + chain code).
+            // We should add dummy chain code in publicKey if we use old 32 byte key to get 128 bytes in total
+            val publicKey = if (CardanoUtils.isExtendedPublicKey(signatureInfo.publicKey)) {
+                signatureInfo.publicKey
+            } else {
+                signatureInfo.publicKey + ByteArray(MISSING_LENGTH_TO_EXTENDED_KEY)
+            }
+
+            publicKeys.add(publicKey)
         }
 
-        publicKeys.add(publicKey)
-
-        val compileWithSignatures = TransactionCompiler.compileWithSignatures(
+        val compileWithSignatures = TransactionCompiler.compileWithMultipleSignatures(
             coinType,
             txInputData,
             signatures,
