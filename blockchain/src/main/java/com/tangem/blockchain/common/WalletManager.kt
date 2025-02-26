@@ -5,11 +5,11 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.*
-import com.tangem.blockchain.extensions.DebouncedInvoke
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.isZero
+import com.tangem.operations.sign.SignData
 import java.math.BigDecimal
 import java.util.Calendar
 import java.util.EnumSet
@@ -214,6 +214,11 @@ interface TransactionSigner {
     suspend fun sign(hashes: List<ByteArray>, publicKey: Wallet.PublicKey): CompletionResult<List<ByteArray>>
 
     suspend fun sign(hash: ByteArray, publicKey: Wallet.PublicKey): CompletionResult<ByteArray>
+
+    suspend fun multiSign(
+        dataToSign: List<SignData>,
+        publicKey: Wallet.PublicKey,
+    ): CompletionResult<Map<ByteArray, ByteArray>>
 }
 
 interface TransactionValidator {
