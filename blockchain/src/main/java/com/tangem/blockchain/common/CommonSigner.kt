@@ -3,6 +3,7 @@ package com.tangem.blockchain.common
 import com.tangem.Message
 import com.tangem.TangemSdk
 import com.tangem.common.CompletionResult
+import com.tangem.operations.sign.SignData
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
@@ -55,4 +56,31 @@ open class CommonSigner(
                 }
             }
         }
+
+    override suspend fun multiSign(
+        dataToSign: List<SignData>,
+        publicKey: Wallet.PublicKey,
+    ): CompletionResult<Map<ByteArray, ByteArray>> = suspendCancellableCoroutine { continuation ->
+        tangemSdk.sign(
+            dataToSign = dataToSign,
+            walletPublicKey = publicKey.seedKey,
+            cardId = cardId,
+            initialMessage = initialMessage,
+        ) { result ->
+            when (result) {
+                is CompletionResult.Success ->
+                    if (continuation.isActive) {
+                        continuation.resume(
+                            CompletionResult.Success(
+                                result.data.associate { it.walletPublicKey to it.signature },
+                            ),
+                        )
+                    }
+                is CompletionResult.Failure ->
+                    if (continuation.isActive) {
+                        continuation.resume(CompletionResult.Failure(result.error))
+                    }
+            }
+        }
+    }
 }
