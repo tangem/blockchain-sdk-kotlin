@@ -1,5 +1,6 @@
 package com.tangem.blockchain.transactionhistory
 
+import com.tangem.blockchain.blockchains.kaspa.KaspaProvidersBuilder
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.network.blockbook.config.NowNodesConfig
@@ -9,6 +10,8 @@ import com.tangem.blockchain.transactionhistory.blockchains.algorand.AlgorandTra
 import com.tangem.blockchain.transactionhistory.blockchains.algorand.network.AlgorandIndexerApi
 import com.tangem.blockchain.transactionhistory.blockchains.bitcoin.BitcoinTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.blockchains.ethereum.EthereumTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.blockchains.kaspa.KaspaTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.blockchains.kaspa.network.KaspaApiService
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.PolygonTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.PolygonScanApi
 import com.tangem.blockchain.transactionhistory.blockchains.tron.TronTransactionHistoryProvider
@@ -39,6 +42,8 @@ internal object TransactionHistoryProviderFactory {
             Blockchain.Polygon -> createPolygonProvider(blockchain, config)
 
             Blockchain.Koinos -> createKoinosProvider()
+
+            Blockchain.Kaspa, Blockchain.KaspaTestnet -> createKaspaProvider(blockchain)
 
             else -> DefaultTransactionHistoryProvider
         }
@@ -84,6 +89,14 @@ internal object TransactionHistoryProviderFactory {
             blockchain = blockchain,
             api = createRetrofitInstance("https://api.polygonscan.com/").create(PolygonScanApi::class.java),
             polygonScanApiKey = apiKey,
+        )
+    }
+
+    private fun createKaspaProvider(blockchain: Blockchain): KaspaTransactionHistoryProvider {
+        val baseUrl = if (blockchain.isTestnet()) KaspaProvidersBuilder.TESTNET_URL else "https://api.kaspa.org/"
+        return KaspaTransactionHistoryProvider(
+            blockchain = blockchain,
+            kaspaApiService = createRetrofitInstance(baseUrl = baseUrl).create(KaspaApiService::class.java),
         )
     }
 
