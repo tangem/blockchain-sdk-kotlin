@@ -28,5 +28,7 @@ data class NFTCollection(
         data class TON(
             @Json(name = "contractAddress") val contractAddress: String?,
         ) : Identifier()
+
+        data object Unknown : Identifier()
     }
 }
