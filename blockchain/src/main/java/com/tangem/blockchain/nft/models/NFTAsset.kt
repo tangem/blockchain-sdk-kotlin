@@ -34,6 +34,8 @@ data class NFTAsset(
         data class TON(
             @Json(name = "tokenAddress") val tokenAddress: String,
         ) : Identifier()
+
+        data object Unknown : Identifier()
     }
 
     @JsonClass(generateAdapter = true)
