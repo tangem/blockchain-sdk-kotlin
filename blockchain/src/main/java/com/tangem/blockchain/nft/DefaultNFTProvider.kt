@@ -3,7 +3,7 @@ package com.tangem.blockchain.nft
 import com.tangem.blockchain.nft.models.NFTAsset
 import com.tangem.blockchain.nft.models.NFTCollection
 
-internal class NFTEmptyProvider : NFTProvider {
+internal object DefaultNFTProvider : NFTProvider {
     override suspend fun getCollections(walletAddress: String): List<NFTCollection> = emptyList()
 
     override suspend fun getAssets(
