@@ -15,6 +15,7 @@ import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.trustlines.AssetRequirementsCondition
 import com.tangem.blockchain.common.trustlines.AssetRequirementsManager
 import com.tangem.blockchain.extensions.*
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
@@ -31,7 +32,11 @@ internal class KaspaWalletManager(
     private val networkProvider: KaspaNetworkProvider,
     private val krc20NetworkProvider: KaspaKRC20NetworkProvider,
     private val dataStorage: AdvancedDataStorage,
-) : WalletManager(wallet), UtxoAmountLimitProvider, UtxoBlockchainManager, AssetRequirementsManager {
+    txHistoryProvider: TransactionHistoryProvider,
+) : WalletManager(wallet = wallet, transactionHistoryProvider = txHistoryProvider),
+    UtxoAmountLimitProvider,
+    UtxoBlockchainManager,
+    AssetRequirementsManager {
 
     override val currentHost: String
         get() = networkProvider.baseUrl
