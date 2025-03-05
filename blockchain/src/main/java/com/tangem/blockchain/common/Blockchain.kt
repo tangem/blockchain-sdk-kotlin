@@ -786,6 +786,7 @@ enum class Blockchain(
             TON, TONTestnet,
             Cardano,
             Kaspa, KaspaTestnet,
+            Sui, SuiTestnet,
             -> true
 
             else -> false
