@@ -46,7 +46,7 @@ internal class MoralisEvmNFTProvider(
                     NFTCollection(
                         name = it.name.orEmpty(),
                         identifier = NFTCollection.Identifier.EVM(tokenAddress),
-                        blockchain = blockchain,
+                        blockchainId = blockchain.id,
                         description = null,
                         logoUrl = it.collectionLogo,
                         count = it.count ?: 0,
@@ -153,7 +153,7 @@ internal class MoralisEvmNFTProvider(
         identifier = assetIdentifier,
         collectionIdentifier = collectionIdentifier,
         contractType = contractType.orEmpty(),
-        blockchain = blockchain,
+        blockchainId = blockchain.id,
         owner = ownerOf,
         name = normalizedMetadata?.name,
         description = normalizedMetadata?.description,
