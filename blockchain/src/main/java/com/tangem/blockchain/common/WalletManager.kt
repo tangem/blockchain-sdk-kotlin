@@ -5,6 +5,8 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.*
+import com.tangem.blockchain.nft.DefaultNFTProvider
+import com.tangem.blockchain.nft.NFTProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
@@ -18,7 +20,10 @@ abstract class WalletManager(
     var wallet: Wallet,
     val cardTokens: MutableSet<Token> = mutableSetOf(),
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
-) : TransactionHistoryProvider by transactionHistoryProvider, TransactionSender {
+    nftProvider: NFTProvider = DefaultNFTProvider,
+) : TransactionSender,
+    TransactionHistoryProvider by transactionHistoryProvider,
+    NFTProvider by nftProvider {
 
     open val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Unspecified
 

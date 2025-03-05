@@ -1,13 +1,12 @@
 package com.tangem.blockchain.nft
 
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.nft.providers.moralis.MoralisEvmNFTProvider
 import com.tangem.blockchain.nft.providers.nftscan.NFTScanTonNFTProvider
 
-class NFTProviderFactory(
-    private val config: NFTSdkConfig = NFTSdkConfig(),
-) {
-    fun createNFTProvider(blockchain: Blockchain): NFTProvider = when (blockchain) {
+internal object NFTProviderFactory {
+    fun createNFTProvider(blockchain: Blockchain, config: BlockchainSdkConfig): NFTProvider = when (blockchain) {
         Blockchain.Ethereum, // supported testnet - Sepolia (11155111)
         Blockchain.Arbitrum, // supported testnet - Sepolia (421614)
         Blockchain.Avalanche,
@@ -35,6 +34,6 @@ class NFTProviderFactory(
             apiKey = config.nftScanApiKey,
         )
 
-        else -> NFTEmptyProvider()
+        else -> DefaultNFTProvider
     }
 }
