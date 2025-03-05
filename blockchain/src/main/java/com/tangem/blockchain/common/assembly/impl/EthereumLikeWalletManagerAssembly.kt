@@ -11,6 +11,7 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
+import com.tangem.blockchain.nft.NFTProviderFactory
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 
 internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<EthereumWalletManager>() {
@@ -25,6 +26,7 @@ internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<Ethere
                         .build(blockchain),
                 ),
                 transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
+                nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
             )
         }
     }
@@ -82,6 +84,8 @@ internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<Ethere
                 config = config,
             )
             Blockchain.ApeChain, Blockchain.ApeChainTestnet -> ApeChainProvidersBuilder(providerTypes)
+            Blockchain.Scroll, Blockchain.ScrollTestnet -> ScrollProvidersBuilder(providerTypes)
+            Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet -> ZkLinkNovaProvidersBuilder(providerTypes)
             else -> error("Unsupported blockchain: $blockchain")
         }
     }

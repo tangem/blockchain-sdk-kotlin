@@ -13,6 +13,8 @@ import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
+import com.tangem.blockchain.nft.DefaultNFTProvider
+import com.tangem.blockchain.nft.NFTProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
@@ -29,7 +31,8 @@ open class EthereumWalletManager(
     val transactionBuilder: EthereumTransactionBuilder,
     protected val networkProvider: EthereumNetworkProvider,
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
-) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider),
+    nftProvider: NFTProvider = DefaultNFTProvider,
+) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider, nftProvider = nftProvider),
     SignatureCountValidator,
     TokenFinder,
     EthereumGasLoader,
