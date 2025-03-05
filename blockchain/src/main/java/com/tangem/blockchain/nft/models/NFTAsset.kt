@@ -2,15 +2,13 @@ package com.tangem.blockchain.nft.models
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import com.tangem.blockchain.common.Blockchain
-import kotlinx.serialization.Serializable
 import java.math.BigDecimal
 
 @JsonClass(generateAdapter = true)
 data class NFTAsset(
     @Json(name = "identifier") val identifier: Identifier,
     @Json(name = "collectionIdentifier") val collectionIdentifier: NFTCollection.Identifier,
-    @Json(name = "blockchain") val blockchain: Blockchain,
+    @Json(name = "blockchainId") val blockchainId: String,
     @Json(name = "contractType") val contractType: String,
     @Json(name = "owner") val owner: String?,
     @Json(name = "name") val name: String?,
@@ -20,16 +18,13 @@ data class NFTAsset(
     @Json(name = "media") val media: Media?,
     @Json(name = "traits") val traits: List<Trait>,
 ) {
-    @Serializable
     sealed class Identifier {
-        @Serializable
         @JsonClass(generateAdapter = true)
         data class EVM(
             @Json(name = "tokenId") val tokenId: String,
             @Json(name = "tokenAddress") val tokenAddress: String,
         ) : Identifier()
 
-        @Serializable
         @JsonClass(generateAdapter = true)
         data class TON(
             @Json(name = "tokenAddress") val tokenAddress: String,
