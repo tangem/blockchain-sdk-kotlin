@@ -61,7 +61,7 @@ configurations {
 }
 
 dependencies {
-    implementation 'com.tangem.tangem-sdk-kotlin:core:develop-424'
+    implementation 'com.tangem.tangem-sdk-kotlin:core:develop-437'
     implementation 'com.tangem.tangem-sdk-kotlin:android:develop-424'
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -108,8 +108,8 @@ dependencies {
 
     implementation files('libs/hedera-sdk-java-2.29.0.jar')
     implementation "com.tangem:blstlib:master-1@aar"
-    implementation "com.tangem:wallet-core:4.1.20-tangem4@aar"
-    implementation("com.tangem:wallet-core-proto:4.1.20-tangem4") {
+    implementation "com.tangem:wallet-core:4.1.20-tangem6@aar"
+    implementation("com.tangem:wallet-core-proto:4.1.20-tangem6") {
         exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
     }
 
