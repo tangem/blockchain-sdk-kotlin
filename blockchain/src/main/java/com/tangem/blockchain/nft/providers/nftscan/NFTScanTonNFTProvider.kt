@@ -34,7 +34,7 @@ internal class NFTScanTonNFTProvider(
             NFTCollection(
                 name = it.contractName,
                 identifier = collectionIdentifier,
-                blockchain = Blockchain.TON,
+                blockchainId = Blockchain.TON.id,
                 description = it.description,
                 logoUrl = it.logoUrl,
                 count = it.ownsTotal ?: 0,
@@ -104,7 +104,7 @@ internal class NFTScanTonNFTProvider(
         identifier = NFTAsset.Identifier.TON(tokenAddress),
         collectionIdentifier = collectionIdentifier,
         contractType = TEP62_STANDARD,
-        blockchain = Blockchain.TON,
+        blockchainId = Blockchain.TON.id,
         owner = owner,
         name = name.orEmpty(),
         description = description,
