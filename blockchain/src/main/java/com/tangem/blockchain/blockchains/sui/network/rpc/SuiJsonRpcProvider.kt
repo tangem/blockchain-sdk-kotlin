@@ -2,7 +2,6 @@ package com.tangem.blockchain.blockchains.sui.network.rpc
 
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Types
-import com.tangem.blockchain.blockchains.sui.network.SuiConstants
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.toBlockchainSdkError
@@ -21,10 +20,9 @@ internal class SuiJsonRpcProvider(override val baseUrl: String) : NetworkProvide
     suspend fun getReferenceGasPrice(): Result<BigDecimal> = rpcCall(
         method = Method.GetReferenceGasPrice,
     )
-    suspend fun getCoins(address: String, coinType: String = SuiConstants.COIN_TYPE): Result<SuiCoinsResponse> =
-        rpcCall(
-            method = Method.GetCoins(address, coinType),
-        )
+    suspend fun getCoins(address: String): Result<SuiCoinsResponse> = rpcCall(
+        method = Method.GetCoins(address),
+    )
 
     suspend fun dryRunTransaction(transactionHash: String): Result<SuiDryRunTransactionResponse> = rpcCall(
         method = Method.DryRunTransactionBlock(transactionHash),
@@ -87,8 +85,8 @@ internal class SuiJsonRpcProvider(override val baseUrl: String) : NetworkProvide
             )
         }
 
-        class GetCoins(address: String, coinType: String) : Method<SuiCoinsResponse>(
-            method = "suix_getCoins",
+        class GetCoins(address: String) : Method<SuiCoinsResponse>(
+            method = "suix_getAllCoins",
         ) {
 
             override val adapter: JsonAdapter<SuiJsonRpcResponse<SuiCoinsResponse>> = moshi.adapter(
@@ -98,7 +96,7 @@ internal class SuiJsonRpcProvider(override val baseUrl: String) : NetworkProvide
                 ),
             )
 
-            override val params: List<String> = listOf(address, coinType)
+            override val params: List<String> = listOf(address)
         }
 
         class DryRunTransactionBlock(transactionHash: String) : Method<SuiDryRunTransactionResponse>(
