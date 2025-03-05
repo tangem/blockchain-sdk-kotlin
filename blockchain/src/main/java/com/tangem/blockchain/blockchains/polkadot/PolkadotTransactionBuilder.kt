@@ -224,12 +224,14 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
 
         const val USE_CHECK_METADATA_HASH_SPEC_VERSION_POLKADOT = 1002005
         const val USE_CHECK_METADATA_HASH_SPEC_VERSION_BITTENSOR = 198
+        const val USE_CHECK_METADATA_HASH_SPEC_VERSION_ENERGY_WEB_X = 77
 
         val SUPPORTED_CHECK_METADATA_HASH_BLOCKCHAINS = mapOf(
             Blockchain.Polkadot to USE_CHECK_METADATA_HASH_SPEC_VERSION_POLKADOT,
             Blockchain.PolkadotTestnet to USE_CHECK_METADATA_HASH_SPEC_VERSION_POLKADOT,
             Blockchain.Kusama to USE_CHECK_METADATA_HASH_SPEC_VERSION_POLKADOT,
             Blockchain.Bittensor to USE_CHECK_METADATA_HASH_SPEC_VERSION_BITTENSOR,
+            Blockchain.EnergyWebX to USE_CHECK_METADATA_HASH_SPEC_VERSION_ENERGY_WEB_X,
         )
     }
 }
