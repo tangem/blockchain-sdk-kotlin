@@ -4,8 +4,8 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-internal data class NFTScanTonNFTAssetResponse(
-    @Json(name = "token_address") val tokenAddress: String?,
+internal data class NFTScanTonAssetResponse(
+    @Json(name = "token_address") val tokenAddress: String,
     @Json(name = "contract_name") val contractName: String?,
     @Json(name = "contract_address") val contractAddress: String?,
     @Json(name = "token_id") val tokenId: String?,
@@ -26,5 +26,12 @@ internal data class NFTScanTonNFTAssetResponse(
     @Json(name = "latest_trade_price") val latestTradePrice: Double?,
     @Json(name = "latest_trade_timestamp") val latestTradeTimestamp: Long?,
     @Json(name = "latest_trade_transaction_hash") val latestTradeTransactionHash: String?,
-    @Json(name = "attributes") val attributes: String?,
+    @Json(name = "attributes") val attributes: List<NFTScanTonNFTAttributeResponse>?,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class NFTScanTonNFTAttributeResponse(
+    @Json(name = "attribute_name") val attributeName: String?,
+    @Json(name = "attribute_value") val attributeValue: String?,
+    @Json(name = "percentage") val percentage: String?,
 )
