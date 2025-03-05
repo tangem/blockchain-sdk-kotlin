@@ -5,11 +5,13 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.*
-import com.tangem.blockchain.extensions.DebouncedInvoke
+import com.tangem.blockchain.nft.DefaultNFTProvider
+import com.tangem.blockchain.nft.NFTProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.isZero
+import com.tangem.operations.sign.SignData
 import java.math.BigDecimal
 import java.util.Calendar
 import java.util.EnumSet
@@ -18,7 +20,10 @@ abstract class WalletManager(
     var wallet: Wallet,
     val cardTokens: MutableSet<Token> = mutableSetOf(),
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
-) : TransactionHistoryProvider by transactionHistoryProvider, TransactionSender {
+    nftProvider: NFTProvider = DefaultNFTProvider,
+) : TransactionSender,
+    TransactionHistoryProvider by transactionHistoryProvider,
+    NFTProvider by nftProvider {
 
     open val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Unspecified
 
@@ -214,6 +219,11 @@ interface TransactionSigner {
     suspend fun sign(hashes: List<ByteArray>, publicKey: Wallet.PublicKey): CompletionResult<List<ByteArray>>
 
     suspend fun sign(hash: ByteArray, publicKey: Wallet.PublicKey): CompletionResult<ByteArray>
+
+    suspend fun multiSign(
+        dataToSign: List<SignData>,
+        publicKey: Wallet.PublicKey,
+    ): CompletionResult<Map<ByteArray, ByteArray>>
 }
 
 interface TransactionValidator {
