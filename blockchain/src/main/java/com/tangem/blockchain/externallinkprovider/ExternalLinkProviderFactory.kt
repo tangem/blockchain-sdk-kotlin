@@ -45,7 +45,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Optimism, Blockchain.OptimismTestnet -> OptimismExternalLinkProvider(isTestnet)
             Blockchain.Dischain -> EthereumFairExternalLinkProvider()
             Blockchain.EthereumPow, Blockchain.EthereumPowTestnet -> EthereumPowExternalLinkProvider(isTestnet)
-            Blockchain.Kaspa -> KaspaExternalLinkProvider()
+            Blockchain.Kaspa, Blockchain.KaspaTestnet -> KaspaExternalLinkProvider(isTestnet)
             Blockchain.Telos, Blockchain.TelosTestnet -> TelosExternalLinkProvider(isTestnet)
             Blockchain.TON, Blockchain.TONTestnet -> TONExternalLinkProvider(isTestnet)
             Blockchain.Ravencoin, Blockchain.RavencoinTestnet -> RavencoinExternalLinkProvider(isTestnet)
@@ -92,12 +92,15 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Casper, Blockchain.CasperTestnet -> CasperExternalLinkProvider(isTestnet)
             Blockchain.Core, Blockchain.CoreTestnet -> CoreExternalLinkProvider(isTestnet)
             Blockchain.Chiliz, Blockchain.ChilizTestnet -> ChilizExternalLinkProvider(isTestnet)
+            Blockchain.Alephium, Blockchain.AlephiumTestnet -> AlephiumExternalLinkProvider(isTestnet)
             Blockchain.VanarChain, Blockchain.VanarChainTestnet -> VanarChainExternalLinkProvider(isTestnet)
             Blockchain.Xodex -> XodexExternalLinkProvider()
             Blockchain.Canxium -> CanxiumExternalLinkProvider()
             Blockchain.Clore -> CloreExternalLinkProvider()
             Blockchain.OdysseyChain, Blockchain.OdysseyChainTestnet -> OdysseyChainExternalLinkProvider(isTestnet)
             Blockchain.Bitrock, Blockchain.BitrockTestnet -> BitrockExternalLinkProvider(isTestnet)
+            Blockchain.Sonic, Blockchain.SonicTestnet -> SonicExternalLinkProvider(isTestnet)
+            Blockchain.ApeChain, Blockchain.ApeChainTestnet -> ApeChainExternalLinkProvider(isTestnet)
         }
     }
 }
