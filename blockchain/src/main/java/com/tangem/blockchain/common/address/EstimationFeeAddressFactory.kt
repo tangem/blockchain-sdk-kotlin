@@ -29,6 +29,7 @@ class EstimationFeeAddressFactory {
             Blockchain.Stellar, Blockchain.StellarTestnet,
             Blockchain.Binance, Blockchain.BinanceTestnet,
             Blockchain.SolanaTestnet,
+            Blockchain.KaspaTestnet,
             -> ""
 
             Blockchain.Nexa, Blockchain.NexaTestnet,
@@ -96,6 +97,8 @@ class EstimationFeeAddressFactory {
             Blockchain.Canxium,
             Blockchain.OdysseyChain, Blockchain.OdysseyChainTestnet,
             Blockchain.Bitrock, Blockchain.BitrockTestnet,
+            Blockchain.Sonic, Blockchain.SonicTestnet,
+            Blockchain.ApeChain, Blockchain.ApeChainTestnet,
             -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
             // Polkadot-like
             Blockchain.Polkadot, Blockchain.PolkadotTestnet ->
@@ -137,6 +140,8 @@ class EstimationFeeAddressFactory {
             -> "0xbca45e36a271e106546c89984108685215724e488570a0049a187c473cd521bc"
             Blockchain.EnergyWebX, Blockchain.EnergyWebXTestnet,
             -> "5CogUCbb5PYYbEHhDVGDN6JRRYBkd4sFRVc4wwP8oy5Su34Z"
+            Blockchain.Alephium, Blockchain.AlephiumTestnet,
+            -> "16tfjvsTi34r5bhifdBtY793n3fmrM7EtvvtE8XUN1Hv1"
             Blockchain.Clore -> "AJfAu7RJxiTowM9qVaTbVuS5JCPCpV3p7M"
         }
     }
