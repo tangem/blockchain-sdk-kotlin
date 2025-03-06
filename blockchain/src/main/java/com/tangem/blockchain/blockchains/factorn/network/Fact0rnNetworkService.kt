@@ -74,7 +74,6 @@ internal class Fact0rnNetworkService(
         .performRequest { getEstimateFee(blockAmount) }
         .map { feeResponse ->
             feeResponse.feeInCoinsPer1000Bytes
-                ?.divide(BigDecimal(BYTES_IN_KB))
                 ?.movePointLeft(blockchain.decimals())
                 ?: BigDecimal.ZERO
         }
