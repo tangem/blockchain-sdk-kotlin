@@ -156,6 +156,8 @@ class WalletManagerFactory(
             Blockchain.Canxium,
             Blockchain.OdysseyChain, Blockchain.OdysseyChainTestnet,
             Blockchain.Bitrock, Blockchain.BitrockTestnet,
+            Blockchain.Sonic, Blockchain.SonicTestnet,
+            Blockchain.ApeChain, Blockchain.ApeChainTestnet,
             -> EthereumLikeWalletManagerAssembly
 
             Blockchain.Mantle, Blockchain.MantleTestnet,
@@ -188,7 +190,7 @@ class WalletManagerFactory(
             Blockchain.Binance, Blockchain.BinanceTestnet -> BinanceWalletManagerAssembly
             Blockchain.Tezos -> TezosWalletManagerAssembly
             Blockchain.Tron, Blockchain.TronTestnet -> TronWalletManagerAssembly
-            Blockchain.Kaspa -> KaspaWalletManagerAssembly(dataStorage)
+            Blockchain.Kaspa, Blockchain.KaspaTestnet -> KaspaWalletManagerAssembly(dataStorage)
             Blockchain.TON, Blockchain.TONTestnet -> TonWalletManagerAssembly
             Blockchain.Cosmos, Blockchain.CosmosTestnet -> CosmosWalletManagerAssembly
             Blockchain.TerraV1 -> TerraV1WalletManagerAssembly
@@ -208,6 +210,7 @@ class WalletManagerFactory(
             Blockchain.InternetComputer -> ICPWalletManagerAssembly
             Blockchain.Sui, Blockchain.SuiTestnet -> SuiteWalletManagerAssembly
             Blockchain.Casper, Blockchain.CasperTestnet -> CasperWalletManagerAssembly
+            Blockchain.Alephium, Blockchain.AlephiumTestnet -> AlephiumWalletManagerAssembly
             Blockchain.Unknown,
             -> error("Unsupported blockchain")
         }

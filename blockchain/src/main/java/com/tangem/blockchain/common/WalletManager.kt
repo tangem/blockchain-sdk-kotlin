@@ -165,6 +165,7 @@ abstract class WalletManager(
     override suspend fun sendMultiple(
         transactionDataList: List<TransactionData>,
         signer: TransactionSigner,
+        sendMode: TransactionSender.MultipleTransactionSendMode,
     ): Result<TransactionsSendResult> {
         return sendSingleTransaction(transactionDataList, signer)
     }
@@ -184,9 +185,15 @@ abstract class WalletManager(
 
 interface TransactionSender {
 
+    enum class MultipleTransactionSendMode {
+        DEFAULT,
+        WAIT_AFTER_FIRST,
+    }
+
     suspend fun sendMultiple(
         transactionDataList: List<TransactionData>,
         signer: TransactionSigner,
+        sendMode: MultipleTransactionSendMode = MultipleTransactionSendMode.DEFAULT,
     ): Result<TransactionsSendResult>
 
     suspend fun send(transactionData: TransactionData, signer: TransactionSigner): Result<TransactionSendResult>
