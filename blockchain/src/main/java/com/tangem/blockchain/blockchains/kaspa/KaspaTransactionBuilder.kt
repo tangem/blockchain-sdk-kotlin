@@ -9,6 +9,7 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.orZero
 import com.tangem.blockchain.network.moshi
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.isZero
@@ -25,17 +26,18 @@ import java.math.BigInteger
 
 class KaspaTransactionBuilder(
     private val publicKey: Wallet.PublicKey,
+    private val isTestnet: Boolean,
 ) {
     private var networkParameters = KaspaMainNetParams()
     var unspentOutputs: List<KaspaUnspentOutput>? = null
 
-    private val addressService = KaspaAddressService()
+    private val addressService = KaspaAddressService(isTestnet)
 
     @OptIn(ExperimentalStdlibApi::class)
     private val envelopeAdapter by lazy { moshi.adapter<Envelope>() }
 
     @Suppress("MagicNumber")
-    fun buildToSign(transactionData: TransactionData): Result<KaspaTransaction> {
+    fun buildToSign(transactionData: TransactionData, dustValue: BigDecimal): Result<KaspaTransaction> {
         transactionData.requireUncompiled()
 
         if (unspentOutputs.isNullOrEmpty()) {
@@ -49,6 +51,7 @@ class KaspaTransactionBuilder(
         val change = calculateChange(
             amount = requireNotNull(transactionData.amount.value) { "Transaction amount is null" },
             fee = transactionData.fee?.amount?.value ?: BigDecimal.ZERO,
+            dustValue = dustValue,
             unspentOutputs = unspentsToSpend,
         )
         if (change < BigDecimal.ZERO) { // unspentsToSpend not enough to cover transaction amount
@@ -56,12 +59,12 @@ class KaspaTransactionBuilder(
             return Result.Failure(BlockchainSdkError.Kaspa.UtxoAmountError(MAX_INPUT_COUNT, maxAmount))
         }
 
-        val addressService = KaspaAddressService()
+        val addressService = KaspaAddressService(isTestnet)
         val sourceScript = ScriptBuilder().data(addressService.getPublicKey(transactionData.sourceAddress)).op(
             OP_CODESEPARATOR,
         ).build()
 
-        val destinationAddressDecoded = KaspaCashAddr.decodeCashAddress(transactionData.destinationAddress)
+        val destinationAddressDecoded = KaspaCashAddr(isTestnet).decodeCashAddress(transactionData.destinationAddress)
         val destinationScript = when (destinationAddressDecoded.addressType) {
             KaspaAddressType.P2PK_SCHNORR ->
                 ScriptBuilder.createP2PKOutputScript(destinationAddressDecoded.hash)
@@ -126,7 +129,7 @@ class KaspaTransactionBuilder(
     @Suppress("LongMethod", "MagicNumber")
     internal fun buildToSignKRC20Commit(
         transactionData: TransactionData,
-        dust: BigDecimal?,
+        dustValue: BigDecimal,
         includeFee: Boolean = true,
     ): Result<CommitTransaction> {
         transactionData.requireUncompiled()
@@ -155,11 +158,12 @@ class KaspaTransactionBuilder(
             transactionFeeAmountValue
         }
 
-        val targetOutputAmountValue = revealFeeAmount + (dust ?: BigDecimal.ZERO)
+        val targetOutputAmountValue = revealFeeAmount + dustValue
 
         val resultChange = calculateChange(
             amount = targetOutputAmountValue,
             fee = commitFeeAmount,
+            dustValue = dustValue,
             unspentOutputs = getUnspentsToSpend(),
         )
 
@@ -185,7 +189,7 @@ class KaspaTransactionBuilder(
                     redeemScript.scriptHash(),
                 )
                 if (!resultChange.isZero()) {
-                    val addressService = KaspaAddressService()
+                    val addressService = KaspaAddressService(isTestnet)
                     val sourceScript = ScriptBuilder()
                         .data(addressService.getPublicKey(transactionData.sourceAddress))
                         .op(OP_CODESEPARATOR)
@@ -219,6 +223,7 @@ class KaspaTransactionBuilder(
         redeemScript: RedeemScript,
         params: BlockchainSavedData.KaspaKRC20IncompleteTokenTransaction,
         revealFeeAmountValue: BigDecimal,
+        dustValue: BigDecimal,
     ): Result<RevealTransaction> {
         val utxo = listOf(
             KaspaUnspentOutput(
@@ -232,6 +237,7 @@ class KaspaTransactionBuilder(
         val change = calculateChange(
             amount = BigDecimal.ZERO,
             fee = revealFeeAmountValue,
+            dustValue = dustValue.orZero(),
             unspentOutputs = utxo,
         )
 
@@ -292,9 +298,20 @@ class KaspaTransactionBuilder(
         return canonicalSignature + SigHash.ALL.value.toByte()
     }
 
-    fun calculateChange(amount: BigDecimal, fee: BigDecimal, unspentOutputs: List<KaspaUnspentOutput>): BigDecimal {
+    private fun calculateChange(
+        amount: BigDecimal,
+        fee: BigDecimal,
+        dustValue: BigDecimal,
+        unspentOutputs: List<KaspaUnspentOutput>,
+    ): BigDecimal {
         val fullAmount = unspentOutputs.sumOf { it.amount }
-        return fullAmount - (amount + fee)
+        val change = fullAmount - (amount + fee)
+
+        return if (change > BigDecimal.ZERO && change < dustValue) {
+            throw BlockchainSdkError.TransactionDustChangeError
+        } else {
+            change
+        }
     }
 
     fun getUnspentsToSpendCount(): Int {
@@ -303,6 +320,8 @@ class KaspaTransactionBuilder(
     }
 
     fun getUnspentsToSpend() = unspentOutputs!!.sortedByDescending { it.amount }.take(getUnspentsToSpendCount())
+
+    fun getUnspentsToSpendAmount() = getUnspentsToSpend().sumOf { it.amount }
 
     fun getHashesForSign(transaction: KaspaTransaction): List<ByteArray> {
         val hashesForSign: MutableList<ByteArray> = MutableList(transaction.inputs.size) { byteArrayOf() }

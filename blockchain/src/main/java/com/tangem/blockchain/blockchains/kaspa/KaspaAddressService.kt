@@ -6,17 +6,20 @@ import com.tangem.blockchain.common.address.AddressService
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.toCompressedPublicKey
 
-class KaspaAddressService : AddressService() {
+class KaspaAddressService(isTestnet: Boolean) : AddressService() {
+
+    private val kaspaCashAddr = KaspaCashAddr(isTestnet)
+
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         val publicKey = walletPublicKey.toCompressedPublicKey()
-        return KaspaCashAddr.toCashAddress(KaspaAddressType.P2PK_ECDSA, publicKey)
+        return kaspaCashAddr.toCashAddress(KaspaAddressType.P2PK_ECDSA, publicKey)
     }
 
     override fun validate(address: String): Boolean {
-        return KaspaCashAddr.isValidCashAddress(address)
+        return kaspaCashAddr.isValidCashAddress(address)
     }
 
     fun getPublicKey(address: String): ByteArray {
-        return KaspaCashAddr.decodeCashAddress(address).hash
+        return kaspaCashAddr.decodeCashAddress(address).hash
     }
 }

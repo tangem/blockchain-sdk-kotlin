@@ -208,9 +208,14 @@ class SolanaWalletManager internal constructor(
     override suspend fun sendMultiple(
         transactionDataList: List<TransactionData>,
         signer: TransactionSigner,
+        sendMode: TransactionSender.MultipleTransactionSendMode,
     ): Result<TransactionsSendResult> {
         if (transactionDataList.size == 1) {
             return sendSingleTransaction(transactionDataList, signer)
+        }
+
+        if (transactionDataList.isEmpty()) {
+            return Result.Failure(BlockchainSdkError.CustomError("Transaction list is empty"))
         }
 
         val startSendingTimestamp = SystemClock.elapsedRealtime()
@@ -226,19 +231,49 @@ class SolanaWalletManager internal constructor(
 
         val unsignedTransactions = withoutSignatureTransactions.map(transactionBuilder::buildUnsignedTransaction)
 
-        val sendResults = signMultipleCompiledTransactions(withoutSignatureTransactions, signer)
+        val signedTransactions = signMultipleCompiledTransactions(withoutSignatureTransactions, signer)
             .successOr { return it }
-            .mapIndexed { index, transaction ->
-                when (val result = sendTransaction(unsignedTransactions[index], transaction, startSendingTimestamp)) {
-                    is Result.Failure -> result
+
+        val sendResults = mutableListOf<Result<TransactionSendResult>>()
+
+        if (sendMode == TransactionSender.MultipleTransactionSendMode.WAIT_AFTER_FIRST) {
+            val signedTx = signedTransactions.first()
+            val originalTx = transactionDataList.first()
+            val unsignedTx = unsignedTransactions.first()
+
+            when (val result = sendTransaction(unsignedTx, signedTx, startSendingTimestamp)) {
+                is Result.Success -> {
+                    originalTx.hash = result.data.hash
+                    wallet.addOutgoingTransaction(originalTx.updateHash(hash = result.data.hash))
+                    sendResults.add(result)
+
+                    delay(DELAY_AFTER_SPLIT_TRANSACTION)
+                }
+                is Result.Failure -> return result
+            }
+        }
+
+        val shouldDropFirst = sendMode == TransactionSender.MultipleTransactionSendMode.WAIT_AFTER_FIRST
+
+        val remainingUnsignedTransactions = unsignedTransactions.dropFirstIfNeeded(shouldDropFirst)
+        val remainingSignedTransactions = signedTransactions.dropFirstIfNeeded(shouldDropFirst)
+        val remainingTransactionData = transactionDataList.dropFirstIfNeeded(shouldDropFirst)
+
+        val otherSendResults = remainingUnsignedTransactions
+            .zip(remainingSignedTransactions)
+            .mapIndexed { index, (unsignedTx, signedTx) ->
+                when (val result = sendTransaction(unsignedTx, signedTx, startSendingTimestamp)) {
                     is Result.Success -> {
-                        val hash = result.data.hash
-                        transactionDataList[index].hash = hash
-                        wallet.addOutgoingTransaction(transactionDataList[index].updateHash(hash = hash))
-                        Result.Success(TransactionSendResult(hash))
+                        val originalTx = remainingTransactionData[index]
+                        originalTx.hash = result.data.hash
+                        wallet.addOutgoingTransaction(originalTx.updateHash(hash = result.data.hash))
+                        Result.Success(TransactionSendResult(result.data.hash))
                     }
+                    is Result.Failure -> result
                 }
             }
+
+        sendResults.addAll(otherSendResults)
 
         val failedResult = sendResults.firstOrNull { it is Result.Failure }
         return if (failedResult != null) {
@@ -496,6 +531,8 @@ class SolanaWalletManager internal constructor(
         else -> RENT_PER_EPOCH_IN_LAMPORTS
     }
 
+    private fun <T> List<T>.dropFirstIfNeeded(condition: Boolean) = if (condition) drop(1) else this
+
     private companion object {
         const val MIN_ACCOUNT_DATA_SIZE = 0L
         const val SIGNATURE_PLACEHOLDER_LENGTH = 65
@@ -503,5 +540,9 @@ class SolanaWalletManager internal constructor(
         const val ACCOUNT_METADATA_SIZE = 128L
         const val RENT_PER_EPOCH_IN_LAMPORTS = 19.055441478439427
         const val RENT_PER_EPOCH_IN_LAMPORTS_DEV_NET = 0.359375
+
+        // delay between SPLIT transaction (if any) and other (usually UNSTAKE)
+        // SPLIT transaction is not executed immediately, so we should wait for 15 seconds to send UNSTAKE transactions
+        const val DELAY_AFTER_SPLIT_TRANSACTION = 15000L
     }
 }
