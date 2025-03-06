@@ -16,7 +16,8 @@ class KaspaTransactionTest {
     private val blockchain = Blockchain.Kaspa
     private val networkParameters = KaspaMainNetParams()
     private val decimals = blockchain.decimals()
-    private val addressService = KaspaAddressService()
+    private val addressService = KaspaAddressService(isTestnet = false)
+    private val dustValue = "0.2".toBigDecimal()
 
     @Suppress("LongMethod")
     @Test
@@ -43,6 +44,7 @@ class KaspaTransactionTest {
                 seedKey = walletPublicKey,
                 derivationType = null,
             ),
+            isTestnet = false,
         )
         transactionBuilder.unspentOutputs = listOf(
             KaspaUnspentOutput(
@@ -137,7 +139,7 @@ class KaspaTransactionTest {
         )
 
         // act
-        val buildToSignResult = transactionBuilder.buildToSign(transactionData) as Result.Success
+        val buildToSignResult = transactionBuilder.buildToSign(transactionData, dustValue) as Result.Success
         val hashes = transactionBuilder.getHashesForSign(buildToSignResult.data)
         val signedTransaction = transactionBuilder.buildToSend(signature, buildToSignResult.data)
 
@@ -170,6 +172,7 @@ class KaspaTransactionTest {
                 seedKey = walletPublicKey,
                 derivationType = null,
             ),
+            isTestnet = false,
         )
         transactionBuilder.unspentOutputs = listOf(
             KaspaUnspentOutput(
@@ -228,7 +231,7 @@ class KaspaTransactionTest {
         )
 
         // act
-        val buildToSignResult = transactionBuilder.buildToSign(transactionData) as Result.Success
+        val buildToSignResult = transactionBuilder.buildToSign(transactionData, dustValue) as Result.Success
         val hashes = transactionBuilder.getHashesForSign(buildToSignResult.data)
         val signedTransaction = transactionBuilder.buildToSend(signature, buildToSignResult.data)
 
