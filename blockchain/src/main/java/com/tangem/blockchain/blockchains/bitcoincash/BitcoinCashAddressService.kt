@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.bitcoincash
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
+import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.BitcoinCashAddressDecodedParts
 import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.BitcoinCashAddressType
 import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.CashAddr
 import com.tangem.blockchain.common.Blockchain
@@ -38,6 +39,8 @@ class BitcoinCashAddressService(blockchain: Blockchain) : AddressService() {
     }
 
     fun validateCashAddrAddress(address: String) = cashAddr.isValidCashAddress(address)
+
+    fun decodeCashAddrAddress(address: String): BitcoinCashAddressDecodedParts? = cashAddr.decodeCashAddress(address)
 
     fun getPublicKeyHash(address: String): ByteArray {
         return cashAddr.decodeCashAddress(address).hash
