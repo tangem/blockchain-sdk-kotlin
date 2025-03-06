@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.blockchains.alephium.AlephiumAddressService
 import com.tangem.blockchain.blockchains.aptos.AptosAddressService
 import com.tangem.blockchain.blockchains.binance.BinanceAddressService
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
@@ -97,6 +98,7 @@ enum class Blockchain(
     EthereumPow("ETH-Pow", "ETHW", "Ethereum PoW"),
     EthereumPowTestnet("ETH-Pow/test", "ETHW", "EthereumPoW Testnet"),
     Kaspa("KAS", "KAS", "Kaspa"),
+    KaspaTestnet("KAS/test", "KAS", "Kaspa Testnet"),
     Telos("TELOS", "TLOS", "Telos EVM"),
     TelosTestnet("TELOS/test", "TLOS", "Telos Testnet"),
     TON("The-Open-Network", "TON", "TON"),
@@ -179,6 +181,8 @@ enum class Blockchain(
     Canxium("canxium", "CAU", "Canxium"),
     Chiliz("chiliz", "CHZ", "Chiliz"),
     ChilizTestnet("chiliz/test", "CHZ", "Chiliz Spicy Testnet"),
+    Alephium("alephium", "ALPH", "Alephium"),
+    AlephiumTestnet("alephium/test", "ALPH", "Alephium Testnet"),
     Clore("clore-ai", "CLORE", "Clore"),
     VanarChain("vanar-chain", "VANRY", "Vanar Chain"),
     VanarChainTestnet("vanar-chain/test", "VG", "Vanar Vanguard Testnet"),
@@ -186,6 +190,10 @@ enum class Blockchain(
     OdysseyChainTestnet("odyssey/test", "DIONE", "Odyssey Chain Testnet"),
     Bitrock("bitrock", "BROCK", "Bitrock"),
     BitrockTestnet("bitrock/test", "BROCK", "Bitrock Testnet"),
+    Sonic("sonic", "S", "Sonic"),
+    SonicTestnet("sonic/test", "S", "Sonic Blaze Testnet"),
+    ApeChain("apechain", "APE", "ApeChain"),
+    ApeChainTestnet("apechain/test", "APE", "Curtis Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -198,6 +206,7 @@ enum class Blockchain(
             TON -> "Toncoin"
             OdysseyChain -> "Dione"
             OdysseyChainTestnet -> "Dione Testnet"
+            ApeChain -> "ApeCoin"
             else -> this.fullName + l2Suffix
         }
     }
@@ -244,7 +253,7 @@ enum class Blockchain(
         Ducatus,
         Dogecoin,
         Dash,
-        Kaspa,
+        Kaspa, KaspaTestnet,
         Ravencoin, RavencoinTestnet,
         Aptos, AptosTestnet,
         Hedera, HederaTestnet,
@@ -308,10 +317,13 @@ enum class Blockchain(
         Core, CoreTestnet,
         Chiliz, ChilizTestnet,
         VanarChain, VanarChainTestnet,
+        Alephium, AlephiumTestnet,
         Xodex,
         Canxium,
         OdysseyChain, OdysseyChainTestnet,
         Bitrock, BitrockTestnet,
+        Sonic, SonicTestnet,
+        ApeChain, ApeChainTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -391,6 +403,8 @@ enum class Blockchain(
             Canxium,
             OdysseyChain, OdysseyChainTestnet,
             Bitrock, BitrockTestnet,
+            Sonic, SonicTestnet,
+            ApeChain, ApeChainTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -425,7 +439,7 @@ enum class Blockchain(
 
             Aptos, AptosTestnet -> AptosAddressService(isTestnet())
             Tron, TronTestnet -> TronAddressService()
-            Kaspa -> KaspaAddressService()
+            Kaspa, KaspaTestnet -> KaspaAddressService(this.isTestnet())
             Chia, ChiaTestnet -> ChiaAddressService(this)
             Hedera, HederaTestnet -> HederaAddressService(this.isTestnet())
             Nexa, NexaTestnet -> NexaAddressService(this.isTestnet())
@@ -433,6 +447,7 @@ enum class Blockchain(
             Radiant -> RadiantAddressService()
             Fact0rn -> Fact0rnAddressService()
             Casper, CasperTestnet -> CasperAddressService()
+            Alephium, AlephiumTestnet -> AlephiumAddressService()
             Unknown -> error("unsupported blockchain")
         }
     }
@@ -522,9 +537,13 @@ enum class Blockchain(
             Casper, CasperTestnet -> CasperTestnet
             Core, CoreTestnet -> CoreTestnet
             Chiliz, ChilizTestnet -> ChilizTestnet
+            Alephium, AlephiumTestnet -> AlephiumTestnet
             VanarChain, VanarChainTestnet -> VanarChainTestnet
             OdysseyChain, OdysseyChainTestnet -> OdysseyChainTestnet
             Bitrock, BitrockTestnet -> BitrockTestnet
+            Sonic, SonicTestnet -> SonicTestnet
+            ApeChain, ApeChainTestnet -> ApeChainTestnet
+            Kaspa, KaspaTestnet -> KaspaTestnet
             else -> null
         }
     }
@@ -564,7 +583,7 @@ enum class Blockchain(
             Dash,
             Optimism, OptimismTestnet,
             Dischain, EthereumPow, EthereumPowTestnet,
-            Kaspa,
+            Kaspa, KaspaTestnet,
             Ravencoin, RavencoinTestnet,
             Cosmos, CosmosTestnet,
             TerraV1, TerraV2,
@@ -600,12 +619,15 @@ enum class Blockchain(
             Core, CoreTestnet,
             Casper, CasperTestnet,
             Chiliz, ChilizTestnet,
+            Alephium, AlephiumTestnet,
             VanarChain, VanarChainTestnet,
             Xodex,
             Canxium,
             Clore,
             OdysseyChain, OdysseyChainTestnet,
             Bitrock, BitrockTestnet,
+            Sonic, SonicTestnet,
+            ApeChain, ApeChainTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -711,6 +733,10 @@ enum class Blockchain(
             OdysseyChainTestnet -> Chain.OdysseyChainTestnet.id
             Bitrock -> Chain.Bitrock.id
             BitrockTestnet -> Chain.BitrockTestnet.id
+            Sonic -> Chain.Sonic.id
+            SonicTestnet -> Chain.SonicTestnet.id
+            ApeChain -> Chain.ApeChain.id
+            ApeChainTestnet -> Chain.ApeChainTestnet.id
             else -> null
         }
     }
@@ -742,7 +768,7 @@ enum class Blockchain(
             Hedera, HederaTestnet,
             TON, TONTestnet,
             Cardano,
-            Kaspa,
+            Kaspa, KaspaTestnet,
             -> true
 
             else -> false
@@ -751,34 +777,22 @@ enum class Blockchain(
 
     fun isEvm(): Boolean = getChainId() != null
 
-    fun isFeeApproximate(amountType: AmountType): Boolean = when (this) {
-        Fantom, FantomTestnet,
-        Tron, TronTestnet,
-        Avalanche, AvalancheTestnet,
-        EthereumPow,
-        Cronos,
-        VeChain, VeChainTestnet,
-        XDC, XDCTestnet,
-        -> amountType is AmountType.Token
-
-        Arbitrum, ArbitrumTestnet,
-        Stellar, StellarTestnet,
-        Optimism, OptimismTestnet,
-        TON, TONTestnet,
-        Near, NearTestnet,
-        Aptos, AptosTestnet,
-        Hedera, HederaTestnet,
-        PulseChain, PulseChainTestnet,
-        Aurora, AuroraTestnet,
-        Manta, MantaTestnet,
-        Mantle, MantleTestnet,
-        ZkSyncEra, ZkSyncEraTestnet,
-        PolygonZkEVM, PolygonZkEVMTestnet,
-        Taraxa, TaraxaTestnet,
-        Base, BaseTestnet,
-        Koinos, KoinosTestnet,
-        -> true
-
+    fun isFeeApproximate(amountType: AmountType): Boolean = when {
+        this in listOf(
+            Stellar, StellarTestnet,
+            TON, TONTestnet,
+            Near, NearTestnet,
+            Aptos, AptosTestnet,
+            Hedera, HederaTestnet,
+            Koinos, KoinosTestnet,
+        ) -> true
+        this in listOf(
+            Tron,
+            TronTestnet,
+            VeChain,
+            VeChainTestnet,
+        ) -> amountType is AmountType.Token
+        isEvm() -> true
         else -> false
     }
 
@@ -799,7 +813,7 @@ enum class Blockchain(
         Litecoin,
         Dogecoin,
         Dash,
-        Kaspa,
+        Kaspa, KaspaTestnet,
         Ravencoin, RavencoinTestnet,
         Ducatus,
         -> true
