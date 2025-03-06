@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.bitcoincash
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
+import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.BitcoinCashAddressType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
@@ -72,7 +73,11 @@ internal fun TransactionData.toBitcoinCashTransaction(
         LegacyAddress.fromPubKeyHash(networkParameters, addressService.getPublicKeyHash(this.sourceAddress))
 
     val destinationLegacyAddress = if (addressService.validateCashAddrAddress(this.destinationAddress)) {
-        LegacyAddress.fromPubKeyHash(networkParameters, addressService.getPublicKeyHash(this.destinationAddress))
+        getLegacyAddressFromCashAddr(
+            destinationAddress = destinationAddress,
+            addressService = addressService,
+            networkParameters = networkParameters,
+        )
     } else {
         LegacyAddress.fromBase58(networkParameters, this.destinationAddress)
     }
@@ -88,4 +93,27 @@ internal fun TransactionData.toBitcoinCashTransaction(
         )
     }
     return transaction
+}
+
+private fun getLegacyAddressFromCashAddr(
+    destinationAddress: String,
+    addressService: BitcoinCashAddressService,
+    networkParameters: NetworkParameters?,
+): LegacyAddress {
+    val addressType = addressService.decodeCashAddrAddress(destinationAddress)?.addressType
+    return when (addressType) {
+        BitcoinCashAddressType.P2SH -> {
+            LegacyAddress.fromScriptHash(
+                networkParameters,
+                addressService.getPublicKeyHash(destinationAddress),
+            )
+        }
+        BitcoinCashAddressType.P2PKH -> {
+            LegacyAddress.fromPubKeyHash(
+                networkParameters,
+                addressService.getPublicKeyHash(destinationAddress),
+            )
+        }
+        else -> error("Failed to decode CashAddr address")
+    }
 }
