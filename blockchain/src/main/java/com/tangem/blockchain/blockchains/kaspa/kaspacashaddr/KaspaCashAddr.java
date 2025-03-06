@@ -28,9 +28,18 @@ public class KaspaCashAddr {
 
     private static final BigInteger POLYMOD_AND_CONSTANT = new BigInteger("07ffffffff", 16);
 
-    public static String toCashAddress(KaspaAddressType addressType, byte[] hash) {
-        String prefixString = MAIN_NET_PREFIX;
-        byte[] prefixBytes = getPrefixBytes(prefixString);
+    String networkPrefix;
+
+    public KaspaCashAddr(boolean isTestNet) {
+        if (isTestNet) {
+            networkPrefix = TEST_NET_PREFIX;
+        } else {
+            networkPrefix = MAIN_NET_PREFIX;
+        }
+    }
+
+    public String toCashAddress(KaspaAddressType addressType, byte[] hash) {
+        byte[] prefixBytes = getPrefixBytes(networkPrefix);
         byte[] payloadBytes = concatenateByteArrays(new byte[]{addressType.getVersionByte()}, hash);
         payloadBytes = convertBits(payloadBytes, 8, 5, false);
         byte[] allChecksumInput = concatenateByteArrays(
@@ -39,10 +48,10 @@ public class KaspaCashAddr {
         byte[] checksumBytes = calculateChecksumBytesPolymod(allChecksumInput);
         checksumBytes = convertBits(checksumBytes, 8, 5, true);
         String cashAddress = KaspaBase32.encode(concatenateByteArrays(payloadBytes, checksumBytes));
-        return prefixString + SEPARATOR + cashAddress;
+        return networkPrefix + SEPARATOR + cashAddress;
     }
 
-    public static KaspaAddressDecodedParts decodeCashAddress(String kaspaAddress) {
+    public KaspaAddressDecodedParts decodeCashAddress(String kaspaAddress) {
         if (!isValidCashAddress(kaspaAddress)) {
             throw new RuntimeException("Address wasn't valid: " + kaspaAddress);
         }
@@ -52,7 +61,7 @@ public class KaspaCashAddr {
         if (addressParts.length == 2) {
             decoded.setPrefix(addressParts[0]);
         } else {
-            decoded.setPrefix(MAIN_NET_PREFIX);
+            decoded.setPrefix(networkPrefix);
         }
 
         byte[] addressData = KaspaBase32.decode(addressParts[addressParts.length - 1]);
@@ -77,7 +86,7 @@ public class KaspaCashAddr {
         throw new RuntimeException("Unknown version byte: " + versionByte);
     }
 
-    public static boolean isValidCashAddress(String kaspaAddress) {
+    public boolean isValidCashAddress(String kaspaAddress) {
         try {
             if (!isSingleCase(kaspaAddress))
                 return false;
@@ -88,12 +97,12 @@ public class KaspaCashAddr {
             if (kaspaAddress.contains(SEPARATOR)) {
                 String[] split = kaspaAddress.split(SEPARATOR);
                 prefix = split[0];
-                if (!prefix.equals(MAIN_NET_PREFIX)) {
+                if (!prefix.equals(networkPrefix)) {
                     return false;
-                } //for now we use main net only
+                }
                 kaspaAddress = split[1];
             } else {
-                prefix = MAIN_NET_PREFIX;
+                prefix = networkPrefix;
             }
             if (!kaspaAddress.startsWith("q") && !kaspaAddress.startsWith("p")) {
                 return false;
