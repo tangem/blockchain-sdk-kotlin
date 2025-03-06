@@ -92,5 +92,11 @@ sealed class Fee {
         val gasPrice: Long,
     ) : Fee()
 
+    data class Alephium(
+        override val amount: Amount,
+        val gasPrice: BigDecimal,
+        val gasAmount: BigDecimal,
+    ) : Fee()
+
     data class Common(override val amount: Amount) : Fee()
 }
