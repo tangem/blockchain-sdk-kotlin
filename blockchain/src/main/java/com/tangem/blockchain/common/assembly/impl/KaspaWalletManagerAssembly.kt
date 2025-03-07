@@ -9,6 +9,7 @@ import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkService
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 
 internal class KaspaWalletManagerAssembly(
     private val dataStorage: AdvancedDataStorage,
@@ -29,6 +30,7 @@ internal class KaspaWalletManagerAssembly(
                     providers = KaspaKRC20ProvidersBuilder(input.providerTypes).build(blockchain),
                 ),
                 dataStorage = dataStorage,
+                txHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
             )
         }
     }
