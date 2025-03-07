@@ -6,6 +6,7 @@ import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.crypto.Secp256k1
 import com.tangem.crypto.generateKeyPair
 import com.tangem.crypto.sign
+import com.tangem.operations.sign.SignData
 
 class DummySigner : TransactionSigner {
 
@@ -24,5 +25,12 @@ class DummySigner : TransactionSigner {
 
     override suspend fun sign(hash: ByteArray, publicKey: Wallet.PublicKey): CompletionResult<ByteArray> {
         return CompletionResult.Success(hash.sign(keyPair.privateKey))
+    }
+
+    override suspend fun multiSign(
+        dataToSign: List<SignData>,
+        publicKey: Wallet.PublicKey,
+    ): CompletionResult<Map<ByteArray, ByteArray>> {
+        return CompletionResult.Success(dataToSign.associate { it.hash to it.hash.sign(keyPair.privateKey) })
     }
 }
