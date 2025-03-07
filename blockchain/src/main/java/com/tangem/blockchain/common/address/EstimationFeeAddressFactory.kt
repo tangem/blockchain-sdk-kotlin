@@ -99,6 +99,8 @@ class EstimationFeeAddressFactory {
             Blockchain.Bitrock, Blockchain.BitrockTestnet,
             Blockchain.Sonic, Blockchain.SonicTestnet,
             Blockchain.ApeChain, Blockchain.ApeChainTestnet,
+            Blockchain.Scroll, Blockchain.ScrollTestnet,
+            Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet,
             -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
             // Polkadot-like
             Blockchain.Polkadot, Blockchain.PolkadotTestnet ->
