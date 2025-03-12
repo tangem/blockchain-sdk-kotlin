@@ -88,7 +88,6 @@ internal class NFTScanTonNFTProvider(
     }
 
     override suspend fun getSalePrice(
-        walletAddress: String,
         collectionIdentifier: NFTCollection.Identifier,
         assetIdentifier: NFTAsset.Identifier,
     ): NFTAsset.SalePrice? {
