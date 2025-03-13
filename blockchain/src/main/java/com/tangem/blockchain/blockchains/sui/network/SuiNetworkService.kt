@@ -2,9 +2,11 @@ package com.tangem.blockchain.blockchains.sui.network
 
 import com.tangem.blockchain.blockchains.sui.model.SuiCoin
 import com.tangem.blockchain.blockchains.sui.model.SuiWalletInfo
+import com.tangem.blockchain.blockchains.sui.network.SuiConstants.COIN_TYPE
 import com.tangem.blockchain.blockchains.sui.network.rpc.SuiDryRunTransactionResponse
 import com.tangem.blockchain.blockchains.sui.network.rpc.SuiExecuteTransactionBlockResponse
 import com.tangem.blockchain.blockchains.sui.network.rpc.SuiJsonRpcProvider
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
@@ -27,10 +29,11 @@ internal class SuiNetworkService(
         val coins = mutableListOf<SuiCoin>()
 
         for (coin in response.data) {
-            totalSuiBalance += coin.balance.movePointLeft(SuiConstants.MIST_SCALE)
+            if (coin.coinType == COIN_TYPE) totalSuiBalance += coin.balance.movePointLeft(Blockchain.Sui.decimals())
 
             val suiCoin = SuiCoin(
                 objectId = coin.coinObjectId,
+                coinType = coin.coinType,
                 mistBalance = coin.balance,
                 version = coin.version.toLong(),
                 digest = coin.digest,
