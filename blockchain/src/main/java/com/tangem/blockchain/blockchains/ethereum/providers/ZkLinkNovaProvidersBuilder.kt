@@ -5,12 +5,12 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.network.providers.OnlyPublicProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
 
-internal class VanarChainProvidersBuilder(
+internal class ZkLinkNovaProvidersBuilder(
     override val providerTypes: List<ProviderType>,
 ) : OnlyPublicProvidersBuilder<EthereumJsonRpcProvider>(
     providerTypes = providerTypes,
     testnetProviders = listOf(
-        "https://rpc-vanguard.vanarchain.com/",
+        "https://sepolia.rpc.zklink.io/",
     ),
 ) {
     override fun createProvider(url: String, blockchain: Blockchain) = EthereumJsonRpcProvider(url)
