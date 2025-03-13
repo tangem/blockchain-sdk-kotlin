@@ -73,7 +73,7 @@ internal class KoinosWalletManager(
         return super.validateTransaction(amount, fee).apply { addAll(errors) }
     }
 
-    override fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
+    override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
         transactionData.requireUncompiled()
 
         val fee = transactionData.fee?.amount?.value
