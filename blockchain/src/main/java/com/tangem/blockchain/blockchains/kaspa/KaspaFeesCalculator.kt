@@ -10,7 +10,7 @@ import com.tangem.common.CompletionResult
 import java.math.BigDecimal
 import java.math.BigInteger
 
-class KaspaFeesCalculator(
+internal class KaspaFeesCalculator(
     private val blockchain: Blockchain,
     private val transactionBuilder: KaspaTransactionBuilder,
     private val networkProvider: KaspaNetworkProvider,

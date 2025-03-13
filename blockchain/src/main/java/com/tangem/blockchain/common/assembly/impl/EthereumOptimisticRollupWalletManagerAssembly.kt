@@ -15,6 +15,7 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
+import com.tangem.blockchain.nft.NFTProviderFactory
 
 internal object EthereumOptimisticRollupWalletManagerAssembly :
     WalletManagerAssembly<EthereumOptimisticRollupWalletManager>() {
@@ -29,6 +30,7 @@ internal object EthereumOptimisticRollupWalletManagerAssembly :
                     jsonRpcProviders = getProvidersBuilder(blockchain, input.providerTypes, input.config)
                         .build(blockchain),
                 ),
+                nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
             )
         }
     }
