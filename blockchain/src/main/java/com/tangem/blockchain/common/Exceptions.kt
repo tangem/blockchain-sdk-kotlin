@@ -296,6 +296,7 @@ sealed class BlockchainSdkError(
             customMessage = "Insufficient min-ada-value amount. In addition to network fees, the Cardano network " +
                 "charges min-ada-value. Make sure the balance is sufficient to withdraw the token.",
         )
+        data object InvalidDerivationType : Cardano(subCode = 4)
     }
 
     sealed class Aptos(
@@ -340,6 +341,15 @@ sealed class BlockchainSdkError(
             customMessage = "Token not found",
         ) {
             private fun readResolve(): Any = TokenNotFound
+        }
+
+        @Suppress("UnusedPrivateMember")
+        data object OneSuiRequired : Sui(
+            subCode = 3,
+            customMessage = "Insufficient funds. An incoming transaction of " +
+                "at least 1 Sui is required to proceed",
+        ) {
+            private fun readResolve(): Any = OneSuiRequired
         }
     }
 
