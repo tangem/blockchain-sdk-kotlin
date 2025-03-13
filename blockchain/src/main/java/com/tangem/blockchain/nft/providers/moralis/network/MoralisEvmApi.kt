@@ -12,7 +12,7 @@ internal interface MoralisEvmApi {
     suspend fun getNFTCollections(
         @Path("address") address: String,
         @Query("chain") chain: String,
-        @Query("cursor") cursor: String,
+        @Query("cursor") cursor: String?,
         @Query("limit") limit: Int,
         @Query("exclude_spam") excludeSpam: Boolean = true,
         @Query("token_counts") tokenCounts: Boolean = true,
@@ -21,9 +21,9 @@ internal interface MoralisEvmApi {
     @GET("api/v2.2/{address}/nft")
     suspend fun getNFTAssets(
         @Path("address") address: String,
-        @Query("token_addresses[]") contractAddresses: List<String>,
+        @Query("token_addresses[]") tokenAddresses: List<String>,
         @Query("chain") chain: String,
-        @Query("cursor") cursor: String,
+        @Query("cursor") cursor: String?,
         @Query("limit") limit: Int,
         @Query("format") format: String = "decimal",
         @Query("normalizeMetadata") normalizeMetadata: Boolean = true,
@@ -31,14 +31,11 @@ internal interface MoralisEvmApi {
     ): MoralisEvmNFTResponse<MoralisEvmNFTAssetResponse>
 
     @POST("api/v2.2/nft/getMultipleNFTs")
-    suspend fun getNFTAssets(
-        @Query("token_addresses[]") contractAddresses: List<String>,
-        @Body request: MoralisEvmNFTGetAssetsRequest,
-    ): List<MoralisEvmNFTAssetResponse>
+    suspend fun getNFTAssets(@Body request: MoralisEvmNFTGetAssetsRequest): List<MoralisEvmNFTAssetResponse>
 
-    @GET("api/v2.2/nft/{contract_address}/{token_id}/price")
+    @GET("api/v2.2/nft/{token_address}/{token_id}/price")
     suspend fun getNFTPrice(
-        @Path("contract_address") contractAddress: String,
+        @Path("token_address") tokenAddress: String,
         @Path("token_id") tokenId: String,
         @Query("chain") chain: String,
         @Query("days") days: Int = 7,

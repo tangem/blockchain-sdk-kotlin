@@ -65,6 +65,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.VanarChain,
             Blockchain.Xodex,
             Blockchain.ApeChain,
+            Blockchain.ZkLinkNova,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.OdysseyChain -> mapOf(AddressType.Default to DerivationPath("m/44'/695'/0'/0/0"))
             Blockchain.XDC -> mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
@@ -159,6 +160,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.SonicTestnet,
             Blockchain.ApeChainTestnet,
             Blockchain.KaspaTestnet,
+            Blockchain.ZkLinkNovaTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             Blockchain.Aptos,
             Blockchain.AptosTestnet,
@@ -197,6 +199,9 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.BitrockTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/7171666'/0'/0/0"))
             Blockchain.Sonic -> mapOf(AddressType.Default to DerivationPath("m/44'/10007'/0'/0/0"))
+            Blockchain.Scroll,
+            Blockchain.ScrollTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/534352'/0'/0/0"))
         }
     }
 }
