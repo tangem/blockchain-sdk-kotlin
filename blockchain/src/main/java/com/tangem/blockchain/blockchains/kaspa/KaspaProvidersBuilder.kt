@@ -29,6 +29,10 @@ internal class KaspaProvidersBuilder(
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<KaspaNetworkProvider> {
-        return listOf(KaspaRestApiNetworkProvider("https://api-tn11.kaspa.org/"))
+        return listOf(KaspaRestApiNetworkProvider(TESTNET_URL))
+    }
+
+    companion object {
+        internal const val TESTNET_URL = "https://api-tn11.kaspa.org/"
     }
 }
