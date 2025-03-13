@@ -194,6 +194,10 @@ enum class Blockchain(
     SonicTestnet("sonic/test", "S", "Sonic Blaze Testnet"),
     ApeChain("apechain", "APE", "ApeChain"),
     ApeChainTestnet("apechain/test", "APE", "Curtis Testnet"),
+    Scroll("scroll", "ETH", "Scroll"),
+    ScrollTestnet("scroll/test", "ETH", "Scroll Sepolia Testnet"),
+    ZkLinkNova("zklink", "ETH", "zkLink Nova"),
+    ZkLinkNovaTestnet("zklink/test", "ETH", "zkLink Nova Sepolia Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -222,6 +226,8 @@ enum class Blockchain(
             Base,
             Blast,
             Cyber,
+            Scroll,
+            ZkLinkNova,
             -> true
             else -> false
         }
@@ -324,6 +330,8 @@ enum class Blockchain(
         Bitrock, BitrockTestnet,
         Sonic, SonicTestnet,
         ApeChain, ApeChainTestnet,
+        Scroll, ScrollTestnet,
+        ZkLinkNova, ZkLinkNovaTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -405,6 +413,8 @@ enum class Blockchain(
             Bitrock, BitrockTestnet,
             Sonic, SonicTestnet,
             ApeChain, ApeChainTestnet,
+            Scroll, ScrollTestnet,
+            ZkLinkNova, ZkLinkNovaTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -544,6 +554,7 @@ enum class Blockchain(
             Sonic, SonicTestnet -> SonicTestnet
             ApeChain, ApeChainTestnet -> ApeChainTestnet
             Kaspa, KaspaTestnet -> KaspaTestnet
+            ZkLinkNova, ZkLinkNovaTestnet -> ZkLinkNovaTestnet
             else -> null
         }
     }
@@ -628,6 +639,8 @@ enum class Blockchain(
             Bitrock, BitrockTestnet,
             Sonic, SonicTestnet,
             ApeChain, ApeChainTestnet,
+            Scroll, ScrollTestnet,
+            ZkLinkNova, ZkLinkNovaTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -737,6 +750,10 @@ enum class Blockchain(
             SonicTestnet -> Chain.SonicTestnet.id
             ApeChain -> Chain.ApeChain.id
             ApeChainTestnet -> Chain.ApeChainTestnet.id
+            Scroll -> Chain.Scroll.id
+            ScrollTestnet -> Chain.ScrollTestnet.id
+            ZkLinkNova -> Chain.ZkLinkNova.id
+            ZkLinkNovaTestnet -> Chain.ZkLinkNovaTestnet.id
             else -> null
         }
     }
@@ -769,6 +786,7 @@ enum class Blockchain(
             TON, TONTestnet,
             Cardano,
             Kaspa, KaspaTestnet,
+            Sui, SuiTestnet,
             -> true
 
             else -> false
