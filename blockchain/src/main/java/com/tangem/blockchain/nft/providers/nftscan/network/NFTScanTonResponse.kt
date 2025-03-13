@@ -4,8 +4,8 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-internal data class NFTScanTonNFTCollectionsResponse(
+internal data class NFTScanTonResponse<T>(
     @Json(name = "code") val code: Int,
     @Json(name = "msg") val message: String?,
-    @Json(name = "data") val data: List<NFTScanTonNFTCollectionResponse>?,
+    @Json(name = "data") val data: T?,
 )
