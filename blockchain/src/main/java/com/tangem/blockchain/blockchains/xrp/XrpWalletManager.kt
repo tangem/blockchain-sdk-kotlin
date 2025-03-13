@@ -17,7 +17,7 @@ class XrpWalletManager(
     wallet: Wallet,
     private val transactionBuilder: XrpTransactionBuilder,
     private val networkProvider: XrpNetworkProvider,
-) : WalletManager(wallet), ReserveAmountProvider {
+) : WalletManager(wallet), ReserveAmountProvider, TransactionValidator {
 
     override val currentHost: String
         get() = networkProvider.baseUrl
@@ -98,5 +98,21 @@ class XrpWalletManager(
 
     override suspend fun isAccountFunded(destinationAddress: String): Boolean {
         return networkProvider.checkIsAccountCreated(destinationAddress)
+    }
+
+    override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
+        transactionData.requireUncompiled()
+
+        val destinationTag = (transactionData.extras as? XrpTransactionBuilder.XrpTransactionExtras)?.destinationTag
+        if (destinationTag != null) {
+            return kotlin.Result.success(Unit)
+        }
+
+        val isMemoRequired = networkProvider.checkAccountDestinationTag(transactionData.destinationAddress)
+        if (!isMemoRequired) {
+            return kotlin.Result.success(Unit)
+        }
+
+        return kotlin.Result.failure(BlockchainSdkError.XRP.DestinationMemoRequired)
     }
 }
