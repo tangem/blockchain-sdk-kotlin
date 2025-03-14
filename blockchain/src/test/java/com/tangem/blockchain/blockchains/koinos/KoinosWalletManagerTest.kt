@@ -6,12 +6,13 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.transaction.Fee.Common
 import io.mockk.mockk
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 internal class KoinosWalletManagerTest {
 
     private val walletManager = KoinosWalletManager(
-        wallet = com.tangem.blockchain.common.Wallet(
+        wallet = Wallet(
             blockchain = Blockchain.Koinos,
             addresses = setOf(Address("1AYz8RCnoafLnifMjJbgNb2aeW5CbZj8Tp")),
             publicKey = mockk(),
@@ -23,7 +24,7 @@ internal class KoinosWalletManagerTest {
     )
 
     @Test
-    fun transactionValidationTest_smoke() {
+    fun transactionValidationTest_smoke() = runTest {
         walletManager.wallet.apply {
             setBalance(100f)
             setMana(100f)
@@ -38,7 +39,7 @@ internal class KoinosWalletManagerTest {
     }
 
     @Test
-    fun transactionValidationTest_not_enough_mana() {
+    fun transactionValidationTest_not_enough_mana() = runTest {
         walletManager.wallet.apply {
             setBalance(100f)
             setMana(0.2f)
@@ -53,7 +54,7 @@ internal class KoinosWalletManagerTest {
     }
 
     @Test
-    fun transactionValidationTest_amount_exceeds_mana_balance() {
+    fun transactionValidationTest_amount_exceeds_mana_balance() = runTest {
         walletManager.wallet.apply {
             setBalance(100f)
             setMana(50f)
@@ -69,7 +70,7 @@ internal class KoinosWalletManagerTest {
     }
 
     @Test
-    fun transactionValidationTest_coin_balance_does_not_cover_fee() {
+    fun transactionValidationTest_coin_balance_does_not_cover_fee() = runTest {
         walletManager.wallet.apply {
             setBalance(0.2f)
             setMana(0.2f)
