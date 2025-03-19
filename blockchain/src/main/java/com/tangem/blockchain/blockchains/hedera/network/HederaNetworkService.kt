@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.hedera.network
 
 import com.hedera.hashgraph.sdk.*
+import com.tangem.blockchain.blockchains.hedera.models.*
 import com.tangem.blockchain.blockchains.hedera.models.HederaAccountBalance
 import com.tangem.blockchain.blockchains.hedera.models.HederaAccountInfo
 import com.tangem.blockchain.blockchains.hedera.models.HederaTransactionId
@@ -41,6 +42,21 @@ internal class HederaNetworkService(private val client: Client, hederaNetworkPro
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
+    }
+
+    suspend fun getTokensCustomFeesInfo(tokenId: String): Result<HederaTokenCustomFeesInfo> {
+        val tokenDetails = multiProvider.performRequest { getTokenDetails(tokenId) }
+
+        return tokenDetails.fold({ tokenDetails ->
+            val customFees = tokenDetails.customFees
+
+            val hasTokenCustomFeesInHBAR = customFees?.fixedFees?.any { it.denominatingTokenId == null } ?: false ||
+                customFees?.fractionalFees?.any { it.denominatingTokenId == null } ?: false
+
+            Result.Success(HederaTokenCustomFeesInfo(hasTokenCustomFeesInHBAR))
+        }, {
+            Result.Failure(it.toBlockchainSdkError())
+        },)
     }
 
     fun <T : Transaction<T>> sendTransaction(transaction: Transaction<T>): Result<TransactionResponse> {
