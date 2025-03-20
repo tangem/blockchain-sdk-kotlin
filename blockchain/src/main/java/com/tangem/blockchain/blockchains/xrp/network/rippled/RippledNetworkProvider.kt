@@ -139,7 +139,7 @@ class RippledNetworkProvider(
         }
     }
 
-    override suspend fun checkAccountDestinationTag(address: String): Boolean {
+    override suspend fun checkDestinationTagRequired(address: String): Boolean {
         return try {
             val accountBody = makeAccountBody(address, validated = true)
             val accountData = retryIO { api.getAccount(accountBody) }
