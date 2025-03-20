@@ -490,7 +490,7 @@ enum class Blockchain(
 
     fun isTestnet(): Boolean = this == getTestnetVersion()
 
-    @Suppress("CyclomaticComplexMethod")
+    @Suppress("CyclomaticComplexMethod", "LongMethod")
     fun getTestnetVersion(): Blockchain? {
         return when (this) {
             Avalanche, AvalancheTestnet -> AvalancheTestnet
@@ -555,7 +555,34 @@ enum class Blockchain(
             ApeChain, ApeChainTestnet -> ApeChainTestnet
             Kaspa, KaspaTestnet -> KaspaTestnet
             ZkLinkNova, ZkLinkNovaTestnet -> ZkLinkNovaTestnet
-            else -> null
+            Nexa, NexaTestnet -> NexaTestnet
+            Scroll, ScrollTestnet -> ScrollTestnet
+            Unknown,
+            Cardano,
+            Dogecoin,
+            Ducatus,
+            Litecoin,
+            Kusama,
+            RSK,
+            Tezos,
+            XRP,
+            Gnosis,
+            Dash,
+            Dischain,
+            TerraV1,
+            TerraV2,
+            Cronos,
+            Playa3ull,
+            Radiant,
+            Fact0rn,
+            Joystream,
+            Bittensor,
+            Filecoin,
+            InternetComputer,
+            Xodex,
+            Canxium,
+            Clore,
+            -> null
         }
     }
 
