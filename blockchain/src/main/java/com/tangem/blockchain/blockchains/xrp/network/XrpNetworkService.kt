@@ -22,6 +22,6 @@ class XrpNetworkService(providers: List<XrpNetworkProvider>) : XrpNetworkProvide
     override suspend fun checkIsAccountCreated(address: String): Boolean =
         multiProvider.currentProvider.checkIsAccountCreated(address)
 
-    override suspend fun checkAccountDestinationTag(address: String): Boolean =
-        multiProvider.currentProvider.checkAccountDestinationTag(address)
+    override suspend fun checkDestinationTagRequired(address: String): Boolean =
+        multiProvider.currentProvider.checkDestinationTagRequired(address)
 }
