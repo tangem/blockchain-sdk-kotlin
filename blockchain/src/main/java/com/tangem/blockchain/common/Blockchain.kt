@@ -820,6 +820,32 @@ enum class Blockchain(
         }
     }
 
+    fun canHandleNFTs(): Boolean = when (this) {
+        // EVM
+        Ethereum, // supported testnet - Sepolia (11155111)
+        Arbitrum, // supported testnet - Sepolia (421614)
+        Avalanche,
+        Fantom, FantomTestnet,
+        BSC, BSCTestnet,
+        Polygon, // supported testnet - Amoy (80002)
+        Gnosis,
+        Cronos,
+        ZkSyncEra, ZkSyncEraTestnet,
+        Moonbeam, MoonbeamTestnet,
+        PolygonZkEVM, PolygonZkEVMTestnet,
+        Moonriver, MoonriverTestnet,
+        Chiliz, ChilizTestnet,
+        Mantle, // supported testnet - Sepolia (5003)
+        Optimism, // supported testnet - Sepolia (11155420)
+        Base, BaseTestnet,
+        Blast, BlastTestnet,
+        // TON
+        TON,
+        -> true
+
+        else -> false
+    }
+
     fun isEvm(): Boolean = getChainId() != null
 
     fun isFeeApproximate(amountType: AmountType): Boolean = when {
