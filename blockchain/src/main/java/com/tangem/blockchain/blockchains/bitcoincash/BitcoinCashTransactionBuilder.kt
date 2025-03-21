@@ -6,7 +6,9 @@ import com.tangem.blockchain.blockchains.bitcoincash.cashaddr.BitcoinCashAddress
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.transaction.getMinimumRequiredUTXOsToSend
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.extensions.isZero
 import com.tangem.common.extensions.toCompressedPublicKey
 import org.bitcoinj.core.*
@@ -19,20 +21,33 @@ class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, private val bloc
     BitcoinTransactionBuilder(walletPublicKey.toCompressedPublicKey(), blockchain) {
 
     override fun buildToSign(transactionData: TransactionData, dustValue: BigDecimal?): Result<List<ByteArray>> {
+        transactionData.requireUncompiled()
         if (unspentOutputs.isNullOrEmpty()) {
             return Result.Failure(
                 BlockchainSdkError.CustomError("Unspent outputs are missing"),
             )
         }
 
-        val change: BigDecimal = calculateChange(transactionData, unspentOutputs!!)
+        val failResult = Result.Failure(BlockchainSdkError.FailedToBuildTx)
 
-        transaction = transactionData.toBitcoinCashTransaction(networkParameters, unspentOutputs!!, change, blockchain)
+        val outputsToSend = getMinimumRequiredUTXOsToSend(
+            unspentOutputs = unspentOutputs ?: return failResult,
+            transactionAmount = transactionData.amount.value ?: return failResult,
+            transactionFeeAmount = transactionData.fee?.amount?.value ?: return failResult,
+            unspentToAmount = { it.amount },
+            dustValue = dustValue,
+        ).successOr { failure ->
+            return failure
+        }
+
+        val change: BigDecimal = calculateChange(transactionData, outputsToSend)
+
+        transaction = transactionData.toBitcoinCashTransaction(networkParameters, outputsToSend, change, blockchain)
 
         val hashesForSign: MutableList<ByteArray> = MutableList(transaction.inputs.size) { byteArrayOf() }
         for (input in transaction.inputs) {
             val index = input.index
-            val value = Coin.parseCoin(unspentOutputs!![index].amount.toString())
+            val value = Coin.parseCoin(outputsToSend[index].amount.toString())
             hashesForSign[index] = getTransaction().hashForSignatureWitness(
                 index,
                 input.scriptBytes,
