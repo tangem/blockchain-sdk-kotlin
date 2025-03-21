@@ -17,8 +17,7 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.isZero
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import org.bitcoinj.core.Base58
 import org.bitcoinj.core.Utils
 import java.math.BigDecimal
@@ -116,48 +115,58 @@ class TezosWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
-        var fee: BigDecimal = BigDecimal.valueOf(TezosConstants.TRANSACTION_FEE)
-        var error: Result.Failure? = null
+        var fee: BigDecimal = BigDecimal.ZERO
 
         coroutineScope {
-            val publicKeyRevealedDeferred =
-                async { networkProvider.isPublicKeyRevealed(wallet.address) }
             val destinationInfoDeferred = async { networkProvider.getInfo(destination) }
 
-            when (val result = publicKeyRevealedDeferred.await()) {
-                is Result.Failure -> error = result
-                is Result.Success -> {
-                    val isPublicKeyRevealedData = result.data
-                    isPublicKeyRevealed = isPublicKeyRevealedData
-                    if (!isPublicKeyRevealedData) {
-                        fee += BigDecimal.valueOf(TezosConstants.REVEAL_FEE)
-                    }
-                }
+            fee += try {
+                calculateFeePartForSender()
+            } catch (e: BlockchainError) {
+                destinationInfoDeferred.cancel()
+                return@coroutineScope Result.Failure(e)
             }
+
             when (val result = destinationInfoDeferred.await()) {
-                is Result.Failure -> error = result
+                is Result.Failure -> return@coroutineScope result
                 is Result.Success -> {
                     if (result.data.balance.isZero()) {
                         fee += BigDecimal.valueOf(TezosConstants.ALLOCATION_FEE)
+                    } else {
+                        // don't add ALLOCATION_FEE
                     }
                 }
             }
         }
 
-        return if (error == null) {
-            Result.Success(TransactionFee.Single(Fee.Common(Amount(fee, blockchain))))
-        } else {
-            error!!
-        }
+        return Result.Success(TransactionFee.Single(Fee.Common(Amount(fee, blockchain))))
     }
 
     override suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee> {
-        // we should update publicKeyRevealed on every fee estimation
-        val publicKeyRevealedUpdated = networkProvider.isPublicKeyRevealed(wallet.address)
-        isPublicKeyRevealed = publicKeyRevealedUpdated.successOr { null }
-        val transactionFee = BigDecimal.valueOf(TezosConstants.TRANSACTION_FEE)
-        val allocationFee = BigDecimal.valueOf(TezosConstants.ALLOCATION_FEE)
-        return Result.Success(TransactionFee.Single(Fee.Common(Amount(transactionFee + allocationFee, blockchain))))
+        var fee: BigDecimal = try {
+            calculateFeePartForSender()
+        } catch (e: BlockchainError) {
+            return Result.Failure(e)
+        }
+        fee += BigDecimal.valueOf(TezosConstants.ALLOCATION_FEE)
+        return Result.Success(
+            TransactionFee.Single(Fee.Common(Amount(fee, blockchain))),
+        )
+    }
+
+    private suspend fun calculateFeePartForSender(): BigDecimal {
+        var fee: BigDecimal = BigDecimal.valueOf(TezosConstants.TRANSACTION_FEE)
+        when (val publicKeyRevealed = networkProvider.isPublicKeyRevealed(wallet.address)) {
+            is Result.Failure -> throw publicKeyRevealed.error
+            is Result.Success -> {
+                val isPublicKeyRevealedData = publicKeyRevealed.data
+                isPublicKeyRevealed = isPublicKeyRevealedData
+                if (!isPublicKeyRevealedData) {
+                    fee += BigDecimal.valueOf(TezosConstants.REVEAL_FEE)
+                }
+            }
+        }
+        return fee
     }
 
     @Deprecated("Will be removed in the future. Use TransactionValidator instead")
