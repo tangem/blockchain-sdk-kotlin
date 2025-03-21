@@ -17,7 +17,6 @@ internal object DefaultNFTProvider : NFTProvider {
     ): NFTAsset? = null
 
     override suspend fun getSalePrice(
-        walletAddress: String,
         collectionIdentifier: NFTCollection.Identifier,
         assetIdentifier: NFTAsset.Identifier,
     ): NFTAsset.SalePrice? = null
