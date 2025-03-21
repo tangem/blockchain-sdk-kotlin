@@ -23,7 +23,6 @@ import okio.ByteString.Companion.toByteString
  */
 internal class KoinContractAbi(isTestnet: Boolean) {
 
-    val contractId: String = if (isTestnet) CONTRACT_ID_TESTNET else CONTRACT_ID
     val chainId: String = if (isTestnet) CHAIN_ID_TESTNET else CHAIN_ID
     val balanceOf = BalanceOf()
     val transfer = Transfer()
@@ -85,8 +84,6 @@ internal class KoinContractAbi(isTestnet: Boolean) {
     }
 
     private companion object {
-        const val CONTRACT_ID: String = "15DJN4a8SgrbGhhGksSBASiSYjGnMU8dGL"
-        const val CONTRACT_ID_TESTNET: String = "1FaSvLjQJsCJKq5ybmGsMMQs8RQYyVv8ju"
         const val CHAIN_ID: String = "EiBZK_GGVP0H_fXVAM3j6EAuz3-B-l3ejxRSewi7qIBfSA=="
         const val CHAIN_ID_TESTNET: String = "EiBncD4pKRIQWco_WRqo5Q-xnXR7JuO3PtZv983mKdKHSQ=="
 
