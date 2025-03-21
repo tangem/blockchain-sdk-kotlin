@@ -15,8 +15,17 @@ data class RippledAccountResult(
     @Json(name = "account_data")
     val accountData: RippledAccountData? = null,
 
+    @Json(name = "account_flags")
+    val accountFlags: XRPAccountFlags? = null,
+
     @Json(name = "error_code")
     val errorCode: Int? = null,
+)
+
+@JsonClass(generateAdapter = true)
+data class XRPAccountFlags(
+    @Json(name = "requireDestinationTag")
+    val requireDestinationTag: Boolean,
 )
 
 @JsonClass(generateAdapter = true)

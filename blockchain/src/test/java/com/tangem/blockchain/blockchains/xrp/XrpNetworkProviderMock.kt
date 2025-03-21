@@ -26,4 +26,8 @@ class XrpNetworkProviderMock(
     }
 
     override suspend fun checkIsAccountCreated(address: String) = isAccountCreatedResponse
+
+    override suspend fun checkDestinationTagRequired(address: String): Boolean {
+        TODO("Not yet implemented")
+    }
 }
