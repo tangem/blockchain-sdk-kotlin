@@ -18,6 +18,7 @@ import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.network.moshi
 import kotlinx.coroutines.delay
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import java.math.BigInteger
@@ -25,6 +26,9 @@ import java.math.BigInteger
 private interface KoinosRetrofitJsonRPCApi {
     @POST(" ")
     suspend fun send(@Header("apikey") apiKey: String? = null, @Body body: JsonRPCRequest): JsonRPCResponse
+
+    @GET("v1/contract/koin/abi")
+    suspend fun getConfig(@Header("apikey") apiKey: String? = null): KoinosContractResponse
 }
 
 /**
@@ -32,21 +36,21 @@ private interface KoinosRetrofitJsonRPCApi {
  * @see <a href="https://docs.koinos.io/rpc/json-rpc/">Koinos JSON-RPC docs</a>
  * @see <a href=https://github.com/koinos/koinos-proto/>Koinos api proto-models</a>
  */
-internal class KoinosNetworkProvier(
+internal class KoinosNetworkProvider(
     override val baseUrl: String,
-    isTestnet: Boolean,
     private val apiKey: String? = null,
+    isTestnet: Boolean,
 ) : NetworkProvider {
 
     private val api = createRetrofitInstance(baseUrl).create(KoinosRetrofitJsonRPCApi::class.java)
     private val koinContractAbi = KoinContractAbi(isTestnet = isTestnet)
 
-    suspend fun getKoinBalance(address: String): Result<Long> {
+    suspend fun getKoinBalance(address: String, contractId: String): Result<Long> {
         val args = koinContractAbi.balanceOf.encodeArgs(address)
             ?: return decodeFailure(koinContractAbi.balanceOf.argsName)
 
         val request = KoinosMethod.ReadContract(
-            contractId = koinContractAbi.contractId,
+            contractId = contractId,
             entryPoint = koinContractAbi.balanceOf.entryPoint,
             args = args,
         ).asRequest()
@@ -62,6 +66,13 @@ internal class KoinosNetworkProvier(
                 koinContractAbi.balanceOf.decodeResult(response.result)?.balance
                     ?: return decodeFailure(koinContractAbi.balanceOf.resultName)
             }
+        }
+    }
+
+    suspend fun getContractId(): Result<String> {
+        return catchNetworkError {
+            val contractId = api.getConfig(apiKey).contractId
+            Result.Success(contractId)
         }
     }
 
