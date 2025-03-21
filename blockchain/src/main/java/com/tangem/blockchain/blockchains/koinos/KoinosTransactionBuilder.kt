@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.koinos.network.dto.KoinosProtocol
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.decodeBase58
+import com.tangem.blockchain.extensions.successOr
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.toByteString
@@ -16,15 +17,17 @@ internal class KoinosTransactionBuilder(isTestnet: Boolean) {
     private val koinContractAbi = KoinContractAbi(isTestnet = isTestnet)
 
     @Suppress("MagicNumber")
-    fun buildToSign(
+    // make this suspend
+    suspend fun buildToSign(
         transactionData: TransactionData,
         currentNonce: KoinosAccountNonce,
+        contractIdHolder: KoinosContractIdHolder,
     ): Result<Pair<KoinosProtocol.Transaction, ByteArray>> {
         transactionData.requireUncompiled()
 
         val from = transactionData.sourceAddress
         val to = transactionData.destinationAddress
-        val amount = transactionData.amount.longValue!!
+        val amount = transactionData.amount.longValue
 
         val manaLimit = (transactionData.extras as? KoinosTransactionExtras)?.manaLimit
             ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx)
@@ -37,7 +40,10 @@ internal class KoinosTransactionBuilder(isTestnet: Boolean) {
 
         val operation = koinos.protocol.operation(
             call_contract = koinos.protocol.call_contract_operation(
-                contract_id = koinContractAbi.contractId.decodeBase58()!!.toByteString(),
+                contract_id = contractIdHolder.get()
+                    .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) }
+                    .decodeBase58()!!
+                    .toByteString(),
                 entry_point = koinContractAbi.transfer.entryPoint,
                 args = koinContractAbi.transfer.argsToProto(
                     fromAccount = from,
@@ -75,7 +81,8 @@ internal class KoinosTransactionBuilder(isTestnet: Boolean) {
             operations = listOf(
                 KoinosProtocol.Operation(
                     callContract = KoinosProtocol.CallContractOperation(
-                        contractIdBase58 = koinContractAbi.contractId,
+                        contractIdBase58 = contractIdHolder.get()
+                            .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) },
                         entryPoint = koinContractAbi.transfer.entryPoint,
                         argsBase64 = operation.call_contract!!.args.base64Url(),
                     ),
