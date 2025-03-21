@@ -8,6 +8,7 @@ import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.di.DepsContainer
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import java.math.BigDecimal
@@ -34,7 +35,7 @@ class CardanoTransactionValidatorTest {
      * Result: success
      */
     @Test
-    fun test_withdraw_coins_1_1() {
+    fun test_withdraw_coins_1_1() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA())
 
         val result = validator.validate(
@@ -49,7 +50,7 @@ class CardanoTransactionValidatorTest {
      * Result: success
      */
     @Test
-    fun test_withdraw_coins_1_2() {
+    fun test_withdraw_coins_1_2() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(wmtValue = BigDecimal.ZERO))
 
         val result = validator.validate(
@@ -64,7 +65,7 @@ class CardanoTransactionValidatorTest {
      * Result: success
      */
     @Test
-    fun test_withdraw_coins_1_3() {
+    fun test_withdraw_coins_1_3() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT())
 
         val result = validator.validate(
@@ -79,7 +80,7 @@ class CardanoTransactionValidatorTest {
      * Result: success
      */
     @Test
-    fun test_withdraw_coins_1_4() {
+    fun test_withdraw_coins_1_4() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT_and_AGIX())
 
         val result = validator.validate(
@@ -96,7 +97,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Balance is less than 1 ADA after sending.
      */
     @Test
-    fun test_withdraw_coins_2_1() {
+    fun test_withdraw_coins_2_1() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA())
 
         val result = validator.validate(
@@ -116,7 +117,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Balance is less than 1 ADA after sending.
      */
     @Test
-    fun test_withdraw_coins_2_2() {
+    fun test_withdraw_coins_2_2() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(wmtValue = BigDecimal.ZERO))
 
         val result = validator.validate(
@@ -136,7 +137,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. User has another NOT ZERO tokens.
      */
     @Test
-    fun test_withdraw_coins_2_3() {
+    fun test_withdraw_coins_2_3() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(wmtValue = BigDecimal(10)))
 
         val result = validator.validate(
@@ -156,7 +157,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. User has another NOT ZERO tokens.
      */
     @Test
-    fun test_withdraw_coins_2_4() {
+    fun test_withdraw_coins_2_4() = runTest {
         val validator = createValidator(model = testModelFactory.create_2_ADA_and_WMT_and_AGIX())
 
         val result = validator.validate(
@@ -178,7 +179,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Sending amount is less than minimum.
      */
     @Test
-    fun test_withdraw_coins_3_1() {
+    fun test_withdraw_coins_3_1() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA())
 
         val result = validator.validate(
@@ -198,7 +199,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Sending amount is less than minimum.
      */
     @Test
-    fun test_withdraw_coins_3_2() {
+    fun test_withdraw_coins_3_2() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(wmtValue = BigDecimal.ZERO))
 
         val result = validator.validate(
@@ -218,7 +219,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Sending amount is less than minimum.
      */
     @Test
-    fun test_withdraw_coins_3_3() {
+    fun test_withdraw_coins_3_3() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(wmtValue = BigDecimal(10)))
 
         val result = validator.validate(
@@ -238,7 +239,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Sending amount is less than minimum.
      */
     @Test
-    fun test_withdraw_coins_3_4() {
+    fun test_withdraw_coins_3_4() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT_and_AGIX())
 
         val result = validator.validate(
@@ -260,7 +261,7 @@ class CardanoTransactionValidatorTest {
      * Result: success
      */
     @Test
-    fun test_withdraw_coins_4_1() {
+    fun test_withdraw_coins_4_1() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA())
 
         val result = validator.validate(
@@ -275,7 +276,7 @@ class CardanoTransactionValidatorTest {
      * Result: success
      */
     @Test
-    fun test_withdraw_coins_4_2() {
+    fun test_withdraw_coins_4_2() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(wmtValue = BigDecimal.ZERO))
 
         val result = validator.validate(
@@ -290,7 +291,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Impossible to withdraw all ADA if user has another NOT ZERO tokens.
      */
     @Test
-    fun test_withdraw_coins_4_3() {
+    fun test_withdraw_coins_4_3() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(wmtValue = BigDecimal(10)))
 
         val result = validator.validate(
@@ -310,7 +311,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Impossible to withdraw all ADA if user has another NOT ZERO tokens.
      */
     @Test
-    fun test_withdraw_coins_4_4() {
+    fun test_withdraw_coins_4_4() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT_and_AGIX())
 
         val result = validator.validate(
@@ -332,7 +333,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Balance is less than 1 ADA after sending.
      */
     @Test
-    fun test_withdraw_coins_5_1() {
+    fun test_withdraw_coins_5_1() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA())
 
         val result = validator.validate(
@@ -352,7 +353,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Balance is less than 1 ADA after sending.
      */
     @Test
-    fun test_withdraw_coins_5_2() {
+    fun test_withdraw_coins_5_2() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(wmtValue = BigDecimal.ZERO))
 
         val result = validator.validate(
@@ -372,7 +373,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Impossible to withdraw all ADA if user has another NOT ZERO tokens.
      */
     @Test
-    fun test_withdraw_coins_5_3() {
+    fun test_withdraw_coins_5_3() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(BigDecimal(10)))
 
         val result = validator.validate(
@@ -392,7 +393,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Impossible to withdraw all ADA if user has another NOT ZERO tokens.
      */
     @Test
-    fun test_withdraw_coins_5_4() {
+    fun test_withdraw_coins_5_4() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT_and_AGIX())
 
         val result = validator.validate(
@@ -414,7 +415,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Insufficient ADA amount.
      */
     @Test
-    fun test_withdraw_tokens_1_1() {
+    fun test_withdraw_tokens_1_1() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT(BigDecimal.ZERO))
 
         val result = validator.validate(
@@ -434,7 +435,7 @@ class CardanoTransactionValidatorTest {
      * Result: success
      */
     @Test
-    fun test_withdraw_tokens_1_2() {
+    fun test_withdraw_tokens_1_2() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT())
 
         val result = validator.validate(
@@ -449,7 +450,7 @@ class CardanoTransactionValidatorTest {
      * Result: success
      */
     @Test
-    fun test_withdraw_tokens_1_3() {
+    fun test_withdraw_tokens_1_3() = runTest {
         val validator = createValidator(model = testModelFactory.create_5_66_ADA_and_WMT_and_AGIX())
 
         val result = validator.validate(
@@ -465,7 +466,7 @@ class CardanoTransactionValidatorTest {
      * Result: success. Due to balance is less than 1 ADA after sending, we will withdraw all ADA.
      */
     @Test
-    fun test_withdraw_tokens_2() {
+    fun test_withdraw_tokens_2() = runTest {
         val validator = createValidator(model = testModelFactory.create_2_ADA_and_WMT())
 
         val result = validator.validate(
@@ -481,7 +482,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Impossible to withdraw part of WMT if user has another NOT ZERO tokens.
      */
     @Test
-    fun test_withdraw_tokens_3_1() {
+    fun test_withdraw_tokens_3_1() = runTest {
         val validator = createValidator(model = testModelFactory.create_2_ADA_and_WMT())
 
         val result = validator.validate(
@@ -501,7 +502,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Impossible to withdraw part of WMT if user has another NOT ZERO tokens.
      */
     @Test
-    fun test_withdraw_tokens_3_2() {
+    fun test_withdraw_tokens_3_2() = runTest {
         val validator = createValidator(
             model = testModelFactory.create_2_ADA_and_WMT_and_AGIX(agixValue = BigDecimal.ZERO),
         )
@@ -523,7 +524,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Impossible to withdraw part of WMT if user has another NOT ZERO tokens.
      */
     @Test
-    fun test_withdraw_tokens_3_3() {
+    fun test_withdraw_tokens_3_3() = runTest {
         val validator = createValidator(model = testModelFactory.create_2_ADA_and_WMT_and_AGIX())
 
         val result = validator.validate(
@@ -544,7 +545,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Impossible to withdraw all ADA if user has another NOT ZERO tokens.
      */
     @Test
-    fun test_withdraw_tokens_4() {
+    fun test_withdraw_tokens_4() = runTest {
         val validator = createValidator(model = testModelFactory.create_2_ADA_and_WMT_and_AGIX())
 
         val result = validator.validate(
@@ -564,7 +565,7 @@ class CardanoTransactionValidatorTest {
      * Result: failure. Balance is low to cover fee and min-ada-value.
      */
     @Test
-    fun test_withdraw_tokens_5() {
+    fun test_withdraw_tokens_5() = runTest {
         val validator = createValidator(model = testModelFactory.create_2_ADA_and_WMT())
 
         val result = validator.validate(

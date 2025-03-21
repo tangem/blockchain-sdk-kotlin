@@ -33,7 +33,7 @@ internal class CardanoTransactionBuilder(
         twTxBuilder = CardanoTWTxBuilder(wallet = wallet, outputs = outputs)
     }
 
-    override fun validate(transactionData: TransactionData): Result<Unit> {
+    override suspend fun validate(transactionData: TransactionData): Result<Unit> {
         return runCatching {
             transactionData.requireUncompiled()
 
