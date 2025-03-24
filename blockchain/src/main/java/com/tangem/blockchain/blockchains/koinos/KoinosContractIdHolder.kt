@@ -4,9 +4,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import com.tangem.blockchain.extensions.Result
 
-class KoinosContractIdHolder(
-    private val loadContractId: suspend () -> Result<String>,
-) {
+internal class KoinosContractIdHolder(private val loadContractId: suspend () -> Result<String>) {
+
     @Volatile
     private var contractId: String? = null
     private val mutex = Mutex()
