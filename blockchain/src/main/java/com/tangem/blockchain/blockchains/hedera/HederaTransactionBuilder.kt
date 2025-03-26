@@ -1,9 +1,11 @@
 package com.tangem.blockchain.blockchains.hedera
 
+import android.util.Log
 import com.hedera.hashgraph.sdk.*
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.toKeccak
 import com.tangem.blockchain.blockchains.hedera.models.TokenAssociation
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.CryptoUtils
@@ -25,9 +27,18 @@ internal class HederaTransactionBuilder(
         return try {
             transactionData.requireUncompiled()
 
-            val maxFeeValue = transactionData.fee?.amount?.value ?: return Result.Failure(
-                BlockchainSdkError.NPError("transactionData.fee"),
+            val fee = transactionData.fee as? Fee.Hedera ?: return Result.Failure(
+                BlockchainSdkError.CustomError("transactionData.fee is not Fee.Hedera"),
             )
+
+            val totalFeeValue = fee.amount.value ?: return Result.Failure(
+                BlockchainSdkError.NPError("Fee amount value must not be null"),
+            )
+            val additionalHBARFee = fee.additionalHBARFee
+
+            val actualFeeValue = totalFeeValue - additionalHBARFee
+            val maxTransactionFee = Hbar.from(actualFeeValue)
+
             val sourceAccountId = AccountId.fromString(transactionData.sourceAddress)
             val destinationAccountId = AccountId.fromString(transactionData.destinationAddress)
             val memo = (transactionData.extras as? HederaTransactionExtras)?.memo.orEmpty()
@@ -38,7 +49,7 @@ internal class HederaTransactionBuilder(
                 destinationAccountId = destinationAccountId,
             )
                 .setTransactionId(TransactionId.generate(sourceAccountId))
-                .setMaxTransactionFee(Hbar.from(maxFeeValue))
+                .setMaxTransactionFee(maxTransactionFee)
                 .setTransactionMemo(memo)
                 .freezeWith(client)
 
