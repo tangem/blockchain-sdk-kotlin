@@ -490,7 +490,7 @@ enum class Blockchain(
 
     fun isTestnet(): Boolean = this == getTestnetVersion()
 
-    @Suppress("CyclomaticComplexMethod")
+    @Suppress("CyclomaticComplexMethod", "LongMethod")
     fun getTestnetVersion(): Blockchain? {
         return when (this) {
             Avalanche, AvalancheTestnet -> AvalancheTestnet
@@ -555,7 +555,34 @@ enum class Blockchain(
             ApeChain, ApeChainTestnet -> ApeChainTestnet
             Kaspa, KaspaTestnet -> KaspaTestnet
             ZkLinkNova, ZkLinkNovaTestnet -> ZkLinkNovaTestnet
-            else -> null
+            Nexa, NexaTestnet -> NexaTestnet
+            Scroll, ScrollTestnet -> ScrollTestnet
+            Unknown,
+            Cardano,
+            Dogecoin,
+            Ducatus,
+            Litecoin,
+            Kusama,
+            RSK,
+            Tezos,
+            XRP,
+            Gnosis,
+            Dash,
+            Dischain,
+            TerraV1,
+            TerraV2,
+            Cronos,
+            Playa3ull,
+            Radiant,
+            Fact0rn,
+            Joystream,
+            Bittensor,
+            Filecoin,
+            InternetComputer,
+            Xodex,
+            Canxium,
+            Clore,
+            -> null
         }
     }
 
@@ -791,6 +818,32 @@ enum class Blockchain(
 
             else -> false
         }
+    }
+
+    fun canHandleNFTs(): Boolean = when (this) {
+        // EVM
+        Ethereum, // supported testnet - Sepolia (11155111)
+        Arbitrum, // supported testnet - Sepolia (421614)
+        Avalanche,
+        Fantom, FantomTestnet,
+        BSC, BSCTestnet,
+        Polygon, // supported testnet - Amoy (80002)
+        Gnosis,
+        Cronos,
+        ZkSyncEra, ZkSyncEraTestnet,
+        Moonbeam, MoonbeamTestnet,
+        PolygonZkEVM, PolygonZkEVMTestnet,
+        Moonriver, MoonriverTestnet,
+        Chiliz, ChilizTestnet,
+        Mantle, // supported testnet - Sepolia (5003)
+        Optimism, // supported testnet - Sepolia (11155420)
+        Base, BaseTestnet,
+        Blast, BlastTestnet,
+        // TON
+        TON,
+        -> true
+
+        else -> false
     }
 
     fun isEvm(): Boolean = getChainId() != null
