@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.hedera
 
-import android.util.Log
 import com.hedera.hashgraph.sdk.*
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.toKeccak
 import com.tangem.blockchain.blockchains.hedera.models.TokenAssociation
