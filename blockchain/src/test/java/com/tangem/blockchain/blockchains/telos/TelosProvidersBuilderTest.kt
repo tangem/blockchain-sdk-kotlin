@@ -19,7 +19,7 @@ class TelosProvidersBuilderTest {
     init {
         DepsContainer.onInit(
             config = BlockchainSdkConfig(),
-            featureToggles = BlockchainFeatureToggles(isEthereumEIP1559Enabled = true),
+            featureToggles = BlockchainFeatureToggles(),
         )
     }
 
