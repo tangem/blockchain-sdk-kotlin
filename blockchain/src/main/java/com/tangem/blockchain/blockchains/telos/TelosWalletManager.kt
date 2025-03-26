@@ -6,7 +6,6 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvide
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -21,8 +20,7 @@ class TelosWalletManager(
 ) : EthereumWalletManager(wallet, transactionBuilder, networkProvider) {
 
     override suspend fun getFeeInternal(amount: Amount, destination: String, data: String?): Result<TransactionFee> {
-        val isEthereumEIP1559Enabled = DepsContainer.blockchainFeatureToggles.isEthereumEIP1559Enabled
-        return if (isEthereumEIP1559Enabled && wallet.blockchain.isSupportEIP1559) {
+        return if (wallet.blockchain.isSupportEIP1559) {
             getEIP1559Fee(amount, destination, data)
         } else {
             getLegacyFee(amount, destination, data)

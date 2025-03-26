@@ -1,4 +1,4 @@
-package com.tangem.blockchain.blockchains.bsc
+package com.tangem.blockchain.blockchains.rsk
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
@@ -13,13 +13,13 @@ import org.junit.Test
 import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.DEFAULT_GAS_PRICE
 
-class BscTransactionTest {
+class RskTransactionTest {
 
-    val blockchain = Blockchain.BSC
+    private val blockchain = Blockchain.RSK
 
     private val walletPublicKey = (
-        "04332F99A76D0ABB06356945CAF02C23B25297D05A2557B0968904792EEB1C88B8C70BCD72258F540C8B76BE1C51C9BC24DC069" +
-            "48758001C5BF17016336652D336"
+        "04EB30400CE9D1DEED12B84D4161A1FA922EF4185A155EF3EC208078B3807B126FA22C335081AAEBF161095C11C7D8BD550EF88" +
+            "82A3125B0EE9AE96DDDE1AE743F"
         ).hexToBytes()
 
     private val transactionBuilder by lazy {
@@ -33,11 +33,15 @@ class BscTransactionTest {
         )
     }
 
+    init {
+        System.loadLibrary("TrustWalletCore")
+    }
+
     @Before
     fun setup() {
         DepsContainer.onInit(
             config = BlockchainSdkConfig(),
-            featureToggles = BlockchainFeatureToggles(isEthereumEIP1559Enabled = false),
+            featureToggles = BlockchainFeatureToggles(),
         )
     }
 
@@ -45,8 +49,8 @@ class BscTransactionTest {
     fun buildCorrectCoinTransaction() {
         // arrange
         val signature = (
-            "BABE797847D1BD14A9A8BF8704D9BB10456C27A39E714A0FB40B668EEF8A79F72D65F9C65735DC38EB5D8DCB26755DDA794FC0F" +
-                "9156135B97C3A3993C75BAFDE"
+            "C0FBC3255442CAE582FDC3CF8F431AAAB0B89D1D0DFBDAE71FEE44F99E4C11BD3D31BEB446589EDC761493C369CDA6B13AC09D1" +
+                "22C58C7F5903832678371A96D"
             ).hexToBytes()
         val sendValue = "0.1".toBigDecimal()
         val feeValue = "0.01".toBigDecimal()
@@ -69,11 +73,11 @@ class BscTransactionTest {
             extras = EthereumTransactionExtras(nonce = nonce),
         )
 
-        val expectedHashToSign = "166A2BF5E57A4732331F876327803E1D35559D8A4F7BEBF6356EA30BC52F0258".hexToBytes()
+        val expectedHashToSign = "B0F824BE586D3BB662DDD855B3BF1165DF0149717A749E986EDBBDCE82A86D22".hexToBytes()
         val expectedSignedTransaction = (
-            "F86D0F856EDF2A079E825208947655B9B19FFAB8B897F836857DAE22A1E7F8D73588016345785D8A0000808194A0BABE797847D" +
-                "1BD14A9A8BF8704D9BB10456C27A39E714A0FB40B668EEF8A79F7A02D65F9C65735DC38EB5D8DCB26755DDA794FC0F91561" +
-                "35B97C3A3993C75BAFDE"
+            "F86C0F856EDF2A079E825208947655B9B19FFAB8B897F836857DAE22A1E7F8D73588016345785D8A0000805FA0C0FBC3255442C" +
+                "AE582FDC3CF8F431AAAB0B89D1D0DFBDAE71FEE44F99E4C11BDA03D31BEB446589EDC761493C369CDA6B13AC09D122C58C7" +
+                "F5903832678371A96D"
             ).hexToBytes()
 
         // act
@@ -89,18 +93,18 @@ class BscTransactionTest {
     fun buildCorrectTokenTransaction() {
         // arrange
         val signature = (
-            "F87F35C5F5EEAD78722315FC7F4CF303BB985479F082550DFC859A45BC39693E5254F458E65EC802EDD725A312AE2A967D6B761" +
-                "CB0708DFF0EC5F08901033CA4"
+            "3057FEA6F18CC08553F79E985646262E06C0ED50DB7583D236958AB3ADB5D71333D1A8395CD286AF65FB781A2C2461132A9F34" +
+                "014CCDC68586B8F458848F4717"
             ).hexToBytes()
         val sendValue = "0.1".toBigDecimal()
         val feeValue = "0.01".toBigDecimal()
         val destinationAddress = "0x7655b9b19ffab8b897f836857dae22a1e7f8d735"
         val nonce = 15.toBigInteger()
-        val contractAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        val contractAddress = "0x2acc95758f8b5f583470ba265eb685a8f45fc9d5"
         val token = Token(
-            symbol = "USDC",
+            symbol = "RIF",
             contractAddress = contractAddress,
-            decimals = 6,
+            decimals = 18,
         )
 
         val walletAddress = EthereumAddressService().makeAddress(walletPublicKey)
@@ -119,12 +123,12 @@ class BscTransactionTest {
             extras = EthereumTransactionExtras(nonce = nonce),
         )
 
-        val expectedHashToSign = "95DB218B4288E60DA2807FC42EFBB2BFEF0A19607EC1D701AF54704DC5A253F6".hexToBytes()
+        val expectedHashToSign = "F3D1B4E2B5A34B0A3D34F3B34D97E35E5CF906DEF3EEABB10B4A218ACCE34DFC".hexToBytes()
         val expectedSignedTransaction = (
-            "F8AA0F856EDF2A079E82520894A0B86991C6218B36C1D19D4A2E9EB0CE3606EB4880B844A9059CBB00000000000000000000000" +
+            "F8A90F856EDF2A079E825208942ACC95758F8B5F583470BA265EB685A8F45FC9D580B844A9059CBB00000000000000000000000" +
                 "07655B9B19FFAB8B897F836857DAE22A1E7F8D735000000000000000000000000000000000000000000000000016345785D" +
-                "8A00008193A0F87F35C5F5EEAD78722315FC7F4CF303BB985479F082550DFC859A45BC39693EA05254F458E65EC802EDD72" +
-                "5A312AE2A967D6B761CB0708DFF0EC5F08901033CA4"
+                "8A000060A03057FEA6F18CC08553F79E985646262E06C0ED50DB7583D236958AB3ADB5D713A033D1A8395CD286AF65FB781" +
+                "A2C2461132A9F34014CCDC68586B8F458848F4717"
             ).hexToBytes()
 
         // act

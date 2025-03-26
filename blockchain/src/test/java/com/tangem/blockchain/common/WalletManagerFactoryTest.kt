@@ -20,7 +20,6 @@ import com.tangem.common.card.EllipticCurve
 import com.tangem.common.core.Config
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.extensions.hexToBytes
-import com.tangem.common.extensions.toHexString
 import com.tangem.common.services.InMemoryStorage
 import com.tangem.operations.read.ReadCommand
 import io.mockk.every
@@ -148,7 +147,7 @@ internal class WalletManagerFactoryTest {
                 override suspend fun remove(key: String) = Unit
             },
             accountCreator = accountCreator,
-            featureToggles = BlockchainFeatureToggles(isEthereumEIP1559Enabled = true),
+            featureToggles = BlockchainFeatureToggles(),
         ).createTwinWalletManager(
             walletPublicKey = card.wallets.first().publicKey,
             pairPublicKey = pairPublicKey.hexToBytes(),
@@ -225,7 +224,7 @@ internal class WalletManagerFactoryTest {
                 override suspend fun remove(key: String) = Unit
             },
             accountCreator = accountCreator,
-            featureToggles = BlockchainFeatureToggles(isEthereumEIP1559Enabled = true),
+            featureToggles = BlockchainFeatureToggles(),
         ).createLegacyWalletManager(
             blockchain,
             publicKey,
@@ -233,6 +232,7 @@ internal class WalletManagerFactoryTest {
         )
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     @Test
     fun test() {
         val ecParams = ECKey.CURVE
