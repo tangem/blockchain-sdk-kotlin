@@ -189,22 +189,38 @@ internal class HederaWalletManager(
         }
 
         val customFeesInfo = (amount.type as? AmountType.Token)?.let {
-            networkService.getTokensCustomFeesInfo(amount.type.token.contractAddress)
+            networkService.getTokensCustomFeesInfo(it.token.contractAddress)
                 .successOr { return Result.Failure(BlockchainSdkError.FailedToLoadFee) }
         }
 
         return when (val usdExchangeRateResult = networkService.getUsdExchangeRate()) {
             is Result.Success -> {
+                val exchangeRate = usdExchangeRateResult.data
                 val isAccountExists = isAccountExist(destination).successOr { false }
-                var feeBase = if (isAccountExists) transferFeeBase else HBAR_CREATE_ACCOUNT_USD_COST
 
-                if (customFeesInfo?.hasTokenCustomFeesInHBAR == true) {
+                var feeBase = if (isAccountExists) {
+                    transferFeeBase
+                } else {
+                    HBAR_CREATE_ACCOUNT_USD_COST
+                }
+
+                if (customFeesInfo?.hasTokenCustomFees == true) {
                     feeBase += HBAR_CUSTOM_FEE_TOKEN_TRANSFER_USD_COST
                 }
 
-                val fee = (feeBase * MAX_FEE_MULTIPLIER * usdExchangeRateResult.data)
-                    .setScale(blockchain.decimals(), RoundingMode.UP)
-                Result.Success(TransactionFee.Single(Fee.Common(Amount(fee, blockchain))))
+                val additionalHBARFee = customFeesInfo?.additionalHBARFee ?: BigDecimal.ZERO
+
+                val feeValue = exchangeRate * feeBase * MAX_FEE_MULTIPLIER + additionalHBARFee
+
+                val roundedFee = feeValue.setScale(blockchain.decimals(), RoundingMode.UP)
+                val feeAmount = Amount(roundedFee, blockchain)
+
+                val fee = Fee.Hedera(
+                    amount = feeAmount,
+                    additionalHBARFee = customFeesInfo?.additionalHBARFee ?: BigDecimal.ZERO,
+                )
+
+                Result.Success(TransactionFee.Single(fee))
             }
             is Result.Failure -> {
                 usdExchangeRateResult
