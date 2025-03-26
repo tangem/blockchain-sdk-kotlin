@@ -1,3 +1,8 @@
 package com.tangem.blockchain.blockchains.hedera.models
 
-data class HederaTokenCustomFeesInfo(val hasTokenCustomFeesInHBAR: Boolean)
+import java.math.BigDecimal
+
+data class HederaTokenCustomFeesInfo(
+    val hasTokenCustomFees: Boolean,
+    val additionalHBARFee: BigDecimal,
+)

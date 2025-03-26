@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.hedera.models.HederaAccountBalance
 import com.tangem.blockchain.blockchains.hedera.models.HederaAccountInfo
 import com.tangem.blockchain.blockchains.hedera.models.HederaTransactionId
 import com.tangem.blockchain.blockchains.hedera.models.HederaTransactionInfo
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.*
 import com.tangem.blockchain.network.MultiNetworkProvider
@@ -45,18 +46,43 @@ internal class HederaNetworkService(private val client: Client, hederaNetworkPro
     }
 
     suspend fun getTokensCustomFeesInfo(tokenId: String): Result<HederaTokenCustomFeesInfo> {
-        val tokenDetails = multiProvider.performRequest { getTokenDetails(tokenId) }
+        val tokenDetailsResult = multiProvider.performRequest { getTokenDetails(tokenId) }
 
-        return tokenDetails.fold({ tokenDetails ->
-            val customFees = tokenDetails.customFees
+        return tokenDetailsResult.fold(
+            { tokenDetails ->
+                val customFees = tokenDetails.customFees ?: return Result.Success(
+                    HederaTokenCustomFeesInfo(
+                        hasTokenCustomFees = false,
+                        additionalHBARFee = BigDecimal.ZERO,
+                    ),
+                )
 
-            val hasTokenCustomFeesInHBAR = customFees?.fixedFees?.any { it.denominatingTokenId == null } ?: false ||
-                customFees?.fractionalFees?.any { it.denominatingTokenId == null } ?: false
+                // avoid charging fee in other tokens in order to prevent fraud
+                val hasInvalidTokenFee = customFees.fixedFees.any { fee ->
+                    fee.denominatingTokenId != null && fee.denominatingTokenId != tokenId
+                }
+                if (hasInvalidTokenFee) {
+                    return Result.Failure(BlockchainSdkError.CustomError("Fixed fee in another token"))
+                }
 
-            Result.Success(HederaTokenCustomFeesInfo(hasTokenCustomFeesInHBAR))
-        }, {
-            Result.Failure(it.toBlockchainSdkError())
-        },)
+                val hasTokenCustomFees = customFees.fixedFees.isNotEmpty() || customFees.fractionalFees.isNotEmpty()
+
+                val additionalHBARFee = customFees.fixedFees
+                    .filter { it.denominatingTokenId == null }
+                    .mapNotNull { it.amount }
+                    .fold(BigDecimal.ZERO, BigDecimal::add)
+
+                Result.Success(
+                    HederaTokenCustomFeesInfo(
+                        hasTokenCustomFees = hasTokenCustomFees,
+                        additionalHBARFee = additionalHBARFee,
+                    ),
+                )
+            },
+            {
+                Result.Failure(it.toBlockchainSdkError())
+            },
+        )
     }
 
     fun <T : Transaction<T>> sendTransaction(transaction: Transaction<T>): Result<TransactionResponse> {
