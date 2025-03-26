@@ -15,9 +15,9 @@ import org.kethereum.DEFAULT_GAS_PRICE
 
 class PolygonTransactionTest {
 
-    val blockchain = Blockchain.Polygon
+    private val blockchain = Blockchain.Polygon
 
-    val walletPublicKey = (
+    private val walletPublicKey = (
         "04332F99A76D0ABB06356945CAF02C23B25297D05A2557B0968904792EEB1C88B8C70BCD72258F540C8B76BE1C51C9BC24DC069" +
             "48758001C5BF17016336652D336"
         ).hexToBytes()
@@ -33,11 +33,15 @@ class PolygonTransactionTest {
         )
     }
 
+    init {
+        System.loadLibrary("TrustWalletCore")
+    }
+
     @Before
     fun setup() {
         DepsContainer.onInit(
             config = BlockchainSdkConfig(),
-            featureToggles = BlockchainFeatureToggles(isEthereumEIP1559Enabled = false),
+            featureToggles = BlockchainFeatureToggles(),
         )
     }
 
@@ -69,7 +73,7 @@ class PolygonTransactionTest {
             extras = EthereumTransactionExtras(nonce = nonce),
         )
 
-        val expectedHashToSign = "9786CAD43696FBFF7024A2707B0A060F54F233708F0A4B4003A42D20A536B39D".hexToBytes()
+        val expectedHashToSign = "8EC5BBC80DA9914FA792AD8B046FE79284251EE408701E286BFF65FC7230945C".hexToBytes()
         val expectedSignedTransaction = (
             "F86E0F856EDF2A079E825208947655B9B19FFAB8B897F836857DAE22A1E7F8D73588016345785D8A000080820135A0BE3E2E3BD" +
                 "DF118DA63522EFE218F1CDE7D4657974D6FAFC6FF8D7CD3E72ACE88A068409168421B4DE78F5FCE10494AF215028386A576" +
@@ -119,7 +123,7 @@ class PolygonTransactionTest {
             extras = EthereumTransactionExtras(nonce = nonce),
         )
 
-        val expectedHashToSign = "3964E9A149904C6A84E06396968E7C0448937C9DEE270AAC9B6622BA7B6CB246".hexToBytes()
+        val expectedHashToSign = "B043051966A599EE2A1B275491E2BC5D58C01F3C7925353F24DB90F7D117F12F".hexToBytes()
         val expectedSignedTransaction = (
             "F8AB0F856EDF2A079E82520894A0B86991C6218B36C1D19D4A2E9EB0CE3606EB4880B844A9059CBB00000000000000000000000" +
                 "07655B9B19FFAB8B897F836857DAE22A1E7F8D735000000000000000000000000000000000000000000000000016345785D" +
