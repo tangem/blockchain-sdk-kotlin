@@ -1,6 +1,7 @@
 package com.tangem.blockchain.nft.providers.moralis
 
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.HEX_PREFIX
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.nft.NFTProvider
@@ -113,7 +114,6 @@ internal class MoralisEvmNFTProvider(
     }
 
     override suspend fun getSalePrice(
-        walletAddress: String,
         collectionIdentifier: NFTCollection.Identifier,
         assetIdentifier: NFTAsset.Identifier,
     ): NFTAsset.SalePrice? {
@@ -144,7 +144,7 @@ internal class MoralisEvmNFTProvider(
         }
     }
 
-    private fun Blockchain.toQueryParam(): String = this.getChainId()?.toHexString().orEmpty()
+    private fun Blockchain.toQueryParam(): String = HEX_PREFIX + this.getChainId()?.toHexString().orEmpty()
 
     private fun MoralisEvmNFTAssetResponse.toNFTAsset(
         assetIdentifier: NFTAsset.Identifier,
@@ -174,7 +174,7 @@ internal class MoralisEvmNFTProvider(
 
     private fun MoralisEvmNFTAttributeResponse.toNFTAssetTrait(): NFTAsset.Trait? =
         if (traitType != null && value != null) {
-            NFTAsset.Trait(traitType, value)
+            NFTAsset.Trait(traitType, value.toString())
         } else {
             null
         }
