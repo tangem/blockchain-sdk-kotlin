@@ -22,11 +22,11 @@ internal class KoinosNetworkService(
 
     private val multiNetworkProvider = MultiNetworkProvider(providers)
 
-    suspend fun getInfo(address: String, contractIdHolder: KoinosContractIdHolder): Result<KoinosAccountInfo> {
-        val contractId = contractIdHolder.get()
+    suspend fun getInfo(address: String, koinContractIdHolder: KoinosContractIdHolder): Result<KoinosAccountInfo> {
+        val koinContractId = koinContractIdHolder.get()
             .successOr { return it }
 
-        val balance = multiNetworkProvider.performRequest { getKoinBalance(address, contractId) }
+        val balance = multiNetworkProvider.performRequest { getKoinBalance(address, koinContractId) }
             .successOr { return it }
         val mana = multiNetworkProvider.performRequest(KoinosNetworkProvider::getRC, address)
             .successOr { return it }
@@ -44,7 +44,7 @@ internal class KoinosNetworkService(
     }
 
     suspend fun getContractId(): Result<String> {
-        return multiNetworkProvider.performRequest(KoinosNetworkProvider::getContractId)
+        return multiNetworkProvider.performRequest(KoinosNetworkProvider::getKoinContractId)
     }
 
     suspend fun getCurrentNonce(address: String): Result<KoinosAccountNonce> {
