@@ -17,11 +17,10 @@ internal class KoinosTransactionBuilder(isTestnet: Boolean) {
     private val koinContractAbi = KoinContractAbi(isTestnet = isTestnet)
 
     @Suppress("MagicNumber")
-    // make this suspend
     suspend fun buildToSign(
         transactionData: TransactionData,
         currentNonce: KoinosAccountNonce,
-        contractIdHolder: KoinosContractIdHolder,
+        koinContractIdHolder: KoinosContractIdHolder,
     ): Result<Pair<KoinosProtocol.Transaction, ByteArray>> {
         transactionData.requireUncompiled()
 
@@ -40,7 +39,7 @@ internal class KoinosTransactionBuilder(isTestnet: Boolean) {
 
         val operation = koinos.protocol.operation(
             call_contract = koinos.protocol.call_contract_operation(
-                contract_id = contractIdHolder.get()
+                contract_id = koinContractIdHolder.get()
                     .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) }
                     .decodeBase58()!!
                     .toByteString(),
@@ -81,7 +80,7 @@ internal class KoinosTransactionBuilder(isTestnet: Boolean) {
             operations = listOf(
                 KoinosProtocol.Operation(
                     callContract = KoinosProtocol.CallContractOperation(
-                        contractIdBase58 = contractIdHolder.get()
+                        contractIdBase58 = koinContractIdHolder.get()
                             .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) },
                         entryPoint = koinContractAbi.transfer.entryPoint,
                         argsBase64 = operation.call_contract!!.args.base64Url(),
