@@ -202,6 +202,8 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Scroll,
             Blockchain.ScrollTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/534352'/0'/0/0"))
+            Blockchain.Pepecoin,
+            Blockchain.PepecoinTestnet -> mapOf(AddressType.Default to DerivationPath("m/44'/3434'/0'/0/0"))
         }
     }
 }
