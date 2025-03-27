@@ -45,12 +45,12 @@ internal class KoinosNetworkProvider(
     private val api = createRetrofitInstance(baseUrl).create(KoinosRetrofitJsonRPCApi::class.java)
     private val koinContractAbi = KoinContractAbi(isTestnet = isTestnet)
 
-    suspend fun getKoinBalance(address: String, contractId: String): Result<Long> {
+    suspend fun getKoinBalance(address: String, koinContractId: String): Result<Long> {
         val args = koinContractAbi.balanceOf.encodeArgs(address)
             ?: return decodeFailure(koinContractAbi.balanceOf.argsName)
 
         val request = KoinosMethod.ReadContract(
-            contractId = contractId,
+            contractId = koinContractId,
             entryPoint = koinContractAbi.balanceOf.entryPoint,
             args = args,
         ).asRequest()
@@ -69,10 +69,10 @@ internal class KoinosNetworkProvider(
         }
     }
 
-    suspend fun getContractId(): Result<String> {
+    suspend fun getKoinContractId(): Result<String> {
         return catchNetworkError {
-            val contractId = api.getConfig(apiKey).contractId
-            Result.Success(contractId)
+            val koinContractId = api.getConfig(apiKey).contractId
+            Result.Success(koinContractId)
         }
     }
 
