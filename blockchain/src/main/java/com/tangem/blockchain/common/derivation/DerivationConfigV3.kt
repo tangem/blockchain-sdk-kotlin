@@ -193,7 +193,8 @@ object DerivationConfigV3 : DerivationConfig() {
             -> mapOf(AddressType.Default to DerivationPath("m/44'/1234'/0'/0/0"))
             Blockchain.Clore -> mapOf(AddressType.Default to DerivationPath("m/44'/1313'/0'/0/0"))
             Blockchain.Pepecoin,
-            Blockchain.PepecoinTestnet -> mapOf(AddressType.Default to DerivationPath("m/44'/3434'/0'/0/0"))
+            Blockchain.PepecoinTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/3434'/0'/0/0"))
         }
     }
 }

@@ -64,7 +64,6 @@ internal class PepecoinNetworkService(
         Result.Success(info)
     }
 
-
     override suspend fun getFee(): Result<BitcoinFee> = coroutineScope {
         val minimalFeeDeferred = async { requestFee(MINIMAL_FEE_BLOCK_AMOUNT) }
         val normalFeeDeferred = async { requestFee(NORMAL_FEE_BLOCK_AMOUNT) }
@@ -179,7 +178,8 @@ internal class PepecoinNetworkService(
 
         private fun addressToScript(walletAddress: String): Script {
             val address = LegacyAddress.fromBase58(
-                PepecoinMainNetParams(), walletAddress
+                PepecoinMainNetParams(),
+                walletAddress,
             )
             return ScriptBuilder.createOutputScript(address)
         }
