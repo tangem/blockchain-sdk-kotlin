@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.pepecoin
 
 import org.bitcoinj.params.MainNetParams
 
+@Suppress("MagicNumber")
 class PepecoinMainNetParams : MainNetParams() {
     init {
         segwitAddressHrp = "P"
