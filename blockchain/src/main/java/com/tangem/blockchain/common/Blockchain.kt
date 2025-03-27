@@ -272,7 +272,7 @@ enum class Blockchain(
         InternetComputer,
         Clore,
         Pepecoin, PepecoinTestnet,
-            -> 8
+        -> 8
 
         Solana, SolanaTestnet,
         TON, TONTestnet,
@@ -675,7 +675,7 @@ enum class Blockchain(
             Scroll, ScrollTestnet,
             ZkLinkNova, ZkLinkNovaTestnet,
             Pepecoin, PepecoinTestnet,
-                -> listOf(EllipticCurve.Secp256k1)
+            -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,

@@ -28,7 +28,7 @@ internal class PepecoinProvidersBuilder(
                 blockchain = blockchain,
                 okHttpClient = BlockchainSdkRetrofitBuilder.build(),
                 supportedProtocolVersion = Fact0rnNetworkService.SUPPORTED_SERVER_VERSION,
-            )
+            ),
         )
     }
 }
