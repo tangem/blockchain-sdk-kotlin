@@ -124,7 +124,7 @@ internal class KoinosWalletManager(
         val (transaction, hashToSign) = transactionBuilder.buildToSign(
             transactionData = transactionDataWithMana,
             currentNonce = nonce,
-            contractIdHolder = contractIdHolder,
+            koinContractIdHolder = contractIdHolder,
         ).successOr { return Result.Failure(it.error) }
 
         val signature = signer.sign(hashToSign, wallet.publicKey)
