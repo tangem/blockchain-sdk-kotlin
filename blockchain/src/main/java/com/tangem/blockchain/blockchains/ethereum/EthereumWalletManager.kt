@@ -4,9 +4,12 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.ethereum.eip1559.isSupportEIP1559
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.ApprovalERC20TokenMethod
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.di.DepsContainer
+import com.tangem.blockchain.common.smartcontract.SmartContractMethod
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
@@ -134,19 +137,23 @@ open class EthereumWalletManager(
         return getFeeInternal(amount, destination, null)
     }
 
-    open suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee> {
-        return getFeeInternal(amount, destination, data)
+    override suspend fun getFee(
+        amount: Amount,
+        destination: String,
+        smartContract: SmartContractMethod?,
+    ): Result<TransactionFee> {
+        return getFeeInternal(amount, destination, smartContract)
     }
 
     protected open suspend fun getFeeInternal(
         amount: Amount,
         destination: String,
-        data: String? = null,
+        smartContract: SmartContractMethod?,
     ): Result<TransactionFee> {
         return if (wallet.blockchain.isSupportEIP1559) {
             getEIP1559Fee(amount, destination, data)
         } else {
-            getLegacyFee(amount, destination, data)
+            getLegacyFee(amount, destination, smartContract)
         }
     }
 
@@ -175,9 +182,9 @@ open class EthereumWalletManager(
                     if (!cardTokens.contains(token)) {
                         cardTokens.add(token)
                     }
-                    val balance = blockchairToken.balance.toBigDecimalOrNull()
-                        ?.movePointLeft(blockchairToken.decimals)
-                        ?: BigDecimal.ZERO
+                    val balance =
+                        blockchairToken.balance.toBigDecimalOrNull()?.movePointLeft(blockchairToken.decimals)
+                            ?: BigDecimal.ZERO
                     wallet.addTokenValue(balance, token)
                     token
                 }
@@ -194,26 +201,32 @@ open class EthereumWalletManager(
         return getGasLimitInternal(amount, destination, null)
     }
 
-    override suspend fun getGasLimit(amount: Amount, destination: String, data: String): Result<BigInteger> {
-        return getGasLimitInternal(amount, destination, data)
+    override suspend fun getGasLimit(
+        amount: Amount,
+        destination: String,
+        smartContract: SmartContractMethod,
+    ): Result<BigInteger> {
+        return getGasLimitInternal(amount, destination, smartContract)
     }
 
     override suspend fun getAllowance(spenderAddress: String, token: Token): kotlin.Result<BigDecimal> {
         return networkProvider.getAllowance(wallet.address, token, spenderAddress)
     }
 
-    override fun getApproveData(spenderAddress: String, value: Amount?) =
-        EthereumUtils.createErc20ApproveDataHex(spenderAddress, value)
+    override fun getApproveData(spenderAddress: String, value: Amount?) = ApprovalERC20TokenMethod(
+        spenderAddress = spenderAddress,
+        amount = value,
+    ).dataHex
 
     private suspend fun getGasLimitInternal(
         amount: Amount,
         destination: String,
-        data: String? = null,
+        smartContract: SmartContractMethod? = null,
     ): Result<BigInteger> {
         val from = wallet.address
         var to = destination
         var value: String? = null
-        var finalData = data
+        val data: String? = smartContract?.dataHex
 
         when (amount.type) {
             is AmountType.Coin -> {
@@ -221,30 +234,26 @@ open class EthereumWalletManager(
             }
 
             is AmountType.Token -> {
-                if (finalData == null) {
-                    to = amount.type.token.contractAddress
-                    finalData = EthereumUtils.createErc20TransferData(destination, amount).toHexString()
-                }
+                to = amount.type.token.contractAddress
             }
 
-            else -> {
-                /*no-op*/
+            else -> { /* no-op */
             }
         }
 
-        return networkProvider.getGasLimit(to, from, value, finalData)
+        return networkProvider.getGasLimit(to, from, value, data)
     }
 
     private suspend fun getEIP1559Fee(
         amount: Amount,
         destination: String,
-        data: String?,
+        smartContract: SmartContractMethod?,
     ): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async {
-                    if (data != null) {
-                        getGasLimit(amount, destination, data)
+                    if (smartContract != null) {
+                        getGasLimit(amount, destination, smartContract)
                     } else {
                         getGasLimit(amount, destination)
                     }
@@ -276,13 +285,13 @@ open class EthereumWalletManager(
     private suspend fun getLegacyFee(
         amount: Amount,
         destination: String,
-        data: String?,
+        smartContract: SmartContractMethod?,
     ): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async {
-                    if (data != null) {
-                        getGasLimit(amount, destination, data)
+                    if (smartContract != null) {
+                        getGasLimit(amount, destination, smartContract)
                     } else {
                         getGasLimit(amount, destination)
                     }
