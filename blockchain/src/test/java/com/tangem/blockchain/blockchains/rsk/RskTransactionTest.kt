@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.rsk
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TransferERC20TokenMethod
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.di.DepsContainer
@@ -116,7 +117,13 @@ class RskTransactionTest {
             destinationAddress = destinationAddress,
             amount = amountToSend,
             fee = fee,
-            extras = EthereumTransactionExtras(nonce = nonce),
+            extras = EthereumTransactionExtras(
+                smartContract = TransferERC20TokenMethod(
+                    destination = destinationAddress,
+                    amount = amountToSend,
+                ),
+                nonce = nonce,
+            ),
         )
 
         val expectedHashToSign = "92BC71B08CA63D69502BFF60E16282A603CFCD987A3C1C36062CD602D66C376B".hexToBytes()

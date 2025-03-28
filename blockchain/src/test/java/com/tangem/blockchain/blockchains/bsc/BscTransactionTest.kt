@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.bsc
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TransferERC20TokenMethod
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.di.DepsContainer
@@ -116,7 +117,13 @@ class BscTransactionTest {
             destinationAddress = destinationAddress,
             amount = amountToSend,
             fee = fee,
-            extras = EthereumTransactionExtras(nonce = nonce),
+            extras = EthereumTransactionExtras(
+                smartContract = TransferERC20TokenMethod(
+                    destination = destinationAddress,
+                    amount = amountToSend,
+                ),
+                nonce = nonce,
+            ),
         )
 
         val expectedHashToSign = "95DB218B4288E60DA2807FC42EFBB2BFEF0A19607EC1D701AF54704DC5A253F6".hexToBytes()
