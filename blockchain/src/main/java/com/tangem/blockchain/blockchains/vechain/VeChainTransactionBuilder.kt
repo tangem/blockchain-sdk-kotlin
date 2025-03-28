@@ -5,6 +5,8 @@ import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TransferERC20Toke
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.extensions.bigIntegerValue
+import com.tangem.blockchain.extensions.orZero
 import com.tangem.blockchain.extensions.trustWalletCoinType
 import com.tangem.common.extensions.toDecompressedPublicKey
 import wallet.core.jni.DataVector
@@ -12,7 +14,6 @@ import wallet.core.jni.TransactionCompiler
 import wallet.core.jni.proto.Common
 import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
 import wallet.core.jni.proto.VeChain
-import java.math.BigInteger
 
 class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: Wallet.PublicKey) {
 
@@ -149,11 +150,10 @@ class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
     }
 
     private fun buildClause(amount: Amount, destination: String): VeChain.Clause {
-        val value = amount.value?.movePointRight(amount.decimals)?.toBigInteger() ?: BigInteger.ZERO
         return when (val type = amount.type) {
             is AmountType.Token -> {
                 val token = type.token
-                val data = TransferERC20TokenMethod(destination, value).data
+                val data = TransferERC20TokenMethod(destination, amount).data
                 VeChain.Clause.newBuilder()
                     .setToBytes(ByteString.copyFromUtf8(token.contractAddress))
                     .setValue(ByteString.EMPTY)
@@ -164,7 +164,7 @@ class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
             AmountType.Coin -> {
                 VeChain.Clause.newBuilder()
                     .setToBytes(ByteString.copyFromUtf8(destination))
-                    .setValue(ByteString.copyFrom(value.toByteArray()))
+                    .setValue(ByteString.copyFrom(amount.bigIntegerValue().orZero().toByteArray()))
                     .setData(ByteString.EMPTY)
                     .build()
             }
