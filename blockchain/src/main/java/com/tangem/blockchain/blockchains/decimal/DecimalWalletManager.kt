@@ -8,6 +8,7 @@ import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.smartcontract.SmartContractMethod
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
@@ -19,24 +20,32 @@ internal class DecimalWalletManager(
     networkProvider: EthereumNetworkProvider,
 ) : EthereumWalletManager(wallet, transactionBuilder, networkProvider) {
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
-        return super.getFee(amount, convertAddress(destination))
+    override suspend fun getFee(
+        amount: Amount,
+        destination: String,
+        smartContract: SmartContractMethod?,
+    ): Result<TransactionFee> {
+        return super.getFee(amount, convertAddress(destination), smartContract)
     }
 
-    override suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee> {
-        return super.getFee(amount, convertAddress(destination), data)
-    }
-
-    override suspend fun getFeeInternal(amount: Amount, destination: String, data: String?): Result<TransactionFee> {
-        return super.getFeeInternal(amount, convertAddress(destination), data)
+    override suspend fun getFeeInternal(
+        amount: Amount,
+        destination: String,
+        smartContract: SmartContractMethod?,
+    ): Result<TransactionFee> {
+        return super.getFeeInternal(amount, convertAddress(destination), smartContract)
     }
 
     override suspend fun getGasLimit(amount: Amount, destination: String): Result<BigInteger> {
         return super.getGasLimit(amount, convertAddress(destination))
     }
 
-    override suspend fun getGasLimit(amount: Amount, destination: String, data: String): Result<BigInteger> {
-        return super.getGasLimit(amount, convertAddress(destination), data)
+    override suspend fun getGasLimit(
+        amount: Amount,
+        destination: String,
+        smartContract: SmartContractMethod,
+    ): Result<BigInteger> {
+        return super.getGasLimit(amount, convertAddress(destination), smartContract)
     }
 
     override suspend fun send(

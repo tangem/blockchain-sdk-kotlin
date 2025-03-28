@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.common.smartcontract.SmartContractMethod
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -45,8 +46,12 @@ abstract class WalletManager(
         }
     }
 
-    override suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee> {
-        return getFee(amount, destination)
+    override suspend fun estimateFee(
+        amount: Amount,
+        destination: String,
+        smartContract: SmartContractMethod?,
+    ): Result<TransactionFee> {
+        return getFee(amount, destination, smartContract)
     }
 
     internal abstract suspend fun updateInternal()
@@ -207,12 +212,29 @@ interface TransactionSender {
     // Think about migration to different interface
     suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee>
 
+    suspend fun getFee(
+        amount: Amount,
+        destination: String,
+        smartContract: SmartContractMethod? = null,
+    ): Result<TransactionFee> = getFee(
+        amount = amount,
+        destination = destination,
+    )
+
     /**
      * Estimates fee (approximate value)
      *
      * [Think about migration to interface]
      */
-    suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee>
+    suspend fun estimateFee(
+        amount: Amount,
+        destination: String,
+        smartContract: SmartContractMethod? = null,
+    ): Result<TransactionFee> = getFee(
+        amount = amount,
+        destination = destination,
+        smartContract = smartContract,
+    )
 }
 
 interface TransactionSigner {
