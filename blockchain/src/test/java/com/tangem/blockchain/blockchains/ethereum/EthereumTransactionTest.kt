@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum
 
 import com.google.common.truth.Truth
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TransferERC20TokenMethod
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.di.DepsContainer
@@ -114,7 +115,13 @@ class EthereumTransactionTest {
             destinationAddress = destinationAddress,
             amount = amountToSend,
             fee = fee,
-            extras = EthereumTransactionExtras(nonce = nonce),
+            extras = EthereumTransactionExtras(
+                smartContract = TransferERC20TokenMethod(
+                    destination = destinationAddress,
+                    amount = amountToSend,
+                ),
+                nonce = nonce,
+            ),
         )
 
         val expectedHashToSign = "2F47B058A0C4A91EC6E26372FA926ACB899235D7A639565B4FC82C7A9356D6C5".hexToBytes()
