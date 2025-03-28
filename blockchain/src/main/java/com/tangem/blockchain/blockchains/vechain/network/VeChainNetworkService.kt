@@ -16,7 +16,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
-import java.math.BigInteger
 
 // Sync2 uses `20_000_000` as a maximum allowed gas amount for such contract calls.
 private const val MAX_ALLOWED_VM_GAS = 20_000_000
@@ -71,11 +70,10 @@ internal class VeChainNetworkService(
     }
 
     suspend fun getVmGas(source: String, destination: String, amount: Amount, token: Token): Result<Long> {
-        val amountValue = amount.value?.movePointRight(amount.decimals)?.toBigInteger() ?: BigInteger.ZERO
         val clause = VeChainClause(
             to = token.contractAddress,
             value = CONTRACT_CALL_VALUE,
-            data = "0x" + TransferERC20TokenMethod(destination = destination, amount = amountValue).data.toHexString(),
+            data = "0x" + TransferERC20TokenMethod(destination = destination, amount = amount).data.toHexString(),
         )
         val request = VeChainContractCallRequest(
             clauses = listOf(clause),
