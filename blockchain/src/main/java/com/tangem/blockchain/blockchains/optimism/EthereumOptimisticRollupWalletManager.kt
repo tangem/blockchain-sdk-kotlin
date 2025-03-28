@@ -7,6 +7,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvide
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.smartcontract.SmartContractMethod
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -26,33 +27,24 @@ class EthereumOptimisticRollupWalletManager(
 
     private var lastLayer1FeeAmount: Amount? = null
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee.Choosable> {
+    override suspend fun getFee(
+        amount: Amount,
+        destination: String,
+        smartContract: SmartContractMethod?,
+    ): Result<TransactionFee.Choosable> {
         lastLayer1FeeAmount = null
 
-        val layer2fee = super.getFee(amount, destination).successOr {
-            return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-        } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-
-        return getLegacyFee(amount = amount, destination = destination, data = null, layer2fee = layer2fee)
-        // TODO: [REDACTED_JIRA]
-        // return if (DepsContainer.blockchainFeatureToggles.isEthereumEIP1559Enabled &&
-        //     wallet.blockchain.isSupportEIP1559
-        // ) {
-        //     getEIP1559Fee(amount = amount, destination = destination, data = null, layer2fee = layer2fee)
-        // } else {
-        //     getLegacyFee(amount = amount, destination = destination, data = null, layer2fee = layer2fee)
-        // }
-    }
-
-    override suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee.Choosable> {
-        lastLayer1FeeAmount = null
-
-        val layer2fee = super.getFee(amount, destination, data).successOr {
+        val layer2fee = super.getFee(amount, destination, smartContract).successOr {
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
         // TODO: [REDACTED_JIRA]
-        return getLegacyFee(amount = amount, destination = destination, data = data, layer2fee = layer2fee)
+        return getLegacyFee(
+            amount = amount,
+            destination = destination,
+            data = smartContract?.dataHex,
+            layer2fee = layer2fee,
+        )
         // return if (DepsContainer.blockchainFeatureToggles.isEthereumEIP1559Enabled &&
         //     wallet.blockchain.isSupportEIP1559
         // ) {
