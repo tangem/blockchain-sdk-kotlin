@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
-import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
-import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.toKeccak
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.AllowanceERC20TokenMethod
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TokenBalanceERC20TokenMethod
 import com.tangem.blockchain.common.JsonRPCRequest
 import com.tangem.blockchain.common.JsonRPCResponse
 import com.tangem.blockchain.common.NetworkProvider
@@ -9,8 +9,6 @@ import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.createRetrofitInstance
-import org.komputing.khex.extensions.toHexString
-import java.math.BigDecimal
 
 internal class EthereumJsonRpcProvider(
     override val baseUrl: String,
@@ -42,20 +40,6 @@ internal class EthereumJsonRpcProvider(
     suspend fun call(data: Any) = createEthereumBody(
         method = EthereumMethod.CALL,
         data,
-        EthBlockParam.LATEST.value,
-    ).post()
-
-    @Suppress("LongParameterList")
-    suspend fun callProcess(
-        contractAddress: String,
-        amount: BigDecimal,
-        decimals: Int,
-        cardAddress: String,
-        otp: ByteArray,
-        otpCounter: Int,
-    ) = createEthereumBody(
-        method = EthereumMethod.CALL,
-        createProcessCallObject(contractAddress, amount, decimals, cardAddress, otp, otpCounter),
         EthBlockParam.LATEST.value,
     ).post()
 
@@ -100,43 +84,19 @@ internal class EthereumJsonRpcProvider(
         return JsonRPCRequest(method = method.value, params = params, id = "67")
     }
 
-    // TODO: [REDACTED_JIRA] Replace with SmartContractMethod interface implementations
     private fun createTokenBalanceCallObject(address: String, contractAddress: String) = EthCallObject(
         to = contractAddress,
-        data = "0x70a08231000000000000000000000000" + address.removePrefixes(),
+        data = TokenBalanceERC20TokenMethod(address = address).dataHex,
     )
 
-    // TODO: [REDACTED_JIRA] Replace with SmartContractMethod interface implementations
     private fun createTokenAllowanceCallObject(ownerAddress: String, contractAddress: String, spenderAddress: String) =
         EthCallObject(
             to = contractAddress,
-            // 5c9b5c6313a3746a1246d07bbedc0292da99f8e2000000000000000000000000e4c4693526e4e3a26f36311d3f80a193b2bae906
-            data = buildString {
-                append(tokenAllowanceSignature)
-                append(CALL_DATA_SEPARATOR)
-                append(ownerAddress.removePrefixes())
-                append(CALL_DATA_SEPARATOR)
-                append(spenderAddress.removePrefixes())
-            },
+            data = AllowanceERC20TokenMethod(
+                ownerAddress = ownerAddress,
+                spenderAddress = spenderAddress,
+            ).dataHex,
         )
-
-    @Suppress("LongParameterList")
-    private fun createProcessCallObject(
-        contractAddress: String,
-        amount: BigDecimal,
-        decimals: Int,
-        cardAddress: String,
-        otp: ByteArray,
-        otpCounter: Int,
-    ): EthCallObject {
-        val data: String = EthereumUtils.createProcessData(
-            cardAddress,
-            amount.movePointLeft(decimals).toBigInteger(),
-            otp,
-            otpCounter,
-        ).toHexString()
-        return EthCallObject(to = contractAddress, data = data)
-    }
 
     private suspend fun JsonRPCRequest.post(): Result<JsonRPCResponse> {
         return try {
@@ -152,19 +112,6 @@ internal class EthereumJsonRpcProvider(
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
-    }
-
-    private fun String.removePrefixes(): String {
-        return takeLast(ETH_VALUABLE_ADDRESS_PART_LENGTH)
-    }
-
-    companion object {
-        private val tokenAllowanceSignature =
-            "allowance(address,address)".toByteArray().toKeccak().copyOf(4).toHexString()
-
-        private const val CALL_DATA_SEPARATOR = "000000000000000000000000"
-
-        private const val ETH_VALUABLE_ADDRESS_PART_LENGTH = 40
     }
 }
 
