@@ -145,7 +145,7 @@ class EstimationFeeAddressFactory {
             Blockchain.Alephium, Blockchain.AlephiumTestnet,
             -> "16tfjvsTi34r5bhifdBtY793n3fmrM7EtvvtE8XUN1Hv1"
             Blockchain.Clore -> "AJfAu7RJxiTowM9qVaTbVuS5JCPCpV3p7M"
-            Blockchain.Pepecoin, Blockchain.PepecoinTestnet -> "" // TODO("[REDACTED_TASK_KEY]")
+            Blockchain.Pepecoin, Blockchain.PepecoinTestnet -> "PgbtQfZaNzLtwQ3hXBrj1KWhxBgaUEM7G6"
         }
     }
 
