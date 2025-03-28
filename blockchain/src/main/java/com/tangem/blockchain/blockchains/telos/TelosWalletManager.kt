@@ -6,6 +6,8 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvide
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.di.DepsContainer
+import com.tangem.blockchain.common.smartcontract.SmartContractMethod
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -23,16 +25,20 @@ class TelosWalletManager(
         return if (wallet.blockchain.isSupportEIP1559) {
             getEIP1559Fee(amount, destination, data)
         } else {
-            getLegacyFee(amount, destination, data)
+            getLegacyFee(amount, destination, smartContract)
         }
     }
 
-    private suspend fun getEIP1559Fee(amount: Amount, destination: String, data: String?): Result<TransactionFee> {
+    private suspend fun getEIP1559Fee(
+        amount: Amount,
+        destination: String,
+        smartContract: SmartContractMethod?,
+    ): Result<TransactionFee> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async {
-                    if (data != null) {
-                        getGasLimit(amount, destination, data)
+                    if (smartContract != null) {
+                        getGasLimit(amount, destination, smartContract)
                     } else {
                         getGasLimit(amount, destination)
                     }
@@ -61,12 +67,16 @@ class TelosWalletManager(
         }
     }
 
-    private suspend fun getLegacyFee(amount: Amount, destination: String, data: String?): Result<TransactionFee> {
+    private suspend fun getLegacyFee(
+        amount: Amount,
+        destination: String,
+        smartContract: SmartContractMethod?,
+    ): Result<TransactionFee> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async {
-                    if (data != null) {
-                        getGasLimit(amount, destination, data)
+                    if (smartContract != null) {
+                        getGasLimit(amount, destination, smartContract)
                     } else {
                         getGasLimit(amount, destination)
                     }
