@@ -5,7 +5,9 @@ import com.google.common.primitives.Ints
 import com.tangem.blockchain.blockchains.tron.network.TronAccountInfo
 import com.tangem.blockchain.blockchains.tron.network.TronEnergyFeeData
 import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
+import com.tangem.blockchain.blockchains.tron.tokenmethods.TronApprovalTokenMethod
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.smartcontract.SmartContractMethod
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -173,7 +175,18 @@ internal class TronWalletManager(
     }
 
     @Suppress("MagicNumber")
-    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
+    override suspend fun getFee(amount: Amount, destination: String) = getFee(
+        amount = amount,
+        destination = destination,
+        smartContract = null,
+    )
+
+    @Suppress("MagicNumber")
+    override suspend fun getFee(
+        amount: Amount,
+        destination: String,
+        smartContract: SmartContractMethod?,
+    ): Result<TransactionFee> {
         val blockchain = wallet.blockchain
         return coroutineScope {
             val destinationExistsDef = async { networkService.checkIfAccountExists(destination) }
@@ -185,7 +198,7 @@ internal class TronWalletManager(
                     destination = destination,
                     signer = dummySigner,
                     publicKey = dummySigner.publicKey,
-                    extras = null,
+                    extras = smartContract?.let { TronTransactionExtras(it) },
                 )
             }
 
@@ -441,7 +454,10 @@ internal class TronWalletManager(
     }
 
     override fun getApproveData(spenderAddress: String, value: Amount?): String {
-        return createTrc20ApproveDataHex(spenderAddress, value)
+        return TronApprovalTokenMethod(
+            spenderAddress = spenderAddress,
+            amount = value,
+        ).dataHex
     }
 
     private companion object {

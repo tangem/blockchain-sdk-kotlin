@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvide
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.smartcontract.SmartContractMethod
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -21,10 +22,14 @@ class MantleWalletManager(
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
 ) : EthereumWalletManager(wallet, transactionBuilder, networkProvider, transactionHistoryProvider) {
 
-    override suspend fun getFeeInternal(amount: Amount, destination: String, data: String?): Result<TransactionFee> {
+    override suspend fun getFeeInternal(
+        amount: Amount,
+        destination: String,
+        smartContract: SmartContractMethod?,
+    ): Result<TransactionFee> {
         return when (amount.type) {
-            is AmountType.Coin -> getFeeForCoinTransaction(amount, destination, data)
-            is AmountType.Token -> super.getFeeInternal(amount, destination, data)
+            is AmountType.Coin -> getFeeForCoinTransaction(amount, destination, smartContract)
+            is AmountType.Token -> super.getFeeInternal(amount, destination, smartContract)
             else -> Result.Failure(BlockchainSdkError.UnsupportedOperation())
         }
     }
@@ -32,10 +37,10 @@ class MantleWalletManager(
     private suspend fun getFeeForCoinTransaction(
         amount: Amount,
         destination: String,
-        data: String?,
+        smartContract: SmartContractMethod?,
     ): Result<TransactionFee> {
         val patchedAmount = amount.minus(ONE_WEI)
-        return super.getFeeInternal(patchedAmount, destination, data)
+        return super.getFeeInternal(patchedAmount, destination, smartContract)
             .map {
                 when (it) {
                     is TransactionFee.Single -> {
@@ -99,7 +104,7 @@ class MantleWalletManager(
                 // [REDACTED_JIRA]
                 extras = EthereumTransactionExtras(
                     gasLimit = fee.gasLimit.toBigDecimal().multiply(FEE_SEND_MULTIPLIER).toBigInteger(),
-                    data = extras?.data ?: ByteArray(0),
+                    smartContract = extras?.smartContract,
                     nonce = extras?.nonce,
                 ),
             ),
