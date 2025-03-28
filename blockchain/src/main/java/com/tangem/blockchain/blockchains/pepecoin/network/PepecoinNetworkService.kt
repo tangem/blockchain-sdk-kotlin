@@ -172,6 +172,7 @@ internal class PepecoinNetworkService(
     }
 
     companion object {
+        const val SUPPORTED_SERVER_VERSION = "1.4"
         private const val MINIMAL_FEE_BLOCK_AMOUNT = 8
         private const val NORMAL_FEE_BLOCK_AMOUNT = 4
         private const val PRIORITY_FEE_BLOCK_AMOUNT = 1

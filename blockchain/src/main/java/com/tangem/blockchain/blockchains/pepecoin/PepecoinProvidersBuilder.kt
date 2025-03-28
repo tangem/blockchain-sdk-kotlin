@@ -1,6 +1,6 @@
 package com.tangem.blockchain.blockchains.pepecoin
 
-import com.tangem.blockchain.blockchains.factorn.network.Fact0rnNetworkService
+import com.tangem.blockchain.blockchains.pepecoin.network.PepecoinNetworkService.Companion.SUPPORTED_SERVER_VERSION
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.network.providers.OnlyPublicProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
@@ -17,7 +17,7 @@ internal class PepecoinProvidersBuilder(
             wssUrl = url,
             blockchain = blockchain,
             okHttpClient = BlockchainSdkRetrofitBuilder.build(),
-            supportedProtocolVersion = Fact0rnNetworkService.SUPPORTED_SERVER_VERSION,
+            supportedProtocolVersion = SUPPORTED_SERVER_VERSION,
         )
     }
 
@@ -27,7 +27,7 @@ internal class PepecoinProvidersBuilder(
                 wssUrl = "wss://testnet.pepelum.site:50009",
                 blockchain = blockchain,
                 okHttpClient = BlockchainSdkRetrofitBuilder.build(),
-                supportedProtocolVersion = Fact0rnNetworkService.SUPPORTED_SERVER_VERSION,
+                supportedProtocolVersion = SUPPORTED_SERVER_VERSION,
             ),
         )
     }
