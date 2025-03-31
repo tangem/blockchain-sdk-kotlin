@@ -199,8 +199,8 @@ enum class Blockchain(
     ScrollTestnet("scroll/test", "ETH", "Scroll Sepolia Testnet"),
     ZkLinkNova("zklink", "ETH", "zkLink Nova"),
     ZkLinkNovaTestnet("zklink/test", "ETH", "zkLink Nova Sepolia Testnet"),
-    Pepecoin("pepecoin", "PEPECOIN", "Pepecoin"),
-    PepecoinTestnet("pepecoin/test", "PEPECOIN", "Pepecoin Testnet"),
+    Pepecoin("pepecoin", "PEP", "Pepecoin"),
+    PepecoinTestnet("pepecoin/test", "PEP", "Pepecoin Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
