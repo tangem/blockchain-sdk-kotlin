@@ -7,7 +7,7 @@ internal class PepecoinExternalLinkProvider(private val isTestnet: Boolean) : Ex
     override val explorerBaseUrl: String = if (isTestnet) {
         "https://testnet.pepeblocks.com/"
     } else {
-        "https://pepeblocks.com/"
+        "https://pepecoinexplorer.com/"
     }
 
     override val testNetTopUpUrl: String = "https://pepeblocks.com/faucet"
