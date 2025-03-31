@@ -6,7 +6,6 @@ import com.tangem.blockchain.extensions.Result
 
 internal class KoinosContractIdHolder(private val loadKoinContractId: suspend () -> Result<String>) {
 
-    @Volatile
     private var koinContractId: String? = null
     private val mutex = Mutex()
 
