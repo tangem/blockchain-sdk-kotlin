@@ -60,7 +60,7 @@ internal class KaspaTransactionHistoryProvider(
             val response = withContext(Dispatchers.IO) {
                 kaspaApiService.getAddressTransactions(
                     address = address,
-                    limit = 1,
+                    limit = 15,
                     offset = 0,
                 )
             }
