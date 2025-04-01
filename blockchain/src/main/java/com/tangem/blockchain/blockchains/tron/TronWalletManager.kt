@@ -5,9 +5,9 @@ import com.google.common.primitives.Ints
 import com.tangem.blockchain.blockchains.tron.network.TronAccountInfo
 import com.tangem.blockchain.blockchains.tron.network.TronEnergyFeeData
 import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
-import com.tangem.blockchain.blockchains.tron.tokenmethods.TronApprovalTokenMethod
+import com.tangem.blockchain.blockchains.tron.tokenmethods.TronApprovalTokenCallData
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.smartcontract.SmartContractMethod
+import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -185,7 +185,7 @@ internal class TronWalletManager(
     override suspend fun getFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractMethod?,
+        smartContract: SmartContractCallData?,
     ): Result<TransactionFee> {
         val blockchain = wallet.blockchain
         return coroutineScope {
@@ -454,7 +454,7 @@ internal class TronWalletManager(
     }
 
     override fun getApproveData(spenderAddress: String, value: Amount?): String {
-        return TronApprovalTokenMethod(
+        return TronApprovalTokenCallData(
             spenderAddress = spenderAddress,
             amount = value,
         ).dataHex
