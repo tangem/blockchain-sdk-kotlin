@@ -1,12 +1,11 @@
 package com.tangem.blockchain.blockchains.vechain
 
 import com.google.protobuf.ByteString
-import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TransferERC20TokenMethod
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TransferERC20TokenCallData
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.bigIntegerValue
-import com.tangem.blockchain.extensions.orZero
 import com.tangem.blockchain.extensions.trustWalletCoinType
 import com.tangem.common.extensions.toDecompressedPublicKey
 import wallet.core.jni.DataVector
@@ -153,7 +152,7 @@ class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
         return when (val type = amount.type) {
             is AmountType.Token -> {
                 val token = type.token
-                val data = TransferERC20TokenMethod(destination, amount).data
+                val data = TransferERC20TokenCallData(destination, amount).data
                 VeChain.Clause.newBuilder()
                     .setToBytes(ByteString.copyFromUtf8(token.contractAddress))
                     .setValue(ByteString.EMPTY)
@@ -162,9 +161,11 @@ class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
             }
 
             AmountType.Coin -> {
+                val amountValue = ByteString.copyFrom(amount.bigIntegerValue()?.toByteArray())
+                    ?: error("Invalid amount")
                 VeChain.Clause.newBuilder()
                     .setToBytes(ByteString.copyFromUtf8(destination))
-                    .setValue(ByteString.copyFrom(amount.bigIntegerValue().orZero().toByteArray()))
+                    .setValue(amountValue)
                     .setData(ByteString.EMPTY)
                     .build()
             }

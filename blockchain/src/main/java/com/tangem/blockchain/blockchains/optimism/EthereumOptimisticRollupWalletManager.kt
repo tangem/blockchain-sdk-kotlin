@@ -7,7 +7,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvide
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.smartcontract.SmartContractMethod
+import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -30,7 +30,7 @@ class EthereumOptimisticRollupWalletManager(
     override suspend fun getFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractMethod?,
+        smartContract: SmartContractCallData?,
     ): Result<TransactionFee.Choosable> {
         lastLayer1FeeAmount = null
 

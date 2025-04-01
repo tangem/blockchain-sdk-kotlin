@@ -1,6 +1,6 @@
 package com.tangem.blockchain.common
 
-import com.tangem.blockchain.common.smartcontract.SmartContractMethod
+import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -49,7 +49,7 @@ abstract class WalletManager(
     override suspend fun estimateFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractMethod?,
+        smartContract: SmartContractCallData?,
     ): Result<TransactionFee> {
         return getFee(amount, destination, smartContract)
     }
@@ -215,7 +215,7 @@ interface TransactionSender {
     suspend fun getFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractMethod? = null,
+        smartContract: SmartContractCallData? = null,
     ): Result<TransactionFee> = getFee(
         amount = amount,
         destination = destination,
@@ -229,7 +229,7 @@ interface TransactionSender {
     suspend fun estimateFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractMethod? = null,
+        smartContract: SmartContractCallData? = null,
     ): Result<TransactionFee> = getFee(
         amount = amount,
         destination = destination,
