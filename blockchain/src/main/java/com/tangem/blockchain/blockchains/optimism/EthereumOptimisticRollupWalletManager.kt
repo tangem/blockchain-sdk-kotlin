@@ -30,18 +30,18 @@ class EthereumOptimisticRollupWalletManager(
     override suspend fun getFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee.Choosable> {
         lastLayer1FeeAmount = null
 
-        val layer2fee = super.getFee(amount, destination, smartContract).successOr {
+        val layer2fee = super.getFee(amount, destination, callData).successOr {
             return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 // [REDACTED_TODO_COMMENT]
         return getLegacyFee(
             amount = amount,
             destination = destination,
-            data = smartContract?.dataHex,
+            data = callData?.dataHex,
             layer2fee = layer2fee,
         )
         // return if (DepsContainer.blockchainFeatureToggles.isEthereumEIP1559Enabled &&
