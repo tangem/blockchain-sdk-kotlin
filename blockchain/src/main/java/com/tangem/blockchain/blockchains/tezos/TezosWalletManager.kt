@@ -146,7 +146,7 @@ class TezosWalletManager(
     override suspend fun estimateFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee> {
         var fee: BigDecimal = try {
             calculateFeePartForSender()
