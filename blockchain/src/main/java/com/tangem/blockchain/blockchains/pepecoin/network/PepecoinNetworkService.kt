@@ -172,8 +172,8 @@ internal class PepecoinNetworkService(
     companion object {
         const val SUPPORTED_SERVER_VERSION = "1.4"
         private const val MINIMAL_FEE_BLOCK_AMOUNT = 10
-        private val NORMAL_FEE_MULTIPLIER = "1.5".toBigDecimal()
-        private val PRIORITY_FEE_MULTIPLIER = 2.toBigDecimal()
+        private val NORMAL_FEE_MULTIPLIER = 10.toBigDecimal()
+        private val PRIORITY_FEE_MULTIPLIER = 100.toBigDecimal()
 
         private fun addressToScript(walletAddress: String): Script {
             val address = LegacyAddress.fromBase58(
