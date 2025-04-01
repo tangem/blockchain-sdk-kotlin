@@ -25,11 +25,11 @@ class MantleWalletManager(
     override suspend fun getFeeInternal(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee> {
         return when (amount.type) {
-            is AmountType.Coin -> getFeeForCoinTransaction(amount, destination, smartContract)
-            is AmountType.Token -> super.getFeeInternal(amount, destination, smartContract)
+            is AmountType.Coin -> getFeeForCoinTransaction(amount, destination, callData)
+            is AmountType.Token -> super.getFeeInternal(amount, destination, callData)
             else -> Result.Failure(BlockchainSdkError.UnsupportedOperation())
         }
     }
@@ -37,10 +37,10 @@ class MantleWalletManager(
     private suspend fun getFeeForCoinTransaction(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee> {
         val patchedAmount = amount.minus(ONE_WEI)
-        return super.getFeeInternal(patchedAmount, destination, smartContract)
+        return super.getFeeInternal(patchedAmount, destination, callData)
             .map {
                 when (it) {
                     is TransactionFee.Single -> {
