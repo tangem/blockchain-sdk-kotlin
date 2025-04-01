@@ -65,23 +65,14 @@ internal class PepecoinNetworkService(
     }
 
     override suspend fun getFee(): Result<BitcoinFee> = coroutineScope {
-        val minimalFee = requestFee(MINIMAL_FEE_BLOCK_AMOUNT).successOr { return@coroutineScope it }
         Result.Success(
             BitcoinFee(
-                minimalPerKb = minimalFee,
-                normalPerKb = minimalFee.multiply(NORMAL_FEE_MULTIPLIER),
-                priorityPerKb = minimalFee.multiply(PRIORITY_FEE_MULTIPLIER),
+                minimalPerKb = MINIMAL_FEE_PER_KB,
+                normalPerKb = NORMAL_FEE_PER_KB,
+                priorityPerKb = PRIORITY_FEE_PER_KB,
             ),
         )
     }
-
-    private suspend fun requestFee(blockAmount: Int) = multiProvider
-        .performRequest { getEstimateFee(blockAmount) }
-        .map { feeResponse ->
-            feeResponse.feeInCoinsPer1000Bytes
-                ?.movePointLeft(blockchain.decimals())
-                ?: BigDecimal.ZERO
-        }
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return multiProvider.performRequest(ElectrumNetworkProvider::broadcastTransaction, transaction.hexToBytes())
@@ -171,9 +162,9 @@ internal class PepecoinNetworkService(
 
     companion object {
         const val SUPPORTED_SERVER_VERSION = "1.4"
-        private const val MINIMAL_FEE_BLOCK_AMOUNT = 10
-        private val NORMAL_FEE_MULTIPLIER = 10.toBigDecimal()
-        private val PRIORITY_FEE_MULTIPLIER = 100.toBigDecimal()
+        private val MINIMAL_FEE_PER_KB = BigDecimal("0.01")
+        private val NORMAL_FEE_PER_KB = MINIMAL_FEE_PER_KB * BigDecimal("10")
+        private val PRIORITY_FEE_PER_KB = MINIMAL_FEE_PER_KB * BigDecimal("100")
 
         private fun addressToScript(walletAddress: String): Script {
             val address = LegacyAddress.fromBase58(
