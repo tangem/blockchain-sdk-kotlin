@@ -4,7 +4,7 @@ import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.tron.network.BlockHeader
 import com.tangem.blockchain.blockchains.tron.network.RawData
 import com.tangem.blockchain.blockchains.tron.network.TronBlock
-import com.tangem.blockchain.blockchains.tron.tokenmethods.TronTransferTokenMethod
+import com.tangem.blockchain.blockchains.tron.tokenmethods.TronTransferTokenCallData
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Token
@@ -70,7 +70,7 @@ class TronTransactionTest {
             destination = "TXXxc9NsHndfQ2z9kMKyWpYa5T3QbhKGwn",
             block = tronBlock,
             extras = TronTransactionExtras(
-                TronTransferTokenMethod(
+                TronTransferTokenCallData(
                     destination = "TXXxc9NsHndfQ2z9kMKyWpYa5T3QbhKGwn",
                     amount = Amount(token, BigDecimal.ONE),
                 ),

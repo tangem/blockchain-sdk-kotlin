@@ -217,7 +217,7 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
     ): Ethereum.SigningInput.Builder {
         return setTransaction(
             Ethereum.Transaction.newBuilder()
-                .setContractGeneric(coinAmount = coinAmount, data = extras?.smartContract?.data)
+                .setContractGeneric(coinAmount = coinAmount, data = extras?.callData?.data)
                 .build(),
         )
     }

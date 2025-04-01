@@ -6,7 +6,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvide
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.smartcontract.SmartContractMethod
+import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -25,7 +25,7 @@ class MantleWalletManager(
     override suspend fun getFeeInternal(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractMethod?,
+        smartContract: SmartContractCallData?,
     ): Result<TransactionFee> {
         return when (amount.type) {
             is AmountType.Coin -> getFeeForCoinTransaction(amount, destination, smartContract)
@@ -37,7 +37,7 @@ class MantleWalletManager(
     private suspend fun getFeeForCoinTransaction(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractMethod?,
+        smartContract: SmartContractCallData?,
     ): Result<TransactionFee> {
         val patchedAmount = amount.minus(ONE_WEI)
         return super.getFeeInternal(patchedAmount, destination, smartContract)
@@ -104,7 +104,7 @@ class MantleWalletManager(
                 // [REDACTED_JIRA]
                 extras = EthereumTransactionExtras(
                     gasLimit = fee.gasLimit.toBigDecimal().multiply(FEE_SEND_MULTIPLIER).toBigInteger(),
-                    smartContract = extras?.smartContract,
+                    callData = extras?.callData,
                     nonce = extras?.nonce,
                 ),
             ),

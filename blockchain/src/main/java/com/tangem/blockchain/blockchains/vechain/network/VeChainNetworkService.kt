@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.vechain.network
 
-import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TokenBalanceERC20TokenMethod
-import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TransferERC20TokenMethod
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TokenBalanceERC20TokenCallData
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TransferERC20TokenCallData
 import com.tangem.blockchain.blockchains.vechain.VeChainAccountInfo
 import com.tangem.blockchain.blockchains.vechain.VeChainBlockInfo
 import com.tangem.blockchain.blockchains.vechain.VeChainWalletManager
@@ -73,7 +73,7 @@ internal class VeChainNetworkService(
         val clause = VeChainClause(
             to = token.contractAddress,
             value = CONTRACT_CALL_VALUE,
-            data = "0x" + TransferERC20TokenMethod(destination = destination, amount = amount).data.toHexString(),
+            data = "0x" + TransferERC20TokenCallData(destination = destination, amount = amount).data.toHexString(),
         )
         val request = VeChainContractCallRequest(
             clauses = listOf(clause),
@@ -95,7 +95,7 @@ internal class VeChainNetworkService(
                         val clause = VeChainClause(
                             to = token.contractAddress,
                             value = CONTRACT_CALL_VALUE,
-                            data = "0x" + TokenBalanceERC20TokenMethod(address = address).data.toHexString(),
+                            data = "0x" + TokenBalanceERC20TokenCallData(address = address).data.toHexString(),
                         )
                         this.callContract(
                             request = VeChainContractCallRequest(

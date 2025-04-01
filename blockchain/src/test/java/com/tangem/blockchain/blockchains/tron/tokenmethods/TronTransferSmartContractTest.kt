@@ -18,7 +18,7 @@ class TronTransferSmartContractTest {
         val amount = "000000000000000000000000000000000000000000000000000000003b9aca00".hexToBytes()
         val expected = signature + destinationData + amount
 
-        val actual = TronTransferTokenMethod(
+        val actual = TronTransferTokenCallData(
             destination = destinationAddress,
             amount = Amount(Blockchain.Tron).copy(
                 value = "1000".toBigDecimal(),

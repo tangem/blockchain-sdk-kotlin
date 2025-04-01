@@ -18,7 +18,7 @@ class TronApprovalSmartContractTest {
         val amount = "000000000000000000000000000000000000000000000000000000003b9aca00".hexToBytes()
         val expected = signature + spenderData + amount
 
-        val actual = TronApprovalTokenMethod(
+        val actual = TronApprovalTokenCallData(
             spenderAddress = spenderAddress,
             amount = Amount(Blockchain.Tron).copy(
                 value = "1000".toBigDecimal(),
@@ -34,7 +34,7 @@ class TronApprovalSmartContractTest {
         val amount = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff".hexToBytes()
         val expected = signature + spenderData + amount
 
-        val actual = TronApprovalTokenMethod(
+        val actual = TronApprovalTokenCallData(
             spenderAddress = spenderAddress,
             amount = null,
         )
@@ -48,7 +48,7 @@ class TronApprovalSmartContractTest {
         val amount = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff".hexToBytes()
         val expected = signature + spenderData + amount
 
-        val actual = TronApprovalTokenMethod(
+        val actual = TronApprovalTokenCallData(
             spenderAddress = spenderAddress,
             amount = Amount(blockchain = Blockchain.Tron),
         )

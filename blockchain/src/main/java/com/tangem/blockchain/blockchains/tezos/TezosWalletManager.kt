@@ -6,7 +6,7 @@ import com.tangem.blockchain.blockchains.tezos.network.TezosInfoResponse
 import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkProvider
 import com.tangem.blockchain.blockchains.tezos.network.TezosTransactionData
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.smartcontract.SmartContractMethod
+import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -146,7 +146,7 @@ class TezosWalletManager(
     override suspend fun estimateFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractMethod?,
+        smartContract: SmartContractCallData?,
     ): Result<TransactionFee> {
         var fee: BigDecimal = try {
             calculateFeePartForSender()

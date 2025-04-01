@@ -1,8 +1,8 @@
 package com.tangem.blockchain.blockchains.tron
 
 import com.tangem.blockchain.common.TransactionExtras
-import com.tangem.blockchain.common.smartcontract.SmartContractMethod
+import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 
 class TronTransactionExtras(
-    val smartContract: SmartContractMethod,
+    val callData: SmartContractCallData,
 ) : TransactionExtras
