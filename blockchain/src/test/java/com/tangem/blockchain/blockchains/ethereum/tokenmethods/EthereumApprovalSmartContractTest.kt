@@ -18,7 +18,7 @@ class EthereumApprovalSmartContractTest {
         val amount = "0000000000000000000000000000000000000000000000056bc75e2d63100000".hexToBytes()
         val expected = signature + spenderData + amount
 
-        val actual = ApprovalERC20TokenMethod(
+        val actual = ApprovalERC20TokenCallData(
             spenderAddress = spenderAddress,
             amount = Amount(Blockchain.Ethereum).copy(
                 value = "100".toBigDecimal(),
@@ -34,7 +34,7 @@ class EthereumApprovalSmartContractTest {
         val amount = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff".hexToBytes()
         val expected = signature + spenderData + amount
 
-        val actual = ApprovalERC20TokenMethod(
+        val actual = ApprovalERC20TokenCallData(
             spenderAddress = spenderAddress,
             amount = null,
         )
