@@ -65,14 +65,12 @@ internal class PepecoinNetworkService(
     }
 
     override suspend fun getFee(): Result<BitcoinFee> = coroutineScope {
-        val minimalFeeDeferred = async { requestFee(MINIMAL_FEE_BLOCK_AMOUNT) }
-        val normalFeeDeferred = async { requestFee(NORMAL_FEE_BLOCK_AMOUNT) }
-        val priorityFeeDeferred = async { requestFee(PRIORITY_FEE_BLOCK_AMOUNT) }
+        val minimalFee = requestFee(MINIMAL_FEE_BLOCK_AMOUNT).successOr { return@coroutineScope it }
         Result.Success(
             BitcoinFee(
-                minimalPerKb = minimalFeeDeferred.await().successOr { return@coroutineScope it },
-                normalPerKb = normalFeeDeferred.await().successOr { return@coroutineScope it },
-                priorityPerKb = priorityFeeDeferred.await().successOr { return@coroutineScope it },
+                minimalPerKb = minimalFee,
+                normalPerKb = minimalFee.multiply(NORMAL_FEE_MULTIPLIER),
+                priorityPerKb = minimalFee.multiply(PRIORITY_FEE_MULTIPLIER),
             ),
         )
     }
@@ -173,9 +171,9 @@ internal class PepecoinNetworkService(
 
     companion object {
         const val SUPPORTED_SERVER_VERSION = "1.4"
-        private const val MINIMAL_FEE_BLOCK_AMOUNT = 8
-        private const val NORMAL_FEE_BLOCK_AMOUNT = 4
-        private const val PRIORITY_FEE_BLOCK_AMOUNT = 1
+        private const val MINIMAL_FEE_BLOCK_AMOUNT = 10
+        private val NORMAL_FEE_MULTIPLIER = "1.5".toBigDecimal()
+        private val PRIORITY_FEE_MULTIPLIER = 2.toBigDecimal()
 
         private fun addressToScript(walletAddress: String): Script {
             val address = LegacyAddress.fromBase58(
