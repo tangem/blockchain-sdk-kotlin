@@ -49,9 +49,9 @@ abstract class WalletManager(
     override suspend fun estimateFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee> {
-        return getFee(amount, destination, smartContract)
+        return getFee(amount, destination, callData)
     }
 
     internal abstract suspend fun updateInternal()
@@ -215,7 +215,7 @@ interface TransactionSender {
     suspend fun getFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData? = null,
+        callData: SmartContractCallData? = null,
     ): Result<TransactionFee> = getFee(
         amount = amount,
         destination = destination,
@@ -229,11 +229,11 @@ interface TransactionSender {
     suspend fun estimateFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData? = null,
+        callData: SmartContractCallData? = null,
     ): Result<TransactionFee> = getFee(
         amount = amount,
         destination = destination,
-        smartContract = smartContract,
+        callData = callData,
     )
 }
 

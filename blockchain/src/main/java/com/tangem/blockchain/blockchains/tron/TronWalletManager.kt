@@ -178,14 +178,14 @@ internal class TronWalletManager(
     override suspend fun getFee(amount: Amount, destination: String) = getFee(
         amount = amount,
         destination = destination,
-        smartContract = null,
+        callData = null,
     )
 
     @Suppress("MagicNumber")
     override suspend fun getFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee> {
         val blockchain = wallet.blockchain
         return coroutineScope {
@@ -198,7 +198,7 @@ internal class TronWalletManager(
                     destination = destination,
                     signer = dummySigner,
                     publicKey = dummySigner.publicKey,
-                    extras = smartContract?.let { TronTransactionExtras(it) },
+                    extras = callData?.let { TronTransactionExtras(it) },
                 )
             }
 
