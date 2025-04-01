@@ -8,7 +8,6 @@ import com.tangem.blockchain.blockchains.ethereum.tokenmethods.ApprovalERC20Toke
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -116,20 +115,20 @@ open class EthereumWalletManager(
     override suspend fun getFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee> {
-        return getFeeInternal(amount, destination, smartContract)
+        return getFeeInternal(amount, destination, callData)
     }
 
     protected open suspend fun getFeeInternal(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee> {
         return if (wallet.blockchain.isSupportEIP1559) {
-            getEIP1559Fee(amount, destination, data)
+            getEIP1559Fee(amount, destination, callData)
         } else {
-            getLegacyFee(amount, destination, smartContract)
+            getLegacyFee(amount, destination, callData)
         }
     }
 
@@ -180,9 +179,9 @@ open class EthereumWalletManager(
     override suspend fun getGasLimit(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData,
+        callData: SmartContractCallData,
     ): Result<BigInteger> {
-        return getGasLimitInternal(amount, destination, smartContract)
+        return getGasLimitInternal(amount, destination, callData)
     }
 
     override suspend fun getAllowance(spenderAddress: String, token: Token): kotlin.Result<BigDecimal> {
@@ -231,12 +230,12 @@ open class EthereumWalletManager(
     private suspend fun getGasLimitInternal(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData? = null,
+        callData: SmartContractCallData? = null,
     ): Result<BigInteger> {
         val from = wallet.address
         var to = destination
         var value: String? = null
-        val data: String? = smartContract?.dataHex
+        val data: String? = callData?.dataHex
 
         when (amount.type) {
             is AmountType.Coin -> {
@@ -257,13 +256,13 @@ open class EthereumWalletManager(
     private suspend fun getEIP1559Fee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async {
-                    if (smartContract != null) {
-                        getGasLimit(amount, destination, smartContract)
+                    if (callData != null) {
+                        getGasLimit(amount, destination, callData)
                     } else {
                         getGasLimit(amount, destination)
                     }
@@ -295,13 +294,13 @@ open class EthereumWalletManager(
     private suspend fun getLegacyFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async {
-                    if (smartContract != null) {
-                        getGasLimit(amount, destination, smartContract)
+                    if (callData != null) {
+                        getGasLimit(amount, destination, callData)
                     } else {
                         getGasLimit(amount, destination)
                     }
