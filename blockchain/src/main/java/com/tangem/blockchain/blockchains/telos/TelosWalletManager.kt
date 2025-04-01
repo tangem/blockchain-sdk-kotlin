@@ -6,7 +6,6 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvide
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -24,25 +23,25 @@ class TelosWalletManager(
     override suspend fun getFeeInternal(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee> {
         return if (wallet.blockchain.isSupportEIP1559) {
-            getEIP1559Fee(amount, destination, smartContract)
+            getEIP1559Fee(amount, destination, callData)
         } else {
-            getLegacyFee(amount, destination, smartContract)
+            getLegacyFee(amount, destination, callData)
         }
     }
 
     private suspend fun getEIP1559Fee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async {
-                    if (smartContract != null) {
-                        getGasLimit(amount, destination, smartContract)
+                    if (callData != null) {
+                        getGasLimit(amount, destination, callData)
                     } else {
                         getGasLimit(amount, destination)
                     }
@@ -74,13 +73,13 @@ class TelosWalletManager(
     private suspend fun getLegacyFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async {
-                    if (smartContract != null) {
-                        getGasLimit(amount, destination, smartContract)
+                    if (callData != null) {
+                        getGasLimit(amount, destination, callData)
                     } else {
                         getGasLimit(amount, destination)
                     }
