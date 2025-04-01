@@ -17,6 +17,6 @@ internal class PepecoinExternalLinkProvider(private val isTestnet: Boolean) : Ex
     }
 
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
-        return TxExploreState.Url("${explorerBaseUrl}tx/$transactionHash")
+        return TxExploreState.Url("${explorerBaseUrl}transaction/$transactionHash")
     }
 }

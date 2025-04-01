@@ -10,5 +10,5 @@ internal open class PepecoinFeeCalculator(
 
     // https://github.com/pepecoinppc/pepecoin/blob/4fb5a0cd930c0df82c88292e973a7b7cfa06c4e8/doc/fee-recommendation.md
     override val minimalFeePerKb: BigDecimal = 0.01.toBigDecimal()
-    override val minimalFee: BigDecimal = 0.01.toBigDecimal()
+    override val minimalFee: BigDecimal = 0.00001.toBigDecimal()
 }
