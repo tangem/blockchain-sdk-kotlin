@@ -8,9 +8,5 @@ import java.math.BigInteger
 interface EthereumGasLoader {
     suspend fun getGasPrice(): Result<BigInteger>
     suspend fun getGasLimit(amount: Amount, destination: String): Result<BigInteger>
-    suspend fun getGasLimit(
-        amount: Amount,
-        destination: String,
-        smartContract: SmartContractCallData,
-    ): Result<BigInteger>
+    suspend fun getGasLimit(amount: Amount, destination: String, callData: SmartContractCallData): Result<BigInteger>
 }
