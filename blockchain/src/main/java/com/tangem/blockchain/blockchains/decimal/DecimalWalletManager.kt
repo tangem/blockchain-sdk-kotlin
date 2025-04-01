@@ -23,17 +23,17 @@ internal class DecimalWalletManager(
     override suspend fun getFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee> {
-        return super.getFee(amount, convertAddress(destination), smartContract)
+        return super.getFee(amount, convertAddress(destination), callData)
     }
 
     override suspend fun getFeeInternal(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee> {
-        return super.getFeeInternal(amount, convertAddress(destination), smartContract)
+        return super.getFeeInternal(amount, convertAddress(destination), callData)
     }
 
     override suspend fun getGasLimit(amount: Amount, destination: String): Result<BigInteger> {
@@ -43,9 +43,9 @@ internal class DecimalWalletManager(
     override suspend fun getGasLimit(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractCallData,
+        callData: SmartContractCallData,
     ): Result<BigInteger> {
-        return super.getGasLimit(amount, convertAddress(destination), smartContract)
+        return super.getGasLimit(amount, convertAddress(destination), callData)
     }
 
     override suspend fun send(
