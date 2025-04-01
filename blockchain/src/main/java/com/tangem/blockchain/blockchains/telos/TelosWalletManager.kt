@@ -7,7 +7,7 @@ import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionB
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.di.DepsContainer
-import com.tangem.blockchain.common.smartcontract.SmartContractMethod
+import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -21,9 +21,13 @@ class TelosWalletManager(
     networkProvider: EthereumNetworkProvider,
 ) : EthereumWalletManager(wallet, transactionBuilder, networkProvider) {
 
-    override suspend fun getFeeInternal(amount: Amount, destination: String, data: String?): Result<TransactionFee> {
+    override suspend fun getFeeInternal(
+        amount: Amount,
+        destination: String,
+        smartContract: SmartContractCallData?,
+    ): Result<TransactionFee> {
         return if (wallet.blockchain.isSupportEIP1559) {
-            getEIP1559Fee(amount, destination, data)
+            getEIP1559Fee(amount, destination, smartContract)
         } else {
             getLegacyFee(amount, destination, smartContract)
         }
@@ -32,7 +36,7 @@ class TelosWalletManager(
     private suspend fun getEIP1559Fee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractMethod?,
+        smartContract: SmartContractCallData?,
     ): Result<TransactionFee> {
         return try {
             coroutineScope {
@@ -70,7 +74,7 @@ class TelosWalletManager(
     private suspend fun getLegacyFee(
         amount: Amount,
         destination: String,
-        smartContract: SmartContractMethod?,
+        smartContract: SmartContractCallData?,
     ): Result<TransactionFee> {
         return try {
             coroutineScope {
