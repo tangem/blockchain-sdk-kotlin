@@ -17,7 +17,7 @@ class EthereumAllowanceSmartContractTest {
     fun makeAllowanceContract() {
         val expected = signature + ownerData + spenderData
 
-        val actual = AllowanceERC20TokenMethod(
+        val actual = AllowanceERC20TokenCallData(
             ownerAddress = ownerAddress,
             spenderAddress = spenderAddress,
         )
