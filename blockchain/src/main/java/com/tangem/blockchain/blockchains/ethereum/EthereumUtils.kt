@@ -169,7 +169,7 @@ object EthereumUtils {
                 transactionData.contractAddress ?: error("Contract address is not specified!"),
             )
             value = BigInteger.ZERO
-            input = extras.smartContract?.data ?: error("Smart contract is not specified")
+            input = extras.callData?.data ?: error("Call data is not specified")
         }
 
         val gasLimitToUse = extras.gasLimit

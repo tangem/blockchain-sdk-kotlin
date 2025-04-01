@@ -18,7 +18,7 @@ class EthereumTransferSmartContractTest {
         val amount = "0000000000000000000000000000000000000000000000056bc75e2d63100000".hexToBytes()
         val expected = signature + destinationData + amount
 
-        val actual = TransferERC20TokenMethod(
+        val actual = TransferERC20TokenCallData(
             destination = destinationAddress,
             amount = Amount(Blockchain.Ethereum).copy(
                 value = "100".toBigDecimal(),

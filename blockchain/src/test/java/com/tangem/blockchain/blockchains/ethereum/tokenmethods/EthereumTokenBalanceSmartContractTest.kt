@@ -15,7 +15,7 @@ class EthereumTokenBalanceSmartContractTest {
     fun makeBalanceOfContract() {
         val expected = signature + addressData
 
-        val actual = TokenBalanceERC20TokenMethod(address = address)
+        val actual = TokenBalanceERC20TokenCallData(address = address)
 
         Truth.assertThat(actual.dataHex).isEqualTo(expected.toHexString())
         Truth.assertThat(actual.data).isEqualTo(expected)
