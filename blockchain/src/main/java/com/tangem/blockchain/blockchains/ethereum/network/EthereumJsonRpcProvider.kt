@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
-import com.tangem.blockchain.blockchains.ethereum.tokenmethods.AllowanceERC20TokenMethod
-import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TokenBalanceERC20TokenMethod
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.AllowanceERC20TokenCallData
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TokenBalanceERC20TokenCallData
 import com.tangem.blockchain.common.JsonRPCRequest
 import com.tangem.blockchain.common.JsonRPCResponse
 import com.tangem.blockchain.common.NetworkProvider
@@ -86,13 +86,13 @@ internal class EthereumJsonRpcProvider(
 
     private fun createTokenBalanceCallObject(address: String, contractAddress: String) = EthCallObject(
         to = contractAddress,
-        data = TokenBalanceERC20TokenMethod(address = address).dataHex,
+        data = TokenBalanceERC20TokenCallData(address = address).dataHex,
     )
 
     private fun createTokenAllowanceCallObject(ownerAddress: String, contractAddress: String, spenderAddress: String) =
         EthCallObject(
             to = contractAddress,
-            data = AllowanceERC20TokenMethod(
+            data = AllowanceERC20TokenCallData(
                 ownerAddress = ownerAddress,
                 spenderAddress = spenderAddress,
             ).dataHex,

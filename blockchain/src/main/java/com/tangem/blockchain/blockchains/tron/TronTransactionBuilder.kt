@@ -91,7 +91,7 @@ class TronTransactionBuilder {
         val parameter = TriggerSmartContract(
             contract_address = amountType.token.contractAddress
                 .decodeBase58(true)?.toByteString() ?: EMPTY,
-            data_ = extras.smartContract.data.toByteString(),
+            data_ = extras.callData.data.toByteString(),
             owner_address = source.decodeBase58(true)?.toByteString() ?: EMPTY,
         )
 
