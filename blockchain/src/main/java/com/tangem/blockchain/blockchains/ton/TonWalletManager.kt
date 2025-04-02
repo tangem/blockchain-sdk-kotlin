@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.ton
 import android.util.Log
 import com.tangem.blockchain.blockchains.ton.TonTransactionBuilder.Companion.JETTON_TRANSFER_PROCESSING_FEE
 import com.tangem.blockchain.blockchains.ton.models.TonWalletInfo
+import com.tangem.blockchain.blockchains.ton.network.TonAccountState
 import com.tangem.blockchain.blockchains.ton.network.TonNetworkProvider
 import com.tangem.blockchain.blockchains.ton.network.TonNetworkService
 import com.tangem.blockchain.common.*
@@ -17,10 +18,7 @@ internal class TonWalletManager(
     wallet: Wallet,
     nftProvider: NFTProvider,
     networkProviders: List<TonNetworkProvider>,
-) : WalletManager(
-    wallet = wallet,
-    nftProvider = nftProvider,
-) {
+) : WalletManager(wallet = wallet, nftProvider = nftProvider), InitializableAccount {
 
     private var sequenceNumber: Int = 0
     private val txBuilder = TonTransactionBuilder(wallet.publicKey, wallet.address)
@@ -31,6 +29,8 @@ internal class TonWalletManager(
 
     override val currentHost: String
         get() = networkService.host
+
+    override var accountInitializationState: InitializableAccount.State = InitializableAccount.State.UNDEFINED
 
     override suspend fun updateInternal() {
         when (val walletInfoResult = networkService.getWalletInformation(wallet.address, cardTokens)) {
@@ -101,6 +101,10 @@ internal class TonWalletManager(
     }
 
     private fun updateWallet(info: TonWalletInfo) {
+        accountInitializationState = when (info.accountState) {
+            TonAccountState.ACTIVE -> InitializableAccount.State.INITIALIZED
+            TonAccountState.UNINITIALIZED -> InitializableAccount.State.NOT_INITIALIZED
+        }
         if (info.sequenceNumber != sequenceNumber) {
             wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
         }
