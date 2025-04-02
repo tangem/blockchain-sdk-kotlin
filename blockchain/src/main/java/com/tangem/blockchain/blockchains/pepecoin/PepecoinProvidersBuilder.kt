@@ -1,0 +1,34 @@
+package com.tangem.blockchain.blockchains.pepecoin
+
+import com.tangem.blockchain.blockchains.pepecoin.network.PepecoinNetworkService.Companion.SUPPORTED_SERVER_VERSION
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.network.providers.OnlyPublicProvidersBuilder
+import com.tangem.blockchain.common.network.providers.ProviderType
+import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
+import com.tangem.blockchain.network.electrum.ElectrumNetworkProvider
+import com.tangem.blockchain.network.electrum.ElectrumNetworkProviderFactory
+
+internal class PepecoinProvidersBuilder(
+    override val providerTypes: List<ProviderType>,
+) : OnlyPublicProvidersBuilder<ElectrumNetworkProvider>(providerTypes) {
+
+    override fun createProvider(url: String, blockchain: Blockchain): ElectrumNetworkProvider {
+        return ElectrumNetworkProviderFactory.create(
+            wssUrl = url,
+            blockchain = blockchain,
+            okHttpClient = BlockchainSdkRetrofitBuilder.build(),
+            supportedProtocolVersion = SUPPORTED_SERVER_VERSION,
+        )
+    }
+
+    override fun createTestnetProviders(blockchain: Blockchain): List<ElectrumNetworkProvider> {
+        return listOf(
+            ElectrumNetworkProviderFactory.create(
+                wssUrl = "wss://testnet.pepelum.site:50009",
+                blockchain = blockchain,
+                okHttpClient = BlockchainSdkRetrofitBuilder.build(),
+                supportedProtocolVersion = SUPPORTED_SERVER_VERSION,
+            ),
+        )
+    }
+}
