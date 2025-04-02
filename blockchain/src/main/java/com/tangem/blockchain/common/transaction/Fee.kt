@@ -98,5 +98,11 @@ sealed class Fee {
         val gasAmount: BigDecimal,
     ) : Fee()
 
+    data class Hedera(
+        override val amount: Amount,
+        // / UI only, this fee must be excluded when building transaction
+        val additionalHBARFee: BigDecimal,
+    ) : Fee()
+
     data class Common(override val amount: Amount) : Fee()
 }
