@@ -7,7 +7,6 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvide
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
@@ -144,8 +143,7 @@ open class EthereumWalletManager(
         destination: String,
         data: String? = null,
     ): Result<TransactionFee> {
-        val isEthereumEIP1559Enabled = DepsContainer.blockchainFeatureToggles.isEthereumEIP1559Enabled
-        return if (isEthereumEIP1559Enabled && wallet.blockchain.isSupportEIP1559) {
+        return if (wallet.blockchain.isSupportEIP1559) {
             getEIP1559Fee(amount, destination, data)
         } else {
             getLegacyFee(amount, destination, data)
