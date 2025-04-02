@@ -60,7 +60,7 @@ class AvalancheProvidersBuilderTest {
     init {
         DepsContainer.onInit(
             config = blockchainSdkConfig,
-            featureToggles = BlockchainFeatureToggles(isEthereumEIP1559Enabled = true),
+            featureToggles = BlockchainFeatureToggles(),
         )
     }
 
