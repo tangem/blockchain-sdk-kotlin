@@ -16,6 +16,7 @@ import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
 import com.tangem.blockchain.blockchains.koinos.KoinosAddressService
 import com.tangem.blockchain.blockchains.nexa.NexaAddressService
+import com.tangem.blockchain.blockchains.pepecoin.PepecoinAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
 import com.tangem.blockchain.blockchains.radiant.RadiantAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
@@ -198,6 +199,8 @@ enum class Blockchain(
     ScrollTestnet("scroll/test", "ETH", "Scroll Sepolia Testnet"),
     ZkLinkNova("zklink", "ETH", "zkLink Nova"),
     ZkLinkNovaTestnet("zklink/test", "ETH", "zkLink Nova Sepolia Testnet"),
+    Pepecoin("pepecoin", "PEP", "Pepecoin"),
+    PepecoinTestnet("pepecoin/test", "PEP", "Pepecoin Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -268,6 +271,7 @@ enum class Blockchain(
         Koinos, KoinosTestnet,
         InternetComputer,
         Clore,
+        Pepecoin, PepecoinTestnet,
         -> 8
 
         Solana, SolanaTestnet,
@@ -456,6 +460,7 @@ enum class Blockchain(
             Koinos, KoinosTestnet -> KoinosAddressService()
             Radiant -> RadiantAddressService()
             Fact0rn -> Fact0rnAddressService()
+            Pepecoin, PepecoinTestnet -> PepecoinAddressService()
             Casper, CasperTestnet -> CasperAddressService()
             Alephium, AlephiumTestnet -> AlephiumAddressService()
             Unknown -> error("unsupported blockchain")
@@ -557,6 +562,7 @@ enum class Blockchain(
             ZkLinkNova, ZkLinkNovaTestnet -> ZkLinkNovaTestnet
             Nexa, NexaTestnet -> NexaTestnet
             Scroll, ScrollTestnet -> ScrollTestnet
+            Pepecoin, PepecoinTestnet -> PepecoinTestnet
             Unknown,
             Cardano,
             Dogecoin,
@@ -668,6 +674,7 @@ enum class Blockchain(
             ApeChain, ApeChainTestnet,
             Scroll, ScrollTestnet,
             ZkLinkNova, ZkLinkNovaTestnet,
+            Pepecoin, PepecoinTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -781,6 +788,8 @@ enum class Blockchain(
             ScrollTestnet -> Chain.ScrollTestnet.id
             ZkLinkNova -> Chain.ZkLinkNova.id
             ZkLinkNovaTestnet -> Chain.ZkLinkNovaTestnet.id
+            Pepecoin -> Chain.Pepecoin.id
+            PepecoinTestnet -> Chain.PepecoinTestnet.id
             else -> null
         }
     }
@@ -818,6 +827,32 @@ enum class Blockchain(
 
             else -> false
         }
+    }
+
+    fun canHandleNFTs(): Boolean = when (this) {
+        // EVM
+        Ethereum, // supported testnet - Sepolia (11155111)
+        Arbitrum, // supported testnet - Sepolia (421614)
+        Avalanche,
+        Fantom, FantomTestnet,
+        BSC, BSCTestnet,
+        Polygon, // supported testnet - Amoy (80002)
+        Gnosis,
+        Cronos,
+        ZkSyncEra, ZkSyncEraTestnet,
+        Moonbeam, MoonbeamTestnet,
+        PolygonZkEVM, PolygonZkEVMTestnet,
+        Moonriver, MoonriverTestnet,
+        Chiliz, ChilizTestnet,
+        Mantle, // supported testnet - Sepolia (5003)
+        Optimism, // supported testnet - Sepolia (11155420)
+        Base, BaseTestnet,
+        Blast, BlastTestnet,
+        // TON
+        TON,
+        -> true
+
+        else -> false
     }
 
     fun isEvm(): Boolean = getChainId() != null
