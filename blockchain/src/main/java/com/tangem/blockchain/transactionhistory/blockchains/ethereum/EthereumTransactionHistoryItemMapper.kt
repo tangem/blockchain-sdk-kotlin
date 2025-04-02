@@ -73,22 +73,35 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
     ): List<TransactionHistoryItem> {
         return transaction.tokenTransfers
             .asSequence()
-            .filter { tokenTransfer ->
-                tokenTransfer.from.equals(walletAddress, ignoreCase = true) ||
-                    tokenTransfer.to.equals(walletAddress, ignoreCase = true)
+            .filter { transfer ->
+                // Double check to exclude token transfers sent to self.
+                // Actually, this is a feasible case, but we don't support such transfers at the moment
+                transfer.from.equalsIgnoreCase(walletAddress) && !transfer.to.equalsIgnoreCase(walletAddress) ||
+                    transfer.to.equalsIgnoreCase(walletAddress) && !transfer.from.equalsIgnoreCase(walletAddress)
             }
-            .map { tokenTransfer ->
+            .filter { transfer ->
+                // Double check to exclude token transfers for different tokens (just in case)
+                val contract = transfer.contract ?: return@filter false
+                token.contractAddress.equalsIgnoreCase(contract)
+            }
+            .mapNotNull { tokenTransfer ->
                 val isOutgoing = tokenTransfer.from.equals(walletAddress, ignoreCase = true)
-                TransactionHistoryItem(
-                    txHash = transaction.txid,
-                    timestamp = TimeUnit.SECONDS.toMillis(transaction.blockTime.toLong()),
-                    isOutgoing = isOutgoing,
-                    destinationType = DestinationType.Single(AddressType.User(tokenTransfer.to)),
-                    sourceType = SourceType.Single(tokenTransfer.from),
-                    status = extractStatus(transaction),
-                    type = extractType(transaction),
-                    amount = tokenTransfer.extractAmount(token),
-                )
+                val amount = tokenTransfer.extractAmount(token)
+
+                if (shouldExcludeTransaction(amount)) {
+                    null
+                } else {
+                    TransactionHistoryItem(
+                        txHash = transaction.txid,
+                        timestamp = TimeUnit.SECONDS.toMillis(transaction.blockTime.toLong()),
+                        isOutgoing = isOutgoing,
+                        destinationType = DestinationType.Single(AddressType.User(tokenTransfer.to)),
+                        sourceType = SourceType.Single(tokenTransfer.from),
+                        status = extractStatus(transaction),
+                        type = extractType(transaction),
+                        amount = amount,
+                    )
+                }
             }
             .toList()
     }
@@ -140,5 +153,13 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
     private fun GetAddressResponse.Transaction.TokenTransfer.extractAmount(token: Token): Amount {
         val transferValue = value?.toBigDecimalOrNull() ?: BigDecimal.ZERO
         return Amount(token = token, value = transferValue.movePointLeft(decimals))
+    }
+
+    private fun String.equalsIgnoreCase(other: String): Boolean {
+        return this.equals(other, ignoreCase = true)
+    }
+
+    private fun shouldExcludeTransaction(amount: Amount): Boolean {
+        return amount.value == null || amount.value.signum() == 0
     }
 }
