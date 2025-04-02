@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.hedera.network
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import java.math.BigDecimal
 
 @JsonClass(generateAdapter = true)
 internal data class HederaAccountResponse(
@@ -76,3 +77,35 @@ internal data class HederaTransactionResponse(
     @Json(name = "result")
     val result: String,
 )
+
+@JsonClass(generateAdapter = true)
+data class HederaTokenDetailsResponse(
+    // there are more fields available here and in the inner objects
+    // ignore them for now
+    @Json(name = "custom_fees")
+    val customFees: CustomFees?,
+) {
+    @JsonClass(generateAdapter = true)
+    data class CustomFees(
+        @Json(name = "fixed_fees")
+        val fixedFees: List<CustomFixedFee>,
+
+        @Json(name = "fractional_fees")
+        val fractionalFees: List<CustomFractionalFee>,
+    ) {
+        @JsonClass(generateAdapter = true)
+        data class CustomFixedFee(
+            @Json(name = "amount")
+            val amount: BigDecimal?,
+
+            @Json(name = "denominating_token_id")
+            val denominatingTokenId: String?,
+        )
+
+        @JsonClass(generateAdapter = true)
+        data class CustomFractionalFee(
+            @Json(name = "denominating_token_id")
+            val denominatingTokenId: String?,
+        )
+    }
+}
