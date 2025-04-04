@@ -23,8 +23,10 @@ internal class KoinosWalletManager(
     override val currentHost: String
         get() = networkService.baseUrl
 
+    private val contractIdHolder = KoinosContractIdHolder { networkService.getContractId() }
+
     override suspend fun updateInternal() {
-        val accountInfo = networkService.getInfo(wallet.address)
+        val accountInfo = networkService.getInfo(wallet.address, contractIdHolder)
             .successOr { return }
 
         val unconfirmedOutgoingTransaction = wallet.recentTransactions.firstOrNull {
@@ -73,7 +75,7 @@ internal class KoinosWalletManager(
         return super.validateTransaction(amount, fee).apply { addAll(errors) }
     }
 
-    override fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
+    override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
         transactionData.requireUncompiled()
 
         val fee = transactionData.fee?.amount?.value
@@ -122,6 +124,7 @@ internal class KoinosWalletManager(
         val (transaction, hashToSign) = transactionBuilder.buildToSign(
             transactionData = transactionDataWithMana,
             currentNonce = nonce,
+            koinContractIdHolder = contractIdHolder,
         ).successOr { return Result.Failure(it.error) }
 
         val signature = signer.sign(hashToSign, wallet.publicKey)

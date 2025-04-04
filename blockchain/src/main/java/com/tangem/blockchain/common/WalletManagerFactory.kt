@@ -119,6 +119,7 @@ class WalletManagerFactory(
             Blockchain.Ravencoin, Blockchain.RavencoinTestnet -> RavencoinWalletManagerAssembly
             Blockchain.Ducatus -> DucatusWalletManagerAssembly
             Blockchain.Clore -> CloreWalletManagerAssembly
+            Blockchain.Pepecoin, Blockchain.PepecoinTestnet -> PepecoinWalletManagerAssembly
             // endregion
 
             // region ETH-like blockchains
