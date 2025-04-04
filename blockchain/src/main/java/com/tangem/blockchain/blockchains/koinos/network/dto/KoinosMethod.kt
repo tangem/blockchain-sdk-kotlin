@@ -186,7 +186,7 @@ internal sealed interface KoinosMethod {
      *
      * @see <a href=https://github.com/koinos/koinos-proto/blob/master/koinos/rpc/chain/chain_rpc.proto>koinos/rpc/chain/chain_rpc.proto</a>
      */
-    object GetResourceLimits : KoinosMethod {
+    data object GetResourceLimits : KoinosMethod {
         override fun asRequest(): JsonRPCRequest = JsonRPCRequest(
             method = "chain.get_resource_limits",
             params = null,
