@@ -1,5 +1,6 @@
 package com.tangem.blockchain.externallinkprovider
 
+import com.tangem.blockchain.externallinkprovider.providers.PepecoinExternalLinkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.externallinkprovider.providers.*
 
@@ -103,6 +104,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.ApeChain, Blockchain.ApeChainTestnet -> ApeChainExternalLinkProvider(isTestnet)
             Blockchain.Scroll, Blockchain.ScrollTestnet -> ScrollExternalLinkProvider(isTestnet)
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet -> ZkLinkNovaExternalLinkProvider(isTestnet)
+            Blockchain.Pepecoin, Blockchain.PepecoinTestnet -> PepecoinExternalLinkProvider(isTestnet)
         }
     }
 }
