@@ -7,7 +7,7 @@ afterEvaluate {
             bar(MavenPublication) {
                 groupId = "$project.artifactGroupId"
                 artifactId = "$project.artifactId"
-                version = "$project.artifactVersion".replace("/", "-")
+                version = "$project.artifactVersion"
 
                 from components.release
                 // artifact(sourceJar)
