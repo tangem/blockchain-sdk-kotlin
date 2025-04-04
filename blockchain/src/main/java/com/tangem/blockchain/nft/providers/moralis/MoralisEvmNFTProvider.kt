@@ -174,7 +174,7 @@ internal class MoralisEvmNFTProvider(
 
     private fun MoralisEvmNFTAttributeResponse.toNFTAssetTrait(): NFTAsset.Trait? =
         if (traitType != null && value != null) {
-            NFTAsset.Trait(traitType, value)
+            NFTAsset.Trait(traitType, value.toString())
         } else {
             null
         }

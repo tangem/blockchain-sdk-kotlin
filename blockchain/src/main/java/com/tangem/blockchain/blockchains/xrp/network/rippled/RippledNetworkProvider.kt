@@ -139,6 +139,16 @@ class RippledNetworkProvider(
         }
     }
 
+    override suspend fun checkDestinationTagRequired(address: String): Boolean {
+        return try {
+            val accountBody = makeAccountBody(address, validated = true)
+            val accountData = retryIO { api.getAccount(accountBody) }
+            accountData.result?.accountFlags?.requireDestinationTag ?: false
+        } catch (exception: Exception) {
+            false
+        }
+    }
+
     private companion object {
         private const val ERROR_CODE = 19
     }
