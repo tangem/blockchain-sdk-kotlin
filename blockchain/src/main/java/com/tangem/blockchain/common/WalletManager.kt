@@ -228,7 +228,7 @@ interface TransactionSigner {
 
 interface TransactionValidator {
 
-    fun validate(transactionData: TransactionData): kotlin.Result<Unit>
+    suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit>
 }
 
 interface SignatureCountValidator {

@@ -4,6 +4,8 @@ import com.tangem.blockchain.blockchains.clore.CloreMainNetParams
 import com.tangem.blockchain.blockchains.dash.DashMainNetParams
 import com.tangem.blockchain.blockchains.ducatus.DucatusMainNetParams
 import com.tangem.blockchain.blockchains.factorn.Fact0rnMainNetParams
+import com.tangem.blockchain.blockchains.pepecoin.PepecoinMainNetParams
+import com.tangem.blockchain.blockchains.pepecoin.PepecoinTestNetParams
 import com.tangem.blockchain.blockchains.radiant.RadiantMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinTestNetParams
@@ -43,6 +45,8 @@ open class BitcoinAddressService(
         Blockchain.Radiant -> RadiantMainNetParams()
         Blockchain.Fact0rn -> Fact0rnMainNetParams()
         Blockchain.Clore -> CloreMainNetParams()
+        Blockchain.Pepecoin -> PepecoinMainNetParams()
+        Blockchain.PepecoinTestnet -> PepecoinTestNetParams()
         else -> error(
             "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}",
         )
