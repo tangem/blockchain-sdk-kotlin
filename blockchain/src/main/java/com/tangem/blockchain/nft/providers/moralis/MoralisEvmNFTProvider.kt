@@ -165,12 +165,12 @@ internal class MoralisEvmNFTProvider(
         }.orEmpty(),
     )
 
-    private fun MoralisEvmNFTMediaResponse.toNFTAssetMedia(): NFTAsset.Media? =
-        if (mimeType != null && mediaCollection?.high?.url != null) {
-            NFTAsset.Media(mimeType, mediaCollection.high.url)
-        } else {
-            null
-        }
+    private fun MoralisEvmNFTMediaResponse.toNFTAssetMedia(): NFTAsset.Media? = when {
+        mediaCollection?.high?.url != null -> NFTAsset.Media(mimeType, mediaCollection.high.url)
+        mediaCollection?.medium?.url != null -> NFTAsset.Media(mimeType, mediaCollection.medium.url)
+        originalMediaUrl != null -> NFTAsset.Media(mimeType, originalMediaUrl)
+        else -> null
+    }
 
     private fun MoralisEvmNFTAttributeResponse.toNFTAssetTrait(): NFTAsset.Trait? =
         if (traitType != null && value != null) {

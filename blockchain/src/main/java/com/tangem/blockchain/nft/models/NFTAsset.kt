@@ -30,12 +30,18 @@ data class NFTAsset(
             @Json(name = "tokenAddress") val tokenAddress: String,
         ) : Identifier()
 
+        @JsonClass(generateAdapter = true)
+        data class Solana(
+            @Json(name = "tokenAddress") val tokenAddress: String,
+            @Json(name = "cnft") val cnft: Boolean,
+        ) : Identifier()
+
         data object Unknown : Identifier()
     }
 
     @JsonClass(generateAdapter = true)
     data class Media(
-        @Json(name = "mimetype") val mimetype: String,
+        @Json(name = "mimetype") val mimetype: String?,
         @Json(name = "url") val url: String,
     )
 
