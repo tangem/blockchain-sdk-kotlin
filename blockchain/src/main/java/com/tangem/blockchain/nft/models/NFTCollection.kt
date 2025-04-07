@@ -24,6 +24,11 @@ data class NFTCollection(
             @Json(name = "contractAddress") val contractAddress: String?,
         ) : Identifier()
 
+        @JsonClass(generateAdapter = true)
+        data class Solana(
+            @Json(name = "collection") val collection: String?,
+        ) : Identifier()
+
         data object Unknown : Identifier()
     }
 }
