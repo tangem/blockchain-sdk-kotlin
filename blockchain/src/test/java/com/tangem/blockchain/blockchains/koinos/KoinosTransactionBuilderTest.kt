@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.koinos.network.dto.KoinosProtocol
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.hexToBytes
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 internal class KoinosTransactionBuilderTest {
@@ -76,10 +77,11 @@ internal class KoinosTransactionBuilderTest {
         "F90AB33FCD0FA5896BB56352875EB49AC984CFD347467A50FE7A28686B11BB45".hexToBytes()
 
     @Test
-    fun buildToSign() {
+    fun buildToSign() = runTest {
         val transactionToSignResult = transactionBuilder.buildToSign(
             transactionData = transactionDataForTest,
             currentNonce = currentNonceForTest,
+            koinContractIdHolder = KoinosContractIdHolder { Result.Success("15DJN4a8SgrbGhhGksSBASiSYjGnMU8dGL") },
         )
         val (transactionToSign, hashToSign) = (transactionToSignResult as Result.Success).data
 
@@ -90,10 +92,11 @@ internal class KoinosTransactionBuilderTest {
     }
 
     @Test
-    fun buildToSignTestnet() {
+    fun buildToSignTestnet() = runTest {
         val transactionToSignResult = transactionBuilderTestnet.buildToSign(
             transactionData = transactionDataForTest,
             currentNonce = currentNonceForTest,
+            koinContractIdHolder = KoinosContractIdHolder { Result.Success("1FaSvLjQJsCJKq5ybmGsMMQs8RQYyVv8ju") },
         )
         val (transactionToSign, hashToSign) = (transactionToSignResult as Result.Success).data
 
