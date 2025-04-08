@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.koinos.network
 
+import com.tangem.blockchain.blockchains.koinos.KoinosContractIdHolder
 import com.tangem.blockchain.blockchains.koinos.models.KoinosAccountInfo
 import com.tangem.blockchain.blockchains.koinos.models.KoinosAccountNonce
 import com.tangem.blockchain.blockchains.koinos.models.KoinosTransactionEntry
@@ -13,7 +14,7 @@ import com.tangem.blockchain.network.MultiNetworkProvider
 import java.math.BigDecimal
 
 internal class KoinosNetworkService(
-    providers: List<KoinosNetworkProvier>,
+    providers: List<KoinosNetworkProvider>,
 ) : NetworkProvider {
 
     override val baseUrl: String
@@ -21,10 +22,13 @@ internal class KoinosNetworkService(
 
     private val multiNetworkProvider = MultiNetworkProvider(providers)
 
-    suspend fun getInfo(address: String): Result<KoinosAccountInfo> {
-        val balance = multiNetworkProvider.performRequest(KoinosNetworkProvier::getKoinBalance, address)
+    suspend fun getInfo(address: String, koinContractIdHolder: KoinosContractIdHolder): Result<KoinosAccountInfo> {
+        val koinContractId = koinContractIdHolder.get()
             .successOr { return it }
-        val mana = multiNetworkProvider.performRequest(KoinosNetworkProvier::getRC, address)
+
+        val balance = multiNetworkProvider.performRequest { getKoinBalance(address, koinContractId) }
+            .successOr { return it }
+        val mana = multiNetworkProvider.performRequest(KoinosNetworkProvider::getRC, address)
             .successOr { return it }
 
         val balanceDecimal = balance.toBigDecimal().movePointLeft(Blockchain.Koinos.decimals())
@@ -39,13 +43,17 @@ internal class KoinosNetworkService(
         )
     }
 
+    suspend fun getContractId(): Result<String> {
+        return multiNetworkProvider.performRequest(KoinosNetworkProvider::getKoinContractId)
+    }
+
     suspend fun getCurrentNonce(address: String): Result<KoinosAccountNonce> {
-        return multiNetworkProvider.performRequest(KoinosNetworkProvier::getNonce, address)
+        return multiNetworkProvider.performRequest(KoinosNetworkProvider::getNonce, address)
             .map { nonce -> KoinosAccountNonce(nonce) }
     }
 
     suspend fun submitTransaction(transaction: KoinosProtocol.Transaction): Result<KoinosTransactionEntry> {
-        return multiNetworkProvider.performRequest(KoinosNetworkProvier::submitTransaction, transaction)
+        return multiNetworkProvider.performRequest(KoinosNetworkProvider::submitTransaction, transaction)
     }
 
     suspend fun getTransactionHistory(
@@ -54,7 +62,7 @@ internal class KoinosNetworkService(
         sequenceNum: Long,
     ): Result<List<KoinosTransactionEntry>> {
         return multiNetworkProvider.performRequest(
-            KoinosNetworkProvier::getTransactionHistory,
+            KoinosNetworkProvider::getTransactionHistory,
             TransactionHistoryRequest(
                 address = address,
                 pageSize = pageSize,
@@ -64,7 +72,7 @@ internal class KoinosNetworkService(
     }
 
     suspend fun getRCLimit(): Result<BigDecimal> {
-        val limits = multiNetworkProvider.performRequest(KoinosNetworkProvier::getResourceLimits)
+        val limits = multiNetworkProvider.performRequest(KoinosNetworkProvider::getResourceLimits)
             .successOr { return it }
 
         val rcLimitSatoshi = MAX_DISK_STORAGE_LIMIT * limits.diskStorageCost +
