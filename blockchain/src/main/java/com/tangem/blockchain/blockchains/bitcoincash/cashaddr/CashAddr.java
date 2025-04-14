@@ -11,13 +11,10 @@ import java.util.Arrays;
  * or http://www.opensource.org/licenses/mit-license.php.
  */
 
-
+/**
+ * Detailed info can be found here https://reference.cash/protocol/blockchain/encoding/cashaddr
+ */
 public class CashAddr {
-
-    public static final String CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
-
-    private static final char[] CHARS = CHARSET.toCharArray();
-
 
     public static final String SEPARATOR = ":";
 
@@ -25,29 +22,36 @@ public class CashAddr {
 
     public static final String TEST_NET_PREFIX = "bchtest";
 
-    public static final String ASSUMED_DEFAULT_PREFIX = MAIN_NET_PREFIX;
-
-    private static final BigInteger[] POLYMOD_GENERATORS = new BigInteger[] { new BigInteger("98f2bc8e61", 16),
+    private static final BigInteger[] POLYMOD_GENERATORS = new BigInteger[]{new BigInteger("98f2bc8e61", 16),
             new BigInteger("79b76d99e2", 16), new BigInteger("f33e5fb3c4", 16), new BigInteger("ae2eabe2a8", 16),
-            new BigInteger("1e4f43e470", 16) };
+            new BigInteger("1e4f43e470", 16)};
 
     private static final BigInteger POLYMOD_AND_CONSTANT = new BigInteger("07ffffffff", 16);
 
-    public static String toCashAddress(BitcoinCashAddressType addressType, byte[] hash) {
-        String prefixString =  MAIN_NET_PREFIX;
-        byte[] prefixBytes = getPrefixBytes(prefixString);
-        byte[] payloadBytes = concatenateByteArrays(new byte[] { addressType.getVersionByte() }, hash);
+    String networkPrefix;
+
+    public CashAddr(boolean isTestNet) {
+        if (isTestNet) {
+            networkPrefix = TEST_NET_PREFIX;
+        } else {
+            networkPrefix = MAIN_NET_PREFIX;
+        }
+    }
+
+    public String toCashAddress(BitcoinCashAddressType addressType, byte[] hash) {
+        byte[] prefixBytes = getPrefixBytes(networkPrefix);
+        byte[] payloadBytes = concatenateByteArrays(new byte[]{addressType.getVersionByte()}, hash);
         payloadBytes = convertBits(payloadBytes, 8, 5, false);
         byte[] allChecksumInput = concatenateByteArrays(
-                concatenateByteArrays(concatenateByteArrays(prefixBytes, new byte[] { 0 }), payloadBytes),
-                new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 });
+                concatenateByteArrays(concatenateByteArrays(prefixBytes, new byte[]{0}), payloadBytes),
+                new byte[]{0, 0, 0, 0, 0, 0, 0, 0});
         byte[] checksumBytes = calculateChecksumBytesPolymod(allChecksumInput);
         checksumBytes = convertBits(checksumBytes, 8, 5, true);
         String cashAddress = BitcoinCashBase32.encode(concatenateByteArrays(payloadBytes, checksumBytes));
-        return prefixString + SEPARATOR + cashAddress;
+        return networkPrefix + SEPARATOR + cashAddress;
     }
 
-    public static BitcoinCashAddressDecodedParts decodeCashAddress(String bitcoinCashAddress) {
+    public BitcoinCashAddressDecodedParts decodeCashAddress(String bitcoinCashAddress) {
         if (!isValidCashAddress(bitcoinCashAddress)) {
             throw new RuntimeException("Address wasn't valid: " + bitcoinCashAddress);
         }
@@ -57,12 +61,12 @@ public class CashAddr {
         if (addressParts.length == 2) {
             decoded.setPrefix(addressParts[0]);
         } else {
-            decoded.setPrefix(MAIN_NET_PREFIX);
+            decoded.setPrefix(networkPrefix);
         }
 
         byte[] addressData = BitcoinCashBase32.decode(addressParts[addressParts.length - 1]);
         addressData = Arrays.copyOfRange(addressData, 0, addressData.length - 8);
-        addressData = BitcoinCashBitArrayConverter.convertBits(addressData, 5, 8, true);
+        addressData = convertBits(addressData, 5, 8, true);
         byte versionByte = addressData[0];
         byte[] hash = Arrays.copyOfRange(addressData, 1, addressData.length);
 
@@ -82,9 +86,16 @@ public class CashAddr {
         throw new RuntimeException("Unknown version byte: " + versionByte);
     }
 
+    private static Boolean checkAddressPrefix(String bitcoinCashAddress) {
+        for (BitcoinCashAddressType addressType : BitcoinCashAddressType.values()) {
+            if (bitcoinCashAddress.startsWith(addressType.getAddressPrefix())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-
-    public static boolean isValidCashAddress(String bitcoinCashAddress ) {
+    public boolean isValidCashAddress(String bitcoinCashAddress) {
         try {
             if (!isSingleCase(bitcoinCashAddress))
                 return false;
@@ -95,15 +106,20 @@ public class CashAddr {
             if (bitcoinCashAddress.contains(SEPARATOR)) {
                 String[] split = bitcoinCashAddress.split(SEPARATOR);
                 prefix = split[0];
-                if (!prefix.equals(MAIN_NET_PREFIX)) {return false;} //for now we use main net only
+                if (!prefix.equals(networkPrefix)) {
+                    return false;
+                }
                 bitcoinCashAddress = split[1];
             } else {
-                prefix = MAIN_NET_PREFIX;
+                prefix = networkPrefix;
             }
-            if (!bitcoinCashAddress.startsWith("q")) {return false;} //for now we use P2PKH addresses only
 
-            byte[] checksumData =  concatenateByteArrays(
-                    concatenateByteArrays(getPrefixBytes(prefix ), new byte[] { 0x00 }),
+            if (!checkAddressPrefix(bitcoinCashAddress)) {
+                return false;
+            }
+
+            byte[] checksumData = concatenateByteArrays(
+                    concatenateByteArrays(getPrefixBytes(prefix), new byte[]{0x00}),
                     BitcoinCashBase32.decode(bitcoinCashAddress));
 
             byte[] calculateChecksumBytesPolymod = calculateChecksumBytesPolymod(checksumData);
@@ -114,22 +130,17 @@ public class CashAddr {
     }
 
 
-
     private static boolean isSingleCase(String bitcoinCashAddress) {
         if (bitcoinCashAddress.equals(bitcoinCashAddress.toLowerCase())) {
             return true;
         }
-        if (bitcoinCashAddress.equals(bitcoinCashAddress.toUpperCase())) {
-            return true;
-        }
-
-        return false;
+        return bitcoinCashAddress.equals(bitcoinCashAddress.toUpperCase());
     }
 
     /**
      * @param checksumInput
      * @return Returns a 40 bits checksum in form of 5 8-bit arrays. This still has
-     *         to me mapped to 5-bit array representation
+     * to me mapped to 5-bit array representation
      */
     private static byte[] calculateChecksumBytesPolymod(byte[] checksumInput) {
         BigInteger c = BigInteger.ONE;
@@ -165,7 +176,7 @@ public class CashAddr {
 
     }
 
-    private static byte[] getPrefixBytes(String prefixString ) {
+    private static byte[] getPrefixBytes(String prefixString) {
         byte[] prefixBytes = new byte[prefixString.length()];
 
         char[] charArray = prefixString.toCharArray();
@@ -218,8 +229,4 @@ public class CashAddr {
 
         return result;
     }
-
-
-
-
 }
