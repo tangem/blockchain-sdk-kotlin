@@ -24,8 +24,6 @@ internal class KoinosWalletManager(
     override val currentHost: String
         get() = networkService.baseUrl
 
-    private val contractIdHolder = KoinosContractIdHolder { networkService.getContractId() }
-
     override suspend fun updateInternal() {
         val accountInfo = networkService.getInfo(wallet.address, contractIdHolder)
             .successOr { return }
