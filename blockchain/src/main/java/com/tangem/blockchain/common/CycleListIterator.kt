@@ -1,15 +1,24 @@
 package com.tangem.blockchain.common
 
-class CycleListIterator<E>(val elements: List<E>) : Iterator<E> {
+@Suppress("IteratorNotThrowingNoSuchElementException")
+internal class CycleListIterator<E>(private val elements: List<E>) : Iterator<E> {
 
-    private var providerIterator = elements.iterator()
+    private var currentIndex = -1
 
-    override fun next() : E {
-        return if (providerIterator.hasNext()) {
-            providerIterator.next()
+    override fun next(): E {
+        currentIndex = getNextIndex()
+        return elements[currentIndex]
+    }
+
+    fun peekNext(): E {
+        return elements[getNextIndex()]
+    }
+
+    private fun getNextIndex(): Int {
+        return if (currentIndex < elements.lastIndex) {
+            currentIndex + 1
         } else {
-            providerIterator = elements.iterator()
-            providerIterator.next()
+            0
         }
     }
 

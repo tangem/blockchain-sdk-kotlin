@@ -1,41 +1,48 @@
+apply(from: "$rootDir/detekt-convention.gradle")
+
 buildscript {
     apply from: 'dependencies.gradle'
 
     repositories {
         google()
-        jcenter()
+        mavenCentral()
         maven { url 'https://maven.fabric.io/public' }
     }
     dependencies {
         classpath "com.android.tools.build:gradle:$versions.build_gradle"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
         classpath "com.github.dcendents:android-maven-gradle-plugin:2.1"
+        classpath 'com.squareup.wire:wire-gradle-plugin:4.9.9'
+        classpath "org.jetbrains.kotlin:kotlin-serialization:$versions.kotlin"
     }
 }
 
-configurations.all {
+configurations.configureEach {
     resolutionStrategy.cacheDynamicVersionsFor 1, 'seconds'
 }
 
 allprojects {
-    def nexusUser = "viewer"
-    def nexusPass = "smartcash124"
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file("local.properties").newDataInputStream())
     repositories {
         google()
-        jcenter()
+        mavenCentral()
+        mavenLocal()
         maven {
+            // setting any repository from tangem project allows maven search all packages in the project
+            url = uri("https://maven.pkg.github.com/tangem-developments/blst-android")
             credentials {
-                username = nexusUser
-                password = nexusPass
+                username = properties.getProperty("gpr.user", System.getenv('GITHUB_ACTOR'))
+                password = properties.getProperty("gpr.key", System.getenv('GITHUB_TOKEN'))
             }
-            url "https://nexus.tangem.com/repository/maven-releases/"
         }
         maven {
+            // setting any repository from tangem project allows maven search all packages in the project
+            url = uri("https://maven.pkg.github.com/tangem-developments/tangem-sdk-android")
             credentials {
-                username = nexusUser
-                password = nexusPass
+                username = properties.getProperty("gpr.user", System.getenv('GITHUB_ACTOR'))
+                password = properties.getProperty("gpr.key", System.getenv('GITHUB_TOKEN'))
             }
-            url "https://nexus.tangem.com/repository/maven-snapshots/"
         }
         maven { url 'https://jitpack.io' }
     }
