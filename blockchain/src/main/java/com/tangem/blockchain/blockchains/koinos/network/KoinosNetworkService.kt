@@ -24,7 +24,6 @@ internal class KoinosNetworkService(
 
     suspend fun getInfo(address: String, koinContractIdHolder: KoinosContractIdHolder): Result<KoinosAccountInfo> {
         val koinContractId = koinContractIdHolder.get()
-            .successOr { return it }
 
         val balance = multiNetworkProvider.performRequest { getKoinBalance(address, koinContractId) }
             .successOr { return it }
