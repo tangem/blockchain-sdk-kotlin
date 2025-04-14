@@ -10,7 +10,10 @@ class EthereumAddressTest {
 
     @Test
     fun makeAddressFromCorrectPublicKey() {
-        val walletPublicKey = "04BAEC8CD3BA50FDFE1E8CF2B04B58E17041245341CD1F1C6B3A496B48956DB4C896A6848BCF8FCFC33B88341507DD25E5F4609386C68086C74CF472B86E5C3820".hexToBytes()
+        val walletPublicKey = (
+            "04BAEC8CD3BA50FDFE1E8CF2B04B58E17041245341CD1F1C6B3A496B48956DB4C896A6848BCF8FCFC33B88341507DD25E5F4609" +
+                "386C68086C74CF472B86E5C3820"
+            ).hexToBytes()
         val expected = "0xc63763572D45171e4C25cA0818b44E5Dd7F5c15B"
 
         Truth.assertThat(addressService.makeAddress(walletPublicKey)).isEqualTo(expected)

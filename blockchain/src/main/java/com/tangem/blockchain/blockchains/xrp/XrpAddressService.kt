@@ -3,7 +3,7 @@ package com.tangem.blockchain.blockchains.xrp
 import com.ripple.encodings.addresses.Addresses
 import com.ripple.encodings.base58.B58
 import com.tangem.blockchain.common.address.AddressService
-import com.tangem.commands.common.card.EllipticCurve
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
@@ -30,6 +30,7 @@ class XrpAddressService : AddressService() {
         }
     }
 
+    @Suppress("MagicNumber")
     companion object {
         private val xrpBase58 = B58("rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz")
         private val xAddressMainnetPrefix = byteArrayOf(0x05, 0x44)
@@ -44,6 +45,7 @@ class XrpAddressService : AddressService() {
             }
         }
 
+        @Suppress("MagicNumber")
         fun decodeXAddress(address: String): XrpTaggedAddress? {
             try {
                 val addressBytes = xrpBase58.decodeChecked(address)
@@ -78,6 +80,6 @@ class XrpAddressService : AddressService() {
 }
 
 data class XrpTaggedAddress(
-        val address: String,
-        val destinationTag: Long?
+    val address: String,
+    val destinationTag: Long?,
 )

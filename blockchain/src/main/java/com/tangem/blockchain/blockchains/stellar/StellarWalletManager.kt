@@ -2,19 +2,24 @@ package com.tangem.blockchain.blockchains.stellar
 
 import android.util.Log
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.commands.SignResponse
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
+import java.math.BigDecimal
 
 class StellarWalletManager(
-        cardId: String,
-        wallet: Wallet,
-        private val transactionBuilder: StellarTransactionBuilder,
-        private val networkProvider: StellarNetworkProvider,
-        presetTokens: MutableSet<Token>
-) : WalletManager(cardId, wallet, presetTokens), TransactionSender, SignatureCountValidator {
+    wallet: Wallet,
+    private val transactionBuilder: StellarTransactionBuilder,
+    private val networkProvider: StellarNetworkProvider,
+) : WalletManager(wallet), SignatureCountValidator, ReserveAmountProvider {
+
+    override val currentHost: String
+        get() = networkProvider.baseUrl
 
     private val blockchain = wallet.blockchain
 
@@ -22,7 +27,7 @@ class StellarWalletManager(
     private var baseReserve = BASE_RESERVE
     private var sequence = 0L
 
-    override suspend fun update() {
+    override suspend fun updateInternal() {
         when (val result = networkProvider.getInfo(wallet.address)) {
             is Result.Failure -> updateError(result.error)
             is Result.Success -> updateWallet(result.data)
@@ -38,14 +43,14 @@ class StellarWalletManager(
         baseReserve = data.baseReserve
         transactionBuilder.minReserve = data.baseReserve * 2.toBigDecimal()
 
-        presetTokens.forEach { token ->
+        cardTokens.forEach { token ->
             val tokenBalance = data.tokenBalances
-                    .find { it.symbol == token.symbol && it.issuer == token.contractAddress }?.balance
-                    ?: 0.toBigDecimal()
+                .find { it.symbol == token.symbol && it.issuer == token.contractAddress }?.balance
+                ?: 0.toBigDecimal()
             wallet.addTokenValue(tokenBalance, token)
         }
         // only if no token(s) specified on manager creation or stored on card
-        if (presetTokens.isEmpty()) updateUnplannedTokens(data.tokenBalances)
+        if (cardTokens.isEmpty()) updateUnplannedTokens(data.tokenBalances)
 
         updateRecentTransactions(data.recentTransactions)
     }
@@ -57,40 +62,50 @@ class StellarWalletManager(
         }
     }
 
-    private fun updateError(error: Throwable?) {
-        Log.e(this::class.java.simpleName, error?.message ?: "")
-        if (error != null) throw error
+    private fun updateError(error: BlockchainError) {
+        Log.e(this::class.java.simpleName, error.customMessage)
+        if (error is BlockchainSdkError) throw error
     }
 
     override suspend fun send(
-            transactionData: TransactionData, signer: TransactionSigner
-    ): Result<SignResponse> {
-
-        val hashes = when (val buildResult =
-                transactionBuilder.buildToSign(transactionData, sequence)
-        ) {
-            is Result.Success -> listOf(buildResult.data)
-            is Result.Failure -> return buildResult
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
+        val hash = transactionBuilder.buildToSign(transactionData, sequence).successOr {
+            return Result.Failure(it.error)
         }
-        return when (val signerResponse = signer.sign(hashes.toTypedArray(), cardId)) {
-            is CompletionResult.Success -> {
-                val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
-                val sendResult = networkProvider.sendTransaction(transactionToSend)
 
-                if (sendResult is SimpleResult.Success) {
-                    transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
-                    wallet.addOutgoingTransaction(transactionData)
+        return when (val signerResponse = signer.sign(hash, wallet.publicKey)) {
+            is CompletionResult.Success -> {
+                val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
+                when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
+                    is SimpleResult.Failure -> Result.Failure(sendResult.error)
+                    SimpleResult.Success -> {
+                        val txHash = transactionBuilder.getTransactionHash().toHexString()
+                        transactionData.hash = txHash
+                        wallet.addOutgoingTransaction(transactionData)
+                        Result.Success(TransactionSendResult(txHash))
+                    }
                 }
-                sendResult.toResultWithData(signerResponse.data)
             }
-            is CompletionResult.Failure -> Result.failure(signerResponse.error)
+            is CompletionResult.Failure -> Result.fromTangemSdkError(signerResponse.error)
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
-        return Result.Success(listOf(
-                Amount(baseFee, blockchain)
-        ))
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
+        val feeStats = networkProvider.getFeeStats().successOr { return it }
+
+        val minChargedFee = feeStats.feeCharged.mode.toBigDecimal().movePointLeft(blockchain.decimals())
+        val normalChargedFee = feeStats.feeCharged.p80.toBigDecimal().movePointLeft(blockchain.decimals())
+        val priorityChargedFee = feeStats.feeCharged.p99.toBigDecimal().movePointLeft(blockchain.decimals())
+
+        return Result.Success(
+            TransactionFee.Choosable(
+                minimum = Fee.Common(Amount(minChargedFee, blockchain)),
+                normal = Fee.Common(Amount(normalChargedFee, blockchain)),
+                priority = Fee.Common(Amount(priorityChargedFee, blockchain)),
+            ),
+        )
     }
 
     override suspend fun validateSignatureCount(signedHashes: Int): SimpleResult {
@@ -101,6 +116,15 @@ class StellarWalletManager(
                 SimpleResult.Failure(BlockchainSdkError.SignatureCountNotMatched)
             }
             is Result.Failure -> SimpleResult.Failure(result.error)
+        }
+    }
+
+    override fun getReserveAmount(): BigDecimal = transactionBuilder.minReserve
+
+    override suspend fun isAccountFunded(destinationAddress: String): Boolean {
+        return when (val response = networkProvider.checkTargetAccount(destinationAddress, null)) {
+            is Result.Success -> response.data.accountCreated
+            is Result.Failure -> false
         }
     }
 

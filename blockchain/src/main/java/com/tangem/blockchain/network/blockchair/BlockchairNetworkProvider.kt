@@ -6,43 +6,68 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.isApiKeyNeeded
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.API_BLOCKCHAIR
+import com.tangem.blockchain.network.API_BLOCKCKAIR_TANGEM
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.common.extensions.hexToBytes
+import retrofit2.HttpException
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 
 open class BlockchairNetworkProvider(
-        blockchain: Blockchain,
-        private val apiKey: String? = null
+    blockchain: Blockchain,
+    private val apiKey: String? = null,
+    private val authorizationToken: String? = null,
 ) : BitcoinNetworkProvider {
 
+    override val baseUrl: String = createHost(blockchain)
+
     private val api: BlockchairApi by lazy {
-        val blockchainPath = when (blockchain) {
-            Blockchain.Bitcoin -> "bitcoin/"
-            Blockchain.BitcoinTestnet -> "bitcoin/testnet/"
-            Blockchain.BitcoinCash -> "bitcoin-cash/"
-            Blockchain.Litecoin -> "litecoin/"
-            else -> throw Exception("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
-        }
-        createRetrofitInstance(API_BLOCKCHAIR + blockchainPath).create(BlockchairApi::class.java)
+        createRetrofitInstance(baseUrl).create(BlockchairApi::class.java)
     }
+
+    private var currentApiKey: String? = null
+
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.ROOT)
     private val decimals = blockchain.decimals()
+    private val transactionHashesCountLimit = 1000
+
+    private fun createHost(blockchain: Blockchain): String {
+        val api = if (apiKey != null) API_BLOCKCHAIR else API_BLOCKCKAIR_TANGEM
+        return api + getPath(blockchain)
+    }
+
+    private suspend fun <T> makeRequestUsingKeyOnlyWhenNeeded(block: suspend () -> T): T {
+        return try {
+            retryIO { block() }
+        } catch (error: HttpException) {
+            if (error.isApiKeyNeeded(currentApiKey, apiKey)) {
+                currentApiKey = apiKey
+                retryIO { block() }
+            } else {
+                throw error
+            }
+        }
+    }
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         return try {
-            val blockchairAddress = retryIO {
+            val blockchairAddress = makeRequestUsingKeyOnlyWhenNeeded {
                 api.getAddressData(
-                        address = address,
-                        transactionDetails = true,
-                        limit = 50,
-                        key = apiKey
+                    address = address,
+                    transactionDetails = true,
+                    limit = transactionHashesCountLimit,
+                    key = apiKey,
+                    authorizationToken = authorizationToken,
                 )
             }
 
@@ -50,70 +75,115 @@ open class BlockchairNetworkProvider(
             val addressInfo = addressData.addressInfo!!
             val script = addressInfo.script!!.hexToBytes()
 
-            val unspentOutputs = addressData.unspentOutputs!!.map {
-                BitcoinUnspentOutput(
+            val unspentOutputs = addressData.unspentOutputs!!
+                .filter {
+                    // Unspents with blockId lower than or equal 1 is not currently available
+                    // This unspents related to transaction in Mempool and are pending. We should ignore this unspents
+                    val block = it.block ?: 0
+                    block > 1
+                }
+                .map {
+                    BitcoinUnspentOutput(
                         amount = it.amount!!.toBigDecimal().movePointLeft(decimals),
                         outputIndex = it.index!!.toLong(),
                         transactionHash = it.transactionHash!!.hexToBytes(),
-                        outputScript = script
-                )
-            }
+                        outputScript = script,
+                    )
+                }
 
             val transactions = addressData.transactions!!.map {
                 BasicTransactionData(
-                        balanceDif = it.balanceDif!!.toBigDecimal().movePointLeft(decimals),
-                        hash = it.hash!!,
-                        isConfirmed = it.block!! != -1,
-                        date = Calendar.getInstance().apply { time = dateFormat.parse(it.time!!)!! }
+                    balanceDif = it.balanceDif!!.toBigDecimal().movePointLeft(decimals),
+                    hash = it.hash!!,
+                    isConfirmed = it.block!! != -1,
+                    date = Calendar.getInstance().apply { time = dateFormat.parse(it.time!!)!! },
                 )
             }
 
-            Result.Success(BitcoinAddressInfo(
-                    balance = addressInfo.balance!!.toBigDecimal().movePointLeft(decimals),
-                    unspentOutputs = unspentOutputs,
-                    recentTransactions = transactions
-            ))
-        } catch (error: Exception) {
-            Result.Failure(error)
-        }
+            var balance = BigDecimal.ZERO
+            // confirmed balance calculation
+            transactions.map {
+                if (it.isConfirmed) {
+                    balance = balance.plus(it.balanceDif)
+                }
+            }
 
+            Result.Success(
+                BitcoinAddressInfo(
+                    balance = balance,
+                    unspentOutputs = unspentOutputs,
+                    recentTransactions = transactions,
+                ),
+            )
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
     }
 
+    @Suppress("MagicNumber")
     override suspend fun getFee(): Result<BitcoinFee> {
         return try {
-            val stats = retryIO { api.getBlockchainStats(apiKey) }
+            val stats = makeRequestUsingKeyOnlyWhenNeeded { api.getBlockchainStats(apiKey, authorizationToken) }
             val feePerKb = (stats.data!!.feePerByte!! * 1024).toBigDecimal().movePointLeft(decimals)
-            Result.Success(BitcoinFee(
-                    minimalPerKb = (feePerKb * BigDecimal.valueOf(0.8)).setScale(decimals, RoundingMode.DOWN),
+            Result.Success(
+                BitcoinFee(
+                    minimalPerKb = (feePerKb * BigDecimal.valueOf(0.8)).setScale(
+                        decimals,
+                        RoundingMode.DOWN,
+                    ),
                     normalPerKb = feePerKb.setScale(decimals, RoundingMode.DOWN),
-                    priorityPerKb = (feePerKb * BigDecimal.valueOf(1.2)).setScale(decimals, RoundingMode.DOWN)
-            ))
-        } catch (error: Exception) {
-            Result.Failure(error)
+                    priorityPerKb = (feePerKb * BigDecimal.valueOf(1.2)).setScale(
+                        decimals,
+                        RoundingMode.DOWN,
+                    ),
+                ),
+            )
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
     override suspend fun sendTransaction(transaction: String): SimpleResult {
         return try {
-            retryIO { api.sendTransaction(BlockchairBody(transaction), apiKey) }
-            SimpleResult.Success
-        } catch (error: Exception) {
-            SimpleResult.Failure(error)
+            val response = makeRequestUsingKeyOnlyWhenNeeded {
+                api.sendTransaction(BlockchairBody(transaction), apiKey, authorizationToken)
+            }
+
+            if (response.transactionData.hash.isNotBlank()) {
+                SimpleResult.Success
+            } else {
+                SimpleResult.Failure(BlockchainSdkError.FailedToSendException)
+            }
+        } catch (exception: Exception) {
+            SimpleResult.Failure(exception.toBlockchainSdkError())
         }
     }
 
     override suspend fun getSignatureCount(address: String): Result<Int> {
         return try {
-            val blockchairAddress = retryIO {
+            val blockchairAddress = makeRequestUsingKeyOnlyWhenNeeded {
                 api.getAddressData(
-                        address = address,
-                        key = apiKey
+                    address = address,
+                    key = apiKey,
+                    authorizationToken = authorizationToken,
                 )
             }
             val addressInfo = blockchairAddress.data!!.getValue(address).addressInfo!!
             Result.Success(addressInfo.outputCount!! - addressInfo.unspentOutputCount!!)
-        } catch (error: Exception) {
-            Result.Failure(error)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    private fun getPath(blockchain: Blockchain): String {
+        return when (blockchain) {
+            Blockchain.Bitcoin -> "bitcoin/"
+            Blockchain.BitcoinTestnet -> "bitcoin/testnet/"
+            Blockchain.BitcoinCash -> "bitcoin-cash/"
+            Blockchain.Litecoin -> "litecoin/"
+            Blockchain.Dogecoin -> "dogecoin/"
+            Blockchain.Dash -> "dash/"
+            else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
         }
     }
 }
