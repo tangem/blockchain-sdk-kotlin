@@ -122,15 +122,14 @@ internal class PepecoinNetworkService(
                 }
                 val otherAddress = vout
                     .firstOrNull { output ->
-                        val outputAddress = output.scriptPublicKey?.address ?: return@firstOrNull false
+                        val outputAddress = output.scriptPublicKey?.addresses?.firstOrNull() ?: return@firstOrNull false
                         outputAddress != walletAddress
                     }
                     ?.scriptPublicKey
-                    ?.address ?: "unknown"
-
+                    ?.addresses?.firstOrNull() ?: "unknown"
                 val balanceDiff = if (isIncoming) {
                     val outputs = vout.filter { output ->
-                        val outputAddress = output.scriptPublicKey?.address ?: return@filter false
+                        val outputAddress = output.scriptPublicKey?.addresses?.firstOrNull() ?: return@filter false
                         outputAddress == walletAddress
                     }
                     outputs
@@ -139,7 +138,7 @@ internal class PepecoinNetworkService(
                 } else {
                     val fee = transaction.fee?.toBigDecimal() ?: BigDecimal.ZERO
                     val outputs = vout.filter { output ->
-                        val outputAddress = output.scriptPublicKey?.address ?: return@filter false
+                        val outputAddress = output.scriptPublicKey?.addresses?.firstOrNull() ?: return@filter false
                         outputAddress != walletAddress
                     }
                     outputs
