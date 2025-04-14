@@ -12,13 +12,11 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
-import com.tangem.blockchain.nft.NFTProvider
 
 internal class TonWalletManager(
     wallet: Wallet,
-    nftProvider: NFTProvider,
     networkProviders: List<TonNetworkProvider>,
-) : WalletManager(wallet = wallet, nftProvider = nftProvider), InitializableAccount {
+) : WalletManager(wallet = wallet), InitializableAccount {
 
     private var sequenceNumber: Int = 0
     private val txBuilder = TonTransactionBuilder(wallet.publicKey, wallet.address)
