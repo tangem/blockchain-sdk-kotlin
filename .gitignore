@@ -13,7 +13,6 @@ local.properties
 .idea/caches/
 .idea/libraries/
 .idea/*.xml
-.idea/codeStyles
 
 # LayoutInspector files
 /captures

@@ -2,31 +2,46 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 import android.util.Log
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.commands.SignResponse
+import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 
-open class BitcoinWalletManager(
-        cardId: String,
-        wallet: Wallet,
-        protected val transactionBuilder: BitcoinTransactionBuilder,
-        private val networkProvider: BitcoinNetworkProvider
-) : WalletManager(cardId, wallet), TransactionSender, SignatureCountValidator {
+internal open class BitcoinWalletManager(
+    wallet: Wallet,
+    transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
+    protected val transactionBuilder: BitcoinTransactionBuilder,
+    private val networkProvider: BitcoinNetworkProvider,
+    private val feesCalculator: BitcoinFeesCalculator,
+) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider),
+    SignatureCountValidator,
+    UtxoBlockchainManager {
 
     protected val blockchain = wallet.blockchain
 
-    override suspend fun update() {
+    override val dustValue: BigDecimal = feesCalculator.minimalFeePerKb
+
+    override val allowConsolidation: Boolean = true
+
+    override val currentHost: String
+        get() = networkProvider.baseUrl
+
+    override suspend fun updateInternal() {
         coroutineScope {
             val addressInfos = mutableListOf<BitcoinAddressInfo>()
             val responsesDeferred =
-                    wallet.addresses.map { async { networkProvider.getInfo(it.value) } }
+                wallet.addresses.map { async { networkProvider.getInfo(it.value) } }
 
             responsesDeferred.forEach {
                 when (val response = it.await()) {
@@ -66,90 +81,101 @@ open class BitcoinWalletManager(
         }
         val finalTransactions = transactionsByHash.map {
             BasicTransactionData(
-                    balanceDif = it.value.sumOf { transaction -> transaction.balanceDif },
-                    hash = it.value[0].hash,
-                    date = it.value[0].date,
-                    isConfirmed = it.value[0].isConfirmed
+                balanceDif = it.value.sumOf { transaction -> transaction.balanceDif },
+                hash = it.value[0].hash,
+                date = it.value[0].date,
+                isConfirmed = it.value[0].isConfirmed,
+                destination = it.value[0].destination,
+                source = it.value[0].source,
             )
         }
         return BitcoinAddressInfo(balance, unspentOutputs, finalTransactions, hasUnconfirmed)
     }
 
-    private fun updateWallet(response: BitcoinAddressInfo) {
+    internal fun updateWallet(response: BitcoinAddressInfo) {
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
-        wallet.amounts[AmountType.Coin]?.value = response.balance
+
+        wallet.changeAmountValue(AmountType.Coin, response.balance)
         transactionBuilder.unspentOutputs = response.unspentOutputs
+        outputsCount = response.unspentOutputs.size
+
         if (response.recentTransactions.isNotEmpty()) {
             updateRecentTransactionsBasic(response.recentTransactions)
         } else {
             when (response.hasUnconfirmed) {
                 true -> wallet.addTransactionDummy()
-                false -> wallet.recentTransactions.clear()
+                else -> wallet.recentTransactions.clear()
             }
         }
     }
 
-    private fun updateError(error: Throwable?) {
-        Log.e(this::class.java.simpleName, error?.message ?: "")
-        if (error != null) throw error
+    internal fun updateError(error: BlockchainError) {
+        Log.e(this::class.java.simpleName, error.customMessage)
+        (error as? BlockchainSdkError)?.let { throw it }
     }
 
     override suspend fun send(
-            transactionData: TransactionData, signer: TransactionSigner
-    ): Result<SignResponse> {
-        when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
-            is Result.Failure -> return Result.Failure(buildTransactionResult.error)
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
+        when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData, dustValue)) {
+            is Result.Failure -> return buildTransactionResult
             is Result.Success -> {
-                when (val signerResult = signer.sign(buildTransactionResult.data.toTypedArray(), cardId)) {
+                return when (val signerResult = signer.sign(buildTransactionResult.data, wallet.publicKey)) {
                     is CompletionResult.Success -> {
-                        val transactionToSend = transactionBuilder.buildToSend(signerResult.data.signature)
+                        val transactionToSend = transactionBuilder.buildToSend(
+                            signerResult.data.reduce { acc, bytes -> acc + bytes },
+                        )
                         val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())
 
-                        if (sendResult is SimpleResult.Success) {
-                            transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
-                            wallet.addOutgoingTransaction(transactionData)
+                        return when (sendResult) {
+                            is SimpleResult.Success -> {
+                                transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
+                                wallet.addOutgoingTransaction(transactionData)
+                                Result.Success(TransactionSendResult(transactionData.hash ?: ""))
+                            }
+                            is SimpleResult.Failure -> return Result.Failure(sendResult.error)
                         }
-                        return sendResult.toResultWithData(signerResult.data)
                     }
-                    is CompletionResult.Failure -> return Result.failure(signerResult.error)
+                    is CompletionResult.Failure -> Result.fromTangemSdkError(signerResult.error)
                 }
             }
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         try {
-            when (val feeResult = networkProvider.getFee()) {
+            when (val feeResult = getBitcoinFeePerKb()) {
                 is Result.Failure -> return feeResult
                 is Result.Success -> {
                     val feeValue = BigDecimal.ONE.movePointLeft(blockchain.decimals())
-                    amount.value = amount.value!! - feeValue
-                    val sizeResult = transactionBuilder.getEstimateSize(
-                            TransactionData(amount, Amount(amount, feeValue), wallet.address, destination)
-                    )
-                    when (sizeResult) {
-                        is Result.Failure -> return sizeResult
-                        is Result.Success -> {
-                            val transactionSize = sizeResult.data.toBigDecimal()
-                            val minFee = feeResult.data.minimalPerKb.calculateFee(transactionSize)
-                            val normalFee = feeResult.data.normalPerKb.calculateFee(transactionSize)
-                            val priorityFee = feeResult.data.priorityPerKb.calculateFee(transactionSize)
-                            val fees = listOf(Amount(minFee, blockchain),
-                                    Amount(normalFee, blockchain),
-                                    Amount(priorityFee, blockchain)
-                            )
 
-                            val minimalFee = transactionSize.movePointLeft(blockchain.decimals())
-                            for (fee in fees) {
-                                if (fee.value!! < minimalFee) fee.value = minimalFee
-                            }
-                            return Result.Success(fees)
+                    val newAmount = amount.copy(value = amount.value!! - feeValue)
+
+                    val sizeResult = transactionBuilder.getEstimateSize(
+                        transactionData = TransactionData.Uncompiled(
+                            amount = newAmount,
+                            fee = Fee.Common(Amount(newAmount, feeValue)),
+                            sourceAddress = wallet.address,
+                            destinationAddress = destination,
+                        ),
+                        dustValue = dustValue,
+                    )
+
+                    return when (sizeResult) {
+                        is Result.Failure -> sizeResult
+                        is Result.Success -> {
+                            val fees = feesCalculator.calculateFees(
+                                sizeResult.data.toBigDecimal(),
+                                feeResult.data,
+                            )
+                            Result.Success(fees)
                         }
                     }
                 }
             }
         } catch (exception: Exception) {
-            return Result.Failure(exception)
+            return Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -164,9 +190,10 @@ open class BitcoinWalletManager(
         }
     }
 
-    private fun BigDecimal.calculateFee(transactionSize: BigDecimal): BigDecimal {
-        val bytesInKb = BigDecimal(1024)
-        return this.divide(bytesInKb).multiply(transactionSize)
-                .setScale(8, BigDecimal.ROUND_DOWN)
+    protected open suspend fun getBitcoinFeePerKb(): Result<BitcoinFee> = networkProvider.getFee()
+
+    companion object {
+        // Synced value with iOS
+        const val DEFAULT_MINIMAL_FEE_PER_KB = 0.00001
     }
 }
