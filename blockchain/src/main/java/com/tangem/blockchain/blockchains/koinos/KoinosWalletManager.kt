@@ -16,14 +16,13 @@ internal class KoinosWalletManager(
     transactionHistoryProvider: TransactionHistoryProvider,
     private val networkService: KoinosNetworkService,
     private val transactionBuilder: KoinosTransactionBuilder,
+    private val contractIdHolder: KoinosContractIdHolder,
 ) : WalletManager(wallet = wallet, transactionHistoryProvider = transactionHistoryProvider),
     FeeResourceAmountProvider,
     TransactionValidator {
 
     override val currentHost: String
         get() = networkService.baseUrl
-
-    private val contractIdHolder = KoinosContractIdHolder { networkService.getContractId() }
 
     override suspend fun updateInternal() {
         val accountInfo = networkService.getInfo(wallet.address, contractIdHolder)
