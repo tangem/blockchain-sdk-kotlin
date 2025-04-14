@@ -14,34 +14,38 @@ import org.bitcoinj.core.ECKey
 import java.math.BigInteger
 import com.ripple.core.coretypes.Amount as XrpAmount
 
+@Suppress("MagicNumber")
 class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, publicKey: ByteArray) {
     var sequence: Long? = null
-    var minReserve = 20.toBigDecimal()
+    // https://xrpl.org/blog/2021/reserves-lowered.html
+    var minReserve = 1.toBigDecimal()
     val blockchain = Blockchain.XRP
 
     private val canonicalPublicKey = XrpAddressService.canonizePublicKey(publicKey)
     private var transaction: XrpSignedTransaction? = null
 
     suspend fun buildToSign(transactionData: TransactionData): Result<ByteArray> {
-        val decodedXAddress =
-                XrpAddressService.decodeXAddress(transactionData.destinationAddress)
+        transactionData.requireUncompiled()
+
+        val decodedXAddress = XrpAddressService.decodeXAddress(transactionData.destinationAddress)
         val destinationAddress = decodedXAddress?.address ?: transactionData.destinationAddress
         val xAddressDestinationTag = decodedXAddress?.destinationTag
 
         val destinationTag = if (transactionData.extras is XrpTransactionExtras) {
             val extrasTag = transactionData.extras.destinationTag
             if (xAddressDestinationTag != null && xAddressDestinationTag != extrasTag) {
-                return Result.Failure(Exception("Two distinct destination tags found"))
+                return Result.Failure(BlockchainSdkError.CustomError("Two distinct destination tags found"))
             }
             extrasTag
         } else {
             xAddressDestinationTag
         }
 
-        if (!networkProvider.checkIsAccountCreated(destinationAddress)
-                && transactionData.amount.value!! < minReserve) {
+        if (!networkProvider.checkIsAccountCreated(destinationAddress) &&
+            transactionData.amount.value!! < minReserve
+        ) {
             return Result.Failure(
-                    CreateAccountUnderfunded(Amount(minReserve, blockchain))
+                BlockchainSdkError.CreateAccountUnderfunded(blockchain, Amount(minReserve, blockchain)),
             )
         }
 
@@ -50,7 +54,7 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
         payment.putTranslated(AccountID.Destination, destinationAddress)
         payment.putTranslated(XrpAmount.Amount, transactionData.amount.bigIntegerValue().toString())
         payment.putTranslated(UInt32.Sequence, sequence)
-        payment.putTranslated(XrpAmount.Fee, transactionData.fee!!.bigIntegerValue().toString())
+        payment.putTranslated(XrpAmount.Fee, transactionData.fee!!.amount.bigIntegerValue().toString())
         if (destinationTag != null) {
             payment.putTranslated(UInt32.DestinationTag, destinationTag)
         }
