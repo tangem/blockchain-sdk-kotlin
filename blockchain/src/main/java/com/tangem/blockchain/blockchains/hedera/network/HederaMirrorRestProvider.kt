@@ -71,6 +71,15 @@ internal class HederaMirrorRestProvider(override val baseUrl: String, key: Strin
         }
     }
 
+    override suspend fun getTokenDetails(tokenId: String): Result<HederaTokenDetailsResponse> {
+        return try {
+            val response = retryIO { api.getTokenDetails(tokenId) }
+            return Result.Success(response)
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
     companion object {
         private const val CENTS_IN_A_DOLLAR = 100
     }
