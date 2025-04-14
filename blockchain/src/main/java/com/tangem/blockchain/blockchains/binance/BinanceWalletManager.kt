@@ -4,24 +4,24 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.binance.network.BinanceInfoResponse
 import com.tangem.blockchain.blockchains.binance.network.BinanceNetworkProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.common.transaction.TransactionFee
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.commands.SignResponse
 import com.tangem.common.CompletionResult
-import java.math.BigDecimal
 
 class BinanceWalletManager(
-        cardId: String,
-        wallet: Wallet,
-        private val transactionBuilder: BinanceTransactionBuilder,
-        private val networkProvider: BinanceNetworkProvider,
-        presetTokens: MutableSet<Token>
-) : WalletManager(cardId, wallet, presetTokens), TransactionSender {
+    wallet: Wallet,
+    private val transactionBuilder: BinanceTransactionBuilder,
+    private val networkProvider: BinanceNetworkProvider,
+) : WalletManager(wallet) {
 
     private val blockchain = wallet.blockchain
 
-    override suspend fun update() {
-        val result = networkProvider.getInfo(wallet.address)
-        when (result) {
+    override val currentHost: String get() = networkProvider.baseUrl
+
+    override suspend fun updateInternal() {
+        when (val result = networkProvider.getInfo(wallet.address)) {
             is Result.Success -> updateWallet(result.data)
             is Result.Failure -> updateError(result.error)
         }
@@ -32,60 +32,49 @@ class BinanceWalletManager(
         Log.d(this::class.java.simpleName, "Balance is $coinBalance")
         wallet.setCoinValue(coinBalance)
 
-        presetTokens.forEach {
+        cardTokens.forEach {
             val tokenBalance = response.balances[it.contractAddress] ?: 0.toBigDecimal()
             wallet.addTokenValue(tokenBalance, it)
-        }
-        if (presetTokens.isEmpty()) { // only if no token(s) specified on manager creation or stored on card
-            val tokenBalances = response.balances.filterKeys { it != blockchain.currency}
-            updateUnplannedTokens(tokenBalances)
         }
 
         transactionBuilder.accountNumber = response.accountNumber
         transactionBuilder.sequence = response.sequence
     }
 
-    private fun updateUnplannedTokens(balances: Map<String, BigDecimal>) {
-        balances.forEach {
-            val token = Token(
-                    symbol = it.key.split("-")[0],
-                    contractAddress = it.key,
-                    decimals = blockchain.decimals()
-            )
-            wallet.addTokenValue(it.value, token)
-        }
-    }
-
-    private fun updateError(error: Throwable?) {
-        Log.e(this::class.java.simpleName, error?.message ?: "")
-        if (error != null) throw error
+    private fun updateError(error: BlockchainError) {
+        Log.e(this::class.java.simpleName, error.customMessage)
+        if (error is BlockchainSdkError) throw error
     }
 
     override suspend fun send(
-            transactionData: TransactionData, signer: TransactionSigner
-    ): Result<SignResponse> {
-        val buildTransactionResult = transactionBuilder.buildToSign(transactionData)
-        return when (buildTransactionResult) {
-            is Result.Failure -> Result.Failure(buildTransactionResult.error)
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
+        return when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
+            is Result.Failure -> buildTransactionResult
             is Result.Success -> {
-                when (val signerResponse = signer.sign(arrayOf(buildTransactionResult.data), cardId)) {
+                when (val signerResponse = signer.sign(buildTransactionResult.data, wallet.publicKey)) {
                     is CompletionResult.Success -> {
-                        val transactionToSend = transactionBuilder.buildToSend(signerResponse.data.signature)
-                        networkProvider.sendTransaction(transactionToSend)
-                                .toResultWithData(signerResponse.data)
+                        val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
+                        when (val result = networkProvider.sendTransaction(transactionToSend)) {
+                            is Result.Success -> {
+                                transactionData.hash = result.data
+                                wallet.addOutgoingTransaction(transactionData)
+                                Result.Success(TransactionSendResult(result.data))
+                            }
+                            is Result.Failure -> return result
+                        }
                     }
-                    is CompletionResult.Failure -> Result.failure(signerResponse.error)
+                    is CompletionResult.Failure -> Result.fromTangemSdkError(signerResponse.error)
                 }
             }
         }
     }
 
-    override suspend fun getFee(amount: Amount, destination: String): Result<List<Amount>> {
-        when (val result = networkProvider.getFee()) {
-            is Result.Success -> return Result.Success(listOf(Amount(result.data, blockchain)))
-            is Result.Failure -> return result
+    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
+        return when (val result = networkProvider.getFee()) {
+            is Result.Success -> Result.Success(TransactionFee.Single(Fee.Common(Amount(result.data, blockchain))))
+            is Result.Failure -> result
         }
     }
-
-
 }

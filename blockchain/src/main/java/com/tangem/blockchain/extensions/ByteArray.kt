@@ -1,22 +1,28 @@
 package com.tangem.blockchain.extensions
 
 import android.util.Base64
+import com.google.common.primitives.Ints
 import com.tangem.blockchain.blockchains.cardano.crypto.Blake2b
+import com.tangem.blockchain.blockchains.tron.libs.Base58Check
+import com.tangem.common.extensions.hexToBytes
 import org.bitcoinj.core.Base58
 import org.bitcoinj.core.ECKey
-import org.bitcoinj.core.Utils
 import org.spongycastle.crypto.util.DigestFactory
-import java.lang.Exception
 import java.math.BigInteger
 
-fun ByteArray.encodeBase58(): String {
-    return Base58.encode(this)
+fun ByteArray.encodeBase58(checked: Boolean = false): String {
+    return if (checked) Base58Check.bytesToBase58(this) else Base58.encode(this)
 }
 
 fun ByteArray.encodeBase64NoWrap(): String {
     return Base64.encodeToString(this, Base64.NO_WRAP)
 }
 
+fun ByteArray.encodeBase64(): String {
+    return Base64.encodeToString(this, Base64.DEFAULT)
+}
+
+@Suppress("MagicNumber")
 fun ByteArray.calculateSha3v256(): ByteArray {
     val sha3Digest = DigestFactory.createSHA3_256()
     sha3Digest.update(this, 0, this.size)
@@ -30,9 +36,28 @@ fun ByteArray.calculateBlake2b(digestByteSize: Int): ByteArray {
     return digest.digest(this)
 }
 
+@Suppress("MagicNumber")
 fun ByteArray.toCanonicalECDSASignature(): ECKey.ECDSASignature {
-    if (this.size != 64) throw Exception("Invalid signature length")
+    if (this.size != 64) error("Invalid signature length")
     val r = BigInteger(1, this.copyOfRange(0, 32))
     val s = BigInteger(1, this.copyOfRange(32, 64))
     return ECKey.ECDSASignature(r, s).toCanonicalised()
+}
+
+fun ByteArray.padLeft(length: Int): ByteArray {
+    val paddingSize = Ints.max(length - this.size, 0)
+    return ByteArray(paddingSize) + this
+}
+
+/** Convert hex string to byte array or null if exception is thrown */
+fun String.hexToBytesOrNull(): ByteArray? = runCatching(String::hexToBytes).getOrNull()
+
+/** Removes all zeros from start */
+fun ByteArray.removeLeadingZeros(): ByteArray {
+    val firstNonZero = indexOfFirst { it != 0.toByte() }
+    if (firstNonZero == -1) {
+        return byteArrayOf()
+    }
+
+    return copyOfRange(firstNonZero, size)
 }
