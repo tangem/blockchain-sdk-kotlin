@@ -24,6 +24,8 @@ internal class KoinosWalletManager(
     override val currentHost: String
         get() = networkService.baseUrl
 
+    private val contractIdHolder = KoinosContractIdHolder { networkService.getContractId() }
+
     override suspend fun updateInternal() {
         val accountInfo = networkService.getInfo(wallet.address, contractIdHolder)
             .successOr { return }
@@ -74,7 +76,7 @@ internal class KoinosWalletManager(
         return super.validateTransaction(amount, fee).apply { addAll(errors) }
     }
 
-    override fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
+    override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
         transactionData.requireUncompiled()
 
         val fee = transactionData.fee?.amount?.value

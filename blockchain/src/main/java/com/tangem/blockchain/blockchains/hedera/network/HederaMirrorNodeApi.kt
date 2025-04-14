@@ -21,7 +21,10 @@ internal interface HederaMirrorNodeApi {
     @GET("transactions/{transactionId}")
     suspend fun getTransactionInfo(@Path("transactionId") transactionId: String): HederaTransactionsResponse
 
+    @GET("tokens/{tokenId}")
+    suspend fun getTokenDetails(@Path("tokenId") tokenId: String): HederaTokenDetailsResponse
+
     private companion object {
-        const val BALANCES_LIMIT = 200 // Arkhia does'nt support limit greater than 200
+        const val BALANCES_LIMIT = 200 // Arkhia doesn't support limit greater than 200
     }
 }
