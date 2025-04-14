@@ -7,7 +7,7 @@ afterEvaluate {
             bar(MavenPublication) {
                 groupId = "$project.artifactGroupId"
                 artifactId = "$project.artifactId"
-                version = "$project.artifactVersion".replace("/", "-")
+                version = "$project.artifactVersion"
 
                 from components.release
                 // artifact(sourceJar)
@@ -31,7 +31,7 @@ afterEvaluate {
         repositories {
             maven {
                 name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/tangem-developments/blockchain-sdk-kotlin")
+                url = uri("https://maven.pkg.github.com/tangem/blockchain-sdk-kotlin")
                 credentials {
                     username = "$githubUser"
                     password = "$githubPass"
