@@ -1,32 +1,25 @@
 package com.tangem.blockchain.extensions
 
-import com.tangem.Message
-import com.tangem.TangemError
-import com.tangem.TangemSdk
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.commands.SignResponse
+import com.tangem.blockchain.common.BlockchainError
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.common.CompletionResult
+import com.tangem.common.core.TangemError
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.suspendCancellableCoroutine
-import retrofit2.HttpException
 import java.io.IOException
-import kotlin.coroutines.resume
 
-
-suspend fun <T> retryIO(
-        times: Int = 3,
-        initialDelay: Long = 100,
-        maxDelay: Long = 1000,
-        factor: Double = 2.0,
-        block: suspend () -> T
+internal suspend fun <T> retryIO(
+    times: Int = 3,
+    initialDelay: Long = 100,
+    maxDelay: Long = 1000,
+    factor: Double = 2.0,
+    block: suspend () -> T,
 ): T {
     var currentDelay = initialDelay
     repeat(times - 1) {
         try {
             return block()
         } catch (e: IOException) {
-
-
+            // Do nothing
         }
         delay(currentDelay)
         currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
@@ -34,72 +27,73 @@ suspend fun <T> retryIO(
     return block() // last attempt
 }
 
-
-//suspend fun <T: Any> handleRequest(requestFunc: suspend () -> T): Result<T> {
-//    return try {
-//        Result.success(requestFunc.invoke())
-//    } catch (he: HttpException) {
-//        Result.failure(he)
-////        HttpException
-////        SocketTimeoutException
-////        IOException
-//    }
-//}
-
-
 sealed class Result<out T> {
     data class Success<out T>(val data: T) : Result<T>()
-    data class Failure(val error: Throwable?) : Result<Nothing>()
+    data class Failure(val error: BlockchainError) : Result<Nothing>()
 
     companion object {
-        fun failure(sdkError: TangemError): Failure =
-                Failure(Exception("TangemError: code: ${sdkError.code}, message: ${sdkError.customMessage}"))
+        fun fromTangemSdkError(sdkError: TangemError): Failure =
+            Failure(BlockchainSdkError.WrappedTangemError(sdkError))
+    }
+}
+
+internal inline fun <T> Result<T>.successOr(failureClause: (Result.Failure) -> T): T {
+    return when (this) {
+        is Result.Success -> this.data
+        is Result.Failure -> failureClause(this)
+    }
+}
+
+internal inline fun <A, B> Result<A>.map(block: (A) -> B): Result<B> {
+    return when (this) {
+        is Result.Success -> Result.Success(block(this.data))
+        is Result.Failure -> this
+    }
+}
+
+internal inline fun <A, B> Result<A>.fold(
+    success: (A) -> Result<B>,
+    failure: (BlockchainError) -> Result<B>,
+): Result<B> {
+    return when (this) {
+        is Result.Success -> success(this.data)
+        is Result.Failure -> failure(this.error)
+    }
+}
+
+internal fun Result.Failure.toSimpleFailure(): SimpleResult.Failure {
+    return SimpleResult.Failure(error)
+}
+
+internal fun <T> Result<T>.toSimpleResult(): SimpleResult {
+    return when (this) {
+        is Result.Success -> SimpleResult.Success
+        is Result.Failure -> SimpleResult.Failure(this.error)
     }
 }
 
 sealed class SimpleResult {
     object Success : SimpleResult()
-    data class Failure(val error: Throwable?) : SimpleResult()
-
-    fun <T> toResultWithData(data: T): Result<T> {
-        return when (this) {
-            is Success -> Result.Success(data)
-            is Failure -> Result.Failure(this.error)
-        }
-    }
+    data class Failure(val error: BlockchainError) : SimpleResult()
 
     companion object {
-        fun failure(sdkError: TangemError): Failure =
-                Failure(Exception("TangemError: code: ${sdkError.code}, message: ${sdkError.customMessage}"))
+        fun fromTangemSdkError(sdkError: TangemError): Failure {
+            return (sdkError as? BlockchainSdkError)?.let { Failure(it) }
+                ?: Failure(BlockchainSdkError.WrappedTangemError(sdkError))
+        }
     }
 }
 
-class Signer(
-        private val tangemSdk: TangemSdk, private val initialMessage: Message? = null
-) : TransactionSigner {
-    override suspend fun sign(hashes: Array<ByteArray>, cardId: String): CompletionResult<SignResponse> =
-            suspendCancellableCoroutine { continuation ->
-                tangemSdk.sign(
-                        hashes = hashes,
-                        cardId = cardId,
-                        initialMessage = initialMessage
-                ) { result ->
-                    if (continuation.isActive) continuation.resume(result)
-                }
-            }
-}
-
-fun Result<*>.isNetworkError(): Boolean {
+internal inline fun SimpleResult.successOr(failureClause: (SimpleResult.Failure) -> Nothing): SimpleResult.Success {
     return when (this) {
-        is Result.Success -> false
-        is Result.Failure -> this.error is IOException || this.error is HttpException
+        is SimpleResult.Success -> this
+        is SimpleResult.Failure -> failureClause(this)
     }
 }
 
-fun SimpleResult.isNetworkError(): Boolean {
+internal inline fun <T> CompletionResult<T>.successOr(failureClause: (CompletionResult.Failure<T>) -> Nothing): T {
     return when (this) {
-        is SimpleResult.Success -> false
-        is SimpleResult.Failure -> this.error is IOException || this.error is HttpException
+        is CompletionResult.Success -> this.data
+        is CompletionResult.Failure -> failureClause(this)
     }
 }
-
