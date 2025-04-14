@@ -32,6 +32,7 @@ import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProviderFactory
 import com.tangem.blockchain.externallinkprovider.TxExploreState
+import com.tangem.blockchain.nft.models.NFTAsset
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 
@@ -487,6 +488,10 @@ enum class Blockchain(
 
     fun getExploreTxUrl(transactionHash: String): TxExploreState {
         return externalLinkProvider.getExplorerTxUrl(transactionHash)
+    }
+
+    fun getNFTExploreUrl(assetIdentifier: NFTAsset.Identifier): String? {
+        return externalLinkProvider.getNFTExplorerUrl(assetIdentifier)
     }
 
     fun getTestnetTopUpUrl(): String? {
