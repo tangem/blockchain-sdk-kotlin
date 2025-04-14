@@ -853,8 +853,6 @@ enum class Blockchain(
         Optimism, // supported testnet - Sepolia (11155420)
         Base, BaseTestnet,
         Blast, BlastTestnet,
-        // TON
-        TON,
         -> true
 
         else -> false
