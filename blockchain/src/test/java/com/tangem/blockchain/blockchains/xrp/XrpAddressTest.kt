@@ -10,17 +10,19 @@ class XrpAddressTest {
 
     @Test
     fun makeAddressFromCorrectSecpPublicKey() {
-        val walletPublicKey = "04D2B9FB288540D54E5B32ECAF0381CD571F97F6F1ECD036B66BB11AA52FFE9981110D883080E2E255C6B1640586F7765E6FAA325D1340F49B56B83D9DE56BC7ED".hexToBytes()
+        val walletPublicKey = (
+            "04D2B9FB288540D54E5B32ECAF0381CD571F97F6F1ECD036B66BB11AA52FFE9981110D883080E2E255C6B1640586F7765E6FAA3" +
+                "25D1340F49B56B83D9DE56BC7ED"
+            ).hexToBytes()
         val expected = "rNxCXgKaCMAmowENKnYa5r8Ue78rjgrM6B"
 
         Truth.assertThat(addressService.makeAddress(walletPublicKey))
-                .isEqualTo(expected)
+            .isEqualTo(expected)
     }
 
     @Test
     fun makeAddressFromCorrectEdPublicKey() {
-        val walletPublicKey = "12CC4DE73BACF875D7423D152E46C1A665F1718CBE7CA0FEB2BA28C149E11909"
-                .hexToBytes()
+        val walletPublicKey = "12CC4DE73BACF875D7423D152E46C1A665F1718CBE7CA0FEB2BA28C149E11909".hexToBytes()
         val expected = "rwWMNBs2GtJwfX7YNVV1sUYaPy6DRmDHB4"
 
         Truth.assertThat(addressService.makeAddress(walletPublicKey)).isEqualTo(expected)
