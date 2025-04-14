@@ -234,7 +234,7 @@ internal class SuiTransactionBuilder(
         val decimalAmount = amount.value?.movePointRight(token.decimals)
             ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         val availableBudget = suiWallet.coins
-            .filter { it.coinType == token.contractAddress }
+            .filter { it.coinType == COIN_TYPE }
             .maxByOrNull { it.mistBalance }
             ?.mistBalance ?: BigDecimal.ZERO
         val budget = minOf(availableBudget, SUI_GAS_BUDGET_MAX_VALUE)
