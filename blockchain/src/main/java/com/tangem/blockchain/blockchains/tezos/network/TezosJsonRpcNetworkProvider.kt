@@ -1,15 +1,15 @@
 package com.tangem.blockchain.blockchains.tezos.network
 
-import com.tangem.blockchain.blockchains.tezos.TezosAddressService.Companion.calculateTezosChecksum
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.createRetrofitInstance
-import com.tangem.common.extensions.hexToBytes
-import org.bitcoinj.core.Base58
 
 class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
+
+    override val baseUrl: String = baseUrl
 
     private val api: TezosApi by lazy {
         createRetrofitInstance(baseUrl).create(TezosApi::class.java)
@@ -19,12 +19,14 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
     override suspend fun getInfo(address: String): Result<TezosInfoResponse> {
         return try {
             val addressData = retryIO { api.getAddressData(address) }
-            Result.Success(TezosInfoResponse(
+            Result.Success(
+                TezosInfoResponse(
                     balance = addressData.balance!!.toBigDecimal().movePointLeft(decimals),
-                    counter = addressData.counter!!
-            ))
+                    counter = addressData.counter!!,
+                ),
+            )
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -32,7 +34,7 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
         return try {
             retryIO { api.getManagerKey(address) }
             Result.Success(true)
-        } catch (exception: Exception) { //TODO: check exception
+        } catch (exception: Exception) { // TODO: check exception
             Result.Success(false)
         }
     }
@@ -40,40 +42,40 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
     override suspend fun getHeader(): Result<TezosHeader> {
         return try {
             val headerResponse = retryIO { api.getHeader() }
-            Result.Success(TezosHeader(
+            Result.Success(
+                TezosHeader(
                     hash = headerResponse.hash!!,
-                    protocol = headerResponse.protocol!!
-            ))
+                    protocol = headerResponse.protocol!!,
+                ),
+            )
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
-    override suspend fun forgeContents(headerHash: String, contents: List<TezosOperationContent>): Result<String> {
+    override suspend fun forgeContents(forgeData: TezosForgeData): Result<String> {
         return try {
-            val forgedContents = retryIO { api.forgeOperations(TezosForgeBody(headerHash, contents)) }
+            val forgedContents = retryIO {
+                api.forgeOperations(TezosForgeBody(forgeData.headerHash, forgeData.contents))
+            }
             Result.Success(forgedContents)
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
-    override suspend fun checkTransaction(
-            header: TezosHeader,
-            contents: List<TezosOperationContent>,
-            encodedSignature: String
-    ): SimpleResult {
+    override suspend fun checkTransaction(transactionData: TezosTransactionData): SimpleResult {
         return try {
             val tezosPreapplyBody = TezosPreapplyBody(
-                    protocol = header.protocol,
-                    branch = header.hash,
-                    contents = contents,
-                    signature = encodedSignature
+                protocol = transactionData.header.protocol,
+                branch = transactionData.header.hash,
+                contents = transactionData.contents,
+                signature = transactionData.encodedSignature,
             )
             retryIO { api.preapplyOperations(listOf(tezosPreapplyBody)) }
             SimpleResult.Success
         } catch (exception: Exception) {
-            SimpleResult.Failure(exception)
+            SimpleResult.Failure(exception.toBlockchainSdkError())
         }
     }
 
@@ -82,7 +84,7 @@ class TezosJsonRpcNetworkProvider(baseUrl: String) : TezosNetworkProvider {
             retryIO { api.sendTransaction(transaction) }
             SimpleResult.Success
         } catch (exception: Exception) {
-            SimpleResult.Failure(exception)
+            SimpleResult.Failure(exception.toBlockchainSdkError())
         }
     }
 }
