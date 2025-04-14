@@ -3,7 +3,6 @@ package com.tangem.blockchain.nft
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.nft.providers.moralis.MoralisEvmNFTProvider
-import com.tangem.blockchain.nft.providers.nftscan.NFTScanTonNFTProvider
 
 internal object NFTProviderFactory {
     fun createNFTProvider(blockchain: Blockchain, config: BlockchainSdkConfig): NFTProvider = when {
@@ -12,9 +11,6 @@ internal object NFTProviderFactory {
                 blockchain.isEvm() -> MoralisEvmNFTProvider(
                     blockchain = blockchain,
                     apiKey = config.moralisApiKey,
-                )
-                blockchain == Blockchain.TON -> NFTScanTonNFTProvider(
-                    apiKey = config.nftScanApiKey,
                 )
                 else -> DefaultNFTProvider
             }
