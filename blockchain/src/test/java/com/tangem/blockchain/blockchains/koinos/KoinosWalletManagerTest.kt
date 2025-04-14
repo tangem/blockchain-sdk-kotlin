@@ -23,8 +23,8 @@ internal class KoinosWalletManagerTest {
         networkService = KoinosNetworkService(listOf(mockk())),
         contractIdHolder = KoinosContractIdHolder(
             isTestnet = false,
-            loadKoinContractId = { Result.Success("15DJN4a8SgrbGhhGksSBASiSYjGnMU8dGL") }
-        )
+            loadKoinContractId = { Result.Success("15DJN4a8SgrbGhhGksSBASiSYjGnMU8dGL") },
+        ),
     )
 
     @Test
