@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.koinos.network.KoinosNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.transaction.Fee.Common
+import com.tangem.blockchain.extensions.Result
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -21,6 +22,10 @@ internal class KoinosWalletManagerTest {
         transactionBuilder = KoinosTransactionBuilder(isTestnet = false),
         transactionHistoryProvider = mockk(),
         networkService = KoinosNetworkService(listOf(mockk())),
+        contractIdHolder = KoinosContractIdHolder(
+            isTestnet = false,
+            loadKoinContractId = { Result.Success("15DJN4a8SgrbGhhGksSBASiSYjGnMU8dGL") },
+        ),
     )
 
     @Test
