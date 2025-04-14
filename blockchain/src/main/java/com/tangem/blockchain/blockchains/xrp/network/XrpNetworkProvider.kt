@@ -10,6 +10,7 @@ interface XrpNetworkProvider : NetworkProvider {
     suspend fun sendTransaction(transaction: String): SimpleResult
     suspend fun getFee(): Result<XrpFeeResponse>
     suspend fun checkIsAccountCreated(address: String): Boolean
+    suspend fun checkDestinationTagRequired(address: String): Boolean
 }
 
 data class XrpInfoResponse(

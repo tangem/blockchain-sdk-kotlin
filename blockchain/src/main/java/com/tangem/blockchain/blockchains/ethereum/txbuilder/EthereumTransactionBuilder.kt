@@ -3,7 +3,6 @@ package com.tangem.blockchain.blockchains.ethereum.txbuilder
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.common.extensions.toDecompressedPublicKey
 
@@ -59,13 +58,7 @@ abstract class EthereumTransactionBuilder(wallet: Wallet) {
 
         /** Create [EthereumTransactionBuilder] using [Wallet] */
         fun create(wallet: Wallet): EthereumTransactionBuilder {
-            val isEthereumEIP1559Enabled = DepsContainer.blockchainFeatureToggles.isEthereumEIP1559Enabled
-
-            return if (isEthereumEIP1559Enabled) {
-                EthereumTWTransactionBuilder(wallet)
-            } else {
-                EthereumLegacyTransactionBuilder(wallet)
-            }
+            return EthereumTWTransactionBuilder(wallet)
         }
     }
 }
