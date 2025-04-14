@@ -5,6 +5,4 @@ package com.tangem.blockchain.common
  *
 [REDACTED_AUTHOR]
  */
-data class BlockchainFeatureToggles(
-    val isEthereumEIP1559Enabled: Boolean,
-)
+class BlockchainFeatureToggles

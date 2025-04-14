@@ -47,9 +47,9 @@ internal data class MoralisEvmNFTNormalizedMetadataResponse(
 @JsonClass(generateAdapter = true)
 internal data class MoralisEvmNFTAttributeResponse(
     @Json(name = "trait_type") val traitType: String?,
-    @Json(name = "value") val value: String?,
+    @Json(name = "value") val value: Any?,
     @Json(name = "display_type") val displayType: String?,
-    @Json(name = "max_value") val maxValue: String?,
+    @Json(name = "max_value") val maxValue: Any?,
     @Json(name = "trait_count") val traitCount: Int?,
     @Json(name = "order") val order: String?,
     @Json(name = "rarity_label") val rarityLabel: String?,

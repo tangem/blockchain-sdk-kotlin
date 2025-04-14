@@ -54,6 +54,7 @@ internal class TonNetworkService(
 
                 Result.Success(
                     TonWalletInfo(
+                        accountState = walletInformation.accountState,
                         balance = walletInformation.balance.movePointLeft(blockchain.decimals()),
                         sequenceNumber = walletInformation.seqno ?: 0,
                         jettonDatas = jettonWalletAddresses.mapValues { entry ->
