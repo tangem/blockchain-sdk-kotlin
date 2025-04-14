@@ -1,77 +1,83 @@
 package com.tangem.blockchain.blockchains.cardano.network.adalite
 
-import com.squareup.moshi.Json
-import com.tangem.blockchain.blockchains.cardano.CardanoUnspentOutput
-import com.tangem.blockchain.blockchains.cardano.network.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
-import com.tangem.blockchain.blockchains.cardano.network.api.AdaliteApi
-import com.tangem.blockchain.common.SendException
+import com.tangem.blockchain.blockchains.cardano.network.InfoInput
+import com.tangem.blockchain.blockchains.cardano.network.adalite.converters.AdaliteUnspentOutputConverter
+import com.tangem.blockchain.blockchains.cardano.network.adalite.repsonse.AdaliteAddressResponse
+import com.tangem.blockchain.blockchains.cardano.network.adalite.request.AdaliteSendBody
+import com.tangem.blockchain.blockchains.cardano.network.common.converters.CardanoAddressResponseConverter
+import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoAddressResponse
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.encodeBase64NoWrap
-import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.createRetrofitInstance
-import com.tangem.common.extensions.hexToBytes
+import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import retrofit2.HttpException
+import java.io.IOException
+import com.tangem.blockchain.blockchains.cardano.network.adalite.repsonse.AdaliteAddressResponse.SuccessData.Transaction as AdaliteTransaction
 
-class AdaliteNetworkProvider(baseUrl: String) : CardanoNetworkProvider {
+internal class AdaliteNetworkProvider(override val baseUrl: String) : CardanoNetworkProvider {
 
     private val api: AdaliteApi by lazy {
         createRetrofitInstance(baseUrl).create(AdaliteApi::class.java)
     }
 
-    override suspend fun getInfo(addresses: Set<String>): Result<CardanoAddressResponse> {
+    override suspend fun getInfo(input: InfoInput): Result<CardanoAddressResponse> {
         return try {
             coroutineScope {
-                val addressesDeferred = addresses.map { retryIO { async { api.getAddressData(it) } } }
-                val unspentsDeferred = retryIO { async { api.getUnspents(addresses.toList()) } }
+                val addressDataDeferred = input.addresses.map { async { api.getAddressData(it) } }
+                val unspentOutputsDeferred = async { api.getUnspentOutputs(input.addresses.toList()) }
 
-                val addressesData = addressesDeferred.map { it.await() }
-                val unspents = unspentsDeferred.await()
-
-                val cardanoUnspents = unspents.data!!.map {
-                    CardanoUnspentOutput(
-                            it.address!!,
-                            it.amountData!!.amount!!,
-                            it.outputIndex!!.toLong(),
-                            it.hash!!.hexToBytes()
-                    )
-                }
-                val recentTransactionsHashes = addressesData
-                        .flatMap { it.data!!.transactions!!.mapNotNull { it.hash } }
+                val addressDataResponse = addressDataDeferred.map { it.await() }
+                val unspentOutputsResponse = unspentOutputsDeferred.await()
 
                 Result.Success(
-                        CardanoAddressResponse(
-                                addressesData.map { it.data!!.balanceData!!.amount!! }.sum(),
-                                cardanoUnspents,
-                                recentTransactionsHashes
-                        )
+                    data = CardanoAddressResponseConverter.convert(
+                        unspentOutputs = AdaliteUnspentOutputConverter.convert(unspentOutputsResponse),
+                        tokens = input.tokens,
+                        recentTransactionsHashes = addressDataResponse.getTransactionHashes(),
+                    ),
                 )
             }
         } catch (exception: Exception) {
-            Result.Failure(exception)
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 
     override suspend fun sendTransaction(transaction: ByteArray): SimpleResult {
         return try {
-            retryIO { api.sendTransaction(AdaliteSendBody(transaction.encodeBase64NoWrap())) }
+            api.sendTransaction(body = AdaliteSendBody(signedTransaction = transaction.encodeBase64NoWrap()))
             SimpleResult.Success
         } catch (exception: Exception) {
-            if (exception is HttpException && exception.code() == 400) {
-                SimpleResult.Failure(
-                        SendException("Failed to send Cardano transaction: $transaction")
-                )
+            val result = if (exception is HttpException && exception.code() == HTTP_BAD_REQUEST_CODE) {
+                createBadRequestException(transaction, exception)
             } else {
-                SimpleResult.Failure(exception)
+                exception
             }
+
+            SimpleResult.Failure(result.toBlockchainSdkError())
         }
     }
-}
 
-data class AdaliteSendBody(
-        @Json(name = "signedTx")
-        val signedTransaction: String
-)
+    private fun List<AdaliteAddressResponse>.getTransactionHashes(): List<String> {
+        return flatMap { it.successData.transactions.mapNotNull(AdaliteTransaction::hash) }
+    }
+
+    private fun createBadRequestException(transaction: ByteArray, cause: HttpException): Exception {
+        return IOException(
+            """
+                ${Blockchain.Cardano}. Failed to send transaction ${transaction.toHexString()}
+                with an error:
+                ${cause.response()?.errorBody()?.string()}
+            """.trimIndent(),
+        )
+    }
+
+    private companion object {
+        const val HTTP_BAD_REQUEST_CODE = 400
+    }
+}
