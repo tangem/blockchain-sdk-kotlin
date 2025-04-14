@@ -83,8 +83,8 @@ internal class KoinosTransactionBuilderTest {
             currentNonce = currentNonceForTest,
             koinContractIdHolder = KoinosContractIdHolder(
                 isTestnet = false,
-                loadKoinContractId = { Result.Success("15DJN4a8SgrbGhhGksSBASiSYjGnMU8dGL") }
-            )
+                loadKoinContractId = { Result.Success("15DJN4a8SgrbGhhGksSBASiSYjGnMU8dGL") },
+            ),
         )
         val (transactionToSign, hashToSign) = (transactionToSignResult as Result.Success).data
 
@@ -101,7 +101,7 @@ internal class KoinosTransactionBuilderTest {
             currentNonce = currentNonceForTest,
             koinContractIdHolder = KoinosContractIdHolder(
                 isTestnet = true,
-                loadKoinContractId = { Result.Success("1FaSvLjQJsCJKq5ybmGsMMQs8RQYyVv8ju") }
+                loadKoinContractId = { Result.Success("1FaSvLjQJsCJKq5ybmGsMMQs8RQYyVv8ju") },
             ),
         )
         val (transactionToSign, hashToSign) = (transactionToSignResult as Result.Success).data
