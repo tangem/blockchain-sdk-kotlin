@@ -14,7 +14,7 @@ internal class SuiAddressService(
         return validate(address) // Fix in [REDACTED_TASK_KEY]
     }
 
-    override fun tryFixContractAddress(address: String?): String? {
+    override fun reformatContractAddress(address: String?): String? {
         // Ignore coin contract address
         if (address == SuiConstants.COIN_TYPE || address == null) return address
 
