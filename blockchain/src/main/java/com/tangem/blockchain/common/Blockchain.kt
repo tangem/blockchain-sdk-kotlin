@@ -22,6 +22,7 @@ import com.tangem.blockchain.blockchains.radiant.RadiantAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
+import com.tangem.blockchain.blockchains.sui.SuiAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.vechain.VeChainWalletManager
@@ -358,6 +359,10 @@ enum class Blockchain(
 
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
+    fun tryFixContractAddress(address: String?): String? {
+        return (getAddressService() as? ContractAddressValidator)?.tryFixContractAddress(address)
+    }
+
     fun validateContractAddress(address: String): Boolean {
         return (getAddressService() as? ContractAddressValidator)?.validateContractAddress(address) == true
     }
@@ -439,6 +444,7 @@ enum class Blockchain(
             Stellar, StellarTestnet -> StellarAddressService()
             Solana, SolanaTestnet -> SolanaAddressService()
             Tezos -> TezosAddressService()
+            Sui, SuiTestnet -> SuiAddressService(this)
             Cosmos, CosmosTestnet,
             TerraV1,
             TerraV2,
@@ -447,7 +453,6 @@ enum class Blockchain(
             InternetComputer,
             Filecoin,
             Sei, SeiTestnet,
-            Sui, SuiTestnet,
             TON, TONTestnet,
             -> WalletCoreAddressService(blockchain = this)
 
