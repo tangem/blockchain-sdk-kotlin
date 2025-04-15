@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.stellar
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import org.stellar.sdk.*
+import org.stellar.sdk.TransactionBuilder
 import org.stellar.sdk.xdr.AccountID
 import org.stellar.sdk.xdr.DecoratedSignature
 import org.stellar.sdk.xdr.Signature
