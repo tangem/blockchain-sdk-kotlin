@@ -17,6 +17,7 @@ import kotlinx.coroutines.coroutineScope
 internal class SuiWalletManager(
     wallet: Wallet,
     networkProviders: List<SuiJsonRpcProvider>,
+    private val addressService: SuiAddressService,
 ) : WalletManager(wallet), UtxoBlockchainManager {
 
     private val networkService: SuiNetworkService = SuiNetworkService(
@@ -38,6 +39,16 @@ internal class SuiWalletManager(
             is Result.Failure -> updateWithError(result.error)
             is Result.Success -> updateWallet(result.data)
         }
+    }
+
+    override fun addToken(token: Token) {
+        // RPC nodes may return trimmed contract address
+        val fixed = addressService.tryFixContractAddress(token.contractAddress) ?: return
+        super.addToken(
+            token.copy(
+                contractAddress = fixed,
+            ),
+        )
     }
 
     override suspend fun send(
@@ -92,11 +103,17 @@ internal class SuiWalletManager(
     }
 
     private suspend fun updateWallet(info: SuiWalletInfo) {
-        walletInfo = info
+        val infoWithFixedAddresses = info.copy(
+            coins = info.coins.map { coin ->
+                // RPC nodes may return trimmed contract address
+                coin.copy(coinType = addressService.tryFixContractAddress(coin.coinType) ?: coin.coinType)
+            },
+        )
+        walletInfo = infoWithFixedAddresses
 
-        wallet.setAmount(Amount(info.suiTotalBalance, wallet.blockchain))
+        wallet.setAmount(Amount(infoWithFixedAddresses.suiTotalBalance, wallet.blockchain))
         cardTokens.forEach { token ->
-            val tokenBalance = info.coins
+            val tokenBalance = infoWithFixedAddresses.coins
                 .filter { it.coinType == token.contractAddress }
                 .sumOf { it.mistBalance }
                 .movePointLeft(token.decimals)
