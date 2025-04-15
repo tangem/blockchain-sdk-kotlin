@@ -8,9 +8,9 @@ package com.tangem.blockchain.common.address
 interface ContractAddressValidator {
 
     /**
-     * Solution to fix contract address if it is trimmed
+     * Solution to reformat contract address if it is trimmed
      */
-    fun tryFixContractAddress(address: String?): String? = address
+    fun reformatContractAddress(address: String?): String? = address
 
     fun validateContractAddress(address: String): Boolean
 }
