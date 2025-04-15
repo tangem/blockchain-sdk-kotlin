@@ -359,8 +359,8 @@ enum class Blockchain(
 
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
-    fun tryFixContractAddress(address: String?): String? {
-        return (getAddressService() as? ContractAddressValidator)?.tryFixContractAddress(address)
+    fun reformatContractAddress(address: String?): String? {
+        return (getAddressService() as? ContractAddressValidator)?.reformatContractAddress(address)
     }
 
     fun validateContractAddress(address: String): Boolean {
