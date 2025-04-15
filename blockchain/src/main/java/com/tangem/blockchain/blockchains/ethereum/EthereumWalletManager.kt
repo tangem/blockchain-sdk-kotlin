@@ -35,6 +35,7 @@ open class EthereumWalletManager(
     SignatureCountValidator,
     TokenFinder,
     EthereumGasLoader,
+    TransactionPreparer,
     Approver {
 
     // move to constructor later
@@ -79,42 +80,17 @@ open class EthereumWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        val nonce = networkProvider.getPendingTxCount(wallet.address)
-            .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) }
+        val transactionToSend = prepareForSend(transactionData, signer)
+            .successOr { return it }
 
-        val transactionData = when (transactionData) {
-            is TransactionData.Uncompiled -> transactionData.copy(
-                extras = when (val extras = transactionData.extras) {
-                    is EthereumTransactionExtras -> extras.copy(nonce = nonce.toBigInteger())
-                    else -> EthereumTransactionExtras(nonce = nonce.toBigInteger())
-                },
-            )
-            is TransactionData.Compiled -> transactionData
-        }
-
-        return when (val signResponse = sign(transactionData, signer)) {
-            is Result.Success -> {
-                val transactionToSend = try {
-                    transactionBuilder.buildForSend(
-                        transaction = transactionData,
-                        signature = signResponse.data.first,
-                        compiledTransaction = signResponse.data.second,
-                    )
-                } catch (e: BlockchainSdkError.FailedToBuildTx) {
-                    return Result.Failure(e)
-                }
-
-                when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())) {
-                    is SimpleResult.Success -> {
-                        val hash = transactionToSend.keccak().toHexString()
-                        transactionData.hash = hash
-                        wallet.addOutgoingTransaction(transactionData)
-                        Result.Success(TransactionSendResult(hash))
-                    }
-                    is SimpleResult.Failure -> Result.fromTangemSdkError(sendResult.error)
-                }
+        return when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())) {
+            is SimpleResult.Success -> {
+                val hash = transactionToSend.keccak().toHexString()
+                transactionData.hash = hash
+                wallet.addOutgoingTransaction(transactionData)
+                Result.Success(TransactionSendResult(hash))
             }
-            is Result.Failure -> Result.fromTangemSdkError(signResponse.error)
+            is SimpleResult.Failure -> Result.fromTangemSdkError(sendResult.error)
         }
     }
 
@@ -204,6 +180,40 @@ open class EthereumWalletManager(
 
     override fun getApproveData(spenderAddress: String, value: Amount?) =
         EthereumUtils.createErc20ApproveDataHex(spenderAddress, value)
+
+    override suspend fun prepareForSend(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<ByteArray> {
+        val nonce = networkProvider.getPendingTxCount(wallet.address)
+            .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) }
+
+        val transactionData = when (transactionData) {
+            is TransactionData.Uncompiled -> transactionData.copy(
+                extras = when (val extras = transactionData.extras) {
+                    is EthereumTransactionExtras -> extras.copy(nonce = nonce.toBigInteger())
+                    else -> EthereumTransactionExtras(nonce = nonce.toBigInteger())
+                },
+            )
+            is TransactionData.Compiled -> transactionData
+        }
+        return when (val signResponse = sign(transactionData, signer)) {
+            is Result.Success -> {
+                val transactionToSend = try {
+                    transactionBuilder.buildForSend(
+                        transaction = transactionData,
+                        signature = signResponse.data.first,
+                        compiledTransaction = signResponse.data.second,
+                    )
+                } catch (e: BlockchainSdkError.FailedToBuildTx) {
+                    return Result.Failure(e)
+                }
+
+                return Result.Success(transactionToSend)
+            }
+            is Result.Failure -> Result.fromTangemSdkError(signResponse.error)
+        }
+    }
 
     private suspend fun getGasLimitInternal(
         amount: Amount,

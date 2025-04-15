@@ -231,6 +231,10 @@ interface TransactionValidator {
     suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit>
 }
 
+interface TransactionPreparer {
+    suspend fun prepareForSend(transactionData: TransactionData, signer: TransactionSigner): Result<ByteArray>
+}
+
 interface SignatureCountValidator {
     suspend fun validateSignatureCount(signedHashes: Int): SimpleResult
 }
