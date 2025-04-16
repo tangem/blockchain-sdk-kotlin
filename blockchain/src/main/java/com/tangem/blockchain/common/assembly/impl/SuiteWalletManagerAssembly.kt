@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common.assembly.impl
 
+import com.tangem.blockchain.blockchains.sui.SuiAddressService
 import com.tangem.blockchain.blockchains.sui.SuiNetworkProvidersBuilder
 import com.tangem.blockchain.blockchains.sui.SuiWalletManager
 import com.tangem.blockchain.common.WalletManager
@@ -14,6 +15,7 @@ internal object SuiteWalletManagerAssembly : WalletManagerAssembly<WalletManager
         SuiWalletManager(
             wallet = wallet,
             networkProviders = providersBuilder.build(wallet.blockchain),
+            addressService = SuiAddressService(wallet.blockchain),
         )
     }
 }
