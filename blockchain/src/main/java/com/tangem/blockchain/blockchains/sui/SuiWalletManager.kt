@@ -42,7 +42,7 @@ internal class SuiWalletManager(
     }
 
     override fun addToken(token: Token) {
-        // RPC nodes may return trimmed contract address
+        // We may receive trimmed contract address. In that case we need to fill it with heading zeros
         val fixed = addressService.reformatContractAddress(token.contractAddress) ?: return
         super.addToken(
             token.copy(
@@ -105,7 +105,7 @@ internal class SuiWalletManager(
     private suspend fun updateWallet(info: SuiWalletInfo) {
         val infoWithFixedAddresses = info.copy(
             coins = info.coins.map { coin ->
-                // RPC nodes may return trimmed contract address
+                // We may receive trimmed contract address. In that case we need to fill it with heading zeros
                 coin.copy(coinType = addressService.reformatContractAddress(coin.coinType) ?: coin.coinType)
             },
         )
