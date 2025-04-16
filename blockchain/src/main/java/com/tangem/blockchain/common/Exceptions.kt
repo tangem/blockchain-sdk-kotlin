@@ -73,6 +73,7 @@ sealed class BlockchainSdkError(
         data object UnsupportedTokenDestinationAddress : Solana(4)
         data object OwnerAccountShouldBeNotNull : Solana(5, "Request owner account info before")
         data object UnknownDestinationAddress : Solana(6, "Invalid destination address")
+        data object TransactionIsEmpty : Solana(7, "Transaction is empty")
     }
 
     sealed class Polkadot(
@@ -104,6 +105,7 @@ sealed class BlockchainSdkError(
             "Due to Kaspa limitations only $maxOutputs UTXOs can fit in a single transaction. This means you can only" +
                 " send ${maxAmount.toPlainString()}. You need to reduce the amount",
         )
+
         data object ZeroUtxoError : Kaspa(3)
     }
 
@@ -296,6 +298,7 @@ sealed class BlockchainSdkError(
             customMessage = "Insufficient min-ada-value amount. In addition to network fees, the Cardano network " +
                 "charges min-ada-value. Make sure the balance is sufficient to withdraw the token.",
         )
+
         data object InvalidDerivationType : Cardano(subCode = 4)
     }
 
