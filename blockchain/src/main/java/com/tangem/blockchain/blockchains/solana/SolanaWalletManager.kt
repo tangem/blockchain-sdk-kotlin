@@ -165,7 +165,7 @@ class SolanaWalletManager internal constructor(
                     return Result.Failure(BlockchainSdkError.CustomError("Compiled transaction must be in bytes"))
                 }
                 val transactionWithoutSignaturePlaceholder =
-                    compiledTransaction.drop(SIGNATURE_PLACEHOLDER_LENGTH).toByteArray()
+                    SolanaTransactionHelper.removeSignaturesPlaceholders(compiledTransaction)
 
                 val transaction = transactionBuilder.buildUnsignedTransaction(
                     builtTransaction = transactionWithoutSignaturePlaceholder,
@@ -226,7 +226,7 @@ class SolanaWalletManager internal constructor(
             val compiled = (it.value as? TransactionData.Compiled.Data.Bytes)?.data
                 ?: return Result.Failure(UnsupportedOperation("Compiled transaction must be in bytes"))
 
-            compiled.drop(SIGNATURE_PLACEHOLDER_LENGTH).toByteArray()
+            SolanaTransactionHelper.removeSignaturesPlaceholders(compiled)
         }
 
         val unsignedTransactions = withoutSignatureTransactions.map(transactionBuilder::buildUnsignedTransaction)
@@ -535,7 +535,6 @@ class SolanaWalletManager internal constructor(
 
     private companion object {
         const val MIN_ACCOUNT_DATA_SIZE = 0L
-        const val SIGNATURE_PLACEHOLDER_LENGTH = 65
 
         const val ACCOUNT_METADATA_SIZE = 128L
         const val RENT_PER_EPOCH_IN_LAMPORTS = 19.055441478439427
