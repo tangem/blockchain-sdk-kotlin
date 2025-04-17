@@ -2,8 +2,8 @@ package com.tangem.blockchain.common.assembly.impl
 
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
+import com.tangem.blockchain.blockchains.clore.CloreFeesCalculator
 import com.tangem.blockchain.blockchains.clore.CloreProvidersBuilder
-import com.tangem.blockchain.blockchains.ravencoin.RavencoinFeesCalculator
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
@@ -24,7 +24,7 @@ internal object CloreWalletManagerAssembly : WalletManagerAssembly<RavencoinWall
                     providers = CloreProvidersBuilder(input.providerTypes, input.config).build(blockchain),
                 ),
                 transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
-                feesCalculator = RavencoinFeesCalculator(blockchain),
+                feesCalculator = CloreFeesCalculator(blockchain),
             )
         }
     }
