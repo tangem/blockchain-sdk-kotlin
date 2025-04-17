@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.ravencoin
 
+import com.tangem.blockchain.blockchains.bitcoin.BitcoinFeesCalculator
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
@@ -12,7 +13,7 @@ internal class RavencoinWalletManager(
     transactionBuilder: BitcoinTransactionBuilder,
     networkProvider: BitcoinNetworkProvider,
     transactionHistoryProvider: TransactionHistoryProvider,
-    feesCalculator: RavencoinFeesCalculator,
+    feesCalculator: BitcoinFeesCalculator,
 ) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider, feesCalculator) {
 
     // https://github.com/raven-community/ravencore-lib/blob/master/docs/transaction.md
