@@ -255,6 +255,16 @@ interface TransactionValidator {
 
 interface TransactionPreparer {
     suspend fun prepareForSend(transactionData: TransactionData, signer: TransactionSigner): Result<ByteArray>
+
+    suspend fun prepareForSendMultiple(
+        transactionDataList: List<TransactionData>,
+        signer: TransactionSigner,
+    ): Result<List<ByteArray>> {
+        return prepareForSend(transactionDataList.first(), signer).fold(
+            success = { Result.Success(listOf(it)) },
+            failure = { Result.Failure(it) },
+        )
+    }
 }
 
 interface SignatureCountValidator {
