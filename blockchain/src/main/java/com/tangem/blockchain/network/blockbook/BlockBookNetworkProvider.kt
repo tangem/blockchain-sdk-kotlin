@@ -201,7 +201,8 @@ class BlockBookNetworkProvider(
     private suspend fun getFeePerKb(param: Int): BigDecimal {
         val feeRate = withContext(Dispatchers.IO) {
             when (blockchain) {
-                Blockchain.Clore -> api.getFees(param).result
+                // increased for clore, tx failed for some reason
+                Blockchain.Clore -> api.getFees(param).result * CLORE_FEE_MULTIPLIER
                 else -> api.getFee(param).result.feerate
             }
         }
@@ -217,5 +218,6 @@ class BlockBookNetworkProvider(
         const val MINIMAL_FEE_BLOCK_AMOUNT = 8
         const val NORMAL_FEE_BLOCK_AMOUNT = 4
         const val PRIORITY_FEE_BLOCK_AMOUNT = 1
+        const val CLORE_FEE_MULTIPLIER = 1.5
     }
 }
