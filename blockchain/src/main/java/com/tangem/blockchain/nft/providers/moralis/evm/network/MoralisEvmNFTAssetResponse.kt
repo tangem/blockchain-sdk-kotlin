@@ -58,7 +58,6 @@ internal data class MoralisEvmNFTAssetResponse(
 
     @JsonClass(generateAdapter = true)
     data class Media(
-    internal data class Media(
         @Json(name = "status") val status: String?,
         @Json(name = "updatedAt") val updatedAt: String?,
         @Json(name = "mimetype") val mimeType: String?,
