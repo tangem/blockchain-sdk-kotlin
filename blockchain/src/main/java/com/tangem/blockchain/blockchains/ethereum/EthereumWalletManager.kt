@@ -197,16 +197,16 @@ open class EthereumWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<ByteArray> {
-        val nonce = networkProvider.getPendingTxCount(wallet.address)
-            .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) }
-
         val transactionData = when (transactionData) {
-            is TransactionData.Uncompiled -> transactionData.copy(
-                extras = when (val extras = transactionData.extras) {
+            is TransactionData.Uncompiled -> {
+                val nonce = networkProvider.getPendingTxCount(wallet.address)
+                    .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) }
+                val newExtras = when (val extras = transactionData.extras) {
                     is EthereumTransactionExtras -> extras.copy(nonce = nonce.toBigInteger())
                     else -> EthereumTransactionExtras(nonce = nonce.toBigInteger())
-                },
-            )
+                }
+                transactionData.copy(extras = newExtras)
+            }
             is TransactionData.Compiled -> transactionData
         }
         return when (val signResponse = sign(transactionData, signer)) {
