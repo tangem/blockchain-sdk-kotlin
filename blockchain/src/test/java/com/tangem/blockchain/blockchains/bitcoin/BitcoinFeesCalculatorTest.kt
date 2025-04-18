@@ -46,8 +46,8 @@ internal class BitcoinFeesCalculatorTest {
                 txSize = txSize,
             ),
             priority = Fee.Bitcoin(
-                amount = amount.copy(value = BigDecimal("0.00007548")),
-                satoshiPerByte = BigDecimal(34),
+                amount = amount.copy(value = BigDecimal("0.00007770")),
+                satoshiPerByte = BigDecimal(35),
                 txSize = txSize,
             ),
         )
@@ -80,8 +80,8 @@ internal class BitcoinFeesCalculatorTest {
                 txSize = txSize,
             ),
             priority = Fee.Bitcoin(
-                amount = amount.copy(value = BigDecimal("0.01108536")),
-                satoshiPerByte = BigDecimal(34),
+                amount = amount.copy(value = BigDecimal("0.01141140")),
+                satoshiPerByte = BigDecimal(35),
                 txSize = txSize,
             ),
         )
