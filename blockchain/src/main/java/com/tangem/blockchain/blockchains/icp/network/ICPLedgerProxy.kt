@@ -15,7 +15,7 @@ interface ICPLedgerProxy {
 
     @UPDATE
     @Name("transfer")
-    @Waiter(timeout = 10, sleep = 1)
+    @Waiter(timeout = 50, sleep = 3)
     fun transfer(
         @Argument(Type.RECORD)
         transferRequest: ICPTransferRequest,
