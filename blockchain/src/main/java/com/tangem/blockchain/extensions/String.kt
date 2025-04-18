@@ -44,6 +44,10 @@ fun String.hexToInt(default: Int = 0): Int {
     return removePrefix(HEX_PREFIX).toIntOrNull(radix = HEX_RADIX) ?: default
 }
 
+fun String.formatHex(): String {
+    return if (this.startsWith(HEX_PREFIX)) this else HEX_PREFIX.plus(this)
+}
+
 fun String?.toBigDecimalOrDefault(default: BigDecimal = BigDecimal.ZERO): BigDecimal =
     this?.toBigDecimalOrNull() ?: default
 
