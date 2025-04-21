@@ -18,6 +18,8 @@ import com.tangem.blockchain.extensions.filterWith
 import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
+import com.tangem.blockchain.nft.DefaultNFTProvider
+import com.tangem.blockchain.nft.NFTProvider
 import kotlinx.coroutines.*
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.Program
@@ -33,7 +35,8 @@ import java.math.BigDecimal
 class SolanaWalletManager internal constructor(
     wallet: Wallet,
     providers: List<SolanaRpcClient>,
-) : WalletManager(wallet), RentProvider, TransactionPreparer {
+    nftProvider: NFTProvider = DefaultNFTProvider,
+) : WalletManager(wallet, nftProvider = nftProvider), RentProvider, TransactionPreparer {
 
     private val account = PublicKey(wallet.address)
     private val networkServices = providers.map { SolanaNetworkService(it) }
