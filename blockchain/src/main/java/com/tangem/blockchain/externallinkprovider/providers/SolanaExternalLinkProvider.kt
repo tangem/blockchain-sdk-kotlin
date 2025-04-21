@@ -2,6 +2,7 @@ package com.tangem.blockchain.externallinkprovider.providers
 
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.TxExploreState
+import com.tangem.blockchain.nft.models.NFTAsset
 
 internal class SolanaExternalLinkProvider(private val isTestnet: Boolean) : ExternalLinkProvider {
 
@@ -16,6 +17,15 @@ internal class SolanaExternalLinkProvider(private val isTestnet: Boolean) : Exte
         return buildString {
             append(baseUrl)
             append("address/$walletAddress")
+            if (isTestnet) append(testNetParam)
+        }
+    }
+
+    override fun getNFTExplorerUrl(assetIdentifier: NFTAsset.Identifier): String {
+        require(assetIdentifier is NFTAsset.Identifier.Solana)
+        return buildString {
+            append(baseUrl)
+            append("address/${assetIdentifier.tokenAddress}")
             if (isTestnet) append(testNetParam)
         }
     }
