@@ -1,4 +1,4 @@
-package com.tangem.blockchain.nft.providers.moralis.network
+package com.tangem.blockchain.nft.providers.moralis.evm.network
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
