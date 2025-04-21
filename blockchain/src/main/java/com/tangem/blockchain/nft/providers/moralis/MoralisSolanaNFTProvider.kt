@@ -113,6 +113,8 @@ internal class MoralisSolanaNFTProvider(
         blockchainId = blockchain.id,
         owner = owner,
         name = name,
+        amount = amount?.toBigInteger(),
+        decimals = decimals ?: 0,
         description = null,
         salePrice = null,
         rarity = null,
