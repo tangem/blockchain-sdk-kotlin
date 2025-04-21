@@ -6,7 +6,10 @@ import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.nft.NFTProvider
 import com.tangem.blockchain.nft.models.*
-import com.tangem.blockchain.nft.providers.moralis.network.*
+import com.tangem.blockchain.nft.providers.moralis.evm.network.*
+import com.tangem.blockchain.nft.providers.moralis.evm.network.MoralisEvmApi
+import com.tangem.blockchain.nft.providers.moralis.evm.network.MoralisEvmNFTAssetResponse
+import com.tangem.blockchain.nft.providers.moralis.evm.network.MoralisEvmNFTCollectionResponse
 import okhttp3.internal.toHexString
 import java.math.BigDecimal
 
@@ -165,14 +168,14 @@ internal class MoralisEvmNFTProvider(
         }.orEmpty(),
     )
 
-    private fun MoralisEvmNFTMediaResponse.toNFTAssetMedia(): NFTAsset.Media? = when {
+    private fun MoralisEvmNFTAssetResponse.Media.toNFTAssetMedia(): NFTAsset.Media? = when {
         mediaCollection?.high?.url != null -> NFTAsset.Media(mimeType, mediaCollection.high.url)
         mediaCollection?.medium?.url != null -> NFTAsset.Media(mimeType, mediaCollection.medium.url)
         originalMediaUrl != null -> NFTAsset.Media(mimeType, originalMediaUrl)
         else -> null
     }
 
-    private fun MoralisEvmNFTAttributeResponse.toNFTAssetTrait(): NFTAsset.Trait? =
+    private fun MoralisEvmNFTAssetResponse.Attribute.toNFTAssetTrait(): NFTAsset.Trait? =
         if (traitType != null && value != null) {
             NFTAsset.Trait(traitType, value.toString())
         } else {
