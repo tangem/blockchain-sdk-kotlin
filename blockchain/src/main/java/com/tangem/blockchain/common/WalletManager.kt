@@ -221,6 +221,14 @@ interface TransactionSender {
         destination = destination,
     )
 
+    suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
+        transactionData.requireUncompiled()
+        return getFee(
+            amount = transactionData.amount,
+            destination = transactionData.destinationAddress,
+        )
+    }
+
     /**
      * Estimates fee (approximate value)
      *

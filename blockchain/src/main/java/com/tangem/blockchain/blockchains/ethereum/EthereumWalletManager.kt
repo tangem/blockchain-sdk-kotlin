@@ -120,6 +120,16 @@ open class EthereumWalletManager(
         return getFeeInternal(amount, destination, callData)
     }
 
+    override suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
+        transactionData.requireUncompiled()
+        val extra = transactionData.extras as? EthereumTransactionExtras
+        return getFeeInternal(
+            amount = transactionData.amount,
+            destination = transactionData.destinationAddress,
+            callData = extra?.callData,
+        )
+    }
+
     protected open suspend fun getFeeInternal(
         amount: Amount,
         destination: String,
