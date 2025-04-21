@@ -1,4 +1,4 @@
-package com.tangem.blockchain.nft.providers.moralis.network
+package com.tangem.blockchain.nft.providers.moralis.evm.network
 
 import retrofit2.http.Body
 import retrofit2.http.GET
