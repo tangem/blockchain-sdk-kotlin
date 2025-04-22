@@ -361,11 +361,13 @@ enum class Blockchain(
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
     fun reformatContractAddress(address: String?): String? {
-        return (getAddressService() as? ContractAddressValidator)?.reformatContractAddress(address)
+        val addressService = getAddressService() as? ContractAddressValidator ?: return address
+        return addressService.reformatContractAddress(address) ?: address
     }
 
     fun validateContractAddress(address: String): Boolean {
-        return (getAddressService() as? ContractAddressValidator)?.validateContractAddress(address) == true
+        val addressService = getAddressService() as? ContractAddressValidator ?: return validateAddress(address)
+        return addressService.validateContractAddress(address)
     }
 
     @Suppress("CyclomaticComplexMethod", "LongMethod")
