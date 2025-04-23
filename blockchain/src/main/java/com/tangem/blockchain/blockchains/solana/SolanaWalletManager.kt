@@ -133,7 +133,7 @@ class SolanaWalletManager internal constructor(
         wallet.recentTransactions.addAll(newUnconfirmedTxData)
     }
 
-    override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData.Uncompiled {
+    override fun createTransaction(amount: Amount, fee: Fee?, destination: String): TransactionData.Uncompiled {
         val accountCreationRent = feeRentHolder[fee]
 
         return if (accountCreationRent == null) {
@@ -141,7 +141,7 @@ class SolanaWalletManager internal constructor(
         } else {
             when (amount.type) {
                 AmountType.Coin -> {
-                    val newFee = Fee.Common(fee.amount.minus(accountCreationRent))
+                    val newFee = fee?.let { Fee.Common(fee.amount.minus(accountCreationRent)) } ?: fee
                     val newAmount = amount.plus(accountCreationRent)
                     super.createTransaction(newAmount, newFee, destination)
                 }
