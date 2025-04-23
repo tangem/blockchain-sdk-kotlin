@@ -1,6 +1,7 @@
 package com.tangem.blockchain.extensions
 
 import org.bitcoinj.core.ECKey
+import org.kethereum.contract.abi.types.leftPadToFixedSize
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -15,3 +16,7 @@ fun BigInteger?.toBigDecimalOrDefault(default: BigDecimal = BigDecimal.ZERO): Bi
     this?.toBigDecimal() ?: default
 
 fun BigInteger?.orZero(): BigInteger = this ?: BigInteger.ZERO
+
+fun BigInteger.toFixedSizeBytes(fixedSize: Int = 32) = toByteArray().removeLeadingZeros().leftPadToFixedSize(
+    fixedSize = fixedSize,
+)
