@@ -1,8 +1,8 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods
 
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
+import com.tangem.blockchain.extensions.hexToFixedSizeBytes
 import com.tangem.common.extensions.hexToBytes
-import org.kethereum.extensions.toFixedLengthByteArray
 
 /**
  * Token allowance call data in ERC20 - allowance(address,address)
@@ -17,8 +17,8 @@ data class AllowanceERC20TokenCallData(
     override val data: ByteArray
         get() {
             val prefixData = methodId.hexToBytes()
-            val ownerAddressData = ownerAddress.hexToBytes().toFixedLengthByteArray(fixedSize = 32)
-            val spenderAddressData = spenderAddress.hexToBytes().toFixedLengthByteArray(fixedSize = 32)
+            val ownerAddressData = ownerAddress.hexToFixedSizeBytes()
+            val spenderAddressData = spenderAddress.hexToFixedSizeBytes()
 
             return prefixData + ownerAddressData + spenderAddressData
         }
