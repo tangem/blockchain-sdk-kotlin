@@ -3,8 +3,9 @@ package com.tangem.blockchain.blockchains.ethereum.tokenmethods
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.extensions.bigIntegerValue
+import com.tangem.blockchain.extensions.hexToFixedSizeBytes
+import com.tangem.blockchain.extensions.toFixedSizeBytes
 import com.tangem.common.extensions.hexToBytes
-import org.kethereum.contract.abi.types.leftPadToFixedSize
 
 /**
  * Token transfer call data in ERC20 - transfer(address,uint256)
@@ -19,8 +20,8 @@ data class TransferERC20TokenCallData(
     override val data: ByteArray
         get() {
             val prefixData = methodId.hexToBytes()
-            val addressData = destination.hexToBytes().leftPadToFixedSize(fixedSize = 32)
-            val amountData = amount.bigIntegerValue()?.toByteArray()?.leftPadToFixedSize(fixedSize = 32)
+            val addressData = destination.hexToFixedSizeBytes()
+            val amountData = amount.bigIntegerValue()?.toFixedSizeBytes()
                 ?: error("Invalid token transfer amount")
             return prefixData + addressData + amountData
         }
