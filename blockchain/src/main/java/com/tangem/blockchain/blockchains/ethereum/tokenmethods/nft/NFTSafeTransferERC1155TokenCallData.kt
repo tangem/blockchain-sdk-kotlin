@@ -1,7 +1,8 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods.nft
 
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
-import com.tangem.blockchain.extensions.removeLeadingZeros
+import com.tangem.blockchain.extensions.hexToFixedSizeBytes
+import com.tangem.blockchain.extensions.toFixedSizeBytes
 import com.tangem.blockchain.nft.models.NFTAsset
 import com.tangem.common.extensions.hexToBytes
 import org.kethereum.contract.abi.types.leftPadToFixedSize
@@ -23,11 +24,11 @@ class NFTSafeTransferERC1155TokenCallData(
             val identifier = nftAsset.identifier as? NFTAsset.Identifier.EVM ?: error("Wrong blockchain identifier")
             val amount = nftAsset.amount ?: error("Invalid nft amount to transfer")
 
-            val fromAddressData = ownerAddress.hexToBytes().leftPadToFixedSize(fixedSize = 32)
-            val toAddressData = destinationAddress.hexToBytes().leftPadToFixedSize(fixedSize = 32)
-            val amountData = amount.toByteArray().leftPadToFixedSize(fixedSize = 32)
-            val tokenIdData = identifier.tokenId.toByteArray().removeLeadingZeros().leftPadToFixedSize(fixedSize = 32)
-            val dataOffset = DATA_OFFSET.hexToBytes().leftPadToFixedSize(fixedSize = 32)
+            val fromAddressData = ownerAddress.hexToFixedSizeBytes()
+            val toAddressData = destinationAddress.hexToFixedSizeBytes()
+            val amountData = amount.toFixedSizeBytes()
+            val tokenIdData = identifier.tokenId.toFixedSizeBytes()
+            val dataOffset = DATA_OFFSET.hexToFixedSizeBytes()
             val dataLength = byteArrayOf().leftPadToFixedSize(fixedSize = 32)
 
             return prefixData + fromAddressData + toAddressData + tokenIdData + amountData + dataOffset + dataLength
