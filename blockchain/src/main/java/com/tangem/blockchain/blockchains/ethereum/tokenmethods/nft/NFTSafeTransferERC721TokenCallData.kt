@@ -1,10 +1,10 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods.nft
 
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
-import com.tangem.blockchain.extensions.removeLeadingZeros
+import com.tangem.blockchain.extensions.hexToFixedSizeBytes
+import com.tangem.blockchain.extensions.toFixedSizeBytes
 import com.tangem.blockchain.nft.models.NFTAsset
 import com.tangem.common.extensions.hexToBytes
-import org.kethereum.contract.abi.types.leftPadToFixedSize
 
 /**
  * NFT safe transfer call data in ERC721 - safeTransferFrom(address, address, uint256)
@@ -23,9 +23,9 @@ class NFTSafeTransferERC721TokenCallData(
             val prefixData = methodId.hexToBytes()
             val identifier = nftAsset.identifier as? NFTAsset.Identifier.EVM ?: error("Wrong blockchain identifier")
 
-            val fromAddressData = ownerAddress.hexToBytes().leftPadToFixedSize(fixedSize = 32)
-            val toAddressData = destinationAddress.hexToBytes().leftPadToFixedSize(fixedSize = 32)
-            val tokenIdData = identifier.tokenId.toByteArray().removeLeadingZeros().leftPadToFixedSize(fixedSize = 32)
+            val fromAddressData = ownerAddress.hexToFixedSizeBytes()
+            val toAddressData = destinationAddress.hexToFixedSizeBytes()
+            val tokenIdData = identifier.tokenId.toFixedSizeBytes()
 
             return prefixData + fromAddressData + toAddressData + tokenIdData
         }
