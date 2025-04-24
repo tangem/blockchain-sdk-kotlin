@@ -8,6 +8,7 @@ import com.tangem.blockchain.blockchains.pepecoin.network.PepecoinNetworkService
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
+import com.tangem.common.extensions.toCompressedPublicKey
 
 internal object PepecoinWalletManagerAssembly : WalletManagerAssembly<BitcoinWalletManager>() {
 
@@ -16,7 +17,7 @@ internal object PepecoinWalletManagerAssembly : WalletManagerAssembly<BitcoinWal
             BitcoinWalletManager(
                 wallet = this,
                 transactionBuilder = BitcoinTransactionBuilder(
-                    walletPublicKey = publicKey.blockchainKey,
+                    walletPublicKey = publicKey.blockchainKey.toCompressedPublicKey(),
                     blockchain = blockchain,
                     walletAddresses = addresses,
                 ),
