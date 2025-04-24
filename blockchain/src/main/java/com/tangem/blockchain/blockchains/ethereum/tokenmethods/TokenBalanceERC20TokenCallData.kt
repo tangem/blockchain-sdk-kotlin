@@ -1,8 +1,8 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods
 
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
+import com.tangem.blockchain.extensions.hexToFixedSizeBytes
 import com.tangem.common.extensions.hexToBytes
-import org.kethereum.contract.abi.types.leftPadToFixedSize
 
 /**
  * Token balance call data in ERC20 - balanceOf(address)
@@ -18,7 +18,7 @@ data class TokenBalanceERC20TokenCallData(
     override val data: ByteArray
         get() {
             val prefixData = methodId.hexToBytes()
-            val addressData = address.hexToBytes().leftPadToFixedSize(fixedSize = 32)
+            val addressData = address.hexToFixedSizeBytes()
             return prefixData + addressData
         }
 }
