@@ -4,7 +4,6 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
-import com.tangem.blockchain.blockchains.pepecoin.PepecoinAddressService
 import com.tangem.blockchain.blockchains.pepecoin.PepecoinMainNetParams
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
@@ -38,7 +37,6 @@ internal class PepecoinNetworkService(
         get() = multiProvider.currentProvider.baseUrl
 
     private val multiProvider = MultiNetworkProvider(providers)
-    private val addressService = PepecoinAddressService()
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> = coroutineScope {
         val scriptHash = generateAddressScriptHash(address)
@@ -113,12 +111,10 @@ internal class PepecoinNetworkService(
             .filterIsInstance<Result.Success<ElectrumResponse.Transaction>>()
             .map { result ->
                 val transaction: ElectrumResponse.Transaction = result.data
-                val vin = transaction.vin ?: listOf()
                 val vout = transaction.vout ?: listOf()
-                val isIncoming = vin.any {
-                    val publicKey = it.txinwitness?.getOrNull(1) ?: return@any false
-                    val vinAddress = addressService.makeAddress(publicKey.hexToBytes())
-                    vinAddress != walletAddress
+                val isIncoming = vout.any {
+                    val publicKey = it.scriptPublicKey?.addresses?.firstOrNull()
+                    publicKey == walletAddress
                 }
                 val otherAddress = vout
                     .firstOrNull { output ->
