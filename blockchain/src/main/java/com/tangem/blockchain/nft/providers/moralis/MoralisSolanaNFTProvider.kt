@@ -79,11 +79,9 @@ internal class MoralisSolanaNFTProvider(
         walletAddress: String,
         collectionIdentifier: NFTCollection.Identifier,
     ): List<NFTAsset> {
-        require(collectionIdentifier is NFTCollection.Identifier.Solana)
-        return getCollections(walletAddress)
-            .firstOrNull { it.identifier == collectionIdentifier }
-            ?.assets
-            .orEmpty()
+        throw UnsupportedOperationException(
+            "Use getCollections() to get all assets grouped into collection",
+        )
     }
 
     override suspend fun getAsset(
