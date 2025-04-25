@@ -5,23 +5,41 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.HEX_PREFIX
 import com.tangem.blockchain.common.address.ContractAddressValidator
 import com.tangem.blockchain.common.address.WalletCoreAddressService
+import com.tangem.common.extensions.hexToBytes
 
 internal class SuiAddressService(
     blockchain: Blockchain,
 ) : WalletCoreAddressService(blockchain = blockchain), ContractAddressValidator {
 
     override fun validateContractAddress(address: String): Boolean {
-        return validate(address) // Fix in [REDACTED_TASK_KEY]
+        if (address == SuiConstants.COIN_TYPE) return true
+        val formatted = reformatContractAddress(address) ?: return false
+        val parts = formatted.split(CONTRACT_ADDRESS_SEPARATOR)
+        if (parts.size != CONTRACT_ADDRESS_PARTS_COUNT) return false
+
+        val (objectId, moduleName, structName) = parts
+
+        val objectIdClean = objectId.removePrefix(HEX_PREFIX)
+        val objectIdBytes = try {
+            objectIdClean.hexToBytes()
+        } catch (_: Exception) {
+            return false
+        }
+        if (objectIdBytes.size != ADDRESS_LENGTH_BYTES) return false
+
+        val nameRegex = Regex("""^[_a-zA-Z][_a-zA-Z0-9]*$""")
+        if (!nameRegex.matches(moduleName)) return false
+        if (!nameRegex.matches(structName)) return false
+
+        return true
     }
 
     override fun reformatContractAddress(address: String?): String? {
-        // Ignore coin contract address
         if (address == SuiConstants.COIN_TYPE || address == null) return address
 
         val parsedAddress = address.split(CONTRACT_ADDRESS_SEPARATOR).toMutableList()
         var rawAddress = parsedAddress.first().removePrefix(HEX_PREFIX)
 
-        // Fill address up to 64 symbols
         while (rawAddress.length < ADDRESS_LENGTH) {
             rawAddress = "0$rawAddress"
         }
@@ -35,5 +53,7 @@ internal class SuiAddressService(
     private companion object {
         const val CONTRACT_ADDRESS_SEPARATOR = "::"
         const val ADDRESS_LENGTH = 64
+        const val ADDRESS_LENGTH_BYTES = 32
+        const val CONTRACT_ADDRESS_PARTS_COUNT = 3
     }
 }
