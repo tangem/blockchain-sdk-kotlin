@@ -13,6 +13,7 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.formatHex
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.hexToBytes
@@ -169,7 +170,7 @@ internal class PolkadotWalletManager(
                         when (val sendResult = networkProvider.sendTransaction(signedData)) {
                             is Result.Failure -> sendResult
                             is Result.Success -> {
-                                val hash = sendResult.data.formattedHash()
+                                val hash = sendResult.data.formatHex()
                                 transactionDataList[index].hash = hash
                                 wallet.addOutgoingTransaction(transactionDataList[index].updateHash(hash = hash))
                                 Result.Success(TransactionSendResult(hash))
@@ -254,7 +255,7 @@ internal class PolkadotWalletManager(
             return Result.Failure(it.error)
         }
 
-        val hash = txHash.formattedHash()
+        val hash = txHash.formatHex()
         transactionData.hash = hash
         transactionData.date = Calendar.getInstance()
         wallet.addOutgoingTransaction(transactionData)
@@ -312,13 +313,6 @@ internal class PolkadotWalletManager(
         val isUnderfunded =
             destinationBalance == BigDecimal.ZERO || destinationBalance < existentialDeposit
         return Result.Success(isUnderfunded)
-    }
-
-    /** Adds 0x prefix transactions hashes if necessary to correctly open transaction in explorer */
-    private fun String.formattedHash() = if (!this.startsWith(HEX_PREFIX)) {
-        HEX_PREFIX.plus(this)
-    } else {
-        this
     }
 
     private companion object {

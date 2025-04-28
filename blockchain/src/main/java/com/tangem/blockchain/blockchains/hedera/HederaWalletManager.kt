@@ -187,13 +187,40 @@ internal class HederaWalletManager(
             is AmountType.Token -> HBAR_TOKEN_TRANSFER_USD_COST
             else -> return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         }
+
+        val customFeesInfo = (amount.type as? AmountType.Token)?.let {
+            networkService.getTokensCustomFeesInfo(it.token.contractAddress)
+                .successOr { return Result.Failure(BlockchainSdkError.FailedToLoadFee) }
+        }
+
         return when (val usdExchangeRateResult = networkService.getUsdExchangeRate()) {
             is Result.Success -> {
+                val exchangeRate = usdExchangeRateResult.data
                 val isAccountExists = isAccountExist(destination).successOr { false }
-                val feeBase = if (isAccountExists) transferFeeBase else HBAR_CREATE_ACCOUNT_USD_COST
-                val fee = (feeBase * MAX_FEE_MULTIPLIER * usdExchangeRateResult.data)
-                    .setScale(blockchain.decimals(), RoundingMode.UP)
-                Result.Success(TransactionFee.Single(Fee.Common(Amount(fee, blockchain))))
+
+                var feeBase = if (isAccountExists) {
+                    transferFeeBase
+                } else {
+                    HBAR_CREATE_ACCOUNT_USD_COST
+                }
+
+                if (customFeesInfo?.hasTokenCustomFees == true) {
+                    feeBase += HBAR_CUSTOM_FEE_TOKEN_TRANSFER_USD_COST
+                }
+
+                val additionalHBARFee = customFeesInfo?.additionalHBARFee ?: BigDecimal.ZERO
+
+                val feeValue = exchangeRate * feeBase * MAX_FEE_MULTIPLIER + additionalHBARFee
+
+                val roundedFee = feeValue.setScale(blockchain.decimals(), RoundingMode.UP)
+                val feeAmount = Amount(roundedFee, blockchain)
+
+                val fee = Fee.Hedera(
+                    amount = feeAmount,
+                    additionalHBARFee = customFeesInfo?.additionalHBARFee ?: BigDecimal.ZERO,
+                )
+
+                Result.Success(TransactionFee.Single(fee))
             }
             is Result.Failure -> {
                 usdExchangeRateResult
@@ -328,6 +355,7 @@ internal class HederaWalletManager(
         val HBAR_CREATE_ACCOUNT_USD_COST = BigDecimal("0.05")
         val HBAR_TOKEN_ASSOCIATE_USD_COST = BigDecimal("0.05")
         val HBAR_TOKEN_TRANSFER_USD_COST = BigDecimal("0.001")
+        val HBAR_CUSTOM_FEE_TOKEN_TRANSFER_USD_COST = BigDecimal("0.001")
         /**
          * Hedera fees are low, allow 10% safety margin to allow usage of not precise fee estimate
          */

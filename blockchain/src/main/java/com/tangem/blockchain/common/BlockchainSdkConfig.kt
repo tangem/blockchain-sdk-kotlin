@@ -20,7 +20,6 @@ data class BlockchainSdkConfig(
     val bittensorOnfinalityApiKey: String? = null,
     val alephiumApiKey: String? = null,
     val moralisApiKey: String? = null,
-    val nftScanApiKey: String? = null,
 )
 
 data class BlockchairCredentials(
