@@ -347,11 +347,15 @@ internal class TronWalletManager(
     ): Result<List<ByteArray>> {
         return when (val result = signer.sign(transactionHashes, publicKey)) {
             is CompletionResult.Success -> {
-                val unmarshalledSignatures = result.data.mapIndexed { index, hash ->
+                val unmarshalledSignatures = result.data.mapIndexed { index, sign ->
                     if (publicKey == dummySigner.publicKey) {
-                        hash + ByteArray(1)
+                        sign + ByteArray(1)
                     } else {
-                        UnmarshalHelper().unmarshalSignatureEVMLegacy(hash, transactionHashes[index], publicKey)
+                        UnmarshalHelper.unmarshalSignatureExtended(
+                            signature = sign,
+                            hash = transactionHashes[index],
+                            publicKey = publicKey,
+                        ).asRSVLegacyEVM()
                     }
                 }
 
@@ -374,7 +378,8 @@ internal class TronWalletManager(
                 val unmarshalledSignature = if (publicKey == dummySigner.publicKey) {
                     result.data + ByteArray(1)
                 } else {
-                    UnmarshalHelper().unmarshalSignatureEVMLegacy(result.data, transactionHash, publicKey)
+                    UnmarshalHelper.unmarshalSignatureExtended(result.data, transactionHash, publicKey)
+                        .asRSVLegacyEVM()
                 }
                 Result.Success(unmarshalledSignature)
             }
