@@ -97,7 +97,7 @@ class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
         publicKeys.add(publicKey.blockchainKey.toDecompressedPublicKey())
 
         val signatures = DataVector()
-        signatures.add(UnmarshalHelper().unmarshalSignatureExtended(signature, hash, publicKey).asRSV())
+        signatures.add(UnmarshalHelper.unmarshalSignatureExtended(signature, hash, publicKey).asRSV())
 
         val compileWithSignatures = TransactionCompiler.compileWithSignatures(
             coinType,

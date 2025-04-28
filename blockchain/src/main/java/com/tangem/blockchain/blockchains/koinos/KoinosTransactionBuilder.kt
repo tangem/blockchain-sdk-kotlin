@@ -97,7 +97,7 @@ internal class KoinosTransactionBuilder(isTestnet: Boolean) {
         hashToSign: ByteArray,
         publicKey: Wallet.PublicKey,
     ): KoinosProtocol.Transaction {
-        val extendedSignature = UnmarshalHelper()
+        val extendedSignature = UnmarshalHelper
             .unmarshalSignatureExtended(signature = signature, hash = hashToSign, publicKey = publicKey)
 
         val v = extendedSignature.recId + 31
