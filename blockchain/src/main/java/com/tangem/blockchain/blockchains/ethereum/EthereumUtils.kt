@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxIn
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.UnmarshalHelper
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.hexToBigDecimal
@@ -16,9 +17,6 @@ import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.remove
 import com.tangem.common.extensions.toDecompressedPublicKey
 import org.kethereum.DEFAULT_GAS_LIMIT
-import org.kethereum.crypto.api.ec.ECDSASignature
-import org.kethereum.crypto.determineRecId
-import org.kethereum.crypto.impl.ec.canonicalise
 import org.kethereum.extensions.transactions.encode
 import org.kethereum.keccakshortcut.keccak
 import org.kethereum.model.*
@@ -66,24 +64,6 @@ object EthereumUtils {
 
     private fun ByteArray.allOutOfRangeIsEqualTo(range: Int, equal: Byte): Boolean =
         this.copyOfRange(range, this.size).all { it == equal }
-
-    fun prepareSignedMessageData(signedHash: ByteArray, hashToSign: ByteArray, publicKey: ByteArray): String {
-        val r = BigInteger(1, signedHash.copyOfRange(0, 32))
-        val s = BigInteger(1, signedHash.copyOfRange(32, 64))
-
-        val ecdsaSignature = ECDSASignature(r, s).canonicalise()
-
-        val recId = ecdsaSignature.determineRecId(
-            hashToSign,
-            PublicKey(publicKey.sliceArray(1..64)),
-        )
-        val v = (recId + 27).toBigInteger()
-
-        return HEX_PREFIX +
-            ecdsaSignature.r.toString(16) +
-            ecdsaSignature.s.toString(16) +
-            v.toString(16)
-    }
 
     fun buildTransactionToSign(
         transactionData: TransactionData,
@@ -193,8 +173,12 @@ object EthereumUtils {
         walletPublicKey: Wallet.PublicKey,
         blockchain: Blockchain,
     ): ByteArray {
-        val publicKey = walletPublicKey.blockchainKey.toDecompressedPublicKey().sliceArray(1..64)
-        return prepareTransactionToSend(signature, transactionToSign, publicKey, blockchain)
+        return prepareTransactionToSend(
+            signature = signature,
+            transactionToSign = transactionToSign,
+            walletPublicKey = walletPublicKey.blockchainKey.toDecompressedPublicKey(),
+            blockchain = blockchain,
+        )
     }
 
     fun prepareTransactionToSend(
@@ -203,19 +187,17 @@ object EthereumUtils {
         walletPublicKey: ByteArray,
         blockchain: Blockchain,
     ): ByteArray {
-        val r = BigInteger(1, signature.copyOfRange(0, 32))
-        val s = BigInteger(1, signature.copyOfRange(32, 64))
-
-        val ecdsaSignature = ECDSASignature(r, s).canonicalise()
-
-        val recId = ecdsaSignature.determineRecId(
-            transactionToSign.hash,
-            PublicKey(walletPublicKey),
+        val extendedSignature = UnmarshalHelper.unmarshalSignatureExtended(
+            signature = signature,
+            hash = transactionToSign.hash,
+            publicKey = walletPublicKey,
         )
+
         val chainId = blockchain.getChainId()
             ?: error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
-        val v = (recId + 27 + 8 + chainId * 2).toBigInteger() // EIP-155
-        val signatureData = SignatureData(ecdsaSignature.r, ecdsaSignature.s, v)
+
+        val v = (extendedSignature.recId + 27 + 8 + chainId * 2).toBigInteger() // EIP-155
+        val signatureData = SignatureData(extendedSignature.r, extendedSignature.s, v)
 
         return transactionToSign.transaction.encode(signatureData)
     }
