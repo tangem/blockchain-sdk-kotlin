@@ -270,7 +270,7 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
     ): Ethereum.SigningOutput {
         if (signature.size != SIGNATURE_SIZE) throw BlockchainSdkError.CustomError("Invalid signature size")
 
-        val unmarshalSignature = UnmarshalHelper()
+        val unmarshalSignature = UnmarshalHelper
             .unmarshalSignatureExtended(
                 signature = signature,
                 hash = hash,
