@@ -6,4 +6,4 @@ fun max(a: BigDecimal, b: BigDecimal): BigDecimal {
     return if (a > b) a else b
 }
 
-fun BigDecimal?.orZero() = this ?: BigDecimal.ZERO
+fun BigDecimal?.orZero(): BigDecimal = this ?: BigDecimal.ZERO
