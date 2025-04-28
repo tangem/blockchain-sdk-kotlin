@@ -3,7 +3,10 @@ package com.tangem.blockchain.blockchains.ethereum
 import com.tangem.blockchain.blockchains.ethereum.eip712.EthEip712Util
 import com.tangem.blockchain.blockchains.ethereum.models.EthereumCompiledTransaction
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.hexToBigDecimal
 import com.tangem.blockchain.extensions.isValidHex
@@ -16,10 +19,7 @@ import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.crypto.api.ec.ECDSASignature
 import org.kethereum.crypto.determineRecId
 import org.kethereum.crypto.impl.ec.canonicalise
-import org.kethereum.extensions.toBytesPadded
-import org.kethereum.extensions.toFixedLengthByteArray
 import org.kethereum.extensions.transactions.encode
-import org.kethereum.extensions.transactions.tokenTransferSignature
 import org.kethereum.keccakshortcut.keccak
 import org.kethereum.model.*
 import org.komputing.khex.extensions.toHexString
@@ -28,12 +28,7 @@ import java.math.BigInteger
 
 @Suppress("MagicNumber", "LargeClass", "LongParameterList")
 object EthereumUtils {
-    private val tokenApproveSignature = "approve(address,uint256)".toByteArray().toKeccak().copyOf(4)
-    private val processSignature =
-        "process(address,uint256,bytes16,uint16)".toByteArray().toKeccak().copyOf(4) // 0x960cab120
-
     private const val HEX_PREFIX = "0x"
-    private const val HEX_F = "f"
 
     // ERC-20 standard defines balanceOf function as returning uint256. Don't accept anything else.
     private const val UInt256Size = 32
@@ -171,12 +166,10 @@ object EthereumUtils {
             input = ByteArray(0)
         } else { // token transfer (or approve)
             to = Address(
-                transactionData.contractAddress
-                    ?: error("Contract address is not specified!"),
+                transactionData.contractAddress ?: error("Contract address is not specified!"),
             )
             value = BigInteger.ZERO
-            input =
-                createErc20TransferData(transactionData.destinationAddress, bigIntegerAmount)
+            input = extras.callData?.data ?: error("Call data is not specified")
         }
 
         val gasLimitToUse = extras.gasLimit
@@ -190,7 +183,7 @@ object EthereumUtils {
             gasPrice = fee.divide(gasLimitToUse),
             gasLimit = gasLimitToUse,
             nonce = nonceValue,
-            input = extras.data ?: input, // use data from extras prefer (TODO refactor this)
+            input = input,
         )
     }
 
@@ -225,35 +218,6 @@ object EthereumUtils {
         val signatureData = SignatureData(ecdsaSignature.r, ecdsaSignature.s, v)
 
         return transactionToSign.transaction.encode(signatureData)
-    }
-
-    // TODO: [REDACTED_JIRA] Replace with SmartContractMethod interface implementations
-    fun createErc20ApproveDataHex(spender: String, amount: Amount?): String = createErc20ApproveData(
-        spender = spender,
-        amount = amount?.value?.movePointRight(amount.decimals)?.toBigInteger(),
-    ).toHexString()
-
-    internal fun createErc20TransferData(recipient: String, amount: BigInteger) = tokenTransferSignature.toByteArray() +
-        recipient.substring(2).hexToBytes().toFixedLengthByteArray(32) +
-        amount.toBytesPadded(32)
-
-    // TODO: [REDACTED_JIRA] Replace with SmartContractMethod interface implementations
-    internal fun createErc20TransferData(recepient: String, amount: Amount) = createErc20TransferData(
-        recepient,
-        amount.value!!.movePointRight(amount.decimals).toBigInteger(),
-    )
-
-    private fun createErc20ApproveData(spender: String, amount: BigInteger?): ByteArray = tokenApproveSignature +
-        spender.substring(2).hexToBytes().toFixedLengthByteArray(32) +
-        (amount?.toBytesPadded(32) ?: HEX_F.repeat(64).hexToBytes())
-
-    fun createProcessData(cardAddress: String, amount: BigInteger, otp: ByteArray, sequence: Int): ByteArray {
-        val cardAddressBytes = cardAddress.substring(2).hexToBytes().toFixedLengthByteArray(32)
-        val amountBytes = amount.toBytesPadded(32)
-        val otpBytes = otp.copyOf(16) + ByteArray(16)
-        val sequenceBytes = BigInteger.valueOf(sequence.toLong()).toBytesPadded(32)
-
-        return processSignature + cardAddressBytes + amountBytes + otpBytes + sequenceBytes
     }
 
     fun makeTypedDataHash(rawMessage: String): ByteArray {
