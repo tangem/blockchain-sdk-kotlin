@@ -143,7 +143,7 @@ object EthereumUtils {
         if (transactionData.amount.type == AmountType.Coin) { // coin transfer
             to = Address(transactionData.destinationAddress)
             value = bigIntegerAmount
-            input = ByteArray(0)
+            input = extras.callData?.data ?: byteArrayOf(0)
         } else { // token transfer (or approve)
             to = Address(
                 transactionData.contractAddress ?: error("Contract address is not specified!"),
