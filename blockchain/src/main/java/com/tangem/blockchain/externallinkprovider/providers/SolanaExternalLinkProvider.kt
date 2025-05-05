@@ -6,7 +6,7 @@ import com.tangem.blockchain.nft.models.NFTAsset
 
 internal class SolanaExternalLinkProvider(private val isTestnet: Boolean) : ExternalLinkProvider {
 
-    private val baseUrl = "https://explorer.solana.com/"
+    private val baseUrl = "https://solscan.io/"
     private val testNetParam = "?cluster=testnet"
 
     override val explorerBaseUrl: String = if (isTestnet) "$baseUrl$testNetParam" else baseUrl
@@ -16,7 +16,7 @@ internal class SolanaExternalLinkProvider(private val isTestnet: Boolean) : Exte
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
         return buildString {
             append(baseUrl)
-            append("address/$walletAddress")
+            append("account/$walletAddress")
             if (isTestnet) append(testNetParam)
         }
     }
@@ -25,7 +25,7 @@ internal class SolanaExternalLinkProvider(private val isTestnet: Boolean) : Exte
         require(assetIdentifier is NFTAsset.Identifier.Solana)
         return buildString {
             append(baseUrl)
-            append("address/${assetIdentifier.tokenAddress}")
+            append("token/${assetIdentifier.tokenAddress}")
             if (isTestnet) append(testNetParam)
         }
     }
