@@ -70,6 +70,7 @@ data class NFTAsset(
     @JsonClass(generateAdapter = true)
     data class SalePrice(
         @Json(name = "value") val value: BigDecimal,
-        @Json(name = "symbol") val symbol: String,
+        @Json(name = "symbol") val symbol: String?,
+        @Json(name = "decimals") val decimals: Int?,
     )
 }
