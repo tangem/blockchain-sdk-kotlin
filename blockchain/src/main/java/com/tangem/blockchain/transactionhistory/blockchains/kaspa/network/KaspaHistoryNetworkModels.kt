@@ -9,28 +9,28 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 internal data class KaspaCoinTransaction(
     @Json(name = "subnetwork_id")
-    val subnetworkId: String,
+    val subnetworkId: String?,
 
     @Json(name = "transaction_id")
-    val transactionId: String,
+    val transactionId: String?,
 
     @Json(name = "hash")
-    val hash: String,
+    val hash: String?,
 
     @Json(name = "mass")
-    val mass: String,
+    val mass: String?,
 
     @Json(name = "payload")
     val payload: String? = null,
 
     @Json(name = "block_hash")
-    val blockHash: List<String>,
+    val blockHash: List<String>?,
 
     @Json(name = "block_time")
-    val blockTime: Long,
+    val blockTime: Long?,
 
     @Json(name = "is_accepted")
-    val isAccepted: Boolean,
+    val isAccepted: Boolean?,
 
     @Json(name = "accepting_block_hash")
     val acceptingBlockHash: String?,
@@ -39,10 +39,10 @@ internal data class KaspaCoinTransaction(
     val acceptingBlockBlueScore: Long?,
 
     @Json(name = "inputs")
-    val inputs: List<KaspaCoinTransactionInput> = emptyList(),
+    val inputs: List<KaspaCoinTransactionInput>? = emptyList(),
 
     @Json(name = "outputs")
-    val outputs: List<KaspaTransactionTransactionOutput> = emptyList(),
+    val outputs: List<KaspaTransactionTransactionOutput>? = emptyList(),
 )
 
 /**
@@ -66,16 +66,16 @@ internal data class KaspaCoinTransactionInput(
     val previousOutpointResolved: Any? = null,
 
     @Json(name = "previous_outpoint_address")
-    val previousOutpointAddress: String,
+    val previousOutpointAddress: String?,
 
     @Json(name = "previous_outpoint_amount")
-    val previousOutpointAmount: Long,
+    val previousOutpointAmount: Long?,
 
     @Json(name = "signature_script")
-    val signatureScript: String,
+    val signatureScript: String?,
 
     @Json(name = "sig_op_count")
-    val sigOpCount: String,
+    val sigOpCount: String?,
 )
 
 /**
@@ -93,13 +93,13 @@ internal data class KaspaTransactionTransactionOutput(
     val amount: Long,
 
     @Json(name = "script_public_key")
-    val scriptPublicKey: String,
+    val scriptPublicKey: String?,
 
     @Json(name = "script_public_key_address")
-    val scriptPublicKeyAddress: String,
+    val scriptPublicKeyAddress: String?,
 
     @Json(name = "script_public_key_type")
-    val scriptPublicKeyType: String,
+    val scriptPublicKeyType: String?,
 
     @Json(name = "accepting_block_hash")
     val acceptingBlockHash: String? = null,
