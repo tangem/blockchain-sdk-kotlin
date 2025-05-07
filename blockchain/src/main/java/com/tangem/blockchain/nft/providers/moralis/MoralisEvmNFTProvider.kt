@@ -134,12 +134,11 @@ internal class MoralisEvmNFTProvider(
             null
         }
 
-        val tokenSymbol = response.lastSale?.paymentToken?.tokenSymbol
-
-        return if (price != null && tokenSymbol != null) {
+        return if (price != null) {
             NFTAsset.SalePrice(
                 value = price,
-                symbol = tokenSymbol,
+                symbol = response.lastSale?.paymentToken?.tokenSymbol,
+                decimals = response.lastSale?.paymentToken?.tokenDecimals?.toIntOrNull(),
             )
         } else {
             null
