@@ -181,6 +181,16 @@ internal class TronWalletManager(
         callData = null,
     )
 
+    override suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
+        transactionData.requireUncompiled()
+        val extra = transactionData.extras as? TronTransactionExtras
+        return getFee(
+            amount = transactionData.amount,
+            destination = transactionData.destinationAddress,
+            callData = extra?.callData,
+        )
+    }
+
     @Suppress("MagicNumber")
     override suspend fun getFee(
         amount: Amount,
