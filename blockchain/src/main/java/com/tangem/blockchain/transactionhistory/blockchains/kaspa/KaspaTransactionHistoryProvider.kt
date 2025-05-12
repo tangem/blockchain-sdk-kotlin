@@ -76,17 +76,18 @@ internal class KaspaTransactionHistoryProvider(
 
     private fun List<KaspaCoinTransaction>.toTxHistoryItems(walletAddress: String): List<TransactionHistoryItem> {
         return mapNotNull { transaction ->
-            val isOutgoing = transaction.inputs.any { it.previousOutpointAddress == walletAddress }
+            val inputs = transaction.inputs ?: emptyList()
+            val isOutgoing = inputs.any { it.previousOutpointAddress == walletAddress }
             val amount = transaction.extractTransactionAmount(isOutgoing, walletAddress) ?: return@mapNotNull null
             val destination = transaction.extractDestination(isOutgoing, walletAddress) ?: return@mapNotNull null
             val source = transaction.extractSource(isOutgoing, walletAddress) ?: return@mapNotNull null
             TransactionHistoryItem(
-                txHash = transaction.transactionId,
-                timestamp = transaction.blockTime,
+                txHash = transaction.transactionId.orEmpty(),
+                timestamp = transaction.blockTime ?: 0L,
                 isOutgoing = isOutgoing,
                 destinationType = destination,
                 sourceType = source,
-                status = if (transaction.isAccepted) Confirmed else Unconfirmed,
+                status = if (transaction.isAccepted == true) Confirmed else Unconfirmed,
                 type = TransactionHistoryItem.TransactionType.Transfer,
                 amount = amount,
             )
@@ -94,13 +95,15 @@ internal class KaspaTransactionHistoryProvider(
     }
 
     private fun KaspaCoinTransaction.extractTransactionAmount(isOutgoing: Boolean, walletAddress: String): Amount? {
+        val outputs = this.outputs ?: emptyList()
+        val inputs = this.inputs ?: emptyList()
         val amount = if (isOutgoing) {
             outputs.firstOrNull { it.scriptPublicKeyAddress != walletAddress }?.amount
         } else {
             outputs.firstOrNull { it.scriptPublicKeyAddress == walletAddress }?.amount
         } ?: return null
 
-        val fee = inputs.sumOf { it.previousOutpointAmount } - outputs.sumOf { it.amount }
+        val fee = inputs.sumOf { it.previousOutpointAmount ?: 0L } - outputs.sumOf { it.amount }
         val amountWithFee = if (isOutgoing) amount + fee else amount
 
         return Amount(
@@ -113,8 +116,9 @@ internal class KaspaTransactionHistoryProvider(
         return when {
             isOutgoing -> {
                 val outputAddresses = outputs
-                    .filter { it.scriptPublicKeyAddress != walletAddress }
-                    .map { TransactionHistoryItem.AddressType.User(it.scriptPublicKeyAddress) }
+                    ?.filter { it.scriptPublicKeyAddress != walletAddress }
+                    ?.map { TransactionHistoryItem.AddressType.User(it.scriptPublicKeyAddress.orEmpty()) }
+                    ?: emptyList()
 
                 when {
                     outputAddresses.isEmpty() -> null
@@ -131,7 +135,7 @@ internal class KaspaTransactionHistoryProvider(
             isOutgoing -> SourceType.Single(walletAddress)
             else ->
                 inputs
-                    .firstOrNull { it.previousOutpointAddress != walletAddress }
+                    ?.firstOrNull { it.previousOutpointAddress != walletAddress }
                     ?.previousOutpointAddress
                     ?.let(SourceType::Single)
         }
