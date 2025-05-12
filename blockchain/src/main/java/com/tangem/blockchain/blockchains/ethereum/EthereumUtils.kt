@@ -3,11 +3,7 @@ package com.tangem.blockchain.blockchains.ethereum
 import com.tangem.blockchain.blockchains.ethereum.eip712.EthEip712Util
 import com.tangem.blockchain.blockchains.ethereum.models.EthereumCompiledTransaction
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.UnmarshalHelper
-import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.hexToBigDecimal
 import com.tangem.blockchain.extensions.isValidHex
@@ -143,7 +139,7 @@ object EthereumUtils {
         if (transactionData.amount.type == AmountType.Coin) { // coin transfer
             to = Address(transactionData.destinationAddress)
             value = bigIntegerAmount
-            input = extras.callData?.data ?: byteArrayOf(0)
+            input = extras.callData?.data ?: ByteArray(0) // use empty ByteArray
         } else { // token transfer (or approve)
             to = Address(
                 transactionData.contractAddress ?: error("Contract address is not specified!"),
