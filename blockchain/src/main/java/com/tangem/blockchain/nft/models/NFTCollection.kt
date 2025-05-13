@@ -26,7 +26,7 @@ data class NFTCollection(
 
         @JsonClass(generateAdapter = true)
         data class Solana(
-            @Json(name = "collection") val collection: String?,
+            @Json(name = "collectionAddress") val collectionAddress: String?,
         ) : Identifier()
 
         data object Unknown : Identifier()
