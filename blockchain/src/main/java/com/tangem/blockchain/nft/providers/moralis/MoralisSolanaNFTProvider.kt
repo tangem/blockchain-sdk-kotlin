@@ -31,7 +31,7 @@ internal class MoralisSolanaNFTProvider(
         )
         .groupBy { assetResponse ->
             NFTCollection.Identifier.Solana(
-                collection = assetResponse.collection?.name,
+                collectionAddress = assetResponse.collection?.collectionAddress,
             )
         }
         .mapValues { (collectionIdentifier, assetsResponse) ->
