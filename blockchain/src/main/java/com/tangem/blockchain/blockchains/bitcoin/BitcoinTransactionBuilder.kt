@@ -223,11 +223,16 @@ internal fun TransactionData.toBitcoinJTransaction(
 
     val transaction = Transaction(networkParameters)
     for (utxo in unspentOutputs) {
-        transaction.addInput(
-            Sha256Hash.wrap(utxo.transactionHash),
-            utxo.outputIndex,
-            Script(utxo.outputScript),
+        val spendTxHash = Sha256Hash.wrap(utxo.transactionHash)
+        val params = transaction.params
+        val input = TransactionInput(
+            /* params = */ params,
+            /* parentTransaction = */ transaction,
+            /* scriptBytes = */ Script(utxo.outputScript).program,
+            /* outpoint = */ TransactionOutPoint(params, utxo.outputIndex, spendTxHash),
         )
+        input.sequenceNumber = RBF_SEQUENCE_NUMBER // RBF flag
+        transaction.addInput(input)
     }
     transaction.addOutput(
         Coin.parseCoin(this.amount.value!!.toPlainString()),
@@ -244,3 +249,5 @@ internal fun TransactionData.toBitcoinJTransaction(
     }
     return transaction
 }
+
+private const val RBF_SEQUENCE_NUMBER = 0L
