@@ -4,6 +4,8 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.nft.NFTProvider
+import com.tangem.blockchain.nft.extensions.ipfsToHttps
+import com.tangem.blockchain.nft.extensions.removeUrlQuery
 import com.tangem.blockchain.nft.models.NFTAsset
 import com.tangem.blockchain.nft.models.NFTCollection
 import com.tangem.blockchain.nft.providers.moralis.solana.network.MoralisSolanaApi
@@ -125,7 +127,7 @@ internal class MoralisSolanaNFTProvider(
     private fun MoralisSolanaNFTAssetResponse.toNFTAssetMedia(): NFTAsset.Media? {
         val firstFile = properties?.files?.firstOrNull()
         return firstFile?.uri?.let {
-            NFTAsset.Media(firstFile.type, it)
+            NFTAsset.Media(firstFile.type, it.ipfsToHttps().removeUrlQuery())
         }
     }
 
