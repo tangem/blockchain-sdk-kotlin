@@ -5,10 +5,10 @@ import com.tangem.blockchain.blockchains.koinos.network.dto.KoinosProtocol
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.decodeBase58
+import com.tangem.blockchain.extensions.removeLeadingZero
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.toByteString
-import org.kethereum.extensions.removeLeadingZero
 import java.math.BigDecimal
 
 internal class KoinosTransactionBuilder(isTestnet: Boolean) {
