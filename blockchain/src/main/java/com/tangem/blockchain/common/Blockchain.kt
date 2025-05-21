@@ -849,17 +849,12 @@ enum class Blockchain(
         Fantom, FantomTestnet,
         BSC, BSCTestnet,
         Polygon, // supported testnet - Amoy (80002)
-        Gnosis,
         Cronos,
-        ZkSyncEra, ZkSyncEraTestnet,
         Moonbeam, MoonbeamTestnet,
-        PolygonZkEVM, PolygonZkEVMTestnet,
         Moonriver, MoonriverTestnet,
         Chiliz, ChilizTestnet,
-        Mantle, // supported testnet - Sepolia (5003)
         Optimism, // supported testnet - Sepolia (11155420)
         Base, BaseTestnet,
-        Blast, BlastTestnet,
 
         Solana,
         -> true
