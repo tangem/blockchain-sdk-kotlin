@@ -1,10 +1,10 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.extensions.removeLeadingZero
 import com.tangem.common.extensions.toDecompressedPublicKey
 import org.kethereum.crypto.api.ec.ECDSASignature
 import org.kethereum.crypto.determineRecId
 import org.kethereum.crypto.impl.ec.canonicalise
-import org.kethereum.extensions.removeLeadingZero
 import org.kethereum.model.PublicKey
 import org.kethereum.model.SignatureData
 import java.math.BigInteger
@@ -74,13 +74,9 @@ data class ExtendedSecp256k1Signature(val r: BigInteger, val s: BigInteger, val 
         val v = recId + recIdOffset
         val signatureData = SignatureData(r = r, s = s, v = v.toBigInteger())
 
-        val partV = if (v == 0) {
-            signatureData.v.toByteArray()
-        } else {
-            signatureData.v.toByteArray().removeLeadingZero()
-        }
+        // !!Important, use removeLeadingZero() from com.tangem.blockchain.extensions
         return signatureData.r.toByteArray().removeLeadingZero() +
             signatureData.s.toByteArray().removeLeadingZero() +
-            partV
+            signatureData.v.toByteArray().removeLeadingZero()
     }
 }
