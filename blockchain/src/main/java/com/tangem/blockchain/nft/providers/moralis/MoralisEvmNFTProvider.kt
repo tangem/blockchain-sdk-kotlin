@@ -5,6 +5,8 @@ import com.tangem.blockchain.common.HEX_PREFIX
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.nft.NFTProvider
+import com.tangem.blockchain.nft.extensions.ipfsToHttps
+import com.tangem.blockchain.nft.extensions.removeUrlQuery
 import com.tangem.blockchain.nft.models.NFTAsset
 import com.tangem.blockchain.nft.models.NFTCollection
 import com.tangem.blockchain.nft.providers.moralis.evm.network.*
@@ -162,17 +164,19 @@ internal class MoralisEvmNFTProvider(
         decimals = 0,
         salePrice = null,
         rarity = toNFTAssetRarity(),
-        media = media?.toNFTAssetMedia(),
+        media = toNFTAssetMedia(),
         traits = normalizedMetadata?.attributes?.mapNotNull {
             it.toNFTAssetTrait()
         }.orEmpty(),
     )
 
-    private fun MoralisEvmNFTAssetResponse.Media.toNFTAssetMedia(): NFTAsset.Media? = when {
-        mediaCollection?.high?.url != null -> NFTAsset.Media(mimeType, mediaCollection.high.url)
-        mediaCollection?.medium?.url != null -> NFTAsset.Media(mimeType, mediaCollection.medium.url)
-        originalMediaUrl != null -> NFTAsset.Media(mimeType, originalMediaUrl)
+    private fun MoralisEvmNFTAssetResponse.toNFTAssetMedia(): NFTAsset.Media? = when {
+        media?.mediaCollection?.high?.url != null -> media.mediaCollection.high.url
+        media?.mediaCollection?.medium?.url != null -> media.mediaCollection.medium.url
+        media?.originalMediaUrl != null -> media.originalMediaUrl
         else -> null
+    }?.let {
+        NFTAsset.Media(media?.mimeType, it.ipfsToHttps().removeUrlQuery())
     }
 
     private fun MoralisEvmNFTAssetResponse.Attribute.toNFTAssetTrait(): NFTAsset.Trait? =
