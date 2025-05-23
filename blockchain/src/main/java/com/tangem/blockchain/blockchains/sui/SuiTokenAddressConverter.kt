@@ -9,6 +9,7 @@ class SuiTokenAddressConverter {
         if (address == SuiConstants.COIN_TYPE || address == null) return address
 
         val parsedAddress = address.split(CONTRACT_ADDRESS_SEPARATOR).toMutableList()
+        if (parsedAddress.size != CONTRACT_ADDRESS_PARTS_COUNT) return null
         var rawAddress = parsedAddress.first().removePrefix(HEX_PREFIX)
 
         while (rawAddress.length < ADDRESS_LENGTH) {
