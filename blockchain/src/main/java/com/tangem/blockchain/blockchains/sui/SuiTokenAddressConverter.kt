@@ -26,5 +26,6 @@ class SuiTokenAddressConverter {
         const val CONTRACT_ADDRESS_SEPARATOR = "::"
         const val ADDRESS_LENGTH_BYTES = 32
         const val ADDRESS_LENGTH = ADDRESS_LENGTH_BYTES * 2 // Each byte is represented by 2 hex characters
+        const val CONTRACT_ADDRESS_PARTS_COUNT = 3
     }
 }
