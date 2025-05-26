@@ -1,5 +1,8 @@
 package com.tangem.blockchain.blockchains.sui
 
+import com.tangem.blockchain.blockchains.sui.SuiTokenAddressConverter.Companion.ADDRESS_LENGTH_BYTES
+import com.tangem.blockchain.blockchains.sui.SuiTokenAddressConverter.Companion.CONTRACT_ADDRESS_PARTS_COUNT
+import com.tangem.blockchain.blockchains.sui.SuiTokenAddressConverter.Companion.CONTRACT_ADDRESS_SEPARATOR
 import com.tangem.blockchain.blockchains.sui.network.SuiConstants
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.HEX_PREFIX
@@ -10,6 +13,8 @@ import com.tangem.common.extensions.hexToBytes
 internal class SuiAddressService(
     blockchain: Blockchain,
 ) : WalletCoreAddressService(blockchain = blockchain), ContractAddressValidator {
+
+    private val tokenAddressConverter = SuiTokenAddressConverter()
 
     override fun validateContractAddress(address: String): Boolean {
         if (address == SuiConstants.COIN_TYPE) return true
@@ -35,25 +40,6 @@ internal class SuiAddressService(
     }
 
     override fun reformatContractAddress(address: String?): String? {
-        if (address == SuiConstants.COIN_TYPE || address == null) return address
-
-        val parsedAddress = address.split(CONTRACT_ADDRESS_SEPARATOR).toMutableList()
-        var rawAddress = parsedAddress.first().removePrefix(HEX_PREFIX)
-
-        while (rawAddress.length < ADDRESS_LENGTH) {
-            rawAddress = "0$rawAddress"
-        }
-
-        parsedAddress.removeAt(0)
-        parsedAddress.add(0, HEX_PREFIX + rawAddress)
-
-        return parsedAddress.joinToString(CONTRACT_ADDRESS_SEPARATOR)
-    }
-
-    private companion object {
-        const val CONTRACT_ADDRESS_SEPARATOR = "::"
-        const val ADDRESS_LENGTH = 64
-        const val ADDRESS_LENGTH_BYTES = 32
-        const val CONTRACT_ADDRESS_PARTS_COUNT = 3
+        return tokenAddressConverter.normalizeAddress(address)
     }
 }
