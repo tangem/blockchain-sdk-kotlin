@@ -52,27 +52,15 @@ internal class MoralisSolanaNFTProvider(
             }
 
             val collectionResponse = assetsResponse.firstOrNull()?.collection
-            if (collectionResponse?.name != null) {
-                NFTCollection(
-                    name = collectionResponse.name,
-                    identifier = collectionIdentifier,
-                    blockchainId = blockchain.id,
-                    description = collectionResponse.description,
-                    logoUrl = collectionResponse.imageOriginalUrl,
-                    count = assets.size,
-                    assets = assets,
-                )
-            } else {
-                NFTCollection(
-                    name = null,
-                    identifier = collectionIdentifier,
-                    blockchainId = blockchain.id,
-                    description = null,
-                    logoUrl = null,
-                    count = assets.size,
-                    assets = assets,
-                )
-            }
+            NFTCollection(
+                name = collectionResponse?.name,
+                identifier = collectionIdentifier,
+                blockchainId = blockchain.id,
+                description = collectionResponse?.description,
+                logoUrl = collectionResponse?.imageOriginalUrl?.ipfsToHttps()?.removeUrlQuery(),
+                count = assets.size,
+                assets = assets,
+            )
         }
         .values
         .toList()
