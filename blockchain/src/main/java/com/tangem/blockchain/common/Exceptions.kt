@@ -55,6 +55,11 @@ sealed class BlockchainSdkError(
         "Transaction change is less than a dust",
     )
 
+    data object DestinationTagRequired : BlockchainSdkError(
+        11,
+        "Destination memo required",
+    )
+
     data object SignatureCountNotMatched : BlockchainSdkError(100)
 
     sealed class Solana(
@@ -378,24 +383,6 @@ sealed class BlockchainSdkError(
         )
     }
 
-    sealed class XRP(
-        subCode: Int,
-        customMessage: String? = null,
-        throwable: Throwable? = null,
-    ) : BlockchainSdkError(
-        code = ERROR_CODE_XRP,
-        customMessage = customMessage?.let { "$ERROR_CODE_XRP: $subCode: $customMessage" }
-            ?: "$ERROR_CODE_XRP: $subCode",
-        messageResId = null,
-        cause = throwable,
-    ) {
-
-        data object DestinationMemoRequired : XRP(
-            subCode = 0,
-            customMessage = "Destination memo required",
-        )
-    }
-
     companion object {
         const val ERROR_CODE_SOLANA = 1000
         const val ERROR_CODE_POLKADOT = 2000
@@ -414,7 +401,6 @@ sealed class BlockchainSdkError(
         const val ERROR_CODE_TRON = 15000
         const val ERROR_CODE_SUI = 16000
         const val ERROR_CODE_ALEPHIUM = 17000
-        const val ERROR_CODE_XRP = 18000
     }
 }
 
