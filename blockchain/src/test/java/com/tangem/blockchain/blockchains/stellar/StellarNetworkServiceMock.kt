@@ -7,7 +7,7 @@ import org.stellar.sdk.responses.FeeStatsResponse
 
 class StellarNetworkServiceMock(
     private val checkTargetAccountResult: Result<StellarTargetAccountResponse> = Result.Success(
-        StellarTargetAccountResponse(accountCreated = true, trustlineCreated = true),
+        StellarTargetAccountResponse(accountCreated = true, trustlineCreated = true, requiresMemo = false),
     ),
 ) : StellarNetworkProvider {
 
