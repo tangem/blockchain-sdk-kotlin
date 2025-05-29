@@ -105,7 +105,7 @@ class XrpWalletManager(
 
         val destinationTag = (transactionData.extras as? XrpTransactionBuilder.XrpTransactionExtras)?.destinationTag
         if (destinationTag == null && networkProvider.checkDestinationTagRequired(transactionData.destinationAddress)) {
-            return kotlin.Result.failure(BlockchainSdkError.XRP.DestinationMemoRequired)
+            return kotlin.Result.failure(BlockchainSdkError.DestinationTagRequired)
         }
         return kotlin.Result.success(Unit)
     }
