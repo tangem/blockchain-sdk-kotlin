@@ -70,8 +70,16 @@ internal class StellarNetworkService(
                     return Result.Failure(it.error)
                 }
 
+            val requiresMemo =
+                account.data.contains(MEMO_REQUIRED_KEY) && account.data[MEMO_REQUIRED_KEY] == MEMO_REQUIRED_VALUE
+
             if (token == null) { // xlm transaction
-                Result.Success(StellarTargetAccountResponse(accountCreated = true))
+                Result.Success(
+                    StellarTargetAccountResponse(
+                        accountCreated = true,
+                        requiresMemo = requiresMemo,
+                    ),
+                )
             } else { // token transaction
                 // tokenBalance can be null if trustline not created
                 val tokenBalance = account.balances
@@ -82,12 +90,13 @@ internal class StellarNetworkService(
                     StellarTargetAccountResponse(
                         accountCreated = true,
                         trustlineCreated = tokenBalance != null,
+                        requiresMemo = requiresMemo,
                     ),
                 )
             }
         } catch (errorResponse: ErrorResponse) {
             if (errorResponse.code == HTTP_NOT_FOUND_CODE) {
-                Result.Success(StellarTargetAccountResponse(accountCreated = false))
+                Result.Success(StellarTargetAccountResponse(accountCreated = false, requiresMemo = false))
             } else {
                 Result.Failure(errorResponse.toBlockchainSdkError())
             }
@@ -242,5 +251,7 @@ internal class StellarNetworkService(
 
     companion object {
         const val HTTP_NOT_FOUND_CODE = 404
+        const val MEMO_REQUIRED_KEY = "config.memo_required"
+        const val MEMO_REQUIRED_VALUE = "MQ=="
     }
 }
