@@ -179,6 +179,14 @@ sealed class StellarMemo {
     data class Text(val value: String) : StellarMemo()
     data class Id(val value: BigInteger) : StellarMemo()
     data class Hash(val value: ByteArray) : StellarMemo() // TODO: check, add return hash? Infos in iOS app?
+
+    fun hasNonEmptyMemo(): Boolean {
+        return when (this) {
+            is Text -> value.isNotEmpty()
+            is Id -> value != BigInteger.ZERO
+            is Hash -> value.isNotEmpty()
+        }
+    }
 }
 
 private fun StellarMemo.toStellarSdkMemo(): Memo {
