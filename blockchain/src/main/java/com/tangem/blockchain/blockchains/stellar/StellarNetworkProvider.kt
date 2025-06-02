@@ -34,5 +34,6 @@ data class StellarAssetBalance(
 
 data class StellarTargetAccountResponse(
     val accountCreated: Boolean,
+    val requiresMemo: Boolean,
     val trustlineCreated: Boolean? = null,
 )
