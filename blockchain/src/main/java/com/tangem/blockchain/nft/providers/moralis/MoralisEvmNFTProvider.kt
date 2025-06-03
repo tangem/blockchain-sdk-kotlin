@@ -5,8 +5,9 @@ import com.tangem.blockchain.common.HEX_PREFIX
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.nft.NFTProvider
-import com.tangem.blockchain.nft.models.*
-import com.tangem.blockchain.nft.providers.moralis.network.*
+import com.tangem.blockchain.nft.models.NFTAsset
+import com.tangem.blockchain.nft.models.NFTCollection
+import com.tangem.blockchain.nft.providers.moralis.evm.network.*
 import okhttp3.internal.toHexString
 import java.math.BigDecimal
 
@@ -80,8 +81,9 @@ internal class MoralisEvmNFTProvider(
             it.tokenId?.let { tokenId ->
                 it.toNFTAsset(
                     assetIdentifier = NFTAsset.Identifier.EVM(
-                        tokenId = tokenId,
+                        tokenId = tokenId.toBigInteger(),
                         tokenAddress = collectionIdentifier.tokenAddress,
+                        contractType = it.toContractType(),
                     ),
                     collectionIdentifier = collectionIdentifier,
                 )
@@ -99,7 +101,7 @@ internal class MoralisEvmNFTProvider(
             tokens = listOf(
                 MoralisEvmNFTGetAssetsTokenRequest(
                     tokenAddress = assetIdentifier.tokenAddress,
-                    tokenId = assetIdentifier.tokenId,
+                    tokenId = assetIdentifier.tokenId.toString(),
                 ),
             ),
         )
@@ -121,7 +123,7 @@ internal class MoralisEvmNFTProvider(
         require(assetIdentifier is NFTAsset.Identifier.EVM)
         val response = moralisEvmApi.getNFTPrice(
             tokenAddress = collectionIdentifier.tokenAddress,
-            tokenId = assetIdentifier.tokenId,
+            tokenId = assetIdentifier.tokenId.toString(),
             chain = blockchain.toQueryParam(),
             days = LAST_SALE_PRICE_DAYS,
         )
@@ -157,6 +159,8 @@ internal class MoralisEvmNFTProvider(
         owner = ownerOf,
         name = normalizedMetadata?.name,
         description = normalizedMetadata?.description,
+        amount = amount?.toBigInteger(),
+        decimals = 0,
         salePrice = null,
         rarity = toNFTAssetRarity(),
         media = media?.toNFTAssetMedia(),
@@ -165,16 +169,16 @@ internal class MoralisEvmNFTProvider(
         }.orEmpty(),
     )
 
-    private fun MoralisEvmNFTMediaResponse.toNFTAssetMedia(): NFTAsset.Media? =
-        if (mimeType != null && mediaCollection?.high?.url != null) {
-            NFTAsset.Media(mimeType, mediaCollection.high.url)
-        } else {
-            null
-        }
+    private fun MoralisEvmNFTAssetResponse.Media.toNFTAssetMedia(): NFTAsset.Media? = when {
+        mediaCollection?.high?.url != null -> NFTAsset.Media(mimeType, mediaCollection.high.url)
+        mediaCollection?.medium?.url != null -> NFTAsset.Media(mimeType, mediaCollection.medium.url)
+        originalMediaUrl != null -> NFTAsset.Media(mimeType, originalMediaUrl)
+        else -> null
+    }
 
-    private fun MoralisEvmNFTAttributeResponse.toNFTAssetTrait(): NFTAsset.Trait? =
+    private fun MoralisEvmNFTAssetResponse.Attribute.toNFTAssetTrait(): NFTAsset.Trait? =
         if (traitType != null && value != null) {
-            NFTAsset.Trait(traitType, value)
+            NFTAsset.Trait(traitType, value.toString())
         } else {
             null
         }
@@ -185,6 +189,11 @@ internal class MoralisEvmNFTProvider(
         } else {
             null
         }
+
+    private fun MoralisEvmNFTAssetResponse.toContractType(): NFTAsset.Identifier.EVM.ContractType =
+        NFTAsset.Identifier.EVM.ContractType.entries.firstOrNull {
+            it.value == contractType.orEmpty()
+        } ?: NFTAsset.Identifier.EVM.ContractType.Unknown
 
     private companion object {
         const val LAST_SALE_PRICE_DAYS = 365

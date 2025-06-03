@@ -4,6 +4,7 @@ import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.tron.network.BlockHeader
 import com.tangem.blockchain.blockchains.tron.network.RawData
 import com.tangem.blockchain.blockchains.tron.network.TronBlock
+import com.tangem.blockchain.blockchains.tron.tokenmethods.TronTransferTokenCallData
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Token
@@ -68,7 +69,12 @@ class TronTransactionTest {
             source = "TU1BRXbr6EmKmrLL4Kymv7Wp18eYFkRfAF",
             destination = "TXXxc9NsHndfQ2z9kMKyWpYa5T3QbhKGwn",
             block = tronBlock,
-            extras = null,
+            extras = TronTransactionExtras(
+                TronTransferTokenCallData(
+                    destination = "TXXxc9NsHndfQ2z9kMKyWpYa5T3QbhKGwn",
+                    amount = Amount(token, BigDecimal.ONE),
+                ),
+            ),
         )
         val signature = (
             "6b5de85a80b2f4f02351f691593fb0e49f14c5cb42451373485357e42d7890cd77ad7bfcb733555c098b992da79dabe5050f5e2" +
