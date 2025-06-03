@@ -2,7 +2,6 @@ package com.tangem.blockchain.blockchains.solana
 
 import android.os.SystemClock
 import android.util.Log
-import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaMainAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaSplAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.TransactionInfo
@@ -19,6 +18,8 @@ import com.tangem.blockchain.extensions.filterWith
 import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
+import com.tangem.blockchain.nft.DefaultNFTProvider
+import com.tangem.blockchain.nft.NFTProvider
 import kotlinx.coroutines.*
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.Program
@@ -34,7 +35,8 @@ import java.math.BigDecimal
 class SolanaWalletManager internal constructor(
     wallet: Wallet,
     providers: List<SolanaRpcClient>,
-) : WalletManager(wallet), RentProvider {
+    nftProvider: NFTProvider = DefaultNFTProvider,
+) : WalletManager(wallet, nftProvider = nftProvider), RentProvider, TransactionPreparer {
 
     private val account = PublicKey(wallet.address)
     private val networkServices = providers.map { SolanaNetworkService(it) }
@@ -158,30 +160,9 @@ class SolanaWalletManager internal constructor(
         return when (transactionData) {
             is TransactionData.Compiled -> {
                 val startSendingTimestamp = SystemClock.elapsedRealtime()
-
-                val compiledTransaction = if (transactionData.value is TransactionData.Compiled.Data.Bytes) {
-                    transactionData.value.data
-                } else {
-                    return Result.Failure(BlockchainSdkError.CustomError("Compiled transaction must be in bytes"))
-                }
-                val transactionWithoutSignaturePlaceholder =
-                    compiledTransaction.drop(SIGNATURE_PLACEHOLDER_LENGTH).toByteArray()
-
-                val transaction = transactionBuilder.buildUnsignedTransaction(
-                    builtTransaction = transactionWithoutSignaturePlaceholder,
-                )
-
-                val signResult = signer.sign(transactionWithoutSignaturePlaceholder, wallet.publicKey).successOr {
-                    return Result.fromTangemSdkError(it.error)
-                }
-
-                val patchedTransactionData = TransactionData.Compiled(
-                    value = TransactionData.Compiled.Data.Bytes(
-                        data = byteArrayOf(1) + signResult + transactionWithoutSignaturePlaceholder,
-                    ),
-                )
-
-                sendTransaction(transaction, patchedTransactionData, startSendingTimestamp)
+                val signedTransaction = prepareForSend(transactionData, signer)
+                    .successOr { return it }
+                sendTransaction(signedTransaction, transactionData, startSendingTimestamp)
             }
             is TransactionData.Uncompiled -> {
                 val ownerAccountInfo = getOwnerAccountInfo(transactionData.amount)?.successOr {
@@ -200,7 +181,7 @@ class SolanaWalletManager internal constructor(
                 }
                 transaction.addSignedDataSignature(signResult)
 
-                sendTransaction(transaction, transactionData, startSendingTimestamp)
+                sendTransaction(transaction.serialize(), transactionData, startSendingTimestamp)
             }
         }
     }
@@ -220,18 +201,7 @@ class SolanaWalletManager internal constructor(
 
         val startSendingTimestamp = SystemClock.elapsedRealtime()
 
-        val withoutSignatureTransactions = transactionDataList.map {
-            it.requireCompiled()
-
-            val compiled = (it.value as? TransactionData.Compiled.Data.Bytes)?.data
-                ?: return Result.Failure(UnsupportedOperation("Compiled transaction must be in bytes"))
-
-            compiled.drop(SIGNATURE_PLACEHOLDER_LENGTH).toByteArray()
-        }
-
-        val unsignedTransactions = withoutSignatureTransactions.map(transactionBuilder::buildUnsignedTransaction)
-
-        val signedTransactions = signMultipleCompiledTransactions(withoutSignatureTransactions, signer)
+        val signedTransactions = prepareForSendMultiple(transactionDataList, signer)
             .successOr { return it }
 
         val sendResults = mutableListOf<Result<TransactionSendResult>>()
@@ -239,9 +209,8 @@ class SolanaWalletManager internal constructor(
         if (sendMode == TransactionSender.MultipleTransactionSendMode.WAIT_AFTER_FIRST) {
             val signedTx = signedTransactions.first()
             val originalTx = transactionDataList.first()
-            val unsignedTx = unsignedTransactions.first()
 
-            when (val result = sendTransaction(unsignedTx, signedTx, startSendingTimestamp)) {
+            when (val result = sendTransaction(signedTx, originalTx, startSendingTimestamp)) {
                 is Result.Success -> {
                     originalTx.hash = result.data.hash
                     wallet.addOutgoingTransaction(originalTx.updateHash(hash = result.data.hash))
@@ -255,16 +224,14 @@ class SolanaWalletManager internal constructor(
 
         val shouldDropFirst = sendMode == TransactionSender.MultipleTransactionSendMode.WAIT_AFTER_FIRST
 
-        val remainingUnsignedTransactions = unsignedTransactions.dropFirstIfNeeded(shouldDropFirst)
         val remainingSignedTransactions = signedTransactions.dropFirstIfNeeded(shouldDropFirst)
         val remainingTransactionData = transactionDataList.dropFirstIfNeeded(shouldDropFirst)
 
-        val otherSendResults = remainingUnsignedTransactions
+        val otherSendResults = remainingTransactionData
             .zip(remainingSignedTransactions)
-            .mapIndexed { index, (unsignedTx, signedTx) ->
-                when (val result = sendTransaction(unsignedTx, signedTx, startSendingTimestamp)) {
+            .mapIndexed { index, (originalTx, signedTx) ->
+                when (val result = sendTransaction(signedTx, originalTx, startSendingTimestamp)) {
                     is Result.Success -> {
-                        val originalTx = remainingTransactionData[index]
                         originalTx.hash = result.data.hash
                         wallet.addOutgoingTransaction(originalTx.updateHash(hash = result.data.hash))
                         Result.Success(TransactionSendResult(result.data.hash))
@@ -283,27 +250,45 @@ class SolanaWalletManager internal constructor(
         }
     }
 
-    private suspend fun signMultipleCompiledTransactions(
-        transactionToSign: List<ByteArray>,
+    override suspend fun prepareForSend(
+        transactionData: TransactionData,
         signer: TransactionSigner,
-    ): Result<List<TransactionData.Compiled>> {
-        val signResults = signer.sign(transactionToSign, wallet.publicKey).successOr {
-            return Result.fromTangemSdkError(it.error)
-        }
+    ): Result<ByteArray> {
+        transactionData.requireCompiled()
+        val transactionToSign = prepareForSign(transactionData).successOr { return it }
+        val signResult = signer.sign(transactionToSign, wallet.publicKey)
+            .successOr { return Result.fromTangemSdkError(it.error) }
 
-        return Result.Success(
-            signResults.mapIndexed { index, signResult ->
-                TransactionData.Compiled(
-                    value = TransactionData.Compiled.Data.Bytes(
-                        data = byteArrayOf(1) + signResult + transactionToSign[index],
-                    ),
-                )
-            },
-        )
+        val signedTransaction = byteArrayOf(1) + signResult + transactionToSign
+        return Result.Success(signedTransaction)
+    }
+
+    override suspend fun prepareForSendMultiple(
+        transactionDataList: List<TransactionData>,
+        signer: TransactionSigner,
+    ): Result<List<ByteArray>> {
+        val transactionToSign = transactionDataList.map { transactionData ->
+            transactionData.requireCompiled()
+            prepareForSign(transactionData).successOr { return it }
+        }
+        val signedTransactions = signer.sign(transactionToSign, wallet.publicKey)
+            .successOr { return Result.fromTangemSdkError(it.error) }
+            .mapIndexed { index, signResult ->
+                byteArrayOf(1) + signResult + transactionToSign[index]
+            }
+        return Result.Success(signedTransactions)
+    }
+
+    private fun prepareForSign(transactionData: TransactionData.Compiled): Result<ByteArray> {
+        val compiledTransaction = (transactionData.value as? TransactionData.Compiled.Data.Bytes)?.data
+        compiledTransaction ?: return Result.Failure(UnsupportedOperation("Compiled transaction must be in bytes"))
+
+        val withoutPlaceholders = SolanaTransactionHelper.removeSignaturesPlaceholders(compiledTransaction)
+        return Result.Success(withoutPlaceholders)
     }
 
     private suspend fun sendTransaction(
-        signedTransaction: SolanaTransaction,
+        signedTransaction: ByteArray,
         transactionData: TransactionData,
         startSendingTimestamp: Long,
     ): Result<TransactionSendResult> {
@@ -311,19 +296,7 @@ class SolanaWalletManager internal constructor(
             multiNetworkProvider.providers
                 .map { provider ->
                     async {
-                        val serializedTransaction = when (transactionData) {
-                            is TransactionData.Compiled -> {
-                                if (transactionData.value is TransactionData.Compiled.Data.Bytes) {
-                                    transactionData.value.data
-                                } else {
-                                    return@async Result.Failure(
-                                        BlockchainSdkError.CustomError("Compiled transaction must be in bytes"),
-                                    )
-                                }
-                            }
-                            is TransactionData.Uncompiled -> signedTransaction.serialize()
-                        }
-                        provider.sendTransaction(serializedTransaction, startSendingTimestamp)
+                        provider.sendTransaction(signedTransaction, startSendingTimestamp)
                     }
                 }
                 .awaitAll()
@@ -535,7 +508,6 @@ class SolanaWalletManager internal constructor(
 
     private companion object {
         const val MIN_ACCOUNT_DATA_SIZE = 0L
-        const val SIGNATURE_PLACEHOLDER_LENGTH = 65
 
         const val ACCOUNT_METADATA_SIZE = 128L
         const val RENT_PER_EPOCH_IN_LAMPORTS = 19.055441478439427
