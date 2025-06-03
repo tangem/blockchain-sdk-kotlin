@@ -75,7 +75,7 @@ internal class FilecoinWalletManager(
             when (val signingResult = signer.sign(hash, wallet.publicKey)) {
                 is CompletionResult.Failure -> Result.fromTangemSdkError(signingResult.error)
                 is CompletionResult.Success -> {
-                    val signature = UnmarshalHelper().unmarshalSignatureExtended(
+                    val signature = UnmarshalHelper.unmarshalSignatureExtended(
                         signature = signingResult.data,
                         hash = hash,
                         publicKey = wallet.publicKey,

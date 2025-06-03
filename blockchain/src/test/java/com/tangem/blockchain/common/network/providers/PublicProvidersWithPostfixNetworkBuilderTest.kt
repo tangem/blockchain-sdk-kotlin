@@ -30,7 +30,7 @@ internal class PublicProvidersWithPostfixNetworkBuilderTest(private val model: M
     init {
         DepsContainer.onInit(
             config = BlockchainSdkConfig(),
-            featureToggles = BlockchainFeatureToggles(isEthereumEIP1559Enabled = true),
+            featureToggles = BlockchainFeatureToggles(),
         )
     }
 
