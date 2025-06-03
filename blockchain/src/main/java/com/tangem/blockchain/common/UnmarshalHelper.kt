@@ -9,11 +9,17 @@ import org.kethereum.model.PublicKey
 import org.kethereum.model.SignatureData
 import java.math.BigInteger
 
-internal class UnmarshalHelper {
+object UnmarshalHelper {
 
-    fun unmarshalSignatureEVMLegacy(signature: ByteArray, hash: ByteArray, publicKey: Wallet.PublicKey): ByteArray {
-        return unmarshalSignatureExtended(signature, hash, publicKey).asRSV(recIdOffset = EVM_LEGACY_REC_ID_OFFSET)
-    }
+    // R
+    private const val COMPRESSED_CURVE_POINT_START_INDEX = 0
+    private const val COMPRESSED_CURVE_POINT_END_INDEX = 32
+
+    // S
+    private const val SCALAR_START_INDEX = 32
+    private const val SCALAR_END_INDEX = 64
+
+    internal const val EVM_LEGACY_REC_ID_OFFSET = 27
 
     fun unmarshalSignatureExtended(
         signature: ByteArray,
@@ -56,21 +62,13 @@ internal class UnmarshalHelper {
             recId = recId,
         )
     }
-
-    companion object {
-        // R
-        private const val COMPRESSED_CURVE_POINT_START_INDEX = 0
-        private const val COMPRESSED_CURVE_POINT_END_INDEX = 32
-
-        // S
-        private const val SCALAR_START_INDEX = 32
-        private const val SCALAR_END_INDEX = 64
-
-        const val EVM_LEGACY_REC_ID_OFFSET = 27
-    }
 }
 
-internal data class ExtendedSecp256k1Signature(val r: BigInteger, val s: BigInteger, val recId: Int) {
+data class ExtendedSecp256k1Signature(val r: BigInteger, val s: BigInteger, val recId: Int) {
+
+    fun asRSVLegacyEVM(): ByteArray {
+        return asRSV(UnmarshalHelper.EVM_LEGACY_REC_ID_OFFSET)
+    }
 
     fun asRSV(recIdOffset: Int = 0): ByteArray {
         val v = recId + recIdOffset
