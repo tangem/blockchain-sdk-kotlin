@@ -3,7 +3,9 @@ package com.tangem.blockchain.extensions
 import com.tangem.blockchain.blockchains.binance.client.encoding.Bech32
 import com.tangem.blockchain.blockchains.binance.client.encoding.Crypto
 import com.tangem.blockchain.common.HEX_PREFIX
+import com.tangem.common.extensions.hexToBytes
 import org.bitcoinj.core.Base58
+import org.kethereum.contract.abi.types.leftPadToFixedSize
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -44,6 +46,10 @@ fun String.hexToInt(default: Int = 0): Int {
     return removePrefix(HEX_PREFIX).toIntOrNull(radix = HEX_RADIX) ?: default
 }
 
+fun String.formatHex(): String {
+    return if (this.startsWith(HEX_PREFIX)) this else HEX_PREFIX.plus(this)
+}
+
 fun String?.toBigDecimalOrDefault(default: BigDecimal = BigDecimal.ZERO): BigDecimal =
     this?.toBigDecimalOrNull() ?: default
 
@@ -56,3 +62,5 @@ inline fun <R> String?.letNotBlank(block: (String) -> R): R? {
 
     return block(this)
 }
+
+fun String.hexToFixedSizeBytes(fixedSize: Int = 32) = hexToBytes().leftPadToFixedSize(fixedSize = fixedSize)
