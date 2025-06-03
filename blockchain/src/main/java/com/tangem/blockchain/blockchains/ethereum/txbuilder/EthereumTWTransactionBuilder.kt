@@ -3,7 +3,6 @@ package com.tangem.blockchain.blockchains.ethereum.txbuilder
 import com.google.protobuf.ByteString
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
-import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.createErc20TransferData
 import com.tangem.blockchain.blockchains.ethereum.models.EthereumCompiledTransaction
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
@@ -110,16 +109,7 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
                     destinationAddress = transaction.amount.type.token.contractAddress,
                     coinAmount = BigInteger.ZERO,
                     fee = ethereumFee,
-                    extras = if (extras != null && extras.data == null) {
-                        val transferData = createErc20TransferData(
-                            recipient = transaction.destinationAddress,
-                            amount = amountValue,
-                        )
-
-                        EthereumTransactionExtras(data = transferData, nonce = extras.nonce)
-                    } else {
-                        extras
-                    },
+                    extras = extras,
                 )
             }
             else -> throw BlockchainSdkError.CustomError("Not implemented")
@@ -227,7 +217,7 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
     ): Ethereum.SigningInput.Builder {
         return setTransaction(
             Ethereum.Transaction.newBuilder()
-                .setContractGeneric(coinAmount = coinAmount, data = extras?.data)
+                .setContractGeneric(coinAmount = coinAmount, data = extras?.callData?.data)
                 .build(),
         )
     }
@@ -280,13 +270,11 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
     ): Ethereum.SigningOutput {
         if (signature.size != SIGNATURE_SIZE) throw BlockchainSdkError.CustomError("Invalid signature size")
 
-        val unmarshalSignature = UnmarshalHelper()
-            .unmarshalSignatureExtended(
-                signature = signature,
-                hash = hash,
-                publicKey = decompressedPublicKey,
-            )
-            .asRSV()
+        val unmarshalSignature = UnmarshalHelper.unmarshalSignatureExtended(
+            signature = signature,
+            hash = hash,
+            publicKey = decompressedPublicKey,
+        ).asRSV()
 
         val txInputData = input.toByteArray()
 
