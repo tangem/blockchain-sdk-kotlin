@@ -1,12 +1,8 @@
 package com.tangem.blockchain.blockchains.tron
 
 import com.tangem.blockchain.common.TransactionExtras
+import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 
 class TronTransactionExtras(
-    val data: ByteArray,
-    val txType: TransactionType,
+    val callData: SmartContractCallData,
 ) : TransactionExtras
-
-enum class TransactionType {
-    APPROVE,
-}
