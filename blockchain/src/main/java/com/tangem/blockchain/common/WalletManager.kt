@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -45,8 +46,12 @@ abstract class WalletManager(
         }
     }
 
-    override suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee> {
-        return getFee(amount, destination)
+    override suspend fun estimateFee(
+        amount: Amount,
+        destination: String,
+        callData: SmartContractCallData?,
+    ): Result<TransactionFee> {
+        return getFee(amount, destination, callData)
     }
 
     internal abstract suspend fun updateInternal()
@@ -207,12 +212,37 @@ interface TransactionSender {
     // Think about migration to different interface
     suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee>
 
+    suspend fun getFee(
+        amount: Amount,
+        destination: String,
+        callData: SmartContractCallData? = null,
+    ): Result<TransactionFee> = getFee(
+        amount = amount,
+        destination = destination,
+    )
+
+    suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
+        transactionData.requireUncompiled()
+        return getFee(
+            amount = transactionData.amount,
+            destination = transactionData.destinationAddress,
+        )
+    }
+
     /**
      * Estimates fee (approximate value)
      *
      * [Think about migration to interface]
      */
-    suspend fun estimateFee(amount: Amount, destination: String): Result<TransactionFee>
+    suspend fun estimateFee(
+        amount: Amount,
+        destination: String,
+        callData: SmartContractCallData? = null,
+    ): Result<TransactionFee> = getFee(
+        amount = amount,
+        destination = destination,
+        callData = callData,
+    )
 }
 
 interface TransactionSigner {
@@ -228,7 +258,21 @@ interface TransactionSigner {
 
 interface TransactionValidator {
 
-    fun validate(transactionData: TransactionData): kotlin.Result<Unit>
+    suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit>
+}
+
+interface TransactionPreparer {
+    suspend fun prepareForSend(transactionData: TransactionData, signer: TransactionSigner): Result<ByteArray>
+
+    suspend fun prepareForSendMultiple(
+        transactionDataList: List<TransactionData>,
+        signer: TransactionSigner,
+    ): Result<List<ByteArray>> {
+        return prepareForSend(transactionDataList.first(), signer).fold(
+            success = { Result.Success(listOf(it)) },
+            failure = { Result.Failure(it) },
+        )
+    }
 }
 
 interface SignatureCountValidator {
