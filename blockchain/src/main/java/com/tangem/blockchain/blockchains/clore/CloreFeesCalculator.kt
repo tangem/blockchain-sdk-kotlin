@@ -5,6 +5,5 @@ import com.tangem.blockchain.common.Blockchain
 import java.math.BigDecimal
 
 internal class CloreFeesCalculator(blockchain: Blockchain) : BitcoinFeesCalculator(blockchain) {
-    override val minimalFeePerKb: BigDecimal = BigDecimal(100_000).movePointLeft(blockchain.decimals())
-    override val minimalFee = 0.01.toBigDecimal()
+    override val minimalFeePerKb: BigDecimal = BigDecimal(1_000_000).movePointLeft(blockchain.decimals())
 }

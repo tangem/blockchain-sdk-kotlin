@@ -31,7 +31,7 @@ internal class EthereumLegacyTransactionBuilder(
         return EthereumUtils.prepareTransactionToSend(
             signature = signature,
             transactionToSign = compiledTransaction as EthereumCompiledTxInfo.Legacy,
-            walletPublicKey = decompressedPublicKey.sliceArray(1..PUBLIC_KEY_SIZE),
+            walletPublicKey = decompressedPublicKey,
             blockchain = blockchain,
         )
     }
@@ -52,9 +52,5 @@ internal class EthereumLegacyTransactionBuilder(
             gasLimit = legacyFee.gasLimit,
             nonce = BigInteger.ONE,
         ).encode()
-    }
-
-    private companion object {
-        const val PUBLIC_KEY_SIZE = 64
     }
 }
