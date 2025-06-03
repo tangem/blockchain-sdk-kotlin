@@ -4,7 +4,6 @@ import com.tangem.blockchain.blockchains.ton.TonProvidersBuilder
 import com.tangem.blockchain.blockchains.ton.TonWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
-import com.tangem.blockchain.nft.NFTProviderFactory
 
 internal object TonWalletManagerAssembly : WalletManagerAssembly<TonWalletManager>() {
 
@@ -12,7 +11,6 @@ internal object TonWalletManagerAssembly : WalletManagerAssembly<TonWalletManage
         return with(input.wallet) {
             TonWalletManager(
                 wallet = this,
-                nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
                 networkProviders = TonProvidersBuilder(input.providerTypes, input.config).build(blockchain),
             )
         }
