@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.vechain.network
 
-import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TokenBalanceERC20TokenMethod
-import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TransferERC20TokenMethod
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TokenBalanceERC20TokenCallData
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TransferERC20TokenCallData
 import com.tangem.blockchain.blockchains.vechain.VeChainAccountInfo
 import com.tangem.blockchain.blockchains.vechain.VeChainBlockInfo
 import com.tangem.blockchain.blockchains.vechain.VeChainWalletManager
@@ -16,7 +16,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
-import java.math.BigInteger
 
 // Sync2 uses `20_000_000` as a maximum allowed gas amount for such contract calls.
 private const val MAX_ALLOWED_VM_GAS = 20_000_000
@@ -71,11 +70,10 @@ internal class VeChainNetworkService(
     }
 
     suspend fun getVmGas(source: String, destination: String, amount: Amount, token: Token): Result<Long> {
-        val amountValue = amount.value?.movePointRight(amount.decimals)?.toBigInteger() ?: BigInteger.ZERO
         val clause = VeChainClause(
             to = token.contractAddress,
             value = CONTRACT_CALL_VALUE,
-            data = "0x" + TransferERC20TokenMethod(destination = destination, amount = amountValue).data.toHexString(),
+            data = "0x" + TransferERC20TokenCallData(destination = destination, amount = amount).data.toHexString(),
         )
         val request = VeChainContractCallRequest(
             clauses = listOf(clause),
@@ -97,7 +95,7 @@ internal class VeChainNetworkService(
                         val clause = VeChainClause(
                             to = token.contractAddress,
                             value = CONTRACT_CALL_VALUE,
-                            data = "0x" + TokenBalanceERC20TokenMethod(address = address).data.toHexString(),
+                            data = "0x" + TokenBalanceERC20TokenCallData(address = address).data.toHexString(),
                         )
                         this.callContract(
                             request = VeChainContractCallRequest(

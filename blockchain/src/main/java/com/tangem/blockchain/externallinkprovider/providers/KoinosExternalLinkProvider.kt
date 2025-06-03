@@ -8,14 +8,14 @@ internal class KoinosExternalLinkProvider(private val isTestnet: Boolean) : Exte
     override val explorerBaseUrl: String = if (isTestnet) {
         "https://harbinger.koinosblocks.com/"
     } else {
-        "https://koiner.app/"
+        "https://koinosblocks.com/"
     }
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
         return if (isTestnet) {
             "${explorerBaseUrl}address/$walletAddress"
         } else {
-            "${explorerBaseUrl}addresses/$walletAddress"
+            "${explorerBaseUrl}address/$walletAddress"
         }
     }
 
@@ -24,7 +24,7 @@ internal class KoinosExternalLinkProvider(private val isTestnet: Boolean) : Exte
             if (isTestnet) {
                 "${explorerBaseUrl}tx/$transactionHash"
             } else {
-                "${explorerBaseUrl}mobile/transactions/$transactionHash"
+                "${explorerBaseUrl}tx/$transactionHash"
             },
         )
     }

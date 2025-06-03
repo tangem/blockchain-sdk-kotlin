@@ -4,10 +4,11 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.ethereum.eip1559.isSupportEIP1559
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.ApprovalERC20TokenCallData
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.di.DepsContainer
+import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
@@ -36,6 +37,7 @@ open class EthereumWalletManager(
     SignatureCountValidator,
     TokenFinder,
     EthereumGasLoader,
+    TransactionPreparer,
     Approver {
 
     // move to constructor later
@@ -80,42 +82,17 @@ open class EthereumWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        val nonce = networkProvider.getPendingTxCount(wallet.address)
-            .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) }
+        val transactionToSend = prepareForSend(transactionData, signer)
+            .successOr { return it }
 
-        val transactionData = when (transactionData) {
-            is TransactionData.Uncompiled -> transactionData.copy(
-                extras = when (val extras = transactionData.extras) {
-                    is EthereumTransactionExtras -> extras.copy(nonce = nonce.toBigInteger())
-                    else -> EthereumTransactionExtras(nonce = nonce.toBigInteger())
-                },
-            )
-            is TransactionData.Compiled -> transactionData
-        }
-
-        return when (val signResponse = sign(transactionData, signer)) {
-            is Result.Success -> {
-                val transactionToSend = try {
-                    transactionBuilder.buildForSend(
-                        transaction = transactionData,
-                        signature = signResponse.data.first,
-                        compiledTransaction = signResponse.data.second,
-                    )
-                } catch (e: BlockchainSdkError.FailedToBuildTx) {
-                    return Result.Failure(e)
-                }
-
-                when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())) {
-                    is SimpleResult.Success -> {
-                        val hash = transactionToSend.keccak().toHexString()
-                        transactionData.hash = hash
-                        wallet.addOutgoingTransaction(transactionData)
-                        Result.Success(TransactionSendResult(hash))
-                    }
-                    is SimpleResult.Failure -> Result.fromTangemSdkError(sendResult.error)
-                }
+        return when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())) {
+            is SimpleResult.Success -> {
+                val hash = transactionToSend.keccak().toHexString()
+                transactionData.hash = hash
+                wallet.addOutgoingTransaction(transactionData)
+                Result.Success(TransactionSendResult(hash))
             }
-            is Result.Failure -> Result.fromTangemSdkError(signResponse.error)
+            is SimpleResult.Failure -> Result.fromTangemSdkError(sendResult.error)
         }
     }
 
@@ -135,20 +112,33 @@ open class EthereumWalletManager(
         return getFeeInternal(amount, destination, null)
     }
 
-    open suspend fun getFee(amount: Amount, destination: String, data: String): Result<TransactionFee> {
-        return getFeeInternal(amount, destination, data)
+    override suspend fun getFee(
+        amount: Amount,
+        destination: String,
+        callData: SmartContractCallData?,
+    ): Result<TransactionFee> {
+        return getFeeInternal(amount, destination, callData)
+    }
+
+    override suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
+        transactionData.requireUncompiled()
+        val extra = transactionData.extras as? EthereumTransactionExtras
+        return getFeeInternal(
+            amount = transactionData.amount,
+            destination = transactionData.destinationAddress,
+            callData = extra?.callData,
+        )
     }
 
     protected open suspend fun getFeeInternal(
         amount: Amount,
         destination: String,
-        data: String? = null,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee> {
-        val isEthereumEIP1559Enabled = DepsContainer.blockchainFeatureToggles.isEthereumEIP1559Enabled
-        return if (isEthereumEIP1559Enabled && wallet.blockchain.isSupportEIP1559) {
-            getEIP1559Fee(amount, destination, data)
+        return if (wallet.blockchain.isSupportEIP1559) {
+            getEIP1559Fee(amount, destination, callData)
         } else {
-            getLegacyFee(amount, destination, data)
+            getLegacyFee(amount, destination, callData)
         }
     }
 
@@ -177,9 +167,9 @@ open class EthereumWalletManager(
                     if (!cardTokens.contains(token)) {
                         cardTokens.add(token)
                     }
-                    val balance = blockchairToken.balance.toBigDecimalOrNull()
-                        ?.movePointLeft(blockchairToken.decimals)
-                        ?: BigDecimal.ZERO
+                    val balance =
+                        blockchairToken.balance.toBigDecimalOrNull()?.movePointLeft(blockchairToken.decimals)
+                            ?: BigDecimal.ZERO
                     wallet.addTokenValue(balance, token)
                     token
                 }
@@ -196,26 +186,66 @@ open class EthereumWalletManager(
         return getGasLimitInternal(amount, destination, null)
     }
 
-    override suspend fun getGasLimit(amount: Amount, destination: String, data: String): Result<BigInteger> {
-        return getGasLimitInternal(amount, destination, data)
+    override suspend fun getGasLimit(
+        amount: Amount,
+        destination: String,
+        callData: SmartContractCallData,
+    ): Result<BigInteger> {
+        return getGasLimitInternal(amount, destination, callData)
     }
 
     override suspend fun getAllowance(spenderAddress: String, token: Token): kotlin.Result<BigDecimal> {
         return networkProvider.getAllowance(wallet.address, token, spenderAddress)
     }
 
-    override fun getApproveData(spenderAddress: String, value: Amount?) =
-        EthereumUtils.createErc20ApproveDataHex(spenderAddress, value)
+    override fun getApproveData(spenderAddress: String, value: Amount?) = ApprovalERC20TokenCallData(
+        spenderAddress = spenderAddress,
+        amount = value,
+    ).dataHex
+
+    override suspend fun prepareForSend(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<ByteArray> {
+        val transactionData = when (transactionData) {
+            is TransactionData.Uncompiled -> {
+                val nonce = networkProvider.getPendingTxCount(wallet.address)
+                    .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) }
+                val newExtras = when (val extras = transactionData.extras) {
+                    is EthereumTransactionExtras -> extras.copy(nonce = nonce.toBigInteger())
+                    else -> EthereumTransactionExtras(nonce = nonce.toBigInteger())
+                }
+                transactionData.copy(extras = newExtras)
+            }
+            is TransactionData.Compiled -> transactionData
+        }
+        return when (val signResponse = sign(transactionData, signer)) {
+            is Result.Success -> {
+                val transactionToSend = try {
+                    transactionBuilder.buildForSend(
+                        transaction = transactionData,
+                        signature = signResponse.data.first,
+                        compiledTransaction = signResponse.data.second,
+                    )
+                } catch (e: BlockchainSdkError.FailedToBuildTx) {
+                    return Result.Failure(e)
+                }
+
+                return Result.Success(transactionToSend)
+            }
+            is Result.Failure -> Result.fromTangemSdkError(signResponse.error)
+        }
+    }
 
     private suspend fun getGasLimitInternal(
         amount: Amount,
         destination: String,
-        data: String? = null,
+        callData: SmartContractCallData? = null,
     ): Result<BigInteger> {
         val from = wallet.address
         var to = destination
         var value: String? = null
-        var finalData = data
+        val data: String? = callData?.dataHex
 
         when (amount.type) {
             is AmountType.Coin -> {
@@ -223,30 +253,26 @@ open class EthereumWalletManager(
             }
 
             is AmountType.Token -> {
-                if (finalData == null) {
-                    to = amount.type.token.contractAddress
-                    finalData = EthereumUtils.createErc20TransferData(destination, amount).toHexString()
-                }
+                to = amount.type.token.contractAddress
             }
 
-            else -> {
-                /*no-op*/
+            else -> { /* no-op */
             }
         }
 
-        return networkProvider.getGasLimit(to, from, value, finalData)
+        return networkProvider.getGasLimit(to, from, value, data)
     }
 
     private suspend fun getEIP1559Fee(
         amount: Amount,
         destination: String,
-        data: String?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async {
-                    if (data != null) {
-                        getGasLimit(amount, destination, data)
+                    if (callData != null) {
+                        getGasLimit(amount, destination, callData)
                     } else {
                         getGasLimit(amount, destination)
                     }
@@ -278,13 +304,13 @@ open class EthereumWalletManager(
     private suspend fun getLegacyFee(
         amount: Amount,
         destination: String,
-        data: String?,
+        callData: SmartContractCallData?,
     ): Result<TransactionFee.Choosable> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async {
-                    if (data != null) {
-                        getGasLimit(amount, destination, data)
+                    if (callData != null) {
+                        getGasLimit(amount, destination, callData)
                     } else {
                         getGasLimit(amount, destination)
                     }
