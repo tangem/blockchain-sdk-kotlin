@@ -13,4 +13,6 @@ internal interface HederaNetworkProvider : NetworkProvider {
     suspend fun getBalances(accountId: String): Result<HederaBalancesResponse>
 
     suspend fun getTransactionInfo(transactionId: String): Result<HederaTransactionResponse>
+
+    suspend fun getTokenDetails(tokenId: String): Result<HederaTokenDetailsResponse>
 }

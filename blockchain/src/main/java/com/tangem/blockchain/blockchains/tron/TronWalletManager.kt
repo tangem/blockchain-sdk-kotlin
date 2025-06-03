@@ -5,7 +5,9 @@ import com.google.common.primitives.Ints
 import com.tangem.blockchain.blockchains.tron.network.TronAccountInfo
 import com.tangem.blockchain.blockchains.tron.network.TronEnergyFeeData
 import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
+import com.tangem.blockchain.blockchains.tron.tokenmethods.TronApprovalTokenCallData
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -173,7 +175,28 @@ internal class TronWalletManager(
     }
 
     @Suppress("MagicNumber")
-    override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
+    override suspend fun getFee(amount: Amount, destination: String) = getFee(
+        amount = amount,
+        destination = destination,
+        callData = null,
+    )
+
+    override suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
+        transactionData.requireUncompiled()
+        val extra = transactionData.extras as? TronTransactionExtras
+        return getFee(
+            amount = transactionData.amount,
+            destination = transactionData.destinationAddress,
+            callData = extra?.callData,
+        )
+    }
+
+    @Suppress("MagicNumber")
+    override suspend fun getFee(
+        amount: Amount,
+        destination: String,
+        callData: SmartContractCallData?,
+    ): Result<TransactionFee> {
         val blockchain = wallet.blockchain
         return coroutineScope {
             val destinationExistsDef = async { networkService.checkIfAccountExists(destination) }
@@ -185,7 +208,7 @@ internal class TronWalletManager(
                     destination = destination,
                     signer = dummySigner,
                     publicKey = dummySigner.publicKey,
-                    extras = null,
+                    extras = callData?.let { TronTransactionExtras(it) },
                 )
             }
 
@@ -334,11 +357,15 @@ internal class TronWalletManager(
     ): Result<List<ByteArray>> {
         return when (val result = signer.sign(transactionHashes, publicKey)) {
             is CompletionResult.Success -> {
-                val unmarshalledSignatures = result.data.mapIndexed { index, hash ->
+                val unmarshalledSignatures = result.data.mapIndexed { index, sign ->
                     if (publicKey == dummySigner.publicKey) {
-                        hash + ByteArray(1)
+                        sign + ByteArray(1)
                     } else {
-                        UnmarshalHelper().unmarshalSignatureEVMLegacy(hash, transactionHashes[index], publicKey)
+                        UnmarshalHelper.unmarshalSignatureExtended(
+                            signature = sign,
+                            hash = transactionHashes[index],
+                            publicKey = publicKey,
+                        ).asRSVLegacyEVM()
                     }
                 }
 
@@ -361,7 +388,8 @@ internal class TronWalletManager(
                 val unmarshalledSignature = if (publicKey == dummySigner.publicKey) {
                     result.data + ByteArray(1)
                 } else {
-                    UnmarshalHelper().unmarshalSignatureEVMLegacy(result.data, transactionHash, publicKey)
+                    UnmarshalHelper.unmarshalSignatureExtended(result.data, transactionHash, publicKey)
+                        .asRSVLegacyEVM()
                 }
                 Result.Success(unmarshalledSignature)
             }
@@ -441,7 +469,10 @@ internal class TronWalletManager(
     }
 
     override fun getApproveData(spenderAddress: String, value: Amount?): String {
-        return createTrc20ApproveDataHex(spenderAddress, value)
+        return TronApprovalTokenCallData(
+            spenderAddress = spenderAddress,
+            amount = value,
+        ).dataHex
     }
 
     private companion object {

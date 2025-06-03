@@ -6,7 +6,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvide
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Wallet
-import com.tangem.blockchain.common.di.DepsContainer
+import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
@@ -20,21 +20,28 @@ class TelosWalletManager(
     networkProvider: EthereumNetworkProvider,
 ) : EthereumWalletManager(wallet, transactionBuilder, networkProvider) {
 
-    override suspend fun getFeeInternal(amount: Amount, destination: String, data: String?): Result<TransactionFee> {
-        val isEthereumEIP1559Enabled = DepsContainer.blockchainFeatureToggles.isEthereumEIP1559Enabled
-        return if (isEthereumEIP1559Enabled && wallet.blockchain.isSupportEIP1559) {
-            getEIP1559Fee(amount, destination, data)
+    override suspend fun getFeeInternal(
+        amount: Amount,
+        destination: String,
+        callData: SmartContractCallData?,
+    ): Result<TransactionFee> {
+        return if (wallet.blockchain.isSupportEIP1559) {
+            getEIP1559Fee(amount, destination, callData)
         } else {
-            getLegacyFee(amount, destination, data)
+            getLegacyFee(amount, destination, callData)
         }
     }
 
-    private suspend fun getEIP1559Fee(amount: Amount, destination: String, data: String?): Result<TransactionFee> {
+    private suspend fun getEIP1559Fee(
+        amount: Amount,
+        destination: String,
+        callData: SmartContractCallData?,
+    ): Result<TransactionFee> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async {
-                    if (data != null) {
-                        getGasLimit(amount, destination, data)
+                    if (callData != null) {
+                        getGasLimit(amount, destination, callData)
                     } else {
                         getGasLimit(amount, destination)
                     }
@@ -63,12 +70,16 @@ class TelosWalletManager(
         }
     }
 
-    private suspend fun getLegacyFee(amount: Amount, destination: String, data: String?): Result<TransactionFee> {
+    private suspend fun getLegacyFee(
+        amount: Amount,
+        destination: String,
+        callData: SmartContractCallData?,
+    ): Result<TransactionFee> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async {
-                    if (data != null) {
-                        getGasLimit(amount, destination, data)
+                    if (callData != null) {
+                        getGasLimit(amount, destination, callData)
                     } else {
                         getGasLimit(amount, destination)
                     }

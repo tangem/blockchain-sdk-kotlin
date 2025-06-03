@@ -39,14 +39,14 @@ internal open class BitcoinFeesCalculator(
         val calculatedFee = satoshiPerByte
             .movePointLeft(blockchain.decimals())
             .multiply(transactionSize)
-            .setScale(blockchain.decimals(), RoundingMode.DOWN)
+            .setScale(blockchain.decimals(), RoundingMode.UP)
 
         val fee = maxOf(calculatedFee, minimalFee)
         return Fee.Bitcoin(Amount(fee, blockchain), satoshiPerByte, transactionSize)
     }
 
     private companion object {
-        const val BYTES_IN_KB = 1024
+        const val BYTES_IN_KB = 1000 // use 1000 for BTC
         const val INT_DECIMALS = 0
     }
 }

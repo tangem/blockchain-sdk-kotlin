@@ -73,6 +73,7 @@ sealed class BlockchainSdkError(
         data object UnsupportedTokenDestinationAddress : Solana(4)
         data object OwnerAccountShouldBeNotNull : Solana(5, "Request owner account info before")
         data object UnknownDestinationAddress : Solana(6, "Invalid destination address")
+        data object TransactionIsEmpty : Solana(7, "Transaction is empty")
     }
 
     sealed class Polkadot(
@@ -104,6 +105,7 @@ sealed class BlockchainSdkError(
             "Due to Kaspa limitations only $maxOutputs UTXOs can fit in a single transaction. This means you can only" +
                 " send ${maxAmount.toPlainString()}. You need to reduce the amount",
         )
+
         data object ZeroUtxoError : Kaspa(3)
     }
 
@@ -296,6 +298,7 @@ sealed class BlockchainSdkError(
             customMessage = "Insufficient min-ada-value amount. In addition to network fees, the Cardano network " +
                 "charges min-ada-value. Make sure the balance is sufficient to withdraw the token.",
         )
+
         data object InvalidDerivationType : Cardano(subCode = 4)
     }
 
@@ -375,6 +378,24 @@ sealed class BlockchainSdkError(
         )
     }
 
+    sealed class XRP(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_XRP,
+        customMessage = customMessage?.let { "$ERROR_CODE_XRP: $subCode: $customMessage" }
+            ?: "$ERROR_CODE_XRP: $subCode",
+        messageResId = null,
+        cause = throwable,
+    ) {
+
+        data object DestinationMemoRequired : XRP(
+            subCode = 0,
+            customMessage = "Destination memo required",
+        )
+    }
+
     companion object {
         const val ERROR_CODE_SOLANA = 1000
         const val ERROR_CODE_POLKADOT = 2000
@@ -393,6 +414,7 @@ sealed class BlockchainSdkError(
         const val ERROR_CODE_TRON = 15000
         const val ERROR_CODE_SUI = 16000
         const val ERROR_CODE_ALEPHIUM = 17000
+        const val ERROR_CODE_XRP = 18000
     }
 }
 

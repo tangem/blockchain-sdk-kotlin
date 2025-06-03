@@ -16,11 +16,13 @@ import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
 import com.tangem.blockchain.blockchains.koinos.KoinosAddressService
 import com.tangem.blockchain.blockchains.nexa.NexaAddressService
+import com.tangem.blockchain.blockchains.pepecoin.PepecoinAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
 import com.tangem.blockchain.blockchains.radiant.RadiantAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
 import com.tangem.blockchain.blockchains.stellar.StellarAddressService
+import com.tangem.blockchain.blockchains.sui.SuiAddressService
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService
 import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.vechain.VeChainWalletManager
@@ -31,6 +33,7 @@ import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProviderFactory
 import com.tangem.blockchain.externallinkprovider.TxExploreState
+import com.tangem.blockchain.nft.models.NFTAsset
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 
@@ -198,6 +201,8 @@ enum class Blockchain(
     ScrollTestnet("scroll/test", "ETH", "Scroll Sepolia Testnet"),
     ZkLinkNova("zklink", "ETH", "zkLink Nova"),
     ZkLinkNovaTestnet("zklink/test", "ETH", "zkLink Nova Sepolia Testnet"),
+    Pepecoin("pepecoin", "PEP", "Pepecoin"),
+    PepecoinTestnet("pepecoin/test", "PEP", "Pepecoin Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -268,6 +273,7 @@ enum class Blockchain(
         Koinos, KoinosTestnet,
         InternetComputer,
         Clore,
+        Pepecoin, PepecoinTestnet,
         -> 8
 
         Solana, SolanaTestnet,
@@ -354,8 +360,14 @@ enum class Blockchain(
 
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
 
+    fun reformatContractAddress(address: String?): String? {
+        val addressService = getAddressService() as? ContractAddressValidator ?: return address
+        return addressService.reformatContractAddress(address) ?: address
+    }
+
     fun validateContractAddress(address: String): Boolean {
-        return (getAddressService() as? ContractAddressValidator)?.validateContractAddress(address) == true
+        val addressService = getAddressService() as? ContractAddressValidator ?: return validateAddress(address)
+        return addressService.validateContractAddress(address)
     }
 
     @Suppress("CyclomaticComplexMethod", "LongMethod")
@@ -435,6 +447,7 @@ enum class Blockchain(
             Stellar, StellarTestnet -> StellarAddressService()
             Solana, SolanaTestnet -> SolanaAddressService()
             Tezos -> TezosAddressService()
+            Sui, SuiTestnet -> SuiAddressService(this)
             Cosmos, CosmosTestnet,
             TerraV1,
             TerraV2,
@@ -443,7 +456,6 @@ enum class Blockchain(
             InternetComputer,
             Filecoin,
             Sei, SeiTestnet,
-            Sui, SuiTestnet,
             TON, TONTestnet,
             -> WalletCoreAddressService(blockchain = this)
 
@@ -456,6 +468,7 @@ enum class Blockchain(
             Koinos, KoinosTestnet -> KoinosAddressService()
             Radiant -> RadiantAddressService()
             Fact0rn -> Fact0rnAddressService()
+            Pepecoin, PepecoinTestnet -> PepecoinAddressService()
             Casper, CasperTestnet -> CasperAddressService()
             Alephium, AlephiumTestnet -> AlephiumAddressService()
             Unknown -> error("unsupported blockchain")
@@ -482,6 +495,10 @@ enum class Blockchain(
 
     fun getExploreTxUrl(transactionHash: String): TxExploreState {
         return externalLinkProvider.getExplorerTxUrl(transactionHash)
+    }
+
+    fun getNFTExploreUrl(assetIdentifier: NFTAsset.Identifier): String? {
+        return externalLinkProvider.getNFTExplorerUrl(assetIdentifier)
     }
 
     fun getTestnetTopUpUrl(): String? {
@@ -557,6 +574,7 @@ enum class Blockchain(
             ZkLinkNova, ZkLinkNovaTestnet -> ZkLinkNovaTestnet
             Nexa, NexaTestnet -> NexaTestnet
             Scroll, ScrollTestnet -> ScrollTestnet
+            Pepecoin, PepecoinTestnet -> PepecoinTestnet
             Unknown,
             Cardano,
             Dogecoin,
@@ -668,6 +686,7 @@ enum class Blockchain(
             ApeChain, ApeChainTestnet,
             Scroll, ScrollTestnet,
             ZkLinkNova, ZkLinkNovaTestnet,
+            Pepecoin, PepecoinTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -781,6 +800,8 @@ enum class Blockchain(
             ScrollTestnet -> Chain.ScrollTestnet.id
             ZkLinkNova -> Chain.ZkLinkNova.id
             ZkLinkNovaTestnet -> Chain.ZkLinkNovaTestnet.id
+            Pepecoin -> Chain.Pepecoin.id
+            PepecoinTestnet -> Chain.PepecoinTestnet.id
             else -> null
         }
     }
@@ -818,6 +839,32 @@ enum class Blockchain(
 
             else -> false
         }
+    }
+
+    fun canHandleNFTs(): Boolean = when (this) {
+        // EVM
+        Ethereum, // supported testnet - Sepolia (11155111)
+        Arbitrum, // supported testnet - Sepolia (421614)
+        Avalanche,
+        Fantom, FantomTestnet,
+        BSC, BSCTestnet,
+        Polygon, // supported testnet - Amoy (80002)
+        Gnosis,
+        Cronos,
+        ZkSyncEra, ZkSyncEraTestnet,
+        Moonbeam, MoonbeamTestnet,
+        PolygonZkEVM, PolygonZkEVMTestnet,
+        Moonriver, MoonriverTestnet,
+        Chiliz, ChilizTestnet,
+        Mantle, // supported testnet - Sepolia (5003)
+        Optimism, // supported testnet - Sepolia (11155420)
+        Base, BaseTestnet,
+        Blast, BlastTestnet,
+
+        Solana,
+        -> true
+
+        else -> false
     }
 
     fun isEvm(): Boolean = getChainId() != null
