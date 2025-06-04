@@ -51,8 +51,8 @@ data class NFTAsset(
 
     @JsonClass(generateAdapter = true)
     data class Media(
-        @Json(name = "mimetype") val mimetype: String?,
-        @Json(name = "url") val url: String,
+        @Json(name = "animationUrl") val animationUrl: String?,
+        @Json(name = "imageUrl") val imageUrl: String?,
     )
 
     @JsonClass(generateAdapter = true)

@@ -48,8 +48,8 @@ internal class EthereumNFTSafeTransferERC1155TokenCallDataTest {
             label = "",
         ),
         media = NFTAsset.Media(
-            mimetype = "",
-            url = "",
+            animationUrl = null,
+            imageUrl = null,
         ),
         traits = listOf(
             NFTAsset.Trait(

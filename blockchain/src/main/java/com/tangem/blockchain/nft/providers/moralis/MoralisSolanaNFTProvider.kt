@@ -115,7 +115,10 @@ internal class MoralisSolanaNFTProvider(
     private fun MoralisSolanaNFTAssetResponse.toNFTAssetMedia(): NFTAsset.Media? {
         val firstFile = properties?.files?.firstOrNull()
         return firstFile?.uri?.let {
-            NFTAsset.Media(firstFile.type, it.ipfsToHttps().removeUrlQuery())
+            NFTAsset.Media(
+                animationUrl = null, // not implemented yet
+                imageUrl = it.ipfsToHttps().removeUrlQuery(),
+            )
         }
     }
 
