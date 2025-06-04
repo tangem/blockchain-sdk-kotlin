@@ -176,7 +176,10 @@ internal class MoralisEvmNFTProvider(
         media?.originalMediaUrl != null -> media.originalMediaUrl
         else -> null
     }?.let {
-        NFTAsset.Media(media?.mimeType, it.ipfsToHttps().removeUrlQuery())
+        NFTAsset.Media(
+            animationUrl = null, // not implemented yet
+            imageUrl = it.ipfsToHttps().removeUrlQuery(),
+        )
     }
 
     private fun MoralisEvmNFTAssetResponse.Attribute.toNFTAssetTrait(): NFTAsset.Trait? =

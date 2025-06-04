@@ -26,6 +26,7 @@ internal interface MoralisEvmApi {
         @Query("cursor") cursor: String?,
         @Query("limit") limit: Int,
         @Query("format") format: String = "decimal",
+        @Query("exclude_spam") excludeSpam: Boolean = true,
         @Query("normalizeMetadata") normalizeMetadata: Boolean = true,
         @Query("media_items") mediaItems: Boolean = true,
     ): MoralisEvmNFTResponse<MoralisEvmNFTAssetResponse>
