@@ -10,5 +10,6 @@ internal interface MoralisSolanaApi {
     suspend fun getNFTAssets(
         @Path("address") address: String,
         @Query("nftMetadata") nftMetadata: Boolean = true,
+        @Query("excludeSpam") excludeSpam: Boolean = true,
     ): List<MoralisSolanaNFTAssetResponse>
 }
