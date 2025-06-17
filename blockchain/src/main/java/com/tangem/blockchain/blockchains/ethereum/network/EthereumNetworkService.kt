@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.ethereum.network
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
+import com.tangem.blockchain.blockchains.ethereum.converters.ENSResponseConverter
 import com.tangem.blockchain.blockchains.ethereum.converters.EthereumFeeHistoryConverter
 import com.tangem.blockchain.blockchains.ethereum.models.EthereumFeeHistoryResponse
 import com.tangem.blockchain.common.*
@@ -14,6 +15,7 @@ import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairToken
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import com.tangem.blockchain.network.moshi
+import com.tangem.common.extensions.hexToBytes
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
@@ -229,6 +231,25 @@ internal open class EthereumNetworkService(
         }
     }
 
+    override suspend fun resolveName(namehash: ByteArray, encodedName: ByteArray): Result<String> {
+        return try {
+            val data = EthereumResolveENSNameRequestData(
+                contractAddress = RESOLVE_ENS_NAME_CONTRACT_ADDRESS,
+                nameBytes = encodedName,
+                callDataBytes = READ_ETHEREUM_ADDRESS_INTERFACE_ID + namehash,
+            )
+
+            val resultString = multiJsonRpcProvider.performRequest(EthereumJsonRpcProvider::resolveENSName, data)
+                .extractResult()
+
+            val result = ENSResponseConverter.convert(resultString)
+
+            Result.Success(result)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
     @Suppress("MagicNumber")
     private fun String.responseToBigInteger() = this.substring(2).ifBlank { "0" }.toBigInteger(16)
 
@@ -248,5 +269,10 @@ internal open class EthereumNetworkService(
                 throw error as? BlockchainSdkError ?: BlockchainSdkError.CustomError("Unknown error format")
             }
         }
+    }
+
+    private companion object {
+        private const val RESOLVE_ENS_NAME_CONTRACT_ADDRESS = "0x64969fb44091A7E5fA1213D30D7A7e8488edf693"
+        private val READ_ETHEREUM_ADDRESS_INTERFACE_ID = "0x3b3b57de".hexToBytes()
     }
 }
