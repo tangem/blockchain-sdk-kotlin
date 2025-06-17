@@ -22,6 +22,7 @@ interface EthereumNetworkProvider : NetworkProvider {
     suspend fun getTokensBalance(address: String, tokens: Set<Token>): Result<Map<Token, BigDecimal>>
 
     suspend fun callContractForFee(data: ContractCallData): Result<BigInteger>
+    suspend fun resolveName(namehash: ByteArray, encodedName: ByteArray): Result<String>
 }
 
 class EthereumInfoResponse(
