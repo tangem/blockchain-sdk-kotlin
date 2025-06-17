@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.ethereum
 
 import android.util.Log
 import com.tangem.blockchain.blockchains.ethereum.eip1559.isSupportEIP1559
+import com.tangem.blockchain.blockchains.ethereum.ens.DefaultENSNameProcessor
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.ApprovalERC20TokenCallData
@@ -38,7 +39,8 @@ open class EthereumWalletManager(
     TokenFinder,
     EthereumGasLoader,
     TransactionPreparer,
-    Approver {
+    Approver,
+    NameResolver {
 
     // move to constructor later
     protected val feesCalculator = EthereumFeesCalculator()
@@ -235,6 +237,14 @@ open class EthereumWalletManager(
             }
             is Result.Failure -> Result.fromTangemSdkError(signResponse.error)
         }
+    }
+
+    override suspend fun resolve(name: String): Result<String> {
+        val ensNameProcessor = DefaultENSNameProcessor()
+        val namehash = ensNameProcessor.getNamehash(name).getOrThrow()
+        val encodedName = ensNameProcessor.encode(name).getOrThrow()
+
+        return networkProvider.resolveName(namehash, encodedName)
     }
 
     private suspend fun getGasLimitInternal(
