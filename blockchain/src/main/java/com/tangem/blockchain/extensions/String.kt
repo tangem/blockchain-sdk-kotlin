@@ -6,6 +6,7 @@ import com.tangem.blockchain.common.HEX_PREFIX
 import com.tangem.common.extensions.hexToBytes
 import org.bitcoinj.core.Base58
 import org.kethereum.contract.abi.types.leftPadToFixedSize
+import org.kethereum.contract.abi.types.rightPadToFixedSize
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -64,3 +65,7 @@ inline fun <R> String?.letNotBlank(block: (String) -> R): R? {
 }
 
 fun String.hexToFixedSizeBytes(fixedSize: Int = 32) = hexToBytes().leftPadToFixedSize(fixedSize = fixedSize)
+
+fun ByteArray.toFixedSizeBytes(fixedSize: Int = 32) = leftPadToFixedSize(fixedSize = fixedSize)
+
+fun ByteArray.toFixedSizeBytesRightPadding(fixedSize: Int = 32) = rightPadToFixedSize(fixedSize = fixedSize)
