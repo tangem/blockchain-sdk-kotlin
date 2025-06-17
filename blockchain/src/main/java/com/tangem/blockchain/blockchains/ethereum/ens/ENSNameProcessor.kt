@@ -1,5 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.ens
 
+import com.tangem.blockchain.extensions.Result
+
 /**
  * Prepares data for ENS contract calls.
  * https://docs.ens.domains/resolution/names/#algorithm-1
