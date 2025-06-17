@@ -1,12 +1,14 @@
 package com.tangem.blockchain.blockchains.ethereum.ens
 
+import com.tangem.blockchain.common.toBlockchainSdkError
 import org.kethereum.keccakshortcut.keccak
+import com.tangem.blockchain.extensions.Result
 import java.net.IDN
 
 @Suppress("MagicNumber")
 internal class DefaultENSNameProcessor : ENSNameProcessor {
 
-    override fun getNamehash(name: String): Result<ByteArray> = runCatching {
+    override fun getNamehash(name: String): Result<ByteArray> = try {
         val normalized = normalizeAndCheckName(name)
         val labels = normalized.split(".")
         var node = ByteArray(32) { 0 }
@@ -16,10 +18,12 @@ internal class DefaultENSNameProcessor : ENSNameProcessor {
             node = (node + labelHash).keccak()
         }
 
-        node
+        Result.Success(node)
+    } catch (e: Exception) {
+        Result.Failure(e.toBlockchainSdkError())
     }
 
-    override fun encode(name: String): Result<ByteArray> = runCatching {
+    override fun encode(name: String): Result<ByteArray> = try {
         val normalized = normalizeAndCheckName(name)
         val labels = normalized.split(".")
         val encoded = ByteArray(labels.sumOf { it.length + 1 } + 1)
@@ -33,7 +37,9 @@ internal class DefaultENSNameProcessor : ENSNameProcessor {
             offset += label.length
         }
         encoded[offset] = 0
-        encoded
+        Result.Success(encoded)
+    } catch (e: Exception) {
+        Result.Failure(e.toBlockchainSdkError())
     }
 
     private fun normalizeAndCheckName(name: String): String {
