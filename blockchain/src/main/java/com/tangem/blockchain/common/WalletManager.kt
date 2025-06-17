@@ -290,6 +290,19 @@ interface Approver {
 }
 
 /**
+ * Interface for resolving human readable names to addresses
+ */
+interface NameResolver {
+    /**
+     * Resolves a human readable name to an address.
+     *
+     * @param name The human readable name to resolve.
+     * @return A [Result] containing the resolved address as a [String] or an error if the resolution fails.
+     */
+    suspend fun resolve(name: String): Result<String>
+}
+
+/**
  * Common interface for UTXO blockchain managers
  */
 interface UtxoBlockchainManager {
