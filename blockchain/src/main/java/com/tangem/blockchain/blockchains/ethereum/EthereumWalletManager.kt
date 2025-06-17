@@ -241,8 +241,8 @@ open class EthereumWalletManager(
 
     override suspend fun resolve(name: String): Result<String> {
         val ensNameProcessor = DefaultENSNameProcessor()
-        val namehash = ensNameProcessor.getNamehash(name).getOrThrow()
-        val encodedName = ensNameProcessor.encode(name).getOrThrow()
+        val namehash = ensNameProcessor.getNamehash(name).successOr { return Result.Failure(it.error) }
+        val encodedName = ensNameProcessor.encode(name).successOr { return Result.Failure(it.error) }
 
         return networkProvider.resolveName(namehash, encodedName)
     }
