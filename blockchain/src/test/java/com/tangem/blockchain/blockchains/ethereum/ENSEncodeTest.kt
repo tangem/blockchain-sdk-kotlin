@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.ethereum
 
 import com.tangem.blockchain.blockchains.ethereum.ens.DefaultENSNameProcessor
 import com.tangem.blockchain.blockchains.ethereum.ens.ENSNameProcessor
+import com.tangem.blockchain.extensions.successOr
 import junit.framework.TestCase.assertEquals
 import org.junit.Test
 import org.komputing.khex.extensions.toNoPrefixHexString
@@ -15,7 +16,7 @@ class ENSEncodeTest {
         val result = ensNameProcessor.encode("vitalik.eth")
         assertEquals(
             "07766974616c696b0365746800",
-            result.getOrThrow().toNoPrefixHexString(),
+            result.successOr { ByteArray(0) }.toNoPrefixHexString(),
         )
     }
 
@@ -24,7 +25,7 @@ class ENSEncodeTest {
         val result = ensNameProcessor.encode("my.name.eth")
         assertEquals(
             "026d79046e616d650365746800",
-            result.getOrThrow().toNoPrefixHexString(),
+            result.successOr { ByteArray(0) }.toNoPrefixHexString(),
         )
     }
 }
