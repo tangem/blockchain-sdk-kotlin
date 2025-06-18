@@ -297,9 +297,9 @@ interface NameResolver {
      * Resolves a human readable name to an address.
      *
      * @param name The human readable name to resolve.
-     * @return A [Result] containing the resolved address as a [String] or an error if the resolution fails.
+     * @return A [ResolveAddressResult] containing the resolved address or an error.
      */
-    suspend fun resolve(name: String): Result<String>
+    suspend fun resolve(name: String): ResolveAddressResult
 }
 
 /**
