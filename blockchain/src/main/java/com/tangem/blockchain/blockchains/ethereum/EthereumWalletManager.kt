@@ -34,6 +34,7 @@ open class EthereumWalletManager(
     protected val networkProvider: EthereumNetworkProvider,
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
+    private val supportsENS: Boolean,
 ) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider, nftProvider = nftProvider),
     SignatureCountValidator,
     TokenFinder,
@@ -44,6 +45,8 @@ open class EthereumWalletManager(
 
     // move to constructor later
     protected val feesCalculator = EthereumFeesCalculator()
+
+    private val ensNameProcessor = DefaultENSNameProcessor()
 
     private var pendingTxCount = -1L
 
@@ -239,12 +242,15 @@ open class EthereumWalletManager(
         }
     }
 
-    override suspend fun resolve(name: String): Result<String> {
-        val ensNameProcessor = DefaultENSNameProcessor()
-        val namehash = ensNameProcessor.getNamehash(name).successOr { return Result.Failure(it.error) }
-        val encodedName = ensNameProcessor.encode(name).successOr { return Result.Failure(it.error) }
+    override suspend fun resolve(name: String): ResolveAddressResult {
+        if (supportsENS) {
+            val namehash = ensNameProcessor.getNamehash(name).successOr { return ResolveAddressResult.Error(it.error) }
+            val encodedName = ensNameProcessor.encode(name).successOr { return ResolveAddressResult.Error(it.error) }
 
-        return networkProvider.resolveName(namehash, encodedName)
+            return networkProvider.resolveName(namehash, encodedName)
+        } else {
+            return ResolveAddressResult.NotSupported
+        }
     }
 
     private suspend fun getGasLimitInternal(
