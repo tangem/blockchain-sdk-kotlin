@@ -20,7 +20,13 @@ class MantleWalletManager(
     transactionBuilder: EthereumTransactionBuilder,
     networkProvider: EthereumNetworkProvider,
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
-) : EthereumWalletManager(wallet, transactionBuilder, networkProvider, transactionHistoryProvider) {
+) : EthereumWalletManager(
+    wallet = wallet,
+    transactionBuilder = transactionBuilder,
+    networkProvider = networkProvider,
+    transactionHistoryProvider = transactionHistoryProvider,
+    supportsENS = false,
+) {
 
     override suspend fun getFeeInternal(
         amount: Amount,
