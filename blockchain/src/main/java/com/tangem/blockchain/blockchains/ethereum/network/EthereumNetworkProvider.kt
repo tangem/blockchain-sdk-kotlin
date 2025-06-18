@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.common.NetworkProvider
+import com.tangem.blockchain.common.ResolveAddressResult
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
@@ -22,7 +23,7 @@ interface EthereumNetworkProvider : NetworkProvider {
     suspend fun getTokensBalance(address: String, tokens: Set<Token>): Result<Map<Token, BigDecimal>>
 
     suspend fun callContractForFee(data: ContractCallData): Result<BigInteger>
-    suspend fun resolveName(namehash: ByteArray, encodedName: ByteArray): Result<String>
+    suspend fun resolveName(namehash: ByteArray, encodedName: ByteArray): ResolveAddressResult
 }
 
 class EthereumInfoResponse(

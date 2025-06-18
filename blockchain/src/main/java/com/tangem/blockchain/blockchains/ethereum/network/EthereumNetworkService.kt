@@ -231,7 +231,7 @@ internal open class EthereumNetworkService(
         }
     }
 
-    override suspend fun resolveName(namehash: ByteArray, encodedName: ByteArray): Result<String> {
+    override suspend fun resolveName(namehash: ByteArray, encodedName: ByteArray): ResolveAddressResult {
         return try {
             val data = EthereumResolveENSNameRequestData(
                 contractAddress = RESOLVE_ENS_NAME_CONTRACT_ADDRESS,
@@ -244,9 +244,9 @@ internal open class EthereumNetworkService(
 
             val result = ENSResponseConverter.convert(resultString)
 
-            Result.Success(result)
+            ResolveAddressResult.Resolved(result)
         } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainSdkError())
+            ResolveAddressResult.Error(exception.toBlockchainSdkError())
         }
     }
 
