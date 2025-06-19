@@ -8,6 +8,9 @@ interface RippledApi {
     suspend fun getAccount(@Body rippledBody: RippledBody): RippledAccountResponse
 
     @POST("./")
+    suspend fun getAccountLine(@Body rippledBody: RippledBody): RippledAccountLinesResponse
+
+    @POST("./")
     suspend fun getServerState(@Body rippledBody: RippledBody = serverStateBody): RippledStateResponse
 
     @POST("./")
@@ -19,6 +22,7 @@ interface RippledApi {
 
 enum class RippledMethod(val value: String) {
     ACCOUNT_INFO("account_info"),
+    ACCOUNT_LINES("account_lines"),
     SERVER_STATE("server_state"),
     FEE("fee"),
     SUBMIT("submit"),
@@ -26,7 +30,7 @@ enum class RippledMethod(val value: String) {
 
 data class RippledBody(
     val method: String,
-    val params: List<Map<String, String>> = listOf(),
+    val params: List<Map<String, Any>> = listOf(),
 )
 
 val serverStateBody = RippledBody(RippledMethod.SERVER_STATE.value)
