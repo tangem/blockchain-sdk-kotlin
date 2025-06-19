@@ -3,13 +3,14 @@ package com.tangem.blockchain.blockchains.xrp
 import com.ripple.encodings.addresses.Addresses
 import com.ripple.encodings.base58.B58
 import com.tangem.blockchain.common.address.AddressService
+import com.tangem.blockchain.common.address.ContractAddressValidator
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toCompressedPublicKey
 import org.kethereum.extensions.toBigInteger
 
-class XrpAddressService : AddressService() {
+class XrpAddressService : AddressService(), ContractAddressValidator {
 
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         val canonicalPublicKey = canonizePublicKey(walletPublicKey)
@@ -28,6 +29,19 @@ class XrpAddressService : AddressService() {
             address.startsWith("X") -> decodeXAddress(address) != null
             else -> false
         }
+    }
+
+    override fun validateContractAddress(address: String): Boolean {
+        val split = address.split(".")
+        val currencyCode = split.getOrNull(0) ?: return false
+        val issuer = split.getOrNull(1) ?: return false
+        return isValidCurrencyCode(currencyCode) && validate(issuer)
+    }
+
+    private fun isValidCurrencyCode(code: String): Boolean {
+        val standard = Regex("^(?!XRP$)[A-Za-z0-9?!@#$%^&*<>(){}\\[\\]|]{3}$")
+        val nonstandard = Regex("^[0-9A-Fa-f]{40}$")
+        return standard.matches(code) || nonstandard.matches(code)
     }
 
     @Suppress("MagicNumber")
