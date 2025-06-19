@@ -7,17 +7,22 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
+import com.tangem.blockchain.common.trustlines.AssetRequirementsCondition
+import com.tangem.blockchain.common.trustlines.AssetRequirementsManager
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.successOr
+import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
+import java.util.Calendar
 
 class XrpWalletManager(
     wallet: Wallet,
     private val transactionBuilder: XrpTransactionBuilder,
     private val networkProvider: XrpNetworkProvider,
-) : WalletManager(wallet), ReserveAmountProvider, TransactionValidator {
+) : WalletManager(wallet), ReserveAmountProvider, TransactionValidator, AssetRequirementsManager {
 
     override val currentHost: String
         get() = networkProvider.baseUrl
@@ -42,6 +47,14 @@ class XrpWalletManager(
         wallet.setCoinValue(response.balance - response.reserveTotal)
         transactionBuilder.sequence = response.sequence
         transactionBuilder.minReserve = response.reserveBase
+        transactionBuilder.reserveInc = response.reserveInc
+        transactionBuilder.tokenBalances = response.tokenBalances
+        cardTokens.forEach { token ->
+            val tokenBalance = response.tokenBalances
+                .find { "${it.currency}.${it.issuer}" == token.contractAddress }?.balance
+                ?: 0.toBigDecimal()
+            wallet.addTokenValue(tokenBalance, token)
+        }
 
         if (response.hasUnconfirmed) {
             if (wallet.recentTransactions.isEmpty()) wallet.addTransactionDummy()
@@ -82,6 +95,10 @@ class XrpWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
+        return innerGetFee()
+    }
+
+    private suspend fun innerGetFee(): Result<TransactionFee> {
         return when (val result = networkProvider.getFee()) {
             is Result.Failure -> result
             is Result.Success -> Result.Success(
@@ -108,5 +125,78 @@ class XrpWalletManager(
             return kotlin.Result.failure(BlockchainSdkError.DestinationTagRequired)
         }
         return kotlin.Result.success(Unit)
+    }
+
+    override suspend fun requirementsCondition(currencyType: CryptoCurrencyType): AssetRequirementsCondition? {
+        if (!assetRequiresAssociation(currencyType)) return null
+
+        return when (currencyType) {
+            is CryptoCurrencyType.Coin -> null
+            is CryptoCurrencyType.Token -> {
+                AssetRequirementsCondition.RequiredTrustline(
+                    blockchain = Blockchain.XRP,
+                    amount = Amount(blockchain = Blockchain.XRP, value = transactionBuilder.reserveInc),
+                )
+            }
+        }
+    }
+
+    override suspend fun fulfillRequirements(
+        currencyType: CryptoCurrencyType,
+        signer: TransactionSigner,
+    ): SimpleResult {
+        if (!assetRequiresAssociation(currencyType) || currencyType !is CryptoCurrencyType.Token) {
+            return SimpleResult.Success
+        }
+        val coinAmount = wallet.getCoinAmount()
+        val fee = innerGetFee().successOr { return it.toSimpleFailure() }
+        val transactionData = TransactionData.Uncompiled(
+            contractAddress = currencyType.info.contractAddress,
+            fee = fee.normal,
+            amount = Amount(Blockchain.XRP),
+            sourceAddress = wallet.address,
+            destinationAddress = "",
+        )
+        val hash = transactionBuilder.buildToOpenTrustlineSign(
+            transactionData = transactionData,
+            coinAmount = coinAmount,
+        ).successOr { return it.toSimpleFailure() }
+
+        return when (val signerResponse = signer.sign(hash, wallet.publicKey)) {
+            is CompletionResult.Success -> {
+                val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
+                when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
+                    is SimpleResult.Failure -> SimpleResult.Failure(sendResult.error)
+                    SimpleResult.Success -> {
+                        val transactionData = TransactionData.Uncompiled(
+                            amount = Amount(token = currencyType.info),
+                            fee = Fee.Common(Amount(blockchain = blockchain)),
+                            sourceAddress = wallet.address,
+                            destinationAddress = currencyType.info.contractAddress,
+                            date = Calendar.getInstance(),
+                            hash = transactionBuilder.getTransactionHash()?.toHexString(),
+                        )
+                        wallet.addOutgoingTransaction(transactionData)
+                        updateInternal()
+                        SimpleResult.Success
+                    }
+                }
+            }
+            is CompletionResult.Failure -> Result.fromTangemSdkError(signerResponse.error).toSimpleFailure()
+        }
+    }
+
+    override suspend fun discardRequirements(currencyType: CryptoCurrencyType): SimpleResult {
+        return SimpleResult.Success
+    }
+
+    private fun assetRequiresAssociation(currencyType: CryptoCurrencyType): Boolean {
+        if (wallet.recentTransactions.isNotEmpty()) return false
+        return when (currencyType) {
+            is CryptoCurrencyType.Coin -> false
+            is CryptoCurrencyType.Token ->
+                transactionBuilder.tokenBalances
+                    .find { currencyType.info.contractAddress == "${it.currency}.${it.issuer}" } == null
+        }
     }
 }
