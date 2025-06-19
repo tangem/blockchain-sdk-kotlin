@@ -5,19 +5,23 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
-import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.extensions.map
-import com.tangem.blockchain.extensions.successOr
+import com.tangem.blockchain.common.trustlines.AssetRequirementsCondition
+import com.tangem.blockchain.common.trustlines.AssetRequirementsManager
+import com.tangem.blockchain.extensions.*
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
+import java.util.Calendar
 
 class StellarWalletManager(
     wallet: Wallet,
     private val transactionBuilder: StellarTransactionBuilder,
     private val networkProvider: StellarNetworkProvider,
-) : WalletManager(wallet), SignatureCountValidator, ReserveAmountProvider, TransactionValidator {
+) : WalletManager(wallet),
+    SignatureCountValidator,
+    ReserveAmountProvider,
+    TransactionValidator,
+    AssetRequirementsManager {
 
     override val currentHost: String
         get() = networkProvider.baseUrl
@@ -27,6 +31,7 @@ class StellarWalletManager(
     private var baseFee = BASE_FEE
     private var baseReserve = BASE_RESERVE
     private var sequence = 0L
+    private var tokenBalances: Set<StellarAssetBalance> = setOf()
 
     override suspend fun updateInternal() {
         when (val result = networkProvider.getInfo(wallet.address)) {
@@ -42,11 +47,12 @@ class StellarWalletManager(
         sequence = data.sequence
         baseFee = data.baseFee
         baseReserve = data.baseReserve
+        tokenBalances = data.tokenBalances
         transactionBuilder.minReserve = data.baseReserve * 2.toBigDecimal()
 
         cardTokens.forEach { token ->
             val tokenBalance = data.tokenBalances
-                .find { it.symbol == token.symbol && it.issuer == token.contractAddress }?.balance
+                .find { it.issuer == token.contractAddress }?.balance
                 ?: 0.toBigDecimal()
             wallet.addTokenValue(tokenBalance, token)
         }
@@ -94,6 +100,10 @@ class StellarWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
+        return innerGetFee()
+    }
+
+    private suspend fun innerGetFee(): Result<TransactionFee> {
         val feeStats = networkProvider.getFeeStats().successOr { return it }
 
         val minChargedFee = feeStats.feeCharged.mode.toBigDecimal().movePointLeft(blockchain.decimals())
@@ -146,6 +156,80 @@ class StellarWalletManager(
             return kotlin.Result.failure(BlockchainSdkError.DestinationTagRequired)
         }
         return kotlin.Result.success(Unit)
+    }
+
+    override suspend fun requirementsCondition(currencyType: CryptoCurrencyType): AssetRequirementsCondition? {
+        if (!assetRequiresAssociation(currencyType)) return null
+
+        return when (currencyType) {
+            is CryptoCurrencyType.Coin -> null
+            is CryptoCurrencyType.Token ->
+                AssetRequirementsCondition.RequiredTrustline(
+                    blockchain = Blockchain.Stellar,
+                    amount = Amount(blockchain = Blockchain.Stellar, value = baseReserve),
+                )
+        }
+    }
+
+    override suspend fun fulfillRequirements(
+        currencyType: CryptoCurrencyType,
+        signer: TransactionSigner,
+    ): SimpleResult {
+        if (!assetRequiresAssociation(currencyType) || currencyType !is CryptoCurrencyType.Token) {
+            return SimpleResult.Success
+        }
+        val coinAmount = wallet.getCoinAmount()
+        val fee = innerGetFee().successOr { return it.toSimpleFailure() }
+        val transactionData = TransactionData.Uncompiled(
+            contractAddress = currencyType.info.contractAddress,
+            fee = fee.normal,
+            amount = Amount(Blockchain.Stellar),
+            sourceAddress = wallet.address,
+            destinationAddress = "",
+        )
+        val hash = transactionBuilder.buildToOpenTrustlineSign(
+            transactionData = transactionData,
+            baseReserve = baseReserve,
+            coinAmount = coinAmount,
+            sequence = sequence,
+        ).successOr { return it.toSimpleFailure() }
+
+        return when (val signerResponse = signer.sign(hash, wallet.publicKey)) {
+            is CompletionResult.Success -> {
+                val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
+                when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
+                    is SimpleResult.Failure -> SimpleResult.Failure(sendResult.error)
+                    SimpleResult.Success -> {
+                        val transactionData = TransactionData.Uncompiled(
+                            amount = Amount(token = currencyType.info),
+                            fee = Fee.Common(Amount(blockchain = blockchain)),
+                            sourceAddress = wallet.address,
+                            destinationAddress = currencyType.info.contractAddress,
+                            date = Calendar.getInstance(),
+                            hash = transactionBuilder.getTransactionHash().toHexString(),
+                        )
+                        wallet.addOutgoingTransaction(transactionData)
+                        updateInternal()
+                        SimpleResult.Success
+                    }
+                }
+            }
+            is CompletionResult.Failure -> Result.fromTangemSdkError(signerResponse.error).toSimpleFailure()
+        }
+    }
+
+    override suspend fun discardRequirements(currencyType: CryptoCurrencyType): SimpleResult {
+        return SimpleResult.Success
+    }
+
+    private fun assetRequiresAssociation(currencyType: CryptoCurrencyType): Boolean {
+        if (wallet.recentTransactions.isNotEmpty()) return false
+        return when (currencyType) {
+            is CryptoCurrencyType.Coin -> false
+            is CryptoCurrencyType.Token ->
+                tokenBalances
+                    .find { currencyType.info.contractAddress == "${it.symbol}-${it.issuer}" } == null
+        }
     }
 
     companion object {
