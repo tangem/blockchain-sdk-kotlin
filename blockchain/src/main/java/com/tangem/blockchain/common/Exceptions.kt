@@ -383,6 +383,26 @@ sealed class BlockchainSdkError(
         )
     }
 
+    sealed class Stellar(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_STELLAR,
+        customMessage = customMessage?.let { "$ERROR_CODE_STELLAR: $subCode: $customMessage" }
+            ?: "$ERROR_CODE_STELLAR: $subCode",
+        messageResId = null,
+        cause = throwable,
+    ) {
+
+        data class MinReserveRequired(
+            val amount: BigDecimal,
+        ) : Stellar(
+            subCode = 0,
+            customMessage = "${amount.toPlainString()} XLM needed for reserve and fee",
+        )
+    }
+
     companion object {
         const val ERROR_CODE_SOLANA = 1000
         const val ERROR_CODE_POLKADOT = 2000
@@ -401,6 +421,7 @@ sealed class BlockchainSdkError(
         const val ERROR_CODE_TRON = 15000
         const val ERROR_CODE_SUI = 16000
         const val ERROR_CODE_ALEPHIUM = 17000
+        const val ERROR_CODE_STELLAR = 18000
     }
 }
 
