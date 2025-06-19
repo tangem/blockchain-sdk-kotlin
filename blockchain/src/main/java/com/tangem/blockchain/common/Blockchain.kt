@@ -835,6 +835,7 @@ enum class Blockchain(
             Cardano,
             Kaspa, KaspaTestnet,
             Sui, SuiTestnet,
+            Stellar, StellarTestnet,
             -> true
 
             else -> false
