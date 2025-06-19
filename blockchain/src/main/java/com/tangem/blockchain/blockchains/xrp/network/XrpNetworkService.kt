@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.xrp.network
 
+import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
@@ -21,6 +22,9 @@ class XrpNetworkService(providers: List<XrpNetworkProvider>) : XrpNetworkProvide
 
     override suspend fun checkIsAccountCreated(address: String): Boolean =
         multiProvider.currentProvider.checkIsAccountCreated(address)
+
+    override suspend fun checkTargetAccount(address: String, token: Token?): Result<XrpTargetAccountResponse> =
+        multiProvider.currentProvider.checkTargetAccount(address, token)
 
     override suspend fun checkDestinationTagRequired(address: String): Boolean =
         multiProvider.currentProvider.checkDestinationTagRequired(address)
