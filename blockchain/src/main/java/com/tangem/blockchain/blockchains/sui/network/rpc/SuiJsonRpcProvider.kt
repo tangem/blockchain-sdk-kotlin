@@ -20,8 +20,8 @@ internal class SuiJsonRpcProvider(override val baseUrl: String) : NetworkProvide
     suspend fun getReferenceGasPrice(): Result<BigDecimal> = rpcCall(
         method = Method.GetReferenceGasPrice,
     )
-    suspend fun getCoins(address: String): Result<SuiCoinsResponse> = rpcCall(
-        method = Method.GetCoins(address),
+    suspend fun getCoins(address: String, cursor: String?): Result<SuiCoinsResponse> = rpcCall(
+        method = Method.GetCoins(address, cursor),
     )
 
     suspend fun dryRunTransaction(transactionHash: String): Result<SuiDryRunTransactionResponse> = rpcCall(
@@ -85,7 +85,7 @@ internal class SuiJsonRpcProvider(override val baseUrl: String) : NetworkProvide
             )
         }
 
-        class GetCoins(address: String) : Method<SuiCoinsResponse>(
+        class GetCoins(address: String, cursor: String?) : Method<SuiCoinsResponse>(
             method = "suix_getAllCoins",
         ) {
 
@@ -96,7 +96,7 @@ internal class SuiJsonRpcProvider(override val baseUrl: String) : NetworkProvide
                 ),
             )
 
-            override val params: List<String> = listOf(address)
+            override val params: List<String> = listOfNotNull(address, cursor)
         }
 
         class DryRunTransactionBlock(transactionHash: String) : Method<SuiDryRunTransactionResponse>(
