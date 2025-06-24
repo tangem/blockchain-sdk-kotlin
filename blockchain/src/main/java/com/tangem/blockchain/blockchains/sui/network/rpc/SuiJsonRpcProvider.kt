@@ -6,6 +6,7 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.network.moshi
 import retrofit2.create
@@ -20,9 +21,20 @@ internal class SuiJsonRpcProvider(override val baseUrl: String) : NetworkProvide
     suspend fun getReferenceGasPrice(): Result<BigDecimal> = rpcCall(
         method = Method.GetReferenceGasPrice,
     )
-    suspend fun getCoins(address: String): Result<SuiCoinsResponse> = rpcCall(
-        method = Method.GetCoins(address),
-    )
+
+    suspend fun getCoins(address: String): Result<List<SuiCoinsResponse.Data>> {
+        var hasNextPage = true
+        var cursor: String? = null
+        var accumulator = listOf<SuiCoinsResponse.Data>()
+        while (hasNextPage) {
+            val rpcCall = rpcCall(Method.GetCoins(address, cursor))
+                .successOr { return it }
+            accumulator = accumulator.plus(rpcCall.data)
+            hasNextPage = rpcCall.hasNextPage
+            cursor = rpcCall.nextCursor
+        }
+        return Result.Success(accumulator)
+    }
 
     suspend fun dryRunTransaction(transactionHash: String): Result<SuiDryRunTransactionResponse> = rpcCall(
         method = Method.DryRunTransactionBlock(transactionHash),
@@ -85,7 +97,7 @@ internal class SuiJsonRpcProvider(override val baseUrl: String) : NetworkProvide
             )
         }
 
-        class GetCoins(address: String) : Method<SuiCoinsResponse>(
+        class GetCoins(address: String, cursor: String?) : Method<SuiCoinsResponse>(
             method = "suix_getAllCoins",
         ) {
 
@@ -96,7 +108,7 @@ internal class SuiJsonRpcProvider(override val baseUrl: String) : NetworkProvide
                 ),
             )
 
-            override val params: List<String> = listOf(address)
+            override val params: List<String> = if (cursor != null) listOf(address, cursor) else listOf(address)
         }
 
         class DryRunTransactionBlock(transactionHash: String) : Method<SuiDryRunTransactionResponse>(

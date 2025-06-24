@@ -28,7 +28,7 @@ internal class SuiNetworkService(
         var totalSuiBalance = BigDecimal.ZERO
         val coins = mutableListOf<SuiCoin>()
 
-        for (coin in response.data) {
+        for (coin in response) {
             if (coin.coinType == COIN_TYPE) totalSuiBalance += coin.balance.movePointLeft(Blockchain.Sui.decimals())
 
             val suiCoin = SuiCoin(
