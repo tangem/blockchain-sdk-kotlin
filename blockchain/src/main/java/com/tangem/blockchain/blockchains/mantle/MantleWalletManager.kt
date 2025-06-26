@@ -33,9 +33,10 @@ class MantleWalletManager(
         destination: String,
         callData: SmartContractCallData?,
     ): Result<TransactionFee> {
-        return when (amount.type) {
-            is AmountType.Coin -> getFeeForCoinTransaction(amount, destination, callData)
-            is AmountType.Token -> super.getFeeInternal(amount, destination, callData)
+        return when {
+            callData != null -> super.getFeeInternal(amount, destination, callData)
+            amount.type is AmountType.Coin -> getFeeForCoinTransaction(amount, destination, callData)
+            amount.type is AmountType.Token -> super.getFeeInternal(amount, destination, callData)
             else -> Result.Failure(BlockchainSdkError.UnsupportedOperation())
         }
     }
