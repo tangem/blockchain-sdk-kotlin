@@ -26,6 +26,7 @@ internal object EthereumWalletManagerAssembly : WalletManagerAssembly<EthereumWa
                 ),
                 transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
                 nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
+                supportsENS = true,
             )
         }
     }
