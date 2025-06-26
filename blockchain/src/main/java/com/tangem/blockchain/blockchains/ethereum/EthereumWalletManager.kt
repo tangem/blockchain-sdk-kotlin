@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.ethereum
 
 import android.util.Log
 import com.tangem.blockchain.blockchains.ethereum.eip1559.isSupportEIP1559
+import com.tangem.blockchain.blockchains.ethereum.ens.DefaultENSNameProcessor
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.ApprovalERC20TokenCallData
@@ -33,15 +34,19 @@ open class EthereumWalletManager(
     protected val networkProvider: EthereumNetworkProvider,
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
+    private val supportsENS: Boolean,
 ) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider, nftProvider = nftProvider),
     SignatureCountValidator,
     TokenFinder,
     EthereumGasLoader,
     TransactionPreparer,
-    Approver {
+    Approver,
+    NameResolver {
 
     // move to constructor later
     protected val feesCalculator = EthereumFeesCalculator()
+
+    private val ensNameProcessor = DefaultENSNameProcessor()
 
     private var pendingTxCount = -1L
 
@@ -234,6 +239,17 @@ open class EthereumWalletManager(
                 return Result.Success(transactionToSend)
             }
             is Result.Failure -> Result.fromTangemSdkError(signResponse.error)
+        }
+    }
+
+    override suspend fun resolve(name: String): ResolveAddressResult {
+        if (supportsENS) {
+            val namehash = ensNameProcessor.getNamehash(name).successOr { return ResolveAddressResult.Error(it.error) }
+            val encodedName = ensNameProcessor.encode(name).successOr { return ResolveAddressResult.Error(it.error) }
+
+            return networkProvider.resolveName(namehash, encodedName)
+        } else {
+            return ResolveAddressResult.NotSupported
         }
     }
 
