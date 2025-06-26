@@ -171,7 +171,7 @@ class StellarTransactionBuilder(
         sequence: Long,
     ): Result<ByteArray> {
         val fee = requireNotNull(transactionData.fee?.amount)
-        val requiredReserve = minReserve.plus(baseReserve).plus(requireNotNull(fee.value))
+        val requiredReserve = baseReserve.plus(requireNotNull(fee.value))
         if (requiredReserve > coinAmount.value) {
             return Result.Failure(BlockchainSdkError.Stellar.MinReserveRequired(requiredReserve))
         }
