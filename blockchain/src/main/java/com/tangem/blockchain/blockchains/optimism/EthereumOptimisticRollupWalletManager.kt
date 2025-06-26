@@ -23,7 +23,13 @@ class EthereumOptimisticRollupWalletManager(
     transactionBuilder: EthereumTransactionBuilder,
     networkProvider: EthereumNetworkProvider,
     nftProvider: NFTProvider,
-) : EthereumWalletManager(wallet, transactionBuilder, networkProvider, nftProvider = nftProvider) {
+) : EthereumWalletManager(
+    wallet = wallet,
+    transactionBuilder = transactionBuilder,
+    networkProvider = networkProvider,
+    nftProvider = nftProvider,
+    supportsENS = false,
+) {
 
     private var lastLayer1FeeAmount: Amount? = null
 
