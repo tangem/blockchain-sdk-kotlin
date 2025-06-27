@@ -41,7 +41,7 @@ internal class MoralisSolanaNFTProvider(
                 assetResponse.mint?.let { tokenAddress ->
                     val assetIdentifier = NFTAsset.Identifier.Solana(
                         tokenAddress = tokenAddress,
-                        cnft = false,
+                        tokenStandard = assetResponse.tokenStandard,
                     )
                     assetResponse.toNFTAsset(
                         assetIdentifier = assetIdentifier,
