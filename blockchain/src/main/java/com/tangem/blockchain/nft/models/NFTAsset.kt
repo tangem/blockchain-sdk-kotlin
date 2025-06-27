@@ -43,7 +43,7 @@ data class NFTAsset(
         @JsonClass(generateAdapter = true)
         data class Solana(
             @Json(name = "tokenAddress") val tokenAddress: String,
-            @Json(name = "cnft") val cnft: Boolean,
+            @Json(name = "tokenStandard") val tokenStandard: Int?,
         ) : Identifier()
 
         data object Unknown : Identifier()
