@@ -14,6 +14,7 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.bigIntegerValue
 import com.tangem.blockchain.extensions.map
+import com.tangem.blockchain.extensions.orZero
 import org.bitcoinj.core.ECKey
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -109,10 +110,12 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
 
     fun buildToOpenTrustlineSign(transactionData: TransactionData.Uncompiled, coinAmount: Amount): Result<ByteArray> {
         val fee = requireNotNull(transactionData.fee?.amount)
-        val requiredReserve = reserveInc
+        val coinAmountValue = coinAmount.value
+        var requiredReserve = reserveInc
             .plus(requireNotNull(fee.value))
-        if (requiredReserve > coinAmount.value) {
-            return Result.Failure(BlockchainSdkError.Xrp.MinReserveRequired(requiredReserve))
+        if (coinAmountValue == null) requiredReserve = requiredReserve.plus(minReserve)
+        if (requiredReserve > coinAmountValue.orZero()) {
+            return Result.Failure(BlockchainSdkError.Xrp.MinReserveRequired(requiredReserve, blockchain.currency))
         }
         val contractAddress: String = requireNotNull(transactionData.contractAddress)
 
