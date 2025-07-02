@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.stellar
 
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.orZero
 import org.stellar.sdk.*
 import org.stellar.sdk.xdr.AccountID
 import org.stellar.sdk.xdr.DecoratedSignature
@@ -172,8 +173,8 @@ class StellarTransactionBuilder(
     ): Result<ByteArray> {
         val fee = requireNotNull(transactionData.fee?.amount)
         val requiredReserve = baseReserve.plus(requireNotNull(fee.value))
-        if (requiredReserve > coinAmount.value) {
-            return Result.Failure(BlockchainSdkError.Stellar.MinReserveRequired(requiredReserve))
+        if (requiredReserve > coinAmount.value.orZero()) {
+            return Result.Failure(BlockchainSdkError.Stellar.MinReserveRequired(requiredReserve, blockchain.currency))
         }
         val contractAddress: String = requireNotNull(transactionData.contractAddress)
         val asset = ChangeTrustAsset.create(canonicalForm(contractAddress))
