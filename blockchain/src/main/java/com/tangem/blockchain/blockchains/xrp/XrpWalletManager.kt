@@ -40,14 +40,14 @@ class XrpWalletManager(
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
 
         wallet.setReserveValue(response.reserveTotal)
+        transactionBuilder.minReserve = response.reserveBase
+        transactionBuilder.reserveInc = response.reserveInc
         if (!response.accountFound) {
             updateError(BlockchainSdkError.AccountNotFound(response.reserveTotal))
             return
         }
         wallet.setCoinValue(response.balance - response.reserveTotal)
         transactionBuilder.sequence = response.sequence
-        transactionBuilder.minReserve = response.reserveBase
-        transactionBuilder.reserveInc = response.reserveInc
         transactionBuilder.tokenBalances = response.tokenBalances
         cardTokens.forEach { token ->
             val tokenBalance = response.tokenBalances
@@ -182,7 +182,7 @@ class XrpWalletManager(
                     }
                 }
             }
-            is CompletionResult.Failure -> Result.fromTangemSdkError(signerResponse.error).toSimpleFailure()
+            is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResponse.error)
         }
     }
 
@@ -191,7 +191,7 @@ class XrpWalletManager(
     }
 
     private fun assetRequiresAssociation(currencyType: CryptoCurrencyType): Boolean {
-        if (wallet.recentTransactions.isNotEmpty()) return false
+        if (wallet.recentTransactions.any { it.status == TransactionStatus.Unconfirmed }) return false
         return when (currencyType) {
             is CryptoCurrencyType.Coin -> false
             is CryptoCurrencyType.Token ->
