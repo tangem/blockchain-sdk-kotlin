@@ -52,7 +52,7 @@ class StellarWalletManager(
 
         cardTokens.forEach { token ->
             val tokenBalance = data.tokenBalances
-                .find { it.issuer == token.contractAddress }?.balance
+                .find { "${it.symbol}-${it.issuer}" == token.contractAddress }?.balance
                 ?: 0.toBigDecimal()
             wallet.addTokenValue(tokenBalance, token)
         }
@@ -214,7 +214,7 @@ class StellarWalletManager(
                     }
                 }
             }
-            is CompletionResult.Failure -> Result.fromTangemSdkError(signerResponse.error).toSimpleFailure()
+            is CompletionResult.Failure -> SimpleResult.fromTangemSdkError(signerResponse.error)
         }
     }
 
@@ -223,7 +223,7 @@ class StellarWalletManager(
     }
 
     private fun assetRequiresAssociation(currencyType: CryptoCurrencyType): Boolean {
-        if (wallet.recentTransactions.isNotEmpty()) return false
+        if (wallet.recentTransactions.any { it.status == TransactionStatus.Unconfirmed }) return false
         return when (currencyType) {
             is CryptoCurrencyType.Coin -> false
             is CryptoCurrencyType.Token ->
