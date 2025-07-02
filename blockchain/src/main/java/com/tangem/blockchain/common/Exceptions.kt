@@ -397,6 +397,7 @@ sealed class BlockchainSdkError(
 
         data class MinReserveRequired(
             val amount: BigDecimal,
+            val symbol: String,
         ) : Stellar(
             subCode = 0,
             customMessage = "${amount.toPlainString()} XLM needed for reserve and fee",
@@ -417,6 +418,7 @@ sealed class BlockchainSdkError(
 
         data class MinReserveRequired(
             val amount: BigDecimal,
+            val symbol: String,
         ) : Xrp(
             subCode = 0,
             customMessage = "${amount.toPlainString()} XRP needed for reserve and fee",
