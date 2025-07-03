@@ -12,6 +12,7 @@ interface XrpNetworkProvider : NetworkProvider {
     suspend fun getFee(): Result<XrpFeeResponse>
     suspend fun checkIsAccountCreated(address: String): Boolean
     suspend fun checkTargetAccount(address: String, token: Token?): Result<XrpTargetAccountResponse>
+    suspend fun getSequence(address: String): Result<Long>
     suspend fun checkDestinationTagRequired(address: String): Boolean
 }
 
