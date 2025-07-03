@@ -15,6 +15,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.bigIntegerValue
 import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.extensions.orZero
+import com.tangem.blockchain.extensions.successOr
 import org.bitcoinj.core.ECKey
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -22,7 +23,6 @@ import com.ripple.core.coretypes.Amount as XrpAmount
 
 @Suppress("MagicNumber")
 class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, publicKey: ByteArray) {
-    var sequence: Long? = null
     // https://xrpl.org/blog/2021/reserves-lowered.html
     var minReserve = 1.toBigDecimal()
     var reserveInc = 0.2.toBigDecimal()
@@ -37,6 +37,8 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
 
         val decodedXAddress = XrpAddressService.decodeXAddress(transactionData.destinationAddress)
         val destinationAddress = decodedXAddress?.address ?: transactionData.destinationAddress
+        val sourceAddress = XrpAddressService.decodeXAddress(transactionData.sourceAddress)
+            ?.address ?: transactionData.sourceAddress
         val xAddressDestinationTag = decodedXAddress?.destinationTag
 
         val destinationTag = if (transactionData.extras is XrpTransactionExtras) {
@@ -51,6 +53,7 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
         val token = (transactionData.amount.type as? AmountType.Token)?.token
         var isAccountCreated = false
         var trustlineCreated = false
+        val sequence = networkProvider.getSequence(sourceAddress).successOr { return it }
         networkProvider.checkTargetAccount(destinationAddress, token)
             .map {
                 isAccountCreated = it.accountCreated
@@ -108,7 +111,13 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
 
     fun getTransactionHash() = transaction?.hash?.bytes()
 
-    fun buildToOpenTrustlineSign(transactionData: TransactionData.Uncompiled, coinAmount: Amount): Result<ByteArray> {
+    suspend fun buildToOpenTrustlineSign(
+        transactionData: TransactionData.Uncompiled,
+        coinAmount: Amount,
+    ): Result<ByteArray> {
+        val sourceAddress = XrpAddressService.decodeXAddress(transactionData.sourceAddress)
+            ?.address ?: transactionData.sourceAddress
+        val sequence = networkProvider.getSequence(sourceAddress).successOr { return it }
         val fee = requireNotNull(transactionData.fee?.amount)
         val coinAmountValue = coinAmount.value
         var requiredReserve = reserveInc
