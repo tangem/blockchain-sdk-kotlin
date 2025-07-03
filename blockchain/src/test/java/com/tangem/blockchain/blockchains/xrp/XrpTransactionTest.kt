@@ -25,12 +25,10 @@ class XrpTransactionTest {
             ).hexToBytes()
         val sendValue = "0.1".toBigDecimal()
         val feeValue = "0.01".toBigDecimal()
-        val sequence = 1406L
         val destinationAddress = "X7gd8rw2UJP3HSS9oxkDc3cYVgpJy4cR9R5TEjF9XoZYJ1p"
 
         val walletAddress = XrpAddressService().makeAddress(walletPublicKey)
         val transactionBuilder = XrpTransactionBuilder(XrpNetworkProviderMock(), walletPublicKey)
-        transactionBuilder.sequence = sequence
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
         val fee = Fee.Common(Amount(amountToSend, feeValue))
@@ -75,12 +73,10 @@ class XrpTransactionTest {
             ).hexToBytes()
         val sendValue = "0.1".toBigDecimal()
         val feeValue = "0.01".toBigDecimal()
-        val sequence = 1406L
         val destinationAddress = "rnruxxLTbJUMNtFNBJ7X2xSiy1KE7ajUuH"
 
         val walletAddress = XrpAddressService().makeAddress(walletPublicKey)
         val transactionBuilder = XrpTransactionBuilder(XrpNetworkProviderMock(), walletPublicKey)
-        transactionBuilder.sequence = sequence
 
         val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
         val fee = Fee.Common(Amount(amountToSend, feeValue))
