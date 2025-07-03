@@ -47,7 +47,6 @@ class XrpWalletManager(
             return
         }
         wallet.setCoinValue(response.balance - response.reserveTotal)
-        transactionBuilder.sequence = response.sequence
         transactionBuilder.tokenBalances = response.tokenBalances
         cardTokens.forEach { token ->
             val tokenBalance = response.tokenBalances
