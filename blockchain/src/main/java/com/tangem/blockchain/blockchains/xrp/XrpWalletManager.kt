@@ -152,9 +152,10 @@ class XrpWalletManager(
         val transactionData = TransactionData.Uncompiled(
             contractAddress = currencyType.info.contractAddress,
             fee = fee.normal,
-            amount = Amount(Blockchain.XRP),
+            amount = Amount(token = currencyType.info),
             sourceAddress = wallet.address,
-            destinationAddress = "",
+            date = Calendar.getInstance(),
+            destinationAddress = currencyType.trustlineTxKey(),
         )
         val hash = transactionBuilder.buildToOpenTrustlineSign(
             transactionData = transactionData,
@@ -167,14 +168,8 @@ class XrpWalletManager(
                 when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
                     is SimpleResult.Failure -> SimpleResult.Failure(sendResult.error)
                     SimpleResult.Success -> {
-                        val transactionData = TransactionData.Uncompiled(
-                            amount = Amount(token = currencyType.info),
-                            fee = Fee.Common(Amount(blockchain = blockchain)),
-                            sourceAddress = wallet.address,
-                            destinationAddress = currencyType.info.contractAddress,
-                            date = Calendar.getInstance(),
-                            hash = transactionBuilder.getTransactionHash()?.toHexString(),
-                        )
+                        val transactionData = transactionData
+                            .copy(hash = transactionBuilder.getTransactionHash()?.toHexString())
                         wallet.addOutgoingTransaction(transactionData)
                         updateInternal()
                         SimpleResult.Success
@@ -189,13 +184,19 @@ class XrpWalletManager(
         return SimpleResult.Success
     }
 
+    private fun CryptoCurrencyType.Token.trustlineTxKey() = "trustline-${info.contractAddress}"
+
     private fun assetRequiresAssociation(currencyType: CryptoCurrencyType): Boolean {
-        if (wallet.recentTransactions.any { it.status == TransactionStatus.Unconfirmed }) return false
         return when (currencyType) {
             is CryptoCurrencyType.Coin -> false
-            is CryptoCurrencyType.Token ->
+            is CryptoCurrencyType.Token -> {
+                val haveUnconfirmedTrustline = wallet.recentTransactions.any {
+                    currencyType.trustlineTxKey() == it.destinationAddress && it.status == TransactionStatus.Unconfirmed
+                }
+                if (haveUnconfirmedTrustline) return false
                 transactionBuilder.tokenBalances
                     .find { currencyType.info.contractAddress == "${it.currency}.${it.issuer}" } == null
+            }
         }
     }
 }
