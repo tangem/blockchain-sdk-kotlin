@@ -61,7 +61,7 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
             }
 
             is AmountType.Token -> {
-                if (!isAccountCreated) return Result.Failure(accountUnderfundedError())
+                if (!isAccountCreated) return Result.Failure(accountUnderfundedTokenError())
                 if (!trustlineCreated) return Result.Failure(notHaveTrustlineError())
             }
             is AmountType.FeeResource,
@@ -147,6 +147,11 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
     private fun accountUnderfundedError() = BlockchainSdkError.CreateAccountUnderfunded(
         blockchain = blockchain,
         minReserve = Amount(minReserve, blockchain),
+    )
+
+    private fun accountUnderfundedTokenError() = BlockchainSdkError.CustomError(
+        "The destination account is not created. " +
+            "To create account send ${minReserve.stripTrailingZeros().toPlainString()}+ ${blockchain.currency}.",
     )
 
     private fun notHaveTrustlineError() = BlockchainSdkError
