@@ -82,7 +82,9 @@ class StellarTransactionBuilder(
                 if (!targetAccountResponse.accountCreated) {
                     return Result.Failure(
                         BlockchainSdkError.CustomError(
-                            "The destination account is not created. To create account send 1+ XLM.",
+                            "The destination account is not created. " +
+                                "To create account send " +
+                                "${minReserve.stripTrailingZeros().toPlainString()}+ " + "${blockchain.currency}.",
                         ),
                     )
                 }
