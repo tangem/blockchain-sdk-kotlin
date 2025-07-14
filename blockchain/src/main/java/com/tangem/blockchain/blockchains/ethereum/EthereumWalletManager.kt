@@ -214,11 +214,23 @@ open class EthereumWalletManager(
     ): Result<ByteArray> {
         val transactionData = when (transactionData) {
             is TransactionData.Uncompiled -> {
-                val nonce = networkProvider.getPendingTxCount(wallet.address)
+                val blockchainNonce = networkProvider
+                    .getPendingTxCount(wallet.address)
                     .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) }
+                    .toBigInteger()
                 val newExtras = when (val extras = transactionData.extras) {
-                    is EthereumTransactionExtras -> extras.copy(nonce = nonce.toBigInteger())
-                    else -> EthereumTransactionExtras(nonce = nonce.toBigInteger())
+                    is EthereumTransactionExtras -> {
+                        val customNonce = extras.nonce
+                        val actualNonce = customNonce?.let {
+                            if (customNonce > blockchainNonce) {
+                                blockchainNonce
+                            } else {
+                                customNonce
+                            }
+                        } ?: blockchainNonce
+                        extras.copy(nonce = actualNonce)
+                    }
+                    else -> EthereumTransactionExtras(nonce = blockchainNonce)
                 }
                 transactionData.copy(extras = newExtras)
             }
