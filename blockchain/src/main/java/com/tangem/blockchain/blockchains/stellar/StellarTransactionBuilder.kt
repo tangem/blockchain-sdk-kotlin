@@ -82,7 +82,9 @@ class StellarTransactionBuilder(
                 if (!targetAccountResponse.accountCreated) {
                     return Result.Failure(
                         BlockchainSdkError.CustomError(
-                            "The destination account is not created. To create account send 1+ XLM.",
+                            "The destination account is not created. " +
+                                "To create account send " +
+                                "${minReserve.stripTrailingZeros().toPlainString()}+ " + "${blockchain.currency}.",
                         ),
                     )
                 }
@@ -192,10 +194,15 @@ class StellarTransactionBuilder(
         return Result.Success(transaction.hash())
     }
 
-    private fun canonicalForm(contractAddress: String) = contractAddress.replace("-", ":")
+    private fun canonicalForm(contractAddress: String) = contractAddress.replace(
+        oldValue = OUR_BACKEND_CONTRACT_ADDRESS_SEPARATOR,
+        newValue = STELLAR_SDK_CONTRACT_ADDRESS_SEPARATOR,
+    )
 
-    private companion object {
+    companion object {
         const val CHANGE_TRUST_OPERATION_LIMIT = "900000000000.0000000"
+        const val OUR_BACKEND_CONTRACT_ADDRESS_SEPARATOR = "-"
+        const val STELLAR_SDK_CONTRACT_ADDRESS_SEPARATOR = ":"
     }
 }
 
