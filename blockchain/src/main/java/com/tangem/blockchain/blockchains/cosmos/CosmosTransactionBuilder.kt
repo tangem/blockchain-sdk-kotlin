@@ -3,6 +3,8 @@ package com.tangem.blockchain.blockchains.cosmos
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.cosmos.network.CosmosChain
 import com.tangem.blockchain.blockchains.cosmos.proto.CosmosProtoMessage
+import com.tangem.blockchain.blockchains.cosmos.proto.DelegateData
+import com.tangem.blockchain.blockchains.cosmos.proto.RedelegateData
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.BlockchainSdkError
@@ -233,6 +235,7 @@ internal class CosmosTransactionBuilder(
         return output.serialized
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     private fun Cosmos.Message.Builder.createStakeMessage(
         message: CosmosProtoMessage.CosmosMessageDelegate,
     ): Cosmos.Message.Builder {
@@ -240,39 +243,58 @@ internal class CosmosTransactionBuilder(
 
         return when {
             type.contains(COSMOS_DELEGATE_MESSAGE) -> {
-                message.delegateData.delegateAmount?.let { delegateAmount ->
+                val delegateData = ProtoBuf.decodeFromByteArray<DelegateData>(message.delegateData)
+                delegateData.delegateAmount?.let { delegateAmount ->
                     val sendCoinsMessage = Cosmos.Message.Delegate.newBuilder()
                         .setAmount(
                             Cosmos.Amount.newBuilder()
                                 .setAmount(delegateAmount.amount)
                                 .setDenom(delegateAmount.denomination),
                         )
-                        .setDelegatorAddress(message.delegateData.delegatorAddress)
-                        .setValidatorAddress(message.delegateData.validatorAddress)
+                        .setDelegatorAddress(delegateData.delegatorAddress)
+                        .setValidatorAddress(delegateData.validatorAddress)
                         .build()
                     this.setStakeMessage(sendCoinsMessage)
                 } ?: this
             }
             type.contains(COSMOS_WITHDRAW_MESSAGE) -> {
+                val delegateData = ProtoBuf.decodeFromByteArray<DelegateData>(message.delegateData)
                 val withdrawMessage = Cosmos.Message.WithdrawDelegationReward.newBuilder()
-                    .setDelegatorAddress(message.delegateData.delegatorAddress)
-                    .setValidatorAddress(message.delegateData.validatorAddress)
+                    .setDelegatorAddress(delegateData.delegatorAddress)
+                    .setValidatorAddress(delegateData.validatorAddress)
                     .build()
 
                 this.setWithdrawStakeRewardMessage(withdrawMessage)
             }
             type.contains(COSMOS_UNDELEGATE_MESSAGE) -> {
-                message.delegateData.delegateAmount?.let { delegateAmount ->
+                val delegateData = ProtoBuf.decodeFromByteArray<DelegateData>(message.delegateData)
+                delegateData.delegateAmount?.let { delegateAmount ->
                     val undelegateMessage = Cosmos.Message.Undelegate.newBuilder()
                         .setAmount(
                             Cosmos.Amount.newBuilder()
                                 .setAmount(delegateAmount.amount)
                                 .setDenom(delegateAmount.denomination),
                         )
-                        .setDelegatorAddress(message.delegateData.delegatorAddress)
-                        .setValidatorAddress(message.delegateData.validatorAddress)
+                        .setDelegatorAddress(delegateData.delegatorAddress)
+                        .setValidatorAddress(delegateData.validatorAddress)
                         .build()
                     this.setUnstakeMessage(undelegateMessage)
+                } ?: this
+            }
+            type.contains(COSMOS_REDELEGATE_MESSAGE) -> {
+                val delegateData = ProtoBuf.decodeFromByteArray<RedelegateData>(message.delegateData)
+                delegateData.delegateAmount?.let { delegateAmount ->
+                    val undelegateMessage = Cosmos.Message.BeginRedelegate.newBuilder()
+                        .setAmount(
+                            Cosmos.Amount.newBuilder()
+                                .setAmount(delegateAmount.amount)
+                                .setDenom(delegateAmount.denomination),
+                        )
+                        .setDelegatorAddress(delegateData.delegatorAddress)
+                        .setValidatorSrcAddress(delegateData.validatorSrcAddress)
+                        .setValidatorDstAddress(delegateData.validatorDstAddress)
+                        .build()
+                    this.setRestakeMessage(undelegateMessage)
                 } ?: this
             }
             else -> this
@@ -295,5 +317,6 @@ internal class CosmosTransactionBuilder(
         const val COSMOS_DELEGATE_MESSAGE = "MsgDelegate"
         const val COSMOS_WITHDRAW_MESSAGE = "MsgWithdrawDelegatorReward"
         const val COSMOS_UNDELEGATE_MESSAGE = "MsgUndelegate"
+        const val COSMOS_REDELEGATE_MESSAGE = "MsgBeginRedelegate"
     }
 }
