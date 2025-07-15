@@ -11,7 +11,7 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.Wallet
 import com.tangem.common.extensions.toByteArray
-import io.ktor.util.*
+import com.tangem.common.extensions.toHexString
 import org.ton.tl.ByteString.Companion.decodeFromHex
 import wallet.core.jni.Cardano.minAdaAmount
 import wallet.core.jni.proto.Cardano
@@ -61,7 +61,14 @@ internal class CardanoTWTxBuilder(
         val stakingAddress = CardanoExt.getStakingAddress(wallet.address)
 
         val signinInputBuilder = with(Cardano.SigningInput.newBuilder()) {
-            addAllUtxos(outputs.map(::createTxInput))
+            addAllUtxos(
+                outputs
+                    .filter { output ->
+                        data.inputs.any {
+                            output.transactionHash.toHexString() == it.transactionID
+                        }
+                    }.map(::createTxInput),
+            )
             setTransferMessage(
                 Cardano.Transfer.newBuilder()
                     .setToAddress(wallet.address)
