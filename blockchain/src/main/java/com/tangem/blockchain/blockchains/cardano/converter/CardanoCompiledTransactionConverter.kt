@@ -123,9 +123,9 @@ class CardanoCompiledTransactionConverter {
     }
 
     private fun convertWithdrawals(withdrawalsData: DataItem): List<Long> {
-        val withdrawals = withdrawalsData as? Array ?: return emptyList()
+        val withdrawals = withdrawalsData as? Map ?: return emptyList()
 
-        return withdrawals.dataItems.mapNotNull {
+        return withdrawals.values.mapNotNull {
             (it as? UnsignedInteger)?.value?.toLong()
         }
     }
