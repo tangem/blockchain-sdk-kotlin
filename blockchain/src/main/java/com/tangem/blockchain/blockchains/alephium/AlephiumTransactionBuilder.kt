@@ -91,22 +91,50 @@ internal class AlephiumTransactionBuilder(
             tokens = listOf(),
             lockTime = null,
         )
-        val gasPrice = GasPrice(U256.unsafe(fee.gasPrice))
-        val gasAmount = GasBox(fee.gasAmount.toInt())
+        val gasPrice = fee.gasPrice
+        val gasAmount = fee.gasAmount
         val networkId = if (blockchain == Blockchain.Alephium) NetworkId.mainNet else NetworkId.testNet
         // portal to alephium sources https://github.com/alephium/alephium
         val unsignedTransaction = TxUtils.transfer(
             fromLockupScript = lockupScript,
             fromUnlockScript = unlockScript,
             outputInfos = outputInfos,
-            gasOpt = gasAmount,
-            gasPrice = gasPrice,
+            gasOpt = GasBox(fee.gasAmount.toInt()),
+            gasPrice = GasPrice(U256.unsafe(fee.gasPrice)),
             utxos = unspentOutputs,
             networkId = networkId,
         ).getOrElse {
             val error = it as? BlockchainSdkError ?: BlockchainSdkError.FailedToBuildTx
             return Result.Failure(error)
         }
+        if (unsignedTransaction.inputs.size > MAX_INPUT_COUNT) {
+            val maxAmount = getMaxUnspentsToSpendAmount()
+
+            val fee = gasPrice * gasAmount
+            return Result.Failure(
+                BlockchainSdkError.Alephium.UtxoAmountError(
+                    MAX_INPUT_COUNT,
+                    (maxAmount - fee).movePointLeft(blockchain.decimals()),
+                ),
+            )
+        }
         return Result.Success(unsignedTransaction)
+    }
+
+    fun getMaxUnspentsToSpendCount(): Int {
+        val count = unspentOutputs?.size ?: 0
+        return if (count < MAX_INPUT_COUNT) count else MAX_INPUT_COUNT
+    }
+
+    fun getMaxUnspentsToSpend() = unspentOutputs!!
+        .sortedByDescending { it.output.amount.v }
+        .take(getMaxUnspentsToSpendCount())
+
+    fun getMaxUnspentsToSpendAmount() = getMaxUnspentsToSpend()
+        .sumOf { it.output.amount.v }
+        .toBigDecimal()
+
+    companion object {
+        const val MAX_INPUT_COUNT = 256 // Alephium rejects transactions with more inputs
     }
 }

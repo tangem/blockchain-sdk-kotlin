@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.alephium.source
 
 import com.tangem.blockchain.blockchains.alephium.source.serde.*
 import com.tangem.blockchain.blockchains.alephium.source.serde.Serde.Companion.Flags
+import com.tangem.blockchain.common.BlockchainSdkError
 import kotlinx.io.bytestring.ByteString
 import kotlinx.io.bytestring.append
 import kotlinx.io.bytestring.buildByteString
@@ -35,6 +36,7 @@ internal data class UnsignedTransaction(
     val id: TransactionId
         get() = TransactionId.hash(serde.serialize(this))
 
+    @Suppress("LargeClass")
     companion object {
 
         val serde = object : Serde<UnsignedTransaction> {
@@ -254,7 +256,17 @@ internal data class UnsignedTransaction(
             }
             val remainder0 = inputSum.sub(outputAmount) ?: return Result.failure(RuntimeException("Not enough balance"))
             val remainder =
-                remainder0.sub(gasFee) ?: return Result.failure(RuntimeException("Not enough balance for gas fee"))
+                remainder0.sub(gasFee) ?: run {
+                    val sumDec = outputAmount.v.toBigDecimal() + gasFee.v.toBigDecimal()
+                    val amountDec = outputAmount.v.toBigDecimal()
+                    val error = BlockchainSdkError.Alephium.NotEnoughBalance(
+                        gotSum = sumDec,
+                        expectedAmount = amountDec,
+                        customMessage = "Not enough balance: got ${sumDec.toPlainString()}, " +
+                            "expected ${amountDec.toPlainString()}",
+                    )
+                    return Result.failure(error)
+                }
             return Result.success(remainder)
         }
 

@@ -381,6 +381,12 @@ sealed class BlockchainSdkError(
             subCode = 0,
             customMessage = customMessage,
         )
+
+        class UtxoAmountError(val maxOutputs: Int, val maxAmount: BigDecimal) : Alephium(
+            1,
+            "Due to Alephium limitations only $maxOutputs UTXOs can fit in a single transaction. " +
+                "This means you can only send ${maxAmount.toPlainString()}. You need to reduce the amount",
+        )
     }
 
     sealed class Stellar(
