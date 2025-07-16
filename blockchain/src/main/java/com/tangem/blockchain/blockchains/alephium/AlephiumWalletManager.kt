@@ -1,11 +1,13 @@
 package com.tangem.blockchain.blockchains.alephium
 
+import com.tangem.blockchain.blockchains.alephium.AlephiumTransactionBuilder.Companion.MAX_INPUT_COUNT
 import com.tangem.blockchain.blockchains.alephium.network.AlephiumNetworkProvider
 import com.tangem.blockchain.blockchains.alephium.source.dustUtxoAmount
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
+import com.tangem.blockchain.common.transaction.getMinimumRequiredUTXOsToSend
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.fold
 import com.tangem.blockchain.extensions.map
@@ -20,11 +22,15 @@ internal class AlephiumWalletManager(
     wallet: Wallet,
     private val networkService: AlephiumNetworkProvider,
     private val transactionBuilder: AlephiumTransactionBuilder,
-) : WalletManager(wallet) {
+) : WalletManager(wallet),
+    UtxoAmountLimitProvider,
+    UtxoBlockchainManager {
 
     override val currentHost: String get() = networkService.baseUrl
 
     override val dustValue: BigDecimal = dustUtxoAmount.v.toBigDecimal().movePointLeft(wallet.blockchain.decimals())
+
+    override val allowConsolidation: Boolean = true
 
     override suspend fun updateInternal() {
         val info = networkService.getInfo(wallet.address).successOr { return }
@@ -81,7 +87,8 @@ internal class AlephiumWalletManager(
         )
             .map { it.gasPrice }
             .successOr { return it }
-        var gasAmount = calculateGasAmount().successOr { return it }
+        var gasAmount = calculateGasAmount(requireNotNull(amount.value).movePointRight(wallet.blockchain.decimals()))
+            .successOr { return it }
         val fee = Fee.Alephium(amount, gasPrice, gasAmount)
 
         val unsignedTransaction = transactionBuilder
@@ -89,24 +96,27 @@ internal class AlephiumWalletManager(
                 destinationAddress = destination,
                 amount = amount,
                 fee = fee,
-            ).fold(success = { Result.Success(it) }, failure = { error ->
-                when (error) {
-                    // If the total amount (including the fee) is greater than the available balance,
-                    // adjust the difference to cover the fee.
-                    // https://github.com/alephium/alephium/blob/master/flow/src/main/scala/org/alephium/flow/core/UtxoSelectionAlgo.scala#L284
-                    is BlockchainSdkError.Alephium.NotEnoughBalance -> transactionBuilder.buildToSign(
-                        destinationAddress = destination,
-                        amount = Amount(
-                            amount = amount,
-                            value = amount.value!! - (error.expectedAmount - error.gotSum).movePointLeft(
-                                amount.decimals,
+            ).fold(
+                success = { Result.Success(it) },
+                failure = { error ->
+                    when (error) {
+                        // If the total amount (including the fee) is greater than the available balance,
+                        // adjust the difference to cover the fee.
+                        // https://github.com/alephium/alephium/blob/master/flow/src/main/scala/org/alephium/flow/core/UtxoSelectionAlgo.scala#L284
+                        is BlockchainSdkError.Alephium.NotEnoughBalance -> transactionBuilder.buildToSign(
+                            destinationAddress = destination,
+                            amount = Amount(
+                                amount = amount,
+                                value = amount.value - (error.gotSum - error.expectedAmount).movePointLeft(
+                                    amount.decimals,
+                                ),
                             ),
-                        ),
-                        fee = fee,
-                    )
-                    else -> Result.Failure(error)
-                }
-            },)
+                            fee = fee,
+                        )
+                        else -> Result.Failure(error)
+                    }
+                },
+            )
             .successOr { return it }
 
         gasPrice = unsignedTransaction.gasPrice.value.v.toBigDecimal()
@@ -121,13 +131,41 @@ internal class AlephiumWalletManager(
         return Result.Success(TransactionFee.Single(feeModel))
     }
 
-    private fun calculateGasAmount(): Result<BigDecimal> {
-        val inputsLength = transactionBuilder.requestOutputs().successOr { return it }.size
+    private fun calculateGasAmount(amount: BigDecimal): Result<BigDecimal> {
+        val unspentsToSpend = transactionBuilder.getMaxUnspentsToSpend()
+
+        val inputs = getMinimumRequiredUTXOsToSend(
+            unspentOutputs = unspentsToSpend,
+            transactionAmount = amount,
+            transactionFeeAmount = BigDecimal.ZERO,
+            dustValue = dustUtxoAmount.v.toBigDecimal(),
+            unspentToAmount = { it.output.amount.v.toBigDecimal() },
+        ).successOr { return it }
+
+        val inputsLength = inputs.size
         val inputGas = INPUT_BASE_GAS * inputsLength
         val outputGas = OUTPUT_BASE_GAS * 2
         val txGas = inputGas + outputGas + BASE_GAS + P2PK_UNLOCK_GAS
         val gasAmount = max(MINIMAL_GAS, txGas).toBigDecimal()
         return Result.Success(gasAmount)
+    }
+
+    override fun checkUtxoAmountLimit(amount: BigDecimal, fee: BigDecimal): UtxoAmountLimit {
+        val fullAmount = transactionBuilder.getMaxUnspentsToSpendAmount()
+            .movePointLeft(wallet.blockchain.decimals())
+        val amountLimit = UtxoAmountLimit(
+            limit = MAX_INPUT_COUNT.toBigDecimal(),
+            availableToSpend = fullAmount,
+            availableToSend = null,
+        )
+        val change = fullAmount - (amount + fee)
+
+        // unspentsToSpend not enough to cover transaction amount
+        return if (change < BigDecimal.ZERO || change > BigDecimal.ZERO && change < dustValue) {
+            amountLimit.copy(availableToSend = amount + change - dustValue)
+        } else {
+            amountLimit
+        }
     }
 
     companion object {
