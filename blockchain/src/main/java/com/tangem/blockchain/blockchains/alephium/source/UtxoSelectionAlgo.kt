@@ -1,6 +1,9 @@
 package com.tangem.blockchain.blockchains.alephium.source
 
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.transaction.getMinimumRequiredUTXOsToSend
+import com.tangem.blockchain.extensions.map
+import com.tangem.blockchain.extensions.successOr
 
 /**
  * https://github.com/alephium/alephium/blob/master/flow/src/main/scala/org/alephium/flow/core/UtxoSelectionAlgo.scala
@@ -77,20 +80,20 @@ internal object UtxoSelectionAlgo {
     }
 
     data class Build(val providedGas: ProvidedGas) {
-        private val ascendingOrderSelector: BuildWithOrder = BuildWithOrder(providedGas, AssetAscendingOrder)
 
         fun select(amounts: AssetAmounts, utxos: List<AssetOutputInfo>): Result<Selected> {
-            val ascendingResult = ascendingOrderSelector.select(
-                amounts,
-                utxos,
+            val gasPrice = providedGas.gasPrice
+            val gas = providedGas.gasOpt
+            val transactionFeeAmount = (gasPrice * gas).v.toBigDecimal()
+            return getMinimumRequiredUTXOsToSend(
+                unspentOutputs = utxos,
+                transactionAmount = amounts.alph.v.toBigDecimal(),
+                transactionFeeAmount = transactionFeeAmount,
+                dustValue = dustUtxoAmount.v.toBigDecimal(),
+                unspentToAmount = { it.output.amount.v.toBigDecimal() },
             )
-            return ascendingResult.onFailure {
-                val descendingOrderSelector = BuildWithOrder(providedGas, AssetDescendingOrder)
-                descendingOrderSelector.select(
-                    amounts,
-                    utxos,
-                )
-            }
+                .map { selected -> Result.success(Selected(selected, gas)) }
+                .successOr { return Result.failure(it.error) }
         }
     }
 
