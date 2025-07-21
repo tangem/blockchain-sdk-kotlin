@@ -9,8 +9,10 @@ import com.tangem.blockchain.blockchains.casper.network.request.CasperRpcBodyFac
 import com.tangem.blockchain.blockchains.casper.network.request.CasperTransactionBody
 import com.tangem.blockchain.blockchains.casper.network.response.CasperRpcResponse
 import com.tangem.blockchain.blockchains.casper.network.response.CasperRpcResponseResult
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.JsonRPCRequest
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.network.moshi
@@ -35,7 +37,7 @@ internal class CasperRpcNetworkProvider(
         },
         onFailure = {
             // Account is not funded yet
-            if (it.code == ERROR_CODE_QUERY_FAILED) {
+            if (it.code in ACCOUNT_NOT_FUNDED_ERROR_CODES) {
                 Result.Success(CasperBalance(value = BigDecimal.ZERO))
             } else {
                 Result.Failure(toDefaultError(it))
@@ -80,8 +82,7 @@ internal class CasperRpcNetworkProvider(
         return IOException(response.message).toBlockchainSdkError()
     }
 
-    companion object {
-        // https://github.com/casper-network/casper-node/blob/dev/node/src/components/rpc_server/rpcs/error_code.rs
-        private const val ERROR_CODE_QUERY_FAILED = -32003
+    private companion object {
+        val ACCOUNT_NOT_FUNDED_ERROR_CODES = setOf(-32003, -32026)
     }
 }
