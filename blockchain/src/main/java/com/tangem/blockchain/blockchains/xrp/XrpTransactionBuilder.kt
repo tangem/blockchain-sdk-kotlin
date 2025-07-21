@@ -6,14 +6,12 @@ import com.ripple.core.coretypes.uint.UInt32
 import com.ripple.crypto.ecdsa.ECDSASignature
 import com.ripple.utils.HashUtils
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
-import com.tangem.blockchain.blockchains.xrp.network.XrpTokenBalance
 import com.tangem.blockchain.blockchains.xrp.override.XrpPayment
 import com.tangem.blockchain.blockchains.xrp.override.XrpSignedTransaction
 import com.tangem.blockchain.blockchains.xrp.override.XrpTrustSet
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.bigIntegerValue
-import com.tangem.blockchain.extensions.orZero
 import com.tangem.blockchain.extensions.successOr
 import org.bitcoinj.core.ECKey
 import java.math.BigDecimal
@@ -25,7 +23,6 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
     // https://xrpl.org/blog/2021/reserves-lowered.html
     var minReserve = 1.toBigDecimal()
     var reserveInc = 0.2.toBigDecimal()
-    var tokenBalances = setOf<XrpTokenBalance>()
     val blockchain = Blockchain.XRP
 
     private val canonicalPublicKey = XrpAddressService.canonizePublicKey(publicKey)
@@ -118,10 +115,9 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
         val sequence = networkProvider.getSequence(sourceAddress).successOr { return it }
         val fee = requireNotNull(transactionData.fee?.amount)
         val coinAmountValue = coinAmount.value
-        var requiredReserve = reserveInc
+        val requiredReserve = reserveInc
             .plus(requireNotNull(fee.value))
-        if (coinAmountValue == null) requiredReserve = requiredReserve.plus(minReserve)
-        if (requiredReserve > coinAmountValue.orZero()) {
+        if (coinAmountValue == null || requiredReserve > coinAmountValue) {
             return Result.Failure(BlockchainSdkError.Xrp.MinReserveRequired(requiredReserve, blockchain.currency))
         }
         val contractAddress: String = requireNotNull(transactionData.contractAddress)
@@ -173,4 +169,8 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
     }
 
     data class XrpTransactionExtras(val destinationTag: Long) : TransactionExtras
+
+    companion object {
+        const val TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR = "."
+    }
 }
