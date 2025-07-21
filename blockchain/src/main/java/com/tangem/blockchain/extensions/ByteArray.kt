@@ -61,3 +61,6 @@ fun ByteArray.removeLeadingZeros(): ByteArray {
 
     return copyOfRange(firstNonZero, size)
 }
+
+fun ByteArray.removeLeadingZero(): ByteArray =
+    if (this.size > 1 && this[0] == 0x00.toByte()) this.copyOfRange(1, this.size) else this

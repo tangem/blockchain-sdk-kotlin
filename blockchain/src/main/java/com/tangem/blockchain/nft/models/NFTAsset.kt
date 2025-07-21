@@ -43,7 +43,7 @@ data class NFTAsset(
         @JsonClass(generateAdapter = true)
         data class Solana(
             @Json(name = "tokenAddress") val tokenAddress: String,
-            @Json(name = "cnft") val cnft: Boolean,
+            @Json(name = "tokenStandard") val tokenStandard: Int?,
         ) : Identifier()
 
         data object Unknown : Identifier()
@@ -51,8 +51,8 @@ data class NFTAsset(
 
     @JsonClass(generateAdapter = true)
     data class Media(
-        @Json(name = "mimetype") val mimetype: String?,
-        @Json(name = "url") val url: String,
+        @Json(name = "animationUrl") val animationUrl: String?,
+        @Json(name = "imageUrl") val imageUrl: String?,
     )
 
     @JsonClass(generateAdapter = true)
@@ -70,6 +70,7 @@ data class NFTAsset(
     @JsonClass(generateAdapter = true)
     data class SalePrice(
         @Json(name = "value") val value: BigDecimal,
-        @Json(name = "symbol") val symbol: String,
+        @Json(name = "symbol") val symbol: String?,
+        @Json(name = "decimals") val decimals: Int?,
     )
 }

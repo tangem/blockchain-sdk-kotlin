@@ -39,7 +39,11 @@ class MantleWalletManager(
         destination: String,
         callData: SmartContractCallData?,
     ): Result<TransactionFee> {
-        val patchedAmount = amount.minus(ONE_WEI)
+        val patchedAmount = if (amount.value != BigDecimal.ZERO && callData == null) {
+            amount.minus(ONE_WEI)
+        } else {
+            amount
+        }
         return super.getFeeInternal(patchedAmount, destination, callData)
             .map {
                 when (it) {
