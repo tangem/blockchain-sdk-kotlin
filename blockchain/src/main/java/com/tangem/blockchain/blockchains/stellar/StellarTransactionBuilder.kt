@@ -2,7 +2,6 @@ package com.tangem.blockchain.blockchains.stellar
 
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.orZero
 import org.stellar.sdk.*
 import org.stellar.sdk.xdr.AccountID
 import org.stellar.sdk.xdr.DecoratedSignature
@@ -175,7 +174,8 @@ class StellarTransactionBuilder(
     ): Result<ByteArray> {
         val fee = requireNotNull(transactionData.fee?.amount)
         val requiredReserve = baseReserve.plus(requireNotNull(fee.value))
-        if (requiredReserve > coinAmount.value.orZero()) {
+        val coinAmountValue = coinAmount.value
+        if (coinAmountValue == null || requiredReserve > coinAmountValue) {
             return Result.Failure(BlockchainSdkError.Stellar.MinReserveRequired(requiredReserve, blockchain.currency))
         }
         val contractAddress: String = requireNotNull(transactionData.contractAddress)
@@ -195,14 +195,15 @@ class StellarTransactionBuilder(
     }
 
     private fun canonicalForm(contractAddress: String) = contractAddress.replace(
-        oldValue = OUR_BACKEND_CONTRACT_ADDRESS_SEPARATOR,
+        oldValue = TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR,
         newValue = STELLAR_SDK_CONTRACT_ADDRESS_SEPARATOR,
     )
 
     companion object {
         const val CHANGE_TRUST_OPERATION_LIMIT = "900000000000.0000000"
-        const val OUR_BACKEND_CONTRACT_ADDRESS_SEPARATOR = "-"
+        const val TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR = "-"
         const val STELLAR_SDK_CONTRACT_ADDRESS_SEPARATOR = ":"
+        const val CONTRACT_ADDRESS_IGNORING_SUFFIX = "-1"
     }
 }
 

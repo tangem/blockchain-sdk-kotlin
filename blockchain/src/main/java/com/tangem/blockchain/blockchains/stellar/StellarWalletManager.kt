@@ -2,6 +2,8 @@ package com.tangem.blockchain.blockchains.stellar
 
 import android.util.Log
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.datastorage.BlockchainSavedData
+import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -13,10 +15,11 @@ import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
 import java.util.Calendar
 
-class StellarWalletManager(
+internal class StellarWalletManager(
     wallet: Wallet,
     private val transactionBuilder: StellarTransactionBuilder,
     private val networkProvider: StellarNetworkProvider,
+    private val dataStorage: AdvancedDataStorage,
 ) : WalletManager(wallet),
     SignatureCountValidator,
     ReserveAmountProvider,
@@ -31,7 +34,6 @@ class StellarWalletManager(
     private var baseFee = BASE_FEE
     private var baseReserve = BASE_RESERVE
     private var sequence = 0L
-    private var tokenBalances: Set<StellarAssetBalance> = setOf()
 
     override suspend fun updateInternal() {
         when (val result = networkProvider.getInfo(wallet.address)) {
@@ -40,19 +42,20 @@ class StellarWalletManager(
         }
     }
 
-    private fun updateWallet(data: StellarResponse) { // TODO: rework reserve
+    private suspend fun updateWallet(data: StellarResponse) { // TODO: rework reserve
         val reserve = data.baseReserve * (2 + data.subEntryCount).toBigDecimal()
         wallet.setCoinValue(data.coinBalance - reserve)
         wallet.setReserveValue(reserve)
         sequence = data.sequence
         baseFee = data.baseFee
         baseReserve = data.baseReserve
-        tokenBalances = data.tokenBalances
+        storeIncompleteTokenTransaction(data.tokenBalances)
         transactionBuilder.minReserve = data.baseReserve * 2.toBigDecimal()
 
         cardTokens.forEach { token ->
             val tokenBalance = data.tokenBalances
-                .find { "${it.symbol}-${it.issuer}" == token.contractAddress }?.balance
+                .find { "${it.symbol}-${it.issuer}" == token.contractAddress }
+                ?.balance
                 ?: 0.toBigDecimal()
             wallet.addTokenValue(tokenBalance, token)
         }
@@ -219,7 +222,7 @@ class StellarWalletManager(
         return SimpleResult.Success
     }
 
-    private fun assetRequiresAssociation(currencyType: CryptoCurrencyType): Boolean {
+    private suspend fun assetRequiresAssociation(currencyType: CryptoCurrencyType): Boolean {
         return when (currencyType) {
             is CryptoCurrencyType.Coin -> false
             is CryptoCurrencyType.Token -> {
@@ -227,9 +230,28 @@ class StellarWalletManager(
                     currencyType.trustlineTxKey() == it.destinationAddress && it.status == TransactionStatus.Unconfirmed
                 }
                 if (haveUnconfirmedTrustline) return false
-                tokenBalances.find { currencyType.info.contractAddress == "${it.symbol}-${it.issuer}" } == null
+                val createdTrustline = getCreatedTrustline()?.createdTrustline ?: return true
+                val isTrustlineCreated = createdTrustline.any { currencyType.info.contractAddress == it }
+                return !isTrustlineCreated
             }
         }
+    }
+
+    private fun storeKey() = "trustline-${wallet.publicKey}-${wallet.address}"
+    private fun StellarAssetBalance.canonicalContractAddress() =
+        "${this.symbol}${StellarTransactionBuilder.TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR}${this.issuer}"
+
+    private suspend fun getCreatedTrustline(): BlockchainSavedData.Trustline? {
+        return dataStorage.getOrNull(storeKey())
+    }
+
+    private suspend fun storeIncompleteTokenTransaction(data: Set<StellarAssetBalance>) {
+        dataStorage.store(
+            key = storeKey(),
+            value = BlockchainSavedData.Trustline(
+                createdTrustline = data.mapTo(mutableSetOf()) { it.canonicalContractAddress() },
+            ),
+        )
     }
 
     companion object {
