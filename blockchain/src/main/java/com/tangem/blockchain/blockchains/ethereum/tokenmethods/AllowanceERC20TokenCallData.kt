@@ -1,6 +1,6 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods
 
-import com.tangem.blockchain.common.smartcontract.SmartContractCallData
+import com.tangem.blockchain.common.smartcontract.Erc20CallData
 import com.tangem.blockchain.extensions.hexToFixedSizeBytes
 import com.tangem.common.extensions.hexToBytes
 
@@ -12,13 +12,13 @@ import com.tangem.common.extensions.hexToBytes
 data class AllowanceERC20TokenCallData(
     private val ownerAddress: String,
     private val spenderAddress: String,
-) : SmartContractCallData {
+) : Erc20CallData {
     override val methodId = "0xdd62ed3e"
     override val data: ByteArray
         get() {
             val prefixData = methodId.hexToBytes()
-            val ownerAddressData = ownerAddress.hexToFixedSizeBytes()
-            val spenderAddressData = spenderAddress.hexToFixedSizeBytes()
+            val ownerAddressData = ownerAddress.addressWithoutPrefix().hexToFixedSizeBytes()
+            val spenderAddressData = spenderAddress.addressWithoutPrefix().hexToFixedSizeBytes()
 
             return prefixData + ownerAddressData + spenderAddressData
         }

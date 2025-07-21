@@ -4,6 +4,8 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.nft.NFTProvider
+import com.tangem.blockchain.nft.extensions.ipfsToHttps
+import com.tangem.blockchain.nft.extensions.removeUrlQuery
 import com.tangem.blockchain.nft.models.NFTAsset
 import com.tangem.blockchain.nft.models.NFTCollection
 import com.tangem.blockchain.nft.providers.moralis.solana.network.MoralisSolanaApi
@@ -31,7 +33,7 @@ internal class MoralisSolanaNFTProvider(
         )
         .groupBy { assetResponse ->
             NFTCollection.Identifier.Solana(
-                collection = assetResponse.collection?.name,
+                collectionAddress = assetResponse.collection?.collectionAddress,
             )
         }
         .mapValues { (collectionIdentifier, assetsResponse) ->
@@ -39,7 +41,7 @@ internal class MoralisSolanaNFTProvider(
                 assetResponse.mint?.let { tokenAddress ->
                     val assetIdentifier = NFTAsset.Identifier.Solana(
                         tokenAddress = tokenAddress,
-                        cnft = false,
+                        tokenStandard = assetResponse.tokenStandard,
                     )
                     assetResponse.toNFTAsset(
                         assetIdentifier = assetIdentifier,
@@ -50,27 +52,15 @@ internal class MoralisSolanaNFTProvider(
             }
 
             val collectionResponse = assetsResponse.firstOrNull()?.collection
-            if (collectionResponse?.name != null) {
-                NFTCollection(
-                    name = collectionResponse.name,
-                    identifier = collectionIdentifier,
-                    blockchainId = blockchain.id,
-                    description = collectionResponse.description,
-                    logoUrl = collectionResponse.imageOriginalUrl,
-                    count = assets.size,
-                    assets = assets,
-                )
-            } else {
-                NFTCollection(
-                    name = null,
-                    identifier = collectionIdentifier,
-                    blockchainId = blockchain.id,
-                    description = null,
-                    logoUrl = null,
-                    count = assets.size,
-                    assets = assets,
-                )
-            }
+            NFTCollection(
+                name = collectionResponse?.name,
+                identifier = collectionIdentifier,
+                blockchainId = blockchain.id,
+                description = collectionResponse?.description,
+                logoUrl = collectionResponse?.imageOriginalUrl?.ipfsToHttps()?.removeUrlQuery(),
+                count = assets.size,
+                assets = assets,
+            )
         }
         .values
         .toList()
@@ -125,7 +115,10 @@ internal class MoralisSolanaNFTProvider(
     private fun MoralisSolanaNFTAssetResponse.toNFTAssetMedia(): NFTAsset.Media? {
         val firstFile = properties?.files?.firstOrNull()
         return firstFile?.uri?.let {
-            NFTAsset.Media(firstFile.type, it)
+            NFTAsset.Media(
+                animationUrl = null, // not implemented yet
+                imageUrl = it.ipfsToHttps().removeUrlQuery(),
+            )
         }
     }
 
