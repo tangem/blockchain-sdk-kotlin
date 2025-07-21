@@ -36,15 +36,16 @@ internal class EthereumNFTSafeTransferERC721TokenCallDataTest {
         decimals = 0,
         salePrice = NFTAsset.SalePrice(
             value = BigDecimal.ZERO,
-            symbol = "",
+            symbol = "ETH",
+            decimals = 18,
         ),
         rarity = NFTAsset.Rarity(
             rank = "",
             label = "",
         ),
         media = NFTAsset.Media(
-            mimetype = "",
-            url = "",
+            animationUrl = null,
+            imageUrl = null,
         ),
         traits = listOf(
             NFTAsset.Trait(

@@ -7,6 +7,7 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
@@ -16,7 +17,7 @@ class StellarWalletManager(
     wallet: Wallet,
     private val transactionBuilder: StellarTransactionBuilder,
     private val networkProvider: StellarNetworkProvider,
-) : WalletManager(wallet), SignatureCountValidator, ReserveAmountProvider {
+) : WalletManager(wallet), SignatureCountValidator, ReserveAmountProvider, TransactionValidator {
 
     override val currentHost: String
         get() = networkProvider.baseUrl
@@ -126,6 +127,25 @@ class StellarWalletManager(
             is Result.Success -> response.data.accountCreated
             is Result.Failure -> false
         }
+    }
+
+    override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
+        transactionData.requireUncompiled()
+
+        val extras = transactionData.extras as? StellarTransactionExtras
+        val hasMemo = extras?.memo?.hasNonEmptyMemo() ?: false
+
+        val amountType = transactionData.amount.type
+        val token = if (amountType is AmountType.Token) amountType.token else null
+
+        val requiresMemo = networkProvider.checkTargetAccount(transactionData.destinationAddress, token)
+            .map { it.requiresMemo }
+            .successOr { false }
+
+        if (!hasMemo && requiresMemo) {
+            return kotlin.Result.failure(BlockchainSdkError.DestinationTagRequired)
+        }
+        return kotlin.Result.success(Unit)
     }
 
     companion object {
