@@ -87,7 +87,7 @@ internal class StellarNetworkService(
                     .find {
                         val assetCode = it.assetCode.get()
                         val assetIssuer = it.assetIssuer.get()
-                        val separator = StellarTransactionBuilder.OUR_BACKEND_CONTRACT_ADDRESS_SEPARATOR
+                        val separator = StellarTransactionBuilder.TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR
                         "$assetCode${separator}$assetIssuer" == token.contractAddress
                     } // null if trustline not created
                 Result.Success(

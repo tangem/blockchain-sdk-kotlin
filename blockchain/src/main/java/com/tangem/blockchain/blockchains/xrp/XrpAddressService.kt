@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.xrp
 
 import com.ripple.encodings.addresses.Addresses
 import com.ripple.encodings.base58.B58
+import com.tangem.blockchain.blockchains.xrp.XrpTransactionBuilder.Companion.TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.ContractAddressValidator
 import com.tangem.common.card.EllipticCurve
@@ -11,6 +12,8 @@ import com.tangem.common.extensions.toCompressedPublicKey
 import org.kethereum.extensions.toBigInteger
 
 class XrpAddressService : AddressService(), ContractAddressValidator {
+
+    private val addressConverter = XrpTokenAddressConverter()
 
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         val canonicalPublicKey = canonizePublicKey(walletPublicKey)
@@ -31,8 +34,14 @@ class XrpAddressService : AddressService(), ContractAddressValidator {
         }
     }
 
+    override fun reformatContractAddress(address: String?): String? {
+        return addressConverter.normalizeAddress(address)
+    }
+
     override fun validateContractAddress(address: String): Boolean {
-        val split = address.split(".")
+        val address = reformatContractAddress(address) ?: return false
+        val split = address.split(TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR)
+        if (split.size != 2) return false
         val currencyCode = split.getOrNull(0) ?: return false
         val issuer = split.getOrNull(1) ?: return false
         return isValidCurrencyCode(currencyCode) && validate(issuer)
