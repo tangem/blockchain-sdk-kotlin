@@ -10,6 +10,7 @@ internal data class MoralisSolanaNFTAssetResponse(
     @Json(name = "name") val name: String?,
     @Json(name = "symbol") val symbol: String?,
     @Json(name = "decimals") val decimals: Int?,
+    @Json(name = "tokenStandard") val tokenStandard: Int?,
     @Json(name = "amount") val amount: String?,
     @Json(name = "amountRaw") val amountRaw: String?,
     @Json(name = "totalSupply") val totalSupply: String?,
