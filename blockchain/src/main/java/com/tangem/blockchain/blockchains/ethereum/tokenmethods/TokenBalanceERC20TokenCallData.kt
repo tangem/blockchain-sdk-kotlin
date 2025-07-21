@@ -1,6 +1,6 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods
 
-import com.tangem.blockchain.common.smartcontract.SmartContractCallData
+import com.tangem.blockchain.common.smartcontract.Erc20CallData
 import com.tangem.blockchain.extensions.hexToFixedSizeBytes
 import com.tangem.common.extensions.hexToBytes
 
@@ -9,16 +9,14 @@ import com.tangem.common.extensions.hexToBytes
  *
  * @see <a href="https://eips.ethereum.org/EIPS/eip-20#balanceof">EIP-20 Balance Of</a>
  */
-data class TokenBalanceERC20TokenCallData(
-    private val address: String,
-) : SmartContractCallData {
+data class TokenBalanceERC20TokenCallData(private val address: String) : Erc20CallData {
 
     override val methodId: String = "0x70a08231"
 
     override val data: ByteArray
         get() {
             val prefixData = methodId.hexToBytes()
-            val addressData = address.hexToFixedSizeBytes()
+            val addressData = address.addressWithoutPrefix().hexToFixedSizeBytes()
             return prefixData + addressData
         }
 }
