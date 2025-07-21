@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common.smartcontract.factory
 
+import com.tangem.blockchain.blockchains.decimal.DecimalAddressService
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TransferERC20TokenCallData
 import com.tangem.blockchain.blockchains.tron.tokenmethods.TronTransferTokenCallData
 import com.tangem.blockchain.common.Amount
@@ -13,10 +14,17 @@ internal object TransferSmartContractCallDataFactory {
         if (amount.type !is AmountType.Token) return null
 
         return when {
-            blockchain.isEvm() -> TransferERC20TokenCallData(
-                destination = destinationAddress,
-                amount = amount,
-            )
+            blockchain.isEvm() -> {
+                val updatedDestinationAddress = if (blockchain == Blockchain.Decimal) {
+                    DecimalAddressService.convertDelAddressToDscAddress(destinationAddress)
+                } else {
+                    destinationAddress
+                }
+                TransferERC20TokenCallData(
+                    destination = updatedDestinationAddress,
+                    amount = amount,
+                )
+            }
             blockchain == Blockchain.Tron -> TronTransferTokenCallData(
                 destination = destinationAddress,
                 amount = amount,
