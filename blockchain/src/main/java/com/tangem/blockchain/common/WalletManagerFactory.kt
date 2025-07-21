@@ -187,9 +187,9 @@ class WalletManagerFactory(
             Blockchain.EnergyWebX, Blockchain.EnergyWebXTestnet,
             -> PolkadotWalletManagerAssembly
 
-            Blockchain.Stellar, Blockchain.StellarTestnet -> StellarWalletManagerAssembly
+            Blockchain.Stellar, Blockchain.StellarTestnet -> StellarWalletManagerAssembly(dataStorage)
             Blockchain.Cardano -> CardanoWalletManagerAssembly
-            Blockchain.XRP -> XRPWalletManagerAssembly
+            Blockchain.XRP -> XRPWalletManagerAssembly(dataStorage)
             Blockchain.Binance, Blockchain.BinanceTestnet -> BinanceWalletManagerAssembly
             Blockchain.Tezos -> TezosWalletManagerAssembly
             Blockchain.Tron, Blockchain.TronTestnet -> TronWalletManagerAssembly
