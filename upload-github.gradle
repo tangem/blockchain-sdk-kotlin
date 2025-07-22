@@ -31,7 +31,7 @@ afterEvaluate {
         repositories {
             maven {
                 name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/tangem/blockchain-sdk-kotlin-public")
+                url = uri("https://maven.pkg.github.com/tangem/blockchain-sdk-kotlin")
                 credentials {
                     username = "$githubUser"
                     password = "$githubPass"
