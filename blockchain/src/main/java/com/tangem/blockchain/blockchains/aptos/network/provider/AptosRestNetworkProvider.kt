@@ -7,13 +7,17 @@ import com.tangem.blockchain.blockchains.aptos.network.AptosApi
 import com.tangem.blockchain.blockchains.aptos.network.AptosNetworkProvider
 import com.tangem.blockchain.blockchains.aptos.network.converter.AptosPseudoTransactionConverter
 import com.tangem.blockchain.blockchains.aptos.network.request.AptosTransactionBody
+import com.tangem.blockchain.blockchains.aptos.network.request.AptosViewRequest
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.network.moshi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import retrofit2.HttpException
+import java.math.BigDecimal
 
 internal class AptosRestNetworkProvider(override val baseUrl: String) : AptosNetworkProvider {
 
@@ -21,21 +25,26 @@ internal class AptosRestNetworkProvider(override val baseUrl: String) : AptosNet
 
     override suspend fun getAccountInfo(address: String): Result<AptosAccountInfo> {
         return try {
-            val resources = api.getAccountResources(address)
+            coroutineScope {
+                val resourcesDeferred = async { api.getAccountResources(address) }
+                val balanceDeferred = async { getBalance(address) }
 
-            val accountResource = resources.getResource<AptosResource.AccountResource>()
-            val coinResource = resources.getResource<AptosResource.CoinResource>()
+                val resources = resourcesDeferred.await()
+                val balance = balanceDeferred.await()
 
-            if (accountResource != null && coinResource != null) {
-                Result.Success(
-                    AptosAccountInfo(
-                        sequenceNumber = accountResource.sequenceNumber.toLong(),
-                        balance = coinResource.balance,
-                        tokens = resources.filterIsInstance<AptosResource.TokenResource>(),
-                    ),
-                )
-            } else {
-                Result.Failure(BlockchainSdkError.AccountNotFound())
+                val accountResource = resources.getResource<AptosResource.AccountResource>()
+
+                if (accountResource == null && balance == BigDecimal.ZERO) {
+                    Result.Failure(BlockchainSdkError.AccountNotFound())
+                } else {
+                    Result.Success(
+                        AptosAccountInfo(
+                            sequenceNumber = accountResource?.sequenceNumber?.toLong() ?: 0L,
+                            balance = balance,
+                            tokens = resources.filterIsInstance<AptosResource.TokenResource>(),
+                        ),
+                    )
+                }
             }
         } catch (e: Exception) {
             if (e.isNoAccountFoundException()) {
@@ -97,6 +106,26 @@ internal class AptosRestNetworkProvider(override val baseUrl: String) : AptosNet
     private fun Exception.isNoAccountFoundException(): Boolean {
         return this is HttpException && code() == NOT_FOUND_HTTP_CODE &&
             response()?.errorBody()?.string()?.contains(ACCOUNT_NOT_FOUND_ERROR_CODE) == true
+    }
+
+    private suspend fun getBalance(address: String): BigDecimal {
+        return try {
+            val viewRequest = AptosViewRequest(
+                function = "0x1::coin::balance",
+                typeArguments = listOf("0x1::aptos_coin::AptosCoin"),
+                arguments = listOf(address),
+            )
+
+            val response = api.executeViewFunction(viewRequest)
+
+            if (response.isNotEmpty()) {
+                BigDecimal(response.first())
+            } else {
+                BigDecimal.ZERO
+            }
+        } catch (e: Exception) {
+            BigDecimal.ZERO
+        }
     }
 
     private companion object {
