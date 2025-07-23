@@ -11,6 +11,7 @@ import com.tangem.blockchain.common.trustlines.AssetRequirementsCondition
 import com.tangem.blockchain.common.trustlines.AssetRequirementsManager
 import com.tangem.blockchain.extensions.*
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
 import java.util.Calendar
@@ -237,7 +238,8 @@ internal class StellarWalletManager(
         }
     }
 
-    private fun storeKey() = "trustline-${wallet.publicKey}-${wallet.address}"
+    private fun storeKey() =
+        "trustline-${wallet.publicKey.blockchainKey.toCompressedPublicKey().toHexString()}-${wallet.address}"
     private fun StellarAssetBalance.canonicalContractAddress() =
         "${this.symbol}${StellarTransactionBuilder.TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR}${this.issuer}"
 
