@@ -17,6 +17,7 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
 import java.util.Calendar
@@ -206,7 +207,8 @@ internal class XrpWalletManager(
         }
     }
 
-    private fun storeKey() = "trustline-${wallet.publicKey}-${wallet.address}"
+    private fun storeKey() =
+        "trustline-${wallet.publicKey.blockchainKey.toCompressedPublicKey().toHexString()}-${wallet.address}"
     private fun XrpTokenBalance.canonicalContractAddress() =
         "${this.currency}${XrpTransactionBuilder.TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR}${this.issuer}"
 
