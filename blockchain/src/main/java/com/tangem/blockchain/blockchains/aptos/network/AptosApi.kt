@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.aptos.network
 
 import com.tangem.blockchain.blockchains.aptos.network.request.AptosTransactionBody
+import com.tangem.blockchain.blockchains.aptos.network.request.AptosViewRequest
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosEstimateGasPriceResponse
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosSimulateTransactionBody
@@ -26,6 +27,17 @@ internal interface AptosApi {
     @Headers("Content-Type: application/json")
     @GET("v1/accounts/{address}/resources")
     suspend fun getAccountResources(@Path("address") address: String): List<AptosResource>
+
+    /**
+     * Execute a view function that returns values without causing any state changes.
+     *
+     * @param request view function request with function name, type arguments, and arguments
+     *
+     * @return list of response values
+     */
+    @Headers("Content-Type: application/json")
+    @POST("v1/view")
+    suspend fun executeViewFunction(@Body request: AptosViewRequest): List<String>
 
     /**
      * Gives an estimate of the gas unit price required to get a transaction on chain in a reasonable amount of time.
