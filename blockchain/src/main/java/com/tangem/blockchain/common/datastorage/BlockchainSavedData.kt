@@ -26,4 +26,9 @@ internal sealed interface BlockchainSavedData {
         @Json(name = "feeAmountValue") val feeAmountValue: BigDecimal,
         @Json(name = "envelope") val envelope: Envelope,
     ) : BlockchainSavedData
+
+    @JsonClass(generateAdapter = true)
+    data class Trustline(
+        @Json(name = "createdTrustline") val createdTrustline: Set<String> = emptySet(),
+    ) : BlockchainSavedData
 }

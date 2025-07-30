@@ -7,8 +7,11 @@ import com.tangem.blockchain.blockchains.stellar.StellarWalletManager
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
+import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 
-internal object StellarWalletManagerAssembly : WalletManagerAssembly<StellarWalletManager>() {
+internal class StellarWalletManagerAssembly(
+    private val dataStorage: AdvancedDataStorage,
+) : WalletManagerAssembly<StellarWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): StellarWalletManager {
         with(input.wallet) {
@@ -23,6 +26,7 @@ internal object StellarWalletManagerAssembly : WalletManagerAssembly<StellarWall
                 wallet = this,
                 transactionBuilder = StellarTransactionBuilder(networkService, publicKey.blockchainKey),
                 networkProvider = networkService,
+                dataStorage = dataStorage,
             )
         }
     }
