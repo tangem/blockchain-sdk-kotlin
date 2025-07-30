@@ -278,6 +278,7 @@ internal class CardanoTransactionBuilder(
         val finalArray = Array().apply {
             add(txBody)
             add(witnessesMap)
+            add(co.nstant.`in`.cbor.model.SimpleValue.TRUE)
             add(co.nstant.`in`.cbor.model.SimpleValue.NULL)
         }
 
