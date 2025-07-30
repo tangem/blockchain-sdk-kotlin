@@ -281,10 +281,11 @@ internal class CardanoTransactionBuilder(
             put(co.nstant.`in`.cbor.model.UnsignedInteger(0), witnessesArray)
         }
 
-        // Собираем финальную структуру: [txBody, witnessesMap, null]
+        // Собираем финальную структуру: [txBody, witnessesMap, true, null]
         val finalArray = Array().apply {
             add(txBody)
             add(witnessesMap)
+            add(co.nstant.`in`.cbor.model.SimpleValue.TRUE)
             add(co.nstant.`in`.cbor.model.SimpleValue.NULL)
         }
 
