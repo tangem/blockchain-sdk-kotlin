@@ -44,6 +44,14 @@ allprojects {
                 password = properties.getProperty("gpr.key", System.getenv('GITHUB_TOKEN'))
             }
         }
+        maven {
+            // setting any repository from tangem project allows maven search all packages in the project
+            url = uri("https://maven.pkg.github.com/tangem/blockchain-sdk-kotlin")
+            credentials {
+                username = properties.getProperty("gpr.user", System.getenv('GITHUB_ACTOR'))
+                password = properties.getProperty("gpr.key", System.getenv('GITHUB_TOKEN'))
+            }
+        }
         maven { url 'https://jitpack.io' }
     }
 }
