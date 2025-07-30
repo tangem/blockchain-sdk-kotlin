@@ -23,4 +23,22 @@ class StellarAddressTest {
 
         Truth.assertThat(addressService.validate(address)).isTrue()
     }
+
+    @Test
+    fun validateCorrectContractAddress() {
+        val address = "VELO-GDM4RQUQQUVSKQA7S6EM7XBZP3FCGH4Q7CL6TABQ7B2BEJ5ERARM2M5M"
+        Truth.assertThat(addressService.validateContractAddress(address)).isTrue()
+    }
+
+    @Test
+    fun validateIncorrectContractAddress() {
+        val address = "GDM4RQUQQUVSKQA7S6EM7XBZP3FCGH4Q7CL6TABQ7B2BEJ5ERARM2M5M"
+        Truth.assertThat(addressService.validateContractAddress(address)).isFalse()
+    }
+
+    @Test
+    fun validateCorrectContractAddressRemoveSuffix() {
+        val addressWithSuffix = "VELO-GDM4RQUQQUVSKQA7S6EM7XBZP3FCGH4Q7CL6TABQ7B2BEJ5ERARM2M5M-1"
+        Truth.assertThat(addressService.validateContractAddress(addressWithSuffix)).isTrue()
+    }
 }
