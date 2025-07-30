@@ -3,7 +3,10 @@ package com.tangem.blockchain.blockchains.xrp
 import android.util.Log
 import com.tangem.blockchain.blockchains.xrp.network.XrpInfoResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
+import com.tangem.blockchain.blockchains.xrp.network.XrpTokenBalance
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.datastorage.BlockchainSavedData
+import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -14,14 +17,16 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
 import java.util.Calendar
 
-class XrpWalletManager(
+internal class XrpWalletManager(
     wallet: Wallet,
     private val transactionBuilder: XrpTransactionBuilder,
     private val networkProvider: XrpNetworkProvider,
+    private val dataStorage: AdvancedDataStorage,
 ) : WalletManager(wallet), ReserveAmountProvider, TransactionValidator, AssetRequirementsManager {
 
     override val currentHost: String
@@ -36,7 +41,7 @@ class XrpWalletManager(
         }
     }
 
-    private fun updateWallet(response: XrpInfoResponse) {
+    private suspend fun updateWallet(response: XrpInfoResponse) {
         Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
 
         wallet.setReserveValue(response.reserveTotal)
@@ -47,7 +52,7 @@ class XrpWalletManager(
             return
         }
         wallet.setCoinValue(response.balance - response.reserveTotal)
-        transactionBuilder.tokenBalances = response.tokenBalances
+        storeIncompleteTokenTransaction(response.tokenBalances)
         cardTokens.forEach { token ->
             val tokenBalance = response.tokenBalances
                 .find { "${it.currency}.${it.issuer}" == token.contractAddress }?.balance
@@ -186,7 +191,7 @@ class XrpWalletManager(
 
     private fun CryptoCurrencyType.Token.trustlineTxKey() = "trustline-${info.contractAddress}"
 
-    private fun assetRequiresAssociation(currencyType: CryptoCurrencyType): Boolean {
+    private suspend fun assetRequiresAssociation(currencyType: CryptoCurrencyType): Boolean {
         return when (currencyType) {
             is CryptoCurrencyType.Coin -> false
             is CryptoCurrencyType.Token -> {
@@ -194,9 +199,29 @@ class XrpWalletManager(
                     currencyType.trustlineTxKey() == it.destinationAddress && it.status == TransactionStatus.Unconfirmed
                 }
                 if (haveUnconfirmedTrustline) return false
-                transactionBuilder.tokenBalances
-                    .find { currencyType.info.contractAddress == "${it.currency}.${it.issuer}" } == null
+                val createdTrustline = getCreatedTrustline()?.createdTrustline ?: return true
+                val isTrustlineCreated = createdTrustline
+                    .any { currencyType.info.contractAddress == it }
+                return !isTrustlineCreated
             }
         }
+    }
+
+    private fun storeKey() =
+        "trustline-${wallet.publicKey.blockchainKey.toCompressedPublicKey().toHexString()}-${wallet.address}"
+    private fun XrpTokenBalance.canonicalContractAddress() =
+        "${this.currency}${XrpTransactionBuilder.TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR}${this.issuer}"
+
+    private suspend fun getCreatedTrustline(): BlockchainSavedData.Trustline? {
+        return dataStorage.getOrNull(storeKey())
+    }
+
+    private suspend fun storeIncompleteTokenTransaction(data: Set<XrpTokenBalance>) {
+        dataStorage.store(
+            key = storeKey(),
+            value = BlockchainSavedData.Trustline(
+                createdTrustline = data.mapTo(mutableSetOf()) { it.canonicalContractAddress() },
+            ),
+        )
     }
 }
