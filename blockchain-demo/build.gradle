@@ -4,12 +4,12 @@ apply plugin: 'kotlin-kapt'
 
 android {
     namespace "com.tangem.blockchain"
-    compileSdkVersion 34
+    compileSdkVersion 35
 
     defaultConfig {
         applicationId "com.example.blockchain_demo"
         minSdkVersion 24
-        targetSdkVersion 34
+        targetSdkVersion 35
         versionCode 1
         versionName "1.0"
 
