@@ -8,6 +8,10 @@ internal class EthereumJsonRpcProviderFactory(
     private val config: BlockchainSdkConfig,
 ) {
 
+    fun getPublicProvider(baseUrl: String): EthereumJsonRpcProvider {
+        return EthereumJsonRpcProvider(baseUrl = baseUrl)
+    }
+
     fun getNowNodesProvider(baseUrl: String): EthereumJsonRpcProvider? {
         return config.nowNodeCredentials?.apiKey.letNotBlank { nowNodesApiKey ->
             EthereumJsonRpcProvider(baseUrl = baseUrl, postfixUrl = nowNodesApiKey)
