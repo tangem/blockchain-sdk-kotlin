@@ -13,6 +13,9 @@ internal class EthereumProvidersBuilder(
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return providerTypes.mapNotNull {
             when (it) {
+                is ProviderType.Public -> {
+                    ethereumProviderFactory.getPublicProvider(baseUrl = it.url)
+                }
                 ProviderType.NowNodes -> ethereumProviderFactory.getNowNodesProvider(
                     baseUrl = "https://eth.nownodes.io/",
                 )
