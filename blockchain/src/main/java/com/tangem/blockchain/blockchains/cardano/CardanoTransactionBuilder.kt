@@ -175,7 +175,7 @@ internal class CardanoTransactionBuilder(
         return ByteArrayOutputStream().use { out ->
             CborEncoder(out).encode(listOf(txBodyItem))
             out.toByteArray()
-        }
+        return parsed
     }
 
     private fun hashBlake2b256(data: ByteArray): ByteArray {
