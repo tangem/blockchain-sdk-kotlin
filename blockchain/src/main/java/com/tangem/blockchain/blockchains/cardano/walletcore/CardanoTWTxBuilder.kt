@@ -1,9 +1,6 @@
 package com.tangem.blockchain.blockchains.cardano.walletcore
 
-import co.nstant.`in`.cbor.CborDecoder
 import com.google.protobuf.ByteString
-import com.tangem.blockchain.blockchains.cardano.converter.CardanoCompiledTransactionConverter
-import com.tangem.blockchain.blockchains.cardano.models.CardanoCompiledTransaction
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.utils.matchesCardanoAsset
 import com.tangem.blockchain.common.AmountType
@@ -11,13 +8,9 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.Wallet
 import com.tangem.common.extensions.toByteArray
-import com.tangem.common.extensions.toHexString
-import org.ton.tl.ByteString.Companion.decodeFromHex
 import wallet.core.jni.Cardano.minAdaAmount
 import wallet.core.jni.proto.Cardano
-import java.io.ByteArrayInputStream
 import java.math.BigDecimal
-import wallet.core.jni.Cardano as CardanoExt
 
 /**
  * Cardano transaction builder using WalletCore
@@ -33,10 +26,7 @@ internal class CardanoTWTxBuilder(
 ) {
 
     /** Build transaction input by [transactionData] */
-    fun build(transactionData: TransactionData): Cardano.SigningInput = when (transactionData) {
-        is TransactionData.Compiled -> buildCompiled(transactionData)
-        is TransactionData.Uncompiled -> buildUncompiled(transactionData)
-    }
+    fun build(transactionData: TransactionData.Uncompiled): Cardano.SigningInput = buildUncompiled(transactionData)
 
     private fun buildUncompiled(transactionData: TransactionData): Cardano.SigningInput {
         transactionData.requireUncompiled()
@@ -46,78 +36,6 @@ internal class CardanoTWTxBuilder(
             .setTtl(TRANSACTION_TTL)
             .addAllUtxos(outputs.map(::createTxInput))
             .build()
-    }
-
-    private fun buildCompiled(transactionData: TransactionData): Cardano.SigningInput {
-        transactionData.requireCompiled()
-        val transaction = transactionData.value as? TransactionData.Compiled.Data.RawString
-            ?: error("Compiled transaction must be in string format")
-
-        val byteData = transaction.data.decodeFromHex().toByteArray()
-        val bais = ByteArrayInputStream(byteData)
-        val decodedData = CborDecoder(bais)
-        val converter = CardanoCompiledTransactionConverter()
-        val data = converter.convert(decodedData) ?: error("Failed to parse compiled transaction")
-        val stakingAddress = CardanoExt.getStakingAddress(wallet.address)
-
-        val signinInputBuilder = with(Cardano.SigningInput.newBuilder()) {
-            addAllUtxos(
-                outputs
-                    .filter { output ->
-                        data.inputs.any {
-                            output.transactionHash.toHexString() == it.transactionID
-                        }
-                    }.map(::createTxInput),
-            )
-            setTransferMessage(
-                Cardano.Transfer.newBuilder()
-                    .setToAddress(wallet.address)
-                    .setChangeAddress(wallet.address)
-                    .setUseMaxAmount(true)
-                    .build(),
-            )
-
-            data.certificates.forEach { certificate ->
-                when (certificate) {
-                    is CardanoCompiledTransaction.Certificate.StakeDelegation -> {
-                        setDelegate(
-                            Cardano.Delegate.newBuilder()
-                                .setDepositAmount(0)
-                                .setPoolId(ByteString.copyFrom(certificate.poolKeyHash))
-                                .setStakingAddress(stakingAddress),
-                        )
-                    }
-                    is CardanoCompiledTransaction.Certificate.StakeDeregistrationLegacy,
-                    is CardanoCompiledTransaction.Certificate.StakeDeregistrationConway,
-                    -> {
-                        setDeregisterStakingKey(
-                            Cardano.DeregisterStakingKey.newBuilder()
-                                .setStakingAddress(stakingAddress)
-                                .setUndepositAmount(STAKING_DEPOSIT_AMOUNT),
-                        )
-                    }
-                    is CardanoCompiledTransaction.Certificate.StakeRegistrationLegacy -> {
-                        setRegisterStakingKey(
-                            Cardano.RegisterStakingKey.newBuilder()
-                                .setStakingAddress(stakingAddress)
-                                .setDepositAmount(STAKING_DEPOSIT_AMOUNT),
-                        )
-                    }
-                }
-            }
-
-            if (!data.withdrawals.isNullOrEmpty()) {
-                setWithdraw(
-                    Cardano.Withdraw.newBuilder()
-                        .setStakingAddress(stakingAddress)
-                        .setWithdrawAmount(data.withdrawals.sum()),
-                )
-            }
-
-            setTtl(TRANSACTION_TTL)
-        }
-
-        return signinInputBuilder.build()
     }
 
     /** Calculate required min-ada-value to withdraw all tokens */
