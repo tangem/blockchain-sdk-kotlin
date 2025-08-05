@@ -26,11 +26,7 @@ internal class CardanoTWTxBuilder(
 ) {
 
     /** Build transaction input by [transactionData] */
-    fun build(transactionData: TransactionData.Uncompiled): Cardano.SigningInput = buildUncompiled(transactionData)
-
-    private fun buildUncompiled(transactionData: TransactionData): Cardano.SigningInput {
-        transactionData.requireUncompiled()
-
+    fun build(transactionData: TransactionData.Uncompiled): Cardano.SigningInput {
         return Cardano.SigningInput.newBuilder()
             .setTransferMessage(createTransfer(transactionData = transactionData))
             .setTtl(TRANSACTION_TTL)
