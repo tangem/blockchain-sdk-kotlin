@@ -19,6 +19,7 @@ import org.bouncycastle.crypto.digests.Blake2bDigest
 import org.ton.tl.ByteString.Companion.decodeFromHex
 import wallet.core.java.AnySigner
 import wallet.core.jni.CoinType
+import wallet.core.jni.DataVector
 import wallet.core.jni.TransactionCompiler
 import wallet.core.jni.proto.Cardano
 import wallet.core.jni.proto.Common
@@ -189,15 +190,55 @@ internal class CardanoTransactionBuilder(
     }
 
     fun buildForSend(transactionData: TransactionData, signaturesInfo: List<SignatureInfo>): ByteArray {
-        transactionData.requireCompiled()
+        return when (transactionData) {
+            is TransactionData.Compiled -> {
+                val compiledTxRawString = (transactionData.value as? TransactionData.Compiled.Data.RawString)?.data
+                    ?: error("TransactionData must be compiled with RawString data type")
 
-        val compiledTxRawString = (transactionData.value as? TransactionData.Compiled.Data.RawString)?.data
-            ?: error("TransactionData must be compiled with RawString data type")
+                buildCompiledForSend(
+                    compiledTx = compiledTxRawString.decodeFromHex().toByteArray(),
+                    signaturesInfo = signaturesInfo,
+                )
+            }
+            is TransactionData.Uncompiled -> {
+                val input = twTxBuilder.build(transactionData)
+                val txInputData = input.toByteArray()
 
-        return buildCompiledForSend(
-            compiledTx = compiledTxRawString.decodeFromHex().toByteArray(),
-            signaturesInfo = signaturesInfo,
-        )
+                val signatures = DataVector()
+                val publicKeys = DataVector()
+
+                signaturesInfo.forEach { signatureInfo ->
+                    signatures.add(signatureInfo.signature)
+
+                    // WalletCore used here `.ed25519Cardano` curve with 128 bytes publicKey.
+                    // Calculated as: chainCode + secondPubKey + chainCode
+                    // The number of bytes in a Cardano public key (two ed25519 public key + chain code).
+                    // We should add dummy chain code in publicKey if we use old 32 byte key to get 128 bytes in total
+                    val publicKey = if (CardanoUtils.isExtendedPublicKey(signatureInfo.publicKey)) {
+                        signatureInfo.publicKey
+                    } else {
+                        signatureInfo.publicKey + ByteArray(MISSING_LENGTH_TO_EXTENDED_KEY)
+                    }
+
+                    publicKeys.add(publicKey)
+                }
+
+                val compileWithSignatures = TransactionCompiler.compileWithMultipleSignatures(
+                    coinType,
+                    txInputData,
+                    signatures,
+                    publicKeys,
+                )
+
+                val output = Cardano.SigningOutput.parseFrom(compileWithSignatures)
+
+                if (output.error != Common.SigningError.OK || output.encoded.isEmpty) {
+                    throw BlockchainSdkError.FailedToBuildTx
+                }
+
+                return output.encoded.toByteArray()
+            }
+        }
     }
 
     private fun buildCompiledForSend(compiledTx: ByteArray, signaturesInfo: List<SignatureInfo>): ByteArray {
@@ -353,6 +394,7 @@ internal class CardanoTransactionBuilder(
     }
 
     private companion object {
+        const val MISSING_LENGTH_TO_EXTENDED_KEY = 32 * 3
         const val BLAKE2B_BIT_LENGTH = 256
         const val BLAKE2B_BYTE_LENGTH = BLAKE2B_BIT_LENGTH / 8
         const val PUB_KEY_LENGTH = 32
