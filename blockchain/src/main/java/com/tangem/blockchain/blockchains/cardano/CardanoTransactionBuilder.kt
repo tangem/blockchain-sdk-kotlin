@@ -171,7 +171,6 @@ internal class CardanoTransactionBuilder(
             out.toByteArray()
         }
 
-        Log.info { "parsed initial: " + parsed.toHexString() }
 
         return ByteArrayOutputStream().use { out ->
             CborEncoder(out).encode(listOf(txBodyItem))
