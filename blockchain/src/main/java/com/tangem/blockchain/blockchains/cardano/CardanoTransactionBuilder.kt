@@ -2,8 +2,6 @@ package com.tangem.blockchain.blockchains.cardano
 
 import co.nstant.`in`.cbor.*
 import co.nstant.`in`.cbor.CborEncoder
-import co.nstant.`in`.cbor.model.Map
-import co.nstant.`in`.cbor.model.Array
 import co.nstant.`in`.cbor.model.DataItem
 import com.google.protobuf.ByteString
 import com.tangem.Log
@@ -126,8 +124,8 @@ internal class CardanoTransactionBuilder(
     fun buildForSign(transactionData: TransactionData): ByteArray {
         return when (transactionData) {
             is TransactionData.Uncompiled -> {
-                val input = twTxBuilder.build(transactionData) // returns Cardano.SigningInput (protobuf)
-                val txInputData = input.toByteArray() // protobuf serialization
+                val input = twTxBuilder.build(transactionData)
+                val txInputData = input.toByteArray()
                 val preImageHashes = TransactionCompiler.preImageHashes(coinType, txInputData)
                 val preSigningOutput = PreSigningOutput.parseFrom(preImageHashes)
 
@@ -160,10 +158,10 @@ internal class CardanoTransactionBuilder(
 
     private fun extractTxBodyFromCompiled(compiledTx: ByteArray): ByteArray {
         val decodedItems = CborDecoder(ByteArrayInputStream(compiledTx)).decode()
-        val rootArray = decodedItems.firstOrNull() as? Array
+        val rootArray = decodedItems.firstOrNull() as? co.nstant.`in`.cbor.model.Array
             ?: error("Expected root CBOR array [txBody, witnessSet, metadata]")
 
-        val txBodyItem = rootArray.dataItems.getOrNull(0) as? Map
+        val txBodyItem = rootArray.dataItems.getOrNull(0) as? co.nstant.`in`.cbor.model.Map
             ?: error("TxBody (index 0) must be CBOR Map")
 
         val parsed = ByteArrayOutputStream().use { out ->
@@ -240,7 +238,7 @@ internal class CardanoTransactionBuilder(
         Log.info { "Starting buildCompiledForSend..." }
 
         val decoded = CborDecoder(ByteArrayInputStream(compiledTx)).decode()
-        val rootArray = decoded.firstOrNull() as? Array
+        val rootArray = decoded.firstOrNull() as? co.nstant.`in`.cbor.model.Array
             ?: error("Expected root CBOR array")
         Log.info { "Decoded root CBOR array" }
 
@@ -251,12 +249,12 @@ internal class CardanoTransactionBuilder(
         removeTag258Recursive(txBody)
         Log.info { "Removed tag(258) from txBody" }
 
-        val witnessesArray = Array()
+        val witnessesArray = co.nstant.`in`.cbor.model.Array()
         signaturesInfo.forEachIndexed { index, sigInfo ->
             val vkey = sigInfo.publicKey.take(PUB_KEY_LENGTH).toByteArray() // truncate extended pubkey
             val sig = sigInfo.signature
 
-            val witness = Array().apply {
+            val witness = co.nstant.`in`.cbor.model.Array().apply {
                 add(co.nstant.`in`.cbor.model.ByteString(vkey))
                 add(co.nstant.`in`.cbor.model.ByteString(sig))
             }
@@ -266,11 +264,11 @@ internal class CardanoTransactionBuilder(
             witnessesArray.add(witness)
         }
 
-        val witnessesMap = Map().apply {
+        val witnessesMap = co.nstant.`in`.cbor.model.Map().apply {
             put(co.nstant.`in`.cbor.model.UnsignedInteger(0), witnessesArray)
         }
 
-        val finalArray = Array().apply {
+        val finalArray = co.nstant.`in`.cbor.model.Array().apply {
             add(txBody)
             add(witnessesMap)
             add(co.nstant.`in`.cbor.model.SimpleValue.TRUE)
@@ -296,7 +294,7 @@ internal class CardanoTransactionBuilder(
         }
 
         when (item) {
-            is Map -> {
+            is co.nstant.`in`.cbor.model.Map -> {
                 for (key in item.keys) {
                     removeTag258Recursive(key)
                     val value = item[key]
@@ -304,7 +302,7 @@ internal class CardanoTransactionBuilder(
                 }
             }
 
-            is Array -> {
+            is co.nstant.`in`.cbor.model.Array -> {
                 for (i in item.dataItems.indices) {
                     removeTag258Recursive(item.dataItems[i])
                 }
@@ -358,7 +356,7 @@ internal class CardanoTransactionBuilder(
     private fun getRemainingTokens(
         transactionData: TransactionData,
         plan: Cardano.TransactionPlan,
-    ): kotlin.collections.Map<Cardano.TokenAmount, Long> {
+    ): Map<Cardano.TokenAmount, Long> {
         transactionData.requireUncompiled()
 
         return plan.availableTokensList
