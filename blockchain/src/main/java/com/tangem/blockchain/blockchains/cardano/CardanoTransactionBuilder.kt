@@ -171,10 +171,6 @@ internal class CardanoTransactionBuilder(
             out.toByteArray()
         }
 
-
-        return ByteArrayOutputStream().use { out ->
-            CborEncoder(out).encode(listOf(txBodyItem))
-            out.toByteArray()
         return parsed
     }
 
