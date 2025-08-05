@@ -105,7 +105,7 @@ internal class CardanoTransactionBuilder(
      *
      * @see CardanoTWTxBuilder.setTokenAmount
      */
-    private fun estimateTokenFee(transactionData: TransactionData): Fee.CardanoToken {
+    private fun estimateTokenFee(transactionData: TransactionData.Uncompiled): Fee.CardanoToken {
         val input = twTxBuilder.build(transactionData)
         val plan = AnySigner.plan(input, coinType, Cardano.TransactionPlan.parser())
 
@@ -157,12 +157,12 @@ internal class CardanoTransactionBuilder(
         }
     }
 
-    fun extractTxBodyFromCompiled(compiledTx: ByteArray): ByteArray {
+    private fun extractTxBodyFromCompiled(compiledTx: ByteArray): ByteArray {
         val decodedItems = CborDecoder(ByteArrayInputStream(compiledTx)).decode()
-        val rootArray = decodedItems.firstOrNull() as? co.nstant.`in`.cbor.model.Array
+        val rootArray = decodedItems.firstOrNull() as? Array
             ?: error("Expected root CBOR array [txBody, witnessSet, metadata]")
 
-        val txBodyItem = rootArray.dataItems.getOrNull(0) as? co.nstant.`in`.cbor.model.Map
+        val txBodyItem = rootArray.dataItems.getOrNull(0) as? Map
             ?: error("TxBody (index 0) must be CBOR Map")
 
         val parsed = ByteArrayOutputStream().use { out ->
@@ -178,10 +178,10 @@ internal class CardanoTransactionBuilder(
         }
     }
 
-    fun hashBlake2b256(data: ByteArray): ByteArray {
-        val digest = Blake2bDigest(256)
+    private fun hashBlake2b256(data: ByteArray): ByteArray {
+        val digest = Blake2bDigest(BLAKE2B_BIT_LENGTH)
         digest.update(data, 0, data.size)
-        return ByteArray(32).also { digest.doFinal(it, 0) }
+        return ByteArray(BLAKE2B_BYTE_LENGTH).also { digest.doFinal(it, 0) }
     }
 
     fun buildForSend(transactionData: TransactionData, signatureInfo: SignatureInfo): ByteArray {
@@ -191,13 +191,16 @@ internal class CardanoTransactionBuilder(
     fun buildForSend(transactionData: TransactionData, signaturesInfo: List<SignatureInfo>): ByteArray {
         transactionData.requireCompiled()
 
+        val compiledTxRawString = (transactionData.value as? TransactionData.Compiled.Data.RawString)?.data
+            ?: error("TransactionData must be compiled with RawString data type")
+
         return buildCompiledForSend(
-            (transactionData.value as TransactionData.Compiled.Data.RawString).data.decodeFromHex().toByteArray(),
-            signaturesInfo,
+            compiledTx = compiledTxRawString.decodeFromHex().toByteArray(),
+            signaturesInfo = signaturesInfo,
         )
     }
 
-    fun buildCompiledForSend(compiledTx: ByteArray, signaturesInfo: List<SignatureInfo>,): ByteArray {
+    private fun buildCompiledForSend(compiledTx: ByteArray, signaturesInfo: List<SignatureInfo>): ByteArray {
         Log.info { "Starting buildCompiledForSend..." }
 
         val decoded = CborDecoder(ByteArrayInputStream(compiledTx)).decode()
@@ -214,7 +217,7 @@ internal class CardanoTransactionBuilder(
 
         val witnessesArray = Array()
         signaturesInfo.forEachIndexed { index, sigInfo ->
-            val vkey = sigInfo.publicKey.take(32).toByteArray() // truncate extended pubkey
+            val vkey = sigInfo.publicKey.take(PUB_KEY_LENGTH).toByteArray() // truncate extended pubkey
             val sig = sigInfo.signature
 
             val witness = Array().apply {
@@ -248,10 +251,10 @@ internal class CardanoTransactionBuilder(
         return result
     }
 
-    fun removeTag258Recursive(item: DataItem?) {
+    private fun removeTag258Recursive(item: DataItem?) {
         if (item == null) return
 
-        if (item.hasTag() && item.tag.value == 258L) {
+        if (item.hasTag() && item.tag.value == TAG_TO_REMOVE) {
             Log.info { "Removed tag(258) from ${item.javaClass.simpleName}" }
             item.removeTag()
         }
@@ -270,7 +273,6 @@ internal class CardanoTransactionBuilder(
                     removeTag258Recursive(item.dataItems[i])
                 }
             }
-
         }
     }
 
@@ -351,6 +353,9 @@ internal class CardanoTransactionBuilder(
     }
 
     private companion object {
-        const val MISSING_LENGTH_TO_EXTENDED_KEY = 32 * 3
+        const val BLAKE2B_BIT_LENGTH = 256
+        const val BLAKE2B_BYTE_LENGTH = BLAKE2B_BIT_LENGTH / 8
+        const val PUB_KEY_LENGTH = 32
+        const val TAG_TO_REMOVE = 258L
     }
 }
