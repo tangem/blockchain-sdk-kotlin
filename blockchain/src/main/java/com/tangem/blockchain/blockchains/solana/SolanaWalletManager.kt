@@ -2,6 +2,8 @@ package com.tangem.blockchain.blockchains.solana
 
 import android.os.SystemClock
 import android.util.Log
+import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionSizeReducer
+import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionParser
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaMainAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaSplAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.TransactionInfo
@@ -45,6 +47,11 @@ class SolanaWalletManager internal constructor(
         MultiNetworkProvider(networkServices)
     private val tokenAccountInfoFinder = SolanaTokenAccountInfoFinder(multiNetworkProvider)
     private val transactionBuilder = SolanaTransactionBuilder(account, multiNetworkProvider)
+    private val solanaTransactionSizeReducer = SolanaTransactionSizeReducer(
+        walletPubkey = wallet.publicKey,
+        rawTransactionParser = SolanaTransactionParser(),
+        multiNetworkProvider = multiNetworkProvider,
+    )
 
     private var accountSize: Long = MIN_ACCOUNT_DATA_SIZE
 
@@ -339,6 +346,13 @@ class SolanaWalletManager internal constructor(
         }
 
         return Result.Success(TransactionFee.Single(feeAmount))
+    }
+
+    suspend fun handleLargeLegacyTransaction(signer: TransactionSigner, legacyTransaction: ByteArray): ByteArray {
+        return solanaTransactionSizeReducer.process(
+            signer = signer,
+            rawTransaction = legacyTransaction,
+        )
     }
 
     private suspend fun getNetworkFeeAndAccountCreationRent(
