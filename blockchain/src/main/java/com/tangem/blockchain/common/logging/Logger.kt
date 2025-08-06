@@ -16,6 +16,10 @@ internal object Logger {
         logInternal(Level.NETWORK, message)
     }
 
+    fun logTransaction(message: String) {
+        logInternal(Level.TRANSACTION, message)
+    }
+
     fun addLoggers(loggers: List<BlockchainSDKLogger>) {
         loggersFlow.value += loggers
     }
