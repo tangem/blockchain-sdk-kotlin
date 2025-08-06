@@ -11,5 +11,6 @@ interface BlockchainSDKLogger {
 
     enum class Level {
         NETWORK,
+        TRANSACTION,
     }
 }
