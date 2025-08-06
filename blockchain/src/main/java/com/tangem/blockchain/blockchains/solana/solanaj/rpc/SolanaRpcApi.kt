@@ -106,6 +106,28 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
         return client.call("getAccountInfo", params, NewSolanaAccountInfo::class.java)
     }
 
+    fun getTableLookupInfo(account: PublicKey, additionalParams: Map<String, Any>): NewSolanaAccountInfo {
+        val params = buildList {
+            add(account.toString())
+
+            val parameterMap = buildMap {
+                this["encoding"] = MapUtils.getOrDefault(additionalParams, "encoding", "base64")
+                if (additionalParams.containsKey("commitment")) {
+                    val commitment = additionalParams["commitment"] as Commitment
+                    this["commitment"] = commitment.value
+                }
+
+                if (additionalParams.containsKey("dataSlice")) {
+                    this["dataSlice"] = additionalParams["dataSlice"]
+                }
+            }
+
+            add(parameterMap)
+        }
+
+        return client.call("getAccountInfo", params, NewSolanaAccountInfo::class.java)
+    }
+
     /**
      * Same as [RpcApi.getTokenAccountsByOwner] but returns improved response [NewSolanaTokenAccountInfo]
      * */
@@ -215,11 +237,15 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
         }
     }
 
-    fun getLatestBlockhash(commitment: Commitment): String {
+    fun getLatestBlockhashInfo(commitment: Commitment): SolanaBlockhashInfo {
         val params = buildList {
             add(mapOf("commitment" to commitment.value))
         }
 
-        return client.call("getLatestBlockhash", params, RecentBlockhash::class.java).value.blockhash
+        val recentBlockhash = client.call("getLatestBlockhash", params, RecentBlockhash::class.java)
+        return SolanaBlockhashInfo(
+            blockhash = recentBlockhash.value.blockhash,
+            slot = recentBlockhash.context.slot,
+        )
     }
 }
