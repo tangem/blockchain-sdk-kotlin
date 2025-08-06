@@ -137,6 +137,10 @@ dependencies {
     implementation group: 'org.bouncycastle', name: 'bcprov-jdk15to18', version: '1.76'
     implementation "com.google.protobuf:protobuf-java:3.21.9"
 
+    // solana sdk with v0 transactions support
+    implementation "foundation.metaplex:solana:0.2.10"
+    implementation "com.ditchoom:buffer-android:1.4.2"
+
     //dependencies for TON
     implementation 'org.ton:ton-kotlin-tvm:0.3.1'
     implementation 'org.ton:ton-kotlin-block-tlb:0.3.1'
