@@ -63,7 +63,13 @@ internal class HederaWalletManager(
         val balance = accountInfo.balance
         Log.d(this::class.java.simpleName, "Balance is ${balance.hbarBalance}")
         val associatedTokens = balance.associatedTokens()
-        cacheData(accountId = accountId, associatedTokens = associatedTokens)
+
+        // Preserve any newly associated tokens that haven't been confirmed on network yet
+        val cachedData = dataStorage.getOrNull<BlockchainSavedData.Hedera>(wallet.publicKey)
+        val pendingAssociatedTokens = cachedData?.associatedTokens ?: emptySet()
+        val mergedAssociatedTokens = associatedTokens + pendingAssociatedTokens
+
+        cacheData(accountId = accountId, associatedTokens = mergedAssociatedTokens)
 
         wallet.changeAmountValue(AmountType.Coin, balance.hbarBalance.movePointLeft(blockchain.decimals()))
         cardTokens.forEach { token ->
@@ -149,6 +155,15 @@ internal class HederaWalletManager(
                                     hash = HederaTransactionId
                                         .fromTransactionId(sendResult.data.transactionId).rawStringId,
                                 ),
+                            )
+
+                            // Add new associated token to cache
+                            val cachedData = dataStorage.getOrNull<BlockchainSavedData.Hedera>(wallet.publicKey)
+                            val currentAssociatedTokens = cachedData?.associatedTokens ?: emptySet()
+                            val updatedAssociatedTokens = currentAssociatedTokens + currencyType.info.contractAddress
+                            cacheData(
+                                accountId = cachedData?.accountId ?: wallet.address,
+                                associatedTokens = updatedAssociatedTokens,
                             )
                         }
                         sendResult.toSimpleResult()
@@ -325,7 +340,11 @@ internal class HederaWalletManager(
     }
 
     private suspend fun requestCreateAccount(): Result<String> {
-        return accountCreator.createAccount(blockchain = blockchain, walletPublicKey = wallet.publicKey.blockchainKey)
+        return accountCreator.createAccount(
+            blockchain = blockchain,
+            walletPublicKey = wallet.publicKey
+                .blockchainKey,
+        )
     }
 
     private fun TransactionData.setTransactionHash(transactionId: TransactionId) {
