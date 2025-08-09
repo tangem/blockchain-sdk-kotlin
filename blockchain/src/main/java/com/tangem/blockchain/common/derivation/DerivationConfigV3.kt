@@ -79,6 +79,7 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.ApeChain,
             Blockchain.Scroll,
             Blockchain.ZkLinkNova,
+            Blockchain.Hyperliquid,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.XDC -> mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
             Blockchain.EthereumClassic -> mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))
@@ -162,6 +163,7 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.KaspaTestnet,
             Blockchain.ScrollTestnet,
             Blockchain.ZkLinkNovaTestnet,
+            Blockchain.HyperliquidTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             Blockchain.Aptos,
             Blockchain.AptosTestnet,
