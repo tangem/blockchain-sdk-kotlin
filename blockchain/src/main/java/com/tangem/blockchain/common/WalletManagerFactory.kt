@@ -1,5 +1,7 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.common.Blockchain.Hyperliquid
+import com.tangem.blockchain.common.Blockchain.HyperliquidTestnet
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.impl.*
@@ -161,6 +163,7 @@ class WalletManagerFactory(
             Blockchain.ApeChain, Blockchain.ApeChainTestnet,
             Blockchain.Scroll, Blockchain.ScrollTestnet,
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet,
+            Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet,
             -> EthereumLikeWalletManagerAssembly
 
             Blockchain.Mantle, Blockchain.MantleTestnet,
