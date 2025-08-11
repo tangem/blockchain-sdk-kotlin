@@ -87,6 +87,7 @@ internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<Ethere
             Blockchain.ApeChain, Blockchain.ApeChainTestnet -> ApeChainProvidersBuilder(providerTypes)
             Blockchain.Scroll, Blockchain.ScrollTestnet -> ScrollProvidersBuilder(providerTypes)
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet -> ZkLinkNovaProvidersBuilder(providerTypes)
+            Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet -> HyperliquidProvidersBuilder(providerTypes)
             else -> error("Unsupported blockchain: $blockchain")
         }
     }
