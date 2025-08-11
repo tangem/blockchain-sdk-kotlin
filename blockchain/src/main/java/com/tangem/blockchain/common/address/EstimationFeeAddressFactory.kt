@@ -101,6 +101,7 @@ class EstimationFeeAddressFactory {
             Blockchain.ApeChain, Blockchain.ApeChainTestnet,
             Blockchain.Scroll, Blockchain.ScrollTestnet,
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet,
+            Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet,
             -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
             // Polkadot-like
             Blockchain.Polkadot, Blockchain.PolkadotTestnet ->
