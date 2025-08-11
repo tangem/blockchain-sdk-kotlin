@@ -20,5 +20,4 @@ internal class HyperliquidExternalLinkProvider(isTestnet: Boolean) : ExternalLin
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
         return TxExploreState.Url("${explorerBaseUrl}tx/$transactionHash")
     }
-
 }
