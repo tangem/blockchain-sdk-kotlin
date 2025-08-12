@@ -48,8 +48,8 @@ android {
 dependencies {
     implementation project(':blockchain')
 
-    implementation 'com.tangem.tangem-sdk-kotlin:core:develop-455'
-    implementation 'com.tangem.tangem-sdk-kotlin:android:develop-455'
+    implementation 'com.tangem.tangem-sdk-kotlin:core:develop-511'
+    implementation 'com.tangem.tangem-sdk-kotlin:android:develop-511'
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.core:core-ktx:1.13.1'
