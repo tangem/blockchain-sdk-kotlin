@@ -53,13 +53,11 @@ class AlephiumTransactionTest {
         val transactionBuilder = AlephiumTransactionBuilder(walletPublicKey, blockchain)
         val serialize = transactionBuilder.serializeUnsignedTransaction(createUnsignedTransaction())
             .toByteArray().toHexString()
-        val expected =
-            "00000080004E20C1174876E800045A66314FAB326ADC899B3B9B47CA506E86E400DD0BF359691B69201AE5A95F8DC3E" +
-                "525AF0003EB30400CE9D1DEED12B84D4161A1FA922EF4185A155EF3EC208078B3807B126F5A66314FAB326ADC899B3B9B47CA506E8" +
-                "6E400DD0BF359691B69201AE5A95F8DC3E525AF035A66314FAB326ADC899B3B9B47CA506E86E400DD0BF359691B69201AE5A95F8DC" +
-                "3E525AF035A66314FAB326ADC899B3B9B47CA506E86E400DD0BF359691B69201AE5A95F8DC3E525AF0302C444EAC6B062970000002" +
-                "AE8B19D653F7F6DA115C571FDDB25F19885379D6A770B2D2A01D7C00C33F00500000000000000000000C40DE0B6B3A7640000003BA" +
-                "23645BD69C241AF4A51962ED119B6286E5193700D8D3C272E6AAC1BA34DD900000000000000000000"
+        val expected = "00000080004E20C1174876E800035A66314FAB326ADC899B3B9B47CA506E86E400DD0BF35969" +
+            "1B69201AE5A95F8DC3E525AF0003EB30400CE9D1DEED12B84D4161A1FA922EF4185A155EF3EC208078B3807B126F5A" +
+            "66314FAB326ADC899B3B9B47CA506E86E400DD0BF359691B69201AE5A95F8DC3E525AF035A66314FAB326ADC899B3B" +
+            "9B47CA506E86E400DD0BF359691B69201AE5A95F8DC3E525AF0301C444EAC6B062970000002AE8B19D653F7F6DA115" +
+            "C571FDDB25F19885379D6A770B2D2A01D7C00C33F00500000000000000000000"
         assertEquals(expected, serialize)
     }
 
@@ -155,12 +153,15 @@ class AlephiumTransactionTest {
     private fun createUnsignedTransaction(): UnsignedTransaction {
         val decodeAddress = destinationAddress.decodeBase58(false)!!
         val decodeAddressWithoutPrefix = ByteString(decodeAddress).substring(1)
+        val utxos = buildUtxosResponse(false).utxos
+            .sortedByDescending { it.amount.toBigDecimal() }
+            .take(3)
         return UnsignedTransaction(
             version = 0,
             networkId = NetworkId.mainNet,
             gasAmount = GasBox(20000),
             gasPrice = GasPrice(value = U256(v = BigInteger("100000000000"))),
-            inputs = buildUtxosResponse(false).utxos.mapIndexed { index, utxo ->
+            inputs = utxos.mapIndexed { index, utxo ->
                 TxInput(
                     outputRef = AssetOutputRef(
                         hint = Hint(utxo.ref.hint),
@@ -173,13 +174,6 @@ class AlephiumTransactionTest {
                 AssetOutput(
                     amount = U256(BigInteger("4966000000000000000")),
                     lockupScript = LockupScript.P2PKH(Blake2b256(decodeAddressWithoutPrefix)),
-                    lockTime = TimeStamp(0),
-                    tokens = listOf(),
-                    additionalData = ByteString(),
-                ),
-                AssetOutput(
-                    amount = U256(BigInteger("1000000000000000000")),
-                    lockupScript = lockupScript,
                     lockTime = TimeStamp(0),
                     tokens = listOf(),
                     additionalData = ByteString(),

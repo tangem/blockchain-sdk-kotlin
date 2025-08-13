@@ -381,6 +381,54 @@ sealed class BlockchainSdkError(
             subCode = 0,
             customMessage = customMessage,
         )
+
+        class UtxoAmountError(val maxOutputs: Int, val maxAmount: BigDecimal) : Alephium(
+            1,
+            "Due to Alephium limitations only $maxOutputs UTXOs can fit in a single transaction. " +
+                "This means you can only send ${maxAmount.toPlainString()}. You need to reduce the amount",
+        )
+    }
+
+    sealed class Stellar(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_STELLAR,
+        customMessage = customMessage?.let { "$ERROR_CODE_STELLAR: $subCode: $customMessage" }
+            ?: "$ERROR_CODE_STELLAR: $subCode",
+        messageResId = null,
+        cause = throwable,
+    ) {
+
+        data class MinReserveRequired(
+            val amount: BigDecimal,
+            val symbol: String,
+        ) : Stellar(
+            subCode = 0,
+            customMessage = "${amount.toPlainString()} XLM needed for reserve and fee",
+        )
+    }
+
+    sealed class Xrp(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_XRP,
+        customMessage = customMessage?.let { "$ERROR_CODE_XRP: $subCode: $customMessage" }
+            ?: "$ERROR_CODE_XRP: $subCode",
+        messageResId = null,
+        cause = throwable,
+    ) {
+
+        data class MinReserveRequired(
+            val amount: BigDecimal,
+            val symbol: String,
+        ) : Xrp(
+            subCode = 0,
+            customMessage = "${amount.toPlainString()} XRP needed for reserve and fee",
+        )
     }
 
     companion object {
@@ -401,6 +449,8 @@ sealed class BlockchainSdkError(
         const val ERROR_CODE_TRON = 15000
         const val ERROR_CODE_SUI = 16000
         const val ERROR_CODE_ALEPHIUM = 17000
+        const val ERROR_CODE_STELLAR = 18000
+        const val ERROR_CODE_XRP = 19000
     }
 }
 

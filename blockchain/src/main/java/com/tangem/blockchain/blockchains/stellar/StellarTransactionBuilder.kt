@@ -2,12 +2,13 @@ package com.tangem.blockchain.blockchains.stellar
 
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.orZero
 import org.stellar.sdk.*
-import org.stellar.sdk.TransactionBuilder
 import org.stellar.sdk.xdr.AccountID
 import org.stellar.sdk.xdr.DecoratedSignature
 import org.stellar.sdk.xdr.Signature
 import org.stellar.sdk.xdr.SignatureHint
+import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.Calendar
 
@@ -81,7 +82,9 @@ class StellarTransactionBuilder(
                 if (!targetAccountResponse.accountCreated) {
                     return Result.Failure(
                         BlockchainSdkError.CustomError(
-                            "The destination account is not created. To create account send 1+ XLM.",
+                            "The destination account is not created. " +
+                                "To create account send " +
+                                "${minReserve.stripTrailingZeros().toPlainString()}+ " + "${blockchain.currency}.",
                         ),
                     )
                 }
@@ -97,16 +100,14 @@ class StellarTransactionBuilder(
                 val operation: Operation = if (amount.value != null) {
                     PaymentOperation.Builder(
                         destinationKeyPair.accountId,
-                        Asset.create(null, amount.currencySymbol, amount.type.token.contractAddress),
+                        Asset.create(canonicalForm(amount.type.token.contractAddress)),
                         amount.value.toPlainString(),
                     )
                         .build()
                 } else {
                     ChangeTrustOperation.Builder(
-                        ChangeTrustAsset.createNonNativeAsset(
-                            amount.currencySymbol,
-                            amount.type.token.contractAddress,
-                        ),
+                        ChangeTrustAsset
+                            .create(canonicalForm(amount.type.token.contractAddress)),
                         CHANGE_TRUST_OPERATION_LIMIT,
                     )
                         .setSourceAccount(sourceKeyPair.accountId)
@@ -122,9 +123,7 @@ class StellarTransactionBuilder(
     }
 
     @Suppress("MagicNumber")
-    private fun getTimeBounds(transactionData: TransactionData): TimeBounds {
-        transactionData.requireUncompiled()
-
+    private fun getTimeBounds(transactionData: TransactionData.Uncompiled): TimeBounds {
         val calendar = transactionData.date ?: Calendar.getInstance()
         val minTime = 0L
         val maxTime = calendar.timeInMillis / 1000 + 120
@@ -168,8 +167,42 @@ class StellarTransactionBuilder(
 
     fun getTransactionHash(): ByteArray = transaction.hash()
 
-    private companion object {
+    fun buildToOpenTrustlineSign(
+        transactionData: TransactionData.Uncompiled,
+        baseReserve: BigDecimal,
+        coinAmount: Amount,
+        sequence: Long,
+    ): Result<ByteArray> {
+        val fee = requireNotNull(transactionData.fee?.amount)
+        val requiredReserve = baseReserve.plus(requireNotNull(fee.value))
+        if (requiredReserve > coinAmount.value.orZero()) {
+            return Result.Failure(BlockchainSdkError.Stellar.MinReserveRequired(requiredReserve, blockchain.currency))
+        }
+        val contractAddress: String = requireNotNull(transactionData.contractAddress)
+        val asset = ChangeTrustAsset.create(canonicalForm(contractAddress))
+
+        val sourceKeyPair = KeyPair.fromAccountId(transactionData.sourceAddress)
+        val timeBounds = getTimeBounds(transactionData)
+        val operation = ChangeTrustOperation
+            .Builder(asset, CHANGE_TRUST_OPERATION_LIMIT)
+            .setSourceAccount(sourceKeyPair.accountId)
+            .build()
+
+        transaction = operation.toTransaction(sourceKeyPair, sequence, fee.longValue.toInt(), timeBounds, null)
+            ?: return Result.Failure(BlockchainSdkError.CustomError("Failed to assemble transaction"))
+
+        return Result.Success(transaction.hash())
+    }
+
+    private fun canonicalForm(contractAddress: String) = contractAddress.replace(
+        oldValue = OUR_BACKEND_CONTRACT_ADDRESS_SEPARATOR,
+        newValue = STELLAR_SDK_CONTRACT_ADDRESS_SEPARATOR,
+    )
+
+    companion object {
         const val CHANGE_TRUST_OPERATION_LIMIT = "900000000000.0000000"
+        const val OUR_BACKEND_CONTRACT_ADDRESS_SEPARATOR = "-"
+        const val STELLAR_SDK_CONTRACT_ADDRESS_SEPARATOR = ":"
     }
 }
 
