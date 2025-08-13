@@ -4,6 +4,7 @@ import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
 import com.tangem.blockchain.blockchains.ethereum.converters.ENSResponseConverter
+import com.tangem.blockchain.blockchains.ethereum.converters.ENSReverseResponseConverter
 import com.tangem.blockchain.blockchains.ethereum.converters.EthereumFeeHistoryConverter
 import com.tangem.blockchain.blockchains.ethereum.models.EthereumFeeHistoryResponse
 import com.tangem.blockchain.common.*
@@ -247,6 +248,27 @@ internal open class EthereumNetworkService(
             ResolveAddressResult.Resolved(result)
         } catch (exception: Exception) {
             ResolveAddressResult.Error(exception.toBlockchainSdkError())
+        }
+    }
+
+    override suspend fun resolveAddress(address: ByteArray): ReversResolveAddressResult {
+        return try {
+            val data = EthereumReverseResolveENSAddressRequestData(
+                address = address,
+                contractAddress = RESOLVE_ENS_NAME_CONTRACT_ADDRESS,
+            )
+
+            val resultString = multiJsonRpcProvider.performRequest(
+                request = EthereumJsonRpcProvider::reverseResolveENSAddress,
+                data = data,
+            )
+                .extractResult()
+
+            val result = ENSReverseResponseConverter.convert(resultString)
+
+            ReversResolveAddressResult.Resolved(result)
+        } catch (exception: Exception) {
+            ReversResolveAddressResult.Error(exception.toBlockchainSdkError())
         }
     }
 
