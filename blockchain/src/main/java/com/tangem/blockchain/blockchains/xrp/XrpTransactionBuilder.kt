@@ -1,16 +1,22 @@
 package com.tangem.blockchain.blockchains.xrp
 
 import com.ripple.core.coretypes.AccountID
+import com.ripple.core.coretypes.Currency
 import com.ripple.core.coretypes.uint.UInt32
 import com.ripple.crypto.ecdsa.ECDSASignature
 import com.ripple.utils.HashUtils
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
+import com.tangem.blockchain.blockchains.xrp.network.XrpTokenBalance
 import com.tangem.blockchain.blockchains.xrp.override.XrpPayment
 import com.tangem.blockchain.blockchains.xrp.override.XrpSignedTransaction
+import com.tangem.blockchain.blockchains.xrp.override.XrpTrustSet
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.bigIntegerValue
+import com.tangem.blockchain.extensions.orZero
+import com.tangem.blockchain.extensions.successOr
 import org.bitcoinj.core.ECKey
+import java.math.BigDecimal
 import java.math.BigInteger
 import com.ripple.core.coretypes.Amount as XrpAmount
 
@@ -19,11 +25,14 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
     var sequence: Long? = null
     // https://xrpl.org/blog/2021/reserves-lowered.html
     var minReserve = 1.toBigDecimal()
+    var reserveInc = 0.2.toBigDecimal()
+    var tokenBalances = setOf<XrpTokenBalance>()
     val blockchain = Blockchain.XRP
 
     private val canonicalPublicKey = XrpAddressService.canonizePublicKey(publicKey)
     private var transaction: XrpSignedTransaction? = null
 
+    @Suppress("CyclomaticComplexMethod")
     suspend fun buildToSign(transactionData: TransactionData): Result<ByteArray> {
         transactionData.requireUncompiled()
 
@@ -40,19 +49,36 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
         } else {
             xAddressDestinationTag
         }
+        val token = (transactionData.amount.type as? AmountType.Token)?.token
+        val checkResult = networkProvider.checkTargetAccount(destinationAddress, token)
+            .successOr { return it }
+        val isAccountCreated = checkResult.accountCreated
+        val trustlineCreated = checkResult.trustlineCreated ?: false
+        when (transactionData.amount.type) {
+            AmountType.Coin -> if (!isAccountCreated && transactionData.amount.value!! < minReserve) {
+                return Result.Failure(accountUnderfundedError())
+            }
 
-        if (!networkProvider.checkIsAccountCreated(destinationAddress) &&
-            transactionData.amount.value!! < minReserve
-        ) {
-            return Result.Failure(
-                BlockchainSdkError.CreateAccountUnderfunded(blockchain, Amount(minReserve, blockchain)),
-            )
+            is AmountType.Token -> {
+                if (!isAccountCreated) return Result.Failure(accountUnderfundedTokenError())
+                if (!trustlineCreated) return Result.Failure(notHaveTrustlineError())
+            }
+            is AmountType.FeeResource,
+            AmountType.Reserve,
+            -> Result.Failure(BlockchainSdkError.CustomError("Unknown amount Type"))
         }
 
         val payment = XrpPayment()
         payment.putTranslated(AccountID.Account, transactionData.sourceAddress)
         payment.putTranslated(AccountID.Destination, destinationAddress)
-        payment.putTranslated(XrpAmount.Amount, transactionData.amount.bigIntegerValue().toString())
+        if (transactionData.amount.type is AmountType.Token) {
+            val (currency, issuer) = transactionData.amount.type
+                .token.contractAddress.splitContractAddress()
+            val amount = XrpAmount(transactionData.amount.value!!, currency, issuer)
+            payment.amount(amount)
+        } else {
+            payment.putTranslated(XrpAmount.Amount, transactionData.amount.bigIntegerValue().toString())
+        }
         payment.putTranslated(UInt32.Sequence, sequence)
         payment.putTranslated(XrpAmount.Fee, transactionData.fee!!.amount.bigIntegerValue().toString())
         if (destinationTag != null) {
@@ -79,6 +105,55 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
     }
 
     fun getTransactionHash() = transaction?.hash?.bytes()
+
+    fun buildToOpenTrustlineSign(transactionData: TransactionData.Uncompiled, coinAmount: Amount): Result<ByteArray> {
+        val fee = requireNotNull(transactionData.fee?.amount)
+        val coinAmountValue = coinAmount.value
+        var requiredReserve = reserveInc
+            .plus(requireNotNull(fee.value))
+        if (coinAmountValue == null) requiredReserve = requiredReserve.plus(minReserve)
+        if (requiredReserve > coinAmountValue.orZero()) {
+            return Result.Failure(BlockchainSdkError.Xrp.MinReserveRequired(requiredReserve, blockchain.currency))
+        }
+        val contractAddress: String = requireNotNull(transactionData.contractAddress)
+
+        val (currency, issuer) = contractAddress.splitContractAddress()
+        val limitAmount = XrpAmount(BigDecimal("9999999999999999E80"), currency, issuer)
+
+        val trustSet = XrpTrustSet()
+        trustSet.putTranslated(AccountID.Account, transactionData.sourceAddress)
+        trustSet.putTranslated(XrpAmount.Fee, fee.bigIntegerValue().toString())
+        trustSet.putTranslated(UInt32.Sequence, sequence)
+        trustSet.limitAmount(limitAmount)
+
+        transaction = trustSet.prepare(canonicalPublicKey)
+
+        return if (canonicalPublicKey[0] == 0xED.toByte()) {
+            Result.Success(transaction!!.signingData)
+        } else {
+            Result.Success(HashUtils.halfSha512(transaction!!.signingData))
+        }
+    }
+
+    private fun accountUnderfundedError() = BlockchainSdkError.CreateAccountUnderfunded(
+        blockchain = blockchain,
+        minReserve = Amount(minReserve, blockchain),
+    )
+
+    private fun accountUnderfundedTokenError() = BlockchainSdkError.CustomError(
+        "The destination account is not created. " +
+            "To create account send ${minReserve.stripTrailingZeros().toPlainString()}+ ${blockchain.currency}.",
+    )
+
+    private fun notHaveTrustlineError() = BlockchainSdkError
+        .CustomError("The destination account does not have a trustline for the asset being sent.")
+
+    private fun String.splitContractAddress(): Pair<Currency, AccountID> {
+        val split = this.split(".")
+        val currency = Currency.fromString(split.first())
+        val issuer = AccountID.fromString(split[1])
+        return currency to issuer
+    }
 
     private fun encodeDerSignature(signature: ByteArray): ByteArray {
         val r = BigInteger(1, signature.copyOfRange(0, 32))
