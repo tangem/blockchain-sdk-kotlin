@@ -300,6 +300,14 @@ interface NameResolver {
      * @return A [ResolveAddressResult] containing the resolved address or an error.
      */
     suspend fun resolve(name: String): ResolveAddressResult
+
+    /**
+     * Resolves an address to a human readable name.
+     *
+     * @param address The address to revers resolve on human readable name.
+     * @return A [ResolveAddressResult] containing the resolved address or an error.
+     */
+    suspend fun reverseResolve(address: ByteArray): ReversResolveAddressResult
 }
 
 /**
