@@ -15,7 +15,12 @@ internal class XDCWalletManager(
     wallet: Wallet,
     transactionBuilder: EthereumTransactionBuilder,
     networkProvider: EthereumNetworkProvider,
-) : EthereumWalletManager(wallet, transactionBuilder, networkProvider) {
+) : EthereumWalletManager(
+    wallet = wallet,
+    transactionBuilder = transactionBuilder,
+    networkProvider = networkProvider,
+    supportsENS = false,
+) {
 
     override suspend fun send(
         transactionData: TransactionData,

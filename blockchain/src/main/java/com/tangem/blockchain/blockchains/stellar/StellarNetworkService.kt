@@ -84,8 +84,12 @@ internal class StellarNetworkService(
                 // tokenBalance can be null if trustline not created
                 val tokenBalance = account.balances
                     .filter { it.assetCode.isPresent && it.assetIssuer.isPresent }
-                    .filter { it.assetCode.get() == token.symbol }
-                    .find { it.assetIssuer.get() == token.contractAddress } // null if trustline not created
+                    .find {
+                        val assetCode = it.assetCode.get()
+                        val assetIssuer = it.assetIssuer.get()
+                        val separator = StellarTransactionBuilder.OUR_BACKEND_CONTRACT_ADDRESS_SEPARATOR
+                        "$assetCode${separator}$assetIssuer" == token.contractAddress
+                    } // null if trustline not created
                 Result.Success(
                     StellarTargetAccountResponse(
                         accountCreated = true,
