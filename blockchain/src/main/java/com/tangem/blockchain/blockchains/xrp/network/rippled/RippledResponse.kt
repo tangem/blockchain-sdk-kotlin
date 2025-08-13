@@ -40,6 +40,29 @@ data class RippledAccountData(
     val ownerCount: Long? = null,
 )
 
+// Rippled account lines
+@JsonClass(generateAdapter = true)
+data class RippledAccountLinesResponse(
+    @Json(name = "result")
+    val result: RippledAccountLinesResult? = null,
+)
+
+@JsonClass(generateAdapter = true)
+data class RippledAccountLinesResult(
+    @Json(name = "lines")
+    val lines: List<RippledAccountLine>? = null,
+)
+
+@JsonClass(generateAdapter = true)
+data class RippledAccountLine(
+    @Json(name = "account")
+    val account: String,
+    @Json(name = "currency")
+    val currency: String,
+    @Json(name = "balance")
+    val balance: String,
+)
+
 // Rippled state
 @JsonClass(generateAdapter = true)
 data class RippledStateResponse(
