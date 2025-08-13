@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.cosmos.proto
 
+import com.tangem.blockchain.blockchains.cosmos.proto.CosmosProtoMessage.DelegateAmount
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -18,7 +19,7 @@ data class CosmosProtoMessage(
     @Serializable
     data class CosmosMessageDelegate(
         val messageType: String,
-        val delegateData: DelegateData,
+        val delegateData: ByteArray,
     )
 
     @Serializable
@@ -36,13 +37,6 @@ data class CosmosProtoMessage(
     @Serializable
     data class CosmosMessagePublicKeyParam(
         val param: Int,
-    )
-
-    @Serializable
-    data class DelegateData(
-        val delegatorAddress: String,
-        val validatorAddress: String,
-        val delegateAmount: DelegateAmount? = null,
     )
 
     @Serializable
@@ -73,3 +67,18 @@ data class CosmosProtoMessage(
         val amount: String,
     )
 }
+
+@Serializable
+data class DelegateData(
+    val delegatorAddress: String,
+    val validatorAddress: String,
+    val delegateAmount: DelegateAmount? = null,
+)
+
+@Serializable
+data class RedelegateData(
+    val delegatorAddress: String,
+    val validatorSrcAddress: String,
+    val validatorDstAddress: String,
+    val delegateAmount: DelegateAmount? = null,
+)
