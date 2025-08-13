@@ -23,4 +23,9 @@ sealed class AssetRequirementsCondition {
         val amount: Amount,
         val feeAmount: Amount,
     ) : AssetRequirementsCondition()
+
+    data class RequiredTrustline(
+        val blockchain: Blockchain,
+        val amount: Amount,
+    ) : AssetRequirementsCondition()
 }
