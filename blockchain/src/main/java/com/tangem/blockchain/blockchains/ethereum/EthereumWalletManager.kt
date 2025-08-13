@@ -265,6 +265,14 @@ open class EthereumWalletManager(
         }
     }
 
+    override suspend fun reverseResolve(address: ByteArray): ReversResolveAddressResult {
+        return if (supportsENS) {
+            networkProvider.resolveAddress(address)
+        } else {
+            ReversResolveAddressResult.NotSupported
+        }
+    }
+
     private suspend fun getGasLimitInternal(
         amount: Amount,
         destination: String,
