@@ -3,6 +3,8 @@ package com.tangem.blockchain.blockchains.xrp
 import com.tangem.blockchain.blockchains.xrp.network.XrpFeeResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpInfoResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
+import com.tangem.blockchain.blockchains.xrp.network.XrpTargetAccountResponse
+import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 
@@ -26,6 +28,10 @@ class XrpNetworkProviderMock(
     }
 
     override suspend fun checkIsAccountCreated(address: String) = isAccountCreatedResponse
+
+    override suspend fun checkTargetAccount(address: String, token: Token?): Result<XrpTargetAccountResponse> {
+        return Result.Success(XrpTargetAccountResponse(accountCreated = true, trustlineCreated = true))
+    }
 
     override suspend fun checkDestinationTagRequired(address: String): Boolean {
         TODO("Not yet implemented")

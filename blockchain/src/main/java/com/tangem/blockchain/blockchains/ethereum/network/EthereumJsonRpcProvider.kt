@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.AllowanceERC20TokenCallData
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.ReadEthereumAddressEIP137CallData
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TokenBalanceERC20TokenCallData
 import com.tangem.blockchain.common.JsonRPCRequest
 import com.tangem.blockchain.common.JsonRPCResponse
@@ -34,6 +35,12 @@ internal class EthereumJsonRpcProvider(
     suspend fun getTokenAllowance(data: EthereumTokenAllowanceRequestData) = createEthereumBody(
         method = EthereumMethod.CALL,
         createTokenAllowanceCallObject(data.ownerAddress, data.contractAddress, data.spenderAddress),
+        EthBlockParam.LATEST.value,
+    ).post()
+
+    suspend fun resolveENSName(data: EthereumResolveENSNameRequestData) = createEthereumBody(
+        method = EthereumMethod.CALL,
+        createResolveENSDomainCallObject(data.contractAddress, data.nameBytes, data.callDataBytes),
         EthBlockParam.LATEST.value,
     ).post()
 
@@ -98,6 +105,18 @@ internal class EthereumJsonRpcProvider(
             ).dataHex,
         )
 
+    private fun createResolveENSDomainCallObject(
+        contractAddress: String,
+        nameBytes: ByteArray,
+        callDataBytes: ByteArray,
+    ) = EthCallObject(
+        to = contractAddress,
+        data = ReadEthereumAddressEIP137CallData(
+            nameBytes = nameBytes,
+            callDataBytes = callDataBytes,
+        ).dataHex,
+    )
+
     private suspend fun JsonRPCRequest.post(): Result<JsonRPCResponse> {
         return try {
             val result = retryIO {
@@ -124,4 +143,10 @@ data class EthereumTokenAllowanceRequestData(
     val ownerAddress: String,
     val contractAddress: String,
     val spenderAddress: String,
+)
+
+data class EthereumResolveENSNameRequestData(
+    val contractAddress: String,
+    val nameBytes: ByteArray,
+    val callDataBytes: ByteArray,
 )
