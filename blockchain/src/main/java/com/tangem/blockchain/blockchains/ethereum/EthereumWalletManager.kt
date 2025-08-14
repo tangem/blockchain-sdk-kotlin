@@ -28,6 +28,7 @@ import org.komputing.khex.extensions.toHexString
 import java.math.BigDecimal
 import java.math.BigInteger
 
+@Suppress("LargeClass")
 open class EthereumWalletManager(
     wallet: Wallet,
     val transactionBuilder: EthereumTransactionBuilder,
@@ -254,6 +255,13 @@ open class EthereumWalletManager(
         }
     }
 
+    override suspend fun prepareAndSign(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<ByteArray> {
+        TODO("[REDACTED_JIRA]")
+    }
+
     override suspend fun resolve(name: String): ResolveAddressResult {
         if (supportsENS) {
             val namehash = ensNameProcessor.getNamehash(name).successOr { return ResolveAddressResult.Error(it.error) }
@@ -263,6 +271,13 @@ open class EthereumWalletManager(
         } else {
             return ResolveAddressResult.NotSupported
         }
+    }
+
+    override suspend fun prepareAndSignMultiple(
+        transactionDataList: List<TransactionData>,
+        signer: TransactionSigner,
+    ): Result<List<ByteArray>> {
+        TODO("[REDACTED_JIRA]")
     }
 
     private suspend fun getGasLimitInternal(
