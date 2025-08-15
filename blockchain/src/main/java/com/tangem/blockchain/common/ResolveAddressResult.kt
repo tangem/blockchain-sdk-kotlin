@@ -6,8 +6,8 @@ sealed class ResolveAddressResult {
     data object NotSupported : ResolveAddressResult()
 }
 
-sealed interface ReversResolveAddressResult {
-    data class Resolved(val name: String) : ReversResolveAddressResult
-    data class Error(val error: Exception) : ReversResolveAddressResult
-    data object NotSupported : ReversResolveAddressResult
+sealed interface ReverseResolveAddressResult {
+    data class Resolved(val name: String) : ReverseResolveAddressResult
+    data class Error(val error: Exception) : ReverseResolveAddressResult
+    data object NotSupported : ReverseResolveAddressResult
 }
