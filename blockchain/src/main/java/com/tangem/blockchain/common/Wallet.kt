@@ -15,6 +15,10 @@ class Wallet(
     val publicKey: PublicKey,
     tokens: Set<Token>,
 ) {
+
+    var ens: String? = null
+        private set
+
     // we put only unconfirmed transactions here, but never delete them, change status to confirmed instead
     val recentTransactions: MutableList<TransactionData.Uncompiled> = mutableListOf()
     val amounts: MutableMap<AmountType, Amount> = mutableMapOf()
@@ -25,6 +29,10 @@ class Wallet(
     init {
         setAmount(Amount(null, blockchain, AmountType.Coin))
         tokens.forEach { setAmount(Amount(it)) }
+    }
+
+    internal fun setEnsName(name: String?) {
+        ens = name
     }
 
     fun setAmount(amount: Amount) {
