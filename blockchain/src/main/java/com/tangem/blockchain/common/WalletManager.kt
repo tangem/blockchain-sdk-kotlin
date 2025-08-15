@@ -304,10 +304,10 @@ interface NameResolver {
     /**
      * Resolves an address to a human readable name.
      *
-     * @param address The address to revers resolve on human readable name.
+     * @param address The address to reverse resolve on human readable name.
      * @return A [ResolveAddressResult] containing the resolved address or an error.
      */
-    suspend fun reverseResolve(address: ByteArray): ReversResolveAddressResult
+    suspend fun reverseResolve(address: ByteArray): ReverseResolveAddressResult
 }
 
 /**
