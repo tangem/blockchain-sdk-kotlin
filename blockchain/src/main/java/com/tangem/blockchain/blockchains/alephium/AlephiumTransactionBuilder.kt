@@ -9,7 +9,6 @@ import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.decodeBase58
-import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toCompressedPublicKey
 import kotlinx.io.bytestring.ByteString
@@ -78,7 +77,7 @@ internal class AlephiumTransactionBuilder(
         amount: Amount,
         fee: Fee.Alephium,
     ): Result<UnsignedTransaction> {
-        val unspentOutputs = requestOutputs().successOr { return it }
+        val unspentOutputs = getMaxUnspentsToSpend()
         val lockupScript = LockupScript.p2pkh(publicKeyByteString)
         val unlockScript = UnlockScript.P2PKH(publicKeyByteString)
         val innerAmount = U256.unsafe(amount.value?.movePointRight(blockchain.decimals()) ?: BigDecimal.ZERO)
