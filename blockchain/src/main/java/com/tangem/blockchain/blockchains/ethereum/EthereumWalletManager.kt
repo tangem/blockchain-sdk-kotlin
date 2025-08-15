@@ -62,7 +62,7 @@ open class EthereumWalletManager(
         }
     }
 
-    private fun updateWallet(data: EthereumInfoResponse) {
+    private suspend fun updateWallet(data: EthereumInfoResponse) {
         wallet.setCoinValue(data.coinBalance)
         data.tokenBalances.forEach { wallet.addTokenValue(it.value, it.key) }
 
@@ -75,6 +75,23 @@ open class EthereumWalletManager(
             updateRecentTransactions(data.recentTransactions)
         } else {
             wallet.addTransactionDummy()
+        }
+
+        if (supportsENS) {
+            try {
+                val ensResult = reverseResolve(wallet.address.toByteArray())
+                when (ensResult) {
+                    is ReverseResolveAddressResult.Error -> {
+                        Log.w(this::class.java.simpleName, "Failed to fetch ENS name: ${ensResult.error}")
+                    }
+                    ReverseResolveAddressResult.NotSupported -> {
+                        Log.w(this::class.java.simpleName, "Ens not supported")
+                    }
+                    is ReverseResolveAddressResult.Resolved -> wallet.setEnsName(ensResult.name)
+                }
+            } catch (e: Exception) {
+                Log.w(this::class.java.simpleName, "Failed to fetch ENS name: $e")
+            }
         }
     }
 
@@ -265,11 +282,11 @@ open class EthereumWalletManager(
         }
     }
 
-    override suspend fun reverseResolve(address: ByteArray): ReversResolveAddressResult {
+    override suspend fun reverseResolve(address: ByteArray): ReverseResolveAddressResult {
         return if (supportsENS) {
             networkProvider.resolveAddress(address)
         } else {
-            ReversResolveAddressResult.NotSupported
+            ReverseResolveAddressResult.NotSupported
         }
     }
 
