@@ -1,9 +1,6 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
-import com.tangem.blockchain.common.NetworkProvider
-import com.tangem.blockchain.common.ResolveAddressResult
-import com.tangem.blockchain.common.Token
-import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.blockchair.BlockchairToken
@@ -24,6 +21,7 @@ interface EthereumNetworkProvider : NetworkProvider {
 
     suspend fun callContractForFee(data: ContractCallData): Result<BigInteger>
     suspend fun resolveName(namehash: ByteArray, encodedName: ByteArray): ResolveAddressResult
+    suspend fun resolveAddress(address: ByteArray): ReverseResolveAddressResult
 }
 
 class EthereumInfoResponse(
