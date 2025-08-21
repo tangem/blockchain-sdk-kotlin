@@ -87,7 +87,10 @@ internal class AlephiumWalletManager(
         )
             .map { it.gasPrice }
             .successOr { return it }
-        var gasAmount = calculateGasAmount(requireNotNull(amount.value).movePointRight(wallet.blockchain.decimals()))
+        var gasAmount = calculateGasAmount(
+            gasPrice = gasPrice,
+            amount = requireNotNull(amount.value).movePointRight(wallet.blockchain.decimals()),
+        )
             .successOr { return it }
         val fee = Fee.Alephium(amount, gasPrice, gasAmount)
 
@@ -131,23 +134,39 @@ internal class AlephiumWalletManager(
         return Result.Success(TransactionFee.Single(feeModel))
     }
 
-    private fun calculateGasAmount(amount: BigDecimal): Result<BigDecimal> {
-        val unspentsToSpend = transactionBuilder.getMaxUnspentsToSpend()
+    private fun calculateGasAmount(gasPrice: BigDecimal, amount: BigDecimal): Result<BigDecimal> {
+        fun calculate(inputsLength: Int): BigDecimal {
+            val inputGas = INPUT_BASE_GAS * inputsLength
+            val outputGas = OUTPUT_BASE_GAS * 2
+            val txGas = inputGas + outputGas + BASE_GAS + P2PK_UNLOCK_GAS
+            return max(MINIMAL_GAS, txGas).toBigDecimal()
+        }
 
+        var inputsLength = getInputsSize(amount = amount)
+            .successOr { return it }
+        var gasAmount = calculate(inputsLength)
+        var finalInputsLength = getInputsSize(amount = amount, fee = gasPrice * gasAmount)
+            .successOr { return it }
+
+        while (finalInputsLength > inputsLength) {
+            inputsLength = finalInputsLength
+            gasAmount = calculate(inputsLength)
+            finalInputsLength = getInputsSize(amount = amount, fee = gasPrice * gasAmount)
+                .successOr { return it }
+        }
+        return Result.Success(gasAmount)
+    }
+
+    private fun getInputsSize(amount: BigDecimal, fee: BigDecimal = BigDecimal.ZERO): Result<Int> {
+        val unspentsToSpend = transactionBuilder.getMaxUnspentsToSpend()
         val inputs = getMinimumRequiredUTXOsToSend(
             unspentOutputs = unspentsToSpend,
             transactionAmount = amount,
-            transactionFeeAmount = BigDecimal.ZERO,
+            transactionFeeAmount = fee,
             dustValue = dustUtxoAmount.v.toBigDecimal(),
             unspentToAmount = { it.output.amount.v.toBigDecimal() },
         ).successOr { return it }
-
-        val inputsLength = inputs.size
-        val inputGas = INPUT_BASE_GAS * inputsLength
-        val outputGas = OUTPUT_BASE_GAS * 2
-        val txGas = inputGas + outputGas + BASE_GAS + P2PK_UNLOCK_GAS
-        val gasAmount = max(MINIMAL_GAS, txGas).toBigDecimal()
-        return Result.Success(gasAmount)
+        return Result.Success(inputs.size)
     }
 
     override fun checkUtxoAmountLimit(amount: BigDecimal, fee: BigDecimal): UtxoAmountLimit {
