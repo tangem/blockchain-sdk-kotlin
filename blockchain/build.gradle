@@ -8,11 +8,11 @@ apply plugin: 'com.squareup.wire'
 android {
     namespace "com.tangem.demo.blockchain"
 
-    compileSdkVersion 34
+    compileSdkVersion 35
 
     defaultConfig {
         minSdkVersion 24
-        targetSdkVersion 34
+        targetSdkVersion 35
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
@@ -136,6 +136,10 @@ dependencies {
     implementation 'io.grpc:grpc-okhttp:1.46.0'
     implementation group: 'org.bouncycastle', name: 'bcprov-jdk15to18', version: '1.76'
     implementation "com.google.protobuf:protobuf-java:3.21.9"
+
+    // solana sdk with v0 transactions support
+    implementation "foundation.metaplex:solana:0.2.10"
+    implementation "com.ditchoom:buffer-android:1.4.2"
 
     //dependencies for TON
     implementation 'org.ton:ton-kotlin-tvm:0.3.1'
