@@ -2,6 +2,8 @@ package com.tangem.blockchain.blockchains.solana
 
 import android.os.SystemClock
 import android.util.Log
+import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionSizeReducer
+import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionParser
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaMainAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaSplAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.TransactionInfo
@@ -13,14 +15,14 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.transaction.TransactionsSendResult
-import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.filterWith
-import com.tangem.blockchain.extensions.map
-import com.tangem.blockchain.extensions.successOr
+import com.tangem.blockchain.extensions.*
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
-import kotlinx.coroutines.*
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.rpc.Cluster
@@ -36,7 +38,7 @@ class SolanaWalletManager internal constructor(
     wallet: Wallet,
     providers: List<SolanaRpcClient>,
     nftProvider: NFTProvider = DefaultNFTProvider,
-) : WalletManager(wallet, nftProvider = nftProvider), RentProvider, TransactionPreparer {
+) : WalletManager(wallet, nftProvider = nftProvider), RentProvider, TransactionPreparer, TransactionValidator {
 
     private val account = PublicKey(wallet.address)
     private val networkServices = providers.map { SolanaNetworkService(it) }
@@ -45,13 +47,17 @@ class SolanaWalletManager internal constructor(
         MultiNetworkProvider(networkServices)
     private val tokenAccountInfoFinder = SolanaTokenAccountInfoFinder(multiNetworkProvider)
     private val transactionBuilder = SolanaTransactionBuilder(account, multiNetworkProvider)
+    private val solanaTransactionSizeReducer = SolanaTransactionSizeReducer(
+        walletPubkey = wallet.publicKey,
+        rawTransactionParser = SolanaTransactionParser(),
+        multiNetworkProvider = multiNetworkProvider,
+    )
 
     private var accountSize: Long = MIN_ACCOUNT_DATA_SIZE
 
     override val currentHost: String
         get() = multiNetworkProvider.currentProvider.baseUrl
 
-    private val feeRentHolder = mutableMapOf<Fee, BigDecimal>()
     override suspend fun updateInternal() {
         val accountInfo = multiNetworkProvider.performRequest {
             getMainAccountInfo(account, cardTokens)
@@ -108,6 +114,25 @@ class SolanaWalletManager internal constructor(
         updateRecentTransactions(confirmedTxData)
     }
 
+    override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
+        transactionData.requireUncompiled()
+
+        val amount = transactionData.amount
+        val destination = transactionData.destinationAddress
+
+        val ownerAccountInfoResult = getOwnerAccountInfo(transactionData.amount)
+        val ownerAccountInfo = ownerAccountInfoResult?.successOr { return kotlin.Result.failure(it.error) }
+        val rentAmount = getAccountCreationRent(amount, destination, ownerAccountInfo).successOr {
+            return kotlin.Result.failure(it.error)
+        }
+
+        return if (amount.value.orZero() < rentAmount) {
+            kotlin.Result.failure(BlockchainSdkError.Solana.DestinationRentExemption(rentAmount))
+        } else {
+            kotlin.Result.success(Unit)
+        }
+    }
+
     private fun addToRecentTransactions(txsInProgress: List<TransactionInfo>) {
         if (txsInProgress.isEmpty()) return
 
@@ -134,22 +159,11 @@ class SolanaWalletManager internal constructor(
     }
 
     override fun createTransaction(amount: Amount, fee: Fee, destination: String): TransactionData.Uncompiled {
-        val accountCreationRent = feeRentHolder[fee]
-
-        return if (accountCreationRent == null) {
-            super.createTransaction(amount, fee, destination)
-        } else {
-            when (amount.type) {
-                AmountType.Coin -> {
-                    val newFee = Fee.Common(fee.amount.minus(accountCreationRent))
-                    val newAmount = amount.plus(accountCreationRent)
-                    super.createTransaction(newAmount, newFee, destination)
-                }
-                is AmountType.Token -> {
-                    super.createTransaction(amount, fee, destination)
-                }
-                else -> throw UnsupportedOperation()
-            }
+        return when (amount.type) {
+            is AmountType.Token,
+            AmountType.Coin,
+            -> super.createTransaction(amount, fee, destination)
+            else -> throw UnsupportedOperation()
         }
     }
 
@@ -331,7 +345,6 @@ class SolanaWalletManager internal constructor(
             .firstOrNull()
 
         if (firstSuccessResult != null) {
-            feeRentHolder.clear()
             val hash = firstSuccessResult.data
             transactionData.hash = hash
             wallet.addOutgoingTransaction(transactionData, hashToLowercase = false)
@@ -347,46 +360,22 @@ class SolanaWalletManager internal constructor(
         return Result.Failure(error)
     }
 
-    /**
-     * This is not a natural fee, as it may contain additional information about the amount that may be required
-     * to open an account. Later, when creating a transaction, this amount will be deducted from fee and added
-     * to the amount of the main transfer
-     */
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
-        feeRentHolder.clear()
-        val (networkFee, accountCreationRent) = getNetworkFeeAndAccountCreationRent(amount, destination)
-            .successOr { return it }
+        val ownerAccountInfo = getOwnerAccountInfo(amount)?.successOr { return it }
+        val networkFee = getNetworkFee(amount, destination, ownerAccountInfo).successOr { return it }
 
-        var feeAmount = Fee.Common(Amount(networkFee, wallet.blockchain))
-        if (accountCreationRent > BigDecimal.ZERO) {
-            feeAmount = feeAmount.copy(amount = feeAmount.amount + accountCreationRent)
-            feeRentHolder[feeAmount] = accountCreationRent
-        }
-
-        return Result.Success(TransactionFee.Single(feeAmount))
+        return Result.Success(
+            data = TransactionFee.Single(
+                Fee.Common(Amount(networkFee, wallet.blockchain)),
+            ),
+        )
     }
 
-    private suspend fun getNetworkFeeAndAccountCreationRent(
-        amount: Amount,
-        destination: String,
-    ): Result<Pair<BigDecimal, BigDecimal>> {
-        val results = withContext(Dispatchers.IO) {
-            val ownerAccountInfoResult = getOwnerAccountInfo(amount)
-            awaitAll(
-                async {
-                    val ownerAccountInfo = ownerAccountInfoResult?.successOr { return@async it }
-                    getNetworkFee(amount, destination, ownerAccountInfo)
-                },
-                async {
-                    val ownerAccountInfo = ownerAccountInfoResult?.successOr { return@async it }
-                    getAccountCreationRent(amount, destination, ownerAccountInfo)
-                },
-            )
-        }
-        val networkFee = results[0].successOr { return it }
-        val accountCreationRent = results[1].successOr { return it }
-
-        return Result.Success(data = networkFee to accountCreationRent)
+    suspend fun handleLargeLegacyTransaction(signer: TransactionSigner, legacyTransaction: ByteArray): ByteArray {
+        return solanaTransactionSizeReducer.process(
+            signer = signer,
+            rawTransaction = legacyTransaction,
+        )
     }
 
     private suspend fun getOwnerAccountInfo(

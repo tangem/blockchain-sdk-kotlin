@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.AllowanceERC20TokenCallData
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.ReadEthereumAddressEIP137CallData
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.ReverseResolveENSAddressCallData
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TokenBalanceERC20TokenCallData
 import com.tangem.blockchain.common.JsonRPCRequest
 import com.tangem.blockchain.common.JsonRPCResponse
@@ -41,6 +42,12 @@ internal class EthereumJsonRpcProvider(
     suspend fun resolveENSName(data: EthereumResolveENSNameRequestData) = createEthereumBody(
         method = EthereumMethod.CALL,
         createResolveENSDomainCallObject(data.contractAddress, data.nameBytes, data.callDataBytes),
+        EthBlockParam.LATEST.value,
+    ).post()
+
+    suspend fun reverseResolveENSAddress(data: EthereumReverseResolveENSAddressRequestData) = createEthereumBody(
+        method = EthereumMethod.CALL,
+        createReverseResolveENSAddressCallObject(data.contractAddress, data.address),
         EthBlockParam.LATEST.value,
     ).post()
 
@@ -117,6 +124,11 @@ internal class EthereumJsonRpcProvider(
         ).dataHex,
     )
 
+    private fun createReverseResolveENSAddressCallObject(contractAddress: String, address: ByteArray) = EthCallObject(
+        to = contractAddress,
+        data = ReverseResolveENSAddressCallData(address = address).dataHex,
+    )
+
     private suspend fun JsonRPCRequest.post(): Result<JsonRPCResponse> {
         return try {
             val result = retryIO {
@@ -150,3 +162,23 @@ data class EthereumResolveENSNameRequestData(
     val nameBytes: ByteArray,
     val callDataBytes: ByteArray,
 )
+
+data class EthereumReverseResolveENSAddressRequestData(
+    val address: ByteArray,
+    val contractAddress: String,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as EthereumReverseResolveENSAddressRequestData
+        if (!address.contentEquals(other.address)) return false
+        if (contractAddress != other.contractAddress) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = address.contentHashCode()
+        result = 31 * result + contractAddress.hashCode()
+        return result
+    }
+}

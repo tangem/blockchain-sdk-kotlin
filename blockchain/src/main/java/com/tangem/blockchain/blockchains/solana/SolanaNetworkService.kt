@@ -189,6 +189,17 @@ internal class SolanaNetworkService(
         }
     }
 
+    fun getTableLookupInfo(account: PublicKey): Result<NewSolanaAccountInfo.Value?> {
+        return try {
+            val params = mapOf("commitment" to Commitment.FINALIZED)
+            val accountInfo = provider.api.getTableLookupInfo(account, params)
+
+            Result.Success(accountInfo.value)
+        } catch (ex: Exception) {
+            Result.Failure(Solana.Api(ex))
+        }
+    }
+
     private suspend fun accountTokensInfo(account: PublicKey): Result<List<NewSolanaTokenAccountInfo.Value>> =
         withContext(Dispatchers.IO) {
             val tokensAccountsInfoDefault = async {
@@ -265,10 +276,10 @@ internal class SolanaNetworkService(
         }
     }
 
-    suspend fun getLatestBlockhash(commitment: Commitment = Commitment.CONFIRMED): Result<String> {
+    suspend fun getLatestBlockhashInfo(commitment: Commitment = Commitment.CONFIRMED): Result<SolanaBlockhashInfo> {
         return withContext(Dispatchers.IO) {
             try {
-                Result.Success(provider.api.getLatestBlockhash(commitment))
+                Result.Success(provider.api.getLatestBlockhashInfo(commitment))
             } catch (ex: Exception) {
                 Result.Failure(Solana.Api(ex))
             }

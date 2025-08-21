@@ -28,7 +28,7 @@ import org.komputing.khex.extensions.toHexString
 import java.math.BigDecimal
 import java.math.BigInteger
 
-@Suppress("LargeClass")
+@Suppress("LargeClass", "TooManyFunctions")
 open class EthereumWalletManager(
     wallet: Wallet,
     val transactionBuilder: EthereumTransactionBuilder,
@@ -63,7 +63,7 @@ open class EthereumWalletManager(
         }
     }
 
-    private fun updateWallet(data: EthereumInfoResponse) {
+    private suspend fun updateWallet(data: EthereumInfoResponse) {
         wallet.setCoinValue(data.coinBalance)
         data.tokenBalances.forEach { wallet.addTokenValue(it.value, it.key) }
 
@@ -76,6 +76,23 @@ open class EthereumWalletManager(
             updateRecentTransactions(data.recentTransactions)
         } else {
             wallet.addTransactionDummy()
+        }
+
+        if (supportsENS) {
+            try {
+                val ensResult = reverseResolve(wallet.address.toByteArray())
+                when (ensResult) {
+                    is ReverseResolveAddressResult.Error -> {
+                        Log.w(this::class.java.simpleName, "Failed to fetch ENS name: ${ensResult.error}")
+                    }
+                    ReverseResolveAddressResult.NotSupported -> {
+                        Log.w(this::class.java.simpleName, "Ens not supported")
+                    }
+                    is ReverseResolveAddressResult.Resolved -> wallet.setEnsName(ensResult.name)
+                }
+            } catch (e: Exception) {
+                Log.w(this::class.java.simpleName, "Failed to fetch ENS name: $e")
+            }
         }
     }
 
@@ -262,6 +279,13 @@ open class EthereumWalletManager(
         TODO("[REDACTED_JIRA]")
     }
 
+    override suspend fun prepareAndSignMultiple(
+        transactionDataList: List<TransactionData>,
+        signer: TransactionSigner,
+    ): Result<List<ByteArray>> {
+        TODO("[REDACTED_JIRA]")
+    }
+
     override suspend fun resolve(name: String): ResolveAddressResult {
         if (supportsENS) {
             val namehash = ensNameProcessor.getNamehash(name).successOr { return ResolveAddressResult.Error(it.error) }
@@ -273,11 +297,12 @@ open class EthereumWalletManager(
         }
     }
 
-    override suspend fun prepareAndSignMultiple(
-        transactionDataList: List<TransactionData>,
-        signer: TransactionSigner,
-    ): Result<List<ByteArray>> {
-        TODO("[REDACTED_JIRA]")
+    override suspend fun reverseResolve(address: ByteArray): ReverseResolveAddressResult {
+        return if (supportsENS) {
+            networkProvider.resolveAddress(address)
+        } else {
+            ReverseResolveAddressResult.NotSupported
+        }
     }
 
     private suspend fun getGasLimitInternal(
