@@ -28,7 +28,7 @@ import org.komputing.khex.extensions.toHexString
 import java.math.BigDecimal
 import java.math.BigInteger
 
-@Suppress("LargeClass")
+@Suppress("LargeClass", "TooManyFunctions")
 open class EthereumWalletManager(
     wallet: Wallet,
     val transactionBuilder: EthereumTransactionBuilder,
@@ -270,6 +270,20 @@ open class EthereumWalletManager(
             }
             is Result.Failure -> Result.fromTangemSdkError(signResponse.error)
         }
+    }
+
+    override suspend fun prepareAndSign(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<ByteArray> {
+        TODO("[REDACTED_JIRA]")
+    }
+
+    override suspend fun prepareAndSignMultiple(
+        transactionDataList: List<TransactionData>,
+        signer: TransactionSigner,
+    ): Result<List<ByteArray>> {
+        TODO("[REDACTED_JIRA]")
     }
 
     override suspend fun resolve(name: String): ResolveAddressResult {
