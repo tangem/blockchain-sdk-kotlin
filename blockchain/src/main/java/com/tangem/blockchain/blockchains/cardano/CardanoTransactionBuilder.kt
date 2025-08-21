@@ -1,6 +1,10 @@
 package com.tangem.blockchain.blockchains.cardano
 
+import co.nstant.`in`.cbor.*
+import co.nstant.`in`.cbor.CborEncoder
+import co.nstant.`in`.cbor.model.DataItem
 import com.google.protobuf.ByteString
+import com.tangem.Log
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
 import com.tangem.blockchain.blockchains.cardano.utils.matchesCardanoAsset
 import com.tangem.blockchain.blockchains.cardano.walletcore.CardanoTWTxBuilder
@@ -9,6 +13,8 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.hexToBigDecimal
 import com.tangem.blockchain.extensions.trustWalletCoinType
 import com.tangem.common.extensions.toHexString
+import org.bouncycastle.crypto.digests.Blake2bDigest
+import org.ton.tl.ByteString.Companion.decodeFromHex
 import wallet.core.java.AnySigner
 import wallet.core.jni.CoinType
 import wallet.core.jni.DataVector
@@ -16,6 +22,8 @@ import wallet.core.jni.TransactionCompiler
 import wallet.core.jni.proto.Cardano
 import wallet.core.jni.proto.Common
 import wallet.core.jni.proto.TransactionCompiler.PreSigningOutput
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.math.BigDecimal
 import kotlin.properties.Delegates
 
@@ -96,7 +104,7 @@ internal class CardanoTransactionBuilder(
      *
      * @see CardanoTWTxBuilder.setTokenAmount
      */
-    private fun estimateTokenFee(transactionData: TransactionData): Fee.CardanoToken {
+    private fun estimateTokenFee(transactionData: TransactionData.Uncompiled): Fee.CardanoToken {
         val input = twTxBuilder.build(transactionData)
         val plan = AnySigner.plan(input, coinType, Cardano.TransactionPlan.parser())
 
@@ -114,17 +122,60 @@ internal class CardanoTransactionBuilder(
     }
 
     fun buildForSign(transactionData: TransactionData): ByteArray {
-        val input = twTxBuilder.build(transactionData)
-        val txInputData = input.toByteArray()
+        return when (transactionData) {
+            is TransactionData.Uncompiled -> {
+                val input = twTxBuilder.build(transactionData)
+                val txInputData = input.toByteArray()
+                val preImageHashes = TransactionCompiler.preImageHashes(coinType, txInputData)
+                val preSigningOutput = PreSigningOutput.parseFrom(preImageHashes)
 
-        val preImageHashes = TransactionCompiler.preImageHashes(coinType, txInputData)
-        val preSigningOutput = PreSigningOutput.parseFrom(preImageHashes)
+                if (preSigningOutput.error != Common.SigningError.OK) {
+                    throw BlockchainSdkError.FailedToBuildTx
+                }
 
-        if (preSigningOutput.error != Common.SigningError.OK) {
-            throw BlockchainSdkError.FailedToBuildTx
+                preSigningOutput.dataHash.toByteArray()
+            }
+
+            is TransactionData.Compiled -> {
+                val compiledBytes = (transactionData.value as TransactionData.Compiled.Data.RawString)
+                    .data.decodeFromHex()
+                    .toByteArray()
+
+                val txBodyBytes = extractTxBodyFromCompiled(compiledBytes)
+
+                val txBodyItem = CborDecoder(ByteArrayInputStream(txBodyBytes)).decode().first()
+                removeTag258Recursive(txBodyItem)
+
+                val cleanBodyBytes = ByteArrayOutputStream().use { out ->
+                    CborEncoder(out).encode(listOf(txBodyItem))
+                    out.toByteArray()
+                }
+
+                hashBlake2b256(cleanBodyBytes)
+            }
+        }
+    }
+
+    private fun extractTxBodyFromCompiled(compiledTx: ByteArray): ByteArray {
+        val decodedItems = CborDecoder(ByteArrayInputStream(compiledTx)).decode()
+        val rootArray = decodedItems.firstOrNull() as? co.nstant.`in`.cbor.model.Array
+            ?: error("Expected root CBOR array [txBody, witnessSet, metadata]")
+
+        val txBodyItem = rootArray.dataItems.getOrNull(0) as? co.nstant.`in`.cbor.model.Map
+            ?: error("TxBody (index 0) must be CBOR Map")
+
+        val parsed = ByteArrayOutputStream().use { out ->
+            CborEncoder(out).encode(listOf(txBodyItem))
+            out.toByteArray()
         }
 
-        return preSigningOutput.dataHash.toByteArray()
+        return parsed
+    }
+
+    private fun hashBlake2b256(data: ByteArray): ByteArray {
+        val digest = Blake2bDigest(BLAKE2B_BIT_LENGTH)
+        digest.update(data, 0, data.size)
+        return ByteArray(BLAKE2B_BYTE_LENGTH).also { digest.doFinal(it, 0) }
     }
 
     fun buildForSend(transactionData: TransactionData, signatureInfo: SignatureInfo): ByteArray {
@@ -132,42 +183,131 @@ internal class CardanoTransactionBuilder(
     }
 
     fun buildForSend(transactionData: TransactionData, signaturesInfo: List<SignatureInfo>): ByteArray {
-        val input = twTxBuilder.build(transactionData)
-        val txInputData = input.toByteArray()
+        return when (transactionData) {
+            is TransactionData.Compiled -> {
+                val compiledTxRawString = (transactionData.value as? TransactionData.Compiled.Data.RawString)?.data
+                    ?: error("TransactionData must be compiled with RawString data type")
 
-        val signatures = DataVector()
-        val publicKeys = DataVector()
+                buildCompiledForSend(
+                    compiledTx = compiledTxRawString.decodeFromHex().toByteArray(),
+                    signaturesInfo = signaturesInfo,
+                )
+            }
+            is TransactionData.Uncompiled -> {
+                val input = twTxBuilder.build(transactionData)
+                val txInputData = input.toByteArray()
 
-        signaturesInfo.forEach { signatureInfo ->
-            signatures.add(signatureInfo.signature)
+                val signatures = DataVector()
+                val publicKeys = DataVector()
 
-            // WalletCore used here `.ed25519Cardano` curve with 128 bytes publicKey.
-            // Calculated as: chainCode + secondPubKey + chainCode
-            // The number of bytes in a Cardano public key (two ed25519 public key + chain code).
-            // We should add dummy chain code in publicKey if we use old 32 byte key to get 128 bytes in total
-            val publicKey = if (CardanoUtils.isExtendedPublicKey(signatureInfo.publicKey)) {
-                signatureInfo.publicKey
-            } else {
-                signatureInfo.publicKey + ByteArray(MISSING_LENGTH_TO_EXTENDED_KEY)
+                signaturesInfo.forEach { signatureInfo ->
+                    signatures.add(signatureInfo.signature)
+
+                    // WalletCore used here `.ed25519Cardano` curve with 128 bytes publicKey.
+                    // Calculated as: chainCode + secondPubKey + chainCode
+                    // The number of bytes in a Cardano public key (two ed25519 public key + chain code).
+                    // We should add dummy chain code in publicKey if we use old 32 byte key to get 128 bytes in total
+                    val publicKey = if (CardanoUtils.isExtendedPublicKey(signatureInfo.publicKey)) {
+                        signatureInfo.publicKey
+                    } else {
+                        signatureInfo.publicKey + ByteArray(MISSING_LENGTH_TO_EXTENDED_KEY)
+                    }
+
+                    publicKeys.add(publicKey)
+                }
+
+                val compileWithSignatures = TransactionCompiler.compileWithMultipleSignatures(
+                    coinType,
+                    txInputData,
+                    signatures,
+                    publicKeys,
+                )
+
+                val output = Cardano.SigningOutput.parseFrom(compileWithSignatures)
+
+                if (output.error != Common.SigningError.OK || output.encoded.isEmpty) {
+                    throw BlockchainSdkError.FailedToBuildTx
+                }
+
+                return output.encoded.toByteArray()
+            }
+        }
+    }
+
+    private fun buildCompiledForSend(compiledTx: ByteArray, signaturesInfo: List<SignatureInfo>): ByteArray {
+        Log.info { "Starting buildCompiledForSend..." }
+
+        val decoded = CborDecoder(ByteArrayInputStream(compiledTx)).decode()
+        val rootArray = decoded.firstOrNull() as? co.nstant.`in`.cbor.model.Array
+            ?: error("Expected root CBOR array")
+        Log.info { "Decoded root CBOR array" }
+
+        val txBody = rootArray.dataItems.getOrNull(0)
+            ?: error("TxBody missing at index 0")
+        Log.info { "Extracted txBody from compiled TX" }
+
+        removeTag258Recursive(txBody)
+        Log.info { "Removed tag(258) from txBody" }
+
+        val witnessesArray = co.nstant.`in`.cbor.model.Array()
+        signaturesInfo.forEachIndexed { index, sigInfo ->
+            val vkey = sigInfo.publicKey.take(PUB_KEY_LENGTH).toByteArray() // truncate extended pubkey
+            val sig = sigInfo.signature
+
+            val witness = co.nstant.`in`.cbor.model.Array().apply {
+                add(co.nstant.`in`.cbor.model.ByteString(vkey))
+                add(co.nstant.`in`.cbor.model.ByteString(sig))
             }
 
-            publicKeys.add(publicKey)
+            Log.info { "Added witness #$index:\n  pubKey=${vkey.toHexString()}\n  signature=${sig.toHexString()}" }
+
+            witnessesArray.add(witness)
         }
 
-        val compileWithSignatures = TransactionCompiler.compileWithMultipleSignatures(
-            coinType,
-            txInputData,
-            signatures,
-            publicKeys,
-        )
-
-        val output = Cardano.SigningOutput.parseFrom(compileWithSignatures)
-
-        if (output.error != Common.SigningError.OK || output.encoded.isEmpty) {
-            throw BlockchainSdkError.FailedToBuildTx
+        val witnessesMap = co.nstant.`in`.cbor.model.Map().apply {
+            put(co.nstant.`in`.cbor.model.UnsignedInteger(0), witnessesArray)
         }
 
-        return output.encoded.toByteArray()
+        val finalArray = co.nstant.`in`.cbor.model.Array().apply {
+            add(txBody)
+            add(witnessesMap)
+            add(co.nstant.`in`.cbor.model.SimpleValue.TRUE)
+            add(co.nstant.`in`.cbor.model.SimpleValue.NULL)
+        }
+
+        Log.info { "Final CBOR structure assembled" }
+
+        val baos = ByteArrayOutputStream()
+        CborEncoder(baos).encode(finalArray)
+
+        val result = baos.toByteArray()
+        Log.info { "Final CBOR TX (hex): ${result.toHexString()}" }
+        return result
+    }
+
+    private fun removeTag258Recursive(item: DataItem?) {
+        if (item == null) return
+
+        if (item.hasTag() && item.tag.value == TAG_TO_REMOVE) {
+            Log.info { "Removed tag(258) from ${item.javaClass.simpleName}" }
+            item.removeTag()
+        }
+
+        when (item) {
+            is co.nstant.`in`.cbor.model.Map -> {
+                for (key in item.keys) {
+                    removeTag258Recursive(key)
+                    val value = item[key]
+                    removeTag258Recursive(value)
+                }
+            }
+
+            is co.nstant.`in`.cbor.model.Array -> {
+                for (i in item.dataItems.indices) {
+                    removeTag258Recursive(item.dataItems[i])
+                }
+            }
+        }
     }
 
     /**
@@ -248,5 +388,9 @@ internal class CardanoTransactionBuilder(
 
     private companion object {
         const val MISSING_LENGTH_TO_EXTENDED_KEY = 32 * 3
+        const val BLAKE2B_BIT_LENGTH = 256
+        const val BLAKE2B_BYTE_LENGTH = BLAKE2B_BIT_LENGTH / 8
+        const val PUB_KEY_LENGTH = 32
+        const val TAG_TO_REMOVE = 258L
     }
 }
