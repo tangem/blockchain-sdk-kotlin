@@ -203,6 +203,8 @@ enum class Blockchain(
     ZkLinkNovaTestnet("zklink/test", "ETH", "zkLink Nova Sepolia Testnet"),
     Pepecoin("pepecoin", "PEP", "Pepecoin"),
     PepecoinTestnet("pepecoin/test", "PEP", "Pepecoin Testnet"),
+    Hyperliquid("hyperliquid", "HYPE", "Hyperliquid"),
+    HyperliquidTestnet("hyperliquid/test", "HYPE", "Hyperliquid Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -338,6 +340,7 @@ enum class Blockchain(
         ApeChain, ApeChainTestnet,
         Scroll, ScrollTestnet,
         ZkLinkNova, ZkLinkNovaTestnet,
+        Hyperliquid, HyperliquidTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -427,6 +430,7 @@ enum class Blockchain(
             ApeChain, ApeChainTestnet,
             Scroll, ScrollTestnet,
             ZkLinkNova, ZkLinkNovaTestnet,
+            Hyperliquid, HyperliquidTestnet,
             -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
@@ -575,6 +579,7 @@ enum class Blockchain(
             Nexa, NexaTestnet -> NexaTestnet
             Scroll, ScrollTestnet -> ScrollTestnet
             Pepecoin, PepecoinTestnet -> PepecoinTestnet
+            Hyperliquid, HyperliquidTestnet -> HyperliquidTestnet
             Unknown,
             Cardano,
             Dogecoin,
@@ -687,6 +692,7 @@ enum class Blockchain(
             Scroll, ScrollTestnet,
             ZkLinkNova, ZkLinkNovaTestnet,
             Pepecoin, PepecoinTestnet,
+            Hyperliquid, HyperliquidTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -802,6 +808,8 @@ enum class Blockchain(
             ZkLinkNovaTestnet -> Chain.ZkLinkNovaTestnet.id
             Pepecoin -> Chain.Pepecoin.id
             PepecoinTestnet -> Chain.PepecoinTestnet.id
+            Hyperliquid -> Chain.Hyperliquid.id
+            HyperliquidTestnet -> Chain.HyperliquidTestnet.id
             else -> null
         }
     }
