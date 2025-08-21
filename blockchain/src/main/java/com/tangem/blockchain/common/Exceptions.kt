@@ -79,6 +79,9 @@ sealed class BlockchainSdkError(
         data object OwnerAccountShouldBeNotNull : Solana(5, "Request owner account info before")
         data object UnknownDestinationAddress : Solana(6, "Invalid destination address")
         data object TransactionIsEmpty : Solana(7, "Transaction is empty")
+        data class DestinationRentExemption(
+            val rentAmount: BigDecimal,
+        ) : Solana(8, "Invalid amount to cover rent in destination account")
     }
 
     sealed class Polkadot(
