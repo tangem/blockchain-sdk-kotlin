@@ -251,10 +251,10 @@ internal open class EthereumNetworkService(
         }
     }
 
-    override suspend fun resolveAddress(address: ByteArray): ReverseResolveAddressResult {
+    override suspend fun resolveAddress(address: String): ReverseResolveAddressResult {
         return try {
             val data = EthereumReverseResolveENSAddressRequestData(
-                address = address,
+                address = address.hexToBytes(),
                 contractAddress = RESOLVE_ENS_NAME_CONTRACT_ADDRESS,
             )
 
