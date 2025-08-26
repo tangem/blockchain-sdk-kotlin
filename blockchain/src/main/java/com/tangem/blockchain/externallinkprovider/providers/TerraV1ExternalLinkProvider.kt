@@ -5,13 +5,13 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class TerraV1ExternalLinkProvider : ExternalLinkProvider {
 
-    override val explorerBaseUrl: String = "https://atomscan.com/terra/"
+    override val explorerBaseUrl: String = "https://ping.pub/terra-luna/"
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
-        return explorerBaseUrl + "accounts/$walletAddress"
+        return explorerBaseUrl + "account/$walletAddress"
     }
 
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
-        return TxExploreState.Url(explorerBaseUrl + "transactions/$transactionHash")
+        return TxExploreState.Url(explorerBaseUrl + "tx/$transactionHash")
     }
 }
