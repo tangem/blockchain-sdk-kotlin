@@ -203,8 +203,8 @@ enum class Blockchain(
     ZkLinkNovaTestnet("zklink/test", "ETH", "zkLink Nova Sepolia Testnet"),
     Pepecoin("pepecoin", "PEP", "Pepecoin"),
     PepecoinTestnet("pepecoin/test", "PEP", "Pepecoin Testnet"),
-    Hyperliquid("hyperliquid", "HYPE", "Hyperliquid"),
-    HyperliquidTestnet("hyperliquid/test", "HYPE", "Hyperliquid Testnet"),
+    Hyperliquid("hyperliquid", "HYPE", "Hyperliquid EVM"),
+    HyperliquidTestnet("hyperliquid/test", "HYPE", "Hyperliquid EVM Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
