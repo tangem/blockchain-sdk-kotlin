@@ -4,6 +4,7 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.CycleListIterator
 import com.tangem.blockchain.common.ExceptionHandler
 import com.tangem.blockchain.common.NetworkProvider
+import com.tangem.blockchain.common.logging.SensitiveKeys
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import java.io.IOException
@@ -46,8 +47,8 @@ class MultiNetworkProvider<P : NetworkProvider>(
             } else {
                 val message = "Switchable publisher caught error: ${getErrorMessage(result)}."
                 ExceptionHandler.handleApiSwitch(
-                    currentHost = currentProvider.baseUrl,
-                    nextHost = providerIterator.peekNext().baseUrl,
+                    currentHost = currentProvider.baseUrl.getUrlWithoutSensitiveInfo(),
+                    nextHost = providerIterator.peekNext().baseUrl.getUrlWithoutSensitiveInfo(),
                     message = message,
                 )
             }
@@ -136,6 +137,16 @@ class MultiNetworkProvider<P : NetworkProvider>(
             is Result<*> -> ResultChecker.getErrorMessageIfAvailable(result = result)
             is SimpleResult -> ResultChecker.getErrorMessageIfAvailable(result = result)
             else -> null
+        }
+    }
+
+    private fun String.getUrlWithoutSensitiveInfo(): String {
+        val key = SensitiveKeys.data.firstOrNull { this.contains(other = it, ignoreCase = true) }
+
+        return if (key == null) {
+            this
+        } else {
+            this.replace(oldValue = key, newValue = "******")
         }
     }
 }
