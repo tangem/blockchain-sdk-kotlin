@@ -263,6 +263,18 @@ class SolanaWalletManager internal constructor(
         return Result.Success(signedTransaction)
     }
 
+    override suspend fun prepareAndSign(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<ByteArray> {
+        transactionData.requireCompiled()
+        val transactionToSign = prepareForSign(transactionData).successOr { return it }
+        val signResult = signer.sign(transactionToSign, wallet.publicKey)
+            .successOr { return Result.fromTangemSdkError(it.error) }
+
+        return Result.Success(signResult)
+    }
+
     override suspend fun prepareForSendMultiple(
         transactionDataList: List<TransactionData>,
         signer: TransactionSigner,
@@ -276,6 +288,19 @@ class SolanaWalletManager internal constructor(
             .mapIndexed { index, signResult ->
                 byteArrayOf(1) + signResult + transactionToSign[index]
             }
+        return Result.Success(signedTransactions)
+    }
+
+    override suspend fun prepareAndSignMultiple(
+        transactionDataList: List<TransactionData>,
+        signer: TransactionSigner,
+    ): Result<List<ByteArray>> {
+        val transactionToSign = transactionDataList.map { transactionData ->
+            transactionData.requireCompiled()
+            prepareForSign(transactionData).successOr { return it }
+        }
+        val signedTransactions = signer.sign(transactionToSign, wallet.publicKey)
+            .successOr { return Result.fromTangemSdkError(it.error) }
         return Result.Success(signedTransactions)
     }
 

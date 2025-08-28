@@ -6,14 +6,12 @@ import com.ripple.core.coretypes.uint.UInt32
 import com.ripple.crypto.ecdsa.ECDSASignature
 import com.ripple.utils.HashUtils
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
-import com.tangem.blockchain.blockchains.xrp.network.XrpTokenBalance
 import com.tangem.blockchain.blockchains.xrp.override.XrpPayment
 import com.tangem.blockchain.blockchains.xrp.override.XrpSignedTransaction
 import com.tangem.blockchain.blockchains.xrp.override.XrpTrustSet
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.bigIntegerValue
-import com.tangem.blockchain.extensions.orZero
 import com.tangem.blockchain.extensions.successOr
 import org.bitcoinj.core.ECKey
 import java.math.BigDecimal
@@ -22,11 +20,9 @@ import com.ripple.core.coretypes.Amount as XrpAmount
 
 @Suppress("MagicNumber")
 class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, publicKey: ByteArray) {
-    var sequence: Long? = null
     // https://xrpl.org/blog/2021/reserves-lowered.html
     var minReserve = 1.toBigDecimal()
     var reserveInc = 0.2.toBigDecimal()
-    var tokenBalances = setOf<XrpTokenBalance>()
     val blockchain = Blockchain.XRP
 
     private val canonicalPublicKey = XrpAddressService.canonizePublicKey(publicKey)
@@ -38,6 +34,8 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
 
         val decodedXAddress = XrpAddressService.decodeXAddress(transactionData.destinationAddress)
         val destinationAddress = decodedXAddress?.address ?: transactionData.destinationAddress
+        val sourceAddress = XrpAddressService.decodeXAddress(transactionData.sourceAddress)
+            ?.address ?: transactionData.sourceAddress
         val xAddressDestinationTag = decodedXAddress?.destinationTag
 
         val destinationTag = if (transactionData.extras is XrpTransactionExtras) {
@@ -67,6 +65,8 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
             AmountType.Reserve,
             -> Result.Failure(BlockchainSdkError.CustomError("Unknown amount Type"))
         }
+
+        val sequence = networkProvider.getSequence(sourceAddress).successOr { return it }
 
         val payment = XrpPayment()
         payment.putTranslated(AccountID.Account, transactionData.sourceAddress)
@@ -106,13 +106,18 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
 
     fun getTransactionHash() = transaction?.hash?.bytes()
 
-    fun buildToOpenTrustlineSign(transactionData: TransactionData.Uncompiled, coinAmount: Amount): Result<ByteArray> {
+    suspend fun buildToOpenTrustlineSign(
+        transactionData: TransactionData.Uncompiled,
+        coinAmount: Amount,
+    ): Result<ByteArray> {
+        val sourceAddress = XrpAddressService.decodeXAddress(transactionData.sourceAddress)
+            ?.address ?: transactionData.sourceAddress
+        val sequence = networkProvider.getSequence(sourceAddress).successOr { return it }
         val fee = requireNotNull(transactionData.fee?.amount)
         val coinAmountValue = coinAmount.value
-        var requiredReserve = reserveInc
+        val requiredReserve = reserveInc
             .plus(requireNotNull(fee.value))
-        if (coinAmountValue == null) requiredReserve = requiredReserve.plus(minReserve)
-        if (requiredReserve > coinAmountValue.orZero()) {
+        if (coinAmountValue == null || requiredReserve > coinAmountValue) {
             return Result.Failure(BlockchainSdkError.Xrp.MinReserveRequired(requiredReserve, blockchain.currency))
         }
         val contractAddress: String = requireNotNull(transactionData.contractAddress)
@@ -164,4 +169,8 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
     }
 
     data class XrpTransactionExtras(val destinationTag: Long) : TransactionExtras
+
+    companion object {
+        const val TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR = "."
+    }
 }
