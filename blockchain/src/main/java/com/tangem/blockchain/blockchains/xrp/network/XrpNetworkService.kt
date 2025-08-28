@@ -26,6 +26,10 @@ class XrpNetworkService(providers: List<XrpNetworkProvider>) : XrpNetworkProvide
     override suspend fun checkTargetAccount(address: String, token: Token?): Result<XrpTargetAccountResponse> =
         multiProvider.currentProvider.checkTargetAccount(address, token)
 
+    override suspend fun getSequence(address: String): Result<Long> {
+        return multiProvider.currentProvider.getSequence(address)
+    }
+
     override suspend fun checkDestinationTagRequired(address: String): Boolean =
         multiProvider.currentProvider.checkDestinationTagRequired(address)
 }
