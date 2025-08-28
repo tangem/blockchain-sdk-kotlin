@@ -182,6 +182,16 @@ class RippledNetworkProvider(
         }
     }
 
+    override suspend fun getSequence(address: String): Result<Long> {
+        return try {
+            val accountBody = makeAccountBody(address, validated = true)
+            val sequence = api.getAccount(accountBody).result?.accountData?.sequence ?: 0
+            Result.Success(sequence)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
     override suspend fun checkDestinationTagRequired(address: String): Boolean {
         return try {
             val accountBody = makeAccountBody(address, validated = true)
