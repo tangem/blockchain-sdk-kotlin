@@ -21,7 +21,7 @@ interface EthereumNetworkProvider : NetworkProvider {
 
     suspend fun callContractForFee(data: ContractCallData): Result<BigInteger>
     suspend fun resolveName(namehash: ByteArray, encodedName: ByteArray): ResolveAddressResult
-    suspend fun resolveAddress(address: ByteArray): ReverseResolveAddressResult
+    suspend fun resolveAddress(address: String): ReverseResolveAddressResult
 }
 
 class EthereumInfoResponse(

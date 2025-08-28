@@ -1,10 +1,7 @@
 package com.tangem.blockchain.common.network.interceptors
 
-import com.squareup.moshi.adapter
-import com.tangem.blockchain.common.BlockchainSdkConfig
-import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.logging.Logger
-import com.tangem.blockchain.network.moshi
+import com.tangem.blockchain.common.logging.SensitiveKeys
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Request
@@ -29,7 +26,6 @@ private const val JSON_INDENT_SPACES = 4
  */
 internal object HttpLoggingInterceptor : Interceptor {
 
-    private val sensitiveKeys = initSensitiveKeys()
     private const val WRITE_LOG_THRESHOLD_BYTES_SIZE = 2_048_000
 
     @Throws(IOException::class)
@@ -50,27 +46,6 @@ internal object HttpLoggingInterceptor : Interceptor {
         logResponseMessage(response, startNs)
 
         return response
-    }
-
-    @OptIn(ExperimentalStdlibApi::class)
-    private fun initSensitiveKeys(): List<String> {
-        val json = moshi.adapter<BlockchainSdkConfig>().toJson(DepsContainer.blockchainSdkConfig)
-        return JSONObject(json).values()
-    }
-
-    /** Recursive function of searching all [String] values in JSON */
-    private fun JSONObject.values(): List<String> {
-        return keys().asSequence()
-            .flatMap { key ->
-                when (val value = opt(key)) {
-                    is String -> listOf(value)
-                    is JSONObject -> value.values()
-                    is JSONArray -> (0..value.length()).mapNotNull { value.opt(it) as? String }
-                    else -> emptyList()
-                }
-            }
-            .filterNot(String::isBlank)
-            .toList()
     }
 
     private fun logRequestMessage(chain: Interceptor.Chain, request: Request) {
@@ -197,7 +172,7 @@ internal object HttpLoggingInterceptor : Interceptor {
     }
 
     private fun Request.getUrlWithoutSensitiveInfo(): String {
-        val key = sensitiveKeys.firstOrNull { url.toString().contains(other = it, ignoreCase = true) }
+        val key = SensitiveKeys.data.firstOrNull { url.toString().contains(other = it, ignoreCase = true) }
 
         return if (key == null) {
             url.toString()
@@ -229,7 +204,7 @@ internal object HttpLoggingInterceptor : Interceptor {
     private fun beautifyIfArray(json: String): String? {
         return try {
             JSONArray(json).toString(JSON_INDENT_SPACES)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
