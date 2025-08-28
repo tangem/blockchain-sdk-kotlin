@@ -1,13 +1,15 @@
 package com.tangem.blockchain.blockchains.stellar
 
-import com.tangem.blockchain.blockchains.stellar.StellarTransactionBuilder.Companion.OUR_BACKEND_CONTRACT_ADDRESS_SEPARATOR
-import com.tangem.blockchain.blockchains.stellar.StellarTransactionBuilder.Companion.STELLAR_SDK_CONTRACT_ADDRESS_SEPARATOR
+import com.tangem.blockchain.blockchains.stellar.StellarTransactionBuilder.Companion.TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.ContractAddressValidator
 import com.tangem.common.card.EllipticCurve
 import org.stellar.sdk.KeyPair
 
 class StellarAddressService : AddressService(), ContractAddressValidator {
+
+    private val addressConverter = StellarTokenAddressConverter()
+
     override fun makeAddress(walletPublicKey: ByteArray, curve: EllipticCurve?): String {
         val kp = KeyPair.fromPublicKey(walletPublicKey)
         return kp.accountId
@@ -21,9 +23,14 @@ class StellarAddressService : AddressService(), ContractAddressValidator {
         }
     }
 
+    override fun reformatContractAddress(address: String?): String? {
+        return addressConverter.normalizeAddress(address)
+    }
+
     override fun validateContractAddress(address: String): Boolean {
-        var split = address.split(OUR_BACKEND_CONTRACT_ADDRESS_SEPARATOR)
-        if (split.size != 2) split = address.split(STELLAR_SDK_CONTRACT_ADDRESS_SEPARATOR)
+        val address = reformatContractAddress(address) ?: return false
+        val split = address.split(TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR)
+        if (split.size != 2) return false
         val currencyCode = split.getOrNull(0) ?: return false
         val issuer = split.getOrNull(1) ?: return false
         return isValidCurrencyCode(currencyCode) && validate(issuer)
