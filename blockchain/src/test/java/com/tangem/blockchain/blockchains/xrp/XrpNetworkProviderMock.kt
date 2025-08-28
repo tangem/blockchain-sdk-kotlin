@@ -33,6 +33,10 @@ class XrpNetworkProviderMock(
         return Result.Success(XrpTargetAccountResponse(accountCreated = true, trustlineCreated = true))
     }
 
+    override suspend fun getSequence(address: String): Result<Long> {
+        return Result.Success(1406L)
+    }
+
     override suspend fun checkDestinationTagRequired(address: String): Boolean {
         TODO("Not yet implemented")
     }
