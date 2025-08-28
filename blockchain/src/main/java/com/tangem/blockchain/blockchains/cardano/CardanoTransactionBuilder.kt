@@ -46,17 +46,17 @@ internal class CardanoTransactionBuilder(
             transactionData.requireUncompiled()
 
             val isCoinTransaction = transactionData.amount.type is AmountType.Coin
-            val transactionValue = transactionData.amount.value ?: BigDecimal.ZERO
-
-            throwIf(
-                exception = BlockchainSdkError.Cardano.InsufficientSendingAdaAmount,
-                condition = isCoinTransaction && transactionValue < BigDecimal.ONE,
-            )
 
             val plan = AnySigner.plan(
                 twTxBuilder.build(transactionData),
                 coinType,
                 Cardano.TransactionPlan.parser(),
+            )
+
+            val minSending = BigDecimal.ONE.movePointRight(decimals).toLong()
+            throwIf(
+                exception = BlockchainSdkError.Cardano.InsufficientSendingAdaAmount,
+                condition = isCoinTransaction && plan.amount < minSending,
             )
 
             throwIf(
