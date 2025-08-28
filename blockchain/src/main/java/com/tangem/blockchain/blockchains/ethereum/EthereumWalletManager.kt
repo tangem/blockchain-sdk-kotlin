@@ -80,7 +80,7 @@ open class EthereumWalletManager(
 
         if (supportsENS) {
             try {
-                val ensResult = reverseResolve(wallet.address.toByteArray())
+                val ensResult = reverseResolve(wallet.address)
                 when (ensResult) {
                     is ReverseResolveAddressResult.Error -> {
                         Log.w(this::class.java.simpleName, "Failed to fetch ENS name: ${ensResult.error}")
@@ -297,7 +297,7 @@ open class EthereumWalletManager(
         }
     }
 
-    override suspend fun reverseResolve(address: ByteArray): ReverseResolveAddressResult {
+    override suspend fun reverseResolve(address: String): ReverseResolveAddressResult {
         return if (supportsENS) {
             networkProvider.resolveAddress(address)
         } else {
