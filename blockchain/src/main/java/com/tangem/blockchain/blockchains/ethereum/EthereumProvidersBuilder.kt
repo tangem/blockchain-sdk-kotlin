@@ -30,8 +30,8 @@ internal class EthereumProvidersBuilder(
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return listOfNotNull(
-            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://eth-goerli.nownodes.io/"),
-            ethereumProviderFactory.getInfuraProvider(baseUrl = "https://goerli.infura.io/v3/"),
+            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://eth-sepolia.nownodes.io/"),
+            ethereumProviderFactory.getInfuraProvider(baseUrl = "https://sepolia.infura.io/v3/"),
         )
     }
 }
