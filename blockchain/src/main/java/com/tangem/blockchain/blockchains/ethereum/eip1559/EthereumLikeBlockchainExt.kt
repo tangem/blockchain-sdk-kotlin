@@ -8,7 +8,7 @@ internal val Blockchain.isSupportEIP1559: Boolean
         if (!isEvm()) return false
 
         return when (this) {
-            Blockchain.Ethereum,
+            Blockchain.Ethereum, Blockchain.EthereumTestnet,
             Blockchain.BSC,
             Blockchain.Polygon,
             Blockchain.Avalanche,
