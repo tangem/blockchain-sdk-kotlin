@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.xrp
 import com.ripple.core.coretypes.AccountID
 import com.ripple.core.coretypes.Currency
 import com.ripple.core.coretypes.uint.UInt32
+import com.ripple.core.fields.Field
 import com.ripple.crypto.ecdsa.ECDSASignature
 import com.ripple.utils.HashUtils
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
@@ -84,6 +85,7 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
         if (destinationTag != null) {
             payment.putTranslated(UInt32.DestinationTag, destinationTag)
         }
+        payment.putTranslated(Field.Flags, UInt32(TF_PARTIAL_PAYMENT)) // tfPartialPayment
 
         transaction = payment.prepare(canonicalPublicKey)
 
@@ -172,5 +174,6 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
 
     companion object {
         const val TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR = "."
+        private const val TF_PARTIAL_PAYMENT = 131072
     }
 }
