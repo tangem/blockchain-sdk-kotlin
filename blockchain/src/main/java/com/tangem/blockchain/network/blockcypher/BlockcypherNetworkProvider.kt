@@ -193,6 +193,7 @@ class BlockcypherNetworkProvider(
             Blockchain.Bitcoin, Blockchain.BitcoinTestnet -> "btc/"
             Blockchain.Litecoin -> "ltc/"
             Blockchain.Ethereum -> "eth/"
+            Blockchain.EthereumTestnet -> "beth"
             Blockchain.EthereumClassic -> "etc/"
             Blockchain.Dogecoin -> "doge/"
             Blockchain.Dash -> "dash/"
@@ -202,6 +203,7 @@ class BlockcypherNetworkProvider(
         }
         val networkPath = when (blockchain) {
             Blockchain.BitcoinTestnet -> "test3/"
+            Blockchain.EthereumTestnet -> "test/"
             else -> "main/"
         }
         return API_BLOCKCYPHER + apiVersionPath + blockchainPath + networkPath
