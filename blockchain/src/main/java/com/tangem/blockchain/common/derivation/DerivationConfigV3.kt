@@ -36,6 +36,7 @@ object DerivationConfigV3 : DerivationConfig() {
                 AddressType.Legacy to DerivationPath("m/44'/145'/0'/0/0"),
             )
             Blockchain.Ethereum,
+            Blockchain.EthereumTestnet,
             Blockchain.EthereumPow,
             Blockchain.Dischain,
             Blockchain.RSK,
@@ -117,7 +118,6 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.BitcoinTestnet,
             Blockchain.BitcoinCashTestnet,
             Blockchain.CosmosTestnet,
-            Blockchain.EthereumTestnet,
             Blockchain.EthereumClassicTestnet,
             Blockchain.FantomTestnet,
             Blockchain.PolkadotTestnet,
