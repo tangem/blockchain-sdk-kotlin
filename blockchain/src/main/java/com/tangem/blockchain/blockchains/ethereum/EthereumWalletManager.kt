@@ -19,6 +19,8 @@ import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.yieldlending.DefaultYieldLendingProvider
+import com.tangem.blockchain.yieldlending.YieldLendingProvider
 import com.tangem.common.CompletionResult
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -29,14 +31,20 @@ import java.math.BigDecimal
 import java.math.BigInteger
 
 @Suppress("LargeClass", "TooManyFunctions")
-open class EthereumWalletManager(
+open class EthereumWalletManager internal constructor(
     wallet: Wallet,
     val transactionBuilder: EthereumTransactionBuilder,
     protected val networkProvider: EthereumNetworkProvider,
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
     private val supportsENS: Boolean,
-) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider, nftProvider = nftProvider),
+    yieldLendingProvider: YieldLendingProvider = DefaultYieldLendingProvider,
+) : WalletManager(
+    wallet = wallet,
+    transactionHistoryProvider = transactionHistoryProvider,
+    nftProvider = nftProvider,
+    yieldLendingProvider = yieldLendingProvider,
+),
     SignatureCountValidator,
     TokenFinder,
     EthereumGasLoader,
@@ -65,7 +73,7 @@ open class EthereumWalletManager(
 
     private suspend fun updateWallet(data: EthereumInfoResponse) {
         wallet.setCoinValue(data.coinBalance)
-        data.tokenBalances.forEach { wallet.addTokenValue(it.value, it.key) }
+        data.tokenBalances.forEach { wallet.setAmount(it) }
 
         txCount = data.txCount
         pendingTxCount = data.pendingTxCount

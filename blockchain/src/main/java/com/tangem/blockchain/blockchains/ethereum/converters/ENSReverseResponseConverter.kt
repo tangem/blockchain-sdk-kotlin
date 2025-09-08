@@ -4,11 +4,7 @@ import com.tangem.blockchain.common.HEX_PREFIX
 import com.tangem.blockchain.extensions.hexToInt
 
 @Suppress("MagicNumber")
-internal object ENSReverseResponseConverter {
-
-    private const val WORD_BYTES = 32
-    private const val HEX_CHARS_PER_BYTE = 2
-    private const val WORD_HEX_LENGTH = WORD_BYTES * HEX_CHARS_PER_BYTE // 64
+internal object ENSReverseResponseConverter : EthereumResponseConverter() {
 
     /**
      * Converts the ENS reverse response string to an ENS name.

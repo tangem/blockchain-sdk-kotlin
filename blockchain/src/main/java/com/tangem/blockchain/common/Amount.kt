@@ -74,4 +74,10 @@ sealed class AmountType {
     object Reserve : AmountType()
     data class FeeResource(val name: String? = null) : AmountType()
     data class Token(val token: BlockchainToken) : AmountType()
+    data class YieldLend(
+        val token: BlockchainToken,
+        val isActive: Boolean,
+        val isInitialized: Boolean,
+        val isAllowedToSpend: Boolean,
+    ) : AmountType()
 }

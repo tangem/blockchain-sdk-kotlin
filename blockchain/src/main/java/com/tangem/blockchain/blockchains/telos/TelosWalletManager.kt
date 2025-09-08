@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvide
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -14,7 +15,7 @@ import com.tangem.blockchain.extensions.successOr
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
-class TelosWalletManager(
+class TelosWalletManager internal constructor(
     wallet: Wallet,
     transactionBuilder: EthereumTransactionBuilder,
     networkProvider: EthereumNetworkProvider,

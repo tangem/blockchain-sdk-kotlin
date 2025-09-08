@@ -9,24 +9,40 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
+import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
+import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.nft.NFTProviderFactory
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
+import com.tangem.blockchain.yieldlending.YieldLendingProviderFactory
 
-internal object EthereumLikeWalletManagerAssembly : WalletManagerAssembly<EthereumWalletManager>() {
+internal class EthereumLikeWalletManagerAssembly(private val dataStorage: AdvancedDataStorage) : WalletManagerAssembly<EthereumWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): EthereumWalletManager {
         with(input.wallet) {
+            val multiNetworkProvider = MultiNetworkProvider(
+                getProvidersBuilder(
+                    blockchain = blockchain,
+                    providerTypes = input.providerTypes,
+                    config = input.config
+                ).build(blockchain)
+            )
+            val yieldLendingProvider = YieldLendingProviderFactory(dataStorage).makeProvider(this, multiNetworkProvider)
+
             return EthereumWalletManager(
                 wallet = this,
                 transactionBuilder = EthereumTransactionBuilder.create(wallet = input.wallet),
                 networkProvider = EthereumNetworkService(
-                    jsonRpcProviders = getProvidersBuilder(blockchain, input.providerTypes, input.config)
-                        .build(blockchain),
+                    multiJsonRpcProvider = multiNetworkProvider,
+                    yieldLendingProvider = yieldLendingProvider,
                 ),
-                transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
+                transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(
+                    blockchain,
+                    input.config
+                ),
                 nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
+                yieldLendingProvider = yieldLendingProvider,
                 supportsENS = false,
             )
         }

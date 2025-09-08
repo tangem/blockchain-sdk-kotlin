@@ -14,7 +14,7 @@ import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import java.math.BigInteger
 
-internal class DecimalWalletManager(
+class DecimalWalletManager internal constructor(
     wallet: Wallet,
     transactionBuilder: EthereumTransactionBuilder,
     networkProvider: EthereumNetworkProvider,

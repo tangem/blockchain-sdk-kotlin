@@ -24,6 +24,14 @@ import java.math.BigInteger
 object EthereumUtils {
     private const val HEX_PREFIX = "0x"
 
+    const val EMPTY_ADDRESS = "0x0000000000000000000000000000000000000000"
+
+    const val HEX_CHARS_PER_BYTE = 2
+
+    // Ethereum address is 20 bytes, equals 40 hex characters
+    const val ADDRESS_BYTES = 20
+    const val ADDRESS_HEX_LENGTH = ADDRESS_BYTES * HEX_CHARS_PER_BYTE // 40
+
     // ERC-20 standard defines balanceOf function as returning uint256. Don't accept anything else.
     private const val UInt256Size = 32
 
