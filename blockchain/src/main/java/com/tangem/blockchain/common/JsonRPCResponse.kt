@@ -8,7 +8,7 @@ import com.squareup.moshi.JsonClass
  * @see <a href="https://www.jsonrpc.org/specification">Specification</a>
  */
 @JsonClass(generateAdapter = true)
-internal data class JsonRPCResponse(
+data class JsonRPCResponse( // todo make internal
     @Json(name = "id") val id: String,
     @Json(name = "jsonrpc") val jsonRpc: String,
     @Json(name = "result") val result: Any?,

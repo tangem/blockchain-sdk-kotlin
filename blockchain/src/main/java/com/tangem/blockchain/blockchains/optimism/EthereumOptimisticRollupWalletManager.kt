@@ -7,28 +7,32 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvide
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.nft.NFTProvider
+import com.tangem.blockchain.yieldlending.YieldLendingProvider
 import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.model.Address
 import java.math.BigDecimal
 import java.math.BigInteger
 
-class EthereumOptimisticRollupWalletManager(
+class EthereumOptimisticRollupWalletManager internal constructor(
     wallet: Wallet,
     transactionBuilder: EthereumTransactionBuilder,
     networkProvider: EthereumNetworkProvider,
     nftProvider: NFTProvider,
+    yieldLendingProvider: YieldLendingProvider,
 ) : EthereumWalletManager(
     wallet = wallet,
     transactionBuilder = transactionBuilder,
     networkProvider = networkProvider,
     nftProvider = nftProvider,
     supportsENS = false,
+    yieldLendingProvider = yieldLendingProvider,
 ) {
 
     private var lastLayer1FeeAmount: Amount? = null

@@ -10,6 +10,8 @@ import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.yieldlending.DefaultYieldLendingProvider
+import com.tangem.blockchain.yieldlending.YieldLendingProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.isZero
 import com.tangem.operations.sign.SignData
@@ -22,9 +24,11 @@ abstract class WalletManager(
     val cardTokens: MutableSet<Token> = mutableSetOf(),
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
+    yieldLendingProvider: YieldLendingProvider = DefaultYieldLendingProvider,
 ) : TransactionSender,
     TransactionHistoryProvider by transactionHistoryProvider,
-    NFTProvider by nftProvider {
+    NFTProvider by nftProvider,
+    YieldLendingProvider by yieldLendingProvider {
 
     open val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Unspecified
 
