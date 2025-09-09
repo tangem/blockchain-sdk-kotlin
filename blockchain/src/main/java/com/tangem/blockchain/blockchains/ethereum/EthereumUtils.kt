@@ -24,7 +24,7 @@ import java.math.BigInteger
 object EthereumUtils {
     private const val HEX_PREFIX = "0x"
 
-    const val EMPTY_ADDRESS = "0x0000000000000000000000000000000000000000"
+    const val ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
     const val HEX_CHARS_PER_BYTE = 2
 
