@@ -2,8 +2,8 @@ package com.tangem.blockchain.blockchains.solana
 
 import android.os.SystemClock
 import android.util.Log
-import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionSizeReducer
 import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionParser
+import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionSizeReducer
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaMainAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaSplAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.TransactionInfo
@@ -371,7 +371,7 @@ class SolanaWalletManager internal constructor(
         )
     }
 
-    suspend fun handleLargeLegacyTransaction(signer: TransactionSigner, legacyTransaction: ByteArray): ByteArray {
+    suspend fun handleLargeLegacyTransaction(signer: TransactionSigner, legacyTransaction: ByteArray): Result<Unit> {
         return solanaTransactionSizeReducer.process(
             signer = signer,
             rawTransaction = legacyTransaction,
