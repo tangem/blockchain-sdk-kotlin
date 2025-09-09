@@ -5,7 +5,7 @@ import com.tangem.blockchain.common.HEX_PREFIX
 import com.tangem.blockchain.yieldsupply.providers.YieldSupplyStatus
 
 /**
- * Converts the result of the `getYieldStatus` call to [YieldSupplyStatus].
+ * Converts the result of the `getYieldSupplyStatus` call to [YieldSupplyStatus].
  *
  * @param decimals The number of decimal
  */
@@ -15,7 +15,7 @@ internal class EthereumYieldSupplyStatusConverter(
 ) {
 
     /**
-     * Converts the [result] of the `getLendingStatus` call to [YieldSupplyStatus].
+     * Converts the [result] of the `getYieldSupplyStatus` call to [YieldSupplyStatus].
      *
      * 0x0000000000000000000000000000000000000000000000000000000000000001 -> true
      * * 0000000000000000000000000000000000000000000000000000000000000001 -> true
