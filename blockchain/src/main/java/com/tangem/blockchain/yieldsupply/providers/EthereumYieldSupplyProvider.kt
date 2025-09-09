@@ -37,8 +37,13 @@ internal class EthereumYieldSupplyProvider(
         EthereumYieldSupplyStatusConverter(wallet.blockchain.decimals())
     }
 
-    override val factoryContractAddress: String = contractAddressFactory.getFactoryAddress()
-    override val processorContractAddress: String = contractAddressFactory.getProcessorAddress()
+    override fun factoryContractAddress(): String {
+        return contractAddressFactory.getFactoryAddress()
+    }
+
+    override fun processorContractAddress(): String {
+        return contractAddressFactory.getProcessorAddress()
+    }
 
     override suspend fun getServiceFee(): BigDecimal {
         return multiJsonRpcProvider.performRequest(
@@ -47,7 +52,7 @@ internal class EthereumYieldSupplyProvider(
                 to = contractAddressFactory.getProcessorAddress(),
                 data = EthereumYieldSupplyServiceFeeCallData.dataHex,
             ),
-        ).extractResult().hexToBigDecimal().movePointLeft(BASE_POINTS_DECIMALS)
+        ).extractResult().hexToBigDecimal().movePointLeft(BASIS_POINTS_DECIMALS)
     }
 
     override suspend fun getYieldContract(): String {
@@ -90,11 +95,6 @@ internal class EthereumYieldSupplyProvider(
             ).extractResult()
 
             val yieldContractAddress = HEX_PREFIX + rawContractAddress.takeLast(EthereumUtils.ADDRESS_HEX_LENGTH)
-
-            dataStorage.store(
-                publicKey = wallet.publicKey,
-                value = YieldSupplyModule(yieldContractAddress),
-            )
 
             yieldContractAddress
         } else {
@@ -160,6 +160,6 @@ internal class EthereumYieldSupplyProvider(
     }
 
     private companion object {
-        const val BASE_POINTS_DECIMALS = 4
+        const val BASIS_POINTS_DECIMALS = 4
     }
 }
