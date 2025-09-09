@@ -10,10 +10,10 @@ import java.math.BigDecimal
 interface YieldSupplyProvider {
 
     /** Address of the factory contract used to create yield contracts */
-    val factoryContractAddress: String
+    fun factoryContractAddress(): String
 
     /** Address of the processor contract that handles yield processing */
-    val processorContractAddress: String
+    fun processorContractAddress(): String
 
     /**
      *  Retrieves the service fee associated with yield module.
