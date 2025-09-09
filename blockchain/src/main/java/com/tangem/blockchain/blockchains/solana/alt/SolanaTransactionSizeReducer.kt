@@ -11,6 +11,7 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.logging.Logger
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.decodeBase58
@@ -43,7 +44,7 @@ internal class SolanaTransactionSizeReducer(
     /**
      * Always returns empty byte array and sends transaction to the network.
      */
-    suspend fun process(signer: TransactionSigner, rawTransaction: ByteArray): ByteArray {
+    suspend fun process(signer: TransactionSigner, rawTransaction: ByteArray): Result<Unit> {
         val parsed = rawTransactionParser.parse(rawTransaction)
 
         Logger.logTransaction("rawTxInitial: " + rawTransaction.toHexString())
@@ -92,7 +93,7 @@ internal class SolanaTransactionSizeReducer(
         val networkParams = multiNetworkProvider.performRequest { getLatestBlockhashInfo() }
             .successOr<SolanaBlockhashInfo> {
                 Logger.logTransaction("failed to get latest blockhash info: $it")
-                return byteArrayOf()
+                return Result.Failure(it.error)
             }
 
         val lookupAltQueue = RemovableQueue(newAltAddresses.chunked(size = ALT_ADDRESS_CHUNK_SIZE))
@@ -114,7 +115,7 @@ internal class SolanaTransactionSizeReducer(
             publicKey = walletPubkey,
         ).successOr {
             Logger.logTransaction("fail to sign ALT creation transaction: $it")
-            return byteArrayOf()
+            return Result.Failure(it.error.toBlockchainSdkError())
         }
 
         createAltTransaction.addSignature(
@@ -132,7 +133,7 @@ internal class SolanaTransactionSizeReducer(
             val networkParams = multiNetworkProvider.performRequest { getLatestBlockhashInfo() }
                 .successOr<SolanaBlockhashInfo> {
                     Logger.logTransaction("failed to get latest blockhash info: $it")
-                    return byteArrayOf()
+                    return Result.Failure(it.error)
                 }
 
             val addressesChunk = lookupAltQueue.takeFirst()
@@ -152,7 +153,7 @@ internal class SolanaTransactionSizeReducer(
                 publicKey = walletPubkey,
             ).successOr {
                 Logger.logTransaction("fail to sign ALT extend transaction: $it")
-                return byteArrayOf()
+                return Result.Failure(it.error.toBlockchainSdkError())
             }
 
             extendTx.addSignature(
@@ -169,7 +170,7 @@ internal class SolanaTransactionSizeReducer(
         val recentBlockhashInfo = multiNetworkProvider.performRequest { getLatestBlockhashInfo() }
             .successOr<SolanaBlockhashInfo> {
                 Logger.logTransaction("failed to get latest blockhash info: $it")
-                return byteArrayOf()
+                return Result.Failure(it.error)
             }
 
         val v0Message = buildV0Message(
@@ -185,7 +186,7 @@ internal class SolanaTransactionSizeReducer(
 
         val signedMessage = signer.sign(v0Message, walletPubkey).successOr {
             Logger.logTransaction("fail to sign v0 message: $it")
-            return byteArrayOf()
+            return Result.Failure(it.error.toBlockchainSdkError())
         }
 
         val v0Tx = buildV0Transaction(
@@ -197,10 +198,10 @@ internal class SolanaTransactionSizeReducer(
 
         sendTransaction(v0Tx, SystemClock.elapsedRealtime()).successOr {
             Logger.logTransaction("fail to send v0 tx: $it")
-            return byteArrayOf()
+            return Result.Failure(it.error)
         }
 
-        return byteArrayOf()
+        return Result.Success(Unit)
     }
 
     fun splitAddressesForV0(
