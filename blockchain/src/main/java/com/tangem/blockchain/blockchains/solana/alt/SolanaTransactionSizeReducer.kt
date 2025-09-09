@@ -45,9 +45,8 @@ internal class SolanaTransactionSizeReducer(
      * Always returns empty byte array and sends transaction to the network.
      */
     suspend fun process(signer: TransactionSigner, rawTransaction: ByteArray): Result<Unit> {
-        val parsed = rawTransactionParser.parse(rawTransaction)
-
         Logger.logTransaction("rawTxInitial: " + rawTransaction.toHexString())
+        val parsed = rawTransactionParser.parse(rawTransaction)
 
         val existLookupTables = if (parsed.compiledAltTable != null && parsed.compiledAltTable.isNotEmpty()) {
             val tableInfos = mutableListOf<NewSolanaAccountInfo.Value>()
