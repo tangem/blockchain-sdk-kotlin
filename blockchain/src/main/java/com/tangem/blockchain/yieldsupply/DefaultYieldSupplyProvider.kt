@@ -5,8 +5,10 @@ import com.tangem.blockchain.yieldsupply.providers.YieldSupplyStatus
 import java.math.BigDecimal
 
 internal object DefaultYieldSupplyProvider : YieldSupplyProvider {
-    override val factoryContractAddress: String = ""
-    override val processorContractAddress: String = ""
+
+    override fun factoryContractAddress(): String = ""
+
+    override fun processorContractAddress(): String = ""
 
     override suspend fun getYieldContract(): String = ""
 
