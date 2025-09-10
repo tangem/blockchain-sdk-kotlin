@@ -29,6 +29,10 @@ class XrpNetworkProviderMock(
 
     override suspend fun checkIsAccountCreated(address: String) = isAccountCreatedResponse
 
+    override suspend fun hasTransferRate(address: String): Boolean {
+        return false
+    }
+
     override suspend fun checkTargetAccount(address: String, token: Token?): Result<XrpTargetAccountResponse> {
         return Result.Success(XrpTargetAccountResponse(accountCreated = true, trustlineCreated = true))
     }
