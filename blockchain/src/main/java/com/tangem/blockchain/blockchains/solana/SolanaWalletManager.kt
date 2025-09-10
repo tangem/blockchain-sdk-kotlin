@@ -372,11 +372,12 @@ class SolanaWalletManager internal constructor(
     }
 
     override suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
-        val messageBytes =
-            ((transactionData as? TransactionData.Compiled)?.value as? TransactionData.Compiled.Data.Bytes)
-                ?.data
-                ?.drop(SOLANA_SIGNATURE_PLACEHOLDER_LENGTH)
-                ?.toByteArray()
+        val transactionWithSignaturePlaceholder =
+            ((transactionData as? TransactionData.Compiled)?.value as? TransactionData.Compiled.Data.Bytes)?.data
+
+        val messageBytes = transactionWithSignaturePlaceholder?.let {
+            SolanaTransactionHelper.removeSignaturesPlaceholders(it)
+        }
 
         if (messageBytes != null) {
             val networkFee = getNetworkFee(messageBytes).successOr { return it }
