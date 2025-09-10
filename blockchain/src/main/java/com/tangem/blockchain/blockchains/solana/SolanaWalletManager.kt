@@ -390,7 +390,7 @@ class SolanaWalletManager internal constructor(
         }
     }
 
-    suspend fun handleLargeLegacyTransaction(signer: TransactionSigner, legacyTransaction: ByteArray): ByteArray {
+    suspend fun handleLargeLegacyTransaction(signer: TransactionSigner, legacyTransaction: ByteArray): Result<Unit> {
         return solanaTransactionSizeReducer.process(
             signer = signer,
             rawTransaction = legacyTransaction,
