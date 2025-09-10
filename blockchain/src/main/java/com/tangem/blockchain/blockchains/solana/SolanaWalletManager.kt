@@ -371,6 +371,25 @@ class SolanaWalletManager internal constructor(
         )
     }
 
+    override suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
+        val messageBytes =
+            ((transactionData as? TransactionData.Compiled)?.value as? TransactionData.Compiled.Data.Bytes)
+                ?.data
+                ?.drop(SOLANA_SIGNATURE_PLACEHOLDER_LENGTH)
+                ?.toByteArray()
+
+        if (messageBytes != null) {
+            val networkFee = getNetworkFee(messageBytes).successOr { return it }
+            return Result.Success(
+                data = TransactionFee.Single(
+                    Fee.Common(Amount(networkFee, wallet.blockchain)),
+                ),
+            )
+        } else {
+            return super.getFee(transactionData)
+        }
+    }
+
     suspend fun handleLargeLegacyTransaction(signer: TransactionSigner, legacyTransaction: ByteArray): ByteArray {
         return solanaTransactionSizeReducer.process(
             signer = signer,
@@ -402,6 +421,14 @@ class SolanaWalletManager internal constructor(
             amount = amount,
             ownerAccountInfo = ownerAccountInfo,
         ).successOr { return it }
+        val result = multiNetworkProvider.performRequest {
+            getFeeForMessage(transaction)
+        }.successOr { return it }
+
+        return Result.Success(result.value.let(SolanaValueConverter::toSol))
+    }
+
+    private suspend fun getNetworkFee(transaction: ByteArray): Result<BigDecimal> {
         val result = multiNetworkProvider.performRequest {
             getFeeForMessage(transaction)
         }.successOr { return it }
@@ -530,5 +557,7 @@ class SolanaWalletManager internal constructor(
         // delay between SPLIT transaction (if any) and other (usually UNSTAKE)
         // SPLIT transaction is not executed immediately, so we should wait for 15 seconds to send UNSTAKE transactions
         const val DELAY_AFTER_SPLIT_TRANSACTION = 15000L
+
+        const val SOLANA_SIGNATURE_PLACEHOLDER_LENGTH = 65
     }
 }
