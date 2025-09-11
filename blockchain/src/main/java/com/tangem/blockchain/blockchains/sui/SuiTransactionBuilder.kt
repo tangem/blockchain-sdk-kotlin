@@ -145,6 +145,7 @@ internal class SuiTransactionBuilder(
                 suiWallet = walletInfo,
             ) ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx)
 
+            is AmountType.TokenYieldSupply,
             is AmountType.FeeResource,
             AmountType.Reserve,
             -> return Result.Failure(BlockchainSdkError.FailedToBuildTx)
