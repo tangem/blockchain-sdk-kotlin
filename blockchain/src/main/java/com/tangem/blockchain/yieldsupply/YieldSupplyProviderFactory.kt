@@ -5,6 +5,7 @@ import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.network.MultiNetworkProvider
+import com.tangem.blockchain.yieldsupply.addressfactory.YieldSupplyContractAddressFactory
 import com.tangem.blockchain.yieldsupply.providers.EthereumYieldSupplyProvider
 
 /**
@@ -17,6 +18,10 @@ internal class YieldSupplyProviderFactory(
     @Suppress("UNCHECKED_CAST")
     fun makeProvider(wallet: Wallet, networkProvider: MultiNetworkProvider<out NetworkProvider>): YieldSupplyProvider {
         val contractAddressFactory = YieldSupplyContractAddressFactory(wallet.blockchain)
+
+        // Check if feature is supported for the given blockchain
+        if (contractAddressFactory.isSupported().not()) return DefaultYieldSupplyProvider
+
         return when {
             wallet.blockchain.isEvm() -> EthereumYieldSupplyProvider(
                 wallet = wallet,
