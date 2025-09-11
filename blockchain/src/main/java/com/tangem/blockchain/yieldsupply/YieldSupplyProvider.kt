@@ -1,5 +1,6 @@
 package com.tangem.blockchain.yieldsupply
 
+import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.yieldsupply.addressfactory.YieldSupplyContractAddresses
 import com.tangem.blockchain.yieldsupply.providers.YieldSupplyStatus
@@ -47,6 +48,15 @@ interface YieldSupplyProvider {
      *  @return The [YieldSupplyStatus] containing status information, or null if not found.
      */
     suspend fun getYieldSupplyStatus(tokenContractAddress: String): YieldSupplyStatus?
+
+    /**
+     *  Retrieves the balance of a specific yield token for the wallet.
+     *
+     *  @param yieldSupplyStatus The status of the yield supply.
+     *  @param token The yield token for which to retrieve the balance.
+     *  @return The balance as an [Amount].
+     */
+    suspend fun getBalance(yieldSupplyStatus: YieldSupplyStatus, token: Token): Amount
 
     /**
      *  Retrieves the total balance of the underlying protocol assets for a specific yield token.
