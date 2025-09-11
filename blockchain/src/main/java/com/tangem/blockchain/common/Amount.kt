@@ -69,9 +69,27 @@ data class Amount(
     operator fun minus(extract: BigDecimal): Amount = copy(value = (value ?: BigDecimal.ZERO).minus(extract))
 }
 
+/**
+ * Type of amount
+ */
 sealed class AmountType {
+    /** Native coin of blockchain */
     object Coin : AmountType()
+
+    /** Native coin of blockchain, but used as reserve currency for fee calculation (for example, Algorand) */
     object Reserve : AmountType()
+
+    /** Resource that can be used to pay fee (for example, Mana on Koinos) */
     data class FeeResource(val name: String? = null) : AmountType()
+
+    /** Any token of blockchain */
     data class Token(val token: BlockchainToken) : AmountType()
+
+    /** Any token of blockchain that supplied to yield module */
+    data class TokenYieldSupply(
+        val token: BlockchainToken,
+        val isActive: Boolean,
+        val isInitialized: Boolean,
+        val isAllowedToSpend: Boolean,
+    ) : AmountType()
 }

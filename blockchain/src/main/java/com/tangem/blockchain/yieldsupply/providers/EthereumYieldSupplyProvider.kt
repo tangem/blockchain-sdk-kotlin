@@ -22,8 +22,11 @@ import com.tangem.blockchain.yieldsupply.providers.ethereum.converters.EthereumY
 import com.tangem.blockchain.yieldsupply.providers.ethereum.factory.EthereumYieldSupplyContractAddressCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.factory.EthereumYieldSupplyModuleCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.processor.EthereumYieldSupplyServiceFeeCallData
+import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyBalanceCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyProtocolBalanceCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyStatusCallData
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
@@ -117,6 +120,41 @@ internal class EthereumYieldSupplyProvider(
             ),
         ).extractResult()
         return ethereumYieldSupplyStatusConverter.convert(result)
+    }
+
+    override suspend fun getBalance(yieldSupplyStatus: YieldSupplyStatus, token: Token): Amount = coroutineScope {
+        val balanceDeferred = async {
+            val rawBalance = multiJsonRpcProvider.performRequest(
+                request = EthereumJsonRpcProvider::call,
+                data = EthCallObject(
+                    to = getYieldContract(),
+                    data = EthereumYieldSupplyBalanceCallData(token.contractAddress).dataHex,
+                ),
+            )
+
+            requireNotNull(
+                EthereumUtils.parseEthereumDecimal(
+                    rawBalance.extractResult(),
+                    token.decimals,
+                ),
+            ) { "Failed to parse token balance. Token: ${token.name}. Balance: ${rawBalance.extractResult()}" }
+        }
+
+        val isAllowedToSpendDeferred = async {
+            isAllowedToSpend(token.contractAddress)
+        }
+
+        Amount(
+            value = balanceDeferred.await(),
+            blockchain = wallet.blockchain,
+            currencySymbol = token.symbol,
+            type = AmountType.TokenYieldSupply(
+                token = token,
+                isActive = yieldSupplyStatus.isActive,
+                isInitialized = yieldSupplyStatus.isInitialized,
+                isAllowedToSpend = isAllowedToSpendDeferred.await(),
+            ),
+        )
     }
 
     override suspend fun getProtocolBalance(token: Token): BigDecimal {
