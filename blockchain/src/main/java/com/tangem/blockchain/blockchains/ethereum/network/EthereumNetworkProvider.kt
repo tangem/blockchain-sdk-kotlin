@@ -17,7 +17,7 @@ interface EthereumNetworkProvider : NetworkProvider {
     suspend fun getGasPrice(): Result<BigInteger>
     suspend fun getGasLimit(to: String, from: String, value: String?, data: String?): Result<BigInteger>
     suspend fun getFeeHistory(): Result<EthereumFeeHistory>
-    suspend fun getTokensBalance(address: String, tokens: Set<Token>): Result<Map<Token, BigDecimal>>
+    suspend fun getTokensBalance(address: String, tokens: Set<Token>): Result<List<Amount>>
 
     suspend fun callContractForFee(data: ContractCallData): Result<BigInteger>
     suspend fun resolveName(namehash: ByteArray, encodedName: ByteArray): ResolveAddressResult
@@ -26,7 +26,7 @@ interface EthereumNetworkProvider : NetworkProvider {
 
 class EthereumInfoResponse(
     val coinBalance: BigDecimal,
-    val tokenBalances: Map<Token, BigDecimal>,
+    val tokenBalances: List<Amount>,
     val txCount: Long,
     val pendingTxCount: Long,
     val recentTransactions: List<TransactionData.Uncompiled>?,
