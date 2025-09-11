@@ -1,18 +1,20 @@
 package com.tangem.blockchain.yieldsupply
 
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
 import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.yieldsupply.addressfactory.YieldSupplyContractAddresses
 import com.tangem.blockchain.yieldsupply.providers.YieldSupplyStatus
 import java.math.BigDecimal
 
 internal object DefaultYieldSupplyProvider : YieldSupplyProvider {
 
-    override fun factoryContractAddress(): String = ""
+    override fun isSupported(): Boolean = false
 
-    override fun processorContractAddress(): String = ""
+    override fun getYieldSupplyContractAddresses(): YieldSupplyContractAddresses? = null
 
-    override suspend fun getYieldContract(): String = ""
+    override suspend fun getYieldContract(): String = EthereumUtils.ZERO_ADDRESS
 
-    override suspend fun calculateYieldContract(): String = ""
+    override suspend fun calculateYieldContract(): String = EthereumUtils.ZERO_ADDRESS
 
     override suspend fun getServiceFee(): BigDecimal = BigDecimal.ZERO
 
