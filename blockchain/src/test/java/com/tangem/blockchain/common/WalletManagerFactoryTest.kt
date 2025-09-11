@@ -147,7 +147,9 @@ internal class WalletManagerFactoryTest {
                 override suspend fun remove(key: String) = Unit
             },
             accountCreator = accountCreator,
-            featureToggles = BlockchainFeatureToggles(),
+            featureToggles = BlockchainFeatureToggles(
+                isYieldSupplyEnabled = false,
+            ),
         ).createTwinWalletManager(
             walletPublicKey = card.wallets.first().publicKey,
             pairPublicKey = pairPublicKey.hexToBytes(),
@@ -224,7 +226,9 @@ internal class WalletManagerFactoryTest {
                 override suspend fun remove(key: String) = Unit
             },
             accountCreator = accountCreator,
-            featureToggles = BlockchainFeatureToggles(),
+            featureToggles = BlockchainFeatureToggles(
+                isYieldSupplyEnabled = false,
+            ),
         ).createLegacyWalletManager(
             blockchain,
             publicKey,
