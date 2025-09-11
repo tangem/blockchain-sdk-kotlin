@@ -1,6 +1,7 @@
 package com.tangem.blockchain.yieldsupply
 
 import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.yieldsupply.addressfactory.YieldSupplyContractAddresses
 import com.tangem.blockchain.yieldsupply.providers.YieldSupplyStatus
 import java.math.BigDecimal
 
@@ -9,11 +10,14 @@ import java.math.BigDecimal
  */
 interface YieldSupplyProvider {
 
-    /** Address of the factory contract used to create yield contracts */
-    fun factoryContractAddress(): String
+    /** Checks if the yield module is supported on the current blockchain network */
+    fun isSupported(): Boolean
 
-    /** Address of the processor contract that handles yield processing */
-    fun processorContractAddress(): String
+    /**
+     *  Retrieves the addresses of the factory and processor contracts for the yield module.
+     *  @return A [YieldSupplyContractAddresses] object containing the contract addresses.
+     **/
+    fun getYieldSupplyContractAddresses(): YieldSupplyContractAddresses?
 
     /**
      *  Retrieves the service fee associated with yield module.
