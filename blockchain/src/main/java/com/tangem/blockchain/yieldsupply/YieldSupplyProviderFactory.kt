@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvide
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.yieldsupply.addressfactory.YieldSupplyContractAddressFactory
 import com.tangem.blockchain.yieldsupply.providers.EthereumYieldSupplyProvider
@@ -17,6 +18,7 @@ internal class YieldSupplyProviderFactory(
 
     @Suppress("UNCHECKED_CAST")
     fun makeProvider(wallet: Wallet, networkProvider: MultiNetworkProvider<out NetworkProvider>): YieldSupplyProvider {
+        if (!DepsContainer.blockchainFeatureToggles.isYieldSupplyEnabled) return DefaultYieldSupplyProvider
         val contractAddressFactory = YieldSupplyContractAddressFactory(wallet.blockchain)
 
         // Check if feature is supported for the given blockchain
