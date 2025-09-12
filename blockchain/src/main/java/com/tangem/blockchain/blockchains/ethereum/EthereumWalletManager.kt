@@ -157,7 +157,7 @@ open class EthereumWalletManager(
             is Result.Success -> signResult.data
         }
 
-        updatedData.forEachIndexed { index, data ->
+        val sendResults = updatedData.mapIndexed { index, data ->
             val transactionToSend = try {
                 transactionBuilder.buildForSend(
                     transaction = data,
@@ -171,15 +171,20 @@ open class EthereumWalletManager(
             when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())) {
                 is SimpleResult.Success -> {
                     val hash = transactionToSend.keccak().toHexString()
-                    data.hash = hash
-                    wallet.addOutgoingTransaction(data)
+                    wallet.addOutgoingTransaction(data.updateHash(hash))
                     Result.Success(TransactionSendResult(hash))
                 }
-                is SimpleResult.Failure -> Result.fromTangemSdkError(sendResult.error)
+                is SimpleResult.Failure -> Result.Failure(sendResult.error)
             }
         }
 
-        return Result.Success(TransactionsSendResult(emptyList()))
+        val failedResult = sendResults.firstOrNull { it is Result.Failure }
+
+        return if (failedResult != null) {
+            Result.Failure((failedResult as Result.Failure).error)
+        } else {
+            Result.Success(TransactionsSendResult(sendResults.mapNotNull { (it as? Result.Success)?.data?.hash }))
+        }
     }
 
     protected open suspend fun sign(
