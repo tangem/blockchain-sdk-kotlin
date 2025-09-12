@@ -19,7 +19,9 @@ class TelosProvidersBuilderTest {
     init {
         DepsContainer.onInit(
             config = BlockchainSdkConfig(),
-            featureToggles = BlockchainFeatureToggles(),
+            featureToggles = BlockchainFeatureToggles(
+                isYieldSupplyEnabled = false,
+            ),
         )
     }
 
