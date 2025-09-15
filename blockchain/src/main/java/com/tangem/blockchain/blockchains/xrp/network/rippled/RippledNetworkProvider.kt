@@ -158,9 +158,10 @@ class RippledNetworkProvider(
         return try {
             coroutineScope {
                 val checkIsAccountCreatedDeferred = retryIO { async { checkIsAccountCreated(address) } }
+                val isAccountCreated = checkIsAccountCreatedDeferred.await()
                 if (token == null) {
                     val response = XrpTargetAccountResponse(
-                        accountCreated = checkIsAccountCreatedDeferred.await(),
+                        accountCreated = isAccountCreated,
                         trustlineCreated = null,
                     )
                     return@coroutineScope Result.Success(response)
@@ -172,13 +173,24 @@ class RippledNetworkProvider(
                 val isExist = accountLineData.result?.lines
                     ?.any { "${it.currency}.${it.account}" == token.contractAddress }
                 val response = XrpTargetAccountResponse(
-                    accountCreated = checkIsAccountCreatedDeferred.await(),
+                    accountCreated = isAccountCreated,
                     trustlineCreated = isExist,
                 )
                 Result.Success(response)
             }
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    override suspend fun hasTransferRate(address: String): Boolean {
+        return try {
+            val accountBody = makeAccountBody(address, validated = true)
+            val accountData = retryIO { api.getAccount(accountBody) }
+            val transferRate = accountData.result?.accountData?.transferRate
+            transferRate != null && transferRate != ZERO_TRANSFER_RATE && transferRate != ZERO
+        } catch (_: Exception) {
+            false
         }
     }
 
@@ -196,14 +208,16 @@ class RippledNetworkProvider(
         return try {
             val accountBody = makeAccountBody(address, validated = true)
             val accountData = retryIO { api.getAccount(accountBody) }
-            accountData.result?.accountFlags?.requireDestinationTag ?: false
-        } catch (exception: Exception) {
+            accountData.result?.accountFlags?.requireDestinationTag == true
+        } catch (_: Exception) {
             false
         }
     }
 
     private companion object {
-        private const val ERROR_CODE = 19
+        const val ERROR_CODE = 19
+        const val ZERO = 0L
+        const val ZERO_TRANSFER_RATE = 1_000_000_000L // 1 billion means no transfer rate
     }
 }
 

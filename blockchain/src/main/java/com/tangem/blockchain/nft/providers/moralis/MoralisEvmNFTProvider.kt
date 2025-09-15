@@ -10,7 +10,6 @@ import com.tangem.blockchain.nft.extensions.removeUrlQuery
 import com.tangem.blockchain.nft.models.NFTAsset
 import com.tangem.blockchain.nft.models.NFTCollection
 import com.tangem.blockchain.nft.providers.moralis.evm.network.*
-import okhttp3.internal.toHexString
 import java.math.BigDecimal
 
 internal class MoralisEvmNFTProvider(
@@ -132,7 +131,7 @@ internal class MoralisEvmNFTProvider(
 
         val price = try {
             BigDecimal(response.lastSale?.priceFormatted.orEmpty())
-        } catch (e: NumberFormatException) {
+        } catch (_: NumberFormatException) {
             null
         }
 
@@ -147,7 +146,8 @@ internal class MoralisEvmNFTProvider(
         }
     }
 
-    private fun Blockchain.toQueryParam(): String = HEX_PREFIX + this.getChainId()?.toHexString().orEmpty()
+    private fun Blockchain.toQueryParam(): String =
+        HEX_PREFIX + this.getChainId()?.let { Integer.toHexString(it) }.orEmpty()
 
     private fun MoralisEvmNFTAssetResponse.toNFTAsset(
         assetIdentifier: NFTAsset.Identifier,

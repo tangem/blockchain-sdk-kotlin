@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.xrp
 import com.ripple.core.coretypes.AccountID
 import com.ripple.core.coretypes.Currency
 import com.ripple.core.coretypes.uint.UInt32
+import com.ripple.core.fields.Field
 import com.ripple.crypto.ecdsa.ECDSASignature
 import com.ripple.utils.HashUtils
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
@@ -51,7 +52,7 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
         val checkResult = networkProvider.checkTargetAccount(destinationAddress, token)
             .successOr { return it }
         val isAccountCreated = checkResult.accountCreated
-        val trustlineCreated = checkResult.trustlineCreated ?: false
+        val trustlineCreated = checkResult.trustlineCreated == true
         when (transactionData.amount.type) {
             AmountType.Coin -> if (!isAccountCreated && transactionData.amount.value!! < minReserve) {
                 return Result.Failure(accountUnderfundedError())
@@ -63,7 +64,7 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
             }
             is AmountType.FeeResource,
             AmountType.Reserve,
-            -> Result.Failure(BlockchainSdkError.CustomError("Unknown amount Type"))
+            -> return Result.Failure(BlockchainSdkError.CustomError("Unknown amount Type"))
         }
 
         val sequence = networkProvider.getSequence(sourceAddress).successOr { return it }
@@ -76,6 +77,11 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
                 .token.contractAddress.splitContractAddress()
             val amount = XrpAmount(transactionData.amount.value!!, currency, issuer)
             payment.amount(amount)
+
+            val hasTransferRate = networkProvider.hasTransferRate(issuer.address)
+            if (hasTransferRate) {
+                payment.putTranslated(Field.Flags, UInt32(TF_PARTIAL_PAYMENT)) // tfPartialPayment
+            }
         } else {
             payment.putTranslated(XrpAmount.Amount, transactionData.amount.bigIntegerValue().toString())
         }
@@ -172,5 +178,6 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
 
     companion object {
         const val TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR = "."
+        private const val TF_PARTIAL_PAYMENT = 131072
     }
 }
