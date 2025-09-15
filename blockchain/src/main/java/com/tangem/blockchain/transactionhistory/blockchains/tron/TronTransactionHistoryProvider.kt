@@ -129,11 +129,20 @@ internal class TronTransactionHistoryProvider(
         decimals: Int,
         filterType: TransactionHistoryRequest.FilterType,
     ): TransactionHistoryItem? {
-        val destinationType = extractDestinationType(this, filterType).guard {
+        val destinationType = extractDestinationType(
+            tx = this,
+            filterType = filterType,
+            walletAddress = walletAddress,
+        ).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
         }
-        val amount = extractAmount(tx = this, decimals = decimals, filterType = filterType).guard {
+        val amount = extractAmount(
+            tx = this,
+            decimals = decimals,
+            filterType = filterType,
+            walletAddress = walletAddress,
+        ).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
         }
@@ -141,7 +150,11 @@ internal class TronTransactionHistoryProvider(
             Log.info { "Transaction with zero amount is excluded from history. $this" }
             return null
         }
-        val sourceType = extractSourceType(tx = this, filterType = filterType).guard {
+        val sourceType = extractSourceType(
+            tx = this,
+            filterType = filterType,
+            walletAddress = walletAddress,
+        ).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
         }
@@ -197,6 +210,7 @@ internal class TronTransactionHistoryProvider(
     private fun extractDestinationType(
         tx: GetAddressResponse.Transaction,
         filterType: TransactionHistoryRequest.FilterType,
+        walletAddress: String,
     ): TransactionHistoryItem.DestinationType? {
         tx.toAddress ?: return null
         tx.fromAddress ?: return null
@@ -212,7 +226,7 @@ internal class TronTransactionHistoryProvider(
             }
 
             is TransactionHistoryRequest.FilterType.Contract -> {
-                val transfer = tx.getTokenTransfer(filterType.tokenInfo.contractAddress) ?: return null
+                val transfer = tx.getTokenTransfer(walletAddress, filterType.tokenInfo.contractAddress) ?: return null
                 TransactionHistoryItem.DestinationType.Single(
                     addressType = TransactionHistoryItem.AddressType.User(transfer.to),
                 )
@@ -223,11 +237,12 @@ internal class TronTransactionHistoryProvider(
     private fun extractSourceType(
         tx: GetAddressResponse.Transaction,
         filterType: TransactionHistoryRequest.FilterType,
+        walletAddress: String,
     ): TransactionHistoryItem.SourceType? {
         val address = when (filterType) {
             TransactionHistoryRequest.FilterType.Coin -> tx.fromAddress
             is TransactionHistoryRequest.FilterType.Contract -> {
-                tx.getTokenTransfer(filterType.tokenInfo.contractAddress)?.from
+                tx.getTokenTransfer(walletAddress, filterType.tokenInfo.contractAddress)?.from
             }
         }.guard { return null }
 
@@ -273,6 +288,7 @@ internal class TronTransactionHistoryProvider(
         tx: GetAddressResponse.Transaction,
         decimals: Int,
         filterType: TransactionHistoryRequest.FilterType,
+        walletAddress: String,
     ): Amount? {
         return when (filterType) {
             TransactionHistoryRequest.FilterType.Coin -> Amount(
@@ -282,7 +298,7 @@ internal class TronTransactionHistoryProvider(
             )
 
             is TransactionHistoryRequest.FilterType.Contract -> {
-                val transfer = tx.getTokenTransfer(filterType.tokenInfo.contractAddress) ?: return null
+                val transfer = tx.getTokenTransfer(walletAddress, filterType.tokenInfo.contractAddress) ?: return null
                 val transferValue = transfer.value ?: "0"
                 val token = Token(
                     name = transfer.name.orEmpty(),
@@ -312,9 +328,13 @@ internal class TronTransactionHistoryProvider(
     }
 
     private fun GetAddressResponse.Transaction.getTokenTransfer(
+        walletAddress: String,
         contractAddress: String,
     ): GetAddressResponse.Transaction.TokenTransfer? {
-        return tokenTransfers.firstOrNull { contractAddress.equals(it.token, ignoreCase = true) }
+        return tokenTransfers.firstOrNull {
+            contractAddress.equals(other = it.token, ignoreCase = true) &&
+                walletAddress.equals(other = it.to, ignoreCase = true)
+        }
     }
 
     private companion object {
