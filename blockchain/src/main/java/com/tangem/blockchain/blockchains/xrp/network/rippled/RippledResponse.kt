@@ -38,6 +38,9 @@ data class RippledAccountData(
 
     @Json(name = "OwnerCount")
     val ownerCount: Long? = null,
+
+    @Json(name = "TransferRate")
+    val transferRate: Long? = null,
 )
 
 // Rippled account lines
