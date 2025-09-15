@@ -395,7 +395,7 @@ class SolanaWalletManager internal constructor(
                 rawTransaction = legacyTransaction,
             )
         }
-        
+
     private suspend fun getOwnerAccountInfo(
         amount: Amount,
     ): Result<Pair<SolanaSplAccountInfo, SolanaTokenProgram.ID>>? {
