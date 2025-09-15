@@ -71,7 +71,11 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
     }
 
     fun getFeeForMessage(transaction: SolanaTransaction, commitment: Commitment): FeeInfo {
-        val message = Base64.encodeToString(transaction.getSerializedMessage(), Base64.NO_WRAP)
+        return getFeeForMessage(transaction.getSerializedMessage(), commitment)
+    }
+
+    fun getFeeForMessage(transaction: ByteArray, commitment: Commitment): FeeInfo {
+        val message = Base64.encodeToString(transaction, Base64.NO_WRAP)
         val params = buildList {
             add(message)
             add(mapOf("commitment" to commitment.value))
