@@ -23,6 +23,9 @@ class XrpNetworkService(providers: List<XrpNetworkProvider>) : XrpNetworkProvide
     override suspend fun checkIsAccountCreated(address: String): Boolean =
         multiProvider.currentProvider.checkIsAccountCreated(address)
 
+    override suspend fun hasTransferRate(address: String): Boolean =
+        multiProvider.currentProvider.hasTransferRate(address)
+
     override suspend fun checkTargetAccount(address: String, token: Token?): Result<XrpTargetAccountResponse> =
         multiProvider.currentProvider.checkTargetAccount(address, token)
 
