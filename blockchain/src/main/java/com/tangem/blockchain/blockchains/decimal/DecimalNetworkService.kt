@@ -3,15 +3,17 @@ package com.tangem.blockchain.blockchains.decimal
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
+import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairToken
 import java.math.BigDecimal
 import java.math.BigInteger
 
 internal class DecimalNetworkService(
-    jsonRpcProviders: List<EthereumJsonRpcProvider>,
-) : EthereumNetworkService(jsonRpcProviders, blockcypherNetworkProvider = null, blockchairEthNetworkProvider = null) {
+    multiJsonRpcProvider: MultiNetworkProvider<EthereumJsonRpcProvider>,
+) : EthereumNetworkService(multiJsonRpcProvider = multiJsonRpcProvider) {
 
     override suspend fun getInfo(address: String, tokens: Set<Token>): Result<EthereumInfoResponse> {
         return super.getInfo(convertAddress(address), tokens)
@@ -33,7 +35,7 @@ internal class DecimalNetworkService(
         return super.getSignatureCount(convertAddress(address))
     }
 
-    override suspend fun getTokensBalance(address: String, tokens: Set<Token>): Result<Map<Token, BigDecimal>> {
+    override suspend fun getTokensBalance(address: String, tokens: Set<Token>): Result<List<Amount>> {
         return super.getTokensBalance(convertAddress(address), tokens)
     }
 
