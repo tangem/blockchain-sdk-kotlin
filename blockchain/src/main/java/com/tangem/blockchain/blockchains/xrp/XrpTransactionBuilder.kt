@@ -62,6 +62,7 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
                 if (!isAccountCreated) return Result.Failure(accountUnderfundedTokenError())
                 if (!trustlineCreated) return Result.Failure(notHaveTrustlineError())
             }
+            is AmountType.TokenYieldSupply,
             is AmountType.FeeResource,
             AmountType.Reserve,
             -> return Result.Failure(BlockchainSdkError.CustomError("Unknown amount Type"))

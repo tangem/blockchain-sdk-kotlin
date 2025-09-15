@@ -23,7 +23,9 @@ class EthereumTransactionBuilderTest {
     fun setup() {
         DepsContainer.onInit(
             config = BlockchainSdkConfig(),
-            featureToggles = BlockchainFeatureToggles(),
+            featureToggles = BlockchainFeatureToggles(
+                isYieldSupplyEnabled = false,
+            ),
         )
     }
 
