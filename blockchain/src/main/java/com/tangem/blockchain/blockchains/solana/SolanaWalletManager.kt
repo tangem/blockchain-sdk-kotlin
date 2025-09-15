@@ -558,7 +558,5 @@ class SolanaWalletManager internal constructor(
         // delay between SPLIT transaction (if any) and other (usually UNSTAKE)
         // SPLIT transaction is not executed immediately, so we should wait for 15 seconds to send UNSTAKE transactions
         const val DELAY_AFTER_SPLIT_TRANSACTION = 15000L
-
-        const val SOLANA_SIGNATURE_PLACEHOLDER_LENGTH = 65
     }
 }
