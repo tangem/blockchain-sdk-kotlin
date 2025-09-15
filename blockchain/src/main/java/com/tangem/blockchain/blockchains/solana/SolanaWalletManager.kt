@@ -19,10 +19,7 @@ import com.tangem.blockchain.extensions.*
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.rpc.Cluster
@@ -391,13 +388,14 @@ class SolanaWalletManager internal constructor(
         }
     }
 
-    suspend fun handleLargeLegacyTransaction(signer: TransactionSigner, legacyTransaction: ByteArray): Result<Unit> {
-        return solanaTransactionSizeReducer.process(
-            signer = signer,
-            rawTransaction = legacyTransaction,
-        )
-    }
-
+    suspend fun handleLargeLegacyTransaction(signer: TransactionSigner, legacyTransaction: ByteArray): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            solanaTransactionSizeReducer.process(
+                signer = signer,
+                rawTransaction = legacyTransaction,
+            )
+        }
+        
     private suspend fun getOwnerAccountInfo(
         amount: Amount,
     ): Result<Pair<SolanaSplAccountInfo, SolanaTokenProgram.ID>>? {
