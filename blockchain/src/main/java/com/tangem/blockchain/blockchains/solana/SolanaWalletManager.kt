@@ -368,6 +368,26 @@ class SolanaWalletManager internal constructor(
         )
     }
 
+    override suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
+        val transactionWithSignaturePlaceholder =
+            ((transactionData as? TransactionData.Compiled)?.value as? TransactionData.Compiled.Data.Bytes)?.data
+
+        val messageBytes = transactionWithSignaturePlaceholder?.let {
+            SolanaTransactionHelper.removeSignaturesPlaceholders(it)
+        }
+
+        if (messageBytes != null) {
+            val networkFee = getNetworkFee(messageBytes).successOr { return it }
+            return Result.Success(
+                data = TransactionFee.Single(
+                    Fee.Common(Amount(networkFee, wallet.blockchain)),
+                ),
+            )
+        } else {
+            return super.getFee(transactionData)
+        }
+    }
+
     suspend fun handleLargeLegacyTransaction(signer: TransactionSigner, legacyTransaction: ByteArray): Result<Unit> =
         withContext(Dispatchers.IO) {
             solanaTransactionSizeReducer.process(
@@ -400,6 +420,14 @@ class SolanaWalletManager internal constructor(
             amount = amount,
             ownerAccountInfo = ownerAccountInfo,
         ).successOr { return it }
+        val result = multiNetworkProvider.performRequest {
+            getFeeForMessage(transaction)
+        }.successOr { return it }
+
+        return Result.Success(result.value.let(SolanaValueConverter::toSol))
+    }
+
+    private suspend fun getNetworkFee(transaction: ByteArray): Result<BigDecimal> {
         val result = multiNetworkProvider.performRequest {
             getFeeForMessage(transaction)
         }.successOr { return it }
