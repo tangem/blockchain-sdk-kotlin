@@ -59,8 +59,8 @@ internal class SolanaTransactionBuilder(
         amount: BigDecimal,
     ): Result<SolanaTransaction> {
         val recentBlockHash = multiNetworkProvider.performRequest {
-            getLatestBlockhash()
-        }.successOr { return Result.Failure(it.error) }
+            getLatestBlockhashInfo()
+        }.successOr { return Result.Failure(it.error) }.blockhash
         val destinationAccount = PublicKey(destinationAddress)
         val lamports = SolanaValueConverter.toLamports(amount)
 
@@ -117,8 +117,8 @@ internal class SolanaTransactionBuilder(
             ).successOr { return Result.Failure(it.error) }
 
             val recentBlockHash = multiNetworkProvider.performRequest {
-                getLatestBlockhash()
-            }.successOr { return it }
+                getLatestBlockhashInfo()
+            }.successOr { return it }.blockhash
             setRecentBlockHash(recentBlockHash)
         }
 
