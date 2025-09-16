@@ -146,15 +146,16 @@ internal open class EthereumNetworkService(
 
     private suspend fun getTokensBalanceInternal(address: String, tokens: Set<Token>): List<Amount> {
         return coroutineScope {
-            val yieldContract = yieldSupplyProvider.getYieldContract()
-            val isYieldSupported = yieldSupplyProvider.isSupported() && yieldContract != EthereumUtils.ZERO_ADDRESS
+            val isYieldSupported = yieldSupplyProvider.isSupported()
 
             tokens.map { token ->
                 async {
                     if (isYieldSupported) {
+                        val yieldContract = yieldSupplyProvider.getYieldContract()
+
                         val yieldLendingStatus = yieldSupplyProvider.getYieldSupplyStatus(token.contractAddress)
 
-                        if (yieldLendingStatus?.isActive == true) {
+                        if (yieldLendingStatus?.isActive == true && yieldContract != EthereumUtils.ZERO_ADDRESS) {
                             yieldSupplyProvider.getBalance(yieldLendingStatus, token)
                         } else {
                             getTokenBalance(address, token)
