@@ -71,13 +71,8 @@ internal class QuaiAddressService : EthereumAddressService() {
         extendedPublicKey: ExtendedPublicKey,
         curve: EllipticCurve?,
     ): String {
-        Log.i(this::class.java.simpleName, "Using proper HD derivation for Quai address")
-        val baseAddress = super.makeAddress(extendedPublicKey.publicKey, curve)
-        if (validateCyprus1Address(baseAddress)) {
-            Log.i(this::class.java.simpleName, "Base address is valid Cyprus-1: $baseAddress")
-            return baseAddress
-        }
-        for (index in 1 until Int.MAX_VALUE) {
+        Log.i(this::class.java.simpleName, "Using HD derivation m/44'/994'/0'/0/{index} for Quai address")
+        for (index in 0 until Int.MAX_VALUE) {
             try {
                 val derivationNode = DerivationNode.NonHardened(index.toLong())
                 val derivedKey = extendedPublicKey.derivePublicKey(derivationNode)
