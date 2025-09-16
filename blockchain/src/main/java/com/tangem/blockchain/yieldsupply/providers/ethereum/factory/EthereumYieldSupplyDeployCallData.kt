@@ -13,7 +13,7 @@ import org.kethereum.extensions.toBytesPadded
  *
  *  Signature: `deployYieldModule(address,address,uint240)`
  */
-internal class EthereumYieldSupplyDeployCallData(
+class EthereumYieldSupplyDeployCallData(
     private val address: String,
     private val tokenContractAddress: String,
     private val maxNetworkFee: Amount,
