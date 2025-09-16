@@ -13,7 +13,7 @@ import org.kethereum.extensions.toBytesPadded
  *
  *  Signature: `reactivateToken(address,uint240)`
  */
-internal class EthereumYieldSupplyReactivateTokenCallData(
+class EthereumYieldSupplyReactivateTokenCallData(
     private val tokenContractAddress: String,
     private val maxNetworkFee: Amount,
 ) : SmartContractCallData {
