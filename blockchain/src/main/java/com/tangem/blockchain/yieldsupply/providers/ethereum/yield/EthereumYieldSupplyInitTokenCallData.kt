@@ -12,7 +12,7 @@ import org.kethereum.extensions.toBytesPadded
  *
  *  Signature: `initYieldToken(address,uint240)`
  */
-internal class EthereumYieldSupplyInitTokenCallData(
+class EthereumYieldSupplyInitTokenCallData(
     private val tokenContractAddress: String,
     private val maxNetworkFee: Amount,
 ) : SmartContractCallData {
