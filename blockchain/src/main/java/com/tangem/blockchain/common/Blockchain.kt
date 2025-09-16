@@ -28,6 +28,7 @@ import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.vechain.VeChainWalletManager
 import com.tangem.blockchain.blockchains.xdc.XDCAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
+import com.tangem.blockchain.blockchains.quai.QuaiAddressService
 import com.tangem.blockchain.common.address.*
 import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
@@ -36,6 +37,7 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 import com.tangem.blockchain.nft.models.NFTAsset
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
+import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 
 /**
  * @param id sdk blockchain id
@@ -205,6 +207,8 @@ enum class Blockchain(
     PepecoinTestnet("pepecoin/test", "PEP", "Pepecoin Testnet"),
     Hyperliquid("hyperliquid", "HYPE", "Hyperliquid EVM"),
     HyperliquidTestnet("hyperliquid/test", "HYPE", "Hyperliquid EVM Testnet"),
+    Quai("quai", "QUAI", "Quai"),
+    QuaiTestnet("quai/test", "QUAI", "Quai Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -341,6 +345,7 @@ enum class Blockchain(
         Scroll, ScrollTestnet,
         ZkLinkNova, ZkLinkNovaTestnet,
         Hyperliquid, HyperliquidTestnet,
+        Quai, QuaiTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -359,6 +364,15 @@ enum class Blockchain(
         } else {
             addressService.makeAddresses(walletPublicKey, curve)
         }
+    }
+
+    fun makeAddressesFromExtendedPublicKey(
+        extendedPublicKey: ExtendedPublicKey,
+        curve: EllipticCurve = EllipticCurve.Secp256k1,
+    ): Set<Address> {
+        val addressService = getAddressService()
+        val address = addressService.makeAddressFromExtendedPublicKey(extendedPublicKey, curve)
+        return setOf(Address(address))
     }
 
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
@@ -432,6 +446,8 @@ enum class Blockchain(
             ZkLinkNova, ZkLinkNovaTestnet,
             Hyperliquid, HyperliquidTestnet,
             -> EthereumAddressService()
+
+            Quai, QuaiTestnet -> QuaiAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
 
@@ -580,6 +596,7 @@ enum class Blockchain(
             Scroll, ScrollTestnet -> ScrollTestnet
             Pepecoin, PepecoinTestnet -> PepecoinTestnet
             Hyperliquid, HyperliquidTestnet -> HyperliquidTestnet
+            Quai, QuaiTestnet -> QuaiTestnet
             Unknown,
             Cardano,
             Dogecoin,
@@ -693,6 +710,7 @@ enum class Blockchain(
             ZkLinkNova, ZkLinkNovaTestnet,
             Pepecoin, PepecoinTestnet,
             Hyperliquid, HyperliquidTestnet,
+            Quai, QuaiTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -810,6 +828,8 @@ enum class Blockchain(
             PepecoinTestnet -> Chain.PepecoinTestnet.id
             Hyperliquid -> Chain.Hyperliquid.id
             HyperliquidTestnet -> Chain.HyperliquidTestnet.id
+            Quai -> Chain.Quai.id
+            QuaiTestnet -> Chain.QuaiTestnet.id
             else -> null
         }
     }
