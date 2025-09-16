@@ -2,9 +2,13 @@ package com.tangem.blockchain.common.assembly.impl
 
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
+import com.tangem.blockchain.blockchains.ethereum.network.EthereumLikeJsonRpcProvider
+import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.blockchains.ethereum.providers.*
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
+import com.tangem.blockchain.blockchains.quai.QuaiJsonRpcProvider
+import com.tangem.blockchain.blockchains.quai.QuaiNetworkService
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
@@ -15,6 +19,7 @@ import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.nft.NFTProviderFactory
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
+import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.blockchain.yieldsupply.YieldSupplyProviderFactory
 
 internal class EthereumLikeWalletManagerAssembly(
@@ -35,9 +40,10 @@ internal class EthereumLikeWalletManagerAssembly(
             return EthereumWalletManager(
                 wallet = this,
                 transactionBuilder = EthereumTransactionBuilder.create(wallet = input.wallet),
-                networkProvider = EthereumNetworkService(
-                    multiJsonRpcProvider = multiNetworkProvider,
+                networkProvider = createNetworkService(
+                    blockchain = blockchain,
                     yieldSupplyProvider = yieldLendingProvider,
+                    multiNetworkProvider = multiNetworkProvider,
                 ),
                 transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
                 nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
@@ -47,12 +53,35 @@ internal class EthereumLikeWalletManagerAssembly(
         }
     }
 
+    private fun createNetworkService(
+        blockchain: Blockchain,
+        multiNetworkProvider: MultiNetworkProvider<out EthereumLikeJsonRpcProvider>,
+        yieldSupplyProvider: YieldSupplyProvider,
+    ): EthereumNetworkProvider {
+        return when (blockchain) {
+            Blockchain.Quai, Blockchain.QuaiTestnet -> {
+                @Suppress("UNCHECKED_CAST")
+                QuaiNetworkService(
+                    multiJsonRpcProvider = multiNetworkProvider as MultiNetworkProvider<QuaiJsonRpcProvider>,
+                    yieldSupplyProvider = yieldSupplyProvider,
+                )
+            }
+            else -> {
+                @Suppress("UNCHECKED_CAST")
+                EthereumNetworkService(
+                    multiJsonRpcProvider = multiNetworkProvider as MultiNetworkProvider<EthereumJsonRpcProvider>,
+                    yieldSupplyProvider = yieldSupplyProvider,
+                )
+            }
+        }
+    }
+
     @Suppress("CyclomaticComplexMethod")
     private fun getProvidersBuilder(
         blockchain: Blockchain,
         providerTypes: List<ProviderType>,
         config: BlockchainSdkConfig,
-    ): NetworkProvidersBuilder<EthereumJsonRpcProvider> {
+    ): NetworkProvidersBuilder<EthereumLikeJsonRpcProvider> {
         return when (blockchain) {
             Blockchain.Arbitrum, Blockchain.ArbitrumTestnet -> ArbitrumProvidersBuilder(providerTypes, config)
             Blockchain.Avalanche, Blockchain.AvalancheTestnet -> AvalancheProvidersBuilder(providerTypes, config)
@@ -103,6 +132,7 @@ internal class EthereumLikeWalletManagerAssembly(
             Blockchain.Scroll, Blockchain.ScrollTestnet -> ScrollProvidersBuilder(providerTypes)
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet -> ZkLinkNovaProvidersBuilder(providerTypes)
             Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet -> HyperliquidProvidersBuilder(providerTypes)
+            Blockchain.Quai, Blockchain.QuaiTestnet -> QuaiProvidersBuilder(providerTypes)
             else -> error("Unsupported blockchain: $blockchain")
         }
     }

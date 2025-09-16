@@ -93,8 +93,14 @@ class WalletManagerFactory(
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
         if (checkIfWrongKey(blockchain, curve, publicKey)) return null
-
-        val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
+        val addresses = if (blockchain == Blockchain.Quai || blockchain == Blockchain.QuaiTestnet) {
+            val extendedPublicKey = publicKey.derivationType?.hdKey?.extendedPublicKey
+            extendedPublicKey?.let {
+                blockchain.makeAddressesFromExtendedPublicKey(extendedPublicKey, curve)
+            } ?: return null
+        } else {
+            blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
+        }
         val wallet = Wallet(blockchain, addresses, publicKey, setOf())
 
         return getAssembly(blockchain).make(
@@ -162,6 +168,7 @@ class WalletManagerFactory(
             Blockchain.Scroll, Blockchain.ScrollTestnet,
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet,
             Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet,
+            Blockchain.Quai, Blockchain.QuaiTestnet,
             -> EthereumLikeWalletManagerAssembly(dataStorage)
 
             Blockchain.Mantle, Blockchain.MantleTestnet,
