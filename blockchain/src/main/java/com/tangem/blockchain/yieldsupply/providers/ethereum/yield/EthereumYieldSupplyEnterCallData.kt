@@ -10,7 +10,7 @@ import com.tangem.common.extensions.hexToBytes
  *
  *  Signature: `enterProtocolByOwner(address)`
  */
-internal class EthereumYieldSupplyEnterCallData(
+class EthereumYieldSupplyEnterCallData(
     private val tokenContractAddress: String,
 ) : SmartContractCallData {
     override val methodId: String = "0x79be55f7"
