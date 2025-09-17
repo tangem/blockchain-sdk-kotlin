@@ -209,7 +209,7 @@ object DerivationConfigV1 : DerivationConfig() {
             -> mapOf(AddressType.Default to DerivationPath("m/44'/3434'/0'/0/0"))
             Blockchain.Quai,
             Blockchain.QuaiTestnet,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/994'/0'/0/0"))
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/994'/0'/0"))
         }
     }
 }
