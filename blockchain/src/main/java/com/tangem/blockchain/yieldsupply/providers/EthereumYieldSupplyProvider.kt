@@ -25,10 +25,10 @@ import com.tangem.blockchain.yieldsupply.providers.ethereum.processor.EthereumYi
 import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyBalanceCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyProtocolBalanceCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyStatusCallData
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -153,6 +153,7 @@ internal class EthereumYieldSupplyProvider(
                 isActive = yieldSupplyStatus.isActive,
                 isInitialized = yieldSupplyStatus.isInitialized,
                 isAllowedToSpend = isAllowedToSpendDeferred.await(),
+                maxNetworkFee = yieldSupplyStatus.maxNetworkFee,
             ),
         )
     }
