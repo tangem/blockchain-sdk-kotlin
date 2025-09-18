@@ -91,6 +91,5 @@ sealed class AmountType {
         val isActive: Boolean,
         val isInitialized: Boolean,
         val isAllowedToSpend: Boolean,
-        val maxNetworkFee: BigDecimal,
     ) : AmountType()
 }
