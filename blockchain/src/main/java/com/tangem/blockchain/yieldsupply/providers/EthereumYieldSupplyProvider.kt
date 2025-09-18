@@ -153,7 +153,6 @@ internal class EthereumYieldSupplyProvider(
                 isActive = yieldSupplyStatus.isActive,
                 isInitialized = yieldSupplyStatus.isInitialized,
                 isAllowedToSpend = isAllowedToSpendDeferred.await(),
-                maxNetworkFee = yieldSupplyStatus.maxNetworkFee,
             ),
         )
     }
