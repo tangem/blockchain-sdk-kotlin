@@ -69,8 +69,8 @@ interface YieldSupplyProvider {
     /**
      *  Checks if the wallet is allowed to spend the specified yield token.
      *
-     *  @param tokenContractAddress The contract address of the yield token.
+     *  @param token The yield token for which to check allowance.
      *  @return True if allowed to spend, false otherwise.
      */
-    suspend fun isAllowedToSpend(tokenContractAddress: String): Boolean
+    suspend fun isAllowedToSpend(token: Token): Boolean
 }
