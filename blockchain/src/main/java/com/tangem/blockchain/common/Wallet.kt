@@ -76,11 +76,21 @@ class Wallet(
     }
 
     fun getTokenAmount(token: Token): Amount? {
-        val key = amounts.keys.find { it is AmountType.Token && it.token == token }
+        val key = amounts.keys.find {
+            it is AmountType.Token && it.token == token ||
+                it is AmountType.TokenYieldSupply && it.token == token
+        }
         return amounts[key]
     }
 
-    fun getTokens(): Set<Token> = amounts.keys.filterIsInstance<AmountType.Token>().map { it.token }.toSet()
+    fun getTokens(): Set<Token> = amounts.keys
+        .mapNotNull { type ->
+            when (type) {
+                is AmountType.Token -> type.token
+                is AmountType.TokenYieldSupply -> type.token
+                else -> null
+            }
+        }.toSet()
 
     fun addTransactionDummy(direction: TransactionDirection? = null) {
         var sourceAddress = "unknown"
