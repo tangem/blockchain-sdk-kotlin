@@ -27,5 +27,5 @@ internal object DefaultYieldSupplyProvider : YieldSupplyProvider {
 
     override suspend fun getProtocolBalance(token: Token): BigDecimal = BigDecimal.ZERO
 
-    override suspend fun isAllowedToSpend(tokenContractAddress: String): Boolean = false
+    override suspend fun isAllowedToSpend(token: Token): Boolean = false
 }
