@@ -92,9 +92,9 @@ internal class EthereumYieldSupplyProvider(
         val supplyContractAddresses = getYieldSupplyContractAddresses()
         val storedYieldContractAddress = dataStorage.getOrNull<YieldSupplyModule>(
             key = storeKey(supplyContractAddresses.providerType),
-        )?.yieldContractAddress
+        )?.yieldContractAddress ?: EthereumUtils.ZERO_ADDRESS
 
-        return if (storedYieldContractAddress == null) {
+        return if (storedYieldContractAddress == EthereumUtils.ZERO_ADDRESS) {
             val rawContractAddress = multiJsonRpcProvider.performRequest(
                 request = EthereumJsonRpcProvider::call,
                 data = EthCallObject(
@@ -141,7 +141,7 @@ internal class EthereumYieldSupplyProvider(
         }
 
         val isAllowedToSpendDeferred = async {
-            isAllowedToSpend(token.contractAddress)
+            isAllowedToSpend(token)
         }
 
         Amount(
@@ -172,11 +172,11 @@ internal class EthereumYieldSupplyProvider(
         ).orZero()
     }
 
-    override suspend fun isAllowedToSpend(tokenContractAddress: String): Boolean {
-        val allowed = multiJsonRpcProvider.performRequest(
+    override suspend fun isAllowedToSpend(token: Token): Boolean {
+        val allowanceRaw = multiJsonRpcProvider.performRequest(
             request = EthereumJsonRpcProvider::call,
             data = EthCallObject(
-                to = tokenContractAddress,
+                to = token.contractAddress,
                 data = AllowanceERC20TokenCallData(
                     ownerAddress = wallet.address,
                     spenderAddress = getYieldContract(),
@@ -184,7 +184,13 @@ internal class EthereumYieldSupplyProvider(
             ),
         ).extractResult()
 
-        return allowed != HEX_F.repeat(n = 64)
+        val allowanceValue = EthereumUtils.parseEthereumDecimal(
+            value = allowanceRaw,
+            decimalsCount = wallet.blockchain.decimals(),
+        ).orZero()
+        val tokenBalance = wallet.getTokenAmount(token)?.value.orZero()
+
+        return allowanceValue > BigDecimal.ZERO && allowanceValue >= tokenBalance
     }
 
     private fun storeKey(providerType: YieldSupplyProviderType) = "yield-supply-${providerType.key}" +
