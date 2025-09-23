@@ -23,7 +23,7 @@ import com.tangem.blockchain.yieldsupply.providers.ethereum.factory.EthereumYiel
 import com.tangem.blockchain.yieldsupply.providers.ethereum.factory.EthereumYieldSupplyModuleCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.processor.EthereumYieldSupplyServiceFeeCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyBalanceCallData
-import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyProtocolBalanceCallData
+import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyEffectiveProtocolBalanceCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyStatusCallData
 import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
@@ -89,26 +89,17 @@ internal class EthereumYieldSupplyProvider(
     }
 
     override suspend fun calculateYieldContract(): String {
-        val supplyContractAddresses = getYieldSupplyContractAddresses()
-        val storedYieldContractAddress = dataStorage.getOrNull<YieldSupplyModule>(
-            key = storeKey(supplyContractAddresses.providerType),
-        )?.yieldContractAddress ?: EthereumUtils.ZERO_ADDRESS
+        val rawContractAddress = multiJsonRpcProvider.performRequest(
+            request = EthereumJsonRpcProvider::call,
+            data = EthCallObject(
+                to = getYieldSupplyContractAddresses().factoryContractAddress,
+                data = EthereumYieldSupplyContractAddressCallData(wallet.address).dataHex,
+            ),
+        ).extractResult()
 
-        return if (storedYieldContractAddress == EthereumUtils.ZERO_ADDRESS) {
-            val rawContractAddress = multiJsonRpcProvider.performRequest(
-                request = EthereumJsonRpcProvider::call,
-                data = EthCallObject(
-                    to = getYieldSupplyContractAddresses().factoryContractAddress,
-                    data = EthereumYieldSupplyContractAddressCallData(wallet.address).dataHex,
-                ),
-            ).extractResult()
+        val yieldContractAddress = HEX_PREFIX + rawContractAddress.takeLast(EthereumUtils.ADDRESS_HEX_LENGTH)
 
-            val yieldContractAddress = HEX_PREFIX + rawContractAddress.takeLast(EthereumUtils.ADDRESS_HEX_LENGTH)
-
-            yieldContractAddress
-        } else {
-            storedYieldContractAddress
-        }
+        return yieldContractAddress
     }
 
     override suspend fun getYieldSupplyStatus(tokenContractAddress: String): YieldSupplyStatus {
@@ -162,7 +153,9 @@ internal class EthereumYieldSupplyProvider(
             request = EthereumJsonRpcProvider::call,
             data = EthCallObject(
                 to = getYieldContract(),
-                data = EthereumYieldSupplyProtocolBalanceCallData(token.contractAddress).dataHex,
+                data = EthereumYieldSupplyEffectiveProtocolBalanceCallData(
+                    tokenContractAddress = token.contractAddress,
+                ).dataHex,
             ),
         ).extractResult()
 
