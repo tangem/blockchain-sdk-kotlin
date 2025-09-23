@@ -20,10 +20,10 @@ import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 
 @Suppress("ClassOrdering")
-internal class PolygonTransactionHistoryProvider(
+internal class EtherscanTransactionHistoryProvider(
     private val blockchain: Blockchain,
-    private val api: PolygonScanApi,
-    private val polygonScanApiKey: String,
+    private val api: EtherScanApi,
+    private val etherscanApiKey: String,
 ) : TransactionHistoryProvider {
 
     @Suppress("TooGenericExceptionThrown")
@@ -35,17 +35,19 @@ internal class PolygonTransactionHistoryProvider(
             val response = withContext(Dispatchers.IO) {
                 when (filterType) {
                     TransactionHistoryRequest.FilterType.Coin -> api.getCoinTransactionHistory(
+                        chainId = requireNotNull(blockchain.getChainId()) { "chainId must not be null" },
                         address = address,
                         page = 1,
                         offset = 1, // We don't need to know all transactions to define state
-                        apiKey = polygonScanApiKey,
+                        apiKey = etherscanApiKey,
                     )
                     is TransactionHistoryRequest.FilterType.Contract -> api.getTokenTransactionHistory(
+                        chainId = requireNotNull(blockchain.getChainId()) { "chainId must not be null" },
                         address = address,
                         page = 1,
                         offset = 100, // There are might be spam transaction in first transactions
                         contractAddress = filterType.tokenInfo.contractAddress,
-                        apiKey = polygonScanApiKey,
+                        apiKey = etherscanApiKey,
                     )
                 }
             }
@@ -80,17 +82,19 @@ internal class PolygonTransactionHistoryProvider(
             val response = withContext(Dispatchers.IO) {
                 when (request.filterType) {
                     TransactionHistoryRequest.FilterType.Coin -> api.getCoinTransactionHistory(
+                        chainId = requireNotNull(blockchain.getChainId()) { "chainId must not be null" },
                         address = request.address,
                         offset = request.pageSize,
                         page = pageToLoad,
-                        apiKey = polygonScanApiKey,
+                        apiKey = etherscanApiKey,
                     )
                     is TransactionHistoryRequest.FilterType.Contract -> api.getTokenTransactionHistory(
+                        chainId = requireNotNull(blockchain.getChainId()) { "chainId must not be null" },
                         address = request.address,
                         offset = request.pageSize,
                         page = pageToLoad,
                         contractAddress = request.filterType.tokenInfo.contractAddress,
-                        apiKey = polygonScanApiKey,
+                        apiKey = etherscanApiKey,
                     )
                 }
             }

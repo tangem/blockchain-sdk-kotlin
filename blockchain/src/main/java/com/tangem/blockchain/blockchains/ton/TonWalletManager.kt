@@ -28,6 +28,8 @@ internal class TonWalletManager(
     override val currentHost: String
         get() = networkService.host
 
+    override val isSelfSendAvailable = true
+
     override var accountInitializationState: InitializableAccount.State = InitializableAccount.State.UNDEFINED
 
     override suspend fun updateInternal() {
