@@ -10,7 +10,7 @@ internal class QuaiProvidersBuilder(
     override val providerTypes: List<ProviderType>,
 ) : OnlyPublicProvidersBuilder<QuaiJsonRpcProvider>(
     providerTypes = providerTypes,
-    testnetProviders = listOf("https://rpc.quai.network/cyprus1/"),
+    testnetProviders = listOf("https://orchard.rpc.quai.network/cyprus1"),
 ) {
 
     override fun createProviders(blockchain: Blockchain): List<QuaiJsonRpcProvider> {
@@ -35,6 +35,6 @@ internal class QuaiProvidersBuilder(
 
     private companion object {
         const val POSTFIX_URL = "cyprus1" // Cyprus-1 is the only active zone
-        const val DEFAULT_CYPRUS_1_RPC = "https://rpc.quai.network/cyprus1/"
+        const val DEFAULT_CYPRUS_1_RPC = "https://9.rpc.thirdweb.com"
     }
 }
