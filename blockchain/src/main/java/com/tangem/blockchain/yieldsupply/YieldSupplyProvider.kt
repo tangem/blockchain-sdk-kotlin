@@ -59,7 +59,7 @@ interface YieldSupplyProvider {
     suspend fun getBalance(yieldSupplyStatus: YieldSupplyStatus, token: Token): Amount
 
     /**
-     *  Retrieves the total balance of the underlying protocol assets for a specific yield token.
+     *  Retrieves the balance (excluding service fee) of the underlying protocol assets for a specific yield token
      *
      *  @param token The yield token for which to retrieve the protocol balance.
      *  @return The protocol balance as a [BigDecimal].
