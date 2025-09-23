@@ -39,6 +39,8 @@ abstract class WalletManager(
 
     open val dustValue: BigDecimal? = null
 
+    open val isSelfSendAvailable = (this as? UtxoBlockchainManager)?.allowConsolidation == true
+
     private val updateDebounced = DebouncedInvoke()
 
     /**
@@ -329,7 +331,7 @@ interface NameResolver {
 /**
  * Common interface for UTXO blockchain managers
  */
-interface UtxoBlockchainManager {
+internal interface UtxoBlockchainManager {
     /** Indicates allowance of self sending */
     val allowConsolidation: Boolean
 }
