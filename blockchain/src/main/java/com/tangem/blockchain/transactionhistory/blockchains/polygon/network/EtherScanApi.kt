@@ -3,10 +3,11 @@ package com.tangem.blockchain.transactionhistory.blockchains.polygon.network
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-internal interface PolygonScanApi {
+internal interface EtherScanApi {
 
     @GET("api")
     suspend fun getCoinTransactionHistory(
+        @Query("chainid") chainId: Int,
         @Query("address") address: String,
         @Query("page") page: Int,
         @Query("offset") offset: Int,
@@ -18,8 +19,10 @@ internal interface PolygonScanApi {
         @Query("sort") sort: String = "desc",
     ): PolygonTransactionHistoryResponse
 
+    @Suppress("LongParameterList")
     @GET("api")
     suspend fun getTokenTransactionHistory(
+        @Query("chainid") chainId: Int,
         @Query("address") address: String,
         @Query("page") page: Int,
         @Query("offset") offset: Int,
