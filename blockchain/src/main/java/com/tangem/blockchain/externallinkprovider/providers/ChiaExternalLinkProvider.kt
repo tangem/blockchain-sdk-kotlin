@@ -5,7 +5,7 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class ChiaExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
-    override val explorerBaseUrl: String = if (isTestnet) "https://testnet10.spacescan.io/" else "https://xchscan.com/"
+    override val explorerBaseUrl: String = if (isTestnet) "https://testnet10.spacescan.io/" else "https://spacescan.io/"
 
     override val testNetTopUpUrl: String? = if (isTestnet) "https://xchdev.com/#!faucet.md" else null
 
