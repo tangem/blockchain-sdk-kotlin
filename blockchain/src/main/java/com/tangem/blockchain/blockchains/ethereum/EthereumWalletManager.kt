@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.ethereum
 import android.util.Log
 import com.tangem.blockchain.blockchains.ethereum.eip1559.isSupportEIP1559
 import com.tangem.blockchain.blockchains.ethereum.ens.DefaultENSNameProcessor
+import com.tangem.blockchain.blockchains.ethereum.network.EthereumFeeHistory
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.ApprovalERC20TokenCallData
@@ -291,6 +292,10 @@ open class EthereumWalletManager(
 
     override suspend fun getGasPrice(): Result<BigInteger> {
         return networkProvider.getGasPrice()
+    }
+
+    override suspend fun getGasHistory(): Result<EthereumFeeHistory> {
+        return networkProvider.getFeeHistory()
     }
 
     override suspend fun getGasLimit(amount: Amount, destination: String): Result<BigInteger> {
