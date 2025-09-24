@@ -148,7 +148,8 @@ object EthereumUtils {
         val value: BigInteger
         val input: ByteArray // data for smart contract
 
-        when (transactionData.amount.type) {
+        // TODO refactor [REDACTED_TASK_KEY]
+        when (val amountType = transactionData.amount.type) {
             is AmountType.TokenYieldSupply, // Destination is defined by application
             AmountType.Coin,
             -> { // coin transfer
@@ -157,9 +158,7 @@ object EthereumUtils {
                 input = extras.callData?.data ?: ByteArray(0) // use empty ByteArray
             }
             is AmountType.Token -> { // token transfer (or approve)
-                to = Address(
-                    transactionData.contractAddress ?: error("Contract address is not specified!"),
-                )
+                to = Address(amountType.token.contractAddress)
                 value = BigInteger.ZERO
                 input = extras.callData?.data ?: error("Call data is not specified")
             }
