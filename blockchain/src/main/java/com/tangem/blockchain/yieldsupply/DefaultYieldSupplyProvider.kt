@@ -14,9 +14,9 @@ internal object DefaultYieldSupplyProvider : YieldSupplyProvider {
 
     override fun getYieldSupplyContractAddresses(): YieldSupplyContractAddresses? = null
 
-    override suspend fun getYieldContract(): String = EthereumUtils.ZERO_ADDRESS
+    override suspend fun getYieldModuleAddress(): String = EthereumUtils.ZERO_ADDRESS
 
-    override suspend fun calculateYieldContract(): String = EthereumUtils.ZERO_ADDRESS
+    override suspend fun calculateYieldModuleAddress(): String = EthereumUtils.ZERO_ADDRESS
 
     override suspend fun getServiceFee(): BigDecimal = BigDecimal.ZERO
 

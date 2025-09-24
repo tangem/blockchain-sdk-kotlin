@@ -150,7 +150,7 @@ internal open class EthereumNetworkService(
 
             tokens.map { token ->
                 async {
-                    if (isYieldSupported && yieldSupplyProvider.getYieldContract() != EthereumUtils.ZERO_ADDRESS) {
+                    if (isYieldSupported && yieldSupplyProvider.getYieldModuleAddress() != EthereumUtils.ZERO_ADDRESS) {
                         val yieldLendingStatus = yieldSupplyProvider.getYieldSupplyStatus(token.contractAddress)
                         if (yieldLendingStatus?.isActive == true) {
                             yieldSupplyProvider.getBalance(yieldLendingStatus, token)
