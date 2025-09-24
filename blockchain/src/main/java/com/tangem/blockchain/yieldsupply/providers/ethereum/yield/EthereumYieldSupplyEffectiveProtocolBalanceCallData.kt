@@ -5,14 +5,15 @@ import com.tangem.blockchain.extensions.hexToFixedSizeBytes
 import com.tangem.common.extensions.hexToBytes
 
 /**
- *  Call data for the method that retrieves the total balance held by the protocol for a specific yield token.
+ *  Call data for the method that retrieves the total balance (excluding service fee) held by the protocol
+ *  for a specific yield token.
  *
- *  Signature: protocolBalance(address)
+ *  Signature: effectiveProtocolBalance(address)
  */
-internal class EthereumYieldSupplyProtocolBalanceCallData(
+internal class EthereumYieldSupplyEffectiveProtocolBalanceCallData(
     private val tokenContractAddress: String,
 ) : SmartContractCallData {
-    override val methodId: String = "0x4bd22a1b"
+    override val methodId: String = "0x5002bb7e"
     override val data: ByteArray
         get() {
             val prefixData = methodId.hexToBytes()
