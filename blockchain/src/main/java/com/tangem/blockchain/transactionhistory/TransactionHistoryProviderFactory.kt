@@ -63,7 +63,6 @@ internal object TransactionHistoryProviderFactory {
             Blockchain.Optimism,
             Blockchain.PolygonZkEVM,
             Blockchain.Polygon,
-            Blockchain.Sei,
             Blockchain.Scroll,
             Blockchain.Sonic,
             Blockchain.XDC,
