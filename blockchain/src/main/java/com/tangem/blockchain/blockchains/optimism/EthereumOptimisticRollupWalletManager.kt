@@ -13,6 +13,7 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.nft.NFTProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.model.Address
@@ -24,6 +25,7 @@ class EthereumOptimisticRollupWalletManager(
     transactionBuilder: EthereumTransactionBuilder,
     networkProvider: EthereumNetworkProvider,
     nftProvider: NFTProvider,
+    transactionHistoryProvider: TransactionHistoryProvider,
     yieldSupplyProvider: YieldSupplyProvider,
 ) : EthereumWalletManager(
     wallet = wallet,
@@ -31,6 +33,7 @@ class EthereumOptimisticRollupWalletManager(
     networkProvider = networkProvider,
     nftProvider = nftProvider,
     supportsENS = false,
+    transactionHistoryProvider = transactionHistoryProvider,
     yieldSupplyProvider = yieldSupplyProvider,
 ) {
 
