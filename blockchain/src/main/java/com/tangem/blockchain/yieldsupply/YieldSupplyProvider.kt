@@ -32,14 +32,14 @@ interface YieldSupplyProvider {
      *
      *  @return The yield contract address as a [String].
      */
-    suspend fun getYieldContract(): String
+    suspend fun getYieldModuleAddress(): String
 
     /**
      *  Calculates and retrieves the yield contract address for the wallet address
      *
      *  @return The calculated yield contract address as a [String].
      */
-    suspend fun calculateYieldContract(): String
+    suspend fun calculateYieldModuleAddress(): String
 
     /**
      *  Retrieves the status of a specific yield token.
