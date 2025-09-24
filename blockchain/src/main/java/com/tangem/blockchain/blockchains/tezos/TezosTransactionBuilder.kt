@@ -74,8 +74,8 @@ class TezosTransactionBuilder(
         for (operation in operationContents) {
             stringBuilder.append(
                 when (operation.kind) {
-                    "reveal" -> TezosConstants.REVEAL_OPERATION_KIND
-                    "transaction" -> TezosConstants.TRANSACTION_OPERATION_KIND
+                    REVEAL_TYPE -> TezosConstants.REVEAL_OPERATION_KIND
+                    TRANSACTION_TYPE -> TezosConstants.TRANSACTION_OPERATION_KIND
                     else -> error("Unsupported operation kind")
                 },
             )
@@ -86,13 +86,18 @@ class TezosTransactionBuilder(
             stringBuilder.append(operation.storageLimit.txEncodeInteger())
 
             // reveal operation only
-            operation.publicKey?.let { stringBuilder.append(it.txEncodePublicKey()) }
+            if (operation.kind == REVEAL_TYPE) {
+                operation.publicKey?.let {
+                    stringBuilder.append(it.txEncodePublicKey())
+                    stringBuilder.append(ZERO_BYTE)
+                }
+            }
 
             // transaction operation only
             operation.amount?.let { stringBuilder.append(it.txEncodeInteger()) }
             operation.destination?.let { stringBuilder.append(it.txEncodeAddress()) }
             // parameters for transaction operation, we don't use them yet
-            operation.destination?.let { stringBuilder.append("00") }
+            operation.destination?.let { stringBuilder.append(ZERO_BYTE) }
         }
 
         return stringBuilder.toString()
@@ -119,7 +124,7 @@ class TezosTransactionBuilder(
         val addressHex = Base58.decodeChecked(this).toHexString()
         val prefix = addressHex.substring(0..5)
         val newPrefix = when (prefix) {
-            TezosConstants.TZ1_PREFIX -> "00"
+            TezosConstants.TZ1_PREFIX -> ZERO_BYTE
             TezosConstants.TZ2_PREFIX -> "01"
             TezosConstants.TZ3_PREFIX -> "02"
             else -> error("Invalid address format")
@@ -131,7 +136,7 @@ class TezosTransactionBuilder(
         val publicKeyHex = Base58.decodeChecked(this).toHexString()
         val prefix = publicKeyHex.substring(0..7)
         val newPrefix = when (prefix) {
-            TezosConstants.EDPK_PREFIX -> "00"
+            TezosConstants.EDPK_PREFIX -> ZERO_BYTE
             TezosConstants.SPPK_PREFIX -> "01"
             TezosConstants.P2PK_PREFIX -> "02"
             else -> error("Invalid public key format")
@@ -173,5 +178,11 @@ class TezosTransactionBuilder(
             }
         }
         return result
+    }
+
+    private companion object {
+        const val REVEAL_TYPE = "reveal"
+        const val TRANSACTION_TYPE = "transaction"
+        const val ZERO_BYTE = "00"
     }
 }
