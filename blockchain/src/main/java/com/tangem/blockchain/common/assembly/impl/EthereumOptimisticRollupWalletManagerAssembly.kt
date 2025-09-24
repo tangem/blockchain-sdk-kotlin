@@ -18,6 +18,7 @@ import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.nft.NFTProviderFactory
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 import com.tangem.blockchain.yieldsupply.YieldSupplyProviderFactory
 
 internal class EthereumOptimisticRollupWalletManagerAssembly(private val dataStorage: AdvancedDataStorage) :
@@ -42,6 +43,7 @@ internal class EthereumOptimisticRollupWalletManagerAssembly(private val dataSto
                     multiJsonRpcProvider = multiNetworkProvider,
                     yieldSupplyProvider = yieldLendingProvider,
                 ),
+                transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
                 nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
                 yieldSupplyProvider = yieldLendingProvider,
             )
