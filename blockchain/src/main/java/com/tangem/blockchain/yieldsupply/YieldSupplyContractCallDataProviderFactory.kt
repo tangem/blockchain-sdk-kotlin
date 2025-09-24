@@ -3,10 +3,7 @@ package com.tangem.blockchain.yieldsupply
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.factory.EthereumYieldSupplyDeployCallData
-import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyEnterCallData
-import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyExitCallData
-import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyInitTokenCallData
-import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyReactivateTokenCallData
+import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.*
 
 /**
  * Factory to provide [SmartContractCallData] for Yield Module operations.
@@ -75,5 +72,24 @@ object YieldSupplyContractCallDataProviderFactory {
      */
     fun getExitCallData(tokenContractAddress: String): SmartContractCallData = EthereumYieldSupplyExitCallData(
         tokenContractAddress = tokenContractAddress,
+    )
+
+    /**
+     * Provides call data for sending amount from yield module
+     *
+     * @param tokenContractAddress The address of the token contract.
+     * @param destinationAddress Destination address.
+     * @param amount Sending amount.
+     *
+     * @return [SmartContractCallData] for sending while in yield supply.
+     */
+    fun getSendCallData(
+        tokenContractAddress: String,
+        destinationAddress: String,
+        amount: Amount,
+    ): SmartContractCallData = EthereumYieldSupplySendCallData(
+        tokenContractAddress = tokenContractAddress,
+        destinationAddress = destinationAddress,
+        amount = amount,
     )
 }
