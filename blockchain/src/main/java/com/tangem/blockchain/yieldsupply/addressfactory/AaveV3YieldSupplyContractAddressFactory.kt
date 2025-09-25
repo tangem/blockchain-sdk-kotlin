@@ -10,14 +10,14 @@ internal class AaveV3YieldSupplyContractAddressFactory(
 ) {
 
     fun getFactoryAddress(): String = when (blockchain) {
-        Blockchain.Polygon -> "0x685345d16aA462FB52bDB0D73807a199d1c5Ef76"
-        Blockchain.EthereumTestnet -> "0xC013c927B9471889BdECDBd8cFD145CdE8B23f1A"
+        Blockchain.Polygon -> "0x1bE509C2fF23dF065E15A6d37b0eFe4c839c62fE"
+        Blockchain.EthereumTestnet -> "0xF3b31452E8EE5B294D7172B69Bd02decF2255FCd"
         else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
 
     fun getProcessorAddress(): String = when (blockchain) {
-        Blockchain.Polygon -> "0xA32019c38a7EF45b87c09155600EEc457915b782"
-        Blockchain.EthereumTestnet -> "0x54E44c70Ed257Baf81e8CfE77Ffe9c5D2Bf6C04b"
+        Blockchain.Polygon -> "0xD021F1D410aCB895aB110a0CbB740a33db209bDD"
+        Blockchain.EthereumTestnet -> "0x9A4b70A216C1A84d72a490f8cD3014Fdb538d249"
         else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
 }
