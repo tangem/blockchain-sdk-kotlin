@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common.address
 
+import com.tangem.blockchain.blockchains.ethereum.EthereumDerivationData
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 
@@ -12,8 +13,13 @@ abstract class AddressService {
     open fun makeAddressFromExtendedPublicKey(
         extendedPublicKey: ExtendedPublicKey,
         curve: EllipticCurve? = EllipticCurve.Secp256k1,
-    ): String {
-        return makeAddress(extendedPublicKey.publicKey, curve)
+        derivationPath: String?,
+    ): EthereumDerivationData {
+        return EthereumDerivationData(
+            address = makeAddress(extendedPublicKey.publicKey, curve),
+            path = null,
+            publicKey = extendedPublicKey,
+        )
     }
 }
 

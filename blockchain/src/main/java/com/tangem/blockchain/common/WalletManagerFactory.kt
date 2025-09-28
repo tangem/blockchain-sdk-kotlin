@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.impl.*
@@ -10,6 +11,7 @@ import com.tangem.blockchain.common.logging.BlockchainSDKLogger
 import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.common.card.EllipticCurve
+import com.tangem.crypto.hdWallet.DerivationPath
 
 class WalletManagerFactory(
     private val config: BlockchainSdkConfig = BlockchainSdkConfig(),
@@ -93,16 +95,15 @@ class WalletManagerFactory(
         curve: EllipticCurve = EllipticCurve.Secp256k1,
     ): WalletManager? {
         if (checkIfWrongKey(blockchain, curve, publicKey)) return null
-        val addresses = if (blockchain == Blockchain.Quai || blockchain == Blockchain.QuaiTestnet) {
-            val extendedPublicKey = publicKey.derivationType?.hdKey?.extendedPublicKey
-            extendedPublicKey?.let {
-                blockchain.makeAddressesFromExtendedPublicKey(extendedPublicKey, curve)
-            } ?: return null
-        } else {
-            blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
-        }
-        val wallet = Wallet(blockchain, addresses, publicKey, setOf())
 
+        val (addresses, finalPublicKey, finalPath) = when (blockchain) {
+            Blockchain.Quai,
+            Blockchain.QuaiTestnet,
+            -> prepareQuaiWalletData(publicKey, blockchain, curve) ?: return null
+            else -> prepareDefaultWalletData(publicKey, pairPublicKey, blockchain, curve)
+        }
+
+        val wallet = Wallet(blockchain, addresses, finalPublicKey, setOf(), finalPath)
         return getAssembly(blockchain).make(
             input = WalletManagerAssemblyInput(
                 wallet = wallet,
@@ -111,6 +112,35 @@ class WalletManagerFactory(
                 providerTypes = blockchainProviderTypes[blockchain] ?: emptyList(),
             ),
         )
+    }
+
+    private fun prepareQuaiWalletData(
+        publicKey: Wallet.PublicKey,
+        blockchain: Blockchain,
+        curve: EllipticCurve,
+    ): Triple<Set<Address>, Wallet.PublicKey, DerivationPath?>? {
+        val extendedPublicKey = publicKey.derivationType?.hdKey?.extendedPublicKey ?: return null
+        val updatedAddress = blockchain.makeAddressesFromExtendedPublicKey(extendedPublicKey, curve)
+        val newPublicKey = Wallet.PublicKey(
+            seedKey = publicKey.seedKey,
+            derivationType = Wallet.PublicKey.DerivationType.Plain(
+                Wallet.HDKey(
+                    extendedPublicKey = updatedAddress.publicKey,
+                    path = publicKey.derivationPath ?: return null,
+                ),
+            ),
+        )
+        return Triple(setOf(Address(updatedAddress.address)), newPublicKey, updatedAddress.path)
+    }
+
+    private fun prepareDefaultWalletData(
+        publicKey: Wallet.PublicKey,
+        pairPublicKey: ByteArray?,
+        blockchain: Blockchain,
+        curve: EllipticCurve,
+    ): Triple<Set<Address>, Wallet.PublicKey, DerivationPath?> {
+        val calculatedAddresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
+        return Triple(calculatedAddresses, publicKey, null)
     }
 
     @Suppress("LongMethod", "CyclomaticComplexMethod")

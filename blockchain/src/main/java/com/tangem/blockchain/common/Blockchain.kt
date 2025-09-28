@@ -11,6 +11,7 @@ import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.decimal.DecimalAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.ethereum.EthereumDerivationData
 import com.tangem.blockchain.blockchains.factorn.Fact0rnAddressService
 import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
@@ -18,6 +19,7 @@ import com.tangem.blockchain.blockchains.koinos.KoinosAddressService
 import com.tangem.blockchain.blockchains.nexa.NexaAddressService
 import com.tangem.blockchain.blockchains.pepecoin.PepecoinAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
+import com.tangem.blockchain.blockchains.quai.QuaiAddressService
 import com.tangem.blockchain.blockchains.radiant.RadiantAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
@@ -28,7 +30,6 @@ import com.tangem.blockchain.blockchains.tron.TronAddressService
 import com.tangem.blockchain.blockchains.vechain.VeChainWalletManager
 import com.tangem.blockchain.blockchains.xdc.XDCAddressService
 import com.tangem.blockchain.blockchains.xrp.XrpAddressService
-import com.tangem.blockchain.blockchains.quai.QuaiAddressService
 import com.tangem.blockchain.common.address.*
 import com.tangem.blockchain.common.derivation.DerivationStyle
 import com.tangem.blockchain.externallinkprovider.ExternalLinkProvider
@@ -369,10 +370,14 @@ enum class Blockchain(
     fun makeAddressesFromExtendedPublicKey(
         extendedPublicKey: ExtendedPublicKey,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
-    ): Set<Address> {
+    ): EthereumDerivationData {
         val addressService = getAddressService()
-        val address = addressService.makeAddressFromExtendedPublicKey(extendedPublicKey, curve)
-        return setOf(Address(address))
+        val address = addressService.makeAddressFromExtendedPublicKey(
+            extendedPublicKey = extendedPublicKey,
+            curve = curve,
+            derivationPath = derivationPath(DerivationStyle.V3)?.rawPath,
+        )
+        return address
     }
 
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)

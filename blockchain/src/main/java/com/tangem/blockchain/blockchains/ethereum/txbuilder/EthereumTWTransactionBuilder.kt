@@ -4,11 +4,9 @@ import com.google.protobuf.ByteString
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
 import com.tangem.blockchain.blockchains.ethereum.models.EthereumCompiledTransaction
-import com.tangem.blockchain.blockchains.quai.QuaiProtobufUtils
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.hexToBigDecimal
-import com.tangem.blockchain.extensions.removeLeadingZero
 import com.tangem.blockchain.network.moshi
 import com.tangem.common.extensions.hexToBytes
 import org.kethereum.extensions.toByteArray
@@ -26,7 +24,7 @@ import java.math.BigInteger
  *
  * @property wallet wallet
  */
-internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactionBuilder(wallet = wallet) {
+internal open class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactionBuilder(wallet = wallet) {
 
     private val coinType = CoinType.ETHEREUM
     private val chainId = wallet.blockchain.getChainId()
@@ -52,27 +50,7 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
             hash = compiledTransaction.hash,
             signature = signature,
         )
-
-        return if (blockchain == Blockchain.Quai || blockchain == Blockchain.QuaiTestnet) {
-            val ext = UnmarshalHelper.unmarshalSignatureExtended(
-                signature = signature,
-                hash = compiledTransaction.hash,
-                publicKey = decompressedPublicKey,
-            )
-
-            val vBytes = ext.recId.toBigInteger().toByteArray().removeLeadingZero()
-            val rBytes = ext.r.toByteArray().removeLeadingZero()
-            val sBytes = ext.s.toByteArray().removeLeadingZero()
-
-            QuaiProtobufUtils.convertSigningInputToProtobuf(
-                signingInput = compiledTransaction.input,
-                vSignature = vBytes,
-                rSignature32 = rBytes,
-                sSignature32 = sBytes,
-            )
-        } else {
-            output.encoded.toByteArray()
-        }
+        return output.encoded.toByteArray()
     }
 
     override fun buildDummyTransactionForL1(
@@ -101,7 +79,7 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
         return output.encoded.toByteArray()
     }
 
-    private fun buildSigningInput(transaction: TransactionData): Ethereum.SigningInput {
+    protected fun buildSigningInput(transaction: TransactionData): Ethereum.SigningInput {
         return when (transaction) {
             is TransactionData.Compiled -> buildCompiledSingingInput(transaction)
             is TransactionData.Uncompiled -> buildUncompiledSigningInput(transaction)

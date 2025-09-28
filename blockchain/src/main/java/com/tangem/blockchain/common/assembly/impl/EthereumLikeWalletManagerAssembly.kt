@@ -9,6 +9,7 @@ import com.tangem.blockchain.blockchains.ethereum.providers.*
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.quai.QuaiJsonRpcProvider
 import com.tangem.blockchain.blockchains.quai.QuaiNetworkService
+import com.tangem.blockchain.blockchains.quai.QuaiWalletManager
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
@@ -37,18 +38,10 @@ internal class EthereumLikeWalletManagerAssembly(
             )
             val yieldLendingProvider = YieldSupplyProviderFactory(dataStorage).makeProvider(this, multiNetworkProvider)
 
-            return EthereumWalletManager(
-                wallet = this,
-                transactionBuilder = EthereumTransactionBuilder.create(wallet = input.wallet),
-                networkProvider = createNetworkService(
-                    blockchain = blockchain,
-                    yieldSupplyProvider = yieldLendingProvider,
-                    multiNetworkProvider = multiNetworkProvider,
-                ),
-                transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
-                nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
-                yieldSupplyProvider = yieldLendingProvider,
-                supportsENS = false,
+            return createWalletManager(
+                input = input,
+                yieldLendingProvider = yieldLendingProvider,
+                multiNetworkProvider = multiNetworkProvider,
             )
         }
     }
@@ -72,6 +65,53 @@ internal class EthereumLikeWalletManagerAssembly(
                     multiJsonRpcProvider = multiNetworkProvider as MultiNetworkProvider<EthereumJsonRpcProvider>,
                     yieldSupplyProvider = yieldSupplyProvider,
                 )
+            }
+        }
+    }
+
+    private fun createWalletManager(
+        input: WalletManagerAssemblyInput,
+        yieldLendingProvider: YieldSupplyProvider,
+        multiNetworkProvider: MultiNetworkProvider<out EthereumLikeJsonRpcProvider>,
+    ): EthereumWalletManager {
+        with(input.wallet) {
+            return when (blockchain) {
+                Blockchain.Quai, Blockchain.QuaiTestnet -> {
+                    QuaiWalletManager(
+                        wallet = this,
+                        transactionBuilder = EthereumTransactionBuilder.create(wallet = input.wallet),
+                        networkProvider = createNetworkService(
+                            blockchain = blockchain,
+                            yieldSupplyProvider = yieldLendingProvider,
+                            multiNetworkProvider = multiNetworkProvider,
+                        ),
+                        transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(
+                            blockchain = blockchain,
+                            config = input.config,
+                        ),
+                        nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
+                        yieldSupplyProvider = yieldLendingProvider,
+                        supportsENS = false,
+                    )
+                }
+                else -> {
+                    EthereumWalletManager(
+                        wallet = this,
+                        transactionBuilder = EthereumTransactionBuilder.create(wallet = input.wallet),
+                        networkProvider = createNetworkService(
+                            blockchain = blockchain,
+                            yieldSupplyProvider = yieldLendingProvider,
+                            multiNetworkProvider = multiNetworkProvider,
+                        ),
+                        transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(
+                            blockchain = blockchain,
+                            config = input.config,
+                        ),
+                        nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
+                        yieldSupplyProvider = yieldLendingProvider,
+                        supportsENS = false,
+                    )
+                }
             }
         }
     }

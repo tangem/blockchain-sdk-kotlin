@@ -2,9 +2,11 @@ package com.tangem.blockchain.blockchains.quai
 
 import android.util.Log
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.ethereum.EthereumDerivationData
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.crypto.hdWallet.DerivationNode
+import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 
 /**
@@ -19,8 +21,16 @@ import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
  */
 internal class QuaiAddressService : EthereumAddressService() {
 
-    override fun makeAddressFromExtendedPublicKey(extendedPublicKey: ExtendedPublicKey, curve: EllipticCurve?): String {
-        return findValidCyprus1AddressWithHDDerivation(extendedPublicKey, curve)
+    override fun makeAddressFromExtendedPublicKey(
+        extendedPublicKey: ExtendedPublicKey,
+        curve: EllipticCurve?,
+        derivationPath: String?,
+    ): EthereumDerivationData {
+        return findValidCyprus1AddressWithHDDerivation(
+            extendedPublicKey = extendedPublicKey,
+            curve = curve,
+            derivationPath = derivationPath,
+        )
     }
 
     override fun validate(address: String): Boolean {
@@ -70,7 +80,8 @@ internal class QuaiAddressService : EthereumAddressService() {
     private fun findValidCyprus1AddressWithHDDerivation(
         extendedPublicKey: ExtendedPublicKey,
         curve: EllipticCurve?,
-    ): String {
+        derivationPath: String?,
+    ): EthereumDerivationData {
         Log.i(this::class.java.simpleName, "Using HD derivation m/44'/994'/0'/0/{index} for Quai address")
         for (index in 0 until Int.MAX_VALUE) {
             try {
@@ -82,7 +93,14 @@ internal class QuaiAddressService : EthereumAddressService() {
                         this::class.java.simpleName,
                         "Found valid Cyprus-1 address: $address (index: $index)",
                     )
-                    return address
+                    val path = derivationPath?.let {
+                        DerivationPath("$it/$index")
+                    }
+                    return EthereumDerivationData(
+                        address = address,
+                        path = path,
+                        publicKey = derivedKey,
+                    )
                 }
             } catch (e: Exception) {
                 Log.e(
