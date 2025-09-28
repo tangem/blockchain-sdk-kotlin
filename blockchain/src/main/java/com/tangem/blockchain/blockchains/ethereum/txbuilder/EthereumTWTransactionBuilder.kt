@@ -94,7 +94,8 @@ internal open class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTrans
         val ethereumFee = transaction.fee as? Fee.Ethereum ?: throw BlockchainSdkError.CustomError("Invalid fee")
         val extras = transaction.extras as? EthereumTransactionExtras
 
-        return when (transaction.amount.type) {
+        // TODO refactor [REDACTED_TASK_KEY]
+        return when (val amountType = transaction.amount.type) {
             is AmountType.TokenYieldSupply, // Destination is defined by application
             AmountType.Coin,
             -> buildSigningInput(
@@ -107,7 +108,7 @@ internal open class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTrans
             is AmountType.Token -> {
                 buildSigningInput(
                     chainId = chainId,
-                    destinationAddress = transaction.amount.type.token.contractAddress,
+                    destinationAddress = amountType.token.contractAddress,
                     coinAmount = BigInteger.ZERO,
                     fee = ethereumFee,
                     extras = extras,

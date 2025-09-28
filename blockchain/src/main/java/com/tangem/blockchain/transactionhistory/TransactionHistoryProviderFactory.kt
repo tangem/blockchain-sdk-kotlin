@@ -12,13 +12,16 @@ import com.tangem.blockchain.transactionhistory.blockchains.bitcoin.BitcoinTrans
 import com.tangem.blockchain.transactionhistory.blockchains.ethereum.EthereumTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.blockchains.kaspa.KaspaTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.blockchains.kaspa.network.KaspaApiService
-import com.tangem.blockchain.transactionhistory.blockchains.polygon.PolygonTransactionHistoryProvider
-import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.PolygonScanApi
+import com.tangem.blockchain.transactionhistory.blockchains.polygon.EtherscanTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.EtherScanApi
 import com.tangem.blockchain.transactionhistory.blockchains.tron.TronTransactionHistoryProvider
 
 internal object TransactionHistoryProviderFactory {
 
     fun makeProvider(blockchain: Blockchain, config: BlockchainSdkConfig): TransactionHistoryProvider {
+        if (blockchain.isEtherscanCompatible()) {
+            return createEtherscanProvider(blockchain, config)
+        }
         return when (blockchain) {
             Blockchain.Bitcoin,
             Blockchain.Litecoin,
@@ -39,13 +42,33 @@ internal object TransactionHistoryProviderFactory {
 
             Blockchain.Tron -> createTronProvider(blockchain, config)
 
-            Blockchain.Polygon -> createPolygonProvider(blockchain, config)
-
             Blockchain.Koinos -> createKoinosProvider()
 
             Blockchain.Kaspa, Blockchain.KaspaTestnet -> createKaspaProvider(blockchain)
 
             else -> DefaultTransactionHistoryProvider
+        }
+    }
+
+    private fun Blockchain.isEtherscanCompatible(): Boolean {
+        return when (this) {
+            Blockchain.ApeChain,
+            Blockchain.Base,
+            Blockchain.Blast,
+            Blockchain.Gnosis,
+            Blockchain.Hyperliquid,
+            Blockchain.Mantle,
+            Blockchain.Moonbeam,
+            Blockchain.Moonriver,
+            Blockchain.Optimism,
+            Blockchain.PolygonZkEVM,
+            Blockchain.Polygon,
+            Blockchain.Scroll,
+            Blockchain.Sonic,
+            Blockchain.XDC,
+            Blockchain.ZkSyncEra,
+            -> true
+            else -> false
         }
     }
 
@@ -83,12 +106,15 @@ internal object TransactionHistoryProviderFactory {
         return TronTransactionHistoryProvider(blockchain = blockchain, blockBookApi = blockBookApi)
     }
 
-    private fun createPolygonProvider(blockchain: Blockchain, config: BlockchainSdkConfig): TransactionHistoryProvider {
-        val apiKey = config.polygonScanApiKey ?: return DefaultTransactionHistoryProvider
-        return PolygonTransactionHistoryProvider(
+    private fun createEtherscanProvider(
+        blockchain: Blockchain,
+        config: BlockchainSdkConfig,
+    ): TransactionHistoryProvider {
+        val apiKey = config.etherscanApiKey ?: return DefaultTransactionHistoryProvider
+        return EtherscanTransactionHistoryProvider(
             blockchain = blockchain,
-            api = createRetrofitInstance("https://api.polygonscan.com/").create(PolygonScanApi::class.java),
-            polygonScanApiKey = apiKey,
+            api = createRetrofitInstance("https://api.etherscan.io/v2/").create(EtherScanApi::class.java),
+            etherscanApiKey = apiKey,
         )
     }
 

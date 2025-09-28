@@ -1,6 +1,7 @@
 package com.tangem.blockchain.transactionhistory.blockchains.polygon
 
 import com.tangem.Log
+import com.tangem.blockchain.blockchains.xdc.XDCAddressService.Companion.formatWith0xPrefix
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.pagination.Page
@@ -20,10 +21,10 @@ import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 
 @Suppress("ClassOrdering")
-internal class PolygonTransactionHistoryProvider(
+internal class EtherscanTransactionHistoryProvider(
     private val blockchain: Blockchain,
-    private val api: PolygonScanApi,
-    private val polygonScanApiKey: String,
+    private val api: EtherScanApi,
+    private val etherscanApiKey: String,
 ) : TransactionHistoryProvider {
 
     @Suppress("TooGenericExceptionThrown")
@@ -32,20 +33,23 @@ internal class PolygonTransactionHistoryProvider(
         filterType: TransactionHistoryRequest.FilterType,
     ): TransactionHistoryState {
         return try {
+            val formattedAddress = formatAddressIfNeeded(address)
             val response = withContext(Dispatchers.IO) {
                 when (filterType) {
                     TransactionHistoryRequest.FilterType.Coin -> api.getCoinTransactionHistory(
-                        address = address,
+                        chainId = requireNotNull(blockchain.getChainId()) { "chainId must not be null" },
+                        address = formattedAddress,
                         page = 1,
                         offset = 1, // We don't need to know all transactions to define state
-                        apiKey = polygonScanApiKey,
+                        apiKey = etherscanApiKey,
                     )
                     is TransactionHistoryRequest.FilterType.Contract -> api.getTokenTransactionHistory(
-                        address = address,
+                        chainId = requireNotNull(blockchain.getChainId()) { "chainId must not be null" },
+                        address = formattedAddress,
                         page = 1,
                         offset = 100, // There are might be spam transaction in first transactions
                         contractAddress = filterType.tokenInfo.contractAddress,
-                        apiKey = polygonScanApiKey,
+                        apiKey = etherscanApiKey,
                     )
                 }
             }
@@ -59,7 +63,7 @@ internal class PolygonTransactionHistoryProvider(
 
             val historyItems = response.result.toTransactionHistoryItems(
                 excludeZeroAmount = false,
-                walletAddress = address,
+                walletAddress = formattedAddress,
                 filterType = filterType,
             )
             when {
@@ -76,21 +80,24 @@ internal class PolygonTransactionHistoryProvider(
         request: TransactionHistoryRequest,
     ): Result<PaginationWrapper<TransactionHistoryItem>> {
         return try {
+            val formattedAddress = formatAddressIfNeeded(request.address)
             val pageToLoad = request.intPageToLoad
             val response = withContext(Dispatchers.IO) {
                 when (request.filterType) {
                     TransactionHistoryRequest.FilterType.Coin -> api.getCoinTransactionHistory(
-                        address = request.address,
+                        chainId = requireNotNull(blockchain.getChainId()) { "chainId must not be null" },
+                        address = formattedAddress,
                         offset = request.pageSize,
                         page = pageToLoad,
-                        apiKey = polygonScanApiKey,
+                        apiKey = etherscanApiKey,
                     )
                     is TransactionHistoryRequest.FilterType.Contract -> api.getTokenTransactionHistory(
-                        address = request.address,
+                        chainId = requireNotNull(blockchain.getChainId()) { "chainId must not be null" },
+                        address = formattedAddress,
                         offset = request.pageSize,
                         page = pageToLoad,
                         contractAddress = request.filterType.tokenInfo.contractAddress,
-                        apiKey = polygonScanApiKey,
+                        apiKey = etherscanApiKey,
                     )
                 }
             }
@@ -106,7 +113,7 @@ internal class PolygonTransactionHistoryProvider(
 
             val txs = response.result.toTransactionHistoryItems(
                 excludeZeroAmount = true,
-                walletAddress = request.address,
+                walletAddress = formattedAddress,
                 filterType = request.filterType,
             )
             val nextPage = if (txs.isNotEmpty()) {
@@ -118,6 +125,13 @@ internal class PolygonTransactionHistoryProvider(
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
+    }
+
+    private fun formatAddressIfNeeded(address: String): String {
+        if (blockchain == Blockchain.XDC) {
+            return formatWith0xPrefix(address)
+        }
+        return address
     }
 
     private fun PolygonScanResult.toTransactionHistoryItems(
