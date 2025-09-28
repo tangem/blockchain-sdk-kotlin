@@ -159,11 +159,9 @@ internal abstract class EthereumLikeNetworkService(
 
             tokens.map { token ->
                 async {
-                    if (isYieldSupported) {
-                        val yieldContract = yieldSupplyProvider.getYieldContract()
+                    if (isYieldSupported && yieldSupplyProvider.getYieldModuleAddress() != EthereumUtils.ZERO_ADDRESS) {
                         val yieldLendingStatus = yieldSupplyProvider.getYieldSupplyStatus(token.contractAddress)
-
-                        if (yieldLendingStatus?.isActive == true && yieldContract != EthereumUtils.ZERO_ADDRESS) {
+                        if (yieldLendingStatus?.isActive == true) {
                             yieldSupplyProvider.getBalance(yieldLendingStatus, token)
                         } else {
                             getTokenBalance(address, token)
