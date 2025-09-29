@@ -15,6 +15,8 @@ sealed interface ProviderType {
 
     data object QuickNode : ProviderType
 
+    data object Mock : ProviderType
+
     sealed interface BitcoinLike : ProviderType {
         data object Blockchair : BitcoinLike
         data object Blockcypher : BitcoinLike
