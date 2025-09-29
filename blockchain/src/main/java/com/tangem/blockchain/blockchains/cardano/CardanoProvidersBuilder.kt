@@ -23,6 +23,7 @@ internal class CardanoProvidersBuilder(
                 ProviderType.NowNodes -> createNowNodesNetworkProvider()
                 ProviderType.Cardano.Adalite -> AdaliteNetworkProvider(API_ADALITE)
                 ProviderType.Cardano.Rosetta -> RosettaNetworkProvider(RosettaNetwork.Tangem)
+                ProviderType.Mock -> RosettaNetworkProvider(RosettaNetwork.Mock)
                 else -> null
             }
         }
