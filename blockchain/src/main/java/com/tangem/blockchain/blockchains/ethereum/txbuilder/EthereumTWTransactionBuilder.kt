@@ -24,7 +24,7 @@ import java.math.BigInteger
  *
  * @property wallet wallet
  */
-internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactionBuilder(wallet = wallet) {
+internal open class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactionBuilder(wallet = wallet) {
 
     private val coinType = CoinType.ETHEREUM
     private val chainId = wallet.blockchain.getChainId()
@@ -50,7 +50,6 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
             hash = compiledTransaction.hash,
             signature = signature,
         )
-
         return output.encoded.toByteArray()
     }
 
@@ -80,7 +79,7 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
         return output.encoded.toByteArray()
     }
 
-    private fun buildSigningInput(transaction: TransactionData): Ethereum.SigningInput {
+    protected fun buildSigningInput(transaction: TransactionData): Ethereum.SigningInput {
         return when (transaction) {
             is TransactionData.Compiled -> buildCompiledSingingInput(transaction)
             is TransactionData.Uncompiled -> buildUncompiledSigningInput(transaction)
