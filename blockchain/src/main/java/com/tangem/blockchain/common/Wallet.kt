@@ -9,11 +9,16 @@ import java.math.BigDecimal
 import java.util.Calendar
 import java.util.Locale
 
+/**
+ * @param updatedDerivationPath - need in case when derivation path is calculation in runtime. In this case we provide
+ * path from outside.
+ */
 class Wallet(
     val blockchain: Blockchain,
     var addresses: Set<Address>,
     val publicKey: PublicKey,
     tokens: Set<Token>,
+    val updatedDerivationPath: DerivationPath? = null,
 ) {
 
     var ens: String? = null
