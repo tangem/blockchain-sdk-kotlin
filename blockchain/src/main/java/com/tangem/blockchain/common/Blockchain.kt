@@ -11,6 +11,7 @@ import com.tangem.blockchain.blockchains.chia.ChiaAddressService
 import com.tangem.blockchain.blockchains.decimal.DecimalAddressService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.ethereum.EthereumDerivationData
 import com.tangem.blockchain.blockchains.factorn.Fact0rnAddressService
 import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
@@ -18,6 +19,7 @@ import com.tangem.blockchain.blockchains.koinos.KoinosAddressService
 import com.tangem.blockchain.blockchains.nexa.NexaAddressService
 import com.tangem.blockchain.blockchains.pepecoin.PepecoinAddressService
 import com.tangem.blockchain.blockchains.polkadot.PolkadotAddressService
+import com.tangem.blockchain.blockchains.quai.QuaiAddressService
 import com.tangem.blockchain.blockchains.radiant.RadiantAddressService
 import com.tangem.blockchain.blockchains.rsk.RskAddressService
 import com.tangem.blockchain.blockchains.solana.SolanaAddressService
@@ -36,6 +38,7 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 import com.tangem.blockchain.nft.models.NFTAsset
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
+import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 
 /**
  * @param id sdk blockchain id
@@ -205,6 +208,8 @@ enum class Blockchain(
     PepecoinTestnet("pepecoin/test", "PEP", "Pepecoin Testnet"),
     Hyperliquid("hyperliquid", "HYPE", "Hyperliquid EVM"),
     HyperliquidTestnet("hyperliquid/test", "HYPE", "Hyperliquid EVM Testnet"),
+    Quai("quai", "QUAI", "Quai"),
+    QuaiTestnet("quai/test", "QUAI", "Quai Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -341,6 +346,7 @@ enum class Blockchain(
         Scroll, ScrollTestnet,
         ZkLinkNova, ZkLinkNovaTestnet,
         Hyperliquid, HyperliquidTestnet,
+        Quai, QuaiTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -359,6 +365,21 @@ enum class Blockchain(
         } else {
             addressService.makeAddresses(walletPublicKey, curve)
         }
+    }
+
+    fun makeAddressesFromExtendedPublicKey(
+        extendedPublicKey: ExtendedPublicKey,
+        curve: EllipticCurve = EllipticCurve.Secp256k1,
+        cachedIndex: Int?,
+    ): EthereumDerivationData {
+        val addressService = getAddressService()
+        val address = addressService.makeAddressFromExtendedPublicKey(
+            extendedPublicKey = extendedPublicKey,
+            curve = curve,
+            derivationPath = derivationPath(DerivationStyle.V3)?.rawPath,
+            cachedIndex = cachedIndex,
+        )
+        return address
     }
 
     fun validateAddress(address: String): Boolean = getAddressService().validate(address)
@@ -432,6 +453,8 @@ enum class Blockchain(
             ZkLinkNova, ZkLinkNovaTestnet,
             Hyperliquid, HyperliquidTestnet,
             -> EthereumAddressService()
+
+            Quai, QuaiTestnet -> QuaiAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
 
@@ -580,6 +603,7 @@ enum class Blockchain(
             Scroll, ScrollTestnet -> ScrollTestnet
             Pepecoin, PepecoinTestnet -> PepecoinTestnet
             Hyperliquid, HyperliquidTestnet -> HyperliquidTestnet
+            Quai, QuaiTestnet -> QuaiTestnet
             Unknown,
             Cardano,
             Dogecoin,
@@ -693,6 +717,7 @@ enum class Blockchain(
             ZkLinkNova, ZkLinkNovaTestnet,
             Pepecoin, PepecoinTestnet,
             Hyperliquid, HyperliquidTestnet,
+            Quai, QuaiTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -810,6 +835,8 @@ enum class Blockchain(
             PepecoinTestnet -> Chain.PepecoinTestnet.id
             Hyperliquid -> Chain.Hyperliquid.id
             HyperliquidTestnet -> Chain.HyperliquidTestnet.id
+            Quai -> Chain.Quai.id
+            QuaiTestnet -> Chain.QuaiTestnet.id
             else -> null
         }
     }
