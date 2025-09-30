@@ -163,5 +163,7 @@ val Blockchain.isUTXO: Boolean
         ZkLinkNovaTestnet,
         Hyperliquid,
         HyperliquidTestnet,
+        Quai,
+        QuaiTestnet,
         -> false
     }

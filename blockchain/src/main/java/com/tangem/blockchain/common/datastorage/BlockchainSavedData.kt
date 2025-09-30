@@ -36,4 +36,9 @@ internal sealed interface BlockchainSavedData {
     data class YieldSupplyModule(
         @Json(name = "contractAddress") val yieldContractAddress: String? = null,
     ) : BlockchainSavedData
+
+    @JsonClass(generateAdapter = true)
+    data class QuaiDerivationIndex(
+        @Json(name = "index") val index: Int,
+    ) : BlockchainSavedData
 }
