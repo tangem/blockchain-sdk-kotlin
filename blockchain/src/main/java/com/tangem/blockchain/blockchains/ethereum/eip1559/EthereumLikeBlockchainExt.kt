@@ -60,6 +60,7 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Scroll,
             Blockchain.ZkLinkNova,
             Blockchain.Hyperliquid,
+            Blockchain.Quai,
             -> false
             else -> error("Don't forget about evm here")
         }
