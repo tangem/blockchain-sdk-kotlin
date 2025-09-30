@@ -82,6 +82,9 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.ZkLinkNova,
             Blockchain.Hyperliquid,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
+            Blockchain.Quai,
+            Blockchain.QuaiTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/994'/0'/0"))
             Blockchain.XDC -> mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
             Blockchain.EthereumClassic -> mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))
             Blockchain.Binance -> mapOf(AddressType.Default to DerivationPath("m/44'/714'/0'/0/0"))
