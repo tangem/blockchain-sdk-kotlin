@@ -332,8 +332,8 @@ internal class TronTransactionHistoryProvider(
         contractAddress: String,
     ): GetAddressResponse.Transaction.TokenTransfer? {
         return tokenTransfers.firstOrNull {
-            contractAddress.equals(other = it.token, ignoreCase = true) &&
-                walletAddress.equals(other = it.to, ignoreCase = true)
+            contractAddress.equals(it.token, ignoreCase = true) &&
+                walletAddress.equals(it.to, ignoreCase = true) || walletAddress.equals(it.from, ignoreCase = true)
         }
     }
 
