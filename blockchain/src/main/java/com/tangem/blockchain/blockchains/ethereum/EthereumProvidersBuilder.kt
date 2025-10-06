@@ -20,6 +20,7 @@ internal class EthereumProvidersBuilder(
                     baseUrl = "https://eth.nownodes.io/",
                 )
                 ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { eth?.jsonRpc }
+                ProviderType.Blink -> ethereumProviderFactory.getBlinkProvider("https://eth.blinklabs.xyz/v1/")
                 ProviderType.EthereumLike.Infura -> {
                     ethereumProviderFactory.getInfuraProvider(baseUrl = "https://mainnet.infura.io/v3/")
                 }
