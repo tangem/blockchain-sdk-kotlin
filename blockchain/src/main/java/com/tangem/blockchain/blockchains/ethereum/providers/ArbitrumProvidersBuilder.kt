@@ -15,6 +15,7 @@ internal class ArbitrumProvidersBuilder(
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return providerTypes.mapNotNull {
             when (it) {
+                is ProviderType.Blink -> ethereumProviderFactory.getBlinkProvider("https://arb.blinklabs.xyz/v1/")
                 is ProviderType.Public -> createPublicProvider(url = it.url)
                 ProviderType.NowNodes -> {
                     ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://arbitrum.nownodes.io/")
