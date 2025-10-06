@@ -17,7 +17,7 @@ import org.p2p.solanaj.ws.listeners.NotificationEventListener
 /**
 [REDACTED_AUTHOR]
  */
-internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
+internal class SolanaRpcApi(rpcClient: RpcClient, val skipPreflight: Boolean = false) : RpcApi(rpcClient) {
 
     @Deprecated("Use signAndSendTransaction instead")
     @Throws(UnsupportedOperationException::class)
@@ -51,7 +51,7 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
     fun sendSignedTransaction(
         signedTransaction: ByteArray,
         maxRetries: Int = 12,
-        skipPreflight: Boolean = false,
+        skipPreflight: Boolean? = null,
         commitment: Commitment = Commitment.FINALIZED,
     ): String {
         val base64Trx = Base64.encodeToString(signedTransaction, Base64.NO_WRAP)
@@ -61,7 +61,7 @@ internal class SolanaRpcApi(rpcClient: RpcClient) : RpcApi(rpcClient) {
             val additionalParams = buildMap<String, Any> {
                 this["encoding"] = "base64"
                 this["maxRetries"] = maxRetries
-                this["skipPreflight"] = skipPreflight
+                this["skipPreflight"] = skipPreflight ?: this@SolanaRpcApi.skipPreflight
                 this["commitment"] = commitment.value
             }
             add(additionalParams)
