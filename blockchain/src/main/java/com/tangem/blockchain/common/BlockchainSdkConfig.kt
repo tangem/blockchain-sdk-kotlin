@@ -21,6 +21,7 @@ data class BlockchainSdkConfig(
     val alephiumApiKey: String? = null,
     val moralisApiKey: String? = null,
     val etherscanApiKey: String? = null,
+    val blinkApiKey: String? = null,
 )
 
 data class BlockchairCredentials(
