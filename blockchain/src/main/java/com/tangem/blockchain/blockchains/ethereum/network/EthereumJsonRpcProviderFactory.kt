@@ -29,4 +29,10 @@ internal class EthereumJsonRpcProviderFactory(
             EthereumJsonRpcProvider(baseUrl = baseUrl, postfixUrl = infuraProjectId)
         }
     }
+
+    fun getBlinkProvider(baseUrl: String): EthereumJsonRpcProvider? {
+        return config.blinkApiKey?.letNotBlank { blinkApiKey ->
+            EthereumJsonRpcProvider(baseUrl = baseUrl, postfixUrl = blinkApiKey)
+        }
+    }
 }
