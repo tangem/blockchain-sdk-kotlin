@@ -165,5 +165,7 @@ val Blockchain.isUTXO: Boolean
         HyperliquidTestnet,
         Quai,
         QuaiTestnet,
+        Linea,
+        LineaTestnet,
         -> false
     }
