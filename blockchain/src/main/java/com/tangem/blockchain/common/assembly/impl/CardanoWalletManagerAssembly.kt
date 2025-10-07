@@ -17,6 +17,7 @@ internal object CardanoWalletManagerAssembly : WalletManagerAssembly<CardanoWall
                 networkProvider = CardanoNetworkService(
                     providers = CardanoProvidersBuilder(providerTypes = input.providerTypes, config = input.config)
                         .build(blockchain = blockchain),
+                    blockchain = blockchain,
                 ),
             )
         }
