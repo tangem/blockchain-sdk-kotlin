@@ -16,6 +16,7 @@ internal object SeiWalletManagerAssembly : WalletManagerAssembly<CosmosWalletMan
                 wallet = input.wallet,
                 networkProviders = SeiProvidersBuilder(input.providerTypes).build(blockchain),
                 cosmosChain = CosmosChain.Sei(testnet),
+                blockchain = blockchain,
             )
         }
     }
