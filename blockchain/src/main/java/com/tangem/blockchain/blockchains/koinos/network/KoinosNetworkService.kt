@@ -15,12 +15,13 @@ import java.math.BigDecimal
 
 internal class KoinosNetworkService(
     providers: List<KoinosNetworkProvider>,
+    blockchain: Blockchain,
 ) : NetworkProvider {
 
     override val baseUrl: String
         get() = multiNetworkProvider.currentProvider.baseUrl
 
-    private val multiNetworkProvider = MultiNetworkProvider(providers)
+    private val multiNetworkProvider = MultiNetworkProvider(providers, blockchain)
 
     suspend fun getInfo(address: String, koinContractIdHolder: KoinosContractIdHolder): Result<KoinosAccountInfo> {
         val koinContractId = koinContractIdHolder.get()

@@ -13,7 +13,7 @@ import com.tangem.blockchain.network.MultiNetworkProvider
 class NearNetworkService(blockchain: Blockchain, providers: List<NearNetworkProvider>) {
 
     val host: String get() = multiNetworkProvider.currentProvider.baseUrl
-    private val multiNetworkProvider = MultiNetworkProvider(providers)
+    private val multiNetworkProvider = MultiNetworkProvider(providers, blockchain)
 
     init {
         if (blockchain != Blockchain.Near && blockchain != Blockchain.NearTestnet) {

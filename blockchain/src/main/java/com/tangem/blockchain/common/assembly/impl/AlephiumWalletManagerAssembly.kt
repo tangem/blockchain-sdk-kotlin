@@ -16,6 +16,7 @@ internal object AlephiumWalletManagerAssembly : WalletManagerAssembly<AlephiumWa
                 networkService = AlephiumNetworkService(
                     providers = AlephiumProvidersBuilder(providerTypes = input.providerTypes, config = config)
                         .build(blockchain = wallet.blockchain),
+                    blockchain = wallet.blockchain,
                 ),
                 transactionBuilder = AlephiumTransactionBuilder(wallet.publicKey.blockchainKey, wallet.blockchain),
             )
