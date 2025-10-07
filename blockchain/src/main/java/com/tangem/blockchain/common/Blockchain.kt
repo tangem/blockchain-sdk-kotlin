@@ -908,16 +908,6 @@ enum class Blockchain(
         else -> false
     }
 
-    /**
-     * List of supported blockchains for activating yield module
-     */
-    fun yieldSupplySupportedBlockchains(): List<Blockchain> {
-        return listOf(
-            Polygon,
-            EthereumTestnet,
-        )
-    }
-
     fun isEvm(): Boolean = getChainId() != null
 
     fun isFeeApproximate(amountType: AmountType): Boolean = when {
@@ -1003,5 +993,15 @@ enum class Blockchain(
             .filter {
                 it.isTestnet() == isTestnet && it.getSupportedCurves().contains(EllipticCurve.Ed25519)
             }
+
+        /**
+         * List of supported blockchains for activating yield module
+         */
+        fun yieldSupplySupportedBlockchains(): List<Blockchain> {
+            return listOf(
+                Polygon,
+                EthereumTestnet,
+            )
+        }
     }
 }
