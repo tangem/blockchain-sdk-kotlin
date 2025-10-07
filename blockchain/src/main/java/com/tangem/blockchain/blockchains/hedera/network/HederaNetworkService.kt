@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.hedera.models.HederaAccountBalance
 import com.tangem.blockchain.blockchains.hedera.models.HederaAccountInfo
 import com.tangem.blockchain.blockchains.hedera.models.HederaTransactionId
 import com.tangem.blockchain.blockchains.hedera.models.HederaTransactionInfo
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.*
@@ -15,9 +16,13 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 
-internal class HederaNetworkService(private val client: Client, hederaNetworkProviders: List<HederaNetworkProvider>) {
+internal class HederaNetworkService(
+    private val client: Client,
+    hederaNetworkProviders: List<HederaNetworkProvider>,
+    blockchain: Blockchain,
+) {
 
-    private val multiProvider = MultiNetworkProvider(hederaNetworkProviders)
+    private val multiProvider = MultiNetworkProvider(hederaNetworkProviders, blockchain)
 
     val baseUrl: String get() = multiProvider.currentProvider.baseUrl
 

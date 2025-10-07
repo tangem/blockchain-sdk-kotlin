@@ -21,7 +21,7 @@ internal class KoinosWalletManagerTest {
         ),
         transactionBuilder = KoinosTransactionBuilder(isTestnet = false),
         transactionHistoryProvider = mockk(),
-        networkService = KoinosNetworkService(listOf(mockk())),
+        networkService = KoinosNetworkService(listOf(mockk(), mockk()), Blockchain.Koinos),
         contractIdHolder = KoinosContractIdHolder(
             isTestnet = false,
             loadKoinContractId = { Result.Success("15DJN4a8SgrbGhhGksSBASiSYjGnMU8dGL") },

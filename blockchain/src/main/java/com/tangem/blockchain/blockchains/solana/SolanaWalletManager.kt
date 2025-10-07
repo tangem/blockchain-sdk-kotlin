@@ -41,7 +41,7 @@ class SolanaWalletManager internal constructor(
     private val networkServices = providers.map { SolanaNetworkService(it) }
 
     private val multiNetworkProvider: MultiNetworkProvider<SolanaNetworkService> =
-        MultiNetworkProvider(networkServices)
+        MultiNetworkProvider(networkServices, wallet.blockchain)
     private val tokenAccountInfoFinder = SolanaTokenAccountInfoFinder(multiNetworkProvider)
     private val transactionBuilder = SolanaTransactionBuilder(account, multiNetworkProvider)
     private val solanaTransactionSizeReducer = SolanaTransactionSizeReducer(
