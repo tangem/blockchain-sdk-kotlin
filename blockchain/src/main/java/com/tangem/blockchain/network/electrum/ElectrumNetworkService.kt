@@ -1,14 +1,18 @@
 package com.tangem.blockchain.network.electrum
 
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.network.electrum.api.ElectrumResponse
 
-internal class ElectrumNetworkService(providers: List<ElectrumNetworkProvider>) : ElectrumNetworkProvider {
+internal class ElectrumNetworkService(
+    providers: List<ElectrumNetworkProvider>,
+    blockchain: Blockchain,
+) : ElectrumNetworkProvider {
     override val baseUrl: String
         get() = multiProvider.currentProvider.baseUrl
 
-    private val multiProvider = MultiNetworkProvider(providers)
+    private val multiProvider = MultiNetworkProvider(providers, blockchain)
 
     override suspend fun getAccountBalance(addressScriptHash: String): Result<ElectrumAccount> =
         multiProvider.performRequest(ElectrumNetworkProvider::getAccountBalance, addressScriptHash)

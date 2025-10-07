@@ -14,9 +14,10 @@ import java.math.BigDecimal
 
 internal class SuiNetworkService(
     providers: List<SuiJsonRpcProvider>,
+    blockchain: Blockchain,
 ) {
 
-    private val multiJsonRpcProvider = MultiNetworkProvider(providers)
+    private val multiJsonRpcProvider = MultiNetworkProvider(providers, blockchain)
 
     val host: String get() = multiJsonRpcProvider.currentProvider.baseUrl
 

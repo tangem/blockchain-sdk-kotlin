@@ -14,6 +14,7 @@ internal object TerraV2WalletManagerAssembly : WalletManagerAssembly<CosmosWalle
                 wallet = wallet,
                 networkProviders = TerraV2ProvidersBuilder(input.providerTypes, config).build(wallet.blockchain),
                 cosmosChain = CosmosChain.TerraV2,
+                blockchain = wallet.blockchain,
             )
         }
     }

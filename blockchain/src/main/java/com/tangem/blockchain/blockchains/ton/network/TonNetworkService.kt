@@ -16,7 +16,7 @@ internal class TonNetworkService(
     private val blockchain: Blockchain,
 ) {
 
-    private val multiJsonRpcProvider = MultiNetworkProvider(jsonRpcProviders)
+    private val multiJsonRpcProvider = MultiNetworkProvider(jsonRpcProviders, blockchain)
 
     val host: String get() = multiJsonRpcProvider.currentProvider.baseUrl
 
