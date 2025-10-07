@@ -14,6 +14,7 @@ internal object DecimalWalletManagerAssembly : WalletManagerAssembly<DecimalWall
         return with(input.wallet) {
             val multiNetworkProvider = MultiNetworkProvider(
                 DecimalProvidersBuilder(input.providerTypes).build(blockchain),
+                blockchain,
             )
             DecimalWalletManager(
                 wallet = this,
