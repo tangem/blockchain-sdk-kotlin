@@ -29,6 +29,7 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.OdysseyChain,
             Blockchain.Sonic,
             Blockchain.ApeChain,
+            Blockchain.Linea,
             -> true
             Blockchain.EthereumClassic, // eth_feeHistory all zeroes
             Blockchain.EthereumPow, // eth_feeHistory with zeros
