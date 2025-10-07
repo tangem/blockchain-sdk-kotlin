@@ -899,6 +899,16 @@ enum class Blockchain(
         else -> false
     }
 
+    /**
+     * List of supported blockchains for activating yield module
+     */
+    fun yieldSupplySupportedBlockchains(): List<Blockchain> {
+        return listOf(
+            Polygon,
+            EthereumTestnet,
+        )
+    }
+
     fun isEvm(): Boolean = getChainId() != null
 
     fun isFeeApproximate(amountType: AmountType): Boolean = when {
