@@ -22,6 +22,7 @@ internal object DogecoinWalletManagerAssembly : WalletManagerAssembly<DogecoinWa
                 ),
                 networkProvider = BitcoinNetworkService(
                     providers = DogecoinProvidersBuilder(input.providerTypes, input.config).build(blockchain),
+                    blockchain = blockchain,
                 ),
                 transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
                 feesCalculator = BitcoinFeesCalculator(blockchain),
