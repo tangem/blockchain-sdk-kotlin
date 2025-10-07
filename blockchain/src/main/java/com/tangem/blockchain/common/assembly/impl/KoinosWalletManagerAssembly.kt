@@ -17,6 +17,7 @@ internal object KoinosWalletManagerAssembly : WalletManagerAssembly<KoinosWallet
                     providerTypes = input.providerTypes,
                     config = input.config,
                 ).build(blockchain),
+                blockchain = blockchain,
             )
             KoinosWalletManager(
                 wallet = this,

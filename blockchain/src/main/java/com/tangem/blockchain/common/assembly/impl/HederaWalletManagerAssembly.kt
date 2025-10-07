@@ -24,6 +24,7 @@ internal class HederaWalletManagerAssembly(
                     client = if (wallet.blockchain.isTestnet()) Client.forTestnet() else Client.forMainnet(),
                     hederaNetworkProviders = HederaProvidersBuilder(input.providerTypes, config)
                         .build(wallet.blockchain),
+                    blockchain = wallet.blockchain,
                 ),
                 dataStorage = dataStorage,
                 accountCreator = accountCreator,
