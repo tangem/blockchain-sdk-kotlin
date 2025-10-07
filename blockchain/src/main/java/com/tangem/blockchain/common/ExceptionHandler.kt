@@ -1,7 +1,7 @@
 package com.tangem.blockchain.common
 
 interface ExceptionHandlerOutput {
-    fun handleApiSwitch(currentHost: String, nextHost: String, message: String)
+    fun handleApiSwitch(currentHost: String, nextHost: String, message: String, blockchain: Blockchain)
 }
 
 object ExceptionHandler {
@@ -11,9 +11,9 @@ object ExceptionHandler {
         outputs.add(output)
     }
 
-    internal fun handleApiSwitch(currentHost: String, nextHost: String, message: String) {
+    internal fun handleApiSwitch(currentHost: String, nextHost: String, message: String, blockchain: Blockchain) {
         outputs.forEach {
-            it.handleApiSwitch(currentHost, nextHost, message)
+            it.handleApiSwitch(currentHost, nextHost, message, blockchain)
         }
     }
 }

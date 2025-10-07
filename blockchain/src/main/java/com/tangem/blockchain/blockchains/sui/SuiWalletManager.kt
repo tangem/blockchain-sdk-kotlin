@@ -22,6 +22,7 @@ internal class SuiWalletManager(
 
     private val networkService: SuiNetworkService = SuiNetworkService(
         providers = networkProviders,
+        blockchain = wallet.blockchain,
     )
     private val txBuilder = SuiTransactionBuilder(
         walletAddress = wallet.address,

@@ -22,6 +22,7 @@ internal object CasperWalletManagerAssembly : WalletManagerAssembly<CasperWallet
                         config = input.config,
                         blockchain = blockchain,
                     ).build(blockchain),
+                    blockchain = blockchain,
                 ),
                 transactionBuilder = CasperTransactionBuilder(this),
                 curve = input.curve,

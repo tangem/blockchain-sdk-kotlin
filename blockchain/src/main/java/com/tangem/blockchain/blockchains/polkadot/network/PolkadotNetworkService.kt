@@ -1,13 +1,17 @@
 package com.tangem.blockchain.blockchains.polkadot.network
 
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.MultiNetworkProvider
 import io.emeraldpay.polkaj.tx.ExtrinsicContext
 import java.math.BigDecimal
 import java.math.BigInteger
 
-class PolkadotNetworkService(providers: List<PolkadotNetworkProvider>) : PolkadotNetworkProvider {
-    private val multiProvider = MultiNetworkProvider(providers)
+class PolkadotNetworkService(
+    providers: List<PolkadotNetworkProvider>,
+    blockchain: Blockchain,
+) : PolkadotNetworkProvider {
+    private val multiProvider = MultiNetworkProvider(providers, blockchain)
     override val baseUrl: String
         get() = multiProvider.currentProvider.baseUrl
 

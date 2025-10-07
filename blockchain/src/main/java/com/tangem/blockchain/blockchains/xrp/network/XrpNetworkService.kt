@@ -1,13 +1,14 @@
 package com.tangem.blockchain.blockchains.xrp.network
 
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
 
-class XrpNetworkService(providers: List<XrpNetworkProvider>) : XrpNetworkProvider {
+class XrpNetworkService(providers: List<XrpNetworkProvider>, blockchain: Blockchain) : XrpNetworkProvider {
 
-    private val multiProvider = MultiNetworkProvider(providers)
+    private val multiProvider = MultiNetworkProvider(providers, blockchain)
 
     override val baseUrl: String
         get() = multiProvider.currentProvider.baseUrl
