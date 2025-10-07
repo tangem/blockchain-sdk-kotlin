@@ -3,17 +3,19 @@ package com.tangem.blockchain.blockchains.casper.network
 import com.tangem.blockchain.blockchains.casper.models.CasperBalance
 import com.tangem.blockchain.blockchains.casper.models.CasperTransaction
 import com.tangem.blockchain.blockchains.casper.network.request.CasperTransactionBody
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.MultiNetworkProvider
 
 internal class CasperNetworkService(
     providers: List<CasperNetworkProvider>,
+    blockchain: Blockchain,
 ) : CasperNetworkProvider {
 
     override val baseUrl: String
         get() = multiJsonRpcProvider.currentProvider.baseUrl
 
-    private val multiJsonRpcProvider = MultiNetworkProvider(providers)
+    private val multiJsonRpcProvider = MultiNetworkProvider(providers, blockchain)
 
     override suspend fun getBalance(address: String): Result<CasperBalance> {
         return multiJsonRpcProvider.performRequest(CasperNetworkProvider::getBalance, address)

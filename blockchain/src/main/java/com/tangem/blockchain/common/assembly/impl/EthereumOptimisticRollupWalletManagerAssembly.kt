@@ -27,11 +27,12 @@ internal class EthereumOptimisticRollupWalletManagerAssembly(private val dataSto
     override fun make(input: WalletManagerAssemblyInput): EthereumOptimisticRollupWalletManager {
         with(input.wallet) {
             val multiNetworkProvider = MultiNetworkProvider(
-                getProvidersBuilder(
+                providers = getProvidersBuilder(
                     blockchain = blockchain,
                     providerTypes = input.providerTypes,
                     config = input.config,
                 ).build(blockchain),
+                blockchain = blockchain,
             )
             val yieldLendingProvider = YieldSupplyProviderFactory(dataStorage).makeProvider(this, multiNetworkProvider)
 

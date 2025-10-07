@@ -18,10 +18,12 @@ class CosmosWalletManager(
     wallet: Wallet,
     networkProviders: List<CosmosRestProvider>,
     private val cosmosChain: CosmosChain,
+    private val blockchain: Blockchain,
 ) : WalletManager(wallet) {
 
     private val networkService: CosmosNetworkService = CosmosNetworkService(
         providers = networkProviders,
+        blockchain = blockchain,
         cosmosChain = cosmosChain,
     )
     private var accountNumber: Long? = null
