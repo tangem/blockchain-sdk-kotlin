@@ -984,5 +984,15 @@ enum class Blockchain(
             .filter {
                 it.isTestnet() == isTestnet && it.getSupportedCurves().contains(EllipticCurve.Ed25519)
             }
+
+        /**
+         * List of supported blockchains for activating yield module
+         */
+        fun yieldSupplySupportedBlockchains(): List<Blockchain> {
+            return listOf(
+                Polygon,
+                EthereumTestnet,
+            )
+        }
     }
 }
