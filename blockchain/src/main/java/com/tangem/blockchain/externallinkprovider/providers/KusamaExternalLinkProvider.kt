@@ -5,7 +5,7 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 
 internal class KusamaExternalLinkProvider : ExternalLinkProvider {
 
-    override val explorerBaseUrl: String = "https://kusama.subscan.io/"
+    override val explorerBaseUrl: String = "https://assethub-kusama.subscan.io/"
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
         return explorerBaseUrl + "account/$walletAddress"
