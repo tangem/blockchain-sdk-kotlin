@@ -2,7 +2,6 @@ package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.blockchair.BlockchairToken
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -11,7 +10,7 @@ interface EthereumNetworkProvider : NetworkProvider {
     suspend fun getInfo(address: String, tokens: Set<Token>): Result<EthereumInfoResponse>
     suspend fun getPendingTxCount(address: String): Result<Long>
     suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): kotlin.Result<BigDecimal>
-    suspend fun sendTransaction(transaction: String): SimpleResult
+    suspend fun sendTransaction(transaction: String): Result<String>
     suspend fun getSignatureCount(address: String): Result<Int>
     suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>>
     suspend fun getGasPrice(): Result<BigInteger>
