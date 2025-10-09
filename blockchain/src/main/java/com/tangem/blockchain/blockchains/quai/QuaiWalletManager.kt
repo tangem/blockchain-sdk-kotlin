@@ -9,7 +9,11 @@ import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.logging.Logger
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.Result.Success
+import com.tangem.blockchain.extensions.formatHex
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
@@ -17,6 +21,7 @@ import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
 import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.toHexString
 
 class QuaiWalletManager(
     wallet: Wallet,
@@ -59,6 +64,23 @@ class QuaiWalletManager(
         return when (val signResponse = signer.sign(transactionToSign.hash, updatedPublicKey)) {
             is CompletionResult.Success -> Result.Success(signResponse.data to transactionToSign)
             is CompletionResult.Failure -> Result.fromTangemSdkError(signResponse.error)
+        }
+    }
+
+    override suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
+        val transactionToSend = prepareForSend(transactionData, signer)
+            .successOr { return it }
+
+        return when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString().formatHex())) {
+            is Result.Failure -> Result.fromTangemSdkError(sendResult.error)
+            is Result.Success<String> -> {
+                transactionData.hash = sendResult.data
+                wallet.addOutgoingTransaction(transactionData)
+                Success(TransactionSendResult(sendResult.data))
+            }
         }
     }
 }
