@@ -7,4 +7,6 @@ sealed class RosettaNetwork(val url: String) {
     data class Nownodes(val apiKey: String) : RosettaNetwork(url = "https://ada.nownodes.io/$apiKey/")
 
     object Tangem : RosettaNetwork(url = "https://ada.tangem.com/")
+
+    object Mock : RosettaNetwork(url = "[REDACTED_ENV_URL]")
 }
