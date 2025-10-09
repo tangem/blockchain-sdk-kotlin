@@ -82,6 +82,7 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.ZkLinkNova,
             Blockchain.Hyperliquid,
             Blockchain.Linea,
+            Blockchain.ArbitrumNova,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.Quai,
             Blockchain.QuaiTestnet,
