@@ -19,6 +19,9 @@ import com.tangem.blockchain.transactionhistory.blockchains.tron.TronTransaction
 internal object TransactionHistoryProviderFactory {
 
     fun makeProvider(blockchain: Blockchain, config: BlockchainSdkConfig): TransactionHistoryProvider {
+        if (blockchain.isEtherscanCompatible()) {
+            return createEtherscanProvider(blockchain, config)
+        }
         return when (blockchain) {
             Blockchain.Bitcoin,
             Blockchain.Litecoin,
@@ -39,13 +42,33 @@ internal object TransactionHistoryProviderFactory {
 
             Blockchain.Tron -> createTronProvider(blockchain, config)
 
-            Blockchain.Polygon -> createEtherscanProvider(blockchain, config)
-
             Blockchain.Koinos -> createKoinosProvider()
 
             Blockchain.Kaspa, Blockchain.KaspaTestnet -> createKaspaProvider(blockchain)
 
             else -> DefaultTransactionHistoryProvider
+        }
+    }
+
+    private fun Blockchain.isEtherscanCompatible(): Boolean {
+        return when (this) {
+            Blockchain.ApeChain,
+            Blockchain.Base,
+            Blockchain.Blast,
+            Blockchain.Gnosis,
+            Blockchain.Hyperliquid,
+            Blockchain.Mantle,
+            Blockchain.Moonbeam,
+            Blockchain.Moonriver,
+            Blockchain.Optimism,
+            Blockchain.PolygonZkEVM,
+            Blockchain.Polygon,
+            Blockchain.Scroll,
+            Blockchain.Sonic,
+            Blockchain.XDC,
+            Blockchain.ZkSyncEra,
+            -> true
+            else -> false
         }
     }
 
