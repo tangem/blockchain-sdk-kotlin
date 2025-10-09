@@ -15,6 +15,10 @@ sealed interface ProviderType {
 
     data object QuickNode : ProviderType
 
+    data object Blink : ProviderType
+
+    data object Mock : ProviderType
+
     sealed interface BitcoinLike : ProviderType {
         data object Blockchair : BitcoinLike
         data object Blockcypher : BitcoinLike
@@ -66,5 +70,9 @@ sealed interface ProviderType {
 
     sealed interface Alephium : ProviderType {
         object Tangem : Alephium
+    }
+
+    sealed interface Kusama : ProviderType {
+        object Tatum : Kusama
     }
 }

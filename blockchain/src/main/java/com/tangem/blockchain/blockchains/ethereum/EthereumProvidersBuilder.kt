@@ -20,6 +20,7 @@ internal class EthereumProvidersBuilder(
                     baseUrl = "https://eth.nownodes.io/",
                 )
                 ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { eth?.jsonRpc }
+                ProviderType.Blink -> ethereumProviderFactory.getBlinkProvider("https://eth.blinklabs.xyz/v1/")
                 ProviderType.EthereumLike.Infura -> {
                     ethereumProviderFactory.getInfuraProvider(baseUrl = "https://mainnet.infura.io/v3/")
                 }
@@ -30,8 +31,8 @@ internal class EthereumProvidersBuilder(
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return listOfNotNull(
-            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://eth-goerli.nownodes.io/"),
-            ethereumProviderFactory.getInfuraProvider(baseUrl = "https://goerli.infura.io/v3/"),
+            ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://eth-sepolia.nownodes.io/"),
+            ethereumProviderFactory.getInfuraProvider(baseUrl = "https://sepolia.infura.io/v3/"),
         )
     }
 }
