@@ -21,6 +21,7 @@ internal class SolanaProvidersBuilder(
     override fun createProviders(blockchain: Blockchain): List<SolanaRpcClient> {
         return providerTypes.mapNotNull {
             when (it) {
+                ProviderType.Blink -> getBlinkProvider()
                 ProviderType.NowNodes -> getNowNodesProvider()
                 ProviderType.QuickNode -> getQuickNodeProvider()
                 ProviderType.GetBlock -> getGetBlock()
@@ -47,6 +48,16 @@ internal class SolanaProvidersBuilder(
                     AddHeaderInterceptor(mapOf(NowNodeCredentials.headerApiKey to it)),
                     *createLoggingInterceptors().toTypedArray(),
                 ),
+            )
+        }
+    }
+
+    private fun getBlinkProvider(): SolanaRpcClient? {
+        return config.blinkApiKey?.letNotBlank { blinkApiKey ->
+            SolanaRpcClient(
+                baseUrl = "https://sol.blinklabs.xyz/v1/$blinkApiKey",
+                skipPreflight = true,
+                httpInterceptors = createLoggingInterceptors(),
             )
         }
     }

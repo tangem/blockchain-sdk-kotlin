@@ -10,6 +10,8 @@ import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
+import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.isZero
 import com.tangem.operations.sign.SignData
@@ -22,9 +24,11 @@ abstract class WalletManager(
     val cardTokens: MutableSet<Token> = mutableSetOf(),
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
+    yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
 ) : TransactionSender,
     TransactionHistoryProvider by transactionHistoryProvider,
-    NFTProvider by nftProvider {
+    NFTProvider by nftProvider,
+    YieldSupplyProvider by yieldSupplyProvider {
 
     open val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Unspecified
 
@@ -34,6 +38,8 @@ abstract class WalletManager(
     abstract val currentHost: String
 
     open val dustValue: BigDecimal? = null
+
+    open val isSelfSendAvailable = (this as? UtxoBlockchainManager)?.allowConsolidation == true
 
     private val updateDebounced = DebouncedInvoke()
 
@@ -325,7 +331,7 @@ interface NameResolver {
 /**
  * Common interface for UTXO blockchain managers
  */
-interface UtxoBlockchainManager {
+internal interface UtxoBlockchainManager {
     /** Indicates allowance of self sending */
     val allowConsolidation: Boolean
 }
