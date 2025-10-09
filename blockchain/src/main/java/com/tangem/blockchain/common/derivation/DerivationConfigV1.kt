@@ -68,6 +68,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.ZkLinkNova,
             Blockchain.Hyperliquid,
             Blockchain.Linea,
+            Blockchain.ArbitrumNova,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.OdysseyChain -> mapOf(AddressType.Default to DerivationPath("m/44'/695'/0'/0/0"))
             Blockchain.XDC -> mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
