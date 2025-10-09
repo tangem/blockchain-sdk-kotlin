@@ -15,6 +15,7 @@ internal class BSCProvidersBuilder(
         // https://docs.fantom.foundation/api/public-api-endpoints
         return providerTypes.mapNotNull {
             when (it) {
+                is ProviderType.Blink -> ethereumProviderFactory.getBlinkProvider("https://bsc.blinklabs.xyz/v1/")
                 is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
                 ProviderType.NowNodes -> {
                     ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://bsc.nownodes.io/")
