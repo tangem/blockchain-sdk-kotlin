@@ -7,6 +7,7 @@ import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.network.moshi
+import retrofit2.HttpException
 import retrofit2.Response
 import retrofit2.create
 
@@ -57,8 +58,17 @@ class CosmosRestProvider(override val baseUrl: String) : NetworkProvider {
         return try {
             val response = api.getTransactionStatus(txHash)
             Result.Success(response)
-        } catch (e: Exception) {
-            Result.Failure(e.toBlockchainSdkError())
+        } catch (exception: Exception) {
+            if (exception is HttpException && exception.code() == HTTP_NOT_FOUND_CODE) {
+                Result.Failure(
+                    BlockchainSdkError.Cosmos.TransactionNotFound(
+                        code = HTTP_NOT_FOUND_CODE,
+                        message = TRANSACTION_NOT_FOUND,
+                    ),
+                )
+            } else {
+                Result.Failure(exception.toBlockchainSdkError())
+            }
         }
     }
 
@@ -79,7 +89,11 @@ class CosmosRestProvider(override val baseUrl: String) : NetworkProvider {
             else -> Result.Failure(BlockchainSdkError.Cosmos.Api(-1, errorBody.orEmpty()))
         }
     }
-}
 
-private const val FAILED_TO_PARSE_JSON = "Failed to parse JSON"
-private const val EMPTY_ACCOUNT = 5
+    companion object {
+        private const val HTTP_NOT_FOUND_CODE = 404
+        private const val FAILED_TO_PARSE_JSON = "Failed to parse JSON"
+        private const val TRANSACTION_NOT_FOUND = "Transaction not found"
+        private const val EMPTY_ACCOUNT = 5
+    }
+}
