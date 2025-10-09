@@ -40,6 +40,7 @@ object DerivationConfigV2 : DerivationConfig() {
                 AddressType.Default to DerivationPath("m/44'/145'/0'/0/0"),
             )
             Blockchain.Ethereum,
+            Blockchain.EthereumTestnet,
             Blockchain.EthereumPow,
             Blockchain.Dischain,
             Blockchain.EthereumClassic,
@@ -121,7 +122,6 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.BitcoinTestnet,
             Blockchain.BitcoinCashTestnet,
             Blockchain.CosmosTestnet,
-            Blockchain.EthereumTestnet,
             Blockchain.EthereumClassicTestnet,
             Blockchain.FantomTestnet,
             Blockchain.PolkadotTestnet,

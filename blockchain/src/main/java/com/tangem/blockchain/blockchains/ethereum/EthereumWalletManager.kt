@@ -12,6 +12,7 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
+import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -19,6 +20,8 @@ import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
+import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -36,7 +39,13 @@ open class EthereumWalletManager(
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
     private val supportsENS: Boolean,
-) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider, nftProvider = nftProvider),
+    yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
+) : WalletManager(
+    wallet = wallet,
+    transactionHistoryProvider = transactionHistoryProvider,
+    nftProvider = nftProvider,
+    yieldSupplyProvider = yieldSupplyProvider,
+),
     SignatureCountValidator,
     TokenFinder,
     EthereumGasLoader,
@@ -65,7 +74,9 @@ open class EthereumWalletManager(
 
     private suspend fun updateWallet(data: EthereumInfoResponse) {
         wallet.setCoinValue(data.coinBalance)
-        data.tokenBalances.forEach { wallet.addTokenValue(it.value, it.key) }
+        // Reset tokens and add again to avoid duplicates
+        wallet.removeAllTokens()
+        data.tokenBalances.forEach { wallet.setAmount(it) }
 
         txCount = data.txCount
         pendingTxCount = data.pendingTxCount
@@ -119,6 +130,63 @@ open class EthereumWalletManager(
         }
     }
 
+    override suspend fun sendMultiple(
+        transactionDataList: List<TransactionData>,
+        signer: TransactionSigner,
+        sendMode: TransactionSender.MultipleTransactionSendMode,
+    ): Result<TransactionsSendResult> {
+        if (transactionDataList.size == 1) {
+            return sendSingleTransaction(transactionDataList, signer)
+        }
+
+        val blockchainNonce = networkProvider
+            .getPendingTxCount(wallet.address)
+            .successOr { return Result.Failure(BlockchainSdkError.FailedToBuildTx) }
+            .toBigInteger()
+
+        val updatedData = transactionDataList.mapIndexed { index, data ->
+            data.requireUncompiled().copy(
+                extras = (data.extras as? EthereumTransactionExtras)
+                    ?.copy(nonce = blockchainNonce + index.toBigInteger())
+                    ?: EthereumTransactionExtras(nonce = blockchainNonce + index.toBigInteger()),
+            )
+        }
+
+        val signedTxs = when (val signResult = signMultiple(updatedData, signer)) {
+            is Result.Failure -> return Result.Failure(signResult.error)
+            is Result.Success -> signResult.data
+        }
+
+        val sendResults = updatedData.mapIndexed { index, data ->
+            val transactionToSend = try {
+                transactionBuilder.buildForSend(
+                    transaction = data,
+                    signature = signedTxs.keys.elementAt(index),
+                    compiledTransaction = signedTxs.values.elementAt(index),
+                )
+            } catch (e: BlockchainSdkError.FailedToBuildTx) {
+                return Result.Failure(e)
+            }
+
+            when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())) {
+                is SimpleResult.Success -> {
+                    val hash = transactionToSend.keccak().toHexString()
+                    wallet.addOutgoingTransaction(data.updateHash(hash))
+                    Result.Success(TransactionSendResult(hash))
+                }
+                is SimpleResult.Failure -> Result.Failure(sendResult.error)
+            }
+        }
+
+        val failedResult = sendResults.firstOrNull { it is Result.Failure }
+
+        return if (failedResult != null) {
+            Result.Failure((failedResult as Result.Failure).error)
+        } else {
+            Result.Success(TransactionsSendResult(sendResults.mapNotNull { (it as? Result.Success)?.data?.hash }))
+        }
+    }
+
     protected open suspend fun sign(
         transactionData: TransactionData,
         signer: TransactionSigner,
@@ -127,6 +195,26 @@ open class EthereumWalletManager(
 
         return when (val signResponse = signer.sign(transactionToSign.hash, wallet.publicKey)) {
             is CompletionResult.Success -> Result.Success(signResponse.data to transactionToSign)
+            is CompletionResult.Failure -> Result.fromTangemSdkError(signResponse.error)
+        }
+    }
+
+    protected open suspend fun signMultiple(
+        transactionDataList: List<TransactionData>,
+        signer: TransactionSigner,
+    ): Result<Map<ByteArray, EthereumCompiledTxInfo>> {
+        val transactionToSignHashes = transactionDataList.map {
+            transactionBuilder.buildForSign(transaction = it)
+        }
+
+        return when (val signResponse = signer.sign(transactionToSignHashes.map { it.hash }, wallet.publicKey)) {
+            is CompletionResult.Success -> {
+                val resultMap = mutableMapOf<ByteArray, EthereumCompiledTxInfo>()
+                signResponse.data.forEachIndexed { index, signature ->
+                    resultMap[signature] = transactionToSignHashes[index]
+                }
+                Result.Success(resultMap)
+            }
             is CompletionResult.Failure -> Result.fromTangemSdkError(signResponse.error)
         }
     }

@@ -16,22 +16,24 @@ import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairToken
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import com.tangem.blockchain.network.moshi
+import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
+import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.extensions.hexToBytes
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 import java.math.BigInteger
 
 @OptIn(ExperimentalStdlibApi::class)
 internal open class EthereumNetworkService(
-    jsonRpcProviders: List<EthereumJsonRpcProvider>,
+    private val multiJsonRpcProvider: MultiNetworkProvider<EthereumJsonRpcProvider>,
     private val blockcypherNetworkProvider: BlockcypherNetworkProvider? = null,
     private val blockchairEthNetworkProvider: BlockchairEthNetworkProvider? = null,
+    private val yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
 ) : EthereumNetworkProvider {
 
     override val baseUrl get() = multiJsonRpcProvider.currentProvider.baseUrl
-
-    private val multiJsonRpcProvider = MultiNetworkProvider(jsonRpcProviders)
 
     private val decimals = Blockchain.Ethereum.decimals()
 
@@ -134,7 +136,7 @@ internal open class EthereumNetworkService(
             ?: Result.Failure(BlockchainSdkError.CustomError("No signature count provider found"))
     }
 
-    override suspend fun getTokensBalance(address: String, tokens: Set<Token>): Result<Map<Token, BigDecimal>> {
+    override suspend fun getTokensBalance(address: String, tokens: Set<Token>): Result<List<Amount>> {
         return try {
             Result.Success(getTokensBalanceInternal(address, tokens))
         } catch (exception: Exception) {
@@ -142,25 +144,27 @@ internal open class EthereumNetworkService(
         }
     }
 
-    private suspend fun getTokensBalanceInternal(address: String, tokens: Set<Token>): Map<Token, BigDecimal> {
+    private suspend fun getTokensBalanceInternal(address: String, tokens: Set<Token>): List<Amount> {
         return coroutineScope {
-            val tokenBalancesDeferred = tokens.map { token ->
-                token to async {
-                    multiJsonRpcProvider.performRequest(
-                        EthereumJsonRpcProvider::getTokenBalance,
-                        EthereumTokenBalanceRequestData(
-                            address,
-                            token.contractAddress,
-                        ),
-                    )
+            val isYieldSupported = yieldSupplyProvider.isSupported()
+
+            tokens.map { token ->
+                async {
+                    if (isYieldSupported) {
+                        val yieldContract = yieldSupplyProvider.getYieldContract()
+
+                        val yieldLendingStatus = yieldSupplyProvider.getYieldSupplyStatus(token.contractAddress)
+
+                        if (yieldLendingStatus?.isActive == true && yieldContract != EthereumUtils.ZERO_ADDRESS) {
+                            yieldSupplyProvider.getBalance(yieldLendingStatus, token)
+                        } else {
+                            getTokenBalance(address, token)
+                        }
+                    } else {
+                        getTokenBalance(address, token)
+                    }
                 }
-            }.toMap()
-            val tokenBalanceResponses = tokenBalancesDeferred.mapValues { it.value.await() }
-            tokenBalanceResponses.mapValues {
-                requireNotNull(EthereumUtils.parseEthereumDecimal(it.value.extractResult(), it.key.decimals)) {
-                    "Failed to parse token balance. Token: ${it.key.name}. Balance: ${it.value.extractResult()}"
-                }
-            }
+            }.awaitAll()
         }
     }
 
@@ -270,6 +274,28 @@ internal open class EthereumNetworkService(
         } catch (exception: Exception) {
             ReverseResolveAddressResult.Error(exception.toBlockchainSdkError())
         }
+    }
+
+    private suspend fun getTokenBalance(address: String, token: Token): Amount {
+        val rawTokenBalance = multiJsonRpcProvider.performRequest(
+            EthereumJsonRpcProvider::getTokenBalance,
+            EthereumTokenBalanceRequestData(
+                address,
+                token.contractAddress,
+            ),
+        )
+
+        val tokenBalance = requireNotNull(
+            EthereumUtils.parseEthereumDecimal(
+                rawTokenBalance.extractResult(),
+                token.decimals,
+            ),
+        ) { "Failed to parse token balance. Token: ${token.name}. Balance: ${rawTokenBalance.extractResult()}" }
+
+        return Amount(
+            token = token,
+            value = tokenBalance,
+        )
     }
 
     @Suppress("MagicNumber")

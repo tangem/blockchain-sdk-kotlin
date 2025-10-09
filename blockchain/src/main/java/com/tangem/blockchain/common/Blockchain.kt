@@ -726,7 +726,7 @@ enum class Blockchain(
             Avalanche -> Chain.Avalanche.id
             AvalancheTestnet -> Chain.AvalancheTestnet.id
             Ethereum -> Chain.Mainnet.id
-            EthereumTestnet -> Chain.Goerli.id
+            EthereumTestnet -> Chain.EthereumSepoliaTestnet.id
             EthereumClassic -> Chain.EthereumClassicMainnet.id
             EthereumClassicTestnet -> Chain.EthereumClassicTestnet.id
             Fantom -> Chain.Fantom.id

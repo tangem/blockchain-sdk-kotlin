@@ -6,9 +6,9 @@ import com.tangem.blockchain.nft.models.NFTAsset
 
 internal class EthereumExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
-    override val explorerBaseUrl: String = if (isTestnet) "https://goerli.etherscan.io/" else "https://etherscan.io/"
+    override val explorerBaseUrl: String = if (isTestnet) "https://sepolia.etherscan.io/" else "https://etherscan.io/"
 
-    override val testNetTopUpUrl: String? = if (isTestnet) "https://goerlifaucet.com/" else null
+    override val testNetTopUpUrl: String? = if (isTestnet) "https://sepoliafaucet.com/" else null
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
         return if (contractAddress != null) {

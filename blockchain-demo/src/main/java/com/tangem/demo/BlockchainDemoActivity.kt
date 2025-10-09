@@ -204,7 +204,9 @@ class BlockchainDemoActivity : AppCompatActivity() {
                 blockchainProviderTypes = emptyMap(),
                 accountCreator = DummyAccountCreator,
                 blockchainDataStorage = DummyBlockchainDataStorage,
-                featureToggles = BlockchainFeatureToggles(),
+                featureToggles = BlockchainFeatureToggles(
+                    isYieldSupplyEnabled = false,
+                ),
             ).makeWalletManagerForApp(
                 scanResponse = scanResponse,
                 blockchain = Blockchain.fromId(selectedBlockchain.id),
