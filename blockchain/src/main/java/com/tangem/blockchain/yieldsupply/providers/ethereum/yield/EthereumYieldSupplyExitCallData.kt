@@ -10,7 +10,7 @@ import com.tangem.common.extensions.hexToBytes
  *
  *  Signature: `withdrawAndDeactivate(address)`
  */
-internal class EthereumYieldSupplyExitCallData(
+class EthereumYieldSupplyExitCallData(
     private val tokenContractAddress: String,
 ) : SmartContractCallData {
     override val methodId: String = "0xc65e6dcf"
