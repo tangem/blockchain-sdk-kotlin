@@ -105,7 +105,7 @@ internal class AlgorandWalletManager(
     override suspend fun isAccountFunded(destinationAddress: String): Boolean {
         return when (val result = networkService.getAccountInfo(destinationAddress, emptySet())) {
             is Result.Failure -> false
-            is Result.Success -> result.data.reserveValue < result.data.balanceIncludingReserve
+            is Result.Success -> result.data.balanceIncludingReserve >= result.data.reserveValue
         }
     }
 }
