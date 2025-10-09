@@ -18,6 +18,7 @@ internal class PolkadotProvidersBuilder(
             when (it) {
                 is ProviderType.GetBlock -> createGetBlockProvider(blockchain)
                 is ProviderType.Public -> createPublicProvider(it.url, blockchain)
+                is ProviderType.Kusama.Tatum -> createTatumProvider(blockchain)
                 else -> null
             }
         }
@@ -34,6 +35,16 @@ internal class PolkadotProvidersBuilder(
     private fun createGetBlockProvider(blockchain: Blockchain): PolkadotNetworkProvider? {
         return config.getBlockCredentials?.polkadot?.jsonRpc.letNotBlank { jsonRpcToken ->
             PolkadotCombinedProvider(baseUrl = "https://go.getblock.io/$jsonRpcToken/", blockchain = blockchain)
+        }
+    }
+
+    private fun createTatumProvider(blockchain: Blockchain): PolkadotNetworkProvider? {
+        return config.tatumApiKey?.letNotBlank { tatumApiKey ->
+            PolkadotCombinedProvider(
+                baseUrl = "https://polkadot-assethub.gateway.tatum.io/",
+                blockchain = blockchain,
+                credentials = mapOf("x-api-key" to tatumApiKey),
+            )
         }
     }
 }
