@@ -9,7 +9,6 @@ import com.tangem.blockchain.blockchains.ethereum.converters.EthereumFeeHistoryC
 import com.tangem.blockchain.blockchains.ethereum.models.EthereumFeeHistoryResponse
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
@@ -129,14 +128,14 @@ internal abstract class EthereumLikeNetworkService(
         }
     }
 
-    override suspend fun sendTransaction(transaction: String): SimpleResult {
+    override suspend fun sendTransaction(transaction: String): Result<String> {
         return try {
-            multiJsonRpcProvider
+            val response = multiJsonRpcProvider
                 .performRequest(EthereumLikeJsonRpcProvider::sendTransaction, transaction)
                 .extractResult()
-            SimpleResult.Success
+            Result.Success(response)
         } catch (exception: Exception) {
-            SimpleResult.Failure(exception.toBlockchainSdkError())
+            Result.Failure(exception.toBlockchainSdkError())
         }
     }
 

@@ -15,6 +15,7 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.Result.*
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.nft.DefaultNFTProvider
@@ -121,13 +122,13 @@ open class EthereumWalletManager(
             .successOr { return it }
 
         return when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())) {
-            is SimpleResult.Success -> {
+            is Failure -> Result.fromTangemSdkError(sendResult.error)
+            is Success<*> -> {
                 val hash = transactionToSend.keccak().toHexString()
                 transactionData.hash = hash
                 wallet.addOutgoingTransaction(transactionData)
-                Result.Success(TransactionSendResult(hash))
+                Success(TransactionSendResult(hash))
             }
-            is SimpleResult.Failure -> Result.fromTangemSdkError(sendResult.error)
         }
     }
 
@@ -170,12 +171,12 @@ open class EthereumWalletManager(
             }
 
             when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())) {
-                is SimpleResult.Success -> {
+                is Result.Failure -> Failure(sendResult.error)
+                is Result.Success<*> -> {
                     val hash = transactionToSend.keccak().toHexString()
                     wallet.addOutgoingTransaction(data.updateHash(hash))
-                    Result.Success(TransactionSendResult(hash))
+                    Success(TransactionSendResult(hash))
                 }
-                is SimpleResult.Failure -> Result.Failure(sendResult.error)
             }
         }
 
