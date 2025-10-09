@@ -3,7 +3,7 @@ package com.tangem.blockchain.blockchains.ethereum.eip1559
 import com.tangem.blockchain.common.Blockchain
 
 /** Returns true if the blockchain supports EIP1559 */
-internal val Blockchain.isSupportEIP1559: Boolean
+val Blockchain.isSupportEIP1559: Boolean
     get() {
         if (!isEvm()) return false
 
@@ -60,6 +60,7 @@ internal val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Scroll,
             Blockchain.ZkLinkNova,
             Blockchain.Hyperliquid,
+            Blockchain.Quai,
             -> false
             else -> error("Don't forget about evm here")
         }

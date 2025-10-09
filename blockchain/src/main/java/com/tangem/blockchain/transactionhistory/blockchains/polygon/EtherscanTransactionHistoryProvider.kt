@@ -1,6 +1,7 @@
 package com.tangem.blockchain.transactionhistory.blockchains.polygon
 
 import com.tangem.Log
+import com.tangem.blockchain.blockchains.xdc.XDCAddressService.Companion.formatWith0xPrefix
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.pagination.Page
@@ -32,18 +33,19 @@ internal class EtherscanTransactionHistoryProvider(
         filterType: TransactionHistoryRequest.FilterType,
     ): TransactionHistoryState {
         return try {
+            val formattedAddress = formatAddressIfNeeded(address)
             val response = withContext(Dispatchers.IO) {
                 when (filterType) {
                     TransactionHistoryRequest.FilterType.Coin -> api.getCoinTransactionHistory(
                         chainId = requireNotNull(blockchain.getChainId()) { "chainId must not be null" },
-                        address = address,
+                        address = formattedAddress,
                         page = 1,
                         offset = 1, // We don't need to know all transactions to define state
                         apiKey = etherscanApiKey,
                     )
                     is TransactionHistoryRequest.FilterType.Contract -> api.getTokenTransactionHistory(
                         chainId = requireNotNull(blockchain.getChainId()) { "chainId must not be null" },
-                        address = address,
+                        address = formattedAddress,
                         page = 1,
                         offset = 100, // There are might be spam transaction in first transactions
                         contractAddress = filterType.tokenInfo.contractAddress,
@@ -61,7 +63,7 @@ internal class EtherscanTransactionHistoryProvider(
 
             val historyItems = response.result.toTransactionHistoryItems(
                 excludeZeroAmount = false,
-                walletAddress = address,
+                walletAddress = formattedAddress,
                 filterType = filterType,
             )
             when {
@@ -78,19 +80,20 @@ internal class EtherscanTransactionHistoryProvider(
         request: TransactionHistoryRequest,
     ): Result<PaginationWrapper<TransactionHistoryItem>> {
         return try {
+            val formattedAddress = formatAddressIfNeeded(request.address)
             val pageToLoad = request.intPageToLoad
             val response = withContext(Dispatchers.IO) {
                 when (request.filterType) {
                     TransactionHistoryRequest.FilterType.Coin -> api.getCoinTransactionHistory(
                         chainId = requireNotNull(blockchain.getChainId()) { "chainId must not be null" },
-                        address = request.address,
+                        address = formattedAddress,
                         offset = request.pageSize,
                         page = pageToLoad,
                         apiKey = etherscanApiKey,
                     )
                     is TransactionHistoryRequest.FilterType.Contract -> api.getTokenTransactionHistory(
                         chainId = requireNotNull(blockchain.getChainId()) { "chainId must not be null" },
-                        address = request.address,
+                        address = formattedAddress,
                         offset = request.pageSize,
                         page = pageToLoad,
                         contractAddress = request.filterType.tokenInfo.contractAddress,
@@ -110,7 +113,7 @@ internal class EtherscanTransactionHistoryProvider(
 
             val txs = response.result.toTransactionHistoryItems(
                 excludeZeroAmount = true,
-                walletAddress = request.address,
+                walletAddress = formattedAddress,
                 filterType = request.filterType,
             )
             val nextPage = if (txs.isNotEmpty()) {
@@ -122,6 +125,13 @@ internal class EtherscanTransactionHistoryProvider(
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
+    }
+
+    private fun formatAddressIfNeeded(address: String): String {
+        if (blockchain == Blockchain.XDC) {
+            return formatWith0xPrefix(address)
+        }
+        return address
     }
 
     private fun PolygonScanResult.toTransactionHistoryItems(

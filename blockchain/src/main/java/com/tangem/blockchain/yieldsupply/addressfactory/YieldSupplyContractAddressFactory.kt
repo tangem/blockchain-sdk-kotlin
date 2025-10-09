@@ -13,7 +13,9 @@ internal class YieldSupplyContractAddressFactory(
     private val aaveV3YieldSupplyContractAddressFactory = AaveV3YieldSupplyContractAddressFactory(blockchain)
 
     fun isSupported() = when (blockchain) {
-        Blockchain.EthereumTestnet -> true
+        Blockchain.Polygon,
+        Blockchain.EthereumTestnet,
+        -> true
         else -> false
     }
 
