@@ -71,4 +71,8 @@ sealed interface ProviderType {
     sealed interface Alephium : ProviderType {
         object Tangem : Alephium
     }
+
+    sealed interface Kusama : ProviderType {
+        object Tatum : Kusama
+    }
 }
