@@ -5,6 +5,7 @@ import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.ton.models.TonCompiledTransactionData
 import com.tangem.blockchain.blockchains.ton.models.TonPreSignStructure
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.extensions.bytes8BigEndian
 import com.tangem.blockchain.extensions.removeLeadingZeros
 import com.tangem.blockchain.network.moshi
 import org.ton.block.CommonMsgInfoRelaxed
@@ -75,7 +76,7 @@ internal class TonTransactionBuilder(
         val info = messageRelaxed.info as CommonMsgInfoRelaxed.IntMsgInfoRelaxed
         val transfer = TheOpenNetwork.Transfer.newBuilder()
             .setDest(MsgAddressInt.toString(address = info.dest))
-            .setAmount(info.value.coins.amount.value.toLong())
+            .setAmount(ByteString.copyFrom(info.value.coins.amount.value.toLong().bytes8BigEndian()))
             .setMode(modeTransactionConstant)
             .setComment(messageRelaxed.extractComment())
             .setBounceable(info.bounce)
@@ -194,7 +195,7 @@ internal class TonTransactionBuilder(
     ): TheOpenNetwork.Transfer {
         return TheOpenNetwork.Transfer.newBuilder()
             .setDest(destination)
-            .setAmount(amount.longValue)
+            .setAmount(ByteString.copyFrom(amount.longValue.bytes8BigEndian()))
             .setMode(modeTransactionConstant)
             .setBounceable(false)
             .setComment(comment)
@@ -216,7 +217,8 @@ internal class TonTransactionBuilder(
             .setJettonAmount(jettonAmount)
             .setToOwner(destination)
             .setResponseAddress(walletAddress)
-            .setForwardAmount(1L) // needs some amount to send "jetton transfer notification", use minimum
+            // needs some amount to send "jetton transfer notification", use minimum
+            .setForwardAmount(ByteString.copyFrom(1L.bytes8BigEndian()))
             .build()
 
         return makeTransfer(
