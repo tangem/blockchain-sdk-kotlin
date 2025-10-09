@@ -96,7 +96,9 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
         val extras = transaction.extras as? EthereumTransactionExtras
 
         return when (transaction.amount.type) {
-            AmountType.Coin -> buildSigningInput(
+            is AmountType.TokenYieldSupply, // Destination is defined by application
+            AmountType.Coin,
+            -> buildSigningInput(
                 chainId = chainId,
                 destinationAddress = transaction.destinationAddress,
                 coinAmount = amountValue,
