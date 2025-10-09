@@ -30,7 +30,9 @@ internal class PublicProvidersWithPostfixNetworkBuilderTest(private val model: M
     init {
         DepsContainer.onInit(
             config = BlockchainSdkConfig(),
-            featureToggles = BlockchainFeatureToggles(),
+            featureToggles = BlockchainFeatureToggles(
+                isYieldSupplyEnabled = false,
+            ),
         )
     }
 
