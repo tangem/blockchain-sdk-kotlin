@@ -27,7 +27,7 @@ internal class DerivationStyleTests {
         Truth.assertThat(ethTestnet.derivationPath(legacy)!!.rawPath)
             .isEqualTo("m/44'/1'/0'/0/0")
         Truth.assertThat(ethTestnet.derivationPath(new)!!.rawPath)
-            .isEqualTo("m/44'/1'/0'/0/0")
+            .isEqualTo("m/44'/60'/0'/0/0")
 
         val xrp = Blockchain.XRP
         Truth.assertThat(xrp.derivationPath(legacy)!!.rawPath)

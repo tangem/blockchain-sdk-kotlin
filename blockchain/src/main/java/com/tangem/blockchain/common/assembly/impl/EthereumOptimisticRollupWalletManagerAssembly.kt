@@ -13,24 +13,37 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
+import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
+import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.nft.NFTProviderFactory
+import com.tangem.blockchain.yieldsupply.YieldSupplyProviderFactory
 
-internal object EthereumOptimisticRollupWalletManagerAssembly :
+internal class EthereumOptimisticRollupWalletManagerAssembly(private val dataStorage: AdvancedDataStorage) :
     WalletManagerAssembly<EthereumOptimisticRollupWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): EthereumOptimisticRollupWalletManager {
         with(input.wallet) {
+            val multiNetworkProvider = MultiNetworkProvider(
+                getProvidersBuilder(
+                    blockchain = blockchain,
+                    providerTypes = input.providerTypes,
+                    config = input.config,
+                ).build(blockchain),
+            )
+            val yieldLendingProvider = YieldSupplyProviderFactory(dataStorage).makeProvider(this, multiNetworkProvider)
+
             return EthereumOptimisticRollupWalletManager(
                 wallet = this,
                 // TODO: [REDACTED_JIRA]
-                transactionBuilder = EthereumLegacyTransactionBuilder(wallet = input.wallet),
+                transactionBuilder = EthereumLegacyTransactionBuilder(wallet = this),
                 networkProvider = EthereumNetworkService(
-                    jsonRpcProviders = getProvidersBuilder(blockchain, input.providerTypes, input.config)
-                        .build(blockchain),
+                    multiJsonRpcProvider = multiNetworkProvider,
+                    yieldSupplyProvider = yieldLendingProvider,
                 ),
                 nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
+                yieldSupplyProvider = yieldLendingProvider,
             )
         }
     }
