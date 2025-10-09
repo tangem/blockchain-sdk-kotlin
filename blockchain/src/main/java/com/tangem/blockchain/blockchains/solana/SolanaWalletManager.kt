@@ -2,8 +2,8 @@ package com.tangem.blockchain.blockchains.solana
 
 import android.os.SystemClock
 import android.util.Log
-import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionSizeReducer
 import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionParser
+import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionSizeReducer
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaMainAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaSplAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.TransactionInfo
@@ -19,10 +19,7 @@ import com.tangem.blockchain.extensions.*
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.rpc.Cluster
@@ -371,12 +368,33 @@ class SolanaWalletManager internal constructor(
         )
     }
 
-    suspend fun handleLargeLegacyTransaction(signer: TransactionSigner, legacyTransaction: ByteArray): ByteArray {
-        return solanaTransactionSizeReducer.process(
-            signer = signer,
-            rawTransaction = legacyTransaction,
-        )
+    override suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
+        val transactionWithSignaturePlaceholder =
+            ((transactionData as? TransactionData.Compiled)?.value as? TransactionData.Compiled.Data.Bytes)?.data
+
+        val messageBytes = transactionWithSignaturePlaceholder?.let {
+            SolanaTransactionHelper.removeSignaturesPlaceholders(it)
+        }
+
+        if (messageBytes != null) {
+            val networkFee = getNetworkFee(messageBytes).successOr { return it }
+            return Result.Success(
+                data = TransactionFee.Single(
+                    Fee.Common(Amount(networkFee, wallet.blockchain)),
+                ),
+            )
+        } else {
+            return super.getFee(transactionData)
+        }
     }
+
+    suspend fun handleLargeLegacyTransaction(signer: TransactionSigner, legacyTransaction: ByteArray): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            solanaTransactionSizeReducer.process(
+                signer = signer,
+                rawTransaction = legacyTransaction,
+            )
+        }
 
     private suspend fun getOwnerAccountInfo(
         amount: Amount,
@@ -402,6 +420,14 @@ class SolanaWalletManager internal constructor(
             amount = amount,
             ownerAccountInfo = ownerAccountInfo,
         ).successOr { return it }
+        val result = multiNetworkProvider.performRequest {
+            getFeeForMessage(transaction)
+        }.successOr { return it }
+
+        return Result.Success(result.value.let(SolanaValueConverter::toSol))
+    }
+
+    private suspend fun getNetworkFee(transaction: ByteArray): Result<BigDecimal> {
         val result = multiNetworkProvider.performRequest {
             getFeeForMessage(transaction)
         }.successOr { return it }

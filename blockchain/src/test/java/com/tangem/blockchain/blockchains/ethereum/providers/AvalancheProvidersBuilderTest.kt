@@ -60,7 +60,9 @@ class AvalancheProvidersBuilderTest {
     init {
         DepsContainer.onInit(
             config = blockchainSdkConfig,
-            featureToggles = BlockchainFeatureToggles(),
+            featureToggles = BlockchainFeatureToggles(
+                isYieldSupplyEnabled = false,
+            ),
         )
     }
 

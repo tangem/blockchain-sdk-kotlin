@@ -18,6 +18,7 @@ import javax.net.ssl.SSLHandshakeException
  */
 internal class SolanaRpcClient(
     override val baseUrl: String,
+    private val skipPreflight: Boolean = false,
     httpInterceptors: List<Interceptor>? = null,
 ) : RpcClient(baseUrl, httpInterceptors), NetworkProvider {
 
@@ -25,7 +26,7 @@ internal class SolanaRpcClient(
     private val moshi = Moshi.Builder().build()
     private val requestAdapter = moshi.adapter(RpcRequest::class.java)
 
-    override fun createRpcApi(): SolanaRpcApi = SolanaRpcApi(this)
+    override fun createRpcApi(): SolanaRpcApi = SolanaRpcApi(rpcClient = this, skipPreflight = skipPreflight)
     override fun getApi(): SolanaRpcApi = super.getApi() as SolanaRpcApi
 
     fun call(method: String?, params: List<Any>?): String {

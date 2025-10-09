@@ -240,6 +240,15 @@ internal class SolanaNetworkService(
         }
     }
 
+    suspend fun getFeeForMessage(transaction: ByteArray): Result<FeeInfo> = withContext(Dispatchers.IO) {
+        try {
+            val params = provider.api.getFeeForMessage(transaction, Commitment.CONFIRMED)
+            Result.Success(params)
+        } catch (ex: Exception) {
+            Result.Failure(Solana.Api(ex))
+        }
+    }
+
     suspend fun minimalBalanceForRentExemption(dataLength: Long): Result<Long> = withContext(Dispatchers.IO) {
         try {
             val rent = provider.api.getMinimumBalanceForRentExemption(dataLength)
