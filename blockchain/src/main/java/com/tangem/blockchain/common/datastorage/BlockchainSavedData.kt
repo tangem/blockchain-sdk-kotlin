@@ -31,4 +31,9 @@ internal sealed interface BlockchainSavedData {
     data class Trustline(
         @Json(name = "createdTrustline") val createdTrustline: Set<String> = emptySet(),
     ) : BlockchainSavedData
+
+    @JsonClass(generateAdapter = true)
+    data class YieldSupplyModule(
+        @Json(name = "contractAddress") val yieldContractAddress: String? = null,
+    ) : BlockchainSavedData
 }

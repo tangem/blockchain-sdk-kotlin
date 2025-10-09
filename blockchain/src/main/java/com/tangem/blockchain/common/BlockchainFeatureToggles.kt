@@ -5,4 +5,6 @@ package com.tangem.blockchain.common
  *
 [REDACTED_AUTHOR]
  */
-class BlockchainFeatureToggles
+class BlockchainFeatureToggles(
+    val isYieldSupplyEnabled: Boolean,
+)
