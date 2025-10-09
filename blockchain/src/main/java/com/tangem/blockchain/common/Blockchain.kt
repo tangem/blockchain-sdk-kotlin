@@ -212,6 +212,7 @@ enum class Blockchain(
     QuaiTestnet("quai/test", "QUAI", "Quai Testnet"),
     Linea("linea", "ETH", "Linea"),
     LineaTestnet("linea/test", "ETH", "Linea Testnet"),
+    ArbitrumNova("arbitrum-nova", "ETH", "Arbitrum Nova"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -243,6 +244,7 @@ enum class Blockchain(
             Scroll,
             ZkLinkNova,
             Linea,
+            ArbitrumNova,
             -> true
             else -> false
         }
@@ -351,6 +353,7 @@ enum class Blockchain(
         Hyperliquid, HyperliquidTestnet,
         Quai, QuaiTestnet,
         Linea, LineaTestnet,
+        ArbitrumNova,
         -> 18
 
         Near, NearTestnet,
@@ -457,6 +460,7 @@ enum class Blockchain(
             ZkLinkNova, ZkLinkNovaTestnet,
             Hyperliquid, HyperliquidTestnet,
             Linea, LineaTestnet,
+            ArbitrumNova,
             -> EthereumAddressService()
 
             Quai, QuaiTestnet -> QuaiAddressService()
@@ -635,6 +639,7 @@ enum class Blockchain(
             Xodex,
             Canxium,
             Clore,
+            ArbitrumNova,
             -> null
         }
     }
@@ -725,6 +730,7 @@ enum class Blockchain(
             Hyperliquid, HyperliquidTestnet,
             Quai, QuaiTestnet,
             Linea, LineaTestnet,
+            ArbitrumNova,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -846,6 +852,7 @@ enum class Blockchain(
             QuaiTestnet -> Chain.QuaiTestnet.id
             Linea -> Chain.Linea.id
             LineaTestnet -> Chain.LineaTestnet.id
+            ArbitrumNova -> Chain.ArbitrumNova.id
             else -> null
         }
     }
