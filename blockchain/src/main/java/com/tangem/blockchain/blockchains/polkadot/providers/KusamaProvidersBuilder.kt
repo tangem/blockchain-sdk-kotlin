@@ -19,6 +19,7 @@ internal class KusamaProvidersBuilder(
                 is ProviderType.GetBlock -> createGetBlockProvider(blockchain)
                 is ProviderType.NowNodes -> createNowNodesProvider(blockchain)
                 is ProviderType.Public -> createPublicProvider(it.url, blockchain)
+                is ProviderType.Kusama.Tatum -> createTatumProvider(blockchain)
                 else -> null
             }
         }
@@ -37,6 +38,16 @@ internal class KusamaProvidersBuilder(
     private fun createNowNodesProvider(blockchain: Blockchain): PolkadotNetworkProvider? {
         return config.nowNodeCredentials?.apiKey.letNotBlank {
             PolkadotCombinedProvider(baseUrl = "https://ksm.nownodes.io/$it/", blockchain = blockchain)
+        }
+    }
+
+    private fun createTatumProvider(blockchain: Blockchain): PolkadotNetworkProvider? {
+        return config.tatumApiKey?.letNotBlank { tatumApiKey ->
+            PolkadotCombinedProvider(
+                baseUrl = "https://kusama-assethub.gateway.tatum.io/",
+                blockchain = blockchain,
+                credentials = mapOf("x-api-key" to tatumApiKey),
+            )
         }
     }
 }
