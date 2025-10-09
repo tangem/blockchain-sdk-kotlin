@@ -109,6 +109,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet -> HyperliquidExternalLinkProvider(isTestnet)
             Blockchain.Quai, Blockchain.QuaiTestnet -> QuaiExternalLinkProvider(isTestnet)
             Blockchain.Linea, Blockchain.LineaTestnet -> LineaExternalLinkProvider(isTestnet)
+            Blockchain.ArbitrumNova -> ArbitrumNovaExternalLinkProvider()
         }
     }
 }
