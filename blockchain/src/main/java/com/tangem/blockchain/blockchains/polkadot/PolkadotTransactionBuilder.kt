@@ -40,7 +40,7 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         -> "0500".hexToBytes()
         Blockchain.PolkadotTestnet,
         Blockchain.Kusama,
-        -> "0400".hexToBytes()
+        -> "0a00".hexToBytes()
         Blockchain.EnergyWebX,
         -> "0a07".hexToBytes()
         else -> error(
@@ -57,7 +57,7 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
 
         encodeCall(codecWriter, amount, Address.from(destinationAddress), context.runtimeVersion)
         encodeEraNonceTip(codecWriter, context)
-
+        encodeAssetId(codecWriter)
         encodeCheckMetadataHashMode(codecWriter, context.runtimeVersion)
 
         codecWriter.writeUint32(context.runtimeVersion)
@@ -87,6 +87,7 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
 
         codecWriter.writeByteArray(tx.method.hexToBytes())
         encodeEraNonceTip(codecWriter, tx)
+        encodeAssetId(codecWriter)
         encodeCheckMetadataHashMode(codecWriter, tx.specVersion.hexToInt())
         codecWriter.writeUint32(tx.specVersion.hexToInt())
         codecWriter.writeUint32(tx.transactionVersion.hexToInt())
@@ -118,6 +119,7 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         codecWriter.writeByteArray(signature.value.bytes)
 
         encodeEraNonceTip(codecWriter, context)
+        encodeAssetId(codecWriter)
         encodeCheckMetadataHashMode(codecWriter, context.runtimeVersion)
         encodeCall(codecWriter, amount, Address.from(destinationAddress), context.runtimeVersion)
 
@@ -149,6 +151,7 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         codecWriter.writeByte(signature.type.code)
         codecWriter.writeByteArray(signature.value.bytes)
         encodeEraNonceTip(codecWriter, tx)
+        encodeAssetId(codecWriter)
         encodeCheckMetadataHashMode(codecWriter, tx.specVersion.hexToInt())
         codecWriter.writeByteArray(tx.method.hexToBytes())
 
@@ -214,6 +217,19 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
             Blockchain.Polkadot -> runtimeVersion < POLKA_RAW_ADDRESS_RUNTIME_VERSION
             Blockchain.Kusama -> runtimeVersion < KUSAMA_RAW_ADDRESS_RUNTIME_VERSION
             Blockchain.Joystream -> true
+            else -> false
+        }
+    }
+
+    private fun encodeAssetId(codecWriter: ScaleCodecWriter) {
+        if (isInAssetHubList(blockchain)) {
+            codecWriter.writeByte(0x0.toByte())
+        }
+    }
+
+    private fun isInAssetHubList(blockchain: Blockchain): Boolean {
+        return when (blockchain) {
+            Blockchain.Kusama -> true
             else -> false
         }
     }
