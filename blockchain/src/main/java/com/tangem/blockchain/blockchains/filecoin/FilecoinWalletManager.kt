@@ -92,8 +92,7 @@ internal class FilecoinWalletManager(
                         is Result.Failure -> Result.Failure(result.error)
                         is Result.Success -> {
                             val txHash = result.data
-                            wallet.addOutgoingTransaction(transactionData.updateHash(hash = txHash))
-                            transactionData.hash = txHash
+                            wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
                             Result.Success(TransactionSendResult(txHash))
                         }
                     }
