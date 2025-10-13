@@ -124,10 +124,9 @@ open class EthereumWalletManager(
         return when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())) {
             is Failure -> Result.fromTangemSdkError(sendResult.error)
             is Success<*> -> {
-                val hash = transactionToSend.keccak().toHexString()
-                transactionData.hash = hash
-                wallet.addOutgoingTransaction(transactionData)
-                Success(TransactionSendResult(hash))
+                val txHash = transactionToSend.keccak().toHexString()
+                wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+                Success(TransactionSendResult(txHash))
             }
         }
     }
@@ -173,9 +172,9 @@ open class EthereumWalletManager(
             when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())) {
                 is Result.Failure -> Failure(sendResult.error)
                 is Result.Success<*> -> {
-                    val hash = transactionToSend.keccak().toHexString()
-                    wallet.addOutgoingTransaction(data.updateHash(hash))
-                    Success(TransactionSendResult(hash))
+                    val txHash = transactionToSend.keccak().toHexString()
+                    wallet.addOutgoingTransaction(transactionData = data, txHash = txHash)
+                    Success(TransactionSendResult(txHash))
                 }
             }
         }

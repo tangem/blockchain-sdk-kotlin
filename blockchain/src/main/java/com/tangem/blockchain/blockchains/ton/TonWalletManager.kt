@@ -63,8 +63,9 @@ internal class TonWalletManager(
         when (val sendResult = networkService.send(txToSend)) {
             is Result.Failure -> Result.Failure(sendResult.error)
             is Result.Success -> {
-                wallet.addOutgoingTransaction(transactionData.updateHash(sendResult.data))
-                Result.Success(TransactionSendResult(sendResult.data))
+                val txHash = sendResult.data
+                wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+                Result.Success(TransactionSendResult(txHash))
             }
         }
     } catch (e: BlockchainSdkError) {

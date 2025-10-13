@@ -170,10 +170,12 @@ internal class PolkadotWalletManager(
                         when (val sendResult = networkProvider.sendTransaction(signedData)) {
                             is Result.Failure -> sendResult
                             is Result.Success -> {
-                                val hash = sendResult.data.formatHex()
-                                transactionDataList[index].hash = hash
-                                wallet.addOutgoingTransaction(transactionDataList[index].updateHash(hash = hash))
-                                Result.Success(TransactionSendResult(hash))
+                                val txHash = sendResult.data.formatHex()
+                                wallet.addOutgoingTransaction(
+                                    transactionData = transactionDataList[index],
+                                    txHash = txHash,
+                                )
+                                Result.Success(TransactionSendResult(txHash))
                             }
                         }
                     }
@@ -251,16 +253,14 @@ internal class PolkadotWalletManager(
             signer = signer,
         ).successOr { return Result.Failure(it.error) }
 
-        val txHash = networkProvider.sendTransaction(signedTransaction).successOr {
+        val hash = networkProvider.sendTransaction(signedTransaction).successOr {
             return Result.Failure(it.error)
         }
 
-        val hash = txHash.formatHex()
-        transactionData.hash = hash
-        transactionData.date = Calendar.getInstance()
-        wallet.addOutgoingTransaction(transactionData)
+        val txHash = hash.formatHex()
+        wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
 
-        return Result.Success(TransactionSendResult(hash))
+        return Result.Success(TransactionSendResult(txHash))
     }
 
     private suspend fun sign(
