@@ -71,10 +71,9 @@ internal class CardanoWalletManager(
                 val transactionToSend = transactionBuilder.buildForSend(transactionData, signatureInfo)
                 when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
                     is SimpleResult.Success -> {
-                        val hash = transactionHash.toHexString()
-                        transactionData.hash = hash
-                        wallet.addOutgoingTransaction(transactionData)
-                        Result.Success(TransactionSendResult(hash))
+                        val txHash = transactionHash.toHexString()
+                        wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+                        Result.Success(TransactionSendResult(txHash))
                     }
                     is SimpleResult.Failure -> return Result.Failure(sendResult.error)
                 }
@@ -153,10 +152,9 @@ internal class CardanoWalletManager(
                     val transactionToSend = transactionBuilder.buildForSend(data, signatureInfo)
                     when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
                         is SimpleResult.Success -> {
-                            val hashString = hash.toHexString()
-                            data.hash = hashString
-                            wallet.addOutgoingTransaction(data)
-                            hashString
+                            val txHash = hash.toHexString()
+                            wallet.addOutgoingTransaction(data, txHash)
+                            txHash
                         }
                         is SimpleResult.Failure -> return Result.Failure(sendResult.error)
                     }

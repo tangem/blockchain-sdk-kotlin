@@ -129,11 +129,14 @@ class NearWalletManager(
                 )
                 when (val sendResultHash = networkService.sendTransaction(txToSend.encodeBase64NoWrap())) {
                     is Result.Success -> {
-                        val hash = sendResultHash.data
-                        transactionData.hash = hash
-                        wallet.addOutgoingTransaction(transactionData = transactionData, hashToLowercase = false)
+                        val txHash = sendResultHash.data
+                        wallet.addOutgoingTransaction(
+                            transactionData = transactionData,
+                            txHash = txHash,
+                            hashToLowercase = false,
+                        )
 
-                        Result.Success(TransactionSendResult(hash))
+                        Result.Success(TransactionSendResult(txHash))
                     }
                     is Result.Failure -> sendResultHash
                 }
