@@ -154,6 +154,8 @@ sealed class BlockchainSdkError(
         cause = throwable,
     ) {
         class Api(code: Int, message: String) : Cosmos(subCode = code, customMessage = message)
+
+        class TransactionNotFound(code: Int, message: String) : Cosmos(subCode = code, customMessage = message)
     }
 
     sealed class NearException(
