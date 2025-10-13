@@ -65,8 +65,7 @@ internal class CasperWalletManager(
                         is Result.Failure -> Result.Failure(result.error)
                         is Result.Success -> {
                             val txHash = result.data.deployHash
-                            wallet.addOutgoingTransaction(transactionData.updateHash(hash = txHash))
-                            transactionData.hash = txHash
+                            wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
                             Result.Success(TransactionSendResult(txHash))
                         }
                     }
