@@ -108,10 +108,9 @@ internal class TronWalletManager(
                 when (val sendResult = networkService.broadcastHex(signResult.data)) {
                     is Result.Failure -> Result.Failure(sendResult.error)
                     is Result.Success -> {
-                        val hash = sendResult.data.txid
-                        transactionData.hash = hash
-                        wallet.addOutgoingTransaction(transactionData.updateHash(hash = hash))
-                        Result.Success(TransactionSendResult(hash))
+                        val txHash = sendResult.data.txid
+                        wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+                        Result.Success(TransactionSendResult(txHash))
                     }
                 }
             }
@@ -153,10 +152,12 @@ internal class TronWalletManager(
                         when (val sendResult = networkService.broadcastHex(signedData)) {
                             is Result.Failure -> sendResult
                             is Result.Success -> {
-                                val hash = sendResult.data.txid
-                                transactionDataList[index].hash = hash
-                                wallet.addOutgoingTransaction(transactionDataList[index].updateHash(hash = hash))
-                                Result.Success(TransactionSendResult(hash))
+                                val txHash = sendResult.data.txid
+                                wallet.addOutgoingTransaction(
+                                    transactionData = transactionDataList[index],
+                                    txHash = txHash,
+                                )
+                                Result.Success(TransactionSendResult(txHash))
                             }
                         }
                     }

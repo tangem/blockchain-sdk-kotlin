@@ -139,15 +139,13 @@ internal class KoinosWalletManager(
         val transactionRes = networkService.submitTransaction(signedTransaction)
             .successOr { return it }
 
-        val hash = transactionRes.id
-        transactionData.hash = hash
+        val txHash = transactionRes.id
         wallet.addOutgoingTransaction(
-            transactionData.copy(
-                hash = hash,
-            ),
+            transactionData = transactionData,
+            txHash = txHash,
         )
 
-        return Result.Success(TransactionSendResult(hash))
+        return Result.Success(TransactionSendResult(txHash))
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
