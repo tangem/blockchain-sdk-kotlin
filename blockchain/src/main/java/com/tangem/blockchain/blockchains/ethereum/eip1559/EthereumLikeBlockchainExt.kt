@@ -15,10 +15,10 @@ internal val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Fantom,
             Blockchain.Arbitrum,
             Blockchain.Gnosis,
-            // TODO: [REDACTED_JIRA]
-            // Blockchain.Optimism,
-            // Blockchain.Manta,
-            // Blockchain.Base,
+                // TODO: [REDACTED_JIRA]
+                // Blockchain.Optimism,
+                // Blockchain.Manta,
+                // Blockchain.Base,
             Blockchain.Cronos,
             Blockchain.Decimal,
             Blockchain.Areon,
@@ -29,7 +29,7 @@ internal val Blockchain.isSupportEIP1559: Boolean
             Blockchain.OdysseyChain,
             Blockchain.Sonic,
             Blockchain.ApeChain,
-            -> true
+                -> true
             Blockchain.EthereumClassic, // eth_feeHistory all zeroes
             Blockchain.EthereumPow, // eth_feeHistory with zeros
             Blockchain.Dischain, // eth_feeHistory with zeros
@@ -60,7 +60,8 @@ internal val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Scroll,
             Blockchain.ZkLinkNova,
             Blockchain.Hyperliquid,
-            -> false
+            Blockchain.Bob,
+                -> false
             else -> error("Don't forget about evm here")
         }
     }

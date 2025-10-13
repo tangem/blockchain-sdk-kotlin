@@ -162,10 +162,11 @@ class WalletManagerFactory(
             Blockchain.Scroll, Blockchain.ScrollTestnet,
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet,
             Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet,
-            -> EthereumLikeWalletManagerAssembly(dataStorage)
+            Blockchain.Bob,
+                -> EthereumLikeWalletManagerAssembly(dataStorage)
 
             Blockchain.Mantle, Blockchain.MantleTestnet,
-            -> MantleWalletManagerAssembly
+                -> MantleWalletManagerAssembly
 
             Blockchain.Decimal, Blockchain.DecimalTestnet -> DecimalWalletManagerAssembly
             Blockchain.XDC, Blockchain.XDCTestnet -> XDCWalletManagerAssembly
@@ -174,7 +175,7 @@ class WalletManagerFactory(
             Blockchain.Manta, Blockchain.MantaTestnet,
             Blockchain.Blast, Blockchain.BlastTestnet,
             Blockchain.Cyber, Blockchain.CyberTestnet,
-            -> EthereumOptimisticRollupWalletManagerAssembly(dataStorage)
+                -> EthereumOptimisticRollupWalletManagerAssembly(dataStorage)
             Blockchain.Telos, Blockchain.TelosTestnet -> TelosWalletManagerAssembly
             // endregion
 
@@ -186,7 +187,7 @@ class WalletManagerFactory(
             Blockchain.Joystream,
             Blockchain.Bittensor,
             Blockchain.EnergyWebX, Blockchain.EnergyWebXTestnet,
-            -> PolkadotWalletManagerAssembly
+                -> PolkadotWalletManagerAssembly
 
             Blockchain.Stellar, Blockchain.StellarTestnet -> StellarWalletManagerAssembly(dataStorage)
             Blockchain.Cardano -> CardanoWalletManagerAssembly
@@ -216,7 +217,7 @@ class WalletManagerFactory(
             Blockchain.Casper, Blockchain.CasperTestnet -> CasperWalletManagerAssembly
             Blockchain.Alephium, Blockchain.AlephiumTestnet -> AlephiumWalletManagerAssembly
             Blockchain.Unknown,
-            -> error("Unsupported blockchain")
+                -> error("Unsupported blockchain")
         }
     }
 
