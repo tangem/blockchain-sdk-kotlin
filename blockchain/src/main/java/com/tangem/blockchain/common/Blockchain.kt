@@ -205,6 +205,7 @@ enum class Blockchain(
     PepecoinTestnet("pepecoin/test", "PEP", "Pepecoin Testnet"),
     Hyperliquid("hyperliquid", "HYPE", "Hyperliquid EVM"),
     HyperliquidTestnet("hyperliquid/test", "HYPE", "Hyperliquid EVM Testnet"),
+    Bob("bob", "BOB", "BOB EVM"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -235,7 +236,8 @@ enum class Blockchain(
             Cyber,
             Scroll,
             ZkLinkNova,
-            -> true
+            Bob,
+                -> true
             else -> false
         }
     }
@@ -245,7 +247,7 @@ enum class Blockchain(
         Unknown -> 0
 
         Nexa, NexaTestnet,
-        -> 2
+            -> 2
 
         Cardano,
         XRP,
@@ -255,7 +257,7 @@ enum class Blockchain(
         TerraV1, TerraV2,
         Algorand, AlgorandTestnet,
         Sei, SeiTestnet,
-        -> 6
+            -> 6
 
         Stellar, StellarTestnet -> 7
 
@@ -276,20 +278,20 @@ enum class Blockchain(
         InternetComputer,
         Clore,
         Pepecoin, PepecoinTestnet,
-        -> 8
+            -> 8
 
         Solana, SolanaTestnet,
         TON, TONTestnet,
         Bittensor,
         Sui, SuiTestnet,
         Casper, CasperTestnet,
-        -> 9
+            -> 9
 
         Polkadot, Joystream -> 10
 
         PolkadotTestnet, Kusama, AlephZero, AlephZeroTestnet,
         Chia, ChiaTestnet,
-        -> 12
+            -> 12
 
         Arbitrum, ArbitrumTestnet,
         Ethereum, EthereumTestnet,
@@ -341,10 +343,11 @@ enum class Blockchain(
         Scroll, ScrollTestnet,
         ZkLinkNova, ZkLinkNovaTestnet,
         Hyperliquid, HyperliquidTestnet,
-        -> 18
+                Bob,
+            -> 18
 
         Near, NearTestnet,
-        -> 24
+            -> 24
     }
 
     fun makeAddresses(
@@ -383,7 +386,7 @@ enum class Blockchain(
             Dash,
             Ravencoin, RavencoinTestnet,
             Clore,
-            -> BitcoinAddressService(this)
+                -> BitcoinAddressService(this)
 
             BitcoinCash, BitcoinCashTestnet -> BitcoinCashAddressService(this)
             Arbitrum, ArbitrumTestnet,
@@ -431,7 +434,8 @@ enum class Blockchain(
             Scroll, ScrollTestnet,
             ZkLinkNova, ZkLinkNovaTestnet,
             Hyperliquid, HyperliquidTestnet,
-            -> EthereumAddressService()
+                    Bob,
+                -> EthereumAddressService()
 
             XDC, XDCTestnet -> XDCAddressService()
 
@@ -447,7 +451,7 @@ enum class Blockchain(
             Joystream,
             Bittensor,
             EnergyWebX, EnergyWebXTestnet,
-            -> PolkadotAddressService(this)
+                -> PolkadotAddressService(this)
             Stellar, StellarTestnet -> StellarAddressService()
             Solana, SolanaTestnet -> SolanaAddressService()
             Tezos -> TezosAddressService()
@@ -461,7 +465,7 @@ enum class Blockchain(
             Filecoin,
             Sei, SeiTestnet,
             TON, TONTestnet,
-            -> WalletCoreAddressService(blockchain = this)
+                -> WalletCoreAddressService(blockchain = this)
 
             Aptos, AptosTestnet -> AptosAddressService(isTestnet())
             Tron, TronTestnet -> TronAddressService()
@@ -605,7 +609,8 @@ enum class Blockchain(
             Xodex,
             Canxium,
             Clore,
-            -> null
+            Bob
+                -> null
         }
     }
 
@@ -614,14 +619,14 @@ enum class Blockchain(
         return when (this) {
             Unknown -> emptyList()
             Tezos,
-            -> listOf(
+                -> listOf(
                 EllipticCurve.Secp256k1,
                 EllipticCurve.Ed25519,
                 EllipticCurve.Ed25519Slip0010,
             )
 
             XRP,
-            -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
+                -> listOf(EllipticCurve.Secp256k1, EllipticCurve.Ed25519)
 
             Arbitrum, ArbitrumTestnet,
             Bitcoin, BitcoinTestnet,
@@ -693,7 +698,8 @@ enum class Blockchain(
             ZkLinkNova, ZkLinkNovaTestnet,
             Pepecoin, PepecoinTestnet,
             Hyperliquid, HyperliquidTestnet,
-            -> listOf(EllipticCurve.Secp256k1)
+                    Bob,
+                -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
             Solana, SolanaTestnet,
@@ -709,12 +715,12 @@ enum class Blockchain(
             Hedera, HederaTestnet,
             Sui, SuiTestnet,
             EnergyWebX, EnergyWebXTestnet,
-            -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
+                -> listOf(EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010)
 
             Cardano -> listOf(EllipticCurve.Ed25519) // todo until cardano support in wallet 2
 
             Chia, ChiaTestnet,
-            -> listOf(EllipticCurve.Bls12381G2Aug)
+                -> listOf(EllipticCurve.Bls12381G2Aug)
         }
     }
 
@@ -810,6 +816,7 @@ enum class Blockchain(
             PepecoinTestnet -> Chain.PepecoinTestnet.id
             Hyperliquid -> Chain.Hyperliquid.id
             HyperliquidTestnet -> Chain.HyperliquidTestnet.id
+            Bob -> Chain.Bob.id
             else -> null
         }
     }
@@ -845,7 +852,7 @@ enum class Blockchain(
             Sui, SuiTestnet,
             Stellar, StellarTestnet,
             XRP,
-            -> true
+                -> true
 
             else -> false
         }
@@ -867,7 +874,7 @@ enum class Blockchain(
         Base, BaseTestnet,
 
         Solana,
-        -> true
+            -> true
 
         else -> false
     }
@@ -913,7 +920,7 @@ enum class Blockchain(
         Kaspa, KaspaTestnet,
         Ravencoin, RavencoinTestnet,
         Ducatus,
-        -> true
+            -> true
         else -> false
     }
 
