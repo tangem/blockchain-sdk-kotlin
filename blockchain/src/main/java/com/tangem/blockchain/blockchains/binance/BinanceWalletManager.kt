@@ -58,9 +58,9 @@ class BinanceWalletManager(
                         val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
                         when (val result = networkProvider.sendTransaction(transactionToSend)) {
                             is Result.Success -> {
-                                transactionData.hash = result.data
-                                wallet.addOutgoingTransaction(transactionData)
-                                Result.Success(TransactionSendResult(result.data))
+                                val txHash = result.data
+                                wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+                                Result.Success(TransactionSendResult(txHash))
                             }
                             is Result.Failure -> return result
                         }

@@ -3,7 +3,6 @@ package com.tangem.blockchain.blockchains.hedera
 import android.util.Log
 import com.hedera.hashgraph.sdk.AccountId
 import com.hedera.hashgraph.sdk.Transaction
-import com.hedera.hashgraph.sdk.TransactionId
 import com.hedera.hashgraph.sdk.TransactionResponse
 import com.tangem.blockchain.blockchains.hedera.models.HederaAccountBalance
 import com.tangem.blockchain.blockchains.hedera.models.HederaAccountInfo
@@ -152,9 +151,9 @@ internal class HederaWalletManager(
                                     sourceAddress = wallet.address,
                                     destinationAddress = currencyType.info.contractAddress,
                                     date = Calendar.getInstance(),
-                                    hash = HederaTransactionId
-                                        .fromTransactionId(sendResult.data.transactionId).rawStringId,
                                 ),
+                                txHash = HederaTransactionId
+                                    .fromTransactionId(sendResult.data.transactionId).rawStringId,
                             )
 
                             // Add new associated token to cache
@@ -187,9 +186,9 @@ internal class HederaWalletManager(
                 when (val sendResult = signAndSendTransaction(signer, buildTransaction.data)) {
                     is Result.Failure -> Result.Failure(sendResult.error)
                     is Result.Success -> {
-                        transactionData.setTransactionHash(sendResult.data.transactionId)
-                        wallet.addOutgoingTransaction(transactionData)
-                        Result.Success(TransactionSendResult(transactionData.hash ?: ""))
+                        val txHash = HederaTransactionId.fromTransactionId(sendResult.data.transactionId).rawStringId
+                        wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+                        Result.Success(TransactionSendResult(txHash))
                     }
                 }
             }
@@ -345,10 +344,6 @@ internal class HederaWalletManager(
             walletPublicKey = wallet.publicKey
                 .blockchainKey,
         )
-    }
-
-    private fun TransactionData.setTransactionHash(transactionId: TransactionId) {
-        hash = HederaTransactionId.fromTransactionId(transactionId).rawStringId
     }
 
     /**
