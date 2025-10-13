@@ -77,9 +77,9 @@ class QuaiWalletManager(
         return when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString().formatHex())) {
             is Result.Failure -> Result.fromTangemSdkError(sendResult.error)
             is Result.Success<String> -> {
-                transactionData.hash = sendResult.data
-                wallet.addOutgoingTransaction(transactionData)
-                Success(TransactionSendResult(sendResult.data))
+                val txHash = sendResult.data
+                wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+                Success(TransactionSendResult(txHash))
             }
         }
     }

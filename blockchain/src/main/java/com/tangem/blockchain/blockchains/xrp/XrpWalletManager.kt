@@ -87,10 +87,9 @@ internal class XrpWalletManager(
                 when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
                     is SimpleResult.Failure -> Result.Failure(sendResult.error)
                     SimpleResult.Success -> {
-                        val hash = transactionBuilder.getTransactionHash()?.toHexString()
-                        transactionData.hash = hash
-                        wallet.addOutgoingTransaction(transactionData)
-                        Result.Success(TransactionSendResult(hash ?: ""))
+                        val txHash = transactionBuilder.getTransactionHash()?.toHexString().orEmpty()
+                        wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+                        Result.Success(TransactionSendResult(txHash))
                     }
                 }
             }
@@ -173,9 +172,8 @@ internal class XrpWalletManager(
                 when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
                     is SimpleResult.Failure -> SimpleResult.Failure(sendResult.error)
                     SimpleResult.Success -> {
-                        val transactionData = transactionData
-                            .copy(hash = transactionBuilder.getTransactionHash()?.toHexString())
-                        wallet.addOutgoingTransaction(transactionData)
+                        val txHash = transactionBuilder.getTransactionHash()?.toHexString().orEmpty()
+                        wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
                         updateInternal()
                         SimpleResult.Success
                     }
@@ -209,6 +207,7 @@ internal class XrpWalletManager(
 
     private fun storeKey() =
         "trustline-${wallet.publicKey.blockchainKey.toCompressedPublicKey().toHexString()}-${wallet.address}"
+
     private fun XrpTokenBalance.canonicalContractAddress() =
         "${this.currency}${XrpTransactionBuilder.TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR}${this.issuer}"
 

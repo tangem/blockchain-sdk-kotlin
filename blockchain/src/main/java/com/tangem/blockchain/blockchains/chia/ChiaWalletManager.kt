@@ -61,9 +61,9 @@ class ChiaWalletManager(
                         val transactionToSend = transactionBuilder.buildToSend(signerResult.data)
                         when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
                             is SimpleResult.Success -> {
-                                transactionData.hash = transactionToSend.spendBundle.aggregatedSignature
-                                wallet.addOutgoingTransaction(transactionData)
-                                Result.Success(TransactionSendResult(transactionData.hash ?: ""))
+                                val txHash = transactionToSend.spendBundle.aggregatedSignature
+                                wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+                                Result.Success(TransactionSendResult(txHash))
                             }
                             is SimpleResult.Failure -> Result.Failure(sendResult.error)
                         }
