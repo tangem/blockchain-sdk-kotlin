@@ -81,6 +81,7 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.Scroll,
             Blockchain.ZkLinkNova,
             Blockchain.Hyperliquid,
+            Blockchain.Bob,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.XDC -> mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
             Blockchain.EthereumClassic -> mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))

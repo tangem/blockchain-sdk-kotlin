@@ -30,26 +30,26 @@ class EstimationFeeAddressFactory {
             Blockchain.Binance, Blockchain.BinanceTestnet,
             Blockchain.SolanaTestnet,
             Blockchain.KaspaTestnet,
-            -> ""
+                -> ""
 
             Blockchain.Nexa, Blockchain.NexaTestnet,
-            -> TODO("Not implemented")
+                -> TODO("Not implemented")
 
             Blockchain.Cardano -> CARDANO_ESTIMATION_ADDRESS
 
             // We have to generate a new dummy address for UTXO-like
             Blockchain.Bitcoin,
             Blockchain.BitcoinTestnet,
-            -> "bc1qkrc5kmpq546wr2xk0errg58yw9jjq7thvhdk5k"
+                -> "bc1qkrc5kmpq546wr2xk0errg58yw9jjq7thvhdk5k"
             Blockchain.Litecoin -> "MSqjXH6toL4kHqsRo3mWaWMkhmiH9GQxLR"
             Blockchain.BitcoinCash,
             Blockchain.BitcoinCashTestnet,
-            -> "bitcoincash:qrn96yyxa93t6sqmehvls6746qafkcsuku6zmd9460"
+                -> "bitcoincash:qrn96yyxa93t6sqmehvls6746qafkcsuku6zmd9460"
             Blockchain.Dogecoin -> "DRVD4B4YD9CBSjqaa3UfF42vSN6k2tJwhz"
             Blockchain.Dash -> "Xqfekbgca2HDaXhrNYP2HTnuQ5go2E8dDE"
             Blockchain.Ravencoin,
             Blockchain.RavencoinTestnet,
-            -> "RT5qKgXdmh9pqtz71cgfL834VfeXFVH1sG"
+                -> "RT5qKgXdmh9pqtz71cgfL834VfeXFVH1sG"
             Blockchain.Solana -> "9wuDg6Y4H4j86Kg5aUGrUeaBa3sAUzjMs37KbeGFnRuM"
             Blockchain.Radiant -> "1K8jBuCKzuwvFCjL7Qpqq69k1hnVXJ31Nc"
             Blockchain.Fact0rn -> "fact1q69h3nzh7rl2uv09zp5pw26vw58wdcl2j4lyag0"
@@ -102,7 +102,8 @@ class EstimationFeeAddressFactory {
             Blockchain.Scroll, Blockchain.ScrollTestnet,
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet,
             Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet,
-            -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
+            Blockchain.Bob,
+                -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
             // Polkadot-like
             Blockchain.Polkadot, Blockchain.PolkadotTestnet ->
                 "15RRtiC2akPUE9FGqqa66awoAFz6XCnZiFUf34k2CHbLWNfC"
@@ -117,7 +118,7 @@ class EstimationFeeAddressFactory {
                 "cosmos1lhjvds604fvac32j4eygpr820lyc82dlyq70m5"
             Blockchain.TerraV1,
             Blockchain.TerraV2,
-            -> "terra1pfamr0t2daet92grdvxqex235q58qrx6xclldg"
+                -> "terra1pfamr0t2daet92grdvxqex235q58qrx6xclldg"
             // Others
             Blockchain.Tron, Blockchain.TronTestnet ->
                 "TA4Tkaj2nAJjkVbDHdUQDxYCbLfsZzS8pA"
@@ -134,17 +135,17 @@ class EstimationFeeAddressFactory {
             Blockchain.Algorand, Blockchain.AlgorandTestnet ->
                 "CW6XDCKQAZUGAIOTGE2NEPYFFVW6H6IKFOTOF3W5WDUVHH4ZIDCIKYDPXY"
             Blockchain.Koinos, Blockchain.KoinosTestnet,
-            -> "1C423Vbd44zjghhJR5fKJdLFS3rgVFUc9A"
+                -> "1C423Vbd44zjghhJR5fKJdLFS3rgVFUc9A"
             Blockchain.Filecoin -> "f1wxdu6d25dc4hmebdfgriswooum22plhmmpxibzq"
             Blockchain.Kaspa -> "kaspa:qyp2f0ust8wyvuvqrzajvehx5jyh43vcjgessjdkw9vyw6rww4fdlsgzysspfuq"
             Blockchain.Sei, Blockchain.SeiTestnet,
-            -> "sei1lhjvds604fvac32j4eygpr820lyc82dlfv0ea4"
+                -> "sei1lhjvds604fvac32j4eygpr820lyc82dlfv0ea4"
             Blockchain.Sui, Blockchain.SuiTestnet,
-            -> "0xbca45e36a271e106546c89984108685215724e488570a0049a187c473cd521bc"
+                -> "0xbca45e36a271e106546c89984108685215724e488570a0049a187c473cd521bc"
             Blockchain.EnergyWebX, Blockchain.EnergyWebXTestnet,
-            -> "5CogUCbb5PYYbEHhDVGDN6JRRYBkd4sFRVc4wwP8oy5Su34Z"
+                -> "5CogUCbb5PYYbEHhDVGDN6JRRYBkd4sFRVc4wwP8oy5Su34Z"
             Blockchain.Alephium, Blockchain.AlephiumTestnet,
-            -> "16tfjvsTi34r5bhifdBtY793n3fmrM7EtvvtE8XUN1Hv1"
+                -> "16tfjvsTi34r5bhifdBtY793n3fmrM7EtvvtE8XUN1Hv1"
             Blockchain.Clore -> "AJfAu7RJxiTowM9qVaTbVuS5JCPCpV3p7M"
             Blockchain.Pepecoin, Blockchain.PepecoinTestnet -> "PgbtQfZaNzLtwQ3hXBrj1KWhxBgaUEM7G6"
         }

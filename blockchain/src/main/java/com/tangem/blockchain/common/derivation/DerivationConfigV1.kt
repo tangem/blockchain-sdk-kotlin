@@ -67,7 +67,8 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.ApeChain,
             Blockchain.ZkLinkNova,
             Blockchain.Hyperliquid,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
+            Blockchain.Bob,
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.OdysseyChain -> mapOf(AddressType.Default to DerivationPath("m/44'/695'/0'/0/0"))
             Blockchain.XDC -> mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
             Blockchain.EthereumClassic -> mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))
@@ -102,10 +103,10 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Near -> mapOf(AddressType.Default to DerivationPath("m/44'/397'/0'"))
             Blockchain.VeChain,
             Blockchain.VeChainTestnet,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/818'/0'/0/0"))
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/818'/0'/0/0"))
             Blockchain.Algorand,
             Blockchain.AlgorandTestnet,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/283'/0'/0'/0'"))
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/283'/0'/0'/0'"))
             Blockchain.Hedera -> mapOf(AddressType.Default to DerivationPath("m/44'/3030'/0'/0'/0'"))
             Blockchain.Moonbeam -> mapOf(AddressType.Default to DerivationPath("m/44'/1284'/0'/0/0"))
             Blockchain.Moonriver -> mapOf(AddressType.Default to DerivationPath("m/44'/1285'/0'/0/0"))
@@ -163,50 +164,50 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.KaspaTestnet,
             Blockchain.ZkLinkNovaTestnet,
             Blockchain.HyperliquidTestnet,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             Blockchain.Aptos,
             Blockchain.AptosTestnet,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/637'/0'/0'/0'"))
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/637'/0'/0'/0'"))
             Blockchain.Nexa,
             Blockchain.NexaTestnet,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/29223'/0'/0/0"))
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/29223'/0'/0/0"))
             Blockchain.Radiant -> mapOf(AddressType.Default to DerivationPath("m/44'/512'/0'/0/0"))
             Blockchain.Fact0rn -> mapOf(AddressType.Default to DerivationPath("m/84'/42069'/0'/0/0"))
             Blockchain.Koinos,
             Blockchain.KoinosTestnet,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/659'/0'/0/0"))
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/659'/0'/0/0"))
             Blockchain.Filecoin -> mapOf(AddressType.Default to DerivationPath("m/44'/461'/0'/0/0"))
             Blockchain.Sei,
             Blockchain.SeiTestnet,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/118'/0'/0/0"))
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/118'/0'/0/0"))
             Blockchain.InternetComputer -> mapOf(AddressType.Default to DerivationPath("m/44'/223'/0'/0/0"))
             Blockchain.Sui,
             Blockchain.SuiTestnet,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/784'/0'/0'/0'"))
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/784'/0'/0'/0'"))
             Blockchain.EnergyWebX,
             Blockchain.EnergyWebXTestnet,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/246'/0'/0'/0'"))
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/246'/0'/0'/0'"))
             Blockchain.EnergyWebChain,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/246'/0'/0/0"))
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/246'/0'/0/0"))
             Blockchain.Core,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/1116'/0'/0/0"))
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/1116'/0'/0/0"))
             Blockchain.Casper,
             Blockchain.CasperTestnet,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/506'/0'/0/0"))
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/506'/0'/0/0"))
             Blockchain.Alephium,
             Blockchain.AlephiumTestnet,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/1234'/0'/0/0"))
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/1234'/0'/0/0"))
             Blockchain.Clore -> mapOf(AddressType.Default to DerivationPath("m/44'/1313'/0'/0/0"))
             Blockchain.Bitrock,
             Blockchain.BitrockTestnet,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/7171666'/0'/0/0"))
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/7171666'/0'/0/0"))
             Blockchain.Sonic -> mapOf(AddressType.Default to DerivationPath("m/44'/10007'/0'/0/0"))
             Blockchain.Scroll,
             Blockchain.ScrollTestnet,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/534352'/0'/0/0"))
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/534352'/0'/0/0"))
             Blockchain.Pepecoin,
             Blockchain.PepecoinTestnet,
-            -> mapOf(AddressType.Default to DerivationPath("m/44'/3434'/0'/0/0"))
+                -> mapOf(AddressType.Default to DerivationPath("m/44'/3434'/0'/0/0"))
         }
     }
 }
