@@ -12,7 +12,7 @@ internal data class RosettaCoinsResponse(
     data class Coin(
         @Json(name = "coin_identifier") val coinIdentifier: CoinIdentifier,
         @Json(name = "amount") val amount: Amount,
-        @Json(name = "metadata") val metadata: Map<String, MetadataValue>?,
+        @Json(name = "metadata") val metadata: Map<String, List<MetadataValue>>?,
     ) {
 
         @JsonClass(generateAdapter = true)
