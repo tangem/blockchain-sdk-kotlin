@@ -149,7 +149,7 @@ class CosmosWalletManager(
                     }
                 }
 
-                wallet.addOutgoingTransaction(transactionData = transaction, txHash = txHash)
+                wallet.addOutgoingTransaction(transactionData = transaction, txHash = txHash, hashToLowercase = false)
                 Result.Success(TransactionSendResult(txHash))
             }
         }
