@@ -42,7 +42,7 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
         Blockchain.Kusama,
         -> "0a00".hexToBytes()
         Blockchain.EnergyWebX,
-        -> "0a07".hexToBytes()
+        -> "0a00".hexToBytes()
         else -> error(
             "${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}",
         )
