@@ -181,9 +181,8 @@ internal class EthereumYieldSupplyProvider(
             value = allowanceRaw,
             decimalsCount = wallet.blockchain.decimals(),
         ).orZero()
-        val tokenBalance = wallet.getTokenAmount(token)?.value.orZero()
 
-        return allowanceValue > BigDecimal.ZERO && allowanceValue >= tokenBalance
+        return allowanceValue >= (Int.MAX_VALUE / 2).toBigDecimal()
     }
 
     private fun storeKey(providerType: YieldSupplyProviderType) = "yield-supply-${providerType.key}" +
