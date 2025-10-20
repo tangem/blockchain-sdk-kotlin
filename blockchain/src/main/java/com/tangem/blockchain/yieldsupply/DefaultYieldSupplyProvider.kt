@@ -25,7 +25,7 @@ internal object DefaultYieldSupplyProvider : YieldSupplyProvider {
     override suspend fun getBalance(yieldSupplyStatus: YieldSupplyStatus, token: Token): Amount =
         Amount(Blockchain.Unknown)
 
-    override suspend fun getProtocolBalance(token: Token): BigDecimal = BigDecimal.ZERO
+    override suspend fun getEffectiveProtocolBalance(token: Token): BigDecimal = BigDecimal.ZERO
 
     override suspend fun isAllowedToSpend(token: Token): Boolean = false
 }
