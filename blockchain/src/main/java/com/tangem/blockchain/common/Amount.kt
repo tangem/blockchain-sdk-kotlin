@@ -91,6 +91,6 @@ sealed class AmountType {
         val isActive: Boolean,
         val isInitialized: Boolean,
         val isAllowedToSpend: Boolean,
-        val protocolBalance: BigDecimal? = null,
+        val effectiveProtocolBalance: BigDecimal? = null,
     ) : AmountType()
 }
