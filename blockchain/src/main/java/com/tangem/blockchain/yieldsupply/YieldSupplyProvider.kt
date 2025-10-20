@@ -64,7 +64,7 @@ interface YieldSupplyProvider {
      *  @param token The yield token for which to retrieve the protocol balance.
      *  @return The protocol balance as a [BigDecimal].
      */
-    suspend fun getProtocolBalance(token: Token): BigDecimal
+    suspend fun getEffectiveProtocolBalance(token: Token): BigDecimal
 
     /**
      *  Checks if the wallet is allowed to spend the specified yield token.
