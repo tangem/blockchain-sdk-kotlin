@@ -135,6 +135,14 @@ internal class EthereumYieldSupplyProvider(
             isAllowedToSpend(token)
         }
 
+        val effectiveProtocolBalance = async {
+            if (yieldSupplyStatus.isActive) {
+                getEffectiveProtocolBalance(token)
+            } else {
+                null
+            }
+        }
+
         Amount(
             value = balanceDeferred.await(),
             blockchain = wallet.blockchain,
@@ -144,11 +152,12 @@ internal class EthereumYieldSupplyProvider(
                 isActive = yieldSupplyStatus.isActive,
                 isInitialized = yieldSupplyStatus.isInitialized,
                 isAllowedToSpend = isAllowedToSpendDeferred.await(),
+                effectiveProtocolBalance = effectiveProtocolBalance.await(),
             ),
         )
     }
 
-    override suspend fun getProtocolBalance(token: Token): BigDecimal {
+    override suspend fun getEffectiveProtocolBalance(token: Token): BigDecimal {
         val rawProtocolBalance = multiJsonRpcProvider.performRequest(
             request = EthereumJsonRpcProvider::call,
             data = EthCallObject(
