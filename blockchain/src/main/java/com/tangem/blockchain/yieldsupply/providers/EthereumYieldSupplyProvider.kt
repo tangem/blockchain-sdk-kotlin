@@ -135,6 +135,14 @@ internal class EthereumYieldSupplyProvider(
             isAllowedToSpend(token)
         }
 
+        val protocolBalance = async {
+            if (yieldSupplyStatus.isActive) {
+                getProtocolBalance(token)
+            } else {
+                null
+            }
+        }
+
         Amount(
             value = balanceDeferred.await(),
             blockchain = wallet.blockchain,
@@ -144,6 +152,7 @@ internal class EthereumYieldSupplyProvider(
                 isActive = yieldSupplyStatus.isActive,
                 isInitialized = yieldSupplyStatus.isInitialized,
                 isAllowedToSpend = isAllowedToSpendDeferred.await(),
+                protocolBalance = protocolBalance.await(),
             ),
         )
     }
