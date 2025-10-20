@@ -31,6 +31,7 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.ApeChain,
             Blockchain.Linea,
             Blockchain.ArbitrumNova,
+            Blockchain.Scroll,
             -> true
             Blockchain.EthereumClassic, // eth_feeHistory all zeroes
             Blockchain.EthereumPow, // eth_feeHistory with zeros
@@ -59,7 +60,6 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Chiliz,
             Blockchain.VanarChain,
             Blockchain.Bitrock,
-            Blockchain.Scroll,
             Blockchain.ZkLinkNova,
             Blockchain.Hyperliquid,
             Blockchain.Quai,
