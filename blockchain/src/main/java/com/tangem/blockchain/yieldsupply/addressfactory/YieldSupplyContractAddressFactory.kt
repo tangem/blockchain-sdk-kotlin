@@ -18,10 +18,7 @@ internal class YieldSupplyContractAddressFactory(
         Blockchain.Arbitrum,
         Blockchain.Optimism,
         Blockchain.Base,
-        Blockchain.Gnosis,
         Blockchain.BSC,
-        Blockchain.ZkSyncEra,
-        Blockchain.Sonic,
         Blockchain.Polygon,
         Blockchain.EthereumTestnet,
         -> true
