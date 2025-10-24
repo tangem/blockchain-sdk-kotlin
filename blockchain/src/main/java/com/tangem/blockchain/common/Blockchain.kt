@@ -995,10 +995,7 @@ enum class Blockchain(
                 Arbitrum,
                 Optimism,
                 Base,
-                Gnosis,
                 BSC,
-                ZkSyncEra,
-                Sonic,
                 Polygon,
                 EthereumTestnet,
             )
