@@ -102,7 +102,7 @@ internal class EthereumYieldSupplyProvider(
         return yieldModuleAddress
     }
 
-    override suspend fun getYieldSupplyStatus(tokenContractAddress: String): YieldSupplyStatus {
+    override suspend fun getYieldSupplyStatus(tokenContractAddress: String): YieldSupplyStatus? {
         val result = multiJsonRpcProvider.performRequest(
             request = EthereumJsonRpcProvider::call,
             data = EthCallObject(
@@ -196,7 +196,7 @@ internal class EthereumYieldSupplyProvider(
 
     private fun storeKey(providerType: YieldSupplyProviderType) = "yield-supply-${providerType.key}" +
         "-${wallet.publicKey.blockchainKey.toCompressedPublicKey().toHexString()}" +
-        "-${wallet.address}"
+        "-${wallet.address}-${wallet.blockchain.id}"
 
     private fun Result<JsonRPCResponse>.extractResult(): String = extractResult(adapter = stringAdapter)
 
