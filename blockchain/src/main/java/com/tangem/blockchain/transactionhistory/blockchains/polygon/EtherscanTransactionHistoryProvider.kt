@@ -197,8 +197,14 @@ internal class EtherscanTransactionHistoryProvider(
             val fnName = this.functionName?.substringBefore("(")
             TransactionHistoryItem.TransactionType.ContractMethodName(fnName ?: this.functionName ?: UNKNOWN)
         } else {
-            // All token transactions are considered simple & plain transfers
-            TransactionHistoryItem.TransactionType.Transfer
+            // Retrieve the methodId from a specific field in the response. If unable to
+            // extract the methodId from either, return the default transaction type.
+            val methodId = this.methodId
+
+            // MethodId is empty for the coin transfers
+            if (methodId.isNullOrEmpty()) return TransactionHistoryItem.TransactionType.Transfer
+
+            TransactionHistoryItem.TransactionType.ContractMethod(id = methodId)
         }
     }
 
