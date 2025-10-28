@@ -1006,6 +1006,12 @@ enum class Blockchain(
          */
         fun yieldSupplySupportedBlockchains(): List<Blockchain> {
             return listOf(
+                Ethereum,
+                Avalanche,
+                Arbitrum,
+                Optimism,
+                Base,
+                BSC,
                 Polygon,
                 EthereumTestnet,
             )
