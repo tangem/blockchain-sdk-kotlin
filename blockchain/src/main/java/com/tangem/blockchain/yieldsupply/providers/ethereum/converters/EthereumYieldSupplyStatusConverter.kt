@@ -21,21 +21,27 @@ internal class EthereumYieldSupplyStatusConverter(
      * * 0000000000000000000000000000000000000000000000000000000000000001 -> true
      * * 0000000000000000000000000000000000000000000000008ac7230489e80000 -> 10.0
      */
-    fun convert(result: String): YieldSupplyStatus {
-        val clean = result.removePrefix(HEX_PREFIX)
+    fun convert(result: String): YieldSupplyStatus? {
+        return try {
+            val clean = result.removePrefix(HEX_PREFIX)
 
-        val isInitializedHex = clean.substring(0, WORD_HEX_LENGTH)
-        val isActiveHex = clean.substring(WORD_HEX_LENGTH, 2 * WORD_HEX_LENGTH)
-        val maxNetworkFeeHex = clean.substring(2 * WORD_HEX_LENGTH, 3 * WORD_HEX_LENGTH)
+            if (clean.isEmpty()) return null
 
-        val isInitial = isInitializedHex.endsWith("1")
-        val isActive = isActiveHex.endsWith("1")
-        val maxNetworkFee = maxNetworkFeeHex.toBigInteger(16).toBigDecimal().movePointLeft(decimals)
+            val isInitializedHex = clean.substring(0, WORD_HEX_LENGTH)
+            val isActiveHex = clean.substring(WORD_HEX_LENGTH, 2 * WORD_HEX_LENGTH)
+            val maxNetworkFeeHex = clean.substring(2 * WORD_HEX_LENGTH, 3 * WORD_HEX_LENGTH)
 
-        return YieldSupplyStatus(
-            isInitialized = isInitial,
-            isActive = isActive,
-            maxNetworkFee = maxNetworkFee,
-        )
+            val isInitial = isInitializedHex.endsWith("1")
+            val isActive = isActiveHex.endsWith("1")
+            val maxNetworkFee = maxNetworkFeeHex.toBigInteger(16).toBigDecimal().movePointLeft(decimals)
+
+            YieldSupplyStatus(
+                isInitialized = isInitial,
+                isActive = isActive,
+                maxNetworkFee = maxNetworkFee,
+            )
+        } catch (_: Exception) {
+            null
+        }
     }
 }
