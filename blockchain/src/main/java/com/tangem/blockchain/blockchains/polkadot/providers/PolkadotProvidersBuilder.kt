@@ -18,7 +18,7 @@ internal class PolkadotProvidersBuilder(
             when (it) {
                 is ProviderType.GetBlock -> createGetBlockProvider(blockchain)
                 is ProviderType.Public -> createPublicProvider(it.url, blockchain)
-                is ProviderType.Kusama.Tatum -> createTatumProvider(blockchain)
+                is ProviderType.PolkadotLike.Tatum -> createTatumProvider(blockchain)
                 else -> null
             }
         }
