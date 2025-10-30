@@ -23,6 +23,7 @@ internal class ChiaProvidersBuilder(
                 ProviderType.Chia.Tangem -> createTangemProvider()
                 ProviderType.Chia.TangemNew -> createTangemNewProvider()
                 ProviderType.Chia.FireAcademy -> createFireAcademyProvider(isTestnet = false)
+                ProviderType.Mock -> createMockProvider()
                 else -> null
             }
         }
@@ -52,6 +53,14 @@ internal class ChiaProvidersBuilder(
                 isRequiredHexPrefixForTx = true,
             )
         }
+    }
+
+    private fun createMockProvider(): ChiaNetworkProvider {
+        return ChiaJsonRpcProvider(
+            baseUrl = "[REDACTED_ENV_URL]",
+            key = "",
+            isRequiredHexPrefixForTx = true,
+        )
     }
 
     private fun createFireAcademyProvider(isTestnet: Boolean): ChiaNetworkProvider? {
