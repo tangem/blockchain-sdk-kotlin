@@ -7,6 +7,8 @@ import com.tangem.blockchain.blockchains.dogecoin.DogecoinProvidersBuilder
 import com.tangem.blockchain.blockchains.dogecoin.DogecoinWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
+import com.tangem.blockchain.common.network.providers.ProviderType
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 
 internal object DogecoinWalletManagerAssembly : WalletManagerAssembly<DogecoinWalletManager>() {
@@ -24,9 +26,17 @@ internal object DogecoinWalletManagerAssembly : WalletManagerAssembly<DogecoinWa
                     providers = DogecoinProvidersBuilder(input.providerTypes, input.config).build(blockchain),
                     blockchain = blockchain,
                 ),
-                transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
+                transactionHistoryProvider = createTransactionHistoryProvider(input),
                 feesCalculator = BitcoinFeesCalculator(blockchain),
             )
+        }
+    }
+
+    private fun createTransactionHistoryProvider(input: WalletManagerAssemblyInput): TransactionHistoryProvider {
+        return if (input.providerTypes.first() == ProviderType.Mock) {
+            TransactionHistoryProviderFactory.makeDogecoinMockProvider(input.wallet.blockchain)
+        } else {
+            TransactionHistoryProviderFactory.makeProvider(input.wallet.blockchain, input.config)
         }
     }
 }

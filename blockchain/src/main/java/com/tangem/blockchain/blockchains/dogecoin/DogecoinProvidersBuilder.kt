@@ -31,6 +31,9 @@ internal class DogecoinProvidersBuilder(
                     blockcypherProviderFactory.create(blockchain).let(::listOfNotNull)
                 }
                 ProviderType.BitcoinLike.Blockchair -> blockchairProviderFactory.createProviders(blockchain)
+                ProviderType.Mock -> {
+                    blockBookProviderFactory.createMockBlockProvider(blockchain).let(::listOfNotNull)
+                }
                 else -> emptyList()
             }
         }
