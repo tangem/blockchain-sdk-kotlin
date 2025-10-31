@@ -6,6 +6,7 @@ import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.extensions.letNotBlank
 import com.tangem.blockchain.network.blockbook.config.CloreBlockBookConfig
 import com.tangem.blockchain.network.blockbook.config.GetBlockConfig
+import com.tangem.blockchain.network.blockbook.config.DogecoinMockBlockBookConfig
 import com.tangem.blockchain.network.blockbook.config.NowNodesConfig
 
 internal class BlockBookNetworkProviderFactory(
@@ -52,5 +53,9 @@ internal class BlockBookNetworkProviderFactory(
             ),
             blockchain = blockchain,
         )
+    }
+
+    fun createMockBlockProvider(blockchain: Blockchain): BitcoinNetworkProvider {
+        return BlockBookNetworkProvider(config = DogecoinMockBlockBookConfig(), blockchain = blockchain)
     }
 }
