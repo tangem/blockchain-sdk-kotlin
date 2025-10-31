@@ -3,6 +3,7 @@ package com.tangem.blockchain.transactionhistory
 import com.tangem.blockchain.blockchains.kaspa.KaspaProvidersBuilder
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.network.blockbook.config.DogecoinMockBlockBookConfig
 import com.tangem.blockchain.network.blockbook.config.NowNodesConfig
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 import com.tangem.blockchain.network.createRetrofitInstance
@@ -48,6 +49,13 @@ internal object TransactionHistoryProviderFactory {
 
             else -> DefaultTransactionHistoryProvider
         }
+    }
+
+    fun makeDogecoinMockProvider(blockchain: Blockchain): TransactionHistoryProvider {
+        return BitcoinTransactionHistoryProvider(
+            blockchain = blockchain,
+            blockBookApi = BlockBookApi(blockchain = blockchain, config = DogecoinMockBlockBookConfig()),
+        )
     }
 
     private fun Blockchain.isEtherscanCompatible(): Boolean {
