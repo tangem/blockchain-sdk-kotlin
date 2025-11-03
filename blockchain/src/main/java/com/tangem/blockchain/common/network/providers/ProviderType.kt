@@ -72,7 +72,7 @@ sealed interface ProviderType {
         object Tangem : Alephium
     }
 
-    sealed interface Kusama : ProviderType {
-        object Tatum : Kusama
+    sealed interface PolkadotLike : ProviderType {
+        object Tatum : PolkadotLike
     }
 }
