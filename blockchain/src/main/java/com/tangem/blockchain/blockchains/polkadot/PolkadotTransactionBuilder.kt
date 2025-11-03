@@ -33,14 +33,13 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
     private val decimals = blockchain.decimals()
 
     private val balanceTransferCallIndex: ByteArray = when (blockchain) {
-        Blockchain.Polkadot,
         Blockchain.AlephZero, Blockchain.AlephZeroTestnet,
         Blockchain.Joystream,
         Blockchain.Bittensor,
         -> "0500".hexToBytes()
+        Blockchain.Polkadot,
         Blockchain.PolkadotTestnet,
         Blockchain.Kusama,
-        -> "0a00".hexToBytes()
         Blockchain.EnergyWebX,
         -> "0a00".hexToBytes()
         else -> error(
@@ -229,7 +228,10 @@ class PolkadotTransactionBuilder(private val blockchain: Blockchain) {
 
     private fun isInAssetHubList(blockchain: Blockchain): Boolean {
         return when (blockchain) {
-            Blockchain.Kusama -> true
+            Blockchain.Kusama,
+            Blockchain.Polkadot,
+            Blockchain.PolkadotTestnet,
+            -> true
             else -> false
         }
     }
