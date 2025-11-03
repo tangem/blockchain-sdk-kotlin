@@ -19,7 +19,7 @@ internal class KusamaProvidersBuilder(
                 is ProviderType.GetBlock -> createGetBlockProvider(blockchain)
                 is ProviderType.NowNodes -> createNowNodesProvider(blockchain)
                 is ProviderType.Public -> createPublicProvider(it.url, blockchain)
-                is ProviderType.Kusama.Tatum -> createTatumProvider(blockchain)
+                is ProviderType.PolkadotLike.Tatum -> createTatumProvider(blockchain)
                 else -> null
             }
         }
