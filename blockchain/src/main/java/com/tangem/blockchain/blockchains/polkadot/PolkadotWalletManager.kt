@@ -37,9 +37,9 @@ internal class PolkadotWalletManager(
     private lateinit var currentContext: ExtrinsicContext
 
     private val existentialDeposit: BigDecimal = when (wallet.blockchain) {
-        Blockchain.Polkadot -> BigDecimal.ONE
+        Blockchain.Polkadot -> 0.01.toBigDecimal()
         Blockchain.PolkadotTestnet -> 0.01.toBigDecimal()
-        Blockchain.Kusama -> 0.000333333333.toBigDecimal()
+        Blockchain.Kusama -> 0.000003333.toBigDecimal()
         Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> 0.0000000005.toBigDecimal()
         Blockchain.Joystream -> 0.026666656.toBigDecimal()
         Blockchain.Bittensor -> 0.0000005.toBigDecimal()
