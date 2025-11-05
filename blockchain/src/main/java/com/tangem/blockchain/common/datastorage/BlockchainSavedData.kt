@@ -30,6 +30,7 @@ internal sealed interface BlockchainSavedData {
     @JsonClass(generateAdapter = true)
     data class Trustline(
         @Json(name = "createdTrustline") val createdTrustline: Set<String> = emptySet(),
+        @Json(name = "trustlinesWithoutNoRipple") val trustlinesWithoutNoRipple: Set<String> = emptySet(),
     ) : BlockchainSavedData
 
     @JsonClass(generateAdapter = true)
