@@ -104,4 +104,39 @@ class XrpTransactionTest {
         Truth.assertThat(buildToSignResult.data).isEqualTo(expectedHashToSign)
         Truth.assertThat(signedTransaction).isEqualTo(expectedSignedTransaction)
     }
+
+    @Test
+    fun buildCorrectTransactionWithNoRippleSecondaryTx() {
+        val walletPublicKey = "64DF67680F2167E1A085083FE3085561E6BEF5AA1FC165785FFAE6264706DB8C".hexToBytes()
+        val paymentSignature = (
+            "C0FBC3255442CAE582FDC3CF8F431AAAB0B89D1D0DFBDAE71FEE44F99E4C11BD3D31BEB446589EDC761493C369CDA6B13AC09D1" +
+                "22C58C7F5903832678371A96D"
+            ).hexToBytes()
+        val sendValue = "0.1".toBigDecimal()
+        val feeValue = "0.01".toBigDecimal()
+        val destinationAddress = "X7gd8rw2UJP3HSS9oxkDc3cYVgpJy4cR9R5TEjF9XoZYJ1p"
+        val walletAddress = XrpAddressService().makeAddress(walletPublicKey)
+        val transactionBuilder = XrpTransactionBuilder(XrpNetworkProviderMock(), walletPublicKey)
+        val amountToSend = Amount(sendValue, blockchain, AmountType.Coin)
+        val fee = Fee.Common(Amount(amountToSend, feeValue))
+        val transactionData = TransactionData.Uncompiled(
+            sourceAddress = walletAddress,
+            destinationAddress = destinationAddress,
+            amount = amountToSend,
+            fee = fee,
+        )
+        val (paymentHash, secondaryTx) = runBlocking {
+            transactionBuilder.buildToSignWithNoRipple(
+                transactionData = transactionData,
+                sequenceOverride = 1406L,
+            ) as Result.Success
+        }.data
+
+        val signedSecondaryTx = transactionBuilder.buildSecondaryToSend(paymentSignature, secondaryTx)
+        Truth.assertThat(paymentHash).isNotEmpty()
+        Truth.assertThat(signedSecondaryTx).isNotEmpty()
+        Truth.assertThat(signedSecondaryTx).contains("1200002280000000")
+        Truth.assertThat(signedSecondaryTx).contains("057E")
+        Truth.assertThat(signedSecondaryTx.length).isGreaterThan(200)
+    }
 }
