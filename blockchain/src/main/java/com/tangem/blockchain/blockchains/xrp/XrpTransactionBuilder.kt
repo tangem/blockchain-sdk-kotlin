@@ -29,14 +29,43 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
     private val canonicalPublicKey = XrpAddressService.canonizePublicKey(publicKey)
     private var transaction: XrpSignedTransaction? = null
 
-    @Suppress("CyclomaticComplexMethod")
     suspend fun buildToSign(transactionData: TransactionData): Result<ByteArray> {
-        transactionData.requireUncompiled()
+        val uncompiledData = transactionData.requireUncompiled()
+        val sourceAddress = XrpAddressService.decodeXAddress(uncompiledData.sourceAddress)
+            ?.address ?: uncompiledData.sourceAddress
+        val sequence = networkProvider.getSequence(sourceAddress).successOr { return it }
 
+        val preparedTx = buildPaymentTransaction(uncompiledData, sequence).successOr { return it }
+        transaction = preparedTx
+
+        return if (canonicalPublicKey[0] == 0xED.toByte()) {
+            Result.Success(preparedTx.signingData)
+        } else {
+            Result.Success(HashUtils.halfSha512(preparedTx.signingData))
+        }
+    }
+
+    suspend fun buildToSignWithNoRipple(
+        transactionData: TransactionData,
+        sequenceOverride: Long,
+    ): Result<Pair<ByteArray, XrpSignedTransaction>> {
+        val uncompiledData = transactionData.requireUncompiled()
+        val preparedTx = buildPaymentTransaction(uncompiledData, sequenceOverride).successOr { return it }
+
+        return if (canonicalPublicKey[0] == 0xED.toByte()) {
+            Result.Success(preparedTx.signingData to preparedTx)
+        } else {
+            Result.Success(HashUtils.halfSha512(preparedTx.signingData) to preparedTx)
+        }
+    }
+
+    @Suppress("CyclomaticComplexMethod")
+    private suspend fun buildPaymentTransaction(
+        transactionData: TransactionData.Uncompiled,
+        sequence: Long,
+    ): Result<XrpSignedTransaction> {
         val decodedXAddress = XrpAddressService.decodeXAddress(transactionData.destinationAddress)
         val destinationAddress = decodedXAddress?.address ?: transactionData.destinationAddress
-        val sourceAddress = XrpAddressService.decodeXAddress(transactionData.sourceAddress)
-            ?.address ?: transactionData.sourceAddress
         val xAddressDestinationTag = decodedXAddress?.destinationTag
 
         val destinationTag = if (transactionData.extras is XrpTransactionExtras) {
@@ -57,7 +86,6 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
             AmountType.Coin -> if (!isAccountCreated && transactionData.amount.value!! < minReserve) {
                 return Result.Failure(accountUnderfundedError())
             }
-
             is AmountType.Token -> {
                 if (!isAccountCreated) return Result.Failure(accountUnderfundedTokenError())
                 if (!trustlineCreated) return Result.Failure(notHaveTrustlineError())
@@ -67,8 +95,6 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
             AmountType.Reserve,
             -> return Result.Failure(BlockchainSdkError.CustomError("Unknown amount Type"))
         }
-
-        val sequence = networkProvider.getSequence(sourceAddress).successOr { return it }
 
         val payment = XrpPayment()
         payment.putTranslated(AccountID.Account, transactionData.sourceAddress)
@@ -81,7 +107,7 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
 
             val hasTransferRate = networkProvider.hasTransferRate(issuer.address)
             if (hasTransferRate) {
-                payment.putTranslated(Field.Flags, UInt32(TF_PARTIAL_PAYMENT)) // tfPartialPayment
+                payment.putTranslated(Field.Flags, UInt32(TF_PARTIAL_PAYMENT))
             }
         } else {
             payment.putTranslated(XrpAmount.Amount, transactionData.amount.bigIntegerValue().toString())
@@ -92,23 +118,28 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
             payment.putTranslated(UInt32.DestinationTag, destinationTag)
         }
 
-        transaction = payment.prepare(canonicalPublicKey)
-
-        return if (canonicalPublicKey[0] == 0xED.toByte()) {
-            Result.Success(transaction!!.signingData)
-        } else {
-            Result.Success(HashUtils.halfSha512(transaction!!.signingData))
-        }
+        return Result.Success(payment.prepare(canonicalPublicKey))
     }
 
     fun buildToSend(signature: ByteArray): String {
+        val tx = transaction ?: error("No transaction to send")
         if (canonicalPublicKey[0] == 0xED.toByte()) {
-            transaction!!.addSign(signature)
+            tx.addSign(signature)
         } else {
             val derSignature = encodeDerSignature(signature)
-            transaction!!.addSign(derSignature)
+            tx.addSign(derSignature)
         }
-        return transaction!!.tx_blob
+        return tx.tx_blob
+    }
+
+    fun buildSecondaryToSend(signature: ByteArray, secondaryTransaction: XrpSignedTransaction): String {
+        if (canonicalPublicKey[0] == 0xED.toByte()) {
+            secondaryTransaction.addSign(signature)
+        } else {
+            val derSignature = encodeDerSignature(signature)
+            secondaryTransaction.addSign(derSignature)
+        }
+        return secondaryTransaction.tx_blob
     }
 
     fun getTransactionHash() = transaction?.hash?.bytes()
@@ -136,6 +167,7 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
         trustSet.putTranslated(AccountID.Account, transactionData.sourceAddress)
         trustSet.putTranslated(XrpAmount.Fee, fee.bigIntegerValue().toString())
         trustSet.putTranslated(UInt32.Sequence, sequence)
+        trustSet.putTranslated(Field.Flags, UInt32(TF_SET_NO_RIPPLE))
         trustSet.limitAmount(limitAmount)
 
         transaction = trustSet.prepare(canonicalPublicKey)
@@ -179,6 +211,7 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
 
     companion object {
         const val TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR = "."
-        private const val TF_PARTIAL_PAYMENT = 131072
+        private const val TF_PARTIAL_PAYMENT = 131072 // 0x00020000 - for Payment tx
+        private const val TF_SET_NO_RIPPLE = 131072 // 0x00020000 - for TrustSet tx
     }
 }
