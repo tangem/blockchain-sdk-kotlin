@@ -79,6 +79,7 @@ class RippledNetworkProvider(
                             balance = it.balance.toBigDecimalOrDefault(),
                             issuer = it.account,
                             currency = it.currency,
+                            noRipple = it.noRipple == true,
                         )
                     } ?: setOf()
                     val confirmedBalance =
