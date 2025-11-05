@@ -2,10 +2,6 @@ package com.tangem.blockchain.blockchains.polkadot
 
 import com.tangem.blockchain.blockchains.polkadot.extensions.makeEraFromBlockNumber
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkProvider
-import com.tangem.blockchain.blockchains.polkadot.network.accounthealthcheck.AccountResponse
-import com.tangem.blockchain.blockchains.polkadot.network.accounthealthcheck.ExtrinsicDetailResponse
-import com.tangem.blockchain.blockchains.polkadot.network.accounthealthcheck.ExtrinsicListResponse
-import com.tangem.blockchain.blockchains.polkadot.network.accounthealthcheck.PolkadotAccountHealthCheckNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
 import com.tangem.blockchain.common.transaction.Fee
@@ -31,15 +27,14 @@ import java.util.EnumSet
 internal class PolkadotWalletManager(
     wallet: Wallet,
     private val networkProvider: PolkadotNetworkProvider,
-    private val extrinsicCheckNetworkProvider: PolkadotAccountHealthCheckNetworkProvider?,
-) : WalletManager(wallet), ExistentialDepositProvider, AccountCheckProvider {
+) : WalletManager(wallet), ExistentialDepositProvider {
 
     private lateinit var currentContext: ExtrinsicContext
 
     private val existentialDeposit: BigDecimal = when (wallet.blockchain) {
-        Blockchain.Polkadot -> BigDecimal.ONE
+        Blockchain.Polkadot -> 0.01.toBigDecimal()
         Blockchain.PolkadotTestnet -> 0.01.toBigDecimal()
-        Blockchain.Kusama -> 0.000333333333.toBigDecimal()
+        Blockchain.Kusama -> 0.000003333.toBigDecimal()
         Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> 0.0000000005.toBigDecimal()
         Blockchain.Joystream -> 0.026666656.toBigDecimal()
         Blockchain.Bittensor -> 0.0000005.toBigDecimal()
@@ -190,32 +185,6 @@ internal class PolkadotWalletManager(
                 }
             }
         }
-    }
-
-    override suspend fun getExtrinsicList(afterExtrinsicId: Long?): ExtrinsicListResponse {
-        if (extrinsicCheckNetworkProvider == null) {
-            error("extrinsicCheckNetworkProvider is not supported")
-        }
-        return extrinsicCheckNetworkProvider.getExtrinsicsList(
-            address = wallet.address,
-            afterExtrinsicId = afterExtrinsicId,
-        ).successOr { throw it.error as BlockchainSdkError }
-    }
-
-    override suspend fun getExtrinsicDetail(hash: String): ExtrinsicDetailResponse {
-        if (extrinsicCheckNetworkProvider == null) {
-            error("extrinsicCheckNetworkProvider is not supported")
-        }
-        return extrinsicCheckNetworkProvider.getExtrinsicDetail(hash = hash)
-            .successOr { throw it.error as BlockchainSdkError }
-    }
-
-    override suspend fun getAccountInfo(): AccountResponse {
-        if (extrinsicCheckNetworkProvider == null) {
-            error("extrinsicCheckNetworkProvider is not supported")
-        }
-        return extrinsicCheckNetworkProvider.getAccountInfo(key = wallet.address)
-            .successOr { throw it.error as BlockchainSdkError }
     }
 
     private suspend fun updateEra() {
