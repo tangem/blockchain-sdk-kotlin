@@ -8,7 +8,7 @@ internal class XDCExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvide
     override val explorerBaseUrl: String = if (isTestnet) {
         "https://apothem.xdcscan.io/"
     } else {
-        "https://xdcscan.io/"
+        "https://xdcscan.com/"
     }
 
     override val testNetTopUpUrl: String = "https://faucet.blocksscan.io/"
