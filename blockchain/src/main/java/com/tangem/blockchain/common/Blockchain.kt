@@ -205,6 +205,8 @@ enum class Blockchain(
     PepecoinTestnet("pepecoin/test", "PEP", "Pepecoin Testnet"),
     Hyperliquid("hyperliquid", "HYPE", "Hyperliquid EVM"),
     HyperliquidTestnet("hyperliquid/test", "HYPE", "Hyperliquid EVM Testnet"),
+    Unichain("unichain", "ETH", "Unichain"),
+    UnichainTestnet("unichain/test", "ETH", "Unichain Sepolia Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -235,6 +237,7 @@ enum class Blockchain(
             Cyber,
             Scroll,
             ZkLinkNova,
+            Unichain,
             -> true
             else -> false
         }

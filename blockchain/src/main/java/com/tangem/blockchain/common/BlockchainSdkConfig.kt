@@ -78,6 +78,7 @@ data class GetBlockCredentials(
     val sui: GetBlockAccessToken?,
     val telos: GetBlockAccessToken?,
     val tezos: GetBlockAccessToken?,
+    val unichain: GetBlockAccessToken?,
 )
 
 data class GetBlockAccessToken(
