@@ -173,6 +173,19 @@ class TonJsonRpcNetworkProvider(
         }
     }
 
+    override suspend fun isJettonWalletActive(jettonWalletAddress: String): Result<Boolean> {
+        return try {
+            val response = runGetMethod(
+                contractAddress = jettonWalletAddress,
+                method = GET_WALLET_DATA_METHOD,
+                stack = emptyList(),
+            ).successOr { return it }
+            Result.Success(response.exitCode != RESPONSE_EXIT_CODE)
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
     private suspend fun runGetMethod(
         contractAddress: String,
         method: String,
