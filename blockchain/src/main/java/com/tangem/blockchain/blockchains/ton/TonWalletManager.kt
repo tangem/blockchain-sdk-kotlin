@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.ton
 
 import android.util.Log
 import com.tangem.blockchain.blockchains.ton.TonTransactionBuilder.Companion.JETTON_TRANSFER_PROCESSING_FEE
+import com.tangem.blockchain.blockchains.ton.TonTransactionBuilder.Companion.JETTON_TRANSFER_PROCESSING_FEE_ACTIVE_WALLET
 import com.tangem.blockchain.blockchains.ton.models.TonWalletInfo
 import com.tangem.blockchain.blockchains.ton.network.TonAccountState
 import com.tangem.blockchain.blockchains.ton.network.TonNetworkProvider
@@ -90,7 +91,24 @@ internal class TonWalletManager(
             is Result.Success -> {
                 var fee = feeResult.data
                 if (amount.type is AmountType.Token) {
-                    fee += JETTON_TRANSFER_PROCESSING_FEE
+                    val token = amount.type.token
+                    val recipientJettonWalletAddressResult = networkService.getJettonWalletAddress(
+                        com.tangem.blockchain.blockchains.ton.models.GetJettonWalletAddressInput(
+                            ownerAddress = destination,
+                            jettonMinterAddress = token.contractAddress,
+                        ),
+                    )
+                    val isRecipientWalletActive = recipientJettonWalletAddressResult
+                        .successOr { null }
+                        ?.let { walletAddress ->
+                            networkService.isJettonWalletActive(walletAddress)
+                                .successOr { null }
+                        } ?: false
+                    fee += if (isRecipientWalletActive) {
+                        JETTON_TRANSFER_PROCESSING_FEE_ACTIVE_WALLET
+                    } else {
+                        JETTON_TRANSFER_PROCESSING_FEE
+                    }
                 }
                 Result.Success(TransactionFee.Single(Fee.Common(fee)))
             }
