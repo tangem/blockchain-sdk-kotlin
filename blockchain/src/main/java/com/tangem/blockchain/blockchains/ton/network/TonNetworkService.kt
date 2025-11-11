@@ -96,4 +96,20 @@ internal class TonNetworkService(
             Result.Failure(e.toBlockchainSdkError())
         }
     }
+
+    suspend fun getJettonWalletAddress(input: GetJettonWalletAddressInput): Result<String> {
+        return try {
+            multiJsonRpcProvider.performRequest(TonNetworkProvider::getJettonWalletAddress, input)
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
+    suspend fun isJettonWalletActive(jettonWalletAddress: String): Result<Boolean> {
+        return try {
+            multiJsonRpcProvider.performRequest(TonNetworkProvider::isJettonWalletActive, jettonWalletAddress)
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
 }
