@@ -16,4 +16,6 @@ interface TonNetworkProvider : NetworkProvider {
     suspend fun getJettonWalletAddress(input: GetJettonWalletAddressInput): Result<String>
 
     suspend fun getJettonBalance(jettonWalletAddress: String): Result<BigInteger>
+
+    suspend fun isJettonWalletActive(jettonWalletAddress: String): Result<Boolean>
 }
