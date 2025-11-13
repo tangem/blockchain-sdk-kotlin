@@ -14,7 +14,7 @@ import org.kethereum.extensions.toBytesPadded
  * @see <a href="https://eips.ethereum.org/EIPS/eip-20#approve">EIP-20 Approve</a>
  */
 data class ApprovalERC20TokenCallData(
-    private val spenderAddress: String,
+    val spenderAddress: String,
     private val amount: Amount?,
 ) : Erc20CallData {
     override val methodId = "0x095ea7b3"
