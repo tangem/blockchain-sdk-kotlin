@@ -104,6 +104,7 @@ class EstimationFeeAddressFactory {
             Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet,
             Blockchain.Linea, Blockchain.LineaTestnet,
             Blockchain.ArbitrumNova,
+            Blockchain.Plasma, Blockchain.PlasmaTestnet,
             -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
             Blockchain.Quai, Blockchain.QuaiTestnet,
             -> "0x001895747a462F3cDEc145d565645D7fcEbe275d"
