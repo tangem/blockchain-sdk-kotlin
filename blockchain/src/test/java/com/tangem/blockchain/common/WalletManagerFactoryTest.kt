@@ -256,6 +256,22 @@ internal class WalletManagerFactoryTest {
         println(signatureBytes.toHexString())
     }
 
+    @Test
+    fun createPlasmaWalletManager() {
+        val walletManager = makeWalletManager(Blockchain.Plasma, EllipticCurve.Secp256k1)
+
+        Truth.assertThat(walletManager).isInstanceOf(EthereumWalletManager::class.java)
+        Truth.assertThat(walletManager?.wallet?.blockchain).isEqualTo(Blockchain.Plasma)
+    }
+
+    @Test
+    fun createPlasmaTestnetWalletManager() {
+        val walletManager = makeWalletManager(Blockchain.PlasmaTestnet, EllipticCurve.Secp256k1)
+
+        Truth.assertThat(walletManager).isInstanceOf(EthereumWalletManager::class.java)
+        Truth.assertThat(walletManager?.wallet?.blockchain).isEqualTo(Blockchain.PlasmaTestnet)
+    }
+
     private companion object {
 
         val BLOCKCHAIN_PROVIDER_TYPES = mapOf(
@@ -267,6 +283,7 @@ internal class WalletManagerFactoryTest {
             Blockchain.Ethereum to listOf(ProviderType.NowNodes),
             Blockchain.Bitcoin to listOf(ProviderType.NowNodes),
             Blockchain.XRP to listOf(ProviderType.NowNodes),
+            Blockchain.Plasma to listOf(ProviderType.Public(url = "https://rpc.plasma.to")),
         )
     }
 }
