@@ -168,5 +168,7 @@ val Blockchain.isUTXO: Boolean
         Linea,
         LineaTestnet,
         ArbitrumNova,
+        Plasma,
+        PlasmaTestnet,
         -> false
     }
