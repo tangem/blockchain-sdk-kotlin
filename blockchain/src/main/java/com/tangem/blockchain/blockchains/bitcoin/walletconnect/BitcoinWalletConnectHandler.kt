@@ -3,6 +3,10 @@ package com.tangem.blockchain.blockchains.bitcoin.walletconnect
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionExtras
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
+import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.AccountAddress
+import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.AddressIntention
+import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.GetAccountAddressesRequest
+import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.GetAccountAddressesResponse
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SendTransferRequest
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SendTransferResponse
 import com.tangem.blockchain.common.Amount
@@ -11,6 +15,7 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
@@ -118,6 +123,75 @@ internal class BitcoinWalletConnectHandler(
 
         return Result.Success(
             SendTransferResponse(txid = sendResult.hash),
+        )
+    }
+
+    /**
+     * Gets account addresses for the wallet.
+     *
+     * This method implements the WalletConnect `getAccountAddresses` RPC method. It returns
+     * the wallet's addresses filtered by intention type (payment/ordinal).
+     *
+     * According to the specification:
+     * - If only "ordinal" intention is requested, return empty array
+     * - Otherwise return: Legacy + Default (SegWit) addresses, and all addresses with UTXOs
+     *
+     * @param request The getAccountAddresses request parameters
+     * @return Success with list of addresses, or Failure with error details
+     *
+     * @see <a href="https://docs.reown.com/advanced/multichain/rpc-reference/bitcoin-rpc#getaccountaddresses">getAccountAddresses Documentation</a>
+     */
+    fun getAccountAddresses(
+        request: GetAccountAddressesRequest,
+    ): Result<GetAccountAddressesResponse> {
+        // Parse intentions from request
+        val intentions = request.intentions?.mapNotNull { AddressIntention.fromString(it) } ?: listOf(
+            AddressIntention.PAYMENT,
+        )
+
+        // If only "ordinal" intention is requested, return empty array
+        if (intentions.size == 1 && intentions.contains(AddressIntention.ORDINAL)) {
+            return Result.Success(GetAccountAddressesResponse(addresses = emptyList()))
+        }
+
+        // Build list of addresses to return
+        val addressList = mutableListOf<AccountAddress>()
+
+        // Add Legacy and Default (SegWit) addresses
+        wallet.addresses.forEach { address ->
+            when (address.type) {
+                AddressType.Legacy, AddressType.Default -> {
+                    addressList.add(
+                        AccountAddress(
+                            address = address.value,
+                            publicKey = null, // Don't expose public key for security
+                            path = null, // Path can be added if needed
+                            intention = AddressIntention.PAYMENT.toApiString(),
+                        ),
+                    )
+                }
+                else -> {
+                    // Include other address types as well
+                    addressList.add(
+                        AccountAddress(
+                            address = address.value,
+                            publicKey = null,
+                            path = null,
+                            intention = AddressIntention.PAYMENT.toApiString(),
+                        ),
+                    )
+                }
+            }
+        }
+
+        // Note: For multi-address wallets, we would also:
+        // 1. Add all addresses with UTXOs (non-empty addresses)
+        // 2. Add 2-20 unused addresses from receive (m/x/x/x/0/x) and change (m/x/x/x/1/x) chains
+        // However, this requires UTXO tracking which is handled by BitcoinWalletManager
+        // For now, we return the basic addresses that the wallet knows about
+
+        return Result.Success(
+            GetAccountAddressesResponse(addresses = addressList),
         )
     }
 
