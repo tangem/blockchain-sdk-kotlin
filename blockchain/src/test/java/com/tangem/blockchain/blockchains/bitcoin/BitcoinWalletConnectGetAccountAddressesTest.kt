@@ -49,12 +49,14 @@ internal class BitcoinWalletConnectGetAccountAddressesTest {
             tokens = emptySet(),
         )
 
-        // Mock wallet manager (not needed for getAccountAddresses, but required for handler)
+        // Mock wallet manager and network provider
         walletManager = mockk(relaxed = true)
+        val networkProvider = mockk<BitcoinNetworkProvider>(relaxed = true)
 
         handler = BitcoinWalletConnectHandler(
             wallet = wallet,
             walletManager = walletManager,
+            networkProvider = networkProvider,
         )
     }
 
@@ -209,9 +211,11 @@ internal class BitcoinWalletConnectGetAccountAddressesTest {
             tokens = emptySet(),
         )
 
+        val networkProvider = mockk<BitcoinNetworkProvider>(relaxed = true)
         val singleAddressHandler = BitcoinWalletConnectHandler(
             wallet = singleAddressWallet,
             walletManager = walletManager,
+            networkProvider = networkProvider,
         )
 
         val request = GetAccountAddressesRequest(
