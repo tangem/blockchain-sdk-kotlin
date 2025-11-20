@@ -21,7 +21,7 @@ class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, private val bloc
     BitcoinTransactionBuilder(walletPublicKey.toCompressedPublicKey(), blockchain) {
 
     override fun buildToSign(transactionData: TransactionData, dustValue: BigDecimal?): Result<List<ByteArray>> {
-        transactionData.requireUncompiled()
+        val uncompiled = transactionData.requireUncompiled()
         if (unspentOutputs.isNullOrEmpty()) {
             return Result.Failure(
                 BlockchainSdkError.CustomError("Unspent outputs are missing"),
@@ -32,8 +32,8 @@ class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, private val bloc
 
         val outputsToSend = getMinimumRequiredUTXOsToSend(
             unspentOutputs = unspentOutputs ?: return failResult,
-            transactionAmount = transactionData.amount.value ?: return failResult,
-            transactionFeeAmount = transactionData.fee?.amount?.value ?: return failResult,
+            transactionAmount = uncompiled.amount.value ?: return failResult,
+            transactionFeeAmount = uncompiled.fee?.amount?.value ?: return failResult,
             unspentToAmount = { it.amount },
             dustValue = dustValue,
         ).successOr { failure ->
@@ -48,7 +48,7 @@ class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, private val bloc
         for (input in transaction.inputs) {
             val index = input.index
             val value = Coin.parseCoin(outputsToSend[index].amount.toString())
-            hashesForSign[index] = getTransaction().hashForSignatureWitness(
+            hashesForSign[index] = getBitcoinCashTransaction().hashForSignatureWitness(
                 index,
                 input.scriptBytes,
                 value,
@@ -68,7 +68,7 @@ class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, private val bloc
         return TransactionSignature(r, canonicalS, sigHash)
     }
 
-    private fun getTransaction() = transaction as BitcoinCashTransaction
+    private fun getBitcoinCashTransaction() = transaction as BitcoinCashTransaction
 }
 
 internal fun TransactionData.toBitcoinCashTransaction(
@@ -77,7 +77,7 @@ internal fun TransactionData.toBitcoinCashTransaction(
     change: BigDecimal,
     blockchain: Blockchain,
 ): BitcoinCashTransaction {
-    requireUncompiled()
+    val uncompiled = requireUncompiled()
 
     val transaction = BitcoinCashTransaction(networkParameters)
     for (utxo in unspentOutputs) {
@@ -85,20 +85,20 @@ internal fun TransactionData.toBitcoinCashTransaction(
     }
     val addressService = BitcoinCashAddressService(blockchain)
     val sourceLegacyAddress =
-        LegacyAddress.fromPubKeyHash(networkParameters, addressService.getPublicKeyHash(this.sourceAddress))
+        LegacyAddress.fromPubKeyHash(networkParameters, addressService.getPublicKeyHash(uncompiled.sourceAddress))
 
-    val destinationLegacyAddress = if (addressService.validateCashAddrAddress(this.destinationAddress)) {
+    val destinationLegacyAddress = if (addressService.validateCashAddrAddress(uncompiled.destinationAddress)) {
         getLegacyAddressFromCashAddr(
-            destinationAddress = destinationAddress,
+            destinationAddress = uncompiled.destinationAddress,
             addressService = addressService,
             networkParameters = networkParameters,
         )
     } else {
-        LegacyAddress.fromBase58(networkParameters, this.destinationAddress)
+        LegacyAddress.fromBase58(networkParameters, uncompiled.destinationAddress)
     }
 
     transaction.addOutput(
-        Coin.parseCoin(this.amount.value!!.toPlainString()),
+        Coin.parseCoin(uncompiled.amount.value!!.toPlainString()),
         destinationLegacyAddress,
     )
     if (!change.isZero()) {
