@@ -1,23 +1,11 @@
 package com.tangem.blockchain.blockchains.bitcoin.walletconnect
 
-import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
+import android.util.Base64
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionExtras
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
-import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.AccountAddress
-import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.AddressIntention
-import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.GetAccountAddressesRequest
-import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.GetAccountAddressesResponse
-import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SendTransferRequest
-import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SendTransferResponse
-import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignPsbtRequest
-import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignPsbtResponse
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.TransactionData
-import com.tangem.blockchain.common.TransactionSigner
-import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.*
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
@@ -44,6 +32,7 @@ internal class BitcoinWalletConnectHandler(
 ) {
 
     private val psbtSigner = BitcoinPsbtSigner(wallet, networkProvider)
+    private val messageSigner = BitcoinMessageSigner(wallet)
 
     /**
      * Sends a Bitcoin transfer transaction.
@@ -233,7 +222,7 @@ internal class BitcoinWalletConnectHandler(
         val txid = if (request.broadcast == true) {
             try {
                 // Parse signed PSBT
-                val psbtBytes = java.util.Base64.getDecoder().decode(signedPsbtBase64)
+                val psbtBytes = Base64.decode(signedPsbtBase64, Base64.NO_WRAP)
 
                 val psbt = when (val result = Psbt.read(psbtBytes)) {
                     is fr.acinq.bitcoin.utils.Either.Right -> result.value
@@ -261,6 +250,65 @@ internal class BitcoinWalletConnectHandler(
             SignPsbtResponse(
                 psbt = signedPsbtBase64,
                 txid = txid,
+            ),
+        )
+    }
+
+    /**
+     * Signs a message with a Bitcoin address.
+     *
+     * This method implements the WalletConnect `signMessage` RPC method. It signs an arbitrary
+     * message using Bitcoin message signing format (BIP137 for ECDSA).
+     *
+     * @param request The signMessage request parameters
+     * @param signer The transaction signer (typically Tangem card)
+     * @return Success with signature and address, or Failure with error details
+     *
+     * @see <a href="https://docs.reown.com/advanced/multichain/rpc-reference/bitcoin-rpc#signmessage">signMessage Documentation</a>
+     */
+    suspend fun signMessage(
+        request: SignMessageRequest,
+        signer: TransactionSigner,
+    ): Result<SignMessageResponse> {
+        // Validate that the account address belongs to this wallet
+        val isValidAccount = wallet.addresses.any { it.value == request.account }
+        if (!isValidAccount) {
+            return Result.Failure(
+                BlockchainSdkError.CustomError(
+                    "Account address ${request.account} does not belong to this wallet",
+                ),
+            )
+        }
+
+        // Determine which address to use for signing
+        val signingAddress = request.address ?: request.account
+
+        // Validate signing address belongs to wallet
+        val isValidSigningAddress = wallet.addresses.any { it.value == signingAddress }
+        if (!isValidSigningAddress) {
+            return Result.Failure(
+                BlockchainSdkError.CustomError(
+                    "Signing address $signingAddress does not belong to this wallet",
+                ),
+            )
+        }
+
+        // Parse protocol
+        val protocol = SignMessageProtocol.fromString(request.protocol ?: "ecdsa")
+
+        // Sign the message
+        val signResult = messageSigner.signMessage(
+            message = request.message,
+            address = signingAddress,
+            protocol = protocol,
+            signer = signer,
+        ).successOr { return it }
+
+        return Result.Success(
+            SignMessageResponse(
+                address = signResult.address,
+                signature = signResult.signature,
+                messageHash = signResult.messageHash,
             ),
         )
     }
