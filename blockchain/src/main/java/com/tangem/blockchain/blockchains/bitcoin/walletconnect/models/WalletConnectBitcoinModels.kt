@@ -143,13 +143,15 @@ enum class SignMessageProtocol {
 /**
  * Request model for WalletConnect signMessage method.
  *
+ * @property account The connected account's first external address
  * @property message Message to sign
- * @property address Optional address to sign with (default: wallet's default address)
+ * @property address Optional address to sign with (if different from account)
  * @property protocol Optional signing protocol ("ecdsa" or "bip322", default: "ecdsa")
  *
  * @see <a href="https://docs.reown.com/advanced/multichain/rpc-reference/bitcoin-rpc#signmessage">signMessage Documentation</a>
  */
 data class SignMessageRequest(
+    val account: String,
     val message: String,
     val address: String? = null,
     val protocol: String? = "ecdsa",
