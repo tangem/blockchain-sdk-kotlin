@@ -1,14 +1,18 @@
 package com.tangem.blockchain.blockchains.bitcoin.walletconnect
 
+import android.util.Base64
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionExtras
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
+import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.AccountAddress
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.AddressIntention
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.GetAccountAddressesRequest
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.GetAccountAddressesResponse
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SendTransferRequest
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SendTransferResponse
+import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignPsbtRequest
+import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignPsbtResponse
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.BlockchainSdkError
@@ -19,7 +23,9 @@ import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
+import fr.acinq.bitcoin.psbt.Psbt
 import java.math.BigDecimal
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
  * Handler for WalletConnect Bitcoin RPC methods.
@@ -35,7 +41,10 @@ import java.math.BigDecimal
 internal class BitcoinWalletConnectHandler(
     private val wallet: Wallet,
     private val walletManager: BitcoinWalletManager,
+    private val networkProvider: BitcoinNetworkProvider,
 ) {
+
+    private val psbtSigner = BitcoinPsbtSigner(wallet, networkProvider)
 
     /**
      * Sends a Bitcoin transfer transaction.
@@ -192,6 +201,68 @@ internal class BitcoinWalletConnectHandler(
 
         return Result.Success(
             GetAccountAddressesResponse(addresses = addressList),
+        )
+    }
+
+    /**
+     * Signs a PSBT (Partially Signed Bitcoin Transaction).
+     *
+     * This method implements the WalletConnect `signPsbt` RPC method. It signs specified
+     * inputs of a PSBT and optionally broadcasts the transaction.
+     *
+     * @param request The signPsbt request parameters
+     * @param signer The transaction signer (typically Tangem card)
+     * @return Success with signed PSBT and optional txid, or Failure with error details
+     *
+     * @see <a href="https://docs.reown.com/advanced/multichain/rpc-reference/bitcoin-rpc#signpsbt">signPsbt Documentation</a>
+     */
+    @OptIn(ExperimentalEncodingApi::class)
+    suspend fun signPsbt(
+        request: SignPsbtRequest,
+        signer: TransactionSigner,
+    ): Result<SignPsbtResponse> {
+        // Sign the PSBT
+        val signedPsbtBase64 = psbtSigner.signPsbt(
+            psbtBase64 = request.psbt,
+            signInputs = request.signInputs,
+            signer = signer,
+        ).successOr { failure ->
+            return failure
+        }
+
+        // If broadcast is requested, extract and send the transaction
+        val txid = if (request.broadcast == true) {
+            try {
+                // Parse signed PSBT
+                val psbtBytes = Base64.decode(signedPsbtBase64, Base64.NO_WRAP)
+
+                val psbt = when (val result = Psbt.read(psbtBytes)) {
+                    is fr.acinq.bitcoin.utils.Either.Right -> result.value
+                    is fr.acinq.bitcoin.utils.Either.Left -> {
+                        return Result.Failure(
+                            BlockchainSdkError.CustomError("Failed to parse PSBT for broadcast: ${result.value}"),
+                        )
+                    }
+                }
+
+                // Broadcast the transaction
+                psbtSigner.broadcastPsbt(psbt).successOr { failure ->
+                    return failure
+                }
+            } catch (e: Exception) {
+                return Result.Failure(
+                    BlockchainSdkError.CustomError("Failed to broadcast PSBT: ${e.message}"),
+                )
+            }
+        } else {
+            null
+        }
+
+        return Result.Success(
+            SignPsbtResponse(
+                psbt = signedPsbtBase64,
+                txid = txid,
+            ),
         )
     }
 
