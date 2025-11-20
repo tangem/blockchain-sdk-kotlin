@@ -77,6 +77,11 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0'
 
     implementation 'org.bitcoinj:bitcoinj-core:0.16.3'
+
+    // Bitcoin PSBT support (BIP 174) - requires Kotlin 2.x
+    implementation 'fr.acinq.bitcoin:bitcoin-kmp-jvm:0.28.1'
+    implementation 'fr.acinq.secp256k1:secp256k1-kmp-jni-jvm:0.19.0'
+
     implementation 'com.github.stellar:java-stellar-sdk:0.40.0'
     implementation 'com.github.dogecoin:libdohj:3dd6d7548843fe1891366e0325a05587eb21d1aa'
 
