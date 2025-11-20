@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.bitcoin.walletconnect
 
-import android.util.Base64
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignInput
 import com.tangem.blockchain.common.BlockchainSdkError
@@ -58,7 +57,7 @@ internal class BitcoinPsbtSigner(
     ): Result<String> {
         // Parse PSBT from Base64
         val psbt = try {
-            val psbtBytes = Base64.decode(psbtBase64, Base64.NO_WRAP)
+            val psbtBytes = java.util.Base64.getDecoder().decode(psbtBase64)
 
             when (val result = Psbt.read(psbtBytes)) {
                 is Either.Right -> result.value
@@ -154,7 +153,7 @@ internal class BitcoinPsbtSigner(
         // Serialize signed PSBT back to Base64
         val signedPsbtBase64 = try {
             val psbtBytes = Psbt.write(updatedPsbt)
-            Base64.encodeToString(psbtBytes.toByteArray(), Base64.NO_WRAP)
+            java.util.Base64.getEncoder().encodeToString(psbtBytes.toByteArray())
         } catch (e: Exception) {
             return Result.Failure(
                 BlockchainSdkError.CustomError("Failed to serialize signed PSBT: ${e.message}"),
