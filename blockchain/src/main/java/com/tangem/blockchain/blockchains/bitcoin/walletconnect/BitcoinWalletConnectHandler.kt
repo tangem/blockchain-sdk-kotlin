@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.bitcoin.walletconnect
 
-import android.util.Base64
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionExtras
 import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
@@ -234,7 +233,7 @@ internal class BitcoinWalletConnectHandler(
         val txid = if (request.broadcast == true) {
             try {
                 // Parse signed PSBT
-                val psbtBytes = Base64.decode(signedPsbtBase64, Base64.NO_WRAP)
+                val psbtBytes = java.util.Base64.getDecoder().decode(signedPsbtBase64)
 
                 val psbt = when (val result = Psbt.read(psbtBytes)) {
                     is fr.acinq.bitcoin.utils.Either.Right -> result.value
