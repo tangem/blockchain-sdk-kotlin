@@ -13,7 +13,7 @@ import com.tangem.common.extensions.hexToBytes
  *
  *  Signature: `send(address,address,uint)`
  */
-internal class EthereumYieldSupplySendCallData(
+class EthereumYieldSupplySendCallData(
     private val tokenContractAddress: String,
     private val destinationAddress: String,
     private val amount: Amount,
