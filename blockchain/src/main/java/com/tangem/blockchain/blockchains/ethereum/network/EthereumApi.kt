@@ -24,16 +24,6 @@ data class EthCallObject(
     val data: String? = null,
 )
 
-enum class EthereumMethod(val value: String) {
-    GET_BALANCE("eth_getBalance"),
-    GET_TRANSACTION_COUNT("eth_getTransactionCount"),
-    CALL("eth_call"),
-    SEND_RAW_TRANSACTION("eth_sendRawTransaction"),
-    ESTIMATE_GAS("eth_estimateGas"),
-    GAS_PRICE("eth_gasPrice"),
-    FEE_HISTORY("eth_feeHistory"),
-}
-
 enum class EthBlockParam(val value: String) {
     EARLIEST("earliest"),
     LATEST("latest"),
