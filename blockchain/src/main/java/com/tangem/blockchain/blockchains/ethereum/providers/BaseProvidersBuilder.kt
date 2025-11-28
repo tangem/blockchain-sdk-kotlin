@@ -14,7 +14,8 @@ internal class BaseProvidersBuilder(
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return providerTypes.mapNotNull {
             when (it) {
-                is ProviderType.Blink -> ethereumProviderFactory.getBlinkProvider("https://base.blinklabs.xyz/v1/")
+                // Remove temporarily because of yield supply and incorrect pending tx count
+                // is ProviderType.Blink -> ethereumProviderFactory.getBlinkProvider("https://base.blinklabs.xyz/v1/")
                 is ProviderType.Public -> EthereumJsonRpcProvider(it.url)
                 ProviderType.NowNodes -> ethereumProviderFactory.getNowNodesProvider("https://base.nownodes.io/")
                 ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { base?.jsonRpc }

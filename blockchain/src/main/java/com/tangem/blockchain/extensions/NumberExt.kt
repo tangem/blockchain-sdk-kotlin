@@ -29,3 +29,12 @@ internal fun Long.bytes8LittleEndian(): ByteArray {
     buffer.putLong(this)
     return buffer.array()
 }
+
+/** return 8 bytes of Long. BigEndian format */
+@Suppress("MagicNumber")
+internal fun Long.bytes8BigEndian(): ByteArray {
+    val buffer = ByteBuffer.allocate(8)
+    buffer.order(ByteOrder.BIG_ENDIAN)
+    buffer.putLong(this)
+    return buffer.array()
+}
