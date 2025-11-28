@@ -39,7 +39,10 @@ abstract class WalletManager(
 
     open val dustValue: BigDecimal? = null
 
-    open val isSelfSendAvailable = (this as? UtxoBlockchainManager)?.allowConsolidation == true
+    /**
+     * Use get() because it seems WalletManager is not UtxoBlockchainManager while initialization is going on
+     */
+    open val isSelfSendAvailable get() = (this as? UtxoBlockchainManager)?.allowConsolidation == true
 
     private val updateDebounced = DebouncedInvoke()
 

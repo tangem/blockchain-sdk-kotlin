@@ -31,9 +31,9 @@ internal object RosettaUnspentOutputsConverter {
         return parts[0].hexToBytes() to parts[1].toLong()
     }
 
-    private fun Map<String, RosettaCoin.MetadataValue>.mapToAsset(): List<CardanoUnspentOutput.Asset> {
+    private fun Map<String, List<RosettaCoin.MetadataValue>>.mapToAsset(): List<CardanoUnspentOutput.Asset> {
         return values.flatMap {
-            it.tokens.mapNotNull { amount ->
+            it.flatMap { it.tokens }.mapNotNull { amount ->
                 CardanoUnspentOutput.Asset(
                     policyID = amount.currency.metadata?.policyId ?: return@mapNotNull null,
                     assetNameHex = amount.currency.symbol ?: return@mapNotNull null,
