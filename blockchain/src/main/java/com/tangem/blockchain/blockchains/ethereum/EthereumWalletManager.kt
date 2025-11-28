@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.ethereum
 import android.util.Log
 import com.tangem.blockchain.blockchains.ethereum.eip1559.isSupportEIP1559
 import com.tangem.blockchain.blockchains.ethereum.ens.DefaultENSNameProcessor
+import com.tangem.blockchain.blockchains.ethereum.network.EthereumFeeHistory
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.ApprovalERC20TokenCallData
@@ -14,6 +15,7 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.Result.*
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.nft.DefaultNFTProvider
@@ -120,13 +122,13 @@ open class EthereumWalletManager(
             .successOr { return it }
 
         return when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())) {
-            is SimpleResult.Success -> {
+            is Failure -> Result.fromTangemSdkError(sendResult.error)
+            is Success<*> -> {
                 val hash = transactionToSend.keccak().toHexString()
                 transactionData.hash = hash
                 wallet.addOutgoingTransaction(transactionData)
-                Result.Success(TransactionSendResult(hash))
+                Success(TransactionSendResult(hash))
             }
-            is SimpleResult.Failure -> Result.fromTangemSdkError(sendResult.error)
         }
     }
 
@@ -169,12 +171,12 @@ open class EthereumWalletManager(
             }
 
             when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())) {
-                is SimpleResult.Success -> {
+                is Result.Failure -> Failure(sendResult.error)
+                is Result.Success<*> -> {
                     val hash = transactionToSend.keccak().toHexString()
                     wallet.addOutgoingTransaction(data.updateHash(hash))
-                    Result.Success(TransactionSendResult(hash))
+                    Success(TransactionSendResult(hash))
                 }
-                is SimpleResult.Failure -> Result.Failure(sendResult.error)
             }
         }
 
@@ -291,6 +293,10 @@ open class EthereumWalletManager(
 
     override suspend fun getGasPrice(): Result<BigInteger> {
         return networkProvider.getGasPrice()
+    }
+
+    override suspend fun getGasHistory(): Result<EthereumFeeHistory> {
+        return networkProvider.getFeeHistory()
     }
 
     override suspend fun getGasLimit(amount: Amount, destination: String): Result<BigInteger> {

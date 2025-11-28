@@ -33,6 +33,7 @@ internal data class PolygonTransaction(
     @Json(name = "contractAddress") val contractAddress: String?,
     @Json(name = "from") val from: String,
     @Json(name = "functionName") val functionName: String?,
+    @Json(name = "methodId") val methodId: String?,
     @Json(name = "gasPrice") val gasPrice: String,
     @Json(name = "gasUsed") val gasUsed: String,
     @Json(name = "hash") val hash: String,
