@@ -10,15 +10,18 @@ import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 
 internal class XDCWalletManager(
     wallet: Wallet,
     transactionBuilder: EthereumTransactionBuilder,
     networkProvider: EthereumNetworkProvider,
+    transactionHistoryProvider: TransactionHistoryProvider,
 ) : EthereumWalletManager(
     wallet = wallet,
     transactionBuilder = transactionBuilder,
     networkProvider = networkProvider,
+    transactionHistoryProvider = transactionHistoryProvider,
     supportsENS = false,
 ) {
 

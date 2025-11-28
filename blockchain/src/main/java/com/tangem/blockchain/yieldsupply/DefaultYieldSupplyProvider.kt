@@ -14,9 +14,9 @@ internal object DefaultYieldSupplyProvider : YieldSupplyProvider {
 
     override fun getYieldSupplyContractAddresses(): YieldSupplyContractAddresses? = null
 
-    override suspend fun getYieldContract(): String = EthereumUtils.ZERO_ADDRESS
+    override suspend fun getYieldModuleAddress(): String = EthereumUtils.ZERO_ADDRESS
 
-    override suspend fun calculateYieldContract(): String = EthereumUtils.ZERO_ADDRESS
+    override suspend fun calculateYieldModuleAddress(): String = EthereumUtils.ZERO_ADDRESS
 
     override suspend fun getServiceFee(): BigDecimal = BigDecimal.ZERO
 
@@ -25,7 +25,7 @@ internal object DefaultYieldSupplyProvider : YieldSupplyProvider {
     override suspend fun getBalance(yieldSupplyStatus: YieldSupplyStatus, token: Token): Amount =
         Amount(Blockchain.Unknown)
 
-    override suspend fun getProtocolBalance(token: Token): BigDecimal = BigDecimal.ZERO
+    override suspend fun getEffectiveProtocolBalance(token: Token): BigDecimal = BigDecimal.ZERO
 
-    override suspend fun isAllowedToSpend(tokenContractAddress: String): Boolean = false
+    override suspend fun isAllowedToSpend(token: Token): Boolean = false
 }

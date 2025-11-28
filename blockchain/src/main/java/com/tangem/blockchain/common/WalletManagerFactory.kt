@@ -1,15 +1,20 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.assembly.impl.*
 import com.tangem.blockchain.common.datastorage.BlockchainDataStorage
+import com.tangem.blockchain.common.datastorage.BlockchainSavedData
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.logging.BlockchainSDKLogger
 import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.common.card.EllipticCurve
+import com.tangem.crypto.hdWallet.DerivationPath
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 
 class WalletManagerFactory(
     private val config: BlockchainSdkConfig = BlockchainSdkConfig(),
@@ -94,9 +99,14 @@ class WalletManagerFactory(
     ): WalletManager? {
         if (checkIfWrongKey(blockchain, curve, publicKey)) return null
 
-        val addresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
-        val wallet = Wallet(blockchain, addresses, publicKey, setOf())
+        val (addresses, finalPublicKey, finalPath) = when (blockchain) {
+            Blockchain.Quai,
+            Blockchain.QuaiTestnet,
+            -> prepareQuaiWalletData(publicKey, blockchain, curve) ?: return null
+            else -> prepareDefaultWalletData(publicKey, pairPublicKey, blockchain, curve)
+        }
 
+        val wallet = Wallet(blockchain, addresses, finalPublicKey, setOf(), finalPath)
         return getAssembly(blockchain).make(
             input = WalletManagerAssemblyInput(
                 wallet = wallet,
@@ -105,6 +115,50 @@ class WalletManagerFactory(
                 providerTypes = blockchainProviderTypes[blockchain] ?: emptyList(),
             ),
         )
+    }
+
+    private fun prepareQuaiWalletData(
+        publicKey: Wallet.PublicKey,
+        blockchain: Blockchain,
+        curve: EllipticCurve,
+    ): Triple<Set<Address>, Wallet.PublicKey, DerivationPath?>? {
+        val extendedPublicKey = publicKey.derivationType?.hdKey?.extendedPublicKey ?: return null
+        val cachedIndex = runBlocking(Dispatchers.IO) {
+            dataStorage.getOrNull<BlockchainSavedData.QuaiDerivationIndex>(publicKey)
+        }
+        val updatedAddress = blockchain.makeAddressesFromExtendedPublicKey(
+            extendedPublicKey = extendedPublicKey,
+            curve = curve,
+            cachedIndex = cachedIndex?.index,
+        )
+        updatedAddress.index?.let { index ->
+            runBlocking(Dispatchers.IO) {
+                dataStorage.store<BlockchainSavedData.QuaiDerivationIndex>(
+                    publicKey = publicKey,
+                    BlockchainSavedData.QuaiDerivationIndex(index),
+                )
+            }
+        }
+        val newPublicKey = Wallet.PublicKey(
+            seedKey = publicKey.seedKey,
+            derivationType = Wallet.PublicKey.DerivationType.Plain(
+                Wallet.HDKey(
+                    extendedPublicKey = updatedAddress.publicKey,
+                    path = publicKey.derivationPath ?: return null,
+                ),
+            ),
+        )
+        return Triple(setOf(Address(updatedAddress.address)), newPublicKey, updatedAddress.path)
+    }
+
+    private fun prepareDefaultWalletData(
+        publicKey: Wallet.PublicKey,
+        pairPublicKey: ByteArray?,
+        blockchain: Blockchain,
+        curve: EllipticCurve,
+    ): Triple<Set<Address>, Wallet.PublicKey, DerivationPath?> {
+        val calculatedAddresses = blockchain.makeAddresses(publicKey.blockchainKey, pairPublicKey, curve)
+        return Triple(calculatedAddresses, publicKey, null)
     }
 
     @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -162,6 +216,7 @@ class WalletManagerFactory(
             Blockchain.Scroll, Blockchain.ScrollTestnet,
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet,
             Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet,
+            Blockchain.Quai, Blockchain.QuaiTestnet,
             -> EthereumLikeWalletManagerAssembly(dataStorage)
 
             Blockchain.Mantle, Blockchain.MantleTestnet,
