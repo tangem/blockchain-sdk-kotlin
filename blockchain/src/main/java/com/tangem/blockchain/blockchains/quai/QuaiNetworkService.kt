@@ -1,5 +1,6 @@
-package com.tangem.blockchain.blockchains.ethereum.network
+package com.tangem.blockchain.blockchains.quai
 
+import com.tangem.blockchain.blockchains.ethereum.network.EthereumLikeNetworkService
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.network.blockchair.BlockchairEthNetworkProvider
@@ -7,9 +8,12 @@ import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
 import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 
-@OptIn(ExperimentalStdlibApi::class)
-internal open class EthereumNetworkService(
-    multiJsonRpcProvider: MultiNetworkProvider<EthereumJsonRpcProvider>,
+/**
+ * Network service for Quai Network
+ * Uses Quai-specific RPC methods with quai_ prefix
+ */
+internal class QuaiNetworkService(
+    multiJsonRpcProvider: MultiNetworkProvider<QuaiJsonRpcProvider>,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
     blockcypherNetworkProvider: BlockcypherNetworkProvider? = null,
     blockchairEthNetworkProvider: BlockchairEthNetworkProvider? = null,
@@ -20,5 +24,5 @@ internal open class EthereumNetworkService(
     blockchairEthNetworkProvider = blockchairEthNetworkProvider,
 ) {
 
-    override fun getDecimals(): Int = Blockchain.Ethereum.decimals()
+    override fun getDecimals(): Int = Blockchain.Quai.decimals()
 }
