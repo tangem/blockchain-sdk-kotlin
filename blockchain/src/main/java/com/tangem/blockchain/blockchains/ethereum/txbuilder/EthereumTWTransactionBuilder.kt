@@ -24,7 +24,7 @@ import java.math.BigInteger
  *
  * @property wallet wallet
  */
-internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactionBuilder(wallet = wallet) {
+internal open class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactionBuilder(wallet = wallet) {
 
     private val coinType = CoinType.ETHEREUM
     private val chainId = wallet.blockchain.getChainId()
@@ -50,7 +50,6 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
             hash = compiledTransaction.hash,
             signature = signature,
         )
-
         return output.encoded.toByteArray()
     }
 
@@ -80,7 +79,7 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
         return output.encoded.toByteArray()
     }
 
-    private fun buildSigningInput(transaction: TransactionData): Ethereum.SigningInput {
+    protected fun buildSigningInput(transaction: TransactionData): Ethereum.SigningInput {
         return when (transaction) {
             is TransactionData.Compiled -> buildCompiledSingingInput(transaction)
             is TransactionData.Uncompiled -> buildUncompiledSigningInput(transaction)
@@ -95,7 +94,8 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
         val ethereumFee = transaction.fee as? Fee.Ethereum ?: throw BlockchainSdkError.CustomError("Invalid fee")
         val extras = transaction.extras as? EthereumTransactionExtras
 
-        return when (transaction.amount.type) {
+        // TODO refactor [REDACTED_TASK_KEY]
+        return when (val amountType = transaction.amount.type) {
             is AmountType.TokenYieldSupply, // Destination is defined by application
             AmountType.Coin,
             -> buildSigningInput(
@@ -108,7 +108,7 @@ internal class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTransactio
             is AmountType.Token -> {
                 buildSigningInput(
                     chainId = chainId,
-                    destinationAddress = transaction.amount.type.token.contractAddress,
+                    destinationAddress = amountType.token.contractAddress,
                     coinAmount = BigInteger.ZERO,
                     fee = ethereumFee,
                     extras = extras,
