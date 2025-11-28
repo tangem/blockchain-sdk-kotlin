@@ -148,16 +148,21 @@ object EthereumUtils {
         val value: BigInteger
         val input: ByteArray // data for smart contract
 
-        if (transactionData.amount.type == AmountType.Coin) { // coin transfer
-            to = Address(transactionData.destinationAddress)
-            value = bigIntegerAmount
-            input = extras.callData?.data ?: ByteArray(0) // use empty ByteArray
-        } else { // token transfer (or approve)
-            to = Address(
-                transactionData.contractAddress ?: error("Contract address is not specified!"),
-            )
-            value = BigInteger.ZERO
-            input = extras.callData?.data ?: error("Call data is not specified")
+        // TODO refactor [REDACTED_TASK_KEY]
+        when (val amountType = transactionData.amount.type) {
+            is AmountType.TokenYieldSupply, // Destination is defined by application
+            AmountType.Coin,
+            -> { // coin transfer
+                to = Address(transactionData.destinationAddress)
+                value = bigIntegerAmount
+                input = extras.callData?.data ?: ByteArray(0) // use empty ByteArray
+            }
+            is AmountType.Token -> { // token transfer (or approve)
+                to = Address(amountType.token.contractAddress)
+                value = BigInteger.ZERO
+                input = extras.callData?.data ?: error("Call data is not specified")
+            }
+            else -> throw BlockchainSdkError.CustomError("Not implemented")
         }
 
         val gasLimitToUse = extras.gasLimit

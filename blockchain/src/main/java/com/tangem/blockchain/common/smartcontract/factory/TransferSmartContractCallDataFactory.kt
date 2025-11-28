@@ -7,12 +7,11 @@ import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
+import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplySendCallData
 
 internal object TransferSmartContractCallDataFactory {
 
     fun create(destinationAddress: String, amount: Amount, blockchain: Blockchain): SmartContractCallData? {
-        if (amount.type !is AmountType.Token) return null
-
         return when {
             blockchain.isEvm() -> {
                 val updatedDestinationAddress = if (blockchain == Blockchain.Decimal) {
@@ -20,15 +19,27 @@ internal object TransferSmartContractCallDataFactory {
                 } else {
                     destinationAddress
                 }
-                TransferERC20TokenCallData(
-                    destination = updatedDestinationAddress,
+
+                when (val amountType = amount.type) {
+                    is AmountType.Token -> TransferERC20TokenCallData(
+                        destination = updatedDestinationAddress,
+                        amount = amount,
+                    )
+                    is AmountType.TokenYieldSupply -> EthereumYieldSupplySendCallData(
+                        tokenContractAddress = amountType.token.contractAddress,
+                        destinationAddress = updatedDestinationAddress,
+                        amount = amount,
+                    )
+                    else -> return null
+                }
+            }
+            blockchain == Blockchain.Tron -> {
+                if (amount.type !is AmountType.Token) return null
+                TronTransferTokenCallData(
+                    destination = destinationAddress,
                     amount = amount,
                 )
             }
-            blockchain == Blockchain.Tron -> TronTransferTokenCallData(
-                destination = destinationAddress,
-                amount = amount,
-            )
             else -> null
         }
     }
