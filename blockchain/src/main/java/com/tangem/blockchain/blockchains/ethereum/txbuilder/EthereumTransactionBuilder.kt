@@ -1,6 +1,8 @@
 package com.tangem.blockchain.blockchains.ethereum.txbuilder
 
+import com.tangem.blockchain.blockchains.quai.QuaiBasedOnEthTransactionBuilder
 import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.transaction.Fee
@@ -58,7 +60,12 @@ abstract class EthereumTransactionBuilder(wallet: Wallet) {
 
         /** Create [EthereumTransactionBuilder] using [Wallet] */
         fun create(wallet: Wallet): EthereumTransactionBuilder {
-            return EthereumTWTransactionBuilder(wallet)
+            return when (wallet.blockchain) {
+                Blockchain.Quai,
+                Blockchain.QuaiTestnet,
+                -> QuaiBasedOnEthTransactionBuilder(wallet)
+                else -> EthereumTWTransactionBuilder(wallet)
+            }
         }
     }
 }
