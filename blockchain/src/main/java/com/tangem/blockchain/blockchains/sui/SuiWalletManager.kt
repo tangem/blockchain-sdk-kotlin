@@ -68,6 +68,7 @@ internal class SuiWalletManager(
             return Result.Failure(BlockchainSdkError.FailedToSendException)
         }
 
+        transactionData.hash = txResponse.digest
         wallet.addOutgoingTransaction(transactionData.updateHash(txResponse.digest), hashToLowercase = false)
 
         return Result.Success(TransactionSendResult(txResponse.digest))
