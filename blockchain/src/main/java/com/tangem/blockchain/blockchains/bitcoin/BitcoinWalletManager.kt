@@ -4,6 +4,7 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.bitcoin.walletconnect.BitcoinWalletConnectHandler
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -18,7 +19,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 
-internal open class BitcoinWalletManager(
+open class BitcoinWalletManager(
     wallet: Wallet,
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     protected val transactionBuilder: BitcoinTransactionBuilder,
@@ -29,6 +30,13 @@ internal open class BitcoinWalletManager(
     UtxoBlockchainManager {
 
     protected val blockchain = wallet.blockchain
+    val walletConnectHandler: BitcoinWalletConnectHandler by lazy {
+        BitcoinWalletConnectHandler(
+            wallet = wallet,
+            walletManager = this,
+            networkProvider = networkProvider,
+        )
+    }
 
     override val dustValue: BigDecimal = feesCalculator.minimalFeePerKb
 
