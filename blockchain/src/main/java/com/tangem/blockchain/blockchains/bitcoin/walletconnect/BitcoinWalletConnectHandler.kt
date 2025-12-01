@@ -25,7 +25,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
  *
  * @see <a href="https://docs.reown.com/advanced/multichain/rpc-reference/bitcoin-rpc">Bitcoin RPC Reference</a>
  */
-internal class BitcoinWalletConnectHandler(
+class BitcoinWalletConnectHandler(
     private val wallet: Wallet,
     private val walletManager: BitcoinWalletManager,
     private val networkProvider: BitcoinNetworkProvider,
@@ -210,6 +210,7 @@ internal class BitcoinWalletConnectHandler(
         signer: TransactionSigner,
     ): Result<SignPsbtResponse> {
         // Sign the PSBT
+        println("Request psbt: $request")
         val signedPsbtBase64 = psbtSigner.signPsbt(
             psbtBase64 = request.psbt,
             signInputs = request.signInputs,
@@ -217,7 +218,7 @@ internal class BitcoinWalletConnectHandler(
         ).successOr { failure ->
             return failure
         }
-
+        println("Signed psbt: $signedPsbtBase64")
         // If broadcast is requested, extract and send the transaction
         val txid = if (request.broadcast == true) {
             try {
