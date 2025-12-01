@@ -11,7 +11,7 @@ import java.math.RoundingMode
 /**
  * Calculates and returns bitcoin fees
  */
-internal open class BitcoinFeesCalculator(
+open class BitcoinFeesCalculator(
     private val blockchain: Blockchain,
 ) {
 
