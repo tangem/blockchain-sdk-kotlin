@@ -17,6 +17,8 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
 /**
  * Unit tests for BitcoinPsbtSigner.
@@ -29,6 +31,7 @@ import org.junit.Test
  * - PSBT serialization
  * - Broadcasting finalized PSBT
  */
+@RunWith(RobolectricTestRunner::class)
 class BitcoinPsbtSignerTest {
 
     private lateinit var wallet: Wallet
@@ -83,7 +86,7 @@ class BitcoinPsbtSignerTest {
         // Then
         assertThat(result).isInstanceOf(Result.Failure::class.java)
         val error = (result as Result.Failure).error
-        assertThat(error.customMessage).contains("Failed to decode PSBT")
+        assertThat(error.customMessage).containsMatch("Failed to (decode|parse) PSBT")
     }
 
     @Test

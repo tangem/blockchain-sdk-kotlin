@@ -1,12 +1,14 @@
 package com.tangem.blockchain.blockchains.bitcoin.walletconnect
 
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.extensions.decodeBase64
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignInput
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.encodeBase64NoWrap
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
@@ -15,8 +17,6 @@ import fr.acinq.bitcoin.PublicKey
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.psbt.Psbt
 import fr.acinq.bitcoin.utils.Either
-import java.util.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
  * Handler for Bitcoin PSBT (Partially Signed Bitcoin Transaction) operations.
@@ -50,7 +50,6 @@ internal class BitcoinPsbtSigner(
      * @param signer Transaction signer (typically Tangem card)
      * @return Success with signed PSBT in Base64, or Failure with error
      */
-    @OptIn(ExperimentalEncodingApi::class)
     suspend fun signPsbt(
         psbtBase64: String,
         signInputs: List<SignInput>,
@@ -58,7 +57,7 @@ internal class BitcoinPsbtSigner(
     ): Result<String> {
         // Parse PSBT from Base64
         val psbt = try {
-            val psbtBytes = Base64.getDecoder().decode(psbtBase64)
+            val psbtBytes = psbtBase64.decodeBase64()
             when (val result = Psbt.read(psbtBytes)) {
                 is Either.Right -> result.value
                 is Either.Left -> {
@@ -174,19 +173,16 @@ internal class BitcoinPsbtSigner(
                         }
                     }
                     else -> {
-                        println("PSBT: Input $index is non-witness or already finalized, skipping")
+                        // Non-witness or already finalized input, skipping
                     }
                 }
             }
-
-            println("PSBT: Successfully finalized all signed inputs")
         } catch (e: Exception) {
-            println("PSBT: Finalization failed: ${e.message}, returning PSBT with partial signatures")
             finalPsbt = updatedPsbt
         }
         val signedPsbtBase64 = try {
             val psbtBytes = Psbt.write(finalPsbt)
-            Base64.getEncoder().encodeToString(psbtBytes.toByteArray())
+            psbtBytes.toByteArray().encodeBase64NoWrap()
         } catch (e: Exception) {
             return Result.Failure(
                 BlockchainSdkError.CustomError("Failed to serialize signed PSBT: ${e.message}"),

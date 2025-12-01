@@ -12,7 +12,6 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import fr.acinq.bitcoin.psbt.Psbt
 import java.math.BigDecimal
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
  * Handler for WalletConnect Bitcoin RPC methods.
@@ -204,13 +203,11 @@ class BitcoinWalletConnectHandler(
      *
      * @see <a href="https://docs.reown.com/advanced/multichain/rpc-reference/bitcoin-rpc#signpsbt">signPsbt Documentation</a>
      */
-    @OptIn(ExperimentalEncodingApi::class)
     suspend fun signPsbt(
         request: SignPsbtRequest,
         signer: TransactionSigner,
     ): Result<SignPsbtResponse> {
         // Sign the PSBT
-        println("Request psbt: $request")
         val signedPsbtBase64 = psbtSigner.signPsbt(
             psbtBase64 = request.psbt,
             signInputs = request.signInputs,
@@ -218,7 +215,6 @@ class BitcoinWalletConnectHandler(
         ).successOr { failure ->
             return failure
         }
-        println("Signed psbt: $signedPsbtBase64")
         // If broadcast is requested, extract and send the transaction
         val txid = if (request.broadcast == true) {
             try {
