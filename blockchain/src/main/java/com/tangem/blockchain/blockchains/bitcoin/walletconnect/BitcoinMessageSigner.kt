@@ -6,6 +6,7 @@ import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import org.spongycastle.crypto.digests.SHA256Digest
@@ -27,6 +28,15 @@ import java.nio.charset.StandardCharsets
 internal class BitcoinMessageSigner(
     private val wallet: Wallet,
 ) {
+
+    private companion object {
+        const val SIGNATURE_SIZE = 64
+        const val MESSAGE_PREFIX = "Bitcoin Signed Message:\n"
+        const val VARINT_SINGLE_BYTE_LIMIT = 253
+        const val VARINT_TWO_BYTE_LIMIT = 0xffff
+        const val HEADER_P2PKH_COMPRESSED: Byte = 31
+        const val HEADER_P2WPKH_NATIVE: Byte = 39
+    }
 
     /**
      * Signs a message using Bitcoin message signing format.
@@ -50,48 +60,14 @@ internal class BitcoinMessageSigner(
         protocol: SignMessageProtocol,
         signer: TransactionSigner,
     ): Result<SignMessageResult> {
-        // Validate that the address belongs to this wallet
-        val walletAddress = wallet.addresses.find { it.value == address }
-            ?: return Result.Failure(
-                BlockchainSdkError.CustomError(
-                    "Address $address does not belong to this wallet",
-                ),
-            )
+        val walletAddress = validateAddress(address).successOr { return it }
+        validateProtocol(protocol).successOr { return it }
 
-        // Currently only ECDSA is supported
-        if (protocol == SignMessageProtocol.BIP322) {
-            return Result.Failure(
-                BlockchainSdkError.CustomError(
-                    "BIP322 message signing is not yet supported. Use ECDSA protocol.",
-                ),
-            )
-        }
-
-        // Create Bitcoin Signed Message format
         val messageHash = createBitcoinMessageHash(message)
+        val signature = signHash(messageHash, signer).successOr { return it }
+        validateSignatureSize(signature).successOr { return it }
 
-        // Sign the hash
-        val signatureResult = signer.sign(listOf(messageHash), wallet.publicKey)
-        val signature = when (signatureResult) {
-            is CompletionResult.Success -> signatureResult.data.firstOrNull()
-                ?: return Result.Failure(
-                    BlockchainSdkError.CustomError("Signer returned empty signature list"),
-                )
-            is CompletionResult.Failure -> return Result.fromTangemSdkError(signatureResult.error)
-        }
-
-        // Signature from Tangem is 64 bytes (32 r + 32 s)
-        if (signature.size != 64) {
-            return Result.Failure(
-                BlockchainSdkError.CustomError(
-                    "Invalid signature size: expected 64 bytes, got ${signature.size}",
-                ),
-            )
-        }
-
-        // Create Bitcoin message signature format (65 bytes: header + r + s)
-        val headerByte = getRecoveryHeaderByte(walletAddress.type)
-        val bitcoinSignature = byteArrayOf(headerByte).plus(signature)
+        val bitcoinSignature = createBitcoinSignature(signature, walletAddress.type)
 
         return Result.Success(
             SignMessageResult(
@@ -100,6 +76,68 @@ internal class BitcoinMessageSigner(
                 messageHash = messageHash.toHexString(),
             ),
         )
+    }
+
+    /**
+     * Validates that address belongs to wallet.
+     */
+    private fun validateAddress(address: String): Result<com.tangem.blockchain.common.address.Address> {
+        return wallet.addresses.find { it.value == address }
+            ?.let { Result.Success(it) }
+            ?: Result.Failure(
+                BlockchainSdkError.CustomError("Address $address does not belong to this wallet"),
+            )
+    }
+
+    /**
+     * Validates signing protocol.
+     */
+    private fun validateProtocol(protocol: SignMessageProtocol): Result<Unit> {
+        return if (protocol == SignMessageProtocol.BIP322) {
+            Result.Failure(
+                BlockchainSdkError.CustomError("BIP322 message signing is not yet supported. Use ECDSA protocol."),
+            )
+        } else {
+            Result.Success(Unit)
+        }
+    }
+
+    /**
+     * Signs message hash using signer.
+     */
+    private suspend fun signHash(
+        messageHash: ByteArray,
+        signer: TransactionSigner,
+    ): Result<ByteArray> {
+        return when (val result = signer.sign(listOf(messageHash), wallet.publicKey)) {
+            is CompletionResult.Success -> result.data.firstOrNull()
+                ?.let { Result.Success(it) }
+                ?: Result.Failure(BlockchainSdkError.CustomError("Signer returned empty signature list"))
+            is CompletionResult.Failure -> Result.fromTangemSdkError(result.error)
+        }
+    }
+
+    /**
+     * Validates signature size.
+     */
+    private fun validateSignatureSize(signature: ByteArray): Result<Unit> {
+        return if (signature.size == SIGNATURE_SIZE) {
+            Result.Success(Unit)
+        } else {
+            Result.Failure(
+                BlockchainSdkError.CustomError(
+                    "Invalid signature size: expected $SIGNATURE_SIZE bytes, got ${signature.size}",
+                ),
+            )
+        }
+    }
+
+    /**
+     * Creates Bitcoin signature format with recovery header.
+     */
+    private fun createBitcoinSignature(signature: ByteArray, addressType: AddressType): ByteArray {
+        val headerByte = getRecoveryHeaderByte(addressType)
+        return byteArrayOf(headerByte) + signature
     }
 
     /**
@@ -112,24 +150,13 @@ internal class BitcoinMessageSigner(
      */
     private fun createBitcoinMessageHash(message: String): ByteArray {
         val messageBytes = message.toByteArray(StandardCharsets.UTF_8)
-        val messageLength = messageBytes.size
+        val prefix = MESSAGE_PREFIX.toByteArray(StandardCharsets.UTF_8)
 
-        // Bitcoin Signed Message prefix
-        val prefix = "Bitcoin Signed Message:\n".toByteArray(StandardCharsets.UTF_8)
-        val prefixLength = byteArrayOf(prefix.size.toByte())
+        val data = byteArrayOf(prefix.size.toByte()) +
+            prefix +
+            encodeVarint(messageBytes.size) +
+            messageBytes
 
-        // Message length as varint (for simplicity, assume message < 253 bytes for single byte varint)
-        val messageLengthVarint = if (messageLength < 253) {
-            byteArrayOf(messageLength.toByte())
-        } else {
-            // For longer messages, use varint encoding
-            encodeVarint(messageLength)
-        }
-
-        // Combine: prefixLength + prefix + messageLengthVarint + message
-        val data = prefixLength + prefix + messageLengthVarint + messageBytes
-
-        // Double SHA256
         return doubleSha256(data)
     }
 
@@ -156,18 +183,18 @@ internal class BitcoinMessageSigner(
      */
     private fun encodeVarint(value: Int): ByteArray {
         return when {
-            value < 0xfd -> byteArrayOf(value.toByte())
-            value <= 0xffff -> byteArrayOf(
+            value < VARINT_SINGLE_BYTE_LIMIT -> byteArrayOf(value.toByte())
+            value <= VARINT_TWO_BYTE_LIMIT -> byteArrayOf(
                 0xfd.toByte(),
-                (value and 0xff).toByte(),
-                ((value shr 8) and 0xff).toByte(),
+                value.toByte(),
+                (value shr 8).toByte(),
             )
             else -> byteArrayOf(
                 0xfe.toByte(),
-                (value and 0xff).toByte(),
-                ((value shr 8) and 0xff).toByte(),
-                ((value shr 16) and 0xff).toByte(),
-                ((value shr 24) and 0xff).toByte(),
+                value.toByte(),
+                (value shr 8).toByte(),
+                (value shr 16).toByte(),
+                (value shr 24).toByte(),
             )
         }
     }
@@ -189,9 +216,9 @@ internal class BitcoinMessageSigner(
      */
     private fun getRecoveryHeaderByte(addressType: AddressType): Byte {
         return when (addressType) {
-            AddressType.Legacy -> 31.toByte() // P2PKH compressed
-            AddressType.Default -> 39.toByte() // P2WPKH native segwit (bc1q...)
-            else -> 31.toByte() // Default to compressed P2PKH
+            AddressType.Legacy -> HEADER_P2PKH_COMPRESSED
+            AddressType.Default -> HEADER_P2WPKH_NATIVE
+            else -> HEADER_P2PKH_COMPRESSED
         }
     }
 }
