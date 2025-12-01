@@ -49,76 +49,104 @@ class BitcoinWalletConnectHandler(
         request: SendTransferRequest,
         signer: TransactionSigner,
     ): Result<SendTransferResponse> {
-        // Validate that the account address belongs to this wallet
-        val isValidAccount = wallet.addresses.any { it.value == request.account }
-        if (!isValidAccount) {
-            return Result.Failure(
-                BlockchainSdkError.CustomError(
-                    "Account address ${request.account} does not belong to this wallet",
-                ),
+        validateAccountAddress(request.account).successOr { return it }
+        request.changeAddress?.let { validateChangeAddress(it).successOr { return it } }
+
+        val amountInBtc = parseAndConvertAmount(request.amount).successOr { return it }
+        val amount = createAmount(amountInBtc)
+        val fee = getFeeForTransaction(amount, request.recipientAddress).successOr { return it }
+
+        val transactionData = buildTransactionData(request, amount, fee)
+        val sendResult = walletManager.send(transactionData, signer).successOr { return it }
+
+        return Result.Success(SendTransferResponse(txid = sendResult.hash))
+    }
+
+    /**
+     * Validates that account address belongs to wallet.
+     */
+    private fun validateAccountAddress(account: String): Result<Unit> {
+        return if (wallet.addresses.any { it.value == account }) {
+            Result.Success(Unit)
+        } else {
+            Result.Failure(
+                BlockchainSdkError.CustomError("Account address $account does not belong to this wallet"),
             )
         }
+    }
 
-        // Validate custom change address if provided
-        request.changeAddress?.let { changeAddr ->
-            val isValidChangeAddress = wallet.addresses.any { it.value == changeAddr }
-            if (!isValidChangeAddress) {
-                return Result.Failure(
-                    BlockchainSdkError.CustomError(
-                        "Change address $changeAddr does not belong to this wallet",
-                    ),
-                )
-            }
+    /**
+     * Validates that change address belongs to wallet.
+     */
+    private fun validateChangeAddress(changeAddress: String): Result<Unit> {
+        return if (wallet.addresses.any { it.value == changeAddress }) {
+            Result.Success(Unit)
+        } else {
+            Result.Failure(
+                BlockchainSdkError.CustomError("Change address $changeAddress does not belong to this wallet"),
+            )
         }
+    }
 
-        // Convert amount from satoshis to BTC
+    /**
+     * Parses amount string and converts from satoshis to BTC.
+     */
+    private fun parseAndConvertAmount(amountString: String): Result<BigDecimal> {
         val amountInSatoshis = try {
-            BigDecimal(request.amount)
+            BigDecimal(amountString)
         } catch (e: NumberFormatException) {
             return Result.Failure(
-                BlockchainSdkError.CustomError("Invalid amount format: ${request.amount}"),
+                BlockchainSdkError.CustomError("Invalid amount format: $amountString"),
             )
         }
 
-        val amountInBtc = convertSatoshisToBtc(amountInSatoshis)
+        return Result.Success(convertSatoshisToBtc(amountInSatoshis))
+    }
 
-        // Get current fee estimate
-        val amount = Amount(
+    /**
+     * Creates Amount instance for transaction.
+     */
+    private fun createAmount(amountInBtc: BigDecimal): Amount {
+        return Amount(
             currencySymbol = wallet.blockchain.currency,
             value = amountInBtc,
             decimals = wallet.blockchain.decimals(),
             type = AmountType.Coin,
         )
+    }
 
-        val feeResult = walletManager.getFee(amount, request.recipientAddress).successOr { failure ->
-            return failure
+    /**
+     * Gets fee estimate for transaction.
+     */
+    private suspend fun getFeeForTransaction(
+        amount: Amount,
+        recipientAddress: String,
+    ): Result<Fee> {
+        val feeResult = walletManager.getFee(amount, recipientAddress).successOr { failure ->
+            return Result.Failure(failure.error)
         }
+        return Result.Success(Fee.Common(feeResult.normal.amount))
+    }
 
-        // Use normal fee as default
-        val fee = feeResult.normal
-
-        // Create transaction extras with memo and changeAddress
+    /**
+     * Builds transaction data from request parameters.
+     */
+    private fun buildTransactionData(
+        request: SendTransferRequest,
+        amount: Amount,
+        fee: Fee,
+    ): TransactionData.Uncompiled {
         val extras = BitcoinTransactionExtras(
             memo = request.memo,
             changeAddress = request.changeAddress,
         )
 
-        // Build transaction data
-        val transactionData = TransactionData.Uncompiled(
+        return TransactionData.Uncompiled(
             amount = amount,
-            fee = Fee.Common(fee.amount),
+            fee = fee,
             sourceAddress = request.account,
             destinationAddress = request.recipientAddress,
             extras = extras,
-        )
-
-        // Send transaction using wallet manager
-        val sendResult = walletManager.send(transactionData, signer).successOr { failure ->
-            return failure
-        }
-
-        return Result.Success(
-            SendTransferResponse(txid = sendResult.hash),
         )
     }
 
