@@ -80,18 +80,42 @@ internal class BitcoinPsbtSigner(
      * Parses PSBT from Base64 encoding.
      */
     private fun parsePsbt(psbtBase64: String): Result<Psbt> {
+        val psbtBytes = decodePsbtBase64(psbtBase64).successOr { return it }
+        return readPsbt(psbtBytes)
+    }
+
+    /**
+     * Decodes PSBT from Base64.
+     */
+    private fun decodePsbtBase64(psbtBase64: String): Result<ByteArray> {
         return try {
-            val psbtBytes = psbtBase64.decodeBase64()
-            when (val result = Psbt.read(psbtBytes)) {
-                is Either.Right -> Result.Success(result.value)
-                is Either.Left -> Result.Failure(
-                    BlockchainSdkError.CustomError("Failed to parse PSBT: ${result.value}"),
-                )
-            }
+            Result.Success(psbtBase64.decodeBase64())
         } catch (e: Exception) {
             Result.Failure(
                 BlockchainSdkError.CustomError("Failed to decode PSBT: ${e.message}"),
             )
+        }
+    }
+
+    /**
+     * Reads PSBT from bytes.
+     */
+    private fun readPsbt(psbtBytes: ByteArray): Result<Psbt> {
+        return when (val result = Psbt.read(psbtBytes)) {
+            is Either.Right -> Result.Success(result.value)
+            is Either.Left -> Result.Failure(
+                BlockchainSdkError.CustomError("Failed to parse PSBT: ${result.value}"),
+            )
+        }
+    }
+
+    /**
+     * Extension to handle Result unwrapping.
+     */
+    private inline fun <T> Result<T>.successOr(onFailure: (Result.Failure) -> Nothing): T {
+        return when (this) {
+            is Result.Success -> this.data
+            is Result.Failure -> onFailure(this)
         }
     }
 
@@ -402,11 +426,19 @@ internal class BitcoinPsbtSigner(
             "Signature must be $SIGNATURE_SIZE bytes ($R_SIZE r + $S_SIZE s)"
         }
 
-        val r = signature.copyOfRange(0, R_SIZE)
-        val s = signature.copyOfRange(R_SIZE, SIGNATURE_SIZE)
+        val (r, s) = extractRandS(signature)
         val derSignature = encodeDer(r, s)
 
         return derSignature + sighashType
+    }
+
+    /**
+     * Extracts R and S components from signature.
+     */
+    private fun extractRandS(signature: ByteArray): Pair<ByteArray, ByteArray> {
+        val r = signature.copyOfRange(0, R_SIZE)
+        val s = signature.copyOfRange(R_SIZE, SIGNATURE_SIZE)
+        return r to s
     }
 
     /**
@@ -431,13 +463,26 @@ internal class BitcoinPsbtSigner(
      * Encodes a single integer in DER format.
      */
     private fun encodeIntegerDer(value: ByteArray): ByteArray {
-        var trimmed = value.dropWhile { it == 0.toByte() }.toByteArray()
-        if (trimmed.isEmpty()) trimmed = byteArrayOf(0)
-
-        val needsPadding = (trimmed[0].toInt() and 0x80) != 0
-        val encoded = if (needsPadding) byteArrayOf(0) + trimmed else trimmed
+        val trimmed = trimLeadingZeros(value)
+        val encoded = addPaddingIfNeeded(trimmed)
 
         return byteArrayOf(DER_INTEGER_TAG, encoded.size.toByte()) + encoded
+    }
+
+    /**
+     * Trims leading zeros from byte array.
+     */
+    private fun trimLeadingZeros(value: ByteArray): ByteArray {
+        val trimmed = value.dropWhile { it == 0.toByte() }.toByteArray()
+        return if (trimmed.isEmpty()) byteArrayOf(0) else trimmed
+    }
+
+    /**
+     * Adds padding if high bit is set.
+     */
+    private fun addPaddingIfNeeded(value: ByteArray): ByteArray {
+        val needsPadding = (value[0].toInt() and 0x80) != 0
+        return if (needsPadding) byteArrayOf(0) + value else value
     }
 
     /**

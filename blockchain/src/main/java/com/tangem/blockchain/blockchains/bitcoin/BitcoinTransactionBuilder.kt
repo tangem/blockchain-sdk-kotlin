@@ -77,15 +77,9 @@ open class BitcoinTransactionBuilder(
         }
 
         val change: BigDecimal = calculateChange(transactionData, outputsToSend)
-        transaction =
-            transactionData.toBitcoinJTransaction(networkParameters, outputsToSend, change)
+        transaction = transactionData.toBitcoinJTransaction(networkParameters, outputsToSend, change)
 
-        val extras = uncompiled.extras as? BitcoinTransactionExtras
-        extras?.memo?.let { memoHex ->
-            BitcoinMemoBuilder.addMemoOutput(transaction, memoHex).successOr { failure ->
-                return failure
-            }
-        }
+        addMemoIfPresent(uncompiled).successOr { return it }
 
         val hashesToSign = MutableList(transaction.inputs.size) { byteArrayOf() }
         for (input in transaction.inputs) {
@@ -186,6 +180,16 @@ open class BitcoinTransactionBuilder(
                 Result.Success(vsize)
             }
         }
+    }
+
+    /**
+     * Adds memo output if present in transaction extras.
+     */
+    private fun addMemoIfPresent(uncompiled: TransactionData.Uncompiled): Result<Unit> {
+        val extras = uncompiled.extras as? BitcoinTransactionExtras
+        val memo = extras?.memo ?: return Result.Success(Unit)
+
+        return BitcoinMemoBuilder.addMemoOutput(transaction, memo)
     }
 
     fun calculateChange(transactionData: TransactionData, unspentOutputs: List<BitcoinUnspentOutput>): BigDecimal {
