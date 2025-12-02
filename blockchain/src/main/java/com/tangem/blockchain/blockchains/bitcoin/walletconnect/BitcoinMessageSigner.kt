@@ -110,11 +110,18 @@ internal class BitcoinMessageSigner(
         signer: TransactionSigner,
     ): Result<ByteArray> {
         return when (val result = signer.sign(listOf(messageHash), wallet.publicKey)) {
-            is CompletionResult.Success -> result.data.firstOrNull()
-                ?.let { Result.Success(it) }
-                ?: Result.Failure(BlockchainSdkError.CustomError("Signer returned empty signature list"))
+            is CompletionResult.Success -> extractSignature(result.data)
             is CompletionResult.Failure -> Result.fromTangemSdkError(result.error)
         }
+    }
+
+    /**
+     * Extracts first signature from signer result.
+     */
+    private fun extractSignature(signatures: List<ByteArray>): Result<ByteArray> {
+        return signatures.firstOrNull()
+            ?.let { Result.Success(it) }
+            ?: Result.Failure(BlockchainSdkError.CustomError("Signer returned empty signature list"))
     }
 
     /**
@@ -183,21 +190,27 @@ internal class BitcoinMessageSigner(
      */
     private fun encodeVarint(value: Int): ByteArray {
         return when {
-            value < VARINT_SINGLE_BYTE_LIMIT -> byteArrayOf(value.toByte())
-            value <= VARINT_TWO_BYTE_LIMIT -> byteArrayOf(
-                0xfd.toByte(),
-                value.toByte(),
-                (value shr 8).toByte(),
-            )
-            else -> byteArrayOf(
-                0xfe.toByte(),
-                value.toByte(),
-                (value shr 8).toByte(),
-                (value shr 16).toByte(),
-                (value shr 24).toByte(),
-            )
+            value < VARINT_SINGLE_BYTE_LIMIT -> encodeSingleByteVarint(value)
+            value <= VARINT_TWO_BYTE_LIMIT -> encodeTwoByteVarint(value)
+            else -> encodeFourByteVarint(value)
         }
     }
+
+    private fun encodeSingleByteVarint(value: Int): ByteArray = byteArrayOf(value.toByte())
+
+    private fun encodeTwoByteVarint(value: Int): ByteArray = byteArrayOf(
+        0xfd.toByte(),
+        value.toByte(),
+        (value shr 8).toByte(),
+    )
+
+    private fun encodeFourByteVarint(value: Int): ByteArray = byteArrayOf(
+        0xfe.toByte(),
+        value.toByte(),
+        (value shr 8).toByte(),
+        (value shr 16).toByte(),
+        (value shr 24).toByte(),
+    )
 
     /**
      * Gets the recovery header byte based on address type.

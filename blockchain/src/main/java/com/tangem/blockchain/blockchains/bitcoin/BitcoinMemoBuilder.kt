@@ -37,31 +37,51 @@ object BitcoinMemoBuilder {
      * @throws IllegalArgumentException if memoHex contains invalid hex characters
      */
     fun addMemoOutput(transaction: Transaction, memoHex: String): Result<Unit> {
-        // Convert hex string to bytes
-        val memoBytes = try {
-            hexToBytes(memoHex)
+        val memoBytes = parseMemoHex(memoHex).getOrElse { return it }
+        validateMemoSize(memoBytes).getOrElse { return it }
+
+        val script = buildOpReturnScript(memoBytes)
+        transaction.addOutput(Coin.ZERO, script)
+
+        return Result.Success(Unit)
+    }
+
+    /**
+     * Parses memo hex string to bytes.
+     */
+    private fun parseMemoHex(memoHex: String): Result<ByteArray> {
+        return try {
+            Result.Success(hexToBytes(memoHex))
         } catch (e: Exception) {
-            return Result.Failure(
+            Result.Failure(
                 BlockchainSdkError.CustomError("Invalid memo hex string: ${e.message}"),
             )
         }
+    }
 
-        // Validate memo size
-        if (memoBytes.size > MAX_MEMO_SIZE_BYTES) {
-            return Result.Failure(
+    /**
+     * Validates memo size.
+     */
+    private fun validateMemoSize(memoBytes: ByteArray): Result<Unit> {
+        return if (memoBytes.size > MAX_MEMO_SIZE_BYTES) {
+            Result.Failure(
                 BlockchainSdkError.CustomError(
                     "Memo exceeds maximum size of $MAX_MEMO_SIZE_BYTES bytes (got ${memoBytes.size} bytes)",
                 ),
             )
+        } else {
+            Result.Success(Unit)
         }
+    }
 
-        // Build OP_RETURN script
-        val script = buildOpReturnScript(memoBytes)
-
-        // Add output with zero value
-        transaction.addOutput(Coin.ZERO, script)
-
-        return Result.Success(Unit)
+    /**
+     * Extension to handle Result unwrapping.
+     */
+    private inline fun <T> Result<T>.getOrElse(onFailure: (Result.Failure) -> Nothing): T {
+        return when (this) {
+            is Result.Success -> this.data
+            is Result.Failure -> onFailure(this)
+        }
     }
 
     /**
@@ -91,16 +111,18 @@ object BitcoinMemoBuilder {
      * @throws IllegalArgumentException if hex string is invalid
      */
     private fun hexToBytes(hex: String): ByteArray {
-        val cleanHex = hex.trim().replace("0x", "", ignoreCase = true)
+        val cleanHex = hex.trim().removePrefix("0x").removePrefix("0X")
 
         require(cleanHex.length % 2 == 0) {
             "Hex string must have even length"
         }
 
         return cleanHex.chunked(2)
-            .map { it.toInt(16).toByte() }
+            .map { it.toInt(HEX_RADIX).toByte() }
             .toByteArray()
     }
+
+    private const val HEX_RADIX = 16
 
     /**
      * Estimates the size contribution of an OP_RETURN output.
@@ -110,13 +132,15 @@ object BitcoinMemoBuilder {
      */
     fun estimateOpReturnOutputSize(memoSizeBytes: Int): Int {
         // Output structure: value (8 bytes) + script length varint + script
-        val valueSize = 8
         val scriptLengthVarintSize = 1 // For typical sizes < 253 bytes
 
         // Script: OP_RETURN (1 byte) + push opcode (1-2 bytes) + data
         val pushOpcodeSize = if (memoSizeBytes <= DIRECT_PUSH_MAX_SIZE) 1 else 2
-        val scriptSize = 1 + pushOpcodeSize + memoSizeBytes
+        val scriptSize = OP_RETURN_SIZE + pushOpcodeSize + memoSizeBytes
 
-        return valueSize + scriptLengthVarintSize + scriptSize
+        return OUTPUT_VALUE_SIZE + scriptLengthVarintSize + scriptSize
     }
+
+    private const val OUTPUT_VALUE_SIZE = 8
+    private const val OP_RETURN_SIZE = 1
 }
