@@ -31,20 +31,18 @@ data class SendTransferResponse(
 /**
  * Address intention type for Bitcoin addresses.
  */
-enum class AddressIntention {
-    PAYMENT,
-    ORDINAL,
+enum class AddressIntention(private val apiValue: String) {
+    PAYMENT("payment"),
+    ORDINAL("ordinal"),
     ;
 
     companion object {
-        fun fromString(value: String): AddressIntention? = when (value.lowercase()) {
-            "payment" -> PAYMENT
-            "ordinal" -> ORDINAL
-            else -> null
+        fun fromString(value: String): AddressIntention? = entries.find {
+            it.apiValue.equals(value, ignoreCase = true)
         }
     }
 
-    fun toApiString(): String = name.lowercase()
+    fun toApiString(): String = apiValue
 }
 
 /**
@@ -126,18 +124,20 @@ data class SignPsbtResponse(
 /**
  * Message signing protocol type.
  */
-enum class SignMessageProtocol {
-    ECDSA,
-    BIP322,
+enum class SignMessageProtocol(private val apiValue: String) {
+    ECDSA("ecdsa"),
+    BIP322("bip322"),
     ;
 
     companion object {
-        fun fromString(value: String): SignMessageProtocol = when (value.lowercase()) {
-            "ecdsa" -> ECDSA
-            "bip322" -> BIP322
-            else -> ECDSA // Default to ECDSA
-        }
+        private val DEFAULT = ECDSA
+
+        fun fromString(value: String): SignMessageProtocol = entries.find {
+            it.apiValue.equals(value, ignoreCase = true)
+        } ?: DEFAULT
     }
+
+    fun toApiString(): String = apiValue
 }
 
 /**

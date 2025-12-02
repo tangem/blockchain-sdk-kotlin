@@ -6,7 +6,6 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.*
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
@@ -63,30 +62,29 @@ class BitcoinWalletConnectHandler(
     }
 
     /**
-     * Validates that account address belongs to wallet.
+     * Validates that address belongs to wallet.
      */
-    private fun validateAccountAddress(account: String): Result<Unit> {
-        return if (wallet.addresses.any { it.value == account }) {
+    private fun validateWalletAddress(address: String, addressType: String = "address"): Result<Unit> {
+        return if (wallet.addresses.any { it.value == address }) {
             Result.Success(Unit)
         } else {
             Result.Failure(
-                BlockchainSdkError.CustomError("Account address $account does not belong to this wallet"),
+                BlockchainSdkError.CustomError("$addressType $address does not belong to this wallet"),
             )
         }
     }
 
     /**
+     * Validates that account address belongs to wallet.
+     */
+    private fun validateAccountAddress(account: String): Result<Unit> =
+        validateWalletAddress(account, "Account address")
+
+    /**
      * Validates that change address belongs to wallet.
      */
-    private fun validateChangeAddress(changeAddress: String): Result<Unit> {
-        return if (wallet.addresses.any { it.value == changeAddress }) {
-            Result.Success(Unit)
-        } else {
-            Result.Failure(
-                BlockchainSdkError.CustomError("Change address $changeAddress does not belong to this wallet"),
-            )
-        }
-    }
+    private fun validateChangeAddress(changeAddress: String): Result<Unit> =
+        validateWalletAddress(changeAddress, "Change address")
 
     /**
      * Parses amount string and converts from satoshis to BTC.
@@ -168,55 +166,44 @@ class BitcoinWalletConnectHandler(
     fun getAccountAddresses(
         request: GetAccountAddressesRequest,
     ): Result<GetAccountAddressesResponse> {
-        // Parse intentions from request
-        val intentions = request.intentions?.mapNotNull { AddressIntention.fromString(it) } ?: listOf(
-            AddressIntention.PAYMENT,
-        )
+        val intentions = parseIntentions(request.intentions)
 
-        // If only "ordinal" intention is requested, return empty array
-        if (intentions.size == 1 && intentions.contains(AddressIntention.ORDINAL)) {
+        if (isOnlyOrdinalIntention(intentions)) {
             return Result.Success(GetAccountAddressesResponse(addresses = emptyList()))
         }
 
-        // Build list of addresses to return
-        val addressList = mutableListOf<AccountAddress>()
+        val addressList = buildAddressList()
 
-        // Add Legacy and Default (SegWit) addresses
-        wallet.addresses.forEach { address ->
-            when (address.type) {
-                AddressType.Legacy, AddressType.Default -> {
-                    addressList.add(
-                        AccountAddress(
-                            address = address.value,
-                            publicKey = null, // Don't expose public key for security
-                            path = null, // Path can be added if needed
-                            intention = AddressIntention.PAYMENT.toApiString(),
-                        ),
-                    )
-                }
-                else -> {
-                    // Include other address types as well
-                    addressList.add(
-                        AccountAddress(
-                            address = address.value,
-                            publicKey = null,
-                            path = null,
-                            intention = AddressIntention.PAYMENT.toApiString(),
-                        ),
-                    )
-                }
-            }
+        return Result.Success(GetAccountAddressesResponse(addresses = addressList))
+    }
+
+    /**
+     * Parses intentions from request.
+     */
+    private fun parseIntentions(intentionStrings: List<String>?): List<AddressIntention> {
+        return intentionStrings?.mapNotNull { AddressIntention.fromString(it) }
+            ?: listOf(AddressIntention.PAYMENT)
+    }
+
+    /**
+     * Checks if only ordinal intention is requested.
+     */
+    private fun isOnlyOrdinalIntention(intentions: List<AddressIntention>): Boolean {
+        return intentions.size == 1 && intentions.contains(AddressIntention.ORDINAL)
+    }
+
+    /**
+     * Builds list of wallet addresses.
+     */
+    private fun buildAddressList(): List<AccountAddress> {
+        return wallet.addresses.map { address ->
+            AccountAddress(
+                address = address.value,
+                publicKey = null, // Don't expose public key for security
+                path = null, // Path can be added if needed
+                intention = AddressIntention.PAYMENT.toApiString(),
+            )
         }
-
-        // Note: For multi-address wallets, we would also:
-        // 1. Add all addresses with UTXOs (non-empty addresses)
-        // 2. Add 2-20 unused addresses from receive (m/x/x/x/0/x) and change (m/x/x/x/1/x) chains
-        // However, this requires UTXO tracking which is handled by BitcoinWalletManager
-        // For now, we return the basic addresses that the wallet knows about
-
-        return Result.Success(
-            GetAccountAddressesResponse(addresses = addressList),
-        )
     }
 
     /**
@@ -338,28 +325,21 @@ class BitcoinWalletConnectHandler(
         )
     }
 
-    /**
-     * Converts satoshis to BTC.
-     *
-     * @param satoshis Amount in satoshis
-     * @return Amount in BTC
-     */
-    private fun convertSatoshisToBtc(satoshis: BigDecimal): BigDecimal {
-        // 1 BTC = 100,000,000 satoshis
-        return satoshis.movePointLeft(SATOSHI_DECIMALS)
-    }
-
-    /**
-     * Converts BTC to satoshis.
-     *
-     * @param btc Amount in BTC
-     * @return Amount in satoshis
-     */
-    private fun convertBtcToSatoshis(btc: BigDecimal): BigDecimal {
-        return btc.movePointRight(SATOSHI_DECIMALS)
-    }
-
     companion object {
         private const val SATOSHI_DECIMALS = 8
+
+        /**
+         * Converts satoshis to BTC.
+         */
+        private fun convertSatoshisToBtc(satoshis: BigDecimal): BigDecimal {
+            return satoshis.movePointLeft(SATOSHI_DECIMALS)
+        }
+
+        /**
+         * Converts BTC to satoshis.
+         */
+        private fun convertBtcToSatoshis(btc: BigDecimal): BigDecimal {
+            return btc.movePointRight(SATOSHI_DECIMALS)
+        }
     }
 }
