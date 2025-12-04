@@ -95,8 +95,6 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     ScrollTestnet(id = 534351, blockchain = Blockchain.ScrollTestnet),
     ZkLinkNova(id = 810180, blockchain = Blockchain.ZkLinkNova),
     ZkLinkNovaTestnet(id = 810181, blockchain = Blockchain.ZkLinkNovaTestnet),
-    Pepecoin(id = 63, blockchain = Blockchain.Pepecoin),
-    PepecoinTestnet(id = 63, blockchain = Blockchain.PepecoinTestnet), // TODO("Check chain id")
     Hyperliquid(id = 999, blockchain = Blockchain.Hyperliquid),
     HyperliquidTestnet(id = 998, blockchain = Blockchain.HyperliquidTestnet),
     Quai(id = 9, blockchain = Blockchain.Quai),
