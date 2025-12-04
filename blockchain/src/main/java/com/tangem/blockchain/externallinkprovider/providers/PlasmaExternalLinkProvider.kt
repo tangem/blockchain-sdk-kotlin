@@ -13,7 +13,7 @@ internal class PlasmaExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProv
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
         return if (contractAddress != null) {
-            explorerBaseUrl + "token/$contractAddress?a=$walletAddress"
+            explorerBaseUrl + "address/$walletAddress/tokentxns?tokenaddress=$contractAddress"
         } else {
             explorerBaseUrl + "address/$walletAddress"
         }
