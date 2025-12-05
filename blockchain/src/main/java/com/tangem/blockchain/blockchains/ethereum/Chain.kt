@@ -6,7 +6,7 @@ import com.tangem.blockchain.common.Blockchain
 
 enum class Chain(val id: Int, val blockchain: Blockchain?) {
     Mainnet(id = 1, blockchain = Blockchain.Ethereum),
-    EthereumSepoliaTestnet(id = 11155111, blockchain = Blockchain.EthereumTestnet),
+    EthereumHoodiTestnet(id = 560048, blockchain = Blockchain.EthereumTestnet),
     Morden(id = 2, blockchain = null),
     Ropsten(id = 3, blockchain = null),
     Kovan(id = 42, blockchain = null),
