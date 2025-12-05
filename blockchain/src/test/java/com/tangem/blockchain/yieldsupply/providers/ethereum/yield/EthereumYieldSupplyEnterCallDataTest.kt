@@ -22,4 +22,33 @@ internal class EthereumYieldSupplyEnterCallDataTest {
         val expected = signature + tokenAddressData
         Truth.assertThat(callData.data).isEqualTo(expected)
     }
+
+    @Test
+    fun `WHEN correct data THEN return RESULT`() {
+        val rawCallData = "0x79be55f70000000000000000000000001234567890abcdef1234567890abcdef12345678"
+
+        val actual = EthereumYieldSupplyEnterCallData.decode(rawCallData)
+        val expected = EthereumYieldSupplyEnterCallData(tokenContractAddress = tokenContractAddress)
+
+        Truth.assertThat(actual).isNotNull()
+        Truth.assertThat(actual!!.tokenContractAddress).isEqualTo(expected.tokenContractAddress)
+    }
+
+    @Test
+    fun `WHEN error data THEN return NULL`() {
+        val rawCallData = "0x79be55f7000000000000000000000001234m67890abcdef1234567890abcdef1234567p"
+
+        val actual = EthereumYieldSupplyEnterCallData.decode(rawCallData)
+
+        Truth.assertThat(actual).isNull()
+    }
+
+    @Test
+    fun `WHEN wrong method data THEN return NULL`() {
+        val rawCallData = "0xc6526dcf0000000000000000000000001234567890abcdef1234567890abcdef12345678"
+
+        val actual = EthereumYieldSupplyEnterCallData.decode(rawCallData)
+
+        Truth.assertThat(actual).isNull()
+    }
 }
