@@ -101,4 +101,6 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     HyperliquidTestnet(id = 998, blockchain = Blockchain.HyperliquidTestnet),
     Quai(id = 9, blockchain = Blockchain.Quai),
     QuaiTestnet(id = 15000, blockchain = Blockchain.QuaiTestnet),
+    Ink(id = 57073, blockchain = Blockchain.Ink),
+    InkTestnet(id = 763373, blockchain = Blockchain.InkTestnet),
 }

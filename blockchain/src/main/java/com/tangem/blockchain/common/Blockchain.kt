@@ -210,6 +210,8 @@ enum class Blockchain(
     HyperliquidTestnet("hyperliquid/test", "HYPE", "Hyperliquid EVM Testnet"),
     Quai("quai", "QUAI", "Quai"),
     QuaiTestnet("quai/test", "QUAI", "Quai Testnet"),
+    Ink("ink", "ETH", "Ink"),
+    InkTestnet("ink/test", "ETH", "Ink Sepolia Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -240,6 +242,8 @@ enum class Blockchain(
             Cyber,
             Scroll,
             ZkLinkNova,
+            Ink,
+            InkTestnet,
             -> true
             else -> false
         }
@@ -347,6 +351,7 @@ enum class Blockchain(
         ZkLinkNova, ZkLinkNovaTestnet,
         Hyperliquid, HyperliquidTestnet,
         Quai, QuaiTestnet,
+        Ink, InkTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -452,6 +457,7 @@ enum class Blockchain(
             Scroll, ScrollTestnet,
             ZkLinkNova, ZkLinkNovaTestnet,
             Hyperliquid, HyperliquidTestnet,
+            Ink, InkTestnet,
             -> EthereumAddressService()
 
             Quai, QuaiTestnet -> QuaiAddressService()
@@ -604,6 +610,7 @@ enum class Blockchain(
             Pepecoin, PepecoinTestnet -> PepecoinTestnet
             Hyperliquid, HyperliquidTestnet -> HyperliquidTestnet
             Quai, QuaiTestnet -> QuaiTestnet
+            Ink, InkTestnet -> InkTestnet
             Unknown,
             Cardano,
             Dogecoin,
@@ -718,6 +725,7 @@ enum class Blockchain(
             Pepecoin, PepecoinTestnet,
             Hyperliquid, HyperliquidTestnet,
             Quai, QuaiTestnet,
+            Ink, InkTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -837,6 +845,8 @@ enum class Blockchain(
             HyperliquidTestnet -> Chain.HyperliquidTestnet.id
             Quai -> Chain.Quai.id
             QuaiTestnet -> Chain.QuaiTestnet.id
+            Ink -> Chain.Ink.id
+            InkTestnet -> Chain.InkTestnet.id
             else -> null
         }
     }
