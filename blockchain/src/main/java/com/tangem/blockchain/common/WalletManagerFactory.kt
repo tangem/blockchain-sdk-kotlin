@@ -230,10 +230,7 @@ class WalletManagerFactory(
             Blockchain.Blast, Blockchain.BlastTestnet,
             Blockchain.Cyber, Blockchain.CyberTestnet,
             Blockchain.Ink, Blockchain.InkTestnet,
-            -> {
-                android.util.Log.d("WalletManagerFactory", "Using EthereumOptimisticRollupWalletManagerAssembly for: $blockchain")
-                EthereumOptimisticRollupWalletManagerAssembly(dataStorage)
-            }
+            -> EthereumOptimisticRollupWalletManagerAssembly(dataStorage)
             Blockchain.Telos, Blockchain.TelosTestnet -> TelosWalletManagerAssembly
             // endregion
 

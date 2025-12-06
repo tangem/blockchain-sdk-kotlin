@@ -215,6 +215,7 @@ internal class WalletManagerFactoryTest {
                     sui = GetBlockAccessToken(),
                     telos = GetBlockAccessToken(),
                     tezos = GetBlockAccessToken(),
+                    ink = GetBlockAccessToken(),
                 ),
                 tronGridApiKey = "",
                 chiaFireAcademyApiKey = "",

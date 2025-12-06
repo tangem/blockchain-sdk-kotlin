@@ -27,20 +27,13 @@ internal class EthereumOptimisticRollupWalletManagerAssembly(private val dataSto
 
     override fun make(input: WalletManagerAssemblyInput): EthereumOptimisticRollupWalletManager {
         with(input.wallet) {
-            android.util.Log.d("EthereumOptimisticRollupWMAssembly", "Creating wallet manager for blockchain: $blockchain")
-            android.util.Log.d("EthereumOptimisticRollupWMAssembly", "Provider types: ${input.providerTypes}")
-            
-            val providersBuilder = getProvidersBuilder(
-                blockchain = blockchain,
-                providerTypes = input.providerTypes,
-                config = input.config,
+            val multiNetworkProvider = MultiNetworkProvider(
+                getProvidersBuilder(
+                    blockchain = blockchain,
+                    providerTypes = input.providerTypes,
+                    config = input.config,
+                ).build(blockchain),
             )
-            android.util.Log.d("EthereumOptimisticRollupWMAssembly", "Providers builder created: ${providersBuilder::class.simpleName}")
-            
-            val providers = providersBuilder.build(blockchain)
-            android.util.Log.d("EthereumOptimisticRollupWMAssembly", "Providers built: ${providers.size} providers")
-            
-            val multiNetworkProvider = MultiNetworkProvider(providers)
             val yieldLendingProvider = YieldSupplyProviderFactory(dataStorage).makeProvider(this, multiNetworkProvider)
 
             return EthereumOptimisticRollupWalletManager(
@@ -63,37 +56,14 @@ internal class EthereumOptimisticRollupWalletManagerAssembly(private val dataSto
         providerTypes: List<ProviderType>,
         config: BlockchainSdkConfig,
     ): NetworkProvidersBuilder<EthereumJsonRpcProvider> {
-        android.util.Log.d("EthereumOptimisticRollupWMAssembly", "getProvidersBuilder called for: $blockchain")
-        
         return when (blockchain) {
-            Blockchain.Optimism, Blockchain.OptimismTestnet -> {
-                android.util.Log.d("EthereumOptimisticRollupWMAssembly", "Creating OptimismProvidersBuilder")
-                OptimismProvidersBuilder(providerTypes, config)
-            }
-            Blockchain.Base, Blockchain.BaseTestnet -> {
-                android.util.Log.d("EthereumOptimisticRollupWMAssembly", "Creating BaseProvidersBuilder")
-                BaseProvidersBuilder(providerTypes, config)
-            }
-            Blockchain.Manta, Blockchain.MantaTestnet -> {
-                android.util.Log.d("EthereumOptimisticRollupWMAssembly", "Creating MantaProvidersBuilder")
-                MantaProvidersBuilder(providerTypes)
-            }
-            Blockchain.Blast, Blockchain.BlastTestnet -> {
-                android.util.Log.d("EthereumOptimisticRollupWMAssembly", "Creating BlastProvidersBuilder")
-                BlastProvidersBuilder(providerTypes, config)
-            }
-            Blockchain.Cyber, Blockchain.CyberTestnet -> {
-                android.util.Log.d("EthereumOptimisticRollupWMAssembly", "Creating CyberProvidersBuilder")
-                CyberProvidersBuilder(providerTypes)
-            }
-            Blockchain.Ink, Blockchain.InkTestnet -> {
-                android.util.Log.d("EthereumOptimisticRollupWMAssembly", "Creating InkProvidersBuilder")
-                InkProvidersBuilder(providerTypes, config)
-            }
-            else -> {
-                android.util.Log.e("EthereumOptimisticRollupWMAssembly", "Unsupported blockchain: $blockchain")
-                error("Unsupported blockchain: $blockchain")
-            }
+            Blockchain.Optimism, Blockchain.OptimismTestnet -> OptimismProvidersBuilder(providerTypes, config)
+            Blockchain.Base, Blockchain.BaseTestnet -> BaseProvidersBuilder(providerTypes, config)
+            Blockchain.Manta, Blockchain.MantaTestnet -> MantaProvidersBuilder(providerTypes)
+            Blockchain.Blast, Blockchain.BlastTestnet -> BlastProvidersBuilder(providerTypes, config)
+            Blockchain.Cyber, Blockchain.CyberTestnet -> CyberProvidersBuilder(providerTypes)
+            Blockchain.Ink, Blockchain.InkTestnet -> InkProvidersBuilder(providerTypes, config)
+            else -> error("Unsupported blockchain: $blockchain")
         }
     }
 }
