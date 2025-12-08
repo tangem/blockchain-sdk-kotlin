@@ -6,7 +6,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.network.providers.ProviderType
 
-internal class InkProvidersBuilder(
+internal class SuperseedProvidersBuilder(
     override val providerTypes: List<ProviderType>,
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
@@ -15,8 +15,9 @@ internal class InkProvidersBuilder(
         return providerTypes.mapNotNull {
             when (it) {
                 is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+                ProviderType.NowNodes -> ethereumProviderFactory.getNowNodesProvider("https://superseed.nownodes.io/")
                 ProviderType.GetBlock -> {
-                    ethereumProviderFactory.getGetBlockProvider { ink?.jsonRpc }
+                    ethereumProviderFactory.getGetBlockProvider { superseed?.jsonRpc }
                 }
                 else -> null
             }
@@ -25,8 +26,8 @@ internal class InkProvidersBuilder(
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://rpc-gel-sepolia.inkonchain.com/"),
-            EthereumJsonRpcProvider(baseUrl = "https://rpc-qnd-sepolia.inkonchain.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://sepolia.superseed.xyz"),
         )
     }
 }
+

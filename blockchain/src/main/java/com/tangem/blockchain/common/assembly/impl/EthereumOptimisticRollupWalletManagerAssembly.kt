@@ -6,6 +6,16 @@ import com.tangem.blockchain.blockchains.ethereum.providers.BaseProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.providers.BlastProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.providers.CyberProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.providers.InkProvidersBuilder
+import com.tangem.blockchain.blockchains.ethereum.providers.LiskProvidersBuilder
+import com.tangem.blockchain.blockchains.ethereum.providers.ModeProvidersBuilder
+import com.tangem.blockchain.blockchains.ethereum.providers.SwellChainProvidersBuilder
+import com.tangem.blockchain.blockchains.ethereum.providers.SuperseedProvidersBuilder
+import com.tangem.blockchain.blockchains.ethereum.providers.BobProvidersBuilder
+import com.tangem.blockchain.blockchains.ethereum.providers.SoneiumProvidersBuilder
+import com.tangem.blockchain.blockchains.ethereum.providers.UnichainProvidersBuilder
+import com.tangem.blockchain.blockchains.ethereum.providers.MetalL2ProvidersBuilder
+import com.tangem.blockchain.blockchains.ethereum.providers.CeloProvidersBuilder
+import com.tangem.blockchain.blockchains.ethereum.providers.FraxtalProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.providers.MantaProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumLegacyTransactionBuilder
 import com.tangem.blockchain.blockchains.optimism.EthereumOptimisticRollupWalletManager
@@ -63,6 +73,16 @@ internal class EthereumOptimisticRollupWalletManagerAssembly(private val dataSto
             Blockchain.Blast, Blockchain.BlastTestnet -> BlastProvidersBuilder(providerTypes, config)
             Blockchain.Cyber, Blockchain.CyberTestnet -> CyberProvidersBuilder(providerTypes)
             Blockchain.Ink, Blockchain.InkTestnet -> InkProvidersBuilder(providerTypes, config)
+            Blockchain.Lisk, Blockchain.LiskTestnet -> LiskProvidersBuilder(providerTypes, config)
+            Blockchain.Mode, Blockchain.ModeTestnet -> ModeProvidersBuilder(providerTypes, config)
+            Blockchain.SwellChain, Blockchain.SwellChainTestnet -> SwellChainProvidersBuilder(providerTypes, config)
+            Blockchain.Superseed, Blockchain.SuperseedTestnet -> SuperseedProvidersBuilder(providerTypes, config)
+            Blockchain.Bob, Blockchain.BobTestnet -> BobProvidersBuilder(providerTypes, config)
+            Blockchain.Soneium, Blockchain.SoneiumTestnet -> SoneiumProvidersBuilder(providerTypes, config)
+            Blockchain.Unichain, Blockchain.UnichainTestnet -> UnichainProvidersBuilder(providerTypes, config)
+            Blockchain.MetalL2, Blockchain.MetalL2Testnet -> MetalL2ProvidersBuilder(providerTypes, config)
+            Blockchain.Celo, Blockchain.CeloTestnet -> CeloProvidersBuilder(providerTypes, config)
+            Blockchain.Fraxtal, Blockchain.FraxtalTestnet -> FraxtalProvidersBuilder(providerTypes, config)
             else -> error("Unsupported blockchain: $blockchain")
         }
     }

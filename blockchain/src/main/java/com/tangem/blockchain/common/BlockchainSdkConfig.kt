@@ -79,6 +79,16 @@ data class GetBlockCredentials(
     val telos: GetBlockAccessToken?,
     val tezos: GetBlockAccessToken?,
     val ink: GetBlockAccessToken?,
+    val lisk: GetBlockAccessToken?,
+    val soneium: GetBlockAccessToken?,
+    val mode: GetBlockAccessToken?,
+    val swellchain: GetBlockAccessToken?,
+    val superseed: GetBlockAccessToken?,
+    val bob: GetBlockAccessToken?,
+    val unichain: GetBlockAccessToken?,
+    val metalL2: GetBlockAccessToken?,
+    val celo: GetBlockAccessToken?,
+    val fraxtal: GetBlockAccessToken?,
 )
 
 data class GetBlockAccessToken(

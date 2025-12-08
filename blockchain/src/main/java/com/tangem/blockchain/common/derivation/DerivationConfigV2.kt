@@ -87,6 +87,16 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.ZkLinkNova,
             Blockchain.Hyperliquid,
             Blockchain.Ink,
+            Blockchain.Lisk,
+            Blockchain.Mode,
+            Blockchain.SwellChain,
+            Blockchain.Superseed,
+            Blockchain.Bob,
+            Blockchain.Soneium,
+            Blockchain.Unichain,
+            Blockchain.MetalL2,
+            Blockchain.Celo,
+            Blockchain.Fraxtal,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.XDC -> mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
             Blockchain.Binance -> mapOf(AddressType.Default to DerivationPath("m/44'/714'/0'/0/0"))
@@ -170,6 +180,16 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.ZkLinkNovaTestnet,
             Blockchain.HyperliquidTestnet,
             Blockchain.InkTestnet,
+            Blockchain.LiskTestnet,
+            Blockchain.ModeTestnet,
+            Blockchain.SwellChainTestnet,
+            Blockchain.SuperseedTestnet,
+            Blockchain.BobTestnet,
+            Blockchain.SoneiumTestnet,
+            Blockchain.UnichainTestnet,
+            Blockchain.MetalL2Testnet,
+            Blockchain.CeloTestnet,
+            Blockchain.FraxtalTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             Blockchain.Aptos,
             Blockchain.AptosTestnet,
