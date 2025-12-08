@@ -230,6 +230,16 @@ class WalletManagerFactory(
             Blockchain.Blast, Blockchain.BlastTestnet,
             Blockchain.Cyber, Blockchain.CyberTestnet,
             Blockchain.Ink, Blockchain.InkTestnet,
+            Blockchain.Lisk, Blockchain.LiskTestnet,
+            Blockchain.Mode, Blockchain.ModeTestnet,
+            Blockchain.SwellChain, Blockchain.SwellChainTestnet,
+            Blockchain.Superseed, Blockchain.SuperseedTestnet,
+            Blockchain.Bob, Blockchain.BobTestnet,
+            Blockchain.Soneium, Blockchain.SoneiumTestnet,
+            Blockchain.Unichain, Blockchain.UnichainTestnet,
+            Blockchain.MetalL2, Blockchain.MetalL2Testnet,
+            Blockchain.Celo, Blockchain.CeloTestnet,
+            Blockchain.Fraxtal, Blockchain.FraxtalTestnet,
             -> EthereumOptimisticRollupWalletManagerAssembly(dataStorage)
             Blockchain.Telos, Blockchain.TelosTestnet -> TelosWalletManagerAssembly
             // endregion

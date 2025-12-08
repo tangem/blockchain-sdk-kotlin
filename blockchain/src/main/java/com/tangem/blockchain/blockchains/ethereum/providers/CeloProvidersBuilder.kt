@@ -6,7 +6,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.network.providers.ProviderType
 
-internal class InkProvidersBuilder(
+internal class CeloProvidersBuilder(
     override val providerTypes: List<ProviderType>,
     override val config: BlockchainSdkConfig,
 ) : EthereumLikeProvidersBuilder(config) {
@@ -16,7 +16,7 @@ internal class InkProvidersBuilder(
             when (it) {
                 is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
                 ProviderType.GetBlock -> {
-                    ethereumProviderFactory.getGetBlockProvider { ink?.jsonRpc }
+                    ethereumProviderFactory.getGetBlockProvider { celo?.jsonRpc }
                 }
                 else -> null
             }
@@ -25,8 +25,8 @@ internal class InkProvidersBuilder(
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return listOf(
-            EthereumJsonRpcProvider(baseUrl = "https://rpc-gel-sepolia.inkonchain.com/"),
-            EthereumJsonRpcProvider(baseUrl = "https://rpc-qnd-sepolia.inkonchain.com/"),
+            EthereumJsonRpcProvider(baseUrl = "https://alfajores-forno.celo-testnet.org/"),
         )
     }
 }
+

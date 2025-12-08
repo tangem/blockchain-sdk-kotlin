@@ -109,6 +109,16 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet -> HyperliquidExternalLinkProvider(isTestnet)
             Blockchain.Quai, Blockchain.QuaiTestnet -> QuaiExternalLinkProvider(isTestnet)
             Blockchain.Ink, Blockchain.InkTestnet -> InkExternalLinkProvider(isTestnet)
+            Blockchain.Lisk, Blockchain.LiskTestnet -> LiskExternalLinkProvider(isTestnet)
+            Blockchain.Mode, Blockchain.ModeTestnet -> ModeExternalLinkProvider(isTestnet)
+            Blockchain.SwellChain, Blockchain.SwellChainTestnet -> SwellChainExternalLinkProvider(isTestnet)
+            Blockchain.Superseed, Blockchain.SuperseedTestnet -> SuperseedExternalLinkProvider(isTestnet)
+            Blockchain.Bob, Blockchain.BobTestnet -> BobExternalLinkProvider(isTestnet)
+            Blockchain.Soneium, Blockchain.SoneiumTestnet -> SoneiumExternalLinkProvider(isTestnet)
+            Blockchain.Unichain, Blockchain.UnichainTestnet -> UnichainExternalLinkProvider(isTestnet)
+            Blockchain.MetalL2, Blockchain.MetalL2Testnet -> MetalL2ExternalLinkProvider(isTestnet)
+            Blockchain.Celo, Blockchain.CeloTestnet -> CeloExternalLinkProvider(isTestnet)
+            Blockchain.Fraxtal, Blockchain.FraxtalTestnet -> FraxtalExternalLinkProvider(isTestnet)
         }
     }
 }

@@ -212,6 +212,26 @@ enum class Blockchain(
     QuaiTestnet("quai/test", "QUAI", "Quai Testnet"),
     Ink("ink", "ETH", "Ink"),
     InkTestnet("ink/test", "ETH", "Ink Sepolia Testnet"),
+    Lisk("lisk", "ETH", "Lisk"),
+    LiskTestnet("lisk/test", "ETH", "Lisk Sepolia Testnet"),
+    Mode("mode", "ETH", "Mode"),
+    ModeTestnet("mode/test", "ETH", "Mode Testnet"),
+    SwellChain("swellchain", "ETH", "Swellchain"),
+    SwellChainTestnet("swellchain/test", "ETH", "Swellchain Testnet"),
+    Superseed("superseed", "ETH", "Superseed"),
+    SuperseedTestnet("superseed/test", "ETH", "Superseed Testnet"),
+    Bob("bob", "ETH", "BOB"),
+    BobTestnet("bob/test", "ETH", "BOB Sepolia Testnet"),
+    Soneium("soneium", "ETH", "Soneium"),
+    SoneiumTestnet("soneium/test", "ETH", "Soneium Minato Testnet"),
+    Unichain("unichain", "ETH", "Unichain"),
+    UnichainTestnet("unichain/test", "ETH", "Unichain Sepolia Testnet"),
+    MetalL2("metal-l2", "ETH", "Metal L2"),
+    MetalL2Testnet("metal-l2/test", "ETH", "Metal L2 Testnet"),
+    Celo("celo", "CELO", "Celo"),
+    CeloTestnet("celo/test", "CELO", "Celo Alfajores Testnet"),
+    Fraxtal("fraxtal", "frxETH", "Fraxtal"),
+    FraxtalTestnet("fraxtal/test", "frxETH", "Fraxtal Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -244,6 +264,24 @@ enum class Blockchain(
             ZkLinkNova,
             Ink,
             InkTestnet,
+            Lisk,
+            LiskTestnet,
+            Mode,
+            ModeTestnet,
+            SwellChain,
+            SwellChainTestnet,
+            Superseed,
+            SuperseedTestnet,
+            Bob,
+            BobTestnet,
+            Soneium,
+            SoneiumTestnet,
+            Unichain,
+            UnichainTestnet,
+            MetalL2,
+            MetalL2Testnet,
+            Fraxtal,
+            FraxtalTestnet,
             -> true
             else -> false
         }
@@ -352,6 +390,16 @@ enum class Blockchain(
         Hyperliquid, HyperliquidTestnet,
         Quai, QuaiTestnet,
         Ink, InkTestnet,
+        Lisk, LiskTestnet,
+        Mode, ModeTestnet,
+        SwellChain, SwellChainTestnet,
+        Superseed, SuperseedTestnet,
+        Bob, BobTestnet,
+        Soneium, SoneiumTestnet,
+        Unichain, UnichainTestnet,
+        MetalL2, MetalL2Testnet,
+        Celo, CeloTestnet,
+        Fraxtal, FraxtalTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -458,6 +506,16 @@ enum class Blockchain(
             ZkLinkNova, ZkLinkNovaTestnet,
             Hyperliquid, HyperliquidTestnet,
             Ink, InkTestnet,
+            Lisk, LiskTestnet,
+            Mode, ModeTestnet,
+            SwellChain, SwellChainTestnet,
+            Superseed, SuperseedTestnet,
+            Bob, BobTestnet,
+            Soneium, SoneiumTestnet,
+            Unichain, UnichainTestnet,
+            MetalL2, MetalL2Testnet,
+            Celo, CeloTestnet,
+            Fraxtal, FraxtalTestnet,
             -> EthereumAddressService()
 
             Quai, QuaiTestnet -> QuaiAddressService()
@@ -611,6 +669,16 @@ enum class Blockchain(
             Hyperliquid, HyperliquidTestnet -> HyperliquidTestnet
             Quai, QuaiTestnet -> QuaiTestnet
             Ink, InkTestnet -> InkTestnet
+            Lisk, LiskTestnet -> LiskTestnet
+            Mode, ModeTestnet -> ModeTestnet
+            SwellChain, SwellChainTestnet -> SwellChainTestnet
+            Superseed, SuperseedTestnet -> SuperseedTestnet
+            Bob, BobTestnet -> BobTestnet
+            Soneium, SoneiumTestnet -> SoneiumTestnet
+            Unichain, UnichainTestnet -> UnichainTestnet
+            MetalL2, MetalL2Testnet -> MetalL2Testnet
+            Celo, CeloTestnet -> CeloTestnet
+            Fraxtal, FraxtalTestnet -> FraxtalTestnet
             Unknown,
             Cardano,
             Dogecoin,
@@ -726,6 +794,16 @@ enum class Blockchain(
             Hyperliquid, HyperliquidTestnet,
             Quai, QuaiTestnet,
             Ink, InkTestnet,
+            Lisk, LiskTestnet,
+            Mode, ModeTestnet,
+            SwellChain, SwellChainTestnet,
+            Superseed, SuperseedTestnet,
+            Bob, BobTestnet,
+            Soneium, SoneiumTestnet,
+            Unichain, UnichainTestnet,
+            MetalL2, MetalL2Testnet,
+            Celo, CeloTestnet,
+            Fraxtal, FraxtalTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -847,6 +925,26 @@ enum class Blockchain(
             QuaiTestnet -> Chain.QuaiTestnet.id
             Ink -> Chain.Ink.id
             InkTestnet -> Chain.InkTestnet.id
+            Lisk -> Chain.Lisk.id
+            LiskTestnet -> Chain.LiskTestnet.id
+            Mode -> Chain.Mode.id
+            ModeTestnet -> Chain.ModeTestnet.id
+            SwellChain -> Chain.SwellChain.id
+            SwellChainTestnet -> Chain.SwellChainTestnet.id
+            Superseed -> Chain.Superseed.id
+            SuperseedTestnet -> Chain.SuperseedTestnet.id
+            Bob -> Chain.Bob.id
+            BobTestnet -> Chain.BobTestnet.id
+            Soneium -> Chain.Soneium.id
+            SoneiumTestnet -> Chain.SoneiumTestnet.id
+            Unichain -> Chain.Unichain.id
+            UnichainTestnet -> Chain.UnichainTestnet.id
+            MetalL2 -> Chain.MetalL2.id
+            MetalL2Testnet -> Chain.MetalL2Testnet.id
+            Celo -> Chain.Celo.id
+            CeloTestnet -> Chain.CeloTestnet.id
+            Fraxtal -> Chain.Fraxtal.id
+            FraxtalTestnet -> Chain.FraxtalTestnet.id
             else -> null
         }
     }

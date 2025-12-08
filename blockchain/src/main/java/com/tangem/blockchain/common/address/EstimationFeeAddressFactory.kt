@@ -103,6 +103,16 @@ class EstimationFeeAddressFactory {
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet,
             Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet,
             Blockchain.Ink, Blockchain.InkTestnet,
+            Blockchain.Lisk, Blockchain.LiskTestnet,
+            Blockchain.Mode, Blockchain.ModeTestnet,
+            Blockchain.SwellChain, Blockchain.SwellChainTestnet,
+            Blockchain.Superseed, Blockchain.SuperseedTestnet,
+            Blockchain.Bob, Blockchain.BobTestnet,
+            Blockchain.Soneium, Blockchain.SoneiumTestnet,
+            Blockchain.Unichain, Blockchain.UnichainTestnet,
+            Blockchain.MetalL2, Blockchain.MetalL2Testnet,
+            Blockchain.Celo, Blockchain.CeloTestnet,
+            Blockchain.Fraxtal, Blockchain.FraxtalTestnet,
             -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
             Blockchain.Quai, Blockchain.QuaiTestnet,
             -> "0x001895747a462F3cDEc145d565645D7fcEbe275d"

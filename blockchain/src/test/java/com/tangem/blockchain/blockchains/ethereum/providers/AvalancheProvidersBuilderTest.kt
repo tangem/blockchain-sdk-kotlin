@@ -55,6 +55,12 @@ class AvalancheProvidersBuilderTest {
             telos = null,
             tezos = null,
             ink = null,
+            lisk = null,
+            soneium = null,
+            mode = null,
+            unichain = null,
+            celo = null,
+            fraxtal = null,
         ),
     )
 
