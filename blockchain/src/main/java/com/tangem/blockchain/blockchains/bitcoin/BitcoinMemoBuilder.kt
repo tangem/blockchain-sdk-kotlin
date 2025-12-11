@@ -4,7 +4,6 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import org.bitcoinj.core.Coin
 import org.bitcoinj.core.Transaction
-import org.bitcoinj.core.TransactionOutput
 import org.bitcoinj.script.ScriptBuilder
 import org.bitcoinj.script.ScriptOpCodes
 
@@ -25,7 +24,9 @@ object BitcoinMemoBuilder {
 
     private const val MAX_MEMO_SIZE_BYTES = 80
     private const val DIRECT_PUSH_MAX_SIZE = 75
-    private const val OP_PUSHDATA1 = 0x4c
+    private const val HEX_RADIX = 16
+    private const val OUTPUT_VALUE_SIZE = 8
+    private const val OP_RETURN_SIZE = 1
 
     /**
      * Adds an OP_RETURN output with memo data to a transaction.
@@ -122,8 +123,6 @@ object BitcoinMemoBuilder {
             .toByteArray()
     }
 
-    private const val HEX_RADIX = 16
-
     /**
      * Estimates the size contribution of an OP_RETURN output.
      *
@@ -140,7 +139,4 @@ object BitcoinMemoBuilder {
 
         return OUTPUT_VALUE_SIZE + scriptLengthVarintSize + scriptSize
     }
-
-    private const val OUTPUT_VALUE_SIZE = 8
-    private const val OP_RETURN_SIZE = 1
 }

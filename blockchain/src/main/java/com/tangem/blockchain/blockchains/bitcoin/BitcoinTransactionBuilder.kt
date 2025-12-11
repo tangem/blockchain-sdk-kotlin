@@ -39,9 +39,6 @@ open class BitcoinTransactionBuilder(
         walletAddresses.filterIsInstance<BitcoinScriptAddress>().map { it.script }
     protected lateinit var transaction: Transaction
     private var transactionSizeWithoutWitness = 0
-
-    internal fun getTransaction(): Transaction = transaction
-
     protected var networkParameters = when (blockchain) {
         Blockchain.Bitcoin, Blockchain.BitcoinCash -> MainNetParams()
         Blockchain.BitcoinTestnet, Blockchain.BitcoinCashTestnet -> TestNet3Params()
@@ -58,6 +55,8 @@ open class BitcoinTransactionBuilder(
         else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
     var unspentOutputs: List<BitcoinUnspentOutput>? = null
+
+    internal fun getTransaction(): Transaction = transaction
 
     open fun buildToSign(transactionData: TransactionData, dustValue: BigDecimal?): Result<List<ByteArray>> {
         val uncompiled = transactionData.requireUncompiled()
