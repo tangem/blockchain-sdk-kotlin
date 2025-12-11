@@ -34,15 +34,6 @@ internal class BitcoinPsbtSigner(
     private val networkProvider: BitcoinNetworkProvider,
 ) {
 
-    private companion object {
-        const val SIGHASH_ALL = 1
-        const val SIGNATURE_SIZE = 64
-        const val R_SIZE = 32
-        const val S_SIZE = 32
-        const val DER_SEQUENCE_TAG: Byte = 0x30
-        const val DER_INTEGER_TAG: Byte = 0x02
-    }
-
     /**
      * Signs a PSBT transaction.
      *
@@ -59,11 +50,7 @@ internal class BitcoinPsbtSigner(
      * @param signer Transaction signer (typically Tangem card)
      * @return Success with signed PSBT in Base64, or Failure with error
      */
-    suspend fun signPsbt(
-        psbtBase64: String,
-        signInputs: List<SignInput>,
-        signer: TransactionSigner,
-    ): Result<String> {
+    suspend fun signPsbt(psbtBase64: String, signInputs: List<SignInput>, signer: TransactionSigner): Result<String> {
         val psbt = parsePsbt(psbtBase64).successOr { return it }
         validateSignInputs(psbt, signInputs).successOr { return it }
 
@@ -122,10 +109,7 @@ internal class BitcoinPsbtSigner(
     /**
      * Prepares signing data from PSBT and sign inputs.
      */
-    private fun prepareSigningData(
-        psbt: Psbt,
-        signInputs: List<SignInput>,
-    ): Result<Pair<List<ByteArray>, List<Int>>> {
+    private fun prepareSigningData(psbt: Psbt, signInputs: List<SignInput>): Result<Pair<List<ByteArray>, List<Int>>> {
         val hashesToSign = mutableListOf<ByteArray>()
         val inputIndices = mutableListOf<Int>()
 
@@ -181,10 +165,7 @@ internal class BitcoinPsbtSigner(
     /**
      * Signs hashes using the provided signer.
      */
-    private suspend fun signHashes(
-        hashesToSign: List<ByteArray>,
-        signer: TransactionSigner,
-    ): Result<List<ByteArray>> {
+    private suspend fun signHashes(hashesToSign: List<ByteArray>, signer: TransactionSigner): Result<List<ByteArray>> {
         return when (val result = signer.sign(hashesToSign, wallet.publicKey)) {
             is CompletionResult.Success -> Result.Success(result.data)
             is CompletionResult.Failure -> Result.fromTangemSdkError(result.error)
@@ -481,7 +462,7 @@ internal class BitcoinPsbtSigner(
      * Adds padding if high bit is set.
      */
     private fun addPaddingIfNeeded(value: ByteArray): ByteArray {
-        val needsPadding = (value[0].toInt() and 0x80) != 0
+        val needsPadding = value[0].toInt() and HIGH_BIT_MASK != 0
         return if (needsPadding) byteArrayOf(0) + value else value
     }
 
@@ -542,5 +523,15 @@ internal class BitcoinPsbtSigner(
         }
 
         return Result.Success(updatedInput)
+    }
+
+    private companion object {
+        const val SIGHASH_ALL = 1
+        const val SIGNATURE_SIZE = 64
+        const val R_SIZE = 32
+        const val S_SIZE = 32
+        const val DER_SEQUENCE_TAG: Byte = 0x30
+        const val DER_INTEGER_TAG: Byte = 0x02
+        const val HIGH_BIT_MASK = 0x80
     }
 }

@@ -36,13 +36,13 @@ enum class AddressIntention(private val apiValue: String) {
     ORDINAL("ordinal"),
     ;
 
+    fun toApiString(): String = apiValue
+
     companion object {
         fun fromString(value: String): AddressIntention? = entries.find {
             it.apiValue.equals(value, ignoreCase = true)
         }
     }
-
-    fun toApiString(): String = apiValue
 }
 
 /**
@@ -129,6 +129,8 @@ enum class SignMessageProtocol(private val apiValue: String) {
     BIP322("bip322"),
     ;
 
+    fun toApiString(): String = apiValue
+
     companion object {
         private val DEFAULT = ECDSA
 
@@ -136,8 +138,6 @@ enum class SignMessageProtocol(private val apiValue: String) {
             it.apiValue.equals(value, ignoreCase = true)
         } ?: DEFAULT
     }
-
-    fun toApiString(): String = apiValue
 }
 
 /**

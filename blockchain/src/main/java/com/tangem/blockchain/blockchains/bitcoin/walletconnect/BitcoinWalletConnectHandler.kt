@@ -44,10 +44,7 @@ class BitcoinWalletConnectHandler(
      *
      * @see <a href="https://docs.reown.com/advanced/multichain/rpc-reference/bitcoin-rpc#sendtransfer">sendTransfer Documentation</a>
      */
-    suspend fun sendTransfer(
-        request: SendTransferRequest,
-        signer: TransactionSigner,
-    ): Result<SendTransferResponse> {
+    suspend fun sendTransfer(request: SendTransferRequest, signer: TransactionSigner): Result<SendTransferResponse> {
         validateAccountAddress(request.account).successOr { return it }
         request.changeAddress?.let { validateChangeAddress(it).successOr { return it } }
 
@@ -116,10 +113,7 @@ class BitcoinWalletConnectHandler(
     /**
      * Gets fee estimate for transaction.
      */
-    private suspend fun getFeeForTransaction(
-        amount: Amount,
-        recipientAddress: String,
-    ): Result<Fee> {
+    private suspend fun getFeeForTransaction(amount: Amount, recipientAddress: String): Result<Fee> {
         val feeResult = walletManager.getFee(amount, recipientAddress).successOr { failure ->
             return Result.Failure(failure.error)
         }
@@ -163,9 +157,7 @@ class BitcoinWalletConnectHandler(
      *
      * @see <a href="https://docs.reown.com/advanced/multichain/rpc-reference/bitcoin-rpc#getaccountaddresses">getAccountAddresses Documentation</a>
      */
-    fun getAccountAddresses(
-        request: GetAccountAddressesRequest,
-    ): Result<GetAccountAddressesResponse> {
+    fun getAccountAddresses(request: GetAccountAddressesRequest): Result<GetAccountAddressesResponse> {
         val intentions = parseIntentions(request.intentions)
 
         if (isOnlyOrdinalIntention(intentions)) {
@@ -218,10 +210,7 @@ class BitcoinWalletConnectHandler(
      *
      * @see <a href="https://docs.reown.com/advanced/multichain/rpc-reference/bitcoin-rpc#signpsbt">signPsbt Documentation</a>
      */
-    suspend fun signPsbt(
-        request: SignPsbtRequest,
-        signer: TransactionSigner,
-    ): Result<SignPsbtResponse> {
+    suspend fun signPsbt(request: SignPsbtRequest, signer: TransactionSigner): Result<SignPsbtResponse> {
         // Sign the PSBT
         val signedPsbtBase64 = psbtSigner.signPsbt(
             psbtBase64 = request.psbt,
@@ -278,10 +267,7 @@ class BitcoinWalletConnectHandler(
      *
      * @see <a href="https://docs.reown.com/advanced/multichain/rpc-reference/bitcoin-rpc#signmessage">signMessage Documentation</a>
      */
-    suspend fun signMessage(
-        request: SignMessageRequest,
-        signer: TransactionSigner,
-    ): Result<SignMessageResponse> {
+    suspend fun signMessage(request: SignMessageRequest, signer: TransactionSigner): Result<SignMessageResponse> {
         // Validate that the account address belongs to this wallet
         val isValidAccount = wallet.addresses.any { it.value == request.account }
         if (!isValidAccount) {
@@ -333,13 +319,6 @@ class BitcoinWalletConnectHandler(
          */
         private fun convertSatoshisToBtc(satoshis: BigDecimal): BigDecimal {
             return satoshis.movePointLeft(SATOSHI_DECIMALS)
-        }
-
-        /**
-         * Converts BTC to satoshis.
-         */
-        private fun convertBtcToSatoshis(btc: BigDecimal): BigDecimal {
-            return btc.movePointRight(SATOSHI_DECIMALS)
         }
     }
 }
