@@ -29,15 +29,6 @@ internal class BitcoinMessageSigner(
     private val wallet: Wallet,
 ) {
 
-    private companion object {
-        const val SIGNATURE_SIZE = 64
-        const val MESSAGE_PREFIX = "Bitcoin Signed Message:\n"
-        const val VARINT_SINGLE_BYTE_LIMIT = 253
-        const val VARINT_TWO_BYTE_LIMIT = 0xffff
-        const val HEADER_P2PKH_COMPRESSED: Byte = 31
-        const val HEADER_P2WPKH_NATIVE: Byte = 39
-    }
-
     /**
      * Signs a message using Bitcoin message signing format.
      *
@@ -105,10 +96,7 @@ internal class BitcoinMessageSigner(
     /**
      * Signs message hash using signer.
      */
-    private suspend fun signHash(
-        messageHash: ByteArray,
-        signer: TransactionSigner,
-    ): Result<ByteArray> {
+    private suspend fun signHash(messageHash: ByteArray, signer: TransactionSigner): Result<ByteArray> {
         return when (val result = signer.sign(listOf(messageHash), wallet.publicKey)) {
             is CompletionResult.Success -> extractSignature(result.data)
             is CompletionResult.Failure -> Result.fromTangemSdkError(result.error)
@@ -201,15 +189,15 @@ internal class BitcoinMessageSigner(
     private fun encodeTwoByteVarint(value: Int): ByteArray = byteArrayOf(
         0xfd.toByte(),
         value.toByte(),
-        (value shr 8).toByte(),
+        (value shr BYTE_SHIFT).toByte(),
     )
 
     private fun encodeFourByteVarint(value: Int): ByteArray = byteArrayOf(
         0xfe.toByte(),
         value.toByte(),
-        (value shr 8).toByte(),
-        (value shr 16).toByte(),
-        (value shr 24).toByte(),
+        (value shr BYTE_SHIFT).toByte(),
+        (value shr TWO_BYTES_SHIFT).toByte(),
+        (value shr THREE_BYTES_SHIFT).toByte(),
     )
 
     /**
@@ -233,6 +221,18 @@ internal class BitcoinMessageSigner(
             AddressType.Default -> HEADER_P2WPKH_NATIVE
             else -> HEADER_P2PKH_COMPRESSED
         }
+    }
+
+    private companion object {
+        const val SIGNATURE_SIZE = 64
+        const val MESSAGE_PREFIX = "Bitcoin Signed Message:\n"
+        const val VARINT_SINGLE_BYTE_LIMIT = 253
+        const val VARINT_TWO_BYTE_LIMIT = 0xffff
+        const val HEADER_P2PKH_COMPRESSED: Byte = 31
+        const val HEADER_P2WPKH_NATIVE: Byte = 39
+        const val BYTE_SHIFT = 8
+        const val TWO_BYTES_SHIFT = 16
+        const val THREE_BYTES_SHIFT = 24
     }
 }
 
