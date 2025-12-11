@@ -1,6 +1,10 @@
 package com.tangem.blockchain.yieldsupply.providers.ethereum.yield
 
+import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.WORD_HEX_LENGTH
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.parseEthereumAddress
 import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.extensions.bigIntegerValue
 import com.tangem.blockchain.extensions.hexToFixedSizeBytes
@@ -14,10 +18,10 @@ import org.kethereum.extensions.toBytesPadded
  *  Signature: `reactivateToken(address,uint240)`
  */
 class EthereumYieldSupplyReactivateTokenCallData(
-    private val tokenContractAddress: String,
+    val tokenContractAddress: String,
     private val maxNetworkFee: Amount,
 ) : SmartContractCallData {
-    override val methodId: String = "0xc478e956"
+    override val methodId: String = METHOD_ID
     override val data: ByteArray
         get() {
             val prefixData = methodId.hexToBytes()
@@ -26,4 +30,25 @@ class EthereumYieldSupplyReactivateTokenCallData(
 
             return prefixData + tokenContractAddressData + maxFeeData
         }
+
+    companion object {
+        const val METHOD_ID = "0xc478e956"
+        fun decode(rawData: String): EthereumYieldSupplyReactivateTokenCallData? {
+            if (!rawData.contains(METHOD_ID)) return null
+
+            val addressService = EthereumAddressService()
+            return runCatching {
+                val dataWithoutMethod = rawData.removePrefix(METHOD_ID)
+                val tokenContractAddress = dataWithoutMethod.take(WORD_HEX_LENGTH).parseEthereumAddress()
+                if (addressService.validate(tokenContractAddress)) {
+                    EthereumYieldSupplyReactivateTokenCallData(
+                        tokenContractAddress = tokenContractAddress,
+                        maxNetworkFee = Amount(Blockchain.Unknown),
+                    )
+                } else {
+                    null
+                }
+            }.getOrNull()
+        }
+    }
 }
