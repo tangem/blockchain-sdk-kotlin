@@ -12,9 +12,13 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.common.CompletionResult
 import io.mockk.coEvery
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.test.runTest
+import org.bitcoinj.core.ECKey
+import org.bitcoinj.core.Sha256Hash
 import org.junit.Before
 import org.junit.Test
+import java.math.BigInteger
 
 /**
  * Unit tests for BitcoinMessageSigner.
@@ -30,14 +34,32 @@ class BitcoinMessageSignerTest {
     private lateinit var wallet: Wallet
     private lateinit var messageSigner: BitcoinMessageSigner
     private lateinit var transactionSigner: TransactionSigner
+    private lateinit var testECKey: ECKey
 
     // Test keys and addresses
-    private val testPublicKey = ByteArray(65) { 0x04 }
-    private val testSegwitAddress = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
-    private val testLegacyAddress = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+    private lateinit var testPublicKey: ByteArray
+    private lateinit var testSegwitAddress: String
+    private lateinit var testLegacyAddress: String
 
     @Before
     fun setup() {
+        // Generate a deterministic key for testing using a known private key
+        val privateKeyBigInt = BigInteger("18e14a7b6a307f426a94f8114701e7c8e774e7f9a47e2c2035db29a206321725", 16)
+        testECKey = ECKey.fromPrivate(privateKeyBigInt, true)
+
+        // Get uncompressed public key (65 bytes: 0x04 + 32 bytes X + 32 bytes Y)
+        testPublicKey = testECKey.pubKeyPoint.getEncoded(false)
+
+        // Generate Bitcoin addresses for testing
+        // Using bitcoinj mainnet addresses
+        val params = org.bitcoinj.params.MainNetParams.get()
+
+        // Legacy P2PKH address
+        testLegacyAddress = org.bitcoinj.core.LegacyAddress.fromKey(params, testECKey).toString()
+
+        // Native SegWit P2WPKH address
+        testSegwitAddress = org.bitcoinj.core.SegwitAddress.fromKey(params, testECKey).toBech32()
+
         // Setup wallet with multiple address types
         wallet = Wallet(
             blockchain = Blockchain.Bitcoin,
@@ -63,11 +85,19 @@ class BitcoinMessageSignerTest {
     fun `signMessage succeeds with valid address`() = runTest {
         // Given
         val message = "Hello, Bitcoin!"
-        val mockSignature = ByteArray(64) { it.toByte() }
 
+        // Capture the hash to sign and return a real signature
+        val hashSlot = slot<List<ByteArray>>()
         coEvery {
-            transactionSigner.sign(any<List<ByteArray>>(), any())
-        } returns CompletionResult.Success(listOf(mockSignature))
+            transactionSigner.sign(capture(hashSlot), any())
+        } answers {
+            val hash = hashSlot.captured.first()
+            val ecdsaSignature = testECKey.sign(Sha256Hash.wrap(hash))
+            // Return r and s components (32 bytes each)
+            val signature = ecdsaSignature.r.toByteArray().takeLast(32).toByteArray() +
+                ecdsaSignature.s.toByteArray().takeLast(32).toByteArray()
+            CompletionResult.Success(listOf(signature))
+        }
 
         // When
         val result = messageSigner.signMessage(
@@ -178,11 +208,19 @@ class BitcoinMessageSignerTest {
     fun `signMessage with legacy address uses correct header byte`() = runTest {
         // Given
         val message = "Hello, Bitcoin!"
-        val mockSignature = ByteArray(64) { it.toByte() }
 
+        // Capture the hash to sign and return a real signature
+        val hashSlot = slot<List<ByteArray>>()
         coEvery {
-            transactionSigner.sign(any<List<ByteArray>>(), any())
-        } returns CompletionResult.Success(listOf(mockSignature))
+            transactionSigner.sign(capture(hashSlot), any())
+        } answers {
+            val hash = hashSlot.captured.first()
+            val ecdsaSignature = testECKey.sign(Sha256Hash.wrap(hash))
+            // Return r and s components (32 bytes each)
+            val signature = ecdsaSignature.r.toByteArray().takeLast(32).toByteArray() +
+                ecdsaSignature.s.toByteArray().takeLast(32).toByteArray()
+            CompletionResult.Success(listOf(signature))
+        }
 
         // When
         val result = messageSigner.signMessage(
@@ -197,21 +235,30 @@ class BitcoinMessageSignerTest {
         val signResult = (result as Result.Success).data
         assertThat(signResult.address).isEqualTo(testLegacyAddress)
 
-        // Header byte for Legacy (P2PKH compressed) should be 31 (0x1F)
+        // Header byte for Legacy (P2PKH compressed) should be 31-34 (base 31 + recovery ID 0-3)
         val signatureBytes = signResult.signature.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
-        val headerByte = signatureBytes[0]
-        assertThat(headerByte).isEqualTo(31.toByte())
+        val headerByte = signatureBytes[0].toInt()
+        assertThat(headerByte).isAtLeast(31)
+        assertThat(headerByte).isAtMost(34)
     }
 
     @Test
     fun `signMessage with segwit address uses correct header byte`() = runTest {
         // Given
         val message = "Hello, Bitcoin!"
-        val mockSignature = ByteArray(64) { it.toByte() }
 
+        // Capture the hash to sign and return a real signature
+        val hashSlot = slot<List<ByteArray>>()
         coEvery {
-            transactionSigner.sign(any<List<ByteArray>>(), any())
-        } returns CompletionResult.Success(listOf(mockSignature))
+            transactionSigner.sign(capture(hashSlot), any())
+        } answers {
+            val hash = hashSlot.captured.first()
+            val ecdsaSignature = testECKey.sign(Sha256Hash.wrap(hash))
+            // Return r and s components (32 bytes each)
+            val signature = ecdsaSignature.r.toByteArray().takeLast(32).toByteArray() +
+                ecdsaSignature.s.toByteArray().takeLast(32).toByteArray()
+            CompletionResult.Success(listOf(signature))
+        }
 
         // When
         val result = messageSigner.signMessage(
@@ -225,21 +272,30 @@ class BitcoinMessageSignerTest {
         assertThat(result).isInstanceOf(Result.Success::class.java)
         val signResult = (result as Result.Success).data
 
-        // Header byte for Native SegWit (P2WPKH) should be 39 (0x27)
+        // Header byte for Native SegWit (P2WPKH) should be 39-42 (base 39 + recovery ID 0-3)
         val signatureBytes = signResult.signature.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
-        val headerByte = signatureBytes[0]
-        assertThat(headerByte).isEqualTo(39.toByte())
+        val headerByte = signatureBytes[0].toInt()
+        assertThat(headerByte).isAtLeast(39)
+        assertThat(headerByte).isAtMost(42)
     }
 
     @Test
     fun `signMessage creates correct message hash`() = runTest {
         // Given
         val message = "Test message"
-        val mockSignature = ByteArray(64) { it.toByte() }
 
+        // Capture the hash to sign and return a real signature
+        val hashSlot = slot<List<ByteArray>>()
         coEvery {
-            transactionSigner.sign(any<List<ByteArray>>(), any())
-        } returns CompletionResult.Success(listOf(mockSignature))
+            transactionSigner.sign(capture(hashSlot), any())
+        } answers {
+            val hash = hashSlot.captured.first()
+            val ecdsaSignature = testECKey.sign(Sha256Hash.wrap(hash))
+            // Return r and s components (32 bytes each)
+            val signature = ecdsaSignature.r.toByteArray().takeLast(32).toByteArray() +
+                ecdsaSignature.s.toByteArray().takeLast(32).toByteArray()
+            CompletionResult.Success(listOf(signature))
+        }
 
         // When
         val result = messageSigner.signMessage(
