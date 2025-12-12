@@ -145,8 +145,8 @@ internal class BitcoinMessageSigner(
         messageHash: ByteArray,
     ): ByteArray {
         // Parse signature into r and s components
-        val r = BigInteger(1, signature.copyOfRange(0, 32))
-        val s = BigInteger(1, signature.copyOfRange(32, 64))
+        val r = BigInteger(1, signature.copyOfRange(0, SIGNATURE_COMPONENT_SIZE))
+        val s = BigInteger(1, signature.copyOfRange(SIGNATURE_COMPONENT_SIZE, SIGNATURE_SIZE))
         val ecdsaSignature = ECDSASignature(r, s).canonicalise()
 
         // Determine recovery ID by attempting to recover the public key
@@ -252,6 +252,7 @@ internal class BitcoinMessageSigner(
 
     private companion object {
         const val SIGNATURE_SIZE = 64
+        const val SIGNATURE_COMPONENT_SIZE = 32
         const val MESSAGE_PREFIX = "Bitcoin Signed Message:\n"
         const val VARINT_SINGLE_BYTE_LIMIT = 253
         const val VARINT_TWO_BYTE_LIMIT = 0xffff
