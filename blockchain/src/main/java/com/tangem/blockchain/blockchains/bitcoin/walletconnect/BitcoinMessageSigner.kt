@@ -8,8 +8,14 @@ import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.toDecompressedPublicKey
 import com.tangem.common.extensions.toHexString
+import org.kethereum.crypto.api.ec.ECDSASignature
+import org.kethereum.crypto.determineRecId
+import org.kethereum.crypto.impl.ec.canonicalise
+import org.kethereum.model.PublicKey
 import org.spongycastle.crypto.digests.SHA256Digest
+import java.math.BigInteger
 import java.nio.charset.StandardCharsets
 
 /**
@@ -58,7 +64,7 @@ internal class BitcoinMessageSigner(
         val signature = signHash(messageHash, signer).successOr { return it }
         validateSignatureSize(signature).successOr { return it }
 
-        val bitcoinSignature = createBitcoinSignature(signature, walletAddress.type)
+        val bitcoinSignature = createBitcoinSignature(signature, walletAddress.type, messageHash)
 
         return Result.Success(
             SignMessageResult(
@@ -129,9 +135,31 @@ internal class BitcoinMessageSigner(
 
     /**
      * Creates Bitcoin signature format with recovery header.
+     *
+     * Computes the correct recovery ID (0-3) by attempting to recover the public key
+     * from the signature and verifying it matches the wallet's public key.
      */
-    private fun createBitcoinSignature(signature: ByteArray, addressType: AddressType): ByteArray {
-        val headerByte = getRecoveryHeaderByte(addressType)
+    private fun createBitcoinSignature(
+        signature: ByteArray,
+        addressType: AddressType,
+        messageHash: ByteArray,
+    ): ByteArray {
+        // Parse signature into r and s components
+        val r = BigInteger(1, signature.copyOfRange(0, 32))
+        val s = BigInteger(1, signature.copyOfRange(32, 64))
+        val ecdsaSignature = ECDSASignature(r, s).canonicalise()
+
+        // Determine recovery ID by attempting to recover the public key
+        val publicKeyBytes = wallet.publicKey.blockchainKey.toDecompressedPublicKey()
+        val recId = ecdsaSignature.determineRecId(
+            messageHash = messageHash,
+            publicKey = PublicKey(publicKeyBytes.sliceArray(1..publicKeyBytes.lastIndex)),
+        )
+
+        // Get base header byte for address type and add recovery ID
+        val baseHeaderByte = getBaseRecoveryHeaderByte(addressType)
+        val headerByte = (baseHeaderByte + recId).toByte()
+
         return byteArrayOf(headerByte) + signature
     }
 
@@ -201,7 +229,7 @@ internal class BitcoinMessageSigner(
     )
 
     /**
-     * Gets the recovery header byte based on address type.
+     * Gets the base recovery header byte based on address type.
      *
      * Header byte values:
      * - 27-30: P2PKH uncompressed
@@ -209,17 +237,16 @@ internal class BitcoinMessageSigner(
      * - 35-38: P2WPKH-P2SH (SegWit)
      * - 39-42: P2WPKH (Native SegWit)
      *
-     * Note: The +0 to +3 offset is determined during signature recovery.
-     * We use base values here, actual recovery ID will be added during verification.
+     * The actual recovery ID (0-3) is added to this base value to create the final header byte.
      *
      * @param addressType Address type
-     * @return Header byte base value
+     * @return Header byte base value (without recovery ID)
      */
-    private fun getRecoveryHeaderByte(addressType: AddressType): Byte {
+    private fun getBaseRecoveryHeaderByte(addressType: AddressType): Int {
         return when (addressType) {
-            AddressType.Legacy -> HEADER_P2PKH_COMPRESSED
-            AddressType.Default -> HEADER_P2WPKH_NATIVE
-            else -> HEADER_P2PKH_COMPRESSED
+            AddressType.Legacy -> HEADER_P2PKH_COMPRESSED.toInt()
+            AddressType.Default -> HEADER_P2WPKH_NATIVE.toInt()
+            else -> HEADER_P2PKH_COMPRESSED.toInt()
         }
     }
 
