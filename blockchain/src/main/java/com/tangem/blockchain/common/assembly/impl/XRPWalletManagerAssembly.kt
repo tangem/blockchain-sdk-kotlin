@@ -16,6 +16,7 @@ internal class XRPWalletManagerAssembly(
         return with(input.wallet) {
             val networkService = XrpNetworkService(
                 providers = XRPProvidersBuilder(input.providerTypes, input.config).build(blockchain),
+                blockchain = blockchain,
             )
 
             XrpWalletManager(

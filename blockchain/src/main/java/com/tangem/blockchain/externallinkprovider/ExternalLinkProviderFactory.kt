@@ -1,6 +1,7 @@
 package com.tangem.blockchain.externallinkprovider
 
 import com.tangem.blockchain.externallinkprovider.providers.PepecoinExternalLinkProvider
+import com.tangem.blockchain.externallinkprovider.providers.PlasmaExternalLinkProvider
 import com.tangem.blockchain.externallinkprovider.providers.QuaiExternalLinkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.externallinkprovider.providers.*
@@ -108,6 +109,9 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Pepecoin, Blockchain.PepecoinTestnet -> PepecoinExternalLinkProvider(isTestnet)
             Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet -> HyperliquidExternalLinkProvider(isTestnet)
             Blockchain.Quai, Blockchain.QuaiTestnet -> QuaiExternalLinkProvider(isTestnet)
+            Blockchain.Linea, Blockchain.LineaTestnet -> LineaExternalLinkProvider(isTestnet)
+            Blockchain.ArbitrumNova -> ArbitrumNovaExternalLinkProvider()
+            Blockchain.Plasma, Blockchain.PlasmaTestnet -> PlasmaExternalLinkProvider(isTestnet)
         }
     }
 }
