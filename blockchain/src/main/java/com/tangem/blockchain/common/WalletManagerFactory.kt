@@ -217,6 +217,9 @@ class WalletManagerFactory(
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet,
             Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet,
             Blockchain.Quai, Blockchain.QuaiTestnet,
+            Blockchain.Linea, Blockchain.LineaTestnet,
+            Blockchain.ArbitrumNova,
+            Blockchain.Plasma, Blockchain.PlasmaTestnet,
             -> EthereumLikeWalletManagerAssembly(dataStorage)
 
             Blockchain.Mantle, Blockchain.MantleTestnet,
