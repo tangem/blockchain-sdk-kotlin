@@ -770,7 +770,7 @@ enum class Blockchain(
             Avalanche -> Chain.Avalanche.id
             AvalancheTestnet -> Chain.AvalancheTestnet.id
             Ethereum -> Chain.Mainnet.id
-            EthereumTestnet -> Chain.EthereumSepoliaTestnet.id
+            EthereumTestnet -> Chain.EthereumHoodiTestnet.id
             EthereumClassic -> Chain.EthereumClassicMainnet.id
             EthereumClassicTestnet -> Chain.EthereumClassicTestnet.id
             Fantom -> Chain.Fantom.id
@@ -850,8 +850,6 @@ enum class Blockchain(
             ScrollTestnet -> Chain.ScrollTestnet.id
             ZkLinkNova -> Chain.ZkLinkNova.id
             ZkLinkNovaTestnet -> Chain.ZkLinkNovaTestnet.id
-            Pepecoin -> Chain.Pepecoin.id
-            PepecoinTestnet -> Chain.PepecoinTestnet.id
             Hyperliquid -> Chain.Hyperliquid.id
             HyperliquidTestnet -> Chain.HyperliquidTestnet.id
             Quai -> Chain.Quai.id
@@ -904,7 +902,7 @@ enum class Blockchain(
 
     fun canHandleNFTs(): Boolean = when (this) {
         // EVM
-        Ethereum, // supported testnet - Sepolia (11155111)
+        Ethereum, // supported testnet - Hoodi (560048)
         Arbitrum, // supported testnet - Sepolia (421614)
         Avalanche,
         Fantom, FantomTestnet,
