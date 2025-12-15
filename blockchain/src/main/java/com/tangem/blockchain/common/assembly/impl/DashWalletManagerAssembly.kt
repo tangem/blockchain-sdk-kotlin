@@ -23,6 +23,7 @@ internal object DashWalletManagerAssembly : WalletManagerAssembly<BitcoinWalletM
                 ),
                 networkProvider = BitcoinNetworkService(
                     providers = DashProvidersBuilder(input.providerTypes, input.config).build(blockchain),
+                    blockchain = blockchain,
                 ),
                 transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
                 feesCalculator = BitcoinFeesCalculator(blockchain),

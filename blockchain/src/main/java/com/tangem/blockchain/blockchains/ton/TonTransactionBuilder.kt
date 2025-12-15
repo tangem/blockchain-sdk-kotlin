@@ -248,5 +248,8 @@ internal class TonTransactionBuilder(
          * times less, excess is returned
          */
         val JETTON_TRANSFER_PROCESSING_FEE = "0.05".toBigDecimal()
+
+        /* used for token transfers when recipient's jetton wallet is already active */
+        val JETTON_TRANSFER_PROCESSING_FEE_ACTIVE_WALLET = "0.0001".toBigDecimal()
     }
 }
