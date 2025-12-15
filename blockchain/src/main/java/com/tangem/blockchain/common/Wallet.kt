@@ -116,12 +116,10 @@ class Wallet(
         recentTransactions.add(transaction)
     }
 
-    fun addOutgoingTransaction(transactionData: TransactionData, hashToLowercase: Boolean = true) {
+    fun addOutgoingTransaction(transactionData: TransactionData, txHash: String, hashToLowercase: Boolean = true) {
+        transactionData.hash = if (hashToLowercase) txHash.lowercase(Locale.US) else txHash
         if (transactionData is TransactionData.Uncompiled) {
-            transactionData.apply {
-                date = Calendar.getInstance()
-                if (hashToLowercase) hash = hash?.lowercase(Locale.US)
-            }
+            transactionData.date = Calendar.getInstance()
             if (recentTransactions.any { it.hash == transactionData.hash }) return
 
             recentTransactions.add(transactionData)

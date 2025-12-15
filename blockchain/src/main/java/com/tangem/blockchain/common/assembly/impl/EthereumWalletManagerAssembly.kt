@@ -23,6 +23,7 @@ internal class EthereumWalletManagerAssembly(private val dataStorage: AdvancedDa
                     providerTypes = input.providerTypes,
                     config = input.config,
                 ).build(blockchain),
+                blockchain = blockchain,
             )
 
             val yieldLendingProvider = YieldSupplyProviderFactory(dataStorage).makeProvider(this, multiJsonRpcProvider)

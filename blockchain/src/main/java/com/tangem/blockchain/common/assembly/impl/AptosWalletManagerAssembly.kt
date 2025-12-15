@@ -15,6 +15,7 @@ internal object AptosWalletManagerAssembly : WalletManagerAssembly<AptosWalletMa
                 networkService = AptosNetworkService(
                     providers = AptosProvidersBuilder(providerTypes = input.providerTypes, config = config)
                         .build(blockchain = wallet.blockchain),
+                    blockchain = wallet.blockchain,
                 ),
             )
         }
