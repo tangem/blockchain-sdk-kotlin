@@ -21,6 +21,7 @@ internal object FilecoinWalletManagerAssembly : WalletManagerAssembly<FilecoinWa
                         providerTypes = input.providerTypes,
                         config = input.config,
                     ).build(blockchain),
+                    blockchain = blockchain,
                 ),
             )
         }

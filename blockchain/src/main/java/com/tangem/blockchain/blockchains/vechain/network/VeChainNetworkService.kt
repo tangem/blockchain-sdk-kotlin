@@ -27,7 +27,7 @@ internal class VeChainNetworkService(
     private val blockchain: Blockchain,
 ) {
 
-    private val multiJsonRpcProvider = MultiNetworkProvider(networkProviders)
+    private val multiJsonRpcProvider = MultiNetworkProvider(networkProviders, blockchain)
     val host: String get() = multiJsonRpcProvider.currentProvider.baseUrl
 
     suspend fun getAccountInfo(

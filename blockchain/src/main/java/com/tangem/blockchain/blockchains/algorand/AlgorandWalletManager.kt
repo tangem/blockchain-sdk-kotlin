@@ -75,10 +75,14 @@ internal class AlgorandWalletManager(
                     )
                 when (val sendResult = networkService.sendTransaction(rawTx)) {
                     is Result.Success -> {
-                        transactionData.hash = sendResult.data
-                        wallet.addOutgoingTransaction(transactionData, hashToLowercase = false)
+                        val txHash = sendResult.data
+                        wallet.addOutgoingTransaction(
+                            transactionData = transactionData,
+                            txHash = txHash,
+                            hashToLowercase = false,
+                        )
 
-                        Result.Success(TransactionSendResult(sendResult.data))
+                        Result.Success(TransactionSendResult(txHash))
                     }
                     is Result.Failure -> sendResult
                 }

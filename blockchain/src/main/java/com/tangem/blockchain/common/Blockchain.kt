@@ -210,6 +210,11 @@ enum class Blockchain(
     HyperliquidTestnet("hyperliquid/test", "HYPE", "Hyperliquid EVM Testnet"),
     Quai("quai", "QUAI", "Quai"),
     QuaiTestnet("quai/test", "QUAI", "Quai Testnet"),
+    Linea("linea", "ETH", "Linea"),
+    LineaTestnet("linea/test", "ETH", "Linea Testnet"),
+    ArbitrumNova("arbitrum-nova", "ETH", "Arbitrum Nova"),
+    Plasma("plasma", "XPL", "Plasma"),
+    PlasmaTestnet("plasma/test", "XPL", "Plasma Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -240,6 +245,8 @@ enum class Blockchain(
             Cyber,
             Scroll,
             ZkLinkNova,
+            Linea,
+            ArbitrumNova,
             -> true
             else -> false
         }
@@ -347,6 +354,9 @@ enum class Blockchain(
         ZkLinkNova, ZkLinkNovaTestnet,
         Hyperliquid, HyperliquidTestnet,
         Quai, QuaiTestnet,
+        Linea, LineaTestnet,
+        ArbitrumNova,
+        Plasma, PlasmaTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -452,6 +462,9 @@ enum class Blockchain(
             Scroll, ScrollTestnet,
             ZkLinkNova, ZkLinkNovaTestnet,
             Hyperliquid, HyperliquidTestnet,
+            Linea, LineaTestnet,
+            ArbitrumNova,
+            Plasma, PlasmaTestnet,
             -> EthereumAddressService()
 
             Quai, QuaiTestnet -> QuaiAddressService()
@@ -604,6 +617,8 @@ enum class Blockchain(
             Pepecoin, PepecoinTestnet -> PepecoinTestnet
             Hyperliquid, HyperliquidTestnet -> HyperliquidTestnet
             Quai, QuaiTestnet -> QuaiTestnet
+            Linea, LineaTestnet -> LineaTestnet
+            Plasma, PlasmaTestnet -> PlasmaTestnet
             Unknown,
             Cardano,
             Dogecoin,
@@ -629,6 +644,7 @@ enum class Blockchain(
             Xodex,
             Canxium,
             Clore,
+            ArbitrumNova,
             -> null
         }
     }
@@ -718,6 +734,9 @@ enum class Blockchain(
             Pepecoin, PepecoinTestnet,
             Hyperliquid, HyperliquidTestnet,
             Quai, QuaiTestnet,
+            Linea, LineaTestnet,
+            ArbitrumNova,
+            Plasma, PlasmaTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -831,12 +850,15 @@ enum class Blockchain(
             ScrollTestnet -> Chain.ScrollTestnet.id
             ZkLinkNova -> Chain.ZkLinkNova.id
             ZkLinkNovaTestnet -> Chain.ZkLinkNovaTestnet.id
-            Pepecoin -> Chain.Pepecoin.id
-            PepecoinTestnet -> Chain.PepecoinTestnet.id
             Hyperliquid -> Chain.Hyperliquid.id
             HyperliquidTestnet -> Chain.HyperliquidTestnet.id
             Quai -> Chain.Quai.id
             QuaiTestnet -> Chain.QuaiTestnet.id
+            Linea -> Chain.Linea.id
+            LineaTestnet -> Chain.LineaTestnet.id
+            ArbitrumNova -> Chain.ArbitrumNova.id
+            Plasma -> Chain.Plasma.id
+            PlasmaTestnet -> Chain.PlasmaTestnet.id
             else -> null
         }
     }

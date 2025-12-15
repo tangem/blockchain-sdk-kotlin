@@ -15,6 +15,7 @@ internal object ChiaWalletManagerAssembly : WalletManagerAssembly<ChiaWalletMana
                 wallet = this,
                 networkProvider = ChiaNetworkService(
                     chiaNetworkProviders = ChiaProvidersBuilder(input.providerTypes, input.config).build(blockchain),
+                    blockchain = blockchain,
                 ),
                 transactionBuilder = ChiaTransactionBuilder(publicKey.blockchainKey, blockchain),
             )

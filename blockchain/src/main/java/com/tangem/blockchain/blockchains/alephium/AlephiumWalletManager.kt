@@ -69,9 +69,9 @@ internal class AlephiumWalletManager(
                 return when (val sendResult = networkService.submitTx(unsignedTx, signature)) {
                     is Result.Failure -> return Result.Failure(sendResult.error)
                     is Result.Success -> {
-                        transactionData.hash = sendResult.data.txId
-                        wallet.addOutgoingTransaction(transactionData)
-                        Result.Success(TransactionSendResult(transactionData.hash ?: ""))
+                        val txHash = sendResult.data.txId
+                        wallet.addOutgoingTransaction(transactionData, txHash)
+                        Result.Success(TransactionSendResult(txHash))
                     }
                 }
             }
