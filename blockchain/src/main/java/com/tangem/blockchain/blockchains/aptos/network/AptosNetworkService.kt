@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.aptos.network
 
 import com.tangem.blockchain.blockchains.aptos.models.AptosAccountInfo
 import com.tangem.blockchain.blockchains.aptos.models.AptosTransactionInfo
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
@@ -16,12 +17,15 @@ import com.tangem.blockchain.network.MultiNetworkProvider
  *
 [REDACTED_AUTHOR]
  */
-internal class AptosNetworkService(providers: List<AptosNetworkProvider>) : AptosNetworkProvider {
+internal class AptosNetworkService(
+    providers: List<AptosNetworkProvider>,
+    blockchain: Blockchain,
+) : AptosNetworkProvider {
 
     override val baseUrl: String
         get() = multiJsonRpcProvider.currentProvider.baseUrl
 
-    private val multiJsonRpcProvider = MultiNetworkProvider(providers)
+    private val multiJsonRpcProvider = MultiNetworkProvider(providers, blockchain)
 
     override suspend fun getAccountInfo(address: String): Result<AptosAccountInfo> {
         return try {

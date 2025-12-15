@@ -81,6 +81,10 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.Scroll,
             Blockchain.ZkLinkNova,
             Blockchain.Hyperliquid,
+            Blockchain.Linea,
+            Blockchain.ArbitrumNova,
+            Blockchain.Plasma,
+            Blockchain.PlasmaTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.Quai,
             Blockchain.QuaiTestnet,
@@ -167,6 +171,7 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.ScrollTestnet,
             Blockchain.ZkLinkNovaTestnet,
             Blockchain.HyperliquidTestnet,
+            Blockchain.LineaTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/1'/0'/0/0"))
             Blockchain.Aptos,
             Blockchain.AptosTestnet,

@@ -16,7 +16,7 @@ internal class TonNetworkService(
     private val blockchain: Blockchain,
 ) {
 
-    private val multiJsonRpcProvider = MultiNetworkProvider(jsonRpcProviders)
+    private val multiJsonRpcProvider = MultiNetworkProvider(jsonRpcProviders, blockchain)
 
     val host: String get() = multiJsonRpcProvider.currentProvider.baseUrl
 
@@ -92,6 +92,22 @@ internal class TonNetworkService(
             val hashResponse = multiJsonRpcProvider.performRequest(TonNetworkProvider::send, message)
                 .successOr { return it }
             Result.Success(hashResponse.hash)
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
+    suspend fun getJettonWalletAddress(input: GetJettonWalletAddressInput): Result<String> {
+        return try {
+            multiJsonRpcProvider.performRequest(TonNetworkProvider::getJettonWalletAddress, input)
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
+    suspend fun isJettonWalletActive(jettonWalletAddress: String): Result<Boolean> {
+        return try {
+            multiJsonRpcProvider.performRequest(TonNetworkProvider::isJettonWalletActive, jettonWalletAddress)
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
