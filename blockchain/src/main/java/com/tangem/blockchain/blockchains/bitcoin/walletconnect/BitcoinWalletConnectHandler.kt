@@ -158,6 +158,8 @@ class BitcoinWalletConnectHandler(
      * @see <a href="https://docs.reown.com/advanced/multichain/rpc-reference/bitcoin-rpc#getaccountaddresses">getAccountAddresses Documentation</a>
      */
     fun getAccountAddresses(request: GetAccountAddressesRequest): Result<GetAccountAddressesResponse> {
+        validateAccountAddress(request.account).successOr { return it }
+
         val intentions = parseIntentions(request.intentions)
 
         if (isOnlyOrdinalIntention(intentions)) {
@@ -268,28 +270,13 @@ class BitcoinWalletConnectHandler(
      * @see <a href="https://docs.reown.com/advanced/multichain/rpc-reference/bitcoin-rpc#signmessage">signMessage Documentation</a>
      */
     suspend fun signMessage(request: SignMessageRequest, signer: TransactionSigner): Result<SignMessageResponse> {
-        // Validate that the account address belongs to this wallet
-        val isValidAccount = wallet.addresses.any { it.value == request.account }
-        if (!isValidAccount) {
-            return Result.Failure(
-                BlockchainSdkError.CustomError(
-                    "Account address ${request.account} does not belong to this wallet",
-                ),
-            )
-        }
+        validateAccountAddress(request.account).successOr { return it }
 
         // Determine which address to use for signing
         val signingAddress = request.address ?: request.account
 
         // Validate signing address belongs to wallet
-        val isValidSigningAddress = wallet.addresses.any { it.value == signingAddress }
-        if (!isValidSigningAddress) {
-            return Result.Failure(
-                BlockchainSdkError.CustomError(
-                    "Signing address $signingAddress does not belong to this wallet",
-                ),
-            )
-        }
+        validateWalletAddress(signingAddress, "Signing address").successOr { return it }
 
         // Parse protocol
         val protocol = SignMessageProtocol.fromString(request.protocol ?: "ecdsa")
