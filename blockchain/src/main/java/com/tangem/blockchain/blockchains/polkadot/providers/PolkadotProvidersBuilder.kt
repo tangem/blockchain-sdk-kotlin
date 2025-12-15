@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.polkadot.network.PolkadotCombinedProvid
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.NowNodeCredentials
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.letNotBlank
@@ -19,6 +20,7 @@ internal class PolkadotProvidersBuilder(
                 is ProviderType.GetBlock -> createGetBlockProvider(blockchain)
                 is ProviderType.Public -> createPublicProvider(it.url, blockchain)
                 is ProviderType.PolkadotLike.Tatum -> createTatumProvider(blockchain)
+                is ProviderType.NowNodes -> createNowNodesNetworkProvider(blockchain)
                 else -> null
             }
         }
@@ -44,6 +46,16 @@ internal class PolkadotProvidersBuilder(
                 baseUrl = "https://polkadot-assethub.gateway.tatum.io/",
                 blockchain = blockchain,
                 credentials = mapOf("x-api-key" to tatumApiKey),
+            )
+        }
+    }
+
+    private fun createNowNodesNetworkProvider(blockchain: Blockchain): PolkadotNetworkProvider? {
+        return config.nowNodeCredentials?.apiKey.letNotBlank {
+            PolkadotCombinedProvider(
+                baseUrl = "https://dot-assethub.nownodes.io/",
+                credentials = mapOf(NowNodeCredentials.headerApiKey to it),
+                blockchain = blockchain,
             )
         }
     }
