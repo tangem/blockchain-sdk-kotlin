@@ -23,6 +23,7 @@ internal object PolkadotWalletManagerAssembly : WalletManagerAssembly<PolkadotWa
                         config = input.config,
                         blockchain = blockchain,
                     ).build(blockchain),
+                    blockchain = blockchain,
                 ),
             )
         }

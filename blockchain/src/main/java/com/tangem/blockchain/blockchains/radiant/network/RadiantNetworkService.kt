@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.radiant.network
 
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.radiant.models.RadiantAccountInfo
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.map
@@ -16,7 +17,7 @@ internal class RadiantNetworkService(providers: List<ElectrumNetworkProvider>) :
     override val baseUrl: String
         get() = multiProvider.currentProvider.baseUrl
 
-    private val multiProvider = MultiNetworkProvider(providers)
+    private val multiProvider = MultiNetworkProvider(providers, Blockchain.Radiant)
 
     /**
      * Relying on answers from blockchain developers and costs from the official application (Electron-Radiant).
