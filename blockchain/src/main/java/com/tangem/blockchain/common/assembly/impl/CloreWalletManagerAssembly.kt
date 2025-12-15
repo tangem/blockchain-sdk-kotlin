@@ -22,6 +22,7 @@ internal object CloreWalletManagerAssembly : WalletManagerAssembly<RavencoinWall
                 ),
                 networkProvider = BitcoinNetworkService(
                     providers = CloreProvidersBuilder(input.providerTypes, input.config).build(blockchain),
+                    blockchain = blockchain,
                 ),
                 transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
                 feesCalculator = CloreFeesCalculator(blockchain),

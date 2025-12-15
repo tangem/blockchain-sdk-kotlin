@@ -263,10 +263,9 @@ internal class KaspaWalletManager(
                         when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
                             is Result.Failure -> sendResult
                             is Result.Success -> {
-                                val hash = sendResult.data
-                                transactionData.hash = hash
-                                wallet.addOutgoingTransaction(transactionData)
-                                Result.Success(TransactionSendResult(hash ?: ""))
+                                val txHash = sendResult.data.orEmpty()
+                                wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+                                Result.Success(TransactionSendResult(txHash))
                             }
                         }
                     }
@@ -339,11 +338,13 @@ internal class KaspaWalletManager(
                                             }
                                             is Result.Success -> {
                                                 updateUnspentOutputs()
-                                                val hash = sendRevealResult.data
-                                                transactionData.hash = hash
-                                                wallet.addOutgoingTransaction(transactionData)
+                                                val txHash = sendRevealResult.data.orEmpty()
+                                                wallet.addOutgoingTransaction(
+                                                    transactionData = transactionData,
+                                                    txHash = txHash,
+                                                )
                                                 removeIncompleteTokenTransaction(token)
-                                                Result.Success(TransactionSendResult(hash ?: ""))
+                                                Result.Success(TransactionSendResult(txHash))
                                             }
                                         }
                                     }
@@ -395,11 +396,10 @@ internal class KaspaWalletManager(
                             }
                             is Result.Success -> {
                                 updateUnspentOutputs()
-                                val hash = sendResult.data
-                                transactionData.hash = hash
-                                wallet.addOutgoingTransaction(transactionData)
+                                val txHash = sendResult.data.orEmpty()
+                                wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
                                 removeIncompleteTokenTransaction(token)
-                                Result.Success(TransactionSendResult(hash ?: ""))
+                                Result.Success(TransactionSendResult(txHash))
                             }
                         }
                     }

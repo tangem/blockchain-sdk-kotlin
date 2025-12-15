@@ -32,6 +32,7 @@ data class XrpTokenBalance(
     val balance: BigDecimal,
     val issuer: String,
     val currency: String,
+    val noRipple: Boolean = false,
 )
 
 data class XrpTargetAccountResponse(

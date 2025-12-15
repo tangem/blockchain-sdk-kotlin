@@ -93,8 +93,7 @@ internal class StellarWalletManager(
                     is SimpleResult.Failure -> Result.Failure(sendResult.error)
                     SimpleResult.Success -> {
                         val txHash = transactionBuilder.getTransactionHash().toHexString()
-                        transactionData.hash = txHash
-                        wallet.addOutgoingTransaction(transactionData)
+                        wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
                         Result.Success(TransactionSendResult(txHash))
                     }
                 }
@@ -205,9 +204,11 @@ internal class StellarWalletManager(
                 when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
                     is SimpleResult.Failure -> SimpleResult.Failure(sendResult.error)
                     SimpleResult.Success -> {
-                        val transactionData = transactionData
-                            .copy(hash = transactionBuilder.getTransactionHash().toHexString())
-                        wallet.addOutgoingTransaction(transactionData)
+                        val txHash = transactionBuilder.getTransactionHash().toHexString()
+                        wallet.addOutgoingTransaction(
+                            transactionData = transactionData,
+                            txHash = txHash,
+                        )
                         updateInternal()
                         SimpleResult.Success
                     }
@@ -240,6 +241,7 @@ internal class StellarWalletManager(
 
     private fun storeKey() =
         "trustline-${wallet.publicKey.blockchainKey.toCompressedPublicKey().toHexString()}-${wallet.address}"
+
     private fun StellarAssetBalance.canonicalContractAddress() =
         "${this.symbol}${StellarTransactionBuilder.TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR}${this.issuer}"
 

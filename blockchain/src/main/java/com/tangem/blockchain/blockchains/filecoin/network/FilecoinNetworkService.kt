@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.filecoin.models.FilecoinAccountInfo
 import com.tangem.blockchain.blockchains.filecoin.models.FilecoinTxGasInfo
 import com.tangem.blockchain.blockchains.filecoin.models.FilecoinTxInfo
 import com.tangem.blockchain.blockchains.filecoin.network.request.FilecoinSignedTransactionBody
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
@@ -16,12 +17,15 @@ import com.tangem.blockchain.network.MultiNetworkProvider
  *
 [REDACTED_AUTHOR]
  */
-internal class FilecoinNetworkService(providers: List<FilecoinNetworkProvider>) : FilecoinNetworkProvider {
+internal class FilecoinNetworkService(
+    providers: List<FilecoinNetworkProvider>,
+    blockchain: Blockchain,
+) : FilecoinNetworkProvider {
 
     override val baseUrl: String
         get() = multiJsonRpcProvider.currentProvider.baseUrl
 
-    private val multiJsonRpcProvider = MultiNetworkProvider(providers)
+    private val multiJsonRpcProvider = MultiNetworkProvider(providers, blockchain)
 
     override suspend fun getAccountInfo(address: String): Result<FilecoinAccountInfo> {
         return try {

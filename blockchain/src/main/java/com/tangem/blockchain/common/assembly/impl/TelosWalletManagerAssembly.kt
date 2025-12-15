@@ -13,10 +13,11 @@ internal object TelosWalletManagerAssembly : WalletManagerAssembly<TelosWalletMa
     override fun make(input: WalletManagerAssemblyInput): TelosWalletManager {
         with(input.wallet) {
             val multiNetworkProvider = MultiNetworkProvider(
-                TelosProvidersBuilder(
+                providers = TelosProvidersBuilder(
                     input.providerTypes,
                     input.config,
                 ).build(blockchain),
+                blockchain = blockchain,
             )
 
             return TelosWalletManager(
