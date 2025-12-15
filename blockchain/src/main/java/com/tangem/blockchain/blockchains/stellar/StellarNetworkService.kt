@@ -35,7 +35,7 @@ internal class StellarNetworkService(
     private val decimals = blockchain.decimals()
 
     val network: Network = if (isTestnet) Network.TESTNET else Network.PUBLIC
-    private val stellarMultiProvider = MultiNetworkProvider(providers = providers)
+    private val stellarMultiProvider = MultiNetworkProvider(providers = providers, blockchain = blockchain)
 
     override val baseUrl: String = stellarMultiProvider.currentProvider.baseUrl
 

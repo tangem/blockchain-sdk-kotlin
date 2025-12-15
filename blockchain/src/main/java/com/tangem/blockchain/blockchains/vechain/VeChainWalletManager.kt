@@ -116,11 +116,14 @@ internal class VeChainWalletManager(
                     )
                 when (val sendResult = networkService.sendTransaction(rawTx)) {
                     is Result.Success -> {
-                        val hash = sendResult.data.txId
-                        transactionData.hash = sendResult.data.txId
-                        wallet.addOutgoingTransaction(transactionData, hashToLowercase = false)
+                        val txHash = sendResult.data.txId
+                        wallet.addOutgoingTransaction(
+                            transactionData = transactionData,
+                            txHash = txHash,
+                            hashToLowercase = false,
+                        )
 
-                        Result.Success(TransactionSendResult(hash))
+                        Result.Success(TransactionSendResult(txHash))
                     }
                     is Result.Failure -> sendResult
                 }

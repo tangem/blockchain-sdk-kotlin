@@ -18,10 +18,12 @@ class CosmosWalletManager(
     wallet: Wallet,
     networkProviders: List<CosmosRestProvider>,
     private val cosmosChain: CosmosChain,
+    private val blockchain: Blockchain,
 ) : WalletManager(wallet) {
 
     private val networkService: CosmosNetworkService = CosmosNetworkService(
         providers = networkProviders,
+        blockchain = blockchain,
         cosmosChain = cosmosChain,
     )
     private var accountNumber: Long? = null
@@ -131,26 +133,26 @@ class CosmosWalletManager(
         return when (val sendResult = networkService.send(message)) {
             is Result.Failure -> sendResult
             is Result.Success -> {
-                val hash = sendResult.data
+                val txHash = sendResult.data
 
                 val transaction = when (transactionData) {
                     is TransactionData.Uncompiled -> {
                         transactionData.copy(
-                            hash = hash,
+                            hash = txHash,
                             status = TransactionStatus.Unconfirmed,
                             sourceAddress = wallet.address,
                         )
                     }
                     is TransactionData.Compiled -> {
                         transactionData.copy(
-                            hash = hash,
+                            hash = txHash,
                             status = TransactionStatus.Unconfirmed,
                         )
                     }
                 }
-                transactionData.hash = hash
-                wallet.addOutgoingTransaction(transaction)
-                Result.Success(TransactionSendResult(hash))
+
+                wallet.addOutgoingTransaction(transactionData = transaction, txHash = txHash, hashToLowercase = false)
+                Result.Success(TransactionSendResult(txHash))
             }
         }
     }

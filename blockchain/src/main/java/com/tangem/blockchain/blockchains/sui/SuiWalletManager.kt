@@ -22,6 +22,7 @@ internal class SuiWalletManager(
 
     private val networkService: SuiNetworkService = SuiNetworkService(
         providers = networkProviders,
+        blockchain = wallet.blockchain,
     )
     private val txBuilder = SuiTransactionBuilder(
         walletAddress = wallet.address,
@@ -68,10 +69,15 @@ internal class SuiWalletManager(
             return Result.Failure(BlockchainSdkError.FailedToSendException)
         }
 
-        transactionData.hash = txResponse.digest
-        wallet.addOutgoingTransaction(transactionData.updateHash(txResponse.digest), hashToLowercase = false)
+        val txHash = txResponse.digest
 
-        return Result.Success(TransactionSendResult(txResponse.digest))
+        wallet.addOutgoingTransaction(
+            transactionData = transactionData,
+            txHash = txHash,
+            hashToLowercase = false,
+        )
+
+        return Result.Success(TransactionSendResult(txHash))
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {

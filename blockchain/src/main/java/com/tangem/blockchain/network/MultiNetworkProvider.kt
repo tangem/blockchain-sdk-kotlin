@@ -1,9 +1,6 @@
 package com.tangem.blockchain.network
 
-import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.CycleListIterator
-import com.tangem.blockchain.common.ExceptionHandler
-import com.tangem.blockchain.common.NetworkProvider
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.logging.SensitiveKeys
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -11,6 +8,7 @@ import java.io.IOException
 
 class MultiNetworkProvider<P : NetworkProvider>(
     val providers: List<P>,
+    val blockchain: Blockchain,
 ) {
     init {
         if (providers.isEmpty()) error("Empty providers list")
@@ -50,6 +48,7 @@ class MultiNetworkProvider<P : NetworkProvider>(
                     currentHost = currentProvider.baseUrl.getUrlWithoutSensitiveInfo(),
                     nextHost = providerIterator.peekNext().baseUrl.getUrlWithoutSensitiveInfo(),
                     message = message,
+                    blockchain = blockchain,
                 )
             }
             finalResult = result

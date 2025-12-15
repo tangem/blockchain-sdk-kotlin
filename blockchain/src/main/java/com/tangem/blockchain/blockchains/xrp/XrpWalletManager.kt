@@ -76,6 +76,75 @@ internal class XrpWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        val uncompiledData = transactionData.requireUncompiled()
+        if (uncompiledData.amount.type is AmountType.Token) {
+            val contractAddress = uncompiledData.amount.type.token.contractAddress
+            if (isNeedSetNoRippling(contractAddress)) {
+                return sendTokenWithNoRippleSetup(uncompiledData, contractAddress, signer)
+            }
+        }
+        return performStandardSend(uncompiledData, signer)
+    }
+
+    private suspend fun sendTokenWithNoRippleSetup(
+        transactionData: TransactionData.Uncompiled,
+        contractAddress: String,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
+        val sourceAddress = XrpAddressService.decodeXAddress(transactionData.sourceAddress)
+            ?.address ?: transactionData.sourceAddress
+        val sequence = networkProvider.getSequence(sourceAddress).successOr { return it }
+        val fee = innerGetFee().successOr { return it }
+        val trustSetData = TransactionData.Uncompiled(
+            amount = Amount(blockchain = blockchain, value = 0.toBigDecimal()),
+            fee = fee.normal,
+            sourceAddress = transactionData.sourceAddress,
+            destinationAddress = transactionData.sourceAddress,
+            contractAddress = contractAddress,
+        )
+
+        val trustSetHash = transactionBuilder.buildToOpenTrustlineSign(
+            transactionData = trustSetData,
+            coinAmount = wallet.getCoinAmount(),
+        ).successOr { return it }
+        val (paymentHash, secondaryTx) = transactionBuilder.buildToSignWithNoRipple(
+            transactionData = transactionData,
+            sequenceOverride = sequence + 1,
+        )
+            .successOr { return it }
+        val signatures = when (val signerResponse = signer.sign(listOf(trustSetHash, paymentHash), wallet.publicKey)) {
+            is CompletionResult.Success -> signerResponse.data
+            is CompletionResult.Failure -> return Result.fromTangemSdkError(signerResponse.error)
+        }
+
+        if (signatures.size != 2) {
+            return Result.Failure(BlockchainSdkError.CustomError("Expected 2 signatures, got ${signatures.size}"))
+        }
+
+        val trustSetBlob = transactionBuilder.buildToSend(signatures[0])
+        when (networkProvider.sendTransaction(trustSetBlob)) {
+            is SimpleResult.Failure -> return Result.Failure(
+                BlockchainSdkError.CustomError("Failed to send TrustSet transaction"),
+            )
+            SimpleResult.Success -> {
+                updateTrustlineNoRippleStatus(contractAddress)
+            }
+        }
+        val paymentBlob = transactionBuilder.buildSecondaryToSend(signatures[1], secondaryTx)
+        return when (val sendResult = networkProvider.sendTransaction(paymentBlob)) {
+            is SimpleResult.Failure -> Result.Failure(sendResult.error)
+            SimpleResult.Success -> {
+                val txHash = secondaryTx.hash.bytes().toHexString()
+                wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+                Result.Success(TransactionSendResult(txHash))
+            }
+        }
+    }
+
+    private suspend fun performStandardSend(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+    ): Result<TransactionSendResult> {
         val transactionHash = when (val buildResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Success -> buildResult.data
             is Result.Failure -> return Result.Failure(buildResult.error)
@@ -87,10 +156,9 @@ internal class XrpWalletManager(
                 when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
                     is SimpleResult.Failure -> Result.Failure(sendResult.error)
                     SimpleResult.Success -> {
-                        val hash = transactionBuilder.getTransactionHash()?.toHexString()
-                        transactionData.hash = hash
-                        wallet.addOutgoingTransaction(transactionData)
-                        Result.Success(TransactionSendResult(hash ?: ""))
+                        val txHash = transactionBuilder.getTransactionHash()?.toHexString().orEmpty()
+                        wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+                        Result.Success(TransactionSendResult(txHash))
                     }
                 }
             }
@@ -99,7 +167,27 @@ internal class XrpWalletManager(
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
-        return innerGetFee()
+        return when (val result = networkProvider.getFee()) {
+            is Result.Failure -> result
+            is Result.Success -> {
+                var minimalFee = result.data.minimalFee
+                var normalFee = result.data.normalFee
+                var priorityFee = result.data.priorityFee
+
+                if (amount.type is AmountType.Token && isNeedSetNoRippling(amount.type.token.contractAddress)) {
+                    minimalFee *= 2.toBigDecimal()
+                    normalFee *= 2.toBigDecimal()
+                    priorityFee *= 2.toBigDecimal()
+                }
+                Result.Success(
+                    TransactionFee.Choosable(
+                        minimum = Fee.Common(Amount(minimalFee, blockchain)),
+                        normal = Fee.Common(Amount(normalFee, blockchain)),
+                        priority = Fee.Common(Amount(priorityFee, blockchain)),
+                    ),
+                )
+            }
+        }
     }
 
     private suspend fun innerGetFee(): Result<TransactionFee> {
@@ -173,9 +261,8 @@ internal class XrpWalletManager(
                 when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
                     is SimpleResult.Failure -> SimpleResult.Failure(sendResult.error)
                     SimpleResult.Success -> {
-                        val transactionData = transactionData
-                            .copy(hash = transactionBuilder.getTransactionHash()?.toHexString())
-                        wallet.addOutgoingTransaction(transactionData)
+                        val txHash = transactionBuilder.getTransactionHash()?.toHexString().orEmpty()
+                        wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
                         updateInternal()
                         SimpleResult.Success
                     }
@@ -209,6 +296,7 @@ internal class XrpWalletManager(
 
     private fun storeKey() =
         "trustline-${wallet.publicKey.blockchainKey.toCompressedPublicKey().toHexString()}-${wallet.address}"
+
     private fun XrpTokenBalance.canonicalContractAddress() =
         "${this.currency}${XrpTransactionBuilder.TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR}${this.issuer}"
 
@@ -217,11 +305,35 @@ internal class XrpWalletManager(
     }
 
     private suspend fun storeIncompleteTokenTransaction(data: Set<XrpTokenBalance>) {
+        val trustlinesWithoutNoRipple = data
+            .filterNot { it.noRipple }
+            .mapTo(mutableSetOf()) { it.canonicalContractAddress() }
+
         dataStorage.store(
             key = storeKey(),
             value = BlockchainSavedData.Trustline(
                 createdTrustline = data.mapTo(mutableSetOf()) { it.canonicalContractAddress() },
+                trustlinesWithoutNoRipple = trustlinesWithoutNoRipple,
             ),
+        )
+    }
+
+    private suspend fun isNeedSetNoRippling(contractAddress: String): Boolean {
+        val trustlineData = getCreatedTrustline() ?: return false
+        if (!trustlineData.createdTrustline.contains(contractAddress)) {
+            return false
+        }
+        return trustlineData.trustlinesWithoutNoRipple.contains(contractAddress)
+    }
+
+    private suspend fun updateTrustlineNoRippleStatus(contractAddress: String) {
+        val trustlineData = getCreatedTrustline() ?: return
+        val updatedTrustlines = trustlineData.trustlinesWithoutNoRipple.toMutableSet()
+        updatedTrustlines.remove(contractAddress)
+
+        dataStorage.store(
+            key = storeKey(),
+            value = trustlineData.copy(trustlinesWithoutNoRipple = updatedTrustlines),
         )
     }
 }

@@ -16,6 +16,7 @@ internal object CosmosWalletManagerAssembly : WalletManagerAssembly<CosmosWallet
                 wallet = input.wallet,
                 networkProviders = CosmosProvidersBuilder(input.providerTypes, input.config).build(blockchain),
                 cosmosChain = CosmosChain.Cosmos(testnet),
+                blockchain = blockchain,
             )
         }
     }

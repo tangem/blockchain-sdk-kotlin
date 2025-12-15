@@ -7,6 +7,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvide
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.blockchains.ethereum.providers.*
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
+import com.tangem.blockchain.blockchains.plasma.PlasmaProvidersBuilder
 import com.tangem.blockchain.blockchains.quai.QuaiJsonRpcProvider
 import com.tangem.blockchain.blockchains.quai.QuaiNetworkService
 import com.tangem.blockchain.blockchains.quai.QuaiWalletManager
@@ -30,11 +31,12 @@ internal class EthereumLikeWalletManagerAssembly(
     override fun make(input: WalletManagerAssemblyInput): EthereumWalletManager {
         with(input.wallet) {
             val multiNetworkProvider = MultiNetworkProvider(
-                getProvidersBuilder(
+                providers = getProvidersBuilder(
                     blockchain = blockchain,
                     providerTypes = input.providerTypes,
                     config = input.config,
                 ).build(blockchain),
+                blockchain = blockchain,
             )
             val yieldLendingProvider = YieldSupplyProviderFactory(dataStorage).makeProvider(this, multiNetworkProvider)
 
@@ -169,10 +171,13 @@ internal class EthereumLikeWalletManagerAssembly(
                 config = config,
             )
             Blockchain.ApeChain, Blockchain.ApeChainTestnet -> ApeChainProvidersBuilder(providerTypes)
-            Blockchain.Scroll, Blockchain.ScrollTestnet -> ScrollProvidersBuilder(providerTypes)
+            Blockchain.Scroll, Blockchain.ScrollTestnet -> ScrollProvidersBuilder(providerTypes, config)
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet -> ZkLinkNovaProvidersBuilder(providerTypes)
             Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet -> HyperliquidProvidersBuilder(providerTypes)
             Blockchain.Quai, Blockchain.QuaiTestnet -> QuaiProvidersBuilder(providerTypes)
+            Blockchain.Linea, Blockchain.LineaTestnet -> LineaProvidersBuilder(providerTypes, config)
+            Blockchain.ArbitrumNova -> ArbitrumNovaProvidersBuilder(providerTypes, config)
+            Blockchain.Plasma, Blockchain.PlasmaTestnet -> PlasmaProvidersBuilder(providerTypes, config)
             else -> error("Unsupported blockchain: $blockchain")
         }
     }

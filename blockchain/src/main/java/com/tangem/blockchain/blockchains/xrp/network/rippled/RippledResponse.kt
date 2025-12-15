@@ -64,6 +64,8 @@ data class RippledAccountLine(
     val currency: String,
     @Json(name = "balance")
     val balance: String,
+    @Json(name = "no_ripple")
+    val noRipple: Boolean? = null,
 )
 
 // Rippled state

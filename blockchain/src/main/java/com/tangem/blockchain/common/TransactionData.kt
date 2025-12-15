@@ -42,17 +42,6 @@ sealed class TransactionData {
         }
     }
 
-    fun updateHash(hash: String): TransactionData {
-        return when (this) {
-            is Uncompiled -> {
-                copy(hash = hash)
-            }
-            is Compiled -> {
-                copy(hash = hash)
-            }
-        }
-    }
-
     fun updateStatus(status: TransactionStatus): TransactionData {
         return when (this) {
             is Uncompiled -> {
