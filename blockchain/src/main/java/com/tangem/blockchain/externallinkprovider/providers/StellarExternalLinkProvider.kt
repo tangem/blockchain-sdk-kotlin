@@ -6,7 +6,7 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 internal class StellarExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
     override val explorerBaseUrl: String =
-        if (isTestnet) "https://testnet.stellarchain.io/" else " https://stellarchain.io/"
+        if (isTestnet) "https://testnet.stellarchain.io/" else "https://stellarchain.io/"
 
     override val testNetTopUpUrl: String? =
         if (isTestnet) "https://laboratory.stellar.org/#account-creator?network=test" else null
