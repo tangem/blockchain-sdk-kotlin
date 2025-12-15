@@ -195,7 +195,10 @@ internal class EtherscanTransactionHistoryProvider(
     ): TransactionHistoryItem.TransactionType {
         return if (filterType is TransactionHistoryRequest.FilterType.Coin && this.isContractInteraction) {
             val fnName = this.functionName?.substringBefore("(")
-            TransactionHistoryItem.TransactionType.ContractMethodName(fnName ?: this.functionName ?: UNKNOWN)
+            TransactionHistoryItem.TransactionType.ContractMethodName(
+                name = fnName ?: this.functionName ?: UNKNOWN,
+                callData = input,
+            )
         } else {
             // Retrieve the methodId from a specific field in the response. If unable to
             // extract the methodId from either, return the default transaction type.
@@ -204,7 +207,10 @@ internal class EtherscanTransactionHistoryProvider(
             // MethodId is empty for the coin transfers
             if (methodId.isNullOrEmpty()) return TransactionHistoryItem.TransactionType.Transfer
 
-            TransactionHistoryItem.TransactionType.ContractMethod(id = methodId)
+            TransactionHistoryItem.TransactionType.ContractMethod(
+                id = methodId,
+                callData = input,
+            )
         }
     }
 
