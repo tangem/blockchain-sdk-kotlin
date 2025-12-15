@@ -17,7 +17,7 @@ class TronNetworkService(
     private val blockchain: Blockchain,
 ) {
 
-    private val multiProvider = MultiNetworkProvider(rpcNetworkProviders)
+    private val multiProvider = MultiNetworkProvider(rpcNetworkProviders, blockchain)
     val host: String
         get() = multiProvider.currentProvider.baseUrl
 

@@ -95,10 +95,13 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     ScrollTestnet(id = 534351, blockchain = Blockchain.ScrollTestnet),
     ZkLinkNova(id = 810180, blockchain = Blockchain.ZkLinkNova),
     ZkLinkNovaTestnet(id = 810181, blockchain = Blockchain.ZkLinkNovaTestnet),
-    Pepecoin(id = 63, blockchain = Blockchain.Pepecoin),
-    PepecoinTestnet(id = 63, blockchain = Blockchain.PepecoinTestnet), // TODO("Check chain id")
     Hyperliquid(id = 999, blockchain = Blockchain.Hyperliquid),
     HyperliquidTestnet(id = 998, blockchain = Blockchain.HyperliquidTestnet),
     Quai(id = 9, blockchain = Blockchain.Quai),
     QuaiTestnet(id = 15000, blockchain = Blockchain.QuaiTestnet),
+    Linea(id = 59144, blockchain = Blockchain.Linea),
+    LineaTestnet(id = 59141, blockchain = Blockchain.LineaTestnet),
+    ArbitrumNova(id = 42170, blockchain = Blockchain.ArbitrumNova),
+    Plasma(id = 9745, blockchain = Blockchain.Plasma),
+    PlasmaTestnet(id = 9746, blockchain = Blockchain.PlasmaTestnet),
 }
