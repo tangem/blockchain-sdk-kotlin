@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.cosmos.network
 
 import com.tangem.blockchain.blockchains.cosmos.CosmosAccountInfo
 import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.toBlockchainSdkError
@@ -15,10 +16,11 @@ import java.math.BigDecimal
 
 class CosmosNetworkService(
     providers: List<CosmosRestProvider>,
+    blockchain: Blockchain,
     private val cosmosChain: CosmosChain,
 ) {
 
-    private val multiJsonRpcProvider = MultiNetworkProvider(providers)
+    private val multiJsonRpcProvider = MultiNetworkProvider(providers, blockchain)
 
     val host: String get() = multiJsonRpcProvider.currentProvider.baseUrl
 

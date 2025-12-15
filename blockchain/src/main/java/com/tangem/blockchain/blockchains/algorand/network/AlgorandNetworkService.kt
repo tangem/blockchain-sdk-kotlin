@@ -31,7 +31,7 @@ internal class AlgorandNetworkService(
 
     val host: String get() = multiJsonRpcProvider.currentProvider.baseUrl
 
-    private val multiJsonRpcProvider = MultiNetworkProvider(networkProviders)
+    private val multiJsonRpcProvider = MultiNetworkProvider(networkProviders, blockchain)
 
     suspend fun getAccountInfo(address: String, pendingTxHashes: Set<String>): Result<AlgorandAccountModel> {
         return try {

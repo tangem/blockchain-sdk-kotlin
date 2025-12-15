@@ -23,6 +23,7 @@ internal object BitcoinWalletManagerAssembly : WalletManagerAssembly<BitcoinWall
                 networkProvider = BitcoinNetworkService(
                     providers = BitcoinProvidersBuilder(providerTypes = input.providerTypes, config = input.config)
                         .build(blockchain),
+                    blockchain = blockchain,
                 ),
                 transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
                 feesCalculator = BitcoinFeesCalculator(blockchain),

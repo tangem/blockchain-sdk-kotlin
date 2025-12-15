@@ -14,7 +14,8 @@ internal object XDCWalletManagerAssembly : WalletManagerAssembly<XDCWalletManage
     override fun make(input: WalletManagerAssemblyInput): XDCWalletManager {
         return with(input.wallet) {
             val multiNetworkProvider = MultiNetworkProvider(
-                XDCProvidersBuilder(input.providerTypes, input.config).build(blockchain),
+                providers = XDCProvidersBuilder(input.providerTypes, input.config).build(blockchain),
+                blockchain = blockchain,
             )
             XDCWalletManager(
                 wallet = this,

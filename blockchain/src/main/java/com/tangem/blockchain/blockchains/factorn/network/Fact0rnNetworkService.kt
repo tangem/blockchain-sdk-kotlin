@@ -30,7 +30,7 @@ internal class Fact0rnNetworkService(
     override val baseUrl: String
         get() = multiProvider.currentProvider.baseUrl
 
-    private val multiProvider = MultiNetworkProvider(providers)
+    private val multiProvider = MultiNetworkProvider(providers, blockchain)
     private val addressService = Fact0rnAddressService()
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> = coroutineScope {

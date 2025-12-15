@@ -130,9 +130,9 @@ internal open class BitcoinWalletManager(
 
                         return when (sendResult) {
                             is SimpleResult.Success -> {
-                                transactionData.hash = transactionBuilder.getTransactionHash().toHexString()
-                                wallet.addOutgoingTransaction(transactionData)
-                                Result.Success(TransactionSendResult(transactionData.hash ?: ""))
+                                val txHash = transactionBuilder.getTransactionHash().toHexString()
+                                wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+                                Result.Success(TransactionSendResult(txHash))
                             }
                             is SimpleResult.Failure -> return Result.Failure(sendResult.error)
                         }

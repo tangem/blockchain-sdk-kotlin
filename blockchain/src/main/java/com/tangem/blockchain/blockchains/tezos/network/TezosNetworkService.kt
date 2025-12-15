@@ -1,12 +1,13 @@
 package com.tangem.blockchain.blockchains.tezos.network
 
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
 
 class TezosNetworkService(providers: List<TezosNetworkProvider>) : TezosNetworkProvider {
 
-    private val multiProvider = MultiNetworkProvider(providers)
+    private val multiProvider = MultiNetworkProvider(providers, Blockchain.Tezos)
     override val baseUrl: String
         get() = multiProvider.currentProvider.baseUrl
 

@@ -41,7 +41,7 @@ class SolanaWalletManager internal constructor(
     private val networkServices = providers.map { SolanaNetworkService(it) }
 
     private val multiNetworkProvider: MultiNetworkProvider<SolanaNetworkService> =
-        MultiNetworkProvider(networkServices)
+        MultiNetworkProvider(networkServices, wallet.blockchain)
     private val tokenAccountInfoFinder = SolanaTokenAccountInfoFinder(multiNetworkProvider)
     private val transactionBuilder = SolanaTransactionBuilder(account, multiNetworkProvider)
     private val solanaTransactionSizeReducer = SolanaTransactionSizeReducer(
@@ -223,8 +223,11 @@ class SolanaWalletManager internal constructor(
 
             when (val result = sendTransaction(signedTx, originalTx, startSendingTimestamp)) {
                 is Result.Success -> {
-                    originalTx.hash = result.data.hash
-                    wallet.addOutgoingTransaction(originalTx.updateHash(hash = result.data.hash))
+                    val txHash = result.data.hash
+                    wallet.addOutgoingTransaction(
+                        transactionData = originalTx,
+                        txHash = txHash,
+                    )
                     sendResults.add(result)
 
                     delay(DELAY_AFTER_SPLIT_TRANSACTION)
@@ -243,9 +246,9 @@ class SolanaWalletManager internal constructor(
             .mapIndexed { index, (originalTx, signedTx) ->
                 when (val result = sendTransaction(signedTx, originalTx, startSendingTimestamp)) {
                     is Result.Success -> {
-                        originalTx.hash = result.data.hash
-                        wallet.addOutgoingTransaction(originalTx.updateHash(hash = result.data.hash))
-                        Result.Success(TransactionSendResult(result.data.hash))
+                        val txHash = result.data.hash
+                        wallet.addOutgoingTransaction(transactionData = originalTx, txHash = txHash)
+                        Result.Success(TransactionSendResult(txHash))
                     }
                     is Result.Failure -> result
                 }
@@ -342,11 +345,14 @@ class SolanaWalletManager internal constructor(
             .firstOrNull()
 
         if (firstSuccessResult != null) {
-            val hash = firstSuccessResult.data
-            transactionData.hash = hash
-            wallet.addOutgoingTransaction(transactionData, hashToLowercase = false)
+            val txHash = firstSuccessResult.data
+            wallet.addOutgoingTransaction(
+                transactionData = transactionData,
+                txHash = txHash,
+                hashToLowercase = false,
+            )
 
-            return Result.Success(TransactionSendResult(hash))
+            return Result.Success(TransactionSendResult(txHash))
         }
 
         val error = sendResults

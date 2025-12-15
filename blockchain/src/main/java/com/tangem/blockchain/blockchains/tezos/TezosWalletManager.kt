@@ -106,9 +106,9 @@ class TezosWalletManager(
                 when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
                     is SimpleResult.Failure -> Result.Failure(sendResult.error)
                     SimpleResult.Success -> {
-                        transactionData.hash = transactionToSend
-                        wallet.addOutgoingTransaction(transactionData)
-                        Result.Success(TransactionSendResult(transactionToSend))
+                        val txHash = transactionToSend
+                        wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+                        Result.Success(TransactionSendResult(txHash))
                     }
                 }
             }

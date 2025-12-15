@@ -74,11 +74,14 @@ internal class RadiantWalletManager(
                     val rawTx = transactionBuilder.buildForSend(transactionData, signatures)
                     when (val sendResult = networkService.sendTransaction(rawTx)) {
                         is Result.Success -> {
-                            val hash = sendResult.data
-                            transactionData.hash = hash
-                            wallet.addOutgoingTransaction(transactionData, hashToLowercase = false)
+                            val txHash = sendResult.data
+                            wallet.addOutgoingTransaction(
+                                transactionData = transactionData,
+                                txHash = txHash,
+                                hashToLowercase = false,
+                            )
 
-                            Result.Success(TransactionSendResult(hash))
+                            Result.Success(TransactionSendResult(txHash))
                         }
                         is Result.Failure -> sendResult
                     }

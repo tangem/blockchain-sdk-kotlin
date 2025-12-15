@@ -4,9 +4,12 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 
-class LitecoinNetworkService(providers: List<BitcoinNetworkProvider>) : BitcoinNetworkService(providers) {
+class LitecoinNetworkService(
+    providers: List<BitcoinNetworkProvider>,
+) : BitcoinNetworkService(providers, Blockchain.Litecoin) {
 
     override suspend fun getFee(): Result<BitcoinFee> {
         val result = super.getFee()

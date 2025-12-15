@@ -14,7 +14,8 @@ internal object MantleWalletManagerAssembly : WalletManagerAssembly<MantleWallet
     override fun make(input: WalletManagerAssemblyInput): MantleWalletManager {
         return with(input.wallet) {
             val multiNetworkProvider = MultiNetworkProvider(
-                MantleProvidersBuilder(input.providerTypes).build(blockchain),
+                providers = MantleProvidersBuilder(input.providerTypes).build(blockchain),
+                blockchain = blockchain,
             )
 
             MantleWalletManager(
