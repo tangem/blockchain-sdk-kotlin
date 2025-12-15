@@ -2,6 +2,8 @@ package com.tangem.blockchain.blockchains.bitcoin.walletconnect
 
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.extensions.Result
+import fr.acinq.bitcoin.Script
+import fr.acinq.bitcoin.SigVersion
 import fr.acinq.bitcoin.Transaction
 
 /**
@@ -15,6 +17,9 @@ import fr.acinq.bitcoin.Transaction
 internal object PsbtHashComputer {
 
     private const val SIGHASH_ALL = 1
+    private const val P2WPKH_SCRIPT_SIZE = 22
+    private const val P2WPKH_PREFIX_SIZE = 2
+    private const val P2WPKH_KEY_HASH_LENGTH = 20
 
     /**
      * Computes the signature hash for a given PSBT input.
@@ -72,7 +77,7 @@ internal object PsbtHashComputer {
             scriptCode,
             sighashType,
             witnessUtxo.amount,
-            signatureVersion = 0,
+            signatureVersion = SigVersion.SIGVERSION_WITNESS_V0,
         )
     }
 
@@ -83,11 +88,32 @@ internal object PsbtHashComputer {
         input: fr.acinq.bitcoin.psbt.Input,
         witnessUtxo: fr.acinq.bitcoin.TxOut,
     ): ByteArray {
+        val pubKeyScript = witnessUtxo.publicKeyScript.toByteArray()
+
         return when {
-            input.witnessScript != null -> fr.acinq.bitcoin.Script.write(input.witnessScript!!)
-            input.redeemScript != null -> fr.acinq.bitcoin.Script.write(input.redeemScript!!)
-            else -> witnessUtxo.publicKeyScript.toByteArray()
+            input.witnessScript != null -> Script.write(input.witnessScript!!)
+            input.redeemScript != null -> Script.write(input.redeemScript!!)
+            isP2WpkhScript(pubKeyScript) -> buildP2pkhScriptCode(pubKeyScript)
+            else -> pubKeyScript
         }
+    }
+
+    /**
+     * Builds the P2PKH scriptCode for SegWit v0 P2WPKH inputs (BIP143 requirement).
+     */
+    private fun buildP2pkhScriptCode(pubKeyScript: ByteArray): ByteArray {
+        val keyHash = pubKeyScript.copyOfRange(P2WPKH_PREFIX_SIZE, pubKeyScript.size)
+        val script = Script.pay2pkh(keyHash)
+        return Script.write(script)
+    }
+
+    /**
+     * Detects a simple P2WPKH scriptPubKey (0 <20-byte-pubkey-hash>).
+     */
+    private fun isP2WpkhScript(pubKeyScript: ByteArray): Boolean {
+        return pubKeyScript.size == P2WPKH_SCRIPT_SIZE &&
+            pubKeyScript[0] == 0x00.toByte() &&
+            pubKeyScript[1] == P2WPKH_KEY_HASH_LENGTH.toByte()
     }
 
     /**
