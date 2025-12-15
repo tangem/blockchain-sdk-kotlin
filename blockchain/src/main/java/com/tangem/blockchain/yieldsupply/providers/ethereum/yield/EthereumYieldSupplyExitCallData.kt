@@ -1,5 +1,7 @@
 package com.tangem.blockchain.yieldsupply.providers.ethereum.yield
 
+import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.parseEthereumAddress
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.extensions.hexToFixedSizeBytes
 import com.tangem.common.extensions.hexToBytes
@@ -11,9 +13,9 @@ import com.tangem.common.extensions.hexToBytes
  *  Signature: `withdrawAndDeactivate(address)`
  */
 class EthereumYieldSupplyExitCallData(
-    private val tokenContractAddress: String,
+    val tokenContractAddress: String,
 ) : SmartContractCallData {
-    override val methodId: String = "0xc65e6dcf"
+    override val methodId: String = METHOD_ID
     override val data: ByteArray
         get() {
             val prefixData = methodId.hexToBytes()
@@ -21,4 +23,21 @@ class EthereumYieldSupplyExitCallData(
 
             return prefixData + tokenContractAddressData
         }
+
+    companion object {
+        const val METHOD_ID = "0xc65e6dcf"
+        fun decode(rawData: String): EthereumYieldSupplyExitCallData? {
+            if (!rawData.contains(METHOD_ID)) return null
+
+            val addressService = EthereumAddressService()
+            return runCatching {
+                val tokenContractAddress = rawData.removePrefix(METHOD_ID).parseEthereumAddress()
+                if (addressService.validate(tokenContractAddress)) {
+                    EthereumYieldSupplyExitCallData(tokenContractAddress = tokenContractAddress)
+                } else {
+                    null
+                }
+            }.getOrNull()
+        }
+    }
 }
