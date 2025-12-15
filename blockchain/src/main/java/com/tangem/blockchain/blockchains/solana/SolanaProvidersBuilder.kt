@@ -26,6 +26,7 @@ internal class SolanaProvidersBuilder(
                 ProviderType.QuickNode -> getQuickNodeProvider()
                 ProviderType.GetBlock -> getGetBlock()
                 ProviderType.Solana.Official -> mainNet()
+                ProviderType.Mock -> getMockProvider()
                 else -> null
             }
         }
@@ -92,6 +93,13 @@ internal class SolanaProvidersBuilder(
         return listOf(
             *BlockchainSdkRetrofitBuilder.interceptors.toTypedArray(),
             HttpLoggingInterceptor,
+        )
+    }
+
+    private fun getMockProvider(): SolanaRpcClient {
+        return SolanaRpcClient(
+            baseUrl = "[REDACTED_ENV_URL]",
+            httpInterceptors = createLoggingInterceptors(),
         )
     }
 

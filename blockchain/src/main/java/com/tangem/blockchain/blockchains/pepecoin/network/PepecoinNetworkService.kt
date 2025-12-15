@@ -36,7 +36,7 @@ internal class PepecoinNetworkService(
     override val baseUrl: String
         get() = multiProvider.currentProvider.baseUrl
 
-    private val multiProvider = MultiNetworkProvider(providers)
+    private val multiProvider = MultiNetworkProvider(providers, blockchain)
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> = coroutineScope {
         val scriptHash = generateAddressScriptHash(address)

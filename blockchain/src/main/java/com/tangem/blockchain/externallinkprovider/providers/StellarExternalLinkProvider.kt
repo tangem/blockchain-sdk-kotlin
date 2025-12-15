@@ -6,16 +6,16 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 internal class StellarExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
     override val explorerBaseUrl: String =
-        if (isTestnet) "https://stellar.expert/explorer/testnet/" else "https://stellar.expert/explorer/public/"
+        if (isTestnet) "https://testnet.stellarchain.io/" else "https://stellarchain.io/"
 
     override val testNetTopUpUrl: String? =
         if (isTestnet) "https://laboratory.stellar.org/#account-creator?network=test" else null
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
-        return explorerBaseUrl + "account/$walletAddress"
+        return explorerBaseUrl + "accounts/$walletAddress"
     }
 
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
-        return TxExploreState.Url(explorerBaseUrl + "tx/$transactionHash")
+        return TxExploreState.Url(explorerBaseUrl + "transactions/$transactionHash")
     }
 }
