@@ -49,11 +49,14 @@ internal class ICPWalletManager(
 
         return when (val sendResult = networkProvider.signAndSendTransaction(transferWithSigner)) {
             is Result.Success -> {
-                val hash = sendResult.data?.toString() ?: ""
-                transactionData.hash = hash
-                wallet.addOutgoingTransaction(transactionData, hashToLowercase = false)
+                val txHash = sendResult.data?.toString() ?: ""
+                wallet.addOutgoingTransaction(
+                    transactionData = transactionData,
+                    txHash = txHash,
+                    hashToLowercase = false,
+                )
 
-                Result.Success(TransactionSendResult(hash))
+                Result.Success(TransactionSendResult(txHash))
             }
             is Result.Failure -> sendResult
         }
