@@ -16,11 +16,7 @@ interface PsbtProvider {
      * @param signer Transaction signer (typically Tangem card)
      * @return Success with signed PSBT in Base64, or Failure with error
      */
-    suspend fun signPsbt(
-        psbtBase64: String,
-        signInputs: Any,
-        signer: TransactionSigner,
-    ): Result<String>
+    suspend fun signPsbt(psbtBase64: String, signInputs: Any, signer: TransactionSigner): Result<String>
 
     /**
      * Broadcasts a finalized PSBT transaction.
