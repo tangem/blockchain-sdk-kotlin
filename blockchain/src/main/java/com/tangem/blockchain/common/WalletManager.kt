@@ -31,14 +31,16 @@ abstract class WalletManager(
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
+    messageSigner: MessageSigner = DefaultMessageSigner,
+    psbtProvider: PsbtProvider = DefaultPsbtProvider,
+    addressProvider: AddressProvider = DefaultAddressProvider(wallet),
 ) : TransactionSender,
     TransactionHistoryProvider by transactionHistoryProvider,
     NFTProvider by nftProvider,
-    YieldSupplyProvider by yieldSupplyProvider {
-
-    open val messageSigner: MessageSigner = DefaultMessageSigner
-    open val psbtProvider: PsbtProvider = DefaultPsbtProvider
-    open val addressProvider: AddressProvider = DefaultAddressProvider(wallet)
+    YieldSupplyProvider by yieldSupplyProvider,
+    MessageSigner by messageSigner,
+    PsbtProvider by psbtProvider,
+    AddressProvider by addressProvider {
 
     open val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Unspecified
 
@@ -241,10 +243,10 @@ interface TransactionSender {
     )
 
     suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
         return getFee(
-            amount = transactionData.amount,
-            destination = transactionData.destinationAddress,
+            amount = uncompiledTransaction.amount,
+            destination = uncompiledTransaction.destinationAddress,
         )
     }
 
