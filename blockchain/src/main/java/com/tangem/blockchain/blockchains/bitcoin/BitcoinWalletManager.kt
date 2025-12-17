@@ -8,9 +8,6 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoin.psbt.BitcoinPsbtProvider
 import com.tangem.blockchain.common.*
-import com.tangem.blockchain.common.address.AddressProvider
-import com.tangem.blockchain.common.messagesigning.MessageSigner
-import com.tangem.blockchain.common.psbt.PsbtProvider
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -33,15 +30,14 @@ open class BitcoinWalletManager(
 ) : WalletManager(
     wallet = wallet,
     transactionHistoryProvider = transactionHistoryProvider,
+    messageSigner = BitcoinMessageSigner(wallet),
+    psbtProvider = BitcoinPsbtProvider(wallet, networkProvider),
+    addressProvider = BitcoinAddressProvider(wallet),
 ),
     SignatureCountValidator,
     UtxoBlockchainManager {
 
     protected val blockchain = wallet.blockchain
-
-    override val messageSigner: MessageSigner = BitcoinMessageSigner(wallet)
-    override val psbtProvider: PsbtProvider = BitcoinPsbtProvider(wallet, networkProvider)
-    override val addressProvider: AddressProvider = BitcoinAddressProvider(wallet)
 
     override val dustValue: BigDecimal = feesCalculator.minimalFeePerKb
 
