@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import com.google.common.truth.Truth.assertThat
-import com.tangem.blockchain.blockchains.bitcoin.walletconnect.BitcoinMessageSigner
+import com.tangem.blockchain.blockchains.bitcoin.messagesigning.BitcoinMessageSigner
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignMessageProtocol
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.TransactionSigner
@@ -103,7 +103,7 @@ class BitcoinMessageSignerTest {
         val result = messageSigner.signMessage(
             message = message,
             address = testSegwitAddress,
-            protocol = SignMessageProtocol.ECDSA,
+            protocol = "ecdsa",
             signer = transactionSigner,
         )
 
@@ -128,7 +128,7 @@ class BitcoinMessageSignerTest {
         val result = messageSigner.signMessage(
             message = message,
             address = wrongAddress,
-            protocol = SignMessageProtocol.ECDSA,
+            protocol = "ecdsa",
             signer = transactionSigner,
         )
 
@@ -147,7 +147,7 @@ class BitcoinMessageSignerTest {
         val result = messageSigner.signMessage(
             message = message,
             address = testSegwitAddress,
-            protocol = SignMessageProtocol.BIP322,
+            protocol = "bip322",
             signer = transactionSigner,
         )
 
@@ -172,7 +172,7 @@ class BitcoinMessageSignerTest {
         val result = messageSigner.signMessage(
             message = message,
             address = testSegwitAddress,
-            protocol = SignMessageProtocol.ECDSA,
+            protocol = "ecdsa",
             signer = transactionSigner,
         )
 
@@ -194,7 +194,7 @@ class BitcoinMessageSignerTest {
         val result = messageSigner.signMessage(
             message = message,
             address = testSegwitAddress,
-            protocol = SignMessageProtocol.ECDSA,
+            protocol = "ecdsa",
             signer = transactionSigner,
         )
 
@@ -226,7 +226,7 @@ class BitcoinMessageSignerTest {
         val result = messageSigner.signMessage(
             message = message,
             address = testLegacyAddress,
-            protocol = SignMessageProtocol.ECDSA,
+            protocol = SignMessageProtocol.ECDSA.name,
             signer = transactionSigner,
         )
 
@@ -264,7 +264,7 @@ class BitcoinMessageSignerTest {
         val result = messageSigner.signMessage(
             message = message,
             address = testSegwitAddress,
-            protocol = SignMessageProtocol.ECDSA,
+            protocol = "ecdsa",
             signer = transactionSigner,
         )
 
@@ -301,7 +301,7 @@ class BitcoinMessageSignerTest {
         val result = messageSigner.signMessage(
             message = message,
             address = testSegwitAddress,
-            protocol = SignMessageProtocol.ECDSA,
+            protocol = "ecdsa",
             signer = transactionSigner,
         )
 

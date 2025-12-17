@@ -5,11 +5,7 @@ import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.extensions.Result
 
 internal object DefaultPsbtProvider : PsbtProvider {
-    override suspend fun signPsbt(
-        psbtBase64: String,
-        signInputs: Any,
-        signer: TransactionSigner,
-    ): Result<String> {
+    override suspend fun signPsbt(psbtBase64: String, signInputs: Any, signer: TransactionSigner): Result<String> {
         return Result.Failure(
             BlockchainSdkError.CustomError("PSBT signing is not supported for this blockchain"),
         )

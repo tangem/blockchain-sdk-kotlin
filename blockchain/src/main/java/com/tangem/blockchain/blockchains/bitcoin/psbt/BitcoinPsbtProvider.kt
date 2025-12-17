@@ -27,11 +27,7 @@ internal class BitcoinPsbtProvider(
 
     private val psbtSigner = BitcoinPsbtSigner(wallet, networkProvider)
 
-    override suspend fun signPsbt(
-        psbtBase64: String,
-        signInputs: Any,
-        signer: TransactionSigner,
-    ): Result<String> {
+    override suspend fun signPsbt(psbtBase64: String, signInputs: Any, signer: TransactionSigner): Result<String> {
         val inputs = when (signInputs) {
             is List<*> -> signInputs.filterIsInstance<SignInput>()
             else -> return Result.Failure(
@@ -48,9 +44,7 @@ internal class BitcoinPsbtProvider(
 
     override suspend fun broadcastPsbt(psbtBase64: String): Result<String> {
         return try {
-            // Parse signed PSBT from Base64
             val psbtBytes = Base64.decode(psbtBase64, Base64.NO_WRAP)
-
             val psbt = when (val result = Psbt.read(psbtBytes)) {
                 is fr.acinq.bitcoin.utils.Either.Right -> result.value
                 is fr.acinq.bitcoin.utils.Either.Left -> {
@@ -59,8 +53,6 @@ internal class BitcoinPsbtProvider(
                     )
                 }
             }
-
-            // Broadcast the transaction
             psbtSigner.broadcastPsbt(psbt)
         } catch (e: Exception) {
             Result.Failure(
