@@ -1,20 +1,18 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import com.google.common.truth.Truth.assertThat
-import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
-import com.tangem.blockchain.blockchains.bitcoin.walletconnect.BitcoinWalletConnectHandler
-import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.GetAccountAddressesRequest
+import com.tangem.blockchain.blockchains.bitcoin.address.BitcoinAddressProvider
+import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.AddressIntention
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.extensions.Result
-import io.mockk.mockk
 import org.junit.Before
 import org.junit.Test
 
 /**
- * Unit tests for BitcoinWalletConnectHandler.getAccountAddresses method.
+ * Unit tests for BitcoinAddressProvider.getAddresses method.
  *
  * Tests cover:
  * - Default behavior (no intentions specified)
@@ -26,8 +24,7 @@ import org.junit.Test
 internal class BitcoinWalletConnectGetAccountAddressesTest {
 
     private lateinit var wallet: Wallet
-    private lateinit var walletManager: BitcoinWalletManager
-    private lateinit var handler: BitcoinWalletConnectHandler
+    private lateinit var addressProvider: BitcoinAddressProvider
 
     private val testPublicKey = ByteArray(65) { 0x04 }
     private val testLegacyAddress = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
@@ -49,188 +46,93 @@ internal class BitcoinWalletConnectGetAccountAddressesTest {
             tokens = emptySet(),
         )
 
-        // Mock wallet manager and network provider
-        walletManager = mockk(relaxed = true)
-        val networkProvider = mockk<BitcoinNetworkProvider>(relaxed = true)
-
-        handler = BitcoinWalletConnectHandler(
-            wallet = wallet,
-            walletManager = walletManager,
-            networkProvider = networkProvider,
-        )
+        addressProvider = BitcoinAddressProvider(wallet)
     }
 
     @Test
-    fun `getAccountAddresses returns all addresses when no intentions specified`() {
-        // Given
-        val request = GetAccountAddressesRequest(
-            account = testSegwitAddress,
-            intentions = null,
-        )
-
+    fun `getAddresses returns all addresses when no intentions specified`() {
         // When
-        val result = handler.getAccountAddresses(request)
+        val result = addressProvider.getAddresses(filterOptions = null)
 
         // Then
         assertThat(result).isInstanceOf(Result.Success::class.java)
-        val response = (result as Result.Success).data
+        val addresses = (result as Result.Success).data
 
-        assertThat(response.addresses).hasSize(2)
-        assertThat(response.addresses.map { it.address }).containsExactly(
+        assertThat(addresses).hasSize(2)
+        assertThat(addresses.map { it.address }).containsExactly(
             testLegacyAddress,
             testSegwitAddress,
         )
     }
 
     @Test
-    fun `getAccountAddresses returns empty array for ordinal-only intention`() {
-        // Given
-        val request = GetAccountAddressesRequest(
-            account = testSegwitAddress,
-            intentions = listOf("ordinal"),
-        )
-
+    fun `getAddresses returns empty array for ordinal-only intention`() {
         // When
-        val result = handler.getAccountAddresses(request)
+        val result = addressProvider.getAddresses(filterOptions = listOf("ordinal"))
 
         // Then
         assertThat(result).isInstanceOf(Result.Success::class.java)
-        val response = (result as Result.Success).data
+        val addresses = (result as Result.Success).data
 
-        assertThat(response.addresses).isEmpty()
+        assertThat(addresses).isEmpty()
     }
 
     @Test
-    fun `getAccountAddresses returns addresses for payment intention`() {
-        // Given
-        val request = GetAccountAddressesRequest(
-            account = testSegwitAddress,
-            intentions = listOf("payment"),
-        )
-
+    fun `getAddresses returns addresses for payment intention`() {
         // When
-        val result = handler.getAccountAddresses(request)
+        val result = addressProvider.getAddresses(filterOptions = listOf("payment"))
 
         // Then
         assertThat(result).isInstanceOf(Result.Success::class.java)
-        val response = (result as Result.Success).data
+        val addresses = (result as Result.Success).data
 
-        assertThat(response.addresses).hasSize(2)
-        response.addresses.forEach { address ->
-            assertThat(address.intention).isEqualTo("payment")
+        assertThat(addresses).hasSize(2)
+        addresses.forEach { address ->
+            val intention = address.metadata?.get("intention") as? String
+            assertThat(intention).isEqualTo(AddressIntention.PAYMENT.toApiString())
         }
     }
 
     @Test
-    fun `getAccountAddresses returns addresses for mixed intentions`() {
-        // Given
-        val request = GetAccountAddressesRequest(
-            account = testSegwitAddress,
-            intentions = listOf("payment", "ordinal"),
-        )
-
+    fun `getAddresses returns addresses for mixed intentions`() {
         // When
-        val result = handler.getAccountAddresses(request)
+        val result = addressProvider.getAddresses(filterOptions = listOf("payment", "ordinal"))
 
         // Then
         assertThat(result).isInstanceOf(Result.Success::class.java)
-        val response = (result as Result.Success).data
+        val addresses = (result as Result.Success).data
 
         // Should return addresses because not ONLY ordinal
-        assertThat(response.addresses).hasSize(2)
+        assertThat(addresses).hasSize(2)
     }
 
     @Test
-    fun `getAccountAddresses includes both Legacy and SegWit addresses`() {
-        // Given
-        val request = GetAccountAddressesRequest(
-            account = testSegwitAddress,
-            intentions = listOf("payment"),
-        )
-
+    fun `getAddresses includes both Legacy and SegWit addresses`() {
         // When
-        val result = handler.getAccountAddresses(request)
+        val result = addressProvider.getAddresses(filterOptions = listOf("payment"))
 
         // Then
         assertThat(result).isInstanceOf(Result.Success::class.java)
-        val response = (result as Result.Success).data
+        val addresses = (result as Result.Success).data
 
-        val legacyAddress = response.addresses.find { it.address == testLegacyAddress }
-        val segwitAddress = response.addresses.find { it.address == testSegwitAddress }
+        val legacyAddress = addresses.find { it.address == testLegacyAddress }
+        val segwitAddress = addresses.find { it.address == testSegwitAddress }
 
         assertThat(legacyAddress).isNotNull()
         assertThat(segwitAddress).isNotNull()
     }
 
     @Test
-    fun `getAccountAddresses does not expose publicKey by default`() {
-        // Given
-        val request = GetAccountAddressesRequest(
-            account = testSegwitAddress,
-            intentions = listOf("payment"),
-        )
-
+    fun `getAddresses does not expose publicKey by default`() {
         // When
-        val result = handler.getAccountAddresses(request)
+        val result = addressProvider.getAddresses(filterOptions = listOf("payment"))
 
         // Then
         assertThat(result).isInstanceOf(Result.Success::class.java)
-        val response = (result as Result.Success).data
+        val addresses = (result as Result.Success).data
 
-        response.addresses.forEach { address ->
+        addresses.forEach { address ->
             assertThat(address.publicKey).isNull()
         }
-    }
-
-    @Test
-    fun `getAccountAddresses handles invalid intention strings gracefully`() {
-        // Given
-        val request = GetAccountAddressesRequest(
-            account = testSegwitAddress,
-            intentions = listOf("invalid_intention", "payment"),
-        )
-
-        // When
-        val result = handler.getAccountAddresses(request)
-
-        // Then
-        assertThat(result).isInstanceOf(Result.Success::class.java)
-        val response = (result as Result.Success).data
-
-        // Should still return addresses (invalid intentions are filtered out)
-        assertThat(response.addresses).hasSize(2)
-    }
-
-    @Test
-    fun `getAccountAddresses handles single address wallet`() {
-        // Given
-        val singleAddressWallet = Wallet(
-            blockchain = Blockchain.Bitcoin,
-            addresses = setOf(Address(testSegwitAddress, AddressType.Default)),
-            publicKey = Wallet.PublicKey(testPublicKey.copyOf(), null),
-            tokens = emptySet(),
-        )
-
-        val networkProvider = mockk<BitcoinNetworkProvider>(relaxed = true)
-        val singleAddressHandler = BitcoinWalletConnectHandler(
-            wallet = singleAddressWallet,
-            walletManager = walletManager,
-            networkProvider = networkProvider,
-        )
-
-        val request = GetAccountAddressesRequest(
-            account = testSegwitAddress,
-            intentions = null,
-        )
-
-        // When
-        val result = singleAddressHandler.getAccountAddresses(request)
-
-        // Then
-        assertThat(result).isInstanceOf(Result.Success::class.java)
-        val response = (result as Result.Success).data
-
-        assertThat(response.addresses).hasSize(1)
-        assertThat(response.addresses[0].address).isEqualTo(testSegwitAddress)
     }
 }

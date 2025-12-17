@@ -22,7 +22,7 @@ internal class BitcoinAddressProvider(
         val intentions = parseIntentions(filterOptions)
 
         // If only "ordinal" intention is requested, return empty list
-        if (isOnlyOrdinalIntention(intentions)) {
+        if (intentions.singleOrNull() == AddressIntention.ORDINAL) {
             return Result.Success(emptyList())
         }
 
@@ -44,22 +44,8 @@ internal class BitcoinAddressProvider(
      */
     private fun parseIntentions(filterOptions: Any?): List<AddressIntention> {
         return when (filterOptions) {
-            is List<*> -> {
-                filterOptions.mapNotNull {
-                    when (it) {
-                        is String -> AddressIntention.fromString(it)
-                        else -> null
-                    }
-                }
-            }
+            is List<*> -> filterOptions.mapNotNull { (it as? String)?.let(AddressIntention::fromString) }
             else -> listOf(AddressIntention.PAYMENT)
         }
-    }
-
-    /**
-     * Checks if only ordinal intention is requested.
-     */
-    private fun isOnlyOrdinalIntention(intentions: List<AddressIntention>): Boolean {
-        return intentions.size == 1 && intentions.contains(AddressIntention.ORDINAL)
     }
 }

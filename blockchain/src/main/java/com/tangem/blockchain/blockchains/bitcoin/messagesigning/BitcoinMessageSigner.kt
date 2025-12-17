@@ -77,32 +77,24 @@ internal class BitcoinMessageSigner(
      * Validates signing protocol.
      */
     private fun validateProtocol(protocol: SignMessageProtocol): Result<Unit> {
-        return if (protocol == SignMessageProtocol.BIP322) {
-            Result.Failure(
+        return when (protocol) {
+            SignMessageProtocol.BIP322 -> Result.Failure(
                 BlockchainSdkError.CustomError("BIP322 message signing is not yet supported. Use ECDSA protocol."),
             )
-        } else {
-            Result.Success(Unit)
+            else -> Result.Success(Unit)
         }
     }
 
     /**
-     * Signs message hash using signer.
+     * Signs message hash using signer and extracts the signature.
      */
     private suspend fun signHash(messageHash: ByteArray, signer: TransactionSigner): Result<ByteArray> {
         return when (val result = signer.sign(listOf(messageHash), wallet.publicKey)) {
-            is CompletionResult.Success -> extractSignature(result.data)
+            is CompletionResult.Success -> result.data.firstOrNull()
+                ?.let { Result.Success(it) }
+                ?: Result.Failure(BlockchainSdkError.CustomError("Signer returned empty signature list"))
             is CompletionResult.Failure -> Result.fromTangemSdkError(result.error)
         }
-    }
-
-    /**
-     * Extracts first signature from signer result.
-     */
-    private fun extractSignature(signatures: List<ByteArray>): Result<ByteArray> {
-        return signatures.firstOrNull()
-            ?.let { Result.Success(it) }
-            ?: Result.Failure(BlockchainSdkError.CustomError("Signer returned empty signature list"))
     }
 
     /**
