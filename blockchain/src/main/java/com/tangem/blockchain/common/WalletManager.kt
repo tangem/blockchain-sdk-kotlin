@@ -1,5 +1,11 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.common.address.AddressProvider
+import com.tangem.blockchain.common.address.DefaultAddressProvider
+import com.tangem.blockchain.common.messagesigning.DefaultMessageSigner
+import com.tangem.blockchain.common.messagesigning.MessageSigner
+import com.tangem.blockchain.common.psbt.DefaultPsbtProvider
+import com.tangem.blockchain.common.psbt.PsbtProvider
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -29,6 +35,10 @@ abstract class WalletManager(
     TransactionHistoryProvider by transactionHistoryProvider,
     NFTProvider by nftProvider,
     YieldSupplyProvider by yieldSupplyProvider {
+
+    open val messageSigner: MessageSigner = DefaultMessageSigner
+    open val psbtProvider: PsbtProvider = DefaultPsbtProvider
+    open val addressProvider: AddressProvider = DefaultAddressProvider(wallet)
 
     open val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Unspecified
 

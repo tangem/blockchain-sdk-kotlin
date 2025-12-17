@@ -1,11 +1,16 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import android.util.Log
+import com.tangem.blockchain.blockchains.bitcoin.address.BitcoinAddressProvider
+import com.tangem.blockchain.blockchains.bitcoin.messagesigning.BitcoinMessageSigner
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
-import com.tangem.blockchain.blockchains.bitcoin.walletconnect.BitcoinWalletConnectHandler
+import com.tangem.blockchain.blockchains.bitcoin.psbt.BitcoinPsbtProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.address.AddressProvider
+import com.tangem.blockchain.common.messagesigning.MessageSigner
+import com.tangem.blockchain.common.psbt.PsbtProvider
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -25,18 +30,18 @@ open class BitcoinWalletManager(
     protected val transactionBuilder: BitcoinTransactionBuilder,
     private val networkProvider: BitcoinNetworkProvider,
     private val feesCalculator: BitcoinFeesCalculator,
-) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider),
+) : WalletManager(
+    wallet = wallet,
+    transactionHistoryProvider = transactionHistoryProvider,
+),
     SignatureCountValidator,
     UtxoBlockchainManager {
 
     protected val blockchain = wallet.blockchain
-    val walletConnectHandler: BitcoinWalletConnectHandler by lazy {
-        BitcoinWalletConnectHandler(
-            wallet = wallet,
-            walletManager = this,
-            networkProvider = networkProvider,
-        )
-    }
+
+    override val messageSigner: MessageSigner = BitcoinMessageSigner(wallet)
+    override val psbtProvider: PsbtProvider = BitcoinPsbtProvider(wallet, networkProvider)
+    override val addressProvider: AddressProvider = BitcoinAddressProvider(wallet)
 
     override val dustValue: BigDecimal = feesCalculator.minimalFeePerKb
 

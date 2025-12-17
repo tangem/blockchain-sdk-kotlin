@@ -1,10 +1,12 @@
-package com.tangem.blockchain.blockchains.bitcoin.walletconnect
+package com.tangem.blockchain.blockchains.bitcoin.messagesigning
 
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignMessageProtocol
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.messagesigning.MessageSignatureResult
+import com.tangem.blockchain.common.messagesigning.MessageSigner
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
@@ -19,7 +21,7 @@ import java.math.BigInteger
 import java.nio.charset.StandardCharsets
 
 /**
- * Handler for Bitcoin message signing operations.
+ * Bitcoin implementation of message signing.
  *
  * Implements Bitcoin message signing according to the standard format:
  * - ECDSA: Standard Bitcoin message signing (BIP137 compatible)
@@ -33,32 +35,17 @@ import java.nio.charset.StandardCharsets
  */
 internal class BitcoinMessageSigner(
     private val wallet: Wallet,
-) {
+) : MessageSigner {
 
-    /**
-     * Signs a message using Bitcoin message signing format.
-     *
-     * This method:
-     * 1. Validates that the signing address belongs to this wallet
-     * 2. Creates the Bitcoin Signed Message format: "\x18Bitcoin Signed Message:\n" + message
-     * 3. Computes double SHA256 hash
-     * 4. Signs the hash using the provided signer
-     * 5. Returns signature in Bitcoin message signature format (65 bytes: header + r + s)
-     *
-     * @param message Message to sign
-     * @param address Address to sign with
-     * @param protocol Signing protocol (ECDSA or BIP322)
-     * @param signer Transaction signer (typically Tangem card)
-     * @return Success with signature data, or Failure with error
-     */
-    suspend fun signMessage(
+    override suspend fun signMessage(
         message: String,
         address: String,
-        protocol: SignMessageProtocol,
+        protocol: String,
         signer: TransactionSigner,
-    ): Result<SignMessageResult> {
+    ): Result<MessageSignatureResult> {
         val walletAddress = validateAddress(address).successOr { return it }
-        validateProtocol(protocol).successOr { return it }
+        val signProtocol = SignMessageProtocol.fromString(protocol)
+        validateProtocol(signProtocol).successOr { return it }
 
         val messageHash = createBitcoinMessageHash(message)
         val signature = signHash(messageHash, signer).successOr { return it }
@@ -67,7 +54,7 @@ internal class BitcoinMessageSigner(
         val bitcoinSignature = createBitcoinSignature(signature, walletAddress.type, messageHash)
 
         return Result.Success(
-            SignMessageResult(
+            MessageSignatureResult(
                 address = address,
                 signature = bitcoinSignature.toHexString(),
                 messageHash = messageHash.toHexString(),
@@ -263,16 +250,3 @@ internal class BitcoinMessageSigner(
         const val THREE_BYTES_SHIFT = 24
     }
 }
-
-/**
- * Result of message signing operation.
- *
- * @property address Address used for signing
- * @property signature Signature as hex string (65 bytes: header + r + s)
- * @property messageHash Message hash as hex string (32 bytes)
- */
-data class SignMessageResult(
-    val address: String,
-    val signature: String,
-    val messageHash: String,
-)
