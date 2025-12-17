@@ -35,7 +35,6 @@ internal object TransactionHistoryProviderFactory {
             Blockchain.EthereumClassic,
             Blockchain.Arbitrum,
             Blockchain.Avalanche,
-            Blockchain.BSC,
             Blockchain.EthereumPow,
             -> createEthereumProvider(blockchain, config)
 
@@ -75,6 +74,7 @@ internal object TransactionHistoryProviderFactory {
             Blockchain.Sonic,
             Blockchain.XDC,
             Blockchain.ZkSyncEra,
+            Blockchain.BSC,
             -> true
             else -> false
         }
