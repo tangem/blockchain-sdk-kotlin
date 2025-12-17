@@ -30,10 +30,10 @@ interface MessageSigner {
  *
  * @property address Address used for signing
  * @property signature Signature as hex string
- * @property messageHash Optional message hash as hex string
+ * @property messageHash Message hash as hex string
  */
 data class MessageSignatureResult(
     val address: String,
     val signature: String,
-    val messageHash: String? = null,
+    val messageHash: String,
 )
