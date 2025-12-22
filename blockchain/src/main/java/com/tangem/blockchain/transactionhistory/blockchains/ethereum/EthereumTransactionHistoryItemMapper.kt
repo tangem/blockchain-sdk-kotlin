@@ -130,7 +130,7 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
         // MethodId is empty for the coin transfers
         if (methodId.isEmpty()) return TransactionType.Transfer
 
-        return TransactionType.ContractMethod(id = methodId)
+        return TransactionType.ContractMethod(id = methodId, callData = ethereumSpecific?.data)
     }
 
     private fun methodIdFromRawData(rawData: String?): String? {
