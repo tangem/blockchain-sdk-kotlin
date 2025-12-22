@@ -15,7 +15,7 @@ import com.tangem.common.extensions.hexToBytes
  */
 class EthereumYieldSupplySendCallData(
     private val tokenContractAddress: String,
-    private val destinationAddress: String,
+    val destinationAddress: String,
     private val amount: Amount,
 ) : SmartContractCallData {
     override val methodId: String = "0x0779afe6"

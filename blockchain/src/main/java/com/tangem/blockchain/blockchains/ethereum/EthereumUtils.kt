@@ -5,13 +5,12 @@ import com.tangem.blockchain.blockchains.ethereum.models.EthereumCompiledTransac
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
-import com.tangem.blockchain.extensions.hexToBigDecimal
-import com.tangem.blockchain.extensions.isValidHex
-import com.tangem.blockchain.extensions.toBigDecimalOrDefault
+import com.tangem.blockchain.extensions.*
 import com.tangem.blockchain.network.moshi
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.remove
 import com.tangem.common.extensions.toDecompressedPublicKey
+import com.tangem.common.extensions.toHexString
 import org.kethereum.DEFAULT_GAS_LIMIT
 import org.kethereum.extensions.transactions.encode
 import org.kethereum.keccakshortcut.keccak
@@ -217,5 +216,9 @@ object EthereumUtils {
 
     fun makeTypedDataHash(rawMessage: String): ByteArray {
         return EthEip712Util.eip712Hash(rawMessage)
+    }
+
+    fun String.parseEthereumAddress(): String {
+        return hexToFixedSizeBytes().removeLeadingZeros().toHexString().formatHex().lowercase()
     }
 }
