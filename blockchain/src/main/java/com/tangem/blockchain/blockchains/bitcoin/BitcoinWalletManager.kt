@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import android.util.Log
-import com.tangem.blockchain.blockchains.bitcoin.address.BitcoinAddressProvider
+import com.tangem.blockchain.blockchains.bitcoin.address.BitcoinWalletAddressProvider
 import com.tangem.blockchain.blockchains.bitcoin.messagesigning.BitcoinMessageSigner
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
@@ -15,24 +15,28 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
+import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 
-open class BitcoinWalletManager(
+internal open class BitcoinWalletManager(
     wallet: Wallet,
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     protected val transactionBuilder: BitcoinTransactionBuilder,
     private val networkProvider: BitcoinNetworkProvider,
     private val feesCalculator: BitcoinFeesCalculator,
+    yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
 ) : WalletManager(
     wallet = wallet,
     transactionHistoryProvider = transactionHistoryProvider,
+    yieldSupplyProvider = yieldSupplyProvider,
     messageSigner = BitcoinMessageSigner(wallet),
     psbtProvider = BitcoinPsbtProvider(wallet, networkProvider),
-    addressProvider = BitcoinAddressProvider(wallet),
+    addressProvider = BitcoinWalletAddressProvider(wallet),
 ),
     SignatureCountValidator,
     UtxoBlockchainManager {

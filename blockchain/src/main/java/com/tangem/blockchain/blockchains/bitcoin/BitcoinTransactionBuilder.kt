@@ -59,7 +59,7 @@ open class BitcoinTransactionBuilder(
     internal fun getTransaction(): Transaction = transaction
 
     open fun buildToSign(transactionData: TransactionData, dustValue: BigDecimal?): Result<List<ByteArray>> {
-        val uncompiled = transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
         if (unspentOutputs.isNullOrEmpty()) {
             return Result.Failure(BlockchainSdkError.CustomError("Unspent outputs are missing"))
@@ -67,8 +67,8 @@ open class BitcoinTransactionBuilder(
 
         val outputsToSend = getMinimumRequiredUTXOsToSend(
             unspentOutputs = unspentOutputs!!,
-            transactionAmount = uncompiled.amount.value!!,
-            transactionFeeAmount = uncompiled.fee?.amount?.value!!,
+            transactionAmount = uncompiledTransaction.amount.value!!,
+            transactionFeeAmount = uncompiledTransaction.fee?.amount?.value!!,
             unspentToAmount = { it.amount },
             dustValue = dustValue,
         ).successOr { failure ->
@@ -78,7 +78,7 @@ open class BitcoinTransactionBuilder(
         val change: BigDecimal = calculateChange(transactionData, outputsToSend)
         transaction = transactionData.toBitcoinJTransaction(networkParameters, outputsToSend, change)
 
-        addMemoIfPresent(uncompiled).successOr { return it }
+        addMemoIfPresent(uncompiledTransaction).successOr { return it }
 
         val hashesToSign = MutableList(transaction.inputs.size) { byteArrayOf() }
         for (input in transaction.inputs) {
@@ -192,12 +192,12 @@ open class BitcoinTransactionBuilder(
     }
 
     fun calculateChange(transactionData: TransactionData, unspentOutputs: List<BitcoinUnspentOutput>): BigDecimal {
-        val uncompiled = transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
         val fullAmount = unspentOutputs.map { it.amount }.reduce { acc, number -> acc + number }
         return fullAmount - (
-            uncompiled.amount.value!! + (
-                uncompiled.fee?.amount?.value
+            uncompiledTransaction.amount.value!! + (
+                uncompiledTransaction.fee?.amount?.value
                     ?: 0.toBigDecimal()
                 )
             )
@@ -231,7 +231,7 @@ internal fun TransactionData.toBitcoinJTransaction(
     unspentOutputs: List<BitcoinUnspentOutput>,
     change: BigDecimal,
 ): Transaction {
-    val uncompiled = requireUncompiled()
+    val uncompiledTransaction = requireUncompiled()
 
     val transaction = Transaction(networkParameters)
     for (utxo in unspentOutputs) {
@@ -247,13 +247,13 @@ internal fun TransactionData.toBitcoinJTransaction(
         transaction.addInput(input)
     }
     transaction.addOutput(
-        Coin.parseCoin(uncompiled.amount.value!!.toPlainString()),
-        Address.fromString(networkParameters, uncompiled.destinationAddress),
+        Coin.parseCoin(uncompiledTransaction.amount.value!!.toPlainString()),
+        Address.fromString(networkParameters, uncompiledTransaction.destinationAddress),
     )
     if (!change.isZero()) {
         // Use custom change address if specified in extras, otherwise use source address
-        val extras = uncompiled.extras as? BitcoinTransactionExtras
-        val changeAddress = extras?.changeAddress ?: uncompiled.sourceAddress
+        val extras = uncompiledTransaction.extras as? BitcoinTransactionExtras
+        val changeAddress = extras?.changeAddress ?: uncompiledTransaction.sourceAddress
 
         transaction.addOutput(
             Coin.parseCoin(change.toPlainString()),

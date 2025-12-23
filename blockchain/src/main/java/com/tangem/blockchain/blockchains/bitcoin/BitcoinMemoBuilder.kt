@@ -28,6 +28,17 @@ object BitcoinMemoBuilder {
     private const val OUTPUT_VALUE_SIZE = 8
     private const val OP_RETURN_SIZE = 1
 
+    // Bitcoin varint (compactSize) encoding thresholds
+    private const val VARINT_SINGLE_BYTE_MAX = 0xFD // 253
+    private const val VARINT_TWO_BYTE_MAX = 0xFFFF // 65535
+    private const val VARINT_FOUR_BYTE_MAX = 0xFFFFFFFF.toInt() // 4294967295
+
+    // Bitcoin varint (compactSize) encoding sizes
+    private const val VARINT_SINGLE_BYTE_SIZE = 1 // Value only
+    private const val VARINT_TWO_BYTE_SIZE = 3 // 1 prefix byte (0xFD) + 2 data bytes
+    private const val VARINT_FOUR_BYTE_SIZE = 5 // 1 prefix byte (0xFE) + 4 data bytes
+    private const val VARINT_EIGHT_BYTE_SIZE = 9 // 1 prefix byte (0xFF) + 8 data bytes
+
     /**
      * Adds an OP_RETURN output with memo data to a transaction.
      *
@@ -130,12 +141,17 @@ object BitcoinMemoBuilder {
      * @return Estimated size in bytes
      */
     fun estimateOpReturnOutputSize(memoSizeBytes: Int): Int {
-        // Output structure: value (8 bytes) + script length varint + script
-        val scriptLengthVarintSize = 1 // For typical sizes < 253 bytes
-
         // Script: OP_RETURN (1 byte) + push opcode (1-2 bytes) + data
         val pushOpcodeSize = if (memoSizeBytes <= DIRECT_PUSH_MAX_SIZE) 1 else 2
         val scriptSize = OP_RETURN_SIZE + pushOpcodeSize + memoSizeBytes
+
+        // Script length is encoded as a Bitcoin varint (compactSize)
+        val scriptLengthVarintSize = when {
+            scriptSize < VARINT_SINGLE_BYTE_MAX -> VARINT_SINGLE_BYTE_SIZE
+            scriptSize <= VARINT_TWO_BYTE_MAX -> VARINT_TWO_BYTE_SIZE
+            scriptSize <= VARINT_FOUR_BYTE_MAX -> VARINT_FOUR_BYTE_SIZE
+            else -> VARINT_EIGHT_BYTE_SIZE
+        }
 
         return OUTPUT_VALUE_SIZE + scriptLengthVarintSize + scriptSize
     }
