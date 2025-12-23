@@ -14,7 +14,7 @@ import com.tangem.blockchain.extensions.Result
  *
  * @property wallet The Bitcoin wallet instance
  */
-internal class BitcoinAddressProvider(
+internal class BitcoinWalletAddressProvider(
     private val wallet: Wallet,
 ) : AddressProvider {
 
