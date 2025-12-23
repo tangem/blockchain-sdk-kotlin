@@ -1,7 +1,7 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import com.google.common.truth.Truth.assertThat
-import com.tangem.blockchain.blockchains.bitcoin.address.BitcoinAddressProvider
+import com.tangem.blockchain.blockchains.bitcoin.address.BitcoinWalletAddressProvider
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.AddressIntention
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Wallet
@@ -12,7 +12,7 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Unit tests for BitcoinAddressProvider.getAddresses method.
+ * Unit tests for BitcoinWalletAddressProvider.getAddresses method.
  *
  * Tests cover:
  * - Default behavior (no intentions specified)
@@ -24,7 +24,7 @@ import org.junit.Test
 internal class BitcoinWalletConnectGetAccountAddressesTest {
 
     private lateinit var wallet: Wallet
-    private lateinit var addressProvider: BitcoinAddressProvider
+    private lateinit var addressProvider: BitcoinWalletAddressProvider
 
     private val testPublicKey = ByteArray(65) { 0x04 }
     private val testLegacyAddress = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
@@ -46,7 +46,7 @@ internal class BitcoinWalletConnectGetAccountAddressesTest {
             tokens = emptySet(),
         )
 
-        addressProvider = BitcoinAddressProvider(wallet)
+        addressProvider = BitcoinWalletAddressProvider(wallet)
     }
 
     @Test
