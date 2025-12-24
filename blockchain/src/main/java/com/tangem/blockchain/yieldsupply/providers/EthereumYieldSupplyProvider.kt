@@ -1,5 +1,6 @@
 package com.tangem.blockchain.yieldsupply.providers
 
+import android.util.Log
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
@@ -60,13 +61,13 @@ internal class EthereumYieldSupplyProvider(
         ).extractResult().hexToBigDecimal().movePointLeft(BASIS_POINTS_DECIMALS)
     }
 
-    override suspend fun getYieldModuleAddress(): String {
+    override suspend fun getYieldModuleAddress(): String = try {
         val supplyContractAddresses = getYieldSupplyContractAddresses()
         val storedYieldModuleAddress = dataStorage.getOrNull<YieldSupplyModule>(
             key = storeKey(supplyContractAddresses.providerType),
         )?.yieldContractAddress ?: EthereumUtils.ZERO_ADDRESS
 
-        return if (storedYieldModuleAddress == EthereumUtils.ZERO_ADDRESS) {
+        if (storedYieldModuleAddress == EthereumUtils.ZERO_ADDRESS) {
             val rawContractAddress = multiJsonRpcProvider.performRequest(
                 request = EthereumJsonRpcProvider::call,
                 data = EthCallObject(
@@ -86,6 +87,9 @@ internal class EthereumYieldSupplyProvider(
         } else {
             storedYieldModuleAddress
         }
+    } catch (exception: Exception) {
+        Log.w(this::class.java.simpleName, "Failed to get yield module address", exception)
+        EthereumUtils.ZERO_ADDRESS
     }
 
     override suspend fun calculateYieldModuleAddress(): String {
@@ -102,7 +106,7 @@ internal class EthereumYieldSupplyProvider(
         return yieldModuleAddress
     }
 
-    override suspend fun getYieldSupplyStatus(tokenContractAddress: String): YieldSupplyStatus? {
+    override suspend fun getYieldSupplyStatus(tokenContractAddress: String): YieldSupplyStatus? = try {
         val result = multiJsonRpcProvider.performRequest(
             request = EthereumJsonRpcProvider::call,
             data = EthCallObject(
@@ -110,7 +114,10 @@ internal class EthereumYieldSupplyProvider(
                 data = EthereumYieldSupplyStatusCallData(tokenContractAddress).dataHex,
             ),
         ).extractResult()
-        return ethereumYieldSupplyStatusConverter.convert(result)
+        ethereumYieldSupplyStatusConverter.convert(result)
+    } catch (exception: Exception) {
+        Log.w(this::class.java.simpleName, "Failed to get yield supply status", exception)
+        null
     }
 
     override suspend fun getBalance(yieldSupplyStatus: YieldSupplyStatus, token: Token): Amount = coroutineScope {
