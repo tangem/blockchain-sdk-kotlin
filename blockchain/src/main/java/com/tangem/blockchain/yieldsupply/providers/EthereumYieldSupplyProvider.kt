@@ -3,6 +3,7 @@ package com.tangem.blockchain.yieldsupply.providers
 import android.util.Log
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.adapter
+import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
 import com.tangem.blockchain.blockchains.ethereum.network.EthCallObject
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
@@ -45,6 +46,8 @@ internal class EthereumYieldSupplyProvider(
         EthereumYieldSupplyStatusConverter(wallet.blockchain.decimals())
     }
 
+    private val addressService = EthereumAddressService()
+
     override fun isSupported(): Boolean = contractAddressFactory.isSupported()
 
     override fun getYieldSupplyContractAddresses(): YieldSupplyContractAddresses {
@@ -67,7 +70,9 @@ internal class EthereumYieldSupplyProvider(
             key = storeKey(supplyContractAddresses.providerType),
         )?.yieldContractAddress ?: EthereumUtils.ZERO_ADDRESS
 
-        if (storedYieldModuleAddress == EthereumUtils.ZERO_ADDRESS) {
+        if (storedYieldModuleAddress == EthereumUtils.ZERO_ADDRESS ||
+            !addressService.validate(storedYieldModuleAddress)
+        ) {
             val rawContractAddress = multiJsonRpcProvider.performRequest(
                 request = EthereumJsonRpcProvider::call,
                 data = EthCallObject(
@@ -75,20 +80,25 @@ internal class EthereumYieldSupplyProvider(
                     data = EthereumYieldSupplyModuleCallData(wallet.address).dataHex,
                 ),
             ).extractResult()
+                .takeLast(EthereumUtils.ADDRESS_HEX_LENGTH)
 
-            val yieldModuleAddress = HEX_PREFIX + rawContractAddress.takeLast(EthereumUtils.ADDRESS_HEX_LENGTH)
+            if (!addressService.validate(rawContractAddress)) {
+                EthereumUtils.ZERO_ADDRESS
+            } else {
+                val yieldModuleAddress = HEX_PREFIX + rawContractAddress
 
-            dataStorage.store(
-                key = storeKey(supplyContractAddresses.providerType),
-                value = YieldSupplyModule(yieldModuleAddress),
-            )
+                dataStorage.store(
+                    key = storeKey(supplyContractAddresses.providerType),
+                    value = YieldSupplyModule(yieldModuleAddress),
+                )
 
-            yieldModuleAddress
+                yieldModuleAddress
+            }
         } else {
             storedYieldModuleAddress
         }
-    } catch (exception: Exception) {
-        Log.w(this::class.java.simpleName, "Failed to get yield module address", exception)
+    } catch (e: Exception) {
+        Log.w(TAG, "Failed to get yield module address: ${e.message}")
         EthereumUtils.ZERO_ADDRESS
     }
 
@@ -223,5 +233,6 @@ internal class EthereumYieldSupplyProvider(
 
     private companion object {
         const val BASIS_POINTS_DECIMALS = 4
+        const val TAG = "EthereumYieldSupplyProvider"
     }
 }
