@@ -7,6 +7,7 @@ package com.tangem.blockchain.blockchains.ethereum.network
 interface EthereumLikeMethod {
     val getBalance: String
     val getTransactionCount: String
+    val getTransactionByHash: String
     val call: String
     val sendRawTransaction: String
     val estimateGas: String
@@ -20,6 +21,7 @@ interface EthereumLikeMethod {
 object EthereumMethod : EthereumLikeMethod {
     override val getBalance = "eth_getBalance"
     override val getTransactionCount = "eth_getTransactionCount"
+    override val getTransactionByHash = "eth_getTransactionByHash"
     override val call = "eth_call"
     override val sendRawTransaction = "eth_sendRawTransaction"
     override val estimateGas = "eth_estimateGas"
@@ -33,6 +35,7 @@ object EthereumMethod : EthereumLikeMethod {
 object QuaiMethod : EthereumLikeMethod {
     override val getBalance = "quai_getBalance"
     override val getTransactionCount = "quai_getTransactionCount"
+    override val getTransactionByHash = "quai_getTransactionByHash"
     override val call = "quai_call"
     override val sendRawTransaction = "quai_sendRawTransaction"
     override val estimateGas = "quai_estimateGas"
