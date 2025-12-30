@@ -42,4 +42,27 @@ internal sealed interface BlockchainSavedData {
     data class QuaiDerivationIndex(
         @Json(name = "index") val index: Int,
     ) : BlockchainSavedData
+
+    @JsonClass(generateAdapter = true)
+    data class PendingTransactions(
+        @Json(name = "transactions") val transactions: List<PendingTransaction> = emptyList(),
+    ) : BlockchainSavedData
 }
+
+/**
+ * Represents a pending transaction stored in persistent storage.
+ *
+ * @property transactionId Transaction hash (hex string)
+ * @property blockchain Blockchain identifier (e.g., "ETH", "POLYGON")
+ * @property walletPublicKey Wallet public key (hex string)
+ * @property providerName Provider name (null for public providers, specific name for private providers like "Blink")
+ * @property sentAt Timestamp when transaction was sent (milliseconds since epoch)
+ */
+@JsonClass(generateAdapter = true)
+internal data class PendingTransaction(
+    @Json(name = "transactionId") val transactionId: String,
+    @Json(name = "blockchain") val blockchain: String,
+    @Json(name = "providerType") val providerName: String? = null,
+    @Json(name = "sentAt") val sentAt: Long,
+    @Json(name = "contractAddress") val contractAddress: String? = null,
+)
