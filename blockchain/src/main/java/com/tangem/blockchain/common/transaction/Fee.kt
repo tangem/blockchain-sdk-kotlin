@@ -23,6 +23,14 @@ sealed class Fee {
             val maxFeePerGas: BigInteger,
             val priorityFee: BigInteger,
         ) : Ethereum()
+
+        data class TokenCurrency(
+            override val amount: Amount,
+            override val gasLimit: BigInteger,
+            val tokenPrice: BigDecimal,
+            val feeTransferGasLimit: BigInteger,
+            val nonce: BigInteger,
+        ) : Ethereum()
     }
 
     data class Bitcoin(
