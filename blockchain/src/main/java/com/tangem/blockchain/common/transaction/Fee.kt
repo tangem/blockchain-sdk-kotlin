@@ -30,7 +30,6 @@ sealed class Fee {
             val tokenPrice: BigDecimal,
             val feeTransferGasLimit: BigInteger,
             val baseGas: BigInteger,
-            val nonce: BigInteger,
         ) : Ethereum()
     }
 
