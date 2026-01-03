@@ -29,6 +29,7 @@ sealed class Fee {
             override val gasLimit: BigInteger,
             val tokenPrice: BigDecimal,
             val feeTransferGasLimit: BigInteger,
+            val baseGas: BigInteger,
             val nonce: BigInteger,
         ) : Ethereum()
     }
