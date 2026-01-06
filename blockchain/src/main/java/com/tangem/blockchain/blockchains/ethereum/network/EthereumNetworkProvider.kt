@@ -21,6 +21,15 @@ interface EthereumNetworkProvider : NetworkProvider {
     suspend fun callContractForFee(data: ContractCallData): Result<BigInteger>
     suspend fun resolveName(namehash: ByteArray, encodedName: ByteArray): ResolveAddressResult
     suspend fun resolveAddress(address: String): ReverseResolveAddressResult
+
+    /**
+     * Get nonce from a smart contract for a specific user.
+     * This is typically used for EIP-712 and EIP-7702 operations.
+     *
+     * @param address The address of the user.
+     * @return Result containing the nonce or an error.
+     */
+    suspend fun getContractNonce(address: String): Result<BigInteger>
 }
 
 class EthereumInfoResponse(
