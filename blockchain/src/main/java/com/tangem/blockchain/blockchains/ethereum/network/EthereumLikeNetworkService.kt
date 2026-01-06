@@ -303,6 +303,27 @@ internal abstract class EthereumLikeNetworkService(
         )
     }
 
+    override suspend fun getContractNonce(address: String): Result<BigInteger> {
+        return try {
+            // Standard nonce() function signature
+            val functionSignature = "0xaffed0e0" // keccak256("nonce()")[:4]
+
+            val data = functionSignature
+
+            val callData = ContractCallData(
+                to = address,
+                data = data,
+            )
+
+            val result = multiJsonRpcProvider.performRequest(EthereumLikeJsonRpcProvider::call, callData)
+                .extractResult().responseToBigInteger()
+
+            Result.Success(result)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
     @Suppress("MagicNumber")
     private fun String.responseToBigInteger() = this.substring(2).ifBlank { "0" }.toBigInteger(16)
 
