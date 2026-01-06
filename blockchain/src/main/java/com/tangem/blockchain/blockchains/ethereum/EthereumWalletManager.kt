@@ -3,6 +3,8 @@ package com.tangem.blockchain.blockchains.ethereum
 import android.util.Log
 import com.tangem.blockchain.blockchains.ethereum.eip1559.isSupportEIP1559
 import com.tangem.blockchain.blockchains.ethereum.ens.DefaultENSNameProcessor
+import com.tangem.blockchain.blockchains.ethereum.gasless.DefaultEthereumGaslessDataProvider
+import com.tangem.blockchain.blockchains.ethereum.gasless.EthereumGaslessDataProvider
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumFeeHistory
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
@@ -15,7 +17,8 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.Result.*
+import com.tangem.blockchain.extensions.Result.Failure
+import com.tangem.blockchain.extensions.Result.Success
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.nft.DefaultNFTProvider
@@ -42,6 +45,7 @@ open class EthereumWalletManager(
     nftProvider: NFTProvider = DefaultNFTProvider,
     private val supportsENS: Boolean,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
+    ethereumGaslessDataProvider: EthereumGaslessDataProvider = DefaultEthereumGaslessDataProvider(networkProvider),
 ) : WalletManager(
     wallet = wallet,
     transactionHistoryProvider = transactionHistoryProvider,
@@ -53,7 +57,8 @@ open class EthereumWalletManager(
     EthereumGasLoader,
     TransactionPreparer,
     Approver,
-    NameResolver {
+    NameResolver,
+    EthereumGaslessDataProvider by ethereumGaslessDataProvider {
 
     // move to constructor later
     protected val feesCalculator = EthereumFeesCalculator()
