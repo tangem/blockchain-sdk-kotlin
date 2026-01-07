@@ -27,7 +27,7 @@ sealed class Fee {
         data class TokenCurrency(
             override val amount: Amount,
             override val gasLimit: BigInteger,
-            val coinPriceInToken: BigDecimal,
+            val coinPriceInToken: BigInteger,
             val feeTransferGasLimit: BigInteger,
             val baseGas: BigInteger,
         ) : Ethereum()
