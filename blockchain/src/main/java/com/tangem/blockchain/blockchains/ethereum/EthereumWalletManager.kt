@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.ethereum.eip1559.isSupportEIP1559
 import com.tangem.blockchain.blockchains.ethereum.ens.DefaultENSNameProcessor
 import com.tangem.blockchain.blockchains.ethereum.gasless.DefaultEthereumGaslessDataProvider
 import com.tangem.blockchain.blockchains.ethereum.gasless.EthereumGaslessDataProvider
+import com.tangem.blockchain.blockchains.ethereum.gasless.GaslessContractAddressFactory
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumFeeHistory
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
@@ -45,7 +46,10 @@ open class EthereumWalletManager(
     nftProvider: NFTProvider = DefaultNFTProvider,
     private val supportsENS: Boolean,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
-    ethereumGaslessDataProvider: EthereumGaslessDataProvider = DefaultEthereumGaslessDataProvider(networkProvider),
+    ethereumGaslessDataProvider: EthereumGaslessDataProvider = DefaultEthereumGaslessDataProvider(
+        networkProvider = networkProvider,
+        gaslessContractAddressFactory = GaslessContractAddressFactory(wallet.blockchain),
+    ),
 ) : WalletManager(
     wallet = wallet,
     transactionHistoryProvider = transactionHistoryProvider,
