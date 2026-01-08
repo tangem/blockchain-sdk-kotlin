@@ -15,16 +15,12 @@ internal class DefaultEthereumGaslessDataProvider(
         return networkProvider.getContractNonce(userAddress)
     }
 
-    override suspend fun prepareEIP7702AuthorizationData(
-        userAddress: String,
-        chainId: Int,
-        nonce: BigInteger,
-    ): Result<ByteArray> {
+    override suspend fun prepareEIP7702AuthorizationData(chainId: Int, nonce: BigInteger): Result<ByteArray> {
         return try {
             // Encode and hash the EIP-7702 authorization data
             val hash = EthEip7702Util.encodeAuthorizationForSigning(
                 chainId = chainId,
-                contractAddress = gaslessContractAddressFactory.getGaslessContractAddress(),
+                contractAddress = gaslessContractAddressFactory.getGaslessExecutorContractAddress(),
                 nonce = nonce,
             )
 
@@ -32,5 +28,9 @@ internal class DefaultEthereumGaslessDataProvider(
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
+    }
+
+    override fun getExecutorContractAddress(): String {
+        return gaslessContractAddressFactory.getGaslessExecutorContractAddress()
     }
 }
