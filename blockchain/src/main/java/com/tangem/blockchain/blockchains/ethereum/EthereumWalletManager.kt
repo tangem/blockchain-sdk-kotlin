@@ -47,6 +47,7 @@ open class EthereumWalletManager(
     private val supportsENS: Boolean,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
     ethereumGaslessDataProvider: EthereumGaslessDataProvider = DefaultEthereumGaslessDataProvider(
+        wallet = wallet,
         networkProvider = networkProvider,
         gaslessContractAddressFactory = GaslessContractAddressFactory(wallet.blockchain),
     ),

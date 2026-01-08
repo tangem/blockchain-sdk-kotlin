@@ -110,6 +110,19 @@ internal abstract class EthereumLikeNetworkService(
         }
     }
 
+    override suspend fun getTxCount(address: String): Result<BigInteger> {
+        return try {
+            val response = multiJsonRpcProvider.performRequest(EthereumLikeJsonRpcProvider::getPendingTxCount, address)
+            Result.Success(
+                response
+                    .extractResult()
+                    .responseToBigInteger(),
+            )
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
     override suspend fun getAllowance(
         ownerAddress: String,
         token: Token,
