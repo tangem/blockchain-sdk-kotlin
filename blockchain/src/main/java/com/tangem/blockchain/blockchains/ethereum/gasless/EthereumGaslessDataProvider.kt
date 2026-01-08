@@ -25,9 +25,7 @@ interface EthereumGaslessDataProvider {
      * @param chainId The chain ID for the authorization.
      * @return Result containing the hash to sign or an error.
      */
-    suspend fun prepareEIP7702AuthorizationData(
-        userAddress: String,
-        chainId: Int,
-        nonce: BigInteger,
-    ): Result<ByteArray>
+    suspend fun prepareEIP7702AuthorizationData(chainId: Int, nonce: BigInteger): Result<ByteArray>
+
+    fun getExecutorContractAddress(): String
 }
