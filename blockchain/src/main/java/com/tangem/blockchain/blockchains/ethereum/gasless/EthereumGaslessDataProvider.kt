@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.ethereum.gasless
 
+import com.tangem.blockchain.blockchains.ethereum.models.EIP7702AuthorizationData
 import com.tangem.blockchain.extensions.Result
 import java.math.BigInteger
 
@@ -21,11 +22,9 @@ interface EthereumGaslessDataProvider {
      * Prepare EIP-7702 authorization data for attaching a gasless contract to user's account.
      * This method retrieves the nonce and prepares the hash to be signed.
      *
-     * @param userAddress The address of the user account.
-     * @param chainId The chain ID for the authorization.
-     * @return Result containing the hash to sign or an error.
+     * @return Result [EIP7702AuthorizationData]
      */
-    suspend fun prepareEIP7702AuthorizationData(chainId: Int, nonce: BigInteger): Result<ByteArray>
+    suspend fun prepareEIP7702AuthorizationData(): Result<EIP7702AuthorizationData>
 
     fun getExecutorContractAddress(): String
 }
