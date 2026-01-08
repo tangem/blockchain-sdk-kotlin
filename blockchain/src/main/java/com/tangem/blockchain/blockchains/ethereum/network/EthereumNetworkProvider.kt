@@ -9,6 +9,7 @@ import java.math.BigInteger
 interface EthereumNetworkProvider : NetworkProvider {
     suspend fun getInfo(address: String, tokens: Set<Token>): Result<EthereumInfoResponse>
     suspend fun getPendingTxCount(address: String): Result<Long>
+    suspend fun getTxCount(address: String): Result<BigInteger>
     suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): kotlin.Result<BigDecimal>
     suspend fun sendTransaction(transaction: String): Result<String>
     suspend fun getSignatureCount(address: String): Result<Int>
