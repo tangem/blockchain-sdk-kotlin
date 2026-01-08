@@ -10,7 +10,7 @@ internal class GaslessContractAddressFactory(
 ) {
 
     // TODO(Add correct addresses when they will be available)
-    fun getGaslessContractAddress(): String {
+    fun getGaslessExecutorContractAddress(): String {
         return when (blockchain) {
             Blockchain.Ethereum -> "0xd8972a45616bEC62cB9687e38a99D763c0879B0d"
             Blockchain.BSC -> "0xd8972a45616bEC62cB9687e38a99D763c0879B0d"
