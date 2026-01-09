@@ -218,6 +218,22 @@ interface TransactionSender {
 
     suspend fun send(transactionData: TransactionData, signer: TransactionSigner): Result<TransactionSendResult>
 
+    /**
+     * Broadcasts a signed transaction to the blockchain network.
+     *
+     * @param signedTransaction The signed transaction data in hexadecimal format.
+     * @return A [Result] containing the [TransactionSendResult] if successful
+     */
+    suspend fun broadcastTransaction(signedTransaction: String): Result<TransactionSendResult> {
+        return Result.Failure(
+            BlockchainSdkError.WrappedThrowable(
+                NotImplementedError(
+                    "broadcastTransaction is not implemented for this blockchain.",
+                ),
+            ),
+        )
+    }
+
     // Think about migration to different interface
     suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee>
 
