@@ -141,6 +141,20 @@ open class EthereumWalletManager(
         }
     }
 
+    override suspend fun broadcastTransaction(signedTransaction: String): Result<TransactionSendResult> {
+        return when (val sendResult = networkProvider.sendTransaction(signedTransaction)) {
+            is Failure -> Result.fromTangemSdkError(sendResult.error)
+            is Success<String> -> {
+                val txHash = sendResult.data
+                val transactionData = TransactionData.Compiled(
+                    value = TransactionData.Compiled.Data.RawString(signedTransaction),
+                )
+                wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+                Success(TransactionSendResult(txHash))
+            }
+        }
+    }
+
     override suspend fun sendMultiple(
         transactionDataList: List<TransactionData>,
         signer: TransactionSigner,
