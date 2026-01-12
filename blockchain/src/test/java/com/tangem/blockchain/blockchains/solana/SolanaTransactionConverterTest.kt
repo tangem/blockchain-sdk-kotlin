@@ -31,7 +31,9 @@ class SolanaTransactionConverterTest {
         println("all account addresses: ${parsed.staticAccountAddresses.joinToString(", ") { it.encodeBase58() }}\n")
         println("writeable alt addresses: ${parsed.writableAltAddresses.joinToString(", ") { it.encodeBase58() }}\n")
         println(
-            "readonlyAltAddresses alt addresses: ${parsed.readonlyAltAddresses.joinToString(", ") { it.encodeBase58() }}\n",
+            "readonlyAltAddresses alt addresses: ${parsed.readonlyAltAddresses.joinToString(
+                ", ",
+            ) { it.encodeBase58() }}\n",
         )
 
         val writableAltAddressesBase58 = listOf(
