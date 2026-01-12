@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.ethereum.eip7702
 
+import com.tangem.blockchain.extensions.removeLeadingZero
 import com.tangem.common.extensions.hexToBytes
 import org.kethereum.keccakshortcut.keccak
 import org.kethereum.rlp.RLPElement
@@ -50,9 +51,9 @@ object EthEip7702Util {
      * @return The RLP-encoded authorization data.
      */
     private fun encodeAuthorizationData(chainId: Int, address: ByteArray, nonce: BigInteger): ByteArray {
-        val chainIdRlp = RLPElement(chainId.toBigInteger().toByteArray())
+        val chainIdRlp = RLPElement(chainId.toBigInteger().toByteArray().removeLeadingZero())
         val addressRlp = RLPElement(address)
-        val nonceBytesRlp = RLPElement(nonce.toByteArray())
+        val nonceBytesRlp = RLPElement(nonce.toByteArray().removeLeadingZero())
 
         // RLP encode: [chain_id, address, nonce]
         val rlpList = RLPList(listOf(chainIdRlp, addressRlp, nonceBytesRlp))
