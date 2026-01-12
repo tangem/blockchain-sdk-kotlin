@@ -23,7 +23,10 @@ configurations.configureEach {
 
 allprojects {
     Properties properties = new Properties()
-    properties.load(project.rootProject.file("local.properties").newDataInputStream())
+    def localPropertiesFile = project.rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        properties.load(localPropertiesFile.newDataInputStream())
+    }
     repositories {
         google()
         mavenCentral()
