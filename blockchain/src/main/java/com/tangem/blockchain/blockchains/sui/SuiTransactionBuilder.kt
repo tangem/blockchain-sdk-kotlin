@@ -44,7 +44,7 @@ internal class SuiTransactionBuilder(
             ).fold(success = { Result.Success(it) }, failure = {
                 val isLessThenOne = isCoinGasLessThenOneForTokenTransaction(walletInfo, amount)
                 if (isLessThenOne) Result.Failure(BlockchainSdkError.Sui.OneSuiRequired) else Result.Failure(it)
-            },)
+            })
             else -> Result.Failure(BlockchainSdkError.FailedToBuildTx)
         }
     }
