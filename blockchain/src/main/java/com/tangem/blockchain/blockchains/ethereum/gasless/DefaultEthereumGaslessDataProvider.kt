@@ -29,10 +29,12 @@ internal class DefaultEthereumGaslessDataProvider(
             val chainId = wallet.blockchain.getChainId() ?: return Result.Failure(
                 error = BlockchainSdkError.NPError("Chain id is null for ${wallet.blockchain}"),
             )
+
+            val executorAddress = gaslessContractAddressFactory.getGaslessExecutorContractAddress()
             // Encode and hash the EIP-7702 authorization data
             val data = EthEip7702Util.encodeAuthorizationForSigning(
                 chainId = chainId,
-                contractAddress = gaslessContractAddressFactory.getGaslessExecutorContractAddress(),
+                contractAddress = executorAddress,
                 nonce = nonce,
             )
 
@@ -41,6 +43,7 @@ internal class DefaultEthereumGaslessDataProvider(
                     chainId = chainId,
                     nonce = nonce,
                     data = data,
+                    executorAddress = executorAddress,
                 ),
             )
         } catch (exception: Exception) {
