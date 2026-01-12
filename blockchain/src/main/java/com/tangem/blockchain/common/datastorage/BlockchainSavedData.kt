@@ -62,7 +62,7 @@ internal sealed interface BlockchainSavedData {
 internal data class PendingTransaction(
     @Json(name = "transactionId") val transactionId: String,
     @Json(name = "blockchain") val blockchain: String,
-    @Json(name = "providerType") val providerName: String? = null,
+    @Json(name = "providerName") val providerName: String? = null,
     @Json(name = "sentAt") val sentAt: Long,
     @Json(name = "contractAddress") val contractAddress: String? = null,
 )
