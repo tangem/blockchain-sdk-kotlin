@@ -50,7 +50,6 @@ internal object SolanaTokenProgram {
     enum class ID(val value: PublicKey) {
         TOKEN(value = PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")),
         TOKEN_2022(value = PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")),
-        ;
     }
 
     fun isTokenProgram(address: String): Boolean {
