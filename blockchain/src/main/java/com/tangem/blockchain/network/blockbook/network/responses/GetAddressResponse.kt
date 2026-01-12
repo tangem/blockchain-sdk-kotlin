@@ -65,7 +65,6 @@ data class GetAddressResponse(
 
             @Json(name = "OK")
             OK(1),
-            ;
         }
 
         @JsonClass(generateAdapter = true)
