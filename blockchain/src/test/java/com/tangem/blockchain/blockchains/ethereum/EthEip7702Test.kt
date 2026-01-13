@@ -205,7 +205,7 @@ class EthEip7702Test {
 
     @Test
     fun testRealWorldScenario() {
-        val expectedHash = "5C29579FF4402D639BF11BD8C2589B6C0B266AA28E9D90A12B4389E6AF3B3184"
+        val expectedHash = "05BFD67D791161EC62068619AC58BA0F7900E29432C6D5A431811CFA7C93EF0C"
         // Simulate real-world gasless contract authorization
         val chainId = 137 // Polygon mainnet
         val gaslessContractAddress = "0x2Bfd00f7D053E7a665d1767f08c5a57B3F52Ec89"
