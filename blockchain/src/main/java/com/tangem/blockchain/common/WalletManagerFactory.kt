@@ -13,7 +13,9 @@ import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.runBlocking
 
 class WalletManagerFactory(
@@ -23,6 +25,7 @@ class WalletManagerFactory(
     featureToggles: BlockchainFeatureToggles,
     blockchainDataStorage: BlockchainDataStorage,
     loggers: List<BlockchainSDKLogger> = emptyList(),
+    private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
 ) {
 
     private val dataStorage by lazy { AdvancedDataStorage(blockchainDataStorage) }
@@ -177,7 +180,10 @@ class WalletManagerFactory(
             // endregion
 
             // region ETH-like blockchains
-            Blockchain.Ethereum, Blockchain.EthereumTestnet -> EthereumWalletManagerAssembly(dataStorage)
+            Blockchain.Ethereum, Blockchain.EthereumTestnet -> EthereumWalletManagerAssembly(
+                dataStorage = dataStorage,
+                coroutineScope = coroutineScope,
+            )
 
             Blockchain.Arbitrum, Blockchain.ArbitrumTestnet,
             Blockchain.Avalanche, Blockchain.AvalancheTestnet,
@@ -220,7 +226,7 @@ class WalletManagerFactory(
             Blockchain.Linea, Blockchain.LineaTestnet,
             Blockchain.ArbitrumNova,
             Blockchain.Plasma, Blockchain.PlasmaTestnet,
-            -> EthereumLikeWalletManagerAssembly(dataStorage)
+            -> EthereumLikeWalletManagerAssembly(dataStorage = dataStorage, coroutineScope = coroutineScope)
 
             Blockchain.Mantle, Blockchain.MantleTestnet,
             -> MantleWalletManagerAssembly
@@ -232,7 +238,7 @@ class WalletManagerFactory(
             Blockchain.Manta, Blockchain.MantaTestnet,
             Blockchain.Blast, Blockchain.BlastTestnet,
             Blockchain.Cyber, Blockchain.CyberTestnet,
-            -> EthereumOptimisticRollupWalletManagerAssembly(dataStorage)
+            -> EthereumOptimisticRollupWalletManagerAssembly(dataStorage, coroutineScope)
             Blockchain.Telos, Blockchain.TelosTestnet -> TelosWalletManagerAssembly
             // endregion
 

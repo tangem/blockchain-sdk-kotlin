@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvide
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.createWithPostfixIfContained
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.network.providers.ProviderType
 
 internal class ArbitrumProvidersBuilder(
@@ -15,8 +16,11 @@ internal class ArbitrumProvidersBuilder(
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return providerTypes.mapNotNull {
             when (it) {
-                // Remove temporarily because of yield supply and incorrect pending tx count
-                // is ProviderType.Blink -> ethereumProviderFactory.getBlinkProvider("https://arb.blinklabs.xyz/v1/")
+                is ProviderType.Blink -> if (DepsContainer.blockchainFeatureToggles.isPendingTransactionsEnabled) {
+                    ethereumProviderFactory.getBlinkProvider("https://arb.blinklabs.xyz/v1/")
+                } else {
+                    null
+                }
                 is ProviderType.Public -> createPublicProvider(url = it.url)
                 ProviderType.NowNodes -> {
                     ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://arbitrum.nownodes.io/")
