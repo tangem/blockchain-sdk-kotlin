@@ -13,6 +13,7 @@ import com.tangem.blockchain.blockchains.ethereum.tokenmethods.ApprovalERC20Toke
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -26,6 +27,9 @@ import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.pendingtransactions.DefaultPendingTransactionsProvider
+import com.tangem.blockchain.pendingtransactions.PendingTransactionStatus
+import com.tangem.blockchain.pendingtransactions.PendingTransactionsProvider
 import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
 import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
@@ -46,6 +50,7 @@ open class EthereumWalletManager(
     nftProvider: NFTProvider = DefaultNFTProvider,
     private val supportsENS: Boolean,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
+    private val pendingTransactionsProvider: PendingTransactionsProvider = DefaultPendingTransactionsProvider,
     ethereumGaslessDataProvider: EthereumGaslessDataProvider = DefaultEthereumGaslessDataProvider(
         wallet = wallet,
         networkProvider = networkProvider,
@@ -63,6 +68,7 @@ open class EthereumWalletManager(
     TransactionPreparer,
     Approver,
     NameResolver,
+    TransactionPendingInfo,
     EthereumGaslessDataProvider by ethereumGaslessDataProvider {
 
     // move to constructor later
@@ -93,12 +99,24 @@ open class EthereumWalletManager(
         txCount = data.txCount
         pendingTxCount = data.pendingTxCount
 
-        if (txCount == pendingTxCount) {
-            wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
-        } else if (!data.recentTransactions.isNullOrEmpty()) {
-            updateRecentTransactions(data.recentTransactions)
+        if (DepsContainer.blockchainFeatureToggles.isPendingTransactionsEnabled) {
+            val pendingTransactionUpdate = pendingTransactionsProvider.checkPendingTransactions()
+            val pendingTransactions = pendingTransactionsProvider.getPendingTransactions(null)
+
+            updatePendingTransactions(
+                pendingTransactionUpdate = pendingTransactionUpdate,
+                pendingTransactions = pendingTransactions,
+                txCount = txCount,
+                pendingTxCount = pendingTxCount,
+            )
         } else {
-            wallet.addTransactionDummy()
+            if (txCount == pendingTxCount) {
+                wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
+            } else if (!data.recentTransactions.isNullOrEmpty()) {
+                updateRecentTransactions(data.recentTransactions)
+            } else {
+                wallet.addTransactionDummy()
+            }
         }
 
         if (supportsENS) {
@@ -124,6 +142,50 @@ open class EthereumWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
+    internal fun updatePendingTransactions(
+        pendingTransactionUpdate: Map<String, PendingTransactionStatus>,
+        pendingTransactions: List<String>,
+        txCount: Long,
+        pendingTxCount: Long,
+    ) {
+        pendingTransactionUpdate.forEach { (txId, status) ->
+            when (status) {
+                PendingTransactionStatus.Executed -> {
+                    wallet.recentTransactions.find { it.hash == txId }?.status = TransactionStatus.Confirmed
+                }
+                PendingTransactionStatus.Dropped -> {
+                    wallet.recentTransactions.removeAll { it.hash == txId }
+                }
+                PendingTransactionStatus.Pending -> {
+                    // Transaction is still pending, no action needed
+                }
+            }
+        }
+
+        if (txCount == pendingTxCount) {
+            wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
+            return
+        }
+
+        val pendingBlockchainCount = pendingTxCount - txCount
+
+        val knownPendingTransactions = pendingTransactions.filter { txId ->
+            wallet.recentTransactions.any { it.hash == txId }
+        }
+
+        if (pendingBlockchainCount > knownPendingTransactions.size) {
+            wallet.addTransactionDummy()
+        } else if (pendingBlockchainCount <= knownPendingTransactions.size) {
+            wallet.recentTransactions.removeAll { it.hash == null }
+
+            pendingTransactions.forEach { txId ->
+                if (wallet.recentTransactions.none { it.hash == txId }) {
+                    wallet.addPendingTransactionDummy(txId)
+                }
+            }
+        }
+    }
+
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
@@ -136,6 +198,10 @@ open class EthereumWalletManager(
             is Success<*> -> {
                 val txHash = transactionToSend.keccak().toHexString()
                 wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+
+                val contractAddress = (transactionData as? TransactionData.Uncompiled)?.contractAddress
+                pendingTransactionsProvider.addPendingTransaction(txHash, networkProvider, contractAddress)
+
                 Success(TransactionSendResult(txHash))
             }
         }
@@ -198,6 +264,10 @@ open class EthereumWalletManager(
                 is Result.Success<*> -> {
                     val txHash = transactionToSend.keccak().toHexString()
                     wallet.addOutgoingTransaction(transactionData = data, txHash = txHash)
+
+                    val contractAddress = data.contractAddress
+                    pendingTransactionsProvider.addPendingTransaction(txHash, networkProvider, contractAddress)
+
                     Success(TransactionSendResult(txHash))
                 }
             }
@@ -441,7 +511,8 @@ open class EthereumWalletManager(
                 to = amount.type.token.contractAddress
             }
 
-            else -> { /* no-op */
+            else -> {
+                /* no-op */
             }
         }
 
@@ -520,5 +591,9 @@ open class EthereumWalletManager(
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
+    }
+
+    override suspend fun getPendingTransactions(contractAddress: String?): List<String> {
+        return pendingTransactionsProvider.getPendingTransactions(contractAddress)
     }
 }
