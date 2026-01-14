@@ -270,6 +270,21 @@ interface TransactionSender {
     )
 }
 
+/**
+ * Interface for getting information about pending transactions.
+ * Similar to [TransactionSender], this interface provides methods to query pending transaction status.
+ */
+interface TransactionPendingInfo {
+
+    /**
+     * Gets current list of pending transaction IDs for the optional contract address.
+     *
+     * @param contractAddress Optional contract address to filter transactions (for token contracts, etc.)
+     * @return List of pending transaction IDs (hashes)
+     */
+    suspend fun getPendingTransactions(contractAddress: String? = null): List<String>
+}
+
 interface TransactionSigner {
     suspend fun sign(hashes: List<ByteArray>, publicKey: Wallet.PublicKey): CompletionResult<List<ByteArray>>
 
