@@ -22,11 +22,9 @@ import com.tangem.blockchain.nft.NFTProviderFactory
 import com.tangem.blockchain.pendingtransactions.PendingTransactionsProviderFactory
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 import com.tangem.blockchain.yieldsupply.YieldSupplyProviderFactory
-import kotlinx.coroutines.CoroutineScope
 
 internal class EthereumOptimisticRollupWalletManagerAssembly(
     private val dataStorage: AdvancedDataStorage,
-    private val coroutineScope: CoroutineScope,
 ) :
     WalletManagerAssembly<EthereumOptimisticRollupWalletManager>() {
 
@@ -48,7 +46,6 @@ internal class EthereumOptimisticRollupWalletManagerAssembly(
 
             val pendingTransactionsProvider = PendingTransactionsProviderFactory(
                 dataStorage = dataStorage,
-                coroutineScope = coroutineScope,
             ).makeProvider(
                 wallet = this,
                 networkProvider = multiNetworkProvider,

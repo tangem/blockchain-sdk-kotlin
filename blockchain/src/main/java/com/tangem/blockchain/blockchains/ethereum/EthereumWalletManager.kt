@@ -162,20 +162,11 @@ open class EthereumWalletManager(
             }
         }
 
-        if (txCount == pendingTxCount) {
-            wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
-            return
-        }
-
         val pendingBlockchainCount = pendingTxCount - txCount
 
-        val knownPendingTransactions = pendingTransactions.filter { txId ->
-            wallet.recentTransactions.any { it.hash == txId }
-        }
-
-        if (pendingBlockchainCount > knownPendingTransactions.size) {
+        if (pendingBlockchainCount > pendingTransactions.size) {
             wallet.addTransactionDummy()
-        } else if (pendingBlockchainCount <= knownPendingTransactions.size) {
+        } else if (pendingBlockchainCount <= pendingTransactions.size) {
             wallet.recentTransactions.removeAll { it.hash == null }
 
             pendingTransactions.forEach { txId ->
