@@ -15,7 +15,7 @@ internal class GaslessContractAddressFactory(
             Blockchain.Ethereum -> "0xd8972a45616bEC62cB9687e38a99D763c0879B0d"
             Blockchain.BSC -> "0xd8972a45616bEC62cB9687e38a99D763c0879B0d"
             Blockchain.Base -> "0xd8972a45616bEC62cB9687e38a99D763c0879B0d"
-            Blockchain.Polygon -> "0x0Ac67D0473f6fCbb28cf1cC06B172b1c8459Efc4"
+            Blockchain.Polygon -> "0x041760838DaC2AC9013D26C9550daa519bd29bB9"
             Blockchain.Arbitrum -> "0xd8972a45616bEC62cB9687e38a99D763c0879B0d"
             Blockchain.XDC -> "0xd8972a45616bEC62cB9687e38a99D763c0879B0d"
             Blockchain.Optimism -> "0xd8972a45616bEC62cB9687e38a99D763c0879B0d"
