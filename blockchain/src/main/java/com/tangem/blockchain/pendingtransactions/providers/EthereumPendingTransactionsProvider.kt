@@ -16,16 +16,9 @@ import com.tangem.blockchain.network.moshi
 import com.tangem.blockchain.pendingtransactions.PendingTransactionStatus
 import com.tangem.blockchain.pendingtransactions.PendingTransactionStorage
 import com.tangem.blockchain.pendingtransactions.PendingTransactionsProvider
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 /**
  * Ethereum implementation of [PendingTransactionsProvider].
@@ -34,14 +27,12 @@ import kotlinx.coroutines.sync.withLock
  * @property wallet Wallet instance
  * @property multiJsonRpcProvider Multi-provider for JSON-RPC calls
  * @property storage Storage for pending transactions
- * @property coroutineScope Coroutine scope for async operations
  * @property networkProviderMap Map of provider types to network providers
  */
 internal class EthereumPendingTransactionsProvider(
     private val wallet: Wallet,
     private val multiJsonRpcProvider: MultiNetworkProvider<EthereumJsonRpcProvider>,
     private val storage: PendingTransactionStorage,
-    private val coroutineScope: CoroutineScope,
     private val networkProviderMap: Map<ProviderType, NetworkProvider>,
 ) : PendingTransactionsProvider {
 
@@ -49,8 +40,6 @@ internal class EthereumPendingTransactionsProvider(
         moshi.adapter(EthereumTransactionResponse::class.java)
     }
     private val networkProviderMapper = NetworkProviderMapper()
-    private var checkingJob: Job? = null
-    private val jobMutex = Mutex()
 
     override suspend fun addPendingTransaction(
         transactionId: String,
@@ -64,7 +53,6 @@ internal class EthereumPendingTransactionsProvider(
         val providerName = providerType?.let { networkProviderMapper.toStorageKey(it) }
         Logger.logTransaction("$LOG_TAG addPendingTransaction: providerName=$providerName")
         storage.addTransaction(transactionId, providerName, contractAddress)
-        startAutomaticCheckingIfNeeded()
     }
 
     override suspend fun removePendingTransaction(transactionId: String) {
@@ -110,44 +98,7 @@ internal class EthereumPendingTransactionsProvider(
             storage.removeTransactions(transactionsToRemove)
         }
 
-        stopAutomaticCheckingIfEmpty()
-
         return statusMap
-    }
-
-    private suspend fun startAutomaticCheckingIfNeeded() {
-        Logger.logTransaction("$LOG_TAG startAutomaticCheckingIfNeeded")
-        jobMutex.withLock {
-            if (checkingJob?.isActive == true) {
-                Logger.logTransaction("$LOG_TAG startAutomaticCheckingIfNeeded: job already active")
-                return
-            }
-            Logger.logTransaction("$LOG_TAG startAutomaticCheckingIfNeeded: starting new checking job")
-            checkingJob = coroutineScope.launch {
-                while (isActive) {
-                    try {
-                        checkPendingTransactions()
-                    } catch (e: Exception) {
-                        Logger.logTransaction(
-                            "$LOG_TAG Error checking pending transactions: ${e.message}",
-                        )
-                    }
-                    delay(CHECK_INTERVAL_MS)
-                }
-            }
-        }
-    }
-
-    private suspend fun stopAutomaticCheckingIfEmpty() {
-        Logger.logTransaction("$LOG_TAG stopAutomaticCheckingIfEmpty")
-        val pendingTransactions = storage.getTransactions()
-        if (pendingTransactions.isEmpty()) {
-            Logger.logTransaction("$LOG_TAG stopAutomaticCheckingIfEmpty: no pending transactions, stopping job")
-            jobMutex.withLock {
-                checkingJob?.cancel()
-                checkingJob = null
-            }
-        }
     }
 
     private suspend fun checkTransactionStatus(pendingTransaction: PendingTransaction): PendingTransactionStatus {
@@ -317,7 +268,6 @@ internal class EthereumPendingTransactionsProvider(
 
     companion object {
         private const val PRIVATE_MEMPOOL_TIMEOUT_MS = 5 * 60 * 1000L // 5 minutes
-        private const val CHECK_INTERVAL_MS = 3 * 1000L
         internal const val LOG_TAG = "PendingTransactionsProvider"
     }
 }
