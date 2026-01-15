@@ -3,22 +3,21 @@ package com.tangem.blockchain.blockchains.bitcoin.walletconnect
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignInput
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.successOr
+import com.tangem.blockchain.extensions.toCanonicalECDSASignature
 import fr.acinq.bitcoin.ByteVector
 import fr.acinq.bitcoin.PublicKey
 import fr.acinq.bitcoin.psbt.Psbt
 import fr.acinq.bitcoin.utils.Either
+import org.bitcoinj.crypto.TransactionSignature
 
 /**
  * Applies signatures to Bitcoin PSBT inputs and finalizes witness inputs.
  *
  * Handles the process of adding DER-encoded signatures to PSBT partial signatures map
  * and finalizing witness inputs when all required signatures are present.
- *
- * @property derEncoder Encoder for converting signatures to DER format
  */
-internal class PsbtSignatureApplier(
-    private val derEncoder: DerSignatureEncoder = DerSignatureEncoder,
-) {
+internal class PsbtSignatureApplier {
 
     /**
      * Applies signatures to PSBT inputs.
@@ -42,7 +41,7 @@ internal class PsbtSignatureApplier(
         signatures.forEachIndexed { index, signature ->
             val inputIndex = inputIndices[index]
             val sighashType = signInputs[index].sighashTypes?.firstOrNull() ?: SIGHASH_ALL
-            val derSignature = derEncoder.encodeDerSignature(signature, sighashType.toByte())
+            val derSignature = encodeDerSignature(signature, sighashType)
 
             updatedPsbt = addSignatureToPsbt(
                 updatedPsbt,
@@ -159,13 +158,16 @@ internal class PsbtSignatureApplier(
     }
 
     /**
-     * Extension to handle Result unwrapping.
+     * Encodes signature in DER format with sighash type using BitcoinJ.
+     *
+     * @param signature Raw 64-byte signature (32-byte R + 32-byte S)
+     * @param sighashType Sighash type flag
+     * @return DER-encoded signature with sighash type appended
      */
-    private inline fun <T> Result<T>.successOr(onFailure: (Result.Failure) -> Nothing): T {
-        return when (this) {
-            is Result.Success -> this.data
-            is Result.Failure -> onFailure(this)
-        }
+    private fun encodeDerSignature(signature: ByteArray, sighashType: Int): ByteArray {
+        val canonicalSignature = signature.toCanonicalECDSASignature()
+        val transactionSignature = TransactionSignature(canonicalSignature.r, canonicalSignature.s, sighashType)
+        return transactionSignature.encodeToBitcoin()
     }
 
     private companion object {
