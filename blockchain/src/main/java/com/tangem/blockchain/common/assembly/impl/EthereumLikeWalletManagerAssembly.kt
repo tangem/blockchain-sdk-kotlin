@@ -25,11 +25,9 @@ import com.tangem.blockchain.pendingtransactions.PendingTransactionsProvider
 import com.tangem.blockchain.pendingtransactions.PendingTransactionsProviderFactory
 import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.blockchain.yieldsupply.YieldSupplyProviderFactory
-import kotlinx.coroutines.CoroutineScope
 
 internal class EthereumLikeWalletManagerAssembly(
     private val dataStorage: AdvancedDataStorage,
-    private val coroutineScope: CoroutineScope,
 ) : WalletManagerAssembly<EthereumWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): EthereumWalletManager {
@@ -50,7 +48,6 @@ internal class EthereumLikeWalletManagerAssembly(
 
             val pendingTransactionsProvider = PendingTransactionsProviderFactory(
                 dataStorage = dataStorage,
-                coroutineScope = coroutineScope,
             ).makeProvider(this, multiNetworkProvider, networkProviderMap)
 
             return createWalletManager(
