@@ -8,14 +8,12 @@ import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.pendingtransactions.providers.EthereumPendingTransactionsProvider
-import kotlinx.coroutines.CoroutineScope
 
 /**
  * Factory for creating instances of [PendingTransactionsProvider] based on the wallet's blockchain.
  */
 internal class PendingTransactionsProviderFactory(
     private val dataStorage: AdvancedDataStorage,
-    private val coroutineScope: CoroutineScope,
 ) {
 
     @Suppress("UNCHECKED_CAST")
@@ -35,7 +33,6 @@ internal class PendingTransactionsProviderFactory(
                     wallet = wallet,
                     multiJsonRpcProvider = networkProvider as MultiNetworkProvider<EthereumJsonRpcProvider>,
                     storage = storage,
-                    coroutineScope = coroutineScope,
                     networkProviderMap = networkProviderMap,
                 )
             }
