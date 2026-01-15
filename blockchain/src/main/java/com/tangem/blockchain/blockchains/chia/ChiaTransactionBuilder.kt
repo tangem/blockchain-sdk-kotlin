@@ -32,8 +32,8 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
     var unspentCoins: List<ChiaCoin> = emptyList()
     private var coinSpends: List<ChiaCoinSpend> = emptyList()
 
-    fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
-        transactionData.requireUncompiled()
+    fun buildToSign(transactionData: TransactionData, isSoftwareWallet: Boolean = false): Result<List<ByteArray>> {
+        val uncompiledTransactionData = transactionData.requireUncompiled()
 
         if (unspentCoins.isEmpty()) {
             return Result.Failure(
@@ -44,12 +44,12 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
         val unspentsToSpend = getUnspentsToSpend()
 
         val change = calculateChange(
-            amount = requireNotNull(transactionData.amount.value) { "Transaction amount is null" },
-            fee = transactionData.fee?.amount?.value ?: BigDecimal.ZERO,
+            amount = requireNotNull(uncompiledTransactionData.amount.value) { "Transaction amount is null" },
+            fee = uncompiledTransactionData.fee?.amount?.value ?: BigDecimal.ZERO,
             unspentCoins = unspentsToSpend,
         )
         if (change < 0) { // unspentsToSpend not enough to cover transaction amount
-            val maxAmount = transactionData.amount.value + change.toBigDecimal().movePointLeft(blockchain.decimals())
+            val maxAmount = uncompiledTransactionData.amount.value + change.toBigDecimal().movePointLeft(blockchain.decimals())
             return Result.Failure(
                 BlockchainSdkError.Chia.UtxoAmountError(
                     maxOutputs = MAX_INPUT_COUNT,
@@ -58,7 +58,7 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
             )
         }
 
-        coinSpends = transactionData.toChiaCoinSpends(unspentsToSpend, change)
+        coinSpends = uncompiledTransactionData.toChiaCoinSpends(unspentsToSpend, change)
 
         val hashesForSign = coinSpends.map {
             // our solutions are always Cons
@@ -109,9 +109,7 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
         }
     }
 
-    private fun TransactionData.toChiaCoinSpends(unspentCoins: List<ChiaCoin>, change: Long): List<ChiaCoinSpend> {
-        requireUncompiled()
-
+    private fun TransactionData.Uncompiled.toChiaCoinSpends(unspentCoins: List<ChiaCoin>, change: Long): List<ChiaCoinSpend> {
         val coinSpends = unspentCoins.map {
             ChiaCoinSpend(
                 coin = it,
