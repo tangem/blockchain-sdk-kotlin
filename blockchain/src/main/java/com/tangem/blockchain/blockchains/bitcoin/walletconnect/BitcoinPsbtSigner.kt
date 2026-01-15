@@ -7,6 +7,7 @@ import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import fr.acinq.bitcoin.Transaction
@@ -29,10 +30,9 @@ internal class BitcoinPsbtSigner(
     private val networkProvider: BitcoinNetworkProvider,
 ) {
 
-    private val derEncoder = DerSignatureEncoder
     private val psbtSerializer = PsbtSerializer
     private val hashComputer = PsbtHashComputer
-    private val signatureApplier = PsbtSignatureApplier(derEncoder)
+    private val signatureApplier = PsbtSignatureApplier()
 
     /**
      * Signs a PSBT transaction.
@@ -67,16 +67,6 @@ internal class BitcoinPsbtSigner(
         val finalizedPsbt = signatureApplier.finalizePsbt(signedPsbt, inputIndices)
 
         return psbtSerializer.serializePsbt(finalizedPsbt)
-    }
-
-    /**
-     * Extension to handle Result unwrapping.
-     */
-    private inline fun <T> Result<T>.successOr(onFailure: (Result.Failure) -> Nothing): T {
-        return when (this) {
-            is Result.Success -> this.data
-            is Result.Failure -> onFailure(this)
-        }
     }
 
     /**

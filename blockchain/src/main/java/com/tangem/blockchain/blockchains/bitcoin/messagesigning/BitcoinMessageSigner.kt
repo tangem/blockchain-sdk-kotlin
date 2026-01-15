@@ -12,11 +12,12 @@ import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toDecompressedPublicKey
 import com.tangem.common.extensions.toHexString
+import org.bitcoinj.core.Sha256Hash
+import org.bitcoinj.core.VarInt
 import org.kethereum.crypto.api.ec.ECDSASignature
 import org.kethereum.crypto.determineRecId
 import org.kethereum.crypto.impl.ec.canonicalise
 import org.kethereum.model.PublicKey
-import org.spongycastle.crypto.digests.SHA256Digest
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
 
@@ -51,7 +52,7 @@ internal class BitcoinMessageSigner(
         val signature = signHash(messageHash, signer).successOr { return it }
         validateSignatureSize(signature).successOr { return it }
 
-        val bitcoinSignature = createBitcoinSignature(signature, walletAddress.type, messageHash)
+        val bitcoinSignature = prepareSignature(signature, walletAddress.type, messageHash)
 
         return Result.Success(
             MessageSignatureResult(
@@ -118,11 +119,7 @@ internal class BitcoinMessageSigner(
      * Computes the correct recovery ID (0-3) by attempting to recover the public key
      * from the signature and verifying it matches the wallet's public key.
      */
-    private fun createBitcoinSignature(
-        signature: ByteArray,
-        addressType: AddressType,
-        messageHash: ByteArray,
-    ): ByteArray {
+    private fun prepareSignature(signature: ByteArray, addressType: AddressType, messageHash: ByteArray): ByteArray {
         // Parse signature into r and s components
         val r = BigInteger(1, signature.copyOfRange(0, SIGNATURE_COMPONENT_SIZE))
         val s = BigInteger(1, signature.copyOfRange(SIGNATURE_COMPONENT_SIZE, SIGNATURE_SIZE))
@@ -156,56 +153,11 @@ internal class BitcoinMessageSigner(
 
         val data = byteArrayOf(prefix.size.toByte()) +
             prefix +
-            encodeVarint(messageBytes.size) +
+            VarInt(messageBytes.size.toLong()).encode() +
             messageBytes
 
-        return doubleSha256(data)
+        return Sha256Hash.hashTwice(data)
     }
-
-    /**
-     * Computes double SHA256 hash.
-     */
-    private fun doubleSha256(data: ByteArray): ByteArray {
-        val digest = SHA256Digest()
-        val firstHash = ByteArray(digest.digestSize)
-
-        digest.update(data, 0, data.size)
-        digest.doFinal(firstHash, 0)
-
-        digest.reset()
-        val secondHash = ByteArray(digest.digestSize)
-        digest.update(firstHash, 0, firstHash.size)
-        digest.doFinal(secondHash, 0)
-
-        return secondHash
-    }
-
-    /**
-     * Encodes integer as Bitcoin varint.
-     */
-    private fun encodeVarint(value: Int): ByteArray {
-        return when {
-            value < VARINT_SINGLE_BYTE_LIMIT -> encodeSingleByteVarint(value)
-            value <= VARINT_TWO_BYTE_LIMIT -> encodeTwoByteVarint(value)
-            else -> encodeFourByteVarint(value)
-        }
-    }
-
-    private fun encodeSingleByteVarint(value: Int): ByteArray = byteArrayOf(value.toByte())
-
-    private fun encodeTwoByteVarint(value: Int): ByteArray = byteArrayOf(
-        0xfd.toByte(),
-        value.toByte(),
-        (value shr BYTE_SHIFT).toByte(),
-    )
-
-    private fun encodeFourByteVarint(value: Int): ByteArray = byteArrayOf(
-        0xfe.toByte(),
-        value.toByte(),
-        (value shr BYTE_SHIFT).toByte(),
-        (value shr TWO_BYTES_SHIFT).toByte(),
-        (value shr THREE_BYTES_SHIFT).toByte(),
-    )
 
     /**
      * Gets the base recovery header byte based on address type.
@@ -233,12 +185,7 @@ internal class BitcoinMessageSigner(
         const val SIGNATURE_SIZE = 64
         const val SIGNATURE_COMPONENT_SIZE = 32
         const val MESSAGE_PREFIX = "Bitcoin Signed Message:\n"
-        const val VARINT_SINGLE_BYTE_LIMIT = 253
-        const val VARINT_TWO_BYTE_LIMIT = 0xffff
         const val HEADER_P2PKH_COMPRESSED: Byte = 31
         const val HEADER_P2WPKH_NATIVE: Byte = 39
-        const val BYTE_SHIFT = 8
-        const val TWO_BYTES_SHIFT = 16
-        const val THREE_BYTES_SHIFT = 24
     }
 }
