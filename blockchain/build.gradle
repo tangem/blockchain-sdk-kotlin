@@ -36,6 +36,9 @@ android {
 
     packagingOptions {
         merges += "paymentrequest.proto"
+        resources {
+            excludes += ['META-INF/LICENSE.md', 'META-INF/LICENSE-notice.md']
+        }
     }
 
     testOptions {
