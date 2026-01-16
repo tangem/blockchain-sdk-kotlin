@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.BitcoinPsbtSigner
@@ -18,10 +19,9 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
 /**
- * Unit tests for BitcoinPsbtSigner.
+ * Instrumented tests for BitcoinPsbtSigner.
  *
  * Tests cover:
  * - PSBT parsing from Base64
@@ -30,8 +30,11 @@ import org.robolectric.RobolectricTestRunner
  * - Signature addition to PSBT
  * - PSBT serialization
  * - Broadcasting finalized PSBT
+ *
+ * Note: These tests require native ACINQ bitcoin-kmp and secp256k1 libraries,
+ * so they run as instrumented tests on Android devices/emulators.
  */
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class BitcoinPsbtSignerTest {
 
     private lateinit var wallet: Wallet
@@ -69,7 +72,7 @@ class BitcoinPsbtSignerTest {
     }
 
     @Test
-    fun `signPsbt fails with invalid Base64`() = runTest {
+    fun signPsbt_fails_with_invalid_Base64() = runTest {
         // Given
         val invalidPsbtBase64 = "not-valid-base64!!!"
         val signInputs = listOf(
@@ -90,7 +93,7 @@ class BitcoinPsbtSignerTest {
     }
 
     @Test
-    fun `signPsbt fails with empty sign inputs`() = runTest {
+    fun signPsbt_fails_with_empty_sign_inputs() = runTest {
         // Given
         val validPsbtBase64 = createMinimalValidPsbt()
         val emptySignInputs = emptyList<SignInput>()
@@ -105,7 +108,7 @@ class BitcoinPsbtSignerTest {
     }
 
     @Test
-    fun `signPsbt fails with out of bounds input index`() = runTest {
+    fun signPsbt_fails_with_out_of_bounds_input_index() = runTest {
         // Given
         val validPsbtBase64 = createMinimalValidPsbt()
         val signInputs = listOf(
@@ -126,7 +129,7 @@ class BitcoinPsbtSignerTest {
     }
 
     @Test
-    fun `signPsbt fails with address not in wallet`() = runTest {
+    fun signPsbt_fails_with_address_not_in_wallet() = runTest {
         // Given
         val validPsbtBase64 = createMinimalValidPsbt()
         val signInputs = listOf(
@@ -147,7 +150,7 @@ class BitcoinPsbtSignerTest {
     }
 
     @Test
-    fun `signPsbt fails with multiple sighash types`() = runTest {
+    fun signPsbt_fails_with_multiple_sighash_types() = runTest {
         // Given
         val validPsbtBase64 = createMinimalValidPsbt()
         val signInputs = listOf(
@@ -168,7 +171,7 @@ class BitcoinPsbtSignerTest {
     }
 
     @Test
-    fun `signPsbt uses default SIGHASH_ALL when not specified`() = runTest {
+    fun signPsbt_uses_default_SIGHASH_ALL_when_not_specified() = runTest {
         // Given
         val validPsbtBase64 = createMinimalValidPsbt()
         val signInputs = listOf(
@@ -196,7 +199,7 @@ class BitcoinPsbtSignerTest {
 
     @org.junit.Ignore("MockK instantiation issue with SimpleResult sealed class")
     @Test
-    fun `broadcastPsbt succeeds with finalized PSBT`() = runTest {
+    fun broadcastPsbt_succeeds_with_finalized_PSBT() = runTest {
         // Given
         val finalizedPsbt = createFinalizedPsbt()
 
@@ -215,7 +218,7 @@ class BitcoinPsbtSignerTest {
     }
 
     @Test
-    fun `broadcastPsbt fails with non-finalized PSBT`() = runTest {
+    fun broadcastPsbt_fails_with_non_finalized_PSBT() = runTest {
         // Given
         val nonFinalizedPsbt = createNonFinalizedPsbt()
 
@@ -229,7 +232,7 @@ class BitcoinPsbtSignerTest {
     }
 
     @Test
-    fun `encodeDerSignature produces correct format`() = runTest {
+    fun encodeDerSignature_produces_correct_format() = runTest {
         // Given: A minimal valid PSBT with witness input
         val validPsbtBase64 = createMinimalValidPsbt()
         val signInputs = listOf(
@@ -263,7 +266,7 @@ class BitcoinPsbtSignerTest {
     }
 
     @Test
-    fun `signPsbt handles signing failure from signer`() = runTest {
+    fun signPsbt_handles_signing_failure_from_signer() = runTest {
         // Given
         val validPsbtBase64 = createMinimalValidPsbt()
         val signInputs = listOf(
