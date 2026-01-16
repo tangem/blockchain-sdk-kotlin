@@ -129,9 +129,6 @@ dependencies {
     implementation 'com.github.multiformats:java-multibase:v1.0.0'
     implementation 'net.openhft:zero-allocation-hashing:0.11'
 
-    // used only for bech32m in Chia for now, remove when bitcoinj is updated up to version with bech32m encoidng
-    implementation "org.chiachat:kbls:1.0.3"
-
     // for hedera sdk
     implementation 'io.grpc:grpc-okhttp:1.46.0'
     implementation group: 'org.bouncycastle', name: 'bcprov-jdk15to18', version: '1.76'
