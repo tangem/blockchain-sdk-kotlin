@@ -247,10 +247,10 @@ interface TransactionSender {
     )
 
     suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
-        transactionData.requireUncompiled()
+        val uncompiledData = transactionData.requireUncompiled()
         return getFee(
-            amount = transactionData.amount,
-            destination = transactionData.destinationAddress,
+            amount = uncompiledData.amount,
+            destination = uncompiledData.destinationAddress,
         )
     }
 
