@@ -30,7 +30,7 @@ internal class SolanaExternalLinkProvider(private val isTestnet: Boolean) : Exte
         }
     }
 
-    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+    override fun getExplorerTxUrl(transactionHash: String, contractAddress: String?): TxExploreState {
         val url = buildString {
             append(baseUrl)
             append("tx/$transactionHash")

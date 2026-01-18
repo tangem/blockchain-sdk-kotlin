@@ -13,7 +13,7 @@ internal class AptosExternalLinkProvider(private val isTestnet: Boolean) : Exter
         return createExplorerUrl(path = "account/$walletAddress")
     }
 
-    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+    override fun getExplorerTxUrl(transactionHash: String, contractAddress: String?): TxExploreState {
         return TxExploreState.Url(createExplorerUrl(path = "txn/$transactionHash"))
     }
 

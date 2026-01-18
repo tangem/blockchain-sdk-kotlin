@@ -14,7 +14,7 @@ internal class AlgorandExternalLinkProvider(isTestnet: Boolean) : ExternalLinkPr
         return explorerBaseUrl + "account/$walletAddress/"
     }
 
-    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+    override fun getExplorerTxUrl(transactionHash: String, contractAddress: String?): TxExploreState {
         return TxExploreState.Url(explorerBaseUrl + "tx/$transactionHash")
     }
 }

@@ -19,7 +19,7 @@ internal class KoinosExternalLinkProvider(private val isTestnet: Boolean) : Exte
         }
     }
 
-    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+    override fun getExplorerTxUrl(transactionHash: String, contractAddress: String?): TxExploreState {
         return TxExploreState.Url(
             if (isTestnet) {
                 "${explorerBaseUrl}tx/$transactionHash"

@@ -533,8 +533,8 @@ enum class Blockchain(
         return externalLinkProvider.explorerUrl(walletAddress = address, contractAddress = tokenContractAddress)
     }
 
-    fun getExploreTxUrl(transactionHash: String): TxExploreState {
-        return externalLinkProvider.getExplorerTxUrl(transactionHash)
+    fun getExploreTxUrl(transactionHash: String, tokenContractAddress: String? = null): TxExploreState {
+        return externalLinkProvider.getExplorerTxUrl(transactionHash, tokenContractAddress)
     }
 
     fun getNFTExploreUrl(assetIdentifier: NFTAsset.Identifier): String? {
