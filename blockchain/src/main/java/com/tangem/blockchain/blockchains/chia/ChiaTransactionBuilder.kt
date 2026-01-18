@@ -32,7 +32,7 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
     var unspentCoins: List<ChiaCoin> = emptyList()
     private var coinSpends: List<ChiaCoinSpend> = emptyList()
 
-    fun buildToSign(transactionData: TransactionData, isSoftwareWallet: Boolean = false): Result<List<ByteArray>> {
+    fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
         val uncompiledTransactionData = transactionData.requireUncompiled()
 
         if (unspentCoins.isEmpty()) {
