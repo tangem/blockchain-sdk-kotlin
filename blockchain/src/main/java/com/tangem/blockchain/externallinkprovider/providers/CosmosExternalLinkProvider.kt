@@ -16,7 +16,7 @@ internal class CosmosExternalLinkProvider(private val isTestnet: Boolean) : Exte
         return explorerBaseUrl + path
     }
 
-    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+    override fun getExplorerTxUrl(transactionHash: String, contractAddress: String?): TxExploreState {
         val path = if (isTestnet) "transactions/$transactionHash" else "tx/$transactionHash"
         return TxExploreState.Url(explorerBaseUrl + path)
     }
