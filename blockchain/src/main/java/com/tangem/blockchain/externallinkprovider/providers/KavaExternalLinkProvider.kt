@@ -14,7 +14,7 @@ internal class KavaExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvid
         return explorerBaseUrl + "address/$walletAddress"
     }
 
-    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+    override fun getExplorerTxUrl(transactionHash: String, contractAddress: String?): TxExploreState {
         return TxExploreState.Url(explorerBaseUrl + "tx/$transactionHash")
     }
 }

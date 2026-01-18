@@ -13,7 +13,7 @@ internal class AreonExternalLinkProvider : ExternalLinkProvider {
         return "${explorerBaseUrl}accounts/$walletAddress"
     }
 
-    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+    override fun getExplorerTxUrl(transactionHash: String, contractAddress: String?): TxExploreState {
         return TxExploreState.Url(url = "${explorerBaseUrl}transactions/$transactionHash")
     }
 }

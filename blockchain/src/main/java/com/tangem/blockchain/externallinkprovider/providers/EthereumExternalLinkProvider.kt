@@ -22,7 +22,7 @@ internal class EthereumExternalLinkProvider(isTestnet: Boolean) : ExternalLinkPr
         }
     }
 
-    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+    override fun getExplorerTxUrl(transactionHash: String, contractAddress: String?): TxExploreState {
         return TxExploreState.Url(explorerBaseUrl + "tx/$transactionHash")
     }
 

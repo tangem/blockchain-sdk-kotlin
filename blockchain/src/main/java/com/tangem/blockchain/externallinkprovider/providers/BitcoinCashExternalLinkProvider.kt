@@ -14,7 +14,7 @@ internal class BitcoinCashExternalLinkProvider(private val isTestnet: Boolean) :
         return explorerBaseUrl + "address/$walletAddress"
     }
 
-    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+    override fun getExplorerTxUrl(transactionHash: String, contractAddress: String?): TxExploreState {
         return TxExploreState.Url(
             if (isTestnet) {
                 explorerBaseUrl + "tx/$transactionHash"

@@ -15,7 +15,7 @@ internal class StellarExternalLinkProvider(isTestnet: Boolean) : ExternalLinkPro
         return explorerBaseUrl + "accounts/$walletAddress"
     }
 
-    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
+    override fun getExplorerTxUrl(transactionHash: String, contractAddress: String?): TxExploreState {
         return TxExploreState.Url(explorerBaseUrl + "transactions/$transactionHash")
     }
 }

@@ -17,7 +17,11 @@ internal class KaspaExternalLinkProvider : ExternalLinkProvider {
         }
     }
 
-    override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
-        return TxExploreState.Url(explorerBaseUrl + "transactions/$transactionHash")
+    override fun getExplorerTxUrl(transactionHash: String, contractAddress: String?): TxExploreState {
+        return if (contractAddress != null) {
+            TxExploreState.Url(tokenExplorerBaseUrl + "transactions/$transactionHash")
+        } else {
+            TxExploreState.Url(explorerBaseUrl + "transactions/$transactionHash")
+        }
     }
 }
