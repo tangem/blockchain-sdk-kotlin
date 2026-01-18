@@ -36,6 +36,11 @@ class ChiaAddressService(blockchain: Blockchain) : AddressService() {
     }
 
     companion object {
+        private const val HRP_MAINNET = "xch"
+        private const val HRP_TESTNET = "txch"
+        private const val FROM_BITS = 8
+        private const val TO_BITS = 5
+
         // curried and serialized signature.clsp (https://github.com/Chia-Network/chialisp-crash-course/blob/af620db2505db507b348d4f036dc4955fa81a004/signature.clsp)
         fun getPuzzle(walletPublicKey: ByteArray): ByteArray {
             return (
