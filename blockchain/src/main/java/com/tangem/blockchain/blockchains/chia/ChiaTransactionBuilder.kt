@@ -49,7 +49,9 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
             unspentCoins = unspentsToSpend,
         )
         if (change < 0) { // unspentsToSpend not enough to cover transaction amount
-            val maxAmount = uncompiledTransactionData.amount.value + change.toBigDecimal().movePointLeft(blockchain.decimals())
+            val maxAmount = uncompiledTransactionData.amount.value + change.toBigDecimal().movePointLeft(
+                blockchain.decimals(),
+            )
             return Result.Failure(
                 BlockchainSdkError.Chia.UtxoAmountError(
                     maxOutputs = MAX_INPUT_COUNT,
@@ -109,7 +111,10 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
         }
     }
 
-    private fun TransactionData.Uncompiled.toChiaCoinSpends(unspentCoins: List<ChiaCoin>, change: Long): List<ChiaCoinSpend> {
+    private fun TransactionData.Uncompiled.toChiaCoinSpends(
+        unspentCoins: List<ChiaCoin>,
+        change: Long,
+    ): List<ChiaCoinSpend> {
         val coinSpends = unspentCoins.map {
             ChiaCoinSpend(
                 coin = it,
