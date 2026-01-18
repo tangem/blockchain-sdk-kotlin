@@ -55,10 +55,5 @@ class ChiaAddressService(blockchain: Blockchain) : AddressService() {
             val decoded = Bech32.decode(address)
             return Crypto.convertBits(decoded.data, 0, decoded.data.size, TO_BITS, FROM_BITS, false)
         }
-
-        private const val HRP_MAINNET = "xch"
-        private const val HRP_TESTNET = "txch"
-        private const val FROM_BITS = 8
-        private const val TO_BITS = 5
     }
 }
