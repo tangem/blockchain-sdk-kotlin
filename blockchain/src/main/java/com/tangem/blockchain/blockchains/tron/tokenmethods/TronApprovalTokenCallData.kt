@@ -32,4 +32,8 @@ data class TronApprovalTokenCallData(
 
             return prefixData + spenderAddressData + amountData
         }
+
+    override fun validate(): Boolean {
+        return spenderAddress.isNotEmpty()
+    }
 }
