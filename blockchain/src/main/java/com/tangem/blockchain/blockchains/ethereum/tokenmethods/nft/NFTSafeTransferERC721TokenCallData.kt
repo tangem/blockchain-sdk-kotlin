@@ -1,5 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods.nft
 
+import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.isNotZeroAddress
 import com.tangem.blockchain.common.smartcontract.Erc20CallData
 import com.tangem.blockchain.extensions.hexToFixedSizeBytes
 import com.tangem.blockchain.extensions.toFixedSizeBytes
@@ -29,4 +31,10 @@ class NFTSafeTransferERC721TokenCallData(
 
             return prefixData + fromAddressData + toAddressData + tokenIdData
         }
+
+    override fun validate(): Boolean {
+        val addressService = EthereumAddressService()
+        return addressService.validate(ownerAddress) && ownerAddress.isNotZeroAddress() &&
+            addressService.validate(destinationAddress) && destinationAddress.isNotZeroAddress()
+    }
 }
