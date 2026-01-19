@@ -16,4 +16,8 @@ internal object EthereumYieldSupplyServiceFeeCallData : SmartContractCallData {
             val prefixData = methodId.hexToBytes()
             return prefixData
         }
+
+    override fun validate(): Boolean {
+        return true
+    }
 }

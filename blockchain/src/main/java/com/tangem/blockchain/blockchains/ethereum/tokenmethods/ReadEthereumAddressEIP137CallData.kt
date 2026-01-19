@@ -33,4 +33,8 @@ internal data class ReadEthereumAddressEIP137CallData(
                 callDataBytesLength +
                 callDataBytes
         }
+
+    override fun validate(): Boolean {
+        return nameBytes.isNotEmpty() && callDataBytes.isNotEmpty()
+    }
 }
