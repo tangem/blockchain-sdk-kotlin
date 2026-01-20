@@ -1,0 +1,60 @@
+package com.tangem.blockchain.blockchains.ethereum.txbuilder
+
+import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.isZeroAddress
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.TransactionValidator
+
+/**
+ * Validator for Ethereum transactions.
+ */
+object EthereumTransactionValidator : TransactionValidator {
+    override suspend fun validate(transactionData: TransactionData): Result<Unit> = when (transactionData) {
+        is TransactionData.Uncompiled -> validateUncompiledTransaction(transactionData)
+        is TransactionData.Compiled -> {
+            // Compiled transactions are assumed to be valid
+            kotlin.Result.success(Unit)
+        }
+    }
+
+    private fun validateUncompiledTransaction(transactionData: TransactionData.Uncompiled): Result<Unit> {
+        val amount = transactionData.amount
+        val destinationAddress = transactionData.destinationAddress
+        val extras = transactionData.extras as? EthereumTransactionExtras
+
+        // Validate destination address and ensure it's not the zero address
+        val isValidAddress = EthereumAddressService().validate(transactionData.destinationAddress)
+        val isZeroAddress = destinationAddress.isZeroAddress()
+        if (!isValidAddress || isZeroAddress) {
+            return kotlin.Result.failure(BlockchainSdkError.FailedToSendException)
+        }
+
+        // Validate extras based on amount type
+        val extrasCheck = when (amount.type) {
+            AmountType.Coin -> if (extras?.callData != null) {
+                extras.callData.validate()
+            } else {
+                true
+            }
+
+            // For TokenYieldSupply and Token amount types, validate call data if present
+            is AmountType.TokenYieldSupply,
+            is AmountType.Token,
+            -> extras != null && extras.callData?.validate() == true
+            else -> true
+        }
+
+        // Validate that fee is provided
+        val feeCheck = transactionData.fee != null
+
+        // Final validation result
+        if (!feeCheck || !extrasCheck) {
+            return kotlin.Result.failure(BlockchainSdkError.FailedToSendException)
+        }
+
+        return kotlin.Result.success(Unit)
+    }
+}
