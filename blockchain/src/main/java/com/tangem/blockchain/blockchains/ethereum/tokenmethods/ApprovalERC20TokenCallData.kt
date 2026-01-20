@@ -1,5 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods
 
+import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.isNotZeroAddress
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.HEX_F
 import com.tangem.blockchain.common.smartcontract.Erc20CallData
@@ -27,4 +29,8 @@ data class ApprovalERC20TokenCallData(
             val amountData = amount?.bigIntegerValue()?.toBytesPadded(length = 32) ?: unlimitedAmount
             return prefixData + addressData + amountData
         }
+
+    override fun validate(): Boolean {
+        return EthereumAddressService().validate(spenderAddress) && spenderAddress.isNotZeroAddress()
+    }
 }
