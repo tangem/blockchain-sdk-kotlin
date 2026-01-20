@@ -1,13 +1,25 @@
 apply plugin: 'maven-publish'
 
+def publishPropsFile = rootProject.file("publish.properties")
+def publishProps = new Properties()
+if (publishPropsFile.exists()) {
+    publishProps.load(new FileInputStream(publishPropsFile))
+}
+
+ext {
+    artifactGroupId = findProperty('artifactGroupId') ?: publishProps.getProperty('artifactGroupId')
+    artifactId = findProperty('artifactId') ?: publishProps.getProperty('artifactId')
+    artifactVersion = findProperty('artifactVersion') ?: publishProps.getProperty('artifactVersion')
+}
+
 afterEvaluate {
     publishing {
 
         publications {
             bar(MavenPublication) {
-                groupId = "$project.artifactGroupId"
-                artifactId = "$project.artifactId"
-                version = "$project.artifactVersion"
+                groupId = project.ext.artifactGroupId
+                artifactId = project.ext.artifactId
+                version = project.ext.artifactVersion
 
                 from components.release
                 // artifact(sourceJar)
@@ -33,8 +45,8 @@ afterEvaluate {
                 name = "GitHubPackages"
                 url = uri("https://maven.pkg.github.com/tangem/blockchain-sdk-kotlin")
                 credentials {
-                    username = "$githubUser"
-                    password = "$githubPass"
+                    username = findProperty("githubUser")
+                    password = findProperty("githubPass")
                 }
             }
         }
