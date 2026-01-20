@@ -71,21 +71,24 @@ class EthereumOptimisticRollupWalletManager(
     }
 
     override suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
         lastLayer1FeeAmount = null
 
-        val extra = transactionData.extras as? EthereumTransactionExtras
+        val extra = uncompiledTransaction.extras as? EthereumTransactionExtras
 
-        val layer2fee =
-            super.getFee(transactionData.amount, transactionData.destinationAddress, extra?.callData).successOr {
-                return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-            } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+        val layer2fee = super.getFee(
+            amount = uncompiledTransaction.amount,
+            destination = uncompiledTransaction.destinationAddress,
+            callData = extra?.callData,
+        ).successOr {
+            return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+        } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
         // TODO: [REDACTED_JIRA]
         return getLegacyFee(
-            amount = transactionData.amount,
-            destination = transactionData.destinationAddress,
+            amount = uncompiledTransaction.amount,
+            destination = uncompiledTransaction.destinationAddress,
             data = extra?.callData?.dataHex,
             layer2fee = layer2fee,
         )
@@ -192,19 +195,19 @@ class EthereumOptimisticRollupWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
         // We need to subtract layer 1 fee, because it is deducted automatically
         // and should not be included into transaction for signing
         // https://help.optimism.io/hc/en-us/articles/4411895794715
-        val calculatedTransactionFee = (transactionData.fee?.amount?.value ?: BigDecimal.ZERO) -
+        val calculatedTransactionFee = (uncompiledTransaction.fee?.amount?.value ?: BigDecimal.ZERO) -
             (lastLayer1FeeAmount?.value ?: BigDecimal.ZERO)
 
-        val gasLimit = (transactionData.extras as? EthereumTransactionExtras)?.gasLimit
-            ?: (transactionData.fee as? Fee.Ethereum.Legacy)?.gasLimit
+        val gasLimit = (uncompiledTransaction.extras as? EthereumTransactionExtras)?.gasLimit
+            ?: (uncompiledTransaction.fee as? Fee.Ethereum.Legacy)?.gasLimit
             ?: DEFAULT_GAS_LIMIT
 
-        val updatedTransactionData = transactionData.copy(
+        val updatedTransactionData = uncompiledTransaction.copy(
             fee = Fee.Ethereum.Legacy(
                 amount = Amount(value = calculatedTransactionFee, blockchain = wallet.blockchain),
                 gasLimit = gasLimit,
