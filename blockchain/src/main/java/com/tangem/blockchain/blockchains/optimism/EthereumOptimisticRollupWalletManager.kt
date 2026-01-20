@@ -73,10 +73,13 @@ class EthereumOptimisticRollupWalletManager(
 
         val extra = uncompiledTransaction.extras as? EthereumTransactionExtras
 
-        val layer2fee =
-            super.getFee(uncompiledTransaction.amount, uncompiledTransaction.destinationAddress, extra?.callData).successOr {
-                return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-            } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+        val layer2fee = super.getFee(
+            amount = uncompiledTransaction.amount,
+            destination = uncompiledTransaction.destinationAddress,
+            callData = extra?.callData,
+        ).successOr {
+            return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+        } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
         // TODO: [REDACTED_JIRA]
         return getLegacyFee(

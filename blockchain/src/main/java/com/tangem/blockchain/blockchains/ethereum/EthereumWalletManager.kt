@@ -430,7 +430,8 @@ open class EthereumWalletManager(
                 to = amount.type.token.contractAddress
             }
 
-            else -> { /* no-op */
+            else -> {
+                /* no-op */
             }
         }
 
