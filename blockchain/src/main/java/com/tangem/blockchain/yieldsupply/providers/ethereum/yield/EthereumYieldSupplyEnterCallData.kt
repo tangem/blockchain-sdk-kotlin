@@ -1,6 +1,7 @@
 package com.tangem.blockchain.yieldsupply.providers.ethereum.yield
 
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.isNotZeroAddress
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.parseEthereumAddress
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.extensions.hexToFixedSizeBytes
@@ -23,6 +24,10 @@ class EthereumYieldSupplyEnterCallData(
 
             return prefixData + tokenContractAddressData
         }
+
+    override fun validate(): Boolean {
+        return EthereumAddressService().validate(tokenContractAddress) && tokenContractAddress.isNotZeroAddress()
+    }
 
     companion object {
         const val METHOD_ID = "0x79be55f7"
