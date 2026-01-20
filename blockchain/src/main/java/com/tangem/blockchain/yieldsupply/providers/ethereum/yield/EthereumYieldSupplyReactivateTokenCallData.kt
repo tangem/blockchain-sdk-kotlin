@@ -2,6 +2,7 @@ package com.tangem.blockchain.yieldsupply.providers.ethereum.yield
 
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.WORD_HEX_LENGTH
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.isNotZeroAddress
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.parseEthereumAddress
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
@@ -10,6 +11,7 @@ import com.tangem.blockchain.extensions.bigIntegerValue
 import com.tangem.blockchain.extensions.hexToFixedSizeBytes
 import com.tangem.common.extensions.hexToBytes
 import org.kethereum.extensions.toBytesPadded
+import java.math.BigInteger
 
 /**
  *  Call data for the method that reactivates a previously deactivated yield token,
@@ -30,6 +32,12 @@ class EthereumYieldSupplyReactivateTokenCallData(
 
             return prefixData + tokenContractAddressData + maxFeeData
         }
+
+    override fun validate(): Boolean {
+        val feeValue = maxNetworkFee.bigIntegerValue()
+        return EthereumAddressService().validate(tokenContractAddress) && tokenContractAddress.isNotZeroAddress() &&
+            feeValue != null && feeValue > BigInteger.ZERO
+    }
 
     companion object {
         const val METHOD_ID = "0xc478e956"
