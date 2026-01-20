@@ -29,4 +29,9 @@ class TronTransferTokenCallData(
 
             return prefixData + addressData + amountData
         }
+
+    override fun validate(): Boolean {
+        val amountValue = amount.bigIntegerValue()
+        return destination.isNotEmpty() && amountValue != null && amountValue > java.math.BigInteger.ZERO
+    }
 }
