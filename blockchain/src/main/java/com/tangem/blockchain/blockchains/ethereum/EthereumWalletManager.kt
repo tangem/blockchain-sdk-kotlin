@@ -9,13 +9,15 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvide
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.ApprovalERC20TokenCallData
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionValidator
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.Result.*
+import com.tangem.blockchain.extensions.Result.Failure
+import com.tangem.blockchain.extensions.Result.Success
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.nft.DefaultNFTProvider
@@ -53,7 +55,8 @@ open class EthereumWalletManager(
     EthereumGasLoader,
     TransactionPreparer,
     Approver,
-    NameResolver {
+    NameResolver,
+    TransactionValidator by EthereumTransactionValidator {
 
     // move to constructor later
     protected val feesCalculator = EthereumFeesCalculator()
@@ -118,6 +121,10 @@ open class EthereumWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        validate(transactionData).onFailure {
+            return Result.Failure(it as? BlockchainSdkError ?: BlockchainSdkError.FailedToBuildTx)
+        }
+
         val transactionToSend = prepareForSend(transactionData, signer)
             .successOr { return it }
 
@@ -136,6 +143,11 @@ open class EthereumWalletManager(
         signer: TransactionSigner,
         sendMode: TransactionSender.MultipleTransactionSendMode,
     ): Result<TransactionsSendResult> {
+        transactionDataList.forEach { transactionData ->
+            validate(transactionData).onFailure {
+                return Result.Failure(it as? BlockchainSdkError ?: BlockchainSdkError.FailedToBuildTx)
+            }
+        }
         if (transactionDataList.size == 1) {
             return sendSingleTransaction(transactionDataList, signer)
         }

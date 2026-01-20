@@ -1,5 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods
 
+import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.isNotZeroAddress
 import com.tangem.blockchain.common.smartcontract.Erc20CallData
 import com.tangem.blockchain.extensions.hexToFixedSizeBytes
 import com.tangem.common.extensions.hexToBytes
@@ -19,4 +21,8 @@ data class TokenBalanceERC20TokenCallData(private val address: String) : Erc20Ca
             val addressData = address.addressWithoutPrefix().hexToFixedSizeBytes()
             return prefixData + addressData
         }
+
+    override fun validate(): Boolean {
+        return EthereumAddressService().validate(address) && address.isNotZeroAddress()
+    }
 }

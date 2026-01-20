@@ -16,5 +16,6 @@ open class EthereumAddressService : AddressService() {
         walletPublicKey.toDecompressedPublicKey().sliceArray(1..64),
     ).toAddress().withERC55Checksum().hex
 
-    override fun validate(address: String): Boolean = Address(address).hasValidERC55ChecksumOrNoChecksum()
+    override fun validate(address: String): Boolean =
+        Address(address).hasValidERC55ChecksumOrNoChecksum() && address != EthereumUtils.ZERO_ADDRESS
 }
