@@ -537,6 +537,10 @@ enum class Blockchain(
         return externalLinkProvider.getExplorerTxUrl(transactionHash)
     }
 
+    fun getTokenExplorerTxUrl(transactionHash: String): TxExploreState {
+        return externalLinkProvider.getTokenExplorerTxUrl(transactionHash)
+    }
+
     fun getNFTExploreUrl(assetIdentifier: NFTAsset.Identifier): String? {
         return externalLinkProvider.getNFTExplorerUrl(assetIdentifier)
     }
