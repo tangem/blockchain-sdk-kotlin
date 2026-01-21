@@ -48,7 +48,11 @@ internal class KaspaTransactionHistoryProvider(
                 )
             }
             val txs = response.toTxHistoryItems(request.address)
-            val nextPage = if (response.size < pageSize) Page.LastPage else Page.Next(pageToLoad.inc().toString())
+            val nextPage = if (response.size < pageSize) {
+                Page.LastPage
+            } else {
+                Page.Next(pageToLoad.inc().toString())
+            }
             Result.Success(PaginationWrapper(nextPage = nextPage, items = txs))
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
