@@ -103,8 +103,6 @@ internal class KaspaTransactionHistoryProvider(
     private fun KaspaCoinTransaction.isCoinbaseTransaction(): Boolean {
         val inputs = this.inputs ?: emptyList()
         if (inputs.isEmpty()) return true
-
-        // Check if all inputs have zero/coinbase outpoint hash (strict equality check)
         return inputs.all { input ->
             input.previousOutpointHash == COINBASE_OUTPOINT_HASH
         }
