@@ -9,61 +9,57 @@ val Blockchain.isSupportEIP1559: Boolean
 
         return when (this) {
             Blockchain.Ethereum, Blockchain.EthereumTestnet,
-            Blockchain.BSC,
-            Blockchain.Polygon,
-            Blockchain.Avalanche,
-            Blockchain.Fantom,
-            Blockchain.Arbitrum,
+            Blockchain.BSC, Blockchain.BSCTestnet,
+            Blockchain.Polygon, Blockchain.PolygonTestnet,
+            Blockchain.Avalanche, Blockchain.AvalancheTestnet,
+            Blockchain.Fantom, Blockchain.FantomTestnet,
+            Blockchain.Arbitrum, Blockchain.ArbitrumTestnet,
             Blockchain.Gnosis,
-            // TODO: [REDACTED_JIRA]
-            // Blockchain.Optimism,
-            // Blockchain.Manta,
-            // Blockchain.Base,
             Blockchain.Cronos,
-            Blockchain.Decimal,
-            Blockchain.Areon,
+            Blockchain.Decimal, Blockchain.DecimalTestnet,
+            Blockchain.Areon, Blockchain.AreonTestnet,
             Blockchain.Playa3ull,
-            Blockchain.PulseChain,
-            Blockchain.Flare,
+            Blockchain.PulseChain, Blockchain.PulseChainTestnet,
+            Blockchain.Flare, Blockchain.FlareTestnet,
             Blockchain.Canxium,
-            Blockchain.OdysseyChain,
-            Blockchain.Sonic,
-            Blockchain.ApeChain,
-            Blockchain.Linea,
+            Blockchain.OdysseyChain, Blockchain.OdysseyChainTestnet,
+            Blockchain.Sonic, Blockchain.SonicTestnet,
+            Blockchain.ApeChain, Blockchain.ApeChainTestnet,
+            Blockchain.Linea, Blockchain.LineaTestnet,
             Blockchain.ArbitrumNova,
-            Blockchain.Plasma,
-            Blockchain.Scroll,
+            Blockchain.Plasma, Blockchain.PlasmaTestnet,
+            Blockchain.Scroll, Blockchain.ScrollTestnet,
+            Blockchain.Optimism, Blockchain.OptimismTestnet,
+            Blockchain.Base, Blockchain.BaseTestnet,
+            Blockchain.Manta, Blockchain.MantaTestnet,
+            Blockchain.Mantle, Blockchain.MantleTestnet,
+            Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet,
             -> true
-            Blockchain.EthereumClassic, // eth_feeHistory all zeroes
-            Blockchain.EthereumPow, // eth_feeHistory with zeros
+            Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet, // eth_feeHistory all zeroes
+            Blockchain.EthereumPow, Blockchain.EthereumPowTestnet, // eth_feeHistory with zeros
             Blockchain.Dischain, // eth_feeHistory with zeros
-            Blockchain.Kava, // eth_feeHistory zero or null
-            Blockchain.OctaSpace, // eth_feeHistory all zeroes
-            Blockchain.Shibarium, // wrong base fee in eth_feeHistory. wei instead of gwei
+            Blockchain.Kava, Blockchain.KavaTestnet, // eth_feeHistory zero or null
+            Blockchain.OctaSpace, Blockchain.OctaSpaceTestnet, // eth_feeHistory all zeroes
+            Blockchain.Shibarium, Blockchain.ShibariumTestnet, // wrong base fee in eth_feeHistory. wei instead of gwei
             Blockchain.RSK,
-            Blockchain.Telos,
-            Blockchain.XDC,
-            Blockchain.Aurora,
-            Blockchain.ZkSyncEra,
-            Blockchain.Moonbeam,
-            Blockchain.PolygonZkEVM,
-            Blockchain.Moonriver,
-            Blockchain.Taraxa,
-            Blockchain.Optimism,
-            Blockchain.Manta,
-            Blockchain.Base,
-            Blockchain.Cyber,
-            Blockchain.Blast,
-            Blockchain.Core, // base fee is zero
-            Blockchain.EnergyWebChain,
-            Blockchain.Mantle,
+            Blockchain.Telos, Blockchain.TelosTestnet,
+            Blockchain.XDC, Blockchain.XDCTestnet,
+            Blockchain.Aurora, Blockchain.AuroraTestnet,
+            Blockchain.ZkSyncEra, Blockchain.ZkSyncEraTestnet,
+            Blockchain.Moonbeam, Blockchain.MoonbeamTestnet,
+            Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet,
+            Blockchain.Moonriver, Blockchain.MoonriverTestnet,
+            Blockchain.Taraxa, Blockchain.TaraxaTestnet,
+            Blockchain.Cyber, Blockchain.CyberTestnet,
+            Blockchain.Blast, Blockchain.BlastTestnet,
+            Blockchain.Core, Blockchain.CoreTestnet, // base fee is zero
+            Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet,
             Blockchain.Xodex,
-            Blockchain.Chiliz,
-            Blockchain.VanarChain,
-            Blockchain.Bitrock,
-            Blockchain.ZkLinkNova,
-            Blockchain.Hyperliquid,
-            Blockchain.Quai,
+            Blockchain.Chiliz, Blockchain.ChilizTestnet,
+            Blockchain.VanarChain, Blockchain.VanarChainTestnet,
+            Blockchain.Bitrock, Blockchain.BitrockTestnet,
+            Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet,
+            Blockchain.Quai, Blockchain.QuaiTestnet,
             -> false
             else -> error("Don't forget about evm here")
         }
