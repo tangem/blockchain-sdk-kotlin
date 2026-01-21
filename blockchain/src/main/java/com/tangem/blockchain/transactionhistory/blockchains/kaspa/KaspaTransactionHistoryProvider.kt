@@ -83,10 +83,15 @@ internal class KaspaTransactionHistoryProvider(
             val inputs = transaction.inputs ?: emptyList()
             val isCoinbase = transaction.isCoinbaseTransaction()
             val isOutgoing = !isCoinbase && inputs.any { it.previousOutpointAddress == walletAddress }
-            val amount = transaction.extractTransactionAmount(isOutgoing, walletAddress, isCoinbase)
+            val amount = transaction
+                .extractTransactionAmount(isOutgoing, walletAddress, isCoinbase)
                 ?: return@mapNotNull null
-            val destination = transaction.extractDestination(isOutgoing, walletAddress) ?: return@mapNotNull null
-            val source = transaction.extractSource(isOutgoing, walletAddress, isCoinbase) ?: return@mapNotNull null
+            val destination = transaction
+                .extractDestination(isOutgoing, walletAddress)
+                ?: return@mapNotNull null
+            val source = transaction
+                .extractSource(isOutgoing, walletAddress, isCoinbase)
+                ?: return@mapNotNull null
             TransactionHistoryItem(
                 txHash = transaction.transactionId.orEmpty(),
                 timestamp = transaction.blockTime ?: 0L,
@@ -129,7 +134,8 @@ internal class KaspaTransactionHistoryProvider(
         val fee = if (isCoinbase) {
             0L
         } else {
-            (inputs.sumOf { it.previousOutpointAmount ?: 0L } - outputs.sumOf { it.amount }).coerceAtLeast(0L)
+            (inputs.sumOf { it.previousOutpointAmount ?: 0L } - outputs.sumOf { it.amount })
+                .coerceAtLeast(0L)
         }
         val amountWithFee = if (isOutgoing) amount + fee else amount
 
@@ -139,7 +145,10 @@ internal class KaspaTransactionHistoryProvider(
         )
     }
 
-    private fun KaspaCoinTransaction.extractDestination(isOutgoing: Boolean, walletAddress: String): DestinationType? {
+    private fun KaspaCoinTransaction.extractDestination(
+        isOutgoing: Boolean,
+        walletAddress: String,
+    ): DestinationType? {
         return when {
             isOutgoing -> {
                 val outputAddresses = outputs
