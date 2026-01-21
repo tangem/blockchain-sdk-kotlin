@@ -24,11 +24,6 @@ internal class KaspaTransactionHistoryProvider(
     private val kaspaApiService: KaspaApiService,
 ) : TransactionHistoryProvider {
 
-    private companion object {
-        private const val COINBASE_OUTPOINT_HASH = "0000000000000000000000000000000000000000000000000000000000000000"
-        private const val COINBASE_SOURCE = "coinbase"
-    }
-
     override suspend fun getTransactionHistoryState(
         address: String,
         filterType: TransactionHistoryRequest.FilterType,
@@ -84,7 +79,8 @@ internal class KaspaTransactionHistoryProvider(
             val inputs = transaction.inputs ?: emptyList()
             val isCoinbase = transaction.isCoinbaseTransaction()
             val isOutgoing = !isCoinbase && inputs.any { it.previousOutpointAddress == walletAddress }
-            val amount = transaction.extractTransactionAmount(isOutgoing, walletAddress, isCoinbase) ?: return@mapNotNull null
+            val amount = transaction.extractTransactionAmount(isOutgoing, walletAddress, isCoinbase)
+                ?: return@mapNotNull null
             val destination = transaction.extractDestination(isOutgoing, walletAddress) ?: return@mapNotNull null
             val source = transaction.extractSource(isOutgoing, walletAddress, isCoinbase) ?: return@mapNotNull null
             TransactionHistoryItem(
@@ -171,5 +167,10 @@ internal class KaspaTransactionHistoryProvider(
                     ?.previousOutpointAddress
                     ?.let(SourceType::Single)
         }
+    }
+
+    private companion object {
+        private const val COINBASE_OUTPOINT_HASH = "0000000000000000000000000000000000000000000000000000000000000000"
+        private const val COINBASE_SOURCE = "coinbase"
     }
 }
