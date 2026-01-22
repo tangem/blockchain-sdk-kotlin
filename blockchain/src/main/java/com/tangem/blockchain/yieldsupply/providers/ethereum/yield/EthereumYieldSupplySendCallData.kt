@@ -1,5 +1,7 @@
 package com.tangem.blockchain.yieldsupply.providers.ethereum.yield
 
+import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.isNotZeroAddress
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.extensions.bigIntegerValue
@@ -28,4 +30,10 @@ class EthereumYieldSupplySendCallData(
 
             return prefixData + tokenContractAddressData + destinationAddressData + amountData
         }
+
+    override fun validate(): Boolean {
+        val addressService = EthereumAddressService()
+        return addressService.validate(tokenContractAddress) && tokenContractAddress.isNotZeroAddress() &&
+            addressService.validate(destinationAddress) && destinationAddress.isNotZeroAddress()
+    }
 }

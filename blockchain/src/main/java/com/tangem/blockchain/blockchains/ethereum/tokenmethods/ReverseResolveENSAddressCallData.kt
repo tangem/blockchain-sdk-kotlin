@@ -49,4 +49,8 @@ internal data class ReverseResolveENSAddressCallData(
         result = 31 * result + coinType
         return result
     }
+
+    override fun validate(): Boolean {
+        return address.isNotEmpty()
+    }
 }
