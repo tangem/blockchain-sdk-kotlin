@@ -146,8 +146,9 @@ open class EthereumWalletManager(
             .toBigInteger()
 
         val updatedData = transactionDataList.mapIndexed { index, data ->
-            data.requireUncompiled().copy(
-                extras = (data.extras as? EthereumTransactionExtras)
+            val uncompiledTransaction = data.requireUncompiled()
+            uncompiledTransaction.copy(
+                extras = (uncompiledTransaction.extras as? EthereumTransactionExtras)
                     ?.copy(nonce = blockchainNonce + index.toBigInteger())
                     ?: EthereumTransactionExtras(nonce = blockchainNonce + index.toBigInteger()),
             )
@@ -233,11 +234,11 @@ open class EthereumWalletManager(
     }
 
     override suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
-        transactionData.requireUncompiled()
-        val extra = transactionData.extras as? EthereumTransactionExtras
+        val uncompiledTransaction = transactionData.requireUncompiled()
+        val extra = uncompiledTransaction.extras as? EthereumTransactionExtras
         return getFeeInternal(
-            amount = transactionData.amount,
-            destination = transactionData.destinationAddress,
+            amount = uncompiledTransaction.amount,
+            destination = uncompiledTransaction.destinationAddress,
             callData = extra?.callData,
         )
     }
