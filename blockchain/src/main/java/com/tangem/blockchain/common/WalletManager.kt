@@ -218,6 +218,22 @@ interface TransactionSender {
 
     suspend fun send(transactionData: TransactionData, signer: TransactionSigner): Result<TransactionSendResult>
 
+    /**
+     * Broadcasts a signed transaction to the blockchain network.
+     *
+     * @param signedTransaction The signed transaction data in hexadecimal format.
+     * @return A [Result] containing the [TransactionSendResult] if successful
+     */
+    suspend fun broadcastTransaction(signedTransaction: String): Result<TransactionSendResult> {
+        return Result.Failure(
+            BlockchainSdkError.WrappedThrowable(
+                NotImplementedError(
+                    "broadcastTransaction is not implemented for this blockchain.",
+                ),
+            ),
+        )
+    }
+
     // Think about migration to different interface
     suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee>
 
@@ -252,6 +268,21 @@ interface TransactionSender {
         destination = destination,
         callData = callData,
     )
+}
+
+/**
+ * Interface for getting information about pending transactions.
+ * Similar to [TransactionSender], this interface provides methods to query pending transaction status.
+ */
+interface TransactionPendingInfo {
+
+    /**
+     * Gets current list of pending transaction IDs for the optional contract address.
+     *
+     * @param contractAddress Optional contract address to filter transactions (for token contracts, etc.)
+     * @return List of pending transaction IDs (hashes)
+     */
+    suspend fun getPendingTransactions(contractAddress: String? = null): List<String>
 }
 
 interface TransactionSigner {

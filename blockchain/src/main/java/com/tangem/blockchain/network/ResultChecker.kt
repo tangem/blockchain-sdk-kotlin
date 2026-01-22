@@ -12,9 +12,12 @@ import java.io.IOException
 
 object ResultChecker {
 
+    private const val EXECUTION_REVERTED_ERROR_CODE = 3
+    private const val EXECUTION_REVERTED_MESSAGE = "execution reverted"
+
     fun isNetworkError(result: Result<*>): Boolean {
         return when (result) {
-            is Result.Success -> isError(result)
+            is Result.Success -> isNetworkError(result)
             is Result.Failure ->
                 when (result.error) {
                     is BlockchainSdkError.WrappedThrowable -> result.error.isNetworkError()
@@ -66,8 +69,18 @@ object ResultChecker {
         return (result.data as? JsonRPCResponse)?.error?.message
     }
 
-    private fun isError(result: Result.Success<*>): Boolean {
-        return result.data is JsonRPCResponse && result.data.error != null
+    private fun isNetworkError(result: Result.Success<*>): Boolean {
+        val response = result.data as? JsonRPCResponse ?: return false
+        val error = response.error ?: return false
+
+        return !isContractExecutionError(error.code, error.message)
+    }
+
+    private fun isContractExecutionError(code: Int, message: String): Boolean {
+        // Code 3 is the standard EIP-1474 code for execution reverted
+        if (code == EXECUTION_REVERTED_ERROR_CODE) return true
+        if (message.contains(EXECUTION_REVERTED_MESSAGE, ignoreCase = true)) return true
+        return false
     }
 
     private fun BlockchainSdkError.WrappedThrowable.isNetworkError(): Boolean {
