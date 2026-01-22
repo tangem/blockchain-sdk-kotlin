@@ -1,6 +1,6 @@
 package com.tangem.blockchain.common
 
-import com.tangem.blockchain.extensions.removeLeadingZero
+import com.tangem.blockchain.extensions.normalizeByteArray
 import com.tangem.common.extensions.toDecompressedPublicKey
 import org.kethereum.crypto.api.ec.ECDSASignature
 import org.kethereum.crypto.determineRecId
@@ -75,8 +75,8 @@ data class ExtendedSecp256k1Signature(val r: BigInteger, val s: BigInteger, val 
         val signatureData = SignatureData(r = r, s = s, v = v.toBigInteger())
 
         // !!Important, use removeLeadingZero() from com.tangem.blockchain.extensions
-        return signatureData.r.toByteArray().removeLeadingZero() +
-            signatureData.s.toByteArray().removeLeadingZero() +
-            signatureData.v.toByteArray().removeLeadingZero()
+        return signatureData.r.toByteArray().normalizeByteArray(size = 32) +
+            signatureData.s.toByteArray().normalizeByteArray(size = 32) +
+            signatureData.v.toByteArray().normalizeByteArray(size = 1)
     }
 }

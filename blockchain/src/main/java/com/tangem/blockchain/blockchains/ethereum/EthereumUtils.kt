@@ -214,6 +214,12 @@ object EthereumUtils {
         return transactionToSign.transaction.encode(signatureData)
     }
 
+    /**
+     * Calculates the hash for Ethereum EIP-712 typed data.
+     *
+     * @param rawMessage A string containing the original EIP-712 formatted message.
+     * @return A byte array representing the message hash.
+     */
     fun makeTypedDataHash(rawMessage: String): ByteArray {
         return EthEip712Util.eip712Hash(rawMessage)
     }

@@ -9,6 +9,7 @@ import java.math.BigInteger
 interface EthereumNetworkProvider : NetworkProvider {
     suspend fun getInfo(address: String, tokens: Set<Token>): Result<EthereumInfoResponse>
     suspend fun getPendingTxCount(address: String): Result<Long>
+    suspend fun getTxCount(address: String): Result<BigInteger>
     suspend fun getAllowance(ownerAddress: String, token: Token, spenderAddress: String): kotlin.Result<BigDecimal>
     suspend fun sendTransaction(transaction: String): Result<String>
     suspend fun getSignatureCount(address: String): Result<Int>
@@ -21,6 +22,15 @@ interface EthereumNetworkProvider : NetworkProvider {
     suspend fun callContractForFee(data: ContractCallData): Result<BigInteger>
     suspend fun resolveName(namehash: ByteArray, encodedName: ByteArray): ResolveAddressResult
     suspend fun resolveAddress(address: String): ReverseResolveAddressResult
+
+    /**
+     * Get nonce from a smart contract for a specific user.
+     * This is typically used for EIP-712 and EIP-7702 operations.
+     *
+     * @param address The address of the user.
+     * @return Result containing the nonce or an error.
+     */
+    suspend fun getContractNonce(address: String): Result<BigInteger>
 }
 
 class EthereumInfoResponse(
