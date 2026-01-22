@@ -227,4 +227,12 @@ object EthereumUtils {
     fun String.parseEthereumAddress(): String {
         return hexToFixedSizeBytes().removeLeadingZeros().toHexString().formatHex().lowercase()
     }
+
+    fun String.isZeroAddress(): Boolean {
+        return this.equals(ZERO_ADDRESS, ignoreCase = true)
+    }
+
+    fun String.isNotZeroAddress(): Boolean {
+        return !this.equals(ZERO_ADDRESS, ignoreCase = true)
+    }
 }

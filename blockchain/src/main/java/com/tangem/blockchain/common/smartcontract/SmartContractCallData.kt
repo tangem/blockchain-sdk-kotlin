@@ -14,4 +14,6 @@ interface SmartContractCallData {
     val data: ByteArray
     val dataHex: String
         get() = data.toHexString()
+
+    fun validate(): Boolean
 }

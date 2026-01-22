@@ -75,6 +75,10 @@ class QuaiWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        validate(transactionData).onFailure {
+            Result.Failure(it as? BlockchainSdkError ?: BlockchainSdkError.FailedToBuildTx)
+        }
+
         val transactionToSend = prepareForSend(transactionData, signer)
             .successOr { return it }
 

@@ -12,6 +12,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvide
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.ApprovalERC20TokenCallData
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionValidator
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
@@ -69,6 +70,7 @@ open class EthereumWalletManager(
     Approver,
     NameResolver,
     PendingTransactionHandler,
+    TransactionValidator by EthereumTransactionValidator,
     EthereumGaslessDataProvider by ethereumGaslessDataProvider {
 
     // move to constructor later
@@ -181,6 +183,10 @@ open class EthereumWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        validate(transactionData).onFailure {
+            return Result.Failure(it as? BlockchainSdkError ?: BlockchainSdkError.FailedToBuildTx)
+        }
+
         val transactionToSend = prepareForSend(transactionData, signer)
             .successOr { return it }
 
@@ -217,6 +223,11 @@ open class EthereumWalletManager(
         signer: TransactionSigner,
         sendMode: TransactionSender.MultipleTransactionSendMode,
     ): Result<TransactionsSendResult> {
+        transactionDataList.forEach { transactionData ->
+            validate(transactionData).onFailure {
+                return Result.Failure(it as? BlockchainSdkError ?: BlockchainSdkError.FailedToBuildTx)
+            }
+        }
         if (transactionDataList.size == 1) {
             return sendSingleTransaction(transactionDataList, signer)
         }
@@ -227,8 +238,9 @@ open class EthereumWalletManager(
             .toBigInteger()
 
         val updatedData = transactionDataList.mapIndexed { index, data ->
-            data.requireUncompiled().copy(
-                extras = (data.extras as? EthereumTransactionExtras)
+            val uncompiledTransaction = data.requireUncompiled()
+            uncompiledTransaction.copy(
+                extras = (uncompiledTransaction.extras as? EthereumTransactionExtras)
                     ?.copy(nonce = blockchainNonce + index.toBigInteger())
                     ?: EthereumTransactionExtras(nonce = blockchainNonce + index.toBigInteger()),
             )
@@ -318,11 +330,11 @@ open class EthereumWalletManager(
     }
 
     override suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
-        transactionData.requireUncompiled()
-        val extra = transactionData.extras as? EthereumTransactionExtras
+        val uncompiled = transactionData.requireUncompiled()
+        val extra = uncompiled.extras as? EthereumTransactionExtras
         return getFeeInternal(
-            amount = transactionData.amount,
-            destination = transactionData.destinationAddress,
+            amount = uncompiled.amount,
+            destination = uncompiled.destinationAddress,
             callData = extra?.callData,
         )
     }
