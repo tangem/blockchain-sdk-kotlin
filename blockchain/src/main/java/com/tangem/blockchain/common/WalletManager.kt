@@ -274,7 +274,7 @@ interface TransactionSender {
  * Interface for getting information about pending transactions.
  * Similar to [TransactionSender], this interface provides methods to query pending transaction status.
  */
-interface TransactionPendingInfo {
+interface PendingTransactionHandler {
 
     /**
      * Gets current list of pending transaction IDs for the optional contract address.
@@ -283,6 +283,19 @@ interface TransactionPendingInfo {
      * @return List of pending transaction IDs (hashes)
      */
     suspend fun getPendingTransactions(contractAddress: String? = null): List<String>
+
+    /**
+     * Adds a new pending gasless transaction ID to the tracking list.
+     * Transaction sent via backend and should be tracked until confirmed.
+     *
+     * @param txHash The transaction ID (hash) to add.
+     * @param contractAddress Optional contract address associated with the transaction.
+     */
+    suspend fun addPendingGaslessTransaction(
+        transactionData: TransactionData,
+        txHash: String,
+        contractAddress: String? = null,
+    )
 }
 
 interface TransactionSigner {

@@ -16,6 +16,10 @@ internal object DefaultPendingTransactionsProvider : PendingTransactionsProvider
         // No-op
     }
 
+    override suspend fun addPendingGaslessTransaction(transactionId: String, contractAddress: String?) {
+        // No-op
+    }
+
     override suspend fun removePendingTransaction(transactionId: String) {
         // No-op
     }
