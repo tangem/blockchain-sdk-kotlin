@@ -1,12 +1,12 @@
 package com.tangem.blockchain.pendingtransactions.providers
 
-import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumTransactionResponse
 import com.tangem.blockchain.common.JsonRPCResponse
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.datastorage.PendingTransaction
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
@@ -52,6 +52,18 @@ internal class EthereumPendingTransactionsProvider(
         }?.key
         val providerName = providerType?.let { networkProviderMapper.toStorageKey(it) }
         Logger.logTransaction("$LOG_TAG addPendingTransaction: providerName=$providerName")
+        storage.addTransaction(transactionId, providerName, contractAddress)
+    }
+
+    override suspend fun addPendingGaslessTransaction(transactionId: String, contractAddress: String?) {
+        Logger.logTransaction(
+            "$LOG_TAG addPendingGaslessTransaction: txId=$transactionId, contractAddress=$contractAddress",
+        )
+        val provider = networkProviderMap.entries
+            .firstOrNull {
+                it.key is ProviderType.Public
+            } ?: networkProviderMap.entries.firstOrNull { it.key !is ProviderType.Blink }
+        val providerName = provider?.key?.let { networkProviderMapper.toStorageKey(it) }
         storage.addTransaction(transactionId, providerName, contractAddress)
     }
 
