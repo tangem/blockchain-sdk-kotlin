@@ -6,10 +6,10 @@ import com.tangem.blockchain.blockchains.ethereum.providers.BaseProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.providers.BlastProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.providers.CyberProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.providers.MantaProvidersBuilder
-import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumLegacyTransactionBuilder
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.optimism.EthereumOptimisticRollupWalletManager
+import com.tangem.blockchain.blockchains.optimism.L1GasOracleConfig
 import com.tangem.blockchain.blockchains.optimism.OptimismProvidersBuilder
-import com.tangem.blockchain.blockchains.plasma.PlasmaProvidersBuilder
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
@@ -39,8 +39,7 @@ internal class EthereumOptimisticRollupWalletManagerAssembly(private val dataSto
 
             return EthereumOptimisticRollupWalletManager(
                 wallet = this,
-                // TODO: [REDACTED_JIRA]
-                transactionBuilder = EthereumLegacyTransactionBuilder(wallet = this),
+                transactionBuilder = EthereumTransactionBuilder.create(wallet = this),
                 networkProvider = EthereumNetworkService(
                     multiJsonRpcProvider = multiNetworkProvider,
                     yieldSupplyProvider = yieldLendingProvider,
@@ -48,6 +47,7 @@ internal class EthereumOptimisticRollupWalletManagerAssembly(private val dataSto
                 transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
                 nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
                 yieldSupplyProvider = yieldLendingProvider,
+                l1GasOracleConfig = getL1GasOracleConfig(blockchain),
             )
         }
     }
@@ -63,8 +63,27 @@ internal class EthereumOptimisticRollupWalletManagerAssembly(private val dataSto
             Blockchain.Manta, Blockchain.MantaTestnet -> MantaProvidersBuilder(providerTypes)
             Blockchain.Blast, Blockchain.BlastTestnet -> BlastProvidersBuilder(providerTypes, config)
             Blockchain.Cyber, Blockchain.CyberTestnet -> CyberProvidersBuilder(providerTypes)
-            Blockchain.Plasma, Blockchain.PlasmaTestnet -> PlasmaProvidersBuilder(providerTypes, config)
             else -> error("Unsupported blockchain: $blockchain")
         }
+    }
+
+    private fun getL1GasOracleConfig(blockchain: Blockchain): L1GasOracleConfig {
+        return when (blockchain) {
+            Blockchain.Optimism, Blockchain.OptimismTestnet,
+            Blockchain.Base, Blockchain.BaseTestnet,
+            Blockchain.Manta, Blockchain.MantaTestnet,
+            Blockchain.Blast, Blockchain.BlastTestnet,
+            Blockchain.Cyber, Blockchain.CyberTestnet,
+            -> L1GasOracleConfig(
+                address = OPTIMISM_L1_GAS_ORACLE_ADDRESS,
+                feeMultiplier = OPTIMISM_FEE_MULTIPLIER,
+            )
+            else -> error("Unsupported blockchain: $blockchain")
+        }
+    }
+
+    companion object {
+        private const val OPTIMISM_L1_GAS_ORACLE_ADDRESS = "0x420000000000000000000000000000000000000F"
+        private const val OPTIMISM_FEE_MULTIPLIER = 1.1
     }
 }
