@@ -25,11 +25,11 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
-import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
-import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.pendingtransactions.DefaultPendingTransactionsProvider
 import com.tangem.blockchain.pendingtransactions.PendingTransactionStatus
 import com.tangem.blockchain.pendingtransactions.PendingTransactionsProvider
+import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
 import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
@@ -68,7 +68,7 @@ open class EthereumWalletManager(
     TransactionPreparer,
     Approver,
     NameResolver,
-    TransactionPendingInfo,
+    PendingTransactionHandler,
     EthereumGaslessDataProvider by ethereumGaslessDataProvider {
 
     // move to constructor later
@@ -586,5 +586,14 @@ open class EthereumWalletManager(
 
     override suspend fun getPendingTransactions(contractAddress: String?): List<String> {
         return pendingTransactionsProvider.getPendingTransactions(contractAddress)
+    }
+
+    override suspend fun addPendingGaslessTransaction(
+        transactionData: TransactionData,
+        txHash: String,
+        contractAddress: String?,
+    ) {
+        wallet.addOutgoingTransaction(transactionData, txHash)
+        pendingTransactionsProvider.addPendingGaslessTransaction(txHash, contractAddress)
     }
 }
