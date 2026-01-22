@@ -78,28 +78,31 @@ class EthereumOptimisticRollupWalletManager(
     }
 
     override suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
-        val uncompiledData = transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
         lastLayer1FeeAmount = null
 
-        val extra = uncompiledData.extras as? EthereumTransactionExtras
+        val extra = uncompiledTransaction.extras as? EthereumTransactionExtras
 
-        val layer2fee =
-            super.getFee(uncompiledData.amount, uncompiledData.destinationAddress, extra?.callData).successOr {
-                return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-            } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+        val layer2fee = super.getFee(
+            amount = uncompiledTransaction.amount,
+            destination = uncompiledTransaction.destinationAddress,
+            callData = extra?.callData,
+        ).successOr {
+            return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+        } as? TransactionFee.Choosable ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
         return if (wallet.blockchain.isSupportEIP1559) {
             getEIP1559Fee(
-                amount = uncompiledData.amount,
-                destination = uncompiledData.destinationAddress,
+                amount = uncompiledTransaction.amount,
+                destination = uncompiledTransaction.destinationAddress,
                 data = extra?.callData?.dataHex,
                 layer2fee = layer2fee,
             )
         } else {
             getLegacyFee(
-                amount = uncompiledData.amount,
-                destination = uncompiledData.destinationAddress,
+                amount = uncompiledTransaction.amount,
+                destination = uncompiledTransaction.destinationAddress,
                 data = extra?.callData?.dataHex,
                 layer2fee = layer2fee,
             )
@@ -207,26 +210,26 @@ class EthereumOptimisticRollupWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
-        val uncompiledData = transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
         // For EIP-1559, the amount field is not used for fee calculation
         // (fee = gasLimit * maxFeePerGas), so we don't subtract L1 fee from amount.
         // For Legacy transactions, we subtract L1 fee from amount as it's deducted automatically.
         // https://help.optimism.io/hc/en-us/articles/4411895794715
-        val calculatedTransactionFee = if (uncompiledData.fee is Fee.Ethereum.EIP1559) {
+        val calculatedTransactionFee = if (uncompiledTransaction.fee is Fee.Ethereum.EIP1559) {
             // EIP-1559: Don't subtract L1 fee from amount (not used anyway)
-            uncompiledData.fee.amount.value ?: BigDecimal.ZERO
+            uncompiledTransaction.fee.amount.value ?: BigDecimal.ZERO
         } else {
             // Legacy: Subtract L1 fee from amount
-            (uncompiledData.fee?.amount?.value ?: BigDecimal.ZERO) -
+            (uncompiledTransaction.fee?.amount?.value ?: BigDecimal.ZERO) -
                 (lastLayer1FeeAmount?.value ?: BigDecimal.ZERO)
         }
 
-        val gasLimit = (uncompiledData.extras as? EthereumTransactionExtras)?.gasLimit
-            ?: (uncompiledData.fee as? Fee.Ethereum)?.gasLimit
+        val gasLimit = (uncompiledTransaction.extras as? EthereumTransactionExtras)?.gasLimit
+            ?: (uncompiledTransaction.fee as? Fee.Ethereum)?.gasLimit
             ?: DEFAULT_GAS_LIMIT
 
-        val updatedFee = when (val originalFee = uncompiledData.fee) {
+        val updatedFee = when (val originalFee = uncompiledTransaction.fee) {
             is Fee.Ethereum.Legacy -> Fee.Ethereum.Legacy(
                 amount = Amount(value = calculatedTransactionFee, blockchain = wallet.blockchain),
                 gasLimit = gasLimit,
@@ -245,7 +248,7 @@ class EthereumOptimisticRollupWalletManager(
             )
         }
 
-        val updatedTransactionData = uncompiledData.copy(fee = updatedFee)
+        val updatedTransactionData = uncompiledTransaction.copy(fee = updatedFee)
         return super.sign(updatedTransactionData, signer)
     }
 
