@@ -43,11 +43,11 @@ internal class EthereumLegacyTransactionBuilder(
         fee: Fee.Ethereum,
     ): ByteArray {
         val legacyFee = fee as Fee.Ethereum.Legacy
-        val value = amount.value?.movePointRight(amount.decimals)?.toBigInteger() ?: BigInteger.ZERO
+
         return createTransactionWithDefaults(
             from = Address(wallet.address),
             to = Address(destination),
-            value = value,
+            value = BigInteger.valueOf(1), // value is not important for dummy transactions
             gasPrice = legacyFee.gasPrice,
             gasLimit = legacyFee.gasLimit,
             nonce = BigInteger.ONE,
