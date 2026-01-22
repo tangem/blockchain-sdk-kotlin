@@ -69,7 +69,7 @@ open class EthereumWalletManager(
     TransactionPreparer,
     Approver,
     NameResolver,
-    TransactionPendingInfo,
+    PendingTransactionHandler,
     TransactionValidator by EthereumTransactionValidator,
     EthereumGaslessDataProvider by ethereumGaslessDataProvider {
 
@@ -598,5 +598,14 @@ open class EthereumWalletManager(
 
     override suspend fun getPendingTransactions(contractAddress: String?): List<String> {
         return pendingTransactionsProvider.getPendingTransactions(contractAddress)
+    }
+
+    override suspend fun addPendingGaslessTransaction(
+        transactionData: TransactionData,
+        txHash: String,
+        contractAddress: String?,
+    ) {
+        wallet.addOutgoingTransaction(transactionData, txHash)
+        pendingTransactionsProvider.addPendingGaslessTransaction(txHash, contractAddress)
     }
 }
