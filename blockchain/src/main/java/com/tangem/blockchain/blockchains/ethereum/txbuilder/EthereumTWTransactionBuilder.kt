@@ -59,35 +59,18 @@ internal open class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTrans
         data: String?,
         fee: Fee.Ethereum,
     ): ByteArray {
-        val coinAmount = amount.value?.movePointRight(amount.decimals)?.toBigInteger() ?: BigInteger.ZERO
+        val eip1559Fee = fee as Fee.Ethereum.EIP1559
 
-        val input = when (fee) {
-            is Fee.Ethereum.EIP1559 -> {
-                buildSigningInput(
-                    chainId = chainId,
-                    destinationAddress = destination,
-                    coinAmount = coinAmount,
-                    fee = fee,
-                    extras = EthereumTransactionExtras(nonce = BigInteger.ONE),
-                )
-            }
-            is Fee.Ethereum.Legacy -> {
-                buildSigningInput(
-                    chainId = chainId,
-                    destinationAddress = destination,
-                    coinAmount = coinAmount,
-                    fee = fee,
-                    extras = EthereumTransactionExtras(nonce = BigInteger.ONE),
-                )
-            }
-        }
+        val input = buildSigningInput(
+            chainId = chainId,
+            destinationAddress = destination,
+            coinAmount = BigInteger.ONE,
+            fee = eip1559Fee,
+            extras = EthereumTransactionExtras(nonce = BigInteger.ONE),
+        )
 
         val preSigningOutput = buildTxCompilerPreSigningOutput(input)
-        return if (preSigningOutput.data.isEmpty) {
-            preSigningOutput.dataHash.toByteArray()
-        } else {
-            preSigningOutput.data.toByteArray()
-        }
+        return preSigningOutput.dataHash.toByteArray()
     }
 
     fun buildForSend(transaction: TransactionData, hash: ByteArray, signature: ByteArray): ByteArray {
