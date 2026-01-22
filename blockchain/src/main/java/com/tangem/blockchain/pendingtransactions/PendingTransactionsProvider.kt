@@ -22,6 +22,14 @@ interface PendingTransactionsProvider {
     )
 
     /**
+     * Adds a pending gasless transaction made on backend side to storage.
+     *
+     * @param transactionId Transaction hash (hex string)
+     * @param contractAddress Optional contract address (for token transactions)
+     */
+    suspend fun addPendingGaslessTransaction(transactionId: String, contractAddress: String? = null)
+
+    /**
      * Removes a pending transaction from storage.
      *
      * @param transactionId Transaction hash to remove
