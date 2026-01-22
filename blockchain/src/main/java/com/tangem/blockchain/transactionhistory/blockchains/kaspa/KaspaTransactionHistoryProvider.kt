@@ -145,10 +145,7 @@ internal class KaspaTransactionHistoryProvider(
         )
     }
 
-    private fun KaspaCoinTransaction.extractDestination(
-        isOutgoing: Boolean,
-        walletAddress: String,
-    ): DestinationType? {
+    private fun KaspaCoinTransaction.extractDestination(isOutgoing: Boolean, walletAddress: String): DestinationType? {
         return when {
             isOutgoing -> {
                 val outputAddresses = outputs
