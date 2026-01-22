@@ -519,9 +519,7 @@ open class EthereumWalletManager(
                 to = amount.type.token.contractAddress
             }
 
-            else -> {
-                /* no-op */
-            }
+            else -> Unit
         }
 
         return networkProvider.getGasLimit(to, from, value, data)
