@@ -110,6 +110,19 @@ internal abstract class EthereumLikeNetworkService(
         }
     }
 
+    override suspend fun getTxCount(address: String): Result<BigInteger> {
+        return try {
+            val response = multiJsonRpcProvider.performRequest(EthereumLikeJsonRpcProvider::getPendingTxCount, address)
+            Result.Success(
+                response
+                    .extractResult()
+                    .responseToBigInteger(),
+            )
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
     override suspend fun getAllowance(
         ownerAddress: String,
         token: Token,
@@ -301,6 +314,27 @@ internal abstract class EthereumLikeNetworkService(
             token = token,
             value = tokenBalance,
         )
+    }
+
+    override suspend fun getContractNonce(address: String): Result<BigInteger> {
+        return try {
+            // Standard nonce() function signature
+            val functionSignature = "0xaffed0e0" // keccak256("nonce()")[:4]
+
+            val data = functionSignature
+
+            val callData = ContractCallData(
+                to = address,
+                data = data,
+            )
+
+            val result = multiJsonRpcProvider.performRequest(EthereumLikeJsonRpcProvider::call, callData)
+                .extractResult().responseToBigInteger()
+
+            Result.Success(result)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
     }
 
     @Suppress("MagicNumber")
