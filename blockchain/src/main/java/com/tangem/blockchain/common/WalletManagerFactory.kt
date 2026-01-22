@@ -213,7 +213,6 @@ class WalletManagerFactory(
             Blockchain.Bitrock, Blockchain.BitrockTestnet,
             Blockchain.Sonic, Blockchain.SonicTestnet,
             Blockchain.ApeChain, Blockchain.ApeChainTestnet,
-            Blockchain.Scroll, Blockchain.ScrollTestnet,
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet,
             Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet,
             Blockchain.Quai, Blockchain.QuaiTestnet,
@@ -233,6 +232,8 @@ class WalletManagerFactory(
             Blockchain.Blast, Blockchain.BlastTestnet,
             Blockchain.Cyber, Blockchain.CyberTestnet,
             -> EthereumOptimisticRollupWalletManagerAssembly(dataStorage)
+            Blockchain.Scroll, Blockchain.ScrollTestnet,
+            -> ScrollWalletManagerAssembly(dataStorage)
             Blockchain.Telos, Blockchain.TelosTestnet -> TelosWalletManagerAssembly
             // endregion
 

@@ -425,7 +425,7 @@ class EthereumTransactionBuilderTest {
             priorityFee = "31900000000".toBigInteger(),
         )
 
-        val expectedDummyTx = "EF928FCAC97DFD720631D2624C951CCD86191A260D05025879D8209A301D86FE".hexToBytes()
+        val expectedDummyTx = "02F2010185076D635F00860412ACBB20518252089490E4D59C8583E37426B37D1D7394B6008A987C67880DE0B6B3A764000080C0".hexToBytes()
 
         // act
         val dummyTx = transactionBuilder.buildDummyTransactionForL1(
