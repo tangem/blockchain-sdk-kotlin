@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumLikeProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.network.providers.ProviderType
 
 internal class BSCProvidersBuilder(
@@ -15,8 +16,11 @@ internal class BSCProvidersBuilder(
         // https://docs.fantom.foundation/api/public-api-endpoints
         return providerTypes.mapNotNull {
             when (it) {
-                // Remove temporarily because of yield supply and incorrect pending tx count
-                // is ProviderType.Blink -> ethereumProviderFactory.getBlinkProvider("https://bsc.blinklabs.xyz/v1/")
+                is ProviderType.Blink -> if (DepsContainer.blockchainFeatureToggles.isPendingTransactionsEnabled) {
+                    ethereumProviderFactory.getBlinkProvider("https://bsc.blinklabs.xyz/v1/")
+                } else {
+                    null
+                }
                 is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
                 ProviderType.NowNodes -> {
                     ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://bsc.nownodes.io/")
