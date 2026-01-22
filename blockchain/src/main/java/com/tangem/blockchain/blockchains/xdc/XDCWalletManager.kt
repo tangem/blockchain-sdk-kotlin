@@ -29,16 +29,16 @@ internal class XDCWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        transactionData.requireUncompiled()
-        return super.send(convertTransactionDataAddress(transactionData), signer)
+        val uncompiledTransaction = transactionData.requireUncompiled()
+        return super.send(convertTransactionDataAddress(uncompiledTransaction), signer)
     }
 
     override suspend fun sign(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
-        transactionData.requireUncompiled()
-        return super.sign(convertTransactionDataAddress(transactionData), signer)
+        val uncompiledTransaction = transactionData.requireUncompiled()
+        return super.sign(convertTransactionDataAddress(uncompiledTransaction), signer)
     }
 
     private fun convertTransactionDataAddress(transactionData: TransactionData.Uncompiled): TransactionData {
