@@ -12,4 +12,6 @@ interface ExternalLinkProvider {
     fun getNFTExplorerUrl(assetIdentifier: NFTAsset.Identifier): String? = null
 
     fun getExplorerTxUrl(transactionHash: String): TxExploreState
+
+    fun getTokenExplorerTxUrl(transactionHash: String): TxExploreState = getExplorerTxUrl(transactionHash)
 }
