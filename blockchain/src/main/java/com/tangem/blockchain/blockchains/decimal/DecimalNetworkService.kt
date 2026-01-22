@@ -23,6 +23,10 @@ internal class DecimalNetworkService(
         return super.getPendingTxCount(convertAddress(address))
     }
 
+    override suspend fun getTxCount(address: String): Result<BigInteger> {
+        return super.getTxCount(address)
+    }
+
     override suspend fun getAllowance(
         ownerAddress: String,
         token: Token,
