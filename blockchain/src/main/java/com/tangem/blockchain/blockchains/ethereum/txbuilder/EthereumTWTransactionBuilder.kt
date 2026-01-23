@@ -80,6 +80,9 @@ internal open class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTrans
                     extras = EthereumTransactionExtras(nonce = BigInteger.ONE),
                 )
             }
+            is Fee.Ethereum.TokenCurrency -> {
+                error("Dummy transaction for L1 doesn't support TokenCurrency fee type")
+            }
         }
 
         val preSigningOutput = buildTxCompilerPreSigningOutput(input)

@@ -84,9 +84,9 @@ internal class CasperWalletManager(
     override fun getMinimumSendAmount(): BigDecimal = MIN_SEND_AMOUNT
 
     override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
-        val amount = requireNotNull(transactionData.amount.value)
+        val amount = requireNotNull(uncompiledTransaction.amount.value)
         return if (amount < MIN_SEND_AMOUNT) {
             kotlin.Result.failure(
                 BlockchainSdkError.TransactionAmountInsufficient(
