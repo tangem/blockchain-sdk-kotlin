@@ -206,6 +206,7 @@ class BlockchainDemoActivity : AppCompatActivity() {
                 blockchainDataStorage = DummyBlockchainDataStorage,
                 featureToggles = BlockchainFeatureToggles(
                     isYieldSupplyEnabled = false,
+                    isPendingTransactionsEnabled = true,
                 ),
             ).makeWalletManagerForApp(
                 scanResponse = scanResponse,
