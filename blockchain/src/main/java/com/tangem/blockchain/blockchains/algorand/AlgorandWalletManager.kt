@@ -61,15 +61,15 @@ internal class AlgorandWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
         val txParams = networkService.getTransactionParams().successOr { return it }
-        val txToSign = transactionBuilder.buildForSign(transactionData, txParams)
+        val txToSign = transactionBuilder.buildForSign(uncompiledTransaction, txParams)
         return when (val signatureResult = signer.sign(txToSign, wallet.publicKey)) {
             is CompletionResult.Success -> {
                 val rawTx =
                     transactionBuilder.buildForSend(
-                        transactionData = transactionData,
+                        transactionData = uncompiledTransaction,
                         params = txParams,
                         signature = signatureResult.data,
                     )
@@ -77,7 +77,7 @@ internal class AlgorandWalletManager(
                     is Result.Success -> {
                         val txHash = sendResult.data
                         wallet.addOutgoingTransaction(
-                            transactionData = transactionData,
+                            transactionData = uncompiledTransaction,
                             txHash = txHash,
                             hashToLowercase = false,
                         )
