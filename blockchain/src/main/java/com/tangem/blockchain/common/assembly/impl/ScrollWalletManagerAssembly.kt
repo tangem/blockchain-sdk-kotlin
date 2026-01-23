@@ -10,6 +10,7 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.nft.NFTProviderFactory
+import com.tangem.blockchain.pendingtransactions.PendingTransactionsProviderFactory
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 import com.tangem.blockchain.yieldsupply.YieldSupplyProviderFactory
 
@@ -24,6 +25,18 @@ internal class ScrollWalletManagerAssembly(private val dataStorage: AdvancedData
             )
             val yieldLendingProvider = YieldSupplyProviderFactory(dataStorage).makeProvider(this, multiNetworkProvider)
 
+            val networkProviderMap = input.providerTypes
+                .zip(multiNetworkProvider.providers)
+                .toMap()
+
+            val pendingTransactionsProvider = PendingTransactionsProviderFactory(
+                dataStorage = dataStorage,
+            ).makeProvider(
+                wallet = this,
+                networkProvider = multiNetworkProvider,
+                networkProviderMap = networkProviderMap,
+            )
+
             return EthereumOptimisticRollupWalletManager(
                 wallet = this,
                 transactionBuilder = EthereumTransactionBuilder.create(wallet = this),
@@ -34,6 +47,7 @@ internal class ScrollWalletManagerAssembly(private val dataStorage: AdvancedData
                 transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
                 nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
                 yieldSupplyProvider = yieldLendingProvider,
+                pendingTransactionsProvider = pendingTransactionsProvider,
                 l1GasOracleConfig = L1GasOracleConfig(
                     address = SCROLL_L1_GAS_ORACLE_ADDRESS,
                     feeMultiplier = SCROLL_FEE_MULTIPLIER,

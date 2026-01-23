@@ -15,6 +15,8 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
+import com.tangem.blockchain.pendingtransactions.DefaultPendingTransactionsProvider
+import com.tangem.blockchain.pendingtransactions.PendingTransactionsProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
@@ -29,6 +31,7 @@ data class L1GasOracleConfig(
     val feeMultiplier: Double,
 )
 
+@Suppress("LongParameterList")
 class EthereumOptimisticRollupWalletManager(
     wallet: Wallet,
     transactionBuilder: EthereumTransactionBuilder,
@@ -37,6 +40,7 @@ class EthereumOptimisticRollupWalletManager(
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
+    pendingTransactionsProvider: PendingTransactionsProvider = DefaultPendingTransactionsProvider,
 ) : EthereumWalletManager(
     wallet = wallet,
     transactionBuilder = transactionBuilder,
@@ -45,6 +49,7 @@ class EthereumOptimisticRollupWalletManager(
     supportsENS = false,
     transactionHistoryProvider = transactionHistoryProvider,
     yieldSupplyProvider = yieldSupplyProvider,
+    pendingTransactionsProvider = pendingTransactionsProvider,
 ) {
 
     private var lastLayer1FeeAmount: Amount? = null

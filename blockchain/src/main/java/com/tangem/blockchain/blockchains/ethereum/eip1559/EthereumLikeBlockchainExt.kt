@@ -64,3 +64,20 @@ val Blockchain.isSupportEIP1559: Boolean
             else -> error("Don't forget about evm here")
         }
     }
+
+val Blockchain.isGaslessTxSupported: Boolean
+    get() {
+        if (!isEvm()) return false
+
+        return when (this) {
+            Blockchain.Ethereum,
+            Blockchain.BSC,
+            Blockchain.Base,
+            Blockchain.Polygon,
+            Blockchain.Arbitrum,
+            Blockchain.XDC,
+            Blockchain.Optimism,
+            -> true
+            else -> false
+        }
+    }

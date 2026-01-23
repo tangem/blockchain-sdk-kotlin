@@ -68,5 +68,5 @@ fun Card.derivationParams(derivationPath: DerivationPath?): DerivationParams? {
 }
 
 private enum class TwinCardNumber(val number: Int) {
-    First(1), Second(2);
+    First(1), Second(2)
 }

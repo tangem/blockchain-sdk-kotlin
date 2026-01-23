@@ -19,4 +19,10 @@ internal class EthereumYieldSupplyServiceFeeCallDataTest {
         val expected = signature
         Truth.assertThat(callData.data).isEqualTo(expected)
     }
+
+    @Test
+    fun `Validate call data`() {
+        val validCallData = EthereumYieldSupplyServiceFeeCallData
+        Truth.assertThat(validCallData.validate()).isTrue()
+    }
 }

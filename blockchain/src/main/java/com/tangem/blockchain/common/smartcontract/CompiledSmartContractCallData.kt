@@ -10,4 +10,5 @@ data class CompiledSmartContractCallData(
     override val data: ByteArray,
 ) : SmartContractCallData {
     override val methodId: String = data.take(n = 4).toHexString()
+    override fun validate(): Boolean = data.isNotEmpty()
 }
