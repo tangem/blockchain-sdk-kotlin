@@ -44,6 +44,9 @@ open class EthereumWalletManager(
     nftProvider: NFTProvider = DefaultNFTProvider,
     private val supportsENS: Boolean,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
+    private val ethereumTransactionValidator: EthereumTransactionValidator = EthereumTransactionValidator(
+        wallet.blockchain,
+    ),
 ) : WalletManager(
     wallet = wallet,
     transactionHistoryProvider = transactionHistoryProvider,
@@ -56,7 +59,7 @@ open class EthereumWalletManager(
     TransactionPreparer,
     Approver,
     NameResolver,
-    TransactionValidator by EthereumTransactionValidator {
+    TransactionValidator by ethereumTransactionValidator {
 
     // move to constructor later
     protected val feesCalculator = EthereumFeesCalculator()
@@ -394,8 +397,10 @@ open class EthereumWalletManager(
 
     override suspend fun resolve(name: String): ResolveAddressResult {
         if (supportsENS) {
-            val namehash = ensNameProcessor.getNamehash(name).successOr { return ResolveAddressResult.Error(it.error) }
-            val encodedName = ensNameProcessor.encode(name).successOr { return ResolveAddressResult.Error(it.error) }
+            val namehash =
+                ensNameProcessor.getNamehash(name).successOr { return ResolveAddressResult.Error(it.error) }
+            val encodedName =
+                ensNameProcessor.encode(name).successOr { return ResolveAddressResult.Error(it.error) }
 
             return networkProvider.resolveName(namehash, encodedName)
         } else {

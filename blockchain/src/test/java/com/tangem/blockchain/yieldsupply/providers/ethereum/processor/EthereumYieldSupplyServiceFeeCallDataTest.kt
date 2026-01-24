@@ -1,6 +1,7 @@
 package com.tangem.blockchain.yieldsupply.providers.ethereum.processor
 
 import com.google.common.truth.Truth
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.yieldsupply.providers.ethereum.factory.EthereumYieldSupplyModuleCallData
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
@@ -9,6 +10,7 @@ import org.junit.Test
  * Test for [EthereumYieldSupplyModuleCallData]
  */
 internal class EthereumYieldSupplyServiceFeeCallDataTest {
+    private val blockchain = Blockchain.Ethereum
 
     private val signature = "0x61d1bc94".hexToBytes()
 
@@ -23,6 +25,6 @@ internal class EthereumYieldSupplyServiceFeeCallDataTest {
     @Test
     fun `Validate call data`() {
         val validCallData = EthereumYieldSupplyServiceFeeCallData
-        Truth.assertThat(validCallData.validate()).isTrue()
+        Truth.assertThat(validCallData.validate(blockchain)).isTrue()
     }
 }
