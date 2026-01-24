@@ -12,7 +12,8 @@ import java.math.BigInteger
 
 class EthereumTransactionValidatorTest {
 
-    private val ethereumTransactionValidator = EthereumTransactionValidator
+    val blockchain = Blockchain.Ethereum
+    private val ethereumTransactionValidator = EthereumTransactionValidator(blockchain)
 
     private val tokenAddress = "0xc63763572D45171e4C25cA0818b44E5Dd7F5c15B"
 
