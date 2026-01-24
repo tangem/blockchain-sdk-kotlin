@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common.smartcontract
 
+import com.tangem.blockchain.common.Blockchain
 import org.komputing.khex.extensions.toHexString
 
 /**
@@ -10,5 +11,5 @@ data class CompiledSmartContractCallData(
     override val data: ByteArray,
 ) : SmartContractCallData {
     override val methodId: String = data.take(n = 4).toHexString()
-    override fun validate(): Boolean = data.isNotEmpty()
+    override fun validate(blockchain: Blockchain): Boolean = data.isNotEmpty()
 }
