@@ -32,9 +32,9 @@ class EthereumYieldSupplyInitTokenCallData(
             return prefixData + tokenContractAddressData + maxFeeData
         }
 
-    override fun validate(): Boolean {
+    override fun validate(blockchain: Blockchain): Boolean {
         val feeValue = maxNetworkFee.bigIntegerValue()
-        return EthereumAddressService().validate(tokenContractAddress) && tokenContractAddress.isNotZeroAddress() &&
+        return blockchain.validateAddress(tokenContractAddress) && tokenContractAddress.isNotZeroAddress() &&
             feeValue != null && feeValue > BigInteger.ZERO
     }
 
