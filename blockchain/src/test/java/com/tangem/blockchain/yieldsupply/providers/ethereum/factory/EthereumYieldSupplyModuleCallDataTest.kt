@@ -2,6 +2,7 @@ package com.tangem.blockchain.yieldsupply.providers.ethereum.factory
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
@@ -9,6 +10,7 @@ import org.junit.Test
  * Test for [EthereumYieldSupplyModuleCallData]
  */
 internal class EthereumYieldSupplyModuleCallDataTest {
+    private val blockchain = Blockchain.Ethereum
 
     private val signature = "0x36571e2c".hexToBytes()
     private val walletAddress = "0x1234567890abcdef1234567890abcdef12345678"
@@ -29,21 +31,21 @@ internal class EthereumYieldSupplyModuleCallDataTest {
         val validCallData = EthereumYieldSupplyModuleCallData(
             address = walletAddress,
         )
-        Truth.assertThat(validCallData.validate()).isTrue()
+        Truth.assertThat(validCallData.validate(blockchain)).isTrue()
 
         val invalidCallData = EthereumYieldSupplyModuleCallData(
             address = "",
         )
-        Truth.assertThat(invalidCallData.validate()).isFalse()
+        Truth.assertThat(invalidCallData.validate(blockchain)).isFalse()
 
         val invalidCallData1 = EthereumYieldSupplyModuleCallData(
             address = EthereumUtils.ZERO_ADDRESS,
         )
-        Truth.assertThat(invalidCallData1.validate()).isFalse()
+        Truth.assertThat(invalidCallData1.validate(blockchain)).isFalse()
 
         val invalidCallData2 = EthereumYieldSupplyModuleCallData(
             address = "0xG234567890123456789012345678901234567890",
         )
-        Truth.assertThat(invalidCallData2.validate()).isFalse()
+        Truth.assertThat(invalidCallData2.validate(blockchain)).isFalse()
     }
 }

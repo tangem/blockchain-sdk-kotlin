@@ -9,6 +9,7 @@ import org.junit.Test
 import org.komputing.khex.extensions.toHexString
 
 class EthereumTransferSmartContractTest {
+    private val blockchain = Blockchain.Ethereum
 
     private val signature = "0xa9059cbb".hexToBytes()
     private val destinationAddress = "0x5678901234567890123456789012345678901234"
@@ -38,7 +39,7 @@ class EthereumTransferSmartContractTest {
                 value = "100".toBigDecimal(),
             ),
         )
-        Truth.assertThat(validContract.validate()).isTrue()
+        Truth.assertThat(validContract.validate(blockchain)).isTrue()
 
         val invalidContract = TransferERC20TokenCallData(
             destination = "",
@@ -46,7 +47,7 @@ class EthereumTransferSmartContractTest {
                 value = "100".toBigDecimal(),
             ),
         )
-        Truth.assertThat(invalidContract.validate()).isFalse()
+        Truth.assertThat(invalidContract.validate(blockchain)).isFalse()
 
         val invalidContract2 = TransferERC20TokenCallData(
             destination = EthereumUtils.ZERO_ADDRESS,
@@ -54,7 +55,7 @@ class EthereumTransferSmartContractTest {
                 value = "100".toBigDecimal(),
             ),
         )
-        Truth.assertThat(invalidContract2.validate()).isFalse()
+        Truth.assertThat(invalidContract2.validate(blockchain)).isFalse()
 
         val invalidContract3 = TransferERC20TokenCallData(
             destination = "0xG234567890123456789012345678901234567890",
@@ -62,6 +63,6 @@ class EthereumTransferSmartContractTest {
                 value = "100".toBigDecimal(),
             ),
         )
-        Truth.assertThat(invalidContract3.validate()).isFalse()
+        Truth.assertThat(invalidContract3.validate(blockchain)).isFalse()
     }
 }
