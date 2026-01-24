@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods
 
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.extensions.toFixedSizeBytes
 import com.tangem.blockchain.extensions.toFixedSizeBytesRightPadding
@@ -34,7 +35,7 @@ internal data class ReadEthereumAddressEIP137CallData(
                 callDataBytes
         }
 
-    override fun validate(): Boolean {
+    override fun validate(blockchain: Blockchain): Boolean {
         return nameBytes.isNotEmpty() && callDataBytes.isNotEmpty()
     }
 }

@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionValidator
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.TransactionSigner
@@ -39,6 +40,7 @@ class QuaiWalletManager(
     nftProvider = nftProvider,
     supportsENS = supportsENS,
     yieldSupplyProvider = yieldSupplyProvider,
+    ethereumTransactionValidator = EthereumTransactionValidator(blockchain = wallet.blockchain),
 ) {
 
     override suspend fun sign(
