@@ -12,6 +12,7 @@ import java.math.BigDecimal
  * Test for [EthereumYieldSupplyInitTokenCallData]
  */
 internal class EthereumYieldSupplyInitTokenCallDataTest {
+    private val blockchain = Blockchain.Ethereum
 
     private val signature = "0xebd4b81c".hexToBytes()
     private val tokenContractAddress = "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd"
@@ -73,30 +74,30 @@ internal class EthereumYieldSupplyInitTokenCallDataTest {
             tokenContractAddress = tokenContractAddress,
             maxNetworkFee = maxNetworkFee,
         )
-        Truth.assertThat(validCallData.validate()).isTrue()
+        Truth.assertThat(validCallData.validate(blockchain)).isTrue()
 
         val invalidCallData = EthereumYieldSupplyInitTokenCallData(
             tokenContractAddress = "",
             maxNetworkFee = maxNetworkFee,
         )
-        Truth.assertThat(invalidCallData.validate()).isFalse()
+        Truth.assertThat(invalidCallData.validate(blockchain)).isFalse()
 
         val invalidCallData1 = EthereumYieldSupplyInitTokenCallData(
             tokenContractAddress = tokenContractAddress,
             maxNetworkFee = Amount(Blockchain.Ethereum).copy(value = BigDecimal.ZERO),
         )
-        Truth.assertThat(invalidCallData1.validate()).isFalse()
+        Truth.assertThat(invalidCallData1.validate(blockchain)).isFalse()
 
         val invalidCallData2 = EthereumYieldSupplyInitTokenCallData(
             tokenContractAddress = "0xG234567890123456789012345678901234567890",
             maxNetworkFee = maxNetworkFee,
         )
-        Truth.assertThat(invalidCallData2.validate()).isFalse()
+        Truth.assertThat(invalidCallData2.validate(blockchain)).isFalse()
 
         val invalidCallData3 = EthereumYieldSupplyInitTokenCallData(
             tokenContractAddress = EthereumUtils.ZERO_ADDRESS,
             maxNetworkFee = maxNetworkFee,
         )
-        Truth.assertThat(invalidCallData3.validate()).isFalse()
+        Truth.assertThat(invalidCallData3.validate(blockchain)).isFalse()
     }
 }
