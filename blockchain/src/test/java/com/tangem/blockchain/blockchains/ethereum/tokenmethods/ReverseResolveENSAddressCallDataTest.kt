@@ -1,10 +1,12 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods
 
 import com.google.common.truth.Truth
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 
 class ReverseResolveENSAddressCallDataTest {
+    private val blockchain = Blockchain.Ethereum
 
     @Test
     fun testReverseResolveENSAddressCallData() {
@@ -31,12 +33,12 @@ class ReverseResolveENSAddressCallDataTest {
             address = addressBytes,
             coinType = 60,
         )
-        Truth.assertThat(validCallData.validate()).isTrue()
+        Truth.assertThat(validCallData.validate(blockchain)).isTrue()
 
         val invalidCallData = ReverseResolveENSAddressCallData(
             address = ByteArray(0),
             coinType = 60,
         )
-        Truth.assertThat(invalidCallData.validate()).isFalse()
+        Truth.assertThat(invalidCallData.validate(blockchain)).isFalse()
     }
 }
