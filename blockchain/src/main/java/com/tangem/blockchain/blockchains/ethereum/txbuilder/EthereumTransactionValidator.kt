@@ -33,7 +33,7 @@ class EthereumTransactionValidator(
         // Validate extras based on amount type
         val extrasCheck = when (amount.type) {
             AmountType.Coin -> if (extras?.callData != null) {
-                extras.callData.validate()
+                extras.callData.validate(blockchain)
             } else {
                 true
             }
@@ -41,7 +41,7 @@ class EthereumTransactionValidator(
             // For TokenYieldSupply and Token amount types, validate call data if present
             is AmountType.TokenYieldSupply,
             is AmountType.Token,
-            -> extras != null && extras.callData?.validate() == true
+            -> extras != null && extras.callData?.validate(blockchain) == true
             else -> true
         }
 
