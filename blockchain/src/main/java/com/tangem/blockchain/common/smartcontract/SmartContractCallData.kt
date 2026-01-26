@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common.smartcontract
 
+import com.tangem.blockchain.common.Blockchain
 import org.komputing.khex.extensions.toHexString
 
 /**
@@ -15,5 +16,5 @@ interface SmartContractCallData {
     val dataHex: String
         get() = data.toHexString()
 
-    fun validate(): Boolean
+    fun validate(blockchain: Blockchain): Boolean
 }
