@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.tron.tokenmethods
 
 import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.extensions.bigIntegerValue
 import com.tangem.blockchain.extensions.decodeBase58
@@ -30,7 +31,7 @@ class TronTransferTokenCallData(
             return prefixData + addressData + amountData
         }
 
-    override fun validate(): Boolean {
+    override fun validate(blockchain: Blockchain): Boolean {
         val amountValue = amount.bigIntegerValue()
         return destination.isNotEmpty() && amountValue != null && amountValue > java.math.BigInteger.ZERO
     }
