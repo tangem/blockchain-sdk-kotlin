@@ -31,6 +31,14 @@ internal class BitcoinProvidersBuilder(
                     blockcypherProviderFactory.create(blockchain).let(::listOfNotNull)
                 }
                 ProviderType.BitcoinLike.Blockchair -> blockchairProviderFactory.createProviders(blockchain)
+                ProviderType.Mock -> {
+                    listOf(
+                        blockBookProviderFactory.createCloreBlockProvider(
+                            blockchain = blockchain,
+                            baseHost = "[REDACTED_ENV_URL]",
+                        ),
+                    )
+                }
                 else -> emptyList()
             }
         }
