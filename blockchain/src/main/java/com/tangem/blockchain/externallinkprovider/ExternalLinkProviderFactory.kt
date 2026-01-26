@@ -78,6 +78,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Manta, Blockchain.MantaTestnet -> MantaExternalLinkProvider(isTestnet)
             Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet -> PolygonZkEVMExternalLinkProvider(isTestnet)
             Blockchain.Moonriver, Blockchain.MoonriverTestnet -> MoonriverExternalLinkProvider(isTestnet)
+            Blockchain.Monad, Blockchain.MonadTestnet -> MonadExternalLinkProvider(isTestnet)
             Blockchain.Mantle, Blockchain.MantleTestnet -> MantleExternalLinkProvider(isTestnet)
             Blockchain.Flare, Blockchain.FlareTestnet -> FlareExternalLinkProvider(isTestnet)
             Blockchain.Taraxa, Blockchain.TaraxaTestnet -> TaraxaExternalLinkProvider(isTestnet)
