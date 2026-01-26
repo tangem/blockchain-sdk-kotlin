@@ -75,4 +75,8 @@ sealed interface ProviderType {
     sealed interface PolkadotLike : ProviderType {
         object Tatum : PolkadotLike
     }
+
+    sealed interface AlephZero : ProviderType {
+        object Dwellir : AlephZero
+    }
 }
