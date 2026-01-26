@@ -36,7 +36,7 @@ internal object PolkadotWalletManagerAssembly : WalletManagerAssembly<PolkadotWa
     ): NetworkProvidersBuilder<PolkadotNetworkProvider> {
         return when (blockchain) {
             Blockchain.Polkadot, Blockchain.PolkadotTestnet -> PolkadotProvidersBuilder(providerTypes, config)
-            Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> AlephZeroProvidersBuilder(providerTypes)
+            Blockchain.AlephZero, Blockchain.AlephZeroTestnet -> AlephZeroProvidersBuilder(providerTypes, config)
             Blockchain.Kusama -> KusamaProvidersBuilder(providerTypes, config)
             Blockchain.Joystream -> JoyStreamProvidersBuilder(providerTypes)
             Blockchain.Bittensor -> BittensorProvidersBuilder(providerTypes, config)

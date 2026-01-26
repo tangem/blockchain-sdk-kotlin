@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.ethereum
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.network.providers.ProviderType
 
 internal class EthereumProvidersBuilder(
@@ -20,8 +21,11 @@ internal class EthereumProvidersBuilder(
                     baseUrl = "https://eth.nownodes.io/",
                 )
                 ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { eth?.jsonRpc }
-                // Remove temporarily because of yield supply and incorrect pending tx count
-                // ProviderType.Blink -> ethereumProviderFactory.getBlinkProvider("https://eth.blinklabs.xyz/v1/")
+                ProviderType.Blink -> if (DepsContainer.blockchainFeatureToggles.isPendingTransactionsEnabled) {
+                    ethereumProviderFactory.getBlinkProvider("https://eth.blinklabs.xyz/v1/")
+                } else {
+                    null
+                }
                 ProviderType.EthereumLike.Infura -> {
                     ethereumProviderFactory.getInfuraProvider(baseUrl = "https://mainnet.infura.io/v3/")
                 }
