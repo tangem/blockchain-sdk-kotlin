@@ -290,10 +290,14 @@ internal class KaspaWalletManager(
             )
         ) {
             is Result.Success -> {
+                val revealFeeAmountValue = requireNotNull(
+                    (uncompiledTransaction.fee as Fee.Kaspa).revealTransactionFee?.value,
+                ) { "Reveal transaction fee is required for KRC20 transactions" }
+
                 val revealTransaction = transactionBuilder.buildToSignKRC20Reveal(
                     sourceAddress = uncompiledTransaction.sourceAddress,
                     redeemScript = commitTransaction.data.redeemScript,
-                    revealFeeAmountValue = (uncompiledTransaction.fee as Fee.Kaspa).revealTransactionFee?.value!!,
+                    revealFeeAmountValue = revealFeeAmountValue,
                     params = commitTransaction.data.params,
                     dustValue = dustValue,
                 )
