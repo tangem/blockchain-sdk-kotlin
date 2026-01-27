@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods
 
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.extensions.toFixedSizeBytes
 import com.tangem.common.extensions.hexToBytes
@@ -50,7 +51,7 @@ internal data class ReverseResolveENSAddressCallData(
         return result
     }
 
-    override fun validate(): Boolean {
+    override fun validate(blockchain: Blockchain): Boolean {
         return address.isNotEmpty()
     }
 }
