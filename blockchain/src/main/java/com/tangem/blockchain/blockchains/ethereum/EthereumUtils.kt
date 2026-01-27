@@ -224,6 +224,16 @@ object EthereumUtils {
         return EthEip712Util.eip712Hash(rawMessage)
     }
 
+    /**
+     * Returns the keccak-256 hash of `message`, prefixed with the header used by the `eth_sign` RPC call.
+     * The output of this function can be fed into `ecsign` to produce the same signature as the `eth_sign`
+     * call for a given `message`, or fed to `ecrecover` along with a signature to recover the public key
+     * used to produce the signature.
+     */
+    fun hashPersonalMessage(message: ByteArray): ByteArray {
+        return EthEip712Util.hashPersonalMessage(message)
+    }
+
     fun String.parseEthereumAddress(): String {
         return hexToFixedSizeBytes().removeLeadingZeros().toHexString().formatHex().lowercase()
     }
