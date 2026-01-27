@@ -151,11 +151,11 @@ internal class StellarWalletManager(
         val amountType = uncompiledTransaction.amount.type
         val token = if (amountType is AmountType.Token) amountType.token else null
 
-        val requiresMemo = networkProvider.checkTargetAccount(uncompiledTransaction.destinationAddress, token)
+        val isMemoRequired = networkProvider.checkTargetAccount(uncompiledTransaction.destinationAddress, token)
             .map { it.requiresMemo }
             .successOr { false }
 
-        if (!hasMemo && requiresMemo) {
+        if (!hasMemo && isMemoRequired) {
             return kotlin.Result.failure(BlockchainSdkError.DestinationTagRequired)
         }
         return kotlin.Result.success(Unit)

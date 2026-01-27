@@ -27,7 +27,7 @@ data class TransferERC20TokenCallData(private val destination: String, private v
 
     override fun validate(blockchain: Blockchain): Boolean {
         val amountValue = amount.bigIntegerValue()
-        val checkAddress = blockchain.validateAddress(destination) && destination.isNotZeroAddress()
-        return checkAddress && amountValue != null
+        val isAddressValid = blockchain.validateAddress(destination) && destination.isNotZeroAddress()
+        return isAddressValid && amountValue != null
     }
 }
