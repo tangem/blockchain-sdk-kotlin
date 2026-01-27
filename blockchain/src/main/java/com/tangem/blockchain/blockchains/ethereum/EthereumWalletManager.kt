@@ -52,6 +52,9 @@ open class EthereumWalletManager(
     private val supportsENS: Boolean,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
     private val pendingTransactionsProvider: PendingTransactionsProvider = DefaultPendingTransactionsProvider,
+    private val ethereumTransactionValidator: EthereumTransactionValidator = EthereumTransactionValidator(
+        wallet.blockchain,
+    ),
     ethereumGaslessDataProvider: EthereumGaslessDataProvider = DefaultEthereumGaslessDataProvider(
         wallet = wallet,
         networkProvider = networkProvider,
@@ -70,7 +73,7 @@ open class EthereumWalletManager(
     Approver,
     NameResolver,
     PendingTransactionHandler,
-    TransactionValidator by EthereumTransactionValidator,
+    TransactionValidator by ethereumTransactionValidator,
     EthereumGaslessDataProvider by ethereumGaslessDataProvider {
 
     // move to constructor later
@@ -478,8 +481,10 @@ open class EthereumWalletManager(
 
     override suspend fun resolve(name: String): ResolveAddressResult {
         if (supportsENS) {
-            val namehash = ensNameProcessor.getNamehash(name).successOr { return ResolveAddressResult.Error(it.error) }
-            val encodedName = ensNameProcessor.encode(name).successOr { return ResolveAddressResult.Error(it.error) }
+            val namehash =
+                ensNameProcessor.getNamehash(name).successOr { return ResolveAddressResult.Error(it.error) }
+            val encodedName =
+                ensNameProcessor.encode(name).successOr { return ResolveAddressResult.Error(it.error) }
 
             return networkProvider.resolveName(namehash, encodedName)
         } else {
