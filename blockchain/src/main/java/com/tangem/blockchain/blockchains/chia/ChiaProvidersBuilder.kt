@@ -20,6 +20,7 @@ internal class ChiaProvidersBuilder(
     override fun createProviders(blockchain: Blockchain): List<ChiaNetworkProvider> {
         return providerTypes.mapNotNull {
             when (it) {
+                is ProviderType.Public -> createPublicProvider(it.url)
                 ProviderType.Chia.Tangem -> createTangemProvider()
                 ProviderType.Chia.TangemNew -> createTangemNewProvider()
                 ProviderType.Chia.FireAcademy -> createFireAcademyProvider(isTestnet = false)
@@ -71,5 +72,13 @@ internal class ChiaProvidersBuilder(
                 isRequiredHexPrefixForTx = true,
             )
         }
+    }
+
+    private fun createPublicProvider(baseUrl: String): ChiaNetworkProvider {
+        return ChiaJsonRpcProvider(
+            baseUrl = baseUrl,
+            key = "",
+            isRequiredHexPrefixForTx = true,
+        )
     }
 }
