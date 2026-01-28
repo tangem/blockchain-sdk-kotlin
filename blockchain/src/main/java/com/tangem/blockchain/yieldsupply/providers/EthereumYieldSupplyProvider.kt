@@ -116,7 +116,7 @@ internal class EthereumYieldSupplyProvider(
         return yieldModuleAddress
     }
 
-    override suspend fun getYieldSupplyStatus(tokenContractAddress: String): YieldSupplyStatus? {
+    override suspend fun getYieldSupplyStatus(tokenContractAddress: String): YieldSupplyStatus? = try {
         val result = multiJsonRpcProvider.performRequest(
             request = EthereumJsonRpcProvider::call,
             data = EthCallObject(
@@ -124,7 +124,10 @@ internal class EthereumYieldSupplyProvider(
                 data = EthereumYieldSupplyStatusCallData(tokenContractAddress).dataHex,
             ),
         ).extractResult()
-        return ethereumYieldSupplyStatusConverter.convert(result)
+        ethereumYieldSupplyStatusConverter.convert(result)
+    } catch (exception: Exception) {
+        Log.w(this::class.java.simpleName, "Failed to get yield supply status", exception)
+        null
     }
 
     override suspend fun getBalance(yieldSupplyStatus: YieldSupplyStatus, token: Token): Amount = coroutineScope {
