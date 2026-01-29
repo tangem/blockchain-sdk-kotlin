@@ -93,7 +93,10 @@ class BorshEncoder : AbstractEncoder() {
     override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int) = encodeByte(index.toByte())
 
     @Suppress("OptionalUnit")
-    override fun encodeByte(value: Byte) = run { bytes.add(value); Unit }
+    override fun encodeByte(value: Byte) = run {
+        bytes.add(value)
+        Unit
+    }
     override fun encodeBoolean(value: Boolean) = encodeByte(if (value) 1 else 0)
     override fun encodeShort(value: Short) = encodeBytes(value.bytes)
     override fun encodeInt(value: Int) = encodeBytes(value.bytes)
