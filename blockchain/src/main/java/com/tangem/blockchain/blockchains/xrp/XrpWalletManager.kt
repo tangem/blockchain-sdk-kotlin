@@ -210,10 +210,13 @@ internal class XrpWalletManager(
     }
 
     override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
-        val destinationTag = (transactionData.extras as? XrpTransactionBuilder.XrpTransactionExtras)?.destinationTag
-        if (destinationTag == null && networkProvider.checkDestinationTagRequired(transactionData.destinationAddress)) {
+        val extras = uncompiledTransaction.extras as? XrpTransactionBuilder.XrpTransactionExtras
+        val destinationTag = extras?.destinationTag
+        val isDestinationTagRequired = networkProvider
+            .checkDestinationTagRequired(uncompiledTransaction.destinationAddress)
+        if (destinationTag == null && isDestinationTagRequired) {
             return kotlin.Result.failure(BlockchainSdkError.DestinationTagRequired)
         }
         return kotlin.Result.success(Unit)

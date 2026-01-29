@@ -37,9 +37,7 @@ class KaspaTransactionBuilder(
     private val envelopeAdapter by lazy { moshi.adapter<Envelope>() }
 
     @Suppress("MagicNumber")
-    fun buildToSign(transactionData: TransactionData, dustValue: BigDecimal): Result<KaspaTransaction> {
-        transactionData.requireUncompiled()
-
+    fun buildToSign(transactionData: TransactionData.Uncompiled, dustValue: BigDecimal): Result<KaspaTransaction> {
         if (unspentOutputs.isNullOrEmpty()) {
             return Result.Failure(
                 BlockchainSdkError.CustomError("Unspent outputs are missing"),
@@ -128,12 +126,10 @@ class KaspaTransactionBuilder(
 
     @Suppress("LongMethod", "MagicNumber")
     internal fun buildToSignKRC20Commit(
-        transactionData: TransactionData,
+        transactionData: TransactionData.Uncompiled,
         dustValue: BigDecimal,
         includeFee: Boolean = true,
     ): Result<CommitTransaction> {
-        transactionData.requireUncompiled()
-
         require(transactionData.amount.type is AmountType.Token)
 
         if (unspentOutputs.isNullOrEmpty()) {

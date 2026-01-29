@@ -127,9 +127,9 @@ internal class TronWalletManager(
         }
 
         val hexStringList = transactionDataList.map {
-            it.requireCompiled()
+            val compiledTransaction = it.requireCompiled()
 
-            (it.value as? TransactionData.Compiled.Data.RawString)?.data ?: return Result.Failure(
+            (compiledTransaction.value as? TransactionData.Compiled.Data.RawString)?.data ?: return Result.Failure(
                 BlockchainSdkError.UnsupportedOperation("Can't retrieve tron raw transaction"),
             )
         }
@@ -183,11 +183,11 @@ internal class TronWalletManager(
     )
 
     override suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
-        transactionData.requireUncompiled()
-        val extra = transactionData.extras as? TronTransactionExtras
+        val uncompiledTransaction = transactionData.requireUncompiled()
+        val extra = uncompiledTransaction.extras as? TronTransactionExtras
         return getFee(
-            amount = transactionData.amount,
-            destination = transactionData.destinationAddress,
+            amount = uncompiledTransaction.amount,
+            destination = uncompiledTransaction.destinationAddress,
             callData = extra?.callData,
         )
     }

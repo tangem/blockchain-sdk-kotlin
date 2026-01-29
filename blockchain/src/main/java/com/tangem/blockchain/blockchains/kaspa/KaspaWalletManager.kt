@@ -110,23 +110,23 @@ internal class KaspaWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
-        return when (val type = transactionData.amount.type) {
-            is AmountType.Coin -> sendCoinTransaction(transactionData, signer)
+        return when (val type = uncompiledTransaction.amount.type) {
+            is AmountType.Coin -> sendCoinTransaction(uncompiledTransaction, signer)
             is AmountType.Token -> {
                 val incompleteTokenTransaction = getIncompleteTokenTransaction(type.token)
                 if (incompleteTokenTransaction != null &&
-                    incompleteTokenTransaction.amountValue == transactionData.amount.value &&
-                    incompleteTokenTransaction.envelope.to == transactionData.destinationAddress
+                    incompleteTokenTransaction.amountValue == uncompiledTransaction.amount.value &&
+                    incompleteTokenTransaction.envelope.to == uncompiledTransaction.destinationAddress
                 ) {
                     sendKRC20RevealOnlyTransaction(
-                        transactionData = transactionData,
+                        transactionData = uncompiledTransaction,
                         signer = signer,
                         incompleteTokenTransactionParams = incompleteTokenTransaction,
                     )
                 } else {
-                    sendKRC20Transaction(transactionData, signer)
+                    sendKRC20Transaction(uncompiledTransaction, signer)
                 }
             }
             else -> error("unknown amount type for fee estimation")
@@ -246,7 +246,7 @@ internal class KaspaWalletManager(
     }
 
     private suspend fun sendCoinTransaction(
-        transactionData: TransactionData,
+        transactionData: TransactionData.Uncompiled,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData, dustValue)) {
@@ -277,11 +277,9 @@ internal class KaspaWalletManager(
 
     @Suppress("NestedBlockDepth", "LongMethod")
     private suspend fun sendKRC20Transaction(
-        transactionData: TransactionData,
+        transactionData: TransactionData.Uncompiled,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        transactionData.requireUncompiled()
-
         val token = (transactionData.amount.type as AmountType.Token).token
         return when (
             val commitTransaction = transactionBuilder.buildToSignKRC20Commit(
@@ -361,12 +359,10 @@ internal class KaspaWalletManager(
     }
 
     private suspend fun sendKRC20RevealOnlyTransaction(
-        transactionData: TransactionData,
+        transactionData: TransactionData.Uncompiled,
         signer: TransactionSigner,
         incompleteTokenTransactionParams: BlockchainSavedData.KaspaKRC20IncompleteTokenTransaction,
     ): Result<TransactionSendResult> {
-        transactionData.requireUncompiled()
-
         val token = (transactionData.amount.type as AmountType.Token).token
         val revealFeeAmountValue = (transactionData.fee as Fee.Kaspa).revealTransactionFee?.value ?: BigDecimal.ZERO
         val redeemScript = RedeemScript(

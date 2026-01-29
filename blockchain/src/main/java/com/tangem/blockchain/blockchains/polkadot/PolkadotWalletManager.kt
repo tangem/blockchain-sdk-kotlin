@@ -124,12 +124,12 @@ internal class PolkadotWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
         runCatching { updateEra() }
             .onFailure { return Result.Failure(BlockchainSdkError.CustomError(it.message ?: "Unknown error")) }
-        return when (transactionData.amount.type) {
-            AmountType.Coin -> sendCoin(transactionData, signer, currentContext)
+        return when (uncompiledTransaction.amount.type) {
+            AmountType.Coin -> sendCoin(uncompiledTransaction, signer, currentContext)
             else -> Result.Failure(UnsupportedOperation())
         }
     }
@@ -195,12 +195,10 @@ internal class PolkadotWalletManager(
     }
 
     private suspend fun sendCoin(
-        transactionData: TransactionData,
+        transactionData: TransactionData.Uncompiled,
         signer: TransactionSigner,
         extrinsicContext: ExtrinsicContext,
     ): Result<TransactionSendResult> {
-        transactionData.requireUncompiled()
-
         val destinationAddress = transactionData.destinationAddress
         val isDestinationAccountIsUnderfunded = isAccountUnderfunded(destinationAddress).successOr {
             return Result.Failure(it.error)

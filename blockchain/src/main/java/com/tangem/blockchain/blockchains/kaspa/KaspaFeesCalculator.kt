@@ -20,7 +20,7 @@ internal class KaspaFeesCalculator(
 
     suspend fun estimateFee(
         amount: Amount,
-        transactionData: TransactionData,
+        transactionData: TransactionData.Uncompiled,
         dustValue: BigDecimal,
     ): Result<KaspaFeeEstimation> {
         val buildTransactionResult = when (amount.type) {
