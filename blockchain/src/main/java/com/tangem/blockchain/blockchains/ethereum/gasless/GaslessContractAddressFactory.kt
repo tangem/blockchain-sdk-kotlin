@@ -12,13 +12,11 @@ internal class GaslessContractAddressFactory(
     // TODO(Add correct addresses when they will be available)
     fun getGaslessExecutorContractAddress(): String {
         return when (blockchain) {
-            Blockchain.Ethereum -> "0xd8972a45616bEC62cB9687e38a99D763c0879B0d"
-            Blockchain.BSC -> "0xd8972a45616bEC62cB9687e38a99D763c0879B0d"
-            Blockchain.Base -> "0xd8972a45616bEC62cB9687e38a99D763c0879B0d"
+            Blockchain.Ethereum -> "0xe3014E9AB2739aDeF234B3829C79128746160178"
+            Blockchain.BSC -> "0xe1d0BF13C427C4B2e25Df0CA29E1Faa2d10458f3"
+            Blockchain.Base -> "0x61dD8620410a2372CbE4946f9148671F38F93fC7"
             Blockchain.Polygon -> "0x2C2397c7605dc6d5493518260BDdeebE743B3faD"
-            Blockchain.Arbitrum -> "0xd8972a45616bEC62cB9687e38a99D763c0879B0d"
-            Blockchain.XDC -> "0xd8972a45616bEC62cB9687e38a99D763c0879B0d"
-            Blockchain.Optimism -> "0xd8972a45616bEC62cB9687e38a99D763c0879B0d"
+            Blockchain.Arbitrum -> "0x20e7016ff14Dd10f04028fE52aBBca34F44b6965"
             else -> error("Gasless contract address not defined for blockchain: $blockchain")
         }
     }
