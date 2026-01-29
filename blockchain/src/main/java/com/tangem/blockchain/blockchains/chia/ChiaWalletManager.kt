@@ -22,8 +22,8 @@ class ChiaWalletManager(
     override val currentHost: String
         get() = networkProvider.baseUrl
 
-    private val blockchain = wallet.blockchain
-    private val puzzleHash = ChiaAddressService.getPuzzleHash(wallet.address).toHexString()
+    private val blockchain by lazy { wallet.blockchain }
+    private val puzzleHash by lazy { ChiaAddressService.getPuzzleHash(wallet.address).toHexString().lowercase() }
 
     override suspend fun updateInternal() {
         when (val response = networkProvider.getUnspents(puzzleHash)) {
