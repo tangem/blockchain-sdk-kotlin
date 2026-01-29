@@ -31,7 +31,7 @@ class EthereumTransactionValidator(
         }
 
         // Validate extras based on amount type
-        val extrasCheck = when (amount.type) {
+        val areExtrasValid = when (amount.type) {
             AmountType.Coin -> if (extras?.callData != null) {
                 extras.callData.validate(blockchain)
             } else {
@@ -46,10 +46,10 @@ class EthereumTransactionValidator(
         }
 
         // Validate that fee is provided
-        val feeCheck = transactionData.fee != null
+        val hasFee = transactionData.fee != null
 
         // Final validation result
-        if (!feeCheck || !extrasCheck) {
+        if (!hasFee || !areExtrasValid) {
             return kotlin.Result.failure(BlockchainSdkError.FailedToSendException)
         }
 
