@@ -21,7 +21,7 @@ class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, private val bloc
     BitcoinTransactionBuilder(walletPublicKey.toCompressedPublicKey(), blockchain) {
 
     override fun buildToSign(transactionData: TransactionData, dustValue: BigDecimal?): Result<List<ByteArray>> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
         if (unspentOutputs.isNullOrEmpty()) {
             return Result.Failure(
                 BlockchainSdkError.CustomError("Unspent outputs are missing"),
@@ -32,8 +32,8 @@ class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, private val bloc
 
         val outputsToSend = getMinimumRequiredUTXOsToSend(
             unspentOutputs = unspentOutputs ?: return failResult,
-            transactionAmount = transactionData.amount.value ?: return failResult,
-            transactionFeeAmount = transactionData.fee?.amount?.value ?: return failResult,
+            transactionAmount = uncompiledTransaction.amount.value ?: return failResult,
+            transactionFeeAmount = uncompiledTransaction.fee?.amount?.value ?: return failResult,
             unspentToAmount = { it.amount },
             dustValue = dustValue,
         ).successOr { failure ->
@@ -77,28 +77,31 @@ internal fun TransactionData.toBitcoinCashTransaction(
     change: BigDecimal,
     blockchain: Blockchain,
 ): BitcoinCashTransaction {
-    requireUncompiled()
+    val uncompiledTransaction = requireUncompiled()
 
     val transaction = BitcoinCashTransaction(networkParameters)
     for (utxo in unspentOutputs) {
         transaction.addInput(Sha256Hash.wrap(utxo.transactionHash), utxo.outputIndex, Script(utxo.outputScript))
     }
     val addressService = BitcoinCashAddressService(blockchain)
-    val sourceLegacyAddress =
-        LegacyAddress.fromPubKeyHash(networkParameters, addressService.getPublicKeyHash(this.sourceAddress))
+    val sourceLegacyAddress = LegacyAddress.fromPubKeyHash(
+        networkParameters,
+        addressService.getPublicKeyHash(uncompiledTransaction.sourceAddress),
+    )
 
-    val destinationLegacyAddress = if (addressService.validateCashAddrAddress(this.destinationAddress)) {
+    val isCashAddrAddress = addressService.validateCashAddrAddress(uncompiledTransaction.destinationAddress)
+    val destinationLegacyAddress = if (isCashAddrAddress) {
         getLegacyAddressFromCashAddr(
-            destinationAddress = destinationAddress,
+            destinationAddress = uncompiledTransaction.destinationAddress,
             addressService = addressService,
             networkParameters = networkParameters,
         )
     } else {
-        LegacyAddress.fromBase58(networkParameters, this.destinationAddress)
+        LegacyAddress.fromBase58(networkParameters, uncompiledTransaction.destinationAddress)
     }
 
     transaction.addOutput(
-        Coin.parseCoin(this.amount.value!!.toPlainString()),
+        Coin.parseCoin(requireNotNull(uncompiledTransaction.amount.value).toPlainString()),
         destinationLegacyAddress,
     )
     if (!change.isZero()) {
