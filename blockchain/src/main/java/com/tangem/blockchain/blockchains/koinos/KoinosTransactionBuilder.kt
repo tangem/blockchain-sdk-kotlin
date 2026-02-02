@@ -21,13 +21,13 @@ internal class KoinosTransactionBuilder(isTestnet: Boolean) {
         currentNonce: KoinosAccountNonce,
         koinContractIdHolder: KoinosContractIdHolder,
     ): Result<Pair<KoinosProtocol.Transaction, ByteArray>> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
-        val from = transactionData.sourceAddress
-        val to = transactionData.destinationAddress
-        val amount = transactionData.amount.longValue
+        val from = uncompiledTransaction.sourceAddress
+        val to = uncompiledTransaction.destinationAddress
+        val amount = uncompiledTransaction.amount.longValue
 
-        val manaLimit = (transactionData.extras as? KoinosTransactionExtras)?.manaLimit
+        val manaLimit = (uncompiledTransaction.extras as? KoinosTransactionExtras)?.manaLimit
             ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx)
 
         val manaLimitSatoshi = manaLimit
