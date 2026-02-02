@@ -30,9 +30,9 @@ class BinanceTransactionBuilder(
     private var transferMessage: TransferMessage? = null
 
     fun buildToSign(transactionData: TransactionData): Result<ByteArray> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
-        val amount = transactionData.amount
+        val amount = uncompiledTransaction.amount
 
         if (!amount.isAboveZero()) {
             return Result.Failure(
@@ -48,13 +48,13 @@ class BinanceTransactionBuilder(
         } else {
             amount.currencySymbol
         }
-        transfer.fromAddress = transactionData.sourceAddress
-        transfer.toAddress = transactionData.destinationAddress
-        transfer.amount = transactionData.amount.value!!
+        transfer.fromAddress = uncompiledTransaction.sourceAddress
+        transfer.toAddress = uncompiledTransaction.destinationAddress
+        transfer.amount = uncompiledTransaction.amount.value!!
             .setScale(Blockchain.Binance.decimals()).toPlainString()
 
         val options = TransactionOption.DEFAULT_INSTANCE
-        options.memo = (transactionData.extras as? BinanceTransactionExtras)?.memo ?: ""
+        options.memo = (uncompiledTransaction.extras as? BinanceTransactionExtras)?.memo ?: ""
 
         val accountData = BinanceAccountData(chainId, accountNumber, sequence)
 
