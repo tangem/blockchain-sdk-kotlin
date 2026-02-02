@@ -27,7 +27,7 @@ class TezosTransactionBuilder(
         transactionData: TransactionData,
         publicKeyRevealed: Boolean,
     ): Result<List<TezosOperationContent>> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
         if (counter == null) return Result.Failure(BlockchainSdkError.CustomError("counter is null"))
         var counter = counter!!
@@ -38,7 +38,7 @@ class TezosTransactionBuilder(
             counter++
             val revealOp = TezosOperationContent(
                 kind = "reveal",
-                source = transactionData.sourceAddress,
+                source = uncompiledTransaction.sourceAddress,
                 fee = TezosConstants.REVEAL_FEE.toMutezValueString(),
                 counter = counter.toString(),
                 gasLimit = "10000",
@@ -51,13 +51,13 @@ class TezosTransactionBuilder(
         counter++
         val transactionOp = TezosOperationContent(
             kind = "transaction",
-            source = transactionData.sourceAddress,
+            source = uncompiledTransaction.sourceAddress,
             fee = TezosConstants.TRANSACTION_FEE.toMutezValueString(),
             counter = counter.toString(),
             gasLimit = "10600",
             storageLimit = "300", // set it to 0?
-            destination = transactionData.destinationAddress,
-            amount = transactionData.amount.bigIntegerValue().toString(),
+            destination = uncompiledTransaction.destinationAddress,
+            amount = uncompiledTransaction.amount.bigIntegerValue().toString(),
         )
         contents.add(transactionOp)
 
