@@ -23,26 +23,26 @@ class StellarTransactionBuilder(
 
     @Suppress("LongMethod", "CyclomaticComplexMethod")
     suspend fun buildToSign(transactionData: TransactionData, sequence: Long): Result<ByteArray> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
-        val amount = transactionData.amount
-        val fee = requireNotNull(transactionData.fee?.amount?.longValue).toInt()
-        val destinationKeyPair = KeyPair.fromAccountId(transactionData.destinationAddress)
-        val sourceKeyPair = KeyPair.fromAccountId(transactionData.sourceAddress)
-        val timeBounds = getTimeBounds(transactionData)
+        val amount = uncompiledTransaction.amount
+        val fee = requireNotNull(uncompiledTransaction.fee?.amount?.longValue).toInt()
+        val destinationKeyPair = KeyPair.fromAccountId(uncompiledTransaction.destinationAddress)
+        val sourceKeyPair = KeyPair.fromAccountId(uncompiledTransaction.sourceAddress)
+        val timeBounds = getTimeBounds(uncompiledTransaction)
 
-        val stellarMemo = (transactionData.extras as? StellarTransactionExtras)?.memo
+        val stellarMemo = (uncompiledTransaction.extras as? StellarTransactionExtras)?.memo
         val memo = try {
             stellarMemo?.toStellarSdkMemo()
         } catch (exception: Exception) {
             return Result.Failure(exception.toBlockchainSdkError())
         }
 
-        val amountType = transactionData.amount.type
+        val amountType = uncompiledTransaction.amount.type
         val token = if (amountType is AmountType.Token) amountType.token else null
         val targetAccountResponse = when (
             val result =
-                networkProvider.checkTargetAccount(transactionData.destinationAddress, token)
+                networkProvider.checkTargetAccount(uncompiledTransaction.destinationAddress, token)
         ) {
             is Result.Success -> result.data
             is Result.Failure -> return result
