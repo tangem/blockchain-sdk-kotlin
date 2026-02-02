@@ -8,7 +8,7 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import java.math.BigDecimal
 
-internal class RavencoinWalletManager(
+internal open class RavencoinWalletManager(
     wallet: Wallet,
     transactionBuilder: BitcoinTransactionBuilder,
     networkProvider: BitcoinNetworkProvider,
