@@ -77,23 +77,23 @@ internal class AlgorandTransactionBuilder(blockchain: Blockchain, private val pu
         transactionData: TransactionData,
         params: AlgorandTransactionBuildParams,
     ): Algorand.SigningInput {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
         val transfer = Algorand.Transfer.newBuilder()
-            .setToAddress(transactionData.destinationAddress)
-            .setAmount(transactionData.amount.longValue ?: 0L)
+            .setToAddress(uncompiledTransaction.destinationAddress)
+            .setAmount(uncompiledTransaction.amount.longValue)
             .build()
         val input = with(Algorand.SigningInput.newBuilder()) {
             publicKey = ByteString.copyFrom(this@AlgorandTransactionBuilder.publicKey)
             genesisId = params.genesisId
             genesisHash = ByteString.copyFrom(Base64.decode(params.genesisHash))
-            note = (transactionData.extras as? AlgorandTransactionExtras)
+            note = (uncompiledTransaction.extras as? AlgorandTransactionExtras)
                 ?.note
                 ?.let(ByteString::copyFromUtf8)
                 ?: ByteString.EMPTY
             firstRound = params.firstRound
             lastRound = params.lastRound
-            fee = transactionData.fee?.amount?.longValue ?: 0L
+            fee = uncompiledTransaction.fee?.amount?.longValue ?: 0L
             setTransfer(transfer)
         }.build()
 
