@@ -15,7 +15,7 @@ import org.bitcoinj.core.Base58
 import org.spongycastle.jcajce.provider.digest.Blake2b
 import java.math.BigDecimal
 
-@Suppress("MagicNumber")
+@Suppress("MagicNumber", "NullableToStringCall")
 class TezosTransactionBuilder(
     private val walletPublicKey: ByteArray,
     private val curve: EllipticCurve,
