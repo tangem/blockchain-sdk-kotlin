@@ -4,16 +4,16 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinTransactionBuilder
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkService
 import com.tangem.blockchain.blockchains.clore.CloreFeesCalculator
 import com.tangem.blockchain.blockchains.clore.CloreProvidersBuilder
-import com.tangem.blockchain.blockchains.ravencoin.RavencoinWalletManager
+import com.tangem.blockchain.blockchains.clore.CloreWalletManager
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 
-internal object CloreWalletManagerAssembly : WalletManagerAssembly<RavencoinWalletManager>() {
+internal object CloreWalletManagerAssembly : WalletManagerAssembly<CloreWalletManager>() {
 
-    override fun make(input: WalletManagerAssemblyInput): RavencoinWalletManager {
+    override fun make(input: WalletManagerAssemblyInput): CloreWalletManager {
         with(input.wallet) {
-            return RavencoinWalletManager(
+            return CloreWalletManager(
                 wallet = this,
                 transactionBuilder = BitcoinTransactionBuilder(
                     walletPublicKey = publicKey.blockchainKey,
