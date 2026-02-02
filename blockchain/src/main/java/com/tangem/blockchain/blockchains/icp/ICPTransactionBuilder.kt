@@ -10,13 +10,13 @@ import com.tangem.common.extensions.hexToBytes
 internal class ICPTransactionBuilder(blockchain: Blockchain) {
     val decimals = blockchain.decimals()
     fun buildForSign(transactionData: TransactionData, timestampNanos: Long): ICPTransferRequest {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
         return ICPTransferRequest(
-            to = transactionData.destinationAddress.hexToBytes(),
-            amount = ICPAmount(transactionData.amount.longValue!!),
-            fee = ICPAmount(transactionData.fee?.amount?.longValue ?: 0),
-            memo = (transactionData.extras as? ICPTransactionExtras)?.memo ?: 0,
+            to = uncompiledTransaction.destinationAddress.hexToBytes(),
+            amount = ICPAmount(uncompiledTransaction.amount.longValue),
+            fee = ICPAmount(uncompiledTransaction.fee?.amount?.longValue ?: 0),
+            memo = (uncompiledTransaction.extras as? ICPTransactionExtras)?.memo ?: 0,
             createdAtTime = ICPTimestamp(timestampNanos),
         )
     }
