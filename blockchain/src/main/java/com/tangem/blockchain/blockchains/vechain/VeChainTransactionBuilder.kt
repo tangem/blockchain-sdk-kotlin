@@ -60,11 +60,16 @@ class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
     }
 
     fun buildForSign(transactionData: TransactionData, blockInfo: VeChainBlockInfo, nonce: Long): ByteArray {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
-        val fee = transactionData.fee as? Fee.VeChain ?: throw BlockchainSdkError.FailedToBuildTx
-        val input =
-            createSigningInput(transactionData.amount, fee, transactionData.destinationAddress, blockInfo, nonce)
+        val fee = uncompiledTransaction.fee as? Fee.VeChain ?: throw BlockchainSdkError.FailedToBuildTx
+        val input = createSigningInput(
+            amount = uncompiledTransaction.amount,
+            fee = fee,
+            destination = uncompiledTransaction.destinationAddress,
+            blockInfo = blockInfo,
+            nonce = nonce,
+        )
         val preImageHashes = TransactionCompiler.preImageHashes(coinType, input.toByteArray())
         val preSigningOutput = PreSigningOutput.parseFrom(preImageHashes)
 
@@ -82,15 +87,15 @@ class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
         blockInfo: VeChainBlockInfo,
         nonce: Long,
     ): ByteArray {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
-        val fee = transactionData.fee as? Fee.VeChain ?: throw BlockchainSdkError.FailedToBuildTx
+        val fee = uncompiledTransaction.fee as? Fee.VeChain ?: throw BlockchainSdkError.FailedToBuildTx
         val inputData = createSigningInput(
-            transactionData.amount,
-            fee,
-            transactionData.destinationAddress,
-            blockInfo,
-            nonce,
+            amount = uncompiledTransaction.amount,
+            fee = fee,
+            destination = uncompiledTransaction.destinationAddress,
+            blockInfo = blockInfo,
+            nonce = nonce,
         )
 
         val publicKeys = DataVector()
