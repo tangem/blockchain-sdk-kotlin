@@ -33,6 +33,7 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Manta, Blockchain.MantaTestnet,
             Blockchain.Mantle, Blockchain.MantleTestnet,
             Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet,
+            Blockchain.Plasma, Blockchain.PlasmaTestnet,
             -> true
             Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet, // eth_feeHistory all zeroes
             Blockchain.EthereumPow, Blockchain.EthereumPowTestnet, // eth_feeHistory with zeros
@@ -55,7 +56,6 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet,
             Blockchain.Xodex,
             Blockchain.Chiliz, Blockchain.ChilizTestnet,
-            Blockchain.Plasma, Blockchain.PlasmaTestnet,
             Blockchain.VanarChain, Blockchain.VanarChainTestnet,
             Blockchain.Bitrock, Blockchain.BitrockTestnet,
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet,
