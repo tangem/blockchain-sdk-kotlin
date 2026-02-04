@@ -101,7 +101,7 @@ internal fun TransactionData.toBitcoinCashTransaction(
     }
 
     transaction.addOutput(
-        Coin.parseCoin(uncompiledTransaction.amount.value!!.toPlainString()),
+        Coin.parseCoin(requireNotNull(uncompiledTransaction.amount.value).toPlainString()),
         destinationLegacyAddress,
     )
     if (!change.isZero()) {

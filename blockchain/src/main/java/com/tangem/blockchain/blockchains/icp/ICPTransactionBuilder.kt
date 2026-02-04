@@ -14,7 +14,7 @@ internal class ICPTransactionBuilder(blockchain: Blockchain) {
 
         return ICPTransferRequest(
             to = uncompiledTransaction.destinationAddress.hexToBytes(),
-            amount = ICPAmount(uncompiledTransaction.amount.longValue!!),
+            amount = ICPAmount(uncompiledTransaction.amount.longValue),
             fee = ICPAmount(uncompiledTransaction.fee?.amount?.longValue ?: 0),
             memo = (uncompiledTransaction.extras as? ICPTransactionExtras)?.memo ?: 0,
             createdAtTime = ICPTimestamp(timestampNanos),
