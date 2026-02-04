@@ -195,6 +195,12 @@ internal class EtherscanTransactionHistoryProvider(
     ): TransactionHistoryItem.TransactionType {
         return if (filterType is TransactionHistoryRequest.FilterType.Coin && this.isContractInteraction) {
             val fnName = this.functionName?.substringBefore("(")
+
+            // ERC-20 transfer method
+            if (fnName == TOKEN_TRANSFER_METHOD_NAME) {
+                return TransactionHistoryItem.TransactionType.Transfer
+            }
+
             TransactionHistoryItem.TransactionType.ContractMethodName(
                 name = fnName ?: this.functionName ?: UNKNOWN,
                 callData = input,
@@ -206,6 +212,12 @@ internal class EtherscanTransactionHistoryProvider(
 
             // MethodId is empty for the coin transfers
             if (methodId.isNullOrEmpty()) return TransactionHistoryItem.TransactionType.Transfer
+
+            // ERC-20 transfer method
+            val fnName = this.functionName?.substringBefore("(")
+            if (fnName == TOKEN_TRANSFER_METHOD_NAME) {
+                return TransactionHistoryItem.TransactionType.Transfer
+            }
 
             TransactionHistoryItem.TransactionType.ContractMethod(
                 id = methodId,
@@ -276,5 +288,6 @@ internal class EtherscanTransactionHistoryProvider(
 
     private companion object {
         const val UNKNOWN = "Unknown"
+        const val TOKEN_TRANSFER_METHOD_NAME = "transfer"
     }
 }
