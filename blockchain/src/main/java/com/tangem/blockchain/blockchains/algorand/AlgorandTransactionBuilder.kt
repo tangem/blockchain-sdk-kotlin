@@ -81,7 +81,7 @@ internal class AlgorandTransactionBuilder(blockchain: Blockchain, private val pu
 
         val transfer = Algorand.Transfer.newBuilder()
             .setToAddress(uncompiledTransaction.destinationAddress)
-            .setAmount(uncompiledTransaction.amount.longValue ?: 0L)
+            .setAmount(uncompiledTransaction.amount.longValue)
             .build()
         val input = with(Algorand.SigningInput.newBuilder()) {
             publicKey = ByteString.copyFrom(this@AlgorandTransactionBuilder.publicKey)
