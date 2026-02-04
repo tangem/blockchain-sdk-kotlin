@@ -11,7 +11,7 @@ internal class VeChainExternalLinkProvider(isTestnet: Boolean) : ExternalLinkPro
     override val testNetTopUpUrl: String = "https://faucet.vecha.in/"
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
-        return explorerBaseUrl + "accounts/$walletAddress"
+        return explorerBaseUrl + "address/$walletAddress"
     }
 
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
