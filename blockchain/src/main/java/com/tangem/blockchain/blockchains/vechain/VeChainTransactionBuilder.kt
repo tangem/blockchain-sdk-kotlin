@@ -64,11 +64,11 @@ class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
 
         val fee = uncompiledTransaction.fee as? Fee.VeChain ?: throw BlockchainSdkError.FailedToBuildTx
         val input = createSigningInput(
-            uncompiledTransaction.amount,
-            fee,
-            uncompiledTransaction.destinationAddress,
-            blockInfo,
-            nonce,
+            amount = uncompiledTransaction.amount,
+            fee = fee,
+            destination = uncompiledTransaction.destinationAddress,
+            blockInfo = blockInfo,
+            nonce = nonce,
         )
         val preImageHashes = TransactionCompiler.preImageHashes(coinType, input.toByteArray())
         val preSigningOutput = PreSigningOutput.parseFrom(preImageHashes)
@@ -91,11 +91,11 @@ class VeChainTransactionBuilder(blockchain: Blockchain, private val publicKey: W
 
         val fee = uncompiledTransaction.fee as? Fee.VeChain ?: throw BlockchainSdkError.FailedToBuildTx
         val inputData = createSigningInput(
-            uncompiledTransaction.amount,
-            fee,
-            uncompiledTransaction.destinationAddress,
-            blockInfo,
-            nonce,
+            amount = uncompiledTransaction.amount,
+            fee = fee,
+            destination = uncompiledTransaction.destinationAddress,
+            blockInfo = blockInfo,
+            nonce = nonce,
         )
 
         val publicKeys = DataVector()
