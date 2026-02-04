@@ -10,8 +10,6 @@
     <ID>BooleanPropertyNaming:CosmosChain.kt$CosmosChain.Cosmos$val testnet: Boolean</ID>
     <ID>BooleanPropertyNaming:CosmosChain.kt$CosmosChain.Sei$val testnet: Boolean</ID>
     <ID>BooleanPropertyNaming:CosmosWalletManagerAssembly.kt$CosmosWalletManagerAssembly$val testnet = blockchain.isTestnet()</ID>
-    <ID>BooleanPropertyNaming:EthereumTransactionValidator.kt$EthereumTransactionValidator$val extrasCheck = when (amount.type) { AmountType.Coin -&gt; if (extras?.callData != null) { extras.callData.validate() } else { true } // For TokenYieldSupply and Token amount types, validate call data if present is AmountType.TokenYieldSupply, is AmountType.Token, -&gt; extras != null &amp;&amp; extras.callData?.validate() == true else -&gt; true }</ID>
-    <ID>BooleanPropertyNaming:EthereumTransactionValidator.kt$EthereumTransactionValidator$val feeCheck = transactionData.fee != null</ID>
     <ID>BooleanPropertyNaming:EthereumWalletManager.kt$EthereumWalletManager$private val supportsENS: Boolean</ID>
     <ID>BooleanPropertyNaming:HederaWalletManager.kt$HederaWalletManager$val accountHasValidAccountIdOrEVMAddress = destinationAccountId.num.toInt() != 0 || destinationAccountId.evmAddress != null</ID>
     <ID>BooleanPropertyNaming:KoinosMethod.kt$KoinosMethod.GetAccountHistory$@Json(name = "ascending") val ascending: Boolean</ID>
@@ -41,7 +39,6 @@
     <ID>BooleanPropertyNaming:StellarWalletManager.kt$StellarWalletManager$val requiresMemo = networkProvider.checkTargetAccount(transactionData.destinationAddress, token) .map { it.requiresMemo } .successOr { false }</ID>
     <ID>BooleanPropertyNaming:TonNetworkModels.kt$TonGetWalletInfoResponse$@Json(name = "wallet") val wallet: Boolean</ID>
     <ID>BooleanPropertyNaming:TonNetworkModels.kt$TonProviderResponse$@Json(name = "ok") val ok: Boolean</ID>
-    <ID>BooleanPropertyNaming:TransferERC20TokenCallData.kt$TransferERC20TokenCallData$val checkAddress = EthereumAddressService().validate(destination) &amp;&amp; destination.isNotZeroAddress()</ID>
     <ID>BooleanPropertyNaming:TronNetworkModels.kt$TronBroadcastResponse$@Json(name = "result") val result: Boolean</ID>
     <ID>BooleanPropertyNaming:TronNetworkModels.kt$TronGetAccountRequest$@Json(name = "visible") val visible: Boolean</ID>
     <ID>BooleanPropertyNaming:TronNetworkModels.kt$TronTriggerSmartContractRequest$@Json(name = "visible") val visible: Boolean</ID>
@@ -275,8 +272,7 @@
     <ID>NamedArguments:UnsignedTransaction.kt$UnsignedTransaction.Companion$AssetOutput( maxOf(alphRemaining, dustUtxoAmount), toLockupScript, lockTimeOpt ?: TimeStamp.zero, listOf(), additionalDataOpt ?: ByteString(), )</ID>
     <ID>NamedArguments:UnsignedTransaction.kt$UnsignedTransaction.Companion$buildTxOutputs( fromLockupScript, inputs, outputInfos, gas, gasPrice, )</ID>
     <ID>NamedArguments:UnsignedTransaction.kt$UnsignedTransaction.Companion$calculateChangeOutputs(fromLockupScript, inputs, txOutputs, gasFee)</ID>
-    <ID>NamedArguments:VeChainTransactionBuilder.kt$VeChainTransactionBuilder$createSigningInput( transactionData.amount, fee, transactionData.destinationAddress, blockInfo, nonce, )</ID>
-    <ID>NamedArguments:VeChainTransactionBuilder.kt$VeChainTransactionBuilder$createSigningInput(transactionData.amount, fee, transactionData.destinationAddress, blockInfo, nonce)</ID>
+    <ID>NamedArguments:VeChainTransactionBuilder.kt$VeChainTransactionBuilder$createSigningInput( uncompiledTransaction.amount, fee, uncompiledTransaction.destinationAddress, blockInfo, nonce, )</ID>
     <ID>NamedArguments:WalletManagerFactory.kt$WalletManagerFactory$Wallet(blockchain, addresses, finalPublicKey, setOf(), finalPath)</ID>
     <ID>NamedArguments:WalletManagerFactory.kt$WalletManagerFactory$prepareDefaultWalletData(publicKey, pairPublicKey, blockchain, curve)</ID>
     <ID>NamedArguments:WalletManagerFactoryTest.kt$WalletManagerFactoryTest$WalletManagerFactory( BlockchainSdkConfig( blockchairCredentials = BlockchairCredentials( apiKey = listOf("anyKey"), authToken = "anyToken", ), blockcypherTokens = setOf(), infuraProjectId = "infuraProjectId", nowNodeCredentials = NowNodeCredentials(apiKey = "nowNodeCredentials"), getBlockCredentials = GetBlockCredentials( xrp = GetBlockAccessToken(), cardano = GetBlockAccessToken(), avalanche = GetBlockAccessToken(), eth = GetBlockAccessToken(), etc = GetBlockAccessToken(), fantom = GetBlockAccessToken(), rsk = GetBlockAccessToken(), bsc = GetBlockAccessToken(), polygon = GetBlockAccessToken(), gnosis = GetBlockAccessToken(), cronos = GetBlockAccessToken(), solana = GetBlockAccessToken(), ton = GetBlockAccessToken(), tron = GetBlockAccessToken(), cosmos = GetBlockAccessToken(), near = GetBlockAccessToken(), dogecoin = GetBlockAccessToken(), litecoin = GetBlockAccessToken(), dash = GetBlockAccessToken(), bitcoin = GetBlockAccessToken(), aptos = GetBlockAccessToken(), algorand = GetBlockAccessToken(), zkSyncEra = GetBlockAccessToken(), polygonZkEvm = GetBlockAccessToken(), base = GetBlockAccessToken(), blast = GetBlockAccessToken(), filecoin = GetBlockAccessToken(), arbitrum = GetBlockAccessToken(), bitcoinCash = GetBlockAccessToken(), kusama = GetBlockAccessToken(), moonbeam = GetBlockAccessToken(), optimism = GetBlockAccessToken(), polkadot = GetBlockAccessToken(), shibarium = GetBlockAccessToken(), sui = GetBlockAccessToken(), telos = GetBlockAccessToken(), tezos = GetBlockAccessToken(), ), tronGridApiKey = "", chiaFireAcademyApiKey = "", ), blockchainProviderTypes = BLOCKCHAIN_PROVIDER_TYPES, blockchainDataStorage = object : BlockchainDataStorage { override suspend fun getOrNull(key: String): String? = null override suspend fun store(key: String, value: String) = Unit override suspend fun remove(key: String) = Unit }, accountCreator = accountCreator, featureToggles = BlockchainFeatureToggles( isYieldSupplyEnabled = false, ), )</ID>
@@ -309,41 +305,6 @@
     <ID>NullableBooleanCheck:SolanaNetworkService.kt$SolanaNetworkService$message?.contains(BLOCKHASH_NOT_FOUND_ERROR) ?: false</ID>
     <ID>NullableBooleanCheck:StellarWalletManager.kt$StellarWalletManager$extras?.memo?.hasNonEmptyMemo() ?: false</ID>
     <ID>NullableBooleanCheck:TonWalletManager.kt$TonWalletManager$recipientJettonWalletAddressResult .successOr { null } ?.let { walletAddress -&gt; networkService.isJettonWalletActive(walletAddress) .successOr { null } } ?: false</ID>
-    <ID>NullableToStringCall:AaveV3YieldSupplyContractAddressFactory.kt$AaveV3YieldSupplyContractAddressFactory$${this::class.simpleName}</ID>
-    <ID>NullableToStringCall:AdaliteNetworkProvider.kt$AdaliteNetworkProvider$${cause.response()?.errorBody()?.string()}</ID>
-    <ID>NullableToStringCall:BitcoinAddressService.kt$BitcoinAddressService$${this::class.simpleName}</ID>
-    <ID>NullableToStringCall:BitcoinCashAddressService.kt$BitcoinCashAddressService$${this::class.simpleName}</ID>
-    <ID>NullableToStringCall:BitcoinCashNowNodesApiService.kt$BitcoinCashNowNodesApiService$${errorBody()?.string()}</ID>
-    <ID>NullableToStringCall:BitcoinTransactionBuilder.kt$BitcoinTransactionBuilder$${this::class.simpleName}</ID>
-    <ID>NullableToStringCall:BlockBookNetworkProvider.kt$BlockBookNetworkProvider$${this::class.simpleName}</ID>
-    <ID>NullableToStringCall:BlockchainDemoActivity.kt$BlockchainDemoActivity$fees.normal.amount.value.toString()</ID>
-    <ID>NullableToStringCall:BlockchairNetworkProvider.kt$BlockchairNetworkProvider$${this::class.simpleName}</ID>
-    <ID>NullableToStringCall:BlockcypherNetworkProvider.kt$BlockcypherNetworkProvider$${this::class.simpleName}</ID>
-    <ID>NullableToStringCall:CardanoAddressService.kt$CardanoAddressService$${this::class.simpleName}</ID>
-    <ID>NullableToStringCall:ChiaJsonRpcProvider.kt$ChiaJsonRpcProvider$${sendResponse.status}</ID>
-    <ID>NullableToStringCall:EthereumPendingTransactionsProvider.kt$EthereumPendingTransactionsProvider$$contractAddress</ID>
-    <ID>NullableToStringCall:EthereumPendingTransactionsProvider.kt$EthereumPendingTransactionsProvider$$providerName</ID>
-    <ID>NullableToStringCall:EthereumPendingTransactionsProvider.kt$EthereumPendingTransactionsProvider$$providerType</ID>
-    <ID>NullableToStringCall:EthereumPendingTransactionsProvider.kt$EthereumPendingTransactionsProvider$${pendingTransaction.providerName}</ID>
-    <ID>NullableToStringCall:EthereumUtils.kt$EthereumUtils$${this::class.simpleName}</ID>
-    <ID>NullableToStringCall:EthereumYieldSupplyProvider.kt$EthereumYieldSupplyProvider$${e.message}</ID>
-    <ID>NullableToStringCall:Exceptions.kt$BlockchainSdkError.WalletCoreException$$customMessage</ID>
-    <ID>NullableToStringCall:MultiNetworkProvider.kt$MultiNetworkProvider$${getErrorMessage(result)}</ID>
-    <ID>NullableToStringCall:PendingTransactionStorage.kt$PendingTransactionStorage$$contractAddress</ID>
-    <ID>NullableToStringCall:PolkadotJsonRpcProvider.kt$PolkadotJsonRpcProvider$response.data.result.toString()</ID>
-    <ID>NullableToStringCall:PolkadotTransactionBuilder.kt$PolkadotTransactionBuilder$${this::class.simpleName}</ID>
-    <ID>NullableToStringCall:QuaiAddressService.kt$QuaiAddressService$${e.message}</ID>
-    <ID>NullableToStringCall:QuaiWalletManager.kt$QuaiWalletManager$$extendedPublicKey</ID>
-    <ID>NullableToStringCall:QuaiWalletManager.kt$QuaiWalletManager$$path</ID>
-    <ID>NullableToStringCall:SolanaRpcApi.kt$SolanaRpcApi$requiredParams["mint"].toString()</ID>
-    <ID>NullableToStringCall:SolanaRpcApi.kt$SolanaRpcApi$requiredParams["programId"].toString()</ID>
-    <ID>NullableToStringCall:SolanaTransactionSizeReducer.kt$$item</ID>
-    <ID>NullableToStringCall:SolanaTransactionSizeReducer.kt$SolanaTransactionSizeReducer$${existLookupTables?.size}</ID>
-    <ID>NullableToStringCall:StellarTransactionBuilder.kt$StellarTransactionBuilder$amount.value.toString()</ID>
-    <ID>NullableToStringCall:TezosTransactionBuilder.kt$TezosTransactionBuilder$transactionData.amount.bigIntegerValue().toString()</ID>
-    <ID>NullableToStringCall:XrpTransactionBuilder.kt$XrpTransactionBuilder$fee.bigIntegerValue().toString()</ID>
-    <ID>NullableToStringCall:XrpTransactionBuilder.kt$XrpTransactionBuilder$transactionData.amount.bigIntegerValue().toString()</ID>
-    <ID>NullableToStringCall:XrpTransactionBuilder.kt$XrpTransactionBuilder$transactionData.fee!!.amount.bigIntegerValue().toString()</ID>
     <ID>ObjectExtendsThrowable:Exceptions.kt$BlockchainSdkError$DestinationTagRequired : BlockchainSdkError</ID>
     <ID>ObjectExtendsThrowable:Exceptions.kt$BlockchainSdkError$FailedToBuildTx : BlockchainSdkError</ID>
     <ID>ObjectExtendsThrowable:Exceptions.kt$BlockchainSdkError$FailedToCreateAccount : BlockchainSdkError</ID>
@@ -406,7 +367,7 @@
     <ID>UnnecessaryLet:SuiTransactionBuilder.kt$SuiTransactionBuilder$let(::DataVector)</ID>
     <ID>UnnecessaryLet:TezosTransactionBuilder.kt$TezosTransactionBuilder$let { stringBuilder.append(ZERO_BYTE) }</ID>
     <ID>UnnecessaryLet:TonTransactionBuilder.kt$TonTransactionBuilder$let(ByteString::copyFrom)</ID>
-    <ID>UnnecessaryNotNullOperator:ICPTransactionBuilder.kt$ICPTransactionBuilder$transactionData.amount.longValue!!</ID>
+    <ID>UnnecessaryNotNullOperator:ICPTransactionBuilder.kt$ICPTransactionBuilder$uncompiledTransaction.amount.longValue!!</ID>
     <ID>UnnecessaryNotNullOperator:KaspaRestApiNetworkProvider.kt$KaspaRestApiNetworkProvider$it.outpoint!!</ID>
     <ID>UnnecessaryNotNullOperator:KaspaRestApiNetworkProvider.kt$KaspaRestApiNetworkProvider$it.utxoEntry!!</ID>
     <ID>UnnecessaryNotNullOperator:RippledNetworkProvider.kt$RippledNetworkProvider$accountData.result!!</ID>
@@ -414,7 +375,7 @@
     <ID>UnnecessaryNotNullOperator:RippledNetworkProvider.kt$RippledNetworkProvider$validatedLedger.reserveBase!!</ID>
     <ID>UnnecessarySafeCall:BinanceNetworkService.kt$BinanceNetworkService$binanceFee.transactionFee?.value</ID>
     <ID>UnreachableCatchBlock:HederaUtils.kt$HederaUtils$catch (e: Exception) { Log.error { e.message.orEmpty() } throw BlockchainSdkError.CustomError(e.message.orEmpty()) }</ID>
-    <ID>UnreachableCode:AlgorandTransactionBuilder.kt$AlgorandTransactionBuilder$transactionData.amount.longValue ?: 0L</ID>
+    <ID>UnreachableCode:AlgorandTransactionBuilder.kt$AlgorandTransactionBuilder$uncompiledTransaction.amount.longValue ?: 0L</ID>
     <ID>UnreachableCode:AptosTransactionBuilder.kt$AptosTransactionBuilder$transactionData.amount.longValue ?: 0L</ID>
     <ID>UnreachableCode:AptosWalletManager.kt$AptosWalletManager$amount.longValue ?: 0L</ID>
     <ID>UnreachableCode:BlockchainDemoActivity.kt$BlockchainDemoActivity$initSpBlockchain(selectedWallet)</ID>
@@ -423,15 +384,15 @@
     <ID>UnreachableCode:RadiantAmountUnspentTransaction.kt$RadiantAmountUnspentTransaction$amount.longValue ?: 0L</ID>
     <ID>UnsafeCallOnNullableType:AlephiumTransactionBuilder.kt$AlephiumTransactionBuilder$unspentOutputs!!</ID>
     <ID>UnsafeCallOnNullableType:BinanceTransactionBuilder.kt$BinanceTransactionBuilder$transactionAssembler!!</ID>
-    <ID>UnsafeCallOnNullableType:BinanceTransactionBuilder.kt$BinanceTransactionBuilder$transactionData.amount.value!!</ID>
-    <ID>UnsafeCallOnNullableType:BitcoinCashTransactionBuilder.kt$this.amount.value!!</ID>
+    <ID>UnsafeCallOnNullableType:BinanceTransactionBuilder.kt$BinanceTransactionBuilder$uncompiledTransaction.amount.value!!</ID>
+    <ID>UnsafeCallOnNullableType:BitcoinCashTransactionBuilder.kt$uncompiledTransaction.amount.value!!</ID>
     <ID>UnsafeCallOnNullableType:BitcoinNetworkService.kt$BitcoinNetworkService$fees.map { it.minimalPerKb }.maxOrNull()!!</ID>
     <ID>UnsafeCallOnNullableType:BitcoinNetworkService.kt$BitcoinNetworkService$fees.map { it.normalPerKb }.maxOrNull()!!</ID>
     <ID>UnsafeCallOnNullableType:BitcoinNetworkService.kt$BitcoinNetworkService$fees.map { it.priorityPerKb }.maxOrNull()!!</ID>
-    <ID>UnsafeCallOnNullableType:BitcoinTransactionBuilder.kt$BitcoinTransactionBuilder$transactionData.amount.value!!</ID>
-    <ID>UnsafeCallOnNullableType:BitcoinTransactionBuilder.kt$BitcoinTransactionBuilder$transactionData.fee?.amount?.value!!</ID>
+    <ID>UnsafeCallOnNullableType:BitcoinTransactionBuilder.kt$BitcoinTransactionBuilder$uncompiledTransaction.amount.value!!</ID>
+    <ID>UnsafeCallOnNullableType:BitcoinTransactionBuilder.kt$BitcoinTransactionBuilder$uncompiledTransaction.fee?.amount?.value!!</ID>
     <ID>UnsafeCallOnNullableType:BitcoinTransactionBuilder.kt$BitcoinTransactionBuilder$unspentOutputs!!</ID>
-    <ID>UnsafeCallOnNullableType:BitcoinTransactionBuilder.kt$this.amount.value!!</ID>
+    <ID>UnsafeCallOnNullableType:BitcoinTransactionBuilder.kt$uncompiledTransaction.amount.value!!</ID>
     <ID>UnsafeCallOnNullableType:BitcoinWalletManager.kt$BitcoinWalletManager$amount.value!!</ID>
     <ID>UnsafeCallOnNullableType:BitcoinWalletManager.kt$BitcoinWalletManager$hasUnconfirmed!!</ID>
     <ID>UnsafeCallOnNullableType:BitcoreNetworkProvider.kt$BitcoreNetworkProvider$balanceData.confirmed!!</ID>
@@ -568,7 +529,7 @@
     <ID>UseEmptyCounterpart:UnsignedTransaction.kt$UnsignedTransaction.Companion$mapOf&lt;TokenId, U256&gt;()</ID>
     <ID>UseEmptyCounterpart:WalletManagerFactory.kt$WalletManagerFactory$setOf()</ID>
     <ID>UseEmptyCounterpart:WalletManagerFactoryTest.kt$WalletManagerFactoryTest$setOf()</ID>
-    <ID>UseOrEmpty:BinanceTransactionBuilder.kt$BinanceTransactionBuilder$(transactionData.extras as? BinanceTransactionExtras)?.memo ?: ""</ID>
+    <ID>UseOrEmpty:BinanceTransactionBuilder.kt$BinanceTransactionBuilder$(uncompiledTransaction.extras as? BinanceTransactionExtras)?.memo ?: ""</ID>
     <ID>UseOrEmpty:BitcoinTransactionHistoryProvider.kt$BitcoinTransactionHistoryProvider$response.transactions ?.mapNotNull { tx -&gt; tx.toTransactionHistoryItem(request.address) } ?: emptyList()</ID>
     <ID>UseOrEmpty:Blockchain.kt$Blockchain$(addressService as? MultisigAddressProvider) ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()</ID>
     <ID>UseOrEmpty:BlockchainDemoActivity.kt$BlockchainDemoActivity$feeResourceAmount?.value?.stripZeroPlainString()?.let { "FeeResource: $it" } ?: ""</ID>
