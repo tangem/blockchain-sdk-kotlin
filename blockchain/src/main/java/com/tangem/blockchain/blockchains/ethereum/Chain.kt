@@ -63,6 +63,8 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     BaseTestnet(id = 84532, blockchain = Blockchain.BaseTestnet),
     Moonriver(id = 1285, blockchain = Blockchain.Moonriver),
     MoonriverTestnet(id = 1287, blockchain = Blockchain.MoonriverTestnet),
+    Monad(id = 143, blockchain = Blockchain.Monad),
+    MonadTestnet(id = 10143, blockchain = Blockchain.MonadTestnet),
     Mantle(id = 5000, blockchain = Blockchain.Mantle),
     MantleTestnet(id = 5001, blockchain = Blockchain.MantleTestnet),
     Flare(id = 14, blockchain = Blockchain.Flare),
