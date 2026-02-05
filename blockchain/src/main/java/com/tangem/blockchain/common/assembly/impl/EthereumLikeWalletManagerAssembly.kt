@@ -167,6 +167,7 @@ internal class EthereumLikeWalletManagerAssembly(
                 config = config,
             )
             Blockchain.Moonriver, Blockchain.MoonriverTestnet -> MoonriverProvidersBuilder(providerTypes)
+            Blockchain.Monad, Blockchain.MonadTestnet -> MonadProvidersBuilder(providerTypes, config)
             Blockchain.Flare, Blockchain.FlareTestnet -> FlareProvidersBuilder(providerTypes, config)
             Blockchain.Taraxa, Blockchain.TaraxaTestnet -> TaraxaProvidersBuilder(providerTypes)
             Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet -> EnergyWebChainProvidersBuilder(providerTypes)
