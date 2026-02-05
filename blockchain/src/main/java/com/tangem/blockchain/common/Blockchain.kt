@@ -156,6 +156,8 @@ enum class Blockchain(
     BaseTestnet("base/test", "ETH", "Base Testnet"),
     Moonriver("moonriver", "MOVR", "Moonriver"),
     MoonriverTestnet("moonriver/test", "MOVR", "Moonriver Testnet"),
+    Monad("monad", "MON", "Monad"),
+    MonadTestnet("monad/test", "MON", "Monad Testnet"),
     Mantle("mantle", "MNT", "Mantle"),
     MantleTestnet("mantle/test", "MNT", "Mantle Testnet"),
     Fact0rn("fact0rn", "FACT", "Fact0rn"),
@@ -332,6 +334,7 @@ enum class Blockchain(
         PolygonZkEVM, PolygonZkEVMTestnet,
         Base, BaseTestnet,
         Moonriver, MoonriverTestnet,
+        Monad, MonadTestnet,
         Mantle, MantleTestnet,
         Flare, FlareTestnet,
         Taraxa, TaraxaTestnet,
@@ -444,6 +447,7 @@ enum class Blockchain(
             PolygonZkEVM, PolygonZkEVMTestnet,
             Base, BaseTestnet,
             Moonriver, MoonriverTestnet,
+            Monad, MonadTestnet,
             Mantle, MantleTestnet,
             Flare, FlareTestnet,
             Taraxa, TaraxaTestnet,
@@ -595,6 +599,7 @@ enum class Blockchain(
             PolygonZkEVM, PolygonZkEVMTestnet -> PolygonZkEVMTestnet
             Base, BaseTestnet -> BaseTestnet
             Moonriver, MoonriverTestnet -> MoonriverTestnet
+            Monad, MonadTestnet -> MonadTestnet
             Mantle, MantleTestnet -> MantleTestnet
             Flare, FlareTestnet -> FlareTestnet
             Taraxa, TaraxaTestnet -> TaraxaTestnet
@@ -711,6 +716,7 @@ enum class Blockchain(
             Fact0rn,
             Base, BaseTestnet,
             Moonriver, MoonriverTestnet,
+            Monad, MonadTestnet,
             Mantle, MantleTestnet,
             Flare, FlareTestnet,
             Taraxa, TaraxaTestnet,
@@ -863,6 +869,8 @@ enum class Blockchain(
             ArbitrumNova -> Chain.ArbitrumNova.id
             Plasma -> Chain.Plasma.id
             PlasmaTestnet -> Chain.PlasmaTestnet.id
+            Monad -> Chain.Monad.id
+            MonadTestnet -> Chain.MonadTestnet.id
             else -> null
         }
     }
