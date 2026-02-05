@@ -54,6 +54,8 @@ class AvalancheProvidersBuilderTest {
             sui = null,
             telos = null,
             tezos = null,
+            monad = null,
+            stellar = null,
         ),
     )
 
