@@ -58,11 +58,11 @@ internal class BitcoinPsbtSigner(
         val signatures = signHashes(hashesToSign, signer).successOr { return it }
 
         val signedPsbt = signatureApplier.applySignatures(
-            psbt,
-            signatures,
-            signInputs,
-            inputIndices,
-            wallet.publicKey.blockchainKey,
+            psbt = psbt,
+            signatures = signatures,
+            signInputs = signInputs,
+            inputIndices = inputIndices,
+            publicKey = wallet.publicKey.blockchainKey,
         ).successOr { return it }
         val finalizedPsbt = signatureApplier.finalizePsbt(signedPsbt, inputIndices)
 

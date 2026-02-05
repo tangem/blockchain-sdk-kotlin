@@ -42,8 +42,18 @@ internal object PsbtHashComputer {
             val tx = psbt.global.tx
 
             val hash = when {
-                input.witnessUtxo != null -> computeWitnessHash(input, tx, inputIndex, sighashType)
-                input.nonWitnessUtxo != null -> computeLegacyHash(input, tx, inputIndex, sighashType)
+                input.witnessUtxo != null -> computeWitnessHash(
+                    input = input,
+                    tx = tx,
+                    inputIndex = inputIndex,
+                    sighashType = sighashType,
+                )
+                input.nonWitnessUtxo != null -> computeLegacyHash(
+                    input = input,
+                    tx = tx,
+                    inputIndex = inputIndex,
+                    sighashType = sighashType,
+                )
                     .successOr { return it }
                 else -> return Result.Failure(
                     BlockchainSdkError.CustomError(
@@ -73,10 +83,10 @@ internal object PsbtHashComputer {
         val scriptCode = getScriptCodeForWitness(input, witnessUtxo)
 
         return tx.hashForSigning(
-            inputIndex,
-            scriptCode,
-            sighashType,
-            witnessUtxo.amount,
+            inputIndex = inputIndex,
+            previousOutputScript = scriptCode,
+            sighashType = sighashType,
+            amount = witnessUtxo.amount,
             signatureVersion = SigVersion.SIGVERSION_WITNESS_V0,
         )
     }
@@ -89,10 +99,12 @@ internal object PsbtHashComputer {
         witnessUtxo: fr.acinq.bitcoin.TxOut,
     ): ByteArray {
         val pubKeyScript = witnessUtxo.publicKeyScript.toByteArray()
+        val witnessScript = input.witnessScript
+        val redeemScript = input.redeemScript
 
         return when {
-            input.witnessScript != null -> Script.write(input.witnessScript!!)
-            input.redeemScript != null -> Script.write(input.redeemScript!!)
+            witnessScript != null -> Script.write(witnessScript)
+            redeemScript != null -> Script.write(redeemScript)
             isP2WpkhScript(pubKeyScript) -> buildP2pkhScriptCode(pubKeyScript)
             else -> pubKeyScript
         }

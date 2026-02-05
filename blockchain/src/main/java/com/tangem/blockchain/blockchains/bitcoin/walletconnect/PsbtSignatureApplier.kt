@@ -44,10 +44,10 @@ internal class PsbtSignatureApplier {
             val derSignature = encodeDerSignature(signature, sighashType)
 
             updatedPsbt = addSignatureToPsbt(
-                updatedPsbt,
-                inputIndex,
-                derSignature,
-                publicKey,
+                psbt = updatedPsbt,
+                inputIndex = inputIndex,
+                signature = derSignature,
+                publicKey = publicKey,
             ).successOr { return it }
         }
 
