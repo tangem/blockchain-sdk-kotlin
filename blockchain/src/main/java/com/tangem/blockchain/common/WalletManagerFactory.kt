@@ -203,6 +203,7 @@ class WalletManagerFactory(
             Blockchain.Moonbeam, Blockchain.MoonbeamTestnet,
             Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet,
             Blockchain.Moonriver, Blockchain.MoonriverTestnet,
+            Blockchain.Monad, Blockchain.MonadTestnet,
             Blockchain.Flare, Blockchain.FlareTestnet,
             Blockchain.Taraxa, Blockchain.TaraxaTestnet,
             Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet,
