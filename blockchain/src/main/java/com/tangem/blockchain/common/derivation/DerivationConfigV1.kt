@@ -112,6 +112,9 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Hedera -> mapOf(AddressType.Default to DerivationPath("m/44'/3030'/0'/0'/0'"))
             Blockchain.Moonbeam -> mapOf(AddressType.Default to DerivationPath("m/44'/1284'/0'/0/0"))
             Blockchain.Moonriver -> mapOf(AddressType.Default to DerivationPath("m/44'/1285'/0'/0/0"))
+            Blockchain.Monad,
+            Blockchain.MonadTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/268435779'/0'/0/0"))
             Blockchain.Chia, Blockchain.ChiaTestnet -> mapOf(AddressType.Default to DerivationPath(""))
             Blockchain.Unknown,
             Blockchain.ArbitrumTestnet,
