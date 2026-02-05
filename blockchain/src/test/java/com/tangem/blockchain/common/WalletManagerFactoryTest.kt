@@ -215,6 +215,7 @@ internal class WalletManagerFactoryTest {
                     sui = GetBlockAccessToken(),
                     telos = GetBlockAccessToken(),
                     tezos = GetBlockAccessToken(),
+                    monad = GetBlockAccessToken(),
                     stellar = GetBlockAccessToken(),
                 ),
                 tronGridApiKey = "",

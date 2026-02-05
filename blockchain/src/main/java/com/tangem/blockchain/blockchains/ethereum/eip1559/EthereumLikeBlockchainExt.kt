@@ -29,6 +29,8 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.OdysseyChain,
             Blockchain.Sonic,
             Blockchain.ApeChain,
+            Blockchain.Monad,
+            Blockchain.MonadTestnet,
             Blockchain.Linea,
             Blockchain.ArbitrumNova,
             Blockchain.Plasma,
