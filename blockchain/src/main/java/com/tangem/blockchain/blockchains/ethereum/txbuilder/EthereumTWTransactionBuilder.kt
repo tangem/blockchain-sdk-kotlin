@@ -176,6 +176,7 @@ internal open class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTrans
                     .setGasLimit(ByteString.copyFrom(fee.gasLimit.toByteArray()))
                     .setGasPrice(ByteString.copyFrom(gasPrice.toByteArray()))
             }
+            is Fee.Ethereum.TokenCurrency -> error("build transaction doesn't support for TokenCurrency Fee type")
         }
     }
 

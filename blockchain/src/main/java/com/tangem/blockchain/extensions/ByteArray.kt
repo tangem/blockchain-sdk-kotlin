@@ -68,3 +68,12 @@ fun ByteArray.removeLeadingZeros(): ByteArray {
 
 fun ByteArray.removeLeadingZero(): ByteArray =
     if (this.size > 1 && this[0] == 0x00.toByte()) this.copyOfRange(1, this.size) else this
+
+fun ByteArray.normalizeByteArray(size: Int): ByteArray {
+    val noLeadingZeros = this.dropWhile { it == 0.toByte() }.toByteArray()
+    return when {
+        noLeadingZeros.size > size -> noLeadingZeros.takeLast(size).toByteArray()
+        noLeadingZeros.size < size -> ByteArray(size - noLeadingZeros.size) { 0 } + noLeadingZeros
+        else -> noLeadingZeros
+    }
+}

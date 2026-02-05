@@ -1,5 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods
 
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.isNotZeroAddress
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.smartcontract.Erc20CallData
 import com.tangem.blockchain.extensions.hexToFixedSizeBytes
 import com.tangem.common.extensions.hexToBytes
@@ -22,4 +24,9 @@ data class AllowanceERC20TokenCallData(
 
             return prefixData + ownerAddressData + spenderAddressData
         }
+
+    override fun validate(blockchain: Blockchain): Boolean {
+        return blockchain.validateAddress(ownerAddress) && blockchain.validateAddress(spenderAddress) &&
+            ownerAddress.isNotZeroAddress() && spenderAddress.isNotZeroAddress()
+    }
 }

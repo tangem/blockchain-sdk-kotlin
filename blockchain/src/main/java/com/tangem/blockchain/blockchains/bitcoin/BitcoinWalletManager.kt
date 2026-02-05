@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
+import android.util.Base64
 import android.util.Log
 import com.tangem.blockchain.blockchains.bitcoin.address.BitcoinWalletAddressProvider
 import com.tangem.blockchain.blockchains.bitcoin.messagesigning.BitcoinMessageSigner
@@ -18,6 +19,7 @@ import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
 import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -39,7 +41,10 @@ internal open class BitcoinWalletManager(
     addressProvider = BitcoinWalletAddressProvider(wallet),
 ),
     SignatureCountValidator,
-    UtxoBlockchainManager {
+    UtxoBlockchainManager,
+    MessageSigner {
+
+    protected open val messageMagic: String? = null
 
     protected val blockchain = wallet.blockchain
 
@@ -204,6 +209,33 @@ internal open class BitcoinWalletManager(
     }
 
     protected open suspend fun getBitcoinFeePerKb(): Result<BitcoinFee> = networkProvider.getFee()
+
+    override suspend fun signMessage(message: String, signer: TransactionSigner): CompletionResult<String> {
+        val magic = messageMagic
+            ?: return CompletionResult.Failure(BlockchainSdkError.CustomError("Message signing is not supported"))
+
+        val messageHash = BitcoinMessageSignUtil.createMessageHash(
+            message = message,
+            messageMagic = magic,
+        )
+
+        return when (val signResult = signer.sign(messageHash, wallet.publicKey)) {
+            is CompletionResult.Success -> {
+                val signatureBytes = signResult.data
+                val publicKey = wallet.publicKey.blockchainKey.toCompressedPublicKey()
+
+                val recoverableSignature = BitcoinMessageSignUtil.createRecoverableSignature(
+                    signatureBytes = signatureBytes,
+                    publicKey = publicKey,
+                    messageHash = messageHash,
+                )
+
+                val base64Signature = Base64.encodeToString(recoverableSignature, Base64.NO_WRAP)
+                CompletionResult.Success(base64Signature)
+            }
+            is CompletionResult.Failure -> CompletionResult.Failure(signResult.error)
+        }
+    }
 
     companion object {
         // Synced value with iOS

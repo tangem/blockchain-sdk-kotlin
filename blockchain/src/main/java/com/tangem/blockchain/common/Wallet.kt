@@ -116,6 +116,19 @@ class Wallet(
         recentTransactions.add(transaction)
     }
 
+    fun addPendingTransactionDummy(txId: String) {
+        val transaction = TransactionData.Uncompiled(
+            amount = Amount(null, blockchain),
+            fee = null,
+            sourceAddress = address,
+            destinationAddress = "unknown",
+            status = TransactionStatus.Unconfirmed,
+            hash = txId,
+            date = Calendar.getInstance(),
+        )
+        recentTransactions.add(transaction)
+    }
+
     fun addOutgoingTransaction(transactionData: TransactionData, txHash: String, hashToLowercase: Boolean = true) {
         transactionData.hash = if (hashToLowercase) txHash.lowercase(Locale.US) else txHash
         if (transactionData is TransactionData.Uncompiled) {

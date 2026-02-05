@@ -230,6 +230,22 @@ interface TransactionSender {
 
     suspend fun send(transactionData: TransactionData, signer: TransactionSigner): Result<TransactionSendResult>
 
+    /**
+     * Broadcasts a signed transaction to the blockchain network.
+     *
+     * @param signedTransaction The signed transaction data in hexadecimal format.
+     * @return A [Result] containing the [TransactionSendResult] if successful
+     */
+    suspend fun broadcastTransaction(signedTransaction: String): Result<TransactionSendResult> {
+        return Result.Failure(
+            BlockchainSdkError.WrappedThrowable(
+                NotImplementedError(
+                    "broadcastTransaction is not implemented for this blockchain.",
+                ),
+            ),
+        )
+    }
+
     // Think about migration to different interface
     suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee>
 
@@ -243,10 +259,10 @@ interface TransactionSender {
     )
 
     suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
-        val uncompiledTransaction = transactionData.requireUncompiled()
+        val uncompiledData = transactionData.requireUncompiled()
         return getFee(
-            amount = uncompiledTransaction.amount,
-            destination = uncompiledTransaction.destinationAddress,
+            amount = uncompiledData.amount,
+            destination = uncompiledData.destinationAddress,
         )
     }
 
@@ -263,6 +279,34 @@ interface TransactionSender {
         amount = amount,
         destination = destination,
         callData = callData,
+    )
+}
+
+/**
+ * Interface for getting information about pending transactions.
+ * Similar to [TransactionSender], this interface provides methods to query pending transaction status.
+ */
+interface PendingTransactionHandler {
+
+    /**
+     * Gets current list of pending transaction IDs for the optional contract address.
+     *
+     * @param contractAddress Optional contract address to filter transactions (for token contracts, etc.)
+     * @return List of pending transaction IDs (hashes)
+     */
+    suspend fun getPendingTransactions(contractAddress: String? = null): List<String>
+
+    /**
+     * Adds a new pending gasless transaction ID to the tracking list.
+     * Transaction sent via backend and should be tracked until confirmed.
+     *
+     * @param txHash The transaction ID (hash) to add.
+     * @param contractAddress Optional contract address associated with the transaction.
+     */
+    suspend fun addPendingGaslessTransaction(
+        transactionData: TransactionData,
+        txHash: String,
+        contractAddress: String? = null,
     )
 }
 

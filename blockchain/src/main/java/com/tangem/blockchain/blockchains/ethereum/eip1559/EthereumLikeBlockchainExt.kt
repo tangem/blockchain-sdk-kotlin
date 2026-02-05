@@ -29,6 +29,8 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.OdysseyChain,
             Blockchain.Sonic,
             Blockchain.ApeChain,
+            Blockchain.Monad,
+            Blockchain.MonadTestnet,
             Blockchain.Linea,
             Blockchain.ArbitrumNova,
             Blockchain.Plasma,
@@ -66,5 +68,22 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Quai,
             -> false
             else -> error("Don't forget about evm here")
+        }
+    }
+
+val Blockchain.isGaslessTxSupported: Boolean
+    get() {
+        if (!isEvm()) return false
+
+        return when (this) {
+            Blockchain.Ethereum,
+            Blockchain.BSC,
+            Blockchain.Base,
+            Blockchain.Polygon,
+            Blockchain.Arbitrum,
+            Blockchain.XDC,
+            Blockchain.Optimism,
+            -> true
+            else -> false
         }
     }

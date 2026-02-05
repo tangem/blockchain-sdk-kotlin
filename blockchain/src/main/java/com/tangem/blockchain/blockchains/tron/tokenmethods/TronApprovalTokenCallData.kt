@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.tron.tokenmethods
 import com.tangem.blockchain.blockchains.tron.TRON_BYTE_ARRAY_PADDING_SIZE
 import com.tangem.blockchain.blockchains.tron.TRON_ENCODED_BYTE_ARRAY_LENGTH
 import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.HEX_F
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.extensions.bigIntegerValue
@@ -32,4 +33,8 @@ data class TronApprovalTokenCallData(
 
             return prefixData + spenderAddressData + amountData
         }
+
+    override fun validate(blockchain: Blockchain): Boolean {
+        return spenderAddress.isNotEmpty()
+    }
 }

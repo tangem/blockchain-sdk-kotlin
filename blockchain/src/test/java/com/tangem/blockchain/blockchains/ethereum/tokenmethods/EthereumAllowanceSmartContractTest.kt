@@ -1,12 +1,15 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods
 
 import com.google.common.truth.Truth
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 import org.komputing.khex.extensions.toHexString
 
 class EthereumAllowanceSmartContractTest {
 
+    private val blockchain = Blockchain.Ethereum
     private val signature = "0xdd62ed3e".hexToBytes()
     private val ownerAddress = "0x1234567890123456789012345678901234567890"
     private val spenderAddress = "0x5678901234567890123456789012345678901234"
@@ -24,5 +27,50 @@ class EthereumAllowanceSmartContractTest {
 
         Truth.assertThat(actual.dataHex).isEqualTo(expected.toHexString())
         Truth.assertThat(actual.data).isEqualTo(expected)
+    }
+
+    @Test
+    fun validateAllowanceContract() {
+        val validContract = AllowanceERC20TokenCallData(
+            ownerAddress = ownerAddress,
+            spenderAddress = spenderAddress,
+        )
+        Truth.assertThat(validContract.validate(blockchain)).isTrue()
+
+        val invalidContract1 = AllowanceERC20TokenCallData(
+            ownerAddress = "",
+            spenderAddress = spenderAddress,
+        )
+        Truth.assertThat(invalidContract1.validate(blockchain)).isFalse()
+
+        val invalidContract2 = AllowanceERC20TokenCallData(
+            ownerAddress = ownerAddress,
+            spenderAddress = "",
+        )
+        Truth.assertThat(invalidContract2.validate(blockchain)).isFalse()
+
+        val invalidContract3 = AllowanceERC20TokenCallData(
+            ownerAddress = EthereumUtils.ZERO_ADDRESS,
+            spenderAddress = spenderAddress,
+        )
+        Truth.assertThat(invalidContract3.validate(blockchain)).isFalse()
+
+        val invalidContract4 = AllowanceERC20TokenCallData(
+            ownerAddress = ownerAddress,
+            spenderAddress = EthereumUtils.ZERO_ADDRESS,
+        )
+        Truth.assertThat(invalidContract4.validate(blockchain)).isFalse()
+
+        val invalidContract5 = AllowanceERC20TokenCallData(
+            ownerAddress = "0xG234567890123456789012345678901234567890",
+            spenderAddress = spenderAddress,
+        )
+        Truth.assertThat(invalidContract5.validate(blockchain)).isFalse()
+
+        val invalidContract6 = AllowanceERC20TokenCallData(
+            ownerAddress = ownerAddress,
+            spenderAddress = "0xG234567890123456789012345678901234567890",
+        )
+        Truth.assertThat(invalidContract6.validate(blockchain)).isFalse()
     }
 }

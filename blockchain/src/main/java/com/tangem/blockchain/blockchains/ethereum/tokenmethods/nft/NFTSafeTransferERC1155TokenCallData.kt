@@ -1,11 +1,14 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods.nft
 
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.isNotZeroAddress
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.smartcontract.Erc20CallData
 import com.tangem.blockchain.extensions.hexToFixedSizeBytes
 import com.tangem.blockchain.extensions.toFixedSizeBytes
 import com.tangem.blockchain.nft.models.NFTAsset
 import com.tangem.common.extensions.hexToBytes
 import org.kethereum.contract.abi.types.leftPadToFixedSize
+import java.math.BigInteger
 
 /**
  * NFT safe transfer call data in ERC1155 - safeTransferFrom(address,address,uint256,uint256,bytes
@@ -33,6 +36,14 @@ class NFTSafeTransferERC1155TokenCallData(
 
             return prefixData + fromAddressData + toAddressData + tokenIdData + amountData + dataOffset + dataLength
         }
+
+    override fun validate(blockchain: Blockchain): Boolean {
+        val amount = nftAsset.amount ?: return false
+
+        return blockchain.validateAddress(ownerAddress) && ownerAddress.isNotZeroAddress() &&
+            blockchain.validateAddress(destinationAddress) && destinationAddress.isNotZeroAddress() &&
+            amount > BigInteger.ZERO
+    }
 
     companion object {
         private const val DATA_OFFSET = "a0"

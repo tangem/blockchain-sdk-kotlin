@@ -44,7 +44,7 @@ internal class SuiTransactionBuilder(
             ).fold(success = { Result.Success(it) }, failure = {
                 val isLessThenOne = isCoinGasLessThenOneForTokenTransaction(walletInfo, amount)
                 if (isLessThenOne) Result.Failure(BlockchainSdkError.Sui.OneSuiRequired) else Result.Failure(it)
-            },)
+            })
             else -> Result.Failure(BlockchainSdkError.FailedToBuildTx)
         }
     }
@@ -122,25 +122,25 @@ internal class SuiTransactionBuilder(
         txData: TransactionData,
         txSigner: TransactionSigner,
     ): Result<Sui.SigningOutput> {
-        txData.requireUncompiled()
-        val amount = txData.amount
+        val uncompiledTransaction = txData.requireUncompiled()
+        val amount = uncompiledTransaction.amount
 
         val input = when (amount.type) {
             AmountType.Coin -> buildSigningInputObject(
                 walletInfo = walletInfo,
-                destinationAddress = txData.destinationAddress,
+                destinationAddress = uncompiledTransaction.destinationAddress,
                 amountMist = amount.value
                     ?.movePointRight(Blockchain.Sui.decimals())
                     ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx),
-                fee = txData.fee as? Fee.Sui
+                fee = uncompiledTransaction.fee as? Fee.Sui
                     ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx),
             )
             is AmountType.Token -> makeTokenInput(
                 decimalAmount = amount.value?.movePointRight(amount.type.token.decimals)
                     ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx),
                 token = amount.type.token,
-                destination = txData.destinationAddress,
-                fee = txData.fee as? Fee.Sui
+                destination = uncompiledTransaction.destinationAddress,
+                fee = uncompiledTransaction.fee as? Fee.Sui
                     ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx),
                 suiWallet = walletInfo,
             ) ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx)

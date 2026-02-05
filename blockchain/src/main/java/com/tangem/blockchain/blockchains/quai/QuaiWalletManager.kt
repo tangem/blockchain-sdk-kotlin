@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionValidator
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.TransactionSigner
@@ -16,6 +17,8 @@ import com.tangem.blockchain.extensions.formatHex
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
+import com.tangem.blockchain.pendingtransactions.DefaultPendingTransactionsProvider
+import com.tangem.blockchain.pendingtransactions.PendingTransactionsProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
@@ -31,6 +34,7 @@ class QuaiWalletManager(
     nftProvider: NFTProvider = DefaultNFTProvider,
     supportsENS: Boolean,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
+    pendingTransactionsProvider: PendingTransactionsProvider = DefaultPendingTransactionsProvider,
 ) : EthereumWalletManager(
     wallet = wallet,
     transactionBuilder = transactionBuilder,
@@ -39,6 +43,8 @@ class QuaiWalletManager(
     nftProvider = nftProvider,
     supportsENS = supportsENS,
     yieldSupplyProvider = yieldSupplyProvider,
+    pendingTransactionsProvider = pendingTransactionsProvider,
+    ethereumTransactionValidator = EthereumTransactionValidator(blockchain = wallet.blockchain),
 ) {
 
     override suspend fun sign(
@@ -71,6 +77,10 @@ class QuaiWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
+        validate(transactionData).onFailure {
+            Result.Failure(it as? BlockchainSdkError ?: BlockchainSdkError.FailedToBuildTx)
+        }
+
         val transactionToSend = prepareForSend(transactionData, signer)
             .successOr { return it }
 

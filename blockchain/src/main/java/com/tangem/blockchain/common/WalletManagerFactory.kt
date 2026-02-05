@@ -177,7 +177,9 @@ class WalletManagerFactory(
             // endregion
 
             // region ETH-like blockchains
-            Blockchain.Ethereum, Blockchain.EthereumTestnet -> EthereumWalletManagerAssembly(dataStorage)
+            Blockchain.Ethereum, Blockchain.EthereumTestnet -> EthereumWalletManagerAssembly(
+                dataStorage = dataStorage,
+            )
 
             Blockchain.Arbitrum, Blockchain.ArbitrumTestnet,
             Blockchain.Avalanche, Blockchain.AvalancheTestnet,
@@ -201,6 +203,7 @@ class WalletManagerFactory(
             Blockchain.Moonbeam, Blockchain.MoonbeamTestnet,
             Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet,
             Blockchain.Moonriver, Blockchain.MoonriverTestnet,
+            Blockchain.Monad, Blockchain.MonadTestnet,
             Blockchain.Flare, Blockchain.FlareTestnet,
             Blockchain.Taraxa, Blockchain.TaraxaTestnet,
             Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet,
@@ -220,7 +223,7 @@ class WalletManagerFactory(
             Blockchain.Linea, Blockchain.LineaTestnet,
             Blockchain.ArbitrumNova,
             Blockchain.Plasma, Blockchain.PlasmaTestnet,
-            -> EthereumLikeWalletManagerAssembly(dataStorage)
+            -> EthereumLikeWalletManagerAssembly(dataStorage = dataStorage)
 
             Blockchain.Mantle, Blockchain.MantleTestnet,
             -> MantleWalletManagerAssembly

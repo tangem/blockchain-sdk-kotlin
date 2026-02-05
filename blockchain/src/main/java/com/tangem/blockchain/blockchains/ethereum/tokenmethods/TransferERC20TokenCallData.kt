@@ -1,6 +1,8 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods
 
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.isNotZeroAddress
 import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.smartcontract.Erc20CallData
 import com.tangem.blockchain.extensions.bigIntegerValue
 import com.tangem.blockchain.extensions.hexToFixedSizeBytes
@@ -22,4 +24,10 @@ data class TransferERC20TokenCallData(private val destination: String, private v
                 ?: error("Invalid token transfer amount")
             return prefixData + addressData + amountData
         }
+
+    override fun validate(blockchain: Blockchain): Boolean {
+        val amountValue = amount.bigIntegerValue()
+        val isValidAddress = blockchain.validateAddress(destination) && destination.isNotZeroAddress()
+        return isValidAddress && amountValue != null
+    }
 }

@@ -21,6 +21,8 @@ import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.nft.NFTProviderFactory
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
+import com.tangem.blockchain.pendingtransactions.PendingTransactionsProvider
+import com.tangem.blockchain.pendingtransactions.PendingTransactionsProviderFactory
 import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.blockchain.yieldsupply.YieldSupplyProviderFactory
 
@@ -40,10 +42,19 @@ internal class EthereumLikeWalletManagerAssembly(
             )
             val yieldLendingProvider = YieldSupplyProviderFactory(dataStorage).makeProvider(this, multiNetworkProvider)
 
+            val networkProviderMap = input.providerTypes
+                .zip(multiNetworkProvider.providers)
+                .toMap()
+
+            val pendingTransactionsProvider = PendingTransactionsProviderFactory(
+                dataStorage = dataStorage,
+            ).makeProvider(this, multiNetworkProvider, networkProviderMap)
+
             return createWalletManager(
                 input = input,
                 yieldLendingProvider = yieldLendingProvider,
                 multiNetworkProvider = multiNetworkProvider,
+                pendingTransactionsProvider = pendingTransactionsProvider,
             )
         }
     }
@@ -75,6 +86,7 @@ internal class EthereumLikeWalletManagerAssembly(
         input: WalletManagerAssemblyInput,
         yieldLendingProvider: YieldSupplyProvider,
         multiNetworkProvider: MultiNetworkProvider<out EthereumLikeJsonRpcProvider>,
+        pendingTransactionsProvider: PendingTransactionsProvider,
     ): EthereumWalletManager {
         with(input.wallet) {
             return when (blockchain) {
@@ -94,6 +106,7 @@ internal class EthereumLikeWalletManagerAssembly(
                         nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
                         yieldSupplyProvider = yieldLendingProvider,
                         supportsENS = false,
+                        pendingTransactionsProvider = pendingTransactionsProvider,
                     )
                 }
                 else -> {
@@ -112,6 +125,7 @@ internal class EthereumLikeWalletManagerAssembly(
                         nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
                         yieldSupplyProvider = yieldLendingProvider,
                         supportsENS = false,
+                        pendingTransactionsProvider = pendingTransactionsProvider,
                     )
                 }
             }
@@ -153,6 +167,7 @@ internal class EthereumLikeWalletManagerAssembly(
                 config = config,
             )
             Blockchain.Moonriver, Blockchain.MoonriverTestnet -> MoonriverProvidersBuilder(providerTypes)
+            Blockchain.Monad, Blockchain.MonadTestnet -> MonadProvidersBuilder(providerTypes, config)
             Blockchain.Flare, Blockchain.FlareTestnet -> FlareProvidersBuilder(providerTypes, config)
             Blockchain.Taraxa, Blockchain.TaraxaTestnet -> TaraxaProvidersBuilder(providerTypes)
             Blockchain.EnergyWebChain, Blockchain.EnergyWebChainTestnet -> EnergyWebChainProvidersBuilder(providerTypes)

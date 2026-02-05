@@ -90,19 +90,19 @@ internal fun TransactionData.toBitcoinCashTransaction(
             addressService.getPublicKeyHash(uncompiledTransaction.sourceAddress),
         )
 
-    val destinationAddress = uncompiledTransaction.destinationAddress
-    val destinationLegacyAddress = if (addressService.validateCashAddrAddress(destinationAddress)) {
+    val isCashAddrAddress = addressService.validateCashAddrAddress(uncompiledTransaction.destinationAddress)
+    val destinationLegacyAddress = if (isCashAddrAddress) {
         getLegacyAddressFromCashAddr(
-            destinationAddress = destinationAddress,
+            destinationAddress = uncompiledTransaction.destinationAddress,
             addressService = addressService,
             networkParameters = networkParameters,
         )
     } else {
-        LegacyAddress.fromBase58(networkParameters, destinationAddress)
+        LegacyAddress.fromBase58(networkParameters, uncompiledTransaction.destinationAddress)
     }
 
     transaction.addOutput(
-        Coin.parseCoin(uncompiledTransaction.amount.value!!.toPlainString()),
+        Coin.parseCoin(requireNotNull(uncompiledTransaction.amount.value).toPlainString()),
         destinationLegacyAddress,
     )
     if (!change.isZero()) {

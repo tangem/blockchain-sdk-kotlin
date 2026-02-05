@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.ethereum.tokenmethods
 
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.extensions.toFixedSizeBytes
 import com.tangem.common.extensions.hexToBytes
@@ -48,5 +49,9 @@ internal data class ReverseResolveENSAddressCallData(
         var result = address.contentHashCode()
         result = 31 * result + coinType
         return result
+    }
+
+    override fun validate(blockchain: Blockchain): Boolean {
+        return address.isNotEmpty()
     }
 }
