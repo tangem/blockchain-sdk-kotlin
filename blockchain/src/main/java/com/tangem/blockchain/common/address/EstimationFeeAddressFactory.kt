@@ -84,6 +84,7 @@ class EstimationFeeAddressFactory {
             Blockchain.Manta, Blockchain.MantaTestnet,
             Blockchain.PolygonZkEVM, Blockchain.PolygonZkEVMTestnet,
             Blockchain.Moonriver, Blockchain.MoonriverTestnet,
+            Blockchain.Monad, Blockchain.MonadTestnet,
             Blockchain.Mantle, Blockchain.MantleTestnet,
             Blockchain.Flare, Blockchain.FlareTestnet,
             Blockchain.Taraxa, Blockchain.TaraxaTestnet,
