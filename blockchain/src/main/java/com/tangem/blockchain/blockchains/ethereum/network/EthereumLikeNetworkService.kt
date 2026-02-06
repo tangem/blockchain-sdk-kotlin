@@ -349,7 +349,7 @@ internal abstract class EthereumLikeNetworkService(
             is Result.Success -> {
                 runCatching { adapter.fromJsonValue(data.result) }.getOrNull()
                     ?: throw data.error?.let { error ->
-                        BlockchainSdkError.Ethereum.Api(code = error.code, message = error.message)
+                        BlockchainSdkError.Ethereum.getApiErrorByCode(error.code, error.message)
                     } ?: BlockchainSdkError.CustomError("Unknown response format")
             }
             is Result.Failure -> {
