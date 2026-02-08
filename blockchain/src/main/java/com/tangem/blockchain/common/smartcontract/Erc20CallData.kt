@@ -1,11 +1,13 @@
 package com.tangem.blockchain.common.smartcontract
 
 internal interface Erc20CallData : SmartContractCallData {
-    fun String.addressWithoutPrefix(): String {
-        return takeLast(ETH_VALUABLE_ADDRESS_PART_LENGTH)
-    }
+    fun String.addressWithoutPrefix(): String = addressWithoutPrefix(this)
 
-    private companion object {
-        const val ETH_VALUABLE_ADDRESS_PART_LENGTH = 40
+    companion object {
+        private const val ETH_VALUABLE_ADDRESS_PART_LENGTH = 40
+
+        internal fun addressWithoutPrefix(address: String): String {
+            return address.takeLast(ETH_VALUABLE_ADDRESS_PART_LENGTH)
+        }
     }
 }
