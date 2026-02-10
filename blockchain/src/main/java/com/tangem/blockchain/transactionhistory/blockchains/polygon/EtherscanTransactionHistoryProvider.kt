@@ -211,7 +211,9 @@ internal class EtherscanTransactionHistoryProvider(
             val methodId = this.methodId
 
             // MethodId is empty for the coin transfers
-            if (methodId.isNullOrEmpty()) return TransactionHistoryItem.TransactionType.Transfer
+            if (methodId.isNullOrEmpty() || methodId == "0x") {
+                return TransactionHistoryItem.TransactionType.Transfer
+            }
 
             // ERC-20 transfer method
             val fnName = this.functionName?.substringBefore("(")
