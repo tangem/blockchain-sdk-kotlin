@@ -193,38 +193,33 @@ internal class EtherscanTransactionHistoryProvider(
     private fun PolygonTransaction.extractType(
         filterType: TransactionHistoryRequest.FilterType,
     ): TransactionHistoryItem.TransactionType {
-        return if (filterType is TransactionHistoryRequest.FilterType.Coin && this.isContractInteraction) {
-            val fnName = this.functionName?.substringBefore("(")
+        // Simple transfer if no contract interaction
+        if (!this.isContractInteraction) {
+            return TransactionHistoryItem.TransactionType.Transfer
+        }
 
-            // ERC-20 transfer method
-            if (fnName == TOKEN_TRANSFER_METHOD_NAME) {
-                return TransactionHistoryItem.TransactionType.Transfer
-            }
+        // ERC-20 transfer method
+        val fnName = this.functionName?.substringBefore("(")
+        if (fnName == TOKEN_TRANSFER_METHOD_NAME) {
+            return TransactionHistoryItem.TransactionType.Transfer
+        }
 
+        // Contract interaction handling
+        return if (filterType is TransactionHistoryRequest.FilterType.Coin) {
             TransactionHistoryItem.TransactionType.ContractMethodName(
                 name = fnName ?: this.functionName ?: UNKNOWN,
                 callData = input,
             )
         } else {
-            // Retrieve the methodId from a specific field in the response. If unable to
-            // extract the methodId from either, return the default transaction type.
             val methodId = this.methodId
-
-            // MethodId is empty for the coin transfers
-            if (methodId.isNullOrEmpty() || methodId == "0x") {
-                return TransactionHistoryItem.TransactionType.Transfer
+            if (methodId.isNullOrEmpty()) {
+                TransactionHistoryItem.TransactionType.Transfer
+            } else {
+                TransactionHistoryItem.TransactionType.ContractMethod(
+                    id = methodId,
+                    callData = input,
+                )
             }
-
-            // ERC-20 transfer method
-            val fnName = this.functionName?.substringBefore("(")
-            if (fnName == TOKEN_TRANSFER_METHOD_NAME) {
-                return TransactionHistoryItem.TransactionType.Transfer
-            }
-
-            TransactionHistoryItem.TransactionType.ContractMethod(
-                id = methodId,
-                callData = input,
-            )
         }
     }
 
