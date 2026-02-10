@@ -222,7 +222,7 @@ internal class EthereumYieldSupplyProvider(
             is Result.Success -> {
                 runCatching { adapter.fromJsonValue(data.result) }.getOrNull()
                     ?: throw data.error?.let { error ->
-                        BlockchainSdkError.Ethereum.Api(code = error.code, message = error.message)
+                        BlockchainSdkError.Ethereum.getApiErrorByCode(code = error.code, message = error.message)
                     } ?: BlockchainSdkError.CustomError("Unknown response format")
             }
             is Result.Failure -> {
