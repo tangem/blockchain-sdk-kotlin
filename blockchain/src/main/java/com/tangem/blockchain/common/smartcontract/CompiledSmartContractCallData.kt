@@ -11,5 +11,5 @@ data class CompiledSmartContractCallData(
     override val data: ByteArray,
 ) : SmartContractCallData {
     override val methodId: String = data.take(n = 4).toHexString()
-    override fun validate(blockchain: Blockchain): Boolean = data.isNotEmpty()
+    override fun validate(blockchain: Blockchain): Boolean = true
 }
