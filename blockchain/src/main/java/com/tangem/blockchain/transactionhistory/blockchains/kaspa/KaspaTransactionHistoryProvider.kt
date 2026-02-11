@@ -48,7 +48,11 @@ internal class KaspaTransactionHistoryProvider(
                 )
             }
             val txs = response.toTxHistoryItems(request.address)
-            val nextPage = if (response.size < pageSize) Page.LastPage else Page.Next(pageToLoad.inc().toString())
+            val nextPage = if (response.size < pageSize) {
+                Page.LastPage
+            } else {
+                Page.Next(pageToLoad.inc().toString())
+            }
             Result.Success(PaginationWrapper(nextPage = nextPage, items = txs))
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
@@ -77,10 +81,17 @@ internal class KaspaTransactionHistoryProvider(
     private fun List<KaspaCoinTransaction>.toTxHistoryItems(walletAddress: String): List<TransactionHistoryItem> {
         return mapNotNull { transaction ->
             val inputs = transaction.inputs ?: emptyList()
-            val isOutgoing = inputs.any { it.previousOutpointAddress == walletAddress }
-            val amount = transaction.extractTransactionAmount(isOutgoing, walletAddress) ?: return@mapNotNull null
-            val destination = transaction.extractDestination(isOutgoing, walletAddress) ?: return@mapNotNull null
-            val source = transaction.extractSource(isOutgoing, walletAddress) ?: return@mapNotNull null
+            val isCoinbase = transaction.isCoinbaseTransaction()
+            val isOutgoing = !isCoinbase && inputs.any { it.previousOutpointAddress == walletAddress }
+            val amount = transaction
+                .extractTransactionAmount(isOutgoing, walletAddress, isCoinbase)
+                ?: return@mapNotNull null
+            val destination = transaction
+                .extractDestination(isOutgoing, walletAddress)
+                ?: return@mapNotNull null
+            val source = transaction
+                .extractSource(isOutgoing, walletAddress, isCoinbase)
+                ?: return@mapNotNull null
             TransactionHistoryItem(
                 txHash = transaction.transactionId.orEmpty(),
                 timestamp = transaction.blockTime ?: 0L,
@@ -94,16 +105,38 @@ internal class KaspaTransactionHistoryProvider(
         }
     }
 
-    private fun KaspaCoinTransaction.extractTransactionAmount(isOutgoing: Boolean, walletAddress: String): Amount? {
+    private fun KaspaCoinTransaction.isCoinbaseTransaction(): Boolean {
+        val inputs = this.inputs ?: emptyList()
+        if (inputs.isEmpty()) return true
+        return inputs.all { input ->
+            input.previousOutpointHash == COINBASE_OUTPOINT_HASH
+        }
+    }
+
+    private fun KaspaCoinTransaction.extractTransactionAmount(
+        isOutgoing: Boolean,
+        walletAddress: String,
+        isCoinbase: Boolean,
+    ): Amount? {
         val outputs = this.outputs ?: emptyList()
         val inputs = this.inputs ?: emptyList()
         val amount = if (isOutgoing) {
-            outputs.firstOrNull { it.scriptPublicKeyAddress != walletAddress }?.amount
+            outputs
+                .filter { it.scriptPublicKeyAddress != walletAddress }
+                .sumOf { it.amount }
         } else {
-            outputs.firstOrNull { it.scriptPublicKeyAddress == walletAddress }?.amount
-        } ?: return null
+            outputs
+                .filter { it.scriptPublicKeyAddress == walletAddress }
+                .sumOf { it.amount }
+        }
 
-        val fee = inputs.sumOf { it.previousOutpointAmount ?: 0L } - outputs.sumOf { it.amount }
+        if (amount == 0L) return null
+        val fee = if (isCoinbase) {
+            0L
+        } else {
+            (inputs.sumOf { it.previousOutpointAmount ?: 0L } - outputs.sumOf { it.amount })
+                .coerceAtLeast(0L)
+        }
         val amountWithFee = if (isOutgoing) amount + fee else amount
 
         return Amount(
@@ -130,14 +163,24 @@ internal class KaspaTransactionHistoryProvider(
         }
     }
 
-    private fun KaspaCoinTransaction.extractSource(isOutgoing: Boolean, walletAddress: String): SourceType? {
+    private fun KaspaCoinTransaction.extractSource(
+        isOutgoing: Boolean,
+        walletAddress: String,
+        isCoinbase: Boolean,
+    ): SourceType? {
         return when {
             isOutgoing -> SourceType.Single(walletAddress)
+            isCoinbase -> SourceType.Single(COINBASE_SOURCE)
             else ->
                 inputs
                     ?.firstOrNull { it.previousOutpointAddress != walletAddress }
                     ?.previousOutpointAddress
                     ?.let(SourceType::Single)
         }
+    }
+
+    private companion object {
+        private const val COINBASE_OUTPOINT_HASH = "0000000000000000000000000000000000000000000000000000000000000000"
+        private const val COINBASE_SOURCE = "coinbase"
     }
 }

@@ -211,7 +211,21 @@ sealed class BlockchainSdkError(
         messageResId = null,
         cause = throwable,
     ) {
-        class Api(code: Int, message: String) : Ethereum(subCode = code, customMessage = message)
+        open class Api(code: Int, message: String) : Ethereum(subCode = code, customMessage = message)
+
+        class InsufficientFundsForOperation(message: String) : Api(
+            code = ERROR_CODE_INSUFFICIENT_FUNDS_FOR_OPERATION,
+            message = message,
+        )
+
+        companion object {
+            internal const val ERROR_CODE_INSUFFICIENT_FUNDS_FOR_OPERATION = 3
+
+            internal fun getApiErrorByCode(code: Int, message: String): Ethereum = when (code) {
+                ERROR_CODE_INSUFFICIENT_FUNDS_FOR_OPERATION -> InsufficientFundsForOperation(message)
+                else -> Api(code, message)
+            }
+        }
     }
 
     sealed class Algorand(
