@@ -13,6 +13,7 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.nft.NFTProvider
+import com.tangem.blockchain.pendingtransactions.PendingTransactionsProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import org.kethereum.DEFAULT_GAS_LIMIT
@@ -20,6 +21,7 @@ import org.kethereum.model.Address
 import java.math.BigDecimal
 import java.math.BigInteger
 
+@Suppress("LongParameterList")
 class EthereumOptimisticRollupWalletManager(
     wallet: Wallet,
     transactionBuilder: EthereumTransactionBuilder,
@@ -27,6 +29,7 @@ class EthereumOptimisticRollupWalletManager(
     nftProvider: NFTProvider,
     transactionHistoryProvider: TransactionHistoryProvider,
     yieldSupplyProvider: YieldSupplyProvider,
+    pendingTransactionsProvider: PendingTransactionsProvider,
 ) : EthereumWalletManager(
     wallet = wallet,
     transactionBuilder = transactionBuilder,
@@ -35,6 +38,7 @@ class EthereumOptimisticRollupWalletManager(
     supportsENS = false,
     transactionHistoryProvider = transactionHistoryProvider,
     yieldSupplyProvider = yieldSupplyProvider,
+    pendingTransactionsProvider = pendingTransactionsProvider,
 ) {
 
     private var lastLayer1FeeAmount: Amount? = null
