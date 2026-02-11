@@ -20,7 +20,7 @@ detekt {
     config.setFrom(rootProject.files("tangem-android-tools/detekt-config.yml"))
 }
 
-tasks.withType(io.gitlab.arturbosch.detekt.Detekt) {
+tasks.withType(io.gitlab.arturbosch.detekt.Detekt).configureEach {
     setSource(file(projectDir))
     include("**/*.kt")
     exclude("**/resources/**", "**/build/**")
@@ -34,7 +34,45 @@ tasks.withType(io.gitlab.arturbosch.detekt.Detekt) {
     }
 }
 
+tasks.withType(io.gitlab.arturbosch.detekt.DetektCreateBaselineTask).configureEach {
+    setSource(file(projectDir))
+    include("**/*.kt")
+    exclude("**/resources/**", "**/build/**")
+}
+
 dependencies {
     detektPlugins(libraries.formattingDetektRules)
     detektPlugins(libraries.composeDetektRules)
+}
+
+// type resolution configuration
+gradle.projectsEvaluated {
+    def classpathFiles = []
+
+    rootProject.subprojects { subproject ->
+        def androidExtension = subproject.extensions.findByName('android')
+        if (androidExtension != null) {
+            classpathFiles.addAll(androidExtension.bootClasspath)
+
+            def variants = androidExtension.hasProperty('libraryVariants')
+                    ? androidExtension.libraryVariants
+                    : androidExtension.applicationVariants
+
+            def debugVariant = variants?.find { it.name == 'debug' }
+            if (debugVariant != null) {
+                classpathFiles.add(debugVariant.javaCompileProvider.get().classpath)
+            }
+        }
+    }
+
+    if (!classpathFiles.isEmpty()) {
+        tasks.withType(io.gitlab.arturbosch.detekt.Detekt).configureEach { detektTask ->
+            detektTask.jvmTarget = '17'
+            detektTask.classpath.setFrom(files(classpathFiles))
+        }
+        tasks.withType(io.gitlab.arturbosch.detekt.DetektCreateBaselineTask).configureEach { baselineTask ->
+            baselineTask.jvmTarget = '17'
+            baselineTask.classpath.setFrom(files(classpathFiles))
+        }
+    }
 }
