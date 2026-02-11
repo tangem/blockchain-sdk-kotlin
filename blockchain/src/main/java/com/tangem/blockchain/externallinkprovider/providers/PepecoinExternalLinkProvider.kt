@@ -7,7 +7,7 @@ internal class PepecoinExternalLinkProvider(private val isTestnet: Boolean) : Ex
     override val explorerBaseUrl: String = if (isTestnet) {
         "https://testnet.pepeblocks.com/"
     } else {
-        "https://pepecoinexplorer.com/"
+        "https://pepeblocks.com/"
     }
 
     override val testNetTopUpUrl: String = "https://pepeblocks.com/faucet"
@@ -17,6 +17,6 @@ internal class PepecoinExternalLinkProvider(private val isTestnet: Boolean) : Ex
     }
 
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
-        return TxExploreState.Url("${explorerBaseUrl}transaction/$transactionHash")
+        return TxExploreState.Url("${explorerBaseUrl}tx/$transactionHash")
     }
 }
