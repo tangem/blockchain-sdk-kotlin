@@ -33,7 +33,7 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
     private var coinSpends: List<ChiaCoinSpend> = emptyList()
 
     fun buildToSign(transactionData: TransactionData): Result<List<ByteArray>> {
-        val uncompiledTransactionData = transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
         if (unspentCoins.isEmpty()) {
             return Result.Failure(
@@ -44,14 +44,15 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
         val unspentsToSpend = getUnspentsToSpend()
 
         val change = calculateChange(
-            amount = requireNotNull(uncompiledTransactionData.amount.value) { "Transaction amount is null" },
-            fee = uncompiledTransactionData.fee?.amount?.value ?: BigDecimal.ZERO,
+            amount = requireNotNull(uncompiledTransaction.amount.value) { "Transaction amount is null" },
+            fee = uncompiledTransaction.fee?.amount?.value ?: BigDecimal.ZERO,
             unspentCoins = unspentsToSpend,
         )
         if (change < 0) { // unspentsToSpend not enough to cover transaction amount
-            val maxAmount = uncompiledTransactionData.amount.value + change.toBigDecimal().movePointLeft(
-                blockchain.decimals(),
-            )
+            val maxAmount = uncompiledTransaction.amount.value +
+                change.toBigDecimal().movePointLeft(
+                    blockchain.decimals(),
+                )
             return Result.Failure(
                 BlockchainSdkError.Chia.UtxoAmountError(
                     maxOutputs = MAX_INPUT_COUNT,
@@ -60,7 +61,7 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
             )
         }
 
-        coinSpends = uncompiledTransactionData.toChiaCoinSpends(unspentsToSpend, change)
+        coinSpends = uncompiledTransaction.toChiaCoinSpends(unspentsToSpend, change)
 
         val hashesForSign = coinSpends.map {
             // our solutions are always Cons
@@ -124,12 +125,12 @@ class ChiaTransactionBuilder(private val walletPublicKey: ByteArray, val blockch
         }
 
         val sendCondition = CreateCoinCondition(
-            destinationPuzzleHash = ChiaAddressService.getPuzzleHash(this.destinationAddress),
-            amount = this.amount.value!!.toMojo(),
+            destinationPuzzleHash = ChiaAddressService.getPuzzleHash(destinationAddress),
+            amount = amount.value!!.toMojo(),
         )
         val changeCondition = if (change != 0L) {
             CreateCoinCondition(
-                destinationPuzzleHash = ChiaAddressService.getPuzzleHash(this.sourceAddress),
+                destinationPuzzleHash = ChiaAddressService.getPuzzleHash(sourceAddress),
                 amount = change,
             )
         } else {
