@@ -37,8 +37,8 @@ internal class XDCWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
-        val uncompiled = transactionData.requireUncompiled()
-        return super.sign(convertTransactionDataAddress(uncompiled), signer)
+        val uncompiledTransaction = transactionData.requireUncompiled()
+        return super.sign(convertTransactionDataAddress(uncompiledTransaction), signer)
     }
 
     private fun convertTransactionDataAddress(transactionData: TransactionData.Uncompiled): TransactionData {
