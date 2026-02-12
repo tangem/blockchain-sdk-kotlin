@@ -112,12 +112,12 @@ class SolanaWalletManager internal constructor(
     }
 
     override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
-        val amount = transactionData.amount
-        val destination = transactionData.destinationAddress
+        val amount = uncompiledTransaction.amount
+        val destination = uncompiledTransaction.destinationAddress
 
-        val ownerAccountInfoResult = getOwnerAccountInfo(transactionData.amount)
+        val ownerAccountInfoResult = getOwnerAccountInfo(uncompiledTransaction.amount)
         val ownerAccountInfo = ownerAccountInfoResult?.successOr { return kotlin.Result.failure(it.error) }
         val rentAmount = getAccountCreationRent(amount, destination, ownerAccountInfo).successOr {
             return kotlin.Result.failure(it.error)
@@ -268,8 +268,8 @@ class SolanaWalletManager internal constructor(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<ByteArray> {
-        transactionData.requireCompiled()
-        val transactionToSign = prepareForSign(transactionData).successOr { return it }
+        val compiledTransaction = transactionData.requireCompiled()
+        val transactionToSign = prepareForSign(compiledTransaction).successOr { return it }
         val signResult = signer.sign(transactionToSign, wallet.publicKey)
             .successOr { return Result.fromTangemSdkError(it.error) }
 
@@ -281,8 +281,8 @@ class SolanaWalletManager internal constructor(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<ByteArray> {
-        transactionData.requireCompiled()
-        val transactionToSign = prepareForSign(transactionData).successOr { return it }
+        val compiledTransaction = transactionData.requireCompiled()
+        val transactionToSign = prepareForSign(compiledTransaction).successOr { return it }
         val signResult = signer.sign(transactionToSign, wallet.publicKey)
             .successOr { return Result.fromTangemSdkError(it.error) }
 
@@ -294,8 +294,8 @@ class SolanaWalletManager internal constructor(
         signer: TransactionSigner,
     ): Result<List<ByteArray>> {
         val transactionToSign = transactionDataList.map { transactionData ->
-            transactionData.requireCompiled()
-            prepareForSign(transactionData).successOr { return it }
+            val compiledTransaction = transactionData.requireCompiled()
+            prepareForSign(compiledTransaction).successOr { return it }
         }
         val signedTransactions = signer.sign(transactionToSign, wallet.publicKey)
             .successOr { return Result.fromTangemSdkError(it.error) }
@@ -310,8 +310,8 @@ class SolanaWalletManager internal constructor(
         signer: TransactionSigner,
     ): Result<List<ByteArray>> {
         val transactionToSign = transactionDataList.map { transactionData ->
-            transactionData.requireCompiled()
-            prepareForSign(transactionData).successOr { return it }
+            val compiledTransaction = transactionData.requireCompiled()
+            prepareForSign(compiledTransaction).successOr { return it }
         }
         val signedTransactions = signer.sign(transactionToSign, wallet.publicKey)
             .successOr { return Result.fromTangemSdkError(it.error) }

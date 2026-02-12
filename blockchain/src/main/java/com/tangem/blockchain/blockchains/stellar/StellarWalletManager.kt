@@ -143,19 +143,19 @@ internal class StellarWalletManager(
     }
 
     override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
-        val extras = transactionData.extras as? StellarTransactionExtras
+        val extras = uncompiledTransaction.extras as? StellarTransactionExtras
         val hasMemo = extras?.memo?.hasNonEmptyMemo() ?: false
 
-        val amountType = transactionData.amount.type
+        val amountType = uncompiledTransaction.amount.type
         val token = if (amountType is AmountType.Token) amountType.token else null
 
-        val requiresMemo = networkProvider.checkTargetAccount(transactionData.destinationAddress, token)
+        val isMemoRequired = networkProvider.checkTargetAccount(uncompiledTransaction.destinationAddress, token)
             .map { it.requiresMemo }
             .successOr { false }
 
-        if (!hasMemo && requiresMemo) {
+        if (!hasMemo && isMemoRequired) {
             return kotlin.Result.failure(BlockchainSdkError.DestinationTagRequired)
         }
         return kotlin.Result.success(Unit)
