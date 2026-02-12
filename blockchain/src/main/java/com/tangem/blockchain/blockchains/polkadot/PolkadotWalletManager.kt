@@ -124,12 +124,12 @@ internal class PolkadotWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
         runCatching { updateEra() }
             .onFailure { return Result.Failure(BlockchainSdkError.CustomError(it.message ?: "Unknown error")) }
-        return when (transactionData.amount.type) {
-            AmountType.Coin -> sendCoin(transactionData, signer, currentContext)
+        return when (uncompiledTransaction.amount.type) {
+            AmountType.Coin -> sendCoin(uncompiledTransaction, signer, currentContext)
             else -> Result.Failure(UnsupportedOperation())
         }
     }
@@ -199,23 +199,23 @@ internal class PolkadotWalletManager(
         signer: TransactionSigner,
         extrinsicContext: ExtrinsicContext,
     ): Result<TransactionSendResult> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
-        val destinationAddress = transactionData.destinationAddress
+        val destinationAddress = uncompiledTransaction.destinationAddress
         val isDestinationAccountIsUnderfunded = isAccountUnderfunded(destinationAddress).successOr {
             return Result.Failure(it.error)
         }
 
         if (isDestinationAccountIsUnderfunded) {
-            val amountValueToSend = transactionData.amount.value ?: BigDecimal.ZERO
+            val amountValueToSend = uncompiledTransaction.amount.value ?: BigDecimal.ZERO
             if (amountValueToSend < existentialDeposit) {
-                val minReserve = Amount(transactionData.amount, existentialDeposit)
+                val minReserve = Amount(uncompiledTransaction.amount, existentialDeposit)
                 return Result.Failure(BlockchainSdkError.CreateAccountUnderfunded(wallet.blockchain, minReserve))
             }
         }
 
         val signedTransaction = sign(
-            amount = transactionData.amount,
+            amount = uncompiledTransaction.amount,
             sourceAddress = wallet.address,
             destinationAddress = destinationAddress,
             context = extrinsicContext,
@@ -227,7 +227,7 @@ internal class PolkadotWalletManager(
         }
 
         val txHash = hash.formatHex()
-        wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+        wallet.addOutgoingTransaction(transactionData = uncompiledTransaction, txHash = txHash)
 
         return Result.Success(TransactionSendResult(txHash))
     }
