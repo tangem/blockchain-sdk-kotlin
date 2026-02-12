@@ -75,12 +75,12 @@ internal class KoinosWalletManager(
     }
 
     override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
-        val fee = transactionData.fee?.amount?.value
+        val fee = uncompiledTransaction.fee?.amount?.value
             ?: return kotlin.Result.failure(BlockchainSdkError.FailedToLoadFee)
         val currentMana = wallet.amounts[AmountType.FeeResource()]?.value ?: BigDecimal.ZERO
-        val amount = transactionData.amount.value
+        val amount = uncompiledTransaction.amount.value
             ?: return kotlin.Result.failure(BlockchainSdkError.FailedToLoadFee)
         val availableBalanceForTransfer = currentMana - fee
         val balance = wallet.amounts[AmountType.Coin]?.value ?: BigDecimal.ZERO
@@ -106,19 +106,19 @@ internal class KoinosWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
-        validate(transactionData).onFailure {
+        validate(uncompiledTransaction).onFailure {
             Result.Failure(it as? BlockchainSdkError ?: BlockchainSdkError.FailedToBuildTx)
         }
 
-        val manaLimit = transactionData.fee?.amount?.value
+        val manaLimit = uncompiledTransaction.fee?.amount?.value
             ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx)
 
         val nonce = networkService.getCurrentNonce(wallet.address)
             .successOr { return Result.Failure(it.error) }
 
-        val transactionDataWithMana = transactionData.copy(extras = KoinosTransactionExtras(manaLimit))
+        val transactionDataWithMana = uncompiledTransaction.copy(extras = KoinosTransactionExtras(manaLimit))
 
         val (transaction, hashToSign) = transactionBuilder.buildToSign(
             transactionData = transactionDataWithMana,
