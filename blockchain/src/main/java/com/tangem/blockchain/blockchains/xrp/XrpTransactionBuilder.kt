@@ -30,12 +30,12 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
     private var transaction: XrpSignedTransaction? = null
 
     suspend fun buildToSign(transactionData: TransactionData): Result<ByteArray> {
-        val uncompiledData = transactionData.requireUncompiled()
-        val sourceAddress = XrpAddressService.decodeXAddress(uncompiledData.sourceAddress)
-            ?.address ?: uncompiledData.sourceAddress
+        val uncompiledTransaction = transactionData.requireUncompiled()
+        val sourceAddress = XrpAddressService.decodeXAddress(uncompiledTransaction.sourceAddress)
+            ?.address ?: uncompiledTransaction.sourceAddress
         val sequence = networkProvider.getSequence(sourceAddress).successOr { return it }
 
-        val preparedTx = buildPaymentTransaction(uncompiledData, sequence).successOr { return it }
+        val preparedTx = buildPaymentTransaction(uncompiledTransaction, sequence).successOr { return it }
         transaction = preparedTx
 
         return if (canonicalPublicKey[0] == 0xED.toByte()) {
@@ -49,8 +49,8 @@ class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, pub
         transactionData: TransactionData,
         sequenceOverride: Long,
     ): Result<Pair<ByteArray, XrpSignedTransaction>> {
-        val uncompiledData = transactionData.requireUncompiled()
-        val preparedTx = buildPaymentTransaction(uncompiledData, sequenceOverride).successOr { return it }
+        val uncompiledTransaction = transactionData.requireUncompiled()
+        val preparedTx = buildPaymentTransaction(uncompiledTransaction, sequenceOverride).successOr { return it }
 
         return if (canonicalPublicKey[0] == 0xED.toByte()) {
             Result.Success(preparedTx.signingData to preparedTx)
