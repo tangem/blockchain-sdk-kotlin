@@ -76,14 +76,14 @@ internal class XrpWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        val uncompiledData = transactionData.requireUncompiled()
-        if (uncompiledData.amount.type is AmountType.Token) {
-            val contractAddress = uncompiledData.amount.type.token.contractAddress
+        val uncompiledTransaction = transactionData.requireUncompiled()
+        if (uncompiledTransaction.amount.type is AmountType.Token) {
+            val contractAddress = uncompiledTransaction.amount.type.token.contractAddress
             if (isNeedSetNoRippling(contractAddress)) {
-                return sendTokenWithNoRippleSetup(uncompiledData, contractAddress, signer)
+                return sendTokenWithNoRippleSetup(uncompiledTransaction, contractAddress, signer)
             }
         }
-        return performStandardSend(uncompiledData, signer)
+        return performStandardSend(uncompiledTransaction, signer)
     }
 
     private suspend fun sendTokenWithNoRippleSetup(
@@ -210,10 +210,13 @@ internal class XrpWalletManager(
     }
 
     override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
-        val destinationTag = (transactionData.extras as? XrpTransactionBuilder.XrpTransactionExtras)?.destinationTag
-        if (destinationTag == null && networkProvider.checkDestinationTagRequired(transactionData.destinationAddress)) {
+        val destinationTag =
+            (uncompiledTransaction.extras as? XrpTransactionBuilder.XrpTransactionExtras)?.destinationTag
+        if (destinationTag == null &&
+            networkProvider.checkDestinationTagRequired(uncompiledTransaction.destinationAddress)
+        ) {
             return kotlin.Result.failure(BlockchainSdkError.DestinationTagRequired)
         }
         return kotlin.Result.success(Unit)
