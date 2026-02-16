@@ -12,9 +12,9 @@ internal class BerachainProvidersBuilder(
 ) : EthereumLikeProvidersBuilder(config) {
 
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return providerTypes.mapNotNull {
-            when (it) {
-                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = it.url)
+        return providerTypes.mapNotNull { providerType ->
+            when (providerType) {
+                is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = providerType.url)
                 ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { berachain?.jsonRpc }
                 else -> null
             }
