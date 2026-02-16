@@ -84,6 +84,7 @@ data class GetBlockCredentials(
     val tezos: GetBlockAccessToken?,
     val monad: GetBlockAccessToken?,
     val stellar: GetBlockAccessToken?,
+    val berachain: GetBlockAccessToken?,
 )
 
 data class GetBlockAccessToken(
