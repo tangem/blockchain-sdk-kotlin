@@ -16,6 +16,8 @@ internal class BerachainProvidersBuilder(
             when (providerType) {
                 is ProviderType.Public -> EthereumJsonRpcProvider(baseUrl = providerType.url)
                 ProviderType.GetBlock -> ethereumProviderFactory.getGetBlockProvider { berachain?.jsonRpc }
+                ProviderType.NowNodes -> ethereumProviderFactory.getNowNodesProvider("https://bera.nownodes.io/")
+                ProviderType.QuickNode -> createQuickNodeProvider()
                 else -> null
             }
         }
@@ -25,5 +27,17 @@ internal class BerachainProvidersBuilder(
         return listOf(
             EthereumJsonRpcProvider(baseUrl = "https://bepolia.rpc.berachain.com/"),
         )
+    }
+
+    private fun createQuickNodeProvider(): EthereumJsonRpcProvider? {
+        return config.quickNodeBerachainCredentials?.let { credentials ->
+            if (credentials.subdomain.isNotBlank() && credentials.apiKey.isNotBlank()) {
+                EthereumJsonRpcProvider(
+                    "https://${credentials.subdomain}/${credentials.apiKey}/",
+                )
+            } else {
+                null
+            }
+        }
     }
 }
