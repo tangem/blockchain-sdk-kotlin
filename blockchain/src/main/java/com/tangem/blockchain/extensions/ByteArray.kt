@@ -22,6 +22,10 @@ fun ByteArray.encodeBase64(): String {
     return Base64.encodeToString(this, Base64.DEFAULT)
 }
 
+fun String.decodeBase64(): ByteArray {
+    return Base64.decode(this, Base64.DEFAULT)
+}
+
 @Suppress("MagicNumber")
 fun ByteArray.calculateSha3v256(): ByteArray {
     val sha3Digest = DigestFactory.createSHA3_256()
