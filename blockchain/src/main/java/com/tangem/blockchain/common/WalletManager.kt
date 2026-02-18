@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.common.memo.MemoState
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -312,6 +313,10 @@ interface TransactionSigner {
 interface TransactionValidator {
 
     suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit>
+
+    suspend fun validateMemo(memo: String): Result<MemoState> {
+        return Result.Success(MemoState.NotSupported)
+    }
 }
 
 interface TransactionPreparer {
