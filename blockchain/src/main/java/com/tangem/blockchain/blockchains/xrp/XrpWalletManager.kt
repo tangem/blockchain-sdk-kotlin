@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.blockchains.xrp.network.XrpTokenBalance
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
+import com.tangem.blockchain.common.memo.MemoState
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -209,6 +210,13 @@ internal class XrpWalletManager(
         return networkProvider.checkIsAccountCreated(destinationAddress)
     }
 
+    override suspend fun validateMemo(memo: String): Result<MemoState> {
+        if (memo.isEmpty()) return Result.Success(MemoState.Valid)
+        val tag = memo.toLongOrNull()
+        val isValid = tag != null && tag >= 0 && tag <= XRP_TAG_MAX_NUMBER
+        return Result.Success(if (isValid) MemoState.Valid else MemoState.Invalid)
+    }
+
     override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
         val uncompiledTransaction = transactionData.requireUncompiled()
 
@@ -338,5 +346,9 @@ internal class XrpWalletManager(
             key = storeKey(),
             value = trustlineData.copy(trustlinesWithoutNoRipple = updatedTrustlines),
         )
+    }
+
+    private companion object {
+        const val XRP_TAG_MAX_NUMBER = 0xFFFFFFFFL
     }
 }
