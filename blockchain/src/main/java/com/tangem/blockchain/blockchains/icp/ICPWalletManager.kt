@@ -4,6 +4,8 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.icp.network.ICPNetworkProvider
 import com.tangem.blockchain.blockchains.icp.network.ICPTransferWithSigner
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.memo.MemoState
+import com.tangem.blockchain.common.memo.isValidUInt64
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -14,7 +16,7 @@ internal class ICPWalletManager(
     wallet: Wallet,
     private val networkProvider: ICPNetworkProvider,
     private val transactionBuilder: ICPTransactionBuilder,
-) : WalletManager(wallet) {
+) : WalletManager(wallet), TransactionValidator {
 
     override val currentHost: String get() = networkProvider.baseUrl
     val blockchain = wallet.blockchain
@@ -60,6 +62,16 @@ internal class ICPWalletManager(
             }
             is Result.Failure -> sendResult
         }
+    }
+
+    override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
+        return kotlin.Result.success(Unit)
+    }
+
+    override suspend fun validateMemo(memo: String): Result<MemoState> {
+        if (memo.isEmpty()) return Result.Success(MemoState.Valid)
+        val isValid = memo.isValidUInt64()
+        return Result.Success(if (isValid) MemoState.Valid else MemoState.Invalid)
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
