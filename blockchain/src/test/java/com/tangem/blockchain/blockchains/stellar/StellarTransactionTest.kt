@@ -143,11 +143,11 @@ class StellarTransactionTest {
             date = calendar,
         )
 
-        val expectedHashToSign = "5DE659F569E194834CE973809BDB3F83A82EB31B86B026CED5B3F07AE6DCAF84"
+        val expectedHashToSign = "242569D68DAC4E2D65FBFF442147DFB6B0F9F0271B75819B9B2B4DEFFC68DFCF"
             .hexToBytes()
         val expectedSignedTransaction = "AAAAAgAAAABk32doDyFn4aCFCD/jCFVh5r71qh/BZXhf+uYmRwbbjAABhqABtWfNAAA" +
             "+SAAAAAEAAAAAAAAAAAAAAAAAGJohAAAAAAAAAAEAAAABAAAAAGTfZ2gPIWfhoIUIP+MIVWHmvvWqH8FleF/65iZHBtuMAAAABgAAAA" +
-            "FNWU5UAAAAAA8jryewthMMedpNTF3HdCfHievtgweYNyh44e1m0ybpfOZsUOKEAAAAAAAAAAAAAUcG24wAAABAwPvDJVRCyuWC/cPPj" +
+            "FNWU5UAAAAAA8jryewthMMedpNTF3HdCfHievtgweYNyh44e1m0ybpf/////////8AAAAAAAAAAUcG24wAAABAwPvDJVRCyuWC/cPPj" +
             "0MaqrC4nR0N+9rnH+5E+Z5MEb09Mb60Rlie3HYUk8NpzaaxOsCdEixYx/WQODJng3GpbQ=="
         // act
         val buildToSignResult = runBlocking {
