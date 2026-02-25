@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.common.memo.MemoState
 import com.tangem.blockchain.common.address.AddressProvider
 import com.tangem.blockchain.common.address.DefaultAddressProvider
 import com.tangem.blockchain.common.messagesigning.DefaultMessageSigner
@@ -324,6 +325,10 @@ interface TransactionSigner {
 interface TransactionValidator {
 
     suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit>
+
+    suspend fun validateMemo(memo: String): Result<MemoState> {
+        return Result.Success(MemoState.NotSupported)
+    }
 }
 
 interface TransactionPreparer {

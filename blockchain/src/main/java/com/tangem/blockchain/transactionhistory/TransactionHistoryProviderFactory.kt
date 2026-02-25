@@ -81,6 +81,7 @@ internal object TransactionHistoryProviderFactory {
             Blockchain.XDC,
             Blockchain.ZkSyncEra,
             Blockchain.BSC,
+            Blockchain.Berachain,
             -> true
             else -> false
         }
