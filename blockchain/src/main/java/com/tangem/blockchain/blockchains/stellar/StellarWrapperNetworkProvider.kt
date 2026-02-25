@@ -52,7 +52,7 @@ internal class StellarWrapperNetworkProvider(
     }
 
     fun feeCall(): Result<FeeStatsResponse> {
-        return runWithErrorHandling { server.feeStats().execute() }
+        return runWithErrorHandling(throwExceptionWhenNotFound = false) { server.feeStats().execute() }
     }
 
     fun operationsLimit(accountId: String): Result<Page<OperationResponse>> {
