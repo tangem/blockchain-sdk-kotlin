@@ -5,13 +5,13 @@ import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.OkHttpClient
 import org.stellar.sdk.Server
 import org.stellar.sdk.Transaction
-import org.stellar.sdk.requests.ErrorResponse
+import org.stellar.sdk.exception.NetworkException
 import org.stellar.sdk.requests.RequestBuilder
 import org.stellar.sdk.responses.*
 import org.stellar.sdk.responses.operations.OperationResponse
-import shadow.okhttp3.OkHttpClient
 import java.io.IOException
 
 internal class StellarWrapperNetworkProvider(
@@ -24,7 +24,7 @@ internal class StellarWrapperNetworkProvider(
         get() = server.httpClient
 
     @Throws(IOException::class)
-    fun submitTransaction(transaction: Transaction?): Result<SubmitTransactionResponse> {
+    fun submitTransaction(transaction: Transaction): Result<TransactionResponse> {
         return runWithErrorHandling { server.submitTransaction(transaction) }
     }
 
@@ -33,7 +33,7 @@ internal class StellarWrapperNetworkProvider(
     }
 
     fun rootCall(): Result<RootResponse> {
-        return runWithErrorHandling { server.root() }
+        return runWithErrorHandling { server.root().execute() }
     }
 
     fun ledgerCall(ledgerSeq: Long): Result<LedgerResponse> {
@@ -52,7 +52,7 @@ internal class StellarWrapperNetworkProvider(
     }
 
     fun feeCall(): Result<FeeStatsResponse> {
-        return runWithErrorHandling { server.feeStats().execute() }
+        return runWithErrorHandling(throwExceptionWhenNotFound = false) { server.feeStats().execute() }
     }
 
     fun operationsLimit(accountId: String): Result<Page<OperationResponse>> {
@@ -69,7 +69,7 @@ internal class StellarWrapperNetworkProvider(
             val result = block()
             Result.Success(result)
         } catch (exception: Exception) {
-            if (exception is ErrorResponse && exception.code == HTTP_NOT_FOUND_CODE && throwExceptionWhenNotFound) {
+            if (exception is NetworkException && exception.code == HTTP_NOT_FOUND_CODE && throwExceptionWhenNotFound) {
                 throw exception // handled in NetworkService
             } else {
                 Result.Failure(exception.toBlockchainSdkError())

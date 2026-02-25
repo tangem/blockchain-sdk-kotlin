@@ -1,5 +1,12 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.common.memo.MemoState
+import com.tangem.blockchain.common.address.AddressProvider
+import com.tangem.blockchain.common.address.DefaultAddressProvider
+import com.tangem.blockchain.common.messagesigning.DefaultMessageSigner
+import com.tangem.blockchain.common.messagesigning.MessageSigner
+import com.tangem.blockchain.common.psbt.DefaultPsbtProvider
+import com.tangem.blockchain.common.psbt.PsbtProvider
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -25,10 +32,16 @@ abstract class WalletManager(
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
+    messageSigner: MessageSigner = DefaultMessageSigner,
+    psbtProvider: PsbtProvider = DefaultPsbtProvider,
+    addressProvider: AddressProvider = DefaultAddressProvider(wallet),
 ) : TransactionSender,
     TransactionHistoryProvider by transactionHistoryProvider,
     NFTProvider by nftProvider,
-    YieldSupplyProvider by yieldSupplyProvider {
+    YieldSupplyProvider by yieldSupplyProvider,
+    MessageSigner by messageSigner,
+    PsbtProvider by psbtProvider,
+    AddressProvider by addressProvider {
 
     open val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Unspecified
 
@@ -312,6 +325,10 @@ interface TransactionSigner {
 interface TransactionValidator {
 
     suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit>
+
+    suspend fun validateMemo(memo: String): Result<MemoState> {
+        return Result.Success(MemoState.NotSupported)
+    }
 }
 
 interface TransactionPreparer {
