@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.stellar
 import android.util.Log
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
+import com.tangem.blockchain.common.memo.MemoState
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -13,6 +14,8 @@ import com.tangem.blockchain.extensions.*
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
+import androidx.core.text.isDigitsOnly
+import com.tangem.blockchain.common.memo.isValidUInt64
 import java.math.BigDecimal
 import java.util.Calendar
 
@@ -145,6 +148,20 @@ internal class StellarWalletManager(
         }
     }
 
+    override suspend fun validateMemo(memo: String): Result<MemoState> {
+        if (memo.isEmpty()) return Result.Success(MemoState.Valid)
+        val isValid = when {
+            memo.isNotEmpty() && memo.isDigitsOnly() -> {
+                memo.isValidUInt64()
+            }
+            else -> {
+                // from org.stellar.sdk.MemoText
+                memo.toByteArray().size <= XLM_MEMO_MAX_LENGTH
+            }
+        }
+        return Result.Success(if (isValid) MemoState.Valid else MemoState.Invalid)
+    }
+
     override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
         val uncompiledTransaction = transactionData.requireUncompiled()
 
@@ -264,5 +281,6 @@ internal class StellarWalletManager(
     companion object {
         val BASE_FEE = 0.00001.toBigDecimal()
         val BASE_RESERVE = 0.5.toBigDecimal()
+        private const val XLM_MEMO_MAX_LENGTH = 28
     }
 }
