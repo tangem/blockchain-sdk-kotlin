@@ -36,6 +36,7 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Mantle, Blockchain.MantleTestnet,
             Blockchain.Hyperliquid, Blockchain.HyperliquidTestnet,
             Blockchain.Plasma, Blockchain.PlasmaTestnet,
+            Blockchain.Berachain, Blockchain.BerachainTestnet,
             -> true
             Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet, // eth_feeHistory all zeroes
             Blockchain.EthereumPow, Blockchain.EthereumPowTestnet, // eth_feeHistory with zeros
