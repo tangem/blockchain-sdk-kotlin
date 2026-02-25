@@ -151,6 +151,7 @@ internal class MonadTest {
                 tezos = null,
                 monad = null,
                 stellar = null,
+                berachain = null,
             ),
         )
 
