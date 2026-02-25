@@ -4,6 +4,8 @@ import android.util.Log
 import com.tangem.blockchain.blockchains.casper.models.CasperBalance
 import com.tangem.blockchain.blockchains.casper.network.CasperNetworkProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.memo.MemoState
+import com.tangem.blockchain.common.memo.isValidUInt64
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -82,6 +84,12 @@ internal class CasperWalletManager(
     }
 
     override fun getMinimumSendAmount(): BigDecimal = MIN_SEND_AMOUNT
+
+    override suspend fun validateMemo(memo: String): Result<MemoState> {
+        if (memo.isEmpty()) return Result.Success(MemoState.Valid)
+        val isValid = memo.isValidUInt64()
+        return Result.Success(if (isValid) MemoState.Valid else MemoState.Invalid)
+    }
 
     override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
         val uncompiledTransaction = transactionData.requireUncompiled()
