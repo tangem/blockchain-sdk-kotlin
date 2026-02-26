@@ -111,6 +111,10 @@ internal data class SolanaInstructionInfo(
     @Json(name = "authority") val authority: String?,
     @Json(name = "tokenAmount") val tokenAmount: SolanaTokenAmount?,
     @Json(name = "mint") val mint: String?,
+    @Json(name = "stakeAccount") val stakeAccount: String?,
+    @Json(name = "voteAccount") val voteAccount: String?,
+    @Json(name = "stakeAuthority") val stakeAuthority: String?,
+    @Json(name = "withdrawAuthority") val withdrawAuthority: String?,
 )
 
 // endregion

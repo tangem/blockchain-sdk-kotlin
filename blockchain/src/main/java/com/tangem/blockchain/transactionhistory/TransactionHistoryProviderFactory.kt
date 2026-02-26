@@ -4,8 +4,6 @@ import com.tangem.blockchain.blockchains.kaspa.KaspaProvidersBuilder
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.SolanaRpcClient
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
-import com.tangem.blockchain.common.NowNodeCredentials
-import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.network.blockbook.config.DogecoinMockBlockBookConfig
 import com.tangem.blockchain.network.blockbook.config.NowNodesConfig
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
@@ -158,12 +156,9 @@ internal object TransactionHistoryProviderFactory {
     }
 
     private fun createSolanaRpcClient(config: BlockchainSdkConfig): SolanaRpcClient? {
-        config.nowNodeCredentials?.apiKey?.takeIf { it.isNotBlank() }?.let { apiKey ->
+        config.blinkApiKey?.takeIf { it.isNotBlank() }?.let { blinkApiKey ->
             return SolanaRpcClient(
-                baseUrl = "https://sol.nownodes.io",
-                httpInterceptors = listOf(
-                    AddHeaderInterceptor(mapOf(NowNodeCredentials.headerApiKey to apiKey)),
-                ),
+                baseUrl = "https://sol.blinklabs.xyz/v1/$blinkApiKey",
             )
         }
 

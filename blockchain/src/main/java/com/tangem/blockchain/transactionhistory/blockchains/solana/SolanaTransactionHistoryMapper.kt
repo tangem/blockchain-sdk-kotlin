@@ -37,6 +37,10 @@ internal class SolanaTransactionHistoryMapper(
         }
 
         return when (txType) {
+            is SolanaTxType.StakeOperation -> {
+                if (filterToken != null) return null
+                mapStakeOperation(signature, timestamp, status, txType, meta, walletAddress, walletIndex)
+            }
             is SolanaTxType.Transfer -> {
                 if (filterToken != null) return null
                 mapSolTransfer(signature, timestamp, status, txType, meta, walletAddress, walletIndex)
@@ -67,6 +71,19 @@ internal class SolanaTransactionHistoryMapper(
         meta: SolanaTransactionMeta,
         allInstructions: List<SolanaInstruction>,
     ): SolanaTxType {
+        // STAKING: check for Stake program instructions first
+        val stakeInstruction = allInstructions.firstOrNull {
+            it.programId == STAKE_PROGRAM_ID || it.program == STAKE_PROGRAM
+        }
+        if (stakeInstruction != null) {
+            val info = stakeInstruction.parsed?.info
+            return SolanaTxType.StakeOperation(
+                stakeType = stakeInstruction.parsed?.type,
+                voteAccount = info?.voteAccount,
+                stakeAccount = info?.stakeAccount,
+            )
+        }
+
         // TRANSFER: innerInstructions empty, preTokenBalances/postTokenBalances/rewards empty,
         // all programIds are system or computeBudget, has transfer instruction with system programId
         if (meta.innerInstructions.isNullOrEmpty()
@@ -93,15 +110,6 @@ internal class SolanaTransactionHistoryMapper(
             }
         }
 
-        // OTHER OPERATION: usedPrograms has program different from "system" or "spl-token"
-        val hasOtherPrograms = allInstructions.any { instruction ->
-            val program = instruction.program
-            !program.isNullOrEmpty() && program != SYSTEM_PROGRAM && program != SPL_TOKEN_PROGRAM
-        }
-        if (hasOtherPrograms) {
-            return SolanaTxType.OtherOperation
-        }
-
         // TOKEN TRANSFER: usedPrograms has spl-token with type "transfer" or "transferChecked"
         val tokenTransferInstruction = allInstructions.firstOrNull {
             it.program == SPL_TOKEN_PROGRAM &&
@@ -119,7 +127,7 @@ internal class SolanaTransactionHistoryMapper(
             )
         }
 
-        // Fallback for unrecognized transactions
+        // OTHER OPERATION: fallback for unrecognized transactions
         return SolanaTxType.OtherOperation
     }
 
@@ -144,6 +152,48 @@ internal class SolanaTransactionHistoryMapper(
             sourceType = SourceType.Single(txType.source),
             status = status,
             type = TransactionType.Transfer,
+            amount = Amount(value = solAmount, blockchain = blockchain),
+        )
+    }
+
+    @Suppress("LongParameterList")
+    private fun mapStakeOperation(
+        txHash: String,
+        timestamp: Long,
+        status: TransactionStatus,
+        txType: SolanaTxType.StakeOperation,
+        meta: SolanaTransactionMeta,
+        walletAddress: String,
+        walletIndex: Int,
+    ): TransactionHistoryItem {
+        val solDelta = calculateSolDelta(meta, walletIndex)
+        val isOutgoing = solDelta < 0
+        val solAmount = BigDecimal(kotlin.math.abs(solDelta)).movePointLeft(blockchain.decimals())
+
+        val transactionType = when (txType.stakeType) {
+            DELEGATE_TYPE -> TransactionType.SolanaStakingTransactionType.Stake(
+                validatorAddress = txType.voteAccount,
+            )
+            DEACTIVATE_TYPE -> TransactionType.SolanaStakingTransactionType.Unstake
+            else -> TransactionType.SolanaStakingTransactionType.Stake(
+                validatorAddress = txType.voteAccount,
+            )
+        }
+
+        val destinationType = if (txType.voteAccount != null) {
+            DestinationType.Single(AddressType.Validator(txType.voteAccount))
+        } else {
+            DestinationType.Single(AddressType.User(txType.stakeAccount ?: walletAddress))
+        }
+
+        return TransactionHistoryItem(
+            txHash = txHash,
+            timestamp = timestamp,
+            isOutgoing = isOutgoing,
+            destinationType = destinationType,
+            sourceType = SourceType.Single(walletAddress),
+            status = status,
+            type = transactionType,
             amount = Amount(value = solAmount, blockchain = blockchain),
         )
     }
@@ -304,6 +354,12 @@ internal class SolanaTransactionHistoryMapper(
             val decimals: Int?,
         ) : SolanaTxType()
 
+        data class StakeOperation(
+            val stakeType: String?,
+            val voteAccount: String?,
+            val stakeAccount: String?,
+        ) : SolanaTxType()
+
         data object OtherOperation : SolanaTxType()
     }
 
@@ -312,8 +368,12 @@ internal class SolanaTransactionHistoryMapper(
         const val SYSTEM_PROGRAM = "system"
         const val COMPUTE_BUDGET_PREFIX = "ComputeBudget"
         const val SPL_TOKEN_PROGRAM = "spl-token"
+        const val STAKE_PROGRAM_ID = "Stake11111111111111111111111111111111111111"
+        const val STAKE_PROGRAM = "stake"
         const val TRANSFER_TYPE = "transfer"
         const val TRANSFER_CHECKED_TYPE = "transferChecked"
+        const val DELEGATE_TYPE = "delegate"
+        const val DEACTIVATE_TYPE = "deactivate"
         const val CONFIRMED_STATUS = "confirmed"
         const val FINALIZED_STATUS = "finalized"
         const val OPERATION_TYPE_NAME = "Operation"
