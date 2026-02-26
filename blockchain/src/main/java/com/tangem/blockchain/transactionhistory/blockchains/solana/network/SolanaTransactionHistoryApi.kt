@@ -25,11 +25,7 @@ internal class SolanaTransactionHistoryApi(
         ),
     )
 
-    fun getSignaturesForAddress(
-        address: String,
-        limit: Int,
-        before: String? = null,
-    ): List<SolanaSignatureInfo> {
+    fun getSignaturesForAddress(address: String, limit: Int, before: String? = null): List<SolanaSignatureInfo> {
         val params = buildList {
             add(address)
             add(

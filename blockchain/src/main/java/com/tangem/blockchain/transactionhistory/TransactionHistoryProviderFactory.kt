@@ -147,10 +147,7 @@ internal object TransactionHistoryProviderFactory {
         return DefaultTransactionHistoryProvider
     }
 
-    private fun createSolanaProvider(
-        blockchain: Blockchain,
-        config: BlockchainSdkConfig,
-    ): TransactionHistoryProvider {
+    private fun createSolanaProvider(blockchain: Blockchain, config: BlockchainSdkConfig): TransactionHistoryProvider {
         val rpcClient = createSolanaRpcClient(config) ?: return DefaultTransactionHistoryProvider
         return SolanaTransactionHistoryProvider(blockchain = blockchain, rpcClient = rpcClient)
     }
@@ -168,9 +165,11 @@ internal object TransactionHistoryProviderFactory {
             }
         }
 
-        config.getBlockCredentials?.solana?.jsonRpc?.takeIf { it.isNotBlank() }?.let { accessToken ->
-            return SolanaRpcClient(baseUrl = "https://go.getblock.io/$accessToken")
-        }
+        config.getBlockCredentials?.solana?.jsonRpc
+            ?.takeIf { it.isNotBlank() }
+            ?.let { accessToken ->
+                return SolanaRpcClient(baseUrl = "https://go.getblock.io/$accessToken")
+            }
 
         return SolanaRpcClient(baseUrl = "https://api.mainnet-beta.solana.com")
     }

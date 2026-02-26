@@ -8,10 +8,12 @@ import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.*
 import java.math.BigDecimal
 
+@Suppress("LargeClass")
 internal class SolanaTransactionHistoryMapper(
     private val blockchain: Blockchain,
 ) {
 
+    @Suppress("CyclomaticComplexMethod")
     fun mapToHistoryItem(
         signatureInfo: SolanaSignatureInfo,
         txResponse: SolanaTransactionResponse,
@@ -39,21 +41,49 @@ internal class SolanaTransactionHistoryMapper(
         return when (txType) {
             is SolanaTxType.StakeOperation -> {
                 if (filterToken != null) return null
-                mapStakeOperation(signature, timestamp, status, txType, meta, walletAddress, walletIndex)
+                mapStakeOperation(
+                    txHash = signature,
+                    timestamp = timestamp,
+                    status = status,
+                    txType = txType,
+                    meta = meta,
+                    walletAddress = walletAddress,
+                    walletIndex = walletIndex,
+                )
             }
             is SolanaTxType.Transfer -> {
                 if (filterToken != null) return null
-                mapSolTransfer(signature, timestamp, status, txType, meta, walletAddress, walletIndex)
+                mapSolTransfer(
+                    txHash = signature,
+                    timestamp = timestamp,
+                    status = status,
+                    txType = txType,
+                    meta = meta,
+                    walletIndex = walletIndex,
+                )
             }
             is SolanaTxType.TokenTransfer -> {
                 mapTokenTransfer(
-                    signature, timestamp, status, txType, meta, walletAddress, walletIndex,
-                    accountKeys, filterToken,
+                    txHash = signature,
+                    timestamp = timestamp,
+                    status = status,
+                    txType = txType,
+                    meta = meta,
+                    walletAddress = walletAddress,
+                    accountKeys = accountKeys,
+                    filterToken = filterToken,
                 )
             }
             is SolanaTxType.OtherOperation -> {
                 if (filterToken != null) return null
-                mapOtherOperation(signature, timestamp, status, meta, walletAddress, walletIndex)
+                mapOtherOperation(
+                    txHash = signature,
+                    timestamp = timestamp,
+                    status = status,
+                    meta = meta,
+                    walletAddress = walletAddress,
+                    walletIndex = walletIndex,
+                )
             }
         }
     }
@@ -67,6 +97,7 @@ internal class SolanaTransactionHistoryMapper(
         return topLevel + inner
     }
 
+    @Suppress("CyclomaticComplexMethod")
     private fun classifyTransaction(
         meta: SolanaTransactionMeta,
         allInstructions: List<SolanaInstruction>,
@@ -86,16 +117,16 @@ internal class SolanaTransactionHistoryMapper(
 
         // TRANSFER: innerInstructions empty, preTokenBalances/postTokenBalances/rewards empty,
         // all programIds are system or computeBudget, has transfer instruction with system programId
-        if (meta.innerInstructions.isNullOrEmpty()
-            && meta.preTokenBalances.isNullOrEmpty()
-            && meta.postTokenBalances.isNullOrEmpty()
-            && meta.rewards.isNullOrEmpty()
-        ) {
+        val isSimpleTransaction = meta.innerInstructions.isNullOrEmpty() &&
+            meta.preTokenBalances.isNullOrEmpty() &&
+            meta.postTokenBalances.isNullOrEmpty() &&
+            meta.rewards.isNullOrEmpty()
+        if (isSimpleTransaction) {
             val allProgramIds = allInstructions.mapNotNull { it.programId }.toSet()
-            val onlySystemPrograms = allProgramIds.all {
+            val hasOnlySystemPrograms = allProgramIds.all {
                 it == SYSTEM_PROGRAM_ID || it.startsWith(COMPUTE_BUDGET_PREFIX)
             }
-            if (onlySystemPrograms) {
+            if (hasOnlySystemPrograms) {
                 val transferInstruction = allInstructions.firstOrNull {
                     it.programId == SYSTEM_PROGRAM_ID && it.parsed?.type == TRANSFER_TYPE
                 }
@@ -111,9 +142,9 @@ internal class SolanaTransactionHistoryMapper(
         }
 
         // TOKEN TRANSFER: usedPrograms has spl-token with type "transfer" or "transferChecked"
-        val tokenTransferInstruction = allInstructions.firstOrNull {
-            it.program == SPL_TOKEN_PROGRAM &&
-                (it.parsed?.type == TRANSFER_TYPE || it.parsed?.type == TRANSFER_CHECKED_TYPE)
+        val tokenTransferInstruction = allInstructions.firstOrNull { instruction ->
+            instruction.program == SPL_TOKEN_PROGRAM &&
+                (instruction.parsed?.type == TRANSFER_TYPE || instruction.parsed?.type == TRANSFER_CHECKED_TYPE)
         }
         if (tokenTransferInstruction != null) {
             val info = tokenTransferInstruction.parsed?.info
@@ -131,13 +162,13 @@ internal class SolanaTransactionHistoryMapper(
         return SolanaTxType.OtherOperation
     }
 
+    @Suppress("LongParameterList")
     private fun mapSolTransfer(
         txHash: String,
         timestamp: Long,
         status: TransactionStatus,
         txType: SolanaTxType.Transfer,
         meta: SolanaTransactionMeta,
-        walletAddress: String,
         walletIndex: Int,
     ): TransactionHistoryItem {
         val solDelta = calculateSolDelta(meta, walletIndex)
@@ -206,7 +237,6 @@ internal class SolanaTransactionHistoryMapper(
         txType: SolanaTxType.TokenTransfer,
         meta: SolanaTransactionMeta,
         walletAddress: String,
-        walletIndex: Int,
         accountKeys: List<String>,
         filterToken: Token?,
     ): TransactionHistoryItem? {
@@ -214,10 +244,8 @@ internal class SolanaTransactionHistoryMapper(
         val walletMints = collectWalletTokenMints(meta, walletAddress)
 
         // If filtering by token, only process matching mint
-        if (filterToken != null) {
-            if (!walletMints.any { it.equals(filterToken.contractAddress, ignoreCase = true) }) {
-                return null
-            }
+        if (filterToken != null && !walletMints.any { it.equals(filterToken.contractAddress, ignoreCase = true) }) {
+            return null
         }
 
         // Calculate token balance change
@@ -259,6 +287,7 @@ internal class SolanaTransactionHistoryMapper(
         )
     }
 
+    @Suppress("LongParameterList")
     private fun mapOtherOperation(
         txHash: String,
         timestamp: Long,
@@ -290,11 +319,7 @@ internal class SolanaTransactionHistoryMapper(
         return post - pre
     }
 
-    private fun calculateTokenDelta(
-        meta: SolanaTransactionMeta,
-        walletAddress: String,
-        mint: String,
-    ): Long {
+    private fun calculateTokenDelta(meta: SolanaTransactionMeta, walletAddress: String, mint: String): Long {
         val preAmount = meta.preTokenBalances.orEmpty()
             .filter { it.owner.equals(walletAddress, ignoreCase = true) && it.mint.equals(mint, ignoreCase = true) }
             .sumOf { it.uiTokenAmount?.amount?.toLongOrNull() ?: 0L }

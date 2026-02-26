@@ -84,8 +84,8 @@ internal data class SolanaTransactionMessage(
 @JsonClass(generateAdapter = true)
 internal data class SolanaAccountKey(
     @Json(name = "pubkey") val pubkey: String,
-    @Json(name = "signer") val signer: Boolean?,
-    @Json(name = "writable") val writable: Boolean?,
+    @Json(name = "signer") val isSigner: Boolean?,
+    @Json(name = "writable") val isWritable: Boolean?,
     @Json(name = "source") val source: String?,
 )
 
