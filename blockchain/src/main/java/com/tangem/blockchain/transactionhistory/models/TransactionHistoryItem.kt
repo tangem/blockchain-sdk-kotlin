@@ -40,6 +40,7 @@ data class TransactionHistoryItem(
         sealed interface SolanaStakingTransactionType : TransactionType {
             data class Stake(val validatorAddress: String?) : SolanaStakingTransactionType
             data object Unstake : SolanaStakingTransactionType
+            data object Withdraw : SolanaStakingTransactionType
         }
 
         sealed interface TronStakingTransactionType : TransactionType {

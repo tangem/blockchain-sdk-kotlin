@@ -206,6 +206,7 @@ internal class SolanaTransactionHistoryMapper(
                 validatorAddress = txType.voteAccount,
             )
             DEACTIVATE_TYPE -> TransactionType.SolanaStakingTransactionType.Unstake
+            WITHDRAW_TYPE -> TransactionType.SolanaStakingTransactionType.Withdraw
             else -> TransactionType.SolanaStakingTransactionType.Stake(
                 validatorAddress = txType.voteAccount,
             )
@@ -399,6 +400,7 @@ internal class SolanaTransactionHistoryMapper(
         const val TRANSFER_CHECKED_TYPE = "transferChecked"
         const val DELEGATE_TYPE = "delegate"
         const val DEACTIVATE_TYPE = "deactivate"
+        const val WITHDRAW_TYPE = "withdraw"
         const val CONFIRMED_STATUS = "confirmed"
         const val FINALIZED_STATUS = "finalized"
         const val OPERATION_TYPE_NAME = "Operation"
