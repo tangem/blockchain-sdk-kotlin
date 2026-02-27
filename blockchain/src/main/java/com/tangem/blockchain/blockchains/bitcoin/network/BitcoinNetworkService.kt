@@ -30,9 +30,9 @@ open class BitcoinNetworkService(
 
             val bitcoinFee = if (fees.size > 2) {
                 BitcoinFee(
-                    minimalPerKb = fees.map { it.minimalPerKb }.sorted().drop(1).average(),
-                    normalPerKb = fees.map { it.normalPerKb }.sorted().drop(1).average(),
-                    priorityPerKb = fees.map { it.priorityPerKb }.sorted().drop(1).average(),
+                    minimalPerKb = fees.map { it.minimalPerKb }.trimmedMean(),
+                    normalPerKb = fees.map { it.normalPerKb }.trimmedMean(),
+                    priorityPerKb = fees.map { it.priorityPerKb }.trimmedMean(),
                 )
             } else {
                 BitcoinFee(
@@ -52,7 +52,26 @@ open class BitcoinNetworkService(
     override suspend fun getSignatureCount(address: String): Result<Int> =
         multiProvider.performRequest(BitcoinNetworkProvider::getSignatureCount, address)
 
+    private fun List<BigDecimal>.trimmedMean(): BigDecimal {
+        val sorted = this.sorted()
+        val trimmed = sorted.drop(1).dropLast(1)
+        val values = trimmed.ifEmpty { sorted }
+        val filtered = values.rejectOutliers()
+        return filtered.average()
+    }
+
+    private fun List<BigDecimal>.rejectOutliers(): List<BigDecimal> {
+        if (size < 2) return this
+        val median = sorted()[size / 2]
+        if (median.signum() == 0) return this
+        return filter { it <= median * OUTLIER_MULTIPLIER }
+    }
+
     private fun List<BigDecimal>.average(): BigDecimal =
         this.reduce { acc, number -> acc + number }.divide(this.size.toBigDecimal(), RoundingMode.HALF_UP)
             .setScale(Blockchain.Bitcoin.decimals(), RoundingMode.HALF_UP)
+
+    private companion object {
+        val OUTLIER_MULTIPLIER = BigDecimal(10)
+    }
 }
