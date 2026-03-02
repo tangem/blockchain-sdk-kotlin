@@ -62,19 +62,15 @@ internal class SolanaTransactionHistoryProvider(
             val items = coroutineScope {
                 signatures.map { sigInfo ->
                     async(Dispatchers.IO) {
-                        try {
-                            val txResponse = api.getTransaction(sigInfo.signature)
-                                ?: return@async null
+                        val txResponse = api.getTransaction(sigInfo.signature)
+                            ?: return@async null
 
-                            mapper.mapToHistoryItem(
-                                signatureInfo = sigInfo,
-                                txResponse = txResponse,
-                                walletAddress = request.address,
-                                filterToken = filterToken,
-                            )
-                        } catch (_: Exception) {
-                            null
-                        }
+                        mapper.mapToHistoryItem(
+                            signatureInfo = sigInfo,
+                            txResponse = txResponse,
+                            walletAddress = request.address,
+                            filterToken = filterToken,
+                        )
                     }
                 }.awaitAll().filterNotNull()
             }
