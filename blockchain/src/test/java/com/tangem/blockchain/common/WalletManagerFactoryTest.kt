@@ -217,7 +217,6 @@ internal class WalletManagerFactoryTest {
                     tezos = GetBlockAccessToken(),
                     monad = GetBlockAccessToken(),
                     stellar = GetBlockAccessToken(),
-                    berachain = GetBlockAccessToken(),
                 ),
                 tronGridApiKey = "",
                 chiaFireAcademyApiKey = "",
