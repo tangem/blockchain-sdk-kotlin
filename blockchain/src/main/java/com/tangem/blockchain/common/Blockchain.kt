@@ -217,8 +217,6 @@ enum class Blockchain(
     ArbitrumNova("arbitrum-nova", "ETH", "Arbitrum Nova"),
     Plasma("plasma", "XPL", "Plasma"),
     PlasmaTestnet("plasma/test", "XPL", "Plasma Testnet"),
-    Berachain("berachain", "BERA", "Berachain"),
-    BerachainTestnet("berachain/test", "BERA", "Berachain Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -362,7 +360,6 @@ enum class Blockchain(
         Linea, LineaTestnet,
         ArbitrumNova,
         Plasma, PlasmaTestnet,
-        Berachain, BerachainTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -472,7 +469,6 @@ enum class Blockchain(
             Linea, LineaTestnet,
             ArbitrumNova,
             Plasma, PlasmaTestnet,
-            Berachain, BerachainTestnet,
             -> EthereumAddressService()
 
             Quai, QuaiTestnet -> QuaiAddressService()
@@ -632,7 +628,6 @@ enum class Blockchain(
             Quai, QuaiTestnet -> QuaiTestnet
             Linea, LineaTestnet -> LineaTestnet
             Plasma, PlasmaTestnet -> PlasmaTestnet
-            Berachain, BerachainTestnet -> BerachainTestnet
             Unknown,
             Cardano,
             Dogecoin,
@@ -752,7 +747,6 @@ enum class Blockchain(
             Linea, LineaTestnet,
             ArbitrumNova,
             Plasma, PlasmaTestnet,
-            Berachain, BerachainTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -877,8 +871,6 @@ enum class Blockchain(
             PlasmaTestnet -> Chain.PlasmaTestnet.id
             Monad -> Chain.Monad.id
             MonadTestnet -> Chain.MonadTestnet.id
-            Berachain -> Chain.Berachain.id
-            BerachainTestnet -> Chain.BerachainTestnet.id
             else -> null
         }
     }
