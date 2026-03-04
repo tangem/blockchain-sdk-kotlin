@@ -7,7 +7,6 @@ data class BlockchainSdkConfig(
     val quickNodeSolanaCredentials: QuickNodeCredentials? = null,
     val quickNodePlasmaCredentials: QuickNodeCredentials? = null,
     val quickNodeMonadCredentials: QuickNodeCredentials? = null,
-    val quickNodeBerachainCredentials: QuickNodeCredentials? = null,
     val quickNodeStellarCredentials: QuickNodeCredentials? = null,
     val nowNodeCredentials: NowNodeCredentials? = null,
     val getBlockCredentials: GetBlockCredentials? = null,
@@ -85,7 +84,6 @@ data class GetBlockCredentials(
     val tezos: GetBlockAccessToken?,
     val monad: GetBlockAccessToken?,
     val stellar: GetBlockAccessToken?,
-    val berachain: GetBlockAccessToken?,
 )
 
 data class GetBlockAccessToken(
