@@ -113,7 +113,6 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Linea, Blockchain.LineaTestnet -> LineaExternalLinkProvider(isTestnet)
             Blockchain.ArbitrumNova -> ArbitrumNovaExternalLinkProvider()
             Blockchain.Plasma, Blockchain.PlasmaTestnet -> PlasmaExternalLinkProvider(isTestnet)
-            Blockchain.Berachain, Blockchain.BerachainTestnet -> BerachainExternalLinkProvider(isTestnet)
         }
     }
 }
