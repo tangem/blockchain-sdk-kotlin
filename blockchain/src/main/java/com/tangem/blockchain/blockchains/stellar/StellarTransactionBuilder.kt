@@ -3,7 +3,10 @@ package com.tangem.blockchain.blockchains.stellar
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.extensions.Result
 import org.stellar.sdk.*
-import org.stellar.sdk.xdr.AccountID
+import org.stellar.sdk.operations.ChangeTrustOperation
+import org.stellar.sdk.operations.CreateAccountOperation
+import org.stellar.sdk.operations.Operation
+import org.stellar.sdk.operations.PaymentOperation
 import org.stellar.sdk.xdr.DecoratedSignature
 import org.stellar.sdk.xdr.Signature
 import org.stellar.sdk.xdr.SignatureHint
@@ -26,7 +29,7 @@ class StellarTransactionBuilder(
         val uncompiledTransaction = transactionData.requireUncompiled()
 
         val amount = uncompiledTransaction.amount
-        val fee = requireNotNull(uncompiledTransaction.fee?.amount?.longValue).toInt()
+        val fee = requireNotNull(uncompiledTransaction.fee?.amount?.longValue)
         val destinationKeyPair = KeyPair.fromAccountId(uncompiledTransaction.destinationAddress)
         val sourceKeyPair = KeyPair.fromAccountId(uncompiledTransaction.sourceAddress)
         val timeBounds = getTimeBounds(uncompiledTransaction)
@@ -52,13 +55,14 @@ class StellarTransactionBuilder(
             is AmountType.Coin -> {
                 val operation =
                     if (targetAccountResponse.accountCreated) {
-                        PaymentOperation.Builder(
-                            destinationKeyPair.accountId,
-                            AssetTypeNative(),
-                            amount.value.toString(),
-                        ).build()
+                        PaymentOperation.builder()
+                            .destination(destinationKeyPair.accountId)
+                            .asset(AssetTypeNative())
+                            .amount(amount.value!!)
+                            .build()
                     } else {
-                        if (amount.value!! < minReserve) {
+                        val amountValue = requireNotNull(amount.value)
+                        if (amountValue < minReserve) {
                             val minAmount = Amount(minReserve, blockchain)
                             return Result.Failure(
                                 BlockchainSdkError.CreateAccountUnderfunded(
@@ -67,10 +71,10 @@ class StellarTransactionBuilder(
                                 ),
                             )
                         }
-                        CreateAccountOperation.Builder(
-                            destinationKeyPair.accountId,
-                            amount.value.toString(),
-                        ).build()
+                        CreateAccountOperation.builder()
+                            .destination(destinationKeyPair.accountId)
+                            .startingBalance(amountValue)
+                            .build()
                     }
                 transaction = operation.toTransaction(sourceKeyPair, sequence, fee, timeBounds, memo)
                     ?: return Result.Failure(BlockchainSdkError.CustomError("Failed to assemble transaction")) // should not happen
@@ -96,20 +100,18 @@ class StellarTransactionBuilder(
                     )
                 }
 
-                val operation: Operation = if (amount.value != null) {
-                    PaymentOperation.Builder(
-                        destinationKeyPair.accountId,
-                        Asset.create(canonicalForm(amount.type.token.contractAddress)),
-                        amount.value.toPlainString(),
-                    )
+                val amountValue = amount.value
+                val operation: Operation = if (amountValue != null) {
+                    PaymentOperation.builder()
+                        .destination(destinationKeyPair.accountId)
+                        .asset(Asset.create(canonicalForm(amount.type.token.contractAddress)))
+                        .amount(amountValue)
                         .build()
                 } else {
-                    ChangeTrustOperation.Builder(
-                        ChangeTrustAsset
-                            .create(canonicalForm(amount.type.token.contractAddress)),
-                        CHANGE_TRUST_OPERATION_LIMIT,
-                    )
-                        .setSourceAccount(sourceKeyPair.accountId)
+                    ChangeTrustOperation.builder()
+                        .asset(ChangeTrustAsset(Asset.create(canonicalForm(amount.type.token.contractAddress))))
+                        .limit(CHANGE_TRUST_OPERATION_LIMIT.toBigDecimal())
+                        .sourceAccount(sourceKeyPair.accountId)
                         .build()
                 }
                 transaction = operation.toTransaction(sourceKeyPair, sequence, fee, timeBounds, memo)
@@ -132,20 +134,21 @@ class StellarTransactionBuilder(
     private fun Operation.toTransaction(
         sourceKeyPair: KeyPair,
         sequence: Long,
-        fee: Int,
+        fee: Long,
         timeBounds: TimeBounds,
         memo: Memo?,
     ): Transaction? {
-        val accountID = AccountID()
-        accountID.accountID = sourceKeyPair.xdrPublicKey
-
         val transactionBuilder = TransactionBuilder(
             Account(sourceKeyPair.accountId, sequence),
             network,
         )
         transactionBuilder
             .addOperation(this)
-            .addTimeBounds(timeBounds)
+            .addPreconditions(
+                TransactionPreconditions.builder()
+                    .timeBounds(timeBounds)
+                    .build(),
+            )
             .setBaseFee(fee)
 
         if (memo != null) transactionBuilder.addMemo(memo)
@@ -179,17 +182,23 @@ class StellarTransactionBuilder(
             return Result.Failure(BlockchainSdkError.Stellar.MinReserveRequired(requiredReserve, blockchain.currency))
         }
         val contractAddress: String = requireNotNull(transactionData.contractAddress)
-        val asset = ChangeTrustAsset.create(canonicalForm(contractAddress))
+        val asset = ChangeTrustAsset(Asset.create(canonicalForm(contractAddress)))
 
         val sourceKeyPair = KeyPair.fromAccountId(transactionData.sourceAddress)
         val timeBounds = getTimeBounds(transactionData)
-        val operation = ChangeTrustOperation
-            .Builder(asset, CHANGE_TRUST_OPERATION_LIMIT)
-            .setSourceAccount(sourceKeyPair.accountId)
+        val operation = ChangeTrustOperation.builder()
+            .asset(asset)
+            .limit(CHANGE_TRUST_OPERATION_LIMIT.toBigDecimal())
+            .sourceAccount(sourceKeyPair.accountId)
             .build()
 
-        transaction = operation.toTransaction(sourceKeyPair, sequence, fee.longValue.toInt(), timeBounds, null)
-            ?: return Result.Failure(BlockchainSdkError.CustomError("Failed to assemble transaction"))
+        transaction = operation.toTransaction(
+            sourceKeyPair = sourceKeyPair,
+            sequence = sequence,
+            fee = fee.longValue,
+            timeBounds = timeBounds,
+            memo = null,
+        ) ?: return Result.Failure(BlockchainSdkError.CustomError("Failed to assemble transaction"))
 
         return Result.Success(transaction.hash())
     }
@@ -200,7 +209,7 @@ class StellarTransactionBuilder(
     )
 
     companion object {
-        const val CHANGE_TRUST_OPERATION_LIMIT = "900000000000.0000000"
+        const val CHANGE_TRUST_OPERATION_LIMIT = "922337203685.4775807"
         const val TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR = "-"
         const val STELLAR_SDK_CONTRACT_ADDRESS_SEPARATOR = ":"
         const val CONTRACT_ADDRESS_IGNORING_SUFFIX = "-1"
