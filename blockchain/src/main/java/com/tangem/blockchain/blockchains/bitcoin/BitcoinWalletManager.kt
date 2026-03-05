@@ -2,9 +2,12 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 import android.util.Base64
 import android.util.Log
+import com.tangem.blockchain.blockchains.bitcoin.address.BitcoinWalletAddressProvider
+import com.tangem.blockchain.blockchains.bitcoin.messagesigning.BitcoinMessageSigner
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.bitcoin.psbt.BitcoinPsbtProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -13,6 +16,8 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
+import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
@@ -26,7 +31,15 @@ internal open class BitcoinWalletManager(
     protected val transactionBuilder: BitcoinTransactionBuilder,
     private val networkProvider: BitcoinNetworkProvider,
     private val feesCalculator: BitcoinFeesCalculator,
-) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider),
+    yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
+) : WalletManager(
+    wallet = wallet,
+    transactionHistoryProvider = transactionHistoryProvider,
+    yieldSupplyProvider = yieldSupplyProvider,
+    messageSigner = BitcoinMessageSigner(wallet),
+    psbtProvider = BitcoinPsbtProvider(wallet, networkProvider),
+    addressProvider = BitcoinWalletAddressProvider(wallet),
+),
     SignatureCountValidator,
     UtxoBlockchainManager,
     MessageSigner {
