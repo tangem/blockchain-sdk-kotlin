@@ -172,7 +172,5 @@ val Blockchain.isUTXO: Boolean
         ArbitrumNova,
         Plasma,
         PlasmaTestnet,
-        Berachain,
-        BerachainTestnet,
         -> false
     }
