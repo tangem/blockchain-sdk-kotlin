@@ -48,7 +48,7 @@ class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, private val bloc
         for (input in transaction.inputs) {
             val index = input.index
             val value = Coin.parseCoin(outputsToSend[index].amount.toString())
-            hashesForSign[index] = getTransaction().hashForSignatureWitness(
+            hashesForSign[index] = getBitcoinCashTransaction().hashForSignatureWitness(
                 index,
                 input.scriptBytes,
                 value,
@@ -68,7 +68,7 @@ class BitcoinCashTransactionBuilder(walletPublicKey: ByteArray, private val bloc
         return TransactionSignature(r, canonicalS, sigHash)
     }
 
-    private fun getTransaction() = transaction as BitcoinCashTransaction
+    private fun getBitcoinCashTransaction() = transaction as BitcoinCashTransaction
 }
 
 internal fun TransactionData.toBitcoinCashTransaction(
@@ -84,10 +84,11 @@ internal fun TransactionData.toBitcoinCashTransaction(
         transaction.addInput(Sha256Hash.wrap(utxo.transactionHash), utxo.outputIndex, Script(utxo.outputScript))
     }
     val addressService = BitcoinCashAddressService(blockchain)
-    val sourceLegacyAddress = LegacyAddress.fromPubKeyHash(
-        networkParameters,
-        addressService.getPublicKeyHash(uncompiledTransaction.sourceAddress),
-    )
+    val sourceLegacyAddress =
+        LegacyAddress.fromPubKeyHash(
+            networkParameters,
+            addressService.getPublicKeyHash(uncompiledTransaction.sourceAddress),
+        )
 
     val isCashAddrAddress = addressService.validateCashAddrAddress(uncompiledTransaction.destinationAddress)
     val destinationLegacyAddress = if (isCashAddrAddress) {
