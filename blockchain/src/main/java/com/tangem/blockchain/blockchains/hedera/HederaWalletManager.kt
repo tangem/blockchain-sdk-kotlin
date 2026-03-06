@@ -125,11 +125,11 @@ internal class HederaWalletManager(
             if (!isErc20) return
 
             val hasTokenEvmAddress = !tokenEvmAddresses[token.contractAddress].isNullOrBlank()
-            val needsResolvedContractAddress = token.contractAddress.startsWith("0x") ||
+            val shouldResolveContractAddress = token.contractAddress.startsWith("0x") ||
                 token.contractAddress.startsWith("0X")
             val hasResolvedContractAddress = !resolvedContractAddresses[token.contractAddress].isNullOrBlank()
 
-            if (hasTokenEvmAddress && (!needsResolvedContractAddress || hasResolvedContractAddress)) return
+            if (hasTokenEvmAddress && (!shouldResolveContractAddress || hasResolvedContractAddress)) return
         }
 
         val contractAddress = resolvedContractAddresses[token.contractAddress] ?: token.contractAddress
@@ -256,7 +256,7 @@ internal class HederaWalletManager(
             val cachedType = HederaTokenType.valueOf(typeName)
             if (cachedType != HederaTokenType.ERC20) return cachedType
 
-            val hasTokenEvmAddress = !cachedData?.tokenEvmAddresses?.get(contractAddress).isNullOrBlank()
+            val hasTokenEvmAddress = !cachedData.tokenEvmAddresses[contractAddress].isNullOrBlank()
             if (hasTokenEvmAddress) {
                 HederaTokenType.ERC20
             } else {
@@ -702,27 +702,30 @@ internal class HederaWalletManager(
             typeName == null || typeName == HederaTokenType.HTS.name
         }
 
-        var allHtsAssociated = true
+        var areAllHtsAssociated = true
         for (token in htsTokens) {
             val resolvedAddress = getResolvedContractAddress(token.contractAddress)
             if (!alreadyAssociatedTokens.contains(resolvedAddress)) {
-                allHtsAssociated = false
+                areAllHtsAssociated = false
                 break
             }
         }
-        if (allHtsAssociated) {
+        if (areAllHtsAssociated) {
             return
         }
 
         tokenAssociationFeeExchangeRate = networkService.getUsdExchangeRate().successOr { return }
     }
 
+    @Suppress("CyclomaticComplexMethod", "LongMethod")
     private suspend fun detectAndStoreTokenType(contractAddress: String): HederaTokenType {
         val cachedData = dataStorage.getOrNull<BlockchainSavedData.Hedera>(wallet.publicKey)
         val tokenTypes = cachedData?.tokenTypes.orEmpty().toMutableMap()
         val tokenEvmAddresses = cachedData?.tokenEvmAddresses.orEmpty().toMutableMap()
         val resolvedContractAddresses = cachedData?.resolvedContractAddresses.orEmpty().toMutableMap()
-        val previouslyCachedType = runCatching { tokenTypes[contractAddress]?.let(HederaTokenType::valueOf) }.getOrNull()
+        val previouslyCachedType = runCatching {
+            tokenTypes[contractAddress]?.let(HederaTokenType::valueOf)
+        }.getOrNull()
 
         val inputAddress = resolvedContractAddresses[contractAddress] ?: contractAddress
         val normalizedAddress = runCatching { tokenAddressConverter.convertToTokenId(inputAddress) }.getOrElse {
@@ -737,14 +740,24 @@ internal class HederaWalletManager(
                     resolvedContractAddresses[contractAddress] = contractInfo.data.contractId
                     tokenEvmAddresses[contractAddress] = contractInfo.data.evmAddress
                     tokenTypes[contractAddress] = HederaTokenType.ERC20.name
-                    cacheTokenMetadata(cachedData, tokenTypes, tokenEvmAddresses, resolvedContractAddresses)
+                    cacheTokenMetadata(
+                        cachedData = cachedData,
+                        tokenTypes = tokenTypes,
+                        tokenEvmAddresses = tokenEvmAddresses,
+                        resolvedContractAddresses = resolvedContractAddresses,
+                    )
                     return HederaTokenType.ERC20
                 }
                 is Result.Failure -> {
                     tokenEvmAddresses[contractAddress] = normalizedAddress
                     if (HederaUtils.evmAddressToAccountId(normalizedAddress) == null) {
                         tokenTypes[contractAddress] = HederaTokenType.ERC20.name
-                        cacheTokenMetadata(cachedData, tokenTypes, tokenEvmAddresses, resolvedContractAddresses)
+                        cacheTokenMetadata(
+                            cachedData = cachedData,
+                            tokenTypes = tokenTypes,
+                            tokenEvmAddresses = tokenEvmAddresses,
+                            resolvedContractAddresses = resolvedContractAddresses,
+                        )
                         return HederaTokenType.ERC20
                     }
                 }
@@ -767,7 +780,12 @@ internal class HederaWalletManager(
                     HederaTokenType.HTS
                 }
                 tokenTypes[contractAddress] = fallbackType.name
-                cacheTokenMetadata(cachedData, tokenTypes, tokenEvmAddresses, resolvedContractAddresses)
+                cacheTokenMetadata(
+                    cachedData = cachedData,
+                    tokenTypes = tokenTypes,
+                    tokenEvmAddresses = tokenEvmAddresses,
+                    resolvedContractAddresses = resolvedContractAddresses,
+                )
                 return fallbackType
             }
         }
@@ -780,7 +798,12 @@ internal class HederaWalletManager(
             }
         }
 
-        cacheTokenMetadata(cachedData, tokenTypes, tokenEvmAddresses, resolvedContractAddresses)
+        cacheTokenMetadata(
+            cachedData = cachedData,
+            tokenTypes = tokenTypes,
+            tokenEvmAddresses = tokenEvmAddresses,
+            resolvedContractAddresses = resolvedContractAddresses,
+        )
         return detectedType
     }
 
@@ -790,8 +813,11 @@ internal class HederaWalletManager(
         if (!resolvedFromCache.isNullOrBlank()) return Result.Success(resolvedFromCache)
 
         val evmAddress = cachedData?.tokenEvmAddresses?.get(contractAddress)
-            ?: if (contractAddress.startsWith("0x") || contractAddress.startsWith("0X")) contractAddress else null
-            ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+            ?: if (contractAddress.startsWith("0x") || contractAddress.startsWith("0X")) {
+                contractAddress
+            } else {
+                return Result.Failure(BlockchainSdkError.FailedToLoadFee)
+            }
 
         val contractInfo = networkService.getContractInfo(evmAddress).successOr { return Result.Failure(it.error) }
 
@@ -805,7 +831,12 @@ internal class HederaWalletManager(
             put(contractAddress, contractInfo.contractId)
         }
 
-        cacheTokenMetadata(cachedData, tokenTypes, tokenEvmAddresses, resolvedContractAddresses)
+        cacheTokenMetadata(
+            cachedData = cachedData,
+            tokenTypes = tokenTypes,
+            tokenEvmAddresses = tokenEvmAddresses,
+            resolvedContractAddresses = resolvedContractAddresses,
+        )
         return Result.Success(contractInfo.contractId)
     }
 
