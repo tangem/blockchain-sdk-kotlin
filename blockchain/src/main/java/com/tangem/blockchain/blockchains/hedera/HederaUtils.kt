@@ -3,17 +3,93 @@ package com.tangem.blockchain.blockchains.hedera
 import com.hedera.hashgraph.sdk.TokenId
 import com.tangem.Log
 import com.tangem.blockchain.common.BlockchainSdkError
+import java.math.BigInteger
 
 internal object HederaUtils {
+
+    private const val BALANCE_OF_SELECTOR = "70a08231"
+    private const val TRANSFER_SELECTOR = "a9059cbb"
+    private const val EVM_ADDRESS_HEX_LENGTH = 40
+    private const val EVM_WORD_HEX_LENGTH = 64
+    private const val EVM_ADDRESS_FIRST_HALF_LENGTH = 20
+    private const val HEX_RADIX = 16
 
     fun createTokenId(contractAddress: String): TokenId {
         return try {
             TokenId.fromString(contractAddress)
-        } catch (e: Exception) {
-            TokenId.fromSolidityAddress(contractAddress)
-        } catch (e: Exception) {
-            Log.error { e.message.orEmpty() }
-            throw BlockchainSdkError.CustomError(e.message.orEmpty())
+        } catch (_: Exception) {
+            try {
+                TokenId.fromSolidityAddress(contractAddress)
+            } catch (e: Exception) {
+                Log.error { e.message.orEmpty() }
+                throw BlockchainSdkError.CustomError(e.message.orEmpty())
+            }
         }
+    }
+
+    /**
+     * Convert Hedera account ID (e.g. "0.0.12345") to EVM address format.
+     * 1. Remove "0.0." prefix
+     * 2. Convert number to hex
+     * 3. Pad left to 20 bytes (40 hex chars)
+     * 4. Add "0x" prefix
+     */
+    fun accountIdToEvmAddress(accountId: String): String {
+        val num = accountId.removePrefix("0.0.").toLong()
+        val hex = num.toString(HEX_RADIX)
+        return "0x" + hex.padStart(EVM_ADDRESS_HEX_LENGTH, '0')
+    }
+
+    /**
+     * Try to convert an EVM address to Hedera account ID format.
+     * If first 10 bytes (20 hex chars) are zeros, it's a simple numeric conversion:
+     *   - Parse remaining hex as decimal, prepend "0.0."
+     * Otherwise returns null (network call needed to resolve).
+     */
+    fun evmAddressToAccountId(evmAddress: String): String? {
+        val hex = evmAddress.removePrefix("0x").removePrefix("0X").lowercase()
+        if (hex.length != EVM_ADDRESS_HEX_LENGTH) return null
+        if (!hex.all { it in "0123456789abcdef" }) return null
+
+        // Check if first 10 bytes (20 hex chars) are zeros
+        val firstHalf = hex.substring(0, EVM_ADDRESS_FIRST_HALF_LENGTH)
+        return if (firstHalf.all { it == '0' }) {
+            val secondHalf = hex.substring(EVM_ADDRESS_FIRST_HALF_LENGTH)
+            runCatching {
+                val num = java.lang.Long.parseLong(secondHalf, HEX_RADIX)
+                "0.0.$num"
+            }.getOrNull()
+        } else {
+            null
+        }
+    }
+
+    fun isValidEvmAddress(address: String): Boolean {
+        val hex = address.removePrefix("0x").removePrefix("0X")
+        return hex.length == EVM_ADDRESS_HEX_LENGTH && hex.all { it.lowercaseChar() in "0123456789abcdef" }
+    }
+
+    /**
+     * Encode ERC20 balanceOf(address) call data.
+     * Function selector: 0x70a08231
+     * Parameter: address padded to 32 bytes
+     */
+    fun encodeBalanceOf(ownerEvmAddress: String): String {
+        val addressHex = ownerEvmAddress.removePrefix("0x").removePrefix("0X").lowercase()
+        val paddedAddress = addressHex.padStart(EVM_WORD_HEX_LENGTH, '0')
+        return "0x$BALANCE_OF_SELECTOR$paddedAddress"
+    }
+
+    /**
+     * Encode ERC20 transfer(address,uint256) call data.
+     * Function selector: 0xa9059cbb
+     * Parameters: address padded to 32 bytes + amount padded to 32 bytes
+     */
+    fun encodeTransfer(toEvmAddress: String, amount: BigInteger): String {
+        val addressHex = toEvmAddress.removePrefix("0x").removePrefix("0X").lowercase()
+        val paddedAddress = addressHex.padStart(EVM_WORD_HEX_LENGTH, '0')
+        val amountHex = amount.toString(HEX_RADIX)
+        val paddedAmount = amountHex.padStart(EVM_WORD_HEX_LENGTH, '0')
+        return "0x$TRANSFER_SELECTOR$paddedAddress$paddedAmount"
     }
 }
