@@ -2,15 +2,20 @@ package com.tangem.blockchain.blockchains.hedera
 
 import com.hedera.hashgraph.sdk.TokenId
 import com.tangem.Log
+import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TokenBalanceERC20TokenCallData
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.smartcontract.Erc20CallData
+import com.tangem.blockchain.extensions.formatHex
+import com.tangem.blockchain.extensions.hexToFixedSizeBytes
+import com.tangem.blockchain.extensions.toFixedSizeBytes
+import com.tangem.common.extensions.hexToBytes
+import org.komputing.khex.extensions.toHexString
 import java.math.BigInteger
 
 internal object HederaUtils {
 
-    private const val BALANCE_OF_SELECTOR = "70a08231"
-    private const val TRANSFER_SELECTOR = "a9059cbb"
+    private const val TRANSFER_SELECTOR = "0xa9059cbb"
     private const val EVM_ADDRESS_HEX_LENGTH = 40
-    private const val EVM_WORD_HEX_LENGTH = 64
     private const val EVM_ADDRESS_FIRST_HALF_LENGTH = 20
     private const val HEX_RADIX = 16
 
@@ -75,9 +80,7 @@ internal object HederaUtils {
      * Parameter: address padded to 32 bytes
      */
     fun encodeBalanceOf(ownerEvmAddress: String): String {
-        val addressHex = ownerEvmAddress.removePrefix("0x").removePrefix("0X").lowercase()
-        val paddedAddress = addressHex.padStart(EVM_WORD_HEX_LENGTH, '0')
-        return "0x$BALANCE_OF_SELECTOR$paddedAddress"
+        return TokenBalanceERC20TokenCallData(ownerEvmAddress).dataHex.formatHex()
     }
 
     /**
@@ -86,10 +89,9 @@ internal object HederaUtils {
      * Parameters: address padded to 32 bytes + amount padded to 32 bytes
      */
     fun encodeTransfer(toEvmAddress: String, amount: BigInteger): String {
-        val addressHex = toEvmAddress.removePrefix("0x").removePrefix("0X").lowercase()
-        val paddedAddress = addressHex.padStart(EVM_WORD_HEX_LENGTH, '0')
-        val amountHex = amount.toString(HEX_RADIX)
-        val paddedAmount = amountHex.padStart(EVM_WORD_HEX_LENGTH, '0')
-        return "0x$TRANSFER_SELECTOR$paddedAddress$paddedAmount"
+        val selector = TRANSFER_SELECTOR.hexToBytes()
+        val addressData = Erc20CallData.addressWithoutPrefix(toEvmAddress).hexToFixedSizeBytes()
+        val amountData = amount.toFixedSizeBytes()
+        return (selector + addressData + amountData).toHexString().formatHex()
     }
 }

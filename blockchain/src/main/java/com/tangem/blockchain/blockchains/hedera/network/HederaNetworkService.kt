@@ -77,7 +77,7 @@ internal class HederaNetworkService(
                 val additionalHBARFee = customFees.fixedFees
                     .filter { it.denominatingTokenId == null }
                     .mapNotNull { it.amount }
-                    .map { it.movePointLeft(HBAR_DECIMALS) }
+                    .map { it.movePointLeft(Blockchain.Hedera.decimals()) }
                     .fold(BigDecimal.ZERO, BigDecimal::add)
 
                 Result.Success(
@@ -109,10 +109,7 @@ internal class HederaNetworkService(
         val data = HederaUtils.encodeBalanceOf(ownerEvmAddress)
         val request = HederaContractCallRequest(data = data, to = tokenEvmAddress)
         return multiProvider.performRequest(HederaNetworkProvider::invokeSmartContract, request)
-            .map { response ->
-                val hex = response.result.removePrefix("0x")
-                if (hex.isBlank() || hex.all { it == '0' }) BigInteger.ZERO else BigInteger(hex, HEX_RADIX)
-            }
+            .map { response -> response.result.hexToBigInteger() }
     }
 
     suspend fun estimateERC20GasLimit(
@@ -129,10 +126,7 @@ internal class HederaNetworkService(
             isEstimate = true,
         )
         return multiProvider.performRequest(HederaNetworkProvider::invokeSmartContract, request)
-            .map { response ->
-                val hex = response.result.removePrefix("0x")
-                if (hex.isBlank()) BigInteger.ZERO else BigInteger(hex, HEX_RADIX)
-            }
+            .map { response -> response.result.hexToBigInteger() }
     }
 
     suspend fun getContractCallGasPrice(): Result<BigInteger> {
@@ -245,9 +239,4 @@ internal class HederaNetworkService(
             )
         },
     )
-
-    private companion object {
-        const val HEX_RADIX = 16
-        const val HBAR_DECIMALS = 8
-    }
 }
