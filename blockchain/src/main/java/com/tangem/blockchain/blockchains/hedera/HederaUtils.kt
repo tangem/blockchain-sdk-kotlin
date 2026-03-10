@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TokenBalanceERC20
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.smartcontract.Erc20CallData
 import com.tangem.blockchain.extensions.formatHex
+import com.tangem.blockchain.extensions.hexToBigInteger
 import com.tangem.blockchain.extensions.hexToFixedSizeBytes
 import com.tangem.blockchain.extensions.toFixedSizeBytes
 import com.tangem.common.extensions.hexToBytes
@@ -52,21 +53,15 @@ internal object HederaUtils {
      * Otherwise returns null (network call needed to resolve).
      */
     fun evmAddressToAccountId(evmAddress: String): String? {
+        if (!isValidEvmAddress(evmAddress)) return null
+
         val hex = evmAddress.removePrefix("0x").removePrefix("0X").lowercase()
-        if (hex.length != EVM_ADDRESS_HEX_LENGTH) return null
-        if (!hex.all { it in "0123456789abcdef" }) return null
 
         // Check if first 10 bytes (20 hex chars) are zeros
         val firstHalf = hex.substring(0, EVM_ADDRESS_FIRST_HALF_LENGTH)
-        return if (firstHalf.all { it == '0' }) {
-            val secondHalf = hex.substring(EVM_ADDRESS_FIRST_HALF_LENGTH)
-            runCatching {
-                val num = java.lang.Long.parseLong(secondHalf, HEX_RADIX)
-                "0.0.$num"
-            }.getOrNull()
-        } else {
-            null
-        }
+        if (!firstHalf.all { it == '0' }) return null
+        val num = hex.substring(EVM_ADDRESS_FIRST_HALF_LENGTH).hexToBigInteger()
+        return "0.0.$num"
     }
 
     fun isValidEvmAddress(address: String): Boolean {
