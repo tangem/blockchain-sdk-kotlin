@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.bitcoin.network
 
+import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
@@ -51,6 +52,12 @@ open class BitcoinNetworkService(
 
     override suspend fun getSignatureCount(address: String): Result<Int> =
         multiProvider.performRequest(BitcoinNetworkProvider::getSignatureCount, address)
+
+    override suspend fun getInfoByXpub(xpub: String): Result<XpubInfoResponse> =
+        multiProvider.performRequest(BitcoinNetworkProvider::getInfoByXpub, xpub)
+
+    override suspend fun getUtxoByXpub(xpub: String): Result<List<BitcoinUnspentOutput>> =
+        multiProvider.performRequest(BitcoinNetworkProvider::getUtxoByXpub, xpub)
 
     private fun List<BigDecimal>.average(): BigDecimal =
         this.reduce { acc, number -> acc + number }.divide(this.size.toBigDecimal(), RoundingMode.HALF_UP)
