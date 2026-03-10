@@ -120,6 +120,36 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
             .unpack()
     }
 
+    suspend fun getXpubInfo(descriptor: String, page: Int? = null, pageSize: Int? = null): GetXpubResponse {
+        val request = BlockBookRequest.GetXpubInfo(page, pageSize)
+        val requestBaseUrl = config.getRequestBaseUrl(request, blockchain)
+        return client
+            .newCall(
+                request = Request.Builder()
+                    .get()
+                    .url("$requestBaseUrl/xpub/$descriptor${request.params()}")
+                    .build(),
+            )
+            .await()
+            .unpack()
+    }
+
+    suspend fun getXpubUtxo(descriptor: String): List<GetUtxoResponseItem> {
+        val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.GetXpubUTXO, blockchain)
+        return client
+            .newCall(
+                request = Request.Builder()
+                    .get()
+                    .url("$requestBaseUrl/utxo/$descriptor")
+                    .build(),
+            )
+            .await()
+            .unpack<List<GetUtxoResponseItem>>()
+            .filter {
+                it.confirmations > 0
+            }
+    }
+
     suspend fun getUtxo(address: String): List<GetUtxoResponseItem> {
         val requestBaseUrl = config.getRequestBaseUrl(BlockBookRequest.GetUTXO, blockchain)
         return client
