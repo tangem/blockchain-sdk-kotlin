@@ -50,11 +50,11 @@ class BinanceTransactionBuilder(
         }
         transfer.fromAddress = uncompiledTransaction.sourceAddress
         transfer.toAddress = uncompiledTransaction.destinationAddress
-        transfer.amount = uncompiledTransaction.amount.value!!
+        transfer.amount = requireNotNull(uncompiledTransaction.amount.value)
             .setScale(Blockchain.Binance.decimals()).toPlainString()
 
         val options = TransactionOption.DEFAULT_INSTANCE
-        options.memo = (uncompiledTransaction.extras as? BinanceTransactionExtras)?.memo ?: ""
+        options.memo = (uncompiledTransaction.extras as? BinanceTransactionExtras)?.memo.orEmpty()
 
         val accountData = BinanceAccountData(chainId, accountNumber, sequence)
 

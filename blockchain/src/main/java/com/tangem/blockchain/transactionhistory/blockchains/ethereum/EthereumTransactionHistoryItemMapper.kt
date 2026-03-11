@@ -129,7 +129,7 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
             ?: return TransactionType.Transfer
 
         // MethodId is empty for the coin transfers
-        if (methodId.isEmpty()) return TransactionType.Transfer
+        if (methodId.isEmpty() || methodId == "0x") return TransactionType.Transfer
 
         // ERC-20 transfer method id
         if (methodId.equals(TOKEN_TRANSFER_METHOD_ID, ignoreCase = true)) {
