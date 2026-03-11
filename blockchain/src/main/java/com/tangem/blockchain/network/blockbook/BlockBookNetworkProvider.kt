@@ -124,6 +124,7 @@ class BlockBookNetworkProvider(
         }
     }
 
+    @Suppress("UnnecessaryParentheses")
     override suspend fun getInfoByXpub(xpub: String): Result<XpubInfoResponse> {
         return try {
             val (xpubResponse, xpubUtxoItems) = coroutineScope {
@@ -144,8 +145,8 @@ class BlockBookNetworkProvider(
                     balance = balance.movePointLeft(blockchain.decimals()),
                     unspentOutputs = createXpubUnspentOutputs(xpubUtxoItems),
                     usedAddresses = createUsedAddresses(xpubResponse),
-                    hasUnconfirmed = xpubResponse.unconfirmedTxs ?: 0 != 0,
-                    recentTransactions = createXpubRecentTransactions(
+                    hasUnconfirmed = (xpubResponse.unconfirmedTxs ?: 0) != 0,
+                    recentTransactions = createXpubUnconfirmedTransactions(
                         xpubResponse = xpubResponse,
                         ownAddresses = ownAddresses,
                     ),
@@ -198,7 +199,7 @@ class BlockBookNetworkProvider(
         }.orEmpty()
     }
 
-    private fun createXpubRecentTransactions(
+    private fun createXpubUnconfirmedTransactions(
         xpubResponse: GetXpubResponse,
         ownAddresses: Set<String>,
     ): List<BasicTransactionData> {
