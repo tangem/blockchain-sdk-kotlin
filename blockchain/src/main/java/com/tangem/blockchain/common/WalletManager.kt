@@ -15,6 +15,8 @@ import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.*
 import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
+import com.tangem.blockchain.tokenbalance.DefaultTokenBalanceProvider
+import com.tangem.blockchain.tokenbalance.TokenBalanceProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
@@ -31,6 +33,7 @@ abstract class WalletManager(
     val cardTokens: MutableSet<Token> = mutableSetOf(),
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
+    tokenBalanceProvider: TokenBalanceProvider = DefaultTokenBalanceProvider,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
     messageSigner: MessageSigner = DefaultMessageSigner,
     psbtProvider: PsbtProvider = DefaultPsbtProvider,
@@ -38,6 +41,7 @@ abstract class WalletManager(
 ) : TransactionSender,
     TransactionHistoryProvider by transactionHistoryProvider,
     NFTProvider by nftProvider,
+    TokenBalanceProvider by tokenBalanceProvider,
     YieldSupplyProvider by yieldSupplyProvider,
     MessageSigner by messageSigner,
     PsbtProvider by psbtProvider,
