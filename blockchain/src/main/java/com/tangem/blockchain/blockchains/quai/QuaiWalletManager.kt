@@ -17,6 +17,8 @@ import com.tangem.blockchain.extensions.formatHex
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
+import com.tangem.blockchain.tokenbalance.DefaultTokenBalanceProvider
+import com.tangem.blockchain.tokenbalance.TokenBalanceProvider
 import com.tangem.blockchain.pendingtransactions.DefaultPendingTransactionsProvider
 import com.tangem.blockchain.pendingtransactions.PendingTransactionsProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
@@ -32,6 +34,7 @@ class QuaiWalletManager(
     networkProvider: EthereumNetworkProvider,
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
+    tokenBalanceProvider: TokenBalanceProvider = DefaultTokenBalanceProvider,
     supportsENS: Boolean,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
     pendingTransactionsProvider: PendingTransactionsProvider = DefaultPendingTransactionsProvider,
@@ -41,6 +44,7 @@ class QuaiWalletManager(
     networkProvider = networkProvider,
     transactionHistoryProvider = transactionHistoryProvider,
     nftProvider = nftProvider,
+    tokenBalanceProvider = tokenBalanceProvider,
     supportsENS = supportsENS,
     yieldSupplyProvider = yieldSupplyProvider,
     pendingTransactionsProvider = pendingTransactionsProvider,

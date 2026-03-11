@@ -3,6 +3,7 @@ package com.tangem.blockchain.nft.providers.moralis
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.HEX_PREFIX
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
+import com.tangem.blockchain.common.moralis.MoralisConstants
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.nft.NFTProvider
 import com.tangem.blockchain.nft.extensions.ipfsToHttps
@@ -18,11 +19,11 @@ internal class MoralisEvmNFTProvider(
 ) : NFTProvider {
 
     private val moralisEvmApi = createRetrofitInstance(
-        baseUrl = "https://deep-index.moralis.io/",
+        baseUrl = MoralisConstants.BASE_URL,
         headerInterceptors = listOf(
             AddHeaderInterceptor(
                 headers = buildMap {
-                    apiKey?.let { put("X-API-Key", it) }
+                    apiKey?.let { put(MoralisConstants.API_KEY_HEADER, it) }
                 },
             ),
         ),
