@@ -6,6 +6,7 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.nft.NFTProviderFactory
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
+import com.tangem.blockchain.tokenbalance.TokenBalanceProviderFactory
 
 internal object SolanaWalletManagerAssembly : WalletManagerAssembly<SolanaWalletManager>() {
 
@@ -16,6 +17,7 @@ internal object SolanaWalletManagerAssembly : WalletManagerAssembly<SolanaWallet
                 providers = SolanaProvidersBuilder(input.providerTypes, input.config).build(blockchain),
                 transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
                 nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
+                tokenBalanceProvider = TokenBalanceProviderFactory.createTokenBalanceProvider(blockchain, input.config),
             )
         }
     }
