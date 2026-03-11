@@ -20,6 +20,7 @@ import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.nft.NFTProviderFactory
 import com.tangem.blockchain.pendingtransactions.PendingTransactionsProviderFactory
+import com.tangem.blockchain.tokenbalance.TokenBalanceProviderFactory
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 import com.tangem.blockchain.yieldsupply.YieldSupplyProviderFactory
 
@@ -61,6 +62,7 @@ internal class EthereumOptimisticRollupWalletManagerAssembly(
                 ),
                 transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
                 nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
+                tokenBalanceProvider = TokenBalanceProviderFactory.createTokenBalanceProvider(blockchain, input.config),
                 yieldSupplyProvider = yieldLendingProvider,
                 pendingTransactionsProvider = pendingTransactionsProvider,
                 l1GasOracleConfig = getL1GasOracleConfig(blockchain),
