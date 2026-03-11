@@ -107,14 +107,14 @@ class NearWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        transactionData.requireUncompiled()
+        val uncompiledTransaction = transactionData.requireUncompiled()
 
         val accessKey =
             networkService.getAccessKey(wallet.address, wallet.publicKey.blockchainKey.encodeToBase58String())
                 .successOr { return it }
 
         val txToSign = txBuilder.buildForSign(
-            transactionData = transactionData,
+            transactionData = uncompiledTransaction,
             nonce = accessKey.nextNonce,
             blockHash = accessKey.blockHash,
         )
@@ -122,7 +122,7 @@ class NearWalletManager(
         return when (val signatureResult = signer.sign(txToSign, wallet.publicKey)) {
             is CompletionResult.Success -> {
                 val txToSend = txBuilder.buildForSend(
-                    transactionData = transactionData,
+                    transactionData = uncompiledTransaction,
                     signature = signatureResult.data,
                     nonce = accessKey.nextNonce,
                     blockHash = accessKey.blockHash,
@@ -131,7 +131,7 @@ class NearWalletManager(
                     is Result.Success -> {
                         val txHash = sendResultHash.data
                         wallet.addOutgoingTransaction(
-                            transactionData = transactionData,
+                            transactionData = uncompiledTransaction,
                             txHash = txHash,
                             hashToLowercase = false,
                         )

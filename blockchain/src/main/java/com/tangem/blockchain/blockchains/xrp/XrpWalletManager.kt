@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.blockchains.xrp.network.XrpTokenBalance
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
+import com.tangem.blockchain.common.memo.MemoState
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -76,14 +77,14 @@ internal class XrpWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        val uncompiledData = transactionData.requireUncompiled()
-        if (uncompiledData.amount.type is AmountType.Token) {
-            val contractAddress = uncompiledData.amount.type.token.contractAddress
+        val uncompiledTransaction = transactionData.requireUncompiled()
+        if (uncompiledTransaction.amount.type is AmountType.Token) {
+            val contractAddress = uncompiledTransaction.amount.type.token.contractAddress
             if (isNeedSetNoRippling(contractAddress)) {
-                return sendTokenWithNoRippleSetup(uncompiledData, contractAddress, signer)
+                return sendTokenWithNoRippleSetup(uncompiledTransaction, contractAddress, signer)
             }
         }
-        return performStandardSend(uncompiledData, signer)
+        return performStandardSend(uncompiledTransaction, signer)
     }
 
     private suspend fun sendTokenWithNoRippleSetup(
@@ -209,11 +210,21 @@ internal class XrpWalletManager(
         return networkProvider.checkIsAccountCreated(destinationAddress)
     }
 
-    override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
-        transactionData.requireUncompiled()
+    override suspend fun validateMemo(memo: String): Result<MemoState> {
+        if (memo.isEmpty()) return Result.Success(MemoState.Valid)
+        val tag = memo.toLongOrNull()
+        val isValid = tag != null && tag >= 0 && tag <= XRP_TAG_MAX_NUMBER
+        return Result.Success(if (isValid) MemoState.Valid else MemoState.Invalid)
+    }
 
-        val destinationTag = (transactionData.extras as? XrpTransactionBuilder.XrpTransactionExtras)?.destinationTag
-        if (destinationTag == null && networkProvider.checkDestinationTagRequired(transactionData.destinationAddress)) {
+    override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
+        val uncompiledTransaction = transactionData.requireUncompiled()
+
+        val destinationTag =
+            (uncompiledTransaction.extras as? XrpTransactionBuilder.XrpTransactionExtras)?.destinationTag
+        if (destinationTag == null &&
+            networkProvider.checkDestinationTagRequired(uncompiledTransaction.destinationAddress)
+        ) {
             return kotlin.Result.failure(BlockchainSdkError.DestinationTagRequired)
         }
         return kotlin.Result.success(Unit)
@@ -335,5 +346,9 @@ internal class XrpWalletManager(
             key = storeKey(),
             value = trustlineData.copy(trustlinesWithoutNoRipple = updatedTrustlines),
         )
+    }
+
+    private companion object {
+        const val XRP_TAG_MAX_NUMBER = 0xFFFFFFFFL
     }
 }
