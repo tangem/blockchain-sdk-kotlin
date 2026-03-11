@@ -41,8 +41,12 @@ class SolanaWalletManager internal constructor(
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
     tokenBalanceProvider: TokenBalanceProvider = DefaultTokenBalanceProvider,
-) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider, nftProvider = nftProvider,
-   tokenBalanceProvider = tokenBalanceProvider), RentProvider,
+) : WalletManager(
+    wallet,
+    transactionHistoryProvider = transactionHistoryProvider,
+    nftProvider = nftProvider,
+    tokenBalanceProvider = tokenBalanceProvider,
+), RentProvider,
     TransactionPreparer,
     TransactionValidator {
 
