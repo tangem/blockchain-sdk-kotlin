@@ -14,7 +14,14 @@ import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import java.math.BigDecimal
+import java.math.BigInteger
+import kotlin.math.ceil
 
+/**
+ * Mantle wallet manager with custom fee calculation.
+ *
+ * https://tangem.slack.com/archives/GMXC6PP71/p1719591856597299?thread_ts=1714215815.690169&cid=GMXC6PP71
+ */
 class MantleWalletManager(
     wallet: Wallet,
     transactionBuilder: EthereumTransactionBuilder,
@@ -33,39 +40,20 @@ class MantleWalletManager(
         destination: String,
         callData: SmartContractCallData?,
     ): Result<TransactionFee> {
-        return when (amount.type) {
-            is AmountType.Coin -> getFeeForCoinTransaction(amount, destination, callData)
-            is AmountType.Token -> super.getFeeInternal(amount, destination, callData)
-            else -> Result.Failure(BlockchainSdkError.UnsupportedOperation())
-        }
-    }
-
-    private suspend fun getFeeForCoinTransaction(
-        amount: Amount,
-        destination: String,
-        callData: SmartContractCallData?,
-    ): Result<TransactionFee> {
-        val patchedAmount = if (amount.value != BigDecimal.ZERO && callData == null) {
-            amount.minus(ONE_WEI)
-        } else {
-            amount
-        }
+        val patchedAmount = prepareAdjustedAmount(amount)
         return super.getFeeInternal(patchedAmount, destination, callData)
-            .map {
-                when (it) {
+            .map { transactionFee ->
+                when (transactionFee) {
                     is TransactionFee.Single -> {
-                        val fee = requireEthereumFee(it.normal)
-                        it.copy(normal = mapFeeForEstimate(fee))
+                        transactionFee.copy(
+                            normal = mapFeeWithMultiplier(transactionFee.normal, FEE_ESTIMATE_MULTIPLIER),
+                        )
                     }
                     is TransactionFee.Choosable -> {
-                        val normalFee = requireEthereumFee(it.normal)
-                        val minimumFee = requireEthereumFee(it.minimum)
-                        val priorityFee = requireEthereumFee(it.priority)
-
                         TransactionFee.Choosable(
-                            normal = mapFeeForEstimate(normalFee),
-                            minimum = mapFeeForEstimate(minimumFee),
-                            priority = mapFeeForEstimate(priorityFee),
+                            normal = mapFeeWithMultiplier(transactionFee.normal, FEE_ESTIMATE_MULTIPLIER),
+                            minimum = mapFeeWithMultiplier(transactionFee.minimum, FEE_ESTIMATE_MULTIPLIER),
+                            priority = mapFeeWithMultiplier(transactionFee.priority, FEE_ESTIMATE_MULTIPLIER),
                         )
                     }
                 }
@@ -78,15 +66,24 @@ class MantleWalletManager(
     ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
         return when (transactionData) {
             is TransactionData.Uncompiled -> {
-                when (transactionData.amount.type) {
-                    is AmountType.Coin -> {
-                        signCoinTransaction(transactionData, signer)
-                    }
-                    is AmountType.Token -> {
-                        super.sign(transactionData, signer)
-                    }
-                    else -> Result.Failure(BlockchainSdkError.UnsupportedOperation())
-                }
+                val patchedFee = mapFeeWithMultiplier(transactionData.fee, FEE_SEND_MULTIPLIER)
+                val extras = transactionData.extras as? EthereumTransactionExtras
+                val patchedGasLimit = multiplyGasLimit(
+                    getGasLimitFromFee(transactionData.fee),
+                    FEE_SEND_MULTIPLIER,
+                )
+
+                super.sign(
+                    transactionData = transactionData.copy(
+                        fee = patchedFee,
+                        extras = EthereumTransactionExtras(
+                            gasLimit = patchedGasLimit,
+                            callData = extras?.callData,
+                            nonce = extras?.nonce,
+                        ),
+                    ),
+                    signer = signer,
+                )
             }
             is TransactionData.Compiled -> {
                 super.sign(transactionData, signer)
@@ -94,48 +91,71 @@ class MantleWalletManager(
         }
     }
 
-    private suspend fun signCoinTransaction(
-        transactionData: TransactionData.Uncompiled,
-        signer: TransactionSigner,
-    ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
-        val fee = requireEthereumFee(transactionData.fee)
+    /**
+     * Adjusts amount for fee estimation when sending max balance.
+     * Subtracts minimal value only when amount equals current balance (sending all funds).
+     */
+    private fun prepareAdjustedAmount(amount: Amount): Amount {
+        if (amount.type !is AmountType.Coin) return amount
 
-        val patchedFee = fee.copy(
-            amount = fee.amount.copy(value = fee.amount.value?.multiply(FEE_SEND_MULTIPLIER)),
-            gasLimit = fee.gasLimit.toBigDecimal().multiply(FEE_SEND_MULTIPLIER).toBigInteger(),
-        )
+        val currentBalance = wallet.amounts[AmountType.Coin]?.value ?: return amount
+        val amountValue = amount.value ?: return amount
 
-        val extras = transactionData.extras as? EthereumTransactionExtras
-        return super.sign(
-            transactionData = transactionData.copy(
-                fee = patchedFee,
-                // Presence of extras is a workaround for correct gasPrice calculation in EthereumUtils
-                // This scenario needs to be reworked
-                // [REDACTED_JIRA]
-                extras = EthereumTransactionExtras(
-                    gasLimit = fee.gasLimit.toBigDecimal().multiply(FEE_SEND_MULTIPLIER).toBigInteger(),
-                    callData = extras?.callData,
-                    nonce = extras?.nonce,
-                ),
-            ),
-            signer = signer,
-        )
+        val delta = BigDecimal.ONE.movePointLeft(wallet.blockchain.decimals())
+        val isMaxAmount = (currentBalance - amountValue).abs() <= delta
+
+        return if (isMaxAmount && amountValue > BigDecimal.ZERO) {
+            amount.copy(value = amountValue - delta)
+        } else {
+            amount
+        }
     }
 
-    private fun mapFeeForEstimate(fee: Fee.Ethereum.Legacy): Fee {
-        return fee.copy(
-            amount = fee.amount.copy(value = fee.amount.value?.multiply(FEE_ESTIMATE_MULTIPLIER)),
-            gasLimit = fee.gasLimit.toBigDecimal().multiply(FEE_ESTIMATE_MULTIPLIER).toBigInteger(),
-        )
+    private fun mapFeeWithMultiplier(fee: Fee?, multiplier: BigDecimal): Fee {
+        val ethereumFee = fee as? Fee.Ethereum
+            ?: error("Fee should be Fee.Ethereum, but was $fee")
+
+        val newGasLimit = multiplyGasLimit(ethereumFee.gasLimit, multiplier)
+
+        return when (ethereumFee) {
+            is Fee.Ethereum.EIP1559 -> {
+                val newAmount = calculateFeeAmount(newGasLimit, ethereumFee.maxFeePerGas)
+                ethereumFee.copy(
+                    amount = ethereumFee.amount.copy(value = newAmount),
+                    gasLimit = newGasLimit,
+                )
+            }
+            is Fee.Ethereum.Legacy -> {
+                val newAmount = calculateFeeAmount(newGasLimit, ethereumFee.gasPrice)
+                ethereumFee.copy(
+                    amount = ethereumFee.amount.copy(value = newAmount),
+                    gasLimit = newGasLimit,
+                )
+            }
+            is Fee.Ethereum.TokenCurrency -> {
+                error("TokenCurrency fee is not supported for Mantle")
+            }
+        }
     }
 
-    private fun requireEthereumFee(fee: Fee?): Fee.Ethereum.Legacy {
-        return fee as? Fee.Ethereum.Legacy ?: error("Fee should be Fee.Ethereum")
+    private fun getGasLimitFromFee(fee: Fee?): BigInteger {
+        val ethereumFee = fee as? Fee.Ethereum
+            ?: error("Fee should be Fee.Ethereum, but was $fee")
+        return ethereumFee.gasLimit
+    }
+
+    private fun multiplyGasLimit(gasLimit: BigInteger, multiplier: BigDecimal): BigInteger {
+        val result = gasLimit.toBigDecimal().multiply(multiplier)
+        return ceil(result.toDouble()).toLong().toBigInteger()
+    }
+
+    private fun calculateFeeAmount(gasLimit: BigInteger, gasPrice: BigInteger): BigDecimal {
+        val decimals = wallet.blockchain.decimals()
+        return (gasLimit * gasPrice).toBigDecimal().movePointLeft(decimals)
     }
 
     companion object {
         private val FEE_ESTIMATE_MULTIPLIER = BigDecimal("1.6")
         private val FEE_SEND_MULTIPLIER = BigDecimal("0.7")
-        private val ONE_WEI = BigDecimal("1E-18")
     }
 }
