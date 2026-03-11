@@ -26,6 +26,8 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
+import com.tangem.blockchain.tokenbalance.DefaultTokenBalanceProvider
+import com.tangem.blockchain.tokenbalance.TokenBalanceProvider
 import com.tangem.blockchain.pendingtransactions.DefaultPendingTransactionsProvider
 import com.tangem.blockchain.pendingtransactions.PendingTransactionStatus
 import com.tangem.blockchain.pendingtransactions.PendingTransactionsProvider
@@ -49,6 +51,7 @@ open class EthereumWalletManager(
     protected val networkProvider: EthereumNetworkProvider,
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
+    tokenBalanceProvider: TokenBalanceProvider = DefaultTokenBalanceProvider,
     private val supportsENS: Boolean,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
     private val pendingTransactionsProvider: PendingTransactionsProvider = DefaultPendingTransactionsProvider,
@@ -64,6 +67,7 @@ open class EthereumWalletManager(
     wallet = wallet,
     transactionHistoryProvider = transactionHistoryProvider,
     nftProvider = nftProvider,
+    tokenBalanceProvider = tokenBalanceProvider,
     yieldSupplyProvider = yieldSupplyProvider,
 ),
     SignatureCountValidator,
