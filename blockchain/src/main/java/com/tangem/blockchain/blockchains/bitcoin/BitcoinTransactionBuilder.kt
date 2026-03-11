@@ -66,8 +66,8 @@ open class BitcoinTransactionBuilder(
 
         val outputsToSend = getMinimumRequiredUTXOsToSend(
             unspentOutputs = unspentOutputs!!,
-            transactionAmount = uncompiledTransaction.amount.value!!,
-            transactionFeeAmount = uncompiledTransaction.fee?.amount?.value!!,
+            transactionAmount = requireNotNull(uncompiledTransaction.amount.value),
+            transactionFeeAmount = requireNotNull(uncompiledTransaction.fee?.amount?.value),
             unspentToAmount = { it.amount },
             dustValue = dustValue,
         ).successOr { failure ->
@@ -184,7 +184,7 @@ open class BitcoinTransactionBuilder(
 
         val fullAmount = unspentOutputs.map { it.amount }.reduce { acc, number -> acc + number }
         return fullAmount - (
-            uncompiledTransaction.amount.value!! + (
+            requireNotNull(uncompiledTransaction.amount.value) + (
                 uncompiledTransaction.fee?.amount?.value
                     ?: 0.toBigDecimal()
                 )
@@ -235,7 +235,7 @@ internal fun TransactionData.toBitcoinJTransaction(
         transaction.addInput(input)
     }
     transaction.addOutput(
-        Coin.parseCoin(uncompiledTransaction.amount.value!!.toPlainString()),
+        Coin.parseCoin(requireNotNull(uncompiledTransaction.amount.value).toPlainString()),
         Address.fromString(networkParameters, uncompiledTransaction.destinationAddress),
     )
     if (!change.isZero()) {

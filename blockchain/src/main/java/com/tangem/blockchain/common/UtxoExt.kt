@@ -117,6 +117,8 @@ val Blockchain.isUTXO: Boolean
         Base,
         BaseTestnet,
         Moonriver,
+        Monad,
+        MonadTestnet,
         MoonriverTestnet,
         Mantle,
         MantleTestnet,
