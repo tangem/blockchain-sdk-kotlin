@@ -92,7 +92,7 @@ internal object EthEip712Util {
      * call for a given `message`, or fed to `ecrecover` along with a signature to recover the public key
      * used to produce the signature.
      */
-    private fun hashPersonalMessage(message: ByteArray): ByteArray {
+    fun hashPersonalMessage(message: ByteArray): ByteArray {
         val prefix = "\u0019Ethereum Signed Message:\n${message.size}".toByteArray()
         return (prefix + message).keccak()
     }

@@ -169,7 +169,7 @@ internal class WalletManagerFactoryTest {
         every { Log.e(any(), any()) } returns 0
 
         return WalletManagerFactory(
-            BlockchainSdkConfig(
+            config = BlockchainSdkConfig(
                 blockchairCredentials = BlockchairCredentials(
                     apiKey = listOf("anyKey"),
                     authToken = "anyToken",
@@ -215,6 +215,8 @@ internal class WalletManagerFactoryTest {
                     sui = GetBlockAccessToken(),
                     telos = GetBlockAccessToken(),
                     tezos = GetBlockAccessToken(),
+                    monad = GetBlockAccessToken(),
+                    stellar = GetBlockAccessToken(),
                 ),
                 tronGridApiKey = "",
                 chiaFireAcademyApiKey = "",
