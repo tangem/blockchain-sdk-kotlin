@@ -112,12 +112,9 @@ internal class StellarWalletManager(
     private suspend fun innerGetFee(): Result<TransactionFee> {
         val feeStats = networkProvider.getFeeStats().successOr { return it }
 
-        val decimals = blockchain.decimals()
-        val feeCharged = feeStats.feeCharged
-            ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-        val minChargedFee = feeCharged.mode.toBigDecimal().movePointLeft(decimals)
-        val normalChargedFee = feeCharged.p80.toBigDecimal().movePointLeft(decimals)
-        val priorityChargedFee = feeCharged.p99.toBigDecimal().movePointLeft(decimals)
+        val minChargedFee = feeStats.feeCharged.mode.toBigDecimal().movePointLeft(blockchain.decimals())
+        val normalChargedFee = feeStats.feeCharged.p80.toBigDecimal().movePointLeft(blockchain.decimals())
+        val priorityChargedFee = feeStats.feeCharged.p99.toBigDecimal().movePointLeft(blockchain.decimals())
 
         return Result.Success(
             TransactionFee.Choosable(

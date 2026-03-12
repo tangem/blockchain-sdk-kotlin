@@ -6,7 +6,7 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.JsonRPCResponse
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import org.stellar.sdk.exception.NetworkException
+import org.stellar.sdk.requests.ErrorResponse
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -90,6 +90,6 @@ object ResultChecker {
     }
 
     private fun stellarNetworkError(cause: Throwable?): Boolean {
-        return cause is NetworkException && cause.code != HTTP_NOT_FOUND_CODE
+        return cause is ErrorResponse && cause.code != HTTP_NOT_FOUND_CODE
     }
 }

@@ -85,9 +85,7 @@ dependencies {
     implementation 'fr.acinq.bitcoin:bitcoin-kmp-jvm:0.28.1'
     implementation 'fr.acinq.secp256k1:secp256k1-kmp-jni-jvm:0.19.0'
 
-    implementation('network.lightsail:stellar-sdk:2.2.2') {
-        exclude group: 'org.bouncycastle', module: 'bcprov-jdk18on'
-    }
+    implementation 'com.github.stellar:java-stellar-sdk:0.40.0'
     implementation 'com.github.dogecoin:libdohj:3dd6d7548843fe1891366e0325a05587eb21d1aa'
 
     implementation "com.madgag.spongycastle:core:1.58.0.0"
