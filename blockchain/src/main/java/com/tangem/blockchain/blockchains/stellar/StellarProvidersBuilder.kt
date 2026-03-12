@@ -5,7 +5,6 @@ import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.letNotBlank
-import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
 import org.stellar.sdk.Server
 
 internal class StellarProvidersBuilder(
@@ -48,14 +47,6 @@ internal class StellarProvidersBuilder(
     }
 
     private fun createWrapperProvider(network: StellarNetwork): StellarWrapperNetworkProvider {
-        val httpClient = BlockchainSdkRetrofitBuilder.build()
-        return StellarWrapperNetworkProvider(
-            server = Server(
-                /* serverURI = */ network.url,
-                /* httpClient = */ httpClient,
-                /* submitHttpClient = */ httpClient,
-            ),
-            url = network.url,
-        )
+        return StellarWrapperNetworkProvider(server = Server(network.url), url = network.url)
     }
 }
