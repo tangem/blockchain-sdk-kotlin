@@ -25,4 +25,18 @@ sealed class BlockBookRequest {
     object SendTransaction : BlockBookRequest()
     object GetUTXO : BlockBookRequest()
     data class GetTxById(val txId: String) : BlockBookRequest()
+
+    data class GetXpubInfo(
+        val page: Int? = null,
+        val pageSize: Int? = null,
+    ) : BlockBookRequest() {
+
+        fun params(): String = buildString {
+            append("?details=txslight&tokens=used")
+            if (page != null) append("&page=$page")
+            if (pageSize != null) append("&pageSize=$pageSize")
+        }
+    }
+
+    object GetXpubUTXO : BlockBookRequest()
 }

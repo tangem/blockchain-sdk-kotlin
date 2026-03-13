@@ -71,6 +71,8 @@ data class GetAddressResponse(
         data class Vin(
             @Json(name = "addresses") val addresses: List<String>?,
             @Json(name = "value") val value: String?,
+            // Present only in xpub queries
+            @Json(name = "isOwn") val isOwn: Boolean? = null,
         )
 
         @JsonClass(generateAdapter = true)
@@ -78,6 +80,8 @@ data class GetAddressResponse(
             @Json(name = "addresses") val addresses: List<String>?,
             @Json(name = "hex") val hex: String?,
             @Json(name = "value") val value: String?,
+            // Present only in xpub queries
+            @Json(name = "isOwn") val isOwn: Boolean? = null,
         )
 
         @JsonClass(generateAdapter = true)
