@@ -19,6 +19,8 @@ import com.tangem.blockchain.extensions.*
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
+import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.tokenbalance.DefaultTokenBalanceProvider
 import com.tangem.blockchain.tokenbalance.TokenBalanceProvider
 import kotlinx.coroutines.*
@@ -36,10 +38,15 @@ import java.math.BigDecimal
 class SolanaWalletManager internal constructor(
     wallet: Wallet,
     providers: List<SolanaRpcClient>,
+    transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
     tokenBalanceProvider: TokenBalanceProvider = DefaultTokenBalanceProvider,
-) : WalletManager(wallet, nftProvider = nftProvider, tokenBalanceProvider = tokenBalanceProvider),
-    RentProvider,
+) : WalletManager(
+    wallet,
+    transactionHistoryProvider = transactionHistoryProvider,
+    nftProvider = nftProvider,
+    tokenBalanceProvider = tokenBalanceProvider,
+), RentProvider,
     TransactionPreparer,
     TransactionValidator {
 
