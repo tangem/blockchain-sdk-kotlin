@@ -61,6 +61,9 @@ tasks.register('sourceJar', Jar) {
 
 configurations {
     all*.exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
+    matching { it.name.toLowerCase().contains('unittest') }.all {
+        exclude group: 'network.lightsail', module: 'stellar-sdk-android-spi'
+    }
 }
 
 dependencies {
@@ -85,9 +88,14 @@ dependencies {
     implementation 'fr.acinq.bitcoin:bitcoin-kmp-jvm:0.28.1'
     implementation 'fr.acinq.secp256k1:secp256k1-kmp-jni-jvm:0.19.0'
 
-    implementation('network.lightsail:stellar-sdk:2.2.2') {
+    def stellarSdkVersion = "2.2.3"
+    implementation("network.lightsail:stellar-sdk:$stellarSdkVersion") {
         exclude group: 'org.bouncycastle', module: 'bcprov-jdk18on'
     }
+    implementation ("network.lightsail:stellar-sdk-android-spi:$stellarSdkVersion") {
+        exclude group: 'org.bouncycastle', module: 'bcprov-jdk18on'
+    }
+
     implementation 'com.github.dogecoin:libdohj:3dd6d7548843fe1891366e0325a05587eb21d1aa'
 
     implementation "com.madgag.spongycastle:core:1.58.0.0"
