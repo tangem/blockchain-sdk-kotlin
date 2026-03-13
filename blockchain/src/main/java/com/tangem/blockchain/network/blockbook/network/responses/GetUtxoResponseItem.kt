@@ -10,4 +10,7 @@ data class GetUtxoResponseItem(
     @Json(name = "txid") val txid: String,
     @Json(name = "value") val value: String,
     @Json(name = "vout") val vout: Int,
+    // Present only in xpub queries
+    @Json(name = "address") val address: String? = null,
+    @Json(name = "path") val path: String? = null,
 )
