@@ -19,7 +19,7 @@ internal class MoralisEvmNFTProvider(
 ) : NFTProvider {
 
     private val moralisEvmApi = createRetrofitInstance(
-        baseUrl = MoralisConstants.BASE_URL,
+        baseUrl = MoralisConstants.DEEP_INDEX_API_URL,
         headerInterceptors = listOf(
             AddHeaderInterceptor(
                 headers = buildMap {
