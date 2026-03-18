@@ -17,7 +17,7 @@ internal class MoralisEvmTokenBalanceProvider(
 ) : TokenBalanceProvider {
 
     private val api: MoralisEvmTokenBalanceApi = createRetrofitInstance(
-        baseUrl = MoralisConstants.BASE_URL,
+        baseUrl = MoralisConstants.DEEP_INDEX_API_URL,
         headerInterceptors = listOf(
             AddHeaderInterceptor(
                 headers = buildMap {
