@@ -8,7 +8,7 @@ internal class RavencoinExternalLinkProvider(isTestnet: Boolean) : ExternalLinkP
     override val explorerBaseUrl: String = if (isTestnet) {
         "https://testnet.ravencoin.network/"
     } else {
-        "https://blockbook.ravencoin.org/"
+        "https://rvn.tokenview.io/"
     }
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
