@@ -933,6 +933,29 @@ enum class Blockchain(
         else -> false
     }
 
+    fun canHandleTokenBalances(): Boolean = when (this) {
+        // EVM
+        Ethereum, // supported testnet - Sepolia (11155111)
+        Arbitrum,
+        Avalanche,
+        Fantom,
+        BSC, BSCTestnet,
+        Polygon, // supported testnet - Amoy (80002)
+        Cronos,
+        Moonbeam, MoonbeamTestnet,
+        Moonriver,
+        Chiliz, ChilizTestnet,
+        Optimism,
+        Base, BaseTestnet,
+        Gnosis, // supported testnet - Chiado (10200)
+        Linea, LineaTestnet,
+        PulseChain,
+        Monad,
+        -> true
+
+        else -> false
+    }
+
     fun isEvm(): Boolean = getChainId() != null
 
     fun isFeeApproximate(amountType: AmountType): Boolean = when {
