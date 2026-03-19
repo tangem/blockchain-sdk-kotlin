@@ -15,9 +15,9 @@ class SolanaAddressService : AddressService() {
 
     override fun validate(address: String): Boolean {
         return try {
-            PublicKey(address)
-            true
-        } catch (ex: Exception) {
+            val publicKey = PublicKey(address)
+            publicKey.toByteArray().size == PublicKey.PUBLIC_KEY_LENGTH
+        } catch (_: Exception) {
             false
         }
     }
