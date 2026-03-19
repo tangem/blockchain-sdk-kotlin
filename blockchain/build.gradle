@@ -67,8 +67,8 @@ configurations {
 }
 
 dependencies {
-    implementation 'com.tangem.tangem-sdk-kotlin:core:develop-511'
-    implementation 'com.tangem.tangem-sdk-kotlin:android:develop-511'
+    implementation 'com.tangem.tangem-sdk-kotlin:core:develop-598'
+    implementation 'com.tangem.tangem-sdk-kotlin:android:develop-598'
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.core:core-ktx:1.13.1'
