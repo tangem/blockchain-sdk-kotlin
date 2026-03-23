@@ -526,6 +526,8 @@ enum class Blockchain(
         Binance, BinanceTestnet -> listOf("bnb:")
         Dogecoin -> listOf("doge:", "dogecoin:")
         XRP -> listOf("ripple:", "xrpl:", "xrp:")
+        Solana, SolanaTestnet -> listOf("solana:")
+        Tron, TronTestnet -> listOf("tron:")
         else -> emptyList()
     }
 
