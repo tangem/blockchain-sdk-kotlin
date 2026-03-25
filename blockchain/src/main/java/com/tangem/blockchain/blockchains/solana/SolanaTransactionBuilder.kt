@@ -20,11 +20,16 @@ import org.p2p.solanaj.programs.AssociatedTokenProgram
 import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.programs.SystemProgram
 import java.math.BigDecimal
+import java.math.RoundingMode
+import java.util.concurrent.ConcurrentHashMap
 
 internal class SolanaTransactionBuilder(
     private val account: PublicKey,
     private val multiNetworkProvider: MultiNetworkProvider<SolanaNetworkService>,
 ) {
+
+    private val scaledUiAmountCache = ConcurrentHashMap<String, ScaledUiAmountConfig>()
+    private val checkedScaledUiMints = ConcurrentHashMap.newKeySet<String>()
 
     suspend fun buildUnsignedTransaction(
         destinationAddress: String,
@@ -105,6 +110,8 @@ internal class SolanaTransactionBuilder(
             return Result.Failure(BlockchainSdkError.Solana.SameSourceAndDestinationAddress)
         }
 
+        val adjustedAmount = adjustAmountForScaledUi(token, amount)
+
         val transaction = SolanaTransaction(account).apply {
             addInstructions(
                 tokenProgramId = tokenProgramId,
@@ -113,7 +120,7 @@ internal class SolanaTransactionBuilder(
                 destinationAccount = destinationAccount,
                 sourceAssociatedAccount = tokenInfo.associatedPubK,
                 token = token,
-                amount = amount,
+                amount = adjustedAmount,
             ).successOr { return Result.Failure(it.error) }
 
             val recentBlockHash = multiNetworkProvider.performRequest {
@@ -236,11 +243,44 @@ internal class SolanaTransactionBuilder(
         }
     }
 
+    private suspend fun adjustAmountForScaledUi(token: Token, uiAmount: BigDecimal): BigDecimal {
+        val mintAddress = token.contractAddress
+
+        val config = if (mintAddress in checkedScaledUiMints) {
+            scaledUiAmountCache[mintAddress]
+        } else {
+            when (val result = multiNetworkProvider.performRequest { getScaledUiAmountConfig(mintAddress) }) {
+                is Result.Success -> {
+                    checkedScaledUiMints.add(mintAddress)
+                    result.data?.also { scaledUiAmountCache[mintAddress] = it }
+                }
+                is Result.Failure -> null
+            }
+        }
+
+        config ?: return uiAmount
+
+        val currentTimeSec = System.currentTimeMillis() / MILLIS_IN_SECOND
+        val multiplier = if (config.newMultiplierEffectiveTimestamp > currentTimeSec) {
+            config.multiplier
+        } else {
+            config.newMultiplier
+        }
+
+        if (multiplier.compareTo(BigDecimal.ONE) == 0 || multiplier.compareTo(BigDecimal.ZERO) == 0) {
+            return uiAmount
+        }
+
+        return uiAmount.divide(multiplier, token.decimals, RoundingMode.DOWN)
+    }
+
     private companion object {
         const val DEFAULT_CU_LIMIT = 200_000
         const val CREATE_NEW_ACCOUNT_CU_LIMIT = 400_000
 
         const val DEFAULT_CU_PRICE = 1_000_000L
         const val CREATE_NEW_ACCOUNT_CU_PRICE = 500_000L
+
+        const val MILLIS_IN_SECOND = 1000
     }
 }
