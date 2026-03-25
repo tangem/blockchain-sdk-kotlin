@@ -21,6 +21,7 @@ import org.p2p.solanaj.rpc.types.RpcResponse
 import org.p2p.solanaj.rpc.types.SignatureStatuses
 import org.p2p.solanaj.rpc.types.config.Commitment
 import java.lang.reflect.Type
+import java.math.BigDecimal
 
 /**
 [REDACTED_AUTHOR]
@@ -44,6 +45,12 @@ internal class SolanaNetworkService(
         Types.newParameterizedType(
             RpcResponse::class.java,
             *arrayOf(Type::class.java.cast(NewSplTokenAccountInfo::class.java) as Type),
+        ),
+    )
+    private val mintAccountResponseAdapter = moshi.adapter<RpcResponse<SolanaMintAccountInfo>>(
+        Types.newParameterizedType(
+            RpcResponse::class.java,
+            *arrayOf(Type::class.java.cast(SolanaMintAccountInfo::class.java) as Type),
         ),
     )
 
@@ -306,6 +313,39 @@ internal class SolanaNetworkService(
             }
         }
 
+    suspend fun getScaledUiAmountConfig(mintAddress: String): Result<ScaledUiAmountConfig?> =
+        withContext(Dispatchers.IO) {
+            try {
+                val params = buildList {
+                    add(mintAddress)
+                    add(buildMap { put("encoding", "jsonParsed") })
+                }
+                val rawResponse = provider.call("getAccountInfo", params)
+                val config = parseScaledUiAmountConfig(rawResponse)
+                Result.Success(config)
+            } catch (ex: Exception) {
+                Result.Failure(Solana.Api(ex))
+            }
+        }
+
+    private fun parseScaledUiAmountConfig(rawJson: String): ScaledUiAmountConfig? {
+        val response = mintAccountResponseAdapter.fromJson(rawJson) ?: return null
+        if (response.error != null) return null
+        val extensions = response.result?.value
+            ?.data?.parsed?.info?.extensions
+            ?: return null
+        val scaledExt = extensions.firstOrNull {
+            it.extension == SCALED_UI_AMOUNT_CONFIG_EXTENSION
+        } ?: return null
+        val state = scaledExt.state ?: return null
+
+        return ScaledUiAmountConfig(
+            multiplier = state.multiplier?.toBigDecimalOrNull() ?: BigDecimal.ONE,
+            newMultiplier = state.newMultiplier?.toBigDecimalOrNull() ?: BigDecimal.ONE,
+            newMultiplierEffectiveTimestamp = state.newMultiplierEffectiveTimestamp ?: 0L,
+        )
+    }
+
     private fun Exception.isBlockhashNotFound(): Boolean {
         return message?.contains(BLOCKHASH_NOT_FOUND_ERROR) ?: false
     }
@@ -317,5 +357,13 @@ internal class SolanaNetworkService(
         const val MAX_RETRY_COUNT = 5
         // Error message if blockhash not found, no code provided by RpcException
         const val BLOCKHASH_NOT_FOUND_ERROR = "Blockhash not found"
+
+        private const val SCALED_UI_AMOUNT_CONFIG_EXTENSION = "scaledUiAmountConfig"
     }
 }
+
+internal data class ScaledUiAmountConfig(
+    val multiplier: BigDecimal,
+    val newMultiplier: BigDecimal,
+    val newMultiplierEffectiveTimestamp: Long,
+)
