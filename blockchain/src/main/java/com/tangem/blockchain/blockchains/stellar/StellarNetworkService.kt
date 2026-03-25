@@ -9,15 +9,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import org.stellar.sdk.AbstractTransaction
 import org.stellar.sdk.AssetTypeCreditAlphaNum
 import org.stellar.sdk.AssetTypeNative
 import org.stellar.sdk.Network
 import org.stellar.sdk.Transaction
-import org.stellar.sdk.requests.ErrorResponse
+import org.stellar.sdk.exception.NetworkException
 import org.stellar.sdk.responses.FeeStatsResponse
 import org.stellar.sdk.responses.operations.CreateAccountOperationResponse
 import org.stellar.sdk.responses.operations.OperationResponse
 import org.stellar.sdk.responses.operations.PaymentOperationResponse
+import org.stellar.sdk.xdr.TransactionResult
 import java.net.URISyntaxException
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -43,19 +45,14 @@ internal class StellarNetworkService(
         return try {
             val response = stellarMultiProvider.performRequest(
                 request = StellarWrapperNetworkProvider::submitTransaction,
-                data = Transaction.fromEnvelopeXdr(transaction, network) as Transaction,
+                data = AbstractTransaction.fromEnvelopeXdr(transaction, network) as Transaction,
             ).successOr {
                 return SimpleResult.Failure(it.error)
             }
-            if (response.isSuccess) {
+            if (response.successful) {
                 SimpleResult.Success
             } else {
-                val trResultCode = response.extras?.resultCodes?.transactionResultCode
-                val operationResultCode = response.extras?.resultCodes?.operationsResultCodes?.getOrNull(0) ?: ""
-                var trResult: String = trResultCode + operationResultCode
-
-                if (trResult == "tx_too_late") trResult = "The system time is invalid"
-
+                val trResult = extractErrorFromResultXdr(response.resultXdr)
                 SimpleResult.Failure(BlockchainSdkError.CustomError(trResult))
             }
         } catch (exception: Exception) {
@@ -83,10 +80,10 @@ internal class StellarNetworkService(
             } else { // token transaction
                 // tokenBalance can be null if trustline not created
                 val tokenBalance = account.balances
-                    .filter { it.assetCode.isPresent && it.assetIssuer.isPresent }
-                    .find {
-                        val assetCode = it.assetCode.get()
-                        val assetIssuer = it.assetIssuer.get()
+                    .filter { it.assetCode != null && it.assetIssuer != null }
+                    .find { balance ->
+                        val assetCode = balance.assetCode
+                        val assetIssuer = balance.assetIssuer
                         val separator = StellarTransactionBuilder.TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR
                         "$assetCode${separator}$assetIssuer" == token.contractAddress
                     } // null if trustline not created
@@ -98,7 +95,7 @@ internal class StellarNetworkService(
                     ),
                 )
             }
-        } catch (errorResponse: ErrorResponse) {
+        } catch (errorResponse: NetworkException) {
             if (errorResponse.code == HTTP_NOT_FOUND_CODE) {
                 Result.Success(StellarTargetAccountResponse(accountCreated = false, requiresMemo = false))
             } else {
@@ -141,18 +138,18 @@ internal class StellarNetworkService(
 
                 val accountResponse = accountResponseDeferred.await()
                 val coinBalance = accountResponse.balances
-                    .find { it.asset.isPresent && it.asset.get() is AssetTypeNative }
+                    .find { it.assetType == "native" }
                     ?.balance?.toBigDecimal()
                     ?: return@coroutineScope Result.Failure(
                         BlockchainSdkError.CustomError("Stellar Balance not found"),
                     )
 
-                val tokenBalances = accountResponse.balances
-                    .filter { it.asset.isPresent && it.assetCode.isPresent && it.assetIssuer.isPresent }
-                    .filter { it.asset.get() !is AssetTypeNative }
-                    .map {
-                        StellarAssetBalance(it.balance.toBigDecimal(), it.assetCode.get(), it.assetIssuer.get())
-                    }
+                val tokenBalances = accountResponse.balances.mapNotNull { balance ->
+                    if (balance.assetType == "native") return@mapNotNull null
+                    val assetCode = balance.assetCode ?: return@mapNotNull null
+                    val assetIssuer = balance.assetIssuer ?: return@mapNotNull null
+                    StellarAssetBalance(balance.balance.toBigDecimal(), assetCode, assetIssuer)
+                }
 
                 val ledgerResponse = ledgerResponseDeferred.await()
                 val baseFee = ledgerResponse.baseFeeInStroops.toBigDecimal().movePointLeft(decimals)
@@ -173,7 +170,7 @@ internal class StellarNetworkService(
                 )
             }
         } catch (exception: Exception) {
-            if (exception is ErrorResponse && exception.code == HTTP_NOT_FOUND_CODE) {
+            if (exception is NetworkException && exception.code == HTTP_NOT_FOUND_CODE) {
                 Result.Failure(BlockchainSdkError.AccountNotFound())
             } else {
                 Result.Failure(exception.toBlockchainSdkError())
@@ -251,6 +248,21 @@ internal class StellarNetworkService(
             date = Calendar.getInstance().apply { time = dateFormat.parse(createdAt)!! },
             hash = transactionHash,
         )
+    }
+
+    private fun extractErrorFromResultXdr(resultXdr: String?): String {
+        if (resultXdr == null) return "Unknown error"
+        return try {
+            val txResult = TransactionResult.fromXdrBase64(resultXdr)
+            val resultCode = txResult.result.discriminant.name
+            if (resultCode == "txTOO_LATE") {
+                "The system time is invalid"
+            } else {
+                resultCode
+            }
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            resultXdr
+        }
     }
 
     companion object {
