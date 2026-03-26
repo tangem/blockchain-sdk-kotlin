@@ -6,8 +6,9 @@ import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.blockchains.xrp.network.XrpTokenBalance
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
-import com.tangem.blockchain.common.memo.MemoState
+import com.tangem.blockchain.common.memo.MemoValidator
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
+import com.tangem.blockchain.common.memo.MemoState
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -29,6 +30,8 @@ internal class XrpWalletManager(
     private val networkProvider: XrpNetworkProvider,
     private val dataStorage: AdvancedDataStorage,
 ) : WalletManager(wallet), ReserveAmountProvider, TransactionValidator, AssetRequirementsManager {
+
+    private val memoValidator: MemoValidator = XrpMemoValidator(networkProvider)
 
     override val currentHost: String
         get() = networkProvider.baseUrl
@@ -211,10 +214,7 @@ internal class XrpWalletManager(
     }
 
     override suspend fun validateMemo(memo: String): Result<MemoState> {
-        if (memo.isEmpty()) return Result.Success(MemoState.Valid)
-        val tag = memo.toLongOrNull()
-        val isValid = tag != null && tag >= 0 && tag <= XRP_TAG_MAX_NUMBER
-        return Result.Success(if (isValid) MemoState.Valid else MemoState.Invalid)
+        return memoValidator.validateMemo(memo)
     }
 
     override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
@@ -222,10 +222,12 @@ internal class XrpWalletManager(
 
         val destinationTag =
             (uncompiledTransaction.extras as? XrpTransactionBuilder.XrpTransactionExtras)?.destinationTag
-        if (destinationTag == null &&
-            networkProvider.checkDestinationTagRequired(uncompiledTransaction.destinationAddress)
-        ) {
-            return kotlin.Result.failure(BlockchainSdkError.DestinationTagRequired)
+        if (destinationTag == null) {
+            val isMemoRequired = memoValidator.isMemoRequired(uncompiledTransaction.destinationAddress)
+                .successOr { false }
+            if (isMemoRequired) {
+                return kotlin.Result.failure(BlockchainSdkError.DestinationTagRequired)
+            }
         }
         return kotlin.Result.success(Unit)
     }
@@ -346,9 +348,5 @@ internal class XrpWalletManager(
             key = storeKey(),
             value = trustlineData.copy(trustlinesWithoutNoRipple = updatedTrustlines),
         )
-    }
-
-    private companion object {
-        const val XRP_TAG_MAX_NUMBER = 0xFFFFFFFFL
     }
 }
