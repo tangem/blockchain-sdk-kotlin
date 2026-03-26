@@ -10,6 +10,7 @@ import com.tangem.blockchain.blockchains.ravencoin.RavencoinMainNetParams
 import com.tangem.blockchain.blockchains.ravencoin.RavencoinTestNetParams
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.address.Address as WalletAddress
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.transaction.getMinimumRequiredUTXOsToSend
 import com.tangem.blockchain.extensions.Result
@@ -18,6 +19,7 @@ import com.tangem.common.extensions.calculateRipemd160
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.isZero
 import com.tangem.common.extensions.toCompressedPublicKey
+import com.tangem.crypto.hdWallet.DerivationPath
 import org.bitcoinj.core.*
 import org.bitcoinj.crypto.TransactionSignature
 import org.bitcoinj.params.MainNetParams
@@ -33,7 +35,7 @@ import java.math.BigInteger
 open class BitcoinTransactionBuilder(
     private val walletPublicKey: ByteArray,
     blockchain: Blockchain,
-    walletAddresses: Set<com.tangem.blockchain.common.address.Address> = emptySet(),
+    walletAddresses: Set<WalletAddress> = emptySet(),
 ) {
     private val walletScripts =
         walletAddresses.filterIsInstance<BitcoinScriptAddress>().map { it.script }
@@ -211,6 +213,149 @@ open class BitcoinTransactionBuilder(
         return TransactionSignature(r, canonicalS)
     }
 
+    /**
+     * Build hashes for multi-address signing. Each UTXO input gets its own derived public key
+     * and derivation path (from [BitcoinUnspentOutput.publicKey] and [BitcoinUnspentOutput.derivationPath]).
+     *
+     * @param changeAddress Explicit change address (e.g., first unused change address from DynamicAddressManager)
+     * @return List of [MultiAddressSignatureInfo] — one per input, with hash, publicKey, and derivationPath
+     */
+    open fun buildToSignMultiAddress(
+        transactionData: TransactionData,
+        dustValue: BigDecimal?,
+        changeAddress: String?,
+    ): Result<List<MultiAddressSignatureInfo>> {
+        val uncompiledTransaction = transactionData.requireUncompiled()
+
+        if (unspentOutputs.isNullOrEmpty()) {
+            return Result.Failure(BlockchainSdkError.CustomError("Unspent outputs are missing"))
+        }
+
+        val outputsToSend = getMinimumRequiredUTXOsToSend(
+            unspentOutputs = unspentOutputs!!,
+            transactionAmount = requireNotNull(uncompiledTransaction.amount.value),
+            transactionFeeAmount = requireNotNull(uncompiledTransaction.fee?.amount?.value),
+            unspentToAmount = { it.amount },
+            dustValue = dustValue,
+        ).successOr { failure ->
+            return failure
+        }
+
+        val change: BigDecimal = calculateChange(transactionData, outputsToSend)
+        transaction = toBitcoinJTransactionMultiAddress(
+            networkParameters = networkParameters,
+            transactionData = uncompiledTransaction,
+            unspentOutputs = outputsToSend,
+            change = change,
+            changeAddress = changeAddress,
+        )
+
+        val signatureInfos = MutableList<MultiAddressSignatureInfo?>(transaction.inputs.size) { null }
+        for (input in transaction.inputs) {
+            val index = input.index
+            val utxo = outputsToSend[index]
+            val inputPublicKey = utxo.publicKey
+                ?: return Result.Failure(BlockchainSdkError.CustomError("UTXO at index $index has no publicKey"))
+            val pathString = utxo.derivationPath
+                ?: return Result.Failure(BlockchainSdkError.CustomError("UTXO at index $index has no derivationPath"))
+            val derivationPath = DerivationPath(pathString)
+
+            val scriptPubKey = Script(transaction.inputs[index].scriptBytes)
+
+            val scriptToSign = when (scriptPubKey.scriptType) {
+                Script.ScriptType.P2PKH -> scriptPubKey
+                Script.ScriptType.P2SH, Script.ScriptType.P2WSH -> findSpendingScript(scriptPubKey)
+                Script.ScriptType.P2WPKH -> ScriptBuilder.createP2PKHOutputScript(
+                    ECKey.fromPublicOnly(inputPublicKey.toCompressedPublicKey()),
+                )
+                else -> return Result.Failure(BlockchainSdkError.CustomError("Unsupported script type"))
+            }
+
+            val hash = when (scriptPubKey.scriptType) {
+                Script.ScriptType.P2PKH, Script.ScriptType.P2SH -> {
+                    transaction.hashForSignature(
+                        index,
+                        scriptToSign,
+                        Transaction.SigHash.ALL,
+                        false,
+                    ).bytes
+                }
+                Script.ScriptType.P2WPKH, Script.ScriptType.P2WSH -> {
+                    transaction.hashForWitnessSignature(
+                        index,
+                        scriptToSign,
+                        Coin.parseCoin(outputsToSend[index].amount.toPlainString()),
+                        Transaction.SigHash.ALL,
+                        false,
+                    ).bytes
+                }
+                else -> return Result.Failure(BlockchainSdkError.CustomError("Unsupported script type"))
+            }
+
+            signatureInfos[index] = MultiAddressSignatureInfo(
+                hash = hash,
+                publicKey = inputPublicKey,
+                derivationPath = derivationPath,
+            )
+        }
+
+        return Result.Success(signatureInfos.filterNotNull())
+    }
+
+    /**
+     * Build final serialized transaction from multi-address signatures.
+     *
+     * @param signatures Ordered list of 64-byte signatures (one per input, in input order)
+     * @param signatureInfos The [MultiAddressSignatureInfo] list from [buildToSignMultiAddress], used for per-input public keys
+     */
+    @Suppress("MagicNumber")
+    open fun buildToSendMultiAddress(
+        signatures: List<ByteArray>,
+        signatureInfos: List<MultiAddressSignatureInfo>,
+    ): ByteArray {
+        for (index in transaction.inputs.indices) {
+            val scriptPubKey = Script(transaction.inputs[index].scriptBytes)
+            val signatureBytes = signatures[index]
+
+            val r = BigInteger(1, signatureBytes.copyOfRange(0, 32))
+            val s = BigInteger(1, signatureBytes.copyOfRange(32, 64))
+            val canonicalS = ECKey.ECDSASignature(r, s).toCanonicalised().s
+            val signature = TransactionSignature(r, canonicalS)
+
+            val inputPublicKey = signatureInfos[index].publicKey
+
+            transaction.inputs[index].scriptSig = when (scriptPubKey.scriptType) {
+                Script.ScriptType.P2PKH -> ScriptBuilder.createInputScript(
+                    signature,
+                    ECKey.fromPublicOnly(inputPublicKey),
+                )
+                Script.ScriptType.P2SH -> {
+                    val script = findSpendingScript(scriptPubKey)
+                    ScriptBuilder.createP2SHMultiSigInputScript(mutableListOf(signature), script)
+                }
+                Script.ScriptType.P2WPKH, Script.ScriptType.P2WSH -> ScriptBuilder.createEmpty()
+                else -> error("Unsupported output script")
+            }
+            transactionSizeWithoutWitness = transaction.messageSize
+
+            transaction.inputs[index].witness = when (scriptPubKey.scriptType) {
+                Script.ScriptType.P2WPKH -> TransactionWitness.redeemP2WPKH(
+                    signature,
+                    ECKey.fromPublicOnly(inputPublicKey.toCompressedPublicKey()),
+                )
+                Script.ScriptType.P2WSH -> {
+                    val witness = TransactionWitness(3)
+                    witness.setPush(0, byteArrayOf())
+                    witness.setPush(1, signature.encodeToBitcoin())
+                    witness.setPush(2, findSpendingScript(scriptPubKey).program)
+                    witness
+                }
+                else -> null
+            }
+        }
+        return transaction.bitcoinSerialize()
+    }
+
     @Suppress("MagicNumber")
     private fun findSpendingScript(scriptPubKey: Script): Script {
         val scriptHash = ScriptPattern.extractHashFromP2SH(scriptPubKey)
@@ -261,6 +406,44 @@ internal fun TransactionData.toBitcoinJTransaction(
                 networkParameters,
                 uncompiledTransaction.sourceAddress,
             ),
+        )
+    }
+    return transaction
+}
+
+/**
+ * Creates a bitcoinj Transaction for multi-address mode with an explicit change address.
+ * Unlike [toBitcoinJTransaction], this correctly uses the provided [changeAddress] for the change output.
+ */
+internal fun toBitcoinJTransactionMultiAddress(
+    networkParameters: NetworkParameters?,
+    transactionData: TransactionData.Uncompiled,
+    unspentOutputs: List<BitcoinUnspentOutput>,
+    change: BigDecimal,
+    changeAddress: String?,
+): Transaction {
+    val transaction = Transaction(networkParameters)
+    for (utxo in unspentOutputs) {
+        val spendTxHash = Sha256Hash.wrap(utxo.transactionHash)
+        val params = transaction.params
+        val input = TransactionInput(
+            params,
+            transaction,
+            Script(utxo.outputScript).program,
+            TransactionOutPoint(params, utxo.outputIndex, spendTxHash),
+        )
+        input.sequenceNumber = RBF_SEQUENCE_NUMBER
+        transaction.addInput(input)
+    }
+    transaction.addOutput(
+        Coin.parseCoin(requireNotNull(transactionData.amount.value).toPlainString()),
+        Address.fromString(networkParameters, transactionData.destinationAddress),
+    )
+    if (!change.isZero()) {
+        val resolvedChangeAddress = changeAddress ?: transactionData.sourceAddress
+        transaction.addOutput(
+            Coin.parseCoin(change.toPlainString()),
+            Address.fromString(networkParameters, resolvedChangeAddress),
         )
     }
     return transaction

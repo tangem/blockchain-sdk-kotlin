@@ -15,6 +15,11 @@ internal class BitcoinCashWalletManager(
 ) : BitcoinWalletManager(wallet, transactionHistoryProvider, transactionBuilder, networkProvider, feesCalculator) {
 
     override suspend fun updateInternal() {
+        // In XPUB mode, delegate to base class which handles XPUB queries
+        if (isDynamicAddressesEnabled) {
+            super.updateInternal()
+            return
+        }
         when (val response = networkProvider.getInfo(wallet.address)) {
             is Result.Success -> updateWallet(response.data)
             is Result.Failure -> updateError(response.error)
