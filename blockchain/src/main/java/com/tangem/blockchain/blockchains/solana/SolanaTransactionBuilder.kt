@@ -21,15 +21,11 @@ import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.programs.SystemProgram
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.util.concurrent.ConcurrentHashMap
 
 internal class SolanaTransactionBuilder(
     private val account: PublicKey,
     private val multiNetworkProvider: MultiNetworkProvider<SolanaNetworkService>,
 ) {
-
-    private val scaledUiAmountCache = ConcurrentHashMap<String, ScaledUiAmountConfig>()
-    private val checkedScaledUiMints = ConcurrentHashMap.newKeySet<String>()
 
     suspend fun buildUnsignedTransaction(
         destinationAddress: String,
@@ -246,19 +242,10 @@ internal class SolanaTransactionBuilder(
     private suspend fun adjustAmountForScaledUi(token: Token, uiAmount: BigDecimal): BigDecimal {
         val mintAddress = token.contractAddress
 
-        val config = if (mintAddress in checkedScaledUiMints) {
-            scaledUiAmountCache[mintAddress]
-        } else {
-            when (val result = multiNetworkProvider.performRequest { getScaledUiAmountConfig(mintAddress) }) {
-                is Result.Success -> {
-                    checkedScaledUiMints.add(mintAddress)
-                    result.data?.also { scaledUiAmountCache[mintAddress] = it }
-                }
-                is Result.Failure -> null
-            }
-        }
-
-        config ?: return uiAmount
+        val config = when (val result = multiNetworkProvider.performRequest { getScaledUiAmountConfig(mintAddress) }) {
+            is Result.Success -> result.data
+            is Result.Failure -> null
+        } ?: return uiAmount
 
         val currentTimeSec = System.currentTimeMillis() / MILLIS_IN_SECOND
         val multiplier = if (config.newMultiplierEffectiveTimestamp > currentTimeSec) {
