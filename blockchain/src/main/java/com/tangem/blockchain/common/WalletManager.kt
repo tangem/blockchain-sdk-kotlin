@@ -330,6 +330,7 @@ interface TransactionValidator {
 
     suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit>
 
+    @Deprecated("ReplaceWith(\"MemoValidator.validateMemo(memo)\")")
     suspend fun validateMemo(memo: String): Result<MemoState> {
         return Result.Success(MemoState.NotSupported)
     }
