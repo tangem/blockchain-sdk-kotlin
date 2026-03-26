@@ -6,6 +6,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.DynamicAddressesManager
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.crypto.hdWallet.DerivationNode
+import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 
 /**
@@ -127,14 +128,13 @@ class BitcoinDynamicAddressesManager(
          * Example: "m/84'/0'/0'/0/5" → Pair(chain=0, index=5)
          */
         fun parseChainAndIndex(path: String): Pair<Int, Int> {
-            val segments = path.split("/")
-            require(segments.size >= MIN_PATH_SEGMENTS) { "Path must have at least chain and index segments: $path" }
+            val nodes = DerivationPath(path).nodes
+            require(nodes.size >= MIN_PATH_SEGMENTS) { "Path must have at least chain and index segments: $path" }
 
-            // Last two non-hardened segments are chain and index
-            val indexStr = segments.last().removeSuffix("'")
-            val chainStr = segments[segments.size - 2].removeSuffix("'")
+            val chain = nodes[nodes.size - 2].index.toInt()
+            val index = nodes.last().index.toInt()
 
-            return Pair(chainStr.toInt(), indexStr.toInt())
+            return Pair(chain, index)
         }
     }
 }
