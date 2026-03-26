@@ -188,7 +188,7 @@ internal class SolanaTransactionSizeReducer(
             Logger.logTransaction(
                 "v0 message still too large after ALT: ${v0Message.size} > $MAX_TRANSACTION_BODY_SIZE bytes",
             )
-            return Result.Failure(BlockchainSdkError.CustomError("Solana v0 transaction too large after ALT reduction"))
+            return Result.Failure(BlockchainSdkError.Solana.TransactionTooLarge())
         }
 
         val signedMessage = signer.sign(v0Message, walletPubkey).successOr {
@@ -379,7 +379,7 @@ internal class SolanaTransactionSizeReducer(
     }
 
     private companion object {
-        const val ALT_ADDRESS_CHUNK_SIZE = 14
+        const val ALT_ADDRESS_CHUNK_SIZE = 22
         const val MAX_TRANSACTION_BODY_SIZE = 928
     }
 }

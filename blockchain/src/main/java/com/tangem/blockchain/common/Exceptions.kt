@@ -82,6 +82,7 @@ sealed class BlockchainSdkError(
         data class DestinationRentExemption(
             val rentAmount: BigDecimal,
         ) : Solana(8, "Invalid amount to cover rent in destination account")
+        class TransactionTooLarge : Solana(9, "Transaction too large after ALT reduction")
     }
 
     sealed class Polkadot(

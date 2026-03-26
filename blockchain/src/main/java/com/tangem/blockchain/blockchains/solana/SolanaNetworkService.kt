@@ -12,6 +12,7 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.BlockchainSdkError.Solana
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import kotlinx.coroutines.*
@@ -339,9 +340,19 @@ internal class SolanaNetworkService(
         } ?: return null
         val state = scaledExt.state ?: return null
 
+        val multiplier = state.multiplier?.toBigDecimalOrNull()
+        val newMultiplier = state.newMultiplier?.toBigDecimalOrNull()
+
+        if (multiplier == null || newMultiplier == null) {
+            Logger.logTransaction(
+                "scaledUiAmountConfig: unexpected multiplier values for mint, " +
+                    "multiplier=${state.multiplier}, newMultiplier=${state.newMultiplier}",
+            )
+        }
+
         return ScaledUiAmountConfig(
-            multiplier = state.multiplier?.toBigDecimalOrNull() ?: BigDecimal.ONE,
-            newMultiplier = state.newMultiplier?.toBigDecimalOrNull() ?: BigDecimal.ONE,
+            multiplier = multiplier ?: BigDecimal.ONE,
+            newMultiplier = newMultiplier ?: BigDecimal.ONE,
             newMultiplierEffectiveTimestamp = state.newMultiplierEffectiveTimestamp ?: 0L,
         )
     }
