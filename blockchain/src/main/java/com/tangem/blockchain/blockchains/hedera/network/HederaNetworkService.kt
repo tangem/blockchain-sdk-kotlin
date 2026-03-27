@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.hedera.network
 
 import com.hedera.hashgraph.sdk.*
+import com.tangem.blockchain.blockchains.hedera.HederaUtils
 import com.tangem.blockchain.blockchains.hedera.models.*
 import com.tangem.blockchain.blockchains.hedera.models.HederaAccountBalance
 import com.tangem.blockchain.blockchains.hedera.models.HederaAccountInfo
@@ -15,6 +16,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
+import java.math.BigInteger
 
 internal class HederaNetworkService(
     private val client: Client,
@@ -75,6 +77,7 @@ internal class HederaNetworkService(
                 val additionalHBARFee = customFees.fixedFees
                     .filter { it.denominatingTokenId == null }
                     .mapNotNull { it.amount }
+                    .map { it.movePointLeft(Blockchain.Hedera.decimals()) }
                     .fold(BigDecimal.ZERO, BigDecimal::add)
 
                 Result.Success(
@@ -88,6 +91,62 @@ internal class HederaNetworkService(
                 Result.Failure(it.toBlockchainSdkError())
             },
         )
+    }
+
+    suspend fun detectTokenType(tokenId: String): Result<HederaTokenType> {
+        return multiProvider.performRequest(HederaNetworkProvider::getTokenType, tokenId)
+    }
+
+    suspend fun getContractInfo(contractIdOrAddress: String): Result<HederaContractResponse> {
+        return multiProvider.performRequest(HederaNetworkProvider::getContractInfo, contractIdOrAddress)
+    }
+
+    suspend fun getContractEvmAddress(contractIdOrAddress: String): Result<String> {
+        return getContractInfo(contractIdOrAddress).map { it.evmAddress }
+    }
+
+    suspend fun getERC20Balance(tokenEvmAddress: String, ownerEvmAddress: String): Result<BigInteger> {
+        val data = HederaUtils.encodeBalanceOf(ownerEvmAddress)
+        val request = HederaContractCallRequest(data = data, to = tokenEvmAddress)
+        return multiProvider.performRequest(HederaNetworkProvider::invokeSmartContract, request)
+            .map { response -> response.result.hexToBigInteger() }
+    }
+
+    suspend fun estimateERC20GasLimit(
+        fromEvmAddress: String,
+        tokenEvmAddress: String,
+        recipientEvmAddress: String,
+        amount: BigInteger,
+    ): Result<BigInteger> {
+        val data = HederaUtils.encodeTransfer(recipientEvmAddress, amount)
+        val request = HederaContractCallRequest(
+            data = data,
+            to = tokenEvmAddress,
+            from = fromEvmAddress,
+            isEstimate = true,
+        )
+        return multiProvider.performRequest(HederaNetworkProvider::invokeSmartContract, request)
+            .map { response -> response.result.hexToBigInteger() }
+    }
+
+    suspend fun getContractCallGasPrice(): Result<BigInteger> {
+        return multiProvider.performRequest(HederaNetworkProvider::getNetworkFees)
+            .fold(
+                success = { feesResponse ->
+                    val contractCallFee = feesResponse.fees.find { it.transactionType == "ContractCall" }
+                    if (contractCallFee != null) {
+                        Result.Success(BigInteger.valueOf(contractCallFee.gas))
+                    } else {
+                        Result.Failure(BlockchainSdkError.FailedToLoadFee)
+                    }
+                },
+                failure = { Result.Failure(it.toBlockchainSdkError()) },
+            )
+    }
+
+    suspend fun getAccountEvmAddress(accountId: String): Result<String> {
+        return multiProvider.performRequest(HederaNetworkProvider::getAccountDetail, accountId)
+            .map { it.evmAddress }
     }
 
     fun <T : Transaction<T>> sendTransaction(transaction: Transaction<T>): Result<TransactionResponse> {
