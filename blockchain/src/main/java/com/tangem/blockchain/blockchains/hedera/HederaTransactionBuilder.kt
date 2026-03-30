@@ -8,6 +8,7 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.CryptoUtils
+import java.math.BigInteger
 
 internal class HederaTransactionBuilder(
     curve: EllipticCurve,
@@ -22,11 +23,35 @@ internal class HederaTransactionBuilder(
         else -> error("unsupported curve $curve")
     }
 
-    fun buildToSign(transactionData: TransactionData): Result<HederaBuiltTransaction<TransferTransaction>> {
-        return try {
-            transactionData.requireUncompiled()
+    fun buildHtsToSign(transactionData: TransactionData): Result<HederaBuiltTransaction<out Transaction<*>>> {
+        return buildHtsTransferToSign(transactionData)
+    }
 
-            val fee = transactionData.fee as? Fee.Hedera ?: return Result.Failure(
+    fun buildErc20ToSign(
+        transactionData: TransactionData,
+        erc20Params: Erc20TransferParams,
+    ): Result<HederaBuiltTransaction<out Transaction<*>>> {
+        return buildErc20TransferToSign(
+            transactionData = transactionData,
+            recipientEvmAddress = erc20Params.recipientEvmAddress,
+            gasLimit = erc20Params.gasLimit,
+            resolvedContractAddress = erc20Params.resolvedContractAddress,
+        )
+    }
+
+    data class Erc20TransferParams(
+        val recipientEvmAddress: String,
+        val gasLimit: BigInteger,
+        val resolvedContractAddress: String,
+    )
+
+    private fun buildHtsTransferToSign(
+        transactionData: TransactionData,
+    ): Result<HederaBuiltTransaction<TransferTransaction>> {
+        return try {
+            val uncompiled = transactionData.requireUncompiled()
+
+            val fee = uncompiled.fee as? Fee.Hedera ?: return Result.Failure(
                 BlockchainSdkError.CustomError("transactionData.fee is not Fee.Hedera"),
             )
 
@@ -38,12 +63,12 @@ internal class HederaTransactionBuilder(
             val actualFeeValue = totalFeeValue - additionalHBARFee
             val maxTransactionFee = Hbar.from(actualFeeValue)
 
-            val sourceAccountId = AccountId.fromString(transactionData.sourceAddress)
-            val destinationAccountId = AccountId.fromString(transactionData.destinationAddress)
-            val memo = (transactionData.extras as? HederaTransactionExtras)?.memo.orEmpty()
+            val sourceAccountId = AccountId.fromString(uncompiled.sourceAddress)
+            val destinationAccountId = AccountId.fromString(uncompiled.destinationAddress)
+            val memo = (uncompiled.extras as? HederaTransactionExtras)?.memo.orEmpty()
 
             val transaction = makeTransferTransaction(
-                amount = transactionData.amount,
+                amount = uncompiled.amount,
                 sourceAccountId = sourceAccountId,
                 destinationAccountId = destinationAccountId,
             )
@@ -62,6 +87,68 @@ internal class HederaTransactionBuilder(
             )
 
             Result.Success(hederaBuiltTransaction)
+        } catch (e: BlockchainSdkError) {
+            Result.Failure(e)
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
+    private fun buildErc20TransferToSign(
+        transactionData: TransactionData,
+        recipientEvmAddress: String,
+        gasLimit: BigInteger,
+        resolvedContractAddress: String,
+    ): Result<HederaBuiltTransaction<ContractExecuteTransaction>> {
+        return try {
+            val uncompiled = transactionData.requireUncompiled()
+
+            val fee = uncompiled.fee as? Fee.Hedera ?: return Result.Failure(
+                BlockchainSdkError.CustomError("transactionData.fee is not Fee.Hedera"),
+            )
+
+            val totalFeeValue = fee.amount.value ?: return Result.Failure(
+                BlockchainSdkError.NPError("Fee amount value must not be null"),
+            )
+            val maxTransactionFee = Hbar.from(totalFeeValue)
+
+            val sourceAccountId = AccountId.fromString(uncompiled.sourceAddress)
+            val amount = uncompiled.amount
+            val amountType = amount.type as? AmountType.Token ?: return Result.Failure(
+                BlockchainSdkError.CustomError("ERC20 transfer requires token amount"),
+            )
+
+            val contractId = HederaUtils.createTokenId(resolvedContractAddress).let {
+                ContractId(it.shard, it.realm, it.num)
+            }
+
+            val transferAmount = amount.longValue
+
+            val functionParams = ContractFunctionParameters()
+                .addAddress(recipientEvmAddress)
+                .addUint256(BigInteger.valueOf(transferAmount))
+
+            val memo = (uncompiled.extras as? HederaTransactionExtras)?.memo.orEmpty()
+
+            val transaction = ContractExecuteTransaction()
+                .setContractId(contractId)
+                .setGas(gasLimit.toLong())
+                .setFunction("transfer", functionParams)
+                .setTransactionId(TransactionId.generate(sourceAccountId))
+                .setMaxTransactionFee(maxTransactionFee)
+                .setTransactionMemo(memo)
+                .freezeWith(client)
+
+            val bodiesToSign = transaction.innerSignedTransactions
+                .map { it.bodyBytes.toByteArray() }
+                .correctWithPublicKey()
+
+            Result.Success(
+                HederaBuiltTransaction(
+                    transaction = transaction,
+                    signatures = bodiesToSign,
+                ),
+            )
         } catch (e: BlockchainSdkError) {
             Result.Failure(e)
         } catch (e: Exception) {
