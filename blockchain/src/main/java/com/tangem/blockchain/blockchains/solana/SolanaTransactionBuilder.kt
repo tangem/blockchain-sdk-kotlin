@@ -106,7 +106,7 @@ internal class SolanaTransactionBuilder(
             return Result.Failure(BlockchainSdkError.Solana.SameSourceAndDestinationAddress)
         }
 
-        val adjustedAmount = adjustAmountForScaledUi(token, amount)
+        val adjustedAmount = adjustAmountForScaledUi(token, amount, tokenProgramId)
 
         val transaction = SolanaTransaction(account).apply {
             addInstructions(
@@ -239,24 +239,27 @@ internal class SolanaTransactionBuilder(
         }
     }
 
-    private suspend fun adjustAmountForScaledUi(token: Token, uiAmount: BigDecimal): BigDecimal {
-        val mintAddress = token.contractAddress
+    private suspend fun adjustAmountForScaledUi(
+        token: Token,
+        uiAmount: BigDecimal,
+        tokenProgramId: SolanaTokenProgram.ID,
+    ): BigDecimal {
+        if (tokenProgramId != SolanaTokenProgram.ID.TOKEN_2022) return uiAmount
 
-        val config = when (val result = multiNetworkProvider.performRequest { getScaledUiAmountConfig(mintAddress) }) {
+        val multiplier = when (
+            val result = multiNetworkProvider.performRequest {
+                getScaledUiAmountMultiplier(token.contractAddress)
+            }
+        ) {
             is Result.Success -> result.data
             is Result.Failure -> null
         } ?: return uiAmount
 
-        val currentTimeSec = System.currentTimeMillis() / MILLIS_IN_SECOND
-        val multiplier = if (config.newMultiplierEffectiveTimestamp > currentTimeSec) {
-            config.multiplier
-        } else {
-            config.newMultiplier
+        if (multiplier <= BigDecimal.ZERO) {
+            throw BlockchainSdkError.FailedToBuildTx
         }
 
-        if (multiplier.compareTo(BigDecimal.ONE) == 0 || multiplier.compareTo(BigDecimal.ZERO) == 0) {
-            return uiAmount
-        }
+        if (multiplier.compareTo(BigDecimal.ONE) == 0) return uiAmount
 
         return uiAmount.divide(multiplier, token.decimals, RoundingMode.DOWN)
     }
@@ -267,7 +270,5 @@ internal class SolanaTransactionBuilder(
 
         const val DEFAULT_CU_PRICE = 1_000_000L
         const val CREATE_NEW_ACCOUNT_CU_PRICE = 500_000L
-
-        const val MILLIS_IN_SECOND = 1000
     }
 }
