@@ -79,6 +79,60 @@ internal data class HederaTransactionResponse(
 )
 
 @JsonClass(generateAdapter = true)
+internal data class HederaContractResponse(
+    @Json(name = "contract_id")
+    val contractId: String,
+
+    @Json(name = "evm_address")
+    val evmAddress: String,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class HederaContractCallRequest(
+    @Json(name = "data")
+    val data: String,
+
+    @Json(name = "to")
+    val to: String,
+
+    @Json(name = "from")
+    val from: String? = null,
+
+    @Json(name = "estimate")
+    val isEstimate: Boolean? = null,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class HederaContractCallResponse(
+    @Json(name = "result")
+    val result: String,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class HederaNetworkFeesResponse(
+    @Json(name = "fees")
+    val fees: List<HederaNetworkFee>,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class HederaNetworkFee(
+    @Json(name = "gas")
+    val gas: Long,
+
+    @Json(name = "transaction_type")
+    val transactionType: String,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class HederaAccountDetailResponse(
+    @Json(name = "account")
+    val account: String,
+
+    @Json(name = "evm_address")
+    val evmAddress: String,
+)
+
+@JsonClass(generateAdapter = true)
 data class HederaTokenDetailsResponse(
     // there are more fields available here and in the inner objects
     // ignore them for now
