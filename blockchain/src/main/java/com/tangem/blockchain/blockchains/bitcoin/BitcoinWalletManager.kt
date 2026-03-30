@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.bitcoin
 
 import android.util.Base64
 import android.util.Log
+import android.util.Log.e
 import com.tangem.blockchain.blockchains.bitcoin.address.BitcoinWalletAddressProvider
 import com.tangem.blockchain.blockchains.bitcoin.messagesigning.BitcoinMessageSigner
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
@@ -11,6 +12,7 @@ import com.tangem.blockchain.blockchains.bitcoin.network.UsedAddress
 import com.tangem.blockchain.blockchains.bitcoin.psbt.BitcoinPsbtProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.DynamicAddressesManager
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.crypto.NetworkType
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
@@ -177,7 +179,8 @@ internal open class BitcoinWalletManager(
                     derivationPath = utxo.derivationPath,
                     publicKey = derivedPubKey,
                 )
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Logger.logNetwork("Failed to derive pubkey for UTXO path=${utxo.derivationPath}: ${e.message}")
                 utxo
             }
         }
@@ -454,7 +457,7 @@ internal open class BitcoinWalletManager(
         }
 
         val sendAmount = totalBalance - feeAmount
-        val baseAddress = wallet.address // on m/.../0/0 derivetion
+        val baseAddress = wallet.address // on m/.../0/0 derivation
 
         return Result.Success(
             TransactionData.Uncompiled(
