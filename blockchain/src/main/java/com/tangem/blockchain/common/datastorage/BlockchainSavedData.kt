@@ -17,6 +17,9 @@ internal sealed interface BlockchainSavedData {
         @Json(name = "associatedTokens") val associatedTokens: Set<String> = emptySet(),
         // TODO: Remove this flag in future [REDACTED_JIRA]
         @Json(name = "cache_cleared") val isCacheCleared: Boolean = false,
+        @Json(name = "tokenTypes") val tokenTypes: Map<String, String> = emptyMap(),
+        @Json(name = "tokenEvmAddresses") val tokenEvmAddresses: Map<String, String> = emptyMap(),
+        @Json(name = "resolvedContractAddresses") val resolvedContractAddresses: Map<String, String> = emptyMap(),
     ) : BlockchainSavedData
 
     @JsonClass(generateAdapter = true)
