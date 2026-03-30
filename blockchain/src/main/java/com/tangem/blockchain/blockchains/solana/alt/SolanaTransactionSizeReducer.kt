@@ -379,7 +379,7 @@ internal class SolanaTransactionSizeReducer(
     }
 
     private companion object {
-        const val ALT_ADDRESS_CHUNK_SIZE = 22
+        const val ALT_ADDRESS_CHUNK_SIZE = 14
         const val MAX_TRANSACTION_BODY_SIZE = 928
     }
 }
