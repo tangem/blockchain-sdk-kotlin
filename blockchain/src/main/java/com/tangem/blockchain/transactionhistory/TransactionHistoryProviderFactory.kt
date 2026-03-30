@@ -50,6 +50,8 @@ internal object TransactionHistoryProviderFactory {
 
             Blockchain.Solana -> createSolanaProvider(blockchain, config)
 
+            Blockchain.ZkSyncEra -> createZkSyncExplorerProvider(blockchain)
+
             else -> DefaultTransactionHistoryProvider
         }
     }
@@ -77,7 +79,6 @@ internal object TransactionHistoryProviderFactory {
             Blockchain.Scroll,
             Blockchain.Sonic,
             Blockchain.XDC,
-            Blockchain.ZkSyncEra,
             Blockchain.BSC,
             -> true
             else -> false
@@ -127,6 +128,15 @@ internal object TransactionHistoryProviderFactory {
             blockchain = blockchain,
             api = createRetrofitInstance("https://api.etherscan.io/v2/").create(EtherScanApi::class.java),
             etherscanApiKey = apiKey,
+        )
+    }
+
+    private fun createZkSyncExplorerProvider(blockchain: Blockchain): TransactionHistoryProvider {
+        return EtherscanTransactionHistoryProvider(
+            blockchain = blockchain,
+            api = createRetrofitInstance("https://block-explorer-api.mainnet.zksync.io/")
+                .create(EtherScanApi::class.java),
+            etherscanApiKey = "",
         )
     }
 
