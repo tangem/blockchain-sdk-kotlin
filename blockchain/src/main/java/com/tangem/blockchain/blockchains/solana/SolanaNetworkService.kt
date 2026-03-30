@@ -313,8 +313,8 @@ internal class SolanaNetworkService(
             }
         }
 
-    suspend fun getScaledUiAmountMultiplier(mintAddress: String): Result<BigDecimal?> =
-        withContext(Dispatchers.IO) {
+    suspend fun getScaledUiAmountMultiplier(mintAddress: String): Result<BigDecimal?> {
+        return withContext(Dispatchers.IO) {
             try {
                 val params = buildList {
                     add(mintAddress)
@@ -327,6 +327,7 @@ internal class SolanaNetworkService(
                 Result.Failure(Solana.Api(ex))
             }
         }
+    }
 
     private fun selectScaledUiAmountMultiplier(rawJson: String): BigDecimal? {
         val response = mintAccountResponseAdapter.fromJson(rawJson) ?: return null
