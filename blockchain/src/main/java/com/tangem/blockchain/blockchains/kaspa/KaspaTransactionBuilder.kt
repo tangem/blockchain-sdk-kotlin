@@ -3,13 +3,20 @@ package com.tangem.blockchain.blockchains.kaspa
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.kaspa.kaspacashaddr.KaspaAddressType
 import com.tangem.blockchain.blockchains.kaspa.kaspacashaddr.KaspaCashAddr
-import com.tangem.blockchain.blockchains.kaspa.krc20.model.*
+import com.tangem.blockchain.blockchains.kaspa.krc20.model.CommitTransaction
+import com.tangem.blockchain.blockchains.kaspa.krc20.model.Envelope
+import com.tangem.blockchain.blockchains.kaspa.krc20.model.RedeemScript
+import com.tangem.blockchain.blockchains.kaspa.krc20.model.RevealTransaction
 import com.tangem.blockchain.blockchains.kaspa.network.*
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.orZero
+import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.moshi
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.isZero
@@ -53,7 +60,7 @@ class KaspaTransactionBuilder(
             fee = uncompiledTransaction.fee?.amount?.value ?: BigDecimal.ZERO,
             dustValue = dustValue,
             unspentOutputs = unspentsToSpend,
-        )
+        ).successOr { return it }
         if (change < BigDecimal.ZERO) { // unspentsToSpend not enough to cover transaction amount
             val maxAmount = uncompiledTransaction.amount.value + change
             return Result.Failure(BlockchainSdkError.Kaspa.UtxoAmountError(MAX_INPUT_COUNT, maxAmount))
@@ -166,7 +173,7 @@ class KaspaTransactionBuilder(
             fee = commitFeeAmount,
             dustValue = dustValue,
             unspentOutputs = getUnspentsToSpend(),
-        )
+        ).successOr { return it }
 
         val envelope = Envelope(
             p = "krc-20",
@@ -240,7 +247,7 @@ class KaspaTransactionBuilder(
             fee = revealFeeAmountValue,
             dustValue = dustValue.orZero(),
             unspentOutputs = utxo,
-        )
+        ).successOr { return it }
 
         val transaction = createKaspaTransaction(
             networkParameters = networkParameters,
@@ -304,14 +311,16 @@ class KaspaTransactionBuilder(
         fee: BigDecimal,
         dustValue: BigDecimal,
         unspentOutputs: List<KaspaUnspentOutput>,
-    ): BigDecimal {
+    ): Result<BigDecimal> {
         val fullAmount = unspentOutputs.sumOf { it.amount }
         val change = fullAmount - (amount + fee)
 
         return if (change > BigDecimal.ZERO && change < dustValue) {
-            throw BlockchainSdkError.TransactionDustChangeError
+            Result.Failure(
+                BlockchainSdkError.Kaspa.DustChangeError(minimumAmount = dustValue),
+            )
         } else {
-            change
+            Result.Success(change)
         }
     }
 
