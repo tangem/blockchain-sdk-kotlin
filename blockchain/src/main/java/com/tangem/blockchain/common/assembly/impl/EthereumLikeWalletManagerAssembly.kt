@@ -20,7 +20,7 @@ import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.nft.NFTProviderFactory
-import com.tangem.blockchain.tokenbalance.TokenBalanceProviderFactory
+import com.tangem.blockchain.tokenbalance.TokenBalanceEvmProviderFactory
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 import com.tangem.blockchain.pendingtransactions.PendingTransactionsProvider
 import com.tangem.blockchain.pendingtransactions.PendingTransactionsProviderFactory
@@ -105,7 +105,7 @@ internal class EthereumLikeWalletManagerAssembly(
                             config = input.config,
                         ),
                         nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
-                        tokenBalanceProvider = TokenBalanceProviderFactory.createTokenBalanceProvider(
+                        tokenBalanceProvider = TokenBalanceEvmProviderFactory.createTokenBalanceEvmProvider(
                             blockchain,
                             input.config,
                         ),
@@ -128,7 +128,7 @@ internal class EthereumLikeWalletManagerAssembly(
                             config = input.config,
                         ),
                         nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
-                        tokenBalanceProvider = TokenBalanceProviderFactory.createTokenBalanceProvider(
+                        tokenBalanceProvider = TokenBalanceEvmProviderFactory.createTokenBalanceEvmProvider(
                             blockchain,
                             input.config,
                         ),
