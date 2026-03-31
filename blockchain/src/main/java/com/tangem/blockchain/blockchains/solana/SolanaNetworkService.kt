@@ -54,10 +54,10 @@ internal class SolanaNetworkService(
         ),
     )
 
-    suspend fun getMainAccountInfo(account: PublicKey, cardTokens: Set<Token>): Result<SolanaMainAccountInfo> =
+    suspend fun getMainAccountInfo(account: PublicKey, cardTokens: Set<Token>?): Result<SolanaMainAccountInfo> =
         withContext(Dispatchers.IO) {
             val accountInfo = getAccountInfo(account).successOr { return@withContext it }
-            val tokenAccounts = if (cardTokens.isNotEmpty()) {
+            val tokenAccounts = if (cardTokens == null || cardTokens.isNotEmpty()) {
                 accountTokensInfo(account).successOr { return@withContext it }
             } else {
                 emptyList()
