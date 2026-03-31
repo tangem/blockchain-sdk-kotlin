@@ -6,20 +6,24 @@ import com.tangem.blockchain.blockchains.tron.TronWalletManager
 import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
+import com.tangem.blockchain.tokenbalance.providers.tron.TronTokenBalanceProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 
 internal object TronWalletManagerAssembly : WalletManagerAssembly<TronWalletManager>() {
 
     override fun make(input: WalletManagerAssemblyInput): TronWalletManager {
         with(input.wallet) {
+            val networkService = TronNetworkService(
+                rpcNetworkProviders = TronProvidersBuilder(input.providerTypes, input.config).build(blockchain),
+                blockchain = input.wallet.blockchain,
+            )
+
             return TronWalletManager(
                 wallet = this,
                 transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
+                tokenBalanceProvider = TronTokenBalanceProvider(networkService),
                 transactionBuilder = TronTransactionBuilder(),
-                networkService = TronNetworkService(
-                    rpcNetworkProviders = TronProvidersBuilder(input.providerTypes, input.config).build(blockchain),
-                    blockchain = input.wallet.blockchain,
-                ),
+                networkService = networkService,
             )
         }
     }
