@@ -15,6 +15,8 @@ import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.bigIntegerValue
 import com.tangem.blockchain.extensions.decodeBase58
+import com.tangem.blockchain.tokenbalance.DefaultTokenBalanceProvider
+import com.tangem.blockchain.tokenbalance.TokenBalanceProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.calculateSha256
@@ -30,9 +32,15 @@ import java.math.BigDecimal
 internal class TronWalletManager(
     wallet: Wallet,
     transactionHistoryProvider: TransactionHistoryProvider,
+    tokenBalanceProvider: TokenBalanceProvider = DefaultTokenBalanceProvider,
     private val transactionBuilder: TronTransactionBuilder,
     private val networkService: TronNetworkService,
-) : WalletManager(wallet, transactionHistoryProvider = transactionHistoryProvider), Approver {
+) : WalletManager(
+    wallet,
+    transactionHistoryProvider = transactionHistoryProvider,
+    tokenBalanceProvider = tokenBalanceProvider,
+),
+    Approver {
 
     override val currentHost: String = networkService.host
 

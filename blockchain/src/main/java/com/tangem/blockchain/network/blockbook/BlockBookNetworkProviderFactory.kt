@@ -8,6 +8,7 @@ import com.tangem.blockchain.network.blockbook.config.CloreBlockBookConfig
 import com.tangem.blockchain.network.blockbook.config.GetBlockConfig
 import com.tangem.blockchain.network.blockbook.config.DogecoinMockBlockBookConfig
 import com.tangem.blockchain.network.blockbook.config.NowNodesConfig
+import com.tangem.blockchain.network.blockbook.config.PublicBitcoinRpcConfig
 
 internal class BlockBookNetworkProviderFactory(
     private val config: BlockchainSdkConfig,
@@ -51,6 +52,13 @@ internal class BlockBookNetworkProviderFactory(
             config = CloreBlockBookConfig(
                 baseHost = baseHost,
             ),
+            blockchain = blockchain,
+        )
+    }
+
+    fun createPublicProvider(blockchain: Blockchain, url: String): BitcoinNetworkProvider {
+        return BlockBookNetworkProvider(
+            config = PublicBitcoinRpcConfig(baseHost = url),
             blockchain = blockchain,
         )
     }
