@@ -113,6 +113,10 @@ class TronNetworkService(
         return multiProvider.performRequest(TronNetworkProvider::getAccount, address)
     }
 
+    suspend fun getV1Accounts(address: String): Result<TronGetAccountResponse> {
+        return multiProvider.performRequest(TronNetworkProvider::getV1Accounts, address)
+    }
+
     suspend fun getChainParameters(): Result<TronChainParameters> {
         return when (val result = multiProvider.performRequest(TronNetworkProvider::getChainParameters)) {
             is Result.Failure -> Result.Failure(result.error)

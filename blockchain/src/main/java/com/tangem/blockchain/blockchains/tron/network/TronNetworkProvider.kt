@@ -8,6 +8,8 @@ interface TronNetworkProvider : NetworkProvider {
 
     suspend fun getAccount(address: String): Result<TronGetAccountResponse>
 
+    suspend fun getV1Accounts(address: String): Result<TronGetAccountResponse>
+
     suspend fun getAccountResource(address: String): Result<TronGetAccountResourceResponse>
 
     suspend fun getNowBlock(): Result<TronBlock>
