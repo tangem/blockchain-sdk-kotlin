@@ -19,8 +19,8 @@ internal class BitcoinProvidersBuilder(
     private val blockcypherProviderFactory by lazy { BlockcypherNetworkProviderFactory(config) }
 
     override fun createProviders(blockchain: Blockchain): List<BitcoinNetworkProvider> {
-        return providerTypes.flatMap {
-            when (it) {
+        return providerTypes.flatMap { type ->
+            when (type) {
                 ProviderType.NowNodes -> {
                     blockBookProviderFactory.createNowNodesProvider(blockchain).let(::listOfNotNull)
                 }
@@ -31,6 +31,9 @@ internal class BitcoinProvidersBuilder(
                     blockcypherProviderFactory.create(blockchain).let(::listOfNotNull)
                 }
                 ProviderType.BitcoinLike.Blockchair -> blockchairProviderFactory.createProviders(blockchain)
+                is ProviderType.Public -> {
+                    listOf(blockBookProviderFactory.createPublicProvider(blockchain, type.url))
+                }
                 ProviderType.Mock -> {
                     listOf(
                         blockBookProviderFactory.createCloreBlockProvider(
