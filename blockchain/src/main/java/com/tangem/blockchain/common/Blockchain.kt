@@ -953,6 +953,11 @@ enum class Blockchain(
         Linea, LineaTestnet,
         PulseChain,
         Monad,
+
+        // Other
+        Solana,
+        Tron,
+        XRP,
         -> true
 
         else -> false
