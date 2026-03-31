@@ -41,6 +41,14 @@ data class TronGetAccountResponse(
     // an empty JSON that we get if account hasn't been activated
     @Json(name = "address")
     val address: String?,
+    @Json(name = "trc20")
+    val trc20: List<Map<String, String>>?,
+)
+
+@JsonClass(generateAdapter = true)
+data class TronV1AccountsResponse(
+    @Json(name = "data")
+    val data: List<TronGetAccountResponse>,
 )
 
 @JsonClass(generateAdapter = true)

@@ -57,9 +57,6 @@ internal class MoralisEvmTokenBalanceProvider(
 
         return TokenBalance(
             contractAddress = if (isNativeToken) null else tokenAddress,
-            symbol = symbol,
-            name = name,
-            decimals = decimals,
             amount = amount,
             isNativeToken = isNativeToken,
         )
