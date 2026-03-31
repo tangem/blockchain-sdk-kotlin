@@ -15,6 +15,8 @@ import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.trustlines.AssetRequirementsCondition
 import com.tangem.blockchain.common.trustlines.AssetRequirementsManager
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.tokenbalance.DefaultTokenBalanceProvider
+import com.tangem.blockchain.tokenbalance.TokenBalanceProvider
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.extensions.toSimpleFailure
@@ -29,7 +31,11 @@ internal class XrpWalletManager(
     private val transactionBuilder: XrpTransactionBuilder,
     private val networkProvider: XrpNetworkProvider,
     private val dataStorage: AdvancedDataStorage,
-) : WalletManager(wallet), ReserveAmountProvider, TransactionValidator, AssetRequirementsManager {
+    tokenBalanceProvider: TokenBalanceProvider = DefaultTokenBalanceProvider,
+) : WalletManager(wallet, tokenBalanceProvider = tokenBalanceProvider),
+    ReserveAmountProvider,
+    TransactionValidator,
+    AssetRequirementsManager {
 
     private val memoValidator: MemoValidator = XrpMemoValidator(networkProvider)
 
