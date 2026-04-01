@@ -116,6 +116,13 @@ sealed class BlockchainSdkError(
         )
 
         data object ZeroUtxoError : Kaspa(3)
+
+        data class DustChangeError(
+            val minimumAmount: BigDecimal,
+        ) : Kaspa(
+            4,
+            "Transaction change is less than dust. Minimum amount: ${minimumAmount.toPlainString()}",
+        )
     }
 
     sealed class Ton(
