@@ -277,4 +277,45 @@ class KaspaTransactionTest {
             .assertThat(commitTransaction.transactionHash())
             .isEqualTo("C2CB9D865F5085CD6F7F23365545C68D1EACA7E3CDE9D231A64812BE2C989A30".hexToBytes())
     }
+
+    @Test
+    fun returnDustChangeErrorInsteadOfThrowingWhenChangeIsBelowDust() {
+        val walletPublicKey = (
+            "04EB30400CE9D1DEED12B84D4161A1FA922EF4185A155EF3EC208078B3807B126FA22C335081AAEBF161095C11C7D8BD550EF88" +
+                "82A3125B0EE9AE96DDDE1AE743F"
+            ).hexToBytes()
+        val sourceAddress = addressService.makeAddress(walletPublicKey)
+        val destinationAddress = "kaspa:qpsqw2aamda868dlgqczeczd28d5nc3rlrj3t87vu9q58l2tugpjs2psdm4fv"
+
+        val transactionBuilder = KaspaTransactionBuilder(
+            publicKey = Wallet.PublicKey(
+                seedKey = walletPublicKey,
+                derivationType = null,
+            ),
+            isTestnet = false,
+        )
+        transactionBuilder.unspentOutputs = listOf(
+            KaspaUnspentOutput(
+                transactionHash = "ae96e819429e9da538e84cb213f62fbc8ad32e932d7c7f1fb9bd2fedf8fd7b4a".hexToBytes(),
+                outputIndex = 0,
+                amount = "1.1".toBigDecimal(),
+                outputScript = "21034c88a1a83469ddf20d0c07e5c4a1e7b83734e721e60d642b94a53222c47c670dab".hexToBytes(),
+            ),
+        )
+
+        val transactionData = TransactionData.Uncompiled(
+            sourceAddress = sourceAddress,
+            destinationAddress = destinationAddress,
+            amount = Amount("1".toBigDecimal(), blockchain, AmountType.Coin),
+            fee = Fee.Common(Amount(value = "0.05".toBigDecimal(), blockchain = blockchain)),
+        )
+
+        val result = transactionBuilder.buildToSign(transactionData, dustValue)
+
+        Truth.assertThat(result).isInstanceOf(Result.Failure::class.java)
+        val failure = result as Result.Failure
+        Truth.assertThat(failure.error).isInstanceOf(BlockchainSdkError.Kaspa.DustChangeError::class.java)
+        val error = failure.error as BlockchainSdkError.Kaspa.DustChangeError
+        Truth.assertThat(error.minimumAmount.compareTo("0.2".toBigDecimal())).isEqualTo(0)
+    }
 }
