@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.kaspa.KaspaProvidersBuilder
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.SolanaRpcClient
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.network.blockbook.config.DogecoinMockBlockBookConfig
 import com.tangem.blockchain.network.blockbook.config.NowNodesConfig
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
@@ -48,7 +49,11 @@ internal object TransactionHistoryProviderFactory {
 
             Blockchain.Kaspa, Blockchain.KaspaTestnet -> createKaspaProvider(blockchain)
 
-            Blockchain.Solana -> createSolanaProvider(blockchain, config)
+            Blockchain.Solana -> if (DepsContainer.blockchainFeatureToggles.isSolanaTxHistoryEnabled) {
+                createSolanaProvider(blockchain, config)
+            } else {
+                DefaultTransactionHistoryProvider
+            }
 
             else -> DefaultTransactionHistoryProvider
         }
