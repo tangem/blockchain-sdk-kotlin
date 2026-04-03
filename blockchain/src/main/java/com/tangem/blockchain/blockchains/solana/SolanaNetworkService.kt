@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.solana
 import android.os.SystemClock
 import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.squareup.moshi.Types
 import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
 import com.tangem.blockchain.blockchains.solana.solanaj.model.*
@@ -34,7 +35,9 @@ internal class SolanaNetworkService(
     override val baseUrl: String = provider.baseUrl
     val endpoint: String = provider.endpoint
 
-    private val moshi = Moshi.Builder().build()
+    private val moshi = Moshi.Builder()
+        .addLast(KotlinJsonAdapterFactory())
+        .build()
     private val emptyDataResponseAdapter = moshi.adapter<RpcResponse<EmptyDataSplTokenAccountInfo>>(
         Types.newParameterizedType(
             RpcResponse::class.java,
