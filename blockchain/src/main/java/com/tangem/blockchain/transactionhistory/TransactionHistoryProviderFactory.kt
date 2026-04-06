@@ -1,8 +1,10 @@
 package com.tangem.blockchain.transactionhistory
 
 import com.tangem.blockchain.blockchains.kaspa.KaspaProvidersBuilder
+import com.tangem.blockchain.blockchains.solana.solanaj.rpc.SolanaRpcClient
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.network.blockbook.config.DogecoinMockBlockBookConfig
 import com.tangem.blockchain.network.blockbook.config.NowNodesConfig
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
@@ -15,6 +17,7 @@ import com.tangem.blockchain.transactionhistory.blockchains.kaspa.KaspaTransacti
 import com.tangem.blockchain.transactionhistory.blockchains.kaspa.network.KaspaApiService
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.EtherscanTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.EtherScanApi
+import com.tangem.blockchain.transactionhistory.blockchains.solana.SolanaTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.blockchains.tron.TronTransactionHistoryProvider
 
 internal object TransactionHistoryProviderFactory {
@@ -45,6 +48,12 @@ internal object TransactionHistoryProviderFactory {
             Blockchain.Koinos -> createKoinosProvider()
 
             Blockchain.Kaspa, Blockchain.KaspaTestnet -> createKaspaProvider(blockchain)
+
+            Blockchain.Solana -> if (DepsContainer.blockchainFeatureToggles.isSolanaTxHistoryEnabled) {
+                createSolanaProvider(blockchain, config)
+            } else {
+                DefaultTransactionHistoryProvider
+            }
 
             else -> DefaultTransactionHistoryProvider
         }
@@ -140,6 +149,39 @@ internal object TransactionHistoryProviderFactory {
      */
     private fun createKoinosProvider(): TransactionHistoryProvider {
         return DefaultTransactionHistoryProvider
+    }
+
+    private fun createSolanaProvider(blockchain: Blockchain, config: BlockchainSdkConfig): TransactionHistoryProvider {
+        val rpcClient = createSolanaRpcClient(config)
+        return SolanaTransactionHistoryProvider(blockchain = blockchain, rpcClient = rpcClient)
+    }
+
+    private fun createSolanaRpcClient(config: BlockchainSdkConfig): SolanaRpcClient {
+        config.alchemyApiKey?.takeIf { it.isNotBlank() }?.let { alchemyApiKey ->
+            return SolanaRpcClient(
+                baseUrl = "https://solana-mainnet.g.alchemy.com/v2/$alchemyApiKey",
+            )
+        }
+
+        config.blinkApiKey?.takeIf { it.isNotBlank() }?.let { blinkApiKey ->
+            return SolanaRpcClient(
+                baseUrl = "https://sol.blinklabs.xyz/v1/$blinkApiKey",
+            )
+        }
+
+        config.quickNodeSolanaCredentials?.let { creds ->
+            if (creds.subdomain.isNotBlank() && creds.apiKey.isNotBlank()) {
+                return SolanaRpcClient(baseUrl = "https://${creds.subdomain}/${creds.apiKey}")
+            }
+        }
+
+        config.getBlockCredentials?.solana?.jsonRpc
+            ?.takeIf { it.isNotBlank() }
+            ?.let { accessToken ->
+                return SolanaRpcClient(baseUrl = "https://go.getblock.io/$accessToken")
+            }
+
+        return SolanaRpcClient(baseUrl = "https://api.mainnet-beta.solana.com")
     }
 
     private fun createBlockBookApiWithNowNodesConfig(
