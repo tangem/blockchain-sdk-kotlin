@@ -8,4 +8,5 @@ package com.tangem.blockchain.common
 class BlockchainFeatureToggles(
     val isYieldSupplyEnabled: Boolean,
     val isPendingTransactionsEnabled: Boolean = false,
+    val isSolanaTxHistoryEnabled: Boolean = false,
 )

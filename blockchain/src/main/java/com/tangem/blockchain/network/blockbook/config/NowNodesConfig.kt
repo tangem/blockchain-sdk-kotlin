@@ -39,7 +39,7 @@ internal class NowNodesConfig(nowNodesCredentials: NowNodeCredentials) : BlockBo
                 if (isRpcRequest) {
                     "https://bsc.$baseHost"
                 } else {
-                    "https://tangem-bsc-bb.$baseHost"
+                    "https://bsc-blockbook.$baseHost"
                 }
             }
             Blockchain.EthereumTestnet -> {

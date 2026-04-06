@@ -37,6 +37,12 @@ data class TransactionHistoryItem(
         data class ContractMethod(val id: String, val callData: String? = null) : TransactionType
         data class ContractMethodName(val name: String, val callData: String? = null) : TransactionType
 
+        sealed interface SolanaStakingTransactionType : TransactionType {
+            data class Stake(val validatorAddress: String?) : SolanaStakingTransactionType
+            data object Unstake : SolanaStakingTransactionType
+            data object Withdraw : SolanaStakingTransactionType
+        }
+
         sealed interface TronStakingTransactionType : TransactionType {
             data object FreezeBalanceV2Contract : TronStakingTransactionType
             data object UnfreezeBalanceV2Contract : TronStakingTransactionType
