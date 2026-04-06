@@ -11,6 +11,7 @@ import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.network.blockcypher.BlockcypherNetworkProvider
 import com.tangem.blockchain.nft.NFTProviderFactory
 import com.tangem.blockchain.pendingtransactions.PendingTransactionsProviderFactory
+import com.tangem.blockchain.tokenbalance.TokenBalanceProviderFactory
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 import com.tangem.blockchain.yieldsupply.YieldSupplyProviderFactory
 
@@ -51,6 +52,7 @@ internal class EthereumWalletManagerAssembly(
                 ),
                 transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, input.config),
                 nftProvider = NFTProviderFactory.createNFTProvider(blockchain, input.config),
+                tokenBalanceProvider = TokenBalanceProviderFactory.createTokenBalanceProvider(blockchain, input.config),
                 yieldSupplyProvider = yieldLendingProvider,
                 supportsENS = true,
                 pendingTransactionsProvider = pendingTransactionsProvider,
