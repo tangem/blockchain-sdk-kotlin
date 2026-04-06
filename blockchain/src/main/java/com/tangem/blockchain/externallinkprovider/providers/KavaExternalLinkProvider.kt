@@ -6,7 +6,7 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 internal class KavaExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
     override val explorerBaseUrl: String =
-        if (isTestnet) "https://explorer.testnet.kava.io/" else "https://explorer.kava.io/"
+        if (isTestnet) "https://explorer.testnet.kava.io/" else "https://kavascan.com/"
 
     override val testNetTopUpUrl: String? = if (isTestnet) "https://faucet.kava.io" else null
 

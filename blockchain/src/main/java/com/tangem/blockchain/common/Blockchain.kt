@@ -78,7 +78,7 @@ enum class Blockchain(
     Litecoin("LTC", "LTC", "Litecoin"),
     Near("NEAR", "NEAR", "NEAR Protocol"),
     NearTestnet("NEAR/test", "NEAR", "NEAR Protocol Testnet"),
-    Polkadot("Polkadot", "DOT", "Polkadot"),
+    Polkadot("Polkadot", "DOT", "Polkadot Asset Hub"),
     PolkadotTestnet("Polkadot", "WND", "Polkadot Westend Testnet"),
     Kava("KAVA", "KAVA", "Kava EVM"),
     KavaTestnet("KAVA/test", "KAVA", "Kava EVM Testnet"),
@@ -526,6 +526,8 @@ enum class Blockchain(
         Binance, BinanceTestnet -> listOf("bnb:")
         Dogecoin -> listOf("doge:", "dogecoin:")
         XRP -> listOf("ripple:", "xrpl:", "xrp:")
+        Solana, SolanaTestnet -> listOf("solana:")
+        Tron, TronTestnet -> listOf("tron:")
         else -> emptyList()
     }
 
@@ -928,6 +930,29 @@ enum class Blockchain(
         Base, BaseTestnet,
 
         Solana,
+        -> true
+
+        else -> false
+    }
+
+    fun canHandleTokenBalances(): Boolean = when (this) {
+        // EVM
+        Ethereum, // supported testnet - Sepolia (11155111)
+        Arbitrum,
+        Avalanche,
+        Fantom,
+        BSC, BSCTestnet,
+        Polygon, // supported testnet - Amoy (80002)
+        Cronos,
+        Moonbeam, MoonbeamTestnet,
+        Moonriver,
+        Chiliz, ChilizTestnet,
+        Optimism,
+        Base, BaseTestnet,
+        Gnosis, // supported testnet - Chiado (10200)
+        Linea, LineaTestnet,
+        PulseChain,
+        Monad,
         -> true
 
         else -> false
