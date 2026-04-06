@@ -15,6 +15,8 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
+import com.tangem.blockchain.tokenbalance.DefaultTokenBalanceProvider
+import com.tangem.blockchain.tokenbalance.TokenBalanceProvider
 import com.tangem.blockchain.pendingtransactions.DefaultPendingTransactionsProvider
 import com.tangem.blockchain.pendingtransactions.PendingTransactionsProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
@@ -39,6 +41,7 @@ class EthereumOptimisticRollupWalletManager(
     private val l1GasOracleConfig: L1GasOracleConfig,
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
+    tokenBalanceProvider: TokenBalanceProvider = DefaultTokenBalanceProvider,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
     pendingTransactionsProvider: PendingTransactionsProvider = DefaultPendingTransactionsProvider,
 ) : EthereumWalletManager(
@@ -46,6 +49,7 @@ class EthereumOptimisticRollupWalletManager(
     transactionBuilder = transactionBuilder,
     networkProvider = networkProvider,
     nftProvider = nftProvider,
+    tokenBalanceProvider = tokenBalanceProvider,
     supportsENS = false,
     transactionHistoryProvider = transactionHistoryProvider,
     yieldSupplyProvider = yieldSupplyProvider,
