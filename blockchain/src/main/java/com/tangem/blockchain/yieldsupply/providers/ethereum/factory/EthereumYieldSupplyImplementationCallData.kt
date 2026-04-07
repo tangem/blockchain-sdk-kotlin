@@ -19,6 +19,6 @@ class EthereumYieldSupplyImplementationCallData : SmartContractCallData {
 
     companion object {
         const val METHOD_ID = "0x5c60da1b"
-        val dataHex: String = METHOD_ID
+        const val dataHex: String = METHOD_ID
     }
 }

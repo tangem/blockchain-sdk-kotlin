@@ -34,8 +34,10 @@ internal class AaveV3YieldSupplyContractAddressFactory(
     }
 
     // TODO: Replace with actual SwapExecutionRegistry address when available
+    @Suppress("FunctionOnlyReturningConstant")
     fun getSwapExecutionRegistryAddress(): String? = null
 
     // TODO: Replace with actual latest implementation addresses per chain when available
+    @Suppress("FunctionOnlyReturningConstant")
     fun getLatestImplementationAddress(): String? = null
 }

@@ -38,14 +38,11 @@ class EthereumYieldSupplySwapCallData(
             // Offset to dynamic bytes parameter (5 static slots * 32 bytes = 160 = 0xa0)
             val dataOffset = BigInteger.valueOf(DYNAMIC_OFFSET).toFixedSizeBytes()
 
-            // Dynamic bytes: length + padded data
             val dataLength = BigInteger.valueOf(swapData.size.toLong()).toFixedSizeBytes()
             val paddedData = if (swapData.isEmpty()) {
                 byteArrayOf()
             } else {
-                swapData.toFixedSizeBytesRightPadding(
-                    fixedSize = ((swapData.size + 31) / 32) * 32,
-                )
+                swapData.toFixedSizeBytesRightPadding(fixedSize = (swapData.size + 31) / 32 * 32)
             }
 
             return prefixData +

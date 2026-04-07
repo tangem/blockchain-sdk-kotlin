@@ -28,12 +28,14 @@ internal class EthereumYieldSupplyUpgradeToAndCallCallDataTest {
     @Test
     fun `Validate call data`() {
         val valid = EthereumYieldSupplyUpgradeToAndCallCallData(
-            newImplementation = newImplementation, callData = innerCallData,
+            newImplementation = newImplementation,
+            callData = innerCallData,
         )
         Truth.assertThat(valid.validate(blockchain)).isTrue()
 
         val invalid = EthereumYieldSupplyUpgradeToAndCallCallData(
-            newImplementation = EthereumUtils.ZERO_ADDRESS, callData = innerCallData,
+            newImplementation = EthereumUtils.ZERO_ADDRESS,
+            callData = innerCallData,
         )
         Truth.assertThat(invalid.validate(blockchain)).isFalse()
     }

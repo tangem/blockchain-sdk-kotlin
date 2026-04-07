@@ -26,8 +26,7 @@ import com.tangem.blockchain.yieldsupply.providers.ethereum.factory.EthereumYiel
 import com.tangem.blockchain.yieldsupply.providers.ethereum.factory.EthereumYieldSupplyImplementationCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.factory.EthereumYieldSupplyModuleCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.processor.EthereumYieldSupplyServiceFeeCallData
-import com.tangem.blockchain.yieldsupply.providers.ethereum.registry.EthereumYieldSupplyAllowedSpendersCallData
-import com.tangem.blockchain.yieldsupply.providers.ethereum.registry.EthereumYieldSupplyAllowedTargetsCallData
+import com.tangem.blockchain.yieldsupply.providers.ethereum.registry.EthereumYieldSupplyAllowedAddressCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyBalanceCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyEffectiveProtocolBalanceCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyStatusCallData
@@ -250,19 +249,19 @@ internal class EthereumYieldSupplyProvider(
             return YieldModuleVersionStatus.NotDeployed
         }
 
-        // Step 4: Save to storage
+        // Step 3: Save to storage
         dataStorage.store(
             key = storeKey(contractAddresses.providerType),
             value = stored?.copy(implementationAddress = currentImpl)
                 ?: YieldSupplyModule(implementationAddress = currentImpl),
         )
 
-        // Step 5: Compare with latest known
+        // Step 4: Compare with latest known
         if (currentImpl.equals(latestKnown, ignoreCase = true)) {
             return YieldModuleVersionStatus.UpToDate
         }
 
-        // Step 5b: Module is outdated — check if factory has the expected latest implementation
+        // Step 5: Module is outdated — check if factory has the expected latest implementation
         return try {
             val factoryImpl = multiJsonRpcProvider.performRequest(
                 request = EthereumJsonRpcProvider::call,
@@ -288,26 +287,13 @@ internal class EthereumYieldSupplyProvider(
         }
     }
 
-    override suspend fun isSwapSpenderAllowed(spenderAddress: String): Boolean = try {
-        val registryAddress = getYieldSupplyContractAddresses().swapExecutionRegistryAddress
-        if (registryAddress == null) {
-            false
-        } else {
-            val result = multiJsonRpcProvider.performRequest(
-                request = EthereumJsonRpcProvider::call,
-                data = EthCallObject(
-                    to = registryAddress,
-                    data = EthereumYieldSupplyAllowedSpendersCallData(spenderAddress).dataHex,
-                ),
-            ).extractResult()
-            result.endsWith("1")
-        }
-    } catch (e: Exception) {
-        Log.w(TAG, "Failed to check allowed spender: ${e.message}")
-        false
-    }
+    override suspend fun isSwapSpenderAllowed(spenderAddress: String): Boolean =
+        isRegistryAddressAllowed(EthereumYieldSupplyAllowedAddressCallData.allowedSpenders(spenderAddress))
 
-    override suspend fun isSwapTargetAllowed(targetAddress: String): Boolean = try {
+    override suspend fun isSwapTargetAllowed(targetAddress: String): Boolean =
+        isRegistryAddressAllowed(EthereumYieldSupplyAllowedAddressCallData.allowedTargets(targetAddress))
+
+    private suspend fun isRegistryAddressAllowed(callData: EthereumYieldSupplyAllowedAddressCallData): Boolean = try {
         val registryAddress = getYieldSupplyContractAddresses().swapExecutionRegistryAddress
         if (registryAddress == null) {
             false
@@ -316,13 +302,13 @@ internal class EthereumYieldSupplyProvider(
                 request = EthereumJsonRpcProvider::call,
                 data = EthCallObject(
                     to = registryAddress,
-                    data = EthereumYieldSupplyAllowedTargetsCallData(targetAddress).dataHex,
+                    data = callData.dataHex,
                 ),
             ).extractResult()
             result.endsWith("1")
         }
     } catch (e: Exception) {
-        Log.w(TAG, "Failed to check allowed target: ${e.message}")
+        Log.w(TAG, "Failed to check registry address: ${e.message}")
         false
     }
 

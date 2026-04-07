@@ -32,14 +32,11 @@ class EthereumYieldSupplyUpgradeToAndCallCallData(
             // Offset to dynamic bytes parameter (2 static slots * 32 bytes = 64 = 0x40)
             val dataOffset = BigInteger.valueOf(DYNAMIC_OFFSET).toFixedSizeBytes()
 
-            // Dynamic bytes: length + padded data
             val dataLength = BigInteger.valueOf(callData.size.toLong()).toFixedSizeBytes()
             val paddedData = if (callData.isEmpty()) {
                 byteArrayOf()
             } else {
-                callData.toFixedSizeBytesRightPadding(
-                    fixedSize = ((callData.size + 31) / 32) * 32,
-                )
+                callData.toFixedSizeBytesRightPadding(fixedSize = (callData.size + 31) / 32 * 32)
             }
 
             return prefixData +

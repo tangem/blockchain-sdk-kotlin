@@ -19,8 +19,11 @@ internal class EthereumYieldSupplySwapCallDataTest {
     @Test
     fun `Is call data correct`() {
         val callData = EthereumYieldSupplySwapCallData(
-            tokenIn = tokenIn, amountIn = amountIn,
-            target = target, spender = spender, swapData = swapData,
+            tokenIn = tokenIn,
+            amountIn = amountIn,
+            target = target,
+            spender = spender,
+            swapData = swapData,
         )
         val expected = "0x4c3f521d".hexToBytes() +
             "0000000000000000000000001234567890abcdef1234567890abcdef12345678".hexToBytes() +
@@ -36,8 +39,11 @@ internal class EthereumYieldSupplySwapCallDataTest {
     @Test
     fun `Is call data correct with empty swap data`() {
         val callData = EthereumYieldSupplySwapCallData(
-            tokenIn = tokenIn, amountIn = amountIn,
-            target = target, spender = spender, swapData = byteArrayOf(),
+            tokenIn = tokenIn,
+            amountIn = amountIn,
+            target = target,
+            spender = spender,
+            swapData = byteArrayOf(),
         )
         val expected = "0x4c3f521d".hexToBytes() +
             "0000000000000000000000001234567890abcdef1234567890abcdef12345678".hexToBytes() +
@@ -52,8 +58,11 @@ internal class EthereumYieldSupplySwapCallDataTest {
     @Test
     fun `Validate call data with valid params`() {
         val callData = EthereumYieldSupplySwapCallData(
-            tokenIn = tokenIn, amountIn = amountIn,
-            target = target, spender = spender, swapData = swapData,
+            tokenIn = tokenIn,
+            amountIn = amountIn,
+            target = target,
+            spender = spender,
+            swapData = swapData,
         )
         Truth.assertThat(callData.validate(blockchain)).isTrue()
     }
@@ -62,8 +71,11 @@ internal class EthereumYieldSupplySwapCallDataTest {
     fun `Validate call data with zero address`() {
         Truth.assertThat(
             EthereumYieldSupplySwapCallData(
-                tokenIn = EthereumUtils.ZERO_ADDRESS, amountIn = amountIn,
-                target = target, spender = spender, swapData = swapData,
+                tokenIn = EthereumUtils.ZERO_ADDRESS,
+                amountIn = amountIn,
+                target = target,
+                spender = spender,
+                swapData = swapData,
             ).validate(blockchain),
         ).isFalse()
     }
@@ -72,8 +84,11 @@ internal class EthereumYieldSupplySwapCallDataTest {
     fun `Validate call data with zero amount`() {
         Truth.assertThat(
             EthereumYieldSupplySwapCallData(
-                tokenIn = tokenIn, amountIn = BigInteger.ZERO,
-                target = target, spender = spender, swapData = swapData,
+                tokenIn = tokenIn,
+                amountIn = BigInteger.ZERO,
+                target = target,
+                spender = spender,
+                swapData = swapData,
             ).validate(blockchain),
         ).isFalse()
     }
