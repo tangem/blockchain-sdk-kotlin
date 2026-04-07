@@ -4,6 +4,8 @@ import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.factory.EthereumYieldSupplyDeployCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.*
+import com.tangem.blockchain.yieldsupply.providers.YieldModuleUpgradeUnavailableException
+import com.tangem.blockchain.yieldsupply.providers.YieldModuleVersionStatus
 
 /**
  * Factory to provide [SmartContractCallData] for Yield Module operations.
@@ -73,6 +75,31 @@ object YieldSupplyContractCallDataProviderFactory {
     fun getExitCallData(tokenContractAddress: String): SmartContractCallData = EthereumYieldSupplyExitCallData(
         tokenContractAddress = tokenContractAddress,
     )
+
+    /**
+     * Wraps the given call data with an upgrade-and-call transaction if the module version is outdated.
+     *
+     * @param versionStatus The current version status of the yield module.
+     * @param originalCallData The original call data to wrap.
+     * @return The original call data if the module is up-to-date,
+     *         or wrapped call data with [EthereumYieldSupplyUpgradeToAndCallCallData] if an upgrade is available.
+     * @throws IllegalStateException if the module is outdated but cannot be upgraded.
+     */
+    fun wrapWithUpgradeIfNeeded(
+        versionStatus: YieldModuleVersionStatus,
+        originalCallData: SmartContractCallData,
+    ): SmartContractCallData = when (versionStatus) {
+        is YieldModuleVersionStatus.UpToDate,
+        is YieldModuleVersionStatus.NotDeployed,
+        -> originalCallData
+        is YieldModuleVersionStatus.UpgradeAvailable -> EthereumYieldSupplyUpgradeToAndCallCallData(
+            newImplementation = versionStatus.latestImplementation,
+            callData = originalCallData.data,
+        )
+        is YieldModuleVersionStatus.UpgradeUnavailable -> throw YieldModuleUpgradeUnavailableException(
+            currentImplementation = versionStatus.currentImplementation,
+        )
+    }
 
     /**
      * Provides call data for sending amount from yield module

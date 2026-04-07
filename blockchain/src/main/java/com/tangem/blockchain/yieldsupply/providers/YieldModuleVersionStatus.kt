@@ -29,3 +29,13 @@ sealed class YieldModuleVersionStatus {
     /** Module is not deployed */
     data object NotDeployed : YieldModuleVersionStatus()
 }
+
+/**
+ * Thrown when a yield module upgrade is required but unavailable.
+ * @property currentImplementation the current implementation address of the outdated module
+ */
+class YieldModuleUpgradeUnavailableException(
+    val currentImplementation: String,
+) : IllegalStateException(
+    "Yield module is outdated (implementation: $currentImplementation) and cannot be upgraded",
+)
