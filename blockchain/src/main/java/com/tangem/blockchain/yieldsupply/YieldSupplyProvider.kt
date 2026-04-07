@@ -3,6 +3,7 @@ package com.tangem.blockchain.yieldsupply
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.yieldsupply.addressfactory.YieldSupplyContractAddresses
+import com.tangem.blockchain.yieldsupply.providers.YieldModuleVersionStatus
 import com.tangem.blockchain.yieldsupply.providers.YieldSupplyStatus
 import java.math.BigDecimal
 
@@ -73,4 +74,28 @@ interface YieldSupplyProvider {
      *  @return True if allowed to spend, false otherwise.
      */
     suspend fun isAllowedToSpend(token: Token): Boolean
+
+    /**
+     *  Checks the version status of the user's Yield Module contract.
+     *  Determines if the module is up-to-date, needs an upgrade, or cannot be upgraded.
+     *
+     *  @return The [YieldModuleVersionStatus] representing the current module state.
+     */
+    suspend fun checkModuleVersionStatus(): YieldModuleVersionStatus
+
+    /**
+     *  Checks if the given spender address is allowed in the SwapExecutionRegistry.
+     *
+     *  @param spenderAddress The address to check.
+     *  @return True if the spender is allowed, false otherwise.
+     */
+    suspend fun isSwapSpenderAllowed(spenderAddress: String): Boolean
+
+    /**
+     *  Checks if the given target address is allowed in the SwapExecutionRegistry.
+     *
+     *  @param targetAddress The address to check.
+     *  @return True if the target is allowed, false otherwise.
+     */
+    suspend fun isSwapTargetAllowed(targetAddress: String): Boolean
 }

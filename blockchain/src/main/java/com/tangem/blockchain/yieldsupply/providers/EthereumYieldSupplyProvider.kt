@@ -6,6 +6,7 @@ import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
 import com.tangem.blockchain.blockchains.ethereum.network.EthCallObject
+import com.tangem.blockchain.blockchains.ethereum.network.EthGetStorageAtData
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.AllowanceERC20TokenCallData
 import com.tangem.blockchain.common.*
@@ -22,8 +23,11 @@ import com.tangem.blockchain.yieldsupply.addressfactory.YieldSupplyContractAddre
 import com.tangem.blockchain.yieldsupply.addressfactory.YieldSupplyContractAddresses
 import com.tangem.blockchain.yieldsupply.providers.ethereum.converters.EthereumYieldSupplyStatusConverter
 import com.tangem.blockchain.yieldsupply.providers.ethereum.factory.EthereumYieldSupplyContractAddressCallData
+import com.tangem.blockchain.yieldsupply.providers.ethereum.factory.EthereumYieldSupplyImplementationCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.factory.EthereumYieldSupplyModuleCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.processor.EthereumYieldSupplyServiceFeeCallData
+import com.tangem.blockchain.yieldsupply.providers.ethereum.registry.EthereumYieldSupplyAllowedSpendersCallData
+import com.tangem.blockchain.yieldsupply.providers.ethereum.registry.EthereumYieldSupplyAllowedTargetsCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyBalanceCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyEffectiveProtocolBalanceCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyStatusCallData
@@ -211,6 +215,117 @@ internal class EthereumYieldSupplyProvider(
         return allowanceValue >= (Int.MAX_VALUE / 2).toBigDecimal()
     }
 
+    @Suppress("ReturnCount")
+    override suspend fun checkModuleVersionStatus(): YieldModuleVersionStatus {
+        val contractAddresses = getYieldSupplyContractAddresses()
+        val latestKnown = contractAddresses.latestImplementationAddress
+            ?: return YieldModuleVersionStatus.NotDeployed
+
+        val yieldModuleAddress = getYieldModuleAddress()
+        if (yieldModuleAddress == EthereumUtils.ZERO_ADDRESS) {
+            return YieldModuleVersionStatus.NotDeployed
+        }
+
+        // Step 1: Check cached implementation address in storage
+        val stored = dataStorage.getOrNull<YieldSupplyModule>(
+            key = storeKey(contractAddresses.providerType),
+        )
+        val storedImpl = stored?.implementationAddress
+        if (storedImpl != null && storedImpl.equals(latestKnown, ignoreCase = true)) {
+            return YieldModuleVersionStatus.UpToDate
+        }
+
+        // Step 2: Read current implementation from proxy storage slot via eth_getStorageAt
+        val currentImpl = try {
+            val result = multiJsonRpcProvider.performRequest(
+                request = EthereumJsonRpcProvider::getStorageAt,
+                data = EthGetStorageAtData(
+                    address = yieldModuleAddress,
+                    position = IMPLEMENTATION_SLOT,
+                ),
+            ).extractResult()
+            HEX_PREFIX + result.takeLast(EthereumUtils.ADDRESS_HEX_LENGTH)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to get module implementation: ${e.message}")
+            return YieldModuleVersionStatus.NotDeployed
+        }
+
+        // Step 4: Save to storage
+        dataStorage.store(
+            key = storeKey(contractAddresses.providerType),
+            value = stored?.copy(implementationAddress = currentImpl)
+                ?: YieldSupplyModule(implementationAddress = currentImpl),
+        )
+
+        // Step 5: Compare with latest known
+        if (currentImpl.equals(latestKnown, ignoreCase = true)) {
+            return YieldModuleVersionStatus.UpToDate
+        }
+
+        // Step 5b: Module is outdated — check if factory has the expected latest implementation
+        return try {
+            val factoryImpl = multiJsonRpcProvider.performRequest(
+                request = EthereumJsonRpcProvider::call,
+                data = EthCallObject(
+                    to = contractAddresses.factoryContractAddress,
+                    data = EthereumYieldSupplyImplementationCallData.dataHex,
+                ),
+            ).extractResult()
+
+            val factoryImplAddress = HEX_PREFIX + factoryImpl.takeLast(EthereumUtils.ADDRESS_HEX_LENGTH)
+
+            if (factoryImplAddress.equals(latestKnown, ignoreCase = true)) {
+                YieldModuleVersionStatus.UpgradeAvailable(
+                    currentImplementation = currentImpl,
+                    latestImplementation = latestKnown,
+                )
+            } else {
+                YieldModuleVersionStatus.UpgradeUnavailable(currentImplementation = currentImpl)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to check factory implementation: ${e.message}")
+            YieldModuleVersionStatus.UpgradeUnavailable(currentImplementation = currentImpl)
+        }
+    }
+
+    override suspend fun isSwapSpenderAllowed(spenderAddress: String): Boolean = try {
+        val registryAddress = getYieldSupplyContractAddresses().swapExecutionRegistryAddress
+        if (registryAddress == null) {
+            false
+        } else {
+            val result = multiJsonRpcProvider.performRequest(
+                request = EthereumJsonRpcProvider::call,
+                data = EthCallObject(
+                    to = registryAddress,
+                    data = EthereumYieldSupplyAllowedSpendersCallData(spenderAddress).dataHex,
+                ),
+            ).extractResult()
+            result.endsWith("1")
+        }
+    } catch (e: Exception) {
+        Log.w(TAG, "Failed to check allowed spender: ${e.message}")
+        false
+    }
+
+    override suspend fun isSwapTargetAllowed(targetAddress: String): Boolean = try {
+        val registryAddress = getYieldSupplyContractAddresses().swapExecutionRegistryAddress
+        if (registryAddress == null) {
+            false
+        } else {
+            val result = multiJsonRpcProvider.performRequest(
+                request = EthereumJsonRpcProvider::call,
+                data = EthCallObject(
+                    to = registryAddress,
+                    data = EthereumYieldSupplyAllowedTargetsCallData(targetAddress).dataHex,
+                ),
+            ).extractResult()
+            result.endsWith("1")
+        }
+    } catch (e: Exception) {
+        Log.w(TAG, "Failed to check allowed target: ${e.message}")
+        false
+    }
+
     private fun storeKey(providerType: YieldSupplyProviderType) = "yield-supply-${providerType.key}" +
         "-${wallet.publicKey.blockchainKey.toCompressedPublicKey().toHexString()}" +
         "-${wallet.address}-${wallet.blockchain.id}"
@@ -234,5 +349,9 @@ internal class EthereumYieldSupplyProvider(
     private companion object {
         const val BASIS_POINTS_DECIMALS = 4
         const val TAG = "EthereumYieldSupplyProvider"
+
+        /** EIP-1967 implementation storage slot */
+        const val IMPLEMENTATION_SLOT =
+            "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc"
     }
 }

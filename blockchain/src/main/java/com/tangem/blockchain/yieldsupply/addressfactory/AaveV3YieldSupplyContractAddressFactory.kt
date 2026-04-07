@@ -32,4 +32,10 @@ internal class AaveV3YieldSupplyContractAddressFactory(
         Blockchain.EthereumTestnet -> "0x9A4b70A216C1A84d72a490f8cD3014Fdb538d249"
         else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
+
+    // TODO: Replace with actual SwapExecutionRegistry address when available
+    fun getSwapExecutionRegistryAddress(): String? = null
+
+    // TODO: Replace with actual latest implementation addresses per chain when available
+    fun getLatestImplementationAddress(): String? = null
 }

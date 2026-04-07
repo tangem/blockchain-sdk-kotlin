@@ -27,6 +27,11 @@ data class EthereumResolveENSNameRequestData(
     val callDataBytes: ByteArray,
 )
 
+data class EthGetStorageAtData(
+    val address: String,
+    val position: String,
+)
+
 data class EthereumReverseResolveENSAddressRequestData(
     val address: ByteArray,
     val contractAddress: String,

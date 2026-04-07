@@ -5,6 +5,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.yieldsupply.addressfactory.YieldSupplyContractAddresses
+import com.tangem.blockchain.yieldsupply.providers.YieldModuleVersionStatus
 import com.tangem.blockchain.yieldsupply.providers.YieldSupplyStatus
 import java.math.BigDecimal
 
@@ -28,4 +29,10 @@ internal object DefaultYieldSupplyProvider : YieldSupplyProvider {
     override suspend fun getEffectiveProtocolBalance(token: Token): BigDecimal = BigDecimal.ZERO
 
     override suspend fun isAllowedToSpend(token: Token): Boolean = false
+
+    override suspend fun checkModuleVersionStatus(): YieldModuleVersionStatus = YieldModuleVersionStatus.NotDeployed
+
+    override suspend fun isSwapSpenderAllowed(spenderAddress: String): Boolean = false
+
+    override suspend fun isSwapTargetAllowed(targetAddress: String): Boolean = false
 }
