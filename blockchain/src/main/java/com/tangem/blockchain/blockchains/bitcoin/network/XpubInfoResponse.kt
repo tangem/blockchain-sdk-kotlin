@@ -14,6 +14,6 @@ data class XpubInfoResponse(
 
 data class UsedAddress(
     val address: String,
-    val path: String,
+    val derivationPath: String,
     val balance: BigDecimal,
 )
