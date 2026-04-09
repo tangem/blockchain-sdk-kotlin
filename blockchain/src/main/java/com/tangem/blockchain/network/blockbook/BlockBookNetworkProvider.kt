@@ -40,6 +40,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Calendar
 
+@Suppress("LargeClass")
 class BlockBookNetworkProvider(
     val config: BlockBookConfig,
     val blockchain: Blockchain,
@@ -140,11 +141,25 @@ class BlockBookNetworkProvider(
 
             val balance = xpubResponse.balance.toBigDecimalOrNull() ?: BigDecimal.ZERO
 
+            // Split UTXOs: confirmed for tx building, all (including unconfirmed) for address tracking
+            val confirmedUtxoItems = xpubUtxoItems.filter { it.confirmations > 0 }
+            val allUtxoAddresses = xpubUtxoItems.mapNotNull { item ->
+                val utxoAddress = item.address ?: return@mapNotNull null
+                val utxoDerivationPath = item.path ?: return@mapNotNull null
+                val utxoBalance = item.value.toBigDecimalOrNull()
+                    ?.movePointLeft(blockchain.decimals()) ?: BigDecimal.ZERO
+                UsedAddress(address = utxoAddress, derivationPath = utxoDerivationPath, balance = utxoBalance)
+            }
+
+            // Merge addresses from /xpub tokens and /utxo (including unconfirmed)
+            val xpubUsedAddresses = createUsedAddresses(xpubResponse)
+            val mergedUsedAddresses = mergeUsedAddresses(xpubUsedAddresses, allUtxoAddresses)
+
             Result.Success(
                 XpubInfoResponse(
                     balance = balance.movePointLeft(blockchain.decimals()),
-                    unspentOutputs = createXpubUnspentOutputs(xpubUtxoItems),
-                    usedAddresses = createUsedAddresses(xpubResponse),
+                    unspentOutputs = createXpubUnspentOutputs(confirmedUtxoItems),
+                    usedAddresses = mergedUsedAddresses,
                     hasUnconfirmed = (xpubResponse.unconfirmedTxs ?: 0) != 0,
                     recentTransactions = createXpubUnconfirmedTransactions(
                         xpubResponse = xpubResponse,
@@ -160,7 +175,8 @@ class BlockBookNetworkProvider(
     override suspend fun getUtxoByXpub(xpub: String): Result<List<BitcoinUnspentOutput>> {
         return try {
             val xpubUtxoItems = withContext(Dispatchers.IO) { api.getXpubUtxo(xpub) }
-            Result.Success(createXpubUnspentOutputs(xpubUtxoItems))
+            val confirmedItems = xpubUtxoItems.filter { it.confirmations > 0 }
+            Result.Success(createXpubUnspentOutputs(confirmedItems))
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
@@ -192,11 +208,28 @@ class BlockBookNetworkProvider(
         return xpubResponse.tokens?.map { token ->
             UsedAddress(
                 address = token.name,
-                path = token.path,
+                derivationPath = token.path,
                 balance = (token.balance?.toBigDecimalOrNull() ?: BigDecimal.ZERO)
                     .movePointLeft(blockchain.decimals()),
             )
         }.orEmpty()
+    }
+
+    /**
+     * Merge used addresses from /xpub tokens and /utxo responses.
+     * /utxo includes unconfirmed UTXOs which means addresses receiving unconfirmed funds
+     * are correctly marked as "used" for gap-aware address generation.
+     */
+    private fun mergeUsedAddresses(
+        xpubAddresses: List<UsedAddress>,
+        utxoAddresses: List<UsedAddress>,
+    ): List<UsedAddress> {
+        val byAddress = linkedMapOf<String, UsedAddress>()
+        xpubAddresses.forEach { byAddress[it.address] = it }
+        utxoAddresses.forEach { addr ->
+            byAddress.putIfAbsent(addr.address, addr)
+        }
+        return byAddress.values.toList()
     }
 
     private fun createXpubUnconfirmedTransactions(
