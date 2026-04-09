@@ -145,9 +145,6 @@ internal class BlockBookApi(private val config: BlockBookConfig, private val blo
             )
             .await()
             .unpack<List<GetUtxoResponseItem>>()
-            .filter {
-                it.confirmations > 0
-            }
     }
 
     suspend fun getUtxo(address: String): List<GetUtxoResponseItem> {
