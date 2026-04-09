@@ -77,7 +77,7 @@ class BitcoinDynamicAddressesManager(
     ): DynamicAddressesManager.DerivedAddress {
         val usedIndices = usedAddresses
             .mapNotNull { usedAddress ->
-                runCatching { parseChainAndIndex(usedAddress.path) }.getOrNull()
+                runCatching { parseChainAndIndex(usedAddress.derivationPath) }.getOrNull()
             }
             .filter { it.first == chain }
             .map { it.second }
