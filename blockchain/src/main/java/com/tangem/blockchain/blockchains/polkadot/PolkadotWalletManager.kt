@@ -165,7 +165,7 @@ internal class PolkadotWalletManager(
                         when (val sendResult = networkProvider.sendTransaction(signedData)) {
                             is Result.Failure -> sendResult
                             is Result.Success -> {
-                                val txHash = sendResult.data.formatHex()
+                                val txHash = sendResult.data.lowercase().formatHex()
                                 wallet.addOutgoingTransaction(
                                     transactionData = transactionDataList[index],
                                     txHash = txHash,
@@ -226,7 +226,7 @@ internal class PolkadotWalletManager(
             return Result.Failure(it.error)
         }
 
-        val txHash = hash.formatHex()
+        val txHash = hash.lowercase().formatHex()
         wallet.addOutgoingTransaction(transactionData = uncompiledTransaction, txHash = txHash)
 
         return Result.Success(TransactionSendResult(txHash))
