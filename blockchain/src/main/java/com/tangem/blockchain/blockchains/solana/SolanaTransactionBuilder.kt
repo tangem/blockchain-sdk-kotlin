@@ -9,6 +9,7 @@ import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -244,6 +245,7 @@ internal class SolanaTransactionBuilder(
         uiAmount: BigDecimal,
         tokenProgramId: SolanaTokenProgram.ID,
     ): BigDecimal {
+        if (!DepsContainer.blockchainFeatureToggles.isSolanaScaledUiAmountEnabled) return uiAmount
         if (tokenProgramId != SolanaTokenProgram.ID.TOKEN_2022) return uiAmount
 
         val multiplier = when (
