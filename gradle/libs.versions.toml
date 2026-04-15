@@ -1,0 +1,233 @@
+[versions]
+# Build tools
+kotlin = "2.1.10"
+agp = "8.10.1"
+ksp = "2.1.10-1.0.31"
+wire = "4.9.9"
+
+# Code quality
+detekt = "1.23.8"
+detektComposeRules = "1.4.0"
+
+# Tangem SDK
+tangemSdk = "develop-602"
+tangemSdkDemo = "develop-511"
+
+# AndroidX & UI
+appcompat = "1.6.1"
+coreKtx = "1.13.1"
+constraintlayout = "2.0.4"
+material = "1.12.0"
+
+# Network
+retrofit = "2.11.0"
+converterMoshi = "2.9.0"
+converterJackson = "2.6.0"
+moshi = "1.14.0"
+moshiCodegen = "1.15.1"
+
+# Coroutines
+coroutines = "1.8.0"
+coroutinesOkhttp = "1.0"
+
+# Serialization
+kotlinxSerializationJson = "1.5.1"
+kotlinxSerializationProtobuf = "1.5.1"
+
+# Bitcoin
+bitcoinj = "0.16.3"
+bitcoinKmp = "0.28.1"
+secp256k1Kmp = "0.19.0"
+
+# Stellar
+stellarSdk = "2.2.3"
+
+# Dogecoin
+libdohj = "3dd6d7548843fe1891366e0325a05587eb21d1aa"
+
+# Crypto
+spongycastle = "1.58.0.0"
+bouncycastle = "1.76"
+kethereum = "0.86.0"
+komputingKhex = "1.1.2"
+eddsa = "0.3.0"
+cbor = "0.8"
+
+# Tangem native
+blstlib = "master-15"
+walletCore = "4.3.9-tangem4"
+
+# Binance
+grpcProtobuf = "1.17.1"
+grpcStub = "1.17.1"
+commonsCodec = "1.10"
+commonsLang3 = "3.6"
+jacksonDatatypeJoda = "2.9.8"
+jodaTime = "2.10.1"
+
+# Polkadot
+multibase = "v1.0.0"
+zeroAllocationHashing = "0.11"
+
+# Hedera
+grpcOkhttp = "1.46.0"
+protobufJava = "3.21.9"
+
+# Solana
+solanaMetaplex = "0.2.10"
+ditchoomBuffer = "1.4.2"
+
+# TON
+tonKotlin = "0.3.1"
+
+# ICP
+ic4jAgent = "master-13"
+ic4jCandid = "0.7.4"
+jackson = "2.17.2"
+
+# Logging
+slf4j = "1.7.26"
+
+# Test
+junit4 = "4.13.2"
+junitJupiter = "5.8.2"
+truth = "1.3.0"
+jsonOrg = "20180813"
+mockk = "1.13.13"
+robolectric = "4.11.1"
+androidxTestJunit = "1.1.5"
+espresso = "3.5.1"
+chucker = "4.0.0"
+
+[libraries]
+# Detekt
+detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
+detekt-compose-rules = { module = "ru.kode:detekt-rules-compose", version.ref = "detektComposeRules" }
+
+# Tangem SDK
+tangem-sdk-core = { module = "com.tangem.tangem-sdk-kotlin:core", version.ref = "tangemSdk" }
+tangem-sdk-android = { module = "com.tangem.tangem-sdk-kotlin:android", version.ref = "tangemSdk" }
+tangem-sdk-core-demo = { module = "com.tangem.tangem-sdk-kotlin:core", version.ref = "tangemSdkDemo" }
+tangem-sdk-android-demo = { module = "com.tangem.tangem-sdk-kotlin:android", version.ref = "tangemSdkDemo" }
+
+# AndroidX
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
+androidx-material = { module = "com.google.android.material:material", version.ref = "material" }
+
+# Network
+network-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+network-converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "converterMoshi" }
+network-converter-jackson = { module = "com.squareup.retrofit2:converter-jackson", version.ref = "converterJackson" }
+network-moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
+network-moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }
+network-moshi-kotlin-codegen = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "moshiCodegen" }
+
+# Coroutines
+coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+coroutines-jdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8", version.ref = "coroutines" }
+coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+coroutines-okhttp = { module = "ru.gildor.coroutines:kotlin-coroutines-okhttp", version.ref = "coroutinesOkhttp" }
+
+# Serialization
+serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version.ref = "kotlinxSerializationProtobuf" }
+
+# Bitcoin
+bitcoin-bitcoinj = { module = "org.bitcoinj:bitcoinj-core", version.ref = "bitcoinj" }
+bitcoin-kmp-jvm = { module = "fr.acinq.bitcoin:bitcoin-kmp-jvm", version.ref = "bitcoinKmp" }
+bitcoin-secp256k1-kmp-jni-jvm = { module = "fr.acinq.secp256k1:secp256k1-kmp-jni-jvm", version.ref = "secp256k1Kmp" }
+
+# Stellar
+stellar-sdk = { module = "network.lightsail:stellar-sdk", version.ref = "stellarSdk" }
+stellar-sdk-android-spi = { module = "network.lightsail:stellar-sdk-android-spi", version.ref = "stellarSdk" }
+
+# Dogecoin
+dogecoin-libdohj = { module = "com.github.dogecoin:libdohj", version.ref = "libdohj" }
+
+# Crypto
+crypto-spongycastle-core = { module = "com.madgag.spongycastle:core", version.ref = "spongycastle" }
+crypto-spongycastle-prov = { module = "com.madgag.spongycastle:prov", version.ref = "spongycastle" }
+crypto-bouncycastle = { module = "org.bouncycastle:bcprov-jdk15to18", version.ref = "bouncycastle" }
+crypto-eddsa = { module = "net.i2p.crypto:eddsa", version.ref = "eddsa" }
+crypto-cbor = { module = "co.nstant.in:cbor", version.ref = "cbor" }
+
+# Kethereum
+kethereum-extensions-kotlin = { module = "com.github.walleth.kethereum:extensions_kotlin", version.ref = "kethereum" }
+kethereum-extensions-transactions = { module = "com.github.walleth.kethereum:extensions_transactions", version.ref = "kethereum" }
+kethereum-erc55 = { module = "com.github.walleth.kethereum:erc55", version.ref = "kethereum" }
+kethereum-keccak-shortcut = { module = "com.github.walleth.kethereum:keccak_shortcut", version.ref = "kethereum" }
+kethereum-wallet = { module = "com.github.walleth.kethereum:wallet", version.ref = "kethereum" }
+kethereum-crypto-impl-spongycastle = { module = "com.github.walleth.kethereum:crypto_impl_spongycastle", version.ref = "kethereum" }
+kethereum-crypto = { module = "com.github.walleth.kethereum:crypto", version.ref = "kethereum" }
+kethereum-crypto-api = { module = "com.github.walleth.kethereum:crypto_api", version.ref = "kethereum" }
+kethereum-model = { module = "com.github.walleth.kethereum:model", version.ref = "kethereum" }
+kethereum-rlp = { module = "com.github.walleth.kethereum:rlp", version.ref = "kethereum" }
+kethereum-abi = { module = "com.github.walleth.kethereum:abi", version.ref = "kethereum" }
+kethereum-types = { module = "com.github.walleth.kethereum:types", version.ref = "kethereum" }
+
+# Komputing
+komputing-khex-extensions = { module = "com.github.komputing.khex:extensions", version.ref = "komputingKhex" }
+
+# Tangem native
+tangem-blstlib = { module = "com.tangem:blstlib", version.ref = "blstlib" }
+tangem-wallet-core = { module = "com.tangem:wallet-core", version.ref = "walletCore" }
+tangem-wallet-core-proto = { module = "com.tangem:wallet-core-proto", version.ref = "walletCore" }
+
+# Binance
+binance-grpc-protobuf = { module = "io.grpc:grpc-protobuf", version.ref = "grpcProtobuf" }
+binance-grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpcStub" }
+binance-commons-codec = { module = "commons-codec:commons-codec", version.ref = "commonsCodec" }
+binance-commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commonsLang3" }
+binance-jackson-datatype-joda = { module = "com.fasterxml.jackson.datatype:jackson-datatype-joda", version.ref = "jacksonDatatypeJoda" }
+binance-joda-time = { module = "joda-time:joda-time", version.ref = "jodaTime" }
+
+# Polkadot
+polkadot-multibase = { module = "com.github.multiformats:java-multibase", version.ref = "multibase" }
+polkadot-zero-allocation-hashing = { module = "net.openhft:zero-allocation-hashing", version.ref = "zeroAllocationHashing" }
+
+# Hedera
+hedera-grpc-okhttp = { module = "io.grpc:grpc-okhttp", version.ref = "grpcOkhttp" }
+hedera-protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobufJava" }
+
+# Solana
+solana-metaplex = { module = "foundation.metaplex:solana", version.ref = "solanaMetaplex" }
+solana-ditchoom-buffer = { module = "com.ditchoom:buffer-android", version.ref = "ditchoomBuffer" }
+
+# TON
+ton-kotlin-tvm = { module = "org.ton:ton-kotlin-tvm", version.ref = "tonKotlin" }
+ton-kotlin-block-tlb = { module = "org.ton:ton-kotlin-block-tlb", version.ref = "tonKotlin" }
+
+# ICP
+icp-ic4j-agent = { module = "com.tangem.ic4j:ic4j-agent", version.ref = "ic4jAgent" }
+icp-ic4j-candid = { module = "org.ic4j:ic4j-candid", version.ref = "ic4jCandid" }
+icp-jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+icp-jackson-datatype-jdk8 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8", version.ref = "jackson" }
+icp-jackson-dataformat-cbor = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor", version.ref = "jackson" }
+
+# Logging
+logging-slf4j = { module = "org.slf4j:slf4j-log4j12", version.ref = "slf4j" }
+
+# Test
+test-junit4 = { module = "junit:junit", version.ref = "junit4" }
+test-junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junitJupiter" }
+test-truth = { module = "com.google.truth:truth", version.ref = "truth" }
+test-json-org = { module = "org.json:json", version.ref = "jsonOrg" }
+test-mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+test-mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockk" }
+test-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+test-robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+test-androidx-junit = { module = "androidx.test.ext:junit", version.ref = "androidxTestJunit" }
+test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso" }
+test-chucker = { module = "com.github.chuckerteam.chucker:library", version.ref = "chucker" }
+test-chucker-no-op = { module = "com.github.chuckerteam.chucker:library-no-op", version.ref = "chucker" }
+
+[plugins]
+android-library = { id = "com.android.library", version.ref = "agp" }
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+wire = { id = "com.squareup.wire", version.ref = "wire" }
