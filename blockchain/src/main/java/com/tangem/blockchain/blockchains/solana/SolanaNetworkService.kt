@@ -3,8 +3,8 @@ package com.tangem.blockchain.blockchains.solana
 import android.os.SystemClock
 import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.squareup.moshi.Types
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
 import com.tangem.blockchain.blockchains.solana.solanaj.model.*
 import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgram
@@ -13,6 +13,7 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.BlockchainSdkError.Solana
 import com.tangem.blockchain.common.NetworkProvider
 import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import kotlinx.coroutines.*
@@ -28,6 +29,7 @@ import java.math.BigDecimal
 [REDACTED_AUTHOR]
  */
 // FIXME: Refactor with wallet-core: [REDACTED_JIRA]
+@Suppress("LargeClass")
 internal class SolanaNetworkService(
     private val provider: SolanaRpcClient,
 ) : NetworkProvider {
@@ -66,12 +68,21 @@ internal class SolanaNetworkService(
                 emptyList()
             }
 
-            val tokensByMint = tokenAccounts.map {
+            val isScaledUiAmountEnabled = DepsContainer.blockchainFeatureToggles.isSolanaScaledUiAmountEnabled
+            val tokensByMint = tokenAccounts.map { tokenAccount ->
+                val tokenInfo = tokenAccount.account.data.parsed.info
+                val tokenAmount = tokenInfo.tokenAmount
+                val isToken2022 = tokenAccount.account.owner == SolanaTokenProgram.ID.TOKEN_2022.value.toBase58()
+                val solAmount = if (isScaledUiAmountEnabled && isToken2022) {
+                    tokenAmount.uiAmount.toBigDecimal()
+                } else {
+                    tokenAmount.amount.toBigDecimal().movePointLeft(tokenAmount.decimals)
+                }
                 SolanaTokenAccountInfo(
-                    value = it,
-                    address = it.pubkey,
-                    mint = it.account.data.parsed.info.mint,
-                    solAmount = it.account.data.parsed.info.tokenAmount.uiAmount.toBigDecimal(),
+                    value = tokenAccount,
+                    address = tokenAccount.pubkey,
+                    mint = tokenInfo.mint,
+                    solAmount = solAmount,
                 )
             }.associateBy { it.mint }
 
