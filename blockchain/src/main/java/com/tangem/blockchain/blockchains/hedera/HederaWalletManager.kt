@@ -13,6 +13,7 @@ import com.tangem.blockchain.blockchains.hedera.network.HederaNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -39,6 +40,7 @@ internal class HederaWalletManager(
 
     private val blockchain = wallet.blockchain
     private val tokenAddressConverter = HederaTokenAddressConverter()
+    private val isErc20Enabled get() = DepsContainer.blockchainFeatureToggles.isHederaErc20Enabled
 
     private var tokenAssociationFeeExchangeRate: BigDecimal? = null
 
@@ -119,6 +121,8 @@ internal class HederaWalletManager(
         tokenEvmAddresses: MutableMap<String, String>,
         resolvedContractAddresses: MutableMap<String, String>,
     ) {
+        if (!isErc20Enabled) return
+
         val existingType = tokenTypes[token.contractAddress]
         if (existingType != null) {
             val isErc20 = existingType == HederaTokenType.ERC20.name
@@ -248,6 +252,8 @@ internal class HederaWalletManager(
     }
 
     private suspend fun getTokenType(contractAddress: String): HederaTokenType {
+        if (!isErc20Enabled) return HederaTokenType.HTS
+
         val cachedData = dataStorage.getOrNull<BlockchainSavedData.Hedera>(wallet.publicKey)
         val typeName = cachedData?.tokenTypes?.get(contractAddress)
         return try {
