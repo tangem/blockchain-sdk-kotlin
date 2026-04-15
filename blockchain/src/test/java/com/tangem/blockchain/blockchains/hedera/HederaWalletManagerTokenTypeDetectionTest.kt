@@ -9,14 +9,27 @@ import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.datastorage.BlockchainDataStorage
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.extensions.Result
 import com.tangem.common.card.EllipticCurve
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import org.junit.Before
 import org.junit.Test
 
 class HederaWalletManagerTokenTypeDetectionTest {
+
+    @Before
+    fun setup() {
+        DepsContainer.onInit(
+            config = BlockchainSdkConfig(),
+            featureToggles = BlockchainFeatureToggles(
+                isYieldSupplyEnabled = false,
+                isHederaErc20Enabled = true,
+            ),
+        )
+    }
 
     @Test
     fun requirementsCondition_detectsAndCachesTypeOnCacheMiss() = runTest {
