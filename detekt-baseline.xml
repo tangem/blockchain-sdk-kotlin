@@ -36,7 +36,6 @@
     <ID>BooleanPropertyNaming:StellarNetworkProvider.kt$StellarTargetAccountResponse$val trustlineCreated: Boolean? = null</ID>
     <ID>BooleanPropertyNaming:StellarNetworkService.kt$StellarNetworkService$val requiresMemo = account.data.contains(MEMO_REQUIRED_KEY) &amp;&amp; account.data[MEMO_REQUIRED_KEY] == MEMO_REQUIRED_VALUE</ID>
     <ID>BooleanPropertyNaming:StellarWalletManager.kt$StellarWalletManager$val haveUnconfirmedTrustline = wallet.recentTransactions.any { currencyType.trustlineTxKey() == it.destinationAddress &amp;&amp; it.status == TransactionStatus.Unconfirmed }</ID>
-    <ID>BooleanPropertyNaming:StellarWalletManager.kt$StellarWalletManager$val requiresMemo = networkProvider.checkTargetAccount(transactionData.destinationAddress, token) .map { it.requiresMemo } .successOr { false }</ID>
     <ID>BooleanPropertyNaming:TonNetworkModels.kt$TonGetWalletInfoResponse$@Json(name = "wallet") val wallet: Boolean</ID>
     <ID>BooleanPropertyNaming:TonNetworkModels.kt$TonProviderResponse$@Json(name = "ok") val ok: Boolean</ID>
     <ID>BooleanPropertyNaming:TronNetworkModels.kt$TronBroadcastResponse$@Json(name = "result") val result: Boolean</ID>
@@ -64,7 +63,6 @@
     <ID>CastNullableToNonNullableType:StellarNetworkService.kt$StellarNetworkService$as</ID>
     <ID>CouldBeSequence:Blockchain.kt$Blockchain.Companion$filter { it.isTestnet() == isTestnet }</ID>
     <ID>CouldBeSequence:PolkadotWalletManager.kt$PolkadotWalletManager$filter { it.hash != null &amp;&amp; it.date != null }</ID>
-    <ID>CouldBeSequence:StellarNetworkService.kt$StellarNetworkService$filter { it.asset.isPresent &amp;&amp; it.assetCode.isPresent &amp;&amp; it.assetIssuer.isPresent }</ID>
     <ID>ExplicitCollectionElementAccessMethod:CardanoAddressService.kt$CardanoAddressService$CborBuilder().add(hashWithAttributes).build().get(0)</ID>
     <ID>HasPlatformType:BitcoinTransactionBuilder.kt$BitcoinTransactionBuilder$fun getTransactionHash()</ID>
     <ID>HasPlatformType:PolkadotAddressService.kt$PolkadotAddressService$val ss58Network = when (blockchain) { Blockchain.Polkadot -&gt; SS58Type.Network.POLKADOT Blockchain.PolkadotTestnet -&gt; SS58Type.Network.WESTEND Blockchain.Kusama -&gt; SS58Type.Network.KUSAMA Blockchain.AlephZero, Blockchain.AlephZeroTestnet, Blockchain.EnergyWebX, Blockchain.EnergyWebXTestnet, -&gt; SS58Type.Network.SUBSTRATE Blockchain.Joystream -&gt; SS58Type.Network.JOYSTREAM Blockchain.Bittensor -&gt; SS58Type.Network.BITTENSOR else -&gt; error("$blockchain isn't supported") }</ID>
@@ -98,7 +96,6 @@
     <ID>MultilineLambdaItParameter:BinanceWalletManager.kt$BinanceWalletManager${ val tokenBalance = response.balances[it.contractAddress] ?: 0.toBigDecimal() wallet.addTokenValue(tokenBalance, it) }</ID>
     <ID>MultilineLambdaItParameter:BitcoinCashNowNodesNetworkProvider.kt$BitcoinCashNowNodesNetworkProvider${ val amount = it.value.toBigDecimalOrNull()?.movePointLeft(Blockchain.BitcoinCash.decimals()) ?: return@mapNotNull null BitcoinUnspentOutput( amount = amount, outputIndex = it.vout.toLong(), transactionHash = it.txid.hexToBytes(), outputScript = outputScript.hexToBytes(), ) }</ID>
     <ID>MultilineLambdaItParameter:BitcoinCashProvidersBuilder.kt$BitcoinCashProvidersBuilder${ when (it) { ProviderType.NowNodes -&gt; getBitcoinCashNowNodesNetworkProvider().let(::listOfNotNull) ProviderType.GetBlock -&gt; { blockBookProviderFactory.createGetBlockProvider(blockchain).let(::listOfNotNull) } ProviderType.BitcoinLike.Blockchair -&gt; { BlockchairNetworkProviderFactory(config).createProviders(blockchain) } else -&gt; emptyList() } }</ID>
-    <ID>MultilineLambdaItParameter:BitcoinProvidersBuilder.kt$BitcoinProvidersBuilder${ when (it) { ProviderType.NowNodes -&gt; { blockBookProviderFactory.createNowNodesProvider(blockchain).let(::listOfNotNull) } ProviderType.GetBlock -&gt; { blockBookProviderFactory.createGetBlockProvider(blockchain).let(::listOfNotNull) } ProviderType.BitcoinLike.Blockcypher -&gt; { blockcypherProviderFactory.create(blockchain).let(::listOfNotNull) } ProviderType.BitcoinLike.Blockchair -&gt; blockchairProviderFactory.createProviders(blockchain) ProviderType.Mock -&gt; { listOf( blockBookProviderFactory.createCloreBlockProvider( blockchain = blockchain, baseHost = "https://wiremock.tests-d.com/bitcoin/", ), ) } else -&gt; emptyList() } }</ID>
     <ID>MultilineLambdaItParameter:BitcoinWalletManager.kt$BitcoinWalletManager${ BasicTransactionData( balanceDif = it.value.sumOf { transaction -&gt; transaction.balanceDif }, hash = it.value[0].hash, date = it.value[0].date, isConfirmed = it.value[0].isConfirmed, destination = it.value[0].destination, source = it.value[0].source, ) }</ID>
     <ID>MultilineLambdaItParameter:BitcoinWalletManager.kt$BitcoinWalletManager${ balance += it.balance unspentOutputs.addAll(it.unspentOutputs) recentTransactions.addAll(it.recentTransactions) hasUnconfirmed = if (hasUnconfirmed == null || it.hasUnconfirmed == null) { null } else { hasUnconfirmed!! || it.hasUnconfirmed } }</ID>
     <ID>MultilineLambdaItParameter:BitcoinWalletManager.kt$BitcoinWalletManager${ when (val response = it.await()) { is Result.Success -&gt; addressInfos.add(response.data) is Result.Failure -&gt; { updateError(response.error) return@coroutineScope } } }</ID>
@@ -156,7 +153,6 @@
     <ID>MultilineLambdaItParameter:GnosisProvidersBuilder.kt$GnosisProvidersBuilder${ when (it) { is ProviderType.Public -&gt; EthereumJsonRpcProvider(baseUrl = it.url) ProviderType.GetBlock -&gt; ethereumProviderFactory.getGetBlockProvider { gnosis?.jsonRpc } else -&gt; null } }</ID>
     <ID>MultilineLambdaItParameter:HederaProvidersBuilder.kt$HederaProvidersBuilder${ HederaMirrorRestProvider( baseUrl = if (isTestnet) API_HEDERA_ARKHIA_MIRROR_TESTNET else API_HEDERA_ARKHIA_MIRROR, key = it, ) }</ID>
     <ID>MultilineLambdaItParameter:HederaProvidersBuilder.kt$HederaProvidersBuilder${ when (it) { is ProviderType.Public -&gt; HederaMirrorRestProvider(baseUrl = it.url) ProviderType.Hedera.Arkhia -&gt; createArkhiaMirrorProvider(isTestnet = false) else -&gt; null } }</ID>
-    <ID>MultilineLambdaItParameter:HederaWalletManager.kt$HederaWalletManager${ networkService.getTokensCustomFeesInfo(it.token.contractAddress) .successOr { return Result.Failure(BlockchainSdkError.FailedToLoadFee) } }</ID>
     <ID>MultilineLambdaItParameter:KaspaFeesCalculator.kt$KaspaFeesCalculator${ when (it) { is Result.Failure -&gt; it is Result.Success -&gt; Result.Success(it.data.transaction) } }</ID>
     <ID>MultilineLambdaItParameter:KaspaRestApiNetworkProvider.kt$KaspaRestApiNetworkProvider${ KaspaUnspentOutput( amount = it.utxoEntry!!.amount!!.toBigDecimal().movePointLeft(decimals), outputIndex = it.outpoint!!.index!!, transactionHash = it.outpoint!!.transactionId!!.hexToBytes(), outputScript = it.utxoEntry!!.scriptPublicKey!!.scriptPublicKey!!.hexToBytes(), ) }</ID>
     <ID>MultilineLambdaItParameter:KaspaTransactionBuilder.kt$KaspaTransactionBuilder${ KaspaOutput( amount = it.value.getValue(), scriptPublicKey = KaspaScriptPublicKey(it.scriptBytes.toHexString()), ) }</ID>
@@ -170,7 +166,6 @@
     <ID>MultilineLambdaItParameter:KusamaProvidersBuilder.kt$KusamaProvidersBuilder${ when (it) { is ProviderType.GetBlock -&gt; createGetBlockProvider(blockchain) is ProviderType.NowNodes -&gt; createNowNodesProvider(blockchain) is ProviderType.Public -&gt; createPublicProvider(it.url, blockchain) is ProviderType.PolkadotLike.Tatum -&gt; createTatumProvider(blockchain) else -&gt; null } }</ID>
     <ID>MultilineLambdaItParameter:LineaProvidersBuilder.kt$LineaProvidersBuilder${ when (it) { is ProviderType.Public -&gt; EthereumJsonRpcProvider(baseUrl = it.url) ProviderType.NowNodes -&gt; { ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://linea.nownodes.io/") } ProviderType.QuickNode -&gt; { EthereumJsonRpcProvider(baseUrl = "https://www.quicknode.com/chains/linea/") } else -&gt; null } }</ID>
     <ID>MultilineLambdaItParameter:LitecoinProvidersBuilder.kt$LitecoinProvidersBuilder${ when (it) { ProviderType.NowNodes -&gt; { blockBookProviderFactory.createNowNodesProvider(blockchain).let(::listOfNotNull) } ProviderType.GetBlock -&gt; { blockBookProviderFactory.createGetBlockProvider(blockchain).let(::listOfNotNull) } ProviderType.BitcoinLike.Blockcypher -&gt; { blockcypherProviderFactory.create(blockchain).let(::listOfNotNull) } ProviderType.BitcoinLike.Blockchair -&gt; blockchairProviderFactory.createProviders(blockchain) else -&gt; emptyList() } }</ID>
-    <ID>MultilineLambdaItParameter:MantleWalletManager.kt$MantleWalletManager${ when (it) { is TransactionFee.Single -&gt; { val fee = requireEthereumFee(it.normal) it.copy(normal = mapFeeForEstimate(fee)) } is TransactionFee.Choosable -&gt; { val normalFee = requireEthereumFee(it.normal) val minimumFee = requireEthereumFee(it.minimum) val priorityFee = requireEthereumFee(it.priority) TransactionFee.Choosable( normal = mapFeeForEstimate(normalFee), minimum = mapFeeForEstimate(minimumFee), priority = mapFeeForEstimate(priorityFee), ) } } }</ID>
     <ID>MultilineLambdaItParameter:MoonbeamProvidersBuilder.kt$MoonbeamProvidersBuilder${ when (it) { is ProviderType.Public -&gt; createPublicProvider(url = it.url) ProviderType.NowNodes -&gt; { ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://moonbeam.nownodes.io/") } ProviderType.GetBlock -&gt; { ethereumProviderFactory.getGetBlockProvider { moonbeam?.jsonRpc } } else -&gt; null } }</ID>
     <ID>MultilineLambdaItParameter:MoralisEvmNFTProvider.kt$MoralisEvmNFTProvider${ NFTAsset.Media( animationUrl = null, // not implemented yet imageUrl = it.ipfsToHttps().removeUrlQuery(), ) }</ID>
     <ID>MultilineLambdaItParameter:MoralisEvmNFTProvider.kt$MoralisEvmNFTProvider${ it.tokenAddress?.let { tokenAddress -&gt; NFTCollection( name = it.name.orEmpty(), identifier = NFTCollection.Identifier.EVM(tokenAddress), blockchainId = blockchain.id, description = null, logoUrl = it.collectionLogo, count = it.count ?: 0, ) } }</ID>
@@ -219,8 +214,6 @@
     <ID>MultilineLambdaItParameter:SolanaWalletManager.kt$SolanaWalletManager${ confirmedTxData.add( it.updateStatus(status = TransactionStatus.Confirmed) as TransactionData.Uncompiled, ) }</ID>
     <ID>MultilineLambdaItParameter:SolanaWalletManager.kt$SolanaWalletManager${ if (it.instructions.isNotEmpty() &amp;&amp; it.instructions[0].programId == Program.Id.system.toBase58()) { val info = it.instructions[0].parsed.info val amount = Amount(SolanaValueConverter.toSol(info.lamports), wallet.blockchain) val feeAmount = Amount(SolanaValueConverter.toSol(it.fee), wallet.blockchain) TransactionData.Uncompiled( amount, Fee.Common(feeAmount), info.source, info.destination, TransactionStatus.Unconfirmed, hash = it.signature, ) } else { null } }</ID>
     <ID>MultilineLambdaItParameter:SonicProvidersBuilder.kt$SonicProvidersBuilder${ when (it) { is ProviderType.Public -&gt; EthereumJsonRpcProvider(baseUrl = it.url) ProviderType.NowNodes -&gt; { ethereumProviderFactory.getNowNodesProvider(baseUrl = "https://ftm-sonic.nownodes.io/") } else -&gt; null } }</ID>
-    <ID>MultilineLambdaItParameter:StellarNetworkService.kt$StellarNetworkService${ val assetCode = it.assetCode.get() val assetIssuer = it.assetIssuer.get() val separator = StellarTransactionBuilder.TANGEM_BACKEND_CONTRACT_ADDRESS_SEPARATOR "$assetCode${separator}$assetIssuer" == token.contractAddress }</ID>
-    <ID>MultilineLambdaItParameter:StellarProvidersBuilder.kt$StellarProvidersBuilder${ when (it) { is ProviderType.Public -&gt; StellarNetwork.Public(it.url) ProviderType.NowNodes -&gt; config.nowNodeCredentials?.apiKey.letNotBlank(StellarNetwork::Nownodes) else -&gt; null } }</ID>
     <ID>MultilineLambdaItParameter:StellarWalletManager.kt$StellarWalletManager${ val token = Token(it.symbol, it.issuer, blockchain.decimals()) wallet.addTokenValue(it.balance, token) }</ID>
     <ID>MultilineLambdaItParameter:SuiTransactionBuilder.kt$SuiTransactionBuilder${ val isLessThenOne = isCoinGasLessThenOneForTokenTransaction(walletInfo, amount) if (isLessThenOne) Result.Failure(BlockchainSdkError.Sui.OneSuiRequired) else Result.Failure(it) }</ID>
     <ID>MultilineLambdaItParameter:TelosProvidersBuilder.kt$TelosProvidersBuilder${ when (it) { is ProviderType.Public -&gt; createPublicProvider(url = it.url) ProviderType.GetBlock -&gt; { ethereumProviderFactory.getGetBlockProvider { telos?.jsonRpc } } else -&gt; null } }</ID>
@@ -233,7 +226,6 @@
     <ID>MultilineLambdaItParameter:TronProvidersBuilder.kt$TronProvidersBuilder${ when (it) { is ProviderType.Public -&gt; TronNetwork.PublicTronGrid(baseUrl = it.url) ProviderType.Tron.TronGrid -&gt; createTronGridProvider() ProviderType.NowNodes -&gt; createNowNodesProvider() ProviderType.GetBlock -&gt; createGetBlockProvider() else -&gt; null } }</ID>
     <ID>MultilineLambdaItParameter:TronTransactionHistoryProvider.kt$TronTransactionHistoryProvider${ contractAddress.equals(it.token, ignoreCase = true) &amp;&amp; walletAddress.equals(it.to, ignoreCase = true) || walletAddress.equals(it.from, ignoreCase = true) }</ID>
     <ID>MultilineLambdaItParameter:TronWalletManager.kt$TronWalletManager${ if (response.confirmedTransactionIds.contains(it.hash)) { it.status = TransactionStatus.Confirmed } }</ID>
-    <ID>MultilineLambdaItParameter:TronWalletManager.kt$TronWalletManager${ it.requireCompiled() (it.value as? TransactionData.Compiled.Data.RawString)?.data ?: return Result.Failure( BlockchainSdkError.UnsupportedOperation("Can't retrieve tron raw transaction"), ) }</ID>
     <ID>MultilineLambdaItParameter:VeChainNetworkService.kt$VeChainNetworkService${ val response = it.firstOrNull() ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee) if (!response.vmError.isNullOrEmpty()) return Result.Failure(BlockchainSdkError.FailedToLoadFee) response.gasUsed ?: 0 }</ID>
     <ID>MultilineLambdaItParameter:VeChainNetworkService.kt$VeChainNetworkService${ val response = it.value.extractResult() response.firstOrNull()?.data?.hexToBigDecimal()?.movePointLeft(it.key.decimals) }</ID>
     <ID>MultilineLambdaItParameter:VeChainProvidersBuilder.kt$VeChainProvidersBuilder${ when (it) { is ProviderType.Public -&gt; it.url ProviderType.NowNodes -&gt; createNowNodesProvider() else -&gt; null } }</ID>
@@ -261,7 +253,6 @@
     <ID>NamedArguments:Serde.kt$Serde.Companion.BatchDeserializer$__deserializeSeq(tRest, index + 1, length, builder)</ID>
     <ID>NamedArguments:SolanaWalletManager.kt$SolanaWalletManager$Uncompiled( amount, Fee.Common(feeAmount), info.source, info.destination, TransactionStatus.Unconfirmed, hash = it.signature, )</ID>
     <ID>NamedArguments:StellarTransactionBuilder.kt$StellarTransactionBuilder$toTransaction(sourceKeyPair, sequence, fee, timeBounds, memo)</ID>
-    <ID>NamedArguments:StellarTransactionBuilder.kt$StellarTransactionBuilder$toTransaction(sourceKeyPair, sequence, fee.longValue.toInt(), timeBounds, null)</ID>
     <ID>NamedArguments:SuiWalletManager.kt$SuiWalletManager$buildForDryRun(info, amount, destination, gasPrice)</ID>
     <ID>NamedArguments:TxOutput.kt$AssetOutput$AssetOutput(amount.subUnsafe(fee), lockupScript, lockTime, tokens, additionalData)</ID>
     <ID>NamedArguments:TxOutput.kt$TxOutput.Companion$AssetOutput( alphRemaining, lockupScript, lockTime, listOf(), ByteString(), )</ID>
@@ -272,10 +263,8 @@
     <ID>NamedArguments:UnsignedTransaction.kt$UnsignedTransaction.Companion$AssetOutput( maxOf(alphRemaining, dustUtxoAmount), toLockupScript, lockTimeOpt ?: TimeStamp.zero, listOf(), additionalDataOpt ?: ByteString(), )</ID>
     <ID>NamedArguments:UnsignedTransaction.kt$UnsignedTransaction.Companion$buildTxOutputs( fromLockupScript, inputs, outputInfos, gas, gasPrice, )</ID>
     <ID>NamedArguments:UnsignedTransaction.kt$UnsignedTransaction.Companion$calculateChangeOutputs(fromLockupScript, inputs, txOutputs, gasFee)</ID>
-    <ID>NamedArguments:VeChainTransactionBuilder.kt$VeChainTransactionBuilder$createSigningInput( uncompiledTransaction.amount, fee, uncompiledTransaction.destinationAddress, blockInfo, nonce, )</ID>
     <ID>NamedArguments:WalletManagerFactory.kt$WalletManagerFactory$Wallet(blockchain, addresses, finalPublicKey, setOf(), finalPath)</ID>
     <ID>NamedArguments:WalletManagerFactory.kt$WalletManagerFactory$prepareDefaultWalletData(publicKey, pairPublicKey, blockchain, curve)</ID>
-    <ID>NamedArguments:WalletManagerFactoryTest.kt$WalletManagerFactoryTest$WalletManagerFactory( BlockchainSdkConfig( blockchairCredentials = BlockchairCredentials( apiKey = listOf("anyKey"), authToken = "anyToken", ), blockcypherTokens = setOf(), infuraProjectId = "infuraProjectId", nowNodeCredentials = NowNodeCredentials(apiKey = "nowNodeCredentials"), getBlockCredentials = GetBlockCredentials( xrp = GetBlockAccessToken(), cardano = GetBlockAccessToken(), avalanche = GetBlockAccessToken(), eth = GetBlockAccessToken(), etc = GetBlockAccessToken(), fantom = GetBlockAccessToken(), rsk = GetBlockAccessToken(), bsc = GetBlockAccessToken(), polygon = GetBlockAccessToken(), gnosis = GetBlockAccessToken(), cronos = GetBlockAccessToken(), solana = GetBlockAccessToken(), ton = GetBlockAccessToken(), tron = GetBlockAccessToken(), cosmos = GetBlockAccessToken(), near = GetBlockAccessToken(), dogecoin = GetBlockAccessToken(), litecoin = GetBlockAccessToken(), dash = GetBlockAccessToken(), bitcoin = GetBlockAccessToken(), aptos = GetBlockAccessToken(), algorand = GetBlockAccessToken(), zkSyncEra = GetBlockAccessToken(), polygonZkEvm = GetBlockAccessToken(), base = GetBlockAccessToken(), blast = GetBlockAccessToken(), filecoin = GetBlockAccessToken(), arbitrum = GetBlockAccessToken(), bitcoinCash = GetBlockAccessToken(), kusama = GetBlockAccessToken(), moonbeam = GetBlockAccessToken(), optimism = GetBlockAccessToken(), polkadot = GetBlockAccessToken(), shibarium = GetBlockAccessToken(), sui = GetBlockAccessToken(), telos = GetBlockAccessToken(), tezos = GetBlockAccessToken(), ), tronGridApiKey = "", chiaFireAcademyApiKey = "", ), blockchainProviderTypes = BLOCKCHAIN_PROVIDER_TYPES, blockchainDataStorage = object : BlockchainDataStorage { override suspend fun getOrNull(key: String): String? = null override suspend fun store(key: String, value: String) = Unit override suspend fun remove(key: String) = Unit }, accountCreator = accountCreator, featureToggles = BlockchainFeatureToggles( isYieldSupplyEnabled = false, ), )</ID>
     <ID>NestedScopeFunctions:AlgorandTransactionBuilder.kt$AlgorandTransactionBuilder$let(ByteString::copyFromUtf8)</ID>
     <ID>NestedScopeFunctions:BlockchainDemoActivity.kt$BlockchainDemoActivity$let { "FeeResource: $it" }</ID>
     <ID>NestedScopeFunctions:QuaiAddressService.kt$QuaiAddressService$let { return it }</ID>
@@ -367,15 +356,12 @@
     <ID>UnnecessaryLet:SuiTransactionBuilder.kt$SuiTransactionBuilder$let(::DataVector)</ID>
     <ID>UnnecessaryLet:TezosTransactionBuilder.kt$TezosTransactionBuilder$let { stringBuilder.append(ZERO_BYTE) }</ID>
     <ID>UnnecessaryLet:TonTransactionBuilder.kt$TonTransactionBuilder$let(ByteString::copyFrom)</ID>
-    <ID>UnnecessaryNotNullOperator:ICPTransactionBuilder.kt$ICPTransactionBuilder$uncompiledTransaction.amount.longValue!!</ID>
     <ID>UnnecessaryNotNullOperator:KaspaRestApiNetworkProvider.kt$KaspaRestApiNetworkProvider$it.outpoint!!</ID>
     <ID>UnnecessaryNotNullOperator:KaspaRestApiNetworkProvider.kt$KaspaRestApiNetworkProvider$it.utxoEntry!!</ID>
     <ID>UnnecessaryNotNullOperator:RippledNetworkProvider.kt$RippledNetworkProvider$accountData.result!!</ID>
     <ID>UnnecessaryNotNullOperator:RippledNetworkProvider.kt$RippledNetworkProvider$feeData.result!!</ID>
     <ID>UnnecessaryNotNullOperator:RippledNetworkProvider.kt$RippledNetworkProvider$validatedLedger.reserveBase!!</ID>
     <ID>UnnecessarySafeCall:BinanceNetworkService.kt$BinanceNetworkService$binanceFee.transactionFee?.value</ID>
-    <ID>UnreachableCatchBlock:HederaUtils.kt$HederaUtils$catch (e: Exception) { Log.error { e.message.orEmpty() } throw BlockchainSdkError.CustomError(e.message.orEmpty()) }</ID>
-    <ID>UnreachableCode:AlgorandTransactionBuilder.kt$AlgorandTransactionBuilder$uncompiledTransaction.amount.longValue ?: 0L</ID>
     <ID>UnreachableCode:AptosTransactionBuilder.kt$AptosTransactionBuilder$transactionData.amount.longValue ?: 0L</ID>
     <ID>UnreachableCode:AptosWalletManager.kt$AptosWalletManager$amount.longValue ?: 0L</ID>
     <ID>UnreachableCode:BlockchainDemoActivity.kt$BlockchainDemoActivity$initSpBlockchain(selectedWallet)</ID>
@@ -384,15 +370,7 @@
     <ID>UnreachableCode:RadiantAmountUnspentTransaction.kt$RadiantAmountUnspentTransaction$amount.longValue ?: 0L</ID>
     <ID>UnsafeCallOnNullableType:AlephiumTransactionBuilder.kt$AlephiumTransactionBuilder$unspentOutputs!!</ID>
     <ID>UnsafeCallOnNullableType:BinanceTransactionBuilder.kt$BinanceTransactionBuilder$transactionAssembler!!</ID>
-    <ID>UnsafeCallOnNullableType:BinanceTransactionBuilder.kt$BinanceTransactionBuilder$uncompiledTransaction.amount.value!!</ID>
-    <ID>UnsafeCallOnNullableType:BitcoinCashTransactionBuilder.kt$uncompiledTransaction.amount.value!!</ID>
-    <ID>UnsafeCallOnNullableType:BitcoinNetworkService.kt$BitcoinNetworkService$fees.map { it.minimalPerKb }.maxOrNull()!!</ID>
-    <ID>UnsafeCallOnNullableType:BitcoinNetworkService.kt$BitcoinNetworkService$fees.map { it.normalPerKb }.maxOrNull()!!</ID>
-    <ID>UnsafeCallOnNullableType:BitcoinNetworkService.kt$BitcoinNetworkService$fees.map { it.priorityPerKb }.maxOrNull()!!</ID>
-    <ID>UnsafeCallOnNullableType:BitcoinTransactionBuilder.kt$BitcoinTransactionBuilder$uncompiledTransaction.amount.value!!</ID>
-    <ID>UnsafeCallOnNullableType:BitcoinTransactionBuilder.kt$BitcoinTransactionBuilder$uncompiledTransaction.fee?.amount?.value!!</ID>
     <ID>UnsafeCallOnNullableType:BitcoinTransactionBuilder.kt$BitcoinTransactionBuilder$unspentOutputs!!</ID>
-    <ID>UnsafeCallOnNullableType:BitcoinTransactionBuilder.kt$uncompiledTransaction.amount.value!!</ID>
     <ID>UnsafeCallOnNullableType:BitcoinWalletManager.kt$BitcoinWalletManager$amount.value!!</ID>
     <ID>UnsafeCallOnNullableType:BitcoinWalletManager.kt$BitcoinWalletManager$hasUnconfirmed!!</ID>
     <ID>UnsafeCallOnNullableType:BitcoreNetworkProvider.kt$BitcoreNetworkProvider$balanceData.confirmed!!</ID>
@@ -435,7 +413,6 @@
     <ID>UnsafeCallOnNullableType:BlockcypherNetworkProvider.kt$BlockcypherNetworkProvider$receivedFee.priorityFeePerKb!!</ID>
     <ID>UnsafeCallOnNullableType:BlockcypherNetworkProvider.kt$BlockcypherNetworkProvider$transactionsMap[it.hash]!!</ID>
     <ID>UnsafeCallOnNullableType:ChiaTransactionBuilder.kt$ChiaTransactionBuilder$amount.value!!</ID>
-    <ID>UnsafeCallOnNullableType:ChiaTransactionBuilder.kt$ChiaTransactionBuilder$this.amount.value!!</ID>
     <ID>UnsafeCallOnNullableType:ContractCallData.kt$ContractCallData.Companion$transaction.to!!</ID>
     <ID>UnsafeCallOnNullableType:DefaultJsonRPCWebsocketService.kt$DefaultJsonRPCWebsocketService$connectResult.exceptionOrNull()!!</ID>
     <ID>UnsafeCallOnNullableType:EthEip712Util.kt$EthEip712Util$typeSpec[typeName]!!</ID>
@@ -452,7 +429,6 @@
     <ID>UnsafeCallOnNullableType:KaspaRestApiNetworkProvider.kt$KaspaRestApiNetworkProvider$it.utxoEntry!!.scriptPublicKey!!</ID>
     <ID>UnsafeCallOnNullableType:KaspaRestApiNetworkProvider.kt$KaspaRestApiNetworkProvider$it.utxoEntry!!.scriptPublicKey!!.scriptPublicKey!!</ID>
     <ID>UnsafeCallOnNullableType:KaspaTransactionBuilder.kt$KaspaTransactionBuilder$unspentOutputs!!</ID>
-    <ID>UnsafeCallOnNullableType:KaspaWalletManager.kt$KaspaWalletManager$(transactionData.fee as Fee.Kaspa).revealTransactionFee?.value!!</ID>
     <ID>UnsafeCallOnNullableType:KoinosTransactionBuilder.kt$KoinosTransactionBuilder$koinContractAbi.chainId.decodeBase64()!!</ID>
     <ID>UnsafeCallOnNullableType:KoinosTransactionBuilder.kt$KoinosTransactionBuilder$koinContractIdHolder.get() .decodeBase58()!!</ID>
     <ID>UnsafeCallOnNullableType:KoinosTransactionBuilder.kt$KoinosTransactionBuilder$operation.call_contract!!</ID>
@@ -529,7 +505,6 @@
     <ID>UseEmptyCounterpart:UnsignedTransaction.kt$UnsignedTransaction.Companion$mapOf&lt;TokenId, U256&gt;()</ID>
     <ID>UseEmptyCounterpart:WalletManagerFactory.kt$WalletManagerFactory$setOf()</ID>
     <ID>UseEmptyCounterpart:WalletManagerFactoryTest.kt$WalletManagerFactoryTest$setOf()</ID>
-    <ID>UseOrEmpty:BinanceTransactionBuilder.kt$BinanceTransactionBuilder$(uncompiledTransaction.extras as? BinanceTransactionExtras)?.memo ?: ""</ID>
     <ID>UseOrEmpty:BitcoinTransactionHistoryProvider.kt$BitcoinTransactionHistoryProvider$response.transactions ?.mapNotNull { tx -&gt; tx.toTransactionHistoryItem(request.address) } ?: emptyList()</ID>
     <ID>UseOrEmpty:Blockchain.kt$Blockchain$(addressService as? MultisigAddressProvider) ?.makeMultisigAddresses(walletPublicKey, pairPublicKey) ?: emptySet()</ID>
     <ID>UseOrEmpty:BlockchainDemoActivity.kt$BlockchainDemoActivity$feeResourceAmount?.value?.stripZeroPlainString()?.let { "FeeResource: $it" } ?: ""</ID>
@@ -554,7 +529,6 @@
     <ID>UseOrEmpty:RosettaUnspentOutputsConverter.kt$RosettaUnspentOutputsConverter$coin.metadata?.mapToAsset() ?: emptyList()</ID>
     <ID>UseOrEmpty:SolanaTransactionSizeReducer.kt$SolanaTransactionSizeReducer$existLookupTables?.takeAddressesForTx(parsed) ?: emptyList()</ID>
     <ID>UseOrEmpty:SolanaTransactionSizeReducer.kt$SolanaTransactionSizeReducer$parsed.compiledAltTable ?: emptyList()</ID>
-    <ID>UseOrEmpty:StellarNetworkService.kt$StellarNetworkService$response.extras?.resultCodes?.operationsResultCodes?.getOrNull(0) ?: ""</ID>
     <ID>UseOrEmpty:StellarWrapperNetworkProvider.kt$StellarWrapperNetworkProvider$url.toHttpUrlOrNull()?.host ?: ""</ID>
     <ID>UseOrEmpty:TronJsonRpcNetworkProvider.kt$TronJsonRpcNetworkProvider$TronAddressService.toHexForm( tokenBalanceRequestData.address, TRON_ENCODED_BYTE_ARRAY_LENGTH, ) ?: ""</ID>
     <ID>UseOrEmpty:WalletManagerFactory.kt$WalletManagerFactory$blockchainProviderTypes[blockchain] ?: emptyList()</ID>
@@ -567,5 +541,43 @@
     <ID>VarCouldBeVal:ICPIc4jAgentNetworkProvider.kt$ICPIc4jAgentNetworkProvider$private var anonymousAgent: Agent = AgentBuilder().transport(transport).build()</ID>
     <ID>VarCouldBeVal:ICPIc4jAgentNetworkProvider.kt$ICPIc4jAgentNetworkProvider$private var transport: ReplicaTransport = ReplicaOkHttpTransport.create(baseUrl)</ID>
     <ID>VarCouldBeVal:KaspaTransactionBuilder.kt$KaspaTransactionBuilder$private var networkParameters = KaspaMainNetParams()</ID>
+    <ID>CanBeNonNullable:CardanoTransactionBuilder.kt$CardanoTransactionBuilder$item: DataItem?</ID>
+    <ID>CanBeNonNullable:SolanaWalletManager.kt$SolanaWalletManager$ownerAccountInfo: Pair&lt;SolanaSplAccountInfo, SolanaTokenProgram.ID&gt;?</ID>
+    <ID>CanBeNonNullable:View.kt$invokeBeforeStateChanged: (() -&gt; Unit)? = null</ID>
+    <ID>CouldBeSequence:Blockchain.kt$Blockchain.Companion$filter { it.isTestnet() == isTestnet }</ID>
+    <ID>CouldBeSequence:PolkadotWalletManager.kt$PolkadotWalletManager$filter { it.hash != null &amp;&amp; it.date != null }</ID>
+    <ID>CouldBeSequence:StellarNetworkService.kt$StellarNetworkService$filter { it.asset.isPresent &amp;&amp; it.assetCode.isPresent &amp;&amp; it.assetIssuer.isPresent }</ID>
+    <ID>NestedScopeFunctions:AlgorandTransactionBuilder.kt$AlgorandTransactionBuilder$let(ByteString::copyFromUtf8)</ID>
+    <ID>NestedScopeFunctions:BlockchainDemoActivity.kt$BlockchainDemoActivity$let { "FeeResource: $it" }</ID>
+    <ID>NestedScopeFunctions:QuaiAddressService.kt$QuaiAddressService$let { return it }</ID>
+    <ID>NestedScopeFunctions:SolanaTransactionBuilder.kt$SolanaTransactionBuilder$let(::addInstruction)</ID>
+    <ID>NestedScopeFunctions:StellarTransactionBuilder.kt$StellarTransactionBuilder$apply { signatureHint = hint }</ID>
+    <ID>NestedScopeFunctions:StellarTransactionBuilder.kt$StellarTransactionBuilder$apply { this.signature = signature }</ID>
+    <ID>NestedScopeFunctions:SuiTransactionBuilder.kt$SuiTransactionBuilder$apply { addAllInputCoins(coins) addRecipients(destinationAddress) addAmounts(amountMist.toLong()) }</ID>
+    <ID>NestedScopeFunctions:SuiTransactionBuilder.kt$SuiTransactionBuilder$apply { addAllInputCoins(inputCoins) addRecipients(destination) addAmounts(decimalAmount.toBigInteger().toLong()) gas = Sui.ObjectRef.newBuilder().apply { version = coinGas.version objectId = coinGas.objectId objectDigest = coinGas.digest }.build() }</ID>
+    <ID>NestedScopeFunctions:SuiTransactionBuilder.kt$SuiTransactionBuilder$apply { version = coin.version objectId = coin.objectId objectDigest = coin.digest }</ID>
+    <ID>NestedScopeFunctions:SuiTransactionBuilder.kt$SuiTransactionBuilder$apply { version = coinGas.version objectId = coinGas.objectId objectDigest = coinGas.digest }</ID>
+    <ID>PropertyUsedBeforeDeclaration:AlephiumNetworkService.kt$AlephiumNetworkService$multiJsonRpcProvider</ID>
+    <ID>PropertyUsedBeforeDeclaration:AlgorandNetworkService.kt$AlgorandNetworkService$multiJsonRpcProvider</ID>
+    <ID>PropertyUsedBeforeDeclaration:AptosNetworkService.kt$AptosNetworkService$multiJsonRpcProvider</ID>
+    <ID>PropertyUsedBeforeDeclaration:CardanoNetworkService.kt$CardanoNetworkService$multiProvider</ID>
+    <ID>PropertyUsedBeforeDeclaration:CardanoTransactionValidatorTestFactory.kt$CardanoTransactionValidatorTestFactory.Companion$AGIX_TOKEN</ID>
+    <ID>PropertyUsedBeforeDeclaration:CardanoTransactionValidatorTestFactory.kt$CardanoTransactionValidatorTestFactory.Companion$WMT_TOKEN</ID>
+    <ID>PropertyUsedBeforeDeclaration:CasperNetworkService.kt$CasperNetworkService$multiJsonRpcProvider</ID>
+    <ID>PropertyUsedBeforeDeclaration:ElectrumNetworkService.kt$ElectrumNetworkService$multiProvider</ID>
+    <ID>PropertyUsedBeforeDeclaration:EtherscanTransactionHistoryProvider.kt$EtherscanTransactionHistoryProvider$intPageToLoad</ID>
+    <ID>PropertyUsedBeforeDeclaration:EtherscanTransactionHistoryProvider.kt$EtherscanTransactionHistoryProvider$isBooleanTrue</ID>
+    <ID>PropertyUsedBeforeDeclaration:EtherscanTransactionHistoryProvider.kt$EtherscanTransactionHistoryProvider$isContractInteraction</ID>
+    <ID>PropertyUsedBeforeDeclaration:EtherscanTransactionHistoryProvider.kt$EtherscanTransactionHistoryProvider$isSuccessful</ID>
+    <ID>PropertyUsedBeforeDeclaration:Fact0rnNetworkService.kt$Fact0rnNetworkService$multiProvider</ID>
+    <ID>PropertyUsedBeforeDeclaration:FilecoinNetworkService.kt$FilecoinNetworkService$multiJsonRpcProvider</ID>
+    <ID>PropertyUsedBeforeDeclaration:KoinosNetworkService.kt$KoinosNetworkService$multiNetworkProvider</ID>
+    <ID>PropertyUsedBeforeDeclaration:NearNetworkService.kt$NearNetworkService$multiNetworkProvider</ID>
+    <ID>PropertyUsedBeforeDeclaration:PepecoinNetworkService.kt$PepecoinNetworkService$multiProvider</ID>
+    <ID>PropertyUsedBeforeDeclaration:RadiantAmountUnspentTransaction.kt$RadiantAmountUnspentTransaction$feeSatoshiDecimalValue</ID>
+    <ID>PropertyUsedBeforeDeclaration:RadiantNetworkService.kt$RadiantNetworkService$multiProvider</ID>
+    <ID>SuspendFunSwallowedCancellation:DefaultJsonRPCService.kt$DefaultJsonRPCService$runCatching</ID>
+    <ID>SuspendFunSwallowedCancellation:DefaultJsonRPCWebsocketService.kt$DefaultJsonRPCWebsocketService$runCatching</ID>
+    <ID>SuspendFunSwallowedCancellation:PolkadotWalletManager.kt$PolkadotWalletManager$runCatching</ID>
   </CurrentIssues>
 </SmellBaseline>
