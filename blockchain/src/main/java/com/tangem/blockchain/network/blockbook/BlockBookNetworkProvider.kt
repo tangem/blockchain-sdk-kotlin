@@ -25,6 +25,7 @@ import com.tangem.blockchain.network.blockbook.network.responses.GetAddressRespo
 import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponseItem
 import com.tangem.blockchain.network.blockbook.network.responses.GetXpubResponse
 import com.tangem.common.extensions.hexToBytes
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -167,6 +168,8 @@ class BlockBookNetworkProvider(
                     ),
                 ),
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
@@ -177,6 +180,8 @@ class BlockBookNetworkProvider(
             val xpubUtxoItems = withContext(Dispatchers.IO) { api.getXpubUtxo(xpub) }
             val confirmedItems = xpubUtxoItems.filter { it.confirmations > 0 }
             Result.Success(createXpubUnspentOutputs(confirmedItems))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
