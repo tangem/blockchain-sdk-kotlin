@@ -27,6 +27,7 @@ import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
+import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.operations.sign.SignData
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -95,6 +96,24 @@ internal open class BitcoinWalletManager(
 
     override fun findFirstUnusedChangeAddress(): DynamicAddressesManager.DerivedAddress? {
         return dynamicAddressesManager?.findFirstUnusedChangeAddress(xpubUsedAddresses)
+    }
+
+    override suspend fun probeHasFundsOnNonBaseAddresses(xpub: String): Result<Boolean> {
+        val descriptor = buildDescriptor(xpub)
+        return when (val response = networkProvider.getInfoByXpub(descriptor)) {
+            is Result.Success -> {
+                val hasFunds = response.data.usedAddresses.any { it.balance > BigDecimal.ZERO && !it.isBase() }
+                Result.Success(hasFunds)
+            }
+            is Result.Failure -> response
+        }
+    }
+
+    private fun UsedAddress.isBase(): Boolean {
+        val nodes = runCatching { DerivationPath(derivationPath).nodes }.getOrNull() ?: return false
+        return nodes.size >= 2 &&
+            nodes[nodes.size - 2].index == 0L &&
+            nodes.last().index == 0L
     }
 
     /**
