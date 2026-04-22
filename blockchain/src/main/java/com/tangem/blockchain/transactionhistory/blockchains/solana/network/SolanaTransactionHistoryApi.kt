@@ -9,7 +9,9 @@ internal class SolanaTransactionHistoryApi(
     private val rpcClient: SolanaRpcClient,
 ) {
 
-    private val moshi = Moshi.Builder().build()
+    private val moshi = Moshi.Builder()
+        .add(SolanaInstructionAdapter())
+        .build()
 
     private val signaturesAdapter = moshi.adapter<SolanaRpcResponse<List<SolanaSignatureInfo>>>(
         Types.newParameterizedType(
