@@ -89,11 +89,10 @@ internal data class SolanaAccountKey(
     @Json(name = "source") val source: String?,
 )
 
-@JsonClass(generateAdapter = true)
 internal data class SolanaInstruction(
-    @Json(name = "programId") val programId: String?,
-    @Json(name = "program") val program: String?,
-    @Json(name = "parsed") val parsed: SolanaParsedInstruction?,
+    val programId: String?,
+    val program: String?,
+    val parsed: SolanaParsedInstruction?,
 )
 
 @JsonClass(generateAdapter = true)
