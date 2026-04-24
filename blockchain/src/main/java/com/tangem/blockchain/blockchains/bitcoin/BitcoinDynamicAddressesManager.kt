@@ -75,7 +75,10 @@ class BitcoinDynamicAddressesManager(
         chain: Int,
         usedAddresses: List<UsedAddress>,
     ): DynamicAddressesManager.DerivedAddress {
+        // Only look at the default script-type tree (SegWit for BTC/LTC, legacy for DOGE/DASH/RVN).
+        // Legacy-tree used addresses on BTC/LTC must not influence SegWit gap search.
         val usedIndices = usedAddresses
+            .filter { it.scriptType == AddressType.Default }
             .mapNotNull { usedAddress ->
                 runCatching { parseChainAndIndex(usedAddress.derivationPath) }.getOrNull()
             }
