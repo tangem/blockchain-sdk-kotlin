@@ -9,4 +9,5 @@ class BitcoinUnspentOutput(
     val outputScript: ByteArray,
     val address: String? = null,
     val derivationPath: String? = null,
+    val publicKey: ByteArray? = null,
 )

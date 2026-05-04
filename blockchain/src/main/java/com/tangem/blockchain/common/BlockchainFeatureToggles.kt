@@ -9,4 +9,6 @@ class BlockchainFeatureToggles(
     val isYieldSupplyEnabled: Boolean,
     val isPendingTransactionsEnabled: Boolean = false,
     val isSolanaTxHistoryEnabled: Boolean = false,
+    val isSolanaScaledUiAmountEnabled: Boolean = false,
+    val isHederaErc20Enabled: Boolean = false,
 )
