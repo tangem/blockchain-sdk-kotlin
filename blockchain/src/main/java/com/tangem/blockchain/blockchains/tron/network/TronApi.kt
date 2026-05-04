@@ -8,6 +8,10 @@ interface TronApi {
     @POST("wallet/getaccount")
     suspend fun getAccount(@Body requestBody: TronGetAccountRequest): TronGetAccountResponse
 
+    @Headers("Accept: application/json")
+    @GET("v1/accounts/{address}")
+    suspend fun getV1Accounts(@Path("address") address: String): TronV1AccountsResponse
+
     @Headers("Content-Type: application/json", "Accept: application/json")
     @POST("wallet/getaccountresource")
     suspend fun getAccountResource(@Body requestBody: TronGetAccountRequest): TronGetAccountResourceResponse
