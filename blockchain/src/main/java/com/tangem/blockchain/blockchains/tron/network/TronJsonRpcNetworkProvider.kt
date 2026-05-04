@@ -46,6 +46,17 @@ class TronJsonRpcNetworkProvider(override val network: TronNetwork) : TronNetwor
         }
     }
 
+    override suspend fun getV1Accounts(address: String): Result<TronGetAccountResponse> {
+        return try {
+            val response = api.getV1Accounts(address)
+            val account = response.data.firstOrNull()
+                ?: return Result.Failure(BlockchainSdkError.CustomError("Account not found"))
+            Result.Success(account)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
     override suspend fun getAccountResource(address: String): Result<TronGetAccountResourceResponse> {
         return try {
             val response = api.getAccountResource(requestBody = TronGetAccountRequest(address, true))
