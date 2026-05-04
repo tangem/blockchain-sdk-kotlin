@@ -9,6 +9,7 @@ import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -20,6 +21,7 @@ import org.p2p.solanaj.programs.AssociatedTokenProgram
 import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.programs.SystemProgram
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 internal class SolanaTransactionBuilder(
     private val account: PublicKey,
@@ -105,6 +107,8 @@ internal class SolanaTransactionBuilder(
             return Result.Failure(BlockchainSdkError.Solana.SameSourceAndDestinationAddress)
         }
 
+        val adjustedAmount = adjustAmountForScaledUi(token, amount, tokenProgramId)
+
         val transaction = SolanaTransaction(account).apply {
             addInstructions(
                 tokenProgramId = tokenProgramId,
@@ -113,7 +117,7 @@ internal class SolanaTransactionBuilder(
                 destinationAccount = destinationAccount,
                 sourceAssociatedAccount = tokenInfo.associatedPubK,
                 token = token,
-                amount = amount,
+                amount = adjustedAmount,
             ).successOr { return Result.Failure(it.error) }
 
             val recentBlockHash = multiNetworkProvider.performRequest {
@@ -234,6 +238,32 @@ internal class SolanaTransactionBuilder(
                 }
             }
         }
+    }
+
+    private suspend fun adjustAmountForScaledUi(
+        token: Token,
+        uiAmount: BigDecimal,
+        tokenProgramId: SolanaTokenProgram.ID,
+    ): BigDecimal {
+        if (!DepsContainer.blockchainFeatureToggles.isSolanaScaledUiAmountEnabled) return uiAmount
+        if (tokenProgramId != SolanaTokenProgram.ID.TOKEN_2022) return uiAmount
+
+        val multiplier = when (
+            val result = multiNetworkProvider.performRequest {
+                getScaledUiAmountMultiplier(token.contractAddress)
+            }
+        ) {
+            is Result.Success -> result.data
+            is Result.Failure -> null
+        } ?: return uiAmount
+
+        if (multiplier <= BigDecimal.ZERO) {
+            throw BlockchainSdkError.FailedToBuildTx
+        }
+
+        if (multiplier.compareTo(BigDecimal.ONE) == 0) return uiAmount
+
+        return uiAmount.divide(multiplier, token.decimals, RoundingMode.DOWN)
     }
 
     private companion object {

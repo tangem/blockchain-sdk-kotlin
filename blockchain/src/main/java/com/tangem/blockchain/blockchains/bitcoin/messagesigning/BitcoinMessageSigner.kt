@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignMessag
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.messagesigning.MessageSignatureResult
 import com.tangem.blockchain.common.messagesigning.MessageSigner
@@ -66,7 +67,7 @@ internal class BitcoinMessageSigner(
     /**
      * Validates that address belongs to wallet.
      */
-    private fun validateAddress(address: String): Result<com.tangem.blockchain.common.address.Address> {
+    private fun validateAddress(address: String): Result<Address> {
         return wallet.addresses.find { it.value == address }
             ?.let { Result.Success(it) }
             ?: Result.Failure(
