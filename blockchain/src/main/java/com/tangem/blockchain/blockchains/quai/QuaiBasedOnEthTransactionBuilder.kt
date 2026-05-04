@@ -8,7 +8,7 @@ import com.tangem.blockchain.common.Wallet
 import org.kethereum.keccakshortcut.keccak
 import java.math.BigInteger
 
-internal class QuaiBasedOnEthTransactionBuilder(wallet: Wallet) : EthereumTWTransactionBuilder(wallet) {
+internal class QuaiBasedOnEthTransactionBuilder(private val wallet: Wallet) : EthereumTWTransactionBuilder(wallet) {
 
     override fun buildForSign(transaction: TransactionData): EthereumCompiledTxInfo.TWInfo {
         val input = buildSigningInput(transaction)
@@ -25,7 +25,7 @@ internal class QuaiBasedOnEthTransactionBuilder(wallet: Wallet) : EthereumTWTran
         val ext = UnmarshalHelper.unmarshalSignatureExtended(
             signature = signature,
             hash = compiledTransaction.hash,
-            publicKey = decompressedPublicKey,
+            publicKey = wallet.publicKey,
         )
         val vBytes = byteArrayOf(ext.recId.toByte())
         val rBytes = toFixedLength32(ext.r)
