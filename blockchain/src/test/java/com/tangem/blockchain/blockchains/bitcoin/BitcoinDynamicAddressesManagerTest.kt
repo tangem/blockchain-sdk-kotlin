@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.bitcoin
 import com.google.common.truth.Truth.assertThat
 import com.tangem.blockchain.blockchains.bitcoin.network.UsedAddress
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.address.AddressType
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import org.junit.Before
@@ -161,6 +162,49 @@ class BitcoinDynamicAddressesManagerTest {
         // Change chain should show index 2 as next unused (0 and 1 are used)
         assertThat(firstUnusedChange.index).isEqualTo(2)
         assertThat(firstUnusedChange.chain).isEqualTo(1)
+    }
+
+    @Test
+    fun findFirstUnusedReceive_legacyEntriesAreIgnored() {
+        val manager = BitcoinDynamicAddressesManager(BTC_ACCOUNT_XPUB, Blockchain.Bitcoin)
+
+        val segwit0 = manager.deriveAddress(0, 0)
+        val segwit1 = manager.deriveAddress(0, 1)
+
+        // Legacy entries at the same logical path MUST NOT close gaps in the SegWit tree.
+        // Only SegWit (Default) used-addresses should drive receive-address gap search.
+        val usedAddresses = listOf(
+            UsedAddress(
+                address = segwit0.address,
+                derivationPath = "m/84'/0'/0'/0/0",
+                balance = BigDecimal.ONE,
+                scriptType = AddressType.Default,
+            ),
+            UsedAddress(
+                address = segwit1.address,
+                derivationPath = "m/84'/0'/0'/0/1",
+                balance = BigDecimal.ONE,
+                scriptType = AddressType.Default,
+            ),
+            UsedAddress(
+                address = "legacyAddr2",
+                derivationPath = "m/84'/0'/0'/0/2",
+                balance = BigDecimal.ONE,
+                scriptType = AddressType.Legacy,
+            ),
+            UsedAddress(
+                address = "legacyAddr3",
+                derivationPath = "m/84'/0'/0'/0/3",
+                balance = BigDecimal.ONE,
+                scriptType = AddressType.Legacy,
+            ),
+        )
+
+        val firstUnused = manager.findFirstUnusedReceiveAddress(usedAddresses)
+
+        // Even though Legacy fills indices 2 and 3, SegWit only reaches 1 — next unused is 2.
+        assertThat(firstUnused.index).isEqualTo(2)
+        assertThat(firstUnused.chain).isEqualTo(0)
     }
 
     // ========== Path Parsing Tests ==========
