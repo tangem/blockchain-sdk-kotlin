@@ -3,7 +3,7 @@ package com.tangem.blockchain.blockchains.hedera
 class HederaTokenAddressConverter {
 
     /**
-     * Converts a token address to Hedera Token ID format (0.0.XXXXXXX).
+     * Converts a token address to Hedera Token ID format (0.0.XXXXXXX) synchronously.
      *
      * If the input is an EVM address (0x...):
      * - First 10 bytes zeros: convert hex to decimal, prepend "0.0."
@@ -23,5 +23,24 @@ class HederaTokenAddressConverter {
         }
 
         return HederaUtils.createTokenId(address).toString()
+    }
+
+    /**
+     * Converts a token address to Hedera Token ID format (0.0.XXXXXXX),
+     * resolving non-zero-prefix EVM addresses via network call.
+     *
+     * @param contractInfoResolver resolves an EVM address to a contract ID (0.0.X) via
+     *   Hedera Mirror Node (`GET /api/v1/contracts/{evm_address}`).
+     *   Returns null if resolution fails.
+     */
+    suspend fun resolveTokenId(
+        address: String,
+        contractInfoResolver: suspend (evmAddress: String) -> String?,
+    ): String {
+        val localResult = convertToTokenId(address)
+        if (!localResult.startsWith("0x", ignoreCase = true)) {
+            return localResult
+        }
+        return contractInfoResolver(address) ?: localResult
     }
 }

@@ -6,7 +6,7 @@ import com.tangem.blockchain.externallinkprovider.TxExploreState
 internal class SeiExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvider {
 
     override val explorerBaseUrl: String =
-        if (isTestnet) "https://www.seiscan.app/atlantic-2/" else "https://seitrace.com/"
+        if (isTestnet) "https://www.seiscan.app/atlantic-2/" else "https://seiscan.io/"
 
     override val testNetTopUpUrl: String? =
         if (isTestnet) "https://atlantic-2.app.sei.io/faucet/" else null
