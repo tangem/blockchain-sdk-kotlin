@@ -7,6 +7,7 @@ import com.tangem.blockchain.common.JsonRPCRequest
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponseItem
+import com.tangem.blockchain.network.blockbook.network.responses.GetXpubResponse
 import com.tangem.blockchain.network.blockbook.network.responses.SendTransactionResponse
 import com.tangem.blockchain.network.createRetrofitInstance
 import retrofit2.Response
@@ -49,6 +50,16 @@ internal class BitcoinCashNowNodesApiService(
         return response.unpack<List<GetUtxoResponseItem>>().filter {
             it.confirmations > 0 // filter unconfirmed UTXOs, to not block sending tx
         }
+    }
+
+    suspend fun getXpubInfo(descriptor: String, page: Int? = null, pageSize: Int? = null): GetXpubResponse {
+        val response = blockBookService.getXpubInfo(descriptor = descriptor, page = page, pageSize = pageSize)
+        return response.unpack()
+    }
+
+    suspend fun getXpubUtxo(descriptor: String): List<GetUtxoResponseItem> {
+        val response = blockBookService.getXpubUtxo(descriptor)
+        return response.unpack()
     }
 
     private fun getFeeRequest(): JsonRPCRequest {
