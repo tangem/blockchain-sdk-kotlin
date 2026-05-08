@@ -18,9 +18,9 @@ internal class BitcoinCashProvidersBuilder(
     private val blockBookProviderFactory by lazy { BlockBookNetworkProviderFactory(config) }
 
     override fun createProviders(blockchain: Blockchain): List<BitcoinNetworkProvider> {
-        return providerTypes.flatMap {
-            when (it) {
-                ProviderType.NowNodes -> getBitcoinCashNowNodesNetworkProvider().let(::listOfNotNull)
+        return providerTypes.flatMap { providerType ->
+            when (providerType) {
+                ProviderType.NowNodes -> getBitcoinCashNowNodesNetworkProvider(blockchain).let(::listOfNotNull)
                 ProviderType.GetBlock -> {
                     blockBookProviderFactory.createGetBlockProvider(blockchain).let(::listOfNotNull)
                 }
@@ -32,12 +32,13 @@ internal class BitcoinCashProvidersBuilder(
         }
     }
 
-    private fun getBitcoinCashNowNodesNetworkProvider(): BitcoinNetworkProvider? {
+    private fun getBitcoinCashNowNodesNetworkProvider(blockchain: Blockchain): BitcoinNetworkProvider? {
         return config.nowNodeCredentials?.apiKey?.letNotBlank {
             BitcoinCashNowNodesNetworkProvider(
                 credentials = NowNodeCredentials.headerApiKey to config.nowNodeCredentials.apiKey,
                 bchBookUrl = "https://bchbook.nownodes.io/",
                 bchUrl = "https://bch.nownodes.io/",
+                blockchain = blockchain,
             )
         }
     }
