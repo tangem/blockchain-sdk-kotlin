@@ -147,6 +147,6 @@ internal class TonWalletManager(
     }
 
     private companion object {
-        const val TRANSACTION_LIFETIME = 60L
+        const val TRANSACTION_LIFETIME = 60L * 5 // 5 minutes
     }
 }
