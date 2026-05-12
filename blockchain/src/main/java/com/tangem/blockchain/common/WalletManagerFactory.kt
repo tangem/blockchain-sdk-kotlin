@@ -123,12 +123,15 @@ class WalletManagerFactory(
         curve: EllipticCurve,
     ): Triple<Set<Address>, Wallet.PublicKey, DerivationPath?>? {
         val extendedPublicKey = publicKey.derivationType?.hdKey?.extendedPublicKey ?: return null
+        val derivationPath = publicKey.derivationPath ?: return null
+        val rawDerivationPath = derivationPath.rawPath
         val cachedIndex = runBlocking(Dispatchers.IO) {
             dataStorage.getOrNull<BlockchainSavedData.QuaiDerivationIndex>(publicKey)
         }
         val updatedAddress = blockchain.makeAddressesFromExtendedPublicKey(
             extendedPublicKey = extendedPublicKey,
             curve = curve,
+            rawPath = rawDerivationPath,
             cachedIndex = cachedIndex?.index,
         )
         updatedAddress.index?.let { index ->
@@ -144,7 +147,7 @@ class WalletManagerFactory(
             derivationType = Wallet.PublicKey.DerivationType.Plain(
                 Wallet.HDKey(
                     extendedPublicKey = updatedAddress.publicKey,
-                    path = publicKey.derivationPath ?: return null,
+                    path = derivationPath,
                 ),
             ),
         )

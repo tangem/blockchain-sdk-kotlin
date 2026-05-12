@@ -380,16 +380,29 @@ enum class Blockchain(
         }
     }
 
+    /**
+     * Creates [EthereumDerivationData] from the given extended public key.
+     *
+     * Uses the blockchain's [AddressService] to derive an address from the extended public key,
+     * applying the specified elliptic curve and derivation path.
+     *
+     * @param extendedPublicKey The extended public key used to derive the address.
+     * @param curve The elliptic curve to use for derivation. Defaults to [EllipticCurve.Secp256k1].
+     * @param rawPath The raw derivation path string. If `null`, the default V3 derivation path for this blockchain is used.
+     * @param cachedIndex The cached index for address derivation, or `null` if not available.
+     * @return [EthereumDerivationData] containing the derived address information.
+     */
     fun makeAddressesFromExtendedPublicKey(
         extendedPublicKey: ExtendedPublicKey,
         curve: EllipticCurve = EllipticCurve.Secp256k1,
+        rawPath: String?,
         cachedIndex: Int?,
     ): EthereumDerivationData {
         val addressService = getAddressService()
         val address = addressService.makeAddressFromExtendedPublicKey(
             extendedPublicKey = extendedPublicKey,
             curve = curve,
-            derivationPath = derivationPath(DerivationStyle.V3)?.rawPath,
+            derivationPath = rawPath ?: derivationPath(DerivationStyle.V3)?.rawPath,
             cachedIndex = cachedIndex,
         )
         return address
