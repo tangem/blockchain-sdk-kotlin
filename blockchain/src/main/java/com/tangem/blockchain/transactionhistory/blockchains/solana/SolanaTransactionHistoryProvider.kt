@@ -11,11 +11,7 @@ import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.transactionhistory.blockchains.solana.network.SolanaTransactionHistoryApi
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 internal class SolanaTransactionHistoryProvider(
     private val blockchain: Blockchain,
@@ -30,8 +26,10 @@ internal class SolanaTransactionHistoryProvider(
         filterType: TransactionHistoryRequest.FilterType,
     ): TransactionHistoryState {
         return try {
+            val queryAddress = resolveSignaturesAddress(walletAddress = address, filterType = filterType)
+                ?: return TransactionHistoryState.Success.Empty
             val signatures = withContext(Dispatchers.IO) {
-                api.getSignaturesForAddress(address = address, limit = 1)
+                api.getSignaturesForAddress(address = queryAddress, limit = 1)
             }
             if (signatures.isNotEmpty()) {
                 TransactionHistoryState.Success.HasTransactions(signatures.size)
@@ -51,9 +49,12 @@ internal class SolanaTransactionHistoryProvider(
                 (request.filterType as? TransactionHistoryRequest.FilterType.Contract)?.tokenInfo
             val beforeCursor = request.pageToLoad
 
+            val queryAddress = resolveSignaturesAddress(request.address, request.filterType)
+                ?: return Result.Success(PaginationWrapper(nextPage = Page.LastPage, items = emptyList()))
+
             val signatures = withContext(Dispatchers.IO) {
                 api.getSignaturesForAddress(
-                    address = request.address,
+                    address = queryAddress,
                     limit = request.pageSize,
                     before = beforeCursor,
                 )
@@ -84,6 +85,28 @@ internal class SolanaTransactionHistoryProvider(
             Result.Success(PaginationWrapper(nextPage = nextPage, items = items))
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
+    /**
+     * For SPL tokens, resolves the token account address via `getTokenAccountsByOwner` RPC call.
+     * This returns the actual on-chain token account for the wallet+mint pair, ensuring that
+     * `getSignaturesForAddress` returns only transactions relevant to that specific token.
+     *
+     * Returns `null` if the token account doesn't exist (no history available).
+     */
+    private suspend fun resolveSignaturesAddress(
+        walletAddress: String,
+        filterType: TransactionHistoryRequest.FilterType,
+    ): String? {
+        val contract = filterType as? TransactionHistoryRequest.FilterType.Contract
+            ?: return walletAddress
+
+        return withContext(Dispatchers.IO) {
+            api.getTokenAccountsByOwner(
+                owner = walletAddress,
+                mint = contract.tokenInfo.contractAddress,
+            )
         }
     }
 }
