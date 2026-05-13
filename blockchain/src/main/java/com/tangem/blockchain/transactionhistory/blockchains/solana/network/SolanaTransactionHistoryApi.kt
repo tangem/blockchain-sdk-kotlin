@@ -10,6 +10,7 @@ internal class SolanaTransactionHistoryApi(
 ) {
 
     private val moshi = Moshi.Builder()
+        .add(SolanaAccountKeyAdapter())
         .add(SolanaInstructionAdapter())
         .build()
 
@@ -27,13 +28,20 @@ internal class SolanaTransactionHistoryApi(
         ),
     )
 
+    private val tokenAccountsAdapter = moshi.adapter<SolanaRpcResponse<SolanaTokenAccounts>>(
+        Types.newParameterizedType(
+            SolanaRpcResponse::class.java,
+            SolanaTokenAccounts::class.java,
+        ),
+    )
+
     fun getSignaturesForAddress(address: String, limit: Int, before: String? = null): List<SolanaSignatureInfo> {
         val params = buildList {
             add(address)
             add(
                 buildMap {
                     put("limit", limit)
-                    put("commitment", "confirmed")
+                    put("commitment", "finalized")
                     if (before != null) put("before", before)
                 },
             )
@@ -47,6 +55,21 @@ internal class SolanaTransactionHistoryApi(
         return response.result.orEmpty()
     }
 
+    fun getTokenAccountsByOwner(owner: String, mint: String): String? {
+        val params = buildList {
+            add(owner)
+            add(mapOf("mint" to mint))
+            add(mapOf("encoding" to "jsonParsed"))
+        }
+        val raw = rpcClient.call("getTokenAccountsByOwner", params)
+        val response = tokenAccountsAdapter.fromJson(raw)
+            ?: throw RpcException("Failed to parse getTokenAccountsByOwner response")
+        response.error?.let {
+            throw RpcException("RPC error ${it.code}: ${it.message}")
+        }
+        return response.result?.value?.firstOrNull()?.pubkey
+    }
+
     fun getTransaction(signature: String): SolanaTransactionResponse? {
         val params = buildList {
             add(signature)
@@ -54,7 +77,6 @@ internal class SolanaTransactionHistoryApi(
                 mapOf(
                     "encoding" to "jsonParsed",
                     "maxSupportedTransactionVersion" to 0,
-                    "commitment" to "confirmed",
                 ),
             )
         }
