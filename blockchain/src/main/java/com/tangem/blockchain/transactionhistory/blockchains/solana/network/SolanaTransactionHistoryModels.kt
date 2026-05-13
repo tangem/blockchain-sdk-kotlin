@@ -53,6 +53,7 @@ internal data class SolanaTokenBalance(
     @Json(name = "accountIndex") val accountIndex: Int,
     @Json(name = "mint") val mint: String,
     @Json(name = "owner") val owner: String?,
+    @Json(name = "programId") val programId: String?,
     @Json(name = "uiTokenAmount") val uiTokenAmount: SolanaTokenAmount?,
 )
 
@@ -61,6 +62,7 @@ internal data class SolanaTokenAmount(
     @Json(name = "amount") val amount: String,
     @Json(name = "decimals") val decimals: Int,
     @Json(name = "uiAmount") val uiAmount: Double?,
+    @Json(name = "uiAmountString") val uiAmountString: String?,
 )
 
 @JsonClass(generateAdapter = true)
@@ -81,12 +83,11 @@ internal data class SolanaTransactionMessage(
     @Json(name = "instructions") val instructions: List<SolanaInstruction>,
 )
 
-@JsonClass(generateAdapter = true)
 internal data class SolanaAccountKey(
-    @Json(name = "pubkey") val pubkey: String,
-    @Json(name = "signer") val isSigner: Boolean?,
-    @Json(name = "writable") val isWritable: Boolean?,
-    @Json(name = "source") val source: String?,
+    val pubkey: String,
+    val isSigner: Boolean?,
+    val isWritable: Boolean?,
+    val source: String?,
 )
 
 internal data class SolanaInstruction(
@@ -114,6 +115,21 @@ internal data class SolanaInstructionInfo(
     @Json(name = "voteAccount") val voteAccount: String?,
     @Json(name = "stakeAuthority") val stakeAuthority: String?,
     @Json(name = "withdrawAuthority") val withdrawAuthority: String?,
+    @Json(name = "newAccount") val newAccount: String?,
+)
+
+// endregion
+
+// region getTokenAccountsByOwner response
+
+@JsonClass(generateAdapter = true)
+internal data class SolanaTokenAccounts(
+    @Json(name = "value") val value: List<SolanaTokenAccount>,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class SolanaTokenAccount(
+    @Json(name = "pubkey") val pubkey: String,
 )
 
 // endregion
