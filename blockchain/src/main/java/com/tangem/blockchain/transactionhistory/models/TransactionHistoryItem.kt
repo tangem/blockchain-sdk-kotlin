@@ -11,6 +11,7 @@ data class TransactionHistoryItem(
     val status: TransactionStatus,
     val type: TransactionType,
     val amount: Amount,
+    val fee: Amount? = null,
 ) {
 
     sealed class DestinationType {
