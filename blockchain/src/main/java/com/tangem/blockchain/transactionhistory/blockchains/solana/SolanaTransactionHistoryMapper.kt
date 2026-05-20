@@ -150,10 +150,14 @@ internal class SolanaTransactionHistoryMapper(
         meta: SolanaTransactionMeta,
         allInstructions: List<SolanaInstruction>,
     ): SolanaTxType {
-        val stakeInstruction = allInstructions.firstOrNull {
+        val stakeInstructions = allInstructions.filter {
             it.programId == STAKE_PROGRAM_ID || it.program == STAKE_PROGRAM
         }
-        if (stakeInstruction != null) {
+        if (stakeInstructions.isNotEmpty()) {
+            val stakeInstruction = stakeInstructions.firstOrNull { it.parsed?.type == DEACTIVATE_TYPE }
+                ?: stakeInstructions.firstOrNull { it.parsed?.type == DELEGATE_TYPE }
+                ?: stakeInstructions.firstOrNull { it.parsed?.type == WITHDRAW_TYPE }
+                ?: stakeInstructions.first()
             val info = stakeInstruction.parsed?.info
             return SolanaTxType.StakeOperation(
                 stakeType = stakeInstruction.parsed?.type,
