@@ -1,15 +1,13 @@
 package com.tangem.blockchain.transactionhistory.blockchains.solana
 
-import com.squareup.moshi.Moshi
 import com.squareup.moshi.JsonDataException
+import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.transactionhistory.blockchains.solana.network.*
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
-import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.DestinationType
-import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.SourceType
-import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.TransactionType
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.*
 import org.junit.Assert.*
 import org.junit.Test
 import java.math.BigDecimal
@@ -222,6 +220,21 @@ class SolanaTransactionHistoryMapperTest {
         assertEquals(
             newAccount,
             ((result.destinationType as DestinationType.Single).addressType as TransactionHistoryItem.AddressType.User).address,
+        )
+    }
+
+    @Test
+    fun `stake delegate alongside initialize picks delegate and exposes validator`() {
+        val voteAccount = "BbM5kJgvKKaQGAdsHkXmLUTkazUmt2x9"
+        val tx = buildStakeInitializeAndDelegate(voteAccount = voteAccount)
+
+        val result = mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = null)!!
+
+        val stakeType = result.type as TransactionType.SolanaStakingTransactionType.Stake
+        assertEquals(voteAccount, stakeType.validatorAddress)
+        assertEquals(
+            voteAccount,
+            ((result.destinationType as DestinationType.Single).addressType as AddressType.Validator).address,
         )
     }
 
@@ -475,10 +488,18 @@ class SolanaTransactionHistoryMapperTest {
                                 parsed = SolanaParsedInstruction(
                                     type = "transfer",
                                     info = SolanaInstructionInfo(
-                                        source = source, destination = destination,
-                                        lamports = null, amount = "1000000", authority = authority,
-                                        tokenAmount = null, mint = null, stakeAccount = null,
-                                        voteAccount = null, stakeAuthority = null, withdrawAuthority = null, newAccount = null,
+                                        source = source,
+                                        destination = destination,
+                                        lamports = null,
+                                        amount = "1000000",
+                                        authority = authority,
+                                        tokenAmount = null,
+                                        mint = null,
+                                        stakeAccount = null,
+                                        voteAccount = null,
+                                        stakeAuthority = null,
+                                        withdrawAuthority = null,
+                                        newAccount = null,
                                     ),
                                 ),
                             ),
@@ -758,6 +779,62 @@ class SolanaTransactionHistoryMapperTest {
                                     stakeAuthority = walletAddress,
                                     withdrawAuthority = walletAddress,
                                     newAccount = newAccount,
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+                signatures = listOf("TestSignature1111111111111111111111111111111"),
+            ),
+        )
+    }
+
+    private fun buildStakeInitializeAndDelegate(voteAccount: String): SolanaTransactionResponse {
+        val stakeAccount = "StakeAccount22222222222222222222222222222222"
+        return SolanaTransactionResponse(
+            blockTime = 1700000000L,
+            meta = SolanaTransactionMeta(
+                err = null,
+                fee = 25000L,
+                preBalances = listOf(56_548_606L, 0L),
+                postBalances = listOf(36_523_606L, 20_000_000L),
+                preTokenBalances = null,
+                postTokenBalances = null,
+                innerInstructions = null,
+                rewards = null,
+            ),
+            transaction = SolanaTransactionData(
+                message = SolanaTransactionMessage(
+                    accountKeys = listOf(
+                        SolanaAccountKey(pubkey = walletAddress, isSigner = true, isWritable = true, source = null),
+                        SolanaAccountKey(pubkey = stakeAccount, isSigner = false, isWritable = true, source = null),
+                    ),
+                    instructions = listOf(
+                        SolanaInstruction(
+                            programId = STAKE_PROGRAM_ID,
+                            program = "stake",
+                            parsed = SolanaParsedInstruction(
+                                type = "initialize",
+                                info = SolanaInstructionInfo(
+                                    source = null, destination = null, lamports = null, amount = null,
+                                    authority = null, tokenAmount = null, mint = null,
+                                    stakeAccount = null, voteAccount = null,
+                                    stakeAuthority = walletAddress, withdrawAuthority = walletAddress,
+                                    newAccount = stakeAccount,
+                                ),
+                            ),
+                        ),
+                        SolanaInstruction(
+                            programId = STAKE_PROGRAM_ID,
+                            program = "stake",
+                            parsed = SolanaParsedInstruction(
+                                type = "delegate",
+                                info = SolanaInstructionInfo(
+                                    source = null, destination = null, lamports = null, amount = null,
+                                    authority = null, tokenAmount = null, mint = null,
+                                    stakeAccount = stakeAccount, voteAccount = voteAccount,
+                                    stakeAuthority = walletAddress, withdrawAuthority = null,
+                                    newAccount = null,
                                 ),
                             ),
                         ),
