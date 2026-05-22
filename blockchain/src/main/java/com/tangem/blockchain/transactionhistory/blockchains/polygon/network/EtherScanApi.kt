@@ -15,7 +15,7 @@ internal interface EtherScanApi {
         @Query("action") action: String = "txlist",
         @Query("module") module: String = "account",
         @Query("startblock") startBlock: Int = 0,
-        @Query("endblock") endBlock: Long = Long.MAX_VALUE,
+        @Query("endblock") endBlock: Int = DEFAULT_END_BLOCK,
         @Query("sort") sort: String = "desc",
     ): PolygonTransactionHistoryResponse
 
@@ -31,7 +31,11 @@ internal interface EtherScanApi {
         @Query("contractAddress") contractAddress: String?,
         @Query("module") module: String = "account",
         @Query("startblock") startBlock: Int = 0,
-        @Query("endblock") endBlock: Long = Long.MAX_VALUE,
+        @Query("endblock") endBlock: Int = DEFAULT_END_BLOCK,
         @Query("sort") sort: String = "desc",
     ): PolygonTransactionHistoryResponse
+
+    companion object {
+        private const val DEFAULT_END_BLOCK: Int = Int.MAX_VALUE
+    }
 }
