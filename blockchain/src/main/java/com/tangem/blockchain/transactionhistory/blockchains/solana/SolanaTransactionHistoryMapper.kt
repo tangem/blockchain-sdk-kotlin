@@ -358,7 +358,6 @@ internal class SolanaTransactionHistoryMapper(
     ): Pair<Boolean, Amount>? {
         if (filterToken == null) {
             val solDelta = calculateSolDelta(meta, walletIndex)
-            if (solDelta == 0L) return null
             return Pair(
                 solDelta < 0,
                 Amount(
