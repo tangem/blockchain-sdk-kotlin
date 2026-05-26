@@ -92,7 +92,7 @@ class SolanaTransactionHistoryMapperTest {
 
         val result = mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = null)!!
 
-        assertEquals(BigDecimal("0.000005"), result.fee!!.value!!.stripTrailingZeros())
+        assertEquals(BigDecimal("0.000005"), result.fee.value!!.stripTrailingZeros())
     }
 
     @Test

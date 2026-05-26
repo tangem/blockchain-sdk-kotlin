@@ -5,6 +5,7 @@ import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
+import com.tangem.blockchain.network.blockbook.network.responses.feeAmount
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.*
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
@@ -59,6 +60,7 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
             sourceType = source,
             status = extractStatus(transaction = transaction),
             type = extractType(transaction = transaction),
+            fee = transaction.feeAmount(blockchain),
             amount = Amount(
                 value = BigDecimal(transaction.value).movePointLeft(blockchain.decimals()),
                 blockchain = blockchain,
@@ -101,6 +103,7 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
                         status = extractStatus(transaction),
                         type = extractType(transaction),
                         amount = amount,
+                        fee = transaction.feeAmount(blockchain),
                     )
                 }
             }
