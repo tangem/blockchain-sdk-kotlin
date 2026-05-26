@@ -7,6 +7,7 @@ import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
+import com.tangem.blockchain.network.blockbook.network.responses.feeAmount
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
@@ -159,6 +160,7 @@ internal class TronTransactionHistoryProvider(
             return null
         }
         val type = extractType(filterType = filterType, tx = this)
+
         return TransactionHistoryItem(
             txHash = txid.removePrefix(PREFIX),
             timestamp = TimeUnit.SECONDS.toMillis(blockTime.toLong()),
@@ -168,6 +170,7 @@ internal class TronTransactionHistoryProvider(
             status = extractStatus(tx = this),
             type = type,
             amount = amount,
+            fee = feeAmount(blockchain),
         )
     }
 
