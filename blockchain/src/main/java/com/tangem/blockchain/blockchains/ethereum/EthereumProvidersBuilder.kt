@@ -35,9 +35,8 @@ internal class EthereumProvidersBuilder(
     }
 
     override fun createTestnetProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
-        return listOf(
-            ethereumProviderFactory.getPublicProvider(baseUrl = "https://ethereum-sepolia.gateway.tatum.io/"),
-            ethereumProviderFactory.getPublicProvider(baseUrl = "https://ethereum-sepolia-rpc.publicnode.com/"),
+        return listOfNotNull(
+            ethereumProviderFactory.getPublicProvider(baseUrl = "https://ethereum-hoodi-rpc.publicnode.com/"),
         )
     }
 }
