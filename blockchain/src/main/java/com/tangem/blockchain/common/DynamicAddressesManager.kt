@@ -64,6 +64,15 @@ interface DynamicAddressesManager {
     fun createConsolidationTransaction(fee: Fee): Result<TransactionData.Uncompiled>
 
     /**
+     * Probe the XPUB for balances on non-base addresses (derived addresses other than m/.../0/0)
+     * without enabling dynamic addresses mode. Does NOT mutate manager state.
+     *
+     * @param xpub Serialized account-level XPUB.
+     * @return true if any non-base derived address has a non-zero balance, false otherwise.
+     */
+    suspend fun probeHasFundsOnNonBaseAddresses(xpub: String): Result<Boolean>
+
+    /**
      * A derived HD address with its public key and position.
      */
     data class DerivedAddress(

@@ -27,6 +27,7 @@ import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
+import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.operations.sign.SignData
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -95,6 +96,24 @@ internal open class BitcoinWalletManager(
 
     override fun findFirstUnusedChangeAddress(): DynamicAddressesManager.DerivedAddress? {
         return dynamicAddressesManager?.findFirstUnusedChangeAddress(xpubUsedAddresses)
+    }
+
+    override suspend fun probeHasFundsOnNonBaseAddresses(xpub: String): Result<Boolean> {
+        val descriptor = buildDescriptor(xpub)
+        return when (val response = networkProvider.getInfoByXpub(descriptor)) {
+            is Result.Success -> {
+                val hasFunds = response.data.usedAddresses.any { it.balance > BigDecimal.ZERO && !it.isBase() }
+                Result.Success(hasFunds)
+            }
+            is Result.Failure -> response
+        }
+    }
+
+    private fun UsedAddress.isBase(): Boolean {
+        val nodes = runCatching { DerivationPath(derivationPath).nodes }.getOrNull() ?: return false
+        return nodes.size >= 2 &&
+            nodes[nodes.size - 2].index == 0L &&
+            nodes.last().index == 0L
     }
 
     /**
@@ -313,50 +332,57 @@ internal open class BitcoinWalletManager(
             is Result.Success -> {
                 val signatureInfos = buildResult.data
 
-                val signDataList = signatureInfos.map { info ->
-                    SignData(
-                        derivationPath = info.derivationPath,
-                        hash = info.hash,
-                        publicKey = info.publicKey,
-                    )
+                val orderedSignatures = when (val signResult = signMultiAddressInputs(signatureInfos, signer)) {
+                    is Result.Failure -> return signResult
+                    is Result.Success -> signResult.data
                 }
 
-                return when (val signerResult = signer.multiSign(signDataList, wallet.publicKey)) {
-                    is CompletionResult.Success -> {
-                        val signatureMap = signerResult.data
-
-                        val orderedSignatures = signatureInfos.map { info ->
-                            findSignature(signatureMap, info)
-                                ?: return Result.Failure(
-                                    BlockchainSdkError.CustomError(
-                                        "No signature found for input with path ${info.derivationPath.rawPath}",
-                                    ),
-                                )
-                        }
-
-                        val transactionToSend = transactionBuilder.buildToSendMultiAddress(
-                            orderedSignatures,
-                            signatureInfos,
-                        )
-                        val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())
-
-                        when (sendResult) {
-                            is SimpleResult.Success -> {
-                                val txHash = transactionBuilder.getTransactionHash().toHexString()
-                                wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
-                                Result.Success(TransactionSendResult(txHash))
-                            }
-                            is SimpleResult.Failure -> Result.Failure(sendResult.error)
-                        }
+                val transactionToSend = transactionBuilder.buildToSendMultiAddress(
+                    orderedSignatures,
+                    signatureInfos,
+                )
+                val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())
+                return when (sendResult) {
+                    is SimpleResult.Success -> {
+                        val txHash = transactionBuilder.getTransactionHash().toHexString()
+                        wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
+                        Result.Success(TransactionSendResult(txHash))
                     }
-                    is CompletionResult.Failure -> Result.fromTangemSdkError(signerResult.error)
+                    is SimpleResult.Failure -> Result.Failure(sendResult.error)
                 }
             }
         }
     }
 
-    private fun findSignature(signatureMap: Map<ByteArray, ByteArray>, info: MultiAddressSignatureInfo): ByteArray? {
-        return signatureMap.entries.find { it.key.contentEquals(info.publicKey) }?.value
+    private suspend fun signMultiAddressInputs(
+        signatureInfos: List<MultiAddressSignatureInfo>,
+        signer: TransactionSigner,
+    ): Result<List<ByteArray>> {
+        val signDataList = signatureInfos.map { info ->
+            SignData(
+                derivationPath = info.derivationPath,
+                hash = info.hash,
+                publicKey = info.publicKey,
+            )
+        }
+
+        return when (val signerResult = signer.multiSign(signDataList, wallet.publicKey)) {
+            is CompletionResult.Success -> {
+                // MultipleSignCommand processes SignData using ArrayDeque.removeLastOrNull(), so we should reverse
+                // order manually
+                val orderedSignatures = signerResult.data.values.toList().reversed()
+
+                if (orderedSignatures.size != signatureInfos.size) {
+                    return Result.Failure(
+                        BlockchainSdkError.CustomError(
+                            "Signature count mismatch: expected ${signatureInfos.size}, got ${orderedSignatures.size}",
+                        ),
+                    )
+                }
+                Result.Success(orderedSignatures)
+            }
+            is CompletionResult.Failure -> Result.fromTangemSdkError(signerResult.error)
+        }
     }
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
