@@ -8,5 +8,7 @@ import com.tangem.blockchain.yieldsupply.YieldSupplyProviderType
 data class YieldSupplyContractAddresses(
     val factoryContractAddress: String,
     val processorContractAddress: String,
+    val swapExecutionRegistryAddress: String?,
+    val latestImplementationAddress: String?,
     val providerType: YieldSupplyProviderType,
 )

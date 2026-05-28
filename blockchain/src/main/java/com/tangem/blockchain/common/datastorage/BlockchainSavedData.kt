@@ -39,6 +39,7 @@ internal sealed interface BlockchainSavedData {
     @JsonClass(generateAdapter = true)
     data class YieldSupplyModule(
         @Json(name = "contractAddress") val yieldContractAddress: String? = null,
+        @Json(name = "implementationAddress") val implementationAddress: String? = null,
     ) : BlockchainSavedData
 
     @JsonClass(generateAdapter = true)
