@@ -1,8 +1,8 @@
 package com.tangem.blockchain.common
 
-import com.tangem.blockchain.common.memo.MemoState
 import com.tangem.blockchain.common.address.AddressProvider
 import com.tangem.blockchain.common.address.DefaultAddressProvider
+import com.tangem.blockchain.common.memo.MemoState
 import com.tangem.blockchain.common.messagesigning.DefaultMessageSigner
 import com.tangem.blockchain.common.messagesigning.MessageSigner
 import com.tangem.blockchain.common.psbt.DefaultPsbtProvider
