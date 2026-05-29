@@ -6,8 +6,11 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
 import com.tangem.blockchain.blockchains.ethereum.converters.ENSResponseConverter
 import com.tangem.blockchain.blockchains.ethereum.converters.ENSReverseResponseConverter
 import com.tangem.blockchain.blockchains.ethereum.converters.EthereumFeeHistoryConverter
+import com.tangem.blockchain.blockchains.ethereum.gas.StateOverrideBuilder
 import com.tangem.blockchain.blockchains.ethereum.models.EthereumFeeHistoryResponse
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.di.DepsContainer
+import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
@@ -28,6 +31,7 @@ import java.math.BigInteger
  * Abstract base class for Ethereum-like network services
  * Supports different RPC method prefixes (eth_, quai_, etc.)
  */
+@Suppress("LargeClass")
 @OptIn(ExperimentalStdlibApi::class)
 internal abstract class EthereumLikeNetworkService(
     private val multiJsonRpcProvider: MultiNetworkProvider<out EthereumLikeJsonRpcProvider>,
@@ -223,6 +227,49 @@ internal abstract class EthereumLikeNetworkService(
             } else {
                 Result.Failure(exception.toBlockchainSdkError())
             }
+        }
+    }
+
+    override suspend fun getGasLimitWithAllowanceOverride(
+        token: Token,
+        ownerAddress: String,
+        destinationAddress: String,
+        spenderAddress: String,
+        callData: SmartContractCallData,
+    ): Result<BigInteger> {
+        if (!DepsContainer.blockchainFeatureToggles.isStateOverrideGasEstimateEnabled) {
+            return Result.Failure(
+                BlockchainSdkError.CustomError("State-override gas estimation is disabled"),
+            )
+        }
+
+        val ethCall = EthCallObject(
+            to = destinationAddress,
+            from = ownerAddress,
+            value = null,
+            data = callData.dataHex,
+        )
+        val stateOverride = StateOverrideBuilder.build(
+            tokenAddress = token.contractAddress,
+            owner = ownerAddress,
+            spender = spenderAddress,
+        )
+        val request = EthereumStateOverrideEstimateGasRequest(call = ethCall, stateOverride = stateOverride)
+        return try {
+            val response = multiJsonRpcProvider.performRequest(
+                request = EthereumLikeJsonRpcProvider::getGasLimitWithStateOverride,
+                data = request,
+            )
+            Result.Success(response.extractResult().responseToBigInteger())
+        } catch (exception: Exception) {
+            Result.Failure(
+                BlockchainSdkError.Ethereum.EstimateOverrideError(
+                    blockchain = multiJsonRpcProvider.blockchain.getCoinName(),
+                    tokenSymbol = token.symbol,
+                    rpcProvider = multiJsonRpcProvider.currentProvider.baseUrl,
+                    underlyingError = exception.message ?: exception::class.java.simpleName,
+                ),
+            )
         }
     }
 

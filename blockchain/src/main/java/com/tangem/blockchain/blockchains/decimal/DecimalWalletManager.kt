@@ -37,8 +37,16 @@ internal class DecimalWalletManager(
         amount: Amount,
         destination: String,
         callData: SmartContractCallData?,
+        isSimulate: Boolean,
+        spenderAddress: String?,
     ): Result<TransactionFee> {
-        return super.getFeeInternal(amount, convertAddress(destination), callData)
+        return super.getFeeInternal(
+            amount = amount,
+            destination = convertAddress(destination),
+            callData = callData,
+            isSimulate = isSimulate,
+            spenderAddress = spenderAddress,
+        )
     }
 
     override suspend fun getGasLimit(amount: Amount, destination: String): Result<BigInteger> {
