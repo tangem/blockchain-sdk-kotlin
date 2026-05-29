@@ -39,9 +39,17 @@ class MantleWalletManager(
         amount: Amount,
         destination: String,
         callData: SmartContractCallData?,
+        isSimulate: Boolean,
+        spenderAddress: String?,
     ): Result<TransactionFee> {
         val patchedAmount = prepareAdjustedAmount(amount)
-        return super.getFeeInternal(patchedAmount, destination, callData)
+        return super.getFeeInternal(
+            amount = patchedAmount,
+            destination = destination,
+            callData = callData,
+            isSimulate = isSimulate,
+            spenderAddress = spenderAddress,
+        )
             .map { transactionFee ->
                 when (transactionFee) {
                     is TransactionFee.Single -> {

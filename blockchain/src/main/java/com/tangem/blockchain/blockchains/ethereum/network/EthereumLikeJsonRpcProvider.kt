@@ -102,6 +102,21 @@ internal abstract class EthereumLikeJsonRpcProvider(
         call,
     ).post()
 
+    /**
+     * `eth_estimateGas` with a third `stateOverride` (a.k.a. `stateDiff`) parameter.
+     *
+     * Supported by Geth/Erigon-based upstreams; in our provider matrix that includes
+     * NowNodes, Infura, and Alchemy. Providers that don't support the third param
+     * either return `method not found` (handled by [com.tangem.blockchain.network.MultiNetworkProvider]
+     * failover) or silently ignore it (the underlying revert then surfaces normally).
+     */
+    suspend fun getGasLimitWithStateOverride(data: EthereumStateOverrideEstimateGasRequest) = createEthereumLikeBody(
+        method = getMethods().estimateGas,
+        data.call,
+        EthBlockParam.LATEST.value,
+        data.stateOverride,
+    ).post()
+
     suspend fun getGasPrice() = createEthereumLikeBody(method = getMethods().gasPrice).post()
 
     /**
