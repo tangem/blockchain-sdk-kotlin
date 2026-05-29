@@ -31,8 +31,8 @@ coroutines = "1.8.0"
 coroutinesOkhttp = "1.0"
 
 # Serialization
-kotlinxSerializationJson = "1.5.1"
-kotlinxSerializationProtobuf = "1.5.1"
+kotlinxSerializationJson = "1.8.0"
+kotlinxSerializationProtobuf = "1.8.0"
 
 # Bitcoin
 bitcoinj = "0.16.3"
