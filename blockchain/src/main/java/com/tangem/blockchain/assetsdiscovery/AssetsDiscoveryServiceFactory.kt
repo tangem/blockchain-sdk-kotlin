@@ -93,6 +93,7 @@ import com.tangem.blockchain.blockchains.pepecoin.PepecoinProvidersBuilder
 import com.tangem.blockchain.blockchains.pepecoin.network.PepecoinNetworkService
 import com.tangem.blockchain.blockchains.adi.AdiProvidersBuilder
 import com.tangem.blockchain.blockchains.plasma.PlasmaProvidersBuilder
+import com.tangem.blockchain.blockchains.seievm.SeiEvmProvidersBuilder
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkProvider
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkService
 import com.tangem.blockchain.blockchains.polkadot.providers.*
@@ -205,6 +206,7 @@ import com.tangem.blockchain.network.MultiNetworkProvider
  * | RSK              | coins            |
  * | Scroll           | coins            |
  * | Sei              | coins + tokens   |
+ * | SEI EVM          | coins            |
  * | Shibarium        | coins            |
  * | Solana           | coins + tokens   |
  * | Sonic            | coins            |
@@ -240,6 +242,10 @@ class AssetsDiscoveryServiceFactory(
             Blockchain.Adi, Blockchain.AdiTestnet -> createDefaultEvmDiscoveryService(
                 blockchain = blockchain,
                 providers = AdiProvidersBuilder(types).build(blockchain),
+            )
+            Blockchain.SeiEvm, Blockchain.SeiEvmTestnet -> createDefaultEvmDiscoveryService(
+                blockchain = blockchain,
+                providers = SeiEvmProvidersBuilder(types, config).build(blockchain),
             )
             Blockchain.Alephium, Blockchain.AlephiumTestnet -> {
                 val networkService = AlephiumNetworkService(

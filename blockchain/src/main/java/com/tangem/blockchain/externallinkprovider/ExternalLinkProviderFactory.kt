@@ -114,6 +114,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.ArbitrumNova -> ArbitrumNovaExternalLinkProvider()
             Blockchain.Plasma, Blockchain.PlasmaTestnet -> PlasmaExternalLinkProvider(isTestnet)
             Blockchain.Adi, Blockchain.AdiTestnet -> AdiExternalLinkProvider(isTestnet)
+            Blockchain.SeiEvm, Blockchain.SeiEvmTestnet -> SeiEvmExternalLinkProvider(isTestnet)
         }
     }
 }
