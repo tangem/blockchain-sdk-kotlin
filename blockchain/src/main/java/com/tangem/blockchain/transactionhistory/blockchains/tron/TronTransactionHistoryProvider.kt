@@ -141,7 +141,7 @@ internal class TronTransactionHistoryProvider(
             walletAddress = walletAddress,
         ).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
-            error("Transaction $this doesn't contain a required value")
+            return null
         }
         val amount = extractAmount(
             tx = this,
@@ -150,7 +150,7 @@ internal class TronTransactionHistoryProvider(
             walletAddress = walletAddress,
         ).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
-            error("Transaction $this doesn't contain a required value")
+            return null
         }
         if (shouldExcludeFromHistory(filterType, amount)) {
             Log.info { "Transaction with zero amount is excluded from history. $this" }
@@ -162,9 +162,13 @@ internal class TronTransactionHistoryProvider(
             walletAddress = walletAddress,
         ).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
-            error("Transaction $this doesn't contain a required value")
+            return null
         }
-        val type = extractType(filterType = filterType, tx = this)
+        val type = if (contractType == null) {
+            extractTypeV2(filterType, tx = this)
+        } else {
+            extractType(filterType = filterType, tx = this)
+        }
         return TransactionHistoryItem(
             txHash = txid.removePrefix(PREFIX),
             timestamp = TimeUnit.SECONDS.toMillis(blockTime.toLong()),
@@ -302,6 +306,59 @@ internal class TronTransactionHistoryProvider(
         }
     }
 
+    private fun extractTypeV2(
+        filterType: TransactionHistoryRequest.FilterType,
+        tx: GetAddressResponse.Transaction,
+    ): TransactionHistoryItem.TransactionType {
+        return when (filterType) {
+            TransactionHistoryRequest.FilterType.Coin -> {
+                val extraData =
+                    tx.chainExtraData ?: return TransactionHistoryItem.TransactionType.Transfer
+
+                if (extraData.payloadType != "tron") return TransactionHistoryItem.TransactionType.Transfer
+
+                val contractType = extraData.payload?.contractType
+                    ?: return TransactionHistoryItem.TransactionType.Transfer
+
+                when (contractType) {
+                    TronTxHistoryPayloadType.Transfer.type, TronTxHistoryPayloadType.SmartContract.type -> {
+                        TransactionHistoryItem.TransactionType.Transfer
+                    }
+
+                    TronTxHistoryPayloadType.Vote.type -> { // vote
+                        TronStakingTransactionType.VoteWitnessContract(
+                            validatorAddress = extraData.payload.votes?.firstOrNull()
+                                ?.address.orEmpty(),
+                        )
+                    }
+
+                    TronTxHistoryPayloadType.ClaimRewards.type -> { // claim rewards
+                        TronStakingTransactionType.WithdrawBalanceContract
+                    }
+
+                    TronTxHistoryPayloadType.Freeze.type -> { // freeze/stake
+                        TronStakingTransactionType.FreezeBalanceV2Contract
+                    }
+
+                    TronTxHistoryPayloadType.Unfreeze.type -> { // unfreeze/unstake
+                        TronStakingTransactionType.UnfreezeBalanceV2Contract
+                    }
+
+                    TronTxHistoryPayloadType.Withdrawal.type -> { // withdraw
+                        TronStakingTransactionType.WithdrawExpireUnfreezeContract
+                    }
+
+                    else -> TransactionHistoryItem.TransactionType.Transfer
+                }
+            }
+
+            is TransactionHistoryRequest.FilterType.Contract -> {
+                // All TRC10 and TRC20 token transactions are considered simple & plain transfers
+                TransactionHistoryItem.TransactionType.Transfer
+            }
+        }
+    }
+
     private fun extractAmount(
         tx: GetAddressResponse.Transaction,
         decimals: Int,
@@ -367,4 +424,16 @@ internal class TronTransactionHistoryProvider(
         private const val UNFREEZE_BALANCE_V2_CONTRACT_TYPE = 55 // unfreeze/unstake
         private const val WITHDRAW_EXPIRE_UNFREEZE_CONTRACT_TYPE = 56 // withdraw
     }
+}
+
+enum class TronTxHistoryPayloadType(val type: String) {
+    Transfer("TransferContract"),
+    SmartContract("TriggerSmartContract"),
+
+    // Staking related
+    Unfreeze("UnfreezeBalanceV2Contract"),
+    Vote("VoteWitnessContract"),
+    Freeze("FreezeBalanceV2Contract"),
+    Withdrawal("WithdrawExpireUnfreezeContract"),
+    ClaimRewards("WithdrawBalanceContract"),
 }
