@@ -508,6 +508,137 @@ class TronTransactionHistoryProviderTest {
 
     // endregion
 
+    // region getTransactionsHistory - extractTypeV2 (contractType == null, chainExtraData based)
+
+    @Test
+    fun `v2 null chainExtraData maps to Transfer`() = runTest {
+        val tx = coinTransaction(contractType = null, chainExtraData = null)
+        assertThat(singleCoinItem(tx).type).isEqualTo(TransactionHistoryItem.TransactionType.Transfer)
+    }
+
+    @Test
+    fun `v2 non-tron payloadType maps to Transfer`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            chainExtraData = chainExtraData(payloadType = "ethereum", contractType = "VoteWitnessContract"),
+        )
+        assertThat(singleCoinItem(tx).type).isEqualTo(TransactionHistoryItem.TransactionType.Transfer)
+    }
+
+    @Test
+    fun `v2 null payload contractType maps to Transfer`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            chainExtraData = chainExtraData(contractType = null),
+        )
+        assertThat(singleCoinItem(tx).type).isEqualTo(TransactionHistoryItem.TransactionType.Transfer)
+    }
+
+    @Test
+    fun `v2 TransferContract maps to Transfer`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            chainExtraData = chainExtraData(contractType = "TransferContract"),
+        )
+        assertThat(singleCoinItem(tx).type).isEqualTo(TransactionHistoryItem.TransactionType.Transfer)
+    }
+
+    @Test
+    fun `v2 TriggerSmartContract maps to Transfer`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            chainExtraData = chainExtraData(contractType = "TriggerSmartContract"),
+        )
+        assertThat(singleCoinItem(tx).type).isEqualTo(TransactionHistoryItem.TransactionType.Transfer)
+    }
+
+    @Test
+    fun `v2 VoteWitnessContract is outgoing and exposes validator from votes`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            chainExtraData = chainExtraData(
+                contractType = "VoteWitnessContract",
+                votes = listOf(
+                    GetAddressResponse.Transaction.ChainExtraData.Payload.Vote(address = VALIDATOR, count = "1"),
+                ),
+            ),
+        )
+        val result = singleCoinItem(tx)
+
+        val type = result.type as TronStakingTransactionType.VoteWitnessContract
+        assertThat(type.validatorAddress).isEqualTo(VALIDATOR)
+        assertThat(result.isOutgoing).isTrue()
+    }
+
+    @Test
+    fun `v2 VoteWitnessContract with null votes exposes empty validator`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            chainExtraData = chainExtraData(contractType = "VoteWitnessContract", votes = null),
+        )
+        val type = singleCoinItem(tx).type as TronStakingTransactionType.VoteWitnessContract
+        assertThat(type.validatorAddress).isEmpty()
+    }
+
+    @Test
+    fun `v2 WithdrawBalanceContract is claim rewards and incoming`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            chainExtraData = chainExtraData(contractType = "WithdrawBalanceContract"),
+        )
+        val result = singleCoinItem(tx)
+
+        assertThat(result.type).isEqualTo(TronStakingTransactionType.WithdrawBalanceContract)
+        assertThat(result.isOutgoing).isFalse()
+    }
+
+    @Test
+    fun `v2 FreezeBalanceV2Contract is outgoing`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            chainExtraData = chainExtraData(contractType = "FreezeBalanceV2Contract"),
+        )
+        val result = singleCoinItem(tx)
+
+        assertThat(result.type).isEqualTo(TronStakingTransactionType.FreezeBalanceV2Contract)
+        assertThat(result.isOutgoing).isTrue()
+    }
+
+    @Test
+    fun `v2 UnfreezeBalanceV2Contract is incoming`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            chainExtraData = chainExtraData(contractType = "UnfreezeBalanceV2Contract"),
+        )
+        val result = singleCoinItem(tx)
+
+        assertThat(result.type).isEqualTo(TronStakingTransactionType.UnfreezeBalanceV2Contract)
+        assertThat(result.isOutgoing).isFalse()
+    }
+
+    @Test
+    fun `v2 WithdrawExpireUnfreezeContract is incoming`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            chainExtraData = chainExtraData(contractType = "WithdrawExpireUnfreezeContract"),
+        )
+        val result = singleCoinItem(tx)
+
+        assertThat(result.type).isEqualTo(TronStakingTransactionType.WithdrawExpireUnfreezeContract)
+        assertThat(result.isOutgoing).isFalse()
+    }
+
+    @Test
+    fun `v2 unknown contractType maps to Transfer`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            chainExtraData = chainExtraData(contractType = "SomethingUnknownContract"),
+        )
+        assertThat(singleCoinItem(tx).type).isEqualTo(TransactionHistoryItem.TransactionType.Transfer)
+    }
+
+    // endregion
+
     // region getTransactionsHistory - contract/token mapping
 
     @Test
@@ -656,6 +787,7 @@ class TronTransactionHistoryProviderTest {
         contractType: Int? = 1,
         contractName: String? = null,
         voteList: Map<String, Int>? = null,
+        chainExtraData: GetAddressResponse.Transaction.ChainExtraData? = null,
         status: GetAddressResponse.Transaction.StatusType? = GetAddressResponse.Transaction.StatusType.OK,
         receipt: GetAddressResponse.Transaction.TronTXReceipt? =
             GetAddressResponse.Transaction.TronTXReceipt(status = status),
@@ -672,12 +804,28 @@ class TronTransactionHistoryProviderTest {
         fees = fees,
         tokenTransfers = tokenTransfers,
         ethereumSpecific = null,
+        chainExtraData = chainExtraData,
         tronTXReceipt = receipt,
         fromAddress = fromAddress,
         toAddress = toAddress,
         contractType = contractType,
         contractName = contractName,
         voteList = voteList,
+    )
+
+    @Suppress("LongParameterList")
+    private fun chainExtraData(
+        payloadType: String? = "tron",
+        contractType: String? = null,
+        votes: List<GetAddressResponse.Transaction.ChainExtraData.Payload.Vote>? = null,
+    ) = GetAddressResponse.Transaction.ChainExtraData(
+        payloadType = payloadType,
+        payload = GetAddressResponse.Transaction.ChainExtraData.Payload(
+            contractType = contractType,
+            operation = null,
+            bandwidthUsage = null,
+            votes = votes,
+        ),
     )
 
     @Suppress("LongParameterList")
