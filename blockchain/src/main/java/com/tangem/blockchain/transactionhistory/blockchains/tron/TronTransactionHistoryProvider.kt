@@ -401,10 +401,10 @@ internal class TronTransactionHistoryProvider(
         walletAddress: String,
         contractAddress: String,
     ): GetAddressResponse.Transaction.TokenTransfer? {
-        return tokenTransfers.firstOrNull {
-            contractAddress.equals(it.token, ignoreCase = true) &&
-                walletAddress.equals(it.to, ignoreCase = true) ||
-                walletAddress.equals(it.from, ignoreCase = true)
+        return tokenTransfers.firstOrNull { transfer ->
+            contractAddress.equals(transfer.contract, ignoreCase = true) &&
+                walletAddress.equals(transfer.to, ignoreCase = true) ||
+                walletAddress.equals(transfer.from, ignoreCase = true)
         }
     }
 
