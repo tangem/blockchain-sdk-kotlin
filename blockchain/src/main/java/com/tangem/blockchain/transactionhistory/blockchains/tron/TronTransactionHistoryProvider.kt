@@ -1,13 +1,9 @@
 package com.tangem.blockchain.transactionhistory.blockchains.tron
 
 import com.tangem.Log
-import com.tangem.blockchain.common.Amount
-import com.tangem.blockchain.common.AmountType
-import com.tangem.blockchain.common.Blockchain
-import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.pagination.Page
 import com.tangem.blockchain.common.pagination.PaginationWrapper
-import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
@@ -116,7 +112,7 @@ internal class TronTransactionHistoryProvider(
 
             is TransactionHistoryRequest.FilterType.Contract -> {
                 val token = response.trxTokens
-                    ?.find { it.matching(filterType.tokenInfo.contractAddress) }
+                    ?.find { it.contract.equals(filterType.tokenInfo.contractAddress, ignoreCase = true) }
                     ?: return TransactionHistoryState.Success.Empty
                 if (token.transfers != null && token.transfers > 0) {
                     TransactionHistoryState.Success.HasTransactions(token.transfers)
@@ -126,9 +122,6 @@ internal class TronTransactionHistoryProvider(
             }
         }
     }
-
-    private fun GetAddressResponse.TrxToken.matching(contractAddress: String): Boolean =
-        listOf(this.id, this.name).any { it.equals(contractAddress, ignoreCase = true) }
 
     private fun GetAddressResponse.Transaction.toTransactionHistoryItem(
         walletAddress: String,
