@@ -23,6 +23,7 @@ data class GetAddressResponse(
         @Json(name = "id") val id: String?,
         @Json(name = "transfers") val transfers: Int?,
         @Json(name = "balance") val balance: String?,
+        @Json(name = "contract") val contract: String?,
     )
 
     @JsonClass(generateAdapter = true)
