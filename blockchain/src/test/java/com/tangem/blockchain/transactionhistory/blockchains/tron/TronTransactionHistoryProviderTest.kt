@@ -104,7 +104,7 @@ class TronTransactionHistoryProviderTest {
     }
 
     @Test
-    fun `contract state matches token by name case-insensitively`() = runTest {
+    fun `contract state matches token by contract address case-insensitively`() = runTest {
         val filter = contractFilter()
         coEvery {
             blockBookApi.getTransactions(WALLET, null, 1, filter)
@@ -113,8 +113,8 @@ class TronTransactionHistoryProviderTest {
             trxTokens = listOf(
                 trxToken(
                     id = "another",
-                    name = CONTRACT.uppercase(),
                     transfers = 3,
+                    contract = CONTRACT.uppercase(),
                 ),
             ),
         )
@@ -767,13 +767,15 @@ class TronTransactionHistoryProviderTest {
         trxTokens = trxTokens,
     )
 
-    private fun trxToken(id: String, name: String? = "Tether", transfers: Int?) = GetAddressResponse.TrxToken(
-        type = "TRC20",
-        name = name,
-        id = id,
-        transfers = transfers,
-        balance = "0",
-    )
+    private fun trxToken(id: String, name: String? = "Tether", transfers: Int?, contract: String? = id) =
+        GetAddressResponse.TrxToken(
+            type = "TRC20",
+            name = name,
+            id = id,
+            transfers = transfers,
+            balance = "0",
+            contract = contract,
+        )
 
     @Suppress("LongParameterList")
     private fun coinTransaction(
