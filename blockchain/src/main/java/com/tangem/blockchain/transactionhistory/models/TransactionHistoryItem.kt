@@ -36,7 +36,7 @@ data class TransactionHistoryItem(
     sealed interface TransactionType {
         data object Transfer : TransactionType
         data class ContractMethod(val id: String, val callData: String? = null) : TransactionType
-        data class ContractMethodName(val name: String, val callData: String? = null) : TransactionType
+        data class ContractMethodName(val name: String?, val callData: String? = null) : TransactionType
 
         sealed interface SolanaStakingTransactionType : TransactionType {
             data class Stake(val validatorAddress: String?) : SolanaStakingTransactionType
@@ -50,6 +50,10 @@ data class TransactionHistoryItem(
             data class VoteWitnessContract(val validatorAddress: String) : TronStakingTransactionType
             data object WithdrawBalanceContract : TronStakingTransactionType
             data object WithdrawExpireUnfreezeContract : TronStakingTransactionType
+        }
+
+        companion object {
+            val UnknownOperation: ContractMethodName get() = ContractMethodName(name = null)
         }
     }
 

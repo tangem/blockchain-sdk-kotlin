@@ -342,7 +342,7 @@ internal class SolanaTransactionHistoryMapper(
             destinationType = DestinationType.Single(AddressType.User(destinationAddress)),
             sourceType = SourceType.Single(sourceAddress),
             status = status,
-            type = TransactionType.ContractMethodName(name = OPERATION_TYPE_NAME),
+            type = TransactionType.UnknownOperation,
             amount = amount,
             fee = extractFeeAmount(meta),
         )
@@ -540,7 +540,6 @@ internal class SolanaTransactionHistoryMapper(
         const val WITHDRAW_TYPE = "withdraw"
         const val CONFIRMED_STATUS = "confirmed"
         const val FINALIZED_STATUS = "finalized"
-        const val OPERATION_TYPE_NAME = "Operation"
         const val MILLIS_IN_SECOND = 1000L
     }
 }
