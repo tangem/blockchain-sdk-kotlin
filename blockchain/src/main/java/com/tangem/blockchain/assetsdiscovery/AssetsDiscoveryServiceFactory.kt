@@ -241,7 +241,7 @@ class AssetsDiscoveryServiceFactory(
         return when (blockchain) {
             Blockchain.Adi, Blockchain.AdiTestnet -> createDefaultEvmDiscoveryService(
                 blockchain = blockchain,
-                providers = AdiProvidersBuilder(types).build(blockchain),
+                providers = AdiProvidersBuilder(types, config).build(blockchain),
             )
             Blockchain.SeiEvm, Blockchain.SeiEvmTestnet -> createDefaultEvmDiscoveryService(
                 blockchain = blockchain,
