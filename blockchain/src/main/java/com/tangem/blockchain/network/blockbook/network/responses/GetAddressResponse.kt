@@ -23,6 +23,7 @@ data class GetAddressResponse(
         @Json(name = "id") val id: String?,
         @Json(name = "transfers") val transfers: Int?,
         @Json(name = "balance") val balance: String?,
+        @Json(name = "contract") val contract: String?,
     )
 
     @JsonClass(generateAdapter = true)
@@ -36,6 +37,7 @@ data class GetAddressResponse(
         @Json(name = "fees") val fees: String,
         @Json(name = "tokenTransfers") val tokenTransfers: List<TokenTransfer> = emptyList(),
         @Json(name = "ethereumSpecific") val ethereumSpecific: EthereumSpecific? = null,
+        @Json(name = "chainExtraData") val chainExtraData: ChainExtraData? = null,
         // ** TRX specific fields **//
         @Json(name = "tronTXReceipt") val tronTXReceipt: TronTXReceipt?,
         @Json(name = "fromAddress") val fromAddress: String?,
@@ -114,6 +116,26 @@ data class GetAddressResponse(
                 @Json(name = "methodId") val methodId: String,
                 @Json(name = "name") val name: String,
             )
+        }
+
+        @JsonClass(generateAdapter = true)
+        data class ChainExtraData(
+            @Json(name = "payloadType") val payloadType: String?,
+            @Json(name = "payload") val payload: Payload?,
+        ) {
+            @JsonClass(generateAdapter = true)
+            data class Payload(
+                @Json(name = "contractType") val contractType: String?,
+                @Json(name = "operation") val operation: String?,
+                @Json(name = "bandwidthUsage") val bandwidthUsage: String?,
+                @Json(name = "votes") val votes: List<Vote>?,
+            ) {
+                @JsonClass(generateAdapter = true)
+                data class Vote(
+                    @Json(name = "address") val address: String?,
+                    @Json(name = "count") val count: String?,
+                )
+            }
         }
     }
 }
