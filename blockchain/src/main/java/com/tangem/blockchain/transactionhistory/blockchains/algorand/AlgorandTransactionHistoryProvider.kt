@@ -1,18 +1,18 @@
 package com.tangem.blockchain.transactionhistory.blockchains.algorand
 
-import com.tangem.blockchain.transactionhistory.blockchains.algorand.network.AlgorandIndexerApi
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.pagination.Page
 import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.common.toBlockchainSdkError
-import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
-import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
-import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
-import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryState
+import com.tangem.blockchain.transactionhistory.blockchains.algorand.network.AlgorandIndexerApi
 import com.tangem.blockchain.transactionhistory.blockchains.algorand.network.AlgorandPaymentTransaction
 import com.tangem.blockchain.transactionhistory.blockchains.algorand.network.AlgorandTransactionHistoryItem
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -78,7 +78,7 @@ internal class AlgorandTransactionHistoryProvider(
         if (this.paymentTransaction == null) return null
 
         val isOutgoing = walletAddress.equals(sender, ignoreCase = true)
-        val transactionAmount = this.extractAmount(isOutgoing, paymentTransaction)
+        val (transactionAmount, feeAmount) = this.extractAmountAndFee(isOutgoing, paymentTransaction)
 
         return TransactionHistoryItem(
             txHash = this.id,
@@ -91,6 +91,7 @@ internal class AlgorandTransactionHistoryProvider(
             status = this.extractStatus(),
             type = TransactionHistoryItem.TransactionType.Transfer,
             amount = transactionAmount,
+            fee = feeAmount,
         )
     }
 
@@ -101,12 +102,20 @@ internal class AlgorandTransactionHistoryProvider(
             TransactionHistoryItem.TransactionStatus.Unconfirmed
         }
 
-    private fun AlgorandTransactionHistoryItem.extractAmount(
+    private fun AlgorandTransactionHistoryItem.extractAmountAndFee(
         isOutgoing: Boolean,
         paymentTransaction: AlgorandPaymentTransaction,
-    ): Amount {
+    ): Pair<Amount, Amount> {
         val txAmount = paymentTransaction.amount.toBigDecimal().movePointLeft(blockchain.decimals())
-        val feeAmount = this.fee.toBigDecimal().movePointLeft(blockchain.decimals())
-        return Amount(blockchain = blockchain, value = if (isOutgoing) txAmount.plus(feeAmount) else txAmount)
+        val fee = this.fee.toBigDecimal().movePointLeft(blockchain.decimals())
+        val transactionAmount = Amount(
+            blockchain = blockchain,
+            value = if (isOutgoing) txAmount.plus(fee) else txAmount,
+        )
+        val feeAmount = Amount(
+            blockchain = blockchain,
+            value = fee,
+        )
+        return transactionAmount to feeAmount
     }
 }

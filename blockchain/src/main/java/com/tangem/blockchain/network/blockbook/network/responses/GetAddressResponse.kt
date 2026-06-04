@@ -2,7 +2,10 @@ package com.tangem.blockchain.network.blockbook.network.responses
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.EnumeratedEnum
+import com.tangem.blockchain.extensions.toBigDecimalOrDefault
 
 @JsonClass(generateAdapter = true)
 data class GetAddressResponse(
@@ -138,4 +141,11 @@ data class GetAddressResponse(
             }
         }
     }
+}
+
+fun GetAddressResponse.Transaction.feeAmount(blockchain: Blockchain): Amount {
+    return Amount(
+        value = fees.toBigDecimalOrDefault().movePointLeft(blockchain.decimals()),
+        blockchain = blockchain,
+    )
 }
