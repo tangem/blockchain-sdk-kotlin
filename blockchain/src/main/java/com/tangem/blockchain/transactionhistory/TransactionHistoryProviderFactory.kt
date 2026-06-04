@@ -57,6 +57,8 @@ internal object TransactionHistoryProviderFactory {
 
             Blockchain.ZkSyncEra -> createZkSyncExplorerProvider(blockchain)
 
+            Blockchain.Adi, Blockchain.AdiTestnet -> createAdiExplorerProvider(blockchain)
+
             else -> DefaultTransactionHistoryProvider
         }
     }
@@ -140,6 +142,15 @@ internal object TransactionHistoryProviderFactory {
         return EtherscanTransactionHistoryProvider(
             blockchain = blockchain,
             api = createRetrofitInstance("https://block-explorer-api.mainnet.zksync.io/")
+                .create(EtherScanApi::class.java),
+            etherscanApiKey = "",
+        )
+    }
+
+    private fun createAdiExplorerProvider(blockchain: Blockchain): TransactionHistoryProvider {
+        return EtherscanTransactionHistoryProvider(
+            blockchain = blockchain,
+            api = createRetrofitInstance("https://explorer-bls.adifoundation.ai/")
                 .create(EtherScanApi::class.java),
             etherscanApiKey = "",
         )
