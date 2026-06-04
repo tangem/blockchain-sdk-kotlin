@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit
 
 private const val PREFIX = "0x"
 
+@Suppress("LargeClass")
 internal class TronTransactionHistoryProvider(
     private val blockchain: Blockchain,
     private val blockBookApi: BlockBookApi,
@@ -108,9 +109,10 @@ internal class TronTransactionHistoryProvider(
                     TransactionHistoryState.Success.Empty
                 }
             }
+
             is TransactionHistoryRequest.FilterType.Contract -> {
                 val token = response.trxTokens
-                    ?.find { it.matching(filterType.tokenInfo.contractAddress) }
+                    ?.find { it.contract.equals(filterType.tokenInfo.contractAddress, ignoreCase = true) }
                     ?: return TransactionHistoryState.Success.Empty
                 if (token.transfers != null && token.transfers > 0) {
                     TransactionHistoryState.Success.HasTransactions(token.transfers)
@@ -120,9 +122,6 @@ internal class TronTransactionHistoryProvider(
             }
         }
     }
-
-    private fun GetAddressResponse.TrxToken.matching(contractAddress: String): Boolean =
-        listOf(this.id, this.name).any { it.equals(contractAddress, ignoreCase = true) }
 
     private fun GetAddressResponse.Transaction.toTransactionHistoryItem(
         walletAddress: String,
@@ -158,7 +157,11 @@ internal class TronTransactionHistoryProvider(
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
         }
-        val type = extractType(filterType = filterType, tx = this)
+        val type = if (contractType == null) {
+            extractTypeV2(filterType, tx = this)
+        } else {
+            extractType(filterType = filterType, tx = this)
+        }
         return TransactionHistoryItem(
             txHash = txid.removePrefix(PREFIX),
             timestamp = TimeUnit.SECONDS.toMillis(blockTime.toLong()),
@@ -182,6 +185,7 @@ internal class TronTransactionHistoryProvider(
             is TransactionHistoryItem.SourceType.Multiple -> {
                 sourceType.addresses.any { it.equals(walletAddress, ignoreCase = true) }
             }
+
             is TransactionHistoryItem.SourceType.Single -> {
                 sourceType.address.equals(walletAddress, ignoreCase = true)
             }
@@ -192,18 +196,14 @@ internal class TronTransactionHistoryProvider(
         return when (type) {
             is TronStakingTransactionType.VoteWitnessContract,
             TronStakingTransactionType.FreezeBalanceV2Contract,
-            -> {
-                true
-            }
+            -> true
+
             TronStakingTransactionType.WithdrawBalanceContract,
             TronStakingTransactionType.WithdrawExpireUnfreezeContract,
             TronStakingTransactionType.UnfreezeBalanceV2Contract,
-            -> {
-                false
-            }
-            else -> {
-                null
-            }
+            -> false
+
+            else -> null
         }
     }
 
@@ -212,21 +212,24 @@ internal class TronTransactionHistoryProvider(
         filterType: TransactionHistoryRequest.FilterType,
         walletAddress: String,
     ): TransactionHistoryItem.DestinationType? {
-        tx.toAddress ?: return null
-        tx.fromAddress ?: return null
         return when (filterType) {
             TransactionHistoryRequest.FilterType.Coin -> {
+                val toAddress = tx.toAddress ?: tx.vout.firstOrNull()?.addresses?.firstOrNull()
+                    ?: return null
                 TransactionHistoryItem.DestinationType.Single(
                     addressType = if (tx.tokenTransfers.isEmpty()) {
-                        TransactionHistoryItem.AddressType.User(tx.toAddress)
+                        TransactionHistoryItem.AddressType.User(toAddress)
                     } else {
-                        TransactionHistoryItem.AddressType.Contract(tx.toAddress)
+                        TransactionHistoryItem.AddressType.Contract(toAddress)
                     },
                 )
             }
 
             is TransactionHistoryRequest.FilterType.Contract -> {
-                val transfer = tx.getTokenTransfer(walletAddress, filterType.tokenInfo.contractAddress) ?: return null
+                val transfer = tx.getTokenTransfer(
+                    walletAddress = walletAddress,
+                    contractAddress = filterType.tokenInfo.contractAddress,
+                ) ?: return null
                 TransactionHistoryItem.DestinationType.Single(
                     addressType = TransactionHistoryItem.AddressType.User(transfer.to),
                 )
@@ -240,7 +243,10 @@ internal class TronTransactionHistoryProvider(
         walletAddress: String,
     ): TransactionHistoryItem.SourceType? {
         val address = when (filterType) {
-            TransactionHistoryRequest.FilterType.Coin -> tx.fromAddress
+            TransactionHistoryRequest.FilterType.Coin -> {
+                tx.fromAddress ?: tx.vin.firstOrNull()?.addresses?.firstOrNull()
+            }
+
             is TransactionHistoryRequest.FilterType.Contract -> {
                 tx.getTokenTransfer(walletAddress, filterType.tokenInfo.contractAddress)?.from
             }
@@ -259,24 +265,86 @@ internal class TronTransactionHistoryProvider(
                     TRANSFER_CONTRACT_TYPE, TRANSFER_ASSET_CONTRACT_TYPE -> {
                         TransactionHistoryItem.TransactionType.Transfer
                     }
+
                     VOTE_WITNESS_CONTRACT_TYPE -> { // vote
-                        TronStakingTransactionType.VoteWitnessContract(tx.voteList?.keys?.first().orEmpty())
+                        TronStakingTransactionType.VoteWitnessContract(
+                            validatorAddress = tx.voteList?.keys?.firstOrNull().orEmpty(),
+                        )
                     }
+
                     WITHDRAW_BALANCE_CONTRACT_TYPE -> { // claim rewards
                         TronStakingTransactionType.WithdrawBalanceContract
                     }
+
                     FREEZE_BALANCE_V2_CONTRACT_TYPE -> { // freeze/stake
                         TronStakingTransactionType.FreezeBalanceV2Contract
                     }
+
                     UNFREEZE_BALANCE_V2_CONTRACT_TYPE -> { // unfreeze/unstake
                         TronStakingTransactionType.UnfreezeBalanceV2Contract
                     }
+
                     WITHDRAW_EXPIRE_UNFREEZE_CONTRACT_TYPE -> { // withdraw
                         TronStakingTransactionType.WithdrawExpireUnfreezeContract
                     }
+
                     else -> TransactionHistoryItem.TransactionType.ContractMethod(id = tx.contractName.orEmpty())
                 }
             }
+
+            is TransactionHistoryRequest.FilterType.Contract -> {
+                // All TRC10 and TRC20 token transactions are considered simple & plain transfers
+                TransactionHistoryItem.TransactionType.Transfer
+            }
+        }
+    }
+
+    private fun extractTypeV2(
+        filterType: TransactionHistoryRequest.FilterType,
+        tx: GetAddressResponse.Transaction,
+    ): TransactionHistoryItem.TransactionType {
+        return when (filterType) {
+            TransactionHistoryRequest.FilterType.Coin -> {
+                val extraData =
+                    tx.chainExtraData ?: return TransactionHistoryItem.TransactionType.Transfer
+
+                if (extraData.payloadType != "tron") return TransactionHistoryItem.TransactionType.Transfer
+
+                val contractType = extraData.payload?.contractType
+                    ?: return TransactionHistoryItem.TransactionType.Transfer
+
+                when (contractType) {
+                    TronTxHistoryPayloadType.Transfer.type, TronTxHistoryPayloadType.SmartContract.type -> {
+                        TransactionHistoryItem.TransactionType.Transfer
+                    }
+
+                    TronTxHistoryPayloadType.Vote.type -> { // vote
+                        TronStakingTransactionType.VoteWitnessContract(
+                            validatorAddress = extraData.payload.votes?.firstOrNull()
+                                ?.address.orEmpty(),
+                        )
+                    }
+
+                    TronTxHistoryPayloadType.ClaimRewards.type -> { // claim rewards
+                        TronStakingTransactionType.WithdrawBalanceContract
+                    }
+
+                    TronTxHistoryPayloadType.Freeze.type -> { // freeze/stake
+                        TronStakingTransactionType.FreezeBalanceV2Contract
+                    }
+
+                    TronTxHistoryPayloadType.Unfreeze.type -> { // unfreeze/unstake
+                        TronStakingTransactionType.UnfreezeBalanceV2Contract
+                    }
+
+                    TronTxHistoryPayloadType.Withdrawal.type -> { // withdraw
+                        TronStakingTransactionType.WithdrawExpireUnfreezeContract
+                    }
+
+                    else -> TransactionHistoryItem.TransactionType.Transfer
+                }
+            }
+
             is TransactionHistoryRequest.FilterType.Contract -> {
                 // All TRC10 and TRC20 token transactions are considered simple & plain transfers
                 TransactionHistoryItem.TransactionType.Transfer
@@ -298,7 +366,9 @@ internal class TronTransactionHistoryProvider(
             )
 
             is TransactionHistoryRequest.FilterType.Contract -> {
-                val transfer = tx.getTokenTransfer(walletAddress, filterType.tokenInfo.contractAddress) ?: return null
+                val transfer =
+                    tx.getTokenTransfer(walletAddress, filterType.tokenInfo.contractAddress)
+                        ?: return null
                 val transferValue = transfer.value ?: "0"
                 val token = Token(
                     name = transfer.name.orEmpty(),
@@ -331,9 +401,10 @@ internal class TronTransactionHistoryProvider(
         walletAddress: String,
         contractAddress: String,
     ): GetAddressResponse.Transaction.TokenTransfer? {
-        return tokenTransfers.firstOrNull {
-            contractAddress.equals(it.token, ignoreCase = true) &&
-                walletAddress.equals(it.to, ignoreCase = true) || walletAddress.equals(it.from, ignoreCase = true)
+        return tokenTransfers.firstOrNull { transfer ->
+            contractAddress.equals(transfer.contract, ignoreCase = true) &&
+                walletAddress.equals(transfer.to, ignoreCase = true) ||
+                walletAddress.equals(transfer.from, ignoreCase = true)
         }
     }
 
@@ -346,4 +417,16 @@ internal class TronTransactionHistoryProvider(
         private const val UNFREEZE_BALANCE_V2_CONTRACT_TYPE = 55 // unfreeze/unstake
         private const val WITHDRAW_EXPIRE_UNFREEZE_CONTRACT_TYPE = 56 // withdraw
     }
+}
+
+enum class TronTxHistoryPayloadType(val type: String) {
+    Transfer("TransferContract"),
+    SmartContract("TriggerSmartContract"),
+
+    // Staking related
+    Unfreeze("UnfreezeBalanceV2Contract"),
+    Vote("VoteWitnessContract"),
+    Freeze("FreezeBalanceV2Contract"),
+    Withdrawal("WithdrawExpireUnfreezeContract"),
+    ClaimRewards("WithdrawBalanceContract"),
 }
