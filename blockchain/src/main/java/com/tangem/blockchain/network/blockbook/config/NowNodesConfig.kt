@@ -8,6 +8,7 @@ internal class NowNodesConfig(nowNodesCredentials: NowNodeCredentials) : BlockBo
 ) {
     override val baseHost: String = "nownodes.io"
 
+    @Suppress("CyclomaticComplexMethod")
     override fun getHost(blockchain: Blockchain, request: BlockBookRequest): String {
         val isRpcRequest = request.isRpcRequest()
         val prefix = blockchain.currency.lowercase()
