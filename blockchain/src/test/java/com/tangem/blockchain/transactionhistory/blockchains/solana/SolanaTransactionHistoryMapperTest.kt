@@ -92,13 +92,15 @@ class SolanaTransactionHistoryMapperTest {
 
         val result = mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = null)!!
 
-        assertEquals(BigDecimal("0.000005"), result.fee!!.value!!.stripTrailingZeros())
+        assertEquals(BigDecimal("0.000005"), result.fee.value!!.stripTrailingZeros())
     }
 
     @Test
-    fun `zero SOL delta filtered out`() {
+    fun `zero SOL delta still shown in coin history with zero amount`() {
         val tx = buildSimpleSolTransfer(lamports = 0L)
-        assertNull(mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = null))
+        val result = mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = null)
+        assertNotNull(result)
+        assertEquals(BigDecimal.ZERO, result!!.amount.value!!.stripTrailingZeros())
     }
 
     @Test
