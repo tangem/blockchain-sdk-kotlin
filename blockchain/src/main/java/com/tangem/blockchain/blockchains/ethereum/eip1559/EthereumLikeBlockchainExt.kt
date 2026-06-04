@@ -62,6 +62,7 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Bitrock, Blockchain.BitrockTestnet,
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet,
             Blockchain.Quai, Blockchain.QuaiTestnet,
+            Blockchain.Adi, Blockchain.AdiTestnet,
             -> false
             else -> error("Don't forget about evm here")
         }

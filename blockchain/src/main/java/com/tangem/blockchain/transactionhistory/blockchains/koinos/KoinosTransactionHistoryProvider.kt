@@ -3,6 +3,7 @@ package com.tangem.blockchain.transactionhistory.blockchains.koinos
 import com.tangem.blockchain.blockchains.koinos.models.KoinosTransactionEntry
 import com.tangem.blockchain.blockchains.koinos.network.KoinosNetworkService
 import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.pagination.Page
 import com.tangem.blockchain.common.pagination.PaginationWrapper
@@ -70,33 +71,33 @@ internal class KoinosTransactionHistoryProvider(
             Page.LastPage
         }
 
-        val transactionHistoryItems = transactions.mapNotNull {
-            val event = when (it.event) {
+        val transactionHistoryItems = transactions.mapNotNull { tx ->
+            val event = when (tx.event) {
                 is KoinosTransactionEntry.Event.KoinTransferEvent -> {
-                    val destination = it.event.fromAddress.getDestinationAddress()
-                    val source = it.event.toAddress.getSourceAddress()
+                    val destination = tx.event.fromAddress.getDestinationAddress()
+                    val source = tx.event.toAddress.getSourceAddress()
 
                     source to destination
                 }
                 KoinosTransactionEntry.Event.Unsupported -> {
                     TransactionHistoryItem.SourceType.Single(
-                        it.payerAddress,
+                        tx.payerAddress,
                     ) to TransactionHistoryItem.DestinationType.Single(
                         addressType = TransactionHistoryItem.AddressType.User(""),
                     )
                 }
             }
 
-            val amount = when (it.event) {
+            val amount = when (tx.event) {
                 is KoinosTransactionEntry.Event.KoinTransferEvent -> {
-                    Amount(it.event.value.toBigDecimal().movePointLeft(request.decimals), Blockchain.Koinos)
+                    Amount(tx.event.value.toBigDecimal().movePointLeft(request.decimals), Blockchain.Koinos)
                 }
                 KoinosTransactionEntry.Event.Unsupported -> Amount(Blockchain.Koinos)
             }
 
             // TODO maybe add mana field as additional info | it.rcUsed
             TransactionHistoryItem(
-                txHash = it.id,
+                txHash = tx.id,
                 timestamp = 0L,
                 isOutgoing = false,
                 sourceType = event.first,
@@ -104,6 +105,11 @@ internal class KoinosTransactionHistoryProvider(
                 amount = amount,
                 status = TransactionHistoryItem.TransactionStatus.Confirmed,
                 type = TransactionHistoryItem.TransactionType.Transfer,
+                fee = Amount(
+                    value = null,
+                    blockchain = Blockchain.Koinos,
+                    type = AmountType.FeeResource(), // Mana
+                ),
             )
         }
 

@@ -8,6 +8,7 @@ import com.tangem.blockchain.common.pagination.Page
 import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.toBigDecimalOrDefault
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.*
@@ -165,8 +166,17 @@ internal class EtherscanTransactionHistoryProvider(
                 status = transaction.extractStatus(),
                 type = transaction.extractType(filterType),
                 amount = transactionAmount,
+                fee = transaction.feeAmount(blockchain),
             )
         }
+    }
+
+    private fun PolygonTransaction.feeAmount(blockchain: Blockchain): Amount {
+        val fee = gasPrice.toBigDecimalOrDefault().multiply(gasUsed.toBigDecimalOrDefault())
+        return Amount(
+            value = fee.movePointLeft(blockchain.decimals()),
+            blockchain = blockchain,
+        )
     }
 
     private fun PolygonTransaction.extractDestinationType(
