@@ -15,6 +15,8 @@ sealed interface ProviderType {
 
     data object QuickNode : ProviderType
 
+    data object Alchemy : ProviderType
+
     data object Blink : ProviderType
 
     data object Mock : ProviderType
