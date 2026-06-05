@@ -347,7 +347,7 @@ open class EthereumWalletManager(
         )
     }
 
-    suspend fun estimateFee(
+    suspend fun estimateFeeWithOverride(
         transactionData: TransactionData,
         spenderAddress: String,
         isSimulate: Boolean,
