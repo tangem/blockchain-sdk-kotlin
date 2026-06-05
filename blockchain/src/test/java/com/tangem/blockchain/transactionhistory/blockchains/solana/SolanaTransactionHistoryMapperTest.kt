@@ -47,7 +47,7 @@ class SolanaTransactionHistoryMapperTest {
 
         val coinResult = mapper.mapToHistoryItem(sig, tx, walletAddress, filterToken = null)
         assertNotNull(coinResult)
-        assertTrue(coinResult!!.type is TransactionType.ContractMethodName)
+        assertEquals(TransactionType.UnknownOperation, coinResult!!.type)
     }
 
     @Test
@@ -57,7 +57,7 @@ class SolanaTransactionHistoryMapperTest {
 
         val coinResult = mapper.mapToHistoryItem(sig, tx, walletAddress, filterToken = null)
         assertNotNull(coinResult)
-        assertTrue(coinResult!!.type is TransactionType.ContractMethodName)
+        assertEquals(TransactionType.UnknownOperation, coinResult!!.type)
 
         assertNull(mapper.mapToHistoryItem(sig, tx, walletAddress, filterToken = leiaFilterToken))
     }
