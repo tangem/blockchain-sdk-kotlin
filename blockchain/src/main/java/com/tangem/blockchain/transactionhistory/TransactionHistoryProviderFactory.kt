@@ -178,31 +178,10 @@ internal object TransactionHistoryProviderFactory {
     }
 
     private fun createSolanaRpcClient(config: BlockchainSdkConfig): SolanaRpcClient {
-        config.alchemyApiKey?.takeIf { it.isNotBlank() }?.let { alchemyApiKey ->
-            return SolanaRpcClient(
-                baseUrl = "https://solana-mainnet.g.alchemy.com/v2/$alchemyApiKey",
-            )
-        }
-
-        config.blinkApiKey?.takeIf { it.isNotBlank() }?.let { blinkApiKey ->
-            return SolanaRpcClient(
-                baseUrl = "https://sol.blinklabs.xyz/v1/$blinkApiKey",
-            )
-        }
-
-        config.quickNodeSolanaCredentials?.let { creds ->
-            if (creds.subdomain.isNotBlank() && creds.apiKey.isNotBlank()) {
-                return SolanaRpcClient(baseUrl = "https://${creds.subdomain}/${creds.apiKey}")
-            }
-        }
-
-        config.getBlockCredentials?.solana?.jsonRpc
-            ?.takeIf { it.isNotBlank() }
-            ?.let { accessToken ->
-                return SolanaRpcClient(baseUrl = "https://go.getblock.io/$accessToken")
-            }
-
-        return SolanaRpcClient(baseUrl = "https://api.mainnet-beta.solana.com")
+        val alchemyApiKey = config.alchemyApiKey.orEmpty()
+        return SolanaRpcClient(
+            baseUrl = "https://solana-mainnet.g.alchemy.com/v2/$alchemyApiKey",
+        )
     }
 
     private fun createBlockBookApiWithNowNodesConfig(
