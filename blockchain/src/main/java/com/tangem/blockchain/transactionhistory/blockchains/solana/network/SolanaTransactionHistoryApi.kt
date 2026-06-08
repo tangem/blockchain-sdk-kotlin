@@ -14,78 +14,51 @@ internal class SolanaTransactionHistoryApi(
         .add(SolanaInstructionAdapter())
         .build()
 
-    private val signaturesAdapter = moshi.adapter<SolanaRpcResponse<List<SolanaSignatureInfo>>>(
+    private val transactionsForAddressAdapter = moshi.adapter<SolanaRpcResponse<SolanaTransactionsForAddress>>(
         Types.newParameterizedType(
             SolanaRpcResponse::class.java,
-            Types.newParameterizedType(List::class.java, SolanaSignatureInfo::class.java),
+            SolanaTransactionsForAddress::class.java,
         ),
     )
 
-    private val transactionAdapter = moshi.adapter<SolanaRpcResponse<SolanaTransactionResponse>>(
-        Types.newParameterizedType(
-            SolanaRpcResponse::class.java,
-            SolanaTransactionResponse::class.java,
-        ),
-    )
-
-    private val tokenAccountsAdapter = moshi.adapter<SolanaRpcResponse<SolanaTokenAccounts>>(
-        Types.newParameterizedType(
-            SolanaRpcResponse::class.java,
-            SolanaTokenAccounts::class.java,
-        ),
-    )
-
-    fun getSignaturesForAddress(address: String, limit: Int, before: String? = null): List<SolanaSignatureInfo> {
-        val params = buildList {
-            add(address)
-            add(
-                buildMap {
-                    put("limit", limit)
-                    put("commitment", "finalized")
-                    if (before != null) put("before", before)
-                },
-            )
+    fun getTransactionsForAddress(
+        address: String,
+        limit: Int,
+        paginationToken: String? = null,
+        tokenAccountsFilter: TokenAccountsFilter = TokenAccountsFilter.Default,
+    ): SolanaTransactionsForAddress {
+        val config = buildMap {
+            put("transactionDetails", "full")
+            put("sortOrder", "desc")
+            put("commitment", "finalized")
+            put("encoding", "jsonParsed")
+            put("maxSupportedTransactionVersion", 0)
+            put("limit", limit)
+            if (paginationToken != null) put("paginationToken", paginationToken)
+            tokenAccountsFilter.asFilters()?.let { put("filters", it) }
         }
-        val raw = rpcClient.call("getSignaturesForAddress", params)
-        val response = signaturesAdapter.fromJson(raw)
-            ?: throw RpcException("Failed to parse getSignaturesForAddress response")
+        val params = listOf(address, config)
+        val raw = rpcClient.call("getTransactionsForAddress", params)
+        val response = transactionsForAddressAdapter.fromJson(raw)
+            ?: throw RpcException("Failed to parse getTransactionsForAddress response")
         response.error?.let {
             throw RpcException("RPC error ${it.code}: ${it.message}")
         }
-        return response.result.orEmpty()
+        return response.result ?: SolanaTransactionsForAddress(data = emptyList(), paginationToken = null)
     }
 
-    fun getTokenAccountsByOwner(owner: String, mint: String): String? {
-        val params = buildList {
-            add(owner)
-            add(mapOf("mint" to mint))
-            add(mapOf("encoding" to "jsonParsed"))
-        }
-        val raw = rpcClient.call("getTokenAccountsByOwner", params)
-        val response = tokenAccountsAdapter.fromJson(raw)
-            ?: throw RpcException("Failed to parse getTokenAccountsByOwner response")
-        response.error?.let {
-            throw RpcException("RPC error ${it.code}: ${it.message}")
-        }
-        return response.result?.value?.firstOrNull()?.pubkey
-    }
+    /**
+     * Restricts the returned transactions to those that changed the wallet's token accounts.
+     * Used for SPL token history; coin history uses [Default] (no filter).
+     */
+    enum class TokenAccountsFilter {
+        Default,
+        BalanceChanged,
+        ;
 
-    fun getTransaction(signature: String): SolanaTransactionResponse? {
-        val params = buildList {
-            add(signature)
-            add(
-                mapOf(
-                    "encoding" to "jsonParsed",
-                    "maxSupportedTransactionVersion" to 0,
-                ),
-            )
+        fun asFilters(): Map<String, String>? = when (this) {
+            Default -> null
+            BalanceChanged -> mapOf("tokenAccounts" to "balanceChanged")
         }
-        val raw = rpcClient.call("getTransaction", params)
-        val response = transactionAdapter.fromJson(raw)
-            ?: throw RpcException("Failed to parse getTransaction response")
-        response.error?.let {
-            throw RpcException("RPC error ${it.code}: ${it.message}")
-        }
-        return response.result
     }
 }

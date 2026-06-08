@@ -15,19 +15,17 @@ internal data class SolanaRpcError(
     @Json(name = "message") val message: String?,
 )
 
-// region getSignaturesForAddress response
+// region getTransactionsForAddress response
 
 @JsonClass(generateAdapter = true)
-internal data class SolanaSignatureInfo(
-    @Json(name = "signature") val signature: String,
-    @Json(name = "blockTime") val blockTime: Long?,
-    @Json(name = "confirmationStatus") val confirmationStatus: String?,
-    @Json(name = "err") val err: Any?,
+internal data class SolanaTransactionsForAddress(
+    @Json(name = "data") val data: List<SolanaTransactionResponse>,
+    @Json(name = "paginationToken") val paginationToken: String?,
 )
 
 // endregion
 
-// region getTransaction (jsonParsed) response
+// region transaction (jsonParsed) details
 
 @JsonClass(generateAdapter = true)
 internal data class SolanaTransactionResponse(
@@ -116,20 +114,6 @@ internal data class SolanaInstructionInfo(
     @Json(name = "stakeAuthority") val stakeAuthority: String?,
     @Json(name = "withdrawAuthority") val withdrawAuthority: String?,
     @Json(name = "newAccount") val newAccount: String?,
-)
-
-// endregion
-
-// region getTokenAccountsByOwner response
-
-@JsonClass(generateAdapter = true)
-internal data class SolanaTokenAccounts(
-    @Json(name = "value") val value: List<SolanaTokenAccount>,
-)
-
-@JsonClass(generateAdapter = true)
-internal data class SolanaTokenAccount(
-    @Json(name = "pubkey") val pubkey: String,
 )
 
 // endregion
