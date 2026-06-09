@@ -306,13 +306,8 @@ interface PendingTransactionHandler {
      * Transaction sent via backend and should be tracked until confirmed.
      *
      * @param txHash The transaction ID (hash) to add.
-     * @param contractAddress Optional contract address associated with the transaction.
      */
-    suspend fun addPendingGaslessTransaction(
-        transactionData: TransactionData,
-        txHash: String,
-        contractAddress: String? = null,
-    )
+    suspend fun addPendingGaslessTransaction(transactionData: TransactionData, txHash: String)
 }
 
 interface TransactionSigner {
