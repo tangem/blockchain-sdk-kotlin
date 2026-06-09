@@ -1,6 +1,8 @@
 package com.tangem.blockchain.pendingtransactions
 
 import com.tangem.blockchain.common.NetworkProvider
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.datastorage.PendingTransaction
 
 /**
  * Default implementation of [PendingTransactionsProvider] that does nothing.
@@ -11,12 +13,12 @@ internal object DefaultPendingTransactionsProvider : PendingTransactionsProvider
     override suspend fun addPendingTransaction(
         transactionId: String,
         networkProvider: NetworkProvider,
-        contractAddress: String?,
+        transactionData: TransactionData,
     ) {
         // No-op
     }
 
-    override suspend fun addPendingGaslessTransaction(transactionId: String, contractAddress: String?) {
+    override suspend fun addPendingGaslessTransaction(transactionId: String, transactionData: TransactionData) {
         // No-op
     }
 
@@ -24,7 +26,7 @@ internal object DefaultPendingTransactionsProvider : PendingTransactionsProvider
         // No-op
     }
 
-    override suspend fun getPendingTransactions(contractAddress: String?): List<String> = emptyList()
+    override suspend fun getPendingTransactions(contractAddress: String?): List<PendingTransaction> = emptyList()
 
     override suspend fun checkPendingTransactions(): Map<String, PendingTransactionStatus> = emptyMap()
 }

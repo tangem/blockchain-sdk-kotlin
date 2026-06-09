@@ -1,5 +1,6 @@
 package com.tangem.blockchain.pendingtransactions
 
+import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData.PendingTransactions
 import com.tangem.blockchain.common.datastorage.PendingTransaction
@@ -29,15 +30,18 @@ internal class PendingTransactionStorage(
      * @param providerName Provider name (null for public providers, specific name for private mempool)
      * @param contractAddress Optional contract address (for token transactions)
      */
-    suspend fun addTransaction(transactionId: String, providerName: String? = null, contractAddress: String? = null) {
+    suspend fun addTransaction(transactionId: String, providerName: String? = null, transactionData: TransactionData) {
         mutex.withLock {
             val currentData = getPendingTransactionsData()
+            val contractAddress = (transactionData as? TransactionData.Uncompiled)?.contractAddress
+            val amount = (transactionData as? TransactionData.Uncompiled)?.amount
             val newTransaction = PendingTransaction(
                 transactionId = transactionId,
                 blockchain = wallet.blockchain.id,
                 providerName = providerName,
                 sentAt = System.currentTimeMillis(),
                 contractAddress = contractAddress,
+                amount = amount?.value?.toPlainString(),
             )
 
             val updatedTransactions = if (currentData.transactions.any { it.transactionId == transactionId }) {
@@ -88,13 +92,13 @@ internal class PendingTransactionStorage(
      * @param contractAddress Optional contract address to filter by
      * @return List of pending transaction IDs matching the criteria
      */
-    suspend fun getTransactionIds(contractAddress: String? = null): List<String> {
+    suspend fun getTransactionIds(contractAddress: String? = null): List<PendingTransaction> {
         return mutex.withLock {
             val allTransactions = getPendingTransactionsData().transactions
             val result = allTransactions.filter { transaction ->
                 transaction.blockchain == wallet.blockchain.id &&
                     (contractAddress == null || transaction.contractAddress == contractAddress)
-            }.map { it.transactionId }
+            }
             Logger.logTransaction(
                 "getPendingTransactionIds: blockchain=${wallet.blockchain.id}, contractAddress=$contractAddress, " +
                     "result=$result",
