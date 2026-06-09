@@ -14,6 +14,7 @@ import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxIn
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionValidator
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.datastorage.PendingTransaction
 import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -154,7 +155,7 @@ open class EthereumWalletManager(
 
     internal fun updatePendingTransactions(
         pendingTransactionUpdate: Map<String, PendingTransactionStatus>,
-        pendingTransactions: List<String>,
+        pendingTransactions: List<PendingTransaction>,
         txCount: Long,
         pendingTxCount: Long,
     ) {
@@ -179,9 +180,9 @@ open class EthereumWalletManager(
         } else if (pendingBlockchainCount <= pendingTransactions.size) {
             wallet.recentTransactions.removeAll { it.hash == null }
 
-            pendingTransactions.forEach { txId ->
-                if (wallet.recentTransactions.none { it.hash == txId }) {
-                    wallet.addPendingTransactionDummy(txId)
+            pendingTransactions.forEach { tx ->
+                if (wallet.recentTransactions.none { it.hash == tx.transactionId }) {
+                    wallet.addPendingTransactionDummy(tx)
                 }
             }
         }
@@ -204,8 +205,7 @@ open class EthereumWalletManager(
                 val txHash = transactionToSend.keccak().toHexString()
                 wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
 
-                val contractAddress = (transactionData as? TransactionData.Uncompiled)?.contractAddress
-                pendingTransactionsProvider.addPendingTransaction(txHash, networkProvider, contractAddress)
+                pendingTransactionsProvider.addPendingTransaction(txHash, networkProvider, transactionData)
 
                 Success(TransactionSendResult(txHash))
             }
@@ -276,8 +276,7 @@ open class EthereumWalletManager(
                     val txHash = transactionToSend.keccak().toHexString()
                     wallet.addOutgoingTransaction(transactionData = data, txHash = txHash)
 
-                    val contractAddress = data.contractAddress
-                    pendingTransactionsProvider.addPendingTransaction(txHash, networkProvider, contractAddress)
+                    pendingTransactionsProvider.addPendingTransaction(txHash, networkProvider, data)
 
                     Success(TransactionSendResult(txHash))
                 }
@@ -690,14 +689,11 @@ open class EthereumWalletManager(
 
     override suspend fun getPendingTransactions(contractAddress: String?): List<String> {
         return pendingTransactionsProvider.getPendingTransactions(contractAddress)
+            .map { tx -> tx.transactionId }
     }
 
-    override suspend fun addPendingGaslessTransaction(
-        transactionData: TransactionData,
-        txHash: String,
-        contractAddress: String?,
-    ) {
+    override suspend fun addPendingGaslessTransaction(transactionData: TransactionData, txHash: String) {
         wallet.addOutgoingTransaction(transactionData, txHash)
-        pendingTransactionsProvider.addPendingGaslessTransaction(txHash, contractAddress)
+        pendingTransactionsProvider.addPendingGaslessTransaction(txHash, transactionData)
     }
 }
