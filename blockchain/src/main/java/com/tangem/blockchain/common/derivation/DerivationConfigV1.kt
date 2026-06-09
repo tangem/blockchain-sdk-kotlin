@@ -71,6 +71,9 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.ArbitrumNova,
             Blockchain.Plasma,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
+            Blockchain.SeiEvm,
+            Blockchain.SeiEvmTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/19000118'/0'/0/0"))
             Blockchain.OdysseyChain -> mapOf(AddressType.Default to DerivationPath("m/44'/695'/0'/0/0"))
             Blockchain.XDC -> mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
             Blockchain.EthereumClassic -> mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))
