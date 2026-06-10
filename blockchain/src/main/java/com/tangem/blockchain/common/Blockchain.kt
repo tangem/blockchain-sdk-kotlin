@@ -217,6 +217,8 @@ enum class Blockchain(
     ArbitrumNova("arbitrum-nova", "ETH", "Arbitrum Nova"),
     Plasma("plasma", "XPL", "Plasma"),
     PlasmaTestnet("plasma/test", "XPL", "Plasma Testnet"),
+    SeiEvm("sei-v2", "SEI", "Sei EVM"),
+    SeiEvmTestnet("sei-v2/test", "SEI", "Sei EVM Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -360,6 +362,7 @@ enum class Blockchain(
         Linea, LineaTestnet,
         ArbitrumNova,
         Plasma, PlasmaTestnet,
+        SeiEvm, SeiEvmTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -482,6 +485,7 @@ enum class Blockchain(
             Linea, LineaTestnet,
             ArbitrumNova,
             Plasma, PlasmaTestnet,
+            SeiEvm, SeiEvmTestnet,
             -> EthereumAddressService()
 
             Quai, QuaiTestnet -> QuaiAddressService()
@@ -643,6 +647,7 @@ enum class Blockchain(
             Quai, QuaiTestnet -> QuaiTestnet
             Linea, LineaTestnet -> LineaTestnet
             Plasma, PlasmaTestnet -> PlasmaTestnet
+            SeiEvm, SeiEvmTestnet -> SeiEvmTestnet
             Unknown,
             Cardano,
             Dogecoin,
@@ -762,6 +767,7 @@ enum class Blockchain(
             Linea, LineaTestnet,
             ArbitrumNova,
             Plasma, PlasmaTestnet,
+            SeiEvm, SeiEvmTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -884,6 +890,8 @@ enum class Blockchain(
             ArbitrumNova -> Chain.ArbitrumNova.id
             Plasma -> Chain.Plasma.id
             PlasmaTestnet -> Chain.PlasmaTestnet.id
+            SeiEvm -> Chain.SeiEvm.id
+            SeiEvmTestnet -> Chain.SeiEvmTestnet.id
             Monad -> Chain.Monad.id
             MonadTestnet -> Chain.MonadTestnet.id
             else -> null
