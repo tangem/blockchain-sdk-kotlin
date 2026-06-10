@@ -174,5 +174,7 @@ val Blockchain.isUTXO: Boolean
         PlasmaTestnet,
         Adi,
         AdiTestnet,
+        SeiEvm,
+        SeiEvmTestnet,
         -> false
     }
