@@ -226,9 +226,11 @@ class BitcoinDynamicAddressesManagerTest {
     }
 
     companion object {
-        // Known account-level extended public key for BTC (m/84'/0'/0')
-        // This is a real zpub decoded to raw components
-        // zpub6qkhJbASjzPuWqEHpw7upUZ9bc6DSs6FiwaV8rWW8hfYHRuDPQwf6zGmnzubDQNth74ha7KjgSkiQCZpUsPrQb4k3QdDngJ7jXu55nVEuev
+        // Synthetic fixture: BIP32 Test Vector 1 MASTER key material (chain m) with depth set to 3
+        // to mimic an account-level key. It is NOT a real account zpub, so derived addresses here
+        // have no external reference — these tests cover gap search and path parsing only.
+        // Exact-address correctness against published BIP84 vectors is covered by
+        // BitcoinDynamicAddressesManagerVectorsTest.
         private val BTC_ACCOUNT_XPUB = createTestXpub(
             publicKey = "0339a36013301597daef41fbe593a02cc513d0b55527ec2df1050e2e8ff49c85c2",
             chainCode = "873dff81c02f525623fd1fe5167eac3a55a049de3d314bb42ee227ffed37d508",
