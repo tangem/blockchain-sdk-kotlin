@@ -15,20 +15,20 @@ internal class SolanaTransactionHistoryMapper(
 
     @Suppress("CyclomaticComplexMethod")
     fun mapToHistoryItem(
-        signatureInfo: SolanaSignatureInfo,
         txResponse: SolanaTransactionResponse,
         walletAddress: String,
         filterToken: Token?,
     ): TransactionHistoryItem? {
         val meta = txResponse.meta ?: return null
         val message = txResponse.transaction?.message ?: return null
+        val txHash = txResponse.transaction.signatures.firstOrNull() ?: return null
         val accountKeys = message.accountKeys.map { it.pubkey }
         val allInstructions = collectAllInstructions(message, meta)
         val txType = classifyTransaction(meta, allInstructions)
         val context = HistoryItemContext(
-            txHash = txResponse.transaction.signatures.firstOrNull() ?: signatureInfo.signature,
-            timestamp = (txResponse.blockTime ?: signatureInfo.blockTime ?: 0L) * MILLIS_IN_SECOND,
-            status = resolveStatus(signatureInfo, meta),
+            txHash = txHash,
+            timestamp = (txResponse.blockTime ?: 0L) * MILLIS_IN_SECOND,
+            status = resolveStatus(meta),
             meta = meta,
             walletAddress = walletAddress,
             accountKeys = accountKeys,
@@ -127,13 +127,10 @@ internal class SolanaTransactionHistoryMapper(
         }
     }
 
-    private fun resolveStatus(signatureInfo: SolanaSignatureInfo, meta: SolanaTransactionMeta): TransactionStatus {
-        return when {
-            signatureInfo.err != null || meta.err != null -> TransactionStatus.Failed
-            signatureInfo.confirmationStatus == FINALIZED_STATUS ||
-                signatureInfo.confirmationStatus == CONFIRMED_STATUS -> TransactionStatus.Confirmed
-            else -> TransactionStatus.Unconfirmed
-        }
+    // `getTransactionsForAddress` is queried with `commitment = finalized`, so every returned transaction is
+    // already finalized. The only remaining distinction is success vs. on-chain failure, derived from `meta.err`.
+    private fun resolveStatus(meta: SolanaTransactionMeta): TransactionStatus {
+        return if (meta.err != null) TransactionStatus.Failed else TransactionStatus.Confirmed
     }
 
     private fun collectAllInstructions(
@@ -342,7 +339,7 @@ internal class SolanaTransactionHistoryMapper(
             destinationType = DestinationType.Single(AddressType.User(destinationAddress)),
             sourceType = SourceType.Single(sourceAddress),
             status = status,
-            type = TransactionType.ContractMethodName(name = OPERATION_TYPE_NAME),
+            type = TransactionType.UnknownOperation,
             amount = amount,
             fee = extractFeeAmount(meta),
         )
@@ -358,7 +355,6 @@ internal class SolanaTransactionHistoryMapper(
     ): Pair<Boolean, Amount>? {
         if (filterToken == null) {
             val solDelta = calculateSolDelta(meta, walletIndex)
-            if (solDelta == 0L) return null
             return Pair(
                 solDelta < 0,
                 Amount(
@@ -539,9 +535,6 @@ internal class SolanaTransactionHistoryMapper(
         const val DELEGATE_TYPE = "delegate"
         const val DEACTIVATE_TYPE = "deactivate"
         const val WITHDRAW_TYPE = "withdraw"
-        const val CONFIRMED_STATUS = "confirmed"
-        const val FINALIZED_STATUS = "finalized"
-        const val OPERATION_TYPE_NAME = "Operation"
         const val MILLIS_IN_SECOND = 1000L
     }
 }

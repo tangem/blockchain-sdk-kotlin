@@ -91,6 +91,8 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.ArbitrumNova,
             Blockchain.Plasma,
             Blockchain.PlasmaTestnet,
+            Blockchain.Adi,
+            Blockchain.AdiTestnet,
             Blockchain.SeiEvm,
             Blockchain.SeiEvmTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
