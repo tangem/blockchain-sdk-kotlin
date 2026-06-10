@@ -8,6 +8,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.blockchains.ethereum.providers.*
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.plasma.PlasmaProvidersBuilder
+import com.tangem.blockchain.blockchains.seievm.SeiEvmProvidersBuilder
 import com.tangem.blockchain.blockchains.quai.QuaiJsonRpcProvider
 import com.tangem.blockchain.blockchains.quai.QuaiNetworkService
 import com.tangem.blockchain.blockchains.quai.QuaiWalletManager
@@ -202,6 +203,7 @@ internal class EthereumLikeWalletManagerAssembly(
             Blockchain.Linea, Blockchain.LineaTestnet -> LineaProvidersBuilder(providerTypes, config)
             Blockchain.ArbitrumNova -> ArbitrumNovaProvidersBuilder(providerTypes, config)
             Blockchain.Plasma, Blockchain.PlasmaTestnet -> PlasmaProvidersBuilder(providerTypes, config)
+            Blockchain.SeiEvm, Blockchain.SeiEvmTestnet -> SeiEvmProvidersBuilder(providerTypes, config)
             else -> error("Unsupported blockchain: $blockchain")
         }
     }
