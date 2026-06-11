@@ -2,9 +2,14 @@ package com.tangem.blockchain.blockchains.solana
 
 import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionParser
 import com.tangem.blockchain.extensions.encodeBase58
+import foundation.metaplex.solana.transactions.AccountMeta
+import foundation.metaplex.solana.transactions.CompiledInstruction
+import foundation.metaplex.solanapublickeys.PublicKey
 import io.ktor.util.*
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.collections.isNotEmpty
 
@@ -59,4 +64,89 @@ class SolanaTransactionConverterTest {
         assertEquals(writableAltAddressesBase58, parsedWritableBase58)
         assertEquals(readonlyAltAddressesBase58, parsedReadonlyBase58)
     }
+
+    @Test
+    fun `convertCompiledToTransactionInstructions derives all four account privilege categories`() {
+        // Solana account ordering: [writable signers | readonly signers | writable non-signers | readonly non-signers]
+        // requiredSignatures = 2, readonlySigned = 1, readonlyUnsigned = 1, total = 5
+        //   idx 0 -> writable signer
+        //   idx 1 -> readonly signer
+        //   idx 2 -> writable non-signer
+        //   idx 3 -> writable non-signer
+        //   idx 4 -> readonly non-signer
+        val accountAddresses = (0 until 5).map { address(seed = it) }
+        val instructionData = byteArrayOf(0x01, 0x02, 0x03, 0x04)
+        val compiled = CompiledInstruction(
+            programIdIndex = 4,
+            accounts = listOf(0, 1, 2, 3, 4),
+            data = instructionData.encodeBase58(),
+        )
+
+        val result = converter.convertCompiledToTransactionInstructions(
+            compiledInstructions = listOf(compiled),
+            allAccountAddresses = accountAddresses,
+            requiredSignatures = 2,
+            readonlySignedAccounts = 1,
+            readonlyUnsignedAccounts = 1,
+        )
+
+        assertEquals(1, result.size)
+        val instruction = result.first()
+        assertEquals(PublicKey(address(seed = 4)), instruction.programId)
+        assertArrayEquals(instructionData, instruction.data)
+
+        val expectedKeys = listOf(
+            AccountMeta(PublicKey(address(seed = 0)), isSigner = true, isWritable = true),
+            AccountMeta(PublicKey(address(seed = 1)), isSigner = true, isWritable = false),
+            AccountMeta(PublicKey(address(seed = 2)), isSigner = false, isWritable = true),
+            AccountMeta(PublicKey(address(seed = 3)), isSigner = false, isWritable = true),
+            AccountMeta(PublicKey(address(seed = 4)), isSigner = false, isWritable = false),
+        )
+        assertEquals(expectedKeys, instruction.keys)
+    }
+
+    @Test
+    fun `convertCompiledToTransactionInstructions preserves instruction order and maps each program id`() {
+        val accountAddresses = (0 until 3).map { address(seed = it) }
+        val first = CompiledInstruction(
+            programIdIndex = 1,
+            accounts = listOf(0),
+            data = byteArrayOf(0x0A).encodeBase58(),
+        )
+        val second = CompiledInstruction(
+            programIdIndex = 2,
+            accounts = listOf(0),
+            data = byteArrayOf(0x0B).encodeBase58(),
+        )
+
+        val result = converter.convertCompiledToTransactionInstructions(
+            compiledInstructions = listOf(first, second),
+            allAccountAddresses = accountAddresses,
+            requiredSignatures = 1,
+            readonlySignedAccounts = 0,
+            readonlyUnsignedAccounts = 1,
+        )
+
+        assertEquals(2, result.size)
+        assertEquals(PublicKey(address(seed = 1)), result[0].programId)
+        assertEquals(PublicKey(address(seed = 2)), result[1].programId)
+        assertArrayEquals(byteArrayOf(0x0A), result[0].data)
+        assertArrayEquals(byteArrayOf(0x0B), result[1].data)
+    }
+
+    @Test
+    fun `convertCompiledToTransactionInstructions returns empty list for empty input`() {
+        val result = converter.convertCompiledToTransactionInstructions(
+            compiledInstructions = emptyList(),
+            allAccountAddresses = listOf(address(seed = 0)),
+            requiredSignatures = 1,
+            readonlySignedAccounts = 0,
+            readonlyUnsignedAccounts = 0,
+        )
+
+        assertTrue(result.isEmpty())
+    }
+
+    /** Builds a distinct 32-byte account address filled with [seed], so each index maps to a unique [PublicKey]. */
+    private fun address(seed: Int): ByteArray = ByteArray(size = 32) { seed.toByte() }
 }
