@@ -162,7 +162,7 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
 
     private fun GetAddressResponse.Transaction.TokenTransfer.extractAmount(token: Token): Amount {
         val transferValue = value?.toBigDecimalOrNull() ?: BigDecimal.ZERO
-        return Amount(token = token, value = transferValue.movePointLeft(decimals))
+        return Amount(token = token, value = transferValue.movePointLeft(token.decimals))
     }
 
     private fun String.equalsIgnoreCase(other: String): Boolean {
