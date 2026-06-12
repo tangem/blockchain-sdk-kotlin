@@ -25,4 +25,14 @@ interface PsbtProvider {
      * @return Success with transaction hash, or Failure with error
      */
     suspend fun broadcastPsbt(psbtBase64: String): Result<String>
+
+    /**
+     * Parses a PSBT and returns its outputs (recipient address + amount) for display before signing.
+     *
+     * This lets the UI show the user where funds are going and how much, instead of signing blindly.
+     *
+     * @param psbtBase64 PSBT in Base64 encoding
+     * @return Success with the list of outputs, or Failure with error
+     */
+    fun parsePsbtOutputs(psbtBase64: String): Result<List<PsbtOutputInfo>>
 }
