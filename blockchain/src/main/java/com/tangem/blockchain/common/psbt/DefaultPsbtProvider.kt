@@ -16,4 +16,10 @@ internal object DefaultPsbtProvider : PsbtProvider {
             BlockchainSdkError.CustomError("PSBT broadcasting is not supported for this blockchain"),
         )
     }
+
+    override fun parsePsbtOutputs(psbtBase64: String): Result<List<PsbtOutputInfo>> {
+        return Result.Failure(
+            BlockchainSdkError.CustomError("PSBT parsing is not supported for this blockchain"),
+        )
+    }
 }
