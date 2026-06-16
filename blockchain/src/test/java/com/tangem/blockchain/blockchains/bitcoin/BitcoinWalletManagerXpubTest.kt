@@ -10,7 +10,12 @@ import com.tangem.blockchain.common.DynamicAddressesManager
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.pagination.Page
+import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.transactionhistory.TransactionHistoryState
+import com.tangem.blockchain.transactionhistory.blockchains.bitcoin.BitcoinTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import io.mockk.coEvery
@@ -94,6 +99,7 @@ class BitcoinWalletManagerXpubTest {
     fun updateInternal_xpubSet_callsGetInfoByXpub() = runTest {
         walletManager.enableDynamicAddresses(testXpub)
 
+        // BTC issues two descriptor requests (wpkh + pkh); return the same body for both.
         coEvery { networkProvider.getInfoByXpub(any()) } returns Result.Success(
             XpubInfoResponse(
                 balance = BigDecimal("0.05"),
@@ -110,7 +116,66 @@ class BitcoinWalletManagerXpubTest {
         walletManager.updateInternal()
 
         coVerify(exactly = 0) { networkProvider.getInfo(any()) }
-        coVerify(exactly = 1) { networkProvider.getInfoByXpub(any()) }
+        coVerify(exactly = 2) { networkProvider.getInfoByXpub(any()) }
+    }
+
+    @Test
+    fun updateInternal_xpubSet_btc_callsBothWpkhAndPkh() = runTest {
+        walletManager.enableDynamicAddresses(testXpub)
+
+        coEvery { networkProvider.getInfoByXpub(any()) } returns Result.Success(
+            XpubInfoResponse(
+                balance = BigDecimal.ZERO,
+                unspentOutputs = emptyList(),
+                usedAddresses = emptyList(),
+                hasUnconfirmed = false,
+                recentTransactions = emptyList(),
+            ),
+        )
+
+        walletManager.updateInternal()
+
+        coVerify(exactly = 1) { networkProvider.getInfoByXpub(match { it.startsWith("wpkh(") }) }
+        coVerify(exactly = 1) { networkProvider.getInfoByXpub(match { it.startsWith("pkh(") }) }
+    }
+
+    @Test
+    fun updateInternal_xpubSet_btc_mergesSegwitAndLegacyBalances() = runTest {
+        walletManager.enableDynamicAddresses(testXpub)
+
+        coEvery { networkProvider.getInfoByXpub(match { it.startsWith("wpkh(") }) } returns Result.Success(
+            XpubInfoResponse(
+                balance = BigDecimal("0.05"),
+                unspentOutputs = emptyList(),
+                usedAddresses = listOf(
+                    UsedAddress("bc1qaddr0", "m/84'/0'/0'/0/0", BigDecimal("0.05")),
+                ),
+                hasUnconfirmed = false,
+                recentTransactions = emptyList(),
+            ),
+        )
+        coEvery { networkProvider.getInfoByXpub(match { it.startsWith("pkh(") }) } returns Result.Success(
+            XpubInfoResponse(
+                balance = BigDecimal("0.03"),
+                unspentOutputs = emptyList(),
+                usedAddresses = listOf(
+                    UsedAddress("1addrLegacy", "m/84'/0'/0'/0/0", BigDecimal("0.03")),
+                ),
+                hasUnconfirmed = false,
+                recentTransactions = emptyList(),
+            ),
+        )
+
+        walletManager.updateInternal()
+
+        // Aggregate balance = SegWit (0.05) + Legacy (0.03) = 0.08
+        assertThat(walletManager.wallet.amounts[com.tangem.blockchain.common.AmountType.Coin]?.value)
+            .isEqualTo(BigDecimal("0.08"))
+        // usedAddresses contains both, and scriptType is stamped correctly.
+        val used = walletManager.usedAddresses
+        assertThat(used).hasSize(2)
+        assertThat(used.first { it.address == "bc1qaddr0" }.scriptType).isEqualTo(AddressType.Default)
+        assertThat(used.first { it.address == "1addrLegacy" }.scriptType).isEqualTo(AddressType.Legacy)
     }
 
     // ========== buildDescriptor tests ==========
@@ -174,6 +239,79 @@ class BitcoinWalletManagerXpubTest {
     }
 
     // ========== Helpers ==========
+
+    // ========== tx-history routing override tests ==========
+
+    @Test
+    fun getTransactionsHistory_dynamicEnabled_routesToXpubPath() = runTest {
+        val historyProvider = mockk<BitcoinTransactionHistoryProvider>()
+        coEvery { historyProvider.getTransactionsHistoryByXpub(any(), any()) } returns
+            Result.Success(PaginationWrapper(Page.LastPage, emptyList()))
+        val wm = createWalletManager(Blockchain.Bitcoin, historyProvider)
+        wm.enableDynamicAddresses(testXpub)
+        val request = txRequest(Page.Initial)
+
+        wm.getTransactionsHistory(request)
+
+        coVerify(exactly = 1) { historyProvider.getTransactionsHistoryByXpub("wpkh($testXpub)", request) }
+        coVerify(exactly = 0) { historyProvider.getTransactionsHistory(any()) }
+    }
+
+    @Test
+    fun getTransactionsHistory_dynamicDisabled_routesToAddressPath() = runTest {
+        val historyProvider = mockk<BitcoinTransactionHistoryProvider>()
+        coEvery { historyProvider.getTransactionsHistory(any()) } returns
+            Result.Success(PaginationWrapper(Page.LastPage, emptyList()))
+        val wm = createWalletManager(Blockchain.Bitcoin, historyProvider)
+        val request = txRequest(Page.Initial)
+
+        wm.getTransactionsHistory(request)
+
+        coVerify(exactly = 1) { historyProvider.getTransactionsHistory(request) }
+        coVerify(exactly = 0) { historyProvider.getTransactionsHistoryByXpub(any(), any()) }
+    }
+
+    @Test
+    fun getTransactionHistoryState_dynamicEnabled_routesToXpubPath() = runTest {
+        val historyProvider = mockk<BitcoinTransactionHistoryProvider>()
+        coEvery { historyProvider.getTransactionHistoryStateByXpub(any()) } returns
+            TransactionHistoryState.Success.Empty
+        val wm = createWalletManager(Blockchain.Bitcoin, historyProvider)
+        wm.enableDynamicAddresses(testXpub)
+
+        wm.getTransactionHistoryState("addr", TransactionHistoryRequest.FilterType.Coin)
+
+        coVerify(exactly = 1) { historyProvider.getTransactionHistoryStateByXpub("wpkh($testXpub)") }
+        coVerify(exactly = 0) { historyProvider.getTransactionHistoryState(any(), any()) }
+    }
+
+    private fun txRequest(page: Page) = TransactionHistoryRequest(
+        address = "addr",
+        decimals = 8,
+        page = page,
+        pageSize = 20,
+        filterType = TransactionHistoryRequest.FilterType.Coin,
+    )
+
+    private fun createWalletManager(
+        blockchain: Blockchain,
+        historyProvider: BitcoinTransactionHistoryProvider,
+    ): BitcoinWalletManager {
+        val addresses = BitcoinAddressService(blockchain).makeAddresses(testAccountXpub.publicKey)
+        val wallet = Wallet(
+            blockchain = blockchain,
+            addresses = addresses,
+            publicKey = Wallet.PublicKey(testAccountXpub.publicKey, null),
+            tokens = emptySet(),
+        )
+        return BitcoinWalletManager(
+            wallet = wallet,
+            transactionHistoryProvider = historyProvider,
+            transactionBuilder = BitcoinTransactionBuilder(testAccountXpub.publicKey, blockchain, addresses),
+            networkProvider = mockk(relaxed = true),
+            feesCalculator = BitcoinFeesCalculator(blockchain),
+        )
+    }
 
     private fun createWalletManager(blockchain: Blockchain): BitcoinWalletManager {
         val addresses = BitcoinAddressService(blockchain).makeAddresses(testAccountXpub.publicKey)
