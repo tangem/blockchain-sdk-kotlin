@@ -1,5 +1,8 @@
 package com.tangem.blockchain.common
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class BlockchainSdkConfig(
     val blockchairCredentials: BlockchairCredentials? = null,
     val blockcypherTokens: Set<String>? = null,
@@ -31,13 +34,16 @@ data class BlockchainSdkConfig(
     val alchemyApiKey: String? = null,
 )
 
+@Serializable
 data class BlockchairCredentials(
     val apiKey: List<String>,
     val authToken: String?,
 )
 
+@Serializable
 data class QuickNodeCredentials(val apiKey: String, val subdomain: String)
 
+@Serializable
 data class NowNodeCredentials(
     val apiKey: String,
 ) {
@@ -46,6 +52,7 @@ data class NowNodeCredentials(
     }
 }
 
+@Serializable
 data class GetBlockCredentials(
     val xrp: GetBlockAccessToken,
     val cardano: GetBlockAccessToken?,
@@ -88,6 +95,7 @@ data class GetBlockCredentials(
     val stellar: GetBlockAccessToken?,
 )
 
+@Serializable
 data class GetBlockAccessToken(
     val jsonRpc: String? = null,
     val blockBookRest: String? = null,
@@ -95,9 +103,10 @@ data class GetBlockAccessToken(
     val rosetta: String? = null,
 )
 
+@Serializable
 data class TonCenterCredentials(
-    private val mainnetApiKey: String,
-    private val testnetApiKey: String,
+    val mainnetApiKey: String,
+    val testnetApiKey: String,
 ) {
     fun getApiKey(testnet: Boolean = false): String {
         return if (testnet) testnetApiKey else mainnetApiKey

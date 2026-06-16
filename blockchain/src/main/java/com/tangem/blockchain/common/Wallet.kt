@@ -3,6 +3,7 @@ package com.tangem.blockchain.common
 import com.tangem.blockchain.blockchains.cardano.CardanoUtils
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressType
+import com.tangem.blockchain.common.datastorage.PendingTransaction
 import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import java.math.BigDecimal
@@ -116,15 +117,16 @@ class Wallet(
         recentTransactions.add(transaction)
     }
 
-    fun addPendingTransactionDummy(txId: String) {
+    fun addPendingTransactionDummy(tx: PendingTransaction) {
+        val amount = Amount(value = tx.amount?.toBigDecimalOrNull(), blockchain = blockchain)
         val transaction = TransactionData.Uncompiled(
-            amount = Amount(null, blockchain),
+            amount = amount,
             fee = null,
             sourceAddress = address,
             destinationAddress = "unknown",
             status = TransactionStatus.Unconfirmed,
-            hash = txId,
-            date = Calendar.getInstance(),
+            hash = tx.transactionId,
+            date = Calendar.getInstance().apply { timeInMillis = tx.sentAt },
         )
         recentTransactions.add(transaction)
     }

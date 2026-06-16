@@ -24,6 +24,15 @@ data class EthCallObject(
     val data: String? = null,
 )
 
+/**
+ * Request bundle for `eth_estimateGas` with the JSON-RPC `stateOverride` (a.k.a. `stateDiff`)
+ * third parameter. See [com.tangem.blockchain.blockchains.ethereum.gas.StateOverrideBuilder].
+ */
+internal data class EthereumStateOverrideEstimateGasRequest(
+    val call: EthCallObject,
+    val stateOverride: Map<String, Map<String, Map<String, String>>>,
+)
+
 enum class EthBlockParam(val value: String) {
     EARLIEST("earliest"),
     LATEST("latest"),
