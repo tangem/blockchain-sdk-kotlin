@@ -23,46 +23,55 @@ internal class TonNetworkService(
     suspend fun getWalletInformation(address: String, tokens: Set<Token>): Result<TonWalletInfo> {
         return try {
             coroutineScope {
-                val jettonWalletAddressesDeferred = tokens.map { token ->
-                    token to async {
+                val jettonWalletAddressesDeferred = tokens.associateWith { token ->
+                    async {
                         multiJsonRpcProvider.performRequest(
                             TonNetworkProvider::getJettonWalletAddress,
                             GetJettonWalletAddressInput(address, token.contractAddress),
                         )
                     }
-                }.toMap()
+                }
                 val walletInformationDeferred = async {
                     multiJsonRpcProvider.performRequest(TonNetworkProvider::getWalletInformation, address)
                 }
 
-                val jettonWalletAddresses = jettonWalletAddressesDeferred.mapValues { entry ->
-                    entry.value.await().successOr { return@coroutineScope it }
-                }
-                val jettonBalancesDeffered = jettonWalletAddresses.mapValues { entry ->
+                // Drop tokens whose jetton wallet address can't be resolved (e.g. a non-Jetton contract) so that
+                // a single bad token does not abort the whole wallet update.
+                val jettonWalletAddresses = jettonWalletAddressesDeferred
+                    .mapNotNull { (token, deferred) ->
+                        val jettonWalletAddress = deferred.await().successOr { return@mapNotNull null }
+                        token to jettonWalletAddress
+                    }
+                    .toMap()
+                val jettonBalancesDeferred = jettonWalletAddresses.mapValues { (_, jettonWalletAddress) ->
                     async {
                         multiJsonRpcProvider.performRequest(
                             TonNetworkProvider::getJettonBalance,
-                            entry.value,
+                            jettonWalletAddress,
                         )
                     }
                 }
 
+                // Coin balance is essential — still hard-fail the whole update if it can't be read.
                 val walletInformation = walletInformationDeferred.await().successOr { return@coroutineScope it }
-                val jettonBalances = jettonBalancesDeffered.mapValues { entry ->
-                    entry.value.await().successOr { return@coroutineScope it }
-                }
+
+                // Drop tokens whose balance fetch failed; keep the rest.
+                val jettonDatas = jettonBalancesDeferred
+                    .mapNotNull { (token, deferred) ->
+                        val balance = deferred.await().successOr { return@mapNotNull null }
+                        token to JettonData(
+                            balance = balance.toBigDecimal().movePointLeft(token.decimals),
+                            jettonWalletAddress = jettonWalletAddresses.getValue(token),
+                        )
+                    }
+                    .toMap()
 
                 Result.Success(
                     TonWalletInfo(
                         accountState = walletInformation.accountState,
                         balance = walletInformation.balance.movePointLeft(blockchain.decimals()),
                         sequenceNumber = walletInformation.seqno ?: 0,
-                        jettonDatas = jettonWalletAddresses.mapValues { entry ->
-                            JettonData(
-                                jettonBalances[entry.key]!!.toBigDecimal().movePointLeft(entry.key.decimals),
-                                entry.value,
-                            )
-                        },
+                        jettonDatas = jettonDatas,
                     ),
                 )
             }
