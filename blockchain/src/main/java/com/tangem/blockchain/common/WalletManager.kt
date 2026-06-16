@@ -1,8 +1,8 @@
 package com.tangem.blockchain.common
 
-import com.tangem.blockchain.common.memo.MemoState
 import com.tangem.blockchain.common.address.AddressProvider
 import com.tangem.blockchain.common.address.DefaultAddressProvider
+import com.tangem.blockchain.common.memo.MemoState
 import com.tangem.blockchain.common.messagesigning.DefaultMessageSigner
 import com.tangem.blockchain.common.messagesigning.MessageSigner
 import com.tangem.blockchain.common.psbt.DefaultPsbtProvider
@@ -306,13 +306,8 @@ interface PendingTransactionHandler {
      * Transaction sent via backend and should be tracked until confirmed.
      *
      * @param txHash The transaction ID (hash) to add.
-     * @param contractAddress Optional contract address associated with the transaction.
      */
-    suspend fun addPendingGaslessTransaction(
-        transactionData: TransactionData,
-        txHash: String,
-        contractAddress: String? = null,
-    )
+    suspend fun addPendingGaslessTransaction(transactionData: TransactionData, txHash: String)
 }
 
 interface TransactionSigner {
