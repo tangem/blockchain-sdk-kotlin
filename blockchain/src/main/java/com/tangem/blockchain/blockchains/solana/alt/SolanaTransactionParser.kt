@@ -1,5 +1,7 @@
 package com.tangem.blockchain.blockchains.solana.alt
 
+import com.tangem.blockchain.blockchains.solana.ShortVecReader
+import com.tangem.blockchain.blockchains.solana.SolanaMessageFormat
 import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.extensions.encodeBase58
 import com.tangem.crypto.decodeBase58
@@ -42,51 +44,43 @@ internal class SolanaTransactionParser {
     /**
      * Parses solana transaction and extracts required addresses and data.
      */
-    @Suppress("MagicNumber")
     fun parse(tx: ByteArray): TransactionRawData {
-        var offset = 0
+        val reader = ShortVecReader(tx)
 
-        val isV0 = if (tx[0].readCompactU16() == 0x80) {
-            offset += 1 // Skip the first byte for v0 transactions
-            true
-        } else {
-            false
+        // Versioned messages set the high bit of the prefix (`0x80 | version`); legacy messages start with the header.
+        val firstByte = reader.peekU8()
+        val isV0 = firstByte and SolanaMessageFormat.HIGH_BIT != 0
+        if (isV0) {
+            val version = firstByte and SolanaMessageFormat.HIGH_BIT.inv()
+            require(version == SolanaMessageFormat.SUPPORTED_VERSION) { "Unsupported message version: $version" }
+            reader.readU8() // consume the version prefix byte
         }
         Logger.logTransaction("SolanaTransactionParser: isV0 = $isV0")
 
         // Message header
-        val requiredSignatures = tx.readCompactU16(offset)
+        val requiredSignatures = reader.readU8()
         if (requiredSignatures > 1) {
             Logger.logTransaction("Too many required signatures: $requiredSignatures")
             throw IllegalArgumentException(
                 "We support only 1 required signature, but found $requiredSignatures",
             )
         }
-        val readonlySignedAccounts = tx.readCompactU16(offset + 1)
-        val readonlyUnsignedAccounts = tx.readCompactU16(offset + 2)
+        val readonlySignedAccounts = reader.readU8()
+        val readonlyUnsignedAccounts = reader.readU8()
         val messageHeader = MessageHeader(
             numRequiredSignatures = requiredSignatures.toByte(),
             numReadonlySignedAccounts = readonlySignedAccounts.toByte(),
             numReadonlyUnsignedAccounts = readonlyUnsignedAccounts.toByte(),
         )
-        offset += 3
 
-        // Account addresses count (compact-u16, single byte for legacy tx)
-        val accountCount = tx.readCompactU16(offset)
-        offset += 1
+        // Static account keys count (compact-u16)
+        val accountCount = reader.readShortVec()
+        require(accountCount > 0) { "A Solana message must contain at least the fee-payer account" }
 
-        if (accountCount >= 0x80) {
-            throw IllegalArgumentException(
-                "Account count uses more than 1 byte, not supported for legacy tx\n" +
-                    "Probably it is already a v0 transaction",
-            )
-        }
-
-        // Account addresses (each 32 bytes)
-        val accountAddresses = mutableListOf<ByteArray>()
-        repeat(accountCount) {
-            accountAddresses.add(tx.copyOfRange(offset, offset + 32))
-            offset += 32
+        // Account addresses (each 32 bytes). Read incrementally so a malformed count cannot force a large
+        // up-front allocation before the reader reaches the end of the buffer.
+        val accountAddresses = buildList {
+            repeat(accountCount) { add(reader.readBytes(SolanaMessageFormat.PUBLIC_KEY_LENGTH)) }
         }
 
         val payer = accountAddresses[0]
@@ -99,17 +93,14 @@ internal class SolanaTransactionParser {
         val writableAltAddresses = altAddresses.take(writableAltCount)
         val readonlyAltAddresses = altAddresses.drop(writableAltCount)
 
-        val recentBlockhash = tx.copyOfRange(offset, offset + 32)
-        offset += 32
+        val recentBlockhash = reader.readBytes(SolanaMessageFormat.PUBLIC_KEY_LENGTH)
 
         // parse instructions
-        val (instructions, newOffset) = parseInstructions(tx = tx, offset = offset)
-
-        offset = newOffset
+        val instructions = parseInstructions(reader)
 
         // parse alt data
         val altTables = if (isV0) {
-            parseAltData(tx, offset).first
+            parseAltData(reader)
         } else {
             null
         }
@@ -126,33 +117,21 @@ internal class SolanaTransactionParser {
         )
     }
 
-    @Suppress("MagicNumber")
-    private fun parseAltData(tx: ByteArray, offset: Int): Pair<List<CompiledAltTable>, Int> {
-        var currentOffset = offset
+    private fun parseAltData(reader: ShortVecReader): List<CompiledAltTable> {
         val altTables = mutableListOf<CompiledAltTable>()
 
-        val altCount = tx.readCompactU16(currentOffset)
-        currentOffset += 1
+        val altCount = reader.readShortVec()
 
         repeat(altCount) {
-            val account = tx.copyOfRange(currentOffset, currentOffset + 32)
-            currentOffset += 32
+            val account = reader.readBytes(SolanaMessageFormat.PUBLIC_KEY_LENGTH)
 
-            val writableIndexesCount = tx.readCompactU16(currentOffset)
-            currentOffset += 1
-            val writableIndexes = mutableListOf<Int>()
-            repeat(writableIndexesCount) {
-                writableIndexes.add(tx.readCompactU16(currentOffset))
-                currentOffset += 1
-            }
+            // Counts are compact-u16; the index values themselves are single bytes. Read incrementally to avoid
+            // pre-allocating from an untrusted count.
+            val writableIndexesCount = reader.readShortVec()
+            val writableIndexes = buildList { repeat(writableIndexesCount) { add(reader.readU8()) } }
 
-            val readonlyIndexesCount = tx.readCompactU16(currentOffset)
-            currentOffset += 1
-            val readonlyIndexes = mutableListOf<Int>()
-            repeat(readonlyIndexesCount) {
-                readonlyIndexes.add(tx.readCompactU16(currentOffset))
-                currentOffset += 1
-            }
+            val readonlyIndexesCount = reader.readShortVec()
+            val readonlyIndexes = buildList { repeat(readonlyIndexesCount) { add(reader.readU8()) } }
 
             altTables.add(
                 CompiledAltTable(
@@ -163,41 +142,32 @@ internal class SolanaTransactionParser {
             )
         }
 
-        return altTables to currentOffset
+        return altTables
     }
 
-    private fun parseInstructions(tx: ByteArray, offset: Int): Pair<List<CompiledInstruction>, Int> {
-        var currentOffset = offset
+    private fun parseInstructions(reader: ShortVecReader): List<CompiledInstruction> {
         val instructions = mutableListOf<CompiledInstruction>()
 
-        // Instruction count
-        val instructionCount = tx.readCompactU16(currentOffset)
-        currentOffset += 1
+        // Instruction count (compact-u16)
+        val instructionCount = reader.readShortVec()
 
         repeat(instructionCount) {
             // Program ID index (1 byte)
-            val programIdIndex = tx.readCompactU16(currentOffset)
-            currentOffset += 1
+            val programIdIndex = reader.readU8()
 
-            // Account count (1 byte)
-            val accountCount = tx.readCompactU16(currentOffset)
-            currentOffset += 1
+            // Account count (compact-u16); the indices themselves are single bytes
+            val accountCount = reader.readShortVec()
 
-            // Account indices (accountCount * 2 bytes)
-            val accountIndices = tx.copyOfRange(currentOffset, currentOffset + accountCount).map { it.readCompactU16() }
-            currentOffset += accountCount
+            // Account indices (1 byte each). Read incrementally to avoid pre-allocating from an untrusted count.
+            val accountIndices = buildList { repeat(accountCount) { add(reader.readU8()) } }
 
             // Data length (compact-u16 LEB128)
-            val (dataLengthWithOffset, updatedOffset) = tx.readCompactU16Leb128(currentOffset)
-            val dataLength = dataLengthWithOffset
-            currentOffset = updatedOffset
+            val dataLength = reader.readShortVec()
 
             // Data
-            val data = tx.copyOfRange(currentOffset, currentOffset + dataLength)
-            currentOffset += dataLength
+            val data = reader.readBytes(dataLength)
 
             instructions.add(
-
                 CompiledInstruction(
                     programIdIndex = programIdIndex,
                     accounts = accountIndices,
@@ -206,36 +176,8 @@ internal class SolanaTransactionParser {
             )
         }
 
-        return instructions to currentOffset
+        return instructions
     }
 }
 
-/**
- * Reads a single-byte compact-u16 value from the given offset in the ByteArray.
- * Returns the value as an Int (0..255).
- */
-@Suppress("MagicNumber")
-fun ByteArray.readCompactU16(offset: Int): Int = this[offset].toInt() and 0xFF
-
-@Suppress("MagicNumber")
-fun Byte.readCompactU16(): Int = this.toInt() and 0xFF
-
-/**
- * Reads a compact-u16 LEB128 value from the given offset in the ByteArray.
- * Returns a Pair containing the value as an Int and the new offset after reading.
- */
-@Suppress("MagicNumber", "UnnecessaryParentheses")
-fun ByteArray.readCompactU16Leb128(offset: Int): Pair<Int, Int> {
-    var result = 0
-    var shift = 0
-    var currentOffset = offset
-
-    while (true) {
-        val byte = this[currentOffset].toInt() and 0xFF
-        result = result or ((byte and 0x7F) shl shift)
-        currentOffset++
-        if ((byte and 0x80) == 0) break
-        shift += 7
-    }
-    return result to currentOffset
-}
+fun Byte.readCompactU16(): Int = this.toInt() and SolanaMessageFormat.BYTE_MASK

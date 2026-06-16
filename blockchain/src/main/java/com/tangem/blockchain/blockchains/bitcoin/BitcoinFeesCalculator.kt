@@ -18,7 +18,7 @@ internal open class BitcoinFeesCalculator(
     open val minimalFeePerKb = BitcoinWalletManager.DEFAULT_MINIMAL_FEE_PER_KB.toBigDecimal()
     open val minimalFee = 0.000001.toBigDecimal()
 
-    fun calculateFees(transactionSize: BigDecimal, feeResult: BitcoinFee): TransactionFee.Choosable {
+    open fun calculateFees(transactionSize: BigDecimal, feeResult: BitcoinFee): TransactionFee.Choosable {
         val minFee = calculateFee(feeResult.minimalPerKb, transactionSize)
         val normalFee = calculateFee(feeResult.normalPerKb, transactionSize)
         val priorityFee = calculateFee(feeResult.priorityPerKb, transactionSize)

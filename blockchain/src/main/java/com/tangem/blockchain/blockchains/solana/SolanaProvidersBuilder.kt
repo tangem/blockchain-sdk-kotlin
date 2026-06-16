@@ -5,7 +5,6 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.NowNodeCredentials
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
-import com.tangem.blockchain.common.network.interceptors.HttpLoggingInterceptor
 import com.tangem.blockchain.common.network.providers.NetworkProvidersBuilder
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.letNotBlank
@@ -90,10 +89,7 @@ internal class SolanaProvidersBuilder(
     }
 
     private fun createLoggingInterceptors(): List<Interceptor> {
-        return listOf(
-            *BlockchainSdkRetrofitBuilder.interceptors.toTypedArray(),
-            HttpLoggingInterceptor,
-        )
+        return BlockchainSdkRetrofitBuilder.interceptors
     }
 
     private fun getMockProvider(): SolanaRpcClient {

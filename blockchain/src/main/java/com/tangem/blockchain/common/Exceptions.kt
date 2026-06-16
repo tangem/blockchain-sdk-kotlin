@@ -82,6 +82,7 @@ sealed class BlockchainSdkError(
         data class DestinationRentExemption(
             val rentAmount: BigDecimal,
         ) : Solana(8, "Invalid amount to cover rent in destination account")
+
         class TransactionTooLarge : Solana(9, "Transaction too large after ALT reduction")
     }
 
@@ -226,8 +227,19 @@ sealed class BlockchainSdkError(
             message = message,
         )
 
+        data class EstimateOverrideError(
+            val blockchain: String,
+            val tokenSymbol: String,
+            val rpcProvider: String,
+            val underlyingError: String,
+        ) : Ethereum(
+            subCode = ERROR_CODE_ESTIMATE_OVERRIDE_ERROR,
+            customMessage = null,
+        )
+
         companion object {
             internal const val ERROR_CODE_INSUFFICIENT_FUNDS_FOR_OPERATION = 3
+            internal const val ERROR_CODE_ESTIMATE_OVERRIDE_ERROR = 4
 
             internal fun getApiErrorByCode(code: Int, message: String): Ethereum = when (code) {
                 ERROR_CODE_INSUFFICIENT_FUNDS_FOR_OPERATION -> InsufficientFundsForOperation(message)

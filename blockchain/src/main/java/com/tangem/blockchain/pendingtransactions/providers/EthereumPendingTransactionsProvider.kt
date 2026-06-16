@@ -2,13 +2,10 @@ package com.tangem.blockchain.pendingtransactions.providers
 
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumTransactionResponse
-import com.tangem.blockchain.common.JsonRPCResponse
-import com.tangem.blockchain.common.NetworkProvider
-import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.datastorage.PendingTransaction
 import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.network.providers.ProviderType
-import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.network.MultiNetworkProvider
@@ -44,18 +41,20 @@ internal class EthereumPendingTransactionsProvider(
     override suspend fun addPendingTransaction(
         transactionId: String,
         networkProvider: NetworkProvider,
-        contractAddress: String?,
+        transactionData: TransactionData,
     ) {
+        val contractAddress = (transactionData as? TransactionData.Uncompiled)?.contractAddress
         Logger.logTransaction("$LOG_TAG addPendingTransaction: txId=$transactionId, contractAddress=$contractAddress")
         val providerType = networkProviderMap.entries.firstOrNull {
             it.value.baseUrl == networkProvider.baseUrl
         }?.key
         val providerName = providerType?.let { networkProviderMapper.toStorageKey(it) }
         Logger.logTransaction("$LOG_TAG addPendingTransaction: providerName=$providerName")
-        storage.addTransaction(transactionId, providerName, contractAddress)
+        storage.addTransaction(transactionId, providerName, transactionData)
     }
 
-    override suspend fun addPendingGaslessTransaction(transactionId: String, contractAddress: String?) {
+    override suspend fun addPendingGaslessTransaction(transactionId: String, transactionData: TransactionData) {
+        val contractAddress = (transactionData as? TransactionData.Uncompiled)?.contractAddress
         Logger.logTransaction(
             "$LOG_TAG addPendingGaslessTransaction: txId=$transactionId, contractAddress=$contractAddress",
         )
@@ -64,7 +63,7 @@ internal class EthereumPendingTransactionsProvider(
                 it.key is ProviderType.Public
             } ?: networkProviderMap.entries.firstOrNull { it.key !is ProviderType.Blink }
         val providerName = provider?.key?.let { networkProviderMapper.toStorageKey(it) }
-        storage.addTransaction(transactionId, providerName, contractAddress)
+        storage.addTransaction(transactionId, providerName, transactionData)
     }
 
     override suspend fun removePendingTransaction(transactionId: String) {
@@ -72,7 +71,7 @@ internal class EthereumPendingTransactionsProvider(
         storage.removeTransaction(transactionId)
     }
 
-    override suspend fun getPendingTransactions(contractAddress: String?): List<String> {
+    override suspend fun getPendingTransactions(contractAddress: String?): List<PendingTransaction> {
         val transactions = storage.getTransactionIds(contractAddress)
         Logger.logTransaction(
             "$LOG_TAG getPendingTransactions: contractAddress=$contractAddress found ${transactions.size} transactions",
