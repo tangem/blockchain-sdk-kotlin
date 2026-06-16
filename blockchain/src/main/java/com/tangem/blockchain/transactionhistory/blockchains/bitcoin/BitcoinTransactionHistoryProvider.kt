@@ -17,6 +17,7 @@ import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.TransactionStatus
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.TransactionType
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
@@ -66,12 +67,11 @@ internal class BitcoinTransactionHistoryProvider(
             val txs = response.transactions
                 ?.mapNotNull { tx -> tx.toTransactionHistoryItem(request.address) }
                 ?: emptyList()
-            val nextPage = if (response.page != null && request.page !is Page.LastPage) {
-                val page = response.page
-                if (page == response.totalPages) Page.LastPage else Page.Next(page.inc().toString())
-            } else {
-                Page.LastPage
-            }
+            val nextPage = nextPage(
+                currentPage = response.page,
+                totalPages = response.totalPages,
+                requestedPage = request.page,
+            )
             Result.Success(
                 PaginationWrapper(
                     nextPage = nextPage,
@@ -81,6 +81,74 @@ internal class BitcoinTransactionHistoryProvider(
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
+    }
+
+    /**
+     * Dynamic-addresses (XPUB) variant of [getTransactionHistoryState].
+     * Queries BlockBook by [descriptor] (e.g. `wpkh(xpub)` / `pkh(xpub)`) instead of a single address.
+     */
+    suspend fun getTransactionHistoryStateByXpub(descriptor: String): TransactionHistoryState {
+        return try {
+            val response = withContext(Dispatchers.IO) {
+                // We don't need to know all transactions to define state
+                blockBookApi.getXpubInfo(descriptor = descriptor, page = null, pageSize = 1)
+            }
+            if (!response.transactions.isNullOrEmpty()) {
+                TransactionHistoryState.Success.HasTransactions(response.txs)
+            } else {
+                TransactionHistoryState.Success.Empty
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(BitcoinTransactionHistoryProvider::class.java.simpleName, e.message, e)
+            TransactionHistoryState.Failed.FetchError(e)
+        }
+    }
+
+    /**
+     * Dynamic-addresses (XPUB) variant of [getTransactionsHistory].
+     * Direction/amount/source/destination are resolved via the `isOwn` flag that BlockBook sets on
+     * inputs/outputs belonging to the queried descriptor, so all derived addresses (and internal
+     * transfers between them) are handled correctly — unlike the single-address path.
+     */
+    suspend fun getTransactionsHistoryByXpub(
+        descriptor: String,
+        request: TransactionHistoryRequest,
+    ): Result<PaginationWrapper<TransactionHistoryItem>> {
+        return try {
+            val response = withContext(Dispatchers.IO) {
+                blockBookApi.getXpubInfo(
+                    descriptor = descriptor,
+                    page = request.pageToLoad?.toIntOrNull(),
+                    pageSize = request.pageSize,
+                )
+            }
+            val txs = response.transactions
+                ?.mapNotNull { tx -> tx.toTransactionHistoryItemByOwnership() }
+                .orEmpty()
+            val nextPage = nextPage(
+                currentPage = response.page,
+                totalPages = response.totalPages,
+                requestedPage = request.page,
+            )
+            Result.Success(
+                PaginationWrapper(
+                    nextPage = nextPage,
+                    items = txs,
+                ),
+            )
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
+    private fun nextPage(currentPage: Int?, totalPages: Int?, requestedPage: Page): Page {
+        if (currentPage == null || requestedPage is Page.LastPage) return Page.LastPage
+        if (totalPages == null || currentPage >= totalPages) return Page.LastPage
+        return Page.Next(currentPage.inc().toString())
     }
 
     private fun GetAddressResponse.Transaction.toTransactionHistoryItem(
@@ -181,4 +249,88 @@ internal class BitcoinTransactionHistoryProvider(
             Amount(blockchain = blockchain)
         }
     }
+
+    private fun GetAddressResponse.Transaction.toTransactionHistoryItemByOwnership(): TransactionHistoryItem? {
+        val isOutgoing = vin.any { it.isOwn == true }
+        val transactionAmount = extractAmountByOwnership(isOutgoing = isOutgoing, tx = this, blockchain = blockchain)
+
+        return TransactionHistoryItem(
+            txHash = txid,
+            timestamp = TimeUnit.SECONDS.toMillis(blockTime.toLong()),
+            isOutgoing = isOutgoing,
+            destinationType = extractDestinationTypeByOwnership(tx = this),
+            sourceType = sourceTypeByOwnership(tx = this),
+            status = if (confirmations > 0) TransactionStatus.Confirmed else TransactionStatus.Unconfirmed,
+            type = TransactionType.Transfer,
+            amount = transactionAmount,
+            fee = this.feeAmount(blockchain),
+        )
+    }
+
+    private fun extractDestinationTypeByOwnership(
+        tx: GetAddressResponse.Transaction,
+    ): TransactionHistoryItem.DestinationType {
+        val externalOutputs = tx.vout
+            .filter { it.isOwn != true }
+            .mapNotNull { it.addresses }
+            .flatten()
+            .toSet()
+        return when {
+            externalOutputs.isEmpty() -> TransactionHistoryItem.DestinationType.Single(
+                TransactionHistoryItem.AddressType.User(tx.firstOwnVoutAddress().orEmpty()),
+            )
+
+            externalOutputs.size == 1 -> TransactionHistoryItem.DestinationType.Single(
+                TransactionHistoryItem.AddressType.User(externalOutputs.first()),
+            )
+
+            else -> TransactionHistoryItem.DestinationType.Multiple(
+                externalOutputs.map { TransactionHistoryItem.AddressType.User(it) },
+            )
+        }
+    }
+
+    private fun sourceTypeByOwnership(tx: GetAddressResponse.Transaction): TransactionHistoryItem.SourceType {
+        val externalInputs = tx.vin
+            .filter { it.isOwn != true }
+            .mapNotNull { it.addresses }
+            .flatten()
+            .toSet()
+        return when {
+            externalInputs.isEmpty() -> TransactionHistoryItem.SourceType.Single(tx.firstOwnVinAddress().orEmpty())
+            externalInputs.size == 1 -> TransactionHistoryItem.SourceType.Single(externalInputs.first())
+            else -> TransactionHistoryItem.SourceType.Multiple(externalInputs.toList())
+        }
+    }
+
+    private fun extractAmountByOwnership(
+        isOutgoing: Boolean,
+        tx: GetAddressResponse.Transaction,
+        blockchain: Blockchain,
+    ): Amount {
+        return try {
+            val amount = if (isOutgoing) {
+                val outputs = tx.vout
+                    .filter { it.isOwn != true }
+                    .mapNotNull { it.value?.toBigDecimalOrNull() }
+                    .sumOf { it }
+                outputs + tx.fees.toBigDecimalOrDefault()
+            } else {
+                tx.vout
+                    .filter { it.isOwn == true }
+                    .mapNotNull { it.value?.toBigDecimalOrNull() }
+                    .sumOf { it }
+            }
+
+            Amount(value = amount.movePointLeft(blockchain.decimals()), blockchain = blockchain)
+        } catch (e: Exception) {
+            Amount(blockchain = blockchain)
+        }
+    }
+
+    private fun GetAddressResponse.Transaction.firstOwnVoutAddress(): String? =
+        vout.firstOrNull { it.isOwn == true }?.addresses?.firstOrNull()
+
+    private fun GetAddressResponse.Transaction.firstOwnVinAddress(): String? =
+        vin.firstOrNull { it.isOwn == true }?.addresses?.firstOrNull()
 }

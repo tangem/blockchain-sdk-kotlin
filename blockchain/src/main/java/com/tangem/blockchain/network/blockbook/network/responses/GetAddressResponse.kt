@@ -98,7 +98,7 @@ data class GetAddressResponse(
             @Json(name = "token") val token: String?,
             @Json(name = "name") val name: String?,
             @Json(name = "symbol") val symbol: String?,
-            @Json(name = "decimals") val decimals: Int,
+            @Json(name = "decimals") val decimals: Int? = null,
             @Json(name = "value") val value: String?,
         )
 
