@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.bitcoin.BitcoinUnspentOutput
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.bitcoin.network.XpubInfoResponse
 import com.tangem.blockchain.common.BasicTransactionData
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
@@ -11,10 +12,14 @@ import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.toBigDecimalOrDefault
+import com.tangem.blockchain.network.blockbook.network.XpubResponseParser
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import com.tangem.blockchain.network.blockbook.network.responses.GetUtxoResponseItem
 import com.tangem.common.extensions.hexToBytes
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -25,11 +30,13 @@ class BitcoinCashNowNodesNetworkProvider(
     val credentials: Pair<String, String>,
     val bchBookUrl: String,
     val bchUrl: String,
+    private val blockchain: Blockchain = Blockchain.BitcoinCash,
 ) : BitcoinNetworkProvider {
 
     override val baseUrl: String = bchBookUrl
 
     private val api: BitcoinCashNowNodesApiService = BitcoinCashNowNodesApiService(bchBookUrl, bchUrl, credentials)
+    private val xpubParser: XpubResponseParser = XpubResponseParser(blockchain)
 
     override suspend fun getInfo(address: String): Result<BitcoinAddressInfo> {
         return try {
@@ -39,7 +46,7 @@ class BitcoinCashNowNodesNetworkProvider(
 
             Result.Success(
                 BitcoinAddressInfo(
-                    balance = balance.movePointLeft(Blockchain.BitcoinCash.decimals()),
+                    balance = balance.movePointLeft(blockchain.decimals()),
                     unspentOutputs = createUnspentOutputs(
                         getUtxoResponseItems = getUtxoResponseItems,
                         transactions = getAddressResponse.transactions.orEmpty(),
@@ -67,7 +74,7 @@ class BitcoinCashNowNodesNetworkProvider(
 
             val fee = result
                 .toBigDecimal()
-                .setScale(Blockchain.BitcoinCash.decimals(), RoundingMode.UP)
+                .setScale(blockchain.decimals(), RoundingMode.UP)
 
             Result.Success(BitcoinFee(fee, fee, fee))
         } catch (e: Exception) {
@@ -100,6 +107,33 @@ class BitcoinCashNowNodesNetworkProvider(
         }
     }
 
+    override suspend fun getInfoByXpub(xpub: String): Result<XpubInfoResponse> {
+        return try {
+            val (xpubResponse, xpubUtxoItems) = coroutineScope {
+                val xpubResponseDeferred = async(Dispatchers.IO) { api.getXpubInfo(xpub) }
+                val xpubUtxoDeferred = async(Dispatchers.IO) { api.getXpubUtxo(xpub) }
+                xpubResponseDeferred.await() to xpubUtxoDeferred.await()
+            }
+            Result.Success(xpubParser.parseXpubInfo(xpubResponse, xpubUtxoItems))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
+    override suspend fun getUtxoByXpub(xpub: String): Result<List<BitcoinUnspentOutput>> {
+        return try {
+            val xpubUtxoItems = withContext(Dispatchers.IO) { api.getXpubUtxo(xpub) }
+            val confirmedItems = xpubUtxoItems.filter { it.confirmations > 0 }
+            Result.Success(xpubParser.parseXpubUtxo(confirmedItems))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
     private fun createUnspentOutputs(
         getUtxoResponseItems: List<GetUtxoResponseItem>,
         transactions: List<GetAddressResponse.Transaction>,
@@ -109,14 +143,14 @@ class BitcoinCashNowNodesNetworkProvider(
             transaction.vout.firstOrNull { it.addresses?.contains(address) == true }?.hex
         } ?: return emptyList()
 
-        return getUtxoResponseItems.mapNotNull {
-            val amount = it.value.toBigDecimalOrNull()?.movePointLeft(Blockchain.BitcoinCash.decimals())
+        return getUtxoResponseItems.mapNotNull { utxoItem ->
+            val amount = utxoItem.value.toBigDecimalOrNull()?.movePointLeft(blockchain.decimals())
                 ?: return@mapNotNull null
 
             BitcoinUnspentOutput(
                 amount = amount,
-                outputIndex = it.vout.toLong(),
-                transactionHash = it.txid.hexToBytes(),
+                outputIndex = utxoItem.vout.toLong(),
+                transactionHash = utxoItem.txid.hexToBytes(),
                 outputScript = outputScript.hexToBytes(),
             )
         }
@@ -160,7 +194,7 @@ class BitcoinCashNowNodesNetworkProvider(
                         .sumOf { it }
                     val fee = transaction.fees.toBigDecimalOrDefault()
                     outputs + fee
-                }.movePointLeft(Blockchain.BitcoinCash.decimals())
+                }.movePointLeft(blockchain.decimals())
 
                 BasicTransactionData(
                     balanceDif = if (isIncoming) amount else amount.negate(),
