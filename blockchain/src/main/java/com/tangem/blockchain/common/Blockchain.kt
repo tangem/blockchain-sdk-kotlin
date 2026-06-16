@@ -217,6 +217,8 @@ enum class Blockchain(
     ArbitrumNova("arbitrum-nova", "ETH", "Arbitrum Nova"),
     Plasma("plasma", "XPL", "Plasma"),
     PlasmaTestnet("plasma/test", "XPL", "Plasma Testnet"),
+    Adi("adi-token", "ADI", "ADI"),
+    AdiTestnet("adi-token/test", "ADI", "ADI Testnet"),
     SeiEvm("sei-v2", "SEI", "Sei EVM"),
     SeiEvmTestnet("sei-v2/test", "SEI", "Sei EVM Testnet"),
     ;
@@ -362,6 +364,7 @@ enum class Blockchain(
         Linea, LineaTestnet,
         ArbitrumNova,
         Plasma, PlasmaTestnet,
+        Adi, AdiTestnet,
         SeiEvm, SeiEvmTestnet,
         -> 18
 
@@ -485,6 +488,7 @@ enum class Blockchain(
             Linea, LineaTestnet,
             ArbitrumNova,
             Plasma, PlasmaTestnet,
+            Adi, AdiTestnet,
             SeiEvm, SeiEvmTestnet,
             -> EthereumAddressService()
 
@@ -647,6 +651,7 @@ enum class Blockchain(
             Quai, QuaiTestnet -> QuaiTestnet
             Linea, LineaTestnet -> LineaTestnet
             Plasma, PlasmaTestnet -> PlasmaTestnet
+            Adi, AdiTestnet -> AdiTestnet
             SeiEvm, SeiEvmTestnet -> SeiEvmTestnet
             Unknown,
             Cardano,
@@ -767,6 +772,7 @@ enum class Blockchain(
             Linea, LineaTestnet,
             ArbitrumNova,
             Plasma, PlasmaTestnet,
+            Adi, AdiTestnet,
             SeiEvm, SeiEvmTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
@@ -801,7 +807,7 @@ enum class Blockchain(
             Avalanche -> Chain.Avalanche.id
             AvalancheTestnet -> Chain.AvalancheTestnet.id
             Ethereum -> Chain.Mainnet.id
-            EthereumTestnet -> Chain.EthereumSepoliaTestnet.id
+            EthereumTestnet -> Chain.EthereumHoodiTestnet.id
             EthereumClassic -> Chain.EthereumClassicMainnet.id
             EthereumClassicTestnet -> Chain.EthereumClassicTestnet.id
             Fantom -> Chain.Fantom.id
@@ -890,6 +896,8 @@ enum class Blockchain(
             ArbitrumNova -> Chain.ArbitrumNova.id
             Plasma -> Chain.Plasma.id
             PlasmaTestnet -> Chain.PlasmaTestnet.id
+            Adi -> Chain.Adi.id
+            AdiTestnet -> Chain.AdiTestnet.id
             SeiEvm -> Chain.SeiEvm.id
             SeiEvmTestnet -> Chain.SeiEvmTestnet.id
             Monad -> Chain.Monad.id
@@ -937,7 +945,7 @@ enum class Blockchain(
 
     fun canHandleNFTs(): Boolean = when (this) {
         // EVM
-        Ethereum, // supported testnet - Sepolia (11155111)
+        Ethereum, // supported testnet - Hoodi (560048)
         Arbitrum, // supported testnet - Sepolia (421614)
         Avalanche,
         Fantom, FantomTestnet,

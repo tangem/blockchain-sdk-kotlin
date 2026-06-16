@@ -225,6 +225,7 @@ class WalletManagerFactory(
             Blockchain.Linea, Blockchain.LineaTestnet,
             Blockchain.ArbitrumNova,
             Blockchain.Plasma, Blockchain.PlasmaTestnet,
+            Blockchain.Adi, Blockchain.AdiTestnet,
             Blockchain.SeiEvm, Blockchain.SeiEvmTestnet,
             -> EthereumLikeWalletManagerAssembly(dataStorage = dataStorage)
 

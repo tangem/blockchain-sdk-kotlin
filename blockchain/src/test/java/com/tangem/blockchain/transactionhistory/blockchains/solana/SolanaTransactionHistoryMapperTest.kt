@@ -30,45 +30,41 @@ class SolanaTransactionHistoryMapperTest {
     @Test
     fun `SOL transfer shown for coin, filtered for token`() {
         val tx = buildSimpleSolTransfer(lamports = 100_000_000L)
-        val sig = buildSignatureInfo()
 
-        assertNotNull(mapper.mapToHistoryItem(sig, tx, walletAddress, filterToken = null))
-        assertNull(mapper.mapToHistoryItem(sig, tx, walletAddress, filterToken = leiaFilterToken))
+        assertNotNull(mapper.mapToHistoryItem(tx, walletAddress, filterToken = null))
+        assertNull(mapper.mapToHistoryItem(tx, walletAddress, filterToken = leiaFilterToken))
     }
 
     @Test
     fun `token transfer shown for token and as operation for coin`() {
         val tx = buildTokenTransfer(mint = leiaFilterToken.contractAddress)
-        val sig = buildSignatureInfo()
 
-        val tokenResult = mapper.mapToHistoryItem(sig, tx, walletAddress, filterToken = leiaFilterToken)
+        val tokenResult = mapper.mapToHistoryItem(tx, walletAddress, filterToken = leiaFilterToken)
         assertNotNull(tokenResult)
         assertEquals(TransactionType.Transfer, tokenResult!!.type)
 
-        val coinResult = mapper.mapToHistoryItem(sig, tx, walletAddress, filterToken = null)
+        val coinResult = mapper.mapToHistoryItem(tx, walletAddress, filterToken = null)
         assertNotNull(coinResult)
-        assertTrue(coinResult!!.type is TransactionType.ContractMethodName)
+        assertEquals(TransactionType.UnknownOperation, coinResult!!.type)
     }
 
     @Test
     fun `other operation shown for coin, filtered for token`() {
         val tx = buildOtherOperation(solDelta = -5000L)
-        val sig = buildSignatureInfo()
 
-        val coinResult = mapper.mapToHistoryItem(sig, tx, walletAddress, filterToken = null)
+        val coinResult = mapper.mapToHistoryItem(tx, walletAddress, filterToken = null)
         assertNotNull(coinResult)
-        assertTrue(coinResult!!.type is TransactionType.ContractMethodName)
+        assertEquals(TransactionType.UnknownOperation, coinResult!!.type)
 
-        assertNull(mapper.mapToHistoryItem(sig, tx, walletAddress, filterToken = leiaFilterToken))
+        assertNull(mapper.mapToHistoryItem(tx, walletAddress, filterToken = leiaFilterToken))
     }
 
     @Test
     fun `different token transfer filtered when filtering by LEIA`() {
         val otherMint = "DifferentTokenMintAddress1111111111111111111"
         val tx = buildTokenTransfer(mint = otherMint, balanceMint = otherMint)
-        val sig = buildSignatureInfo()
 
-        assertNull(mapper.mapToHistoryItem(sig, tx, walletAddress, filterToken = leiaFilterToken))
+        assertNull(mapper.mapToHistoryItem(tx, walletAddress, filterToken = leiaFilterToken))
     }
 
     // endregion
@@ -78,9 +74,8 @@ class SolanaTransactionHistoryMapperTest {
     @Test
     fun `SOL transfer amount and direction calculated from balance delta`() {
         val tx = buildSimpleSolTransfer(lamports = 500_000_000L)
-        val sig = buildSignatureInfo()
 
-        val result = mapper.mapToHistoryItem(sig, tx, walletAddress, filterToken = null)!!
+        val result = mapper.mapToHistoryItem(tx, walletAddress, filterToken = null)!!
 
         assertTrue(result.isOutgoing)
         assertEquals(BigDecimal("0.5"), result.amount.value!!.stripTrailingZeros())
@@ -90,15 +85,17 @@ class SolanaTransactionHistoryMapperTest {
     fun `SOL transfer fee is mapped from meta fee`() {
         val tx = buildSimpleSolTransfer(lamports = 500_000_000L)
 
-        val result = mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = null)!!
+        val result = mapper.mapToHistoryItem(tx, walletAddress, filterToken = null)!!
 
-        assertEquals(BigDecimal("0.000005"), result.fee!!.value!!.stripTrailingZeros())
+        assertEquals(BigDecimal("0.000005"), result.fee.value!!.stripTrailingZeros())
     }
 
     @Test
-    fun `zero SOL delta filtered out`() {
+    fun `zero SOL delta still shown in coin history with zero amount`() {
         val tx = buildSimpleSolTransfer(lamports = 0L)
-        assertNull(mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = null))
+        val result = mapper.mapToHistoryItem(tx, walletAddress, filterToken = null)
+        assertNotNull(result)
+        assertEquals(BigDecimal.ZERO, result!!.amount.value!!.stripTrailingZeros())
     }
 
     @Test
@@ -108,7 +105,7 @@ class SolanaTransactionHistoryMapperTest {
             preBalance = 2_000_000L,
             postBalance = 1_000_000L,
         )
-        val result = mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = leiaFilterToken)!!
+        val result = mapper.mapToHistoryItem(tx, walletAddress, filterToken = leiaFilterToken)!!
 
         assertTrue(result.isOutgoing)
         assertEquals(BigDecimal("1"), result.amount.value!!.stripTrailingZeros())
@@ -121,7 +118,7 @@ class SolanaTransactionHistoryMapperTest {
             preBalance = 1_000_000L,
             postBalance = 1_000_000L,
         )
-        assertNull(mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = leiaFilterToken))
+        assertNull(mapper.mapToHistoryItem(tx, walletAddress, filterToken = leiaFilterToken))
     }
 
     // endregion
@@ -141,7 +138,7 @@ class SolanaTransactionHistoryMapperTest {
             preUiAmount = "10.5",
             postUiAmount = "8.0",
         )
-        val result = mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = token2022)!!
+        val result = mapper.mapToHistoryItem(tx, walletAddress, filterToken = token2022)!!
 
         assertTrue(result.isOutgoing)
         assertEquals(BigDecimal("2.5"), result.amount.value!!.stripTrailingZeros())
@@ -160,7 +157,7 @@ class SolanaTransactionHistoryMapperTest {
             ownerInBalance = null,
             accountIndexMatchesWallet = true,
         )
-        assertNotNull(mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = leiaFilterToken))
+        assertNotNull(mapper.mapToHistoryItem(tx, walletAddress, filterToken = leiaFilterToken))
     }
 
     // endregion
@@ -176,7 +173,7 @@ class SolanaTransactionHistoryMapperTest {
             source = "TokenAccountSource1111111111111111111111111",
             authority = walletAddress,
         )
-        val result = mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = leiaFilterToken)!!
+        val result = mapper.mapToHistoryItem(tx, walletAddress, filterToken = leiaFilterToken)!!
 
         assertEquals(walletAddress, (result.sourceType as SourceType.Single).address)
     }
@@ -185,7 +182,7 @@ class SolanaTransactionHistoryMapperTest {
     fun `other operation uses counterparty instead of wallet to wallet`() {
         val tx = buildOtherOperation(solDelta = -5000L)
 
-        val result = mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = null)!!
+        val result = mapper.mapToHistoryItem(tx, walletAddress, filterToken = null)!!
 
         assertEquals(walletAddress, (result.sourceType as SourceType.Single).address)
         assertEquals(
@@ -199,7 +196,7 @@ class SolanaTransactionHistoryMapperTest {
         val stakeAccount = "StakeAccount11111111111111111111111111111111"
         val tx = buildStakeWithdraw(stakeAccount = stakeAccount)
 
-        val result = mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = null)!!
+        val result = mapper.mapToHistoryItem(tx, walletAddress, filterToken = null)!!
 
         assertEquals(TransactionType.SolanaStakingTransactionType.Withdraw, result.type)
         assertFalse(result.isOutgoing)
@@ -215,7 +212,7 @@ class SolanaTransactionHistoryMapperTest {
         val newAccount = "NewStakeAccount1111111111111111111111111111"
         val tx = buildStakeCreateAccount(newAccount = newAccount)
 
-        val result = mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = null)!!
+        val result = mapper.mapToHistoryItem(tx, walletAddress, filterToken = null)!!
 
         assertEquals(
             newAccount,
@@ -228,7 +225,7 @@ class SolanaTransactionHistoryMapperTest {
         val voteAccount = "BbM5kJgvKKaQGAdsHkXmLUTkazUmt2x9"
         val tx = buildStakeInitializeAndDelegate(voteAccount = voteAccount)
 
-        val result = mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = null)!!
+        val result = mapper.mapToHistoryItem(tx, walletAddress, filterToken = null)!!
 
         val stakeType = result.type as TransactionType.SolanaStakingTransactionType.Stake
         assertEquals(voteAccount, stakeType.validatorAddress)
@@ -294,10 +291,62 @@ class SolanaTransactionHistoryMapperTest {
             """.trimIndent(),
         )!!.result!!
 
-        val result = mapper.mapToHistoryItem(buildSignatureInfo(), response, walletAddress, filterToken = null)
+        val result = mapper.mapToHistoryItem(response, walletAddress, filterToken = null)
 
         assertNotNull(result)
         assertEquals(BigDecimal("0.5"), result!!.amount.value!!.stripTrailingZeros())
+    }
+
+    @Test
+    fun `getTransactionsForAddress response is decoded with data and pagination token`() {
+        val moshi = Moshi.Builder()
+            .add(SolanaAccountKeyAdapter())
+            .add(SolanaInstructionAdapter())
+            .build()
+        val adapter = moshi.adapter<SolanaRpcResponse<SolanaTransactionsForAddress>>(
+            Types.newParameterizedType(
+                SolanaRpcResponse::class.java,
+                SolanaTransactionsForAddress::class.java,
+            ),
+        )
+
+        val response = adapter.fromJson(
+            """
+            {
+              "result": {
+                "data": [
+                  {
+                    "blockTime": 1739362549,
+                    "slot": 320159884,
+                    "meta": {
+                      "err": null,
+                      "fee": 5000,
+                      "preBalances": [1000000000, 1000000000],
+                      "postBalances": [999995000, 1000000000],
+                      "preTokenBalances": [],
+                      "postTokenBalances": [],
+                      "innerInstructions": [],
+                      "rewards": []
+                    },
+                    "transaction": {
+                      "message": {
+                        "accountKeys": ["$walletAddress", "RecipientAddress111111111111111111111111111"],
+                        "instructions": []
+                      },
+                      "signatures": ["signature_1"]
+                    },
+                    "version": 0
+                  }
+                ],
+                "paginationToken": "320159884:0"
+              }
+            }
+            """.trimIndent(),
+        )!!.result!!
+
+        assertEquals(1, response.data.size)
+        assertEquals("signature_1", response.data[0].transaction?.signatures?.first())
+        assertEquals("320159884:0", response.paginationToken)
     }
 
     @Test(expected = JsonDataException::class)
@@ -360,7 +409,7 @@ class SolanaTransactionHistoryMapperTest {
             ),
         )
 
-        val result = mapper.mapToHistoryItem(buildSignatureInfo(), tx, walletAddress, filterToken = null)!!
+        val result = mapper.mapToHistoryItem(tx, walletAddress, filterToken = null)!!
 
         assertEquals(walletAddress, (result.sourceType as SourceType.Single).address)
         assertEquals(
@@ -372,13 +421,6 @@ class SolanaTransactionHistoryMapperTest {
     // endregion
 
     // region Helpers
-
-    private fun buildSignatureInfo(err: Any? = null) = SolanaSignatureInfo(
-        signature = "TestSignature1111111111111111111111111111111",
-        blockTime = 1700000000L,
-        confirmationStatus = "finalized",
-        err = err,
-    )
 
     private fun buildSimpleSolTransfer(lamports: Long): SolanaTransactionResponse {
         val destination = "RecipientAddress111111111111111111111111111"

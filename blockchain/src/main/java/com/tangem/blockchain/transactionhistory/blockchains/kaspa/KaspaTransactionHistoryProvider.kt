@@ -83,8 +83,8 @@ internal class KaspaTransactionHistoryProvider(
             val inputs = transaction.inputs ?: emptyList()
             val isCoinbase = transaction.isCoinbaseTransaction()
             val isOutgoing = !isCoinbase && inputs.any { it.previousOutpointAddress == walletAddress }
-            val amount = transaction
-                .extractTransactionAmount(isOutgoing, walletAddress, isCoinbase)
+            val (transactionAmount, feeAmount) = transaction
+                .extractTransactionAmountAndFee(isOutgoing, walletAddress, isCoinbase)
                 ?: return@mapNotNull null
             val destination = transaction
                 .extractDestination(isOutgoing, walletAddress)
@@ -100,7 +100,8 @@ internal class KaspaTransactionHistoryProvider(
                 sourceType = source,
                 status = if (transaction.isAccepted == true) Confirmed else Unconfirmed,
                 type = TransactionHistoryItem.TransactionType.Transfer,
-                amount = amount,
+                amount = transactionAmount,
+                fee = feeAmount,
             )
         }
     }
@@ -113,11 +114,11 @@ internal class KaspaTransactionHistoryProvider(
         }
     }
 
-    private fun KaspaCoinTransaction.extractTransactionAmount(
+    private fun KaspaCoinTransaction.extractTransactionAmountAndFee(
         isOutgoing: Boolean,
         walletAddress: String,
         isCoinbase: Boolean,
-    ): Amount? {
+    ): Pair<Amount, Amount>? {
         val outputs = this.outputs ?: emptyList()
         val inputs = this.inputs ?: emptyList()
         val amount = if (isOutgoing) {
@@ -139,10 +140,15 @@ internal class KaspaTransactionHistoryProvider(
         }
         val amountWithFee = if (isOutgoing) amount + fee else amount
 
-        return Amount(
+        val transactionAmount = Amount(
             blockchain = blockchain,
             value = amountWithFee.toBigDecimal().movePointLeft(blockchain.decimals()),
         )
+        val feeAmount = Amount(
+            blockchain = blockchain,
+            value = fee.toBigDecimal().movePointLeft(blockchain.decimals()),
+        )
+        return transactionAmount to feeAmount
     }
 
     private fun KaspaCoinTransaction.extractDestination(isOutgoing: Boolean, walletAddress: String): DestinationType? {

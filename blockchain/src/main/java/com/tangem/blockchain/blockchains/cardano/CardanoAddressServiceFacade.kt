@@ -34,10 +34,35 @@ internal class CardanoAddressServiceFacade : AddressService(), ContractAddressVa
     }
 
     /**
-     * Validate contract [address]
+     * Validates the given contract [address] to ensure it adheres to the Cardano Asset Fingerprint standard.
      *
-     * @see <a href="https://tangem.slack.com/archives/GMXC6PP71/p1718980475109089?thread_ts=1718980364.635649&
-     * cid=GMXC6PP71">Algorithm</a>
+     * The validation process follows these steps:
+     * 1. Check if the address is a valid Asset Fingerprint:
+     *    - Attempt to validate/decode the address using a library.
+     *    - Ensure the format and checksum are correct.
+     *    - If invalid, proceed to step 2.
+     * 2. Verify the prefix:
+     *    - The prefix should be "asset".
+     *    - If the only issue is with the prefix, throw an error.
+     *    - If the prefix is correct, add the address as is.
+     * 3. Validate the hexadecimal format:
+     *    - If valid, proceed to the next step.
+     *    - If invalid, throw an error.
+     * 4. Check the length of the hexadecimal string:
+     *    - If the length is greater than 56 characters, it is an Asset ID. Proceed to step 5.
+     *    - If the length is exactly 56 characters, it is a Policy ID:
+     *      - Convert the token symbol to hexadecimal (ASCII or UTF-8, same result for Latin characters).
+     *      - Concatenate the Policy ID with the hexadecimal symbol to form the Asset ID.
+     *      - Proceed to step 5.
+     *    - If the length is less than 56 characters, throw an error.
+     * 5. Convert the Asset ID to an Asset Fingerprint and save it.
+     *
+     * For more information, refer to:
+     * - [Cardano Token Bundles](https://cardano-ledger.readthedocs.io/en/latest/explanations/token-bundles.html)
+     * - [Asset Fingerprint CIP-14](https://cips.cardano.org/cip/CIP-14)
+     *
+     * @param address The contract address to validate.
+     * @return True if the address is valid, false otherwise.
      */
     override fun validateContractAddress(address: String): Boolean {
         return CardanoContractAddressRecognizer.recognize(address) != null
