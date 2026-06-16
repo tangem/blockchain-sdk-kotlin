@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common.psbt
 
+import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignInput
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.extensions.Result
 
@@ -35,4 +36,18 @@ interface PsbtProvider {
      * @return Success with the list of outputs, or Failure with error
      */
     fun parsePsbtOutputs(psbtBase64: String): Result<List<PsbtOutputInfo>>
+
+    /**
+     * Derives the list of PSBT inputs that belong to this wallet and therefore must be signed.
+     *
+     * Unlike WalletConnect (where the dApp explicitly supplies the inputs to sign), swap providers
+     * return a "naked" PSBT in `txData`, so the wallet has to figure out which inputs are its own.
+     * For every input whose previous-output address (from `witnessUtxo`/`nonWitnessUtxo`) matches one
+     * of the wallet's addresses, a [SignInput] with the default `SIGHASH_ALL` is produced. The result
+     * can be passed directly to [signPsbt].
+     *
+     * @param psbtBase64 PSBT in Base64 encoding
+     * @return Success with the inputs to sign, or Failure if parsing fails or no input belongs to the wallet
+     */
+    fun deriveSignInputs(psbtBase64: String): Result<List<SignInput>>
 }
