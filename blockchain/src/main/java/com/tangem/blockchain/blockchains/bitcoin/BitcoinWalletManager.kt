@@ -9,9 +9,11 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoin.network.UsedAddress
+import com.tangem.blockchain.blockchains.bitcoin.network.XpubInfoResponse
 import com.tangem.blockchain.blockchains.bitcoin.psbt.BitcoinPsbtProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.DynamicAddressesManager
+import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.crypto.NetworkType
@@ -20,8 +22,13 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryState
+import com.tangem.blockchain.transactionhistory.blockchains.bitcoin.BitcoinTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
 import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
@@ -30,13 +37,14 @@ import com.tangem.common.extensions.toHexString
 import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.operations.sign.SignData
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 
 @Suppress("LargeClass")
 internal open class BitcoinWalletManager(
     wallet: Wallet,
-    transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
+    private val transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     protected val transactionBuilder: BitcoinTransactionBuilder,
     private val networkProvider: BitcoinNetworkProvider,
     private val feesCalculator: BitcoinFeesCalculator,
@@ -98,15 +106,21 @@ internal open class BitcoinWalletManager(
         return dynamicAddressesManager?.findFirstUnusedChangeAddress(xpubUsedAddresses)
     }
 
-    override suspend fun probeHasFundsOnNonBaseAddresses(xpub: String): Result<Boolean> {
-        val descriptor = buildDescriptor(xpub)
-        return when (val response = networkProvider.getInfoByXpub(descriptor)) {
-            is Result.Success -> {
-                val hasFunds = response.data.usedAddresses.any { it.balance > BigDecimal.ZERO && !it.isBase() }
-                Result.Success(hasFunds)
+    override suspend fun probeHasFundsOnNonBaseAddresses(xpub: String): Result<Boolean> = coroutineScope {
+        val requests = buildDescriptors(xpub)
+        val responses = requests.map { req ->
+            async { networkProvider.getInfoByXpub(req.descriptor) }
+        }.awaitAll()
+
+        val allUsed = mutableListOf<UsedAddress>()
+        for (response in responses) {
+            when (response) {
+                is Result.Success -> allUsed += response.data.usedAddresses
+                is Result.Failure -> return@coroutineScope response
             }
-            is Result.Failure -> response
         }
+
+        Result.Success(allUsed.any { it.balance > BigDecimal.ZERO && !it.isBase() })
     }
 
     private fun UsedAddress.isBase(): Boolean {
@@ -117,13 +131,64 @@ internal open class BitcoinWalletManager(
     }
 
     /**
-     * Build the BlockBook descriptor for XPUB queries.
-     * SegWit networks (BTC, LTC) use wpkh() wrapper; legacy P2PKH networks use pkh().
+     * A single BlockBook descriptor query with the script-type it will return.
+     * For BTC/LTC we issue TWO queries — wpkh() for SegWit and pkh() for Legacy —
+     * and merge results so dynamic-addresses mode obeys both trees.
      */
-    fun buildDescriptor(xpub: String): String {
+    data class DescriptorRequest(val descriptor: String, val scriptType: AddressType)
+
+    /**
+     * Build all BlockBook descriptors for XPUB queries.
+     * BTC/LTC: wpkh($xpub) (Default/SegWit) + pkh($xpub) (Legacy/P2PKH).
+     * Others (DOGE, DASH, RVN, BCH, ...): single pkh($xpub).
+     */
+    fun buildDescriptors(xpub: String): List<DescriptorRequest> {
         return when (blockchain) {
-            Blockchain.Bitcoin, Blockchain.BitcoinTestnet, Blockchain.Litecoin -> "wpkh($xpub)"
-            else -> "pkh($xpub)" // Legacy P2PKH: DOGE, DASH, RVN, BCH, etc.
+            Blockchain.Bitcoin, Blockchain.BitcoinTestnet, Blockchain.Litecoin -> listOf(
+                DescriptorRequest("wpkh($xpub)", AddressType.Default),
+                DescriptorRequest("pkh($xpub)", AddressType.Legacy),
+            )
+            else -> listOf(DescriptorRequest("pkh($xpub)", AddressType.Default))
+        }
+    }
+
+    /**
+     * Kept for backward compatibility and for existing tests.
+     * Returns the first (primary) descriptor only.
+     */
+    fun buildDescriptor(xpub: String): String = buildDescriptors(xpub).first().descriptor
+
+    /**
+     * Descriptor used for transaction history while dynamic addresses are enabled.
+     * Only the [AddressType.Default] tree is queried (SegWit `wpkh` for BTC/LTC, `pkh` otherwise);
+     * the legacy tree is intentionally excluded for now.
+     */
+    private fun dynamicTxHistoryDescriptorOrNull(): String? {
+        if (!isDynamicAddressesEnabled) return null
+        val currentXpub = xpub ?: return null
+        return buildDescriptors(currentXpub).firstOrNull { it.scriptType == AddressType.Default }?.descriptor
+    }
+
+    override suspend fun getTransactionHistoryState(
+        address: String,
+        filterType: TransactionHistoryRequest.FilterType,
+    ): TransactionHistoryState {
+        val descriptor = dynamicTxHistoryDescriptorOrNull()
+        return if (descriptor != null && transactionHistoryProvider is BitcoinTransactionHistoryProvider) {
+            transactionHistoryProvider.getTransactionHistoryStateByXpub(descriptor)
+        } else {
+            transactionHistoryProvider.getTransactionHistoryState(address, filterType)
+        }
+    }
+
+    override suspend fun getTransactionsHistory(
+        request: TransactionHistoryRequest,
+    ): Result<PaginationWrapper<TransactionHistoryItem>> {
+        val descriptor = dynamicTxHistoryDescriptorOrNull()
+        return if (descriptor != null && transactionHistoryProvider is BitcoinTransactionHistoryProvider) {
+            transactionHistoryProvider.getTransactionsHistoryByXpub(descriptor, request)
+        } else {
+            transactionHistoryProvider.getTransactionsHistory(request)
         }
     }
 
@@ -155,26 +220,77 @@ internal open class BitcoinWalletManager(
         }
     }
 
-    private suspend fun updateFromXpub(xpub: String) {
-        val descriptor = buildDescriptor(xpub)
-        when (val response = networkProvider.getInfoByXpub(descriptor)) {
-            is Result.Success -> {
-                val xpubInfo = response.data
-                xpubUsedAddresses = xpubInfo.usedAddresses
+    private suspend fun updateFromXpub(xpub: String) = coroutineScope {
+        val requests = buildDescriptors(xpub)
+        val responses = requests.map { req ->
+            async { req to networkProvider.getInfoByXpub(req.descriptor) }
+        }.awaitAll()
 
-                // Enrich UTXOs with derived public keys from DynamicAddressManager
-                val enrichedUtxos = enrichUtxosWithPublicKeys(xpubInfo.unspentOutputs)
-
-                val addressInfo = BitcoinAddressInfo(
-                    balance = xpubInfo.balance,
-                    unspentOutputs = enrichedUtxos,
-                    recentTransactions = xpubInfo.recentTransactions,
-                    hasUnconfirmed = xpubInfo.hasUnconfirmed,
-                )
-                updateWallet(addressInfo)
+        val merged = when (val mergeResult = mergeXpubResponses(responses)) {
+            is Result.Success -> mergeResult.data
+            is Result.Failure -> {
+                updateError(mergeResult.error)
+                return@coroutineScope
             }
-            is Result.Failure -> updateError(response.error)
         }
+
+        xpubUsedAddresses = merged.usedAddresses
+        val enrichedUtxos = enrichUtxosWithPublicKeys(merged.unspentOutputs)
+
+        updateWallet(
+            BitcoinAddressInfo(
+                balance = merged.balance,
+                unspentOutputs = enrichedUtxos,
+                recentTransactions = merged.recentTransactions,
+                hasUnconfirmed = merged.hasUnconfirmed,
+            ),
+        )
+    }
+
+    /**
+     * Merge per-descriptor XPUB responses into a single [XpubInfoResponse].
+     * Each response's [UsedAddress]es are stamped with the descriptor's [DescriptorRequest.scriptType]
+     * so that downstream gap-search / probes can tell SegWit from Legacy derivations.
+     *
+     * Fails fast: if any descriptor request failed, the first failure is returned.
+     */
+    private fun mergeXpubResponses(
+        responses: List<Pair<DescriptorRequest, Result<XpubInfoResponse>>>,
+    ): Result<XpubInfoResponse> {
+        var totalBalance = BigDecimal.ZERO
+        val utxos = mutableListOf<BitcoinUnspentOutput>()
+        val used = mutableListOf<UsedAddress>()
+        val txs = mutableListOf<BasicTransactionData>()
+        var hasUnconfirmed = false
+
+        for ((req, res) in responses) {
+            when (res) {
+                is Result.Success -> {
+                    val info = res.data
+                    totalBalance += info.balance
+                    utxos += info.unspentOutputs
+                    used += info.usedAddresses.map { it.copy(scriptType = req.scriptType) }
+                    txs += info.recentTransactions
+                    hasUnconfirmed = hasUnconfirmed || info.hasUnconfirmed
+                }
+                is Result.Failure -> return res
+            }
+        }
+
+        // Dedup recent transactions by hash (same tx can appear under both descriptors).
+        val dedupTxs = txs.groupBy { it.hash }.map { (_, list) ->
+            list.first().copy(balanceDif = list.sumOf { it.balanceDif })
+        }
+
+        return Result.Success(
+            XpubInfoResponse(
+                balance = totalBalance,
+                unspentOutputs = utxos,
+                usedAddresses = used,
+                hasUnconfirmed = hasUnconfirmed,
+                recentTransactions = dedupTxs,
+            ),
+        )
     }
 
     /**
@@ -267,11 +383,14 @@ internal open class BitcoinWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
     ): Result<TransactionSendResult> {
-        val utxos = transactionBuilder.unspentOutputs
-        val utxoWithPath = utxos?.count { it.derivationPath != null && it.publicKey != null } ?: 0
-        val isMultiAddressMode = xpub != null &&
-            dynamicAddressesManager != null &&
-            utxoWithPath > 0
+        val utxos = transactionBuilder.unspentOutputs.orEmpty()
+
+        // Multi-address signing is only needed when inputs carry MORE THAN ONE distinct public key.
+        // When every input is derived from the same key (e.g. base-SegWit + base-Legacy from m/.../0/0),
+        // the regular single-key signer path works and avoids the Map<pubkey, signature> collapse
+        // inside MultiSignHashTask — see AND-*** for the full story.
+        val distinctPubkeys = utxos.mapNotNull { it.publicKey?.toList() }.distinct()
+        val isMultiAddressMode = isDynamicAddressesEnabled && distinctPubkeys.size >= 2
 
         return if (isMultiAddressMode) {
             sendMultiAddress(transactionData, signer)
