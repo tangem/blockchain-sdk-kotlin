@@ -22,13 +22,8 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
-import com.tangem.blockchain.transactionhistory.TransactionHistoryState
-import com.tangem.blockchain.transactionhistory.blockchains.bitcoin.BitcoinTransactionHistoryProvider
-import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
-import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
 import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
@@ -44,7 +39,7 @@ import java.math.BigDecimal
 @Suppress("LargeClass")
 internal open class BitcoinWalletManager(
     wallet: Wallet,
-    private val transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
+    transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     protected val transactionBuilder: BitcoinTransactionBuilder,
     private val networkProvider: BitcoinNetworkProvider,
     private val feesCalculator: BitcoinFeesCalculator,
@@ -157,40 +152,6 @@ internal open class BitcoinWalletManager(
      * Returns the first (primary) descriptor only.
      */
     fun buildDescriptor(xpub: String): String = buildDescriptors(xpub).first().descriptor
-
-    /**
-     * Descriptor used for transaction history while dynamic addresses are enabled.
-     * Only the [AddressType.Default] tree is queried (SegWit `wpkh` for BTC/LTC, `pkh` otherwise);
-     * the legacy tree is intentionally excluded for now.
-     */
-    private fun dynamicTxHistoryDescriptorOrNull(): String? {
-        if (!isDynamicAddressesEnabled) return null
-        val currentXpub = xpub ?: return null
-        return buildDescriptors(currentXpub).firstOrNull { it.scriptType == AddressType.Default }?.descriptor
-    }
-
-    override suspend fun getTransactionHistoryState(
-        address: String,
-        filterType: TransactionHistoryRequest.FilterType,
-    ): TransactionHistoryState {
-        val descriptor = dynamicTxHistoryDescriptorOrNull()
-        return if (descriptor != null && transactionHistoryProvider is BitcoinTransactionHistoryProvider) {
-            transactionHistoryProvider.getTransactionHistoryStateByXpub(descriptor)
-        } else {
-            transactionHistoryProvider.getTransactionHistoryState(address, filterType)
-        }
-    }
-
-    override suspend fun getTransactionsHistory(
-        request: TransactionHistoryRequest,
-    ): Result<PaginationWrapper<TransactionHistoryItem>> {
-        val descriptor = dynamicTxHistoryDescriptorOrNull()
-        return if (descriptor != null && transactionHistoryProvider is BitcoinTransactionHistoryProvider) {
-            transactionHistoryProvider.getTransactionsHistoryByXpub(descriptor, request)
-        } else {
-            transactionHistoryProvider.getTransactionsHistory(request)
-        }
-    }
 
     override suspend fun updateInternal() {
         val currentXpub = xpub
