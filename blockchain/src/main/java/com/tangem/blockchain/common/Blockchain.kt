@@ -107,8 +107,8 @@ enum class Blockchain(
     KaspaTestnet("KAS/test", "KAS", "Kaspa Testnet"),
     Telos("TELOS", "TLOS", "Telos EVM"),
     TelosTestnet("TELOS/test", "TLOS", "Telos Testnet"),
-    TON("The-Open-Network", "TON", "TON"),
-    TONTestnet("The-Open-Network/test", "TON", "Ton Testnet"),
+    TON("The-Open-Network", "GRAM", "TON"),
+    TONTestnet("The-Open-Network/test", "GRAM", "TON Testnet"),
     Ravencoin("ravencoin", "RVN", "Ravencoin"),
     RavencoinTestnet("ravencoin/test", "RVN", "Ravencoin Testnet"),
     TerraV1("terra", "LUNC", "Terra Classic"),
@@ -230,7 +230,7 @@ enum class Blockchain(
         return when (this) {
             Chia -> "Chia"
             Fantom -> "Fantom"
-            TON -> "Toncoin"
+            TON -> "Gram"
             OdysseyChain -> "Dione"
             OdysseyChainTestnet -> "Dione Testnet"
             ApeChain -> "ApeCoin"
