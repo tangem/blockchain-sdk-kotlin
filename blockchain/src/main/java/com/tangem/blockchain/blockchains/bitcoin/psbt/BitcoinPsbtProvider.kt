@@ -156,6 +156,47 @@ internal class BitcoinPsbtProvider(
         }
     }
 
+    override fun getPsbtFee(psbtBase64: String): Result<Long> {
+        if (wallet.blockchain != Blockchain.Bitcoin && wallet.blockchain != Blockchain.BitcoinTestnet) {
+            return Result.Failure(
+                BlockchainSdkError.CustomError("PSBT fee computation is not supported for ${wallet.blockchain}"),
+            )
+        }
+        return try {
+            val psbtBytes = Base64.decode(psbtBase64, Base64.NO_WRAP)
+            val psbt = when (val result = Psbt.read(psbtBytes)) {
+                is fr.acinq.bitcoin.utils.Either.Right -> result.value
+                is fr.acinq.bitcoin.utils.Either.Left -> {
+                    return Result.Failure(
+                        BlockchainSdkError.CustomError("Failed to parse PSBT: ${result.value}"),
+                    )
+                }
+            }
+
+            var inputsSatoshi = 0L
+            psbt.inputs.forEachIndexed { index, input ->
+                val amount = inputPreviousOutputAmount(psbt, input, index)
+                    ?: return Result.Failure(
+                        BlockchainSdkError.CustomError("PSBT input #$index has no UTXO to derive its amount"),
+                    )
+                inputsSatoshi += amount
+            }
+            val outputsSatoshi = psbt.global.tx.txOut.sumOf { it.amount.toLong() }
+
+            val feeSatoshi = inputsSatoshi - outputsSatoshi
+            if (feeSatoshi < 0L) {
+                return Result.Failure(
+                    BlockchainSdkError.CustomError("Malformed PSBT: outputs exceed inputs (negative fee)"),
+                )
+            }
+            Result.Success(feeSatoshi)
+        } catch (e: Exception) {
+            Result.Failure(
+                BlockchainSdkError.CustomError("Failed to compute PSBT fee: ${e.message}"),
+            )
+        }
+    }
+
     /**
      * Returns the scriptPubKey of the UTXO spent by [input] (from `witnessUtxo`, or `nonWitnessUtxo`
      * resolved via the input's outpoint index), or `null` if the PSBT carries no UTXO for it.
@@ -167,6 +208,19 @@ internal class BitcoinPsbtProvider(
         val outpointIndex = spentTxIn.outPoint.index.toInt()
         val previousOutput = nonWitnessUtxo.txOut.getOrNull(outpointIndex) ?: return null
         return previousOutput.publicKeyScript.toByteArray()
+    }
+
+    /**
+     * Returns the satoshi amount of the UTXO spent by [input] (from `witnessUtxo`, or `nonWitnessUtxo`
+     * resolved via the input's outpoint index), or `null` if the PSBT carries no UTXO for it.
+     */
+    private fun inputPreviousOutputAmount(psbt: Psbt, input: fr.acinq.bitcoin.psbt.Input, index: Int): Long? {
+        input.witnessUtxo?.let { return it.amount.toLong() }
+        val nonWitnessUtxo = input.nonWitnessUtxo ?: return null
+        val spentTxIn = psbt.global.tx.txIn.getOrNull(index) ?: return null
+        val outpointIndex = spentTxIn.outPoint.index.toInt()
+        val previousOutput = nonWitnessUtxo.txOut.getOrNull(outpointIndex) ?: return null
+        return previousOutput.amount.toLong()
     }
 
     private companion object {
