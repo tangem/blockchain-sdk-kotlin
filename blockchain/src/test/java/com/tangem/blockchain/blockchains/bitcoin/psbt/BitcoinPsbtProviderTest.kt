@@ -188,6 +188,61 @@ internal class BitcoinPsbtProviderTest {
 
     // endregion
 
+    // region getPsbtFee
+
+    @Test
+    fun `getPsbtFee returns inputs minus outputs for real provider psbt`() {
+        // Given — the real LI.FI swap PSBT: single input of 200_000_000_000 sat,
+        // outputs summing to 199_999_998_671 sat → fee = 1_329 sat.
+        // When
+        val result = provider.getPsbtFee(realSwapPsbtBase64)
+
+        // Then
+        assertThat(result).isInstanceOf(Result.Success::class.java)
+        assertThat((result as Result.Success).data).isEqualTo(1_329L)
+    }
+
+    @Test
+    fun `getPsbtFee returns failure when outputs exceed inputs`() {
+        // Given — a PSBT with outputs but no inputs: inputs sum = 0, outputs = 100_000 → negative fee
+        val psbtBase64 = buildPsbtBase64(legacyAddress to 100_000L)
+
+        // When
+        val result = provider.getPsbtFee(psbtBase64)
+
+        // Then
+        assertThat(result).isInstanceOf(Result.Failure::class.java)
+    }
+
+    @Test
+    fun `getPsbtFee returns failure for invalid base64 input`() {
+        // When
+        val result = provider.getPsbtFee("not-a-valid-psbt")
+
+        // Then
+        assertThat(result).isInstanceOf(Result.Failure::class.java)
+    }
+
+    @Test
+    fun `getPsbtFee returns failure for non-bitcoin blockchain`() {
+        // Given — altcoin wallet that inherits BitcoinPsbtProvider
+        val altcoinWallet = Wallet(
+            blockchain = Blockchain.Dogecoin,
+            addresses = setOf(Address(swapInputP2shAddress, AddressType.Default)),
+            publicKey = Wallet.PublicKey(seedKey = ByteArray(65) { 0x04 }, derivationType = null),
+            tokens = emptySet(),
+        )
+        val altcoinProvider = BitcoinPsbtProvider(wallet = altcoinWallet, networkProvider = mockk(relaxed = true))
+
+        // When
+        val result = altcoinProvider.getPsbtFee(realSwapPsbtBase64)
+
+        // Then
+        assertThat(result).isInstanceOf(Result.Failure::class.java)
+    }
+
+    // endregion
+
     private fun buildPsbtBase64(vararg outputs: Pair<String, Long>): String {
         val txOuts = outputs.map { (address, amount) ->
             val script = when (val r = Bitcoin.addressToPublicKeyScript(Block.LivenetGenesisBlock.hash, address)) {

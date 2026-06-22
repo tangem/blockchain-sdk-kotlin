@@ -38,6 +38,20 @@ interface PsbtProvider {
     fun parsePsbtOutputs(psbtBase64: String): Result<List<PsbtOutputInfo>>
 
     /**
+     * Computes the on-chain miner fee carried by a PSBT, in satoshi.
+     *
+     * The fee is not transmitted separately by swap providers — it is implied by the transaction as
+     * `sum(input amounts) - sum(output amounts)`. Input amounts are taken from each input's
+     * `witnessUtxo`/`nonWitnessUtxo`; if any input has no UTXO data the fee cannot be derived and a
+     * [Result.Failure] is returned.
+     *
+     * @param psbtBase64 PSBT in Base64 encoding
+     * @return Success with the fee in satoshi, or Failure if parsing fails, a UTXO is missing, or the
+     * fee is negative (malformed PSBT)
+     */
+    fun getPsbtFee(psbtBase64: String): Result<Long>
+
+    /**
      * Derives the list of PSBT inputs that belong to this wallet and therefore must be signed.
      *
      * Unlike WalletConnect (where the dApp explicitly supplies the inputs to sign), swap providers

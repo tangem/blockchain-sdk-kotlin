@@ -29,4 +29,10 @@ internal object DefaultPsbtProvider : PsbtProvider {
             BlockchainSdkError.CustomError("PSBT sign-input derivation is not supported for this blockchain"),
         )
     }
+
+    override fun getPsbtFee(psbtBase64: String): Result<Long> {
+        return Result.Failure(
+            BlockchainSdkError.CustomError("PSBT fee computation is not supported for this blockchain"),
+        )
+    }
 }
