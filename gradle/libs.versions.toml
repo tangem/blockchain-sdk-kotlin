@@ -138,6 +138,7 @@ serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization
 bitcoin-bitcoinj = { module = "org.bitcoinj:bitcoinj-core", version.ref = "bitcoinj" }
 bitcoin-kmp-jvm = { module = "fr.acinq.bitcoin:bitcoin-kmp-jvm", version.ref = "bitcoinKmp" }
 bitcoin-secp256k1-kmp-jni-jvm = { module = "fr.acinq.secp256k1:secp256k1-kmp-jni-jvm", version.ref = "secp256k1Kmp" }
+bitcoin-secp256k1-kmp-jni-android = { module = "fr.acinq.secp256k1:secp256k1-kmp-jni-android", version.ref = "secp256k1Kmp" }
 
 # Stellar
 stellar-sdk = { module = "network.lightsail:stellar-sdk", version.ref = "stellarSdk" }

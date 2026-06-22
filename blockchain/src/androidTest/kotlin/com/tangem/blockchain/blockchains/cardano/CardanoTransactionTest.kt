@@ -85,7 +85,7 @@ class CardanoTransactionTest {
             35, -25, -128, 71, -77, -7, -76, -87, -49,
         )
 
-        assertArrayEquals(result, expected)
+        assertArrayEquals(expected, result)
     }
 
     @Test
@@ -139,6 +139,6 @@ class CardanoTransactionTest {
             9, -87, -15, -107, 35, -101, 116, 13, -10,
         )
 
-        assertArrayEquals(result, expected)
+        assertArrayEquals(expected, result)
     }
 }
