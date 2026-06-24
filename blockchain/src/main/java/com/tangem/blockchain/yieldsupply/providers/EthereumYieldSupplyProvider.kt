@@ -1,7 +1,6 @@
 package com.tangem.blockchain.yieldsupply.providers
 
 import android.util.Log
-import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
@@ -24,7 +23,6 @@ import com.tangem.blockchain.yieldsupply.addressfactory.YieldSupplyContractAddre
 import com.tangem.blockchain.yieldsupply.addressfactory.YieldSupplyContractAddresses
 import com.tangem.blockchain.yieldsupply.providers.ethereum.converters.EthereumYieldSupplyStatusConverter
 import com.tangem.blockchain.yieldsupply.providers.ethereum.factory.EthereumYieldSupplyContractAddressCallData
-import com.tangem.blockchain.yieldsupply.providers.ethereum.factory.EthereumYieldSupplyImplementationCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.factory.EthereumYieldSupplyModuleCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.processor.EthereumYieldSupplyServiceFeeCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.registry.EthereumYieldSupplyAllowedAddressCallData
@@ -70,12 +68,17 @@ internal class EthereumYieldSupplyProvider(
 
     override suspend fun getYieldModuleAddress(): String = try {
         val supplyContractAddresses = getYieldSupplyContractAddresses()
-        val storedYieldModuleAddress = dataStorage.getOrNull<YieldSupplyModule>(
+        val stored = dataStorage.getOrNull<YieldSupplyModule>(
             key = storeKey(supplyContractAddresses.providerType),
-        )?.yieldContractAddress ?: EthereumUtils.ZERO_ADDRESS
+        )
+        val storedYieldModuleAddress = stored?.yieldContractAddress ?: EthereumUtils.ZERO_ADDRESS
+
+        val hasMatchingCachedFactory = stored?.factoryAddress
+            ?.equals(supplyContractAddresses.factoryContractAddress, ignoreCase = true) == true
 
         if (storedYieldModuleAddress == EthereumUtils.ZERO_ADDRESS ||
-            !addressService.validate(storedYieldModuleAddress)
+            !addressService.validate(storedYieldModuleAddress) ||
+            !hasMatchingCachedFactory
         ) {
             val rawContractAddress = multiJsonRpcProvider.performRequest(
                 request = EthereumJsonRpcProvider::call,
@@ -93,7 +96,10 @@ internal class EthereumYieldSupplyProvider(
             } else {
                 dataStorage.store(
                     key = storeKey(supplyContractAddresses.providerType),
-                    value = YieldSupplyModule(yieldModuleAddress),
+                    value = YieldSupplyModule(
+                        yieldContractAddress = yieldModuleAddress,
+                        factoryAddress = supplyContractAddresses.factoryContractAddress,
+                    ),
                 )
 
                 yieldModuleAddress
@@ -271,36 +277,14 @@ internal class EthereumYieldSupplyProvider(
             return YieldModuleVersionStatus.UpToDate
         }
 
-        // Step 5: Module is outdated — check if factory has the expected latest implementation
-        return resolveOutdatedModuleStatus(contractAddresses, currentImpl, latestKnown)
-    }
-
-    private suspend fun resolveOutdatedModuleStatus(
-        contractAddresses: YieldSupplyContractAddresses,
-        currentImpl: String,
-        latestKnown: String,
-    ): YieldModuleVersionStatus = try {
-        val factoryImpl = multiJsonRpcProvider.performRequest(
-            request = EthereumJsonRpcProvider::call,
-            data = EthCallObject(
-                to = contractAddresses.factoryContractAddress,
-                data = EthereumYieldSupplyImplementationCallData.dataHex,
-            ),
-        ).extractResult()
-
-        val factoryImplAddress = HEX_PREFIX + factoryImpl.takeLast(EthereumUtils.ADDRESS_HEX_LENGTH)
-
-        if (factoryImplAddress.equals(latestKnown, ignoreCase = true)) {
-            YieldModuleVersionStatus.UpgradeAvailable(
-                currentImplementation = currentImpl,
-                latestImplementation = latestKnown,
-            )
-        } else {
-            YieldModuleVersionStatus.UpgradeUnavailable(currentImplementation = currentImpl)
-        }
-    } catch (e: Exception) {
-        Log.w(TAG, "Failed to check factory implementation: ${e.message}")
-        YieldModuleVersionStatus.UpgradeUnavailable(currentImplementation = currentImpl)
+        // Step 5: Module is outdated — check if the module's OWN factory authorizes the upgrade
+        return resolveOutdatedYieldModuleStatus(
+            multiJsonRpcProvider = multiJsonRpcProvider,
+            contractAddresses = contractAddresses,
+            yieldModuleAddress = yieldModuleAddress,
+            currentImpl = currentImpl,
+            latestKnown = latestKnown,
+        )
     }
 
     override suspend fun isSwapSpenderAllowed(spenderAddress: String): Boolean {
@@ -338,9 +322,10 @@ internal class EthereumYieldSupplyProvider(
         currentImpl: String,
     ) {
         if (stored?.implementationAddress?.equals(currentImpl, ignoreCase = true) == true) return
+        val current = dataStorage.getOrNull<YieldSupplyModule>(key = storeKey(providerType))
         dataStorage.store(
             key = storeKey(providerType),
-            value = stored?.copy(implementationAddress = currentImpl)
+            value = current?.copy(implementationAddress = currentImpl)
                 ?: YieldSupplyModule(implementationAddress = currentImpl),
         )
     }
@@ -349,21 +334,7 @@ internal class EthereumYieldSupplyProvider(
         "-${wallet.publicKey.blockchainKey.toCompressedPublicKey().toHexString()}" +
         "-${wallet.address}-${wallet.blockchain.id}"
 
-    private fun Result<JsonRPCResponse>.extractResult(): String = extractResult(adapter = stringAdapter)
-
-    private fun <Body> Result<JsonRPCResponse>.extractResult(adapter: JsonAdapter<Body>): Body {
-        return when (this) {
-            is Result.Success -> {
-                runCatching { adapter.fromJsonValue(data.result) }.getOrNull()
-                    ?: throw data.error?.let { error ->
-                        BlockchainSdkError.Ethereum.getApiErrorByCode(code = error.code, message = error.message)
-                    } ?: BlockchainSdkError.CustomError("Unknown response format")
-            }
-            is Result.Failure -> {
-                throw error as? BlockchainSdkError ?: BlockchainSdkError.CustomError("Unknown error format")
-            }
-        }
-    }
+    private fun Result<JsonRPCResponse>.extractResult(): String = extractYieldRpcResult(stringAdapter)
 
     private companion object {
         const val BASIS_POINTS_DECIMALS = 4
