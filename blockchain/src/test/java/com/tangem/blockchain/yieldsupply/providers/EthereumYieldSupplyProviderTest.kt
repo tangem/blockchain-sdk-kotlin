@@ -208,6 +208,155 @@ internal class EthereumYieldSupplyProviderTest {
         assertThat(indeterminate.reason).contains("rpc down")
     }
 
+    @Test
+    fun `checkModuleVersionStatus returns UpgradeUnavailable when module's own factory does not authorize latest`() =
+        runTest {
+            every {
+                contractAddressFactory.getYieldSupplyContractAddresses()
+            } returns addresses(latestImplementationAddress = LATEST_IMPL)
+            coEvery {
+                blockchainDataStorage.getOrNull(any())
+            } returns yieldSupplyModuleJson(yieldContractAddress = YIELD_MODULE, implementationAddress = null)
+            coEvery {
+                networkProvider.performRequest(EthereumJsonRpcProvider::getStorageAt, any<EthGetStorageAtData>())
+            } returns Result.Success(stringResponse(OUTDATED_IMPL_RAW))
+            // `module.factory()` resolves to the module's OWN (older-generation) factory, which differs
+            // from the currently configured one.
+            coEvery {
+                networkProvider.performRequest(
+                    EthereumJsonRpcProvider::call,
+                    match<EthCallObject> { it.to.equals(YIELD_MODULE, ignoreCase = true) },
+                )
+            } returns Result.Success(stringResponse(BOUND_FACTORY_RAW))
+            // That bound factory authorizes only the OUTDATED implementation, not the configured latest —
+            // so an `upgradeToAndCall(latest)` would revert on-chain with `UnauthorizedImplementation()`.
+            coEvery {
+                networkProvider.performRequest(
+                    EthereumJsonRpcProvider::call,
+                    match<EthCallObject> { it.to.equals(BOUND_FACTORY, ignoreCase = true) },
+                )
+            } returns Result.Success(stringResponse(OUTDATED_IMPL_RAW))
+
+            val status = provider.checkModuleVersionStatus()
+
+            assertThat(status).isEqualTo(
+                YieldModuleVersionStatus.UpgradeUnavailable(currentImplementation = OUTDATED_IMPL),
+            )
+            // The implementation() lookup must target the module's OWN factory, never the configured one.
+            coVerify(exactly = 0) {
+                networkProvider.performRequest(
+                    EthereumJsonRpcProvider::call,
+                    match<EthCallObject> { it.to.equals(FACTORY, ignoreCase = true) },
+                )
+            }
+        }
+
+    @Test
+    fun `checkModuleVersionStatus returns UpgradeAvailable when module's own factory authorizes latest`() = runTest {
+        every {
+            contractAddressFactory.getYieldSupplyContractAddresses()
+        } returns addresses(latestImplementationAddress = LATEST_IMPL)
+        coEvery {
+            blockchainDataStorage.getOrNull(any())
+        } returns yieldSupplyModuleJson(yieldContractAddress = YIELD_MODULE, implementationAddress = null)
+        coEvery {
+            networkProvider.performRequest(EthereumJsonRpcProvider::getStorageAt, any<EthGetStorageAtData>())
+        } returns Result.Success(stringResponse(OUTDATED_IMPL_RAW))
+        // `module.factory()` matches the configured factory…
+        coEvery {
+            networkProvider.performRequest(
+                EthereumJsonRpcProvider::call,
+                match<EthCallObject> { it.to.equals(YIELD_MODULE, ignoreCase = true) },
+            )
+        } returns Result.Success(stringResponse(FACTORY_RAW))
+        // …and that factory exposes the latest implementation.
+        coEvery {
+            networkProvider.performRequest(
+                EthereumJsonRpcProvider::call,
+                match<EthCallObject> { it.to.equals(FACTORY, ignoreCase = true) },
+            )
+        } returns Result.Success(stringResponse(LATEST_IMPL_RAW))
+
+        val status = provider.checkModuleVersionStatus()
+
+        assertThat(status).isEqualTo(
+            YieldModuleVersionStatus.UpgradeAvailable(
+                currentImplementation = OUTDATED_IMPL,
+                latestImplementation = LATEST_IMPL,
+            ),
+        )
+    }
+
+    // --- getYieldModuleAddress cache invalidation (factory binding) ---
+
+    @Test
+    fun `getYieldModuleAddress returns cached address without recompute when cached factory matches`() = runTest {
+        every {
+            contractAddressFactory.getYieldSupplyContractAddresses()
+        } returns addresses(latestImplementationAddress = LATEST_IMPL)
+        coEvery {
+            blockchainDataStorage.getOrNull(any())
+        } returns yieldSupplyModuleJson(yieldContractAddress = YIELD_MODULE, factoryAddress = FACTORY)
+
+        val result = provider.getYieldModuleAddress()
+
+        assertThat(result).isEqualTo(YIELD_MODULE)
+        // Cache hit — the factory is not queried to re-derive the module address
+        coVerify(exactly = 0) {
+            networkProvider.performRequest(EthereumJsonRpcProvider::call, any<EthCallObject>())
+        }
+    }
+
+    @Test
+    fun `getYieldModuleAddress recomputes from configured factory when cached factory differs`() = runTest {
+        every {
+            contractAddressFactory.getYieldSupplyContractAddresses()
+        } returns addresses(latestImplementationAddress = LATEST_IMPL)
+        // Cached address was produced by an older-generation factory (BOUND_FACTORY) — it now points
+        // at a dead, wrong-generation module and must not be reused.
+        coEvery {
+            blockchainDataStorage.getOrNull(any())
+        } returns yieldSupplyModuleJson(yieldContractAddress = YIELD_MODULE, factoryAddress = BOUND_FACTORY)
+        coEvery {
+            networkProvider.performRequest(
+                EthereumJsonRpcProvider::call,
+                match<EthCallObject> { it.to.equals(FACTORY, ignoreCase = true) },
+            )
+        } returns Result.Success(stringResponse(NEW_MODULE_RAW))
+
+        val result = provider.getYieldModuleAddress()
+
+        assertThat(result).isEqualTo(NEW_MODULE)
+        // The freshly derived module is re-cached together with the factory that produced it
+        coVerify {
+            blockchainDataStorage.store(
+                any(),
+                match { it.contains(NEW_MODULE, ignoreCase = true) && it.contains(FACTORY, ignoreCase = true) },
+            )
+        }
+    }
+
+    @Test
+    fun `getYieldModuleAddress recomputes when cached entry has no factory (legacy entry)`() = runTest {
+        every {
+            contractAddressFactory.getYieldSupplyContractAddresses()
+        } returns addresses(latestImplementationAddress = LATEST_IMPL)
+        // Legacy entry written before factoryAddress existed → treated as a miss
+        coEvery {
+            blockchainDataStorage.getOrNull(any())
+        } returns yieldSupplyModuleJson(yieldContractAddress = YIELD_MODULE, factoryAddress = null)
+        coEvery {
+            networkProvider.performRequest(
+                EthereumJsonRpcProvider::call,
+                match<EthCallObject> { it.to.equals(FACTORY, ignoreCase = true) },
+            )
+        } returns Result.Success(stringResponse(NEW_MODULE_RAW))
+
+        val result = provider.getYieldModuleAddress()
+
+        assertThat(result).isEqualTo(NEW_MODULE)
+    }
+
     // --- isSwapSpenderAllowed / isSwapTargetAllowed (strict ABI bool decoding) ---
 
     @Test
@@ -307,10 +456,17 @@ internal class EthereumYieldSupplyProviderTest {
         providerType = YieldSupplyProviderType.AaveV3,
     )
 
-    private fun yieldSupplyModuleJson(yieldContractAddress: String?, implementationAddress: String?): String {
+    // factoryAddress defaults to the configured FACTORY so that, unless a test says otherwise, a
+    // cached entry is a valid cache hit (the module address is honored without recompute).
+    private fun yieldSupplyModuleJson(
+        yieldContractAddress: String? = null,
+        implementationAddress: String? = null,
+        factoryAddress: String? = FACTORY,
+    ): String {
         val parts = mutableListOf<String>()
         if (yieldContractAddress != null) parts += "\"contractAddress\":\"$yieldContractAddress\""
         if (implementationAddress != null) parts += "\"implementationAddress\":\"$implementationAddress\""
+        if (factoryAddress != null) parts += "\"factoryAddress\":\"$factoryAddress\""
         return "{${parts.joinToString(",")}}"
     }
 
@@ -331,6 +487,14 @@ internal class EthereumYieldSupplyProviderTest {
         const val LATEST_IMPL = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         const val OUTDATED_IMPL = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 
+        // Module's own (older-generation) factory, distinct from the configured FACTORY
+        const val BOUND_FACTORY = "0x6666666666666666666666666666666666666666"
+
+        // New-generation module address the configured FACTORY derives after a generation switch
+        const val NEW_MODULE = "0x7777777777777777777777777777777777777777"
+        const val NEW_MODULE_RAW =
+            "0x0000000000000000000000007777777777777777777777777777777777777777"
+
         // 32-byte ABI-encoded address responses (0x + 24 leading zero hex chars + 40-char address)
         const val LATEST_IMPL_RAW =
             "0x000000000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -338,6 +502,10 @@ internal class EthereumYieldSupplyProviderTest {
             "0x000000000000000000000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         const val UNKNOWN_IMPL_RAW =
             "0x000000000000000000000000cccccccccccccccccccccccccccccccccccccccc"
+        const val FACTORY_RAW =
+            "0x0000000000000000000000003333333333333333333333333333333333333333"
+        const val BOUND_FACTORY_RAW =
+            "0x0000000000000000000000006666666666666666666666666666666666666666"
         const val ZERO_PADDED_32 =
             "0x0000000000000000000000000000000000000000000000000000000000000000"
     }
