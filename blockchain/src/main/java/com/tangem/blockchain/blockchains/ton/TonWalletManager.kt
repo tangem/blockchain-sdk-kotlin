@@ -13,6 +13,9 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
+import com.tangem.common.extensions.toHexString
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 internal class TonWalletManager(
     wallet: Wallet,
@@ -34,12 +37,17 @@ internal class TonWalletManager(
     override var accountInitializationState: InitializableAccount.State = InitializableAccount.State.UNDEFINED
 
     override suspend fun updateInternal() {
-        when (val walletInfoResult = networkService.getWalletInformation(wallet.address, cardTokens)) {
+        val walletInfoResult = networkService.getWalletInformation(
+            address = wallet.address,
+            tokens = cardTokens,
+        )
+        when (walletInfoResult) {
             is Result.Failure -> updateError(walletInfoResult.error)
             is Result.Success -> updateWallet(walletInfoResult.data)
         }
     }
 
+    @OptIn(ExperimentalEncodingApi::class)
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
@@ -49,6 +57,7 @@ internal class TonWalletManager(
                 transactionData = transactionData,
                 expireAt = createExpirationTimestampSecs(),
             )
+
             is TransactionData.Uncompiled -> txBuilder.buildForSign(
                 sequenceNumber = sequenceNumber,
                 amount = transactionData.amount,
@@ -57,16 +66,19 @@ internal class TonWalletManager(
                 expireAt = createExpirationTimestampSecs(),
             )
         }
-        val signatureResult = signer.sign(hash = txToSign.hashToSign, publicKey = wallet.publicKey).successOr {
+        val signatureResult = signer.sign(
+            hash = txToSign.hashToSign,
+            publicKey = wallet.publicKey,
+        ).successOr {
             return Result.fromTangemSdkError(it.error)
         }
         val txToSend = txBuilder.buildForSend(signature = signatureResult, preSignStructure = txToSign)
         when (val sendResult = networkService.send(txToSend)) {
             is Result.Failure -> Result.Failure(sendResult.error)
             is Result.Success -> {
-                val txHash = sendResult.data
-                wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
-                Result.Success(TransactionSendResult(txHash))
+                val hex = Base64.decode(sendResult.data).toHexString().lowercase()
+                wallet.addOutgoingTransaction(transactionData = transactionData, txHash = hex)
+                Result.Success(TransactionSendResult(hex))
             }
         }
     } catch (e: BlockchainSdkError) {
@@ -133,7 +145,11 @@ internal class TonWalletManager(
         info.jettonDatas.forEach {
             wallet.addTokenValue(it.value.balance, it.key)
         }
-        txBuilder.updateJettonAdresses(info.jettonDatas.mapValues { it.value.jettonWalletAddress })
+        txBuilder.updateJettonAdresses(
+            fetchedJettonWalletAddresses = info.jettonDatas.mapValues {
+                it.value.jettonWalletAddress
+            },
+        )
     }
 
     private fun updateError(error: BlockchainError) {
