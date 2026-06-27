@@ -9,7 +9,6 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.transactionhistory.blockchains.solana.network.SolanaTransactionHistoryApi
-import com.tangem.blockchain.transactionhistory.blockchains.solana.network.SolanaTransactionHistoryApi.TokenAccountsFilter
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest.FilterType
@@ -28,12 +27,10 @@ internal class SolanaTransactionHistoryProvider(
         filterType: TransactionHistoryRequest.FilterType,
     ): TransactionHistoryState {
         return try {
+            val queryAddress = resolveQueryAddress(walletAddress = address, filterType = filterType)
+                ?: return TransactionHistoryState.Success.Empty
             val response = withContext(Dispatchers.IO) {
-                api.getTransactionsForAddress(
-                    address = address,
-                    limit = 1,
-                    tokenAccountsFilter = filterType.toTokenAccountsFilter(),
-                )
+                api.getTransactionsForAddress(address = queryAddress, limit = 1)
             }
             if (response.data.isNotEmpty()) {
                 TransactionHistoryState.Success.HasTransactions(response.data.size)
@@ -52,12 +49,16 @@ internal class SolanaTransactionHistoryProvider(
             val filterToken =
                 (request.filterType as? TransactionHistoryRequest.FilterType.Contract)?.tokenInfo
 
+            val queryAddress = resolveQueryAddress(
+                walletAddress = request.address,
+                filterType = request.filterType,
+            ) ?: return Result.Success(PaginationWrapper(nextPage = Page.LastPage, items = emptyList()))
+
             val response = withContext(Dispatchers.IO) {
                 api.getTransactionsForAddress(
-                    address = request.address,
+                    address = queryAddress,
                     limit = request.pageSize,
                     paginationToken = request.pageToLoad,
-                    tokenAccountsFilter = request.filterType.toTokenAccountsFilter(),
                 )
             }
 
@@ -79,10 +80,13 @@ internal class SolanaTransactionHistoryProvider(
         }
     }
 
-    private fun FilterType.toTokenAccountsFilter(): TokenAccountsFilter {
-        return when (this) {
-            is FilterType.Contract -> TokenAccountsFilter.BalanceChanged
-            FilterType.Coin -> TokenAccountsFilter.Default
+    private suspend fun resolveQueryAddress(walletAddress: String, filterType: FilterType): String? {
+        val contract = filterType as? FilterType.Contract ?: return walletAddress
+        return withContext(Dispatchers.IO) {
+            api.getTokenAccountsByOwner(
+                owner = walletAddress,
+                mint = contract.tokenInfo.contractAddress,
+            )
         }
     }
 }
