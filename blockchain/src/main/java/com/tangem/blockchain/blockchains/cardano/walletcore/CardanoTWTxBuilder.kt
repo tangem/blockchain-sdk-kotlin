@@ -169,7 +169,7 @@ internal class CardanoTWTxBuilder(
         // We need to rework this logic to use relative validity time.
         // TODO: [REDACTED_JIRA]
         // This can be constructed using absolute ttl slot from `/metadata` endpoint.
-        const val TRANSACTION_TTL = 190000000L
+        const val TRANSACTION_TTL = 1900000000L
         const val STAKING_DEPOSIT_AMOUNT = 2000000L
     }
 }
