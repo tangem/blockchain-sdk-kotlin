@@ -117,3 +117,17 @@ internal data class SolanaInstructionInfo(
 )
 
 // endregion
+
+// region getTokenAccountsByOwner response
+
+@JsonClass(generateAdapter = true)
+internal data class SolanaTokenAccounts(
+    @Json(name = "value") val value: List<SolanaTokenAccount>,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class SolanaTokenAccount(
+    @Json(name = "pubkey") val pubkey: String,
+)
+
+// endregion
