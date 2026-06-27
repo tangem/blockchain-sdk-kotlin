@@ -41,22 +41,7 @@ internal class PolkadotJsonRpcProvider(
         ).post()
 
         return when (response) {
-            is Result.Success -> {
-                val result = response.data.result.toString().remove(HEX_PREFIX)
-                val bytesToParse = result.decodeFromHex().toByteArray()
-                val reader = ScaleCodecReader(bytesToParse)
-                val parsedData = PolkadotRuntimeDispatchInfo(
-                    refTime = reader.readCompactInt(),
-                    proofSize = reader.readCompactInt(),
-                    classType = reader.readByte(),
-                    partialFee = if (bytesToParse.size == SHORT_FEE_RESPONSE_LENGTH) {
-                        reader.readUInt64()
-                    } else {
-                        reader.readUint128()
-                    },
-                )
-                parsedData.partialFee.toBigDecimal().movePointLeft(decimals) ?: BigDecimal.ZERO
-            }
+            is Result.Success -> parseFee(resultHex = response.data.result.toString(), decimals = decimals)
             is Result.Failure -> throw response.error
         }
     }
@@ -107,9 +92,42 @@ internal class PolkadotJsonRpcProvider(
         }
     }
 
-    private companion object {
-        // RPC Apis for Bittensor are returning shortened response to TransactionPaymentApi_query_info
-        // Which result value partialFee be not UINT128 but UINT64
-        const val SHORT_FEE_RESPONSE_LENGTH = 15
+    internal companion object {
+
+        /**
+         * Decodes the SCALE-encoded `RuntimeDispatchInfo` returned by `TransactionPaymentApi_query_info`.
+         *
+         * Layout: `Compact<u64> refTime | Compact<u64> proofSize | u8 dispatchClass | partialFee`.
+         *
+         * The width of `partialFee` is runtime-dependent (u64 on Bittensor, u128 on standard Substrate)
+         * and the leading `Compact<u64>` weight fields are themselves variable length, so the total
+         * response size is not constant. A previous implementation branched on a hardcoded response
+         * length (15 bytes); when the Bittensor finney runtime started reporting a larger `proofSize`
+         * (crossing the 2^14 compact boundary, growing the response to 17 bytes) the check fell through
+         * to the u128 path and `readUint128()` overran the buffer, surfacing as `Polkadot.Api` (2001).
+         *
+         * To be resilient to such weight changes we decode whatever bytes remain after the header as a
+         * little-endian unsigned integer instead of assuming a fixed width or response length.
+         */
+        fun parseFee(resultHex: String, decimals: Int): BigDecimal {
+            val bytesToParse = resultHex.remove(HEX_PREFIX).decodeFromHex().toByteArray()
+            val reader = ScaleCodecReader(bytesToParse)
+            val parsedData = PolkadotRuntimeDispatchInfo(
+                refTime = reader.readCompactInt(),
+                proofSize = reader.readCompactInt(),
+                classType = reader.readByte(),
+                partialFee = reader.readRemainingAsUnsignedLittleEndian(),
+            )
+            return parsedData.partialFee.toBigDecimal().movePointLeft(decimals)
+        }
+
+        private fun ScaleCodecReader.readRemainingAsUnsignedLittleEndian(): BigInteger {
+            val littleEndianBytes = buildList { while (hasNext()) add(readByte()) }
+            return if (littleEndianBytes.isEmpty()) {
+                BigInteger.ZERO
+            } else {
+                BigInteger(1, littleEndianBytes.asReversed().toByteArray())
+            }
+        }
     }
 }
