@@ -25,8 +25,10 @@ object StakingTransactionRecognizer {
         "UnfreezeBalanceV2Contract",
         "CancelAllUnfreezeV2Contract",
         "DelegateResourceContract",
+        "UnDelegateResourceContract",
         "WithdrawExpireUnfreezeContract",
         "VoteWitnessContract",
+        "WithdrawBalanceContract",
     )
     private const val COSMOS_STAKING_TYPE_URL_PREFIX = "/cosmos.staking."
     private val CARDANO_CERTIFICATES_KEY: BigInteger = BigInteger.valueOf(4)
