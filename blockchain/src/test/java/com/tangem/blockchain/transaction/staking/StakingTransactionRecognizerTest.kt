@@ -56,9 +56,15 @@ class StakingTransactionRecognizerTest {
     }
 
     @Test
-    fun `GIVEN tron undelegate resource tx WHEN recognize THEN false`() {
+    fun `GIVEN tron undelegate resource tx WHEN recognize THEN true`() {
         val json = """{"raw_data":{"contract":[{"type":"UnDelegateResourceContract"}]}}"""
-        assertThat(recognizer.isRecognizedStakingTransaction(Blockchain.Tron, json)).isFalse()
+        assertThat(recognizer.isRecognizedStakingTransaction(Blockchain.Tron, json)).isTrue()
+    }
+
+    @Test
+    fun `GIVEN tron withdraw balance reward claim tx WHEN recognize THEN true`() {
+        val json = """{"raw_data":{"contract":[{"type":"WithdrawBalanceContract"}]}}"""
+        assertThat(recognizer.isRecognizedStakingTransaction(Blockchain.Tron, json)).isTrue()
     }
 
     @Test
