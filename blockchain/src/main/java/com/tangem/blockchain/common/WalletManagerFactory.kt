@@ -264,6 +264,7 @@ class WalletManagerFactory(
             Blockchain.Kaspa, Blockchain.KaspaTestnet -> KaspaWalletManagerAssembly(dataStorage)
             Blockchain.TON, Blockchain.TONTestnet -> TonWalletManagerAssembly
             Blockchain.Cosmos, Blockchain.CosmosTestnet -> CosmosWalletManagerAssembly
+            Blockchain.Gonka -> GonkaWalletManagerAssembly
             Blockchain.TerraV1 -> TerraV1WalletManagerAssembly
             Blockchain.TerraV2 -> TerraV2WalletManagerAssembly
             Blockchain.Chia, Blockchain.ChiaTestnet -> ChiaWalletManagerAssembly
