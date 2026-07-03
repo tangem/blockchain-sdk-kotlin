@@ -127,7 +127,7 @@ sealed interface CosmosChain {
         override val blockchain: Blockchain = Blockchain.Gonka
         override val chainId: String = "gonka-mainnet"
         override val smallestDenomination: String = "ngonka"
-        override val gasMultiplier: BigDecimal = BigDecimal.ONE
+        override val gasMultiplier: BigDecimal = BigDecimal(2)
         override val feeMultiplier: BigDecimal = BigDecimal.ONE
         override val coin: CoinType = CoinType.COSMOS
         override val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Forbids
