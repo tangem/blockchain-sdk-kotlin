@@ -8,8 +8,14 @@ import com.tangem.blockchain.blockchains.tron.tokenmethods.TronTransferTokenCall
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.smartcontract.CompiledSmartContractCallData
+import com.tangem.blockchain.extensions.decodeBase58
 import com.tangem.common.extensions.hexToBytes
+import okio.ByteString.Companion.toByteString
 import org.junit.Test
+import org.tron.protos.Transaction
+import org.tron.protos.contract.TriggerSmartContract
 import java.math.BigDecimal
 
 class TronTransactionTest {
@@ -92,5 +98,39 @@ class TronTransactionTest {
             ).hexToBytes()
 
         Truth.assertThat(transactionData).isEqualTo(expectedTransactionData)
+    }
+
+    /**
+     * [REDACTED_TASK_KEY]: a native-value DEX swap (EVM-format tx) built from a [TransactionData] must be a
+     * [TriggerSmartContract] to the destination router — with call_value = amount and data = call
+     * data — not a plain TransferContract.
+     */
+    @Test
+    fun testSmartContractCallSwap() {
+        val callData = "a9059cbb00000000000000000000000000000000000000000000000000000000000f4240".hexToBytes()
+        val source = "TU1BRXbr6EmKmrLL4Kymv7Wp18eYFkRfAF"
+        val router = "TXXxc9NsHndfQ2z9kMKyWpYa5T3QbhKGwn"
+        val amount = Amount(BigDecimal.valueOf(5), blockchain) // native TRX (txValue)
+
+        val transactionRaw = transactionBuilder.buildForSign(
+            transaction = TransactionData.Uncompiled(
+                amount = amount,
+                fee = null,
+                sourceAddress = source,
+                destinationAddress = router,
+                extras = TronTransactionExtras(CompiledSmartContractCallData(callData)),
+            ),
+            block = tronBlock,
+        )
+
+        val contract = transactionRaw.contract.single()
+        Truth.assertThat(contract.type).isEqualTo(Transaction.Contract.ContractType.TriggerSmartContract)
+        Truth.assertThat(transactionRaw.fee_limit).isEqualTo(TronTransactionBuilder.SMART_CONTRACT_FEE_LIMIT)
+
+        val trigger = TriggerSmartContract.ADAPTER.decode(contract.parameter!!.value)
+        Truth.assertThat(trigger.owner_address).isEqualTo(source.decodeBase58(checked = true)!!.toByteString())
+        Truth.assertThat(trigger.contract_address).isEqualTo(router.decodeBase58(checked = true)!!.toByteString())
+        Truth.assertThat(trigger.call_value).isEqualTo(amount.longValue)
+        Truth.assertThat(trigger.data_).isEqualTo(callData.toByteString())
     }
 }
