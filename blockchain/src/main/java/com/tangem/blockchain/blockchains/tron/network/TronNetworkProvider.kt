@@ -30,6 +30,12 @@ interface TronNetworkProvider : NetworkProvider {
         parameter: String,
     ): Result<TronTriggerSmartContractResponse>
 
+    suspend fun contractEnergyUsageForCallData(
+        address: String,
+        contractAddress: String,
+        callDataHex: String,
+    ): Result<TronTriggerSmartContractResponse>
+
     suspend fun getTransactionInfoById(id: String): Result<String>
 
     suspend fun getChainParameters(): Result<TronChainParametersResponse>
