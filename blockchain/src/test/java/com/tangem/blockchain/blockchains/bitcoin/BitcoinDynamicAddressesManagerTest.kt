@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.bitcoin.network.UsedAddress
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.crypto.CryptoUtils
+import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import org.junit.Before
 import org.junit.Test
@@ -223,6 +224,51 @@ class BitcoinDynamicAddressesManagerTest {
 
         assertThat(chain).isEqualTo(1)
         assertThat(index).isEqualTo(2)
+    }
+
+    // ========== Signing Path Tests ==========
+
+    @Test
+    fun buildSigningPath_replacesBlockBookLabelPrefixWithWalletBranch() {
+        // BlockBook labels wpkh(xpub) children as m/84'/..., but the wallet's account is m/44'/0'/0'.
+        val basePath = DerivationPath("m/44'/0'/0'/0/0")
+        val (chain, index) = BitcoinDynamicAddressesManager.parseChainAndIndex("m/84'/0'/0'/0/2")
+
+        val signingPath = BitcoinDynamicAddressesManager.buildSigningPath(basePath, chain, index)
+
+        assertThat(signingPath).isEqualTo(DerivationPath("m/44'/0'/0'/0/2"))
+    }
+
+    @Test
+    fun buildSigningPath_baseChainAndIndex_matchesWalletBasePath() {
+        val basePath = DerivationPath("m/44'/0'/0'/0/0")
+
+        val signingPath = BitcoinDynamicAddressesManager.buildSigningPath(basePath, chain = 0, index = 0)
+
+        assertThat(signingPath).isEqualTo(basePath)
+    }
+
+    @Test
+    fun buildSigningPath_changeChain() {
+        val basePath = DerivationPath("m/44'/0'/0'/0/0")
+
+        val signingPath = BitcoinDynamicAddressesManager.buildSigningPath(basePath, chain = 1, index = 5)
+
+        assertThat(signingPath).isEqualTo(DerivationPath("m/44'/0'/0'/1/5"))
+    }
+
+    @Test
+    fun buildSigningPath_nullBasePath_returnsNull() {
+        val signingPath = BitcoinDynamicAddressesManager.buildSigningPath(null, chain = 0, index = 1)
+
+        assertThat(signingPath).isNull()
+    }
+
+    @Test
+    fun buildSigningPath_tooShortBasePath_returnsNull() {
+        val signingPath = BitcoinDynamicAddressesManager.buildSigningPath(DerivationPath("m/44'"), chain = 0, index = 1)
+
+        assertThat(signingPath).isNull()
     }
 
     companion object {
