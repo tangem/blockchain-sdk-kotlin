@@ -300,18 +300,25 @@ internal open class BitcoinWalletManager(
      */
     private fun enrichUtxosWithPublicKeys(utxos: List<BitcoinUnspentOutput>): List<BitcoinUnspentOutput> {
         val manager = dynamicAddressesManager ?: return utxos
+        val baseDerivationPath = wallet.publicKey.derivationPath?.takeIf { isXpubDerivedAtWalletAccountPath(manager) }
         return utxos.map { utxo ->
             if (utxo.publicKey != null || utxo.derivationPath == null) return@map utxo
             try {
                 val (chain, index) = BitcoinDynamicAddressesManager.parseChainAndIndex(utxo.derivationPath)
                 val derivedPubKey = manager.derivePublicKey(chain, index)
+                // BlockBook's path is a script-type label (wpkh → m/84'/…) that may not be the branch
+                // the xpub was derived at — the card must sign with the wallet's own account path.
+                val signingPath = BitcoinDynamicAddressesManager
+                    .buildSigningPath(baseDerivationPath, chain, index)
+                    ?.rawPath
+                    ?: utxo.derivationPath
                 BitcoinUnspentOutput(
                     amount = utxo.amount,
                     outputIndex = utxo.outputIndex,
                     transactionHash = utxo.transactionHash,
                     outputScript = utxo.outputScript,
                     address = utxo.address,
-                    derivationPath = utxo.derivationPath,
+                    derivationPath = signingPath,
                     publicKey = derivedPubKey,
                 )
             } catch (e: Exception) {
@@ -319,6 +326,28 @@ internal open class BitcoinWalletManager(
                 utxo
             }
         }
+    }
+
+    /**
+     * The signing-path rebuild in [enrichUtxosWithPublicKeys] assumes the xpub is the account key at
+     * the wallet's base derivation path without its chain/index nodes (how the app derives it — see
+     * `GetExtendedPublicKeyForCurrencyUseCase`): then the xpub's (0,0) child IS the wallet's own base
+     * key. If the app ever changes the xpub depth this stops holding — verify it and fall back to
+     * BlockBook labels instead of silently signing with paths from a wrong branch.
+     */
+    private fun isXpubDerivedAtWalletAccountPath(manager: BitcoinDynamicAddressesManager): Boolean {
+        val baseKeyFromXpub = runCatching {
+            manager.derivePublicKey(chain = BitcoinDynamicAddressesManager.RECEIVE_CHAIN, index = 0)
+        }.getOrNull() ?: return false
+
+        val isConsistent = baseKeyFromXpub.contentEquals(wallet.publicKey.blockchainKey.toCompressedPublicKey())
+        if (!isConsistent) {
+            Logger.logNetwork(
+                "Xpub (0,0) child does not match the wallet public key — " +
+                    "keeping BlockBook derivation paths for signing",
+            )
+        }
+        return isConsistent
     }
 
     private fun List<BitcoinAddressInfo>.merge(): BitcoinAddressInfo {
@@ -385,12 +414,18 @@ internal open class BitcoinWalletManager(
     ): Result<TransactionSendResult> {
         val utxos = transactionBuilder.unspentOutputs.orEmpty()
 
-        // Multi-address signing is only needed when inputs carry MORE THAN ONE distinct public key.
-        // When every input is derived from the same key (e.g. base-SegWit + base-Legacy from m/.../0/0),
-        // the regular single-key signer path works and avoids the Map<pubkey, signature> collapse
-        // inside MultiSignHashTask — see AND-*** for the full story.
-        val distinctPubkeys = utxos.mapNotNull { it.publicKey?.toList() }.distinct()
-        val isMultiAddressMode = isDynamicAddressesEnabled && distinctPubkeys.size >= 2
+        // Multi-address signing is needed whenever ANY input key differs from the wallet's base key.
+        // Base-only input sets keep the regular single-key signer path (base-SegWit + base-Legacy share
+        // the key from m/.../0/0), which avoids the Map<pubkey, signature> collapse inside
+        // MultiSignHashTask — see AND-*** for the full story. A SINGLE distinct non-base key must still
+        // go through multi-address signing: the single-key path signs with the base derivation and
+        // produces signatures that don't match the input's script (e.g. all funds on a change address).
+        val basePublicKey = wallet.publicKey.blockchainKey.toCompressedPublicKey().toList()
+        val hasNonBaseInput = utxos.any { utxo ->
+            val utxoPublicKey = utxo.publicKey ?: return@any false
+            utxoPublicKey.toCompressedPublicKey().toList() != basePublicKey
+        }
+        val isMultiAddressMode = isDynamicAddressesEnabled && hasNonBaseInput
 
         return if (isMultiAddressMode) {
             sendMultiAddress(transactionData, signer)
@@ -487,16 +522,20 @@ internal open class BitcoinWalletManager(
 
         return when (val signerResult = signer.multiSign(signDataList, wallet.publicKey)) {
             is CompletionResult.Success -> {
-                // MultipleSignCommand processes SignData using ArrayDeque.removeLastOrNull(), so we should reverse
-                // order manually
-                val orderedSignatures = signerResult.data.values.toList().reversed()
-
-                if (orderedSignatures.size != signatureInfos.size) {
-                    return Result.Failure(
-                        BlockchainSdkError.CustomError(
-                            "Signature count mismatch: expected ${signatureInfos.size}, got ${orderedSignatures.size}",
-                        ),
-                    )
+                // multiSign returns a Map<publicKey, signature> keyed on the per-input public-key label we passed
+                // in SignData. Resolve every input's signature by its own key rather than relying on the Map's value
+                // order: the cold signer emits signatures in reverse (MultipleSignCommand drains an ArrayDeque from
+                // the tail) while the hot signer emits them in input order, so a positional reconstruction is
+                // signer-specific and fragile. Looking each input up by its key is order-agnostic and keeps the
+                // signature/input association correct even when several inputs are spent from the same address.
+                val signaturesByPublicKey = signerResult.data
+                val orderedSignatures = signatureInfos.map { info ->
+                    signaturesByPublicKey[info.publicKey]
+                        ?: return Result.Failure(
+                            BlockchainSdkError.CustomError(
+                                "Missing signature for input with derivationPath=${info.derivationPath.rawPath}",
+                            ),
+                        )
                 }
                 Result.Success(orderedSignatures)
             }
