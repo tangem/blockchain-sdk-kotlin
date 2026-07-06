@@ -115,4 +115,23 @@ sealed interface CosmosChain {
             BigDecimal(0.04),
         )
     }
+
+    /**
+     * Gonka is a Cosmos-SDK chain with no network fees. It is not present in TrustWallet's
+     * [CoinType] registry, so we reuse [CoinType.COSMOS] (same secp256k1 scheme) — the custom
+     * "gonka" bech32 prefix is handled by [com.tangem.blockchain.blockchains.gonka.GonkaAddressService].
+     * The native denomination is "ngonka" (nano-gonka, 9 decimals). Gas price is zero, so the
+     * computed fee is always 0 ngonka and fee selection is hidden.
+     */
+    object Gonka : CosmosChain {
+        override val blockchain: Blockchain = Blockchain.Gonka
+        override val chainId: String = "gonka-mainnet"
+        override val smallestDenomination: String = "ngonka"
+        override val gasMultiplier: BigDecimal = BigDecimal(2)
+        override val feeMultiplier: BigDecimal = BigDecimal.ONE
+        override val coin: CoinType = CoinType.COSMOS
+        override val allowsFeeSelection: FeeSelectionState = FeeSelectionState.Forbids
+
+        override fun gasPrices(amountType: AmountType): List<BigDecimal> = listOf(BigDecimal.ZERO)
+    }
 }
