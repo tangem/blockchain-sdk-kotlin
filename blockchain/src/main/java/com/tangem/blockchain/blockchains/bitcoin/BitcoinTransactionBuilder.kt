@@ -294,7 +294,10 @@ open class BitcoinTransactionBuilder(
 
             signatureInfos[index] = MultiAddressSignatureInfo(
                 hash = hash,
-                publicKey = inputPublicKey,
+                // The signer round-trips this value as the key of its Map<publicKey, signature>, and that Map keys
+                // ByteArray by reference. Copy per input so two UTXOs spent from the same address (identical key
+                // bytes) never share one instance and collapse into a single Map entry, which would drop a signature.
+                publicKey = inputPublicKey.copyOf(),
                 derivationPath = derivationPath,
             )
         }
