@@ -13,6 +13,7 @@ import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.ethereum.EthereumDerivationData
 import com.tangem.blockchain.blockchains.factorn.Fact0rnAddressService
+import com.tangem.blockchain.blockchains.gonka.GonkaAddressService
 import com.tangem.blockchain.blockchains.hedera.HederaAddressService
 import com.tangem.blockchain.blockchains.kaspa.KaspaAddressService
 import com.tangem.blockchain.blockchains.koinos.KoinosAddressService
@@ -75,6 +76,7 @@ enum class Blockchain(
     EthereumClassicTestnet("ETC/test", "ETC", "Ethereum Classic Testnet"),
     Fantom("FTM", "FTM", "Fantom Opera"),
     FantomTestnet("FTM/test", "FTM", "Fantom Testnet"),
+    Gonka("gonka", "GNK", "Gonka"),
     Litecoin("LTC", "LTC", "Litecoin"),
     Near("NEAR", "NEAR", "NEAR Protocol"),
     NearTestnet("NEAR/test", "NEAR", "NEAR Protocol Testnet"),
@@ -301,6 +303,7 @@ enum class Blockchain(
         Bittensor,
         Sui, SuiTestnet,
         Casper, CasperTestnet,
+        Gonka,
         -> 9
 
         Polkadot, Joystream -> 10
@@ -513,6 +516,7 @@ enum class Blockchain(
             Solana, SolanaTestnet -> SolanaAddressService()
             Tezos -> TezosAddressService()
             Sui, SuiTestnet -> SuiAddressService(this)
+            Gonka -> GonkaAddressService()
             Cosmos, CosmosTestnet,
             TerraV1,
             TerraV2,
@@ -679,6 +683,7 @@ enum class Blockchain(
             Canxium,
             Clore,
             ArbitrumNova,
+            Gonka,
             -> null
         }
     }
@@ -721,6 +726,7 @@ enum class Blockchain(
             Kaspa, KaspaTestnet,
             Ravencoin, RavencoinTestnet,
             Cosmos, CosmosTestnet,
+            Gonka,
             TerraV1, TerraV2,
             Cronos,
             OctaSpace, OctaSpaceTestnet,
