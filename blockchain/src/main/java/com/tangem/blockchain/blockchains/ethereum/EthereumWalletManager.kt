@@ -14,6 +14,7 @@ import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxIn
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionValidator
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.datastorage.PendingTransaction
 import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -26,18 +27,19 @@ import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
-import com.tangem.blockchain.tokenbalance.DefaultTokenBalanceProvider
-import com.tangem.blockchain.tokenbalance.TokenBalanceProvider
 import com.tangem.blockchain.pendingtransactions.DefaultPendingTransactionsProvider
 import com.tangem.blockchain.pendingtransactions.PendingTransactionStatus
 import com.tangem.blockchain.pendingtransactions.PendingTransactionsProvider
+import com.tangem.blockchain.tokenbalance.DefaultTokenBalanceProvider
+import com.tangem.blockchain.tokenbalance.TokenBalanceProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
 import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.supervisorScope
 import org.kethereum.extensions.toHexString
 import org.kethereum.keccakshortcut.keccak
 import org.komputing.khex.extensions.toHexString
@@ -153,7 +155,7 @@ open class EthereumWalletManager(
 
     internal fun updatePendingTransactions(
         pendingTransactionUpdate: Map<String, PendingTransactionStatus>,
-        pendingTransactions: List<String>,
+        pendingTransactions: List<PendingTransaction>,
         txCount: Long,
         pendingTxCount: Long,
     ) {
@@ -178,9 +180,9 @@ open class EthereumWalletManager(
         } else if (pendingBlockchainCount <= pendingTransactions.size) {
             wallet.recentTransactions.removeAll { it.hash == null }
 
-            pendingTransactions.forEach { txId ->
-                if (wallet.recentTransactions.none { it.hash == txId }) {
-                    wallet.addPendingTransactionDummy(txId)
+            pendingTransactions.forEach { tx ->
+                if (wallet.recentTransactions.none { it.hash == tx.transactionId }) {
+                    wallet.addPendingTransactionDummy(tx)
                 }
             }
         }
@@ -203,8 +205,7 @@ open class EthereumWalletManager(
                 val txHash = transactionToSend.keccak().toHexString()
                 wallet.addOutgoingTransaction(transactionData = transactionData, txHash = txHash)
 
-                val contractAddress = (transactionData as? TransactionData.Uncompiled)?.contractAddress
-                pendingTransactionsProvider.addPendingTransaction(txHash, networkProvider, contractAddress)
+                pendingTransactionsProvider.addPendingTransaction(txHash, networkProvider, transactionData)
 
                 Success(TransactionSendResult(txHash))
             }
@@ -275,8 +276,7 @@ open class EthereumWalletManager(
                     val txHash = transactionToSend.keccak().toHexString()
                     wallet.addOutgoingTransaction(transactionData = data, txHash = txHash)
 
-                    val contractAddress = data.contractAddress
-                    pendingTransactionsProvider.addPendingTransaction(txHash, networkProvider, contractAddress)
+                    pendingTransactionsProvider.addPendingTransaction(txHash, networkProvider, data)
 
                     Success(TransactionSendResult(txHash))
                 }
@@ -346,15 +346,53 @@ open class EthereumWalletManager(
         )
     }
 
+    suspend fun estimateFeeWithOverride(
+        transactionData: TransactionData,
+        spenderAddress: String,
+        isSimulate: Boolean,
+    ): Result<TransactionFee> {
+        return if (!DepsContainer.blockchainFeatureToggles.isStateOverrideGasEstimateEnabled) {
+            Result.Failure(
+                BlockchainSdkError.CustomError(
+                    "State-override gas estimation is not supported on this blockchain",
+                ),
+            )
+        } else {
+            val uncompiledTransaction = transactionData.requireUncompiled()
+            val extra = uncompiledTransaction.extras as? EthereumTransactionExtras
+            getFeeInternal(
+                amount = uncompiledTransaction.amount,
+                destination = uncompiledTransaction.destinationAddress,
+                spenderAddress = spenderAddress,
+                callData = extra?.callData,
+                isSimulate = isSimulate,
+            )
+        }
+    }
+
     protected open suspend fun getFeeInternal(
         amount: Amount,
         destination: String,
         callData: SmartContractCallData?,
+        isSimulate: Boolean = false,
+        spenderAddress: String? = null,
     ): Result<TransactionFee> {
         return if (wallet.blockchain.isSupportEIP1559) {
-            getEIP1559Fee(amount, destination, callData)
+            getEIP1559Fee(
+                amount = amount,
+                destination = destination,
+                spenderAddress = spenderAddress,
+                callData = callData,
+                isSimulate = isSimulate,
+            )
         } else {
-            getLegacyFee(amount, destination, callData)
+            getLegacyFee(
+                amount = amount,
+                destination = destination,
+                callData = callData,
+                spenderAddress = spenderAddress,
+                isSimulate = isSimulate,
+            )
         }
     }
 
@@ -529,15 +567,47 @@ open class EthereumWalletManager(
         return networkProvider.getGasLimit(to, from, value, data)
     }
 
+    suspend fun getGasLimitWithOverride(
+        destination: String,
+        spenderAddress: String,
+        amountType: AmountType,
+        callData: SmartContractCallData,
+    ): Result<BigInteger> {
+        if (amountType !is AmountType.Token) {
+            return Result.Failure(
+                BlockchainSdkError.CustomError(
+                    "State-override gas estimation not available to this amount type: $amountType",
+                ),
+            )
+        }
+        return networkProvider.getGasLimitWithAllowanceOverride(
+            token = amountType.token,
+            destinationAddress = destination,
+            spenderAddress = spenderAddress,
+            ownerAddress = wallet.address,
+            callData = callData,
+        )
+    }
+
     private suspend fun getEIP1559Fee(
         amount: Amount,
         destination: String,
         callData: SmartContractCallData?,
+        spenderAddress: String?,
+        isSimulate: Boolean,
     ): Result<TransactionFee.Choosable> {
         return try {
-            coroutineScope {
+            supervisorScope {
                 val gasLimitResponsesDeferred = async {
-                    if (callData != null) {
+                    val isSimulateWithOverride = isSimulate && spenderAddress != null
+                    if (isSimulateWithOverride && callData != null && amount.type is AmountType.Token) {
+                        getGasLimitWithOverride(
+                            destination = destination,
+                            spenderAddress = spenderAddress,
+                            amountType = amount.type,
+                            callData = callData,
+                        )
+                    } else if (callData != null) {
                         getGasLimit(amount, destination, callData)
                     } else {
                         getGasLimit(amount, destination)
@@ -547,11 +617,11 @@ open class EthereumWalletManager(
                 val feeHistoryResponseDeferred = async { networkProvider.getFeeHistory() }
 
                 val gLimit = gasLimitResponsesDeferred.await().successOr {
-                    return@coroutineScope Result.Failure(it.error)
+                    return@supervisorScope Result.Failure(it.error)
                 }
 
                 val feeHistory = feeHistoryResponseDeferred.await().successOr {
-                    return@coroutineScope Result.Failure(it.error)
+                    return@supervisorScope Result.Failure(it.error)
                 }
 
                 val fees = feesCalculator.calculateEip1559Fees(
@@ -562,6 +632,8 @@ open class EthereumWalletManager(
 
                 Result.Success(fees)
             }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
@@ -571,11 +643,21 @@ open class EthereumWalletManager(
         amount: Amount,
         destination: String,
         callData: SmartContractCallData?,
+        spenderAddress: String?,
+        isSimulate: Boolean,
     ): Result<TransactionFee.Choosable> {
         return try {
-            coroutineScope {
+            supervisorScope {
                 val gasLimitResponsesDeferred = async {
-                    if (callData != null) {
+                    val isSimulateWithOverride = isSimulate && spenderAddress != null
+                    if (isSimulateWithOverride && callData != null && amount.type is AmountType.Token) {
+                        getGasLimitWithOverride(
+                            destination = destination,
+                            spenderAddress = spenderAddress,
+                            amountType = amount.type,
+                            callData = callData,
+                        )
+                    } else if (callData != null) {
                         getGasLimit(amount, destination, callData)
                     } else {
                         getGasLimit(amount, destination)
@@ -584,10 +666,10 @@ open class EthereumWalletManager(
                 val gasPriceResponsesDeferred = async { getGasPrice() }
 
                 val gLimit = gasLimitResponsesDeferred.await().successOr {
-                    return@coroutineScope Result.Failure(it.error)
+                    return@supervisorScope Result.Failure(it.error)
                 }
                 val gPrice = gasPriceResponsesDeferred.await().successOr {
-                    return@coroutineScope Result.Failure(it.error)
+                    return@supervisorScope Result.Failure(it.error)
                 }
 
                 val fees = feesCalculator.calculateFees(
@@ -598,6 +680,8 @@ open class EthereumWalletManager(
 
                 Result.Success(fees)
             }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
@@ -605,14 +689,11 @@ open class EthereumWalletManager(
 
     override suspend fun getPendingTransactions(contractAddress: String?): List<String> {
         return pendingTransactionsProvider.getPendingTransactions(contractAddress)
+            .map { tx -> tx.transactionId }
     }
 
-    override suspend fun addPendingGaslessTransaction(
-        transactionData: TransactionData,
-        txHash: String,
-        contractAddress: String?,
-    ) {
+    override suspend fun addPendingGaslessTransaction(transactionData: TransactionData, txHash: String) {
         wallet.addOutgoingTransaction(transactionData, txHash)
-        pendingTransactionsProvider.addPendingGaslessTransaction(txHash, contractAddress)
+        pendingTransactionsProvider.addPendingGaslessTransaction(txHash, transactionData)
     }
 }
