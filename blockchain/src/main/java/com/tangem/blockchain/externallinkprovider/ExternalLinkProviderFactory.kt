@@ -21,6 +21,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.BitcoinCash, Blockchain.BitcoinCashTestnet -> BitcoinCashExternalLinkProvider(isTestnet)
             Blockchain.Cardano -> CardanoExternalLinkProvider()
             Blockchain.Cosmos, Blockchain.CosmosTestnet -> CosmosExternalLinkProvider(isTestnet)
+            Blockchain.Gonka -> GonkaExternalLinkProvider()
             Blockchain.Dogecoin -> DogecoinExternalLinkProvider()
             Blockchain.Ducatus -> DucatusExternalLinkProvider()
             Blockchain.Ethereum, Blockchain.EthereumTestnet -> EthereumExternalLinkProvider(isTestnet)

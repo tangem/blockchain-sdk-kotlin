@@ -5,7 +5,9 @@ import com.tangem.blockchain.blockchains.ethereum.eip1559.isSupportEIP1559
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -29,11 +31,25 @@ class TelosWalletManager(
         amount: Amount,
         destination: String,
         callData: SmartContractCallData?,
+        isSimulate: Boolean,
+        spenderAddress: String?,
     ): Result<TransactionFee> {
         return if (wallet.blockchain.isSupportEIP1559) {
-            getEIP1559Fee(amount, destination, callData)
+            getEIP1559Fee(
+                amount = amount,
+                destination = destination,
+                callData = callData,
+                spenderAddress = spenderAddress,
+                isSimulate = isSimulate,
+            )
         } else {
-            getLegacyFee(amount, destination, callData)
+            getLegacyFee(
+                amount = amount,
+                destination = destination,
+                callData = callData,
+                spenderAddress = spenderAddress,
+                isSimulate = isSimulate,
+            )
         }
     }
 
@@ -41,11 +57,22 @@ class TelosWalletManager(
         amount: Amount,
         destination: String,
         callData: SmartContractCallData?,
+        spenderAddress: String?,
+        isSimulate: Boolean,
     ): Result<TransactionFee> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async {
-                    if (callData != null) {
+                    val isSimulateWithOverride = isSimulate && spenderAddress != null
+                    if (isSimulateWithOverride && callData != null && amount.type is AmountType.Token) {
+                        Logger.logNetwork("ETH: start gas estimate")
+                        getGasLimitWithOverride(
+                            destination = destination,
+                            spenderAddress = spenderAddress,
+                            amountType = amount.type,
+                            callData = callData,
+                        )
+                    } else if (callData != null) {
                         getGasLimit(amount, destination, callData)
                     } else {
                         getGasLimit(amount, destination)
@@ -79,11 +106,22 @@ class TelosWalletManager(
         amount: Amount,
         destination: String,
         callData: SmartContractCallData?,
+        spenderAddress: String?,
+        isSimulate: Boolean,
     ): Result<TransactionFee> {
         return try {
             coroutineScope {
                 val gasLimitResponsesDeferred = async {
-                    if (callData != null) {
+                    val isSimulateWithOverride = isSimulate && spenderAddress != null
+                    if (isSimulateWithOverride && callData != null && amount.type is AmountType.Token) {
+                        Logger.logNetwork("ETH: start gas estimate")
+                        getGasLimitWithOverride(
+                            destination = destination,
+                            spenderAddress = spenderAddress,
+                            amountType = amount.type,
+                            callData = callData,
+                        )
+                    } else if (callData != null) {
                         getGasLimit(amount, destination, callData)
                     } else {
                         getGasLimit(amount, destination)
