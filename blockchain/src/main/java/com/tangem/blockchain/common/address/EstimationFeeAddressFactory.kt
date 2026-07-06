@@ -123,6 +123,8 @@ class EstimationFeeAddressFactory {
             // Cosmos-like
             Blockchain.Cosmos, Blockchain.CosmosTestnet ->
                 "cosmos1lhjvds604fvac32j4eygpr820lyc82dlyq70m5"
+            Blockchain.Gonka ->
+                "gonka1an29dzc6a8z4deqwy8e5jnux3gnazlfcmc45ua"
             Blockchain.TerraV1,
             Blockchain.TerraV2,
             -> "terra1pfamr0t2daet92grdvxqex235q58qrx6xclldg"

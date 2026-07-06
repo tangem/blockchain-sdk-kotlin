@@ -15,8 +15,13 @@ import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.transaction.Fee
+import com.tangem.blockchain.common.pagination.Page
+import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.transactionhistory.TransactionHistoryState
+import com.tangem.blockchain.transactionhistory.blockchains.bitcoin.BitcoinTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import com.tangem.common.CompletionResult
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.hdWallet.DerivationNode
@@ -531,6 +536,79 @@ class BitcoinWalletManagerXpubTest {
     }
 
     // ========== Helpers ==========
+
+    // ========== tx-history routing override tests ==========
+
+    @Test
+    fun getTransactionsHistory_dynamicEnabled_routesToXpubPath() = runTest {
+        val historyProvider = mockk<BitcoinTransactionHistoryProvider>()
+        coEvery { historyProvider.getTransactionsHistoryByXpub(any(), any()) } returns
+            Result.Success(PaginationWrapper(Page.LastPage, emptyList()))
+        val wm = createWalletManager(Blockchain.Bitcoin, historyProvider)
+        wm.enableDynamicAddresses(testXpub)
+        val request = txRequest(Page.Initial)
+
+        wm.getTransactionsHistory(request)
+
+        coVerify(exactly = 1) { historyProvider.getTransactionsHistoryByXpub("wpkh($testXpub)", request) }
+        coVerify(exactly = 0) { historyProvider.getTransactionsHistory(any()) }
+    }
+
+    @Test
+    fun getTransactionsHistory_dynamicDisabled_routesToAddressPath() = runTest {
+        val historyProvider = mockk<BitcoinTransactionHistoryProvider>()
+        coEvery { historyProvider.getTransactionsHistory(any()) } returns
+            Result.Success(PaginationWrapper(Page.LastPage, emptyList()))
+        val wm = createWalletManager(Blockchain.Bitcoin, historyProvider)
+        val request = txRequest(Page.Initial)
+
+        wm.getTransactionsHistory(request)
+
+        coVerify(exactly = 1) { historyProvider.getTransactionsHistory(request) }
+        coVerify(exactly = 0) { historyProvider.getTransactionsHistoryByXpub(any(), any()) }
+    }
+
+    @Test
+    fun getTransactionHistoryState_dynamicEnabled_routesToXpubPath() = runTest {
+        val historyProvider = mockk<BitcoinTransactionHistoryProvider>()
+        coEvery { historyProvider.getTransactionHistoryStateByXpub(any()) } returns
+            TransactionHistoryState.Success.Empty
+        val wm = createWalletManager(Blockchain.Bitcoin, historyProvider)
+        wm.enableDynamicAddresses(testXpub)
+
+        wm.getTransactionHistoryState("addr", TransactionHistoryRequest.FilterType.Coin)
+
+        coVerify(exactly = 1) { historyProvider.getTransactionHistoryStateByXpub("wpkh($testXpub)") }
+        coVerify(exactly = 0) { historyProvider.getTransactionHistoryState(any(), any()) }
+    }
+
+    private fun txRequest(page: Page) = TransactionHistoryRequest(
+        address = "addr",
+        decimals = 8,
+        page = page,
+        pageSize = 20,
+        filterType = TransactionHistoryRequest.FilterType.Coin,
+    )
+
+    private fun createWalletManager(
+        blockchain: Blockchain,
+        historyProvider: BitcoinTransactionHistoryProvider,
+    ): BitcoinWalletManager {
+        val addresses = BitcoinAddressService(blockchain).makeAddresses(testAccountXpub.publicKey)
+        val wallet = Wallet(
+            blockchain = blockchain,
+            addresses = addresses,
+            publicKey = Wallet.PublicKey(testAccountXpub.publicKey, null),
+            tokens = emptySet(),
+        )
+        return BitcoinWalletManager(
+            wallet = wallet,
+            transactionHistoryProvider = historyProvider,
+            transactionBuilder = BitcoinTransactionBuilder(testAccountXpub.publicKey, blockchain, addresses),
+            networkProvider = mockk(relaxed = true),
+            feesCalculator = BitcoinFeesCalculator(blockchain),
+        )
+    }
 
     private fun createWalletManager(blockchain: Blockchain): BitcoinWalletManager {
         val addresses = BitcoinAddressService(blockchain).makeAddresses(testAccountXpub.publicKey)
