@@ -303,7 +303,7 @@ internal class TronWalletManager(
             }
 
             is Result.Success -> {
-                // [REDACTED_TASK_KEY]: a native-value tx that carries call data is a DEX swap in EVM format —
+                // A native-value tx that carries call data is a DEX swap in EVM format —
                 // build it via the TransactionData overload (smart-contract call). Regular coin/token
                 // transfers keep the original decomposed overload untouched.
                 val transactionToSign = if (amount.type == AmountType.Coin && extras != null) {
@@ -442,10 +442,14 @@ internal class TronWalletManager(
         destination: String,
         callData: SmartContractCallData?,
     ): Result<TronEnergyFeeData> {
-        // [REDACTED_TASK_KEY]: a native-value contract call (DEX swap in EVM format) triggers the destination
+        // A native-value contract call (DEX swap in EVM format) triggers the destination
         // router with raw call data — estimate its energy from that call data, not the token path.
         if (amount.type == AmountType.Coin && callData != null) {
-            return getSwapEnergyFeeParameters(contractAddress = destination, callData = callData)
+            return getSwapEnergyFeeParameters(
+                contractAddress = destination,
+                callData = callData,
+                callValue = amount.longValue,
+            )
         }
         val token = when (amount.type) {
             AmountType.Coin -> return Result.Success(TronEnergyFeeData(energyFee = 0, sunPerEnergyUnit = 0))
@@ -503,13 +507,15 @@ internal class TronWalletManager(
     }
 
     /**
-     * [REDACTED_TASK_KEY]: estimates energy for a native-value contract call (DEX swap) by simulating the raw
-     * [callData] against the destination [contractAddress] (the router), then applies the same
-     * conservative dynamic-increase bump as the token path.
+     * Estimates energy for a native-value contract call (DEX swap) by simulating the raw
+     * [callData] against the destination [contractAddress] (the router) with the native [callValue]
+     * the real transaction sends, then applies the same conservative dynamic-increase bump as the
+     * token path.
      */
     private suspend fun getSwapEnergyFeeParameters(
         contractAddress: String,
         callData: SmartContractCallData,
+        callValue: Long,
     ): Result<TronEnergyFeeData> {
         return coroutineScope {
             val energyUseDef = async {
@@ -517,6 +523,7 @@ internal class TronWalletManager(
                     address = wallet.address,
                     contractAddress = contractAddress,
                     callDataHex = callData.data.toHexString(),
+                    callValue = callValue,
                 )
             }
             val chainParametersDef = async { networkService.getChainParameters() }

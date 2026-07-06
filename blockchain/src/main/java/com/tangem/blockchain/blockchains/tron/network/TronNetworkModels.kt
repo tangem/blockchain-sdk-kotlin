@@ -179,6 +179,9 @@ sealed class TronTriggerSmartContractRequest {
         @Json(name = "data")
         val data: String,
 
+        @Json(name = "call_value")
+        val callValue: Long,
+
         @Json(name = "fee_limit")
         override val feeLimit: Long? = null,
 

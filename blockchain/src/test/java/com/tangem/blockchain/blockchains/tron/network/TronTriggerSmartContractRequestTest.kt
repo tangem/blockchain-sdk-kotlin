@@ -5,7 +5,7 @@ import com.squareup.moshi.Moshi
 import org.junit.Test
 
 /**
- * [REDACTED_TASK_KEY]: the two contract-call request shapes must serialize to their own wire formats and never
+ * The two contract-call request shapes must serialize to their own wire formats and never
  * leak the other's keys:
  * - [TronTriggerSmartContractRequest.Function] → `function_selector` + `parameter`;
  * - [TronTriggerSmartContractRequest.CallData] → a raw `data` field.
@@ -43,11 +43,13 @@ class TronTriggerSmartContractRequestTest {
                 ownerAddress = "TU1BRXbr6EmKmrLL4Kymv7Wp18eYFkRfAF",
                 contractAddress = "TXXxc9NsHndfQ2z9kMKyWpYa5T3QbhKGwn",
                 data = callDataHex,
+                callValue = 1_000_000L,
                 visible = true,
             ),
         )
 
         assertThat(json).contains("\"data\":\"$callDataHex\"")
+        assertThat(json).contains("\"call_value\":1000000")
         assertThat(json).doesNotContain("function_selector")
         assertThat(json).doesNotContain("parameter")
     }

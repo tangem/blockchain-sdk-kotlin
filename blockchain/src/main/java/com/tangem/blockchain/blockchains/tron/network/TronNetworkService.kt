@@ -102,9 +102,15 @@ class TronNetworkService(
         address: String,
         contractAddress: String,
         callDataHex: String,
+        callValue: Long,
     ): Result<Long> {
         val result = multiProvider.performRequest {
-            contractEnergyUsageForCallData(address, contractAddress, callDataHex)
+            contractEnergyUsageForCallData(
+                address = address,
+                contractAddress = contractAddress,
+                callDataHex = callDataHex,
+                callValue = callValue,
+            )
         }
         return when (result) {
             is Result.Failure -> Result.Failure(result.error)
