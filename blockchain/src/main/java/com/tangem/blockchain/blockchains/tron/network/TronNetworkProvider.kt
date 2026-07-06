@@ -34,6 +34,7 @@ interface TronNetworkProvider : NetworkProvider {
         address: String,
         contractAddress: String,
         callDataHex: String,
+        callValue: Long,
     ): Result<TronTriggerSmartContractResponse>
 
     suspend fun getTransactionInfoById(id: String): Result<String>
