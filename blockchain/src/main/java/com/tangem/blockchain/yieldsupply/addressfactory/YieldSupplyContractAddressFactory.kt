@@ -29,6 +29,8 @@ internal class YieldSupplyContractAddressFactory(
         return YieldSupplyContractAddresses(
             factoryContractAddress = aaveV3YieldSupplyContractAddressFactory.getFactoryAddress(),
             processorContractAddress = aaveV3YieldSupplyContractAddressFactory.getProcessorAddress(),
+            swapExecutionRegistryAddress = aaveV3YieldSupplyContractAddressFactory.getSwapExecutionRegistryAddress(),
+            latestImplementationAddress = aaveV3YieldSupplyContractAddressFactory.getLatestImplementationAddress(),
             providerType = YieldSupplyProviderType.AaveV3,
         )
     }

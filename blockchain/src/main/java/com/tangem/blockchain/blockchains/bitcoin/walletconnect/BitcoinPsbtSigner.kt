@@ -156,7 +156,7 @@ internal class BitcoinPsbtSigner(
 
         val rawTx = Transaction.write(transaction).toHexString()
         return when (val result = networkProvider.sendTransaction(rawTx)) {
-            is SimpleResult.Success -> Result.Success(transaction.txid.value.reversed().toHex())
+            is SimpleResult.Success -> Result.Success(transaction.txid.value.toHex())
             is SimpleResult.Failure -> Result.Failure(result.error)
         }
     }

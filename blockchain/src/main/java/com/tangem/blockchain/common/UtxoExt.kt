@@ -38,6 +38,7 @@ val Blockchain.isUTXO: Boolean
         Cardano,
         Cosmos,
         CosmosTestnet,
+        Gonka,
         Ethereum,
         EthereumTestnet,
         EthereumClassic,
