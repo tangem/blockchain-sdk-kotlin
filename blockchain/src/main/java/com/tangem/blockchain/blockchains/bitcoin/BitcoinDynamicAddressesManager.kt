@@ -12,10 +12,15 @@ import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 /**
  * Manages HD address derivation for UTXO blockchains with Dynamic Addresses (multi-address) support.
  *
- * Given an account-level XPUB (e.g., at m/84'/0'/0' for BTC), derives child addresses
+ * Given an account-level XPUB (the wallet's base derivation path without the chain/index nodes —
+ * m/44'/0'/0' on Tangem cards regardless of address type), derives child addresses
  * using BIP32 non-hardened derivation:
- * - Receive addresses: chain=0, e.g., m/84'/0'/0'/0/0, m/84'/0'/0'/0/1, ...
- * - Change addresses:  chain=1, e.g., m/84'/0'/0'/1/0, m/84'/0'/0'/1/1, ...
+ * - Receive addresses: chain=0 (…/0/0, …/0/1, ...)
+ * - Change addresses:  chain=1 (…/1/0, …/1/1, ...)
+ *
+ * Note: BlockBook path labels in descriptor responses are script-type based (wpkh → m/84'/…,
+ * pkh → m/44'/…) and do NOT have to match the branch the XPUB was actually derived at —
+ * only their chain/index components are meaningful. See [buildSigningPath].
  *
  * Supports gap-aware "first unused" address finding per BIP44 standard.
  */
@@ -124,6 +129,7 @@ class BitcoinDynamicAddressesManager(
         const val RECEIVE_CHAIN = 0
         const val CHANGE_CHAIN = 1
         private const val MIN_PATH_SEGMENTS = 3
+        private const val CHAIN_AND_INDEX_NODES = 2
 
         /**
          * Parse BIP44/84 derivation path to extract chain and index.
@@ -138,6 +144,31 @@ class BitcoinDynamicAddressesManager(
             val index = nodes.last().index.toInt()
 
             return Pair(chain, index)
+        }
+
+        /**
+         * Build the derivation path an xpub-derived UTXO must be SIGNED with.
+         *
+         * The XPUB is derived at the wallet's account path — [baseDerivationPath] without its last
+         * chain/index nodes (mirrors `GetExtendedPublicKeyForCurrencyUseCase` on the app side).
+         * BlockBook's `path` labels come from the descriptor's script type (wpkh → m/84'/…) and may
+         * point at a branch the card never derived the xpub from; signing with such a label makes
+         * the card use a key that does not match the per-input public key derived from the xpub.
+         * Only chain/index may be taken from the label; the prefix must be the wallet's own.
+         *
+         * @return the signing path, or null when [baseDerivationPath] is absent or has no
+         * chain/index nodes to replace.
+         */
+        fun buildSigningPath(baseDerivationPath: DerivationPath?, chain: Int, index: Int): DerivationPath? {
+            val baseNodes = baseDerivationPath?.nodes ?: return null
+            if (baseNodes.size < CHAIN_AND_INDEX_NODES) return null
+
+            val accountNodes = baseNodes.dropLast(CHAIN_AND_INDEX_NODES)
+            return DerivationPath(
+                path = accountNodes +
+                    DerivationNode.NonHardened(chain.toLong()) +
+                    DerivationNode.NonHardened(index.toLong()),
+            )
         }
     }
 }
