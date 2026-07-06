@@ -78,6 +78,19 @@ object YieldSupplyContractCallDataProviderFactory {
     )
 
     /**
+     * Provides call data for partially withdrawing [amount] of a yield token from the user's yield module.
+     *
+     * @param tokenContractAddress The address of the token contract.
+     * @param amount The amount to withdraw.
+     * @return [SmartContractCallData] for `withdraw(address,uint256)`.
+     */
+    fun getWithdrawCallData(tokenContractAddress: String, amount: Amount): SmartContractCallData =
+        EthereumYieldSupplyWithdrawCallData(
+            tokenContractAddress = tokenContractAddress,
+            amount = amount,
+        )
+
+    /**
      * Wraps the given call data with an upgrade-and-call transaction if the module version is outdated.
      *
      * @param versionStatus The current version status of the yield module.
