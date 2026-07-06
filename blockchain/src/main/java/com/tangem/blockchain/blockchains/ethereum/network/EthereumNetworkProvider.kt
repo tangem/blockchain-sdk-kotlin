@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.blockchair.BlockchairToken
 import java.math.BigDecimal
@@ -16,6 +17,28 @@ interface EthereumNetworkProvider : NetworkProvider {
     suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>>
     suspend fun getGasPrice(): Result<BigInteger>
     suspend fun getGasLimit(to: String, from: String, value: String?, data: String?): Result<BigInteger>
+
+    /**
+     * Estimate gas for an ERC20 `transferFrom` call where the spender currently has no
+     * allowance, by overriding the token's `_allowances[owner][spender]` storage slot
+     * to `uint256.max` in the simulation (JSON-RPC `stateDiff`).
+     *
+     * Default implementation returns a feature-disabled failure so existing concrete
+     * providers and tests are not forced to implement state-override logic. The EVM
+     * shared service overrides this method.
+     */
+    suspend fun getGasLimitWithAllowanceOverride(
+        token: Token,
+        ownerAddress: String,
+        destinationAddress: String,
+        spenderAddress: String,
+        callData: SmartContractCallData,
+    ): Result<BigInteger> = Result.Failure(
+        BlockchainSdkError.CustomError(
+            "State-override gas estimation is not supported by this network provider",
+        ),
+    )
+
     suspend fun getFeeHistory(): Result<EthereumFeeHistory>
     suspend fun getTokensBalance(address: String, tokens: Set<Token>): Result<List<Amount>>
 

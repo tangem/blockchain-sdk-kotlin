@@ -1,6 +1,8 @@
 package com.tangem.blockchain.pendingtransactions
 
 import com.tangem.blockchain.common.NetworkProvider
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.datastorage.PendingTransaction
 
 /**
  * Interface defining a provider for pending transactions management.
@@ -18,7 +20,7 @@ interface PendingTransactionsProvider {
     suspend fun addPendingTransaction(
         transactionId: String,
         networkProvider: NetworkProvider,
-        contractAddress: String? = null,
+        transactionData: TransactionData,
     )
 
     /**
@@ -27,7 +29,7 @@ interface PendingTransactionsProvider {
      * @param transactionId Transaction hash (hex string)
      * @param contractAddress Optional contract address (for token transactions)
      */
-    suspend fun addPendingGaslessTransaction(transactionId: String, contractAddress: String? = null)
+    suspend fun addPendingGaslessTransaction(transactionId: String, transactionData: TransactionData)
 
     /**
      * Removes a pending transaction from storage.
@@ -42,7 +44,7 @@ interface PendingTransactionsProvider {
      * @param contractAddress Optional contract address to filter by
      * @return List of pending transaction IDs matching the criteria
      */
-    suspend fun getPendingTransactions(contractAddress: String? = null): List<String>
+    suspend fun getPendingTransactions(contractAddress: String? = null): List<PendingTransaction>
 
     /**
      * Checks all pending transactions for the wallet and updates their status.
