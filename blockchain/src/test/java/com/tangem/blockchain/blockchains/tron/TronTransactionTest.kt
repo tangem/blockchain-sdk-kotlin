@@ -101,7 +101,7 @@ class TronTransactionTest {
     }
 
     /**
-     * [REDACTED_TASK_KEY]: a native-value DEX swap (EVM-format tx) built from a [TransactionData] must be a
+     * A native-value DEX swap (EVM-format tx) built from a [TransactionData] must be a
      * [TriggerSmartContract] to the destination router — with call_value = amount and data = call
      * data — not a plain TransferContract.
      */

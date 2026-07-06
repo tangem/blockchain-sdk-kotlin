@@ -28,7 +28,7 @@ import org.junit.Test
 import java.math.BigDecimal
 
 /**
- * [REDACTED_TASK_KEY]: a native-value DEX swap (Coin + call data) must have its energy estimated from the raw
+ * A native-value DEX swap (Coin + call data) must have its energy estimated from the raw
  * call data against the router (the new `getMaxEnergyUseForCallData` path), while a plain coin
  * transfer must keep the original behavior — no contract energy at all.
  */
@@ -100,7 +100,14 @@ internal class TronWalletManagerFeeTest {
         val callData = CompiledSmartContractCallData(
             "a9059cbb00000000000000000000000000000000000000000000000000000000000f4240".hexToBytes(),
         )
-        coEvery { networkService.getMaxEnergyUseForCallData(any(), any(), any()) } returns Result.Success(1000L)
+        coEvery {
+            networkService.getMaxEnergyUseForCallData(
+                address = any(),
+                contractAddress = any(),
+                callDataHex = any(),
+                callValue = any(),
+            )
+        } returns Result.Success(1000L)
 
         // Act
         val result = walletManager.getFee(
@@ -113,7 +120,12 @@ internal class TronWalletManagerFeeTest {
         val fee = ((result as Result.Success).data as TransactionFee.Single).normal as Fee.Tron
         assertThat(fee.feeEnergy).isEqualTo(1000L)
         coVerify(exactly = 1) {
-            networkService.getMaxEnergyUseForCallData(walletAddress, router, callData.data.toHexString())
+            networkService.getMaxEnergyUseForCallData(
+                address = walletAddress,
+                contractAddress = router,
+                callDataHex = callData.data.toHexString(),
+                callValue = 5_000_000L,
+            )
         }
     }
 
@@ -129,6 +141,13 @@ internal class TronWalletManagerFeeTest {
         // Assert
         val fee = ((result as Result.Success).data as TransactionFee.Single).normal as Fee.Tron
         assertThat(fee.feeEnergy).isEqualTo(0L)
-        coVerify(exactly = 0) { networkService.getMaxEnergyUseForCallData(any(), any(), any()) }
+        coVerify(exactly = 0) {
+            networkService.getMaxEnergyUseForCallData(
+                address = any(),
+                contractAddress = any(),
+                callDataHex = any(),
+                callValue = any(),
+            )
+        }
     }
 }

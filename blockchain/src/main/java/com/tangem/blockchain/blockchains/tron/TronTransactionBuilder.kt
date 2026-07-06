@@ -37,7 +37,7 @@ class TronTransactionBuilder {
     }
 
     /**
-     * [REDACTED_TASK_KEY]: builds the transaction to sign from a [TransactionData], mirroring the EVM
+     * Builds the transaction to sign from a [TransactionData], mirroring the EVM
      * `buildForSign(TransactionData)` shape and dispatching by amount type:
      * - native coin transfer (Coin, no extras) → `TransferContract`;
      * - TRC-20 token transfer (Token) → `TriggerSmartContract` on the token contract;

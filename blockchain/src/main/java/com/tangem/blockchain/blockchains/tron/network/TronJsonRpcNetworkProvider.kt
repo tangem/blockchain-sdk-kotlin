@@ -162,6 +162,7 @@ class TronJsonRpcNetworkProvider(override val network: TronNetwork) : TronNetwor
         address: String,
         contractAddress: String,
         callDataHex: String,
+        callValue: Long,
     ): Result<TronTriggerSmartContractResponse> {
         return try {
             val response = api.triggerConstantContractByData(
@@ -169,6 +170,7 @@ class TronJsonRpcNetworkProvider(override val network: TronNetwork) : TronNetwor
                     ownerAddress = address,
                     contractAddress = contractAddress,
                     data = callDataHex,
+                    callValue = callValue,
                     visible = true,
                 ),
             )
