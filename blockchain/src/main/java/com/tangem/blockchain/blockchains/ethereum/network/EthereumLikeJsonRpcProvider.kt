@@ -131,7 +131,7 @@ internal abstract class EthereumLikeJsonRpcProvider(
     ).post()
 
     private fun createEthereumLikeBody(method: String, vararg params: Any): JsonRPCRequest {
-        return JsonRPCRequest(method = method, params = params, id = "67")
+        return JsonRPCRequest(method = method, params = params, id = JSON_RPC_REQUEST_ID)
     }
 
     private fun createTokenBalanceCallObject(address: String, contractAddress: String) = EthCallObject(
@@ -179,5 +179,9 @@ internal abstract class EthereumLikeJsonRpcProvider(
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
+    }
+
+    private companion object {
+        private const val JSON_RPC_REQUEST_ID = 67
     }
 }
