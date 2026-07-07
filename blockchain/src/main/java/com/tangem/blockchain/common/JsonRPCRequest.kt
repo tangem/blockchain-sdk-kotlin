@@ -14,6 +14,6 @@ import java.util.UUID
 internal data class JsonRPCRequest(
     @Json(name = "method") val method: String,
     @Json(name = "params") val params: Any?,
-    @Json(name = "id") val id: String = UUID.randomUUID().toString(),
+    @Json(name = "id") val id: Any = UUID.randomUUID().toString(),
     @Json(name = "jsonrpc") val jsonRpc: String = "2.0",
 )
