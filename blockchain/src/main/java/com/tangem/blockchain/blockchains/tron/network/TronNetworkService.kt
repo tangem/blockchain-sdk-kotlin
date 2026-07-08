@@ -98,6 +98,26 @@ class TronNetworkService(
         }
     }
 
+    suspend fun getMaxEnergyUseForCallData(
+        address: String,
+        contractAddress: String,
+        callDataHex: String,
+        callValue: Long,
+    ): Result<Long> {
+        val result = multiProvider.performRequest {
+            contractEnergyUsageForCallData(
+                address = address,
+                contractAddress = contractAddress,
+                callDataHex = callDataHex,
+                callValue = callValue,
+            )
+        }
+        return when (result) {
+            is Result.Failure -> Result.Failure(result.error)
+            is Result.Success -> Result.Success(result.data.energyUsed)
+        }
+    }
+
     suspend fun getAccountResource(address: String): Result<TronGetAccountResourceResponse> {
         return multiProvider.performRequest(TronNetworkProvider::getAccountResource, address)
     }
