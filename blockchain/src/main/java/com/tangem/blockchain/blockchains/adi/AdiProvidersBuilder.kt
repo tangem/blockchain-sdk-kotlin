@@ -31,6 +31,6 @@ internal class AdiProvidersBuilder(
     private fun createAlchemyProvider(blockchain: Blockchain): EthereumJsonRpcProvider? {
         val apiKey = config.alchemyApiKey?.takeIf(String::isNotBlank) ?: return null
         val subdomain = if (blockchain.isTestnet()) "adi-testnet" else "adi-mainnet"
-        return EthereumJsonRpcProvider(baseUrl = "https://$subdomain.g.alchemy.com/v2/$apiKey")
+        return EthereumJsonRpcProvider(baseUrl = "https://$subdomain.g.alchemy.com/v2/$apiKey/")
     }
 }
