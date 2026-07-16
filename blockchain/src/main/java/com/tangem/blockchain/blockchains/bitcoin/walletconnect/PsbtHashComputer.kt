@@ -1,7 +1,6 @@
 package com.tangem.blockchain.blockchains.bitcoin.walletconnect
 
 import com.tangem.blockchain.common.BlockchainSdkError
-import com.tangem.blockchain.common.psbt.PsbtSighash
 import com.tangem.blockchain.extensions.Result
 import fr.acinq.bitcoin.Script
 import fr.acinq.bitcoin.SigVersion
@@ -17,6 +16,7 @@ import fr.acinq.bitcoin.Transaction
  */
 internal object PsbtHashComputer {
 
+    private const val SIGHASH_ALL = 1
     private const val P2WPKH_SCRIPT_SIZE = 22
     private const val P2WPKH_PREFIX_SIZE = 2
     private const val P2WPKH_KEY_HASH_LENGTH = 20
@@ -35,7 +35,7 @@ internal object PsbtHashComputer {
     fun computeHashToSign(
         psbt: fr.acinq.bitcoin.psbt.Psbt,
         inputIndex: Int,
-        sighashType: Int = PsbtSighash.ALL,
+        sighashType: Int = SIGHASH_ALL,
     ): Result<ByteArray> {
         return try {
             val input = psbt.inputs[inputIndex]

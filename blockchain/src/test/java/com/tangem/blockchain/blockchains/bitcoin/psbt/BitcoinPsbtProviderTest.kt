@@ -2,14 +2,12 @@ package com.tangem.blockchain.blockchains.bitcoin.psbt
 
 import android.util.Base64
 import com.google.common.truth.Truth.assertThat
-import com.tangem.blockchain.blockchains.bitcoin.BitcoinAddressService
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignInput
-import com.tangem.blockchain.common.psbt.PsbtSighash
 import com.tangem.blockchain.extensions.Result
 import fr.acinq.bitcoin.Bitcoin
 import fr.acinq.bitcoin.Block
@@ -54,9 +52,6 @@ internal class BitcoinPsbtProviderTest {
         every { Base64.decode(any<String>(), any()) } answers {
             java.util.Base64.getDecoder().decode(firstArg<String>())
         }
-        every { Base64.encodeToString(any<ByteArray>(), any()) } answers {
-            java.util.Base64.getEncoder().encodeToString(firstArg<ByteArray>())
-        }
 
         val wallet = Wallet(
             blockchain = Blockchain.Bitcoin,
@@ -64,12 +59,7 @@ internal class BitcoinPsbtProviderTest {
             publicKey = Wallet.PublicKey(seedKey = ByteArray(65) { 0x04 }, derivationType = null),
             tokens = emptySet(),
         )
-        provider = BitcoinPsbtProvider(
-            wallet = wallet,
-            networkProvider = mockk<BitcoinNetworkProvider>(relaxed = true),
-            addressCodec = AcinqAddressCodec(wallet.blockchain),
-            sighashStrategy = DefaultSighashStrategy,
-        )
+        provider = BitcoinPsbtProvider(wallet = wallet, networkProvider = mockk<BitcoinNetworkProvider>(relaxed = true))
     }
 
     @After
@@ -107,6 +97,28 @@ internal class BitcoinPsbtProviderTest {
         assertThat(result).isInstanceOf(Result.Failure::class.java)
     }
 
+    @Test
+    fun `parsePsbtOutputs returns failure for non-bitcoin blockchain`() {
+        // Given an altcoin wallet manager that inherits BitcoinPsbtProvider (e.g. Dogecoin)
+        val altcoinWallet = Wallet(
+            blockchain = Blockchain.Dogecoin,
+            addresses = setOf(Address(legacyAddress, AddressType.Legacy)),
+            publicKey = Wallet.PublicKey(seedKey = ByteArray(65) { 0x04 }, derivationType = null),
+            tokens = emptySet(),
+        )
+        val altcoinProvider = BitcoinPsbtProvider(
+            wallet = altcoinWallet,
+            networkProvider = mockk(relaxed = true),
+        )
+        val psbtBase64 = buildPsbtBase64(legacyAddress to 100_000L)
+
+        // When
+        val result = altcoinProvider.parsePsbtOutputs(psbtBase64)
+
+        // Then — must not decode altcoin outputs with Bitcoin chain params
+        assertThat(result).isInstanceOf(Result.Failure::class.java)
+    }
+
     // region deriveSignInputs
 
     @Test
@@ -122,8 +134,6 @@ internal class BitcoinPsbtProviderTest {
         val swapProvider = BitcoinPsbtProvider(
             wallet = walletWithSwapInput,
             networkProvider = mockk(relaxed = true),
-            addressCodec = AcinqAddressCodec(walletWithSwapInput.blockchain),
-            sighashStrategy = DefaultSighashStrategy,
         )
 
         // When
@@ -133,34 +143,8 @@ internal class BitcoinPsbtProviderTest {
         assertThat(result).isInstanceOf(Result.Success::class.java)
         val inputs = (result as Result.Success).data
         assertThat(inputs).containsExactly(
-            SignInput(address = swapInputP2shAddress, index = 0, sighashTypes = listOf(PsbtSighash.ALL)),
+            SignInput(address = swapInputP2shAddress, index = 0, sighashTypes = listOf(SIGHASH_ALL)),
         )
-    }
-
-    @Test
-    fun `deriveSignInputs still works for Bitcoin via AcinqAddressCodec`() {
-        // Given — a wallet owning the P2WPKH address of PsbtTestFixtures' single-input PSBT
-        val ownerAddress = BitcoinAddressService(Blockchain.Bitcoin).makeSegwitAddress(PsbtTestFixtures.ownerPublicKey)
-        val wallet = Wallet(
-            blockchain = Blockchain.Bitcoin,
-            addresses = setOf(ownerAddress),
-            publicKey = Wallet.PublicKey(seedKey = ByteArray(65) { 0x04 }, derivationType = null),
-            tokens = emptySet(),
-        )
-        val bitcoinProvider = BitcoinPsbtProvider(
-            wallet = wallet,
-            networkProvider = mockk(relaxed = true),
-            addressCodec = AcinqAddressCodec(wallet.blockchain),
-            sighashStrategy = DefaultSighashStrategy,
-        )
-        val psbtBase64 = PsbtTestFixtures.serialize(PsbtTestFixtures.singleP2wpkhInputPsbt())
-
-        // When
-        val result = bitcoinProvider.deriveSignInputs(psbtBase64)
-
-        // Then
-        assertThat(result).isInstanceOf(Result.Success::class.java)
-        assertThat((result as Result.Success).data).hasSize(1)
     }
 
     @Test
@@ -179,6 +163,24 @@ internal class BitcoinPsbtProviderTest {
     fun `deriveSignInputs returns failure for invalid base64 input`() {
         // When
         val result = provider.deriveSignInputs("not-a-valid-psbt")
+
+        // Then
+        assertThat(result).isInstanceOf(Result.Failure::class.java)
+    }
+
+    @Test
+    fun `deriveSignInputs returns failure for non-bitcoin blockchain`() {
+        // Given — altcoin wallet that inherits BitcoinPsbtProvider
+        val altcoinWallet = Wallet(
+            blockchain = Blockchain.Dogecoin,
+            addresses = setOf(Address(swapInputP2shAddress, AddressType.Default)),
+            publicKey = Wallet.PublicKey(seedKey = ByteArray(65) { 0x04 }, derivationType = null),
+            tokens = emptySet(),
+        )
+        val altcoinProvider = BitcoinPsbtProvider(wallet = altcoinWallet, networkProvider = mockk(relaxed = true))
+
+        // When
+        val result = altcoinProvider.deriveSignInputs(realSwapPsbtBase64)
 
         // Then
         assertThat(result).isInstanceOf(Result.Failure::class.java)
@@ -221,6 +223,24 @@ internal class BitcoinPsbtProviderTest {
         assertThat(result).isInstanceOf(Result.Failure::class.java)
     }
 
+    @Test
+    fun `getPsbtFee returns failure for non-bitcoin blockchain`() {
+        // Given — altcoin wallet that inherits BitcoinPsbtProvider
+        val altcoinWallet = Wallet(
+            blockchain = Blockchain.Dogecoin,
+            addresses = setOf(Address(swapInputP2shAddress, AddressType.Default)),
+            publicKey = Wallet.PublicKey(seedKey = ByteArray(65) { 0x04 }, derivationType = null),
+            tokens = emptySet(),
+        )
+        val altcoinProvider = BitcoinPsbtProvider(wallet = altcoinWallet, networkProvider = mockk(relaxed = true))
+
+        // When
+        val result = altcoinProvider.getPsbtFee(realSwapPsbtBase64)
+
+        // Then
+        assertThat(result).isInstanceOf(Result.Failure::class.java)
+    }
+
     // endregion
 
     private fun buildPsbtBase64(vararg outputs: Pair<String, Long>): String {
@@ -235,5 +255,9 @@ internal class BitcoinPsbtProviderTest {
         val psbt = Psbt(tx)
         val bytes = Psbt.write(psbt).toByteArray()
         return java.util.Base64.getEncoder().encodeToString(bytes)
+    }
+
+    private companion object {
+        const val SIGHASH_ALL = 1
     }
 }
