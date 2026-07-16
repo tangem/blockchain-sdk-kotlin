@@ -39,6 +39,7 @@ internal sealed interface BlockchainSavedData {
     @JsonClass(generateAdapter = true)
     data class YieldSupplyModule(
         @Json(name = "contractAddress") val yieldContractAddress: String? = null,
+        @Json(name = "implementationAddress") val implementationAddress: String? = null,
     ) : BlockchainSavedData
 
     @JsonClass(generateAdapter = true)
@@ -62,10 +63,11 @@ internal sealed interface BlockchainSavedData {
  * @property sentAt Timestamp when transaction was sent (milliseconds since epoch)
  */
 @JsonClass(generateAdapter = true)
-internal data class PendingTransaction(
+data class PendingTransaction(
     @Json(name = "transactionId") val transactionId: String,
     @Json(name = "blockchain") val blockchain: String,
     @Json(name = "providerName") val providerName: String? = null,
     @Json(name = "sentAt") val sentAt: Long,
     @Json(name = "contractAddress") val contractAddress: String? = null,
+    @Json(name = "amount") val amount: String? = null,
 )

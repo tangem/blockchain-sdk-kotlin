@@ -21,11 +21,17 @@ internal class SolanaTransactionHistoryApi(
         ),
     )
 
+    private val tokenAccountsAdapter = moshi.adapter<SolanaRpcResponse<SolanaTokenAccounts>>(
+        Types.newParameterizedType(
+            SolanaRpcResponse::class.java,
+            SolanaTokenAccounts::class.java,
+        ),
+    )
+
     fun getTransactionsForAddress(
         address: String,
         limit: Int,
         paginationToken: String? = null,
-        tokenAccountsFilter: TokenAccountsFilter = TokenAccountsFilter.Default,
     ): SolanaTransactionsForAddress {
         val config = buildMap {
             put("transactionDetails", "full")
@@ -35,7 +41,6 @@ internal class SolanaTransactionHistoryApi(
             put("maxSupportedTransactionVersion", 0)
             put("limit", limit)
             if (paginationToken != null) put("paginationToken", paginationToken)
-            tokenAccountsFilter.asFilters()?.let { put("filters", it) }
         }
         val params = listOf(address, config)
         val raw = rpcClient.call("getTransactionsForAddress", params)
@@ -48,17 +53,22 @@ internal class SolanaTransactionHistoryApi(
     }
 
     /**
-     * Restricts the returned transactions to those that changed the wallet's token accounts.
-     * Used for SPL token history; coin history uses [Default] (no filter).
+     * Resolves the wallet's on-chain token account (ATA) for [mint] via `getTokenAccountsByOwner`.
+     * The `mint` filter matches the account regardless of the owning token program (SPL Token or Token-2022).
+     * Returns `null` if the token account doesn't exist yet (no history available).
      */
-    enum class TokenAccountsFilter {
-        Default,
-        BalanceChanged,
-        ;
-
-        fun asFilters(): Map<String, String>? = when (this) {
-            Default -> null
-            BalanceChanged -> mapOf("tokenAccounts" to "balanceChanged")
+    fun getTokenAccountsByOwner(owner: String, mint: String): String? {
+        val params = buildList {
+            add(owner)
+            add(mapOf("mint" to mint))
+            add(mapOf("encoding" to "jsonParsed"))
         }
+        val raw = rpcClient.call("getTokenAccountsByOwner", params)
+        val response = tokenAccountsAdapter.fromJson(raw)
+            ?: throw RpcException("Failed to parse getTokenAccountsByOwner response")
+        response.error?.let {
+            throw RpcException("RPC error ${it.code}: ${it.message}")
+        }
+        return response.result?.value?.firstOrNull()?.pubkey
     }
 }

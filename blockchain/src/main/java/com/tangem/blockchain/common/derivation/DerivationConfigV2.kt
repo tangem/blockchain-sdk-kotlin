@@ -113,6 +113,7 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.Kaspa -> mapOf(AddressType.Default to DerivationPath("m/44'/111111'/0'/0/0"))
             Blockchain.Ravencoin -> mapOf(AddressType.Default to DerivationPath("m/44'/175'/0'/0/0"))
             Blockchain.Cosmos -> mapOf(AddressType.Default to DerivationPath("m/44'/118'/0'/0/0"))
+            Blockchain.Gonka -> mapOf(AddressType.Default to DerivationPath("m/44'/1200'/0'/0/0"))
             Blockchain.TerraV1, Blockchain.TerraV2 -> mapOf(AddressType.Default to DerivationPath("m/44'/330'/0'/0/0"))
             Blockchain.Near -> mapOf(AddressType.Default to DerivationPath("m/44'/397'/0'"))
             Blockchain.VeChain,
