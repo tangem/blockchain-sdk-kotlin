@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignInput
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.psbt.PsbtSighashStrategy
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -21,6 +22,7 @@ import fr.acinq.bitcoin.utils.Either
  *
  * @property wallet The Bitcoin wallet instance
  * @property networkProvider Network provider for broadcasting transactions
+ * @property sighashStrategy Chain-specific signature-hash computation
  *
  * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki">BIP-174 PSBT</a>
  * @see <a href="https://github.com/ACINQ/bitcoin-kmp">ACINQ bitcoin-kmp library</a>
@@ -28,10 +30,10 @@ import fr.acinq.bitcoin.utils.Either
 internal class BitcoinPsbtSigner(
     private val wallet: Wallet,
     private val networkProvider: BitcoinNetworkProvider,
+    private val sighashStrategy: PsbtSighashStrategy,
 ) {
 
     private val psbtSerializer = PsbtSerializer
-    private val hashComputer = PsbtHashComputer
     private val signatureApplier = PsbtSignatureApplier()
 
     /**
@@ -63,6 +65,7 @@ internal class BitcoinPsbtSigner(
             signInputs = signInputs,
             inputIndices = inputIndices,
             publicKey = wallet.publicKey.blockchainKey,
+            sighashByte = sighashStrategy.sighashByte,
         ).successOr { return it }
         val finalizedPsbt = signatureApplier.finalizePsbt(signedPsbt, inputIndices)
 
@@ -80,7 +83,6 @@ internal class BitcoinPsbtSigner(
             validateWalletOwnership(signInput.address).successOr { return it }
             validateSighashTypes(signInput.sighashTypes).successOr { return it }
 
-            val sighashType = signInput.sighashTypes?.firstOrNull() ?: SIGHASH_ALL
             val inputIndex = signInput.index
 
             if (inputIndex >= psbt.inputs.size) {
@@ -91,7 +93,8 @@ internal class BitcoinPsbtSigner(
                 )
             }
 
-            val hash = hashComputer.computeHashToSign(psbt, inputIndex, sighashType).successOr { return it }
+            val sighashType = signInput.sighashTypes?.firstOrNull() ?: sighashStrategy.sighashByte
+            val hash = sighashStrategy.computeHashToSign(psbt, inputIndex, sighashType).successOr { return it }
             hashesToSign.add(hash)
             inputIndices.add(inputIndex)
         }
@@ -182,20 +185,5 @@ internal class BitcoinPsbtSigner(
         }
 
         return Result.Success(Unit)
-    }
-
-    /**
-     * Computes the hash to sign for a specific input.
-     *
-     * This method determines whether the input is SegWit or legacy and computes
-     * the appropriate signature hash.
-     *
-     * @param psbt The PSBT containing the input
-     * @param inputIndex Index of the input to compute hash for
-     * @param sighashType Sighash type flag (default SIGHASH_ALL = 1)
-     * @return Success with hash bytes, or Failure with error
-     */
-    private companion object {
-        const val SIGHASH_ALL = 1
     }
 }
