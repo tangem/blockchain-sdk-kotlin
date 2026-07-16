@@ -3,6 +3,7 @@ package com.tangem.blockchain.blockchains.bitcoin
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
+import com.tangem.blockchain.blockchains.bitcoin.psbt.DefaultSighashStrategy
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.BitcoinPsbtSigner
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignInput
 import com.tangem.blockchain.common.Blockchain
@@ -65,7 +66,7 @@ class BitcoinPsbtSignerTest {
         networkProvider = mockk()
 
         // Create PSBT signer
-        psbtSigner = BitcoinPsbtSigner(wallet, networkProvider)
+        psbtSigner = BitcoinPsbtSigner(wallet, networkProvider, DefaultSighashStrategy)
 
         // Mock transaction signer
         transactionSigner = mockk(relaxed = true)
