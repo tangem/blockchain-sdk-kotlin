@@ -10,11 +10,11 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoin.network.UsedAddress
 import com.tangem.blockchain.blockchains.bitcoin.network.XpubInfoResponse
+import com.tangem.blockchain.blockchains.bitcoin.psbt.BitcoinPsbtProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.DynamicAddressesManager
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.logging.Logger
-import com.tangem.blockchain.common.psbt.PsbtProviderFactory
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.crypto.NetworkType
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
@@ -54,11 +54,7 @@ internal open class BitcoinWalletManager(
     transactionHistoryProvider = transactionHistoryProvider,
     yieldSupplyProvider = yieldSupplyProvider,
     messageSigner = BitcoinMessageSigner(wallet),
-    psbtProvider = PsbtProviderFactory.make(
-        blockchain = wallet.blockchain,
-        wallet = wallet,
-        networkProvider = networkProvider,
-    ),
+    psbtProvider = BitcoinPsbtProvider(wallet, networkProvider),
     addressProvider = BitcoinWalletAddressProvider(wallet),
 ),
     SignatureCountValidator,
