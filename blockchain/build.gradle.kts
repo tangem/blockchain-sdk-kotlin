@@ -90,7 +90,8 @@ dependencies {
 
     // Bitcoin PSBT support (BIP 174) - requires Kotlin 2.x
     implementation(libs.bitcoin.kmp.jvm)
-    implementation(libs.bitcoin.secp256k1.kmp.jni.jvm)
+    implementation(libs.bitcoin.secp256k1.kmp.jni.android)
+    testImplementation(libs.bitcoin.secp256k1.kmp.jni.jvm)
 
     implementation(libs.stellar.sdk) {
         exclude(group = "org.bouncycastle", module = "bcprov-jdk18on")

@@ -14,7 +14,8 @@ internal class TONExternalLinkProvider(isTestnet: Boolean) : ExternalLinkProvide
     }
 
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
-        return TxExploreState.Unsupported
-        // return explorerBaseUrl + "tx/$transactionHash" // disable for now
+        return TxExploreState.Url(
+            explorerBaseUrl + "transaction/$transactionHash",
+        )
     }
 }

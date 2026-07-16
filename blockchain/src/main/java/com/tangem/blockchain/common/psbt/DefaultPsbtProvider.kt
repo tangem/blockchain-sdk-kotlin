@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common.psbt
 
+import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignInput
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.extensions.Result
@@ -14,6 +15,24 @@ internal object DefaultPsbtProvider : PsbtProvider {
     override suspend fun broadcastPsbt(psbtBase64: String): Result<String> {
         return Result.Failure(
             BlockchainSdkError.CustomError("PSBT broadcasting is not supported for this blockchain"),
+        )
+    }
+
+    override fun parsePsbtOutputs(psbtBase64: String): Result<List<PsbtOutputInfo>> {
+        return Result.Failure(
+            BlockchainSdkError.CustomError("PSBT parsing is not supported for this blockchain"),
+        )
+    }
+
+    override fun deriveSignInputs(psbtBase64: String): Result<List<SignInput>> {
+        return Result.Failure(
+            BlockchainSdkError.CustomError("PSBT sign-input derivation is not supported for this blockchain"),
+        )
+    }
+
+    override fun getPsbtFee(psbtBase64: String): Result<Long> {
+        return Result.Failure(
+            BlockchainSdkError.CustomError("PSBT fee computation is not supported for this blockchain"),
         )
     }
 }
