@@ -15,6 +15,12 @@ class StakingTransactionRecognizerTest {
     // Cosmos: hex containing "/cosmos.bank." — a non-staking message
     private val cosmosBankHex = "0a0d2f636f736d6f732e62616e6b2e"
 
+    // Cosmos: hex of an Any typeUrl "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward" — the
+    // reward-claim message, served by the distribution module (not staking).
+    private val cosmosWithdrawRewardHex =
+        "0a372f636f736d6f732e646973747269627574696f6e2e763162657461312e4d736757697468647261774" +
+            "4656c656761746f72526577617264"
+
     // Cardano CBOR: [ { 4: [] } ]  → body has certificates key (4)
     private val cardanoCertHex = "81a10480"
 
@@ -97,6 +103,11 @@ class StakingTransactionRecognizerTest {
     @Test
     fun `GIVEN cosmos delegate tx WHEN recognize THEN true`() {
         assertThat(recognizer.isRecognizedStakingTransaction(Blockchain.Cosmos, cosmosDelegateHex)).isTrue()
+    }
+
+    @Test
+    fun `GIVEN cosmos withdraw delegator reward tx WHEN recognize THEN true`() {
+        assertThat(recognizer.isRecognizedStakingTransaction(Blockchain.Cosmos, cosmosWithdrawRewardHex)).isTrue()
     }
 
     @Test

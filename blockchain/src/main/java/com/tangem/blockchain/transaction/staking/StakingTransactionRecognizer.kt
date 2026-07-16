@@ -30,7 +30,14 @@ object StakingTransactionRecognizer {
         "VoteWitnessContract",
         "WithdrawBalanceContract",
     )
-    private const val COSMOS_STAKING_TYPE_URL_PREFIX = "/cosmos.staking."
+    private val COSMOS_STAKING_TYPE_URL_MARKERS = setOf(
+        // Staking module: delegate / undelegate / redelegate / ...
+        "/cosmos.staking.",
+        // Reward claim is served by the distribution module, not staking. Recognize the specific
+        // delegator-reward withdrawal so a legitimate claim is not blocked; keep it message-specific
+        // (not the whole "/cosmos.distribution." module) to stay fail-closed.
+        "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+    )
     private val CARDANO_CERTIFICATES_KEY: BigInteger = BigInteger.valueOf(4)
     private val CARDANO_WITHDRAWALS_KEY: BigInteger = BigInteger.valueOf(5)
     private const val SOLANA_STAKE_PROGRAM_HEX = "06a1d8179137542a983437bdfe2a7ab2557f535c8a78722b68a49dc000000000"
@@ -92,7 +99,7 @@ object StakingTransactionRecognizer {
     // as plain ASCII. ISO-8859-1 preserves every byte 1:1 so the ASCII marker is findable.
     private fun isCosmosStaking(unsignedTransaction: String): Boolean {
         val decoded = String(unsignedTransaction.hexToBytes(), Charsets.ISO_8859_1)
-        return decoded.contains(COSMOS_STAKING_TYPE_URL_PREFIX)
+        return COSMOS_STAKING_TYPE_URL_MARKERS.any { decoded.contains(it) }
     }
 
     private fun isCardanoStaking(unsignedTransaction: String): Boolean {
