@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.bitcoin.walletconnect
 
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignInput
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.psbt.PsbtSighash
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.extensions.toCanonicalECDSASignature
@@ -27,6 +28,7 @@ internal class PsbtSignatureApplier {
      * @param signInputs List of sign input specifications
      * @param inputIndices List of input indices corresponding to signatures
      * @param publicKey Public key corresponding to signatures
+     * @param sighashByte Fallback sighash type used when a [SignInput] doesn't specify its own sighash types
      * @return Success with updated PSBT, or Failure with error
      */
     fun applySignatures(
@@ -35,13 +37,14 @@ internal class PsbtSignatureApplier {
         signInputs: List<SignInput>,
         inputIndices: List<Int>,
         publicKey: ByteArray,
+        sighashByte: Int = PsbtSighash.ALL,
     ): Result<Psbt> {
         var updatedPsbt = psbt
 
         signatures.forEachIndexed { index, signature ->
             val inputIndex = inputIndices[index]
-            val sighashType = signInputs[index].sighashTypes?.firstOrNull() ?: SIGHASH_ALL
-            val derSignature = encodeDerSignature(signature, sighashType)
+            val effectiveSighash = signInputs[index].sighashTypes?.firstOrNull() ?: sighashByte
+            val derSignature = encodeDerSignature(signature, effectiveSighash)
 
             updatedPsbt = addSignatureToPsbt(
                 psbt = updatedPsbt,
@@ -68,7 +71,7 @@ internal class PsbtSignatureApplier {
         var finalPsbt = psbt
 
         inputIndices.forEach { index ->
-            finalPsbt = finalizeWitnessInput(finalPsbt, index) ?: finalPsbt
+            finalPsbt = finalizeInput(finalPsbt, index) ?: finalPsbt
         }
 
         return finalPsbt
@@ -132,13 +135,11 @@ internal class PsbtSignatureApplier {
     }
 
     /**
-     * Attempts to finalize a single witness input.
+     * Attempts to finalize a single input, either witness (SegWit scriptWitness) or non-witness (legacy scriptSig).
      */
-    private fun finalizeWitnessInput(psbt: Psbt, index: Int): Psbt? {
+    private fun finalizeInput(psbt: Psbt, index: Int): Psbt? {
         return try {
-            val input = psbt.inputs[index]
-
-            when (input) {
+            when (val input = psbt.inputs[index]) {
                 is fr.acinq.bitcoin.psbt.Input.WitnessInput.PartiallySignedWitnessInput -> {
                     if (input.partialSigs.isEmpty()) return null
 
@@ -146,6 +147,24 @@ internal class PsbtSignatureApplier {
                     val witness = fr.acinq.bitcoin.ScriptWitness(listOf(signature, pubKey.value))
 
                     when (val result = psbt.finalizeWitnessInput(index, witness)) {
+                        is Either.Right -> result.value
+                        is Either.Left -> null
+                    }
+                }
+                is fr.acinq.bitcoin.psbt.Input.NonWitnessInput.PartiallySignedNonWitnessInput -> {
+                    // Only auto-finalize a simple single-sig P2PKH legacy input. Building a
+                    // `PUSH(sig) PUSH(pubkey)` scriptSig for a P2SH/multisig/non-standard legacy spend
+                    // would produce an invalid finalScriptSig and break extraction/broadcast, so leave
+                    // those unfinalized for script-specific handling.
+                    if (input.partialSigs.size != 1 || !input.redeemScript.isNullOrEmpty()) return null
+
+                    val (pubKey, signature) = input.partialSigs.entries.first()
+                    val scriptSig = listOf(
+                        fr.acinq.bitcoin.OP_PUSHDATA(signature),
+                        fr.acinq.bitcoin.OP_PUSHDATA(pubKey.value),
+                    )
+
+                    when (val result = psbt.finalizeNonWitnessInput(index, scriptSig)) {
                         is Either.Right -> result.value
                         is Either.Left -> null
                     }
@@ -168,9 +187,5 @@ internal class PsbtSignatureApplier {
         val canonicalSignature = signature.toCanonicalECDSASignature()
         val transactionSignature = TransactionSignature(canonicalSignature.r, canonicalSignature.s, sighashType)
         return transactionSignature.encodeToBitcoin()
-    }
-
-    private companion object {
-        const val SIGHASH_ALL = 1
     }
 }
