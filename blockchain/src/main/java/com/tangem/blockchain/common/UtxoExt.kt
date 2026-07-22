@@ -177,5 +177,7 @@ val Blockchain.isUTXO: Boolean
         AdiTestnet,
         SeiEvm,
         SeiEvmTestnet,
+        Robinhood,
+        RobinhoodTestnet,
         -> false
     }
