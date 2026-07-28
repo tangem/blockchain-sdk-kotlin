@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.tron
 
 import android.util.Log
 import com.google.common.primitives.Ints
+import com.tangem.blockchain.blockchains.tron.gasless.TronGaslessTransactionSigner
 import com.tangem.blockchain.blockchains.tron.network.TronAccountInfo
 import com.tangem.blockchain.blockchains.tron.network.TronEnergyFeeData
 import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
@@ -21,6 +22,7 @@ import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toHexString
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -40,7 +42,8 @@ internal class TronWalletManager(
     transactionHistoryProvider = transactionHistoryProvider,
     tokenBalanceProvider = tokenBalanceProvider,
 ),
-    Approver {
+    Approver,
+    TronGaslessTransactionSigner {
 
     override val currentHost: String = networkService.host
 
@@ -567,6 +570,44 @@ internal class TronWalletManager(
             spenderAddress = spenderAddress,
             amount = value,
         ).dataHex
+    }
+
+    override suspend fun signGaslessTransactions(
+        transactionDataList: List<TransactionData>,
+        signer: TransactionSigner,
+    ): Result<List<String>> {
+        val block = when (val blockResult = networkService.getNowBlock()) {
+            is Result.Success -> blockResult.data
+            is Result.Failure -> return Result.Failure(blockResult.error)
+        }
+
+        return try {
+            val rawDataList = transactionDataList.map { transactionData ->
+                val uncompiled = transactionData.requireUncompiled()
+                transactionBuilder.buildForSign(
+                    amount = uncompiled.amount,
+                    source = wallet.address,
+                    destination = uncompiled.destinationAddress,
+                    block = block,
+                    extras = uncompiled.extras as? TronTransactionExtras,
+                )
+            }
+
+            val hashes = rawDataList.map { it.encode().calculateSha256() }
+
+            when (val signResult = signMultiple(hashes, signer, wallet.publicKey)) {
+                is Result.Failure -> signResult
+                is Result.Success -> Result.Success(
+                    rawDataList.mapIndexed { index, rawData ->
+                        transactionBuilder.buildSignedTronWebJson(rawData, signResult.data[index])
+                    },
+                )
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            Result.Failure(BlockchainSdkError.WrappedThrowable(e))
+        }
     }
 
     private companion object {
