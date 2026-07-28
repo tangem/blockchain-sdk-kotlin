@@ -1,6 +1,12 @@
 package com.tangem.blockchain.blockchains.tron
 
+import com.squareup.moshi.Moshi
 import com.squareup.wire.AnyMessage
+import com.tangem.blockchain.blockchains.tron.gasless.TronWebContract
+import com.tangem.blockchain.blockchains.tron.gasless.TronWebParameter
+import com.tangem.blockchain.blockchains.tron.gasless.TronWebRawData
+import com.tangem.blockchain.blockchains.tron.gasless.TronWebSignedTransaction
+import com.tangem.blockchain.blockchains.tron.gasless.TronWebTriggerValue
 import com.tangem.blockchain.blockchains.tron.network.TronBlock
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
@@ -9,6 +15,7 @@ import com.tangem.blockchain.extensions.decodeBase58
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
+import com.tangem.common.extensions.toHexString
 import okio.ByteString.Companion.EMPTY
 import okio.ByteString.Companion.toByteString
 import org.tron.protos.BlockHeader
@@ -168,6 +175,51 @@ class TronTransactionBuilder {
         )
     }
 
+    /**
+     * Serialises a signed Tron transaction into the TronWeb-compatible JSON format that the
+     * gasless backend expects (`JSON.parse`-able signed transaction object).
+     *
+     * Only [Transaction.Contract.ContractType.TriggerSmartContract] contracts are supported
+     * because gasless operations are limited to token transfers via smart contracts.
+     */
+    fun buildSignedTronWebJson(rawData: Transaction.raw, signature: ByteArray): String {
+        val contract = rawData.contract.firstOrNull() ?: error("Tron raw_data has no contract")
+        require(contract.type == Transaction.Contract.ContractType.TriggerSmartContract) {
+            "Only TriggerSmartContract is supported for gasless, got ${contract.type}"
+        }
+        val trigger = contract.parameter?.unpack(TriggerSmartContract.ADAPTER)
+            ?: error("Failed to unpack TriggerSmartContract")
+
+        val rawBytes = rawData.encode()
+        val dto = TronWebSignedTransaction(
+            isVisible = false,
+            txId = rawBytes.calculateSha256().toHexString().lowercase(),
+            rawDataHex = rawBytes.toHexString().lowercase(),
+            signature = listOf(signature.toHexString().lowercase()),
+            rawData = TronWebRawData(
+                contract = listOf(
+                    TronWebContract(
+                        type = "TriggerSmartContract",
+                        parameter = TronWebParameter(
+                            typeUrl = "type.googleapis.com/protocol.TriggerSmartContract",
+                            value = TronWebTriggerValue(
+                                data = trigger.data_.toByteArray().toHexString().lowercase(),
+                                ownerAddress = trigger.owner_address.toByteArray().toHexString().lowercase(),
+                                contractAddress = trigger.contract_address.toByteArray().toHexString().lowercase(),
+                            ),
+                        ),
+                    ),
+                ),
+                refBlockBytes = rawData.ref_block_bytes.toByteArray().toHexString().lowercase(),
+                refBlockHash = rawData.ref_block_hash.toByteArray().toHexString().lowercase(),
+                expiration = rawData.expiration,
+                feeLimit = rawData.fee_limit.takeIf { it > 0 },
+                timestamp = rawData.timestamp,
+            ),
+        )
+        return tronWebAdapter.toJson(dto)
+    }
+
     private fun buildContractForCoin(amount: Amount, source: String, destination: String): Transaction.Contract {
         val parameter = TransferContract(
             owner_address = source.decodeBase58(checked = true)?.toByteString() ?: EMPTY,
@@ -182,5 +234,9 @@ class TronTransactionBuilder {
 
     companion object {
         const val SMART_CONTRACT_FEE_LIMIT = 100_000_000L
+
+        private val tronWebAdapter by lazy {
+            Moshi.Builder().build().adapter(TronWebSignedTransaction::class.java)
+        }
     }
 }
