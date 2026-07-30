@@ -16,9 +16,15 @@ data class ProtocolConfigResult(
     @Json(name = "min_gas_price") val minGasPrice: BigDecimal,
     @Json(name = "runtime_config") val runtimeConfig: RuntimeConfig,
 ) {
+    /**
+     * [minGasPurchasePrice] is the price the network locks the execution gas at. It is not the same parameter as the
+     * top level `min_gas_price`, which is the floor of the block gas price: on testnet they differ by five orders of
+     * magnitude. Chains that predate it report no value, and zero degrades to charging the block price.
+     */
     data class RuntimeConfig(
         @Json(name = "transaction_costs") val transactionCosts: TransactionCost,
         @Json(name = "storage_amount_per_byte") val storageAmountPerByte: BigDecimal,
+        @Json(name = "min_gas_purchase_price") val minGasPurchasePrice: BigDecimal = BigDecimal.ZERO,
     )
 
     data class TransactionCost(
