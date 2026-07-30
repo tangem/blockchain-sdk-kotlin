@@ -40,7 +40,13 @@ object StakingTransactionRecognizer {
     )
     private val CARDANO_CERTIFICATES_KEY: BigInteger = BigInteger.valueOf(4)
     private val CARDANO_WITHDRAWALS_KEY: BigInteger = BigInteger.valueOf(5)
+
+    // Solana Stake program id (base58 Stake11111111111111111111111111111111111111) as raw bytes.
     private const val SOLANA_STAKE_PROGRAM_HEX = "06a1d8179137542a983437bdfe2a7ab2557f535c8a78722b68a49dc000000000"
+    private val SOLANA_STAKE_PROGRAM_BYTES = SOLANA_STAKE_PROGRAM_HEX.hexToBytes()
+    private const val SOLANA_SIGNATURE_LENGTH = 64
+    private const val SOLANA_MESSAGE_HEADER_LENGTH = 3
+    private const val SOLANA_ACCOUNT_KEY_LENGTH = 32
 
     // Trust anchors of the staking signing gate — verify before changing:
     // StakeKit Polygon staking contract.
@@ -111,8 +117,23 @@ object StakingTransactionRecognizer {
         }
     }
 
-    private fun isSolanaStaking(unsignedTransaction: String): Boolean =
-        unsignedTransaction.lowercase().contains(SOLANA_STAKE_PROGRAM_HEX)
+    // Parse the legacy Solana message and look for the Stake program id ONLY among the account keys —
+    // a substring scan would also match the program id embedded in instruction data (false positive).
+    // StakeKit staking txs are always legacy wire format (no versioned/ALT), so this layout holds.
+    // Layout: shortvec(signatures) + signatures, 3-byte message header, shortvec(accountKeys) + keys.
+    private fun isSolanaStaking(unsignedTransaction: String): Boolean {
+        val reader = SolanaByteReader(unsignedTransaction.hexToBytes())
+        val signaturesCount = reader.readShortVecLength()
+        reader.skip(signaturesCount * SOLANA_SIGNATURE_LENGTH)
+        reader.skip(SOLANA_MESSAGE_HEADER_LENGTH)
+        val accountKeysCount = reader.readShortVecLength()
+        repeat(accountKeysCount) {
+            if (reader.read(SOLANA_ACCOUNT_KEY_LENGTH).contentEquals(SOLANA_STAKE_PROGRAM_BYTES)) {
+                return true
+            }
+        }
+        return false
+    }
 
     private fun isEvmStakingTo(unsignedTransaction: String, contractAddress: String): Boolean {
         val to = evmAdapter.fromJson(unsignedTransaction)?.to ?: return false
@@ -140,5 +161,42 @@ object StakingTransactionRecognizer {
         val spenderWord = hex.substring(METHOD_ID_HEX_LENGTH, METHOD_ID_HEX_LENGTH + WORD_HEX_LENGTH)
         val spenderAddress = "0x" + spenderWord.takeLast(ADDRESS_HEX_LENGTH)
         return spenderAddress.equals(spender, ignoreCase = true)
+    }
+}
+
+// Sequential reader over Solana transaction bytes. Any out-of-bounds read throws, which the recognizer
+// treats as fail-closed (not a staking transaction).
+private class SolanaByteReader(private val data: ByteArray) {
+
+    private var offset = 0
+
+    fun read(count: Int): ByteArray {
+        check(count >= 0 && offset + count <= data.size) { "Solana tx read out of bounds" }
+        return data.copyOfRange(offset, offset + count).also { offset += count }
+    }
+
+    fun skip(count: Int) {
+        read(count)
+    }
+
+    // Decodes a shortvec (compact-u16) length: 7 data bits per byte, high bit is a continuation flag.
+    fun readShortVecLength(): Int {
+        var length = 0
+        for (byteIndex in 0 until SHORT_VEC_MAX_BYTES) {
+            val byte = read(1).first().toInt() and BYTE_MASK
+            val chunk = byte and SHORT_VEC_DATA_MASK
+            val shift = byteIndex * SHORT_VEC_DATA_BITS
+            length = length or (chunk shl shift)
+            if (byte and SHORT_VEC_CONTINUATION_MASK == 0) return length
+        }
+        error("Solana shortvec length exceeds 3 bytes")
+    }
+
+    private companion object {
+        const val BYTE_MASK = 0xFF
+        const val SHORT_VEC_MAX_BYTES = 3
+        const val SHORT_VEC_DATA_BITS = 7
+        const val SHORT_VEC_DATA_MASK = 0x7F
+        const val SHORT_VEC_CONTINUATION_MASK = 0x80
     }
 }
