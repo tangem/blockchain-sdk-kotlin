@@ -151,15 +151,48 @@ class StakingTransactionRecognizerTest {
 
     // region Solana
     @Test
-    fun `GIVEN solana tx with stake program WHEN recognize THEN true`() {
-        val hex = "0102" + "06a1d8179137542a983437bdfe2a7ab2557f535c8a78722b68a49dc000000000" + "0304"
+    fun `GIVEN solana staking tx with stake program in account keys WHEN recognize THEN true`() {
+        val hex = solanaTx(accountCountHex = "02", accountKeysHex = "11".repeat(ACCOUNT_KEY_BYTES) + SOLANA_STAKE_KEY)
         assertThat(recognizer.isRecognizedStakingTransaction(Blockchain.Solana, hex)).isTrue()
     }
 
     @Test
     fun `GIVEN solana tx without stake program WHEN recognize THEN false`() {
-        assertThat(recognizer.isRecognizedStakingTransaction(Blockchain.Solana, "0102030405")).isFalse()
+        val hex = solanaTx(
+            accountCountHex = "02",
+            accountKeysHex = "11".repeat(ACCOUNT_KEY_BYTES) + "22".repeat(ACCOUNT_KEY_BYTES),
+        )
+        assertThat(recognizer.isRecognizedStakingTransaction(Blockchain.Solana, hex)).isFalse()
     }
+
+    // Regression: the Stake program id appears only in instruction data, not among the account keys.
+    // A substring scan wrongly accepted this; the account-keys parser must reject it.
+    @Test
+    fun `GIVEN solana stake program only in instruction data WHEN recognize THEN false`() {
+        val accountKeys = "11".repeat(ACCOUNT_KEY_BYTES) + "22".repeat(ACCOUNT_KEY_BYTES)
+        val instructionData = "33".repeat(ACCOUNT_KEY_BYTES) + SOLANA_STAKE_KEY
+        val hex = solanaTx(accountCountHex = "02", accountKeysHex = accountKeys) + instructionData
+        assertThat(recognizer.isRecognizedStakingTransaction(Blockchain.Solana, hex)).isFalse()
+    }
+
+    // 130 account keys → the shortvec length spans two bytes (0x82 0x01); stake key is the last one.
+    @Test
+    fun `GIVEN solana tx with many account keys and stake WHEN recognize THEN true`() {
+        val keys = "aa".repeat(ACCOUNT_KEY_BYTES).repeat(FILLER_KEY_COUNT) + SOLANA_STAKE_KEY
+        val hex = SIGNATURE_AND_HEADER_HEX + "8201" + keys
+        assertThat(recognizer.isRecognizedStakingTransaction(Blockchain.Solana, hex)).isTrue()
+    }
+
+    // Declares 4 account keys but contains only one → malformed → false.
+    @Test
+    fun `GIVEN solana truncated account keys WHEN recognize THEN false`() {
+        val hex = SIGNATURE_AND_HEADER_HEX + "04" + "11".repeat(ACCOUNT_KEY_BYTES)
+        assertThat(recognizer.isRecognizedStakingTransaction(Blockchain.Solana, hex)).isFalse()
+    }
+
+    // Legacy Solana layout: 1 signature + 3-byte header + shortvec(account count) + account keys.
+    private fun solanaTx(accountCountHex: String, accountKeysHex: String): String =
+        SIGNATURE_AND_HEADER_HEX + accountCountHex + accountKeysHex
     // endregion
 
     // region EVM
@@ -237,4 +270,14 @@ class StakingTransactionRecognizerTest {
         assertThat(recognizer.isRecognizedStakingTransaction(Blockchain.Ethereum, "deadbeef")).isFalse()
     }
     // endregion
+
+    private companion object {
+        const val SOLANA_STAKE_KEY = "06a1d8179137542a983437bdfe2a7ab2557f535c8a78722b68a49dc000000000"
+        const val ACCOUNT_KEY_BYTES = 32
+        const val SIGNATURE_BYTES = 64
+        const val FILLER_KEY_COUNT = 129
+
+        // 1 signature (0x01 + 64 zero bytes) + 3-byte message header (0x01 0x00 0x01).
+        val SIGNATURE_AND_HEADER_HEX = "01" + "00".repeat(SIGNATURE_BYTES) + "010001"
+    }
 }
