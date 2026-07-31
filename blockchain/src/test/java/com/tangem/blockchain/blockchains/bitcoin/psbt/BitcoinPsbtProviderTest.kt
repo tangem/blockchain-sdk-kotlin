@@ -69,6 +69,7 @@ internal class BitcoinPsbtProviderTest {
             networkProvider = mockk<BitcoinNetworkProvider>(relaxed = true),
             addressCodec = AcinqAddressCodec(wallet.blockchain),
             sighashStrategy = DefaultSighashStrategy,
+            transactionExtractor = AcinqPsbtTransactionExtractor,
         )
     }
 
@@ -124,6 +125,7 @@ internal class BitcoinPsbtProviderTest {
             networkProvider = mockk(relaxed = true),
             addressCodec = AcinqAddressCodec(walletWithSwapInput.blockchain),
             sighashStrategy = DefaultSighashStrategy,
+            transactionExtractor = AcinqPsbtTransactionExtractor,
         )
 
         // When
@@ -152,6 +154,7 @@ internal class BitcoinPsbtProviderTest {
             networkProvider = mockk(relaxed = true),
             addressCodec = AcinqAddressCodec(wallet.blockchain),
             sighashStrategy = DefaultSighashStrategy,
+            transactionExtractor = AcinqPsbtTransactionExtractor,
         )
         val psbtBase64 = PsbtTestFixtures.serialize(PsbtTestFixtures.singleP2wpkhInputPsbt())
 
