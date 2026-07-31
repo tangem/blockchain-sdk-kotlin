@@ -196,10 +196,12 @@ internal class TronWalletManager(
     override suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
         val uncompiledTransaction = transactionData.requireUncompiled()
         val extra = uncompiledTransaction.extras as? TronTransactionExtras
-        return getFee(
+        return calculateFee(
             amount = uncompiledTransaction.amount,
             destination = uncompiledTransaction.destinationAddress,
-            callData = extra?.callData,
+            callData = extra.callDataOrNull(),
+            // The memo is part of the signed payload, so it counts towards the bandwidth estimate.
+            memo = extra?.memo,
         )
     }
 
@@ -213,13 +215,26 @@ internal class TronWalletManager(
         callData: SmartContractCallData?,
     ): Boolean = !destinationExists && amount.type == AmountType.Coin && callData == null
 
-    @Suppress("MagicNumber")
     override suspend fun getFee(
         amount: Amount,
         destination: String,
         callData: SmartContractCallData?,
+    ): Result<TransactionFee> = calculateFee(
+        amount = amount,
+        destination = destination,
+        callData = callData,
+        memo = null,
+    )
+
+    @Suppress("MagicNumber")
+    private suspend fun calculateFee(
+        amount: Amount,
+        destination: String,
+        callData: SmartContractCallData?,
+        memo: ByteArray?,
     ): Result<TransactionFee> {
         val blockchain = wallet.blockchain
+        val effectiveCallData = callData.orNullIfEmpty()
         return coroutineScope {
             val destinationExistsDef = async { networkService.checkIfAccountExists(destination) }
             val resourceDef = async { networkService.getAccountResource(wallet.address) }
@@ -230,11 +245,11 @@ internal class TronWalletManager(
                     destination = destination,
                     signer = dummySigner,
                     publicKey = dummySigner.publicKey,
-                    extras = callData?.let { TronTransactionExtras(it) },
+                    extras = TronTransactionExtras(callData = effectiveCallData, memo = memo),
                 )
             }
 
-            if (isInactiveAccountActivation(destinationExistsDef.await(), amount, callData)) {
+            if (isInactiveAccountActivation(destinationExistsDef.await(), amount, effectiveCallData)) {
                 return@coroutineScope Result.Success(
                     TransactionFee.Single(
                         Fee.Common(
@@ -248,7 +263,7 @@ internal class TronWalletManager(
             }
 
             val energyFeeParameters = when (
-                val energyFeeResult = getEnergyFeeParameters(amount, destination, callData)
+                val energyFeeResult = getEnergyFeeParameters(amount, destination, effectiveCallData)
             ) {
                 is Result.Failure -> return@coroutineScope Result.Failure(energyFeeResult.error)
                 is Result.Success -> energyFeeResult.data
@@ -306,10 +321,11 @@ internal class TronWalletManager(
             }
 
             is Result.Success -> {
-                // A native-value tx that carries call data is a DEX swap in EVM format —
-                // build it via the TransactionData overload (smart-contract call). Regular coin/token
-                // transfers keep the original decomposed overload untouched.
-                val transactionToSign = if (amount.type == AmountType.Coin && extras != null) {
+                // A native-value tx carrying call data is a DEX swap in EVM format, and a memo has to
+                // reach `Transaction.raw.data` — both are only handled by the TransactionData
+                // overload. Regular coin/token transfers keep the decomposed overload untouched.
+                val isRichBuilderNeeded = extras.callDataOrNull() != null || extras?.memo != null
+                val transactionToSign = if (amount.type == AmountType.Coin && isRichBuilderNeeded) {
                     transactionBuilder.buildForSign(
                         transaction = TransactionData.Uncompiled(
                             amount = amount,
