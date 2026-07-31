@@ -196,4 +196,18 @@ data class TronTriggerSmartContractResponse(
     val constantResult: List<String>,
     @Json(name = "energy_used")
     val energyUsed: Long,
+    @Json(name = "result")
+    val executionResult: TronContractExecutionResult? = null,
+)
+
+/**
+ * Outcome of a `triggerconstantcontract` simulation.
+ *
+ * Its own `result` flag is `true` even when the contract call reverts, and `energy_used` still
+ * reports the energy burned up to the revert — so [message], which the node populates only on
+ * failure, is the only field that tells a successful simulation from a failed one.
+ */
+data class TronContractExecutionResult(
+    @Json(name = "message")
+    val message: String? = null,
 )
