@@ -18,10 +18,15 @@ import fr.acinq.bitcoin.psbt.Psbt
  * acinq's interpreter would recompute the legacy Bitcoin sighash while the signature commits to the
  * FORKID (BIP143-style) preimage. So a *correctly* signed BCH transaction always fails there ([REDACTED_TASK_KEY]).
  *
- * This extractor therefore performs the same assembly as [Psbt.extract] — including its structural checks —
- * but skips the Bitcoin-rules script validation. Consequently a malformed signature is only rejected by the
- * network; [com.tangem.blockchain.blockchains.bitcoincash.psbt.BitcoinCashSighashStrategy] and its tests are
- * what keep the signature honest.
+ * This extractor therefore assembles the transaction the same way [Psbt.extract] does — the unsigned global
+ * transaction with each input's finalScriptSig attached — but skips the Bitcoin-rules script validation.
+ * The utxo consistency checks acinq performs are not replicated: they exist only to build the utxo map that
+ * feeds that validation, and cannot influence the extracted bytes. What is kept is the guarantee that every
+ * input really is a finalized legacy input, so an unfinalized PSBT fails here instead of broadcasting an
+ * unspendable transaction.
+ *
+ * Consequently a malformed signature is only rejected by the network; [BitcoinCashSighashStrategy] and its
+ * tests are what keep the signature honest.
  */
 internal object BitcoinCashPsbtTransactionExtractor : PsbtTransactionExtractor {
 
