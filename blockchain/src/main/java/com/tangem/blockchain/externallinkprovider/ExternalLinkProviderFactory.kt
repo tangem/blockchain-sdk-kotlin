@@ -117,6 +117,7 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Adi, Blockchain.AdiTestnet -> AdiExternalLinkProvider(isTestnet)
             Blockchain.SeiEvm, Blockchain.SeiEvmTestnet -> SeiEvmExternalLinkProvider(isTestnet)
             Blockchain.Robinhood, Blockchain.RobinhoodTestnet -> RobinhoodExternalLinkProvider(isTestnet)
+            Blockchain.Igra, Blockchain.IgraTestnet -> IgraExternalLinkProvider(isTestnet)
         }
     }
 }
