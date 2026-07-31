@@ -11,10 +11,15 @@ data class TronAccountInfo(
     val confirmedTransactionIds: List<String>,
 )
 
+/**
+ * @param memoFee sun burned on top of everything else when a transaction carries a memo
+ *   (`raw_data.data`). Governance-controlled: 1 TRX on mainnet, 0 by default elsewhere.
+ */
 data class TronChainParameters(
     val sunPerEnergyUnit: Long,
     val dynamicEnergyMaxFactor: Long,
     val dynamicIncreaseFactor: Long,
+    val memoFee: Long,
 )
 
 @JsonClass(generateAdapter = true)
