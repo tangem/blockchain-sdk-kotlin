@@ -6,6 +6,7 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.psbt.PsbtSighashStrategy
+import com.tangem.blockchain.common.psbt.PsbtTransactionExtractor
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.extensions.successOr
@@ -13,7 +14,6 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.psbt.Psbt
-import fr.acinq.bitcoin.utils.Either
 
 /**
  * Handler for Bitcoin PSBT (Partially Signed Bitcoin Transaction) operations.
@@ -23,6 +23,7 @@ import fr.acinq.bitcoin.utils.Either
  * @property wallet The Bitcoin wallet instance
  * @property networkProvider Network provider for broadcasting transactions
  * @property sighashStrategy Chain-specific signature-hash computation
+ * @property transactionExtractor Chain-specific assembly of the final transaction from a finalized PSBT
  *
  * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki">BIP-174 PSBT</a>
  * @see <a href="https://github.com/ACINQ/bitcoin-kmp">ACINQ bitcoin-kmp library</a>
@@ -31,6 +32,7 @@ internal class BitcoinPsbtSigner(
     private val wallet: Wallet,
     private val networkProvider: BitcoinNetworkProvider,
     private val sighashStrategy: PsbtSighashStrategy,
+    private val transactionExtractor: PsbtTransactionExtractor,
 ) {
 
     private val psbtSerializer = PsbtSerializer
@@ -148,14 +150,7 @@ internal class BitcoinPsbtSigner(
      * @return Success with transaction hash, or Failure with error
      */
     suspend fun broadcastPsbt(psbt: Psbt): Result<String> {
-        val transaction = when (val result = psbt.extract()) {
-            is Either.Right -> result.value
-            is Either.Left -> {
-                return Result.Failure(
-                    BlockchainSdkError.CustomError("PSBT is not finalized or cannot be extracted: ${result.value}"),
-                )
-            }
-        }
+        val transaction = transactionExtractor.extract(psbt).successOr { return it }
 
         val rawTx = Transaction.write(transaction).toHexString()
         return when (val result = networkProvider.sendTransaction(rawTx)) {

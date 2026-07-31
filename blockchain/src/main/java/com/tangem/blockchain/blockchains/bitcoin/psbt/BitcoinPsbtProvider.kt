@@ -11,6 +11,7 @@ import com.tangem.blockchain.common.psbt.PsbtAddressCodec
 import com.tangem.blockchain.common.psbt.PsbtOutputInfo
 import com.tangem.blockchain.common.psbt.PsbtProvider
 import com.tangem.blockchain.common.psbt.PsbtSighashStrategy
+import com.tangem.blockchain.common.psbt.PsbtTransactionExtractor
 import com.tangem.blockchain.extensions.Result
 import fr.acinq.bitcoin.psbt.Psbt
 
@@ -26,15 +27,22 @@ import fr.acinq.bitcoin.psbt.Psbt
  * @property networkProvider Network provider for broadcasting transactions
  * @property addressCodec Decodes scriptPubKeys into the chain's native address format
  * @property sighashStrategy Chain-specific signature-hash computation
+ * @property transactionExtractor Chain-specific assembly of the final transaction from a finalized PSBT
  */
 internal class BitcoinPsbtProvider(
     private val wallet: Wallet,
     private val networkProvider: BitcoinNetworkProvider,
     private val addressCodec: PsbtAddressCodec,
     private val sighashStrategy: PsbtSighashStrategy,
+    private val transactionExtractor: PsbtTransactionExtractor,
 ) : PsbtProvider {
 
-    private val psbtSigner = BitcoinPsbtSigner(wallet, networkProvider, sighashStrategy)
+    private val psbtSigner = BitcoinPsbtSigner(
+        wallet = wallet,
+        networkProvider = networkProvider,
+        sighashStrategy = sighashStrategy,
+        transactionExtractor = transactionExtractor,
+    )
 
     override suspend fun signPsbt(psbtBase64: String, signInputs: Any, signer: TransactionSigner): Result<String> {
         val inputs = when (signInputs) {
