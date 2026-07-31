@@ -11,6 +11,7 @@ import com.tangem.blockchain.blockchains.tron.network.TronBlock
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.extensions.decodeBase58
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
@@ -40,16 +41,18 @@ class TronTransactionBuilder {
         }
         val feeLimit = if (amount.type == AmountType.Coin) 0L else SMART_CONTRACT_FEE_LIMIT
 
-        return buildRaw(block, contract, feeLimit)
+        return buildRaw(block = block, contract = contract, feeLimit = feeLimit, memo = extras?.memo)
     }
 
     /**
      * Builds the transaction to sign from a [TransactionData], mirroring the EVM
      * `buildForSign(TransactionData)` shape and dispatching by amount type:
-     * - native coin transfer (Coin, no extras) → `TransferContract`;
+     * - native coin transfer (Coin, no extras or extras without call data) → `TransferContract`;
      * - TRC-20 token transfer (Token) → `TriggerSmartContract` on the token contract;
      * - native-value contract call (Coin + call data, e.g. a DEX swap in EVM format) →
      *   `TriggerSmartContract` on the destination router with `call_value` + `data`.
+     *
+     * Any [TronTransactionExtras.memo] is attached to the resulting transaction regardless of shape.
      *
      * Shares the raw-tx assembly ([buildRaw]) with the decomposed overload above; the two differ only
      * in how the contract is resolved and in the fee limit. The decomposed overload is kept so the
@@ -60,14 +63,15 @@ class TronTransactionBuilder {
         val source = transaction.sourceAddress
         val destination = transaction.destinationAddress
         val extras = transaction.extras as? TronTransactionExtras
+        val swapCallData = extras.callDataOrNull()
 
         val contract = when (amount.type) {
-            AmountType.Coin -> if (extras != null) {
+            AmountType.Coin -> if (swapCallData != null) {
                 buildContractForSmartContractCall(
                     amount = amount,
                     source = source,
                     destination = destination,
-                    extras = extras,
+                    callData = swapCallData,
                 )
             } else {
                 buildContractForCoin(amount, source, destination)
@@ -75,9 +79,9 @@ class TronTransactionBuilder {
             is AmountType.Token -> buildContractForToken(amount, source, extras)
             else -> error("Not supported")
         }
-        val feeLimit = if (amount.type == AmountType.Coin && extras == null) 0L else SMART_CONTRACT_FEE_LIMIT
+        val feeLimit = if (amount.type == AmountType.Coin && swapCallData == null) 0L else SMART_CONTRACT_FEE_LIMIT
 
-        return buildRaw(block, contract, feeLimit)
+        return buildRaw(block = block, contract = contract, feeLimit = feeLimit, memo = extras?.memo)
     }
 
     fun buildForSend(rawData: Transaction.raw, signature: ByteArray): Transaction {
@@ -89,13 +93,13 @@ class TronTransactionBuilder {
         source: String,
         extras: TronTransactionExtras?,
     ): Transaction.Contract {
-        if (extras == null) error("Smart contract is not specified")
+        val callData = extras?.callData ?: error("Smart contract is not specified")
         val amountType = amount.type as? AmountType.Token ?: error("wrong amount type")
 
         return buildTriggerSmartContract(
             ownerAddress = source,
             contractAddress = amountType.token.contractAddress,
-            data = extras.callData.data,
+            data = callData.data,
         )
     }
 
@@ -103,11 +107,11 @@ class TronTransactionBuilder {
         amount: Amount,
         source: String,
         destination: String,
-        extras: TronTransactionExtras,
+        callData: SmartContractCallData,
     ): Transaction.Contract = buildTriggerSmartContract(
         ownerAddress = source,
         contractAddress = destination,
-        data = extras.callData.data,
+        data = callData.data,
         callValue = amount.longValue,
     )
 
@@ -139,10 +143,18 @@ class TronTransactionBuilder {
     /**
      * Assembles the signable [Transaction.raw] shared by both `buildForSign` overloads: derives the
      * `ref_block_hash` / `ref_block_bytes` and the expiration from the reference [block] header, then
-     * wraps the already-built [contract] with the given [feeLimit].
+     * wraps the already-built [contract] with the given [feeLimit] and optional [memo].
+     *
+     * [memo] lands in the transaction-level `data` field. A `null` memo encodes identically to the
+     * proto3 default, so transactions without one are byte-for-byte unchanged.
      */
     @Suppress("MagicNumber")
-    private fun buildRaw(block: TronBlock, contract: Transaction.Contract, feeLimit: Long): Transaction.raw {
+    private fun buildRaw(
+        block: TronBlock,
+        contract: Transaction.Contract,
+        feeLimit: Long,
+        memo: ByteArray? = null,
+    ): Transaction.raw {
         val blockHeaderRawData = block.blockHeader.rawData
         val blockHeader = BlockHeader.raw(
             timestamp = blockHeaderRawData.timestamp,
@@ -172,6 +184,7 @@ class TronTransactionBuilder {
             ref_block_bytes = refBlockBytes,
             contract = listOf(contract),
             fee_limit = feeLimit,
+            data_ = memo?.toByteString() ?: EMPTY,
         )
     }
 

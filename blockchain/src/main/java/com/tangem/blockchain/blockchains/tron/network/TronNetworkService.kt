@@ -114,7 +114,16 @@ class TronNetworkService(
         }
         return when (result) {
             is Result.Failure -> Result.Failure(result.error)
-            is Result.Success -> Result.Success(result.data.energyUsed)
+            is Result.Success -> {
+                // Without this a reverted call is priced as if it would succeed — see
+                // TronContractExecutionResult.
+                val failure = result.data.executionResult?.message
+                if (failure != null) {
+                    Result.Failure(BlockchainSdkError.CustomError("Contract call simulation failed: $failure"))
+                } else {
+                    Result.Success(result.data.energyUsed)
+                }
+            }
         }
     }
 
