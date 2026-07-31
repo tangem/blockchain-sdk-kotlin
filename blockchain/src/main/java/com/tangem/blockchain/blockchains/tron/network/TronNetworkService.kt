@@ -160,12 +160,19 @@ class TronNetworkService(
                     .firstOrNull { it.key == KEY_INCREASE_FACTOR }
                     ?.value
 
+                // Absent on networks that never voted the proposal in, where it means no memo fee.
+                val memoFee = result.data.chainParameters
+                    .firstOrNull { it.key == KEY_MEMO_FEE }
+                    ?.value
+                    ?: 0
+
                 if (energyFee != null && energyMaxFactor != null && increaseFactor != null) {
                     Result.Success(
                         TronChainParameters(
                             sunPerEnergyUnit = energyFee,
                             dynamicEnergyMaxFactor = energyMaxFactor,
                             dynamicIncreaseFactor = increaseFactor,
+                            memoFee = memoFee,
                         ),
                     )
                 } else {
@@ -206,3 +213,4 @@ class TronNetworkService(
 private const val KEY_SUN_ENERGY_FEE = "getEnergyFee"
 private const val KEY_MAX_FACTOR = "getDynamicEnergyMaxFactor"
 private const val KEY_INCREASE_FACTOR = "getDynamicEnergyIncreaseFactor"
+private const val KEY_MEMO_FEE = "getMemoFee"
