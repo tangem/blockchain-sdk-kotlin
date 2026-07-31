@@ -112,4 +112,6 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     SeiEvmTestnet(id = 1328, blockchain = Blockchain.SeiEvmTestnet),
     Robinhood(id = 4663, blockchain = Blockchain.Robinhood),
     RobinhoodTestnet(id = 46630, blockchain = Blockchain.RobinhoodTestnet),
+    Igra(id = 38833, blockchain = Blockchain.Igra),
+    IgraTestnet(id = 38836, blockchain = Blockchain.IgraTestnet),
 }
