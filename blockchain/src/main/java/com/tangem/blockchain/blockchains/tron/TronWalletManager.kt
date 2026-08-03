@@ -5,6 +5,7 @@ import com.google.common.primitives.Ints
 import com.tangem.blockchain.blockchains.tron.gasless.TronGaslessTransactionSigner
 import com.tangem.blockchain.blockchains.tron.network.TronAccountInfo
 import com.tangem.blockchain.blockchains.tron.network.TronEnergyFeeData
+import com.tangem.blockchain.blockchains.tron.network.TronGetAccountResourceResponse
 import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
 import com.tangem.blockchain.blockchains.tron.tokenmethods.TronApprovalTokenCallData
 import com.tangem.blockchain.common.*
@@ -196,10 +197,12 @@ internal class TronWalletManager(
     override suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
         val uncompiledTransaction = transactionData.requireUncompiled()
         val extra = uncompiledTransaction.extras as? TronTransactionExtras
-        return getFee(
+        return calculateFee(
             amount = uncompiledTransaction.amount,
             destination = uncompiledTransaction.destinationAddress,
-            callData = extra?.callData,
+            callData = extra.callDataOrNull(),
+            // The memo is part of the signed payload, so it counts towards the bandwidth estimate.
+            memo = extra?.memo,
         )
     }
 
@@ -213,16 +216,35 @@ internal class TronWalletManager(
         callData: SmartContractCallData?,
     ): Boolean = !destinationExists && amount.type == AmountType.Coin && callData == null
 
-    @Suppress("MagicNumber")
     override suspend fun getFee(
         amount: Amount,
         destination: String,
         callData: SmartContractCallData?,
+    ): Result<TransactionFee> = calculateFee(
+        amount = amount,
+        destination = destination,
+        callData = callData,
+        memo = null,
+    )
+
+    @Suppress("MagicNumber")
+    private suspend fun calculateFee(
+        amount: Amount,
+        destination: String,
+        callData: SmartContractCallData?,
+        memo: ByteArray?,
     ): Result<TransactionFee> {
         val blockchain = wallet.blockchain
+        val effectiveCallData = callData.orNullIfEmpty()
         return coroutineScope {
             val destinationExistsDef = async { networkService.checkIfAccountExists(destination) }
             val resourceDef = async { networkService.getAccountResource(wallet.address) }
+            // A memo costs a flat burn on top of bandwidth and energy, so its price has to be read
+            // even on paths that need no energy estimation (a plain transfer). Fetched only when
+            // there is a memo, to keep the ordinary transfer at its current request count.
+            val memoFeeDef = memo?.takeIf { it.isNotEmpty() }?.let {
+                async { networkService.getChainParameters() }
+            }
             val transactionDataDef = async {
                 signUncompiledTransactionData(
                     amount = amount,
@@ -230,16 +252,22 @@ internal class TronWalletManager(
                     destination = destination,
                     signer = dummySigner,
                     publicKey = dummySigner.publicKey,
-                    extras = callData?.let { TronTransactionExtras(it) },
+                    extras = TronTransactionExtras(callData = effectiveCallData, memo = memo),
                 )
             }
 
-            if (isInactiveAccountActivation(destinationExistsDef.await(), amount, callData)) {
+            val memoFee = when (val memoFeeResult = memoFeeDef?.await()) {
+                null -> BigDecimal.ZERO
+                is Result.Failure -> return@coroutineScope Result.Failure(memoFeeResult.error)
+                is Result.Success -> BigDecimal(memoFeeResult.data.memoFee)
+            }
+
+            if (isInactiveAccountActivation(destinationExistsDef.await(), amount, effectiveCallData)) {
                 return@coroutineScope Result.Success(
                     TransactionFee.Single(
                         Fee.Common(
                             amount = Amount(
-                                BigDecimal.valueOf(1.1),
+                                BigDecimal.valueOf(1.1) + memoFee.movePointLeft(blockchain.decimals()),
                                 blockchain,
                             ),
                         ),
@@ -248,7 +276,7 @@ internal class TronWalletManager(
             }
 
             val energyFeeParameters = when (
-                val energyFeeResult = getEnergyFeeParameters(amount, destination, callData)
+                val energyFeeResult = getEnergyFeeParameters(amount, destination, effectiveCallData)
             ) {
                 is Result.Failure -> return@coroutineScope Result.Failure(energyFeeResult.error)
                 is Result.Success -> energyFeeResult.data
@@ -262,33 +290,53 @@ internal class TronWalletManager(
                 is Result.Success -> transactionDataResult.data
             }
 
-            val sunPerBandwidthPoint = 1000
-            val additionalDataSize = 64
-            val remainingBandwidth = resource.freeNetLimit - (resource.freeNetUsed ?: 0)
-            val transactionSizeFee = transactionData.size + additionalDataSize
-            val consumedBandwidthFee = if (transactionSizeFee <= remainingBandwidth) {
-                0
-            } else {
-                transactionSizeFee * sunPerBandwidthPoint
-            }
-
-            val remainingEnergy = (resource.energyLimit ?: 0) - (resource.energyUsed ?: 0)
-            val consumedEnergy = kotlin.math.max(0, energyFeeParameters.energyFee - remainingEnergy)
-            val consumedEnergyFee = BigDecimal(energyFeeParameters.sunPerEnergyUnit) * BigDecimal(consumedEnergy)
-
-            val totalFee = BigDecimal(consumedBandwidthFee) + consumedEnergyFee
-
-            val value = totalFee.movePointLeft(blockchain.decimals())
             Result.Success(
                 TransactionFee.Single(
-                    Fee.Tron(
-                        remainingEnergy = remainingEnergy,
-                        feeEnergy = energyFeeParameters.energyFee,
-                        amount = Amount(value, blockchain),
+                    buildFee(
+                        resource = resource,
+                        transactionSize = transactionData.size,
+                        energyFeeParameters = energyFeeParameters,
+                        memoFee = memoFee,
                     ),
                 ),
             )
         }
+    }
+
+    /**
+     * Bandwidth is free up to the account's daily allowance and paid per byte beyond it; energy is
+     * paid only for what the account's own staked energy does not cover. [memoFee] is a flat burn
+     * that applies regardless of either.
+     */
+    @Suppress("MagicNumber")
+    private fun buildFee(
+        resource: TronGetAccountResourceResponse,
+        transactionSize: Int,
+        energyFeeParameters: TronEnergyFeeData,
+        memoFee: BigDecimal,
+    ): Fee.Tron {
+        val blockchain = wallet.blockchain
+        val sunPerBandwidthPoint = 1000
+        val additionalDataSize = 64
+        val remainingBandwidth = resource.freeNetLimit - (resource.freeNetUsed ?: 0)
+        val transactionSizeFee = transactionSize + additionalDataSize
+        val consumedBandwidthFee = if (transactionSizeFee <= remainingBandwidth) {
+            0
+        } else {
+            transactionSizeFee * sunPerBandwidthPoint
+        }
+
+        val remainingEnergy = (resource.energyLimit ?: 0) - (resource.energyUsed ?: 0)
+        val consumedEnergy = kotlin.math.max(0, energyFeeParameters.energyFee - remainingEnergy)
+        val consumedEnergyFee = BigDecimal(energyFeeParameters.sunPerEnergyUnit) * BigDecimal(consumedEnergy)
+
+        val totalFee = BigDecimal(consumedBandwidthFee) + consumedEnergyFee + memoFee
+
+        return Fee.Tron(
+            remainingEnergy = remainingEnergy,
+            feeEnergy = energyFeeParameters.energyFee,
+            amount = Amount(totalFee.movePointLeft(blockchain.decimals()), blockchain),
+        )
     }
 
     @Suppress("LongParameterList")
@@ -306,10 +354,11 @@ internal class TronWalletManager(
             }
 
             is Result.Success -> {
-                // A native-value tx that carries call data is a DEX swap in EVM format —
-                // build it via the TransactionData overload (smart-contract call). Regular coin/token
-                // transfers keep the original decomposed overload untouched.
-                val transactionToSign = if (amount.type == AmountType.Coin && extras != null) {
+                // A native-value tx carrying call data is a DEX swap in EVM format, and a memo has to
+                // reach `Transaction.raw.data` — both are only handled by the TransactionData
+                // overload. Regular coin/token transfers keep the decomposed overload untouched.
+                val isRichBuilderNeeded = extras.callDataOrNull() != null || extras?.memo != null
+                val transactionToSign = if (amount.type == AmountType.Coin && isRichBuilderNeeded) {
                     transactionBuilder.buildForSign(
                         transaction = TransactionData.Uncompiled(
                             amount = amount,
