@@ -5,10 +5,15 @@ import co.nstant.`in`.cbor.model.Array as CborArray
 import co.nstant.`in`.cbor.model.Map as CborMap
 import co.nstant.`in`.cbor.model.UnsignedInteger
 import com.squareup.moshi.Moshi
+import com.tangem.blockchain.blockchains.cosmos.proto.CosmosProtoMessage
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.transaction.staking.model.EvmStakingTx
 import com.tangem.blockchain.transaction.staking.model.TronStakingRawTx
 import com.tangem.common.extensions.hexToBytes
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.protobuf.ProtoBuf
+import org.tron.protos.Transaction
 import java.math.BigInteger
 
 /**
@@ -21,14 +26,14 @@ import java.math.BigInteger
 object StakingTransactionRecognizer {
 
     private val TRON_STAKING_CONTRACT_TYPES = setOf(
-        "FreezeBalanceV2Contract",
-        "UnfreezeBalanceV2Contract",
-        "CancelAllUnfreezeV2Contract",
-        "DelegateResourceContract",
-        "UnDelegateResourceContract",
-        "WithdrawExpireUnfreezeContract",
-        "VoteWitnessContract",
-        "WithdrawBalanceContract",
+        Transaction.Contract.ContractType.FreezeBalanceV2Contract,
+        Transaction.Contract.ContractType.UnfreezeBalanceV2Contract,
+        Transaction.Contract.ContractType.CancelAllUnfreezeV2Contract,
+        Transaction.Contract.ContractType.DelegateResourceContract,
+        Transaction.Contract.ContractType.UnDelegateResourceContract,
+        Transaction.Contract.ContractType.WithdrawExpireUnfreezeContract,
+        Transaction.Contract.ContractType.VoteWitnessContract,
+        Transaction.Contract.ContractType.WithdrawBalanceContract,
     )
     private val COSMOS_STAKING_TYPE_URL_MARKERS = setOf(
         // Staking module: delegate / undelegate / redelegate / ...
@@ -94,18 +99,25 @@ object StakingTransactionRecognizer {
         }.getOrDefault(false)
     }
 
-    // Fail-closed: a Tron tx is staking only if it has at least one contract and EVERY contract is a
-    // staking operation, so a rogue contract can't ride along with a staking one in a bundled tx.
+    // Validate the protobuf raw_data_hex that actually gets signed — not the human-readable raw_data
+    // JSON, which a tampered payload can leave intact while mutating the signed bytes. Fail-closed: a
+    // Tron tx is staking only if it has at least one contract and EVERY contract is a staking operation,
+    // so a rogue contract can't ride along with a staking one in a bundled tx.
     private fun isTronStaking(unsignedTransaction: String): Boolean {
-        val contracts = tronAdapter.fromJson(unsignedTransaction)?.rawData?.contract
-        return !contracts.isNullOrEmpty() && contracts.all { it.type in TRON_STAKING_CONTRACT_TYPES }
+        val rawDataHex = tronAdapter.fromJson(unsignedTransaction)?.rawDataHex ?: return false
+        val contracts = Transaction.raw.ADAPTER.decode(rawDataHex.hexToBytes()).contract
+        return contracts.isNotEmpty() && contracts.all { it.type in TRON_STAKING_CONTRACT_TYPES }
     }
 
-    // No Cosmos protobuf model here: detect the staking message by its type URL, which is serialized
-    // as plain ASCII. ISO-8859-1 preserves every byte 1:1 so the ASCII marker is findable.
+    // Read the staking message type from the decoded protobuf (the same CosmosProtoMessage the signer
+    // parses) and match it against the staking markers by prefix. Reading the dedicated messageType
+    // field — rather than scanning the whole payload for the marker — prevents a non-staking tx from
+    // being recognized just because the marker string appears in a memo or another field.
+    @OptIn(ExperimentalSerializationApi::class)
     private fun isCosmosStaking(unsignedTransaction: String): Boolean {
-        val decoded = String(unsignedTransaction.hexToBytes(), Charsets.ISO_8859_1)
-        return COSMOS_STAKING_TYPE_URL_MARKERS.any { decoded.contains(it) }
+        val message = ProtoBuf.decodeFromByteArray<CosmosProtoMessage>(unsignedTransaction.hexToBytes())
+        val messageType = message.delegateContainer.delegate.messageType
+        return COSMOS_STAKING_TYPE_URL_MARKERS.any { messageType.startsWith(it) }
     }
 
     private fun isCardanoStaking(unsignedTransaction: String): Boolean {
