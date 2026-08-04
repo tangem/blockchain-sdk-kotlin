@@ -259,6 +259,7 @@ enum class Blockchain(
             ZkLinkNova,
             Linea,
             ArbitrumNova,
+            Robinhood,
             -> true
             else -> false
         }
