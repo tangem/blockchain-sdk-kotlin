@@ -7,6 +7,7 @@ import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider.Companion.shouldExcludeFromHistory
 import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
@@ -59,7 +60,7 @@ internal class EthereumTransactionHistoryProvider(
                 walletAddress = request.address,
                 filterType = request.filterType,
                 response = response,
-            )
+            ).filterNot { item -> shouldExcludeFromHistory(filterType = request.filterType, item = item) }
             val nextPage = if (response.page != null && request.page !is Page.LastPage) {
                 val page = response.page
                 if (page == response.totalPages) Page.LastPage else Page.Next(page.inc().toString())

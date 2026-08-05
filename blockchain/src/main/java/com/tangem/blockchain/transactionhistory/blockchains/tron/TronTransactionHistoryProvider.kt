@@ -1,14 +1,19 @@
 package com.tangem.blockchain.transactionhistory.blockchains.tron
 
 import com.tangem.Log
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.pagination.Page
 import com.tangem.blockchain.common.pagination.PaginationWrapper
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import com.tangem.blockchain.network.blockbook.network.responses.feeAmount
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider.Companion.shouldExcludeFromHistory
 import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.TransactionType.TronStakingTransactionType
@@ -81,6 +86,7 @@ internal class TronTransactionHistoryProvider(
                             filterType = request.filterType,
                         )
                     }
+                    .filterNot { item -> shouldExcludeFromHistory(filterType = request.filterType, item = item) }
                 val nextPage = if (response.page != null && request.page !is Page.LastPage) {
                     Page.Next(response.page.inc().toString())
                 } else {
@@ -144,10 +150,6 @@ internal class TronTransactionHistoryProvider(
             walletAddress = walletAddress,
         ).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
-            return null
-        }
-        if (shouldExcludeFromHistory(filterType, amount)) {
-            Log.info { "Transaction with zero amount is excluded from history. $this" }
             return null
         }
         val sourceType = extractSourceType(
