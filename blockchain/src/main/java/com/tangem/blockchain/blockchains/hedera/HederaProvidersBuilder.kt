@@ -17,10 +17,11 @@ internal class HederaProvidersBuilder(
 ) : NetworkProvidersBuilder<HederaNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<HederaNetworkProvider> {
-        return providerTypes.mapNotNull {
-            when (it) {
-                is ProviderType.Public -> HederaMirrorRestProvider(baseUrl = it.url)
+        return providerTypes.mapNotNull { providerType ->
+            when (providerType) {
+                is ProviderType.Public -> HederaMirrorRestProvider(baseUrl = providerType.url)
                 ProviderType.Hedera.Arkhia -> createArkhiaMirrorProvider(isTestnet = false)
+                ProviderType.QuickNode -> createQuickNodeMirrorProvider()
                 else -> null
             }
         }
@@ -31,6 +32,16 @@ internal class HederaProvidersBuilder(
             HederaMirrorRestProvider(baseUrl = API_HEDERA_MIRROR_TESTNET),
             createArkhiaMirrorProvider(isTestnet = true),
         )
+    }
+
+    private fun createQuickNodeMirrorProvider(): HederaMirrorRestProvider? {
+        return config.quickNodeHederaCredentials?.let { credentials ->
+            if (credentials.subdomain.isNotBlank() && credentials.apiKey.isNotBlank()) {
+                HederaMirrorRestProvider(baseUrl = "https://${credentials.subdomain}/${credentials.apiKey}/api/v1/")
+            } else {
+                null
+            }
+        }
     }
 
     private fun createArkhiaMirrorProvider(isTestnet: Boolean): HederaMirrorRestProvider? {
