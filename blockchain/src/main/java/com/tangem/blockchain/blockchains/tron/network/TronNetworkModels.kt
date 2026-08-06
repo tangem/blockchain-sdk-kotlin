@@ -129,26 +129,66 @@ data class TronBroadcastResponse(
     val errorMessage: String?,
 )
 
-@JsonClass(generateAdapter = true)
-data class TronTriggerSmartContractRequest(
-    @Json(name = "owner_address")
-    val ownerAddress: String,
+/**
+ * Request for `triggerconstantcontract` / `triggersmartcontract`. A contract call can be specified in
+ * two equivalent ways that share the same envelope (owner/contract/fee_limit/visible), hence the
+ * sealed hierarchy:
+ * - [Function] — by human-readable function selector + ABI-encoded [parameter][Function.parameter]
+ *   (used for token balance/allowance/transfer);
+ * - [CallData] — by raw [data][CallData.data] (selector + args), used for arbitrary calls such as a
+ *   DEX swap where the human-readable selector is unavailable.
+ */
+sealed class TronTriggerSmartContractRequest {
 
-    @Json(name = "contract_address")
-    val contractAddress: String,
+    abstract val ownerAddress: String
+    abstract val contractAddress: String
+    abstract val feeLimit: Long?
 
-    @Json(name = "function_selector")
-    val functionSelector: String,
+    @Suppress("BooleanPropertyNaming")
+    abstract val visible: Boolean
 
-    @Json(name = "fee_limit")
-    val feeLimit: Long? = null,
+    @JsonClass(generateAdapter = true)
+    data class Function(
+        @Json(name = "owner_address")
+        override val ownerAddress: String,
 
-    @Json(name = "parameter")
-    val parameter: String,
+        @Json(name = "contract_address")
+        override val contractAddress: String,
 
-    @Json(name = "visible")
-    val visible: Boolean,
-)
+        @Json(name = "function_selector")
+        val functionSelector: String,
+
+        @Json(name = "parameter")
+        val parameter: String,
+
+        @Json(name = "fee_limit")
+        override val feeLimit: Long? = null,
+
+        @Json(name = "visible")
+        override val visible: Boolean,
+    ) : TronTriggerSmartContractRequest()
+
+    @JsonClass(generateAdapter = true)
+    data class CallData(
+        @Json(name = "owner_address")
+        override val ownerAddress: String,
+
+        @Json(name = "contract_address")
+        override val contractAddress: String,
+
+        @Json(name = "data")
+        val data: String,
+
+        @Json(name = "call_value")
+        val callValue: Long,
+
+        @Json(name = "fee_limit")
+        override val feeLimit: Long? = null,
+
+        @Json(name = "visible")
+        override val visible: Boolean,
+    ) : TronTriggerSmartContractRequest()
+}
 
 @JsonClass(generateAdapter = true)
 data class TronTriggerSmartContractResponse(
