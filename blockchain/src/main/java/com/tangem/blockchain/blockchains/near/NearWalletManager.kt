@@ -80,27 +80,20 @@ class NearWalletManager(
         if (error is BlockchainSdkError) throw error
     }
 
+    /**
+     * Nearcore charges the account creation and access key costs for every transfer to an implicit address, whether
+     * that account already exists or not — the receiver shard is unknown at the send stage — so the fee depends only
+     * on the shape of the address and the destination does not have to be looked up.
+     */
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
-        val destinationAccount = networkService.getAccount(destination).successOr { return it }
         val protocolConfig = networkService.getProtocolConfig().successOr { return it }
         val gasPrice = networkService.getGas(blockHash = null).successOr { return it }
 
         val isImplicitAccount = destination.length == IMPLICIT_ACCOUNT_ADDRESS_LENGTH
+        val feeYocto = protocolConfig.calculateSendFundsFee(gasPrice, isImplicitAccount)
+        val feeAmount = Amount(NearAmount(feeYocto).value, wallet.blockchain)
 
-        return when (destinationAccount) {
-            is NearAccount.Full -> {
-                val feeYocto = protocolConfig.calculateSendFundsFee(gasPrice, isImplicitAccount)
-                val feeAmount = Amount(NearAmount(feeYocto).value, wallet.blockchain)
-                Result.Success(TransactionFee.Single(Fee.Common(feeAmount)))
-            }
-
-            NearAccount.NotInitialized -> {
-                val feeYocto = protocolConfig.calculateSendFundsFee(gasPrice, isImplicitAccount) +
-                    protocolConfig.calculateCreateAccountFee(gasPrice)
-                val feeAmount = Amount(NearAmount(feeYocto).value, wallet.blockchain)
-                Result.Success(TransactionFee.Single(Fee.Common(feeAmount)))
-            }
-        }
+        return Result.Success(TransactionFee.Single(Fee.Common(feeAmount)))
     }
 
     override suspend fun send(
