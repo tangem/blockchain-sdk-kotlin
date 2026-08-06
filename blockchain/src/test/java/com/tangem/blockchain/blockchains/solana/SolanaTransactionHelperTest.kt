@@ -1,5 +1,7 @@
 package com.tangem.blockchain.blockchains.solana
 
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.extensions.Result
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
 import io.ktor.util.*
@@ -186,5 +188,142 @@ internal class SolanaTransactionHelperTest {
             SolanaTransactionHelper.removeSignaturesPlaceholders(transaction).toHexString()
 
         Assert.assertEquals(expectedTransaction.lowercase(), transactionWithRemovedSignatures.lowercase())
+    }
+
+    // region putSignature
+
+    @Test
+    fun `putSignature places signature in the wallet slot preserving other slots and message`() {
+        // A two-signer transaction: slot 0 is a co-signer's signature already supplied by the dApp, slot 1 is the
+        // zero placeholder for our wallet (signer index 1 — not the fee-payer at index 0).
+        val coSignerSignature = ByteArray(SIGNATURE_LENGTH) { 0x11 }
+        val ourPlaceholder = ByteArray(SIGNATURE_LENGTH) { 0x00 }
+        val ourSignature = ByteArray(SIGNATURE_LENGTH) { 0x77 }
+
+        val transaction = byteArrayOf(0x02) + // signature count = 2
+            coSignerSignature + ourPlaceholder +
+            TWO_SIGNER_MESSAGE
+
+        val result = SolanaTransactionHelper.putSignature(
+            transaction = transaction,
+            signerPublicKey = OUR_KEY,
+            signature = ourSignature,
+        )
+
+        val expected = byteArrayOf(0x02) +
+            coSignerSignature + ourSignature + // our signature spliced into slot 1, co-signer's slot untouched
+            TWO_SIGNER_MESSAGE
+        Assert.assertArrayEquals(expected, result.dataOrFail())
+    }
+
+    @Test
+    fun `putSignature keeps the signature count and message identical`() {
+        val transaction = byteArrayOf(0x02) +
+            ByteArray(SIGNATURE_LENGTH) + ByteArray(SIGNATURE_LENGTH) +
+            TWO_SIGNER_MESSAGE
+
+        val signed = SolanaTransactionHelper
+            .putSignature(transaction, OUR_KEY, ByteArray(SIGNATURE_LENGTH) { 0x77 })
+            .dataOrFail()
+
+        Assert.assertEquals(2, signed[0].toInt()) // count unchanged
+        Assert.assertArrayEquals(TWO_SIGNER_MESSAGE, SolanaTransactionHelper.extractMessage(signed))
+    }
+
+    @Test
+    fun `putSignature signs the fee-payer slot when the wallet is signer index 0`() {
+        val transaction = byteArrayOf(0x02) +
+            ByteArray(SIGNATURE_LENGTH) + ByteArray(SIGNATURE_LENGTH) +
+            TWO_SIGNER_MESSAGE
+        val feePayerSignature = ByteArray(SIGNATURE_LENGTH) { 0x55 }
+
+        val result = SolanaTransactionHelper.putSignature(transaction, FEE_PAYER_KEY, feePayerSignature)
+
+        val expected = byteArrayOf(0x02) +
+            feePayerSignature + ByteArray(SIGNATURE_LENGTH) +
+            TWO_SIGNER_MESSAGE
+        Assert.assertArrayEquals(expected, result.dataOrFail())
+    }
+
+    @Test
+    fun `putSignature returns SignerPublicKeyNotFound when the public key is not a required signer`() {
+        val transaction = byteArrayOf(0x02) +
+            ByteArray(SIGNATURE_LENGTH) + ByteArray(SIGNATURE_LENGTH) +
+            TWO_SIGNER_MESSAGE
+        val strangerKey = ByteArray(PUBLIC_KEY_LENGTH) { 0xEE.toByte() }
+
+        val result = SolanaTransactionHelper.putSignature(transaction, strangerKey, ByteArray(SIGNATURE_LENGTH))
+
+        Assert.assertTrue(result is Result.Failure)
+        Assert.assertTrue((result as Result.Failure).error is BlockchainSdkError.Solana.SignerPublicKeyNotFound)
+    }
+
+    @Test
+    fun `putSignature does not treat a non-signer account as a signer`() {
+        // PROGRAM_KEY is account index 2 — present in the message but not among the two required signers.
+        val transaction = byteArrayOf(0x02) +
+            ByteArray(SIGNATURE_LENGTH) + ByteArray(SIGNATURE_LENGTH) +
+            TWO_SIGNER_MESSAGE
+
+        val result = SolanaTransactionHelper.putSignature(transaction, PROGRAM_KEY, ByteArray(SIGNATURE_LENGTH))
+
+        Assert.assertTrue(result is Result.Failure)
+        Assert.assertTrue((result as Result.Failure).error is BlockchainSdkError.Solana.SignerPublicKeyNotFound)
+    }
+
+    @Test
+    fun `putSignature returns failure for a signature of the wrong length`() {
+        val transaction = byteArrayOf(0x02) +
+            ByteArray(SIGNATURE_LENGTH) + ByteArray(SIGNATURE_LENGTH) +
+            TWO_SIGNER_MESSAGE
+
+        val result = SolanaTransactionHelper.putSignature(transaction, OUR_KEY, ByteArray(SIGNATURE_LENGTH - 1))
+
+        Assert.assertTrue(result is Result.Failure)
+    }
+
+    @Test
+    fun `putSignature returns failure for an empty transaction`() {
+        val result = SolanaTransactionHelper.putSignature(byteArrayOf(), OUR_KEY, ByteArray(SIGNATURE_LENGTH))
+
+        Assert.assertTrue(result is Result.Failure)
+        Assert.assertTrue((result as Result.Failure).error is BlockchainSdkError.Solana.TransactionIsEmpty)
+    }
+
+    @Test
+    fun `extractMessage returns the message of a two-signer transaction`() {
+        val transaction = byteArrayOf(0x02) +
+            ByteArray(SIGNATURE_LENGTH) + ByteArray(SIGNATURE_LENGTH) +
+            TWO_SIGNER_MESSAGE
+
+        Assert.assertArrayEquals(TWO_SIGNER_MESSAGE, SolanaTransactionHelper.extractMessage(transaction))
+    }
+
+    // endregion
+
+    private fun Result<ByteArray>.dataOrFail(): ByteArray =
+        (this as? Result.Success)?.data ?: error("Expected Result.Success but was $this")
+
+    private companion object {
+        const val SIGNATURE_LENGTH = 64
+        const val PUBLIC_KEY_LENGTH = 32
+
+        val FEE_PAYER_KEY = ByteArray(PUBLIC_KEY_LENGTH) { 0xA0.toByte() } // signer index 0
+        val OUR_KEY = ByteArray(PUBLIC_KEY_LENGTH) { 0xB1.toByte() } // signer index 1
+        val PROGRAM_KEY = ByteArray(PUBLIC_KEY_LENGTH) { 0xC2.toByte() } // account index 2, not a signer
+        val BLOCKHASH = ByteArray(PUBLIC_KEY_LENGTH) { 0xD3.toByte() }
+
+        /**
+         * A well-formed legacy message with 2 required signers and 3 static accounts (fee-payer, our wallet,
+         * program), a blockhash and a single instruction referencing accounts 0 and 1.
+         */
+        val TWO_SIGNER_MESSAGE: ByteArray =
+            byteArrayOf(0x02, 0x00, 0x01) + // header: 2 required signatures, 0 readonly signed, 1 readonly unsigned
+                byteArrayOf(0x03) + FEE_PAYER_KEY + OUR_KEY + PROGRAM_KEY + // 3 account keys
+                BLOCKHASH +
+                byteArrayOf(0x01) + // instruction count
+                byteArrayOf(0x02) + // program id index -> PROGRAM_KEY
+                byteArrayOf(0x02, 0x00, 0x01) + // 2 account indices -> [0, 1]
+                byteArrayOf(0x00) // data length 0
     }
 }
