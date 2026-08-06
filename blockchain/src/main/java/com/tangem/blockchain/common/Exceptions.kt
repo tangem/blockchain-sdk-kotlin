@@ -62,6 +62,7 @@ sealed class BlockchainSdkError(
 
     data object SignatureCountNotMatched : BlockchainSdkError(100)
 
+    @Suppress("ObjectExtendsThrowable")
     sealed class Solana(
         subCode: Int,
         customMessage: String? = null,
@@ -84,6 +85,8 @@ sealed class BlockchainSdkError(
         ) : Solana(8, "Invalid amount to cover rent in destination account")
 
         class TransactionTooLarge : Solana(9, "Transaction too large after ALT reduction")
+        data object SignerPublicKeyNotFound :
+            Solana(10, "Wallet public key is not among the transaction's required signers")
     }
 
     sealed class Polkadot(

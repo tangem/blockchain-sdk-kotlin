@@ -19,10 +19,10 @@ import com.tangem.blockchain.extensions.*
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
-import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
-import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.tokenbalance.DefaultTokenBalanceProvider
 import com.tangem.blockchain.tokenbalance.TokenBalanceProvider
+import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import kotlinx.coroutines.*
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.Program
@@ -287,7 +287,10 @@ class SolanaWalletManager internal constructor(
         val signResult = signer.sign(transactionToSign, wallet.publicKey)
             .successOr { return Result.fromTangemSdkError(it.error) }
 
-        val signedTransaction = byteArrayOf(1) + signResult + transactionToSign
+        val signedTransaction = placeSignature(
+            transactionData = compiledTransaction,
+            signature = signResult,
+        ).successOr { return it }
         return Result.Success(signedTransaction)
     }
 
@@ -307,14 +310,17 @@ class SolanaWalletManager internal constructor(
         transactionDataList: List<TransactionData>,
         signer: TransactionSigner,
     ): Result<List<ByteArray>> {
-        val transactionToSign = transactionDataList.map { transactionData ->
-            val compiledTransaction = transactionData.requireCompiled()
+        val compiledTransactions = transactionDataList.map { it.requireCompiled() }
+        val transactionToSign = compiledTransactions.map { compiledTransaction ->
             prepareForSign(compiledTransaction).successOr { return it }
         }
         val signedTransactions = signer.sign(transactionToSign, wallet.publicKey)
             .successOr { return Result.fromTangemSdkError(it.error) }
             .mapIndexed { index, signResult ->
-                byteArrayOf(1) + signResult + transactionToSign[index]
+                placeSignature(
+                    transactionData = compiledTransactions[index],
+                    signature = signResult,
+                ).successOr { return it }
             }
         return Result.Success(signedTransactions)
     }
@@ -336,8 +342,26 @@ class SolanaWalletManager internal constructor(
         val compiledTransaction = (transactionData.value as? TransactionData.Compiled.Data.Bytes)?.data
         compiledTransaction ?: return Result.Failure(UnsupportedOperation("Compiled transaction must be in bytes"))
 
-        val withoutPlaceholders = SolanaTransactionHelper.removeSignaturesPlaceholders(compiledTransaction)
+        val withoutPlaceholders = SolanaTransactionHelper.extractMessage(compiledTransaction)
         return Result.Success(withoutPlaceholders)
+    }
+
+    /**
+     * Places the wallet's [signature] into its slot in the compiled transaction, preserving the signature count
+     * and every other signer's slot. Used by the send paths that return a full serialized transaction
+     * (`solana_signAndSendTransaction`, `solana_signAllTransactions`, swaps), unlike [prepareAndSign] which
+     * returns the bare signature for the dApp to assemble.
+     */
+    private fun placeSignature(transactionData: TransactionData.Compiled, signature: ByteArray): Result<ByteArray> {
+        val compiledTransaction =
+            (transactionData.value as? TransactionData.Compiled.Data.Bytes)?.data
+                ?: return Result.Failure(UnsupportedOperation("Compiled transaction must be in bytes"))
+
+        return SolanaTransactionHelper.putSignature(
+            transaction = compiledTransaction,
+            signerPublicKey = wallet.publicKey.blockchainKey,
+            signature = signature,
+        )
     }
 
     private suspend fun sendTransaction(
@@ -393,7 +417,7 @@ class SolanaWalletManager internal constructor(
             ((transactionData as? TransactionData.Compiled)?.value as? TransactionData.Compiled.Data.Bytes)?.data
 
         val messageBytes = transactionWithSignaturePlaceholder?.let {
-            SolanaTransactionHelper.removeSignaturesPlaceholders(it)
+            SolanaTransactionHelper.extractMessage(it)
         }
 
         if (messageBytes != null) {

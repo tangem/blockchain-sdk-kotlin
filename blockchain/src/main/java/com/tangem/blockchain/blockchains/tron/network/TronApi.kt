@@ -27,13 +27,19 @@ interface TronApi {
     @Headers("Content-Type: application/json", "Accept: application/json")
     @POST("wallet/triggerconstantcontract")
     suspend fun triggerConstantContract(
-        @Body requestBody: TronTriggerSmartContractRequest,
+        @Body requestBody: TronTriggerSmartContractRequest.Function,
+    ): TronTriggerSmartContractResponse
+
+    @Headers("Content-Type: application/json", "Accept: application/json")
+    @POST("wallet/triggerconstantcontract")
+    suspend fun triggerConstantContractByData(
+        @Body requestBody: TronTriggerSmartContractRequest.CallData,
     ): TronTriggerSmartContractResponse
 
     @Headers("Content-Type: application/json", "Accept: application/json")
     @POST("wallet/triggersmartcontract")
     suspend fun triggerSmartContract(
-        @Body requestBody: TronTriggerSmartContractRequest,
+        @Body requestBody: TronTriggerSmartContractRequest.Function,
     ): TronTriggerSmartContractResponse
 
     @Headers("Content-Type: application/json", "Accept: application/json")

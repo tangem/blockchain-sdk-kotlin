@@ -1,14 +1,18 @@
 package com.tangem.blockchain.yieldsupply
 
 import com.google.common.truth.Truth.assertThat
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.yieldsupply.providers.YieldModuleUpgradeUnavailableException
 import com.tangem.blockchain.yieldsupply.providers.YieldModuleVersionIndeterminateException
 import com.tangem.blockchain.yieldsupply.providers.YieldModuleVersionStatus
 import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyEnterCallData
 import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyUpgradeToAndCallCallData
+import com.tangem.blockchain.yieldsupply.providers.ethereum.yield.EthereumYieldSupplyWithdrawCallData
 import com.tangem.common.extensions.toHexString
 import org.junit.Assert.assertThrows
 import org.junit.Test
+import java.math.BigDecimal
 
 internal class YieldSupplyContractCallDataProviderFactoryTest {
 
@@ -82,6 +86,24 @@ internal class YieldSupplyContractCallDataProviderFactoryTest {
         }
 
         assertThat(exception.reason).isEqualTo("rpc down")
+    }
+
+    @Test
+    fun `getWithdrawCallData returns withdraw call data`() {
+        val amount = Amount(
+            token = Token(
+                symbol = "USDC",
+                contractAddress = "0x1234567890abcdef1234567890abcdef12345678",
+                decimals = 6,
+            ),
+            value = BigDecimal("0.01"),
+        )
+        val callData = YieldSupplyContractCallDataProviderFactory.getWithdrawCallData(
+            tokenContractAddress = "0x1234567890abcdef1234567890abcdef12345678",
+            amount = amount,
+        )
+        assertThat(callData).isInstanceOf(EthereumYieldSupplyWithdrawCallData::class.java)
+        assertThat(callData.methodId).isEqualTo("0xf3fef3a3")
     }
 
     private companion object {

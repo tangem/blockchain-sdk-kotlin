@@ -92,7 +92,7 @@ class TronJsonRpcNetworkProvider(override val network: TronNetwork) : TronNetwor
     ): Result<TronTriggerSmartContractResponse> {
         return try {
             val response = api.triggerConstantContract(
-                requestBody = TronTriggerSmartContractRequest(
+                requestBody = TronTriggerSmartContractRequest.Function(
                     ownerAddress = tokenBalanceRequestData.address,
                     contractAddress = tokenBalanceRequestData.contractAddress,
                     functionSelector = BALANCE_FUNCTION,
@@ -123,7 +123,7 @@ class TronJsonRpcNetworkProvider(override val network: TronNetwork) : TronNetwor
             )
             val params = owner + spender
             val response = api.triggerConstantContract(
-                requestBody = TronTriggerSmartContractRequest(
+                requestBody = TronTriggerSmartContractRequest.Function(
                     ownerAddress = tokenAllowanceRequestData.ownerAddress,
                     contractAddress = tokenAllowanceRequestData.contractAddress,
                     functionSelector = ALLOWANCE_FUNCTION,
@@ -144,11 +144,33 @@ class TronJsonRpcNetworkProvider(override val network: TronNetwork) : TronNetwor
     ): Result<TronTriggerSmartContractResponse> {
         return try {
             val response = api.triggerConstantContract(
-                requestBody = TronTriggerSmartContractRequest(
+                requestBody = TronTriggerSmartContractRequest.Function(
                     ownerAddress = address,
                     contractAddress = contractAddress,
                     functionSelector = TRANSFER_FUNCTION,
                     parameter = parameter,
+                    visible = true,
+                ),
+            )
+            Result.Success(response)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    override suspend fun contractEnergyUsageForCallData(
+        address: String,
+        contractAddress: String,
+        callDataHex: String,
+        callValue: Long,
+    ): Result<TronTriggerSmartContractResponse> {
+        return try {
+            val response = api.triggerConstantContractByData(
+                requestBody = TronTriggerSmartContractRequest.CallData(
+                    ownerAddress = address,
+                    contractAddress = contractAddress,
+                    data = callDataHex,
+                    callValue = callValue,
                     visible = true,
                 ),
             )

@@ -11,10 +11,15 @@ data class TronAccountInfo(
     val confirmedTransactionIds: List<String>,
 )
 
+/**
+ * @param memoFee sun burned on top of everything else when a transaction carries a memo
+ *   (`raw_data.data`). Governance-controlled: 1 TRX on mainnet, 0 by default elsewhere.
+ */
 data class TronChainParameters(
     val sunPerEnergyUnit: Long,
     val dynamicEnergyMaxFactor: Long,
     val dynamicIncreaseFactor: Long,
+    val memoFee: Long,
 )
 
 @JsonClass(generateAdapter = true)
@@ -129,26 +134,66 @@ data class TronBroadcastResponse(
     val errorMessage: String?,
 )
 
-@JsonClass(generateAdapter = true)
-data class TronTriggerSmartContractRequest(
-    @Json(name = "owner_address")
-    val ownerAddress: String,
+/**
+ * Request for `triggerconstantcontract` / `triggersmartcontract`. A contract call can be specified in
+ * two equivalent ways that share the same envelope (owner/contract/fee_limit/visible), hence the
+ * sealed hierarchy:
+ * - [Function] — by human-readable function selector + ABI-encoded [parameter][Function.parameter]
+ *   (used for token balance/allowance/transfer);
+ * - [CallData] — by raw [data][CallData.data] (selector + args), used for arbitrary calls such as a
+ *   DEX swap where the human-readable selector is unavailable.
+ */
+sealed class TronTriggerSmartContractRequest {
 
-    @Json(name = "contract_address")
-    val contractAddress: String,
+    abstract val ownerAddress: String
+    abstract val contractAddress: String
+    abstract val feeLimit: Long?
 
-    @Json(name = "function_selector")
-    val functionSelector: String,
+    @Suppress("BooleanPropertyNaming")
+    abstract val visible: Boolean
 
-    @Json(name = "fee_limit")
-    val feeLimit: Long? = null,
+    @JsonClass(generateAdapter = true)
+    data class Function(
+        @Json(name = "owner_address")
+        override val ownerAddress: String,
 
-    @Json(name = "parameter")
-    val parameter: String,
+        @Json(name = "contract_address")
+        override val contractAddress: String,
 
-    @Json(name = "visible")
-    val visible: Boolean,
-)
+        @Json(name = "function_selector")
+        val functionSelector: String,
+
+        @Json(name = "parameter")
+        val parameter: String,
+
+        @Json(name = "fee_limit")
+        override val feeLimit: Long? = null,
+
+        @Json(name = "visible")
+        override val visible: Boolean,
+    ) : TronTriggerSmartContractRequest()
+
+    @JsonClass(generateAdapter = true)
+    data class CallData(
+        @Json(name = "owner_address")
+        override val ownerAddress: String,
+
+        @Json(name = "contract_address")
+        override val contractAddress: String,
+
+        @Json(name = "data")
+        val data: String,
+
+        @Json(name = "call_value")
+        val callValue: Long,
+
+        @Json(name = "fee_limit")
+        override val feeLimit: Long? = null,
+
+        @Json(name = "visible")
+        override val visible: Boolean,
+    ) : TronTriggerSmartContractRequest()
+}
 
 @JsonClass(generateAdapter = true)
 data class TronTriggerSmartContractResponse(
@@ -156,4 +201,18 @@ data class TronTriggerSmartContractResponse(
     val constantResult: List<String>,
     @Json(name = "energy_used")
     val energyUsed: Long,
+    @Json(name = "result")
+    val executionResult: TronContractExecutionResult? = null,
+)
+
+/**
+ * Outcome of a `triggerconstantcontract` simulation.
+ *
+ * Its own `result` flag is `true` even when the contract call reverts, and `energy_used` still
+ * reports the energy burned up to the revert — so [message], which the node populates only on
+ * failure, is the only field that tells a successful simulation from a failed one.
+ */
+data class TronContractExecutionResult(
+    @Json(name = "message")
+    val message: String? = null,
 )
