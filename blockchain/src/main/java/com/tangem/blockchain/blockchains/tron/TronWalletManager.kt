@@ -200,6 +200,16 @@ internal class TronWalletManager(
         )
     }
 
+    /**
+     * A plain coin transfer to a not-yet-activated account is charged a fixed activation fee; a swap
+     * (Coin + call data) targets an existing contract and must fall through to real energy estimation.
+     */
+    private fun isInactiveAccountActivation(
+        destinationExists: Boolean,
+        amount: Amount,
+        callData: SmartContractCallData?,
+    ): Boolean = !destinationExists && amount.type == AmountType.Coin && callData == null
+
     @Suppress("MagicNumber")
     override suspend fun getFee(
         amount: Amount,
@@ -221,7 +231,7 @@ internal class TronWalletManager(
                 )
             }
 
-            if (!destinationExistsDef.await() && amount.type == AmountType.Coin) {
+            if (isInactiveAccountActivation(destinationExistsDef.await(), amount, callData)) {
                 return@coroutineScope Result.Success(
                     TransactionFee.Single(
                         Fee.Common(
@@ -234,7 +244,9 @@ internal class TronWalletManager(
                 )
             }
 
-            val energyFeeParameters = when (val energyFeeResult = getEnergyFeeParameters(amount, destination)) {
+            val energyFeeParameters = when (
+                val energyFeeResult = getEnergyFeeParameters(amount, destination, callData)
+            ) {
                 is Result.Failure -> return@coroutineScope Result.Failure(energyFeeResult.error)
                 is Result.Success -> energyFeeResult.data
             }
@@ -291,13 +303,29 @@ internal class TronWalletManager(
             }
 
             is Result.Success -> {
-                val transactionToSign = transactionBuilder.buildForSign(
-                    amount = amount,
-                    source = source,
-                    destination = destination,
-                    block = result.data,
-                    extras = extras,
-                )
+                // A native-value tx that carries call data is a DEX swap in EVM format —
+                // build it via the TransactionData overload (smart-contract call). Regular coin/token
+                // transfers keep the original decomposed overload untouched.
+                val transactionToSign = if (amount.type == AmountType.Coin && extras != null) {
+                    transactionBuilder.buildForSign(
+                        transaction = TransactionData.Uncompiled(
+                            amount = amount,
+                            fee = null,
+                            sourceAddress = source,
+                            destinationAddress = destination,
+                            extras = extras,
+                        ),
+                        block = result.data,
+                    )
+                } else {
+                    transactionBuilder.buildForSign(
+                        amount = amount,
+                        source = source,
+                        destination = destination,
+                        block = result.data,
+                        extras = extras,
+                    )
+                }
                 when (val signResult = sign(transactionToSign.encode().calculateSha256(), signer, publicKey)) {
                     is Result.Failure -> Result.Failure(signResult.error)
                     is Result.Success -> {
@@ -409,7 +437,20 @@ internal class TronWalletManager(
         }
     }
 
-    private suspend fun getEnergyFeeParameters(amount: Amount, destination: String): Result<TronEnergyFeeData> {
+    private suspend fun getEnergyFeeParameters(
+        amount: Amount,
+        destination: String,
+        callData: SmartContractCallData?,
+    ): Result<TronEnergyFeeData> {
+        // A native-value contract call (DEX swap in EVM format) triggers the destination
+        // router with raw call data — estimate its energy from that call data, not the token path.
+        if (amount.type == AmountType.Coin && callData != null) {
+            return getSwapEnergyFeeParameters(
+                contractAddress = destination,
+                callData = callData,
+                callValue = amount.longValue,
+            )
+        }
         val token = when (amount.type) {
             AmountType.Coin -> return Result.Success(TronEnergyFeeData(energyFee = 0, sunPerEnergyUnit = 0))
             is AmountType.Token -> amount.type.token
@@ -454,6 +495,50 @@ internal class TronWalletManager(
                     chainParameters.dynamicIncreaseFactor.toDouble() / ENERGY_FACTOR_PRECISION
                 }
 
+            val conservativeEnergyFee = (energyUse.toDouble() * (1 + dynamicEnergyIncreaseFactor)).toLong()
+
+            Result.Success(
+                TronEnergyFeeData(
+                    energyFee = conservativeEnergyFee,
+                    sunPerEnergyUnit = chainParameters.sunPerEnergyUnit,
+                ),
+            )
+        }
+    }
+
+    /**
+     * Estimates energy for a native-value contract call (DEX swap) by simulating the raw
+     * [callData] against the destination [contractAddress] (the router) with the native [callValue]
+     * the real transaction sends, then applies the same conservative dynamic-increase bump as the
+     * token path.
+     */
+    private suspend fun getSwapEnergyFeeParameters(
+        contractAddress: String,
+        callData: SmartContractCallData,
+        callValue: Long,
+    ): Result<TronEnergyFeeData> {
+        return coroutineScope {
+            val energyUseDef = async {
+                networkService.getMaxEnergyUseForCallData(
+                    address = wallet.address,
+                    contractAddress = contractAddress,
+                    callDataHex = callData.data.toHexString(),
+                    callValue = callValue,
+                )
+            }
+            val chainParametersDef = async { networkService.getChainParameters() }
+
+            val energyUse = when (val energyUseResult = energyUseDef.await()) {
+                is Result.Failure -> return@coroutineScope Result.Failure(energyUseResult.error)
+                is Result.Success -> energyUseResult.data
+            }
+            val chainParameters = when (val chainParametersResult = chainParametersDef.await()) {
+                is Result.Failure -> return@coroutineScope Result.Failure(chainParametersResult.error)
+                is Result.Success -> chainParametersResult.data
+            }
+
+            val dynamicEnergyIncreaseFactor =
+                chainParameters.dynamicIncreaseFactor.toDouble() / ENERGY_FACTOR_PRECISION
             val conservativeEnergyFee = (energyUse.toDouble() * (1 + dynamicEnergyIncreaseFactor)).toLong()
 
             Result.Success(
