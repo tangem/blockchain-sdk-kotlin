@@ -21,12 +21,13 @@ import org.p2p.solanaj.programs.AssociatedTokenProgram
 import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.programs.SystemProgram
 import java.math.BigDecimal
-import java.math.RoundingMode
 
 internal class SolanaTransactionBuilder(
     private val account: PublicKey,
     private val multiNetworkProvider: MultiNetworkProvider<SolanaNetworkService>,
 ) {
+
+    private val multiplierResolver = SolanaScaledUiAmountMultiplierResolver(multiNetworkProvider)
 
     suspend fun buildUnsignedTransaction(
         destinationAddress: String,
@@ -107,7 +108,12 @@ internal class SolanaTransactionBuilder(
             return Result.Failure(BlockchainSdkError.Solana.SameSourceAndDestinationAddress)
         }
 
-        val adjustedAmount = adjustAmountForScaledUi(token, amount, tokenProgramId)
+        val adjustedAmount = adjustAmountForScaledUi(
+            token = token,
+            uiAmount = amount,
+            tokenProgramId = tokenProgramId,
+            sourceAccountInfo = tokenInfo,
+        ).successOr { return it }
 
         val transaction = SolanaTransaction(account).apply {
             addInstructions(
@@ -244,26 +250,52 @@ internal class SolanaTransactionBuilder(
         token: Token,
         uiAmount: BigDecimal,
         tokenProgramId: SolanaTokenProgram.ID,
-    ): BigDecimal {
-        if (!DepsContainer.blockchainFeatureToggles.isSolanaScaledUiAmountEnabled) return uiAmount
-        if (tokenProgramId != SolanaTokenProgram.ID.TOKEN_2022) return uiAmount
+        sourceAccountInfo: SolanaSplAccountInfo,
+    ): Result<BigDecimal> {
+        if (!DepsContainer.blockchainFeatureToggles.isSolanaScaledUiAmountEnabled) return Result.Success(uiAmount)
+        if (tokenProgramId != SolanaTokenProgram.ID.TOKEN_2022) return Result.Success(uiAmount)
 
-        val multiplier = when (
-            val result = multiNetworkProvider.performRequest {
-                getScaledUiAmountMultiplier(token.contractAddress)
-            }
-        ) {
-            is Result.Success -> result.data
-            is Result.Failure -> null
-        } ?: return uiAmount
+        val multiplier = multiplierResolver.resolve(token.contractAddress)
+            .successOr { return it }
+            ?: return Result.Success(uiAmount)
 
         if (multiplier <= BigDecimal.ZERO) {
-            throw BlockchainSdkError.FailedToBuildTx
+            return Result.Failure(BlockchainSdkError.FailedToBuildTx)
         }
 
-        if (multiplier.compareTo(BigDecimal.ONE) == 0) return uiAmount
+        if (multiplier.compareTo(BigDecimal.ONE) == 0) return Result.Success(uiAmount)
 
-        return uiAmount.divide(multiplier, token.decimals, RoundingMode.DOWN)
+        // The multiplier scales the amount the card signs, so it is only trusted as far as it agrees with the
+        // balance shown to the user. See [SolanaScaledUiAmount].
+        if (!isMultiplierConsistentWithBalance(multiplier, sourceAccountInfo)) {
+            return Result.Failure(BlockchainSdkError.Solana.ScaledUiAmountMultiplierBalanceMismatch)
+        }
+
+        return Result.Success(
+            SolanaScaledUiAmount.unscale(uiAmount = uiAmount, multiplier = multiplier, decimals = token.decimals),
+        )
+    }
+
+    private fun isMultiplierConsistentWithBalance(
+        multiplier: BigDecimal,
+        sourceAccountInfo: SolanaSplAccountInfo,
+    ): Boolean {
+        val tokenAmount = sourceAccountInfo.value.data
+            ?.parsed
+            ?.info
+            ?.tokenAmount
+            ?: return false
+        val rawBalance = tokenAmount.amount?.toBigDecimalOrNull() ?: return false
+        val uiBalance = tokenAmount.uiAmountString?.toBigDecimalOrNull()
+            ?: tokenAmount.uiAmount?.toBigDecimal()
+            ?: return false
+
+        return SolanaScaledUiAmount.isMultiplierConsistentWithBalance(
+            multiplier = multiplier,
+            rawBalance = rawBalance,
+            uiBalance = uiBalance,
+            decimals = tokenAmount.decimals,
+        )
     }
 
     private companion object {
