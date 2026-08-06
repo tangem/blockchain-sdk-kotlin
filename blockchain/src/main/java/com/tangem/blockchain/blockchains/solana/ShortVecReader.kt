@@ -47,6 +47,12 @@ internal class ShortVecReader(private val bytes: ByteArray) {
 
     fun isAtEnd(): Boolean = offset == bytes.size
 
+    /** Current read offset, in bytes, from the start of the buffer. */
+    fun position(): Int = offset
+
+    /** Reads and returns all bytes from the current cursor to the end of the buffer, advancing to the end. */
+    fun remaining(): ByteArray = readBytes(bytes.size - offset)
+
     private companion object {
         const val SHORT_VEC_DATA_MASK = 0x7F
         const val SHORT_VEC_SHIFT_STEP = 7
