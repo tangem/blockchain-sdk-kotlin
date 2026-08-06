@@ -19,7 +19,7 @@ internal class DefaultEthereumGaslessDataProvider(
         return networkProvider.getContractNonce(userAddress)
     }
 
-    override suspend fun prepareEIP7702AuthorizationData(): Result<EIP7702AuthorizationData> {
+    override suspend fun prepareEIP7702AuthorizationData(isV2: Boolean): Result<EIP7702AuthorizationData> {
         return try {
             val nonce = when (val nonceResult = networkProvider.getTxCount(wallet.address)) {
                 is Result.Failure -> return Result.Failure(nonceResult.error)
@@ -30,7 +30,7 @@ internal class DefaultEthereumGaslessDataProvider(
                 error = BlockchainSdkError.NPError("Chain id is null for ${wallet.blockchain}"),
             )
 
-            val executorAddress = gaslessContractAddressFactory.getGaslessExecutorContractAddress()
+            val executorAddress = gaslessContractAddressFactory.getGaslessExecutorContractAddress(isV2)
             // Encode and hash the EIP-7702 authorization data
             val data = EthEip7702Util.encodeAuthorizationForSigning(
                 chainId = chainId,
@@ -49,9 +49,5 @@ internal class DefaultEthereumGaslessDataProvider(
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
-    }
-
-    override fun getExecutorContractAddress(): String {
-        return gaslessContractAddressFactory.getGaslessExecutorContractAddress()
     }
 }

@@ -15,8 +15,9 @@ internal class TonProvidersBuilder(
 ) : NetworkProvidersBuilder<TonNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<TonNetworkProvider> {
-        return providerTypes.mapNotNull {
-            when (it) {
+        return providerTypes.mapNotNull { type ->
+            when (type) {
+                is ProviderType.Public -> TonJsonRpcNetworkProvider(baseUrl = type.url)
                 is ProviderType.Ton.TonCentral -> createTonCenterJsonRpcProvider(isTestnet = false)
                 ProviderType.NowNodes -> createNowNodeJsonRpcProvider()
                 ProviderType.GetBlock -> createGetBlockJsonRpcProvider()
