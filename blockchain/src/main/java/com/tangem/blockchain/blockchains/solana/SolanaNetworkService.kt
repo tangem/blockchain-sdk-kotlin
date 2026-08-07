@@ -335,24 +335,41 @@ internal class SolanaNetworkService(
                     add(buildMap { put("encoding", "jsonParsed") })
                 }
                 val rawResponse = provider.call("getAccountInfo", params)
-                val multiplier = selectScaledUiAmountMultiplier(rawResponse)
-                Result.Success(multiplier)
+                selectScaledUiAmountMultiplier(rawResponse)
             } catch (ex: Exception) {
                 Result.Failure(Solana.Api(ex))
             }
         }
     }
 
-    private fun selectScaledUiAmountMultiplier(rawJson: String): BigDecimal? {
-        val response = mintAccountResponseAdapter.fromJson(rawJson) ?: return null
-        if (response.error != null) return null
-        val extensions = response.result?.value
-            ?.data?.parsed?.info?.extensions
-            ?: return null
-        val scaledExt = extensions.firstOrNull {
-            it.extension == SCALED_UI_AMOUNT_CONFIG_EXTENSION
-        } ?: return null
-        val state = scaledExt.state ?: return null
+    /**
+     * Reads the mint's `scaledUiAmountConfig` multiplier.
+     *
+     * Failing to read the mint is not the same as the mint declaring no scaling: the multiplier divides the amount
+     * the card signs, so an unreadable answer has to surface as a failure. Only [Result.Success] with `null` means
+     * "this mint is not scaled" - it is a statement about the mint, not about the provider.
+     */
+    private fun selectScaledUiAmountMultiplier(rawJson: String): Result<BigDecimal?> {
+        val response = mintAccountResponseAdapter.fromJson(rawJson)
+            ?: return unreadableMintAccount("response is not a valid mint account info")
+
+        val error = response.error
+        if (error != null) return Result.Failure(Solana.Api(RpcException(error.message)))
+
+        val info = response.result
+            ?.value
+            ?.data
+            ?.parsed
+            ?.info
+            ?: return unreadableMintAccount("mint account data is missing or not parsed")
+
+        // A mint without extensions is a plain one: nothing scales the amount.
+        val scaledExt = info.extensions
+            ?.firstOrNull { it.extension == SCALED_UI_AMOUNT_CONFIG_EXTENSION }
+            ?: return Result.Success(null)
+
+        val state = scaledExt.state
+            ?: return unreadableMintAccount("$SCALED_UI_AMOUNT_CONFIG_EXTENSION has no state")
 
         val currentTimeSec = System.currentTimeMillis() / MILLIS_IN_SECOND
         val effectiveTimestamp = state.newMultiplierEffectiveTimestamp
@@ -363,8 +380,14 @@ internal class SolanaNetworkService(
             state.multiplier
         }
 
-        return multiplierString?.toBigDecimalOrNull()
+        val multiplier = multiplierString?.toBigDecimalOrNull()
+            ?: return unreadableMintAccount("$SCALED_UI_AMOUNT_CONFIG_EXTENSION declares no readable multiplier")
+
+        return Result.Success(multiplier)
     }
+
+    private fun unreadableMintAccount(reason: String): Result.Failure =
+        Result.Failure(Solana.Api(RpcException("Scaled UI amount multiplier is unreadable: $reason")))
 
     private fun Exception.isBlockhashNotFound(): Boolean {
         return message?.contains(BLOCKHASH_NOT_FOUND_ERROR) ?: false
