@@ -62,6 +62,7 @@ sealed class BlockchainSdkError(
 
     data object SignatureCountNotMatched : BlockchainSdkError(100)
 
+    @Suppress("ObjectExtendsThrowable")
     sealed class Solana(
         subCode: Int,
         customMessage: String? = null,
@@ -84,6 +85,15 @@ sealed class BlockchainSdkError(
         ) : Solana(8, "Invalid amount to cover rent in destination account")
 
         class TransactionTooLarge : Solana(9, "Transaction too large after ALT reduction")
+
+        data object ScaledUiAmountMultiplierMismatch :
+            Solana(11, "Providers report different scaled UI amount multipliers")
+
+        data object ScaledUiAmountMultiplierNotCorroborated :
+            Solana(12, "Scaled UI amount multiplier is reported by a single provider and cannot be corroborated")
+
+        data object ScaledUiAmountMultiplierBalanceMismatch :
+            Solana(13, "Scaled UI amount multiplier does not match the reported token balance")
     }
 
     sealed class Polkadot(
