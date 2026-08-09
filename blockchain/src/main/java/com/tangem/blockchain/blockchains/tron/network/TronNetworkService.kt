@@ -60,7 +60,7 @@ class TronNetworkService(
             is Result.Success -> {
                 val allowance = allowanceRequest.data.constantResult.firstOrNull()
                     ?: return kotlin.Result.failure(BlockchainSdkError.CustomError("Failed to get allowance"))
-                kotlin.Result.success(allowance.hexToBigDecimal())
+                kotlin.Result.success(allowance.hexToBigDecimal().movePointLeft(token.decimals))
             }
         }
     }
