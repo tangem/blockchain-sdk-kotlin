@@ -639,6 +639,131 @@ class TronTransactionHistoryProviderTest {
 
     // endregion
 
+    // region getTransactionsHistory - technical transactions
+
+    @Test
+    fun `delegate resource contract is excluded from coin history`() = runTest {
+        assertThat(coinItems(coinTransaction(contractType = 57))).isEmpty()
+    }
+
+    @Test
+    fun `undelegate resource contract is excluded from coin history`() = runTest {
+        assertThat(coinItems(coinTransaction(contractType = 58))).isEmpty()
+    }
+
+    @Test
+    fun `account create contract is excluded from coin history`() = runTest {
+        assertThat(coinItems(coinTransaction(contractType = 9))).isEmpty()
+    }
+
+    @Test
+    fun `v2 delegate resource contract is excluded from coin history`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            chainExtraData = chainExtraData(contractType = "DelegateResourceContract"),
+        )
+        assertThat(coinItems(tx)).isEmpty()
+    }
+
+    @Test
+    fun `v2 undelegate resource contract is excluded from coin history`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            chainExtraData = chainExtraData(contractType = "UnDelegateResourceContract"),
+        )
+        assertThat(coinItems(tx)).isEmpty()
+    }
+
+    @Test
+    fun `v2 account create contract is excluded from coin history`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            chainExtraData = chainExtraData(contractType = "AccountCreateContract"),
+        )
+        assertThat(coinItems(tx)).isEmpty()
+    }
+
+    @Test
+    fun `v2 resource contract of a non-tron payload is not treated as technical`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            chainExtraData = chainExtraData(
+                payloadType = "ethereum",
+                contractType = "DelegateResourceContract",
+            ),
+        )
+        assertThat(coinItems(tx)).hasSize(1)
+    }
+
+    @Test
+    fun `resource contract is not filtered out of token history`() = runTest {
+        val tx = coinTransaction(
+            contractType = 57,
+            tokenTransfers = listOf(tokenTransfer(value = "1000000")),
+        )
+        val result = singleContractItem(tx, decimals = 6)
+
+        assertThat(result.amount.value!!.compareTo(BigDecimal.ONE)).isEqualTo(0)
+    }
+
+    @Test
+    fun `incoming dust transfer is excluded from coin history`() = runTest {
+        val tx = coinTransaction(fromAddress = RECIPIENT, toAddress = WALLET, value = "5")
+        assertThat(coinItems(tx)).isEmpty()
+    }
+
+    @Test
+    fun `incoming dust transfer is detected by vin when fromAddress is missing`() = runTest {
+        // NowNodes stopped sending `fromAddress`, the sender is only available in `vin`
+        val tx = coinTransaction(
+            fromAddress = null,
+            toAddress = WALLET,
+            value = "5",
+            vin = listOf(GetAddressResponse.Transaction.Vin(addresses = listOf(RECIPIENT), value = "5")),
+        )
+        assertThat(coinItems(tx)).isEmpty()
+    }
+
+    @Test
+    fun `outgoing dust transfer is kept in coin history`() = runTest {
+        // An outgoing transaction is always signed by the user, so it stays visible regardless of its amount
+        val tx = coinTransaction(fromAddress = WALLET, toAddress = RECIPIENT, value = "5")
+        val item = coinItems(tx).single()
+
+        assertThat(item.isOutgoing).isTrue()
+        assertThat(item.amount.value!!.compareTo(BigDecimal("0.000005"))).isEqualTo(0)
+    }
+
+    @Test
+    fun `incoming transfer right below the dust threshold is excluded from coin history`() = runTest {
+        val tx = coinTransaction(fromAddress = RECIPIENT, toAddress = WALLET, value = "999")
+        assertThat(coinItems(tx)).isEmpty()
+    }
+
+    @Test
+    fun `incoming transfer at the dust threshold is kept in coin history`() = runTest {
+        val tx = coinTransaction(fromAddress = RECIPIENT, toAddress = WALLET, value = "1000")
+        val item = coinItems(tx).single()
+
+        assertThat(item.isOutgoing).isFalse()
+        assertThat(item.amount.value!!.compareTo(BigDecimal("0.001"))).isEqualTo(0)
+    }
+
+    @Test
+    fun `incoming dust is not filtered out of token history`() = runTest {
+        val tx = coinTransaction(
+            fromAddress = RECIPIENT,
+            toAddress = WALLET,
+            value = "5",
+            tokenTransfers = listOf(tokenTransfer(from = RECIPIENT, to = WALLET, value = "1000000")),
+        )
+        val result = singleContractItem(tx, decimals = 6)
+
+        assertThat(result.amount.value!!.compareTo(BigDecimal.ONE)).isEqualTo(0)
+    }
+
+    // endregion
+
     // region getTransactionsHistory - contract/token mapping
 
     @Test
@@ -702,6 +827,20 @@ class TronTransactionHistoryProviderTest {
     // endregion
 
     // region helpers
+
+    private suspend fun coinItems(tx: GetAddressResponse.Transaction): List<TransactionHistoryItem> {
+        val request = coinRequest(page = Page.Initial)
+        coEvery {
+            blockBookApi.getTransactions(
+                WALLET,
+                null,
+                PAGE_SIZE,
+                TransactionHistoryRequest.FilterType.Coin,
+            )
+        } returns addressResponse(transactions = listOf(tx), page = 1)
+
+        return (provider.getTransactionsHistory(request) as Result.Success).data.items
+    }
 
     private suspend fun singleCoinItem(tx: GetAddressResponse.Transaction): TransactionHistoryItem {
         val request = coinRequest(page = Page.Initial)
