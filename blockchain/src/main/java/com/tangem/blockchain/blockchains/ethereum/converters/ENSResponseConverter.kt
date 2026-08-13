@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.ethereum.converters
 
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.ADDRESS_HEX_LENGTH
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.HEX_CHARS_PER_BYTE
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.isNotZeroAddress
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.WORD_HEX_LENGTH
 import com.tangem.blockchain.common.HEX_PREFIX
 import com.tangem.blockchain.extensions.hexToInt
@@ -14,6 +15,8 @@ internal object ENSResponseConverter {
      *
      * @param result The ENS response string in hex.
      * @return The Ethereum address as a hex string, e.g. "0xd8da6bf26964af9d7eed9e03e53415d37aa96045"
+     * @throws IllegalArgumentException if the name has no address record: the universal resolver answers with a
+     * zeroed word instead of reverting, so without this check the burn address would be returned as a valid one.
      *
      * Example input:
      * "0x" +
@@ -37,6 +40,11 @@ internal object ENSResponseConverter {
         val dataHex = clean.substring(dataStart, dataEnd)
         val addressHex = dataHex.takeLast(ADDRESS_HEX_LENGTH)
 
-        return "$HEX_PREFIX$addressHex"
+        val address = "$HEX_PREFIX$addressHex"
+        require(addressHex.length == ADDRESS_HEX_LENGTH && address.isNotZeroAddress()) {
+            "ENS name has no address record"
+        }
+
+        return address
     }
 }

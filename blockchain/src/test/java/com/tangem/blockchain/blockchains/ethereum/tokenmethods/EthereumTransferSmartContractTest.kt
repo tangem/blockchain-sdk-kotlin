@@ -65,4 +65,32 @@ class EthereumTransferSmartContractTest {
         )
         Truth.assertThat(invalidContract3.validate(blockchain)).isFalse()
     }
+
+    /** A broken recipient must fail at encoding time, not silently become the zero address. */
+    @Test
+    fun encodeBrokenDestination() {
+        val brokenDestinations = listOf(
+            "",
+            EthereumUtils.ZERO_ADDRESS,
+            // truncated by one character
+            destinationAddress.dropLast(1),
+            // not hex
+            "0xG234567890123456789012345678901234567890",
+        )
+
+        brokenDestinations.forEach { destination ->
+            val callData = TransferERC20TokenCallData(
+                destination = destination,
+                amount = Amount(Blockchain.Ethereum).copy(
+                    value = "100".toBigDecimal(),
+                ),
+            )
+
+            val error = runCatching { callData.data }.exceptionOrNull()
+
+            Truth.assertWithMessage("destination='%s'", destination)
+                .that(error)
+                .isInstanceOf(IllegalArgumentException::class.java)
+        }
+    }
 }
