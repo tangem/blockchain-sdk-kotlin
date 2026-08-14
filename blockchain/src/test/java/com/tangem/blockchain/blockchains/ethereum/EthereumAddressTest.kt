@@ -32,4 +32,33 @@ class EthereumAddressTest {
 
         Truth.assertThat(addressService.validate(address)).isTrue()
     }
+
+    @Test
+    fun validateZeroAddress() {
+        Truth.assertThat(addressService.validate(EthereumUtils.ZERO_ADDRESS)).isFalse()
+    }
+
+    @Test
+    fun validateZeroAddressWithoutPrefix() {
+        val address = "0000000000000000000000000000000000000000"
+
+        Truth.assertThat(addressService.validate(address)).isFalse()
+    }
+
+    @Test
+    fun validateZeroAddressWithUppercasePrefix() {
+        val address = "0X0000000000000000000000000000000000000000"
+
+        Truth.assertThat(addressService.validate(address)).isFalse()
+    }
+
+    @Test
+    fun isZeroAddressIgnoresPrefix() {
+        with(EthereumUtils) {
+            Truth.assertThat("0000000000000000000000000000000000000000".isZeroAddress()).isTrue()
+            Truth.assertThat(ZERO_ADDRESS.isZeroAddress()).isTrue()
+            Truth.assertThat("0xc63763572d45171e4c25ca0818b44e5dd7f5c15b".isZeroAddress()).isFalse()
+            Truth.assertThat("c63763572d45171e4c25ca0818b44e5dd7f5c15b".isZeroAddress()).isFalse()
+        }
+    }
 }
