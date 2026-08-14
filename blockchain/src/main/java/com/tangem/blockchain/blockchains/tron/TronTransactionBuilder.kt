@@ -1,14 +1,22 @@
 package com.tangem.blockchain.blockchains.tron
 
+import com.squareup.moshi.Moshi
 import com.squareup.wire.AnyMessage
+import com.tangem.blockchain.blockchains.tron.gasless.TronWebContract
+import com.tangem.blockchain.blockchains.tron.gasless.TronWebParameter
+import com.tangem.blockchain.blockchains.tron.gasless.TronWebRawData
+import com.tangem.blockchain.blockchains.tron.gasless.TronWebSignedTransaction
+import com.tangem.blockchain.blockchains.tron.gasless.TronWebTriggerValue
 import com.tangem.blockchain.blockchains.tron.network.TronBlock
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.extensions.decodeBase58
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
+import com.tangem.common.extensions.toHexString
 import okio.ByteString.Companion.EMPTY
 import okio.ByteString.Companion.toByteString
 import org.tron.protos.BlockHeader
@@ -33,16 +41,18 @@ class TronTransactionBuilder {
         }
         val feeLimit = if (amount.type == AmountType.Coin) 0L else SMART_CONTRACT_FEE_LIMIT
 
-        return buildRaw(block, contract, feeLimit)
+        return buildRaw(block = block, contract = contract, feeLimit = feeLimit, memo = extras?.memo)
     }
 
     /**
      * Builds the transaction to sign from a [TransactionData], mirroring the EVM
      * `buildForSign(TransactionData)` shape and dispatching by amount type:
-     * - native coin transfer (Coin, no extras) → `TransferContract`;
+     * - native coin transfer (Coin, no extras or extras without call data) → `TransferContract`;
      * - TRC-20 token transfer (Token) → `TriggerSmartContract` on the token contract;
      * - native-value contract call (Coin + call data, e.g. a DEX swap in EVM format) →
      *   `TriggerSmartContract` on the destination router with `call_value` + `data`.
+     *
+     * Any [TronTransactionExtras.memo] is attached to the resulting transaction regardless of shape.
      *
      * Shares the raw-tx assembly ([buildRaw]) with the decomposed overload above; the two differ only
      * in how the contract is resolved and in the fee limit. The decomposed overload is kept so the
@@ -53,14 +63,15 @@ class TronTransactionBuilder {
         val source = transaction.sourceAddress
         val destination = transaction.destinationAddress
         val extras = transaction.extras as? TronTransactionExtras
+        val swapCallData = extras.callDataOrNull()
 
         val contract = when (amount.type) {
-            AmountType.Coin -> if (extras != null) {
+            AmountType.Coin -> if (swapCallData != null) {
                 buildContractForSmartContractCall(
                     amount = amount,
                     source = source,
                     destination = destination,
-                    extras = extras,
+                    callData = swapCallData,
                 )
             } else {
                 buildContractForCoin(amount, source, destination)
@@ -68,9 +79,9 @@ class TronTransactionBuilder {
             is AmountType.Token -> buildContractForToken(amount, source, extras)
             else -> error("Not supported")
         }
-        val feeLimit = if (amount.type == AmountType.Coin && extras == null) 0L else SMART_CONTRACT_FEE_LIMIT
+        val feeLimit = if (amount.type == AmountType.Coin && swapCallData == null) 0L else SMART_CONTRACT_FEE_LIMIT
 
-        return buildRaw(block, contract, feeLimit)
+        return buildRaw(block = block, contract = contract, feeLimit = feeLimit, memo = extras?.memo)
     }
 
     fun buildForSend(rawData: Transaction.raw, signature: ByteArray): Transaction {
@@ -82,13 +93,13 @@ class TronTransactionBuilder {
         source: String,
         extras: TronTransactionExtras?,
     ): Transaction.Contract {
-        if (extras == null) error("Smart contract is not specified")
+        val callData = extras?.callData ?: error("Smart contract is not specified")
         val amountType = amount.type as? AmountType.Token ?: error("wrong amount type")
 
         return buildTriggerSmartContract(
             ownerAddress = source,
             contractAddress = amountType.token.contractAddress,
-            data = extras.callData.data,
+            data = callData.data,
         )
     }
 
@@ -96,11 +107,11 @@ class TronTransactionBuilder {
         amount: Amount,
         source: String,
         destination: String,
-        extras: TronTransactionExtras,
+        callData: SmartContractCallData,
     ): Transaction.Contract = buildTriggerSmartContract(
         ownerAddress = source,
         contractAddress = destination,
-        data = extras.callData.data,
+        data = callData.data,
         callValue = amount.longValue,
     )
 
@@ -132,10 +143,18 @@ class TronTransactionBuilder {
     /**
      * Assembles the signable [Transaction.raw] shared by both `buildForSign` overloads: derives the
      * `ref_block_hash` / `ref_block_bytes` and the expiration from the reference [block] header, then
-     * wraps the already-built [contract] with the given [feeLimit].
+     * wraps the already-built [contract] with the given [feeLimit] and optional [memo].
+     *
+     * [memo] lands in the transaction-level `data` field. A `null` memo encodes identically to the
+     * proto3 default, so transactions without one are byte-for-byte unchanged.
      */
     @Suppress("MagicNumber")
-    private fun buildRaw(block: TronBlock, contract: Transaction.Contract, feeLimit: Long): Transaction.raw {
+    private fun buildRaw(
+        block: TronBlock,
+        contract: Transaction.Contract,
+        feeLimit: Long,
+        memo: ByteArray? = null,
+    ): Transaction.raw {
         val blockHeaderRawData = block.blockHeader.rawData
         val blockHeader = BlockHeader.raw(
             timestamp = blockHeaderRawData.timestamp,
@@ -165,7 +184,53 @@ class TronTransactionBuilder {
             ref_block_bytes = refBlockBytes,
             contract = listOf(contract),
             fee_limit = feeLimit,
+            data_ = memo?.toByteString() ?: EMPTY,
         )
+    }
+
+    /**
+     * Serialises a signed Tron transaction into the TronWeb-compatible JSON format that the
+     * gasless backend expects (`JSON.parse`-able signed transaction object).
+     *
+     * Only [Transaction.Contract.ContractType.TriggerSmartContract] contracts are supported
+     * because gasless operations are limited to token transfers via smart contracts.
+     */
+    fun buildSignedTronWebJson(rawData: Transaction.raw, signature: ByteArray): String {
+        val contract = rawData.contract.firstOrNull() ?: error("Tron raw_data has no contract")
+        require(contract.type == Transaction.Contract.ContractType.TriggerSmartContract) {
+            "Only TriggerSmartContract is supported for gasless, got ${contract.type}"
+        }
+        val trigger = contract.parameter?.unpack(TriggerSmartContract.ADAPTER)
+            ?: error("Failed to unpack TriggerSmartContract")
+
+        val rawBytes = rawData.encode()
+        val dto = TronWebSignedTransaction(
+            isVisible = false,
+            txId = rawBytes.calculateSha256().toHexString().lowercase(),
+            rawDataHex = rawBytes.toHexString().lowercase(),
+            signature = listOf(signature.toHexString().lowercase()),
+            rawData = TronWebRawData(
+                contract = listOf(
+                    TronWebContract(
+                        type = "TriggerSmartContract",
+                        parameter = TronWebParameter(
+                            typeUrl = "type.googleapis.com/protocol.TriggerSmartContract",
+                            value = TronWebTriggerValue(
+                                data = trigger.data_.toByteArray().toHexString().lowercase(),
+                                ownerAddress = trigger.owner_address.toByteArray().toHexString().lowercase(),
+                                contractAddress = trigger.contract_address.toByteArray().toHexString().lowercase(),
+                            ),
+                        ),
+                    ),
+                ),
+                refBlockBytes = rawData.ref_block_bytes.toByteArray().toHexString().lowercase(),
+                refBlockHash = rawData.ref_block_hash.toByteArray().toHexString().lowercase(),
+                expiration = rawData.expiration,
+                feeLimit = rawData.fee_limit.takeIf { it > 0 },
+                timestamp = rawData.timestamp,
+            ),
+        )
+        return tronWebAdapter.toJson(dto)
     }
 
     private fun buildContractForCoin(amount: Amount, source: String, destination: String): Transaction.Contract {
@@ -182,5 +247,9 @@ class TronTransactionBuilder {
 
     companion object {
         const val SMART_CONTRACT_FEE_LIMIT = 100_000_000L
+
+        private val tronWebAdapter by lazy {
+            Moshi.Builder().build().adapter(TronWebSignedTransaction::class.java)
+        }
     }
 }

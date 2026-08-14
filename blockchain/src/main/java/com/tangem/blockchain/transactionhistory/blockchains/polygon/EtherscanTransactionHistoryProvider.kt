@@ -10,6 +10,7 @@ import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.toBigDecimalOrDefault
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider.Companion.shouldExcludeFromHistory
 import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.*
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
@@ -63,7 +64,6 @@ internal class EtherscanTransactionHistoryProvider(
             }
 
             val historyItems = response.result.toTransactionHistoryItems(
-                excludeZeroAmount = false,
                 walletAddress = formattedAddress,
                 filterType = filterType,
             )
@@ -112,15 +112,14 @@ internal class EtherscanTransactionHistoryProvider(
                 }
             }
 
-            val txs = response.result.toTransactionHistoryItems(
-                excludeZeroAmount = true,
-                walletAddress = formattedAddress,
-                filterType = request.filterType,
-            )
-            val nextPage = if (txs.isNotEmpty()) {
-                Page.Next(pageToLoad.inc().toString())
-            } else {
+            val txs = response.result
+                .toTransactionHistoryItems(walletAddress = formattedAddress, filterType = request.filterType)
+                .filterNot { item -> shouldExcludeFromHistory(filterType = request.filterType, item = item) }
+
+            val nextPage = if (response.result.transactions.isNullOrEmpty()) {
                 Page.LastPage
+            } else {
+                Page.Next(pageToLoad.inc().toString())
             }
             Result.Success(PaginationWrapper(nextPage = nextPage, items = txs))
         } catch (e: Exception) {
@@ -136,7 +135,6 @@ internal class EtherscanTransactionHistoryProvider(
     }
 
     private fun PolygonScanResult.toTransactionHistoryItems(
-        excludeZeroAmount: Boolean,
         walletAddress: String,
         filterType: TransactionHistoryRequest.FilterType,
     ): List<TransactionHistoryItem> {
@@ -145,10 +143,6 @@ internal class EtherscanTransactionHistoryProvider(
 
             val transactionAmount = transaction.extractAmount(filterType = filterType).guard {
                 Log.info { "Transaction with invalid value  $transaction received" }
-                return@mapNotNull null
-            }
-            if (excludeZeroAmount && shouldExcludeFromHistory(filterType, transactionAmount)) {
-                Log.info { "Transaction with zero amount is excluded from history. $transaction" }
                 return@mapNotNull null
             }
             if (isLikelySpamTransaction(amount = transactionAmount, filterType = filterType)) {

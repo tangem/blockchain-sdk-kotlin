@@ -92,7 +92,9 @@ import com.tangem.blockchain.blockchains.nexa.NexaProvidersBuilder
 import com.tangem.blockchain.blockchains.pepecoin.PepecoinProvidersBuilder
 import com.tangem.blockchain.blockchains.pepecoin.network.PepecoinNetworkService
 import com.tangem.blockchain.blockchains.adi.AdiProvidersBuilder
+import com.tangem.blockchain.blockchains.igra.IgraProvidersBuilder
 import com.tangem.blockchain.blockchains.plasma.PlasmaProvidersBuilder
+import com.tangem.blockchain.blockchains.robinhood.RobinhoodProvidersBuilder
 import com.tangem.blockchain.blockchains.seievm.SeiEvmProvidersBuilder
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkProvider
 import com.tangem.blockchain.blockchains.polkadot.network.PolkadotNetworkService
@@ -174,6 +176,7 @@ import com.tangem.blockchain.network.MultiNetworkProvider
  * | Flare            | coins            |
  * | Gnosis           | coins + tokens   |
  * | Hyperliquid      | coins            |
+ * | Igra             | coins + tokens   |
  * | InternetComputer | coins            |
  * | Joystream        | coins            |
  * | Kaspa            | coins            |
@@ -203,6 +206,7 @@ import com.tangem.blockchain.network.MultiNetworkProvider
  * | Quai             | coins            |
  * | Radiant          | coins            |
  * | Ravencoin        | coins            |
+ * | Robinhood Chain  | coins + tokens   |
  * | RSK              | coins            |
  * | Scroll           | coins            |
  * | Sei              | coins + tokens   |
@@ -246,6 +250,14 @@ class AssetsDiscoveryServiceFactory(
             Blockchain.SeiEvm, Blockchain.SeiEvmTestnet -> createDefaultEvmDiscoveryService(
                 blockchain = blockchain,
                 providers = SeiEvmProvidersBuilder(types, config).build(blockchain),
+            )
+            Blockchain.Robinhood, Blockchain.RobinhoodTestnet -> createDefaultEvmDiscoveryService(
+                blockchain = blockchain,
+                providers = RobinhoodProvidersBuilder(types, config).build(blockchain),
+            )
+            Blockchain.Igra, Blockchain.IgraTestnet -> createDefaultEvmDiscoveryService(
+                blockchain = blockchain,
+                providers = IgraProvidersBuilder(types, config).build(blockchain),
             )
             Blockchain.Alephium, Blockchain.AlephiumTestnet -> {
                 val networkService = AlephiumNetworkService(

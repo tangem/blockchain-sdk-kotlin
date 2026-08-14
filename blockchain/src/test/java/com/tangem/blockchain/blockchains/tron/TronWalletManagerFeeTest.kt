@@ -9,6 +9,7 @@ import com.tangem.blockchain.blockchains.tron.network.TronGetAccountResourceResp
 import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.smartcontract.CompiledSmartContractCallData
@@ -78,6 +79,7 @@ internal class TronWalletManagerFeeTest {
                 sunPerEnergyUnit = 280,
                 dynamicEnergyMaxFactor = 1500,
                 dynamicIncreaseFactor = 0,
+                memoFee = MEMO_FEE_SUN,
             ),
         )
 
@@ -129,6 +131,59 @@ internal class TronWalletManagerFeeTest {
         }
     }
 
+    /**
+     * A non-empty `raw_data.data` makes the network burn the MEMO_FEE chain parameter on top of
+     * bandwidth and energy — 1 TRX on mainnet. It applies to a plain transfer too, which needs no
+     * energy estimation, so the parameter has to be fetched on that path as well.
+     */
+    @Test
+    fun `GIVEN transfer with memo WHEN getFee THEN memo fee is added`() = runTest {
+        // Arrange
+        val withoutMemo = walletManager.feeValue(memo = null)
+
+        // Act
+        val withMemo = walletManager.feeValue(memo = "swap-id".encodeToByteArray())
+
+        // Assert
+        assertThat(withMemo - withoutMemo).isEquivalentAccordingToCompareTo(BigDecimal.ONE)
+    }
+
+    @Test
+    fun `GIVEN transfer without memo WHEN getFee THEN chain parameters are not fetched`() = runTest {
+        // Act
+        walletManager.feeValue(memo = null)
+
+        // Assert
+        // A plain transfer must keep its request count — the memo fee is the only reason to ask.
+        coVerify(exactly = 0) { networkService.getChainParameters() }
+    }
+
+    @Test
+    fun `GIVEN memo and inactive destination WHEN getFee THEN memo fee is added to activation fee`() = runTest {
+        // Arrange
+        coEvery { networkService.checkIfAccountExists(any()) } returns false
+
+        // Act
+        val actual = walletManager.feeValue(memo = "swap-id".encodeToByteArray())
+
+        // Assert
+        assertThat(actual).isEquivalentAccordingToCompareTo(BigDecimal.valueOf(1.1) + BigDecimal.ONE)
+    }
+
+    /** Fee of a plain TRX transfer built as a [TransactionData], which is what carries a memo. */
+    private suspend fun TronWalletManager.feeValue(memo: ByteArray?): BigDecimal {
+        val result = getFee(
+            TransactionData.Uncompiled(
+                amount = Amount(BigDecimal.valueOf(5), Blockchain.Tron),
+                fee = null,
+                sourceAddress = walletAddress,
+                destinationAddress = router,
+                extras = TronTransactionExtras(memo = memo),
+            ),
+        )
+        return ((result as Result.Success).data as TransactionFee.Single).normal.amount.value!!
+    }
+
     @Test
     fun `GIVEN plain coin transfer WHEN getFee THEN contract energy is not estimated`() = runTest {
         // Act
@@ -149,5 +204,10 @@ internal class TronWalletManagerFeeTest {
                 callValue = any(),
             )
         }
+    }
+
+    private companion object {
+        /** Mainnet MEMO_FEE: 1 TRX in sun. */
+        const val MEMO_FEE_SUN = 1_000_000L
     }
 }
