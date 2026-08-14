@@ -14,7 +14,7 @@ import com.tangem.blockchain.network.createRetrofitInstance
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
-class RippledNetworkProvider(
+internal class RippledNetworkProvider(
     override val baseUrl: String,
     apiKeyHeader: Pair<String, String>? = null,
 ) : XrpNetworkProvider {
