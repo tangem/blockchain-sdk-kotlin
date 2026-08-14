@@ -18,6 +18,9 @@ interface RippledApi {
 
     @POST("./")
     suspend fun submitTransaction(@Body rippledBody: RippledBody): RippledSubmitResponse
+
+    @POST("./")
+    suspend fun getAccountTransactions(@Body rippledBody: RippledBody): RippledAccountTxResponse
 }
 
 enum class RippledMethod(val value: String) {
@@ -26,6 +29,7 @@ enum class RippledMethod(val value: String) {
     SERVER_STATE("server_state"),
     FEE("fee"),
     SUBMIT("submit"),
+    ACCOUNT_TX("account_tx"),
 }
 
 data class RippledBody(

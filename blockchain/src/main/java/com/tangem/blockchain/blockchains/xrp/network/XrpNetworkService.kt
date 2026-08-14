@@ -36,4 +36,7 @@ class XrpNetworkService(providers: List<XrpNetworkProvider>, blockchain: Blockch
 
     override suspend fun checkDestinationTagRequired(address: String): Boolean =
         multiProvider.currentProvider.checkDestinationTagRequired(address)
+
+    override suspend fun getAccountTransactions(request: XrpAccountTxRequest): Result<XrpAccountTxResponse> =
+        multiProvider.performRequest(XrpNetworkProvider::getAccountTransactions, request)
 }
