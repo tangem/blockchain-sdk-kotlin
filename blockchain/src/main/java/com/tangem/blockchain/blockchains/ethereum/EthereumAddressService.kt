@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.ethereum
 
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils.isNotZeroAddress
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.toDecompressedPublicKey
@@ -17,5 +18,5 @@ open class EthereumAddressService : AddressService() {
     ).toAddress().withERC55Checksum().hex
 
     override fun validate(address: String): Boolean =
-        Address(address).hasValidERC55ChecksumOrNoChecksum() && address != EthereumUtils.ZERO_ADDRESS
+        Address(address).hasValidERC55ChecksumOrNoChecksum() && address.isNotZeroAddress()
 }
