@@ -3,7 +3,7 @@ package com.tangem.blockchain.blockchains.xrp.network.rippled
 import retrofit2.http.Body
 import retrofit2.http.POST
 
-interface RippledApi {
+internal interface RippledApi {
     @POST("./")
     suspend fun getAccount(@Body rippledBody: RippledBody): RippledAccountResponse
 
@@ -23,7 +23,7 @@ interface RippledApi {
     suspend fun getAccountTransactions(@Body rippledBody: RippledBody): RippledAccountTxResponse
 }
 
-enum class RippledMethod(val value: String) {
+internal enum class RippledMethod(val value: String) {
     ACCOUNT_INFO("account_info"),
     ACCOUNT_LINES("account_lines"),
     SERVER_STATE("server_state"),
@@ -32,10 +32,10 @@ enum class RippledMethod(val value: String) {
     ACCOUNT_TX("account_tx"),
 }
 
-data class RippledBody(
+internal data class RippledBody(
     val method: String,
     val params: List<Map<String, Any>> = listOf(),
 )
 
-val serverStateBody = RippledBody(RippledMethod.SERVER_STATE.value)
-val feeBody = RippledBody(RippledMethod.FEE.value)
+internal val serverStateBody = RippledBody(RippledMethod.SERVER_STATE.value)
+internal val feeBody = RippledBody(RippledMethod.FEE.value)

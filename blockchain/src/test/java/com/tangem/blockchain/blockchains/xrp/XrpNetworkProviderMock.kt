@@ -10,7 +10,7 @@ import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 
-class XrpNetworkProviderMock(
+internal class XrpNetworkProviderMock(
     private val isAccountCreatedResponse: Boolean = true,
 ) : XrpNetworkProvider {
 
