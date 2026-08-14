@@ -15,6 +15,7 @@ import com.tangem.common.extensions.hexToBytes
 import okio.ByteString.Companion.toByteString
 import org.junit.Test
 import org.tron.protos.Transaction
+import org.tron.protos.contract.TransferContract
 import org.tron.protos.contract.TriggerSmartContract
 import java.math.BigDecimal
 
@@ -132,5 +133,93 @@ class TronTransactionTest {
         Truth.assertThat(trigger.contract_address).isEqualTo(router.decodeBase58(checked = true)!!.toByteString())
         Truth.assertThat(trigger.call_value).isEqualTo(amount.longValue)
         Truth.assertThat(trigger.data_).isEqualTo(callData.toByteString())
+    }
+
+    /**
+     * A swap provider may describe a plain deposit transfer as a swap. With no call data to run the
+     * transaction must stay a [TransferContract] with no fee limit — a TriggerSmartContract against
+     * an ordinary account is rejected by the network.
+     */
+    @Test
+    fun testSwapWithoutCallDataStaysTransfer() {
+        val source = "TU1BRXbr6EmKmrLL4Kymv7Wp18eYFkRfAF"
+        val destination = "TXXxc9NsHndfQ2z9kMKyWpYa5T3QbhKGwn"
+        val amount = Amount(BigDecimal.valueOf(15), blockchain)
+
+        val transactionRaw = transactionBuilder.buildForSign(
+            transaction = TransactionData.Uncompiled(
+                amount = amount,
+                fee = null,
+                sourceAddress = source,
+                destinationAddress = destination,
+                extras = TronTransactionExtras(callData = CompiledSmartContractCallData(byteArrayOf())),
+            ),
+            block = tronBlock,
+        )
+
+        val contract = transactionRaw.contract.single()
+        Truth.assertThat(contract.type).isEqualTo(Transaction.Contract.ContractType.TransferContract)
+        Truth.assertThat(transactionRaw.fee_limit).isEqualTo(0L)
+
+        val transfer = TransferContract.ADAPTER.decode(contract.parameter!!.value)
+        Truth.assertThat(transfer.owner_address).isEqualTo(source.decodeBase58(checked = true)!!.toByteString())
+        Truth.assertThat(transfer.to_address).isEqualTo(destination.decodeBase58(checked = true)!!.toByteString())
+        Truth.assertThat(transfer.amount).isEqualTo(amount.longValue)
+    }
+
+    /** A memo travels in the transaction-level `data` field, whatever the contract shape is. */
+    @Test
+    fun testMemoIsAttachedToTransfer() {
+        val memo = "=:ETH.ETH:0xRecipient".encodeToByteArray()
+
+        val transactionRaw = transactionBuilder.buildForSign(
+            transaction = TransactionData.Uncompiled(
+                amount = Amount(BigDecimal.valueOf(15), blockchain),
+                fee = null,
+                sourceAddress = "TU1BRXbr6EmKmrLL4Kymv7Wp18eYFkRfAF",
+                destinationAddress = "TXXxc9NsHndfQ2z9kMKyWpYa5T3QbhKGwn",
+                extras = TronTransactionExtras(memo = memo),
+            ),
+            block = tronBlock,
+        )
+
+        Truth.assertThat(transactionRaw.contract.single().type)
+            .isEqualTo(Transaction.Contract.ContractType.TransferContract)
+        Truth.assertThat(transactionRaw.data_).isEqualTo(memo.toByteString())
+    }
+
+    @Test
+    fun testMemoIsAttachedToSmartContractCall() {
+        val memo = "swap-id-42".encodeToByteArray()
+        val callData = "a9059cbb".hexToBytes()
+
+        val transactionRaw = transactionBuilder.buildForSign(
+            transaction = TransactionData.Uncompiled(
+                amount = Amount(BigDecimal.valueOf(5), blockchain),
+                fee = null,
+                sourceAddress = "TU1BRXbr6EmKmrLL4Kymv7Wp18eYFkRfAF",
+                destinationAddress = "TXXxc9NsHndfQ2z9kMKyWpYa5T3QbhKGwn",
+                extras = TronTransactionExtras(CompiledSmartContractCallData(callData), memo),
+            ),
+            block = tronBlock,
+        )
+
+        Truth.assertThat(transactionRaw.contract.single().type)
+            .isEqualTo(Transaction.Contract.ContractType.TriggerSmartContract)
+        Truth.assertThat(transactionRaw.data_).isEqualTo(memo.toByteString())
+    }
+
+    /** No memo must encode exactly as before, so existing transactions stay byte-for-byte equal. */
+    @Test
+    fun testNoMemoLeavesTransactionUnchanged() {
+        fun build(extras: TronTransactionExtras?) = transactionBuilder.buildForSign(
+            amount = Amount(BigDecimal.valueOf(1), blockchain),
+            source = "TU1BRXbr6EmKmrLL4Kymv7Wp18eYFkRfAF",
+            destination = "TXXxc9NsHndfQ2z9kMKyWpYa5T3QbhKGwn",
+            block = tronBlock,
+            extras = extras,
+        ).encode()
+
+        Truth.assertThat(build(TronTransactionExtras(memo = null))).isEqualTo(build(null))
     }
 }
