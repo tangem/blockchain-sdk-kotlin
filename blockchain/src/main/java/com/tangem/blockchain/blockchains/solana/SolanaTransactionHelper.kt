@@ -1,23 +1,120 @@
 package com.tangem.blockchain.blockchains.solana
 
 import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.extensions.Result
 
 object SolanaTransactionHelper {
 
     private const val SIGNATURE_LENGTH = 64
 
     /**
-     * Removes signatures placeholders from transaction data
-     * @param transaction: transaction data with placeholders
-     * @returns Transaction data without placeholders
+     * Returns the serialized message of a compiled transaction — the exact bytes that are signed.
+     *
+     * A serialized Solana transaction is `[compact-u16 signatureCount][N × 64-byte signature slots][message]`;
+     * this strips the leading signature array and returns the remaining message untouched.
      */
-    fun removeSignaturesPlaceholders(transaction: ByteArray): ByteArray {
-        val firstByte = transaction.firstOrNull() ?: throw BlockchainSdkError.Solana.TransactionIsEmpty
+    fun extractMessage(transaction: ByteArray): ByteArray = parse(transaction).message
 
-        val signaturesPlaceholderLength = 1 + firstByte.toInt() * SIGNATURE_LENGTH
+    /**
+     * Splices [signature] into the signature slot of a compiled [transaction] that belongs to [signerPublicKey],
+     * leaving the signature count and every other slot exactly as received — including placeholders and signatures
+     * already supplied by the dApp for co-signers.
+     *
+     * This preserves multi-signer transactions. The signer's slot index is resolved by matching [signerPublicKey]
+     * against the transaction's required-signer keys (the first `numRequiredSignatures` static account keys), so
+     * the signature lands at the correct position even when the wallet is not the fee-payer at index 0. Only the
+     * 64 bytes of that one slot are overwritten; the rest of the wire bytes are copied verbatim.
+     *
+     * Never throws — every failure is returned as [Result.Failure]: `SignerPublicKeyNotFound` when
+     * [signerPublicKey] is not a required signer, `TransactionIsEmpty` when [transaction] is empty, and a
+     * `CustomError` when [signature] is not 64 bytes or [transaction] is malformed.
+     */
+    fun putSignature(transaction: ByteArray, signerPublicKey: ByteArray, signature: ByteArray): Result<ByteArray> {
+        if (signature.size != SIGNATURE_LENGTH) {
+            val message = "Solana signature must be $SIGNATURE_LENGTH bytes, got ${signature.size}"
+            return Result.Failure(BlockchainSdkError.CustomError(message))
+        }
 
-        return transaction.drop(signaturesPlaceholderLength).toByteArray()
+        return try {
+            val parsed = parse(transaction)
+            val signerKeys = readSignerPublicKeys(parsed.message, maxSigners = parsed.signatures.size)
+            val index = signerKeys.indexOfFirst { it.contentEquals(signerPublicKey) }
+            if (index !in parsed.signatures.indices) {
+                Result.Failure(BlockchainSdkError.Solana.SignerPublicKeyNotFound)
+            } else {
+                val signedTransaction = transaction.copyOf().also { result ->
+                    signature.copyInto(result, destinationOffset = parsed.signaturesOffset + index * SIGNATURE_LENGTH)
+                }
+                Result.Success(signedTransaction)
+            }
+        } catch (e: BlockchainSdkError) {
+            Result.Failure(e)
+        } catch (e: Exception) {
+            Result.Failure(BlockchainSdkError.CustomError("Failed to place Solana signature: ${e.message}"))
+        }
     }
+
+    @Deprecated(
+        message = "Rebuilding the transaction from the returned message drops every other signature slot and " +
+            "breaks multi-signer transactions. Use extractMessage() to obtain the bytes to sign and " +
+            "putSignature() to reassemble.",
+        replaceWith = ReplaceWith("extractMessage(transaction)"),
+    )
+    fun removeSignaturesPlaceholders(transaction: ByteArray): ByteArray = extractMessage(transaction)
+
+    /**
+     * Splits a serialized transaction into its signature slots and message, without interpreting the message.
+     */
+    private fun parse(transaction: ByteArray): ParsedTransaction {
+        if (transaction.isEmpty()) throw BlockchainSdkError.Solana.TransactionIsEmpty
+
+        val reader = ShortVecReader(transaction)
+        val signatureCount = reader.readShortVec()
+        val signaturesOffset = reader.position()
+        val signatures = buildList {
+            repeat(signatureCount) { add(reader.readBytes(SIGNATURE_LENGTH)) }
+        }
+        val message = reader.remaining()
+
+        return ParsedTransaction(
+            message = message,
+            signatures = signatures,
+            signaturesOffset = signaturesOffset,
+        )
+    }
+
+    /**
+     * Reads the required-signer public keys from a serialized [message]: the first `numRequiredSignatures` static
+     * account keys, in order. Capped by [maxSigners] (the number of signature slots actually present) so a
+     * malformed header cannot read past the slots. Returns an empty list for a message that fails to parse, which
+     * surfaces as [BlockchainSdkError.Solana.SignerPublicKeyNotFound] in [putSignature].
+     */
+    private fun readSignerPublicKeys(message: ByteArray, maxSigners: Int): List<ByteArray> = runCatching {
+        val reader = ShortVecReader(message)
+
+        // Versioned (v0) messages prefix the header with `0x80 | version`; legacy messages start with the header.
+        val isVersioned = reader.peekU8() and SolanaMessageFormat.HIGH_BIT != 0
+        if (isVersioned) reader.readU8() // consume the version prefix
+
+        val numRequiredSignatures = reader.readU8()
+        reader.readU8() // numReadonlySigned
+        reader.readU8() // numReadonlyUnsigned
+
+        val accountCount = reader.readShortVec()
+        val signerCount = minOf(numRequiredSignatures, accountCount, maxSigners)
+        buildList {
+            repeat(signerCount) { add(reader.readBytes(SolanaMessageFormat.PUBLIC_KEY_LENGTH)) }
+        }
+    }.getOrDefault(emptyList())
+
+    private class ParsedTransaction(
+        /** The serialized message — the bytes that are signed. */
+        val message: ByteArray,
+        /** Signature slots exactly as received (64 bytes each; zero placeholders or real signatures). */
+        val signatures: List<ByteArray>,
+        /** Byte offset in the original buffer where the signature slots begin (right after the count prefix). */
+        val signaturesOffset: Int,
+    )
 
     /**
      * Checks whether [data] is a serialized Solana transaction message (legacy or v0).

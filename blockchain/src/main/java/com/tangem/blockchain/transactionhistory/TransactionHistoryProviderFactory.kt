@@ -59,6 +59,8 @@ internal object TransactionHistoryProviderFactory {
 
             Blockchain.Adi, Blockchain.AdiTestnet -> createAdiExplorerProvider(blockchain)
 
+            Blockchain.Igra, Blockchain.IgraTestnet -> createIgraExplorerProvider(blockchain)
+
             else -> DefaultTransactionHistoryProvider
         }
     }
@@ -152,6 +154,19 @@ internal object TransactionHistoryProviderFactory {
             blockchain = blockchain,
             api = createRetrofitInstance("https://explorer-bls.adifoundation.ai/")
                 .create(EtherScanApi::class.java),
+            etherscanApiKey = "",
+        )
+    }
+
+    private fun createIgraExplorerProvider(blockchain: Blockchain): TransactionHistoryProvider {
+        val baseUrl = if (blockchain.isTestnet()) {
+            "https://explorer.galleon-testnet.igralabs.com/"
+        } else {
+            "https://explorer.igralabs.com/"
+        }
+        return EtherscanTransactionHistoryProvider(
+            blockchain = blockchain,
+            api = createRetrofitInstance(baseUrl).create(EtherScanApi::class.java),
             etherscanApiKey = "",
         )
     }
