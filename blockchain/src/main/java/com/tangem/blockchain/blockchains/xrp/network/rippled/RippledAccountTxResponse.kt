@@ -15,13 +15,13 @@ import com.squareup.moshi.JsonWriter
  * https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/account-methods/account_tx
  */
 @JsonClass(generateAdapter = true)
-data class RippledAccountTxResponse(
+internal data class RippledAccountTxResponse(
     @Json(name = "result")
     val result: RippledAccountTxResult? = null,
 )
 
 @JsonClass(generateAdapter = true)
-data class RippledAccountTxResult(
+internal data class RippledAccountTxResult(
     @Json(name = "transactions")
     val transactions: List<RippledTransactionInfo>? = null,
 
@@ -45,7 +45,7 @@ data class RippledAccountTxResult(
  * failing the whole page parsing.
  */
 @JsonClass(generateAdapter = true)
-data class RippledMarker(
+internal data class RippledMarker(
     @Json(name = "ledger")
     val ledger: Long? = null,
 
@@ -54,7 +54,7 @@ data class RippledMarker(
 )
 
 @JsonClass(generateAdapter = true)
-data class RippledTransactionInfo(
+internal data class RippledTransactionInfo(
     @Json(name = "tx")
     val tx: RippledHistoryTransaction,
 
@@ -66,13 +66,13 @@ data class RippledTransactionInfo(
 )
 
 @JsonClass(generateAdapter = true)
-data class RippledTransactionMeta(
+internal data class RippledTransactionMeta(
     @Json(name = "TransactionResult")
     val transactionResult: String? = null,
 )
 
 @JsonClass(generateAdapter = true)
-data class RippledHistoryTransaction(
+internal data class RippledHistoryTransaction(
     @Json(name = "Account")
     val account: String,
 
@@ -105,7 +105,7 @@ data class RippledHistoryTransaction(
  *
  * https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts
  */
-sealed interface RippledTransactionAmount {
+internal sealed interface RippledTransactionAmount {
 
     data class Drops(val value: String) : RippledTransactionAmount
 
@@ -113,7 +113,7 @@ sealed interface RippledTransactionAmount {
 }
 
 @JsonClass(generateAdapter = true)
-data class RippledIssuedCurrencyAmount(
+internal data class RippledIssuedCurrencyAmount(
     @Json(name = "currency")
     val currency: String,
 

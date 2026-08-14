@@ -20,7 +20,10 @@ import java.math.BigInteger
 import com.ripple.core.coretypes.Amount as XrpAmount
 
 @Suppress("MagicNumber")
-class XrpTransactionBuilder(private val networkProvider: XrpNetworkProvider, publicKey: ByteArray) {
+class XrpTransactionBuilder internal constructor(
+    private val networkProvider: XrpNetworkProvider,
+    publicKey: ByteArray,
+) {
     // https://xrpl.org/blog/2021/reserves-lowered.html
     var minReserve = 1.toBigDecimal()
     var reserveInc = 0.2.toBigDecimal()

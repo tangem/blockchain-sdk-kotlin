@@ -6,7 +6,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import java.math.BigDecimal
 
-interface XrpNetworkProvider : NetworkProvider {
+internal interface XrpNetworkProvider : NetworkProvider {
     suspend fun getInfo(address: String): Result<XrpInfoResponse>
     suspend fun sendTransaction(transaction: String): SimpleResult
     suspend fun getFee(): Result<XrpFeeResponse>
@@ -25,7 +25,7 @@ interface XrpNetworkProvider : NetworkProvider {
  * @property limit   maximum number of transactions in the page
  * @property marker  position to continue from, `null` for the first page
  */
-data class XrpAccountTxRequest(
+internal data class XrpAccountTxRequest(
     val address: String,
     val limit: Int,
     val marker: XrpTransactionMarker? = null,
@@ -37,12 +37,12 @@ data class XrpAccountTxRequest(
  * @property transactions transactions of the page
  * @property marker       position to continue from, `null` if the last page has been reached
  */
-data class XrpAccountTxResponse(
+internal data class XrpAccountTxResponse(
     val transactions: List<XrpTransaction>,
     val marker: XrpTransactionMarker? = null,
 )
 
-data class XrpTransactionMarker(val ledger: Long, val seq: Long)
+internal data class XrpTransactionMarker(val ledger: Long, val seq: Long)
 
 /**
  * Transaction of the account history.
@@ -53,7 +53,7 @@ data class XrpTransactionMarker(val ledger: Long, val seq: Long)
  * @property date              seconds since the Ripple Epoch
  * @property transactionResult engine result code of the transaction, `tesSUCCESS` if it succeeded
  */
-data class XrpTransaction(
+internal data class XrpTransaction(
     val hash: String,
     val account: String,
     val destination: String?,
@@ -66,7 +66,7 @@ data class XrpTransaction(
     val transactionResult: String?,
 )
 
-sealed interface XrpTransactionAmount {
+internal sealed interface XrpTransactionAmount {
 
     /** Native XRP amount in drops, i.e. not scaled by the blockchain decimals */
     data class Drops(val value: BigDecimal) : XrpTransactionAmount
@@ -74,13 +74,13 @@ sealed interface XrpTransactionAmount {
     data class IssuedCurrency(val amount: XrpIssuedCurrencyAmount) : XrpTransactionAmount
 }
 
-data class XrpIssuedCurrencyAmount(
+internal data class XrpIssuedCurrencyAmount(
     val currency: String,
     val issuer: String,
     val value: BigDecimal,
 )
 
-data class XrpInfoResponse(
+internal data class XrpInfoResponse(
     val balance: BigDecimal = BigDecimal.ZERO,
     val sequence: Long = 0,
     val hasUnconfirmed: Boolean = false,
@@ -91,19 +91,19 @@ data class XrpInfoResponse(
     val tokenBalances: Set<XrpTokenBalance>,
 )
 
-data class XrpTokenBalance(
+internal data class XrpTokenBalance(
     val balance: BigDecimal,
     val issuer: String,
     val currency: String,
     val noRipple: Boolean = false,
 )
 
-data class XrpTargetAccountResponse(
+internal data class XrpTargetAccountResponse(
     val accountCreated: Boolean,
     val trustlineCreated: Boolean? = null,
 )
 
-data class XrpFeeResponse(
+internal data class XrpFeeResponse(
     val minimalFee: BigDecimal,
     val normalFee: BigDecimal,
     val priorityFee: BigDecimal,
