@@ -25,6 +25,8 @@ object EthereumUtils {
 
     const val ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
+    private val ZERO_ADDRESS_BODY = ZERO_ADDRESS.removePrefix(HEX_PREFIX)
+
     const val HEX_CHARS_PER_BYTE = 2
 
     // Each "word" in Ethereum ABI is 32 bytes, which equals 64 hex characters
@@ -239,10 +241,10 @@ object EthereumUtils {
     }
 
     fun String.isZeroAddress(): Boolean {
-        return this.equals(ZERO_ADDRESS, ignoreCase = true)
+        val body = trim().removePrefix(HEX_PREFIX).removePrefix(HEX_PREFIX.uppercase())
+
+        return body.equals(ZERO_ADDRESS_BODY, ignoreCase = true)
     }
 
-    fun String.isNotZeroAddress(): Boolean {
-        return !this.equals(ZERO_ADDRESS, ignoreCase = true)
-    }
+    fun String.isNotZeroAddress(): Boolean = !isZeroAddress()
 }
