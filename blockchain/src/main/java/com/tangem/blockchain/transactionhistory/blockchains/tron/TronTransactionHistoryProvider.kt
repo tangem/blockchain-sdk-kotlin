@@ -1,14 +1,19 @@
 package com.tangem.blockchain.transactionhistory.blockchains.tron
 
 import com.tangem.Log
-import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.pagination.Page
 import com.tangem.blockchain.common.pagination.PaginationWrapper
+import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import com.tangem.blockchain.network.blockbook.network.responses.feeAmount
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider.Companion.shouldExcludeFromHistory
 import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.TransactionType.TronStakingTransactionType
@@ -74,6 +79,7 @@ internal class TronTransactionHistoryProvider(
             } else {
                 val txs = response.transactions
                     .orEmpty()
+                    .filterNot { tx -> shouldHideTechnicalTransaction(tx = tx, request = request) }
                     .mapNotNull { tx ->
                         tx.toTransactionHistoryItem(
                             walletAddress = request.address,
@@ -81,6 +87,7 @@ internal class TronTransactionHistoryProvider(
                             filterType = request.filterType,
                         )
                     }
+                    .filterNot { item -> shouldExcludeFromHistory(filterType = request.filterType, item = item) }
                 val nextPage = if (response.page != null && request.page !is Page.LastPage) {
                     Page.Next(response.page.inc().toString())
                 } else {
@@ -96,6 +103,47 @@ internal class TronTransactionHistoryProvider(
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
+    }
+
+    /**
+     * Technical transactions that are not real coin movements and must not be shown in the coin history.
+     *
+     * The gasless flow rents energy for the wallet: the rental service delegates energy to the address right
+     * before a gasless transfer and revokes it afterwards, and rental bots additionally probe the address with
+     * dust TRX transfers. None of that is initiated by the user, so it is filtered out to keep the Tron history
+     * consistent with other networks.
+     *
+     * Only *incoming* dust is hidden — an outgoing transaction is always signed by the user, so it stays
+     * visible regardless of its amount.
+     */
+    private fun shouldHideTechnicalTransaction(
+        tx: GetAddressResponse.Transaction,
+        request: TransactionHistoryRequest,
+    ): Boolean {
+        if (request.filterType !is TransactionHistoryRequest.FilterType.Coin) return false
+
+        return tx.isResourceRelated() || tx.isIncomingDust(walletAddress = request.address)
+    }
+
+    private fun GetAddressResponse.Transaction.isResourceRelated(): Boolean {
+        contractType?.let { if (it in RESOURCE_CONTRACT_TYPES) return true }
+
+        val payloadContractType = chainExtraData
+            ?.takeIf { it.payloadType == TRON_PAYLOAD_TYPE }
+            ?.payload
+            ?.contractType
+            ?: return false
+
+        return payloadContractType in RESOURCE_PAYLOAD_TYPES
+    }
+
+    private fun GetAddressResponse.Transaction.isIncomingDust(walletAddress: String): Boolean {
+        val sender = fromAddress ?: vin.firstOrNull()?.addresses?.firstOrNull()
+        if (sender == null || sender.equals(walletAddress, ignoreCase = true)) return false
+
+        val amount = value.toBigDecimalOrNull()?.movePointLeft(blockchain.decimals()) ?: return false
+
+        return amount < DUST_THRESHOLD
     }
 
     private fun checkHistoryStatus(
@@ -144,10 +192,6 @@ internal class TronTransactionHistoryProvider(
             walletAddress = walletAddress,
         ).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
-            return null
-        }
-        if (shouldExcludeFromHistory(filterType, amount)) {
-            Log.info { "Transaction with zero amount is excluded from history. $this" }
             return null
         }
         val sourceType = extractSourceType(
@@ -310,7 +354,9 @@ internal class TronTransactionHistoryProvider(
                 val extraData =
                     tx.chainExtraData ?: return TransactionHistoryItem.TransactionType.Transfer
 
-                if (extraData.payloadType != "tron") return TransactionHistoryItem.TransactionType.Transfer
+                if (extraData.payloadType != TRON_PAYLOAD_TYPE) {
+                    return TransactionHistoryItem.TransactionType.Transfer
+                }
 
                 val contractType = extraData.payload?.contractType
                     ?: return TransactionHistoryItem.TransactionType.Transfer
@@ -411,13 +457,38 @@ internal class TronTransactionHistoryProvider(
     }
 
     private companion object {
+        private const val TRON_PAYLOAD_TYPE = "tron"
+
         private const val TRANSFER_CONTRACT_TYPE = 1
         private const val TRANSFER_ASSET_CONTRACT_TYPE = 2
         private const val VOTE_WITNESS_CONTRACT_TYPE = 4 // vote
+        private const val ACCOUNT_CREATE_CONTRACT_TYPE = 9 // address activation
         private const val WITHDRAW_BALANCE_CONTRACT_TYPE = 13 // claim rewards
         private const val FREEZE_BALANCE_V2_CONTRACT_TYPE = 54 // freeze/stake
         private const val UNFREEZE_BALANCE_V2_CONTRACT_TYPE = 55 // unfreeze/unstake
         private const val WITHDRAW_EXPIRE_UNFREEZE_CONTRACT_TYPE = 56 // withdraw
+        private const val DELEGATE_RESOURCE_CONTRACT_TYPE = 57 // energy/bandwidth delegation
+        private const val UN_DELEGATE_RESOURCE_CONTRACT_TYPE = 58 // energy/bandwidth revocation
+
+        /** Legacy `contract_type` values of transactions that are technical and never user-initiated. */
+        private val RESOURCE_CONTRACT_TYPES = setOf(
+            ACCOUNT_CREATE_CONTRACT_TYPE,
+            DELEGATE_RESOURCE_CONTRACT_TYPE,
+            UN_DELEGATE_RESOURCE_CONTRACT_TYPE,
+        )
+
+        /** Same as [RESOURCE_CONTRACT_TYPES], but for the `chainExtraData` payload shape. */
+        private val RESOURCE_PAYLOAD_TYPES = setOf(
+            TronTxHistoryPayloadType.AccountCreate.type,
+            TronTxHistoryPayloadType.DelegateResource.type,
+            TronTxHistoryPayloadType.UnDelegateResource.type,
+        )
+
+        /**
+         * Incoming transfers below this amount are treated as energy rental / address poisoning spam.
+         * Two orders of magnitude above the observed spam (1–10 SUN) and far below any meaningful transfer.
+         */
+        private val DUST_THRESHOLD: BigDecimal = BigDecimal("0.001")
     }
 }
 
@@ -431,4 +502,9 @@ enum class TronTxHistoryPayloadType(val type: String) {
     Freeze("FreezeBalanceV2Contract"),
     Withdrawal("WithdrawExpireUnfreezeContract"),
     ClaimRewards("WithdrawBalanceContract"),
+
+    // Technical, never initiated by the user. Produced by the gasless energy rental flow
+    DelegateResource("DelegateResourceContract"),
+    UnDelegateResource("UnDelegateResourceContract"),
+    AccountCreate("AccountCreateContract"),
 }

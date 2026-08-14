@@ -1,10 +1,10 @@
 package com.tangem.blockchain.transactionhistory
 
-import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
+import com.tangem.common.extensions.isZero
 
 interface TransactionHistoryProvider {
 
@@ -17,11 +17,21 @@ interface TransactionHistoryProvider {
         request: TransactionHistoryRequest,
     ): Result<PaginationWrapper<TransactionHistoryItem>>
 
-    // TODO: Move to inside mappers - [REDACTED_JIRA]
-    fun shouldExcludeFromHistory(filterType: TransactionHistoryRequest.FilterType, amount: Amount): Boolean {
-        return when (filterType) {
-            TransactionHistoryRequest.FilterType.Coin -> return false
-            is TransactionHistoryRequest.FilterType.Contract -> amount.value == null || amount.value.signum() == 0
+    companion object {
+
+        fun shouldExcludeFromHistory(
+            filterType: TransactionHistoryRequest.FilterType,
+            item: TransactionHistoryItem,
+        ): Boolean {
+            val amount = item.amount.value
+            val isCoinHistory = filterType == TransactionHistoryRequest.FilterType.Coin
+            val isPlainTransfer = item.type == TransactionHistoryItem.TransactionType.Transfer
+
+            return when {
+                item.status == TransactionHistoryItem.TransactionStatus.Failed -> false
+                isCoinHistory && !isPlainTransfer -> false
+                else -> amount == null || amount.isZero()
+            }
         }
     }
 }

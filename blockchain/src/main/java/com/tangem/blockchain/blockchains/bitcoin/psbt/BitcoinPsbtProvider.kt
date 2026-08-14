@@ -4,32 +4,45 @@ import android.util.Base64
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinNetworkProvider
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.BitcoinPsbtSigner
 import com.tangem.blockchain.blockchains.bitcoin.walletconnect.models.SignInput
-import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.blockchain.common.Wallet
+import com.tangem.blockchain.common.psbt.PsbtAddressCodec
 import com.tangem.blockchain.common.psbt.PsbtOutputInfo
 import com.tangem.blockchain.common.psbt.PsbtProvider
+import com.tangem.blockchain.common.psbt.PsbtSighashStrategy
+import com.tangem.blockchain.common.psbt.PsbtTransactionExtractor
 import com.tangem.blockchain.extensions.Result
-import fr.acinq.bitcoin.Bitcoin
-import fr.acinq.bitcoin.Block
 import fr.acinq.bitcoin.psbt.Psbt
 
 /**
- * Bitcoin implementation of PSBT (Partially Signed Bitcoin Transaction) provider.
+ * Bitcoin-like (UTXO) implementation of PSBT (Partially Signed Bitcoin Transaction) provider.
  *
  * Delegates PSBT operations to BitcoinPsbtSigner while providing the PsbtProvider interface
- * for integration with WalletManager.
+ * for integration with WalletManager. Chain-specific address decoding and sighash computation
+ * are injected via [addressCodec] and [sighashStrategy], so this class works for any
+ * Bitcoin-like chain (Bitcoin, Litecoin, Dogecoin, etc.).
  *
- * @property wallet The Bitcoin wallet instance
+ * @property wallet The wallet instance
  * @property networkProvider Network provider for broadcasting transactions
+ * @property addressCodec Decodes scriptPubKeys into the chain's native address format
+ * @property sighashStrategy Chain-specific signature-hash computation
+ * @property transactionExtractor Chain-specific assembly of the final transaction from a finalized PSBT
  */
 internal class BitcoinPsbtProvider(
     private val wallet: Wallet,
     private val networkProvider: BitcoinNetworkProvider,
+    private val addressCodec: PsbtAddressCodec,
+    private val sighashStrategy: PsbtSighashStrategy,
+    private val transactionExtractor: PsbtTransactionExtractor,
 ) : PsbtProvider {
 
-    private val psbtSigner = BitcoinPsbtSigner(wallet, networkProvider)
+    private val psbtSigner = BitcoinPsbtSigner(
+        wallet = wallet,
+        networkProvider = networkProvider,
+        sighashStrategy = sighashStrategy,
+        transactionExtractor = transactionExtractor,
+    )
 
     override suspend fun signPsbt(psbtBase64: String, signInputs: Any, signer: TransactionSigner): Result<String> {
         val inputs = when (signInputs) {
@@ -66,11 +79,6 @@ internal class BitcoinPsbtProvider(
     }
 
     override fun parsePsbtOutputs(psbtBase64: String): Result<List<PsbtOutputInfo>> {
-        if (wallet.blockchain != Blockchain.Bitcoin && wallet.blockchain != Blockchain.BitcoinTestnet) {
-            return Result.Failure(
-                BlockchainSdkError.CustomError("PSBT outputs parsing is not supported for ${wallet.blockchain}"),
-            )
-        }
         return try {
             val psbtBytes = Base64.decode(psbtBase64, Base64.NO_WRAP)
             val psbt = when (val result = Psbt.read(psbtBytes)) {
@@ -81,18 +89,8 @@ internal class BitcoinPsbtProvider(
                     )
                 }
             }
-            val chainHash = if (wallet.blockchain.isTestnet()) {
-                Block.Testnet3GenesisBlock.hash
-            } else {
-                Block.LivenetGenesisBlock.hash
-            }
             val outputs = psbt.global.tx.txOut.map { txOut ->
-                val address = when (
-                    val decoded = Bitcoin.addressFromPublicKeyScript(chainHash, txOut.publicKeyScript.toByteArray())
-                ) {
-                    is fr.acinq.bitcoin.utils.Either.Right -> decoded.value
-                    is fr.acinq.bitcoin.utils.Either.Left -> null
-                }
+                val address = addressCodec.scriptToAddress(txOut.publicKeyScript.toByteArray())
                 PsbtOutputInfo(
                     address = address,
                     amountSatoshi = txOut.amount.toLong(),
@@ -107,11 +105,6 @@ internal class BitcoinPsbtProvider(
     }
 
     override fun deriveSignInputs(psbtBase64: String): Result<List<SignInput>> {
-        if (wallet.blockchain != Blockchain.Bitcoin && wallet.blockchain != Blockchain.BitcoinTestnet) {
-            return Result.Failure(
-                BlockchainSdkError.CustomError("PSBT sign-input derivation is not supported for ${wallet.blockchain}"),
-            )
-        }
         return try {
             val psbtBytes = Base64.decode(psbtBase64, Base64.NO_WRAP)
             val psbt = when (val result = Psbt.read(psbtBytes)) {
@@ -122,21 +115,13 @@ internal class BitcoinPsbtProvider(
                     )
                 }
             }
-            val chainHash = if (wallet.blockchain.isTestnet()) {
-                Block.Testnet3GenesisBlock.hash
-            } else {
-                Block.LivenetGenesisBlock.hash
-            }
             val walletAddresses = wallet.addresses.mapTo(mutableSetOf()) { it.value }
 
             val signInputs = psbt.inputs.mapIndexedNotNull { index, input ->
                 val script = inputPreviousOutputScript(psbt, input, index) ?: return@mapIndexedNotNull null
-                val address = when (val decoded = Bitcoin.addressFromPublicKeyScript(chainHash, script)) {
-                    is fr.acinq.bitcoin.utils.Either.Right -> decoded.value
-                    is fr.acinq.bitcoin.utils.Either.Left -> null
-                }
+                val address = addressCodec.scriptToAddress(script)
                 if (address != null && address in walletAddresses) {
-                    SignInput(address = address, index = index, sighashTypes = listOf(SIGHASH_ALL))
+                    SignInput(address = address, index = index, sighashTypes = listOf(sighashStrategy.sighashByte))
                 } else {
                     null
                 }
@@ -157,11 +142,6 @@ internal class BitcoinPsbtProvider(
     }
 
     override fun getPsbtFee(psbtBase64: String): Result<Long> {
-        if (wallet.blockchain != Blockchain.Bitcoin && wallet.blockchain != Blockchain.BitcoinTestnet) {
-            return Result.Failure(
-                BlockchainSdkError.CustomError("PSBT fee computation is not supported for ${wallet.blockchain}"),
-            )
-        }
         return try {
             val psbtBytes = Base64.decode(psbtBase64, Base64.NO_WRAP)
             val psbt = when (val result = Psbt.read(psbtBytes)) {
@@ -221,9 +201,5 @@ internal class BitcoinPsbtProvider(
         val outpointIndex = spentTxIn.outPoint.index.toInt()
         val previousOutput = nonWitnessUtxo.txOut.getOrNull(outpointIndex) ?: return null
         return previousOutput.amount.toLong()
-    }
-
-    private companion object {
-        const val SIGHASH_ALL = 1
     }
 }
