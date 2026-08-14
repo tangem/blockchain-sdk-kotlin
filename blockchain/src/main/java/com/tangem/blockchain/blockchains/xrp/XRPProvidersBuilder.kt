@@ -15,11 +15,12 @@ internal class XRPProvidersBuilder(
 ) : NetworkProvidersBuilder<XrpNetworkProvider>() {
 
     override fun createProviders(blockchain: Blockchain): List<XrpNetworkProvider> {
-        return providerTypes.mapNotNull {
-            when (it) {
-                is ProviderType.Public -> RippledNetworkProvider(baseUrl = it.url)
+        return providerTypes.mapNotNull { providerType ->
+            when (providerType) {
+                is ProviderType.Public -> RippledNetworkProvider(baseUrl = providerType.url)
                 ProviderType.NowNodes -> createNowNodesProvider()
                 ProviderType.GetBlock -> createGetBlockProvider()
+                ProviderType.QuickNode -> createQuickNodeProvider()
                 else -> null
             }
         }
@@ -31,6 +32,16 @@ internal class XRPProvidersBuilder(
                 baseUrl = "https://xrp.nownodes.io/",
                 apiKeyHeader = NowNodeCredentials.headerApiKey to it,
             )
+        }
+    }
+
+    private fun createQuickNodeProvider(): XrpNetworkProvider? {
+        return config.quickNodeXrpCredentials?.let { credentials ->
+            if (credentials.subdomain.isNotBlank() && credentials.apiKey.isNotBlank()) {
+                RippledNetworkProvider(baseUrl = "https://${credentials.subdomain}/${credentials.apiKey}/")
+            } else {
+                null
+            }
         }
     }
 
