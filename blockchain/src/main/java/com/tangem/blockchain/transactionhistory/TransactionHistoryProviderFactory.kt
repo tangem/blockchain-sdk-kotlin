@@ -2,6 +2,7 @@ package com.tangem.blockchain.transactionhistory
 
 import com.tangem.blockchain.blockchains.kaspa.KaspaProvidersBuilder
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.SolanaRpcClient
+import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.di.DepsContainer
@@ -19,6 +20,7 @@ import com.tangem.blockchain.transactionhistory.blockchains.polygon.EtherscanTra
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.EtherScanApi
 import com.tangem.blockchain.transactionhistory.blockchains.solana.SolanaTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.blockchains.tron.TronTransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.blockchains.xrp.XrpTransactionHistoryProvider
 
 internal object TransactionHistoryProviderFactory {
 
@@ -62,6 +64,18 @@ internal object TransactionHistoryProviderFactory {
             Blockchain.Igra, Blockchain.IgraTestnet -> createIgraExplorerProvider(blockchain)
 
             else -> DefaultTransactionHistoryProvider
+        }
+    }
+
+    /**
+
+     * the already built [networkProvider] instead of the raw [BlockchainSdkConfig].
+     */
+    fun makeXrpProvider(blockchain: Blockchain, networkProvider: XrpNetworkProvider): TransactionHistoryProvider {
+        return if (DepsContainer.blockchainFeatureToggles.isXrpTxHistoryEnabled) {
+            XrpTransactionHistoryProvider(blockchain = blockchain, networkProvider = networkProvider)
+        } else {
+            DefaultTransactionHistoryProvider
         }
     }
 

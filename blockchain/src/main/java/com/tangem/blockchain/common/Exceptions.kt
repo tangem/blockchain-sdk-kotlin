@@ -481,6 +481,12 @@ sealed class BlockchainSdkError(
             subCode = 0,
             customMessage = "${amount.toPlainString()} XRP needed for reserve and fee",
         )
+
+        /** Error reported by the ledger inside a successful HTTP response */
+        data class Api(val errorCode: Int?, val errorName: String?, val errorMessage: String?) : Xrp(
+            subCode = 1,
+            customMessage = "rippled error ${errorName ?: errorCode}: ${errorMessage ?: "unknown"}",
+        )
     }
 
     companion object {
