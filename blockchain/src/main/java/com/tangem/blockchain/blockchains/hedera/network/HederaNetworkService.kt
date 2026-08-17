@@ -25,6 +25,7 @@ internal class HederaNetworkService(
 ) {
 
     private val multiProvider = MultiNetworkProvider(hederaNetworkProviders, blockchain)
+    private val evmAddressResolver = HederaEvmAddressResolver(hederaNetworkProviders)
 
     val baseUrl: String get() = multiProvider.currentProvider.baseUrl
 
@@ -145,8 +146,7 @@ internal class HederaNetworkService(
     }
 
     suspend fun getAccountEvmAddress(accountId: String): Result<String> {
-        return multiProvider.performRequest(HederaNetworkProvider::getAccountDetail, accountId)
-            .map { it.evmAddress }
+        return evmAddressResolver.resolveAccountEvmAddress(accountId)
     }
 
     fun <T : Transaction<T>> sendTransaction(transaction: Transaction<T>): Result<TransactionResponse> {
