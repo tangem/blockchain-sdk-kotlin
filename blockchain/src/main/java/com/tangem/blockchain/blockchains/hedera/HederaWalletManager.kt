@@ -475,8 +475,8 @@ internal class HederaWalletManager(
     }
 
     private suspend fun getErc20Fee(amount: Amount, destination: String): Result<TransactionFee> {
-        val recipientEvmAddress = getRecipientEvmAddress(destination)
-            .successOr { return Result.Failure(BlockchainSdkError.FailedToLoadFee) }
+        // Recipient address resolution errors are security-relevant: surface them instead of a generic fee error
+        val recipientEvmAddress = getRecipientEvmAddress(destination).successOr { return it }
 
         val uncompiled = TransactionData.Uncompiled(
             amount = amount,
