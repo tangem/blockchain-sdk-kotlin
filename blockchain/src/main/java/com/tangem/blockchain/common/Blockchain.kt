@@ -227,6 +227,8 @@ enum class Blockchain(
     RobinhoodTestnet("robinhood/test", "ETH", "Robinhood Chain Testnet"),
     Igra("igra", "iKAS", "Igra"),
     IgraTestnet("igra/test", "iKAS", "Igra Testnet"),
+    Electroneum("electroneum", "ETN", "Electroneum"),
+    ElectroneumTestnet("electroneum/test", "ETN", "Electroneum Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -376,6 +378,7 @@ enum class Blockchain(
         SeiEvm, SeiEvmTestnet,
         Robinhood, RobinhoodTestnet,
         Igra, IgraTestnet,
+        Electroneum, ElectroneumTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -502,6 +505,7 @@ enum class Blockchain(
             SeiEvm, SeiEvmTestnet,
             Robinhood, RobinhoodTestnet,
             Igra, IgraTestnet,
+            Electroneum, ElectroneumTestnet,
             -> EthereumAddressService()
 
             Quai, QuaiTestnet -> QuaiAddressService()
@@ -668,6 +672,7 @@ enum class Blockchain(
             SeiEvm, SeiEvmTestnet -> SeiEvmTestnet
             Robinhood, RobinhoodTestnet -> RobinhoodTestnet
             Igra, IgraTestnet -> IgraTestnet
+            Electroneum, ElectroneumTestnet -> ElectroneumTestnet
             Unknown,
             Cardano,
             Dogecoin,
@@ -793,6 +798,7 @@ enum class Blockchain(
             SeiEvm, SeiEvmTestnet,
             Robinhood, RobinhoodTestnet,
             Igra, IgraTestnet,
+            Electroneum, ElectroneumTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -923,6 +929,8 @@ enum class Blockchain(
             RobinhoodTestnet -> Chain.RobinhoodTestnet.id
             Igra -> Chain.Igra.id
             IgraTestnet -> Chain.IgraTestnet.id
+            Electroneum -> Chain.Electroneum.id
+            ElectroneumTestnet -> Chain.ElectroneumTestnet.id
             Monad -> Chain.Monad.id
             MonadTestnet -> Chain.MonadTestnet.id
             else -> null

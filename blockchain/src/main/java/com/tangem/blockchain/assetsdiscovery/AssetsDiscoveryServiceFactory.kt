@@ -92,6 +92,7 @@ import com.tangem.blockchain.blockchains.nexa.NexaProvidersBuilder
 import com.tangem.blockchain.blockchains.pepecoin.PepecoinProvidersBuilder
 import com.tangem.blockchain.blockchains.pepecoin.network.PepecoinNetworkService
 import com.tangem.blockchain.blockchains.adi.AdiProvidersBuilder
+import com.tangem.blockchain.blockchains.electroneum.ElectroneumProvidersBuilder
 import com.tangem.blockchain.blockchains.igra.IgraProvidersBuilder
 import com.tangem.blockchain.blockchains.plasma.PlasmaProvidersBuilder
 import com.tangem.blockchain.blockchains.robinhood.RobinhoodProvidersBuilder
@@ -165,6 +166,7 @@ import com.tangem.blockchain.network.MultiNetworkProvider
  * | Dischain         | coins            |
  * | Dogecoin         | coins            |
  * | Ducatus          | coins            |
+ * | Electroneum      | coins + tokens   |
  * | EnergyWebChain   | coins            |
  * | EnergyWebX       | coins            |
  * | Ethereum         | coins + tokens   |
@@ -258,6 +260,10 @@ class AssetsDiscoveryServiceFactory(
             Blockchain.Igra, Blockchain.IgraTestnet -> createDefaultEvmDiscoveryService(
                 blockchain = blockchain,
                 providers = IgraProvidersBuilder(types, config).build(blockchain),
+            )
+            Blockchain.Electroneum, Blockchain.ElectroneumTestnet -> createDefaultEvmDiscoveryService(
+                blockchain = blockchain,
+                providers = ElectroneumProvidersBuilder(types, config).build(blockchain),
             )
             Blockchain.Alephium, Blockchain.AlephiumTestnet -> {
                 val networkService = AlephiumNetworkService(
