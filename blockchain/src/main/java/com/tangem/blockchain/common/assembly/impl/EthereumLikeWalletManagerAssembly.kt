@@ -8,6 +8,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkService
 import com.tangem.blockchain.blockchains.ethereum.providers.*
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.blockchains.adi.AdiProvidersBuilder
+import com.tangem.blockchain.blockchains.electroneum.ElectroneumProvidersBuilder
 import com.tangem.blockchain.blockchains.igra.IgraProvidersBuilder
 import com.tangem.blockchain.blockchains.plasma.PlasmaProvidersBuilder
 import com.tangem.blockchain.blockchains.robinhood.RobinhoodProvidersBuilder
@@ -210,6 +211,7 @@ internal class EthereumLikeWalletManagerAssembly(
             Blockchain.SeiEvm, Blockchain.SeiEvmTestnet -> SeiEvmProvidersBuilder(providerTypes, config)
             Blockchain.Robinhood, Blockchain.RobinhoodTestnet -> RobinhoodProvidersBuilder(providerTypes, config)
             Blockchain.Igra, Blockchain.IgraTestnet -> IgraProvidersBuilder(providerTypes, config)
+            Blockchain.Electroneum, Blockchain.ElectroneumTestnet -> ElectroneumProvidersBuilder(providerTypes, config)
             else -> error("Unsupported blockchain: $blockchain")
         }
     }

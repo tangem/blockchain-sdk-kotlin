@@ -24,6 +24,7 @@ import com.tangem.blockchain.transactionhistory.blockchains.xrp.XrpTransactionHi
 
 internal object TransactionHistoryProviderFactory {
 
+    @Suppress("CyclomaticComplexMethod")
     fun makeProvider(blockchain: Blockchain, config: BlockchainSdkConfig): TransactionHistoryProvider {
         if (blockchain.isEtherscanCompatible()) {
             return createEtherscanProvider(blockchain, config)
@@ -62,6 +63,10 @@ internal object TransactionHistoryProviderFactory {
             Blockchain.Adi, Blockchain.AdiTestnet -> createAdiExplorerProvider(blockchain)
 
             Blockchain.Igra, Blockchain.IgraTestnet -> createIgraExplorerProvider(blockchain)
+
+            Blockchain.Electroneum,
+            Blockchain.ElectroneumTestnet,
+            -> createElectroneumExplorerProvider(blockchain)
 
             else -> DefaultTransactionHistoryProvider
         }
@@ -177,6 +182,19 @@ internal object TransactionHistoryProviderFactory {
             "https://explorer.galleon-testnet.igralabs.com/"
         } else {
             "https://explorer.igralabs.com/"
+        }
+        return EtherscanTransactionHistoryProvider(
+            blockchain = blockchain,
+            api = createRetrofitInstance(baseUrl).create(EtherScanApi::class.java),
+            etherscanApiKey = "",
+        )
+    }
+
+    private fun createElectroneumExplorerProvider(blockchain: Blockchain): TransactionHistoryProvider {
+        val baseUrl = if (blockchain.isTestnet()) {
+            "https://testnet-blockexplorer.electroneum.com/"
+        } else {
+            "https://blockexplorer.electroneum.com/"
         }
         return EtherscanTransactionHistoryProvider(
             blockchain = blockchain,

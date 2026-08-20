@@ -39,6 +39,7 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.SeiEvm, Blockchain.SeiEvmTestnet,
             Blockchain.Robinhood, Blockchain.RobinhoodTestnet,
             Blockchain.Igra, Blockchain.IgraTestnet,
+            Blockchain.Electroneum, Blockchain.ElectroneumTestnet,
             -> true
             Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet, // eth_feeHistory all zeroes
             Blockchain.EthereumPow, Blockchain.EthereumPowTestnet, // eth_feeHistory with zeros
