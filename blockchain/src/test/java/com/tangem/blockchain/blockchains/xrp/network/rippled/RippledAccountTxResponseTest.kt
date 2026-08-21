@@ -50,6 +50,19 @@ class RippledAccountTxResponseTest {
     }
 
     @Test
+    fun `offer create sides are parsed`() {
+        val tx = transactions(RESPONSE)[3].tx
+
+        assertThat(tx.amount).isNull()
+        assertThat(tx.takerGets).isEqualTo(RippledTransactionAmount.Drops("1500000"))
+        assertThat(tx.takerPays).isEqualTo(
+            RippledTransactionAmount.IssuedCurrency(
+                RippledIssuedCurrencyAmount(currency = "USD", issuer = "rIssuer", value = "12.34"),
+            ),
+        )
+    }
+
+    @Test
     fun `marker is parsed`() {
         val result = requireNotNull(adapter.fromJson(RESPONSE)?.result)
 
@@ -77,7 +90,7 @@ class RippledAccountTxResponseTest {
         val result = requireNotNull(adapter.fromJson(RESPONSE)).toDomain()
 
         val page = (result as Result.Success).data
-        assertThat(page.transactions.map { it.hash }).containsExactly("A1", "A2", "A3").inOrder()
+        assertThat(page.transactions.map { it.hash }).containsExactly("A1", "A2", "A3", "A4").inOrder()
         assertThat(page.marker).isEqualTo(XrpTransactionMarker(ledger = 98_765, seq = 4))
     }
 
@@ -170,6 +183,19 @@ class RippledAccountTxResponseTest {
                       "TransactionType": "TrustSet",
                       "date": 808924802,
                       "hash": "A3"
+                    },
+                    "validated": true
+                  },
+                  {
+                    "meta": { "TransactionResult": "tesSUCCESS" },
+                    "tx": {
+                      "Account": "rSender",
+                      "TakerGets": "1500000",
+                      "TakerPays": { "currency": "USD", "issuer": "rIssuer", "value": "12.34" },
+                      "Fee": "12",
+                      "TransactionType": "OfferCreate",
+                      "date": 808924803,
+                      "hash": "A4"
                     },
                     "validated": true
                   }

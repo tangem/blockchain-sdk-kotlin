@@ -283,6 +283,8 @@ private fun RippledTransactionInfo.toDomain(): XrpTransaction? {
         destination = tx.destination,
         amount = tx.amount?.toDomain(),
         limitAmount = tx.limitAmount?.toDomain(),
+        takerGets = tx.takerGets?.toDomain(),
+        takerPays = tx.takerPays?.toDomain(),
         feeInDrops = tx.fee?.toBigDecimalOrNull(),
         transactionType = tx.transactionType,
         date = tx.date,
