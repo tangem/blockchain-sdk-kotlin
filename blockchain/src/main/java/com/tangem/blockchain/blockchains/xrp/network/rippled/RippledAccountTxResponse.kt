@@ -86,6 +86,14 @@ internal data class RippledHistoryTransaction(
     @Json(name = "LimitAmount")
     val limitAmount: RippledIssuedCurrencyAmount? = null,
 
+    /** Amount the `OfferCreate` owner sells */
+    @Json(name = "TakerGets")
+    val takerGets: RippledTransactionAmount? = null,
+
+    /** Amount the `OfferCreate` owner buys */
+    @Json(name = "TakerPays")
+    val takerPays: RippledTransactionAmount? = null,
+
     @Json(name = "Fee")
     val fee: String? = null,
 

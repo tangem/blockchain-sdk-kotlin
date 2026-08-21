@@ -70,7 +70,12 @@ internal class XrpTransactionHistoryProvider(
             is Result.Success -> {
                 val items = result.data.transactions
                     .mapNotNull { it.toTransactionHistoryItem(request.address, request.filterType) }
-                    .filterNot { item -> shouldExcludeFromHistory(filterType = request.filterType, item = item) }
+                    .filterNot { item ->
+                        // Only plain transfers are subject to the shared zero-amount filter. The other supported
+                        // types report a zero amount by design, yet they belong in the history of their currency
+                        item.type == TransactionHistoryItem.TransactionType.Transfer &&
+                            shouldExcludeFromHistory(filterType = request.filterType, item = item)
+                    }
 
                 Result.Success(
                     PaginationWrapper(
@@ -87,59 +92,123 @@ internal class XrpTransactionHistoryProvider(
         walletAddress: String,
         filterType: TransactionHistoryRequest.FilterType,
     ): TransactionHistoryItem? {
-        val amount = extractAmount(filterType) ?: return null
+        if (transactionType !in SUPPORTED_TRANSACTION_TYPES) return null
+
+        val historyAmount = extractHistoryAmount(walletAddress, filterType) ?: return null
         val fee = feeInDrops?.movePointLeft(blockchain.decimals()) ?: return null
 
         return TransactionHistoryItem(
             txHash = hash,
             timestamp = date?.let { TimeUnit.SECONDS.toMillis(it + RIPPLE_EPOCH_OFFSET_SECONDS) } ?: 0L,
-            isOutgoing = account == walletAddress,
+            isOutgoing = historyAmount.isOutgoing,
             destinationType = TransactionHistoryItem.DestinationType.Single(
                 addressType = TransactionHistoryItem.AddressType.User(extractDestination(walletAddress)),
             ),
             sourceType = TransactionHistoryItem.SourceType.Single(address = account),
             status = extractStatus(),
             type = extractType(),
-            amount = amount,
+            amount = historyAmount.toAmount(filterType),
             fee = Amount(blockchain = blockchain, value = fee),
         )
     }
 
-    private fun XrpTransaction.extractAmount(filterType: TransactionHistoryRequest.FilterType): Amount? {
+    private fun XrpHistoryAmount.toAmount(filterType: TransactionHistoryRequest.FilterType): Amount {
         return when (filterType) {
-            TransactionHistoryRequest.FilterType.Coin -> {
+            TransactionHistoryRequest.FilterType.Coin -> Amount(
+                value = value,
+                blockchain = blockchain,
+                type = AmountType.Coin,
+            )
+            is TransactionHistoryRequest.FilterType.Contract -> Amount(value = value, token = filterType.tokenInfo)
+        }
+    }
+
+    private fun XrpTransaction.extractHistoryAmount(
+        walletAddress: String,
+        filterType: TransactionHistoryRequest.FilterType,
+    ): XrpHistoryAmount? {
+        return when (filterType) {
+            TransactionHistoryRequest.FilterType.Coin -> extractCoinAmount(walletAddress)
+            is TransactionHistoryRequest.FilterType.Contract -> extractTokenAmount(walletAddress, filterType.tokenInfo)
+        }
+    }
+
+    private fun XrpTransaction.extractCoinAmount(walletAddress: String): XrpHistoryAmount? {
+        val isOutgoing = account == walletAddress
+
+        return when (transactionType) {
+            // Account creation is a `Payment` too, so it needs no branch of its own
+            PAYMENT_TRANSACTION_TYPE, ESCROW_CREATE_TRANSACTION_TYPE -> {
                 val drops = (amount as? XrpTransactionAmount.Drops)?.value ?: return null
 
-                Amount(
-                    value = drops.movePointLeft(blockchain.decimals()),
-                    blockchain = blockchain,
-                    type = AmountType.Coin,
-                )
+                XrpHistoryAmount(value = drops.movePointLeft(blockchain.decimals()), isOutgoing = isOutgoing)
             }
-            is TransactionHistoryRequest.FilterType.Contract -> {
-                val token = filterType.tokenInfo
-                val value = extractTokenAmount(token) ?: return null
+            OFFER_CREATE_TRANSACTION_TYPE -> {
+                val side = matchOfferSide { it is XrpTransactionAmount.Drops } ?: return null
 
-                Amount(value = value, token = token)
+                XrpHistoryAmount(value = BigDecimal.ZERO, isOutgoing = side.isOutgoing)
             }
+            // These types move funds through the metadata only, so the moved value stays unknown here
+            OFFER_CANCEL_TRANSACTION_TYPE,
+            ESCROW_FINISH_TRANSACTION_TYPE,
+            ESCROW_CANCEL_TRANSACTION_TYPE,
+            ACCOUNT_DELETE_TRANSACTION_TYPE,
+            -> XrpHistoryAmount(value = BigDecimal.ZERO, isOutgoing = isOutgoing)
+            // `TrustSet` and `Clawback` always belong to an issued currency, never to XRP
+            else -> null
         }
     }
 
     /** Issued currency amounts are already denominated, so they need no scaling by the token decimals */
-    private fun XrpTransaction.extractTokenAmount(token: Token): BigDecimal? {
-        val issuedAmount = extractIssuedAmount() ?: return null
+    private fun XrpTransaction.extractTokenAmount(walletAddress: String, token: Token): XrpHistoryAmount? {
         val (currency, issuer) = parseAssetId(token.contractAddress) ?: return null
+        val isOutgoing = account == walletAddress
 
-        return if (issuedAmount.currency == currency && issuedAmount.issuer == issuer) issuedAmount.value else null
+        return when (transactionType) {
+            PAYMENT_TRANSACTION_TYPE, ESCROW_CREATE_TRANSACTION_TYPE -> {
+                val issued = (amount as? XrpTransactionAmount.IssuedCurrency)?.amount ?: return null
+                if (!issued.matches(currency, issuer)) return null
+
+                XrpHistoryAmount(value = issued.value, isOutgoing = isOutgoing)
+            }
+            TRUST_SET_TRANSACTION_TYPE -> {
+                if (limitAmount?.matches(currency, issuer) != true) return null
+
+                // `LimitAmount` is the trust line cap, not a transferred amount, so nothing is moved
+                XrpHistoryAmount(value = BigDecimal.ZERO, isOutgoing = isOutgoing)
+            }
+            OFFER_CREATE_TRANSACTION_TYPE -> {
+                val side = matchOfferSide {
+                    (it as? XrpTransactionAmount.IssuedCurrency)?.amount?.matches(currency, issuer) == true
+                } ?: return null
+
+                XrpHistoryAmount(value = BigDecimal.ZERO, isOutgoing = side.isOutgoing)
+            }
+            CLAWBACK_TRANSACTION_TYPE -> {
+                // The issuer claws the funds back, so it is `Account`, while `Amount.issuer` holds the account
+                // the funds are taken from
+                val issued = (amount as? XrpTransactionAmount.IssuedCurrency)?.amount ?: return null
+                if (issued.currency != currency || account != issuer) return null
+
+                XrpHistoryAmount(value = issued.value, isOutgoing = issued.issuer == walletAddress)
+            }
+            // The remaining types carry no currency data, so they cannot be attributed to a token
+            else -> null
+        }
     }
 
-    private fun XrpTransaction.extractIssuedAmount(): XrpIssuedCurrencyAmount? {
-        // `TrustSet` operations store the token data in `LimitAmount`
-        return if (transactionType == TRUST_SET_TRANSACTION_TYPE) {
-            limitAmount
-        } else {
-            (amount as? XrpTransactionAmount.IssuedCurrency)?.amount
-        }
+    /**
+     * Side of an `OfferCreate` the [predicate] matches, or `null` when the offer doesn't involve the requested
+     * currency at all. `TakerGets` is sold by the offer owner, `TakerPays` is bought by them.
+     */
+    private fun XrpTransaction.matchOfferSide(predicate: (XrpTransactionAmount) -> Boolean): XrpOfferSide? = when {
+        takerGets?.let(predicate) == true -> XrpOfferSide.SELL
+        takerPays?.let(predicate) == true -> XrpOfferSide.BUY
+        else -> null
+    }
+
+    private fun XrpIssuedCurrencyAmount.matches(currency: String, issuer: String): Boolean {
+        return this.currency == currency && this.issuer == issuer
     }
 
     private fun parseAssetId(contractAddress: String): Pair<String, String>? {
@@ -151,11 +220,14 @@ internal class XrpTransactionHistoryProvider(
     private fun XrpTransaction.extractDestination(walletAddress: String): String {
         destination?.let { return it }
 
-        if (transactionType == TRUST_SET_TRANSACTION_TYPE) {
-            limitAmount?.issuer?.let { return it }
+        val counterparty = when (transactionType) {
+            TRUST_SET_TRANSACTION_TYPE -> limitAmount?.issuer
+            // The clawback is performed by the issuer of the token
+            CLAWBACK_TRANSACTION_TYPE -> account
+            else -> null
         }
 
-        return walletAddress
+        return counterparty ?: walletAddress
     }
 
     private fun XrpTransaction.extractStatus(): TransactionHistoryItem.TransactionStatus = when {
@@ -185,6 +257,20 @@ internal class XrpTransactionHistoryProvider(
         return XrpTransactionMarker(ledger = ledger, seq = seq)
     }
 
+    /**
+     * Amount of a history item, already attributed to the requested currency.
+     *
+     * @property value      value moved by the transaction. `ZERO` for the types that move no funds and for those
+     *                      whose moved value is declared by the metadata rather than by the transaction itself
+     * @property isOutgoing whether the funds leave the wallet
+     */
+    private data class XrpHistoryAmount(val value: BigDecimal, val isOutgoing: Boolean)
+
+    private enum class XrpOfferSide(val isOutgoing: Boolean) {
+        SELL(isOutgoing = true),
+        BUY(isOutgoing = false),
+    }
+
     private companion object {
 
         // We don't need to know all transactions to define state
@@ -192,6 +278,30 @@ internal class XrpTransactionHistoryProvider(
 
         const val PAYMENT_TRANSACTION_TYPE = "Payment"
         const val TRUST_SET_TRANSACTION_TYPE = "TrustSet"
+        const val OFFER_CREATE_TRANSACTION_TYPE = "OfferCreate"
+        const val OFFER_CANCEL_TRANSACTION_TYPE = "OfferCancel"
+        const val ACCOUNT_DELETE_TRANSACTION_TYPE = "AccountDelete"
+        const val ESCROW_CREATE_TRANSACTION_TYPE = "EscrowCreate"
+        const val ESCROW_FINISH_TRANSACTION_TYPE = "EscrowFinish"
+        const val ESCROW_CANCEL_TRANSACTION_TYPE = "EscrowCancel"
+        const val CLAWBACK_TRANSACTION_TYPE = "Clawback"
+
+        /**
+         * Types the history renders. Everything else — NFTs, checks, multisig, tickets and the other service
+         * operations — is left out on purpose.
+         */
+        val SUPPORTED_TRANSACTION_TYPES = setOf(
+            PAYMENT_TRANSACTION_TYPE,
+            TRUST_SET_TRANSACTION_TYPE,
+            OFFER_CREATE_TRANSACTION_TYPE,
+            OFFER_CANCEL_TRANSACTION_TYPE,
+            ACCOUNT_DELETE_TRANSACTION_TYPE,
+            ESCROW_CREATE_TRANSACTION_TYPE,
+            ESCROW_FINISH_TRANSACTION_TYPE,
+            ESCROW_CANCEL_TRANSACTION_TYPE,
+            CLAWBACK_TRANSACTION_TYPE,
+        )
+
         const val SUCCESS_RESULT = "tesSUCCESS"
 
         /**
