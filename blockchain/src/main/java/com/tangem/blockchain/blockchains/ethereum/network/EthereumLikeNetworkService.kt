@@ -169,6 +169,38 @@ internal abstract class EthereumLikeNetworkService(
         }
     }
 
+    override suspend fun getExternalAddressBalances(
+        address: String,
+        tokens: Set<Token>,
+    ): Result<ExternalAddressBalances> {
+        return try {
+            coroutineScope {
+                val coinBalanceDeferred = async {
+                    multiJsonRpcProvider.performRequest(EthereumLikeJsonRpcProvider::getBalance, address)
+                }
+                // Plain `balanceOf` per token, never through the yield-supply provider: that one is built around
+                // this wallet, so on a foreign address it would answer with our own yield balance
+                val tokenBalancesDeferred = tokens.map { token -> async { getTokenBalance(address, token) } }
+
+                val coinBalance = coinBalanceDeferred.await().extractResult().let { response ->
+                    requireNotNull(
+                        value = EthereumUtils.parseEthereumDecimal(value = response, decimalsCount = getDecimals()),
+                        lazyMessage = { "Error while parsing balance. Balance response: $response" },
+                    )
+                }
+
+                Result.Success(
+                    ExternalAddressBalances(
+                        coinBalance = coinBalance,
+                        tokenBalances = tokenBalancesDeferred.awaitAll(),
+                    ),
+                )
+            }
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
     private suspend fun getTokensBalanceInternal(address: String, tokens: Set<Token>): List<Amount> {
         return coroutineScope {
             val isYieldSupported = yieldSupplyProvider.isSupported()
