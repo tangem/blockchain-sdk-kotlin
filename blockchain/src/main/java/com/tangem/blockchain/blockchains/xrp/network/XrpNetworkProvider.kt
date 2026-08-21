@@ -49,6 +49,8 @@ internal data class XrpTransactionMarker(val ledger: Long, val seq: Long)
  *
  * @property amount            transferred amount, absent for transaction types that don't move funds
  * @property limitAmount       trust line limit, present only for the `TrustSet` transaction type
+ * @property takerGets         amount the offer owner sells, present only for the `OfferCreate` transaction type
+ * @property takerPays         amount the offer owner buys, present only for the `OfferCreate` transaction type
  * @property feeInDrops        fee in drops, i.e. not scaled by the blockchain decimals
  * @property date              seconds since the Ripple Epoch
  * @property transactionResult engine result code of the transaction, `tesSUCCESS` if it succeeded
@@ -59,6 +61,8 @@ internal data class XrpTransaction(
     val destination: String?,
     val amount: XrpTransactionAmount?,
     val limitAmount: XrpIssuedCurrencyAmount?,
+    val takerGets: XrpTransactionAmount? = null,
+    val takerPays: XrpTransactionAmount? = null,
     val feeInDrops: BigDecimal?,
     val transactionType: String?,
     val date: Long?,

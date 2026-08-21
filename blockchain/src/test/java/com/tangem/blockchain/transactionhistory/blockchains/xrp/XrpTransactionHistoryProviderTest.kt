@@ -222,18 +222,221 @@ class XrpTransactionHistoryProviderTest {
     }
 
     @Test
-    fun `trust set takes token data from limit amount`() = runTest {
+    fun `trust set is matched by limit amount but reports no transferred amount`() = runTest {
         coEvery { networkProvider.getAccountTransactions(any()) } returns success(trustSet())
 
         val item = provider.tokenHistory().single()
 
-        assertThat(item.amount).isEqualTo(Amount(value = BigDecimal("100"), token = TOKEN))
+        assertThat(item.amount).isEqualTo(Amount(value = BigDecimal.ZERO, token = TOKEN))
         assertThat(item.destinationType).isEqualTo(
             TransactionHistoryItem.DestinationType.Single(
                 addressType = TransactionHistoryItem.AddressType.User(ISSUER),
             ),
         )
         assertThat(item.type).isEqualTo(TransactionHistoryItem.TransactionType.ContractMethodName(name = "TrustSet"))
+    }
+
+    @Test
+    fun `trust set with the maximum limit reports no transferred amount`() = runTest {
+        coEvery { networkProvider.getAccountTransactions(any()) } returns success(
+            trustSet(limitAmount = issuedAmount(BigDecimal("9999999999999999e80"))),
+        )
+
+        assertThat(provider.tokenHistory().single().amount)
+            .isEqualTo(Amount(value = BigDecimal.ZERO, token = TOKEN))
+    }
+
+    @Test
+    fun `trust set of another issuer is skipped`() = runTest {
+        coEvery { networkProvider.getAccountTransactions(any()) } returns success(
+            trustSet(limitAmount = issuedAmount(value = BigDecimal.ONE, issuer = "rOtherIssuer")),
+        )
+
+        assertThat(provider.tokenHistory()).isEmpty()
+    }
+
+    // endregion
+
+    // region supported transaction types
+
+    @Test
+    fun `unsupported transaction type is skipped`() = runTest {
+        coEvery { networkProvider.getAccountTransactions(any()) } returns success(
+            operation("AccountSet", amount = XrpTransactionAmount.Drops(DROPS)),
+        )
+
+        assertThat(provider.coinHistory()).isEmpty()
+    }
+
+    @Test
+    fun `escrow create is mapped with its amount`() = runTest {
+        coEvery { networkProvider.getAccountTransactions(any()) } returns success(
+            operation(
+                transactionType = "EscrowCreate",
+                destination = COUNTERPARTY,
+                amount = XrpTransactionAmount.Drops(DROPS),
+            ),
+        )
+
+        val item = provider.coinHistory().single()
+
+        assertThat(item.amount)
+            .isEqualTo(Amount(value = BigDecimal("1.500000"), blockchain = Blockchain.XRP, type = AmountType.Coin))
+        assertThat(item.isOutgoing).isTrue()
+    }
+
+    @Test
+    fun `escrow create of an issued currency is mapped in token history`() = runTest {
+        coEvery { networkProvider.getAccountTransactions(any()) } returns success(
+            operation(transactionType = "EscrowCreate", amount = issued(BigDecimal("7.5"))),
+        )
+
+        assertThat(provider.tokenHistory().single().amount)
+            .isEqualTo(Amount(value = BigDecimal("7.5"), token = TOKEN))
+    }
+
+    @Test
+    fun `escrow finish is kept in coin history with no amount`() = runTest {
+        coEvery { networkProvider.getAccountTransactions(any()) } returns success(operation("EscrowFinish"))
+
+        val item = provider.coinHistory().single()
+
+        assertThat(item.amount.value).isEqualTo(BigDecimal.ZERO)
+        assertThat(item.type).isEqualTo(TransactionHistoryItem.TransactionType.ContractMethodName("EscrowFinish"))
+    }
+
+    @Test
+    fun `escrow cancel and offer cancel are kept in coin history`() = runTest {
+        coEvery { networkProvider.getAccountTransactions(any()) } returns success(
+            operation("EscrowCancel"),
+            operation("OfferCancel"),
+        )
+
+        assertThat(provider.coinHistory().map { it.type }).containsExactly(
+            TransactionHistoryItem.TransactionType.ContractMethodName("EscrowCancel"),
+            TransactionHistoryItem.TransactionType.ContractMethodName("OfferCancel"),
+        )
+    }
+
+    @Test
+    fun `account delete is kept in coin history with its destination`() = runTest {
+        coEvery { networkProvider.getAccountTransactions(any()) } returns success(
+            operation(transactionType = "AccountDelete", destination = COUNTERPARTY),
+        )
+
+        val item = provider.coinHistory().single()
+
+        assertThat(item.amount.value).isEqualTo(BigDecimal.ZERO)
+        assertThat(item.destinationType).isEqualTo(
+            TransactionHistoryItem.DestinationType.Single(
+                addressType = TransactionHistoryItem.AddressType.User(COUNTERPARTY),
+            ),
+        )
+    }
+
+    @Test
+    fun `offer selling coin is outgoing and declares no moved amount`() = runTest {
+        coEvery { networkProvider.getAccountTransactions(any()) } returns success(
+            operation(
+                transactionType = "OfferCreate",
+                takerGets = XrpTransactionAmount.Drops(DROPS),
+                takerPays = issued(BigDecimal("10")),
+            ),
+        )
+
+        val item = provider.coinHistory().single()
+
+        assertThat(item.amount.value).isEqualTo(BigDecimal.ZERO)
+        assertThat(item.isOutgoing).isTrue()
+    }
+
+    @Test
+    fun `offer buying coin is incoming`() = runTest {
+        coEvery { networkProvider.getAccountTransactions(any()) } returns success(
+            operation(
+                transactionType = "OfferCreate",
+                takerGets = issued(BigDecimal("10")),
+                takerPays = XrpTransactionAmount.Drops(DROPS),
+            ),
+        )
+
+        assertThat(provider.coinHistory().single().isOutgoing).isFalse()
+    }
+
+    @Test
+    fun `offer buying the token is incoming in token history`() = runTest {
+        coEvery { networkProvider.getAccountTransactions(any()) } returns success(
+            operation(
+                transactionType = "OfferCreate",
+                takerGets = XrpTransactionAmount.Drops(DROPS),
+                takerPays = issued(BigDecimal("10")),
+            ),
+        )
+
+        val item = provider.tokenHistory().single()
+
+        assertThat(item.amount).isEqualTo(Amount(value = BigDecimal.ZERO, token = TOKEN))
+        assertThat(item.isOutgoing).isFalse()
+    }
+
+    @Test
+    fun `offer of another token is skipped in token history`() = runTest {
+        coEvery { networkProvider.getAccountTransactions(any()) } returns success(
+            operation(
+                transactionType = "OfferCreate",
+                takerGets = XrpTransactionAmount.Drops(DROPS),
+                takerPays = issued(value = BigDecimal("10"), issuer = "rOtherIssuer"),
+            ),
+        )
+
+        assertThat(provider.tokenHistory()).isEmpty()
+    }
+
+    @Test
+    fun `clawback of the wallet funds is outgoing to the issuer`() = runTest {
+        coEvery { networkProvider.getAccountTransactions(any()) } returns success(
+            operation(
+                transactionType = "Clawback",
+                account = ISSUER,
+                // The clawed back funds are identified by the account they are taken from
+                amount = issued(value = BigDecimal("4"), issuer = WALLET),
+            ),
+        )
+
+        val item = provider.tokenHistory().single()
+
+        assertThat(item.amount).isEqualTo(Amount(value = BigDecimal("4"), token = TOKEN))
+        assertThat(item.isOutgoing).isTrue()
+        assertThat(item.destinationType).isEqualTo(
+            TransactionHistoryItem.DestinationType.Single(
+                addressType = TransactionHistoryItem.AddressType.User(ISSUER),
+            ),
+        )
+    }
+
+    @Test
+    fun `clawback of another token is skipped`() = runTest {
+        coEvery { networkProvider.getAccountTransactions(any()) } returns success(
+            operation(
+                transactionType = "Clawback",
+                account = "rOtherIssuer",
+                amount = issued(value = BigDecimal("4"), issuer = WALLET),
+            ),
+        )
+
+        assertThat(provider.tokenHistory()).isEmpty()
+    }
+
+    @Test
+    fun `types without currency data are skipped in token history`() = runTest {
+        coEvery { networkProvider.getAccountTransactions(any()) } returns success(
+            operation("OfferCancel"),
+            operation("EscrowFinish"),
+            operation("EscrowCancel"),
+            operation(transactionType = "AccountDelete", destination = COUNTERPARTY),
+        )
+
+        assertThat(provider.tokenHistory()).isEmpty()
     }
 
     // endregion
@@ -346,14 +549,36 @@ class XrpTransactionHistoryProviderTest {
         transactionResult = transactionResult,
     )
 
-    private fun trustSet() = XrpTransaction(
+    private fun trustSet(limitAmount: XrpIssuedCurrencyAmount = issuedAmount(BigDecimal("100"))) = XrpTransaction(
         hash = HASH,
         account = WALLET,
         destination = null,
         amount = null,
-        limitAmount = issuedAmount(BigDecimal("100")),
+        limitAmount = limitAmount,
         feeInDrops = FEE_DROPS,
         transactionType = "TrustSet",
+        date = RIPPLE_DATE,
+        isValidated = true,
+        transactionResult = "tesSUCCESS",
+    )
+
+    private fun operation(
+        transactionType: String,
+        account: String = WALLET,
+        destination: String? = null,
+        amount: XrpTransactionAmount? = null,
+        takerGets: XrpTransactionAmount? = null,
+        takerPays: XrpTransactionAmount? = null,
+    ) = XrpTransaction(
+        hash = HASH,
+        account = account,
+        destination = destination,
+        amount = amount,
+        limitAmount = null,
+        takerGets = takerGets,
+        takerPays = takerPays,
+        feeInDrops = FEE_DROPS,
+        transactionType = transactionType,
         date = RIPPLE_DATE,
         isValidated = true,
         transactionResult = "tesSUCCESS",
@@ -366,6 +591,9 @@ class XrpTransactionHistoryProviderTest {
     ): XrpIssuedCurrencyAmount {
         return XrpIssuedCurrencyAmount(currency = currency, issuer = issuer, value = value)
     }
+
+    private fun issued(value: BigDecimal, currency: String = CURRENCY, issuer: String = ISSUER) =
+        XrpTransactionAmount.IssuedCurrency(issuedAmount(value = value, currency = currency, issuer = issuer))
 
     private companion object {
 
