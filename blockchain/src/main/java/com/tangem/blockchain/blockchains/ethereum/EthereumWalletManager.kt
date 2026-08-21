@@ -9,6 +9,7 @@ import com.tangem.blockchain.blockchains.ethereum.gasless.GaslessContractAddress
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumFeeHistory
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
+import com.tangem.blockchain.blockchains.ethereum.network.ExternalAddressBalances
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.ApprovalERC20TokenCallData
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
@@ -80,7 +81,8 @@ open class EthereumWalletManager(
     NameResolver,
     PendingTransactionHandler,
     TransactionValidator by ethereumTransactionValidator,
-    EthereumGaslessDataProvider by ethereumGaslessDataProvider {
+    EthereumGaslessDataProvider by ethereumGaslessDataProvider,
+    ExternalAddressBalanceProvider {
 
     // move to constructor later
     protected val feesCalculator = EthereumFeesCalculator()
@@ -93,6 +95,16 @@ open class EthereumWalletManager(
 
     override val currentHost: String
         get() = networkProvider.baseUrl
+
+    /**
+     * Balances of an address this wallet does not own — the network provider is otherwise unreachable from outside.
+     */
+    override suspend fun getExternalAddressBalances(
+        address: String,
+        tokens: Set<Token>,
+    ): Result<ExternalAddressBalances> {
+        return networkProvider.getExternalAddressBalances(address = address, tokens = tokens)
+    }
 
     override suspend fun updateInternal() {
         when (val result = networkProvider.getInfo(wallet.address, cardTokens)) {
