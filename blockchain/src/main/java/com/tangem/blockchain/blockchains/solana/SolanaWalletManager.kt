@@ -4,6 +4,8 @@ import android.os.SystemClock
 import android.util.Log
 import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionParser
 import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionSizeReducer
+import com.tangem.blockchain.collectibles.CollectiblesVaultProvider
+import com.tangem.blockchain.collectibles.DefaultCollectiblesVaultProvider
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaMainAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaSplAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.TransactionInfo
@@ -41,11 +43,13 @@ class SolanaWalletManager internal constructor(
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
     tokenBalanceProvider: TokenBalanceProvider = DefaultTokenBalanceProvider,
+    collectiblesVaultProvider: CollectiblesVaultProvider = DefaultCollectiblesVaultProvider,
 ) : WalletManager(
     wallet,
     transactionHistoryProvider = transactionHistoryProvider,
     nftProvider = nftProvider,
     tokenBalanceProvider = tokenBalanceProvider,
+    collectiblesVaultProvider = collectiblesVaultProvider,
 ),
     RentProvider,
     TransactionPreparer,

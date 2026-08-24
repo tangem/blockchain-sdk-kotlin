@@ -1,0 +1,234 @@
+package com.tangem.blockchain.collectibles.providers.solana
+
+import com.tangem.blockchain.blockchains.solana.SolanaTransactionBuilder
+import com.tangem.blockchain.blockchains.solana.SolanaNetworkService
+import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
+import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaAssociatedTokenProgram
+import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgram
+import com.tangem.blockchain.collectibles.CollectiblesVaultProvider
+import com.tangem.blockchain.collectibles.models.CollectiblesVault
+import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaCloseVaultInstruction
+import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaInitVaultInstruction
+import com.tangem.blockchain.collectibles.providers.solana.model.GachaConfig
+import com.tangem.blockchain.collectibles.providers.solana.model.GachaConfigParser
+import com.tangem.blockchain.collectibles.providers.solana.model.GachaVaultParser
+import com.tangem.blockchain.common.BlockchainSdkError
+import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.successOr
+import com.tangem.blockchain.network.MultiNetworkProvider
+import io.ktor.util.decodeBase64Bytes
+import org.p2p.solanaj.core.PublicKey
+import org.p2p.solanaj.core.TransactionInstruction
+
+internal class SolanaCollectiblesVaultProvider(
+    private val coldOwner: PublicKey,
+    private val multiNetworkProvider: MultiNetworkProvider<SolanaNetworkService>,
+) : CollectiblesVaultProvider {
+
+    private val transactionBuilder = SolanaTransactionBuilder(
+        account = coldOwner,
+        multiNetworkProvider = multiNetworkProvider,
+    )
+
+    override fun isCollectiblesVaultSupported(): Boolean = true
+
+    override fun getCollectiblesVaultAddress(): Result<String> = when (val result = vaultAddress()) {
+        is Result.Success -> Result.Success(result.data.toBase58())
+        is Result.Failure -> result
+    }
+
+    override suspend fun isCollectiblesVaultInitialized(): Result<Boolean> {
+        return when (val result = getCollectiblesVault()) {
+            is Result.Success -> Result.Success(result.data != null)
+            is Result.Failure -> result
+        }
+    }
+
+    override suspend fun getCollectiblesVault(): Result<CollectiblesVault?> {
+        val vault = vaultAddress().successOr { return it }
+        val result = multiNetworkProvider.performRequest { getAccountInfoIfExist(vault) }
+
+        val accountInfo = when (result) {
+            is Result.Success -> result.data
+            is Result.Failure -> if (result.error is BlockchainSdkError.AccountNotFound) {
+                return Result.Success(null)
+            } else {
+                return result
+            }
+        }
+
+        if (accountInfo.owner != GachaVaultProgram.programId.toBase58()) {
+            return Result.Failure(BlockchainSdkError.CustomError("Vault account is not owned by the gacha program"))
+        }
+
+        val rawData = accountInfo.data.firstOrNull()
+            ?: return Result.Failure(BlockchainSdkError.CustomError("Vault account has no data"))
+
+        val parsed =
+            runCatching { GachaVaultParser.parse(vault, rawData.decodeBase64Bytes()) }.getOrNull()
+                ?: return Result.Failure(BlockchainSdkError.CustomError("Failed to parse vault account"))
+
+        // The address was derived from this wallet's key, so a different cold owner means the account is not what
+        // it claims to be. Reported rather than silently accepted.
+        if (parsed.coldOwner != coldOwner.toBase58()) {
+            return Result.Failure(BlockchainSdkError.CustomError("Vault belongs to a different cold owner"))
+        }
+
+        return Result.Success(parsed)
+    }
+
+    override suspend fun buildInitCollectiblesVault(
+        hotDelegate: String,
+        perSpinCap: Long,
+        dailyCap: Long,
+    ): Result<TransactionData.Compiled> {
+        // Mirrors the program's own invariant, checked here so it fails before the card is asked for a signature;
+        // on-chain the same violation surfaces as `6004 InvalidCaps`.
+        if (perSpinCap !in 1..dailyCap) {
+            return Result.Failure(
+                BlockchainSdkError.CustomError("perSpinCap must be greater than 0 and not exceed dailyCap"),
+            )
+        }
+
+        val vault = vaultAddress().successOr { return it }
+        val delegate = delegate(hotDelegate).successOr { return it }
+
+        val initVault = GachaInitVaultInstruction.create(
+            vault = vault,
+            coldOwner = coldOwner,
+            payer = coldOwner,
+            hotDelegate = delegate,
+            perSpinCap = perSpinCap,
+            dailyCap = dailyCap,
+        )
+
+        val createVaultUsdc = createVaultUsdc(vault).successOr { return it }
+
+        // Both instructions allocate an account, hence the create-an-account budget rather than the default one.
+        // They are bundled rather than sent one after another so that the vault and the account it receives USDC on
+        // either both exist or neither does — and because the card signs the pair exactly once.
+        val transaction = transactionBuilder.buildUnsignedTransaction(
+            instructions = listOf(initVault, createVaultUsdc),
+            computeUnitLimit = SolanaTransactionBuilder.CREATE_NEW_ACCOUNT_CU_LIMIT,
+            computeUnitPrice = SolanaTransactionBuilder.CREATE_NEW_ACCOUNT_CU_PRICE,
+        ).successOr { return it }
+
+        return Result.Success(transaction.toCompiled())
+    }
+
+    override suspend fun buildCloseCollectiblesVault(): Result<TransactionData.Compiled> {
+        val vault = vaultAddress().successOr { return it }
+
+        val transaction = transactionBuilder.buildUnsignedTransaction(
+            instructions = listOf(
+                GachaCloseVaultInstruction.create(
+                    vault = vault,
+                    coldOwner = coldOwner,
+                ),
+            ),
+            computeUnitLimit = SolanaTransactionBuilder.DEFAULT_CU_LIMIT,
+            computeUnitPrice = SolanaTransactionBuilder.DEFAULT_CU_PRICE,
+        ).successOr { return it }
+
+        return Result.Success(transaction.toCompiled())
+    }
+
+    /**
+     * Builds the idempotent creation of the vault's USDC token account.
+     *
+     * The mint comes from [config] rather than a constant, so the address is derived from what the program actually
+     * uses today. The card pays, and being the payer is the only signature the ATA program asks for — the vault owns
+     * the account but does not authorise its creation.
+     */
+    private suspend fun createVaultUsdc(vault: PublicKey): Result<TransactionInstruction> {
+        val usdcMint = config().successOr { return it }.usdcMint
+        val mint = runCatching { PublicKey(usdcMint) }.getOrNull()
+            ?: return Result.Failure(BlockchainSdkError.CustomError("Config holds an invalid USDC mint"))
+
+        val vaultUsdc = GachaVaultProgram.vaultUsdcAddress(vault = vault, usdcMint = mint).fold(
+            onSuccess = { it },
+            onFailure = {
+                return Result.Failure(BlockchainSdkError.CustomError("Failed to derive the vault USDC address"))
+            },
+        )
+
+        return Result.Success(
+            SolanaAssociatedTokenProgram.createIdempotentInstruction(
+                payer = coldOwner,
+                associatedAccount = vaultUsdc,
+                owner = vault,
+                mint = mint,
+                tokenProgramId = SolanaTokenProgram.ID.TOKEN,
+            ),
+        )
+    }
+
+    /**
+     * Reads the program's `Config` account, the only source of the USDC mint, the treasuries and the fee.
+     *
+     * Deliberately not cached. The admin changes those values with `update_config` and no redeploy, and a stale copy
+     * surfaces on chain as `2012` — an error about a constraint on an account we passed, not about being out of date.
+     *
+     * Unlike a missing `Vault`, which legitimately means "this wallet was never onboarded" and is reported as null, a
+     * missing or foreign `Config` is an ops incident: the program is not where the SDK thinks it is.
+     */
+    private suspend fun config(): Result<GachaConfig> {
+        val address = configAddress().successOr { return it }
+
+        val accountInfo = multiNetworkProvider.performRequest { getAccountInfoIfExist(address) }
+            .successOr { failure ->
+                return if (failure.error is BlockchainSdkError.AccountNotFound) {
+                    Result.Failure(BlockchainSdkError.CustomError("Gacha config account does not exist"))
+                } else {
+                    failure
+                }
+            }
+
+        if (accountInfo.owner != GachaVaultProgram.programId.toBase58()) {
+            return Result.Failure(BlockchainSdkError.CustomError("Config account is not owned by the gacha program"))
+        }
+
+        val rawData = accountInfo.data.firstOrNull()
+            ?: return Result.Failure(BlockchainSdkError.CustomError("Config account has no data"))
+
+        val parsed = runCatching { GachaConfigParser.parse(rawData.decodeBase64Bytes()) }
+            .getOrNull()
+            ?: return Result.Failure(BlockchainSdkError.CustomError("Failed to parse config account"))
+
+        return Result.Success(parsed)
+    }
+
+    /**
+     * Wire bytes for `send(TransactionData, signer)`: solanaj serializes only signatures it already holds, so the
+     * empty slots the card signature is spliced into are reserved by hand. Their count is the first byte of the
+     * header — true for the legacy messages the builder compiles, not for v0, which opens with a `0x80` prefix.
+     */
+    private fun SolanaTransaction.toCompiled(): TransactionData.Compiled {
+        val message = getSerializedMessage()
+        val signatureCount = message.first().toInt() and BYTE_MASK
+        val wire = byteArrayOf(signatureCount.toByte()) + ByteArray(signatureCount * SIGNATURE_LENGTH) + message
+
+        return TransactionData.Compiled(value = TransactionData.Compiled.Data.Bytes(wire))
+    }
+
+    private fun configAddress(): Result<PublicKey> = GachaVaultProgram.configAddress().fold(
+        onSuccess = { Result.Success(it) },
+        onFailure = { Result.Failure(BlockchainSdkError.CustomError("Failed to derive config address")) },
+    )
+
+    private fun delegate(hotDelegate: String): Result<PublicKey> = runCatching { PublicKey(hotDelegate) }.fold(
+        onSuccess = { Result.Success(it) },
+        onFailure = { Result.Failure(BlockchainSdkError.CustomError("Invalid hot delegate address")) },
+    )
+
+    private fun vaultAddress(): Result<PublicKey> = GachaVaultProgram.vaultAddress(coldOwner).fold(
+        onSuccess = { Result.Success(it) },
+        onFailure = { Result.Failure(BlockchainSdkError.CustomError("Failed to derive vault address")) },
+    )
+
+    private companion object {
+        const val SIGNATURE_LENGTH = 64
+        const val BYTE_MASK = 0xFF
+    }
+}
