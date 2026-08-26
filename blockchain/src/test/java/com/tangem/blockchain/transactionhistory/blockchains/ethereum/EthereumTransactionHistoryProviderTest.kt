@@ -2,6 +2,7 @@ package com.tangem.blockchain.transactionhistory.blockchains.ethereum
 
 import com.google.common.truth.Truth.assertThat
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.pagination.Page
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
@@ -86,6 +87,115 @@ class EthereumTransactionHistoryProviderTest {
         assertThat(coinItems(tx)).isEmpty()
     }
 
+    @Test
+    fun `several incoming transfers of one transaction are merged into a single item with the total amount`() =
+        runTest {
+            // A swap payout arrives as two USDT transfers from the same settlement contract:
+            // 9.534256 + 0.345802 = 9.880058
+            val tx = transaction(
+                tokenTransfers = listOf(
+                    tokenTransfer(from = SETTLEMENT, to = WALLET, value = "9534256"),
+                    tokenTransfer(from = SETTLEMENT, to = WALLET, value = "345802"),
+                ),
+            )
+
+            val item = tokenItems(tx).single()
+
+            assertThat(item.amount.value!!.compareTo(BigDecimal("9.880058"))).isEqualTo(0)
+            assertThat(item.isOutgoing).isFalse()
+            assertThat(item.txHash).isEqualTo(TX_HASH)
+            assertThat((item.sourceType as TransactionHistoryItem.SourceType.Single).address).isEqualTo(SETTLEMENT)
+            val destination = item.destinationType as TransactionHistoryItem.DestinationType.Single
+            assertThat(destination.addressType.address).isEqualTo(WALLET)
+        }
+
+    @Test
+    fun `transfers to different counterparties stay separate rows`() = runTest {
+        // The gasless flow pays the recipient and the fee service within one transaction, and the fee is recognised
+        // downstream by its destination address, so the two charges must not collapse into one row.
+        val tx = transaction(
+            tokenTransfers = listOf(
+                tokenTransfer(from = WALLET, to = RECIPIENT, value = "3000000"),
+                tokenTransfer(from = WALLET, to = FEE_COLLECTOR, value = "63146"),
+            ),
+        )
+
+        val items = tokenItems(tx)
+
+        assertThat(items).hasSize(2)
+        assertThat(
+            items.map { (it.destinationType as TransactionHistoryItem.DestinationType.Single).addressType.address },
+        )
+            .containsExactly(RECIPIENT, FEE_COLLECTOR)
+            .inOrder()
+        assertThat(items[0].amount.value!!.compareTo(BigDecimal("3"))).isEqualTo(0)
+        assertThat(items[1].amount.value!!.compareTo(BigDecimal("0.063146"))).isEqualTo(0)
+    }
+
+    @Test
+    fun `incoming and outgoing transfers of the same counterparty stay separate rows`() = runTest {
+        val tx = transaction(
+            tokenTransfers = listOf(
+                tokenTransfer(from = WALLET, to = SETTLEMENT, value = "5000000"),
+                tokenTransfer(from = SETTLEMENT, to = WALLET, value = "1000000"),
+            ),
+        )
+
+        val items = tokenItems(tx)
+
+        assertThat(items).hasSize(2)
+        assertThat(items.map { it.isOutgoing }).containsExactly(true, false).inOrder()
+    }
+
+    @Test
+    fun `counterparty address casing does not split a single transfer group`() = runTest {
+        val tx = transaction(
+            tokenTransfers = listOf(
+                tokenTransfer(from = SETTLEMENT, to = WALLET, value = "1000000"),
+                tokenTransfer(from = SETTLEMENT.uppercase(), to = WALLET, value = "2000000"),
+            ),
+        )
+
+        val item = tokenItems(tx).single()
+
+        assertThat(item.amount.value!!.compareTo(BigDecimal("3"))).isEqualTo(0)
+    }
+
+    @Test
+    fun `transfers of another token are ignored`() = runTest {
+        val tx = transaction(
+            tokenTransfers = listOf(
+                tokenTransfer(from = SETTLEMENT, to = WALLET, value = "1000000"),
+                tokenTransfer(from = SETTLEMENT, to = WALLET, value = "7000000", contract = OTHER_CONTRACT),
+            ),
+        )
+
+        val item = tokenItems(tx).single()
+
+        assertThat(item.amount.value!!.compareTo(BigDecimal.ONE)).isEqualTo(0)
+    }
+
+    @Test
+    fun `self transfers are ignored`() = runTest {
+        val tx = transaction(
+            tokenTransfers = listOf(tokenTransfer(from = WALLET, to = WALLET, value = "1000000")),
+        )
+
+        assertThat(tokenItems(tx)).isEmpty()
+    }
+
+    @Test
+    fun `group of zero-value transfers is excluded from history`() = runTest {
+        val tx = transaction(
+            tokenTransfers = listOf(
+                tokenTransfer(from = SETTLEMENT, to = WALLET, value = "0"),
+                tokenTransfer(from = SETTLEMENT, to = WALLET, value = null),
+            ),
+        )
+
+        assertThat(tokenItems(tx)).isEmpty()
+    }
+
     // region helpers
 
     private suspend fun coinItems(tx: GetAddressResponse.Transaction): List<TransactionHistoryItem> {
@@ -93,6 +203,22 @@ class EthereumTransactionHistoryProviderTest {
         val request = TransactionHistoryRequest(
             address = WALLET,
             decimals = Blockchain.Ethereum.decimals(),
+            page = Page.Initial,
+            pageSize = PAGE_SIZE,
+            filterType = filterType,
+        )
+        coEvery {
+            blockBookApi.getTransactions(WALLET, null, PAGE_SIZE, filterType)
+        } returns addressResponse(transactions = listOf(tx))
+
+        return (provider.getTransactionsHistory(request) as Result.Success).data.items
+    }
+
+    private suspend fun tokenItems(tx: GetAddressResponse.Transaction): List<TransactionHistoryItem> {
+        val filterType = TransactionHistoryRequest.FilterType.Contract(tokenInfo = TOKEN)
+        val request = TransactionHistoryRequest(
+            address = WALLET,
+            decimals = TOKEN.decimals,
             page = Page.Initial,
             pageSize = PAGE_SIZE,
             filterType = filterType,
@@ -176,6 +302,7 @@ class EthereumTransactionHistoryProviderTest {
         const val RELAYER = "0x05917c2b4811e78deaa4f68f3900242acfb9beab"
         const val GASLESS_ENTRY_POINT = "0x9a74442ad2d0c8c2ca035a6f9b6122a085e72f0f"
         const val CONTRACT = "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        const val OTHER_CONTRACT = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
         const val TX_HASH = "0x37d5db34b233fded3f0a3a044cc49257c61f345c43f3e748c990e0141f3996fa"
         const val DELEGATION_TX_HASH = "0x3cc0e0f3be221d0c3ff2c4671846603d17d5618a7158e89a85190a8b6d998ebb"
         const val PAGE_SIZE = 20
@@ -185,6 +312,13 @@ class EthereumTransactionHistoryProviderTest {
 
         /** `approve(address,uint256)`. */
         const val APPROVE_CALL_DATA = "0x095ea7b3"
+
+        val TOKEN = Token(
+            name = "Tether USD",
+            symbol = "USDT",
+            contractAddress = CONTRACT,
+            decimals = 6,
+        )
     }
 
     // endregion
