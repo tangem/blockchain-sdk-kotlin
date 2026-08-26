@@ -43,21 +43,30 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
         walletAddress: String,
         transaction: GetAddressResponse.Transaction,
     ): TransactionHistoryItem? {
-        val source = transaction.extractSourceType() ?: return null
-        val destination = transaction.extractDestination() ?: return null
+        val sourceAddress = transaction.vin.firstOrNull()?.addresses?.firstOrNull() ?: return null
+        val destinationAddress = transaction.vout.firstOrNull()?.addresses?.firstOrNull() ?: return null
 
-        val isOutgoing = transaction.vin
-            .firstOrNull()
-            ?.addresses
-            ?.firstOrNull()
-            .equals(walletAddress, ignoreCase = true)
+        val isOutgoing = sourceAddress.equalsIgnoreCase(walletAddress)
+        val isIncoming = destinationAddress.equalsIgnoreCase(walletAddress)
+
+        // A gasless transfer is submitted by the relayer, so the wallet is neither the sender nor the recipient of
+        // the transaction — it only appears in the EIP-7702 authorization list and in the token transfers. Such a
+        // transaction moves no coin for the wallet, but it survives `shouldExcludeFromHistory` because a
+        // zero-amount item is kept whenever its type is not a plain transfer.
+        if (!isOutgoing && !isIncoming) return null
+
+        val destinationAddressType = if (transaction.tokenTransfers.isEmpty()) {
+            AddressType.User(destinationAddress)
+        } else {
+            AddressType.Contract(destinationAddress)
+        }
 
         return TransactionHistoryItem(
             txHash = transaction.txid,
             timestamp = TimeUnit.SECONDS.toMillis(transaction.blockTime.toLong()),
             isOutgoing = isOutgoing,
-            destinationType = destination,
-            sourceType = source,
+            destinationType = DestinationType.Single(addressType = destinationAddressType),
+            sourceType = SourceType.Single(address = sourceAddress),
             status = extractStatus(transaction = transaction),
             type = extractType(transaction = transaction),
             fee = transaction.feeAmount(blockchain),
@@ -146,18 +155,6 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
         val rawDataWithoutPrefix = rawData?.removePrefix("0x")
         val methodId = rawDataWithoutPrefix?.take(ETHEREUM_METHOD_ID_LENGTH)
         return if (methodId?.length == ETHEREUM_METHOD_ID_LENGTH) methodId else null
-    }
-
-    private fun GetAddressResponse.Transaction.extractDestination(): DestinationType? {
-        val address = vout.firstOrNull()?.addresses?.firstOrNull() ?: return null
-        val addressType = if (tokenTransfers.isEmpty()) AddressType.User(address) else AddressType.Contract(address)
-
-        return DestinationType.Single(addressType = addressType)
-    }
-
-    private fun GetAddressResponse.Transaction.extractSourceType(): SourceType? {
-        val address = vin.firstOrNull()?.addresses?.firstOrNull() ?: return null
-        return SourceType.Single(address = address)
     }
 
     private fun GetAddressResponse.Transaction.TokenTransfer.extractAmount(token: Token): Amount {
