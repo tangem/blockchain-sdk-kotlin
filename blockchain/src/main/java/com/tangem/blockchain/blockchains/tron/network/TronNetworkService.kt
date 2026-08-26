@@ -60,7 +60,7 @@ class TronNetworkService(
             is Result.Success -> {
                 val allowance = allowanceRequest.data.constantResult.firstOrNull()
                     ?: return kotlin.Result.failure(BlockchainSdkError.CustomError("Failed to get allowance"))
-                kotlin.Result.success(allowance.hexToBigDecimal())
+                kotlin.Result.success(allowance.hexToBigDecimal().movePointLeft(token.decimals))
             }
         }
     }
@@ -114,7 +114,16 @@ class TronNetworkService(
         }
         return when (result) {
             is Result.Failure -> Result.Failure(result.error)
-            is Result.Success -> Result.Success(result.data.energyUsed)
+            is Result.Success -> {
+                // Without this a reverted call is priced as if it would succeed — see
+                // TronContractExecutionResult.
+                val failure = result.data.executionResult?.message
+                if (failure != null) {
+                    Result.Failure(BlockchainSdkError.CustomError("Contract call simulation failed: $failure"))
+                } else {
+                    Result.Success(result.data.energyUsed)
+                }
+            }
         }
     }
 
@@ -151,12 +160,19 @@ class TronNetworkService(
                     .firstOrNull { it.key == KEY_INCREASE_FACTOR }
                     ?.value
 
+                // Absent on networks that never voted the proposal in, where it means no memo fee.
+                val memoFee = result.data.chainParameters
+                    .firstOrNull { it.key == KEY_MEMO_FEE }
+                    ?.value
+                    ?: 0
+
                 if (energyFee != null && energyMaxFactor != null && increaseFactor != null) {
                     Result.Success(
                         TronChainParameters(
                             sunPerEnergyUnit = energyFee,
                             dynamicEnergyMaxFactor = energyMaxFactor,
                             dynamicIncreaseFactor = increaseFactor,
+                            memoFee = memoFee,
                         ),
                     )
                 } else {
@@ -197,3 +213,4 @@ class TronNetworkService(
 private const val KEY_SUN_ENERGY_FEE = "getEnergyFee"
 private const val KEY_MAX_FACTOR = "getDynamicEnergyMaxFactor"
 private const val KEY_INCREASE_FACTOR = "getDynamicEnergyIncreaseFactor"
+private const val KEY_MEMO_FEE = "getMemoFee"
