@@ -86,6 +86,9 @@ sealed class BlockchainSdkError(
 
         class TransactionTooLarge : Solana(9, "Transaction too large after ALT reduction")
 
+        data object SignerPublicKeyNotFound :
+            Solana(10, "Wallet public key is not among the transaction's required signers")
+
         data object ScaledUiAmountMultiplierMismatch :
             Solana(11, "Providers report different scaled UI amount multipliers")
 

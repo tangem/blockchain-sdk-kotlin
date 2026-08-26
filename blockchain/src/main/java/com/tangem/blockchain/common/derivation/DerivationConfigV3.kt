@@ -90,6 +90,10 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.AdiTestnet,
             Blockchain.SeiEvm,
             Blockchain.SeiEvmTestnet,
+            Blockchain.Robinhood,
+            Blockchain.RobinhoodTestnet,
+            Blockchain.Igra,
+            Blockchain.IgraTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.Quai,
             Blockchain.QuaiTestnet,

@@ -12,6 +12,8 @@ data class BlockchainSdkConfig(
     val quickNodeMonadCredentials: QuickNodeCredentials? = null,
     val quickNodeStellarCredentials: QuickNodeCredentials? = null,
     val quickNodeSeiCredentials: QuickNodeCredentials? = null,
+    val quickNodeHederaCredentials: QuickNodeCredentials? = null,
+    val quickNodeRobinhoodCredentials: QuickNodeCredentials? = null,
     val nowNodeCredentials: NowNodeCredentials? = null,
     val getBlockCredentials: GetBlockCredentials? = null,
     val tonCenterCredentials: TonCenterCredentials? = null,
