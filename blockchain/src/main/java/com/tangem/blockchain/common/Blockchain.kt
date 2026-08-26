@@ -979,15 +979,15 @@ enum class Blockchain(
         Ethereum, // supported testnet - Sepolia (11155111)
         Arbitrum, // supported testnet - Sepolia (421614)
         Avalanche,
-        Fantom, FantomTestnet,
         BSC, BSCTestnet,
         Polygon, // supported testnet - Amoy (80002)
         Cronos,
-        Moonbeam, MoonbeamTestnet,
-        Moonriver, MoonriverTestnet,
         Chiliz, ChilizTestnet,
         Optimism, // supported testnet - Sepolia (11155420)
         Base, BaseTestnet,
+        Linea, LineaTestnet,
+        SeiEvm, SeiEvmTestnet,
+        Monad,
 
         Solana,
         -> true
