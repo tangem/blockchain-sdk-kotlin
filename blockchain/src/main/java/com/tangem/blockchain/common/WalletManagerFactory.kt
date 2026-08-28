@@ -1,5 +1,7 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.blockchains.ethereum.ExternalAddressBalanceProvider
+import com.tangem.blockchain.blockchains.ethereum.network.EvmNetworkServiceFactory
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
@@ -11,6 +13,7 @@ import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.logging.BlockchainSDKLogger
 import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.network.providers.ProviderType
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 import kotlinx.coroutines.Dispatchers
@@ -88,6 +91,31 @@ class WalletManagerFactory(
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(walletPublicKey, null),
             curve = curve,
+        )
+    }
+
+    /**
+     * Creates the network provider of an EVM [address] the wallet does not own, such as a Safe, keeping the
+     * address's balances and recent transactions alongside the chain's network and history calls.
+     *
+     * Unlike a wallet manager, the address is given rather than derived from a key. Returns `null` when the
+     * blockchain is not EVM, its network is not assembled by the shared EVM factory, the address is not valid for it,
+     * or no RPC providers are configured for it.
+     */
+    fun createExternalAddressBalanceProvider(blockchain: Blockchain, address: String): ExternalAddressBalanceProvider? {
+        if (!blockchain.isEvm() || !blockchain.validateAddress(address)) return null
+
+        val multiNetworkProvider = EvmNetworkServiceFactory.createMultiProviderOrNull(
+            blockchain = blockchain,
+            providerTypes = blockchainProviderTypes[blockchain] ?: emptyList(),
+            config = config,
+        ) ?: return null
+
+        return ExternalAddressBalanceProvider(
+            blockchain = blockchain,
+            address = address,
+            networkProvider = EvmNetworkServiceFactory.createNetworkService(blockchain, multiNetworkProvider),
+            transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, config),
         )
     }
 
