@@ -175,19 +175,29 @@ internal abstract class EthereumLikeNetworkService(
 
             tokens.map { token ->
                 async {
-                    if (isYieldSupported && yieldSupplyProvider.getYieldModuleAddress() != EthereumUtils.ZERO_ADDRESS) {
-                        val yieldLendingStatus = yieldSupplyProvider.getYieldSupplyStatus(token.contractAddress)
-                        if (yieldLendingStatus?.isActive == true) {
-                            yieldSupplyProvider.getBalance(yieldLendingStatus, token)
-                        } else {
-                            getTokenBalance(address, token)
-                        }
+                    if (isYieldSupported) {
+                        getYieldAwareTokenBalance(address, token)
                     } else {
                         getTokenBalance(address, token)
                     }
                 }
             }.awaitAll()
         }
+    }
+
+    private suspend fun getYieldAwareTokenBalance(address: String, token: Token): Amount = try {
+        if (yieldSupplyProvider.getYieldModuleAddress() != EthereumUtils.ZERO_ADDRESS) {
+            val yieldLendingStatus = yieldSupplyProvider.getYieldSupplyStatus(token.contractAddress)
+            if (yieldLendingStatus?.isActive == true) {
+                yieldSupplyProvider.getBalance(yieldLendingStatus, token)
+            } else {
+                getTokenBalance(address, token)
+            }
+        } else {
+            getTokenBalance(address, token)
+        }
+    } catch (e: BlockchainSdkError.Ethereum.YieldModuleAddressMismatch) {
+        getTokenBalance(address, token)
     }
 
     override suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>> {
