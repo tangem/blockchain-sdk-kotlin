@@ -11,3 +11,5 @@ fun String.ipfsToHttps(): String {
 fun String.removeUrlQuery(): String {
     return substringBefore("?")
 }
+
+fun String.nullIfEmpty(): String? = ifEmpty { null }
