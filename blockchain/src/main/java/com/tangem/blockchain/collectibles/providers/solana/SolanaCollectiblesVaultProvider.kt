@@ -7,6 +7,7 @@ import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaAssociated
 import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgram
 import com.tangem.blockchain.collectibles.CollectiblesVaultProvider
 import com.tangem.blockchain.collectibles.models.CollectiblesVault
+import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaCloseTokenAccountInstruction
 import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaCloseVaultInstruction
 import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaInitVaultInstruction
 import com.tangem.blockchain.collectibles.providers.solana.model.GachaConfig
@@ -119,14 +120,26 @@ internal class SolanaCollectiblesVaultProvider(
 
     override suspend fun buildCloseCollectiblesVault(): Result<TransactionData.Compiled> {
         val vault = vaultAddress().successOr { return it }
+        val mint = usdcMint().successOr { return it }
+        val vaultUsdc = vaultUsdcAddress(vault = vault, mint = mint).successOr { return it }
+
+        val instructions = buildList {
+            // Skipped when the account is already gone: `3012` from this instruction would take `close_vault` with it.
+            if (isVaultUsdcExist(vaultUsdc).successOr { return it }) {
+                add(
+                    GachaCloseTokenAccountInstruction.create(
+                        vault = vault,
+                        coldOwner = coldOwner,
+                        tokenAccount = vaultUsdc,
+                    ),
+                )
+            }
+
+            add(GachaCloseVaultInstruction.create(vault = vault, coldOwner = coldOwner))
+        }
 
         val transaction = transactionBuilder.buildUnsignedTransaction(
-            instructions = listOf(
-                GachaCloseVaultInstruction.create(
-                    vault = vault,
-                    coldOwner = coldOwner,
-                ),
-            ),
+            instructions = instructions,
             computeUnitLimit = SolanaTransactionBuilder.DEFAULT_CU_LIMIT,
             computeUnitPrice = SolanaTransactionBuilder.DEFAULT_CU_PRICE,
         ).successOr { return it }
@@ -137,21 +150,12 @@ internal class SolanaCollectiblesVaultProvider(
     /**
      * Builds the idempotent creation of the vault's USDC token account.
      *
-     * The mint comes from [config] rather than a constant, so the address is derived from what the program actually
-     * uses today. The card pays, and being the payer is the only signature the ATA program asks for — the vault owns
-     * the account but does not authorise its creation.
+     * The card pays, and being the payer is the only signature the ATA program asks for — the vault owns the account
+     * but does not authorise its creation.
      */
     private suspend fun createVaultUsdc(vault: PublicKey): Result<TransactionInstruction> {
-        val usdcMint = config().successOr { return it }.usdcMint
-        val mint = runCatching { PublicKey(usdcMint) }.getOrNull()
-            ?: return Result.Failure(BlockchainSdkError.CustomError("Config holds an invalid USDC mint"))
-
-        val vaultUsdc = GachaVaultProgram.vaultUsdcAddress(vault = vault, usdcMint = mint).fold(
-            onSuccess = { it },
-            onFailure = {
-                return Result.Failure(BlockchainSdkError.CustomError("Failed to derive the vault USDC address"))
-            },
-        )
+        val mint = usdcMint().successOr { return it }
+        val vaultUsdc = vaultUsdcAddress(vault = vault, mint = mint).successOr { return it }
 
         return Result.Success(
             SolanaAssociatedTokenProgram.createIdempotentInstruction(
@@ -163,6 +167,39 @@ internal class SolanaCollectiblesVaultProvider(
             ),
         )
     }
+
+    /**
+     * Whether the vault's USDC account is there to be closed. A missing account is a plain `false`: it means the
+     * onboarding bundle never completed, or the account has already been closed — neither is an error here.
+     */
+    private suspend fun isVaultUsdcExist(vaultUsdc: PublicKey): Result<Boolean> {
+        val result = multiNetworkProvider.performRequest { getTokenAccountInfoIfExist(vaultUsdc) }
+
+        return when (result) {
+            is Result.Success -> Result.Success(true)
+            is Result.Failure -> if (result.error is BlockchainSdkError.AccountNotFound) {
+                Result.Success(false)
+            } else {
+                result
+            }
+        }
+    }
+
+    /** The mint comes from [config] rather than a constant, so it is whatever the program actually uses today. */
+    private suspend fun usdcMint(): Result<PublicKey> {
+        val usdcMint = config().successOr { return it }.usdcMint
+
+        return runCatching { PublicKey(usdcMint) }.fold(
+            onSuccess = { Result.Success(it) },
+            onFailure = { Result.Failure(BlockchainSdkError.CustomError("Config holds an invalid USDC mint")) },
+        )
+    }
+
+    private fun vaultUsdcAddress(vault: PublicKey, mint: PublicKey): Result<PublicKey> =
+        GachaVaultProgram.vaultUsdcAddress(vault = vault, usdcMint = mint).fold(
+            onSuccess = { Result.Success(it) },
+            onFailure = { Result.Failure(BlockchainSdkError.CustomError("Failed to derive the vault USDC address")) },
+        )
 
     /**
      * Reads the program's `Config` account, the only source of the USDC mint, the treasuries and the fee.
