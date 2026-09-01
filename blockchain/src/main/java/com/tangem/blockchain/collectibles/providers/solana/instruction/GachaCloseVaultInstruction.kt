@@ -15,9 +15,10 @@ internal object GachaCloseVaultInstruction {
     private val DISCRIMINATOR = GachaVaultProgram.discriminator(141, 103, 17, 126, 72, 75, 29, 29)
 
     /**
-     * Fails on-chain with `6014 VaultNotClean` while a buyback delegate is live. The vault must also be closed after
+     * Fails on-chain with `6014 VaultNotClean` while a buyback delegate is live — and that is the only state the
+     * program refuses to close over. Token accounts the vault still owns are not checked: closing the vault first
 
-     * the same cold key. Enforcing that order is the caller's responsibility.
+     * along with it. Ordering the close after them is the caller's responsibility.
      */
     fun create(vault: PublicKey, coldOwner: PublicKey): TransactionInstruction {
         val keys = listOf(

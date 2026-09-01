@@ -40,6 +40,12 @@ interface CollectiblesVaultProvider {
         dailyCap: Long,
     ): Result<TransactionData.Compiled>
 
-    /** Fails on-chain while a buyback delegate is live, or if the vault still owns token accounts. */
+    /**
+     * Closes the vault's USDC account and then the vault itself, in that order and in one transaction.
+     *
+     * Fails on-chain while a buyback delegate is live (`6014`), or with `6015` if any USDC is left on the vault's
+     * token account. Prizes still held by the vault do not block the close: their accounts, and the rent paid for
+
+     */
     suspend fun buildCloseCollectiblesVault(): Result<TransactionData.Compiled>
 }
