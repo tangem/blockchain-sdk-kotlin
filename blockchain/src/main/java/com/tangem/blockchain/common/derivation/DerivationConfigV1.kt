@@ -83,6 +83,9 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.Electroneum,
             Blockchain.ElectroneumTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/415'/0'/0/0"))
+            Blockchain.Arc,
+            Blockchain.ArcTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/5042'/0'/0/0"))
             Blockchain.OdysseyChain -> mapOf(AddressType.Default to DerivationPath("m/44'/695'/0'/0/0"))
             Blockchain.XDC -> mapOf(AddressType.Default to DerivationPath("m/44'/550'/0'/0/0"))
             Blockchain.EthereumClassic -> mapOf(AddressType.Default to DerivationPath("m/44'/61'/0'/0/0"))

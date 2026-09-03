@@ -96,6 +96,8 @@ object DerivationConfigV3 : DerivationConfig() {
             Blockchain.IgraTestnet,
             Blockchain.Electroneum,
             Blockchain.ElectroneumTestnet,
+            Blockchain.Arc,
+            Blockchain.ArcTestnet,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.Quai,
             Blockchain.QuaiTestnet,
