@@ -35,7 +35,7 @@ internal class DefaultEvmAssetsDiscoveryService(
         val rawBalance = response.result as? String ?: return emptyList()
         val balance = EthereumUtils.parseEthereumDecimal(
             value = rawBalance,
-            decimalsCount = blockchain.decimals(),
+            decimalsCount = blockchain.onChainDecimals(),
         ) ?: return emptyList()
 
         if (balance <= BigDecimal.ZERO) return emptyList()

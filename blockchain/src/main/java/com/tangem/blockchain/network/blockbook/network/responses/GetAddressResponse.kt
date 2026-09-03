@@ -145,7 +145,7 @@ data class GetAddressResponse(
 
 fun GetAddressResponse.Transaction.feeAmount(blockchain: Blockchain): Amount {
     return Amount(
-        value = fees.toBigDecimalOrDefault().movePointLeft(blockchain.decimals()),
+        value = fees.toBigDecimalOrDefault().movePointLeft(blockchain.onChainDecimals()),
         blockchain = blockchain,
     )
 }
