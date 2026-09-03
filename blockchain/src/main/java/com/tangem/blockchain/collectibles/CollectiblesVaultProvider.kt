@@ -41,6 +41,20 @@ interface CollectiblesVaultProvider {
     ): Result<TransactionData.Compiled>
 
     /**
+     * Rotates the hot key and the caps of an existing vault. A null argument leaves the field as it is; all three
+     * being null is rejected rather than turned into a card tap that changes nothing.
+     *
+     * @param hotDelegate  base58 key allowed to pay for spins, or null to keep the current one
+     * @param perSpinCap   base units of USDC, must satisfy `0 < perSpinCap <= dailyCap` over the merged state
+     * @param dailyCap     base units of USDC, so either cap can be refused because of the other's stored value
+     */
+    suspend fun buildUpdateCollectiblesVault(
+        hotDelegate: String?,
+        perSpinCap: Long?,
+        dailyCap: Long?,
+    ): Result<TransactionData.Compiled>
+
+    /**
      * Closes the vault's USDC account and then the vault itself, in that order and in one transaction.
      *
      * Fails on-chain while a buyback delegate is live (`6014`), or with `6015` if any USDC is left on the vault's

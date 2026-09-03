@@ -22,6 +22,12 @@ internal object DefaultCollectiblesVaultProvider : CollectiblesVaultProvider {
         dailyCap: Long,
     ): Result<TransactionData.Compiled> = unsupported()
 
+    override suspend fun buildUpdateCollectiblesVault(
+        hotDelegate: String?,
+        perSpinCap: Long?,
+        dailyCap: Long?,
+    ): Result<TransactionData.Compiled> = unsupported()
+
     override suspend fun buildCloseCollectiblesVault(): Result<TransactionData.Compiled> = unsupported()
 
     private fun unsupported(): Result.Failure = Result.Failure(
