@@ -10,6 +10,7 @@ import com.tangem.blockchain.collectibles.models.CollectiblesVault
 import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaCloseTokenAccountInstruction
 import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaCloseVaultInstruction
 import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaInitVaultInstruction
+import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaUpdateVaultInstruction
 import com.tangem.blockchain.collectibles.providers.solana.model.GachaConfig
 import com.tangem.blockchain.collectibles.providers.solana.model.GachaConfigParser
 import com.tangem.blockchain.collectibles.providers.solana.model.GachaVaultParser
@@ -84,13 +85,7 @@ internal class SolanaCollectiblesVaultProvider(
         perSpinCap: Long,
         dailyCap: Long,
     ): Result<TransactionData.Compiled> {
-        // Mirrors the program's own invariant, checked here so it fails before the card is asked for a signature;
-        // on-chain the same violation surfaces as `6004 InvalidCaps`.
-        if (perSpinCap !in 1..dailyCap) {
-            return Result.Failure(
-                BlockchainSdkError.CustomError("perSpinCap must be greater than 0 and not exceed dailyCap"),
-            )
-        }
+        validateCaps(perSpinCap = perSpinCap, dailyCap = dailyCap)?.let { return it }
 
         val vault = vaultAddress().successOr { return it }
         val delegate = delegate(hotDelegate).successOr { return it }
@@ -113,6 +108,37 @@ internal class SolanaCollectiblesVaultProvider(
             instructions = listOf(initVault, createVaultUsdc),
             computeUnitLimit = SolanaTransactionBuilder.CREATE_NEW_ACCOUNT_CU_LIMIT,
             computeUnitPrice = SolanaTransactionBuilder.CREATE_NEW_ACCOUNT_CU_PRICE,
+        ).successOr { return it }
+
+        return Result.Success(transaction.toCompiled())
+    }
+
+    override suspend fun buildUpdateCollectiblesVault(
+        hotDelegate: String?,
+        perSpinCap: Long?,
+        dailyCap: Long?,
+    ): Result<TransactionData.Compiled> {
+        if (hotDelegate == null && perSpinCap == null && dailyCap == null) {
+            return Result.Failure(BlockchainSdkError.CustomError("Nothing to update"))
+        }
+
+        validateCapsOnUpdate(perSpinCap = perSpinCap, dailyCap = dailyCap)?.let { return it }
+
+        val delegate = hotDelegate?.let { delegate(it).successOr { failure -> return failure } }
+        val vault = vaultAddress().successOr { return it }
+
+        val updateVault = GachaUpdateVaultInstruction.create(
+            vault = vault,
+            coldOwner = coldOwner,
+            hotDelegate = delegate,
+            perSpinCap = perSpinCap,
+            dailyCap = dailyCap,
+        )
+
+        val transaction = transactionBuilder.buildUnsignedTransaction(
+            instructions = listOf(updateVault),
+            computeUnitLimit = SolanaTransactionBuilder.DEFAULT_CU_LIMIT,
+            computeUnitPrice = SolanaTransactionBuilder.DEFAULT_CU_PRICE,
         ).successOr { return it }
 
         return Result.Success(transaction.toCompiled())
@@ -192,6 +218,36 @@ internal class SolanaCollectiblesVaultProvider(
         return runCatching { PublicKey(usdcMint) }.fold(
             onSuccess = { Result.Success(it) },
             onFailure = { Result.Failure(BlockchainSdkError.CustomError("Config holds an invalid USDC mint")) },
+        )
+    }
+
+    /**
+     * Neither cap updated: nothing to check, the stored pair already satisfies the invariant.
+     * Both caps updated: checked against each other.
+     * One cap updated: the stored pair is read, since the program checks the merged state.
+     */
+    private suspend fun validateCapsOnUpdate(perSpinCap: Long?, dailyCap: Long?): Result.Failure? {
+        if (perSpinCap == null && dailyCap == null) return null
+        if (perSpinCap != null && dailyCap != null) return validateCaps(perSpinCap = perSpinCap, dailyCap = dailyCap)
+
+        val stored = getCollectiblesVault().successOr { return it }
+            ?: return Result.Failure(BlockchainSdkError.CustomError("Vault does not exist"))
+
+        return validateCaps(
+            perSpinCap = perSpinCap ?: stored.perSpinCap,
+            dailyCap = dailyCap ?: stored.dailyCap,
+        )
+    }
+
+    /**
+     * Mirrors the program's own invariant, checked here so it fails before the card is asked for a signature; on-chain
+     * the same violation surfaces as `6004 InvalidCaps`.
+     */
+    private fun validateCaps(perSpinCap: Long, dailyCap: Long): Result.Failure? {
+        if (perSpinCap in 1..dailyCap) return null
+
+        return Result.Failure(
+            BlockchainSdkError.CustomError("perSpinCap must be greater than 0 and not exceed dailyCap"),
         )
     }
 
