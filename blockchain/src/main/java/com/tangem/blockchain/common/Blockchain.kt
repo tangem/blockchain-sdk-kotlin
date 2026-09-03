@@ -284,7 +284,6 @@ enum class Blockchain(
         TerraV1, TerraV2,
         Algorand, AlgorandTestnet,
         Sei, SeiTestnet,
-        Arc, ArcTestnet,
         -> 6
 
         Stellar, StellarTestnet -> 7
@@ -382,6 +381,7 @@ enum class Blockchain(
         Robinhood, RobinhoodTestnet,
         Igra, IgraTestnet,
         Electroneum, ElectroneumTestnet,
+        Arc, ArcTestnet,
         -> 18
 
         Near, NearTestnet,
@@ -389,15 +389,15 @@ enum class Blockchain(
     }
 
     /**
-     * Number of decimals the chain itself operates with for the native coin: balances returned by the node and
-     * values put into a transaction are denominated in it.
+     * Number of fraction digits to show for the native coin. Formatting only: never use it to convert a value to or
+     * from the chain's smallest unit, that is what [decimals] is for.
      *
-     * Equals [decimals] for every blockchain but Arc, whose native currency is USDC with 6 decimals while the chain
-     * keeps balances and fees in 18 decimals.
+     * Equals [decimals] for every blockchain but Arc and Arc Testnet, whose native coin is USDC: the chain keeps
+     * balances and fees in 18 decimals, but users expect USDC with 6.
      */
     @Suppress("MagicNumber")
-    fun onChainDecimals(): Int = when (this) {
-        Arc, ArcTestnet -> 18
+    fun displayDecimals(): Int = when (this) {
+        Arc, ArcTestnet -> 6
         else -> decimals()
     }
 

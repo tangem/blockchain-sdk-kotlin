@@ -19,10 +19,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import java.math.BigDecimal
 
-/**
- * Arc history comes from an Etherscan-compatible explorer that reports wei with 18 decimals, while the USDC coin
- * itself has 6 decimals, so amounts and fees must be scaled with the on-chain decimals.
- */
 internal class ArcTransactionHistoryTest {
 
     private val api = mockk<EtherScanApi>()
@@ -34,16 +30,18 @@ internal class ArcTransactionHistoryTest {
 
     @Test
     fun `Arc uses etherscan compatible transaction history provider`() {
-        val provider = TransactionHistoryProviderFactory.makeProvider(
-            blockchain = Blockchain.Arc,
-            config = BlockchainSdkConfig(),
-        )
+        listOf(Blockchain.Arc, Blockchain.ArcTestnet).forEach { blockchain ->
+            val provider = TransactionHistoryProviderFactory.makeProvider(
+                blockchain = blockchain,
+                config = BlockchainSdkConfig(),
+            )
 
-        Truth.assertThat(provider).isInstanceOf(EtherscanTransactionHistoryProvider::class.java)
+            Truth.assertThat(provider).isInstanceOf(EtherscanTransactionHistoryProvider::class.java)
+        }
     }
 
     @Test
-    fun `Arc coin history amount and fee are scaled with 18 on-chain decimals`() = runTest {
+    fun `Arc coin history amount and fee are scaled with 18 decimals`() = runTest {
         coEvery {
             api.getCoinTransactionHistory(chainId = any(), address = any(), page = any(), offset = any(), apiKey = any())
         } returns response(transaction(value = "2000000000000000000", gasPrice = "25000000000", gasUsed = "21000"))

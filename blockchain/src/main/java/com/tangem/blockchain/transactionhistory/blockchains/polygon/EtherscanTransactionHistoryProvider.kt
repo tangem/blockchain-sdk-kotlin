@@ -168,7 +168,7 @@ internal class EtherscanTransactionHistoryProvider(
     private fun PolygonTransaction.feeAmount(blockchain: Blockchain): Amount {
         val fee = gasPrice.toBigDecimalOrDefault().multiply(gasUsed.toBigDecimalOrDefault())
         return Amount(
-            value = fee.movePointLeft(blockchain.onChainDecimals()),
+            value = fee.movePointLeft(blockchain.decimals()),
             blockchain = blockchain,
         )
     }
@@ -235,7 +235,7 @@ internal class EtherscanTransactionHistoryProvider(
         }
         return when (filterType) {
             TransactionHistoryRequest.FilterType.Coin -> Amount(
-                value = txAmount.movePointLeft(blockchain.onChainDecimals()),
+                value = txAmount.movePointLeft(blockchain.decimals()),
                 blockchain = blockchain,
             )
             is TransactionHistoryRequest.FilterType.Contract -> Amount(
