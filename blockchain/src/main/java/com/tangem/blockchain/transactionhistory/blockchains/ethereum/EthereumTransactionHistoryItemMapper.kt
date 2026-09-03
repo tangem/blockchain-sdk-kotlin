@@ -71,7 +71,7 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
             type = extractType(transaction = transaction),
             fee = transaction.feeAmount(blockchain),
             amount = Amount(
-                value = BigDecimal(transaction.value).movePointLeft(blockchain.onChainDecimals()),
+                value = BigDecimal(transaction.value).movePointLeft(blockchain.decimals()),
                 blockchain = blockchain,
                 type = AmountType.Coin,
             ),

@@ -51,7 +51,7 @@ internal class ArcFeesCalculatorTest {
     }
 
     @Test
-    fun `Arc fee amount is denominated in USDC with 6 decimals`() {
+    fun `Arc fee amount is wei scaled to 18 decimals`() {
         val fees = arcCalculator.calculateEip1559Fees(
             amountParams = Amount(Blockchain.Arc),
             gasLimit = GAS_LIMIT,
@@ -59,11 +59,10 @@ internal class ArcFeesCalculatorTest {
         )
 
         val minimum = fees.minimum as Fee.Ethereum.EIP1559
-        val expectedValue = BigDecimal(minimum.maxFeePerGas * GAS_LIMIT).movePointLeft(18)
 
-        Truth.assertThat(minimum.amount.decimals).isEqualTo(6)
-        Truth.assertThat(minimum.amount.currencySymbol).isEqualTo("USDC")
-        Truth.assertThat(minimum.amount.value).isEqualTo(expectedValue)
+        Truth.assertThat(minimum.maxFeePerGas).isEqualTo(TWENTY_GWEI)
+        Truth.assertThat(minimum.amount.decimals).isEqualTo(18)
+        Truth.assertThat(minimum.amount.value).isEqualTo(BigDecimal("0.000420000000000000"))
     }
 
     @Test
@@ -77,11 +76,11 @@ internal class ArcFeesCalculatorTest {
         val minimum = fees.minimum as Fee.Ethereum.EIP1559
 
         Truth.assertThat(minimum.priorityFee).isEqualTo(BigInteger.ZERO)
-        Truth.assertThat(minimum.maxFeePerGas).isEqualTo(TWENTY_GWEI)
+        Truth.assertThat(minimum.maxFeePerGas).isEqualTo(BASE_FEE)
     }
 
     private fun zeroPriorityFeeHistory() = EthereumFeeHistory.Common(
-        baseFee = BigDecimal(TWENTY_GWEI),
+        baseFee = BigDecimal(BASE_FEE),
         lowPriorityFee = BigDecimal.ZERO,
         marketPriorityFee = BigDecimal.ZERO,
         fastPriorityFee = BigDecimal.ZERO,
@@ -89,6 +88,7 @@ internal class ArcFeesCalculatorTest {
 
     private companion object {
         val GAS_LIMIT: BigInteger = BigInteger.valueOf(21_000)
+        val BASE_FEE: BigInteger = BigInteger.valueOf(7_000_000_000)
         val TWENTY_GWEI: BigInteger = BigInteger.valueOf(20_000_000_000)
         val FIVE_GWEI: BigInteger = BigInteger.valueOf(5_000_000_000)
     }

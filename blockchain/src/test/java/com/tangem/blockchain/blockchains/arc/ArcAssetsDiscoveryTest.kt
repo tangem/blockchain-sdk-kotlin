@@ -14,9 +14,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import java.math.BigDecimal
 
-/**
- * `eth_getBalance` on Arc returns 18-decimal wei, while the USDC coin has 6 decimals.
- */
 internal class ArcAssetsDiscoveryTest {
 
     private val provider = mockk<EthereumJsonRpcProvider>()
@@ -26,7 +23,7 @@ internal class ArcAssetsDiscoveryTest {
     )
 
     @Test
-    fun `Arc discovered coin balance is scaled with 18 on-chain decimals`() = runTest {
+    fun `Arc coin balance is discovered via eth_getBalance`() = runTest {
         coEvery { provider.getBalance(WALLET) } returns Result.Success(
             JsonRPCResponse(id = "1", jsonRpc = "2.0", result = "0x1bc16d674ec80000", error = null),
         )
