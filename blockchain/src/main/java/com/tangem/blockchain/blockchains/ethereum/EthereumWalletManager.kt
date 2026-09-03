@@ -85,7 +85,7 @@ open class EthereumWalletManager(
     ExternalAddressBalanceProvider {
 
     // move to constructor later
-    protected val feesCalculator = EthereumFeesCalculator()
+    protected val feesCalculator = EthereumFeesCalculator(wallet.blockchain)
 
     private val ensNameProcessor = DefaultENSNameProcessor()
 
@@ -566,7 +566,7 @@ open class EthereumWalletManager(
 
         when (amount.type) {
             is AmountType.Coin -> {
-                value = amount.value?.movePointRight(amount.decimals)?.toBigInteger()?.toHexString()
+                value = amount.toOnChainValue(wallet.blockchain)?.toHexString()
             }
 
             is AmountType.Token -> {

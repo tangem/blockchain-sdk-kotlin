@@ -79,8 +79,8 @@ object EthereumUtils {
         blockchain: Blockchain,
     ): EthereumCompiledTxInfo.Legacy {
         val transaction = when (transactionData) {
-            is TransactionData.Uncompiled -> buildUncompiledTransactionToSign(transactionData)
-            is TransactionData.Compiled -> buildCompiledTransactionToSign(transactionData)
+            is TransactionData.Uncompiled -> buildUncompiledTransactionToSign(transactionData, blockchain)
+            is TransactionData.Compiled -> buildCompiledTransactionToSign(transactionData, blockchain)
         } ?: error("Error while building transaction to sign")
 
         val chainId = blockchain.getChainId()
@@ -95,7 +95,10 @@ object EthereumUtils {
         )
     }
 
-    private fun buildCompiledTransactionToSign(transactionData: TransactionData.Compiled): Transaction {
+    private fun buildCompiledTransactionToSign(
+        transactionData: TransactionData.Compiled,
+        blockchain: Blockchain,
+    ): Transaction {
         val compiledTransaction = if (transactionData.value is TransactionData.Compiled.Data.RawString) {
             transactionData.value.data
         } else {
@@ -107,9 +110,9 @@ object EthereumUtils {
 
         val value = parsed.value?.hexToBigDecimal()?.toBigInteger() ?: BigInteger.ZERO
 
-        val fee = transactionData.fee?.amount?.value
-            ?.movePointRight(transactionData.fee.amount.decimals)
-            ?.toBigInteger()?.takeIf { it > BigInteger.ZERO }
+        val fee = transactionData.fee?.amount
+            ?.toOnChainValue(blockchain)
+            ?.takeIf { it > BigInteger.ZERO }
             ?: error("Transaction fee must be specified")
 
         val gasLimit = parsed.gasLimit.hexToBigDecimal().toBigInteger().takeIf { it > BigInteger.ZERO }
@@ -133,17 +136,16 @@ object EthereumUtils {
         )
     }
 
-    private fun buildUncompiledTransactionToSign(transactionData: TransactionData.Uncompiled): Transaction? {
+    private fun buildUncompiledTransactionToSign(
+        transactionData: TransactionData.Uncompiled,
+        blockchain: Blockchain,
+    ): Transaction? {
         val extras = transactionData.extras as? EthereumTransactionExtras
 
         val nonceValue = extras?.nonce ?: return null
 
-        val amount: BigDecimal = transactionData.amount.value ?: return null
-        val transactionFee: BigDecimal = transactionData.fee?.amount?.value ?: return null
-
-        val fee = transactionFee.movePointRight(transactionData.fee.amount.decimals).toBigInteger()
-        val bigIntegerAmount =
-            amount.movePointRight(transactionData.amount.decimals).toBigInteger()
+        val fee = transactionData.fee?.amount?.toOnChainValue(blockchain) ?: return null
+        val bigIntegerAmount = transactionData.amount.toOnChainValue(blockchain) ?: return null
 
         val to: Address
         val value: BigInteger

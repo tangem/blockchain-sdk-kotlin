@@ -229,6 +229,8 @@ enum class Blockchain(
     IgraTestnet("igra/test", "iKAS", "Igra Testnet"),
     Electroneum("electroneum", "ETN", "Electroneum"),
     ElectroneumTestnet("electroneum/test", "ETN", "Electroneum Testnet"),
+    Arc("arc", "USDC", "Arc"),
+    ArcTestnet("arc/test", "USDC", "Arc Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -282,6 +284,7 @@ enum class Blockchain(
         TerraV1, TerraV2,
         Algorand, AlgorandTestnet,
         Sei, SeiTestnet,
+        Arc, ArcTestnet,
         -> 6
 
         Stellar, StellarTestnet -> 7
@@ -383,6 +386,19 @@ enum class Blockchain(
 
         Near, NearTestnet,
         -> 24
+    }
+
+    /**
+     * Number of decimals the chain itself operates with for the native coin: balances returned by the node and
+     * values put into a transaction are denominated in it.
+     *
+     * Equals [decimals] for every blockchain but Arc, whose native currency is USDC with 6 decimals while the chain
+     * keeps balances and fees in 18 decimals.
+     */
+    @Suppress("MagicNumber")
+    fun onChainDecimals(): Int = when (this) {
+        Arc, ArcTestnet -> 18
+        else -> decimals()
     }
 
     fun makeAddresses(
@@ -506,6 +522,7 @@ enum class Blockchain(
             Robinhood, RobinhoodTestnet,
             Igra, IgraTestnet,
             Electroneum, ElectroneumTestnet,
+            Arc, ArcTestnet,
             -> EthereumAddressService()
 
             Quai, QuaiTestnet -> QuaiAddressService()
@@ -673,6 +690,7 @@ enum class Blockchain(
             Robinhood, RobinhoodTestnet -> RobinhoodTestnet
             Igra, IgraTestnet -> IgraTestnet
             Electroneum, ElectroneumTestnet -> ElectroneumTestnet
+            Arc, ArcTestnet -> ArcTestnet
             Unknown,
             Cardano,
             Dogecoin,
@@ -799,6 +817,7 @@ enum class Blockchain(
             Robinhood, RobinhoodTestnet,
             Igra, IgraTestnet,
             Electroneum, ElectroneumTestnet,
+            Arc, ArcTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -931,6 +950,8 @@ enum class Blockchain(
             IgraTestnet -> Chain.IgraTestnet.id
             Electroneum -> Chain.Electroneum.id
             ElectroneumTestnet -> Chain.ElectroneumTestnet.id
+            Arc -> Chain.Arc.id
+            ArcTestnet -> Chain.ArcTestnet.id
             Monad -> Chain.Monad.id
             MonadTestnet -> Chain.MonadTestnet.id
             else -> null
