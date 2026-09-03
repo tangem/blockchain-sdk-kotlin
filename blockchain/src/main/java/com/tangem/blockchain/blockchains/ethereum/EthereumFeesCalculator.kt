@@ -162,7 +162,7 @@ class EthereumFeesCalculator(private val blockchain: Blockchain) {
     private fun BigDecimal.coerceMaxFeePerGas(): BigDecimal = coerceAtLeast(blockchain.minimalMaxFeePerGas)
 
     private fun createFee(amountParams: Amount, value: BigInteger): Amount {
-        val decimals = blockchain.onChainDecimals()
+        val decimals = Blockchain.Ethereum.decimals()
 
         return Amount(
             amount = amountParams,

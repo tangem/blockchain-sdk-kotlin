@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.arc
 
 import com.google.common.truth.Truth
 import com.tangem.blockchain.assetsdiscovery.AssetsDiscoveryServiceFactory
-import com.tangem.blockchain.assetsdiscovery.DefaultAssetsDiscoveryService
+import com.tangem.blockchain.assetsdiscovery.providers.evm.DefaultEvmAssetsDiscoveryService
 import com.tangem.blockchain.blockchains.ethereum.Chain
 import com.tangem.blockchain.blockchains.ethereum.EthereumWalletManager
 import com.tangem.blockchain.blockchains.ethereum.eip1559.isSupportEIP1559
@@ -51,11 +51,18 @@ internal class ArcTest {
     }
 
     @Test
-    fun `Arc coin has 6 decimals while the chain operates with 18`() {
-        Truth.assertThat(Blockchain.Arc.decimals()).isEqualTo(6)
-        Truth.assertThat(Blockchain.ArcTestnet.decimals()).isEqualTo(6)
-        Truth.assertThat(Blockchain.Arc.onChainDecimals()).isEqualTo(18)
-        Truth.assertThat(Blockchain.ArcTestnet.onChainDecimals()).isEqualTo(18)
+    fun `Arc operates with 18 decimals but displays USDC with 6`() {
+        Truth.assertThat(Blockchain.Arc.decimals()).isEqualTo(18)
+        Truth.assertThat(Blockchain.ArcTestnet.decimals()).isEqualTo(18)
+        Truth.assertThat(Blockchain.Arc.displayDecimals()).isEqualTo(6)
+        Truth.assertThat(Blockchain.ArcTestnet.displayDecimals()).isEqualTo(6)
+    }
+
+    @Test
+    fun `display decimals equal decimals for every blockchain but Arc`() {
+        val mismatched = Blockchain.entries.filter { it.displayDecimals() != it.decimals() }
+
+        Truth.assertThat(mismatched).containsExactly(Blockchain.Arc, Blockchain.ArcTestnet)
     }
 
     @Test
@@ -144,7 +151,7 @@ internal class ArcTest {
                 ),
             ).create(blockchain)
 
-            Truth.assertThat(service).isNotEqualTo(DefaultAssetsDiscoveryService)
+            Truth.assertThat(service).isInstanceOf(DefaultEvmAssetsDiscoveryService::class.java)
         }
     }
 

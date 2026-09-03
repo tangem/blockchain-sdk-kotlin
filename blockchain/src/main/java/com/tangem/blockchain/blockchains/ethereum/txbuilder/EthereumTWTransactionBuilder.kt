@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
 import com.tangem.blockchain.blockchains.ethereum.models.EthereumCompiledTransaction
-import com.tangem.blockchain.blockchains.ethereum.toOnChainValue
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.hexToBigDecimal
@@ -60,7 +59,7 @@ internal open class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTrans
         data: String?,
         fee: Fee.Ethereum,
     ): ByteArray {
-        val coinAmount = amount.toOnChainValue(blockchain) ?: BigInteger.ZERO
+        val coinAmount = amount.value?.movePointRight(amount.decimals)?.toBigInteger() ?: BigInteger.ZERO
 
         val input = when (fee) {
             is Fee.Ethereum.EIP1559 -> {
@@ -108,7 +107,8 @@ internal open class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTrans
     }
 
     private fun buildUncompiledSigningInput(transaction: TransactionData.Uncompiled): Ethereum.SigningInput {
-        val amountValue = transaction.amount.toOnChainValue(blockchain)
+        val amountValue = transaction.amount.value?.movePointRight(transaction.amount.decimals)
+            ?.toBigInteger()
             ?: throw BlockchainSdkError.CustomError("Fail to parse amount")
 
         val ethereumFee = transaction.fee as? Fee.Ethereum ?: throw BlockchainSdkError.CustomError("Invalid fee")
@@ -226,7 +226,9 @@ internal open class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTrans
     }
 
     private fun Fee.Ethereum.Legacy.calculateGasPrice(): BigInteger {
-        val feeValue = amount.toOnChainValue(blockchain)
+        val feeValue = amount.value
+            ?.movePointRight(amount.decimals)
+            ?.toBigInteger()
             ?: error("Transaction fee must be specified")
 
         return feeValue.divide(gasLimit)

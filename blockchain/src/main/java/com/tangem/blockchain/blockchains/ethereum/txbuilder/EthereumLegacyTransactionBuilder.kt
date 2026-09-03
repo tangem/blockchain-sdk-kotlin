@@ -1,7 +1,6 @@
 package com.tangem.blockchain.blockchains.ethereum.txbuilder
 
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
-import com.tangem.blockchain.blockchains.ethereum.toOnChainValue
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.common.Wallet
@@ -44,7 +43,7 @@ internal class EthereumLegacyTransactionBuilder(
         fee: Fee.Ethereum,
     ): ByteArray {
         val legacyFee = fee as Fee.Ethereum.Legacy
-        val value = amount.toOnChainValue(blockchain) ?: BigInteger.ZERO
+        val value = amount.value?.movePointRight(amount.decimals)?.toBigInteger() ?: BigInteger.ZERO
         return createTransactionWithDefaults(
             from = Address(wallet.address),
             to = Address(destination),
