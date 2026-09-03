@@ -11,6 +11,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 
 private const val HEX_RADIX = 16
+private const val HEX_CHARS_PER_BYTE = 2
 
 fun String.decodeBase58(checked: Boolean = false): ByteArray? {
     return try {
@@ -54,7 +55,15 @@ fun String.formatHex(): String {
 fun String?.toBigDecimalOrDefault(default: BigDecimal = BigDecimal.ZERO): BigDecimal =
     this?.toBigDecimalOrNull() ?: default
 
-fun String.isValidHex(): Boolean = this.all { it.isAscii() }
+/**
+ * Checks that the string is a hex encoding of a whole number of bytes: hex digits only, even length.
+ *
+ * Both conditions matter for callers that decode the string afterwards — `hexToBytes` cannot turn an odd-length or
+ * non-hex string into a [ByteArray], so accepting one here only defers the failure.
+ */
+fun String.isValidHex(): Boolean = length % HEX_CHARS_PER_BYTE == 0 && all(Char::isHexDigit)
+
+private fun Char.isHexDigit(): Boolean = this in '0'..'9' || this in 'a'..'f' || this in 'A'..'F'
 
 fun String.isSameCase(): Boolean = this.lowercase() == this || this.uppercase() == this
 
