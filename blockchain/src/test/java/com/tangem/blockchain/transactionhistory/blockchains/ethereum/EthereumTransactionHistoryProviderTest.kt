@@ -11,6 +11,7 @@ import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import java.math.BigDecimal
@@ -197,6 +198,44 @@ class EthereumTransactionHistoryProviderTest {
     }
 
     // region helpers
+
+    @Test
+    fun `cancelled history request propagates the cancellation instead of a failure result`() = runTest {
+        val filterType = TransactionHistoryRequest.FilterType.Coin
+        val request = TransactionHistoryRequest(
+            address = WALLET,
+            decimals = Blockchain.Ethereum.decimals(),
+            page = Page.Initial,
+            pageSize = PAGE_SIZE,
+            filterType = filterType,
+        )
+        coEvery { blockBookApi.getTransactions(WALLET, null, PAGE_SIZE, filterType) } throws CancellationException()
+
+        val error = try {
+            provider.getTransactionsHistory(request)
+            null
+        } catch (e: CancellationException) {
+            e
+        }
+
+        assertThat(error).isInstanceOf(CancellationException::class.java)
+    }
+
+    @Test
+    fun `cancelled history state request propagates the cancellation instead of a failed state`() = runTest {
+        coEvery {
+            blockBookApi.getTransactions(WALLET, null, 1, TransactionHistoryRequest.FilterType.Coin)
+        } throws CancellationException()
+
+        val error = try {
+            provider.getTransactionHistoryState(WALLET, TransactionHistoryRequest.FilterType.Coin)
+            null
+        } catch (e: CancellationException) {
+            e
+        }
+
+        assertThat(error).isInstanceOf(CancellationException::class.java)
+    }
 
     private suspend fun coinItems(tx: GetAddressResponse.Transaction): List<TransactionHistoryItem> {
         val filterType = TransactionHistoryRequest.FilterType.Coin

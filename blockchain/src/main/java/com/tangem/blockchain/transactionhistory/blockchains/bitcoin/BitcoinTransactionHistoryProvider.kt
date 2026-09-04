@@ -45,6 +45,8 @@ internal class BitcoinTransactionHistoryProvider(
             } else {
                 TransactionHistoryState.Success.Empty
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e(BitcoinTransactionHistoryProvider::class.java.simpleName, e.message, e)
             TransactionHistoryState.Failed.FetchError(e)
@@ -78,6 +80,8 @@ internal class BitcoinTransactionHistoryProvider(
                     items = txs,
                 ),
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
@@ -245,6 +249,8 @@ internal class BitcoinTransactionHistoryProvider(
             }
 
             Amount(value = amount.movePointLeft(blockchain.decimals()), blockchain = blockchain)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Amount(blockchain = blockchain)
         }
@@ -323,6 +329,8 @@ internal class BitcoinTransactionHistoryProvider(
             }
 
             Amount(value = amount.movePointLeft(blockchain.decimals()), blockchain = blockchain)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Amount(blockchain = blockchain)
         }

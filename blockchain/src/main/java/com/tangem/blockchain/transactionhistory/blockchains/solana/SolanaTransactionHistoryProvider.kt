@@ -13,6 +13,7 @@ import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest.FilterType
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 
 internal class SolanaTransactionHistoryProvider(
     private val blockchain: Blockchain,
@@ -37,6 +38,8 @@ internal class SolanaTransactionHistoryProvider(
             } else {
                 TransactionHistoryState.Success.Empty
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             TransactionHistoryState.Failed.FetchError(e)
         }
@@ -75,6 +78,8 @@ internal class SolanaTransactionHistoryProvider(
                 ?: Page.LastPage
 
             Result.Success(PaginationWrapper(nextPage = nextPage, items = items))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
