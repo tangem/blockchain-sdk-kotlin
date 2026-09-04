@@ -132,9 +132,21 @@ class TronNetworkService(
     }
 
     suspend fun checkIfAccountExists(address: String): Boolean {
-        return when (val result = getAccount(address)) {
+        return when (val result = isAccountActivated(address)) {
             is Result.Failure -> false
-            is Result.Success -> result.data.address != null
+            is Result.Success -> result.data
+        }
+    }
+
+    /**
+     * Whether [address] has been activated on-chain. The node answers an empty JSON for an address
+     * that has never been activated, so a missing `address` field is the activation signal; a
+     * failed request is reported as such rather than mistaken for a missing account.
+     */
+    suspend fun isAccountActivated(address: String): Result<Boolean> {
+        return when (val result = getAccount(address)) {
+            is Result.Failure -> Result.Failure(result.error)
+            is Result.Success -> Result.Success(result.data.address != null)
         }
     }
 
