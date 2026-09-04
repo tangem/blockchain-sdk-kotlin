@@ -49,6 +49,7 @@ internal class EthereumYieldSupplyProvider(
     }
 
     private val addressService = EthereumAddressService()
+    private val moduleAddressResolver = EthereumYieldModuleAddressResolver(multiJsonRpcProvider)
 
     override fun isSupported(): Boolean = contractAddressFactory.isSupported()
 
@@ -80,18 +81,12 @@ internal class EthereumYieldSupplyProvider(
             !addressService.validate(storedYieldModuleAddress) ||
             !hasMatchingCachedFactory
         ) {
-            val rawContractAddress = multiJsonRpcProvider.performRequest(
-                request = EthereumJsonRpcProvider::call,
-                data = EthCallObject(
-                    to = supplyContractAddresses.factoryContractAddress,
-                    data = EthereumYieldSupplyModuleCallData(wallet.address).dataHex,
-                ),
-            ).extractResult()
-                .takeLast(EthereumUtils.ADDRESS_HEX_LENGTH)
+            val yieldModuleAddress = moduleAddressResolver.resolve(
+                factoryContractAddress = supplyContractAddresses.factoryContractAddress,
+                callDataHex = EthereumYieldSupplyModuleCallData(wallet.address).dataHex,
+            )
 
-            val yieldModuleAddress = HEX_PREFIX + rawContractAddress
-
-            if (!addressService.validate(yieldModuleAddress)) {
+            if (yieldModuleAddress == EthereumUtils.ZERO_ADDRESS) {
                 EthereumUtils.ZERO_ADDRESS
             } else {
                 dataStorage.store(
@@ -107,21 +102,22 @@ internal class EthereumYieldSupplyProvider(
         } else {
             storedYieldModuleAddress
         }
+    } catch (e: BlockchainSdkError.Ethereum.YieldModuleAddressMismatch) {
+        throw e
     } catch (e: Exception) {
         Log.w(TAG, "Failed to get yield module address: ${e.message}")
         EthereumUtils.ZERO_ADDRESS
     }
 
     override suspend fun calculateYieldModuleAddress(): String {
-        val rawYieldModuleAddress = multiJsonRpcProvider.performRequest(
-            request = EthereumJsonRpcProvider::call,
-            data = EthCallObject(
-                to = getYieldSupplyContractAddresses().factoryContractAddress,
-                data = EthereumYieldSupplyContractAddressCallData(wallet.address).dataHex,
-            ),
-        ).extractResult()
+        val yieldModuleAddress = moduleAddressResolver.resolve(
+            factoryContractAddress = getYieldSupplyContractAddresses().factoryContractAddress,
+            callDataHex = EthereumYieldSupplyContractAddressCallData(wallet.address).dataHex,
+        )
 
-        val yieldModuleAddress = HEX_PREFIX + rawYieldModuleAddress.takeLast(EthereumUtils.ADDRESS_HEX_LENGTH)
+        if (yieldModuleAddress == EthereumUtils.ZERO_ADDRESS) {
+            throw BlockchainSdkError.Ethereum.YieldModuleAddressUnavailable()
+        }
 
         return yieldModuleAddress
     }

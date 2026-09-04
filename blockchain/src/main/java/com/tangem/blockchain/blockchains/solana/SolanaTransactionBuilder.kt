@@ -17,6 +17,7 @@ import com.tangem.blockchain.network.MultiNetworkProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.p2p.solanaj.core.PublicKey
+import org.p2p.solanaj.core.TransactionInstruction
 import org.p2p.solanaj.programs.AssociatedTokenProgram
 import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.programs.SystemProgram
@@ -51,6 +52,26 @@ internal class SolanaTransactionBuilder(
         }
     }
 
+    suspend fun buildUnsignedTransaction(
+        instructions: List<TransactionInstruction>,
+        computeUnitLimit: Int,
+        computeUnitPrice: Long,
+    ): Result<SolanaTransaction> {
+        val recentBlockHash = multiNetworkProvider.performRequest {
+            getLatestBlockhashInfo()
+        }.successOr { return Result.Failure(it.error) }.blockhash
+
+        val transaction = SolanaTransaction(account).apply {
+            addInstruction(SolanaComputeBudgetProgram.setComputeUnitPrice(microLamports = computeUnitPrice))
+            addInstruction(SolanaComputeBudgetProgram.setComputeUnitLimit(units = computeUnitLimit))
+
+            instructions.forEach(::addInstruction)
+            setRecentBlockHash(recentBlockHash)
+        }
+
+        return Result.Success(transaction)
+    }
+
     fun buildUnsignedTransaction(builtTransaction: ByteArray): SolanaTransaction {
         return SolanaTransaction(account).apply {
             setSerializedMessage(builtTransaction)
@@ -61,26 +82,14 @@ internal class SolanaTransactionBuilder(
         destinationAddress: String,
         amount: BigDecimal,
     ): Result<SolanaTransaction> {
-        val recentBlockHash = multiNetworkProvider.performRequest {
-            getLatestBlockhashInfo()
-        }.successOr { return Result.Failure(it.error) }.blockhash
         val destinationAccount = PublicKey(destinationAddress)
         val lamports = SolanaValueConverter.toLamports(amount)
 
-        val transaction = SolanaTransaction(account).apply {
-            SolanaComputeBudgetProgram.setComputeUnitPrice(
-                microLamports = DEFAULT_CU_PRICE,
-            ).let(::addInstruction)
-
-            SolanaComputeBudgetProgram.setComputeUnitLimit(
-                units = DEFAULT_CU_LIMIT,
-            ).let(::addInstruction)
-
-            SystemProgram.transfer(account, destinationAccount, lamports).let(::addInstruction)
-            setRecentBlockHash(recentBlockHash)
-        }
-
-        return Result.Success(transaction)
+        return buildUnsignedTransaction(
+            instructions = listOf(SystemProgram.transfer(account, destinationAccount, lamports)),
+            computeUnitLimit = DEFAULT_CU_LIMIT,
+            computeUnitPrice = DEFAULT_CU_PRICE,
+        )
     }
 
     private suspend fun buildUnsignedTokenTransaction(
@@ -298,7 +307,7 @@ internal class SolanaTransactionBuilder(
         )
     }
 
-    private companion object {
+    companion object {
         const val DEFAULT_CU_LIMIT = 200_000
         const val CREATE_NEW_ACCOUNT_CU_LIMIT = 400_000
 

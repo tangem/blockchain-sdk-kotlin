@@ -13,6 +13,8 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.*
+import com.tangem.blockchain.collectibles.CollectiblesVaultProvider
+import com.tangem.blockchain.collectibles.DefaultCollectiblesVaultProvider
 import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
 import com.tangem.blockchain.tokenbalance.DefaultTokenBalanceProvider
@@ -35,6 +37,7 @@ abstract class WalletManager(
     nftProvider: NFTProvider = DefaultNFTProvider,
     tokenBalanceProvider: TokenBalanceProvider = DefaultTokenBalanceProvider,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
+    collectiblesVaultProvider: CollectiblesVaultProvider = DefaultCollectiblesVaultProvider,
     messageSigner: MessageSigner = DefaultMessageSigner,
     psbtProvider: PsbtProvider = DefaultPsbtProvider,
     addressProvider: AddressProvider = DefaultAddressProvider(wallet),
@@ -43,6 +46,7 @@ abstract class WalletManager(
     NFTProvider by nftProvider,
     TokenBalanceProvider by tokenBalanceProvider,
     YieldSupplyProvider by yieldSupplyProvider,
+    CollectiblesVaultProvider by collectiblesVaultProvider,
     MessageSigner by messageSigner,
     PsbtProvider by psbtProvider,
     AddressProvider by addressProvider {

@@ -4,7 +4,13 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.logging.SensitiveKeys
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import java.io.IOException
+import java.net.URI
+import java.net.URISyntaxException
 
 class MultiNetworkProvider<P : NetworkProvider>(
     val providers: List<P>,
@@ -29,6 +35,28 @@ class MultiNetworkProvider<P : NetworkProvider>(
         SimpleRequest(request, data).perform()
 
     suspend fun <R> performRequest(request: suspend P.() -> Result<R>): Result<R> = NoDataRequest(request).perform()
+
+    suspend fun <D, R> performRequestOnEachHost(
+        request: suspend P.(D) -> Result<R>,
+        data: D,
+    ): List<ProviderResult<P, R>> = coroutineScope {
+        providers
+            .distinctBy { it.baseUrl.urlHost() }
+            .map { provider ->
+                async {
+                    val result = try {
+                        provider.request(data)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                        Result.Failure(e.toBlockchainSdkError())
+                    }
+
+                    ProviderResult(provider = provider, result = result)
+                }
+            }
+            .awaitAll()
+    }
 
     @JvmName("performRawResultRequest")
     suspend fun <R> performRequest(request: suspend P.() -> R): Result<R> =
@@ -138,14 +166,22 @@ class MultiNetworkProvider<P : NetworkProvider>(
             else -> null
         }
     }
+}
 
-    private fun String.getUrlWithoutSensitiveInfo(): String {
-        val key = SensitiveKeys.data.firstOrNull { this.contains(other = it, ignoreCase = true) }
+data class ProviderResult<P : NetworkProvider, R>(val provider: P, val result: Result<R>)
 
-        return if (key == null) {
-            this
-        } else {
-            this.replace(oldValue = key, newValue = "******")
-        }
+internal fun String.urlHost(): String = try {
+    URI(this).host ?: this
+} catch (e: URISyntaxException) {
+    this
+}
+
+internal fun String.getUrlWithoutSensitiveInfo(): String {
+    val key = SensitiveKeys.data.firstOrNull { this.contains(other = it, ignoreCase = true) }
+
+    return if (key == null) {
+        this
+    } else {
+        this.replace(oldValue = key, newValue = "******")
     }
 }
