@@ -68,8 +68,6 @@ internal object TransactionHistoryProviderFactory {
             Blockchain.ElectroneumTestnet,
             -> createElectroneumExplorerProvider(blockchain)
 
-            Blockchain.Arc, Blockchain.ArcTestnet -> createArcExplorerProvider(blockchain)
-
             else -> DefaultTransactionHistoryProvider
         }
     }
@@ -197,19 +195,6 @@ internal object TransactionHistoryProviderFactory {
             "https://testnet-blockexplorer.electroneum.com/"
         } else {
             "https://blockexplorer.electroneum.com/"
-        }
-        return EtherscanTransactionHistoryProvider(
-            blockchain = blockchain,
-            api = createRetrofitInstance(baseUrl).create(EtherScanApi::class.java),
-            etherscanApiKey = "",
-        )
-    }
-
-    private fun createArcExplorerProvider(blockchain: Blockchain): TransactionHistoryProvider {
-        val baseUrl = if (blockchain.isTestnet()) {
-            "https://testnet.arcscan.app/"
-        } else {
-            "https://explorer.arc.io/"
         }
         return EtherscanTransactionHistoryProvider(
             blockchain = blockchain,

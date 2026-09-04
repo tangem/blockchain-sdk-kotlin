@@ -6,6 +6,7 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.pagination.Page
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.EtherscanTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.EtherScanApi
@@ -29,14 +30,14 @@ internal class ArcTransactionHistoryTest {
     )
 
     @Test
-    fun `Arc uses etherscan compatible transaction history provider`() {
+    fun `Arc transaction history is not supported`() {
         listOf(Blockchain.Arc, Blockchain.ArcTestnet).forEach { blockchain ->
             val provider = TransactionHistoryProviderFactory.makeProvider(
                 blockchain = blockchain,
                 config = BlockchainSdkConfig(),
             )
 
-            Truth.assertThat(provider).isInstanceOf(EtherscanTransactionHistoryProvider::class.java)
+            Truth.assertThat(provider).isSameInstanceAs(DefaultTransactionHistoryProvider)
         }
     }
 
