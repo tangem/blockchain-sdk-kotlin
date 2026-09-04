@@ -110,11 +110,15 @@ class WalletManagerFactory(
             providerTypes = blockchainProviderTypes[blockchain] ?: emptyList(),
             config = config,
         ) ?: return null
+        val networkProvider = EvmNetworkServiceFactory.createNetworkServiceOrNull(
+            blockchain = blockchain,
+            multiNetworkProvider = multiNetworkProvider,
+        ) ?: return null
 
         return ExternalAddressBalanceProvider(
             blockchain = blockchain,
             address = address,
-            networkProvider = EvmNetworkServiceFactory.createNetworkService(blockchain, multiNetworkProvider),
+            networkProvider = networkProvider,
             transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, config),
         )
     }

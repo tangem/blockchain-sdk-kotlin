@@ -79,6 +79,34 @@ internal object EvmNetworkServiceFactory {
         }
     }
 
+    fun createNetworkServiceOrNull(
+        blockchain: Blockchain,
+        multiNetworkProvider: MultiNetworkProvider<out EthereumLikeJsonRpcProvider>,
+        yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
+        blockcypherNetworkProvider: BlockcypherNetworkProvider? = null,
+    ): EthereumNetworkProvider? {
+        return when {
+            blockchain == Blockchain.Quai || blockchain == Blockchain.QuaiTestnet -> {
+                if (multiNetworkProvider.currentProvider !is QuaiJsonRpcProvider) return null
+
+                @Suppress("UNCHECKED_CAST")
+                QuaiNetworkService(
+                    multiJsonRpcProvider = multiNetworkProvider as MultiNetworkProvider<QuaiJsonRpcProvider>,
+                    yieldSupplyProvider = yieldSupplyProvider,
+                )
+            }
+            multiNetworkProvider.currentProvider is EthereumJsonRpcProvider -> {
+                @Suppress("UNCHECKED_CAST")
+                EthereumNetworkService(
+                    multiJsonRpcProvider = multiNetworkProvider as MultiNetworkProvider<EthereumJsonRpcProvider>,
+                    yieldSupplyProvider = yieldSupplyProvider,
+                    blockcypherNetworkProvider = blockcypherNetworkProvider,
+                )
+            }
+            else -> null
+        }
+    }
+
     private fun createProvidersBuilder(
         blockchain: Blockchain,
         providerTypes: List<ProviderType>,

@@ -142,6 +142,34 @@ internal class ExternalAddressBalanceProviderTest {
     }
 
     @Test
+    fun `GIVEN pending on chain without details twice WHEN update THEN only one placeholder transaction is kept`() =
+        runBlocking {
+            coEvery { networkProvider.getInfo(any(), any()) } returns Result.Success(
+                info(coinBalance = BigDecimal.ZERO, tokenBalances = emptyList(), txCount = 7, pendingTxCount = 8),
+            )
+
+            provider.update()
+            val actual = provider.update()
+
+            val recentTransactions = (actual as Result.Success).data.recentTransactions
+            assertThat(recentTransactions).hasSize(1)
+            assertThat(recentTransactions.single().hash).isNull()
+        }
+
+    @Test
+    fun `GIVEN a placeholder and then no pending on chain WHEN update THEN the placeholder is removed`() = runBlocking {
+        coEvery { networkProvider.getInfo(any(), any()) } returnsMany listOf(
+            Result.Success(info(coinBalance = BigDecimal.ZERO, tokenBalances = emptyList(), txCount = 7, pendingTxCount = 8)),
+            Result.Success(info(coinBalance = BigDecimal.ZERO, tokenBalances = emptyList(), txCount = 8, pendingTxCount = 8)),
+        )
+
+        provider.update()
+        val actual = provider.update()
+
+        assertThat((actual as Result.Success).data.recentTransactions).isEmpty()
+    }
+
+    @Test
     fun `GIVEN a transaction with a known hash WHEN addTransactions THEN the entry is replaced, not duplicated`() {
         provider.addTransactions(listOf(transaction(hash = "0x01")))
 
