@@ -2,10 +2,12 @@ package com.tangem.blockchain.nft.providers.moralis
 
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.moralis.MoralisConstants
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.nft.NFTProvider
 import com.tangem.blockchain.nft.extensions.ipfsToHttps
+import com.tangem.blockchain.nft.extensions.nullIfEmpty
 import com.tangem.blockchain.nft.extensions.removeUrlQuery
 import com.tangem.blockchain.nft.models.NFTAsset
 import com.tangem.blockchain.nft.models.NFTCollection
@@ -39,17 +41,24 @@ internal class MoralisSolanaNFTProvider(
         }
         .mapValues { (collectionIdentifier, assetsResponse) ->
             val assets = assetsResponse.mapNotNull { assetResponse ->
-                assetResponse.mint?.let { tokenAddress ->
-                    val assetIdentifier = NFTAsset.Identifier.Solana(
+                val tokenAddress = assetResponse.mint
+
+                if (tokenAddress == null) {
+                    Logger.logNetwork(
+                        "$LOG_TAG Asset missing required fields: mint=null, " +
+                            "collection=${collectionIdentifier.collectionAddress}",
+                    )
+                    return@mapNotNull null
+                }
+
+                assetResponse.toNFTAsset(
+                    assetIdentifier = NFTAsset.Identifier.Solana(
                         tokenAddress = tokenAddress,
                         tokenStandard = assetResponse.tokenStandard,
-                    )
-                    assetResponse.toNFTAsset(
-                        assetIdentifier = assetIdentifier,
-                        collectionIdentifier = collectionIdentifier,
-                        owner = walletAddress,
-                    )
-                }
+                    ),
+                    collectionIdentifier = collectionIdentifier,
+                    owner = walletAddress,
+                )
             }
 
             val collectionResponse = assetsResponse.firstOrNull()?.collection
@@ -101,26 +110,37 @@ internal class MoralisSolanaNFTProvider(
         contractType = contract?.type.orEmpty(),
         blockchainId = blockchain.id,
         owner = owner,
-        name = name,
+        name = name?.nullIfEmpty(),
         amount = amount?.toBigInteger(),
         decimals = decimals ?: 0,
         description = null,
         salePrice = null,
         rarity = null,
-        media = toNFTAssetMedia(),
+        media = toNFTAssetMedia(collectionIdentifier),
         traits = attributes?.mapNotNull {
             it.toNFTAssetTrait()
         }.orEmpty(),
     )
 
-    private fun MoralisSolanaNFTAssetResponse.toNFTAssetMedia(): NFTAsset.Media? {
-        val firstFile = properties?.files?.firstOrNull()
-        return firstFile?.uri?.let {
-            NFTAsset.Media(
-                animationUrl = null, // not implemented yet
-                imageUrl = it.ipfsToHttps().removeUrlQuery(),
+    private fun MoralisSolanaNFTAssetResponse.toNFTAssetMedia(
+        collectionIdentifier: NFTCollection.Identifier.Solana,
+    ): NFTAsset.Media? {
+        val uri = properties?.files?.firstNotNullOfOrNull { it.uri?.nullIfEmpty() }
+
+        // A legitimate token whose metadata Moralis hasn't indexed yet arrives with no media files. It is repaired
+        // by a manual metadata resync, which needs the mint address.
+        if (uri == null) {
+            Logger.logNetwork(
+                "$LOG_TAG Asset has no media: collection=${collectionIdentifier.collectionAddress}, mint=$mint, " +
+                    "has_properties=${properties != null}, files=${properties?.files?.size ?: 0}",
             )
+            return null
         }
+
+        return NFTAsset.Media(
+            animationUrl = null, // not implemented yet
+            imageUrl = uri.ipfsToHttps().removeUrlQuery(),
+        )
     }
 
     private fun MoralisSolanaNFTAssetResponse.Attribute.toNFTAssetTrait(): NFTAsset.Trait? =
@@ -129,4 +149,8 @@ internal class MoralisSolanaNFTProvider(
         } else {
             null
         }
+
+    private companion object {
+        const val LOG_TAG = "MoralisSolanaNFTProvider"
+    }
 }

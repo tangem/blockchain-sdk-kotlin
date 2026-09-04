@@ -44,7 +44,8 @@ internal class TronWalletManager(
     tokenBalanceProvider = tokenBalanceProvider,
 ),
     Approver,
-    TronGaslessTransactionSigner {
+    TronGaslessTransactionSigner,
+    TronAccountActivationProvider {
 
     override val currentHost: String = networkService.host
 
@@ -79,6 +80,8 @@ internal class TronWalletManager(
             }
         }
     }
+
+    override suspend fun isAccountActivated(): Result<Boolean> = networkService.isAccountActivated(wallet.address)
 
     private fun updateError(error: BlockchainError) {
         Log.e(this::class.java.simpleName, error.customMessage)

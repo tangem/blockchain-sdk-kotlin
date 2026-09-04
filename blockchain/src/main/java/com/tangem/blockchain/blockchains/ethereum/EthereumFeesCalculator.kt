@@ -1,5 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum
 
+import com.tangem.blockchain.blockchains.ethereum.eip1559.minimalMaxFeePerGas
+import com.tangem.blockchain.blockchains.ethereum.eip1559.minimalPriorityFeePerGas
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumFeeHistory
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
@@ -10,7 +12,7 @@ import java.math.BigInteger
 import java.math.MathContext
 import java.math.RoundingMode
 
-class EthereumFeesCalculator {
+class EthereumFeesCalculator(private val blockchain: Blockchain) {
 
     internal fun calculateFees(
         amountParams: Amount,
@@ -58,11 +60,11 @@ class EthereumFeesCalculator {
         val (lowPriorityFee, marketPriorityFee, fastPriorityFee) = when (feeHistory) {
             is EthereumFeeHistory.Common -> feeHistory.toTriple()
             is EthereumFeeHistory.Fallback -> feeHistory.gasPrice.calculateByPriority()
-        }
+        }.coercePriorityFees()
 
-        val minMaxFeePerGas = feeHistory.baseFee * minimalMultiplier + lowPriorityFee
-        val normalMaxFeePerGas = feeHistory.baseFee * normalMultiplier + marketPriorityFee
-        val priorityMaxFeePerGas = feeHistory.baseFee * priorityMultiplier + fastPriorityFee
+        val minMaxFeePerGas = (feeHistory.baseFee * minimalMultiplier + lowPriorityFee).coerceMaxFeePerGas()
+        val normalMaxFeePerGas = (feeHistory.baseFee * normalMultiplier + marketPriorityFee).coerceMaxFeePerGas()
+        val priorityMaxFeePerGas = (feeHistory.baseFee * priorityMultiplier + fastPriorityFee).coerceMaxFeePerGas()
 
         val minFee = minMaxFeePerGas * gasLimitDecimal
         val normalFee = normalMaxFeePerGas * gasLimitDecimal
@@ -123,9 +125,9 @@ class EthereumFeesCalculator {
         val marketPriorityFee = when (feeHistory) {
             is EthereumFeeHistory.Common -> feeHistory.marketPriorityFee
             is EthereumFeeHistory.Fallback -> BigDecimal(feeHistory.gasPrice) * normalMultiplier
-        }
+        }.coercePriorityFee()
 
-        val normalMaxFeePerGas = feeHistory.baseFee * normalMultiplier + marketPriorityFee
+        val normalMaxFeePerGas = (feeHistory.baseFee * normalMultiplier + marketPriorityFee).coerceMaxFeePerGas()
 
         val normalFee = normalMaxFeePerGas * gasLimitDecimal
 
@@ -149,12 +151,24 @@ class EthereumFeesCalculator {
         return Triple(first = minGasPrice, second = normalGasPrice, third = priorityGasPrice)
     }
 
+    private fun Triple<BigDecimal, BigDecimal, BigDecimal>.coercePriorityFees() = Triple(
+        first = first.coercePriorityFee(),
+        second = second.coercePriorityFee(),
+        third = third.coercePriorityFee(),
+    )
+
+    private fun BigDecimal.coercePriorityFee(): BigDecimal = coerceAtLeast(blockchain.minimalPriorityFeePerGas)
+
+    private fun BigDecimal.coerceMaxFeePerGas(): BigDecimal = coerceAtLeast(blockchain.minimalMaxFeePerGas)
+
     private fun createFee(amountParams: Amount, value: BigInteger): Amount {
+        val decimals = Blockchain.Ethereum.decimals()
+
         return Amount(
             amount = amountParams,
             value = value.toBigDecimal(
-                scale = Blockchain.Ethereum.decimals(),
-                mathContext = MathContext(Blockchain.Ethereum.decimals(), RoundingMode.HALF_EVEN),
+                scale = decimals,
+                mathContext = MathContext(decimals, RoundingMode.HALF_EVEN),
             ),
         )
     }

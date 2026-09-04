@@ -183,5 +183,7 @@ val Blockchain.isUTXO: Boolean
         IgraTestnet,
         Electroneum,
         ElectroneumTestnet,
+        Arc,
+        ArcTestnet,
         -> false
     }

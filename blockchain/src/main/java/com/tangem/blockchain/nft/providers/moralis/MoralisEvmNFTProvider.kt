@@ -3,10 +3,12 @@ package com.tangem.blockchain.nft.providers.moralis
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.HEX_PREFIX
 import com.tangem.blockchain.common.logging.AddHeaderInterceptor
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.moralis.MoralisConstants
 import com.tangem.blockchain.network.createRetrofitInstance
 import com.tangem.blockchain.nft.NFTProvider
 import com.tangem.blockchain.nft.extensions.ipfsToHttps
+import com.tangem.blockchain.nft.extensions.nullIfEmpty
 import com.tangem.blockchain.nft.extensions.removeUrlQuery
 import com.tangem.blockchain.nft.models.NFTAsset
 import com.tangem.blockchain.nft.models.NFTCollection
@@ -45,17 +47,25 @@ internal class MoralisEvmNFTProvider(
         } while (cursor != null)
 
         return accumulator
-            .mapNotNull {
-                it.tokenAddress?.let { tokenAddress ->
-                    NFTCollection(
-                        name = it.name.orEmpty(),
-                        identifier = NFTCollection.Identifier.EVM(tokenAddress),
-                        blockchainId = blockchain.id,
-                        description = null,
-                        logoUrl = it.collectionLogo,
-                        count = it.count ?: 0,
+            .mapNotNull { collectionResponse ->
+                val tokenAddress = collectionResponse.tokenAddress
+
+                if (tokenAddress == null) {
+                    Logger.logNetwork(
+                        "$LOG_TAG Collection missing required fields: token_address=null, " +
+                            "chain=${blockchain.toQueryParam()}, name=${collectionResponse.name}",
                     )
+                    return@mapNotNull null
                 }
+
+                NFTCollection(
+                    name = collectionResponse.name.orEmpty(),
+                    identifier = NFTCollection.Identifier.EVM(tokenAddress),
+                    blockchainId = blockchain.id,
+                    description = null,
+                    logoUrl = collectionResponse.collectionLogo,
+                    count = collectionResponse.count ?: 0,
+                )
             }
     }
 
@@ -79,17 +89,25 @@ internal class MoralisEvmNFTProvider(
             cursor = response.cursor
         } while (cursor != null)
 
-        return accumulator.mapNotNull {
-            it.tokenId?.let { tokenId ->
-                it.toNFTAsset(
-                    assetIdentifier = NFTAsset.Identifier.EVM(
-                        tokenId = tokenId.toBigInteger(),
-                        tokenAddress = collectionIdentifier.tokenAddress,
-                        contractType = it.toContractType(),
-                    ),
-                    collectionIdentifier = collectionIdentifier,
+        return accumulator.mapNotNull { assetResponse ->
+            val tokenId = assetResponse.tokenId
+
+            if (tokenId == null) {
+                Logger.logNetwork(
+                    "$LOG_TAG Asset missing required fields: token_id=null, " +
+                        "chain=${blockchain.toQueryParam()}, token_address=${collectionIdentifier.tokenAddress}",
                 )
+                return@mapNotNull null
             }
+
+            assetResponse.toNFTAsset(
+                assetIdentifier = NFTAsset.Identifier.EVM(
+                    tokenId = tokenId.toBigInteger(),
+                    tokenAddress = collectionIdentifier.tokenAddress,
+                    contractType = assetResponse.toContractType(),
+                ),
+                collectionIdentifier = collectionIdentifier,
+            )
         }
     }
 
@@ -159,27 +177,48 @@ internal class MoralisEvmNFTProvider(
         contractType = contractType.orEmpty(),
         blockchainId = blockchain.id,
         owner = ownerOf,
-        name = normalizedMetadata?.name,
-        description = normalizedMetadata?.description,
+        // Moralis leaves normalized_metadata empty for a token it hasn't indexed yet, while the top-level name
+        // (taken from the contract) is still there — without the fallback such a token renders nameless.
+        name = normalizedMetadata?.name?.nullIfEmpty() ?: name?.nullIfEmpty(),
+        description = normalizedMetadata?.description?.nullIfEmpty(),
         amount = amount?.toBigInteger(),
         decimals = 0,
         salePrice = null,
         rarity = toNFTAssetRarity(),
-        media = toNFTAssetMedia(),
+        media = toNFTAssetMedia(collectionIdentifier),
         traits = normalizedMetadata?.attributes?.mapNotNull {
             it.toNFTAssetTrait()
         }.orEmpty(),
     )
 
-    private fun MoralisEvmNFTAssetResponse.toNFTAssetMedia(): NFTAsset.Media? = when {
-        media?.mediaCollection?.high?.url != null -> media.mediaCollection.high.url
-        media?.mediaCollection?.medium?.url != null -> media.mediaCollection.medium.url
-        media?.originalMediaUrl != null -> media.originalMediaUrl
-        else -> null
-    }?.let {
-        NFTAsset.Media(
+    private fun MoralisEvmNFTAssetResponse.toNFTAssetMedia(
+        collectionIdentifier: NFTCollection.Identifier.EVM,
+    ): NFTAsset.Media? {
+        val assetMedia = media
+        val mediaCollection = assetMedia?.mediaCollection
+
+        val url = mediaCollection?.high?.url?.nullIfEmpty()
+            ?: mediaCollection?.medium?.url?.nullIfEmpty()
+            ?: mediaCollection?.low?.url?.nullIfEmpty()
+            ?: assetMedia?.originalMediaUrl?.nullIfEmpty()
+
+        // Moralis serves a legitimate token with no media at all when it hasn't indexed its metadata yet. Such a
+        // token is repaired by a manual metadata resync, which needs the chain, the contract and the token id — so
+        // log the identity together with the fields that tell an unindexed token apart from a spam or media-less one.
+        if (url == null) {
+            Logger.logNetwork(
+                "$LOG_TAG Asset has no media: chain=${blockchain.toQueryParam()}, " +
+                    "token_address=${collectionIdentifier.tokenAddress}, token_id=$tokenId, " +
+                    "media_status=${assetMedia?.status}, has_metadata=${metadata != null}, " +
+                    "has_normalized_metadata=${normalizedMetadata != null}, token_uri=$tokenUri, " +
+                    "last_metadata_sync=$lastMetadataSync, possible_spam=$possibleSpam",
+            )
+            return null
+        }
+
+        return NFTAsset.Media(
             animationUrl = null, // not implemented yet
-            imageUrl = it.ipfsToHttps().removeUrlQuery(),
+            imageUrl = url.ipfsToHttps().removeUrlQuery(),
         )
     }
 
@@ -203,6 +242,7 @@ internal class MoralisEvmNFTProvider(
         } ?: NFTAsset.Identifier.EVM.ContractType.Unknown
 
     private companion object {
+        const val LOG_TAG = "MoralisEvmNFTProvider"
         const val LAST_SALE_PRICE_DAYS = 365
         const val PAGINATION_LIMIT = 100
     }

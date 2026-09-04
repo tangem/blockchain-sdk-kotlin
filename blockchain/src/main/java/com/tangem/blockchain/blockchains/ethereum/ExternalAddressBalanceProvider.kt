@@ -117,6 +117,7 @@ class ExternalAddressBalanceProvider internal constructor(
         pendingTxCount = data.pendingTxCount
 
         if (txCount == pendingTxCount) {
+            mutableRecentTransactions.removeAll(::isPendingPlaceholder)
             mutableRecentTransactions.forEach { it.status = TransactionStatus.Confirmed }
         } else if (!data.recentTransactions.isNullOrEmpty()) {
             updateRecentTransactions(data.recentTransactions)
@@ -139,6 +140,8 @@ class ExternalAddressBalanceProvider internal constructor(
     }
 
     private fun addTransactionDummy() {
+        if (mutableRecentTransactions.any(::isPendingPlaceholder)) return
+
         mutableRecentTransactions.add(
             TransactionData.Uncompiled(
                 amount = Amount(null, blockchain),
@@ -148,6 +151,13 @@ class ExternalAddressBalanceProvider internal constructor(
                 date = Calendar.getInstance(),
             ),
         )
+    }
+
+    private fun isPendingPlaceholder(transaction: TransactionData.Uncompiled): Boolean {
+        return transaction.hash == null &&
+            transaction.status == TransactionStatus.Unconfirmed &&
+            transaction.sourceAddress == UNKNOWN_ADDRESS &&
+            transaction.destinationAddress == UNKNOWN_ADDRESS
     }
 
     private fun info(): ExternalAddressInfo {

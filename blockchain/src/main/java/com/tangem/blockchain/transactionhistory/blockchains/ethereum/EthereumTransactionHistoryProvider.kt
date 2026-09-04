@@ -11,6 +11,7 @@ import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider.Compa
 import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -39,6 +40,8 @@ internal class EthereumTransactionHistoryProvider(
             } else {
                 TransactionHistoryState.Success.Empty
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             TransactionHistoryState.Failed.FetchError(e)
         }
@@ -73,6 +76,8 @@ internal class EthereumTransactionHistoryProvider(
                     items = txs,
                 ),
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }

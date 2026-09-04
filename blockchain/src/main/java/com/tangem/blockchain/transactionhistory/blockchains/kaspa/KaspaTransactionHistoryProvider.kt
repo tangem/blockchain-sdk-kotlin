@@ -16,6 +16,7 @@ import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.So
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.TransactionStatus.Confirmed
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.TransactionStatus.Unconfirmed
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -54,6 +55,8 @@ internal class KaspaTransactionHistoryProvider(
                 Page.Next(pageToLoad.inc().toString())
             }
             Result.Success(PaginationWrapper(nextPage = nextPage, items = txs))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
@@ -73,6 +76,8 @@ internal class KaspaTransactionHistoryProvider(
             } else {
                 TransactionHistoryState.Success.Empty
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             TransactionHistoryState.Failed.FetchError(e)
         }
