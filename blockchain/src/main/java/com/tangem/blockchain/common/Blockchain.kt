@@ -244,6 +244,7 @@ enum class Blockchain(
             OdysseyChain -> "Dione"
             OdysseyChainTestnet -> "Dione Testnet"
             ApeChain -> "ApeCoin"
+            Arc, ArcTestnet -> "USDC"
             else -> this.fullName + l2Suffix
         }
     }
