@@ -7,7 +7,7 @@ import java.math.BigInteger
 
 internal class EthereumFeeCalculatorTest {
 
-    private val feesCalculator = EthereumFeesCalculator()
+    private val feesCalculator = EthereumFeesCalculator(Blockchain.Ethereum)
 
     @Test
     fun testCalculateFees1() {

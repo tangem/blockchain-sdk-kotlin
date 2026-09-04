@@ -40,9 +40,9 @@ internal object GachaVaultParser {
         buffer.long // _reserved, legacy filler
 
         var cursor = TAIL_OFFSET
-        val liveBuybackMint = data.readOptionalPubkey(cursor)
+        val liveBuybackMint = data.readOptionalPubkey(cursor) ?: return null
         cursor += liveBuybackMint.size
-        val liveBuybackToken = data.readOptionalPubkey(cursor)
+        val liveBuybackToken = data.readOptionalPubkey(cursor) ?: return null
         cursor += liveBuybackToken.size
         if (cursor >= data.size) return null
 
@@ -65,12 +65,12 @@ internal object GachaVaultParser {
         return PublicKey(bytes).toBase58()
     }
 
-    private fun ByteArray.readOptionalPubkey(offset: Int): OptionalPubkey {
-        val isSome = getOrNull(offset)?.toInt() == SOME_TAG
-        if (!isSome) return OptionalPubkey(value = null, size = 1)
+    private fun ByteArray.readOptionalPubkey(offset: Int): OptionalPubkey? {
+        val tag = getOrNull(offset)?.toInt() ?: return null
+        if (tag != SOME_TAG) return OptionalPubkey(value = null, size = 1)
 
         val end = offset + 1 + PUBKEY_SIZE
-        if (end > size) return OptionalPubkey(value = null, size = 1)
+        if (end > size) return null
 
         return OptionalPubkey(
             value = PublicKey(copyOfRange(offset + 1, end)).toBase58(),

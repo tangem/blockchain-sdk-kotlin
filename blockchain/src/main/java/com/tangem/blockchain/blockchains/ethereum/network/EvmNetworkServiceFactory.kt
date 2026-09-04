@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.ethereum.network
 
 import com.tangem.blockchain.blockchains.adi.AdiProvidersBuilder
+import com.tangem.blockchain.blockchains.arc.ArcProvidersBuilder
 import com.tangem.blockchain.blockchains.electroneum.ElectroneumProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.EthereumProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.providers.*
@@ -75,6 +76,34 @@ internal object EvmNetworkServiceFactory {
                     blockcypherNetworkProvider = blockcypherNetworkProvider,
                 )
             }
+        }
+    }
+
+    fun createNetworkServiceOrNull(
+        blockchain: Blockchain,
+        multiNetworkProvider: MultiNetworkProvider<out EthereumLikeJsonRpcProvider>,
+        yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
+        blockcypherNetworkProvider: BlockcypherNetworkProvider? = null,
+    ): EthereumNetworkProvider? {
+        return when {
+            blockchain == Blockchain.Quai || blockchain == Blockchain.QuaiTestnet -> {
+                if (multiNetworkProvider.currentProvider !is QuaiJsonRpcProvider) return null
+
+                @Suppress("UNCHECKED_CAST")
+                QuaiNetworkService(
+                    multiJsonRpcProvider = multiNetworkProvider as MultiNetworkProvider<QuaiJsonRpcProvider>,
+                    yieldSupplyProvider = yieldSupplyProvider,
+                )
+            }
+            multiNetworkProvider.currentProvider is EthereumJsonRpcProvider -> {
+                @Suppress("UNCHECKED_CAST")
+                EthereumNetworkService(
+                    multiJsonRpcProvider = multiNetworkProvider as MultiNetworkProvider<EthereumJsonRpcProvider>,
+                    yieldSupplyProvider = yieldSupplyProvider,
+                    blockcypherNetworkProvider = blockcypherNetworkProvider,
+                )
+            }
+            else -> null
         }
     }
 
@@ -155,6 +184,7 @@ internal object EvmNetworkServiceFactory {
             Blockchain.ArbitrumNova -> ArbitrumNovaProvidersBuilder(providerTypes, config)
             Blockchain.Plasma, Blockchain.PlasmaTestnet -> PlasmaProvidersBuilder(providerTypes, config)
             Blockchain.Adi, Blockchain.AdiTestnet -> AdiProvidersBuilder(providerTypes, config)
+            Blockchain.Arc, Blockchain.ArcTestnet -> ArcProvidersBuilder(providerTypes, config)
             Blockchain.SeiEvm, Blockchain.SeiEvmTestnet -> SeiEvmProvidersBuilder(providerTypes, config)
             Blockchain.Robinhood, Blockchain.RobinhoodTestnet -> RobinhoodProvidersBuilder(providerTypes, config)
             Blockchain.Igra, Blockchain.IgraTestnet -> IgraProvidersBuilder(providerTypes, config)

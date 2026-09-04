@@ -19,6 +19,7 @@ import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.TransactionType.TronStakingTransactionType
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import com.tangem.common.extensions.guard
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
@@ -45,6 +46,8 @@ internal class TronTransactionHistoryProvider(
                 )
             }
             checkHistoryStatus(response, filterType)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             TransactionHistoryState.Failed.FetchError(e)
         }
@@ -100,6 +103,8 @@ internal class TronTransactionHistoryProvider(
                     ),
                 )
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }

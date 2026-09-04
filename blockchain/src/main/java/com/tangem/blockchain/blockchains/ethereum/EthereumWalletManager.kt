@@ -83,7 +83,7 @@ open class EthereumWalletManager(
     EthereumGaslessDataProvider by ethereumGaslessDataProvider {
 
     // move to constructor later
-    protected val feesCalculator = EthereumFeesCalculator()
+    protected val feesCalculator = EthereumFeesCalculator(wallet.blockchain)
 
     private val ensNameProcessor = DefaultENSNameProcessor()
 
