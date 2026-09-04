@@ -51,6 +51,12 @@ internal class ArcTest {
     }
 
     @Test
+    fun `Arc coin is named USDC, not after the network`() {
+        Truth.assertThat(Blockchain.Arc.getCoinName()).isEqualTo("USDC")
+        Truth.assertThat(Blockchain.ArcTestnet.getCoinName()).isEqualTo("USDC")
+    }
+
+    @Test
     fun `Arc operates with 18 decimals but displays USDC with 6`() {
         Truth.assertThat(Blockchain.Arc.decimals()).isEqualTo(18)
         Truth.assertThat(Blockchain.ArcTestnet.decimals()).isEqualTo(18)
