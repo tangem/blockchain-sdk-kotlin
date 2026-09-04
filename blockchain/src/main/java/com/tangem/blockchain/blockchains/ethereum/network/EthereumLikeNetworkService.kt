@@ -169,57 +169,35 @@ internal abstract class EthereumLikeNetworkService(
         }
     }
 
-    override suspend fun getExternalAddressBalances(
-        address: String,
-        tokens: Set<Token>,
-    ): Result<ExternalAddressBalances> {
-        return try {
-            coroutineScope {
-                val coinBalanceDeferred = async {
-                    multiJsonRpcProvider.performRequest(EthereumLikeJsonRpcProvider::getBalance, address)
-                }
-                // Plain `balanceOf` per token, never through the yield-supply provider: that one is built around
-                // this wallet, so on a foreign address it would answer with our own yield balance
-                val tokenBalancesDeferred = tokens.map { token -> async { getTokenBalance(address, token) } }
-
-                val coinBalance = coinBalanceDeferred.await().extractResult().let { response ->
-                    requireNotNull(
-                        value = EthereumUtils.parseEthereumDecimal(value = response, decimalsCount = getDecimals()),
-                        lazyMessage = { "Error while parsing balance. Balance response: $response" },
-                    )
-                }
-
-                Result.Success(
-                    ExternalAddressBalances(
-                        coinBalance = coinBalance,
-                        tokenBalances = tokenBalancesDeferred.awaitAll(),
-                    ),
-                )
-            }
-        } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainSdkError())
-        }
-    }
-
     private suspend fun getTokensBalanceInternal(address: String, tokens: Set<Token>): List<Amount> {
         return coroutineScope {
             val isYieldSupported = yieldSupplyProvider.isSupported()
 
             tokens.map { token ->
                 async {
-                    if (isYieldSupported && yieldSupplyProvider.getYieldModuleAddress() != EthereumUtils.ZERO_ADDRESS) {
-                        val yieldLendingStatus = yieldSupplyProvider.getYieldSupplyStatus(token.contractAddress)
-                        if (yieldLendingStatus?.isActive == true) {
-                            yieldSupplyProvider.getBalance(yieldLendingStatus, token)
-                        } else {
-                            getTokenBalance(address, token)
-                        }
+                    if (isYieldSupported) {
+                        getYieldAwareTokenBalance(address, token)
                     } else {
                         getTokenBalance(address, token)
                     }
                 }
             }.awaitAll()
         }
+    }
+
+    private suspend fun getYieldAwareTokenBalance(address: String, token: Token): Amount = try {
+        if (yieldSupplyProvider.getYieldModuleAddress() != EthereumUtils.ZERO_ADDRESS) {
+            val yieldLendingStatus = yieldSupplyProvider.getYieldSupplyStatus(token.contractAddress)
+            if (yieldLendingStatus?.isActive == true) {
+                yieldSupplyProvider.getBalance(yieldLendingStatus, token)
+            } else {
+                getTokenBalance(address, token)
+            }
+        } else {
+            getTokenBalance(address, token)
+        }
+    } catch (e: BlockchainSdkError.Ethereum.YieldModuleAddressMismatch) {
+        getTokenBalance(address, token)
     }
 
     override suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>> {

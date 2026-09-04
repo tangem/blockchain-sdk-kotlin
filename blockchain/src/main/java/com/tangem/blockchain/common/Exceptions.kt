@@ -250,9 +250,21 @@ sealed class BlockchainSdkError(
             customMessage = null,
         )
 
+        data class YieldModuleAddressMismatch(val addresses: List<String>) : Ethereum(
+            subCode = ERROR_CODE_YIELD_MODULE_ADDRESS_MISMATCH,
+            customMessage = "Yield module address mismatch between providers: ${addresses.joinToString()}",
+        )
+
+        class YieldModuleAddressUnavailable : Ethereum(
+            subCode = ERROR_CODE_YIELD_MODULE_ADDRESS_UNAVAILABLE,
+            customMessage = "No provider returned a yield module address",
+        )
+
         companion object {
             internal const val ERROR_CODE_INSUFFICIENT_FUNDS_FOR_OPERATION = 3
             internal const val ERROR_CODE_ESTIMATE_OVERRIDE_ERROR = 4
+            internal const val ERROR_CODE_YIELD_MODULE_ADDRESS_MISMATCH = 5
+            internal const val ERROR_CODE_YIELD_MODULE_ADDRESS_UNAVAILABLE = 6
 
             internal fun getApiErrorByCode(code: Int, message: String): Ethereum = when (code) {
                 ERROR_CODE_INSUFFICIENT_FUNDS_FOR_OPERATION -> InsufficientFundsForOperation(message)
