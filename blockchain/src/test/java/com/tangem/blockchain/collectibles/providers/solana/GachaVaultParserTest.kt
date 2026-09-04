@@ -80,6 +80,13 @@ internal class GachaVaultParserTest {
         assertThat(GachaVaultParser.parse(address, ByteArray(0))).isNull()
     }
 
+    @Test
+    fun `a truncated some option is rejected`() {
+        val truncatedBuyback = data.copyOf(TAIL_OFFSET + 10).also { it[TAIL_OFFSET] = 1 }
+
+        assertThat(GachaVaultParser.parse(address, truncatedBuyback)).isNull()
+    }
+
     private companion object {
         const val TAIL_OFFSET = 112
     }
