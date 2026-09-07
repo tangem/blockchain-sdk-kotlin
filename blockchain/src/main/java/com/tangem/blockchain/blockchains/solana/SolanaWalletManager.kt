@@ -1,7 +1,6 @@
 package com.tangem.blockchain.blockchains.solana
 
 import android.os.SystemClock
-import android.util.Log
 import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionParser
 import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionSizeReducer
 import com.tangem.blockchain.collectibles.CollectiblesVaultProvider
@@ -13,6 +12,7 @@ import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgr
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.SolanaRpcClient
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -98,7 +98,7 @@ class SolanaWalletManager internal constructor(
     }
 
     private fun updateWithError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
 
         wallet.removeAllTokens()
         throw error
@@ -109,7 +109,7 @@ class SolanaWalletManager internal constructor(
         val signatureStatuses = multiNetworkProvider.performRequest {
             getSignatureStatuses(txSignatures)
         }.successOr {
-            Log.e(this.javaClass.simpleName, it.error.customMessage)
+            Logger.e(this.javaClass.simpleName, it.error.customMessage)
             return
         }
 

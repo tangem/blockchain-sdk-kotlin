@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.koinos.network
 
-import android.util.Log
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.koinos.KoinContractAbi
@@ -12,6 +11,7 @@ import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.JsonRPCRequest
 import com.tangem.blockchain.common.JsonRPCResponse
 import com.tangem.blockchain.common.NetworkProvider
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.network.createRetrofitInstance
@@ -290,7 +290,7 @@ internal class KoinosNetworkProvider(
             runCatching {
                 adapter.fromJsonValue(result)
             }.onFailure {
-                Log.e("KoinosApi", it.stackTraceToString())
+                Logger.e("KoinosApi", it.stackTraceToString())
             }.getOrNull()?.let { Result.Success(it) } ?: Result.Failure(
                 BlockchainSdkError.UnsupportedOperation(
                     "Unknown Koinos JSON-RPC response result",
