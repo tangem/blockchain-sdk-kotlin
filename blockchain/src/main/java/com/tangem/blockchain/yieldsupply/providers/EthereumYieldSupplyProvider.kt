@@ -1,6 +1,5 @@
 package com.tangem.blockchain.yieldsupply.providers
 
-import android.util.Log
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
@@ -12,6 +11,7 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData.YieldSupplyModule
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.di.DepsContainer
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.hexToBigDecimal
 import com.tangem.blockchain.extensions.orZero
@@ -105,7 +105,7 @@ internal class EthereumYieldSupplyProvider(
     } catch (e: BlockchainSdkError.Ethereum.YieldModuleAddressMismatch) {
         throw e
     } catch (e: Exception) {
-        Log.w(TAG, "Failed to get yield module address: ${e.message}")
+        Logger.e(TAG, "Failed to get yield module address: ${e.message}")
         EthereumUtils.ZERO_ADDRESS
     }
 
@@ -132,7 +132,7 @@ internal class EthereumYieldSupplyProvider(
         ).extractResult()
         ethereumYieldSupplyStatusConverter.convert(result)
     } catch (exception: Exception) {
-        Log.w(this::class.java.simpleName, "Failed to get yield supply status", exception)
+        Logger.e(this::class.java.simpleName, "Failed to get yield supply status", exception)
         null
     }
 
@@ -257,7 +257,7 @@ internal class EthereumYieldSupplyProvider(
             ).extractResult()
             HEX_PREFIX + result.takeLast(EthereumUtils.ADDRESS_HEX_LENGTH)
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to get module implementation: ${e.message}")
+            Logger.e(TAG, "Failed to get module implementation: ${e.message}")
             // Module is provably deployed (we just resolved yieldModuleAddress != ZERO), but we
             // cannot read its implementation slot — version is unknown, refuse to proceed.
             return YieldModuleVersionStatus.Indeterminate(
@@ -308,7 +308,7 @@ internal class EthereumYieldSupplyProvider(
             result.removePrefix(HEX_PREFIX).trimStart('0') == "1"
         }
     } catch (e: Exception) {
-        Log.w(TAG, "Failed to check registry address: ${e.message}")
+        Logger.e(TAG, "Failed to check registry address: ${e.message}")
         false
     }
 

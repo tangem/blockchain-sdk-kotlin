@@ -1,8 +1,8 @@
 package com.tangem.blockchain.blockchains.stellar
 
-import android.util.Log
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.memo.MemoState
 import com.tangem.blockchain.common.memo.MemoValidator
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
@@ -78,7 +78,7 @@ internal class StellarWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 

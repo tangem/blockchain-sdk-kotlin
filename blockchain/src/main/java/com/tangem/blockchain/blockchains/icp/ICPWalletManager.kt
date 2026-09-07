@@ -1,9 +1,9 @@
 package com.tangem.blockchain.blockchains.icp
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.icp.network.ICPNetworkProvider
 import com.tangem.blockchain.blockchains.icp.network.ICPTransferWithSigner
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.memo.MemoState
 import com.tangem.blockchain.common.memo.isValidUInt64
 import com.tangem.blockchain.common.transaction.Fee
@@ -36,7 +36,7 @@ internal class ICPWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage, error)
+        Logger.e(this::class.java.simpleName, error.customMessage, error)
         if (error is BlockchainSdkError) throw error
     }
 

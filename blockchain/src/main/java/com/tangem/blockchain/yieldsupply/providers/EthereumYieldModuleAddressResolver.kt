@@ -1,6 +1,5 @@
 package com.tangem.blockchain.yieldsupply.providers
 
-import android.util.Log
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.ethereum.EthereumAddressService
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
@@ -60,23 +59,18 @@ internal class EthereumYieldModuleAddressResolver(
             answers.joinToString { (_, address) -> address }
         }
 
-        log("Yield module address mismatch between providers: $details")
+        Logger.e(TAG, "Yield module address mismatch between providers: $details")
     }
 
     private fun logNotCorroborated() {
-        log("Yield module address not corroborated: only one provider answered")
-    }
-
-    private fun log(message: String) {
-        Log.w(TAG, message)
-        Logger.logTransaction(message)
+        Logger.e(TAG, "Yield module address not corroborated: only one provider answered")
     }
 
     private fun Result<JsonRPCResponse>.extractAddressOrNull(): String? {
         val rawAddress = try {
             extractYieldRpcResult(stringAdapter)
         } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-            Log.w(TAG, "Failed to read yield module address from provider: ${e.message}")
+            Logger.e(TAG, "Failed to read yield module address from provider: ${e.message}")
             return null
         }
 

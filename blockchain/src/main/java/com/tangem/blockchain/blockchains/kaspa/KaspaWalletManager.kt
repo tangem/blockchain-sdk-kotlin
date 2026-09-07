@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.kaspa
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.kaspa.krc20.KaspaKRC20InfoResponse
 import com.tangem.blockchain.blockchains.kaspa.krc20.KaspaKRC20NetworkProvider
 import com.tangem.blockchain.blockchains.kaspa.krc20.model.RedeemScript
@@ -9,6 +8,7 @@ import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -76,7 +76,7 @@ internal class KaspaWalletManager(
     }
 
     private fun updateWallet(response: KaspaInfoResponse) {
-        Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
+        Logger.d(this::class.java.simpleName, "Balance is ${response.balance}")
         if (response.balance != wallet.amounts[AmountType.Coin]?.value) {
             // assume outgoing transaction has been finalized if balance has changed
             wallet.recentTransactions.clear()
@@ -102,7 +102,7 @@ internal class KaspaWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 

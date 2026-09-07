@@ -1,8 +1,6 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import android.util.Base64
-import android.util.Log
-import android.util.Log.e
 import com.tangem.blockchain.blockchains.bitcoin.address.BitcoinWalletAddressProvider
 import com.tangem.blockchain.blockchains.bitcoin.messagesigning.BitcoinMessageSigner
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
@@ -391,7 +389,7 @@ internal open class BitcoinWalletManager(
     }
 
     internal fun updateWallet(response: BitcoinAddressInfo) {
-        Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
+        Logger.d(this::class.java.simpleName, "Balance is ${response.balance}")
 
         wallet.changeAmountValue(AmountType.Coin, response.balance)
         transactionBuilder.unspentOutputs = response.unspentOutputs
@@ -408,7 +406,7 @@ internal open class BitcoinWalletManager(
     }
 
     internal fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         (error as? BlockchainSdkError)?.let { throw it }
     }
 

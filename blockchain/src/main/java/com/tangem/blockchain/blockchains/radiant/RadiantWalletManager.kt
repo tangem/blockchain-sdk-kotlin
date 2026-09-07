@@ -1,9 +1,9 @@
 package com.tangem.blockchain.blockchains.radiant
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.radiant.models.RadiantAccountInfo
 import com.tangem.blockchain.blockchains.radiant.network.RadiantNetworkService
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -46,7 +46,7 @@ internal class RadiantWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage, error)
+        Logger.e(this::class.java.simpleName, error.customMessage, error)
         if (error is BlockchainSdkError) throw error
     }
 
