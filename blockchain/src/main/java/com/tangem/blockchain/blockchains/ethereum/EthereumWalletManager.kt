@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.ethereum
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.ethereum.eip1559.isSupportEIP1559
 import com.tangem.blockchain.blockchains.ethereum.ens.DefaultENSNameProcessor
 import com.tangem.blockchain.blockchains.ethereum.gasless.DefaultEthereumGaslessDataProvider
@@ -16,6 +15,7 @@ import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionV
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.datastorage.PendingTransaction
 import com.tangem.blockchain.common.di.DepsContainer
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -135,21 +135,21 @@ open class EthereumWalletManager(
                 val ensResult = reverseResolve(wallet.address)
                 when (ensResult) {
                     is ReverseResolveAddressResult.Error -> {
-                        Log.w(this::class.java.simpleName, "Failed to fetch ENS name: ${ensResult.error}")
+                        Logger.e(this::class.java.simpleName, "Failed to fetch ENS name: ${ensResult.error}")
                     }
                     ReverseResolveAddressResult.NotSupported -> {
-                        Log.w(this::class.java.simpleName, "Ens not supported")
+                        Logger.i(this::class.java.simpleName, "Ens not supported")
                     }
                     is ReverseResolveAddressResult.Resolved -> wallet.setEnsName(ensResult.name)
                 }
             } catch (e: Exception) {
-                Log.w(this::class.java.simpleName, "Failed to fetch ENS name: $e")
+                Logger.e(this::class.java.simpleName, "Failed to fetch ENS name: $e")
             }
         }
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 

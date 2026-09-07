@@ -1,11 +1,11 @@
 package com.tangem.blockchain.blockchains.xrp
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.xrp.network.XrpInfoResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.blockchains.xrp.network.XrpTokenBalance
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.memo.MemoValidator
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.common.memo.MemoState
@@ -59,7 +59,7 @@ internal class XrpWalletManager(
     }
 
     private suspend fun updateWallet(response: XrpInfoResponse) {
-        Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
+        Logger.d(this::class.java.simpleName, "Balance is ${response.balance}")
 
         wallet.setReserveValue(response.reserveTotal)
         transactionBuilder.minReserve = response.reserveBase
@@ -85,7 +85,7 @@ internal class XrpWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 

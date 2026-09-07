@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.tron
 
-import android.util.Log
 import com.google.common.primitives.Ints
 import com.tangem.blockchain.blockchains.tron.gasless.TronGaslessTransactionSigner
 import com.tangem.blockchain.blockchains.tron.network.TronAccountInfo
@@ -9,6 +8,7 @@ import com.tangem.blockchain.blockchains.tron.network.TronGetAccountResourceResp
 import com.tangem.blockchain.blockchains.tron.network.TronNetworkService
 import com.tangem.blockchain.blockchains.tron.tokenmethods.TronApprovalTokenCallData
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -69,7 +69,7 @@ internal class TronWalletManager(
     }
 
     private fun updateWallet(response: TronAccountInfo) {
-        Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
+        Logger.d(this::class.java.simpleName, "Balance is ${response.balance}")
 
         wallet.changeAmountValue(AmountType.Coin, response.balance)
         response.tokenBalances.forEach { wallet.addTokenValue(it.value, it.key) }
@@ -84,7 +84,7 @@ internal class TronWalletManager(
     override suspend fun isAccountActivated(): Result<Boolean> = networkService.isAccountActivated(wallet.address)
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 

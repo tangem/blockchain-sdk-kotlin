@@ -1,8 +1,8 @@
 package com.tangem.blockchain.common.network.providers
 
-import android.util.Log
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.NetworkProvider
+import com.tangem.blockchain.common.logging.Logger
 
 /**
  * Network providers builder
@@ -27,7 +27,7 @@ internal abstract class NetworkProvidersBuilder<out T : NetworkProvider> {
         val providers = if (blockchain.isTestnet()) createTestnetProviders(blockchain) else createProviders(blockchain)
 
         return providers.ifEmpty {
-            Log.e(NetworkProvidersBuilder::class.simpleName, "No providers found for $blockchain")
+            Logger.e(NetworkProvidersBuilder::class.java.simpleName, "No providers found for $blockchain")
             emptyList()
         }
     }

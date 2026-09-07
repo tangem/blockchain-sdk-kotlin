@@ -1,11 +1,11 @@
 package com.tangem.blockchain.blockchains.tezos
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService.Companion.calculateTezosChecksum
 import com.tangem.blockchain.blockchains.tezos.network.TezosInfoResponse
 import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkProvider
 import com.tangem.blockchain.blockchains.tezos.network.TezosTransactionData
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -45,7 +45,7 @@ class TezosWalletManager(
     }
 
     private fun updateWallet(response: TezosInfoResponse) {
-        Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
+        Logger.d(this::class.java.simpleName, "Balance is ${response.balance}")
         if (response.balance != wallet.amounts[AmountType.Coin]?.value) {
             // assume outgoing transaction has been finalized if balance has changed
             wallet.recentTransactions.clear()
@@ -55,7 +55,7 @@ class TezosWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 

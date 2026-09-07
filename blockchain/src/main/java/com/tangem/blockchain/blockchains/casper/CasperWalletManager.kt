@@ -1,9 +1,9 @@
 package com.tangem.blockchain.blockchains.casper
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.casper.models.CasperBalance
 import com.tangem.blockchain.blockchains.casper.network.CasperNetworkProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.memo.MemoState
 import com.tangem.blockchain.common.memo.isValidUInt64
 import com.tangem.blockchain.common.transaction.Fee
@@ -41,7 +41,7 @@ internal class CasperWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage, error)
+        Logger.e(this::class.java.simpleName, error.customMessage, error)
         if (error is BlockchainSdkError) throw error
     }
 
@@ -74,7 +74,7 @@ internal class CasperWalletManager(
                 }
             }
         } catch (e: Exception) {
-            Log.e(this::class.java.simpleName, e.toBlockchainSdkError().customMessage)
+            Logger.e(this::class.java.simpleName, e.toBlockchainSdkError().customMessage)
             throw e
         }
     }

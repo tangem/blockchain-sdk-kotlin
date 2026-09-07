@@ -1,9 +1,9 @@
 package com.tangem.blockchain.blockchains.vechain
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.vechain.network.VeChainNetworkProvider
 import com.tangem.blockchain.blockchains.vechain.network.VeChainNetworkService
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
@@ -73,7 +73,7 @@ internal class VeChainWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 
