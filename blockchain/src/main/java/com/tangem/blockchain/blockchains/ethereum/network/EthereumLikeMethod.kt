@@ -14,6 +14,7 @@ interface EthereumLikeMethod {
     val gasPrice: String
     val feeHistory: String
     val getStorageAt: String
+    val getCode: String
 }
 
 /**
@@ -29,6 +30,7 @@ object EthereumMethod : EthereumLikeMethod {
     override val gasPrice = "eth_gasPrice"
     override val feeHistory = "eth_feeHistory"
     override val getStorageAt = "eth_getStorageAt"
+    override val getCode = "eth_getCode"
 }
 
 /**
@@ -44,4 +46,5 @@ object QuaiMethod : EthereumLikeMethod {
     override val gasPrice = "quai_gasPrice"
     override val feeHistory = "quai_feeHistory"
     override val getStorageAt = "quai_getStorageAt"
+    override val getCode = "quai_getCode"
 }
