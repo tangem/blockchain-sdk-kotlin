@@ -311,6 +311,26 @@ internal abstract class EthereumLikeNetworkService(
         }
     }
 
+    override suspend fun callContract(data: ContractCallData): Result<String> {
+        return try {
+            val result = multiJsonRpcProvider.performRequest(EthereumLikeJsonRpcProvider::call, data)
+                .extractResult()
+            Result.Success(result)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    override suspend fun getCode(address: String): Result<String> {
+        return try {
+            val result = multiJsonRpcProvider.performRequest(EthereumLikeJsonRpcProvider::getCode, address)
+                .extractResult()
+            Result.Success(result)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
     override suspend fun resolveName(namehash: ByteArray, encodedName: ByteArray): ResolveAddressResult {
         return try {
             val data = EthereumResolveENSNameRequestData(

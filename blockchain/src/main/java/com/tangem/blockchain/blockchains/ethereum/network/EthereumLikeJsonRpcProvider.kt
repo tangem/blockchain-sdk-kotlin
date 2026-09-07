@@ -68,6 +68,12 @@ internal abstract class EthereumLikeJsonRpcProvider(
         EthBlockParam.LATEST.value,
     ).post()
 
+    suspend fun getCode(address: String) = createEthereumLikeBody(
+        method = getMethods().getCode,
+        address,
+        EthBlockParam.LATEST.value,
+    ).post()
+
     suspend fun getStorageAt(data: EthGetStorageAtData) = createEthereumLikeBody(
         method = getMethods().getStorageAt,
         data.address,

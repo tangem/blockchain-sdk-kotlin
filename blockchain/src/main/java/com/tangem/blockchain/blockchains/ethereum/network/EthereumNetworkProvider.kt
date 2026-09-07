@@ -43,6 +43,31 @@ interface EthereumNetworkProvider : NetworkProvider {
     suspend fun getTokensBalance(address: String, tokens: Set<Token>): Result<List<Amount>>
 
     suspend fun callContractForFee(data: ContractCallData): Result<BigInteger>
+
+    /**
+     * Generic contract call (`eth_call` / `quai_call`, per the chain family) returning the raw hex
+     * response, for contract reads that do not fit the [callContractForFee] `BigInteger` shape —
+     * e.g. Safe's `getOwners()` returning `address[]`. ABI decoding is left to the caller.
+     *
+     * Default implementation returns a feature-disabled failure so existing concrete providers
+     * are not forced to implement it. The EVM shared service overrides this method.
+     */
+    suspend fun callContract(data: ContractCallData): Result<String> = Result.Failure(
+        BlockchainSdkError.CustomError("Raw contract calls are not supported by this network provider"),
+    )
+
+    /**
+     * Returns the raw contract code (`eth_getCode` / `quai_getCode`, per the chain family) at
+     * [address] — `"0x"` when no contract is deployed there, so the caller can tell a counterfactual
+     * Safe from a deployed one.
+     *
+     * Default implementation returns a feature-disabled failure so existing concrete providers
+     * are not forced to implement it. The EVM shared service overrides this method.
+     */
+    suspend fun getCode(address: String): Result<String> = Result.Failure(
+        BlockchainSdkError.CustomError("Contract code reads are not supported by this network provider"),
+    )
+
     suspend fun resolveName(namehash: ByteArray, encodedName: ByteArray): ResolveAddressResult
     suspend fun resolveAddress(address: String): ReverseResolveAddressResult
 
