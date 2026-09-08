@@ -24,6 +24,24 @@ internal class BlockchainTypeTest {
     }
 
     /**
+     * Katana is an Ethereum L2 (Polygon CDK / AggLayer) whose native coin is ETH, so it must be listed as an
+     * L2 network rather than as a standalone coin.
+     */
+    @Test
+    fun testKatanaIsL2EthereumNetwork() {
+        Truth.assertThat(Blockchain.Katana.isL2EthereumNetwork()).isTrue()
+    }
+
+    /**
+     * Guards the Katana chain ID against accidental edits: a wrong chain ID would make EIP-155 signatures
+     * valid on another network.
+     */
+    @Test
+    fun testKatanaChainId() {
+        Truth.assertThat(Blockchain.Katana.getChainId()).isEqualTo(KATANA_CHAIN_ID)
+    }
+
+    /**
      * A mainnet whose native coin is ETH is an Ethereum L2 and vice versa. The app relies on this to show such a
      * network under the ETH coin instead of listing its own "<network>-ethereum" coin.
      */
@@ -35,5 +53,9 @@ internal class BlockchainTypeTest {
         val l2Networks = Blockchain.entries.filter { !it.isTestnet() && it.isL2EthereumNetwork() }
 
         Truth.assertThat(l2Networks).containsExactlyElementsIn(ethNativeMainnets)
+    }
+
+    private companion object {
+        const val KATANA_CHAIN_ID = 747474
     }
 }

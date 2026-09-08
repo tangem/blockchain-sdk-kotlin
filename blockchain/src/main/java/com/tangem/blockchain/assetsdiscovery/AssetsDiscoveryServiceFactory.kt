@@ -93,6 +93,7 @@ import com.tangem.blockchain.blockchains.pepecoin.PepecoinProvidersBuilder
 import com.tangem.blockchain.blockchains.pepecoin.network.PepecoinNetworkService
 import com.tangem.blockchain.blockchains.adi.AdiProvidersBuilder
 import com.tangem.blockchain.blockchains.igra.IgraProvidersBuilder
+import com.tangem.blockchain.blockchains.katana.KatanaProvidersBuilder
 import com.tangem.blockchain.blockchains.plasma.PlasmaProvidersBuilder
 import com.tangem.blockchain.blockchains.robinhood.RobinhoodProvidersBuilder
 import com.tangem.blockchain.blockchains.seievm.SeiEvmProvidersBuilder
@@ -180,6 +181,7 @@ import com.tangem.blockchain.network.MultiNetworkProvider
  * | InternetComputer | coins            |
  * | Joystream        | coins            |
  * | Kaspa            | coins            |
+ * | Katana           | coins            |
  * | Kava             | coins            |
  * | Koinos           | coins            |
  * | Kusama           | coins            |
@@ -258,6 +260,10 @@ class AssetsDiscoveryServiceFactory(
             Blockchain.Igra, Blockchain.IgraTestnet -> createDefaultEvmDiscoveryService(
                 blockchain = blockchain,
                 providers = IgraProvidersBuilder(types, config).build(blockchain),
+            )
+            Blockchain.Katana -> createDefaultEvmDiscoveryService(
+                blockchain = blockchain,
+                providers = KatanaProvidersBuilder(types, config).build(blockchain),
             )
             Blockchain.Alephium, Blockchain.AlephiumTestnet -> {
                 val networkService = AlephiumNetworkService(

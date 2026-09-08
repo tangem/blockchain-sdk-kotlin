@@ -181,5 +181,6 @@ val Blockchain.isUTXO: Boolean
         RobinhoodTestnet,
         Igra,
         IgraTestnet,
+        Katana,
         -> false
     }

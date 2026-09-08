@@ -76,6 +76,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.RobinhoodTestnet,
             Blockchain.Igra,
             Blockchain.IgraTestnet,
+            Blockchain.Katana,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.SeiEvm,
             Blockchain.SeiEvmTestnet,
