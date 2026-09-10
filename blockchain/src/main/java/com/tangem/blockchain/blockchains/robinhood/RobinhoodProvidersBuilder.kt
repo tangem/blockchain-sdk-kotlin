@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumLikeProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.network.providers.ProviderType
 
 internal class RobinhoodProvidersBuilder(
@@ -14,6 +15,11 @@ internal class RobinhoodProvidersBuilder(
     override fun createProviders(blockchain: Blockchain): List<EthereumJsonRpcProvider> {
         return providerTypes.mapNotNull { type ->
             when (type) {
+                ProviderType.Blink -> if (DepsContainer.blockchainFeatureToggles.isPendingTransactionsEnabled) {
+                    ethereumProviderFactory.getBlinkProvider("https://robinhood.blinklabs.xyz/v1/")
+                } else {
+                    null
+                }
                 is ProviderType.Public -> EthereumJsonRpcProvider(type.url)
                 ProviderType.QuickNode -> createQuickNodeProvider()
                 else -> null
