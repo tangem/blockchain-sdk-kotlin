@@ -43,21 +43,30 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
         walletAddress: String,
         transaction: GetAddressResponse.Transaction,
     ): TransactionHistoryItem? {
-        val source = transaction.extractSourceType() ?: return null
-        val destination = transaction.extractDestination() ?: return null
+        val sourceAddress = transaction.vin.firstOrNull()?.addresses?.firstOrNull() ?: return null
+        val destinationAddress = transaction.vout.firstOrNull()?.addresses?.firstOrNull() ?: return null
 
-        val isOutgoing = transaction.vin
-            .firstOrNull()
-            ?.addresses
-            ?.firstOrNull()
-            .equals(walletAddress, ignoreCase = true)
+        val isOutgoing = sourceAddress.equalsIgnoreCase(walletAddress)
+        val isIncoming = destinationAddress.equalsIgnoreCase(walletAddress)
+
+        // A gasless transfer is submitted by the relayer, so the wallet is neither the sender nor the recipient of
+        // the transaction — it only appears in the EIP-7702 authorization list and in the token transfers. Such a
+        // transaction moves no coin for the wallet, but it survives `shouldExcludeFromHistory` because a
+        // zero-amount item is kept whenever its type is not a plain transfer.
+        if (!isOutgoing && !isIncoming) return null
+
+        val destinationAddressType = if (transaction.tokenTransfers.isEmpty()) {
+            AddressType.User(destinationAddress)
+        } else {
+            AddressType.Contract(destinationAddress)
+        }
 
         return TransactionHistoryItem(
             txHash = transaction.txid,
             timestamp = TimeUnit.SECONDS.toMillis(transaction.blockTime.toLong()),
             isOutgoing = isOutgoing,
-            destinationType = destination,
-            sourceType = source,
+            destinationType = DestinationType.Single(addressType = destinationAddressType),
+            sourceType = SourceType.Single(address = sourceAddress),
             status = extractStatus(transaction = transaction),
             type = extractType(transaction = transaction),
             fee = transaction.feeAmount(blockchain),
@@ -75,7 +84,6 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
         transaction: GetAddressResponse.Transaction,
     ): List<TransactionHistoryItem> {
         return transaction.tokenTransfers
-            .asSequence()
             .filter { transfer ->
                 // Double check to exclude token transfers sent to self.
                 // Actually, this is a feasible case, but we don't support such transfers at the moment
@@ -87,9 +95,14 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
                 val contract = transfer.contract ?: return@filter false
                 token.contractAddress.equalsIgnoreCase(contract)
             }
-            .mapNotNull { tokenTransfer ->
-                val isOutgoing = tokenTransfer.from.equals(walletAddress, ignoreCase = true)
-                val amount = tokenTransfer.extractAmount(token)
+            .groupBy { transfer ->
+                val isOutgoing = transfer.from.equalsIgnoreCase(walletAddress)
+                val counterparty = if (isOutgoing) transfer.to else transfer.from
+                isOutgoing to counterparty.lowercase()
+            }
+            .mapNotNull { (_, transfers) ->
+                val transfer = transfers.first()
+                val amount = transfers.extractTotalAmount(token)
 
                 if (shouldExcludeTransaction(amount)) {
                     null
@@ -97,9 +110,9 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
                     TransactionHistoryItem(
                         txHash = transaction.txid,
                         timestamp = TimeUnit.SECONDS.toMillis(transaction.blockTime.toLong()),
-                        isOutgoing = isOutgoing,
-                        destinationType = DestinationType.Single(AddressType.User(tokenTransfer.to)),
-                        sourceType = SourceType.Single(tokenTransfer.from),
+                        isOutgoing = transfer.from.equalsIgnoreCase(walletAddress),
+                        destinationType = DestinationType.Single(AddressType.User(transfer.to)),
+                        sourceType = SourceType.Single(transfer.from),
                         status = extractStatus(transaction),
                         type = extractType(transaction),
                         amount = amount,
@@ -107,7 +120,6 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
                     )
                 }
             }
-            .toList()
     }
 
     private fun extractStatus(transaction: GetAddressResponse.Transaction): TransactionStatus {
@@ -148,21 +160,11 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
         return if (methodId?.length == ETHEREUM_METHOD_ID_LENGTH) methodId else null
     }
 
-    private fun GetAddressResponse.Transaction.extractDestination(): DestinationType? {
-        val address = vout.firstOrNull()?.addresses?.firstOrNull() ?: return null
-        val addressType = if (tokenTransfers.isEmpty()) AddressType.User(address) else AddressType.Contract(address)
-
-        return DestinationType.Single(addressType = addressType)
-    }
-
-    private fun GetAddressResponse.Transaction.extractSourceType(): SourceType? {
-        val address = vin.firstOrNull()?.addresses?.firstOrNull() ?: return null
-        return SourceType.Single(address = address)
-    }
-
-    private fun GetAddressResponse.Transaction.TokenTransfer.extractAmount(token: Token): Amount {
-        val transferValue = value?.toBigDecimalOrNull() ?: BigDecimal.ZERO
-        return Amount(token = token, value = transferValue.movePointLeft(token.decimals))
+    private fun List<GetAddressResponse.Transaction.TokenTransfer>.extractTotalAmount(token: Token): Amount {
+        val totalValue = fold(BigDecimal.ZERO) { total, transfer ->
+            total + (transfer.value?.toBigDecimalOrNull() ?: BigDecimal.ZERO)
+        }
+        return Amount(token = token, value = totalValue.movePointLeft(token.decimals))
     }
 
     private fun String.equalsIgnoreCase(other: String): Boolean {

@@ -10,6 +10,8 @@ import com.tangem.blockchain.blockchains.casper.network.response.CasperRpcRespon
 import com.tangem.blockchain.blockchains.casper.network.response.CasperRpcResponseAdapter
 import com.tangem.blockchain.blockchains.filecoin.network.response.FilecoinRpcResponse
 import com.tangem.blockchain.blockchains.filecoin.network.response.FilecoinRpcResponseAdapter
+import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledTransactionAmount
+import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledTransactionAmountAdapter
 import com.tangem.blockchain.common.EnumeratedEnum
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.PolygonScanResultAdapter
@@ -80,6 +82,7 @@ internal val moshi: Moshi by lazy {
         .add(FilecoinRpcResponse::class.java, FilecoinRpcResponseAdapter)
         .add(CasperRpcResponse::class.java, CasperRpcResponseAdapter)
         .add(CasperTransactionBody.CLType::class.java, CasperCLTypeAdapter)
+        .add(RippledTransactionAmount::class.java, RippledTransactionAmountAdapter)
         .add(createEnumJsonAdapter<GetAddressResponse.Transaction.StatusType>())
         .add(PolygonScanResultAdapter())
         .add(KotlinJsonAdapterFactory())

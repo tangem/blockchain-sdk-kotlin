@@ -28,6 +28,7 @@ object ResultChecker {
                     is BlockchainSdkError.ElectrumBlockchain.Api -> true
                     is BlockchainSdkError.Aptos.Api -> true
                     is BlockchainSdkError.Algorand.Send -> true
+                    is BlockchainSdkError.Xrp.Api -> true
                     else -> false
                 }
         }
@@ -46,6 +47,7 @@ object ResultChecker {
                     is BlockchainSdkError.ElectrumBlockchain.Api -> true
                     is BlockchainSdkError.Aptos.Api -> true
                     is BlockchainSdkError.Algorand.Send -> true
+                    is BlockchainSdkError.Xrp.Api -> true
                     else -> false
                 }
         }

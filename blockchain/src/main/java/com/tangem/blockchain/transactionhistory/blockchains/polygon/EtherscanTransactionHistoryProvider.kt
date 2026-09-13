@@ -17,6 +17,7 @@ import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import com.tangem.common.extensions.guard
 import com.tangem.common.extensions.isZero
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
@@ -71,6 +72,8 @@ internal class EtherscanTransactionHistoryProvider(
                 historyItems.isEmpty() -> TransactionHistoryState.Success.Empty
                 else -> TransactionHistoryState.Success.HasTransactions(historyItems.size)
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             TransactionHistoryState.Failed.FetchError(e)
         }
@@ -122,6 +125,8 @@ internal class EtherscanTransactionHistoryProvider(
                 Page.Next(pageToLoad.inc().toString())
             }
             Result.Success(PaginationWrapper(nextPage = nextPage, items = txs))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }

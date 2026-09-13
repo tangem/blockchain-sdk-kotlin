@@ -481,6 +481,49 @@ sealed class BlockchainSdkError(
             subCode = 0,
             customMessage = "${amount.toPlainString()} XRP needed for reserve and fee",
         )
+
+        /** Error reported by the ledger inside a successful HTTP response */
+        data class Api(val errorCode: Int?, val errorName: String?, val errorMessage: String?) : Xrp(
+            subCode = 1,
+            customMessage = "rippled error ${errorName ?: errorCode}: ${errorMessage ?: "unknown"}",
+        )
+    }
+
+    sealed class Hedera(
+        subCode: Int,
+        customMessage: String? = null,
+        throwable: Throwable? = null,
+    ) : BlockchainSdkError(
+        code = ERROR_CODE_HEDERA,
+        customMessage = customMessage?.let { "$ERROR_CODE_HEDERA: $subCode: $customMessage" }
+            ?: "$ERROR_CODE_HEDERA: $subCode",
+        messageResId = null,
+        cause = throwable,
+    ) {
+
+        @Suppress("UnusedPrivateMember")
+        data object EvmAddressMismatchBetweenNodes : Hedera(
+            subCode = 0,
+            customMessage = "Mirror nodes returned different EVM addresses for the recipient",
+        ) {
+            private fun readResolve(): Any = EvmAddressMismatchBetweenNodes
+        }
+
+        @Suppress("UnusedPrivateMember")
+        data object EvmAddressNotConfirmed : Hedera(
+            subCode = 1,
+            customMessage = "Recipient EVM address is not confirmed by a second source",
+        ) {
+            private fun readResolve(): Any = EvmAddressNotConfirmed
+        }
+
+        @Suppress("UnusedPrivateMember")
+        data object EvmAddressUnavailable : Hedera(
+            subCode = 2,
+            customMessage = "Failed to resolve recipient EVM address",
+        ) {
+            private fun readResolve(): Any = EvmAddressUnavailable
+        }
     }
 
     companion object {
@@ -503,6 +546,7 @@ sealed class BlockchainSdkError(
         const val ERROR_CODE_ALEPHIUM = 17000
         const val ERROR_CODE_STELLAR = 18000
         const val ERROR_CODE_XRP = 19000
+        const val ERROR_CODE_HEDERA = 20000
     }
 }
 

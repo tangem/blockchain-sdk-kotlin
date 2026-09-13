@@ -39,11 +39,22 @@ internal object HederaUtils {
      * 2. Convert number to hex
      * 3. Pad left to 20 bytes (40 hex chars)
      * 4. Add "0x" prefix
+     *
+     * @throws NumberFormatException if [accountId] is not in the "0.0.N" form.
      */
     fun accountIdToEvmAddress(accountId: String): String {
-        val num = accountId.removePrefix("0.0.").toLong()
-        val hex = num.toString(HEX_RADIX)
-        return "0x" + hex.padStart(EVM_ADDRESS_HEX_LENGTH, '0')
+        return accountIdToEvmAddressOrNull(accountId)
+            ?: throw NumberFormatException("Invalid Hedera account ID: $accountId")
+    }
+
+    /**
+     * Same as [accountIdToEvmAddress], but returns null instead of throwing when [accountId]
+     * is not in the "0.0.N" form with a non-negative N (e.g. "1.2.3" or an alias string).
+     */
+    fun accountIdToEvmAddressOrNull(accountId: String): String? {
+        val num = accountId.removePrefix("0.0.").toLongOrNull() ?: return null
+        if (num < 0) return null
+        return "0x" + num.toString(HEX_RADIX).padStart(EVM_ADDRESS_HEX_LENGTH, '0')
     }
 
     /**

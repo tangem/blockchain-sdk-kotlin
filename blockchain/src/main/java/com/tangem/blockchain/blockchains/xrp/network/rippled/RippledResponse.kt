@@ -5,13 +5,13 @@ import com.squareup.moshi.JsonClass
 
 // Rippled account
 @JsonClass(generateAdapter = true)
-data class RippledAccountResponse(
+internal data class RippledAccountResponse(
     @Json(name = "result")
     val result: RippledAccountResult? = null,
 )
 
 @JsonClass(generateAdapter = true)
-data class RippledAccountResult(
+internal data class RippledAccountResult(
     @Json(name = "account_data")
     val accountData: RippledAccountData? = null,
 
@@ -23,13 +23,13 @@ data class RippledAccountResult(
 )
 
 @JsonClass(generateAdapter = true)
-data class XRPAccountFlags(
+internal data class XRPAccountFlags(
     @Json(name = "requireDestinationTag")
     val requireDestinationTag: Boolean,
 )
 
 @JsonClass(generateAdapter = true)
-data class RippledAccountData(
+internal data class RippledAccountData(
     @Json(name = "Balance")
     val balance: String? = null,
 
@@ -45,19 +45,19 @@ data class RippledAccountData(
 
 // Rippled account lines
 @JsonClass(generateAdapter = true)
-data class RippledAccountLinesResponse(
+internal data class RippledAccountLinesResponse(
     @Json(name = "result")
     val result: RippledAccountLinesResult? = null,
 )
 
 @JsonClass(generateAdapter = true)
-data class RippledAccountLinesResult(
+internal data class RippledAccountLinesResult(
     @Json(name = "lines")
     val lines: List<RippledAccountLine>? = null,
 )
 
 @JsonClass(generateAdapter = true)
-data class RippledAccountLine(
+internal data class RippledAccountLine(
     @Json(name = "account")
     val account: String,
     @Json(name = "currency")
@@ -70,25 +70,25 @@ data class RippledAccountLine(
 
 // Rippled state
 @JsonClass(generateAdapter = true)
-data class RippledStateResponse(
+internal data class RippledStateResponse(
     @Json(name = "result")
     val result: RippledStateResult? = null,
 )
 
 @JsonClass(generateAdapter = true)
-data class RippledStateResult(
+internal data class RippledStateResult(
     @Json(name = "state")
     val state: RippledState? = null,
 )
 
 @JsonClass(generateAdapter = true)
-data class RippledState(
+internal data class RippledState(
     @Json(name = "validated_ledger")
     val validatedLedger: RippledLedger? = null,
 )
 
 @JsonClass(generateAdapter = true)
-data class RippledLedger(
+internal data class RippledLedger(
     @Json(name = "reserve_base")
     val reserveBase: Long? = null,
     @Json(name = "reserve_inc")
@@ -97,19 +97,19 @@ data class RippledLedger(
 
 // Rippled fee
 @JsonClass(generateAdapter = true)
-data class RippledFeeResponse(
+internal data class RippledFeeResponse(
     @Json(name = "result")
     val result: RippledFeeResult? = null,
 )
 
 @JsonClass(generateAdapter = true)
-data class RippledFeeResult(
+internal data class RippledFeeResult(
     @Json(name = "drops")
     val feeData: RippledFeeData? = null,
 )
 
 @JsonClass(generateAdapter = true)
-data class RippledFeeData(
+internal data class RippledFeeData(
     // enough to put tx to queue
     @Json(name = "minimum_fee")
     val minimalFee: String? = null,
@@ -124,13 +124,13 @@ data class RippledFeeData(
 
 // Rippled submit
 @JsonClass(generateAdapter = true)
-data class RippledSubmitResponse(
+internal data class RippledSubmitResponse(
     @Json(name = "result")
     val result: RippledSubmitResult? = null,
 )
 
 @JsonClass(generateAdapter = true)
-data class RippledSubmitResult(
+internal data class RippledSubmitResult(
     @Json(name = "engine_result_code")
     val resultCode: Int? = null,
 

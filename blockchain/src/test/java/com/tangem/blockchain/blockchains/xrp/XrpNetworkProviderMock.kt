@@ -1,5 +1,7 @@
 package com.tangem.blockchain.blockchains.xrp
 
+import com.tangem.blockchain.blockchains.xrp.network.XrpAccountTxRequest
+import com.tangem.blockchain.blockchains.xrp.network.XrpAccountTxResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpFeeResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpInfoResponse
 import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
@@ -8,7 +10,7 @@ import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 
-class XrpNetworkProviderMock(
+internal class XrpNetworkProviderMock(
     private val isAccountCreatedResponse: Boolean = true,
 ) : XrpNetworkProvider {
 
@@ -42,6 +44,10 @@ class XrpNetworkProviderMock(
     }
 
     override suspend fun checkDestinationTagRequired(address: String): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getAccountTransactions(request: XrpAccountTxRequest): Result<XrpAccountTxResponse> {
         TODO("Not yet implemented")
     }
 }

@@ -20,7 +20,7 @@ import org.kethereum.extensions.toBytesPadded
  */
 data class ApprovalERC20TokenCallData(
     val spenderAddress: String,
-    private val amount: Amount?,
+    val amount: Amount?,
 ) : Erc20CallData {
     override val methodId = APPROVE_METHOD_ID
     override val data: ByteArray

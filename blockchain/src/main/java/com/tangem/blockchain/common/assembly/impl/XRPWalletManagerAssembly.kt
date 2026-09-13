@@ -8,6 +8,7 @@ import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
 import com.tangem.blockchain.tokenbalance.providers.xrp.XrplTokenBalanceProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
 
 internal class XRPWalletManagerAssembly(
     private val dataStorage: AdvancedDataStorage,
@@ -26,6 +27,10 @@ internal class XRPWalletManagerAssembly(
                 networkProvider = networkService,
                 dataStorage = dataStorage,
                 tokenBalanceProvider = XrplTokenBalanceProvider(networkService),
+                transactionHistoryProvider = TransactionHistoryProviderFactory.makeXrpProvider(
+                    blockchain = blockchain,
+                    networkProvider = networkService,
+                ),
             )
         }
     }
