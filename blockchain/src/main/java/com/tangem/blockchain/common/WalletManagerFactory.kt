@@ -229,6 +229,8 @@ class WalletManagerFactory(
             Blockchain.SeiEvm, Blockchain.SeiEvmTestnet,
             Blockchain.Robinhood, Blockchain.RobinhoodTestnet,
             Blockchain.Igra, Blockchain.IgraTestnet,
+            Blockchain.Electroneum, Blockchain.ElectroneumTestnet,
+            Blockchain.Arc, Blockchain.ArcTestnet,
             -> EthereumLikeWalletManagerAssembly(dataStorage = dataStorage)
 
             Blockchain.Mantle, Blockchain.MantleTestnet,

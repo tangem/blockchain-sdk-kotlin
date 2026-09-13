@@ -1,6 +1,32 @@
 package com.tangem.blockchain.blockchains.ethereum.eip1559
 
 import com.tangem.blockchain.common.Blockchain
+import java.math.BigDecimal
+
+private val GWEI = BigDecimal.TEN.pow(9)
+
+/**
+ * Lower bound for `maxFeePerGas`, in wei.
+ *
+ * Arc drops transactions with `maxFeePerGas` below 20 gwei, which is its constant base fee.
+ */
+val Blockchain.minimalMaxFeePerGas: BigDecimal
+    get() = when (this) {
+        Blockchain.Arc, Blockchain.ArcTestnet -> GWEI * BigDecimal.valueOf(20)
+        else -> BigDecimal.ZERO
+    }
+
+/**
+ * Lower bound for `maxPriorityFeePerGas`, in wei.
+ *
+ * Arc reports a zero priority fee for empty blocks, so a transaction built from it would not compete with the rest
+ * on a busy block.
+ */
+val Blockchain.minimalPriorityFeePerGas: BigDecimal
+    get() = when (this) {
+        Blockchain.Arc, Blockchain.ArcTestnet -> GWEI * BigDecimal.valueOf(5)
+        else -> BigDecimal.ZERO
+    }
 
 /** Returns true if the blockchain supports EIP1559 */
 val Blockchain.isSupportEIP1559: Boolean
@@ -39,6 +65,8 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.SeiEvm, Blockchain.SeiEvmTestnet,
             Blockchain.Robinhood, Blockchain.RobinhoodTestnet,
             Blockchain.Igra, Blockchain.IgraTestnet,
+            Blockchain.Electroneum, Blockchain.ElectroneumTestnet,
+            Blockchain.Arc, Blockchain.ArcTestnet,
             -> true
             Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet, // eth_feeHistory all zeroes
             Blockchain.EthereumPow, Blockchain.EthereumPowTestnet, // eth_feeHistory with zeros

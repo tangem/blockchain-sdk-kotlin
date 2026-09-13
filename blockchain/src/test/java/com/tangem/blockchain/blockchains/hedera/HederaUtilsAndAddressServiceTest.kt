@@ -72,4 +72,38 @@ class HederaUtilsAndAddressServiceTest {
 
         assertThat(result).isEqualTo("0.0.1250")
     }
+
+    @Test
+    fun accountIdToEvmAddressOrNull_convertsPlainAccountId() {
+        val expected = "0x" + "0".repeat(37) + "3e9" // 1001 == 0x3e9
+
+        assertThat(HederaUtils.accountIdToEvmAddressOrNull("0.0.1001")).isEqualTo(expected)
+    }
+
+    @Test
+    fun accountIdToEvmAddressOrNull_convertsZeroAccountId() {
+        assertThat(HederaUtils.accountIdToEvmAddressOrNull("0.0.0")).isEqualTo("0x" + "0".repeat(40))
+    }
+
+    @Test
+    fun accountIdToEvmAddressOrNull_returnsNullForNonZeroShardOrRealm() {
+        assertThat(HederaUtils.accountIdToEvmAddressOrNull("1.2.3")).isNull()
+    }
+
+    @Test
+    fun accountIdToEvmAddressOrNull_returnsNullForGarbage() {
+        assertThat(HederaUtils.accountIdToEvmAddressOrNull("not-an-account")).isNull()
+        assertThat(HederaUtils.accountIdToEvmAddressOrNull("")).isNull()
+        assertThat(HederaUtils.accountIdToEvmAddressOrNull("0.0.-5")).isNull()
+    }
+
+    @Test
+    fun accountIdToEvmAddress_stillThrowsOnInvalidInput() {
+        try {
+            HederaUtils.accountIdToEvmAddress("1.2.3")
+            error("expected NumberFormatException")
+        } catch (_: NumberFormatException) {
+            // expected
+        }
+    }
 }

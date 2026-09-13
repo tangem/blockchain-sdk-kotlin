@@ -14,7 +14,7 @@ import com.tangem.blockchain.network.createRetrofitInstance
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
-class RippledNetworkProvider(
+internal class RippledNetworkProvider(
     override val baseUrl: String,
     apiKeyHeader: Pair<String, String>? = null,
 ) : XrpNetworkProvider {
@@ -63,7 +63,7 @@ class RippledNetworkProvider(
                     .toBigDecimal()
                     .movePointLeft(decimals)
 
-                if (accountData.result!!.errorCode == ERROR_CODE) {
+                if (accountData.result!!.errorCode == ACCOUNT_NOT_FOUND_ERROR_CODE) {
                     Result.Success(
                         XrpInfoResponse(
                             reserveBase = reserveBase,
@@ -149,7 +149,7 @@ class RippledNetworkProvider(
         return try {
             val accountBody = makeAccountBody(address, validated = true)
             val accountData = retryIO { api.getAccount(accountBody) }
-            accountData.result!!.errorCode != ERROR_CODE
+            accountData.result!!.errorCode != ACCOUNT_NOT_FOUND_ERROR_CODE
         } catch (exception: Exception) {
             true // or let's assume it's created? (normally it is)
         }
@@ -215,11 +215,95 @@ class RippledNetworkProvider(
         }
     }
 
+    override suspend fun getAccountTransactions(request: XrpAccountTxRequest): Result<XrpAccountTxResponse> {
+        return try {
+            retryIO { api.getAccountTransactions(makeAccountTxBody(request)) }.toDomain()
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
     private companion object {
-        const val ERROR_CODE = 19
         const val ZERO = 0L
         const val ZERO_TRANSFER_RATE = 1_000_000_000L // 1 billion means no transfer rate
     }
+}
+
+/** Error code of an account that hasn't been created on the ledger yet */
+internal const val ACCOUNT_NOT_FOUND_ERROR_CODE = 19
+
+private const val ACCOUNT_NOT_FOUND_ERROR = "actNotFound"
+
+/**
+ * The ledger reports `account_tx` failures with the HTTP 200 code, so the error has to be pulled out of the body.
+ * A missing account is the only error meaning an empty history, every other one fails the request to let
+ * [com.tangem.blockchain.network.MultiNetworkProvider] switch to the next node.
+ */
+internal fun RippledAccountTxResponse.toDomain(): Result<XrpAccountTxResponse> {
+    val result = result
+        ?: return Result.Failure(
+            BlockchainSdkError.Xrp.Api(
+                errorCode = null,
+                errorName = null,
+                errorMessage = "account_tx response contains no result",
+            ),
+        )
+
+    // Not every node fills `error_code`, so the textual code is checked as well
+    val isAccountNotFound = result.errorCode == ACCOUNT_NOT_FOUND_ERROR_CODE || result.error == ACCOUNT_NOT_FOUND_ERROR
+
+    return when {
+        isAccountNotFound -> Result.Success(XrpAccountTxResponse(transactions = emptyList()))
+        result.errorCode != null || result.error != null -> Result.Failure(
+            BlockchainSdkError.Xrp.Api(
+                errorCode = result.errorCode,
+                errorName = result.error,
+                errorMessage = result.errorMessage,
+            ),
+        )
+        else -> Result.Success(
+            XrpAccountTxResponse(
+                transactions = result.transactions.orEmpty().mapNotNull { it.toDomain() },
+                marker = result.marker?.toDomain(),
+            ),
+        )
+    }
+}
+
+private fun RippledMarker.toDomain(): XrpTransactionMarker? {
+    return XrpTransactionMarker(ledger = ledger ?: return null, seq = seq ?: return null)
+}
+
+private fun RippledTransactionInfo.toDomain(): XrpTransaction? {
+    val hash = tx.hash ?: return null
+
+    return XrpTransaction(
+        hash = hash,
+        account = tx.account,
+        destination = tx.destination,
+        amount = tx.amount?.toDomain(),
+        limitAmount = tx.limitAmount?.toDomain(),
+        takerGets = tx.takerGets?.toDomain(),
+        takerPays = tx.takerPays?.toDomain(),
+        feeInDrops = tx.fee?.toBigDecimalOrNull(),
+        transactionType = tx.transactionType,
+        date = tx.date,
+        isValidated = isValidated == true,
+        transactionResult = meta?.transactionResult,
+    )
+}
+
+private fun RippledTransactionAmount.toDomain(): XrpTransactionAmount? = when (this) {
+    is RippledTransactionAmount.Drops -> value.toBigDecimalOrNull()?.let(XrpTransactionAmount::Drops)
+    is RippledTransactionAmount.IssuedCurrency -> amount.toDomain()?.let(XrpTransactionAmount::IssuedCurrency)
+}
+
+private fun RippledIssuedCurrencyAmount.toDomain(): XrpIssuedCurrencyAmount? {
+    return XrpIssuedCurrencyAmount(
+        currency = currency,
+        issuer = issuer,
+        value = value.toBigDecimalOrNull() ?: return null,
+    )
 }
 
 private fun makeAccountBody(address: String, validated: Boolean): RippledBody {
@@ -240,4 +324,22 @@ private fun makeSubmitBody(transaction: String): RippledBody {
     val params = HashMap<String, String>()
     params["tx_blob"] = transaction
     return RippledBody(RippledMethod.SUBMIT.value, listOf(params))
+}
+
+internal fun makeAccountTxBody(request: XrpAccountTxRequest): RippledBody {
+    val params = buildMap<String, Any> {
+        put("account", request.address)
+        // Pinned explicitly: v2 moves the transaction from `tx` to `tx_json` and hoists `hash` out of it, so relying
+        // on the server default would break parsing once that default changes
+        put("api_version", 1)
+        put("binary", false)
+        put("forward", false)
+        // -1 removes the lower and the upper ledger boundaries of the lookup
+        put("ledger_index_min", -1)
+        put("ledger_index_max", -1)
+        put("limit", request.limit)
+        request.marker?.let { put("marker", RippledMarker(ledger = it.ledger, seq = it.seq)) }
+    }
+
+    return RippledBody(RippledMethod.ACCOUNT_TX.value, listOf(params))
 }

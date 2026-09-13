@@ -6,7 +6,7 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
 import com.tangem.blockchain.network.MultiNetworkProvider
 
-class XrpNetworkService(providers: List<XrpNetworkProvider>, blockchain: Blockchain) : XrpNetworkProvider {
+internal class XrpNetworkService(providers: List<XrpNetworkProvider>, blockchain: Blockchain) : XrpNetworkProvider {
 
     private val multiProvider = MultiNetworkProvider(providers, blockchain)
 
@@ -36,4 +36,7 @@ class XrpNetworkService(providers: List<XrpNetworkProvider>, blockchain: Blockch
 
     override suspend fun checkDestinationTagRequired(address: String): Boolean =
         multiProvider.currentProvider.checkDestinationTagRequired(address)
+
+    override suspend fun getAccountTransactions(request: XrpAccountTxRequest): Result<XrpAccountTxResponse> =
+        multiProvider.performRequest(XrpNetworkProvider::getAccountTransactions, request)
 }

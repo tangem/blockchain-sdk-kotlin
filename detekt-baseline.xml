@@ -305,6 +305,9 @@
     <ID>ObjectExtendsThrowable:Exceptions.kt$BlockchainSdkError.Cardano$InsufficientRemainingBalanceToWithdrawTokens : Cardano</ID>
     <ID>ObjectExtendsThrowable:Exceptions.kt$BlockchainSdkError.Cardano$InsufficientSendingAdaAmount : Cardano</ID>
     <ID>ObjectExtendsThrowable:Exceptions.kt$BlockchainSdkError.Cardano$InvalidDerivationType : Cardano</ID>
+    <ID>ObjectExtendsThrowable:Exceptions.kt$BlockchainSdkError.Hedera$EvmAddressMismatchBetweenNodes : Hedera</ID>
+    <ID>ObjectExtendsThrowable:Exceptions.kt$BlockchainSdkError.Hedera$EvmAddressNotConfirmed : Hedera</ID>
+    <ID>ObjectExtendsThrowable:Exceptions.kt$BlockchainSdkError.Hedera$EvmAddressUnavailable : Hedera</ID>
     <ID>ObjectExtendsThrowable:Exceptions.kt$BlockchainSdkError.Kaspa$ZeroUtxoError : Kaspa</ID>
     <ID>ObjectExtendsThrowable:Exceptions.kt$BlockchainSdkError.Koinos$InsufficientBalance : Koinos</ID>
     <ID>ObjectExtendsThrowable:Exceptions.kt$BlockchainSdkError.Solana$FailedToCreateAssociatedAccount : Solana</ID>

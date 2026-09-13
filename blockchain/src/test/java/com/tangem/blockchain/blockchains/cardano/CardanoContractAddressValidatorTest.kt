@@ -43,6 +43,18 @@ internal class CardanoContractAddressValidatorTest(private val model: Model) {
             Model(address = "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc53", actual = false),
             // Random string
             Model(address = "asse", actual = false),
+            // SONGMARKETCAP, AssetID
+            Model(
+                address = "f71b4cf652d8edb33a57928b8b8a546a3c954b7ba24db5583ac79b34534f4e474d41524b4554434150",
+                actual = true,
+            ),
+            // The same AssetID of an odd length, e.g. a partially typed one: not decodable into bytes
+            Model(
+                address = "f71b4cf652d8edb33a57928b8b8a546a3c954b7ba24db5583ac79b34534f4e474d41524b455443415",
+                actual = false,
+            ),
+            // PolicyID with a non-hex character
+            Model(address = "1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df20p", actual = false),
         )
     }
 }
