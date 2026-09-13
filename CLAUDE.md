@@ -84,7 +84,8 @@ Three main patterns:
 1. **UTXO (Bitcoin-like)**: `UtxoBlockchainManager`, PSBT support, multiple address types (P2PKH/P2WPKH/P2TR). Used by
    Bitcoin, Litecoin, Dogecoin, Dash, Ravencoin, etc.
 2. **EVM (Ethereum-like)**: EIP-1559 + legacy gas, ERC-20/NFT, ENS resolution, `Approver`. Shared by 20+ chains (
-   Polygon, Arbitrum, Optimism, BSC, etc.) via `EthereumLikeWalletManager`.
+   Polygon, Arbitrum, Optimism, BSC, etc.) via `EthereumLikeWalletManager`. Adding a new EVM chain is pure
+   registration — no new WalletManager. Use the `adding-evm-network` skill for the full checklist.
 3. **Custom (Solana, TON, XRP, etc.)**: Each has unique transaction construction, signing, and network interaction.
 
 ### Feature Providers
@@ -119,6 +120,14 @@ backends include JSON-RPC, BlockBook, BlockCypher, BlockChair, Electrum, and cha
 - Groovy Gradle (not Kotlin DSL)
 - Serialization: kotlinx-serialization (JSON + Protobuf), Moshi
 - Networking: Retrofit + OkHttp, gRPC for some chains
+
+## Skills
+
+Project skills live in `.claude/skills/`:
+
+- **`adding-evm-network`** (`.claude/skills/adding-evm-network/SKILL.md`) — checklist for adding an EVM-compatible
+  network: every registration point, which ones the compiler enforces and which fail silently, file templates,
+  required tests and verification commands.
 
 ## Branching
 

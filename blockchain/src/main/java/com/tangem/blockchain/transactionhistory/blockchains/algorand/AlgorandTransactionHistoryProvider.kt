@@ -13,6 +13,7 @@ import com.tangem.blockchain.transactionhistory.blockchains.algorand.network.Alg
 import com.tangem.blockchain.transactionhistory.blockchains.algorand.network.AlgorandTransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -38,6 +39,8 @@ internal class AlgorandTransactionHistoryProvider(
             } else {
                 TransactionHistoryState.Success.Empty
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             TransactionHistoryState.Failed.FetchError(e)
         }
@@ -67,6 +70,8 @@ internal class AlgorandTransactionHistoryProvider(
                     items = txs,
                 ),
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }

@@ -227,6 +227,10 @@ enum class Blockchain(
     RobinhoodTestnet("robinhood/test", "ETH", "Robinhood Chain Testnet"),
     Igra("igra", "iKAS", "Igra"),
     IgraTestnet("igra/test", "iKAS", "Igra Testnet"),
+    Electroneum("electroneum", "ETN", "Electroneum"),
+    ElectroneumTestnet("electroneum/test", "ETN", "Electroneum Testnet"),
+    Arc("arc", "USDC", "Arc"),
+    ArcTestnet("arc/test", "USDC", "Arc Testnet"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -240,6 +244,7 @@ enum class Blockchain(
             OdysseyChain -> "Dione"
             OdysseyChainTestnet -> "Dione Testnet"
             ApeChain -> "ApeCoin"
+            Arc, ArcTestnet -> "USDC"
             else -> this.fullName + l2Suffix
         }
     }
@@ -376,10 +381,25 @@ enum class Blockchain(
         SeiEvm, SeiEvmTestnet,
         Robinhood, RobinhoodTestnet,
         Igra, IgraTestnet,
+        Electroneum, ElectroneumTestnet,
+        Arc, ArcTestnet,
         -> 18
 
         Near, NearTestnet,
         -> 24
+    }
+
+    /**
+     * Number of fraction digits to show for the native coin. Formatting only: never use it to convert a value to or
+     * from the chain's smallest unit, that is what [decimals] is for.
+     *
+     * Equals [decimals] for every blockchain but Arc and Arc Testnet, whose native coin is USDC: the chain keeps
+     * balances and fees in 18 decimals, but users expect USDC with 6.
+     */
+    @Suppress("MagicNumber")
+    fun displayDecimals(): Int = when (this) {
+        Arc, ArcTestnet -> 6
+        else -> decimals()
     }
 
     fun makeAddresses(
@@ -502,6 +522,8 @@ enum class Blockchain(
             SeiEvm, SeiEvmTestnet,
             Robinhood, RobinhoodTestnet,
             Igra, IgraTestnet,
+            Electroneum, ElectroneumTestnet,
+            Arc, ArcTestnet,
             -> EthereumAddressService()
 
             Quai, QuaiTestnet -> QuaiAddressService()
@@ -668,6 +690,8 @@ enum class Blockchain(
             SeiEvm, SeiEvmTestnet -> SeiEvmTestnet
             Robinhood, RobinhoodTestnet -> RobinhoodTestnet
             Igra, IgraTestnet -> IgraTestnet
+            Electroneum, ElectroneumTestnet -> ElectroneumTestnet
+            Arc, ArcTestnet -> ArcTestnet
             Unknown,
             Cardano,
             Dogecoin,
@@ -793,6 +817,8 @@ enum class Blockchain(
             SeiEvm, SeiEvmTestnet,
             Robinhood, RobinhoodTestnet,
             Igra, IgraTestnet,
+            Electroneum, ElectroneumTestnet,
+            Arc, ArcTestnet,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -826,7 +852,7 @@ enum class Blockchain(
             Avalanche -> Chain.Avalanche.id
             AvalancheTestnet -> Chain.AvalancheTestnet.id
             Ethereum -> Chain.Mainnet.id
-            EthereumTestnet -> Chain.EthereumHoodiTestnet.id
+            EthereumTestnet -> Chain.EthereumSepoliaTestnet.id
             EthereumClassic -> Chain.EthereumClassicMainnet.id
             EthereumClassicTestnet -> Chain.EthereumClassicTestnet.id
             Fantom -> Chain.Fantom.id
@@ -923,6 +949,10 @@ enum class Blockchain(
             RobinhoodTestnet -> Chain.RobinhoodTestnet.id
             Igra -> Chain.Igra.id
             IgraTestnet -> Chain.IgraTestnet.id
+            Electroneum -> Chain.Electroneum.id
+            ElectroneumTestnet -> Chain.ElectroneumTestnet.id
+            Arc -> Chain.Arc.id
+            ArcTestnet -> Chain.ArcTestnet.id
             Monad -> Chain.Monad.id
             MonadTestnet -> Chain.MonadTestnet.id
             else -> null
@@ -968,18 +998,18 @@ enum class Blockchain(
 
     fun canHandleNFTs(): Boolean = when (this) {
         // EVM
-        Ethereum, // supported testnet - Hoodi (560048)
+        Ethereum, // supported testnet - Sepolia (11155111)
         Arbitrum, // supported testnet - Sepolia (421614)
         Avalanche,
-        Fantom, FantomTestnet,
         BSC, BSCTestnet,
         Polygon, // supported testnet - Amoy (80002)
         Cronos,
-        Moonbeam, MoonbeamTestnet,
-        Moonriver, MoonriverTestnet,
         Chiliz, ChilizTestnet,
         Optimism, // supported testnet - Sepolia (11155420)
         Base, BaseTestnet,
+        Linea, LineaTestnet,
+        SeiEvm, SeiEvmTestnet,
+        Monad,
 
         Solana,
         -> true

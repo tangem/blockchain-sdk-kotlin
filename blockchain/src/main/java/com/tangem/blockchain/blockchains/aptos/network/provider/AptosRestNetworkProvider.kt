@@ -19,9 +19,10 @@ import kotlinx.coroutines.coroutineScope
 import retrofit2.HttpException
 import java.math.BigDecimal
 
-internal class AptosRestNetworkProvider(override val baseUrl: String) : AptosNetworkProvider {
-
-    private val api = createRetrofitInstance(baseUrl = baseUrl).create(AptosApi::class.java)
+internal class AptosRestNetworkProvider(
+    override val baseUrl: String,
+    private val api: AptosApi = createRetrofitInstance(baseUrl = baseUrl).create(AptosApi::class.java),
+) : AptosNetworkProvider {
 
     override suspend fun getAccountInfo(address: String): Result<AptosAccountInfo> {
         return try {
@@ -47,10 +48,10 @@ internal class AptosRestNetworkProvider(override val baseUrl: String) : AptosNet
                 }
             }
         } catch (e: Exception) {
-            if (e.isNoAccountFoundException()) {
-                Result.Failure(BlockchainSdkError.AccountNotFound())
-            } else {
-                Result.Failure(e.toBlockchainSdkError())
+            when {
+                e.isNoAccountFoundException() -> Result.Failure(BlockchainSdkError.AccountNotFound())
+                e is BlockchainSdkError -> Result.Failure(e)
+                else -> Result.Failure(e.toBlockchainSdkError())
             }
         }
     }
@@ -108,28 +109,28 @@ internal class AptosRestNetworkProvider(override val baseUrl: String) : AptosNet
             response()?.errorBody()?.string()?.contains(ACCOUNT_NOT_FOUND_ERROR_CODE) == true
     }
 
+    /**
+     * A failure here must not be turned into a zero balance: the caller cannot distinguish it from an
+     * empty account, and [com.tangem.blockchain.network.MultiNetworkProvider] would keep the broken
+     * provider instead of switching to the next one.
+     */
     private suspend fun getBalance(address: String): BigDecimal {
-        return try {
-            val viewRequest = AptosViewRequest(
-                function = "0x1::coin::balance",
-                typeArguments = listOf("0x1::aptos_coin::AptosCoin"),
-                arguments = listOf(address),
-            )
+        val viewRequest = AptosViewRequest(
+            function = APTOS_COIN_BALANCE_FUNCTION,
+            typeArguments = listOf(APTOS_COIN_CONTRACT),
+            arguments = listOf(address),
+        )
 
-            val response = api.executeViewFunction(viewRequest)
+        val response = api.executeViewFunction(viewRequest)
 
-            if (response.isNotEmpty()) {
-                BigDecimal(response.first())
-            } else {
-                BigDecimal.ZERO
-            }
-        } catch (e: Exception) {
-            BigDecimal.ZERO
-        }
+        return response.firstOrNull()?.toBigDecimalOrNull()
+            ?: throw BlockchainSdkError.Aptos.Api("Failed to parse balance from the view function response")
     }
 
     private companion object {
         const val NOT_FOUND_HTTP_CODE = 404
         const val ACCOUNT_NOT_FOUND_ERROR_CODE = "account_not_found"
+        const val APTOS_COIN_BALANCE_FUNCTION = "0x1::coin::balance"
+        const val APTOS_COIN_CONTRACT = "0x1::aptos_coin::AptosCoin"
     }
 }

@@ -110,6 +110,8 @@ class EstimationFeeAddressFactory {
             Blockchain.SeiEvm, Blockchain.SeiEvmTestnet,
             Blockchain.Robinhood, Blockchain.RobinhoodTestnet,
             Blockchain.Igra, Blockchain.IgraTestnet,
+            Blockchain.Electroneum, Blockchain.ElectroneumTestnet,
+            Blockchain.Arc, Blockchain.ArcTestnet,
             -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
             Blockchain.Quai, Blockchain.QuaiTestnet,
             -> "0x001895747a462F3cDEc145d565645D7fcEbe275d"
