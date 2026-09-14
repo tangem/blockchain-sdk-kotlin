@@ -1,6 +1,7 @@
 package com.tangem.blockchain.collectibles
 
 import com.tangem.blockchain.collectibles.models.CollectiblesVault
+import com.tangem.blockchain.collectibles.models.CollectiblesVaultUsdc
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
 
@@ -28,6 +29,12 @@ interface CollectiblesVaultProvider {
 
     /** Returns null when the vault account does not exist — that means onboarding has not happened, not an error. */
     suspend fun getCollectiblesVault(): Result<CollectiblesVault?>
+
+    /**
+     * The vault's USDC token account and the mint it holds, the mint being read from the on-chain config rather
+     * than held as a constant here. Costs the one request that reads it; both fields are immutable afterwards.
+     */
+    suspend fun getCollectiblesVaultUsdc(): Result<CollectiblesVaultUsdc>
 
     /**
      * @param hotDelegate  base58 key allowed to pay for spins; produced outside this module
