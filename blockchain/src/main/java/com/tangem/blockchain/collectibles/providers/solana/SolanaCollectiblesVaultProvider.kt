@@ -7,6 +7,7 @@ import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaAssociated
 import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgram
 import com.tangem.blockchain.collectibles.CollectiblesVaultProvider
 import com.tangem.blockchain.collectibles.models.CollectiblesVault
+import com.tangem.blockchain.collectibles.models.CollectiblesVaultUsdc
 import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaCloseTokenAccountInstruction
 import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaCloseVaultInstruction
 import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaInitVaultInstruction
@@ -78,6 +79,19 @@ internal class SolanaCollectiblesVaultProvider(
         }
 
         return Result.Success(parsed)
+    }
+
+    override suspend fun getCollectiblesVaultUsdc(): Result<CollectiblesVaultUsdc> {
+        val vault = vaultAddress().successOr { return it }
+        val mint = usdcMint().successOr { return it }
+        val vaultUsdc = vaultUsdcAddress(vault = vault, mint = mint).successOr { return it }
+
+        return Result.Success(
+            CollectiblesVaultUsdc(
+                address = vaultUsdc.toBase58(),
+                mint = mint.toBase58(),
+            ),
+        )
     }
 
     override suspend fun buildInitCollectiblesVault(
