@@ -1,6 +1,7 @@
 package com.tangem.blockchain.collectibles
 
 import com.tangem.blockchain.collectibles.models.CollectiblesVault
+import com.tangem.blockchain.collectibles.models.CollectiblesVaultUsdc
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
 import com.tangem.blockchain.extensions.Result
@@ -15,6 +16,8 @@ internal object DefaultCollectiblesVaultProvider : CollectiblesVaultProvider {
     override suspend fun isCollectiblesVaultInitialized(): Result<Boolean> = unsupported()
 
     override suspend fun getCollectiblesVault(): Result<CollectiblesVault?> = unsupported()
+
+    override suspend fun getCollectiblesVaultUsdc(): Result<CollectiblesVaultUsdc> = unsupported()
 
     override suspend fun buildInitCollectiblesVault(
         hotDelegate: String,
