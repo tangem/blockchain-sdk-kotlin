@@ -55,9 +55,15 @@ internal class SuiWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val info = walletInfo ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx)
-        val transactionOutput = txBuilder.buildForSend(info, transactionData, signer)
+        val transactionOutput = txBuilder.buildForSend(
+            walletInfo = info,
+            txData = transactionData,
+            txSigner = signer,
+            onSigned = onSigned,
+        )
             .successOr { return it }
 
         val txResponse = networkService.executeTransaction(

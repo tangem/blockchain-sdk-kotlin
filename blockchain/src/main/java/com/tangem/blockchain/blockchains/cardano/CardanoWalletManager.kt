@@ -61,11 +61,14 @@ internal class CardanoWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val transactionHash = transactionBuilder.buildForSign(transactionData)
 
         return when (val signatureResult = signer.sign(transactionHash, wallet.publicKey)) {
             is CompletionResult.Success -> {
+                onSigned()
+
                 val signatureInfo = SignatureInfo(signatureResult.data, wallet.publicKey.blockchainKey)
 
                 val transactionToSend = transactionBuilder.buildForSend(transactionData, signatureInfo)

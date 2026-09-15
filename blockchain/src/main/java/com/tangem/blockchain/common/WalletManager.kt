@@ -237,7 +237,11 @@ interface TransactionSender {
         sendMode: MultipleTransactionSendMode = MultipleTransactionSendMode.DEFAULT,
     ): Result<TransactionsSendResult>
 
-    suspend fun send(transactionData: TransactionData, signer: TransactionSigner): Result<TransactionSendResult>
+    suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+        onSigned: () -> Unit = {},
+    ): Result<TransactionSendResult>
 
     /**
      * Broadcasts a signed transaction to the blockchain network.

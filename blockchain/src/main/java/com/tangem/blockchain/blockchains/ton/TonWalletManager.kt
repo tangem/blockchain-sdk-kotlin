@@ -51,6 +51,7 @@ internal class TonWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> = try {
         val txToSign = when (transactionData) {
             is TransactionData.Compiled -> txBuilder.buildCompiledForSign(
@@ -72,6 +73,8 @@ internal class TonWalletManager(
         ).successOr {
             return Result.fromTangemSdkError(it.error)
         }
+        onSigned()
+
         val txToSend = txBuilder.buildForSend(signature = signatureResult, preSignStructure = txToSign)
         when (val sendResult = networkService.send(txToSend)) {
             is Result.Failure -> Result.Failure(sendResult.error)

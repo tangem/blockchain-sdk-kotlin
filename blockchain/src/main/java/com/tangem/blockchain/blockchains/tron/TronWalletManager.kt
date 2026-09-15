@@ -23,13 +23,13 @@ import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toHexString
+import java.math.BigDecimal
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import okio.ByteString.Companion.decodeHex
 import org.tron.protos.Transaction.raw
-import java.math.BigDecimal
 
 @Suppress("LargeClass")
 internal class TronWalletManager(
@@ -91,6 +91,7 @@ internal class TronWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val signResult = when (transactionData) {
             is TransactionData.Compiled -> {
@@ -102,6 +103,7 @@ internal class TronWalletManager(
                 signCompiledTransactionData(
                     hexString = hexString,
                     signer = signer,
+                    onSigned = onSigned,
                     publicKey = wallet.publicKey,
                 )
             }
@@ -113,6 +115,7 @@ internal class TronWalletManager(
                     signer = signer,
                     publicKey = wallet.publicKey,
                     extras = transactionData.extras as? TronTransactionExtras,
+                    onSigned = onSigned,
                 )
             }
         }
@@ -350,6 +353,7 @@ internal class TronWalletManager(
         signer: TransactionSigner,
         publicKey: Wallet.PublicKey,
         extras: TronTransactionExtras?,
+        onSigned: () -> Unit = {},
     ): Result<ByteArray> {
         return when (val result = networkService.getNowBlock()) {
             is Result.Failure -> {
@@ -381,7 +385,14 @@ internal class TronWalletManager(
                         extras = extras,
                     )
                 }
-                when (val signResult = sign(transactionToSign.encode().calculateSha256(), signer, publicKey)) {
+                val signResult = sign(
+                    transactionHash = transactionToSign.encode().calculateSha256(),
+                    signer = signer,
+                    publicKey = publicKey,
+                    onSigned = onSigned,
+                )
+
+                when (signResult) {
                     is Result.Failure -> Result.Failure(signResult.error)
                     is Result.Success -> {
                         val transactionToSend = transactionBuilder.buildForSend(
@@ -399,10 +410,18 @@ internal class TronWalletManager(
         hexString: String,
         signer: TransactionSigner,
         publicKey: Wallet.PublicKey,
+        onSigned: () -> Unit,
     ): Result<ByteArray> {
         val rawData = raw.ADAPTER.decode(hexString.decodeHex())
 
-        return when (val signResult = sign(rawData.encode().calculateSha256(), signer, publicKey)) {
+        val signResult = sign(
+            transactionHash = rawData.encode().calculateSha256(),
+            signer = signer,
+            publicKey = publicKey,
+            onSigned = onSigned,
+        )
+
+        return when (signResult) {
             is Result.Failure -> Result.Failure(signResult.error)
             is Result.Success -> {
                 val transactionToSend = transactionBuilder.buildForSend(
@@ -474,9 +493,12 @@ internal class TronWalletManager(
         transactionHash: ByteArray,
         signer: TransactionSigner,
         publicKey: Wallet.PublicKey,
+        onSigned: () -> Unit,
     ): Result<ByteArray> {
         return when (val result = signer.sign(transactionHash, publicKey)) {
             is CompletionResult.Success -> {
+                onSigned()
+
                 val unmarshalledSignature = if (publicKey == dummySigner.publicKey) {
                     result.data + ByteArray(1)
                 } else {

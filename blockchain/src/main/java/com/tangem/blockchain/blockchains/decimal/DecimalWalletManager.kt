@@ -64,17 +64,19 @@ internal class DecimalWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val uncompiledTransaction = transactionData.requireUncompiled()
-        return super.send(convertTransactionDataAddress(uncompiledTransaction), signer)
+        return super.send(convertTransactionDataAddress(uncompiledTransaction), signer, onSigned)
     }
 
     override suspend fun sign(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
         val uncompiledTransaction = transactionData.requireUncompiled()
-        return super.sign(convertTransactionDataAddress(uncompiledTransaction), signer)
+        return super.sign(convertTransactionDataAddress(uncompiledTransaction), signer, onSigned)
     }
 
     private fun convertTransactionDataAddress(transactionData: TransactionData.Uncompiled) = transactionData.copy(

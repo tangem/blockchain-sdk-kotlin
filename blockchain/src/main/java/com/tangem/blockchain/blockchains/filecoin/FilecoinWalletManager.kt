@@ -67,6 +67,7 @@ internal class FilecoinWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         return try {
             val txBuilder = FilecoinTransactionBuilder(wallet)
@@ -75,6 +76,8 @@ internal class FilecoinWalletManager(
             when (val signingResult = signer.sign(hash, wallet.publicKey)) {
                 is CompletionResult.Failure -> Result.fromTangemSdkError(signingResult.error)
                 is CompletionResult.Success -> {
+                    onSigned()
+
                     val signature = UnmarshalHelper.unmarshalSignatureExtended(
                         signature = signingResult.data,
                         hash = hash,

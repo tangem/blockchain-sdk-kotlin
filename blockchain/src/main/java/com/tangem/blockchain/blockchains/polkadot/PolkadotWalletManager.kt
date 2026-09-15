@@ -15,11 +15,11 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.hexToBytes
 import io.emeraldpay.polkaj.tx.ExtrinsicContext
 import io.emeraldpay.polkaj.types.Hash256
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import java.math.BigDecimal
 import java.util.Calendar
 import java.util.EnumSet
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 
 /**
 [REDACTED_AUTHOR]
@@ -123,13 +123,19 @@ internal class PolkadotWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val uncompiledTransaction = transactionData.requireUncompiled()
 
         runCatching { updateEra() }
             .onFailure { return Result.Failure(BlockchainSdkError.CustomError(it.message ?: "Unknown error")) }
         return when (uncompiledTransaction.amount.type) {
-            AmountType.Coin -> sendCoin(uncompiledTransaction, signer, currentContext)
+            AmountType.Coin -> sendCoin(
+                transactionData = uncompiledTransaction,
+                signer = signer,
+                extrinsicContext = currentContext,
+                onSigned = onSigned,
+            )
             else -> Result.Failure(UnsupportedOperation())
         }
     }
@@ -198,6 +204,7 @@ internal class PolkadotWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
         extrinsicContext: ExtrinsicContext,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val uncompiledTransaction = transactionData.requireUncompiled()
 
@@ -220,6 +227,7 @@ internal class PolkadotWalletManager(
             destinationAddress = destinationAddress,
             context = extrinsicContext,
             signer = signer,
+            onSigned = onSigned,
         ).successOr { return Result.Failure(it.error) }
 
         val hash = networkProvider.sendTransaction(signedTransaction).successOr {
@@ -232,17 +240,20 @@ internal class PolkadotWalletManager(
         return Result.Success(TransactionSendResult(txHash))
     }
 
+    @Suppress("LongParameterList")
     private suspend fun sign(
         amount: Amount,
         sourceAddress: String,
         destinationAddress: String,
         context: ExtrinsicContext,
         signer: TransactionSigner,
+        onSigned: () -> Unit = {},
     ): Result<ByteArray> {
         val builtTxForSign = txBuilder.buildForSign(destinationAddress, amount, context)
-
         return when (val signResult = signer.sign(builtTxForSign, wallet.publicKey)) {
             is CompletionResult.Success -> {
+                onSigned()
+
                 val signature = signResult.data
                 val builtForSend = txBuilder.buildForSend(sourceAddress, destinationAddress, amount, context, signature)
                 Result.Success(builtForSend)

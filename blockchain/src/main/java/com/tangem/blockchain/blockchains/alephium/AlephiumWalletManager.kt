@@ -54,6 +54,7 @@ internal class AlephiumWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val unsignedTransaction = transactionBuilder
             .buildToSign(transactionData)
@@ -62,6 +63,8 @@ internal class AlephiumWalletManager(
 
         return when (val signerResult = signer.sign(hex, wallet.publicKey)) {
             is CompletionResult.Success -> {
+                onSigned()
+
                 val unsignedTx = transactionBuilder.serializeUnsignedTransaction(unsignedTransaction)
                     .toByteArray().toHexString()
                 val signature = signerResult.data.toHexString()

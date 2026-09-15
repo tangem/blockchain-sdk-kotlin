@@ -99,6 +99,7 @@ class NearWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val uncompiledTransaction = transactionData.requireUncompiled()
 
@@ -114,6 +115,8 @@ class NearWalletManager(
 
         return when (val signatureResult = signer.sign(txToSign, wallet.publicKey)) {
             is CompletionResult.Success -> {
+                onSigned()
+
                 val txToSend = txBuilder.buildForSend(
                     transactionData = uncompiledTransaction,
                     signature = signatureResult.data,

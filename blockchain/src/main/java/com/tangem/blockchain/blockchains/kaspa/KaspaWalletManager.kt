@@ -19,11 +19,11 @@ import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
+import java.math.BigDecimal
+import java.math.BigInteger
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import java.math.BigDecimal
-import java.math.BigInteger
 
 @Suppress("LargeClass")
 internal class KaspaWalletManager(
@@ -109,11 +109,11 @@ internal class KaspaWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val uncompiledTransaction = transactionData.requireUncompiled()
-
         return when (val type = uncompiledTransaction.amount.type) {
-            is AmountType.Coin -> sendCoinTransaction(uncompiledTransaction, signer)
+            is AmountType.Coin -> sendCoinTransaction(uncompiledTransaction, signer, onSigned)
             is AmountType.Token -> {
                 val incompleteTokenTransaction = getIncompleteTokenTransaction(type.token)
                 if (incompleteTokenTransaction != null &&
@@ -124,9 +124,10 @@ internal class KaspaWalletManager(
                         transactionData = uncompiledTransaction,
                         signer = signer,
                         incompleteTokenTransactionParams = incompleteTokenTransaction,
+                        onSigned = onSigned,
                     )
                 } else {
-                    sendKRC20Transaction(uncompiledTransaction, signer)
+                    sendKRC20Transaction(uncompiledTransaction, signer, onSigned)
                 }
             }
             else -> error("unknown amount type for fee estimation")
@@ -248,6 +249,7 @@ internal class KaspaWalletManager(
     private suspend fun sendCoinTransaction(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData, dustValue)) {
             is Result.Failure -> return buildTransactionResult
@@ -256,6 +258,8 @@ internal class KaspaWalletManager(
                 val hashesToSign = transactionBuilder.getHashesForSign(transaction)
                 return when (val signerResult = signer.sign(hashesToSign, wallet.publicKey)) {
                     is CompletionResult.Success -> {
+                        onSigned()
+
                         val transactionToSend = transactionBuilder.buildToSend(
                             signatures = signerResult.data.reduce { acc, bytes -> acc + bytes },
                             transaction = transaction,
@@ -279,6 +283,7 @@ internal class KaspaWalletManager(
     private suspend fun sendKRC20Transaction(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val uncompiledTransaction = transactionData.requireUncompiled()
 
@@ -308,6 +313,8 @@ internal class KaspaWalletManager(
 
                         return when (val signerResult = signer.sign(unionHashes, wallet.publicKey)) {
                             is CompletionResult.Success -> {
+                                onSigned()
+
                                 val commitSignaturesLength = commitTransaction.data.hashes.size
                                 val commitSignatures = signerResult.data.take(commitSignaturesLength)
                                 val revealSignatures = signerResult.data.drop(commitSignaturesLength)
@@ -368,6 +375,7 @@ internal class KaspaWalletManager(
         transactionData: TransactionData,
         signer: TransactionSigner,
         incompleteTokenTransactionParams: BlockchainSavedData.KaspaKRC20IncompleteTokenTransaction,
+        onSigned: () -> Unit = {},
     ): Result<TransactionSendResult> {
         val uncompiledTransaction = transactionData.requireUncompiled()
 
@@ -389,6 +397,8 @@ internal class KaspaWalletManager(
             is Result.Success -> {
                 return when (val signerResult = signer.sign(transaction.data.hashes, wallet.publicKey)) {
                     is CompletionResult.Success -> {
+                        onSigned()
+
                         val transactionToSend = transactionBuilder.buildToSendKRC20Reveal(
                             signatures = signerResult.data.reduce { acc, bytes -> acc + bytes },
                             redeemScript = redeemScript,

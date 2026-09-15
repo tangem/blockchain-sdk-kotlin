@@ -5,29 +5,30 @@ import com.tangem.blockchain.blockchains.xrp.network.XrpNetworkProvider
 import com.tangem.blockchain.blockchains.xrp.network.XrpTokenBalance
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
-import com.tangem.blockchain.common.logging.Logger
-import com.tangem.blockchain.common.memo.MemoValidator
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.memo.MemoState
+import com.tangem.blockchain.common.memo.MemoValidator
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.trustlines.AssetRequirementsCondition
 import com.tangem.blockchain.common.trustlines.AssetRequirementsManager
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.SimpleResult
+import com.tangem.blockchain.extensions.successOr
+import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.blockchain.tokenbalance.DefaultTokenBalanceProvider
 import com.tangem.blockchain.tokenbalance.TokenBalanceProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
-import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.extensions.successOr
-import com.tangem.blockchain.extensions.toSimpleFailure
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
 import java.math.BigDecimal
 import java.util.Calendar
 
+@Suppress("LargeClass")
 internal class XrpWalletManager(
     wallet: Wallet,
     private val transactionBuilder: XrpTransactionBuilder,
@@ -92,21 +93,28 @@ internal class XrpWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val uncompiledTransaction = transactionData.requireUncompiled()
         if (uncompiledTransaction.amount.type is AmountType.Token) {
             val contractAddress = uncompiledTransaction.amount.type.token.contractAddress
             if (isNeedSetNoRippling(contractAddress)) {
-                return sendTokenWithNoRippleSetup(uncompiledTransaction, contractAddress, signer)
+                return sendTokenWithNoRippleSetup(
+                    transactionData = uncompiledTransaction,
+                    contractAddress = contractAddress,
+                    signer = signer,
+                    onSigned = onSigned,
+                )
             }
         }
-        return performStandardSend(uncompiledTransaction, signer)
+        return performStandardSend(uncompiledTransaction, signer, onSigned)
     }
 
     private suspend fun sendTokenWithNoRippleSetup(
         transactionData: TransactionData.Uncompiled,
         contractAddress: String,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val sourceAddress = XrpAddressService.decodeXAddress(transactionData.sourceAddress)
             ?.address ?: transactionData.sourceAddress
@@ -130,7 +138,11 @@ internal class XrpWalletManager(
         )
             .successOr { return it }
         val signatures = when (val signerResponse = signer.sign(listOf(trustSetHash, paymentHash), wallet.publicKey)) {
-            is CompletionResult.Success -> signerResponse.data
+            is CompletionResult.Success -> {
+                onSigned()
+
+                signerResponse.data
+            }
             is CompletionResult.Failure -> return Result.fromTangemSdkError(signerResponse.error)
         }
 
@@ -161,6 +173,7 @@ internal class XrpWalletManager(
     private suspend fun performStandardSend(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val transactionHash = when (val buildResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Success -> buildResult.data
@@ -169,6 +182,8 @@ internal class XrpWalletManager(
 
         return when (val signerResponse = signer.sign(transactionHash, wallet.publicKey)) {
             is CompletionResult.Success -> {
+                onSigned()
+
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
                 when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
                     is SimpleResult.Failure -> Result.Failure(sendResult.error)

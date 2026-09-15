@@ -52,12 +52,15 @@ class ChiaWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Failure -> return Result.Failure(buildTransactionResult.error)
             is Result.Success -> {
                 return when (val signerResult = signer.sign(buildTransactionResult.data, wallet.publicKey)) {
                     is CompletionResult.Success -> {
+                        onSigned()
+
                         val transactionToSend = transactionBuilder.buildToSend(signerResult.data)
                         when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
                             is SimpleResult.Success -> {
