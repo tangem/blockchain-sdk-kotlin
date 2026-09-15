@@ -85,6 +85,7 @@ internal class StellarWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val hash = transactionBuilder.buildToSign(transactionData, sequence).successOr {
             return Result.Failure(it.error)
@@ -92,6 +93,8 @@ internal class StellarWalletManager(
 
         return when (val signerResponse = signer.sign(hash, wallet.publicKey)) {
             is CompletionResult.Success -> {
+                onSigned()
+
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
                 when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
                     is SimpleResult.Failure -> Result.Failure(sendResult.error)

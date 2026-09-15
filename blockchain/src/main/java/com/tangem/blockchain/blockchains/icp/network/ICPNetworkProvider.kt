@@ -14,4 +14,5 @@ interface ICPNetworkProvider : NetworkProvider {
 data class ICPTransferWithSigner(
     val transfer: ICPTransferRequest,
     val signer: TransactionSigner,
+    val onSigned: () -> Unit,
 )

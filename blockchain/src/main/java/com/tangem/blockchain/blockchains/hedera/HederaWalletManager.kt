@@ -12,8 +12,8 @@ import com.tangem.blockchain.blockchains.hedera.network.HederaNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
-import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -377,6 +377,7 @@ internal class HederaWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val uncompiled = transactionData as? TransactionData.Uncompiled
             ?: return Result.Failure(BlockchainSdkError.CustomError("Expected uncompiled transaction"))
@@ -404,7 +405,7 @@ internal class HederaWalletManager(
         return when (buildTransaction) {
             is Result.Failure -> Result.Failure(buildTransaction.error)
             is Result.Success -> {
-                when (val sendResult = signAndSendTransaction(signer, buildTransaction.data)) {
+                when (val sendResult = signAndSendTransaction(signer, buildTransaction.data, onSigned)) {
                     is Result.Failure -> Result.Failure(sendResult.error)
                     is Result.Success -> {
                         val txHash = HederaTransactionId.fromTransactionId(sendResult.data.transactionId).rawStringId
@@ -580,10 +581,13 @@ internal class HederaWalletManager(
     private suspend fun <T : Transaction<T>> signAndSendTransaction(
         signer: TransactionSigner,
         builtTransaction: HederaBuiltTransaction<out Transaction<*>>,
+        onSigned: () -> Unit = {},
     ): Result<TransactionResponse> {
         return try {
             when (val signerResult = signer.sign(builtTransaction.signatures, wallet.publicKey)) {
                 is CompletionResult.Success -> {
+                    onSigned()
+
                     val transactionToSend = transactionBuilder.buildToSend(
                         transaction = builtTransaction.transaction as T,
                         signatures = signerResult.data,

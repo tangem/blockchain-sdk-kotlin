@@ -60,6 +60,7 @@ internal class AlgorandWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val uncompiledTransaction = transactionData.requireUncompiled()
 
@@ -67,6 +68,8 @@ internal class AlgorandWalletManager(
         val txToSign = transactionBuilder.buildForSign(uncompiledTransaction, txParams)
         return when (val signatureResult = signer.sign(txToSign, wallet.publicKey)) {
             is CompletionResult.Success -> {
+                onSigned()
+
                 val rawTx =
                     transactionBuilder.buildForSend(
                         transactionData = uncompiledTransaction,

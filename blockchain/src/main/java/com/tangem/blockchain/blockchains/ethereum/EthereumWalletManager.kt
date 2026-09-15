@@ -37,14 +37,14 @@ import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
 import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
+import java.math.BigDecimal
+import java.math.BigInteger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.supervisorScope
 import org.kethereum.extensions.toHexString
 import org.kethereum.keccakshortcut.keccak
 import org.komputing.khex.extensions.toHexString
-import java.math.BigDecimal
-import java.math.BigInteger
 
 @Suppress("LargeClass", "TooManyFunctions")
 open class EthereumWalletManager(
@@ -191,12 +191,13 @@ open class EthereumWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         validate(transactionData).onFailure {
             return Result.Failure(it as? BlockchainSdkError ?: BlockchainSdkError.FailedToBuildTx)
         }
 
-        val transactionToSend = prepareForSend(transactionData, signer)
+        val transactionToSend = prepareForSend(transactionData, signer, onSigned)
             .successOr { return it }
 
         return when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())) {
@@ -295,11 +296,15 @@ open class EthereumWalletManager(
     protected open suspend fun sign(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
         val transactionToSign = transactionBuilder.buildForSign(transaction = transactionData)
-
         return when (val signResponse = signer.sign(transactionToSign.hash, wallet.publicKey)) {
-            is CompletionResult.Success -> Result.Success(signResponse.data to transactionToSign)
+            is CompletionResult.Success -> {
+                onSigned()
+
+                Result.Success(signResponse.data to transactionToSign)
+            }
             is CompletionResult.Failure -> Result.fromTangemSdkError(signResponse.error)
         }
     }
@@ -464,6 +469,12 @@ open class EthereumWalletManager(
     override suspend fun prepareForSend(
         transactionData: TransactionData,
         signer: TransactionSigner,
+    ): Result<ByteArray> = prepareForSend(transactionData, signer, onSigned = {})
+
+    protected suspend fun prepareForSend(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<ByteArray> {
         val transactionData = when (transactionData) {
             is TransactionData.Uncompiled -> {
@@ -489,7 +500,7 @@ open class EthereumWalletManager(
             }
             is TransactionData.Compiled -> transactionData
         }
-        return when (val signResponse = sign(transactionData, signer)) {
+        return when (val signResponse = sign(transactionData, signer, onSigned)) {
             is Result.Success -> {
                 val transactionToSend = try {
                     transactionBuilder.buildForSend(

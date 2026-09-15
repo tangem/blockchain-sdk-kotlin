@@ -185,11 +185,12 @@ class SolanaWalletManager internal constructor(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         return when (transactionData) {
             is TransactionData.Compiled -> {
                 val startSendingTimestamp = SystemClock.elapsedRealtime()
-                val signedTransaction = prepareForSend(transactionData, signer)
+                val signedTransaction = prepareForSend(transactionData, signer, onSigned)
                     .successOr { return it }
                 sendTransaction(signedTransaction, transactionData, startSendingTimestamp)
             }
@@ -205,9 +206,10 @@ class SolanaWalletManager internal constructor(
 
                 val startSendingTimestamp = SystemClock.elapsedRealtime()
 
-                val signResult = signer.sign(transaction.getSerializedMessage(), wallet.publicKey).successOr {
-                    return Result.fromTangemSdkError(it.error)
-                }
+                val signResult = signer.sign(transaction.getSerializedMessage(), wallet.publicKey)
+                    .successOr { return Result.fromTangemSdkError(it.error) }
+                onSigned()
+
                 transaction.addSignedDataSignature(signResult)
 
                 sendTransaction(transaction.serialize(), transactionData, startSendingTimestamp)
@@ -285,11 +287,18 @@ class SolanaWalletManager internal constructor(
     override suspend fun prepareForSend(
         transactionData: TransactionData,
         signer: TransactionSigner,
+    ): Result<ByteArray> = prepareForSend(transactionData, signer, onSigned = {})
+
+    private suspend fun prepareForSend(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<ByteArray> {
         val compiledTransaction = transactionData.requireCompiled()
         val transactionToSign = prepareForSign(compiledTransaction).successOr { return it }
         val signResult = signer.sign(transactionToSign, wallet.publicKey)
             .successOr { return Result.fromTangemSdkError(it.error) }
+        onSigned()
 
         val signedTransaction = placeSignature(
             transactionData = compiledTransaction,
