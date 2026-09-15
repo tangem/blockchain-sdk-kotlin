@@ -13,8 +13,8 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
-import org.joda.time.DateTime
 import java.math.BigDecimal
+import org.joda.time.DateTime
 
 internal class AptosWalletManager(
     wallet: Wallet,
@@ -59,6 +59,7 @@ internal class AptosWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val expirationTimestamp = createExpirationTimestamp()
 
@@ -71,6 +72,8 @@ internal class AptosWalletManager(
         return when (val signingResult = signer.sign(rawTx, wallet.publicKey)) {
             is CompletionResult.Failure -> Result.fromTangemSdkError(signingResult.error)
             is CompletionResult.Success -> {
+                onSigned()
+
                 val hash = txBuilder.buildForSend(
                     sequenceNumber = sequenceNumber,
                     transactionData = transactionData,

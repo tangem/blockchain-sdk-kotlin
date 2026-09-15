@@ -49,12 +49,15 @@ class BinanceWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         return when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Failure -> buildTransactionResult
             is Result.Success -> {
                 when (val signerResponse = signer.sign(buildTransactionResult.data, wallet.publicKey)) {
                     is CompletionResult.Success -> {
+                        onSigned()
+
                         val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
                         when (val result = networkProvider.sendTransaction(transactionToSend)) {
                             is Result.Success -> {

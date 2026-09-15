@@ -48,6 +48,7 @@ internal class CasperWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         return try {
             val unsignedBody = transactionBuilder.buildForSign(transactionData = transactionData)
@@ -56,6 +57,8 @@ internal class CasperWalletManager(
             when (val signingResult = signer.sign(hashSha256, wallet.publicKey)) {
                 is CompletionResult.Failure -> Result.fromTangemSdkError(signingResult.error)
                 is CompletionResult.Success -> {
+                    onSigned()
+
                     val signedTransactionBody = transactionBuilder.buildForSend(
                         unsignedTransactionBody = unsignedBody,
                         signature = encodeSignature(signingResult.data),

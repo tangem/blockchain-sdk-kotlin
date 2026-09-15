@@ -99,6 +99,7 @@ internal class VeChainWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val blockInfo = networkService.getLatestBlock()
             .successOr { return it }
@@ -106,6 +107,8 @@ internal class VeChainWalletManager(
         val txToSign = transactionBuilder.buildForSign(transactionData, blockInfo, nonce)
         return when (val signatureResult = signer.sign(txToSign, wallet.publicKey)) {
             is CompletionResult.Success -> {
+                onSigned()
+
                 val rawTx =
                     transactionBuilder.buildForSend(
                         transactionData = transactionData,

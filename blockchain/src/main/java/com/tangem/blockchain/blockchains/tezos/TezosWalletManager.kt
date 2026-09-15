@@ -18,11 +18,11 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.isZero
+import java.math.BigDecimal
+import java.util.EnumSet
 import kotlinx.coroutines.*
 import org.bitcoinj.core.Base58
 import org.bitcoinj.core.Utils
-import java.math.BigDecimal
-import java.util.EnumSet
 
 class TezosWalletManager(
     wallet: Wallet,
@@ -62,6 +62,7 @@ class TezosWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         if (isPublicKeyRevealed == null) {
             // in case of publicKeyRevealed is null, we should try request it
@@ -91,7 +92,11 @@ class TezosWalletManager(
 
         val signature = when (val signerResponse = signer.sign(dataToSign, wallet.publicKey)) {
             is CompletionResult.Failure -> return Result.fromTangemSdkError(signerResponse.error)
-            is CompletionResult.Success -> signerResponse.data
+            is CompletionResult.Success -> {
+                onSigned()
+
+                signerResponse.data
+            }
         }
         val canonicalSignature = canonicalizeSignature(signature)
 

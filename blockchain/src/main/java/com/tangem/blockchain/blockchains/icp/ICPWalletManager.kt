@@ -43,11 +43,12 @@ internal class ICPWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val nowMillis = System.currentTimeMillis()
         val nowNanos = nowMillis * NANOSECONDS_IN_MILLISECOND
         val transferRequest = transactionBuilder.buildForSign(transactionData, nowNanos)
-        val transferWithSigner = ICPTransferWithSigner(transferRequest, signer)
+        val transferWithSigner = ICPTransferWithSigner(transferRequest, signer, onSigned)
 
         return when (val sendResult = networkProvider.signAndSendTransaction(transferWithSigner)) {
             is Result.Success -> {

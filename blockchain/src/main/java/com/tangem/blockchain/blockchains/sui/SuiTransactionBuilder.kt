@@ -121,6 +121,7 @@ internal class SuiTransactionBuilder(
         walletInfo: SuiWalletInfo,
         txData: TransactionData,
         txSigner: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<Sui.SigningOutput> {
         val uncompiledTransaction = txData.requireUncompiled()
         val amount = uncompiledTransaction.amount
@@ -164,6 +165,8 @@ internal class SuiTransactionBuilder(
 
         val signature = txSigner.sign(preSigningOutput.dataHash.toByteArray(), publicKey)
             .successOr { return Result.Failure(it.error.toBlockchainSdkError()) }
+        onSigned()
+
         val compiled = TransactionCompiler.compileWithSignatures(
             /* coinType = */ CoinType.SUI,
             /* txInputData = */ input.toByteArray(),

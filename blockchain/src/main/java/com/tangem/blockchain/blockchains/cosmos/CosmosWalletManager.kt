@@ -54,6 +54,7 @@ class CosmosWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val accNumber = accountNumber ?: return Result.Failure(BlockchainSdkError.AccountNotFound())
 
@@ -86,6 +87,8 @@ class CosmosWalletManager(
 
         val message = when (val signature = signer.sign(hash, wallet.publicKey)) {
             is CompletionResult.Success -> {
+                onSigned()
+
                 when (transactionData) {
                     is TransactionData.Uncompiled -> {
                         txBuilder.buildForSend(
