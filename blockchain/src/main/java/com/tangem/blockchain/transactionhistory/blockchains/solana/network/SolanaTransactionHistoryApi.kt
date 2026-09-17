@@ -2,6 +2,7 @@ package com.tangem.blockchain.transactionhistory.blockchains.solana.network
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import com.tangem.blockchain.blockchains.solana.SolanaTokenAccountSelector
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.SolanaRpcClient
 import org.p2p.solanaj.rpc.RpcException
 
@@ -53,8 +54,8 @@ internal class SolanaTransactionHistoryApi(
     }
 
     /**
-     * Resolves the wallet's on-chain token account (ATA) for [mint] via `getTokenAccountsByOwner`.
-     * The `mint` filter matches the account regardless of the owning token program (SPL Token or Token-2022).
+     * Resolves the wallet's on-chain token account for [mint] via `getTokenAccountsByOwner`, preferring the
+     * associated one. The `mint` filter matches regardless of the owning token program (SPL Token or Token-2022).
      * Returns `null` if the token account doesn't exist yet (no history available).
      */
     fun getTokenAccountsByOwner(owner: String, mint: String): String? {
@@ -69,6 +70,10 @@ internal class SolanaTransactionHistoryApi(
         response.error?.let {
             throw RpcException("RPC error ${it.code}: ${it.message}")
         }
-        return response.result?.value?.firstOrNull()?.pubkey
+        return SolanaTokenAccountSelector.preferredAccountAddress(
+            addresses = response.result?.value?.map(SolanaTokenAccount::pubkey).orEmpty(),
+            mint = mint,
+            ownerAccountId = owner,
+        )
     }
 }
