@@ -207,11 +207,7 @@ internal class EtherscanTransactionHistoryProvider(
             return TransactionHistoryItem.TransactionType.Transfer
         }
 
-        // ERC-20 transfer method
         val fnName = this.functionName?.substringBefore("(")
-        if (fnName == TOKEN_TRANSFER_METHOD_NAME) {
-            return TransactionHistoryItem.TransactionType.Transfer
-        }
 
         // Contract interaction handling
         return if (filterType is TransactionHistoryRequest.FilterType.Coin) {
@@ -294,6 +290,5 @@ internal class EtherscanTransactionHistoryProvider(
 
     private companion object {
         const val UNKNOWN = "Unknown"
-        const val TOKEN_TRANSFER_METHOD_NAME = "transfer"
     }
 }

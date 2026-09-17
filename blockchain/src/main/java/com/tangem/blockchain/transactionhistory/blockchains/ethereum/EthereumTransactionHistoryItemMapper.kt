@@ -3,6 +3,7 @@ package com.tangem.blockchain.transactionhistory.blockchains.ethereum
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.HEX_PREFIX
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import com.tangem.blockchain.network.blockbook.network.responses.feeAmount
@@ -32,7 +33,7 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
             is TransactionHistoryRequest.FilterType.Contract -> transactions.flatMap { transaction ->
                 convertFromTokenTransaction(
                     walletAddress = walletAddress,
-                    token = filterType.tokenInfo,
+                    filterType = filterType,
                     transaction = transaction,
                 )
             }
@@ -68,7 +69,7 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
             destinationType = DestinationType.Single(addressType = destinationAddressType),
             sourceType = SourceType.Single(address = sourceAddress),
             status = extractStatus(transaction = transaction),
-            type = extractType(transaction = transaction),
+            type = extractType(transaction = transaction, filterType = TransactionHistoryRequest.FilterType.Coin),
             fee = transaction.feeAmount(blockchain),
             amount = Amount(
                 value = BigDecimal(transaction.value).movePointLeft(blockchain.decimals()),
@@ -80,9 +81,11 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
 
     private fun convertFromTokenTransaction(
         walletAddress: String,
-        token: Token,
+        filterType: TransactionHistoryRequest.FilterType.Contract,
         transaction: GetAddressResponse.Transaction,
     ): List<TransactionHistoryItem> {
+        val token = filterType.tokenInfo
+
         return transaction.tokenTransfers
             .filter { transfer ->
                 // Double check to exclude token transfers sent to self.
@@ -114,7 +117,7 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
                         destinationType = DestinationType.Single(AddressType.User(transfer.to)),
                         sourceType = SourceType.Single(transfer.from),
                         status = extractStatus(transaction),
-                        type = extractType(transaction),
+                        type = extractType(transaction = transaction, filterType = filterType),
                         amount = amount,
                         fee = transaction.feeAmount(blockchain),
                     )
@@ -134,7 +137,10 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
         }
     }
 
-    private fun extractType(transaction: GetAddressResponse.Transaction): TransactionType {
+    private fun extractType(
+        transaction: GetAddressResponse.Transaction,
+        filterType: TransactionHistoryRequest.FilterType,
+    ): TransactionType {
         val ethereumSpecific = transaction.ethereumSpecific
 
         // Retrieve the methodId from a specific field in the response or parse it from ethereumSpecific. If unable to
@@ -144,15 +150,20 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
             ?: return TransactionType.Transfer
 
         // MethodId is empty for the coin transfers
-        if (methodId.isEmpty() || methodId == "0x") return TransactionType.Transfer
+        if (methodId.isEmpty() || methodId == HEX_PREFIX) return TransactionType.Transfer
 
-        // ERC-20 transfer method id
-        if (methodId.equals(TOKEN_TRANSFER_METHOD_ID, ignoreCase = true)) {
+        // In the token's own history a transfer IS the transfer. Only the coin history keeps it a contract call:
+        // there it moves no coin, and that is what carries it past `shouldExcludeFromHistory`.
+        if (methodId.isTokenTransfer() && filterType is TransactionHistoryRequest.FilterType.Contract) {
             return TransactionType.Transfer
         }
 
         return TransactionType.ContractMethod(id = methodId, callData = ethereumSpecific?.data)
     }
+
+    /** The response reports the selector bare or `0x`-prefixed, depending on where it was read from. */
+    private fun String.isTokenTransfer(): Boolean =
+        removePrefix(HEX_PREFIX).equals(TOKEN_TRANSFER_METHOD_ID, ignoreCase = true)
 
     private fun methodIdFromRawData(rawData: String?): String? {
         val rawDataWithoutPrefix = rawData?.removePrefix("0x")
