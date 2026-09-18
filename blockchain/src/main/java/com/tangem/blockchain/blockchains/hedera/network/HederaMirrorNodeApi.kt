@@ -35,10 +35,17 @@ internal interface HederaMirrorNodeApi {
     @GET("network/fees")
     suspend fun getNetworkFees(): HederaNetworkFeesResponse
 
+    @GET("network/nodes")
+    suspend fun getNetworkNodes(
+        @Query("node.id") nodeIdFilter: String?,
+        @Query("limit") limit: Int = NODES_PAGE_LIMIT,
+    ): HederaNetworkNodesResponse
+
     @GET("accounts/{idOrAliasOrEvmAddress}")
     suspend fun getAccountDetail(@Path("idOrAliasOrEvmAddress") id: String): HederaAccountDetailResponse
 
     private companion object {
         const val BALANCES_LIMIT = 200 // Arkhia doesn't support limit greater than 200
+        const val NODES_PAGE_LIMIT = 25
     }
 }
