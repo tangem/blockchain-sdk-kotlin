@@ -4,6 +4,7 @@ import android.util.Log
 import com.google.common.truth.Truth.assertThat
 import com.tangem.blockchain.common.datastorage.BlockchainDataStorage
 import com.tangem.blockchain.common.network.providers.ProviderType
+import com.tangem.common.extensions.hexToBytes
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -11,17 +12,16 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * The provider for an external address is assembled from the chain's RPC providers alone: the address is given, no
- * key is involved, and a chain the factory cannot serve yields no provider rather than a broken one.
+ * The Safe manager is assembled from the chain's RPC providers around the wallet's real key, but its wallet address
+ * is the Safe's; a chain the factory cannot serve for the Safe yields no manager rather than a broken one.
  */
-internal class WalletManagerFactoryExternalAddressTest {
+internal class WalletManagerFactorySafeTest {
 
     private val factory = WalletManagerFactory(
         config = BlockchainSdkConfig(),
         blockchainProviderTypes = mapOf(
             Blockchain.Ethereum to listOf(ProviderType.Public(url = "https://ethereum.example.org/")),
             Blockchain.Polygon to emptyList(),
-            Blockchain.Mantle to listOf(ProviderType.Public(url = "https://mantle.example.org/")),
         ),
         accountCreator = mockk(),
         featureToggles = BlockchainFeatureToggles(isYieldSupplyEnabled = false),
@@ -32,6 +32,8 @@ internal class WalletManagerFactoryExternalAddressTest {
         },
     )
 
+    private val ownerKey = Wallet.PublicKey(seedKey = OWNER_PUBLIC_KEY.hexToBytes(), derivationType = null)
+
     @Before
     fun setUp() {
         mockkStatic(Log::class)
@@ -39,54 +41,47 @@ internal class WalletManagerFactoryExternalAddressTest {
     }
 
     @Test
-    fun `GIVEN an EVM chain with providers WHEN create THEN the provider observes the given address`() {
-        val actual = factory.createExternalAddressBalanceProvider(
+    fun `GIVEN an EVM chain with providers WHEN create THEN the manager reads for the Safe with the owner key`() {
+        val actual = factory.createSafeWalletManager(
             blockchain = Blockchain.Ethereum,
-            address = SAFE_ADDRESS,
+            publicKey = ownerKey,
+            safeAddress = SAFE_ADDRESS,
         )
 
         assertThat(actual).isNotNull()
-        assertThat(actual!!.address).isEqualTo(SAFE_ADDRESS)
-        assertThat(actual.blockchain).isEqualTo(Blockchain.Ethereum)
-        assertThat(actual.tokens).isEmpty()
-        assertThat(actual.amounts).isEmpty()
+        assertThat(actual!!.wallet.address).isEqualTo(SAFE_ADDRESS)
+        assertThat(actual.wallet.publicKey).isEqualTo(ownerKey)
+        assertThat(actual.wallet.blockchain).isEqualTo(Blockchain.Ethereum)
     }
 
     @Test
-    fun `GIVEN a non-EVM chain WHEN create THEN no provider`() {
-        val actual = factory.createExternalAddressBalanceProvider(
+    fun `GIVEN a non-EVM chain WHEN create THEN no manager`() {
+        val actual = factory.createSafeWalletManager(
             blockchain = Blockchain.Bitcoin,
-            address = SAFE_ADDRESS,
+            publicKey = ownerKey,
+            safeAddress = SAFE_ADDRESS,
         )
 
         assertThat(actual).isNull()
     }
 
     @Test
-    fun `GIVEN an address invalid for the chain WHEN create THEN no provider`() {
-        val actual = factory.createExternalAddressBalanceProvider(
+    fun `GIVEN an address invalid for the chain WHEN create THEN no manager`() {
+        val actual = factory.createSafeWalletManager(
             blockchain = Blockchain.Ethereum,
-            address = "not-an-address",
+            publicKey = ownerKey,
+            safeAddress = "not-an-address",
         )
 
         assertThat(actual).isNull()
     }
 
     @Test
-    fun `GIVEN a chain without configured providers WHEN create THEN no provider`() {
-        val actual = factory.createExternalAddressBalanceProvider(
+    fun `GIVEN a chain without configured providers WHEN create THEN no manager`() {
+        val actual = factory.createSafeWalletManager(
             blockchain = Blockchain.Polygon,
-            address = SAFE_ADDRESS,
-        )
-
-        assertThat(actual).isNull()
-    }
-
-    @Test
-    fun `GIVEN an EVM chain with an assembly of its own WHEN create THEN no provider`() {
-        val actual = factory.createExternalAddressBalanceProvider(
-            blockchain = Blockchain.Mantle,
-            address = SAFE_ADDRESS,
+            publicKey = ownerKey,
+            safeAddress = SAFE_ADDRESS,
         )
 
         assertThat(actual).isNull()
@@ -94,5 +89,7 @@ internal class WalletManagerFactoryExternalAddressTest {
 
     private companion object {
         const val SAFE_ADDRESS = "0xe7411b2aB7b76a11ca0E6174697714983fC09Cb2"
+        const val OWNER_PUBLIC_KEY = "040876BDEC26B89BD2159A668B9AF3D9FE86370F318717C92B8D6C1186FB3648C32A5F9321998CC2D0" +
+            "42901C91D40601E79A641E1CBCEBE7A2358BE6054E1B6E5D"
     }
 }
