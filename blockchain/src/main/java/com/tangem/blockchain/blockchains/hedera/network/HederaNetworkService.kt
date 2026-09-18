@@ -149,6 +149,35 @@ internal class HederaNetworkService(
         return evmAddressResolver.resolveAccountEvmAddress(accountId)
     }
 
+    suspend fun syncClientNetwork(): Result<Unit> {
+        val nodes = multiProvider.performRequest(HederaNetworkProvider::getNetworkNodes)
+            .successOr { return it }
+        val network = nodes.toClientNetwork()
+        if (network.isEmpty()) {
+            return Result.Failure(BlockchainSdkError.CustomError("Mirror node returned no consensus node endpoints"))
+        }
+        return try {
+            client.setNetwork(network)
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
+    private fun List<HederaNetworkNodeResponse>.toClientNetwork(): Map<String, AccountId> = buildMap {
+        for (node in this@toClientNetwork) {
+            val accountId = AccountId.fromString(node.nodeAccountId)
+            node.serviceEndpoints
+                .filter { it.port == PLAINTEXT_GRPC_PORT }
+                .mapNotNull { it.host() }
+                .forEach { host -> put("$host:$PLAINTEXT_GRPC_PORT", accountId) }
+        }
+    }
+
+    private fun HederaServiceEndpointResponse.host(): String? {
+        return domainName?.takeIf { it.isNotEmpty() } ?: ipAddressV4?.takeIf { it.isNotEmpty() }
+    }
+
     fun <T : Transaction<T>> sendTransaction(transaction: Transaction<T>): Result<TransactionResponse> {
         return try {
             Result.Success(transaction.execute(client))
@@ -239,4 +268,8 @@ internal class HederaNetworkService(
             )
         },
     )
+
+    private companion object {
+        const val PLAINTEXT_GRPC_PORT = 50211
+    }
 }

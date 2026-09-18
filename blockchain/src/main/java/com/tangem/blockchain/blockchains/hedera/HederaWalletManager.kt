@@ -328,6 +328,7 @@ internal class HederaWalletManager(
             is CryptoCurrencyType.Coin -> SimpleResult.Success
             is CryptoCurrencyType.Token -> {
                 val resolvedContractAddress = getResolvedContractAddress(currencyType.info.contractAddress)
+                syncClientNetwork()
                 val transaction = transactionBuilder.buildTokenAssociationForSign(
                     tokenAssociation = TokenAssociation(
                         accountId = wallet.address,
@@ -393,6 +394,7 @@ internal class HederaWalletManager(
             null
         }
 
+        syncClientNetwork()
         val buildTransaction = if (erc20Params != null) {
             transactionBuilder.buildErc20ToSign(
                 transactionData = transactionData,
@@ -575,6 +577,16 @@ internal class HederaWalletManager(
             recipientEvmAddress = recipientEvmAddress,
             amount = BigInteger.valueOf(transferAmount),
         )
+    }
+
+    private suspend fun syncClientNetwork() {
+        when (val result = networkService.syncClientNetwork()) {
+            is Result.Success -> Unit
+            is Result.Failure -> Logger.e(
+                this::class.java.simpleName,
+                "Failed to sync consensus nodes, using the current client network: ${result.error.customMessage}",
+            )
+        }
     }
 
     @Suppress("UNCHECKED_CAST")

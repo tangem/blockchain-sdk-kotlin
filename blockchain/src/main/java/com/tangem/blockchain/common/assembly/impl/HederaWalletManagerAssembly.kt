@@ -17,11 +17,12 @@ internal class HederaWalletManagerAssembly(
 
     override fun make(input: WalletManagerAssemblyInput): HederaWalletManager {
         return with(input) {
+            val client = if (wallet.blockchain.isTestnet()) Client.forTestnet() else Client.forMainnet()
             HederaWalletManager(
                 wallet = wallet,
-                transactionBuilder = HederaTransactionBuilder(curve = curve, wallet = wallet),
+                transactionBuilder = HederaTransactionBuilder(curve = curve, wallet = wallet, client = client),
                 networkService = HederaNetworkService(
-                    client = if (wallet.blockchain.isTestnet()) Client.forTestnet() else Client.forMainnet(),
+                    client = client,
                     hederaNetworkProviders = HederaProvidersBuilder(input.providerTypes, config)
                         .build(wallet.blockchain),
                     blockchain = wallet.blockchain,
