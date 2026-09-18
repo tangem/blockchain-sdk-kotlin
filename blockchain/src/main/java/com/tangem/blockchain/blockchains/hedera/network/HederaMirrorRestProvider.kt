@@ -124,6 +124,21 @@ internal class HederaMirrorRestProvider(override val baseUrl: String, key: Strin
         }
     }
 
+    override suspend fun getNetworkNodes(): Result<List<HederaNetworkNodeResponse>> {
+        return try {
+            val nodes = mutableListOf<HederaNetworkNodeResponse>()
+            var nodeIdFilter: String? = null
+            do {
+                val page = retryIO { api.getNetworkNodes(nodeIdFilter) }
+                nodes += page.nodes
+                nodeIdFilter = page.nodes.lastOrNull()?.let { "gt:${it.nodeId}" }
+            } while (page.links.next != null && nodeIdFilter != null)
+            Result.Success(nodes)
+        } catch (e: Exception) {
+            Result.Failure(e.toBlockchainSdkError())
+        }
+    }
+
     override suspend fun getAccountDetail(idOrAddress: String): Result<HederaAccountDetailResponse> {
         return try {
             val response = retryIO { api.getAccountDetail(idOrAddress) }

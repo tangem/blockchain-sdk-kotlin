@@ -13,8 +13,8 @@ import java.math.BigInteger
 internal class HederaTransactionBuilder(
     curve: EllipticCurve,
     wallet: Wallet,
+    private val client: Client,
 ) {
-    private val client = if (wallet.blockchain.isTestnet()) Client.forTestnet() else Client.forMainnet()
     private val publicKey: PublicKey = when (curve) {
         EllipticCurve.Secp256k1 -> PublicKey.fromBytesECDSA(wallet.publicKey.blockchainKey)
         EllipticCurve.Ed25519,
