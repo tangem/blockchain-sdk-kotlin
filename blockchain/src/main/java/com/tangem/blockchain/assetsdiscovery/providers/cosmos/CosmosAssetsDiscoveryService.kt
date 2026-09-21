@@ -24,7 +24,7 @@ internal class CosmosAssetsDiscoveryService(
         val result = mutableListOf<DiscoveredAsset>()
 
         response.balances.forEach { cosmosBalance ->
-            val amount = cosmosBalance.amount.toBigDecimal().movePointLeft(blockchain.decimals())
+            val amount = cosmosBalance.amount.movePointLeft(blockchain.decimals())
             if (amount <= BigDecimal.ZERO) return@forEach
 
             if (cosmosBalance.denom == nativeDenom) {
