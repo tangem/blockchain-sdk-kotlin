@@ -114,12 +114,8 @@ internal class TronTransactionHistoryProvider(
      * Technical transactions that are not real coin movements and must not be shown in the coin history.
      *
      * The gasless flow rents energy for the wallet: the rental service delegates energy to the address right
-     * before a gasless transfer and revokes it afterwards, and rental bots additionally probe the address with
-     * dust TRX transfers. None of that is initiated by the user, so it is filtered out to keep the Tron history
-     * consistent with other networks.
-     *
-     * Only *incoming* dust is hidden — an outgoing transaction is always signed by the user, so it stays
-     * visible regardless of its amount.
+     * before a gasless transfer and revokes it afterwards. None of that is initiated by the user, so it is
+     * filtered out to keep the Tron history consistent with other networks.
      */
     private fun shouldHideTechnicalTransaction(
         tx: GetAddressResponse.Transaction,
@@ -127,7 +123,7 @@ internal class TronTransactionHistoryProvider(
     ): Boolean {
         if (request.filterType !is TransactionHistoryRequest.FilterType.Coin) return false
 
-        return tx.isResourceRelated() || tx.isIncomingDust(walletAddress = request.address)
+        return tx.isResourceRelated()
     }
 
     private fun GetAddressResponse.Transaction.isResourceRelated(): Boolean {
@@ -140,15 +136,6 @@ internal class TronTransactionHistoryProvider(
             ?: return false
 
         return payloadContractType in RESOURCE_PAYLOAD_TYPES
-    }
-
-    private fun GetAddressResponse.Transaction.isIncomingDust(walletAddress: String): Boolean {
-        val sender = fromAddress ?: vin.firstOrNull()?.addresses?.firstOrNull()
-        if (sender == null || sender.equals(walletAddress, ignoreCase = true)) return false
-
-        val amount = value.toBigDecimalOrNull()?.movePointLeft(blockchain.decimals()) ?: return false
-
-        return amount < DUST_THRESHOLD
     }
 
     private fun checkHistoryStatus(
@@ -488,12 +475,6 @@ internal class TronTransactionHistoryProvider(
             TronTxHistoryPayloadType.DelegateResource.type,
             TronTxHistoryPayloadType.UnDelegateResource.type,
         )
-
-        /**
-         * Incoming transfers below this amount are treated as energy rental / address poisoning spam.
-         * Two orders of magnitude above the observed spam (1–10 SUN) and far below any meaningful transfer.
-         */
-        private val DUST_THRESHOLD: BigDecimal = BigDecimal("0.001")
     }
 }
 
