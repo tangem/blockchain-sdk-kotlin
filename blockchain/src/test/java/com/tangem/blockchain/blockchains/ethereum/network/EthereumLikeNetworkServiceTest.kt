@@ -74,6 +74,65 @@ internal class EthereumLikeNetworkServiceTest {
         assertThat(result).isInstanceOf(Result.Failure::class.java)
     }
 
+    @Test
+    fun `getTransactionReceipt fails when the node returns a JSON-RPC error`() = runTest {
+        stubReceiptResponse(
+            result = null,
+            error = JsonRPCResponse.Error(code = RATE_LIMIT_CODE, message = "rate limit"),
+        )
+
+        val result = service.getTransactionReceipt(TX_HASH)
+
+        assertThat(result).isInstanceOf(Result.Failure::class.java)
+        assertThat((result as Result.Failure).error.cause).isInstanceOf(BlockchainSdkError.Ethereum.Api::class.java)
+    }
+
+    @Test
+    fun `getTransactionReceipt returns null while the transaction is not mined`() = runTest {
+        stubReceiptResponse(result = null, error = null)
+
+        val result = service.getTransactionReceipt(TX_HASH)
+
+        assertThat(result).isEqualTo(Result.Success(null))
+    }
+
+    @Test
+    fun `getTransactionReceipt reports a reverted transaction`() = runTest {
+        stubReceiptResponse(result = receiptJson(status = "0x0"), error = null)
+
+        val result = service.getTransactionReceipt(TX_HASH)
+
+        assertThat((result as Result.Success).data?.isSuccess).isFalse()
+    }
+
+    @Test
+    fun `getTransactionReceipt reports a successful transaction`() = runTest {
+        stubReceiptResponse(result = receiptJson(status = "0x1"), error = null)
+
+        val result = service.getTransactionReceipt(TX_HASH)
+
+        assertThat((result as Result.Success).data?.isSuccess).isTrue()
+    }
+
+    private fun stubReceiptResponse(result: Any?, error: JsonRPCResponse.Error?) {
+        coEvery {
+            multiJsonRpcProvider.performRequest(
+                EthereumLikeJsonRpcProvider::getTransactionReceipt,
+                any<String>(),
+            )
+        } returns Result.Success(
+            JsonRPCResponse(id = "1", jsonRpc = "2.0", result = result, error = error),
+        )
+    }
+
+    private fun receiptJson(status: String): Map<String, Any?> = mapOf(
+        "transactionHash" to TX_HASH,
+        "blockNumber" to "0x10",
+        "status" to status,
+        "gasUsed" to "0x5208",
+        "effectiveGasPrice" to "0x3b9aca00",
+    )
+
     private fun stubPlainTokenBalance() {
         coEvery {
             multiJsonRpcProvider.performRequest(
@@ -90,6 +149,8 @@ internal class EthereumLikeNetworkServiceTest {
         const val MODULE = "0x7777777777777777777777777777777777777777"
         const val HOSTILE_MODULE = "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
         const val ONE_TOKEN_RAW = "0x0de0b6b3a7640000"
+        const val TX_HASH = "0xabababababababababababababababababababababababababababababababab"
+        const val RATE_LIMIT_CODE = -32005
 
         val ONE_TOKEN: BigDecimal = BigDecimal.ONE.setScale(18)
         val YIELD_BALANCE: BigDecimal = BigDecimal("42")
