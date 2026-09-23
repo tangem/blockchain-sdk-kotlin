@@ -12,7 +12,6 @@ import com.tangem.blockchain.network.MultiNetworkProvider
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import java.math.BigDecimal
 
 class CosmosNetworkService(
     providers: List<CosmosRestProvider>,
@@ -107,7 +106,7 @@ class CosmosNetworkService(
 
         return Amount(
             blockchain = cosmosChain.blockchain,
-            value = BigDecimal.valueOf(balanceAmount).movePointLeft(decimals),
+            value = balanceAmount.movePointLeft(decimals),
         )
     }
 }
