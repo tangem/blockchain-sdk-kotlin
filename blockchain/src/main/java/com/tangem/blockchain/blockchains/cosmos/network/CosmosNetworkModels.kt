@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.cosmos.network
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import java.math.BigDecimal
 
 @JsonClass(generateAdapter = true)
 data class CosmosAccountResponse(
@@ -22,7 +23,7 @@ data class CosmosBalanceResponse(
 @JsonClass(generateAdapter = true)
 data class CosmosBalance(
     @Json(name = "denom") val denom: String,
-    @Json(name = "amount") val amount: Long,
+    @Json(name = "amount") val amount: BigDecimal,
 )
 
 @JsonClass(generateAdapter = true)
