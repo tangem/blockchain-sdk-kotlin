@@ -98,6 +98,11 @@ internal abstract class EthereumLikeJsonRpcProvider(
         transactionHash,
     ).post()
 
+    suspend fun getTransactionReceipt(transactionHash: String) = createEthereumLikeBody(
+        method = getMethods().getTransactionReceipt,
+        transactionHash,
+    ).post()
+
     suspend fun sendTransaction(transaction: String) = createEthereumLikeBody(
         method = getMethods().sendRawTransaction,
         transaction,

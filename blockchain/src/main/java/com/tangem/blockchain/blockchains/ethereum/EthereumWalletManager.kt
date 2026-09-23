@@ -6,6 +6,7 @@ import com.tangem.blockchain.blockchains.ethereum.gasless.DefaultEthereumGasless
 import com.tangem.blockchain.blockchains.ethereum.gasless.EthereumGaslessDataProvider
 import com.tangem.blockchain.blockchains.ethereum.gasless.GaslessContractAddressFactory
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumFeeHistory
+import com.tangem.blockchain.blockchains.ethereum.network.EthereumTransactionReceipt
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.ApprovalERC20TokenCallData
@@ -79,6 +80,7 @@ open class EthereumWalletManager(
     Approver,
     NameResolver,
     PendingTransactionHandler,
+    TransactionReceiptProvider,
     TransactionValidator by ethereumTransactionValidator,
     EthereumGaslessDataProvider by ethereumGaslessDataProvider {
 
@@ -706,5 +708,9 @@ open class EthereumWalletManager(
     override suspend fun addPendingGaslessTransaction(transactionData: TransactionData, txHash: String) {
         wallet.addOutgoingTransaction(transactionData, txHash)
         pendingTransactionsProvider.addPendingGaslessTransaction(txHash, transactionData)
+    }
+
+    override suspend fun getTransactionReceipt(transactionHash: String): Result<EthereumTransactionReceipt?> {
+        return networkProvider.getTransactionReceipt(transactionHash)
     }
 }

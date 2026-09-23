@@ -31,7 +31,7 @@ import java.math.BigInteger
  * Abstract base class for Ethereum-like network services
  * Supports different RPC method prefixes (eth_, quai_, etc.)
  */
-@Suppress("LargeClass")
+@Suppress("LargeClass", "TooManyFunctions")
 @OptIn(ExperimentalStdlibApi::class)
 internal abstract class EthereumLikeNetworkService(
     private val multiJsonRpcProvider: MultiNetworkProvider<out EthereumLikeJsonRpcProvider>,
@@ -43,6 +43,7 @@ internal abstract class EthereumLikeNetworkService(
     override val baseUrl get() = multiJsonRpcProvider.currentProvider.baseUrl
     private val stringAdapter by lazy { moshi.adapter<String>() }
     private val feeHistoryAdapter by lazy { moshi.adapter<EthereumFeeHistoryResponse>() }
+    private val receiptAdapter by lazy { moshi.adapter<EthereumTransactionReceiptResponse>() }
 
     /**
      * Get the decimals for this blockchain
@@ -409,6 +410,32 @@ internal abstract class EthereumLikeNetworkService(
                 .extractResult().responseToBigInteger()
 
             Result.Success(result)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    override suspend fun getTransactionReceipt(transactionHash: String): Result<EthereumTransactionReceipt?> {
+        return try {
+            val response = multiJsonRpcProvider.performRequest(
+                EthereumLikeJsonRpcProvider::getTransactionReceipt,
+                transactionHash,
+            )
+
+            val receipt = when (response) {
+                is Result.Success -> {
+                    // A node may answer HTTP 200 with a JSON-RPC error (e.g. rate limit) and a null result.
+                    response.data.error?.let { error ->
+                        throw BlockchainSdkError.Ethereum.getApiErrorByCode(error.code, error.message)
+                    }
+                    // A null result without an error means the node has not mined the transaction yet.
+                    response.data.result?.let { receiptAdapter.fromJsonValue(it) }
+                }
+                is Result.Failure -> throw response.error as? BlockchainSdkError
+                    ?: BlockchainSdkError.CustomError("Unknown error format")
+            }
+
+            Result.Success(receipt?.toDomain())
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }
