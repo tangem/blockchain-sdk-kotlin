@@ -132,6 +132,8 @@ data class GetAddressResponse(
                 @Json(name = "operation") val operation: String?,
                 @Json(name = "bandwidthUsage") val bandwidthUsage: String?,
                 @Json(name = "votes") val votes: List<Vote>?,
+                @Json(name = "claimedVoteReward") val claimedVoteReward: String?,
+                @Json(name = "totalFee") val totalFee: String?,
             ) {
                 @JsonClass(generateAdapter = true)
                 data class Vote(
