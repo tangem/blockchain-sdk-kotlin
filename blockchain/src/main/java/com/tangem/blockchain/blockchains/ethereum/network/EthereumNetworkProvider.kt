@@ -79,6 +79,22 @@ interface EthereumNetworkProvider : NetworkProvider {
      * @return Result containing the nonce or an error.
      */
     suspend fun getContractNonce(address: String): Result<BigInteger>
+
+    /**
+     * Fetch the receipt of a mined transaction.
+     *
+     * A receipt exists only once the transaction is included in a block, and its status tells a successful
+     * transaction apart from a reverted one. `eth_getTransactionByHash` cannot: a reverted transaction also
+     * carries a block number, so it is indistinguishable from a successful one there.
+     *
+     * Default implementation returns a feature-disabled failure so existing concrete providers and tests are
+     * not forced to implement it. The EVM shared service overrides this method.
+     *
+     * @return the receipt, or null when the transaction has not been mined yet.
+     */
+    suspend fun getTransactionReceipt(transactionHash: String): Result<EthereumTransactionReceipt?> = Result.Failure(
+        BlockchainSdkError.CustomError("Transaction receipts are not supported by this network provider"),
+    )
 }
 
 class EthereumInfoResponse(

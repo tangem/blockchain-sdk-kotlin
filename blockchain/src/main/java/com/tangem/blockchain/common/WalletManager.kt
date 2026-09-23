@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.blockchains.ethereum.network.EthereumTransactionReceipt
 import com.tangem.blockchain.common.address.AddressProvider
 import com.tangem.blockchain.common.address.DefaultAddressProvider
 import com.tangem.blockchain.common.memo.MemoState
@@ -316,6 +317,23 @@ interface PendingTransactionHandler {
      * @param txHash The transaction ID (hash) to add.
      */
     suspend fun addPendingGaslessTransaction(transactionData: TransactionData, txHash: String)
+}
+
+/**
+ * Interface for reading the settled outcome of a broadcast transaction.
+ *
+ * Distinct from [PendingTransactionHandler], which only answers whether a transaction is still pending. A
+ * transaction that reverted is no longer pending, yet it did not do what it was sent to do — only a receipt
+ * tells the two apart.
+ */
+interface TransactionReceiptProvider {
+
+    /**
+     * Fetch the receipt of a previously broadcast transaction.
+     *
+     * @return the receipt once the transaction is mined, or null while it is still pending.
+     */
+    suspend fun getTransactionReceipt(transactionHash: String): Result<EthereumTransactionReceipt?>
 }
 
 interface TransactionSigner {
