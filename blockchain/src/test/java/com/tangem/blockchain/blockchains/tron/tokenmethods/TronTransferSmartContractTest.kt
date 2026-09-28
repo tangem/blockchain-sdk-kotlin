@@ -50,11 +50,31 @@ class TronTransferSmartContractTest {
     }
 
     @Test
-    fun decodeRejectsErc20Encoding() {
-        val erc20CallData = "0xa9059cbb0000000000000000000000004316b5c3f99fd4818918abced9d7df3d31396ae3" +
+    fun decodeTransferWithoutAddressPrefix() {
+        // A wallet that reuses the EVM encoding pads the 20-byte body, leaving the Tron prefix byte zero
+        val callData = "0xa9059cbb0000000000000000000000004316b5c3f99fd4818918abced9d7df3d31396ae3" +
             "000000000000000000000000000000000000000000000000000000003b9aca00"
 
-        Truth.assertThat(TronTransferTokenCallData(erc20CallData)).isNull()
+        val actual = TronTransferTokenCallData(callData)
+
+        Truth.assertThat(actual?.destination).isEqualTo(destinationAddress)
+        Truth.assertThat(actual?.amount?.value!!.compareTo("1000000000".toBigDecimal())).isEqualTo(0)
+    }
+
+    @Test
+    fun decodeRejectsZeroAddress() {
+        val callData = "0xa9059cbb0000000000000000000000000000000000000000000000000000000000000000" +
+            "000000000000000000000000000000000000000000000000000000003b9aca00"
+
+        Truth.assertThat(TronTransferTokenCallData(callData)).isNull()
+    }
+
+    @Test
+    fun decodeRejectsDirtyAddressPadding() {
+        val callData = "0xa9059cbb0000000000000000000100000041b5c3f99fd4818918abced9d7df3d31396ae3ff" +
+            "000000000000000000000000000000000000000000000000000000003b9aca00"
+
+        Truth.assertThat(TronTransferTokenCallData(callData)).isNull()
     }
 
     @Test
