@@ -10,11 +10,11 @@ import com.tangem.blockchain.network.blockbook.network.responses.feeAmount
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.*
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
+import com.tangem.blockchain.transactionhistory.utils.methodIdFromRawData
 import com.tangem.common.extensions.guard
 import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 
-private const val ETHEREUM_METHOD_ID_LENGTH = 8
 private const val TOKEN_TRANSFER_METHOD_ID = "a9059cbb"
 
 internal class EthereumTransactionHistoryItemMapper(private val blockchain: Blockchain) {
@@ -164,12 +164,6 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
     /** The response reports the selector bare or `0x`-prefixed, depending on where it was read from. */
     private fun String.isTokenTransfer(): Boolean =
         removePrefix(HEX_PREFIX).equals(TOKEN_TRANSFER_METHOD_ID, ignoreCase = true)
-
-    private fun methodIdFromRawData(rawData: String?): String? {
-        val rawDataWithoutPrefix = rawData?.removePrefix("0x")
-        val methodId = rawDataWithoutPrefix?.take(ETHEREUM_METHOD_ID_LENGTH)
-        return if (methodId?.length == ETHEREUM_METHOD_ID_LENGTH) methodId else null
-    }
 
     private fun List<GetAddressResponse.Transaction.TokenTransfer>.extractTotalAmount(token: Token): Amount {
         val totalValue = fold(BigDecimal.ZERO) { total, transfer ->
