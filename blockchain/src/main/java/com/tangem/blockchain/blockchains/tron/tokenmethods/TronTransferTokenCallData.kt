@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.tron.tokenmethods
 
-import com.tangem.blockchain.blockchains.tron.libs.Base58Check
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.HEX_PREFIX
@@ -51,21 +50,14 @@ class TronTransferTokenCallData(
         private const val ARGUMENTS_COUNT = 2
         private const val CALL_DATA_SIZE = METHOD_ID_SIZE + WORD_SIZE * ARGUMENTS_COUNT
 
-        /** A Tron address is the 20-byte hash behind a one-byte prefix, so it occupies 21 bytes of its word. */
-        private const val ADDRESS_SIZE = 21
-        private const val ADDRESS_PADDING_SIZE = WORD_SIZE - ADDRESS_SIZE
-        private const val ADDRESS_PREFIX: Byte = 0x41
-        private const val ZERO_BYTE: Byte = 0
-
         /**
          * Decode a flat TRC20 `transfer(address,uint256)` call data.
          *
          * The [amount] comes back raw, in the token's smallest units, because the call data carries no decimals to
-         * scale it by. The [destination] is rendered back in base58, the form the address is read and written in
-         * everywhere outside the call data.
+         * scale it by. The [destination] is rendered back in base58 — see [decodeTronAddressWord] for the two
+         * encodings it accepts.
          *
-         * Returns `null` for call data that is not a TRC20 transfer — including the ERC20 encoding of the same
-         * method, which pads the address to 20 bytes and so leaves the Tron prefix byte zero.
+         * Returns `null` for call data that is not a TRC20 transfer.
          */
         operator fun invoke(compiledData: ByteArray): TronTransferTokenCallData? {
             if (compiledData.size != CALL_DATA_SIZE) return null
@@ -77,16 +69,15 @@ class TronTransferTokenCallData(
 
             if (!methodId.equals(METHOD_ID, ignoreCase = true)) return null
 
-            val addressWord = compiledData.copyOfRange(METHOD_ID_SIZE, METHOD_ID_SIZE + WORD_SIZE)
-            if (addressWord.take(ADDRESS_PADDING_SIZE).any { it != ZERO_BYTE }) return null
-
-            val addressData = addressWord.copyOfRange(ADDRESS_PADDING_SIZE, WORD_SIZE)
-            if (addressData.first() != ADDRESS_PREFIX) return null
+            val destination = compiledData
+                .copyOfRange(METHOD_ID_SIZE, METHOD_ID_SIZE + WORD_SIZE)
+                .decodeTronAddressWord()
+                ?: return null
 
             val amountData = compiledData.copyOfRange(METHOD_ID_SIZE + WORD_SIZE, CALL_DATA_SIZE)
 
             return TronTransferTokenCallData(
-                destination = Base58Check.bytesToBase58(addressData),
+                destination = destination,
                 amount = Amount(
                     blockchain = Blockchain.Unknown,
                     value = amountData.toBigInteger().toBigDecimal(),
