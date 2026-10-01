@@ -57,7 +57,10 @@ public class CashAddr {
         }
 
         BitcoinCashAddressDecodedParts decoded = new BitcoinCashAddressDecodedParts();
-        String[] addressParts = bitcoinCashAddress.split(SEPARATOR);
+        String[] addressParts = bitcoinCashAddress.split(SEPARATOR, -1);
+        if (addressParts.length > 2) {
+            throw new RuntimeException("Address has more than one separator: " + bitcoinCashAddress);
+        }
         if (addressParts.length == 2) {
             decoded.setPrefix(addressParts[0]);
         } else {
@@ -104,7 +107,12 @@ public class CashAddr {
             String prefix;
 
             if (bitcoinCashAddress.contains(SEPARATOR)) {
-                String[] split = bitcoinCashAddress.split(SEPARATOR);
+                String[] split = bitcoinCashAddress.split(SEPARATOR, -1);
+                // only "prefix:payload" is allowed, otherwise the checksum is verified over a different part
+                // than the one decodeCashAddress() pays to
+                if (split.length != 2) {
+                    return false;
+                }
                 prefix = split[0];
                 if (!prefix.equals(networkPrefix)) {
                     return false;
