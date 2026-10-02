@@ -4,6 +4,7 @@ import com.tangem.blockchain.collectibles.models.CollectiblesVault
 import com.tangem.blockchain.collectibles.models.CollectiblesVaultUsdc
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 
 /** No-op provider for every blockchain the gacha program is not deployed on. */
@@ -32,6 +33,14 @@ internal object DefaultCollectiblesVaultProvider : CollectiblesVaultProvider {
     ): Result<TransactionData.Compiled> = unsupported()
 
     override suspend fun buildCloseCollectiblesVault(): Result<TransactionData.Compiled> = unsupported()
+
+    override suspend fun sendPurchasePack(
+        hotDelegate: String,
+        amount: Long,
+        feeAmount: Long,
+        memo: String,
+        signer: suspend (message: ByteArray) -> Result<ByteArray>,
+    ): Result<TransactionSendResult> = unsupported()
 
     private fun unsupported(): Result.Failure = Result.Failure(
         BlockchainSdkError.UnsupportedOperation("Gacha vault is not supported for this blockchain"),

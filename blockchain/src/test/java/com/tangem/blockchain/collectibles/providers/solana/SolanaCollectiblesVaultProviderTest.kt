@@ -95,6 +95,6 @@ internal class SolanaCollectiblesVaultProviderTest {
         /** The real devnet `Config` account, the same bytes [GachaConfigParserTest] parses. */
         const val CONFIG_DATA = "mwyq4B76zIKtbdnm3fQfKiZwulw19xJe+Y62TcL9MF5YyYuupu7XZOkoOVUJZf/U1krKr0bUXfcxjltP" +
             "V8kMSH1gYl2Cm4N7hqQIUEd4g/rZZ93XJGmfY1Im7dYaVhpfB0GPFwNaf39/LRy7KpYTz3xzEH7Z5ZuyXLdQy82fbyK8F4zf" +
-            "pFdYmoNiez2h0gaidjS66O7bgD1GanQ/NMIfiiDM0v1mCX+YZAAAAQH/"
+            "pFdYmoNiez2h0gaidjS66O7bgD1GanQ/NMIfiiDM0v1mCX+YZAAAAQH/9AE="
     }
 }
