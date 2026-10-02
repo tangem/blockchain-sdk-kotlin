@@ -12,7 +12,8 @@ import java.nio.ByteOrder
  *
  * ```
  *   8 admin(32)  40 usdc_mint(32)  72 gacha_wallet(32)  104 gacha_usdc_account(32)  136 fee_usdc_account(32)
- * 168 fee_bps(u16)  170 paused(bool)  171 _reserved(1)  172 allow_buyback_delegation(bool)  173 bump(u8)
+ * 168 min_fee_bps(u16)  170 paused(bool)  171 _reserved(1)  172 allow_buyback_delegation(bool)  173 bump(u8)
+ * 174 max_fee_bps(u16)
  * ```
  *
  * Byte 171 is a legacy filler and must be skipped explicitly. It is not zero — on the live devnet account it holds a
@@ -25,7 +26,7 @@ internal object GachaConfigParser {
 
     private const val DISCRIMINATOR_SIZE = 8
     private const val PUBKEY_SIZE = 32
-    private const val ACCOUNT_SIZE = 174
+    private const val ACCOUNT_SIZE = 176
     private const val BYTE_MASK = 0xFF
     private const val U16_MASK = 0xFFFF
 
@@ -42,7 +43,7 @@ internal object GachaConfigParser {
         val gachaWallet = buffer.readPubkey()
         val gachaUsdcAccount = buffer.readPubkey()
         val feeUsdcAccount = buffer.readPubkey()
-        val feeBps = buffer.short.toInt() and U16_MASK
+        val minFeeBps = buffer.short.toInt() and U16_MASK
         val isPaused = buffer.readBoolean()
         buffer.get() // _reserved, legacy filler, holds 1 on devnet
         val isBuybackDelegationAllowed = buffer.readBoolean()
@@ -54,7 +55,7 @@ internal object GachaConfigParser {
             gachaWallet = gachaWallet,
             gachaUsdcAccount = gachaUsdcAccount,
             feeUsdcAccount = feeUsdcAccount,
-            feeBps = feeBps,
+            minFeeBps = minFeeBps,
             isPaused = isPaused,
             isBuybackDelegationAllowed = isBuybackDelegationAllowed,
             bump = bump,

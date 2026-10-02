@@ -1,9 +1,12 @@
 package com.tangem.blockchain.collectibles.providers.solana
 
+import android.os.SystemClock
 import com.tangem.blockchain.blockchains.solana.SolanaTransactionBuilder
 import com.tangem.blockchain.blockchains.solana.SolanaNetworkService
+import com.tangem.blockchain.blockchains.solana.SolanaTransactionHelper
 import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
 import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaAssociatedTokenProgram
+import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaMemoProgram
 import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgram
 import com.tangem.blockchain.collectibles.CollectiblesVaultProvider
 import com.tangem.blockchain.collectibles.models.CollectiblesVault
@@ -11,13 +14,16 @@ import com.tangem.blockchain.collectibles.models.CollectiblesVaultUsdc
 import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaCloseTokenAccountInstruction
 import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaCloseVaultInstruction
 import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaInitVaultInstruction
+import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaPurchasePackInstruction
 import com.tangem.blockchain.collectibles.providers.solana.instruction.GachaUpdateVaultInstruction
 import com.tangem.blockchain.collectibles.providers.solana.model.GachaConfig
 import com.tangem.blockchain.collectibles.providers.solana.model.GachaConfigParser
 import com.tangem.blockchain.collectibles.providers.solana.model.GachaVaultParser
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
 import io.ktor.util.decodeBase64Bytes
@@ -36,10 +42,11 @@ internal class SolanaCollectiblesVaultProvider(
 
     override fun isCollectiblesVaultSupported(): Boolean = true
 
-    override fun getCollectiblesVaultAddress(): Result<String> = when (val result = vaultAddress()) {
-        is Result.Success -> Result.Success(result.data.toBase58())
-        is Result.Failure -> result
-    }
+    override fun getCollectiblesVaultAddress(): Result<String> =
+        when (val result = vaultAddress()) {
+            is Result.Success -> Result.Success(result.data.toBase58())
+            is Result.Failure -> result
+        }
 
     override suspend fun isCollectiblesVaultInitialized(): Result<Boolean> {
         return when (val result = getCollectiblesVault()) {
@@ -102,7 +109,7 @@ internal class SolanaCollectiblesVaultProvider(
         validateCaps(perSpinCap = perSpinCap, dailyCap = dailyCap)?.let { return it }
 
         val vault = vaultAddress().successOr { return it }
-        val delegate = delegate(hotDelegate).successOr { return it }
+        val delegate = publicKey(hotDelegate).successOr { return it }
 
         val initVault = GachaInitVaultInstruction.create(
             vault = vault,
@@ -138,7 +145,7 @@ internal class SolanaCollectiblesVaultProvider(
 
         validateCapsOnUpdate(perSpinCap = perSpinCap, dailyCap = dailyCap)?.let { return it }
 
-        val delegate = hotDelegate?.let { delegate(it).successOr { failure -> return failure } }
+        val delegate = hotDelegate?.let { publicKey(it).successOr { failure -> return failure } }
         val vault = vaultAddress().successOr { return it }
 
         val updateVault = GachaUpdateVaultInstruction.create(
@@ -185,6 +192,89 @@ internal class SolanaCollectiblesVaultProvider(
         ).successOr { return it }
 
         return Result.Success(transaction.toCompiled())
+    }
+
+    override suspend fun sendPurchasePack(
+        hotDelegate: String,
+        amount: Long,
+        feeAmount: Long,
+        memo: String,
+        signer: suspend (message: ByteArray) -> Result<ByteArray>,
+    ): Result<TransactionSendResult> {
+        val chainMemo = memo + OPEN_PACK_MEMO_SUFFIX
+
+        // An empty memo still passes on chain as ":open": the vault pays, the gacha credits no spin
+        if (memo.isEmpty() || chainMemo.toByteArray(Charsets.UTF_8).size > MAX_MEMO_BYTES) {
+            return Result.Failure(BlockchainSdkError.CustomError("Invalid memo"))
+        }
+
+        val delegate = publicKey(hotDelegate).successOr { return it }
+        val config = config().successOr { return it }
+
+        val purchasePack = purchasePackInstruction(
+            config = config,
+            hotDelegate = delegate,
+            amount = amount,
+            feeAmount = feeAmount,
+            memo = chainMemo,
+        ).successOr { return it }
+
+        // The memo is top level and precedes `purchase_pack`: the gacha counts a spin by it, not by the argument
+        val transaction = SolanaTransactionBuilder(
+            account = delegate,
+            multiNetworkProvider = multiNetworkProvider
+        )
+            .buildUnsignedTransaction(
+                instructions = listOf(
+                    SolanaMemoProgram.createMemoInstruction(chainMemo),
+                    purchasePack
+                ),
+                computeUnitLimit = SolanaTransactionBuilder.DEFAULT_CU_LIMIT,
+                computeUnitPrice = SolanaTransactionBuilder.DEFAULT_CU_PRICE,
+            )
+            .successOr { return it }
+
+        val startSendingTimestamp = SystemClock.elapsedRealtime()
+        val signature = signer(transaction.getSerializedMessage()).successOr { return it }
+        val signedTransaction = SolanaTransactionHelper.putSignature(
+            transaction = transaction.toWireBytes(),
+            signerPublicKey = delegate.toByteArray(),
+            signature = signature,
+        ).successOr { return it }
+
+        return multiNetworkProvider
+            .performRequest { sendTransaction(signedTransaction, startSendingTimestamp) }
+            .map(::TransactionSendResult)
+    }
+
+    private fun purchasePackInstruction(
+        config: GachaConfig,
+        hotDelegate: PublicKey,
+        amount: Long,
+        feeAmount: Long,
+        memo: String,
+    ): Result<TransactionInstruction> {
+        val vault = vaultAddress().successOr { return it }
+        val usdcMint = publicKey(config.usdcMint).successOr { return it }
+        val gachaUsdc = publicKey(config.gachaUsdcAccount).successOr { return it }
+        val feeUsdc = publicKey(config.feeUsdcAccount).successOr { return it }
+        val vaultUsdc = vaultUsdcAddress(vault = vault, mint = usdcMint).successOr { return it }
+        val configAddress = configAddress().successOr { return it }
+
+        return Result.Success(
+            GachaPurchasePackInstruction.create(
+                config = configAddress,
+                vault = vault,
+                sessionKey = hotDelegate,
+                usdcMint = usdcMint,
+                vaultUsdc = vaultUsdc,
+                gachaUsdc = gachaUsdc,
+                feeUsdc = feeUsdc,
+                amount = amount,
+                feeAmount = feeAmount,
+                memo = memo,
+            ),
+        )
     }
 
     /**
@@ -242,7 +332,10 @@ internal class SolanaCollectiblesVaultProvider(
      */
     private suspend fun validateCapsOnUpdate(perSpinCap: Long?, dailyCap: Long?): Result.Failure? {
         if (perSpinCap == null && dailyCap == null) return null
-        if (perSpinCap != null && dailyCap != null) return validateCaps(perSpinCap = perSpinCap, dailyCap = dailyCap)
+        if (perSpinCap != null && dailyCap != null) return validateCaps(
+            perSpinCap = perSpinCap,
+            dailyCap = dailyCap
+        )
 
         val stored = getCollectiblesVault().successOr { return it }
             ?: return Result.Failure(BlockchainSdkError.CustomError("Vault does not exist"))
@@ -311,12 +404,14 @@ internal class SolanaCollectiblesVaultProvider(
      * empty slots the card signature is spliced into are reserved by hand. Their count is the first byte of the
      * header — true for the legacy messages the builder compiles, not for v0, which opens with a `0x80` prefix.
      */
-    private fun SolanaTransaction.toCompiled(): TransactionData.Compiled {
+    private fun SolanaTransaction.toCompiled(): TransactionData.Compiled =
+        TransactionData.Compiled(value = TransactionData.Compiled.Data.Bytes(toWireBytes()))
+
+    private fun SolanaTransaction.toWireBytes(): ByteArray {
         val message = getSerializedMessage()
         val signatureCount = message.first().toInt() and BYTE_MASK
-        val wire = byteArrayOf(signatureCount.toByte()) + ByteArray(signatureCount * SIGNATURE_LENGTH) + message
 
-        return TransactionData.Compiled(value = TransactionData.Compiled.Data.Bytes(wire))
+        return byteArrayOf(signatureCount.toByte()) + ByteArray(signatureCount * SIGNATURE_LENGTH) + message
     }
 
     private fun configAddress(): Result<PublicKey> = GachaVaultProgram.configAddress().fold(
@@ -324,10 +419,11 @@ internal class SolanaCollectiblesVaultProvider(
         onFailure = { Result.Failure(BlockchainSdkError.CustomError("Failed to derive config address")) },
     )
 
-    private fun delegate(hotDelegate: String): Result<PublicKey> = runCatching { PublicKey(hotDelegate) }.fold(
-        onSuccess = { Result.Success(it) },
-        onFailure = { Result.Failure(BlockchainSdkError.CustomError("Invalid hot delegate address")) },
-    )
+    private fun publicKey(address: String): Result<PublicKey> =
+        runCatching { PublicKey(address) }.fold(
+            onSuccess = { Result.Success(it) },
+            onFailure = { Result.Failure(BlockchainSdkError.CustomError("Invalid public key")) },
+        )
 
     private fun vaultAddress(): Result<PublicKey> = GachaVaultProgram.vaultAddress(coldOwner).fold(
         onSuccess = { Result.Success(it) },
@@ -337,5 +433,7 @@ internal class SolanaCollectiblesVaultProvider(
     private companion object {
         const val SIGNATURE_LENGTH = 64
         const val BYTE_MASK = 0xFF
+        const val OPEN_PACK_MEMO_SUFFIX = ":open"
+        const val MAX_MEMO_BYTES = 256
     }
 }

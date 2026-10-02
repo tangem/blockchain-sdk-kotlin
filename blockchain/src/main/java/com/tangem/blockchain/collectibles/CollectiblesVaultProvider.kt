@@ -3,6 +3,7 @@ package com.tangem.blockchain.collectibles
 import com.tangem.blockchain.collectibles.models.CollectiblesVault
 import com.tangem.blockchain.collectibles.models.CollectiblesVaultUsdc
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 
 /**
@@ -11,6 +12,7 @@ import com.tangem.blockchain.extensions.Result
  * Building and sending are deliberately separate: the provider returns wire bytes, and the caller sends them with
  * the wallet manager's existing `send(transactionData, signer)`, which strips the message, has the card sign it,
  * splices the signature into its slot and broadcasts to every provider.
+ *
  */
 interface CollectiblesVaultProvider {
 
@@ -69,4 +71,27 @@ interface CollectiblesVaultProvider {
 
      */
     suspend fun buildCloseCollectiblesVault(): Result<TransactionData.Compiled>
+
+    /**
+     * Pays for one spin from the vault: a top-level SPL Memo `"<memo>:open"`, which is what the gacha counts the
+     * spin by, then `purchase_pack` with the same memo. The hot key is the only signer and therefore the fee payer.
+     *
+     * Not idempotent: the program does not deduplicate memos, so a second call with the same [memo] is charged
+     * again. While the outcome of a call is unknown, check the signature status instead of calling again.
+     *
+     * @param hotDelegate  base58 key the vault's session key (`hot_delegate`) holds
+     * @param amount       base units of USDC — the pack price exactly as the gacha expects it; the program only
+     *                     checks it is positive, and a wrong one is charged and lost
+     * @param feeAmount    Tangem's fee in base units of USDC, charged on top of [amount]
+     * @param memo         `memo` from `/api/generatePack`, without `:open` — the suffix is appended here
+     * @param signer       signs the message with the hot key, returning a 64-byte ed25519 signature
+     *                     (not a `TransactionSigner`: `send` signs into the wallet's own slot, the hot key is not it)
+     */
+    suspend fun sendPurchasePack(
+        hotDelegate: String,
+        amount: Long,
+        feeAmount: Long,
+        memo: String,
+        signer: suspend (message: ByteArray) -> Result<ByteArray>,
+    ): Result<TransactionSendResult>
 }
