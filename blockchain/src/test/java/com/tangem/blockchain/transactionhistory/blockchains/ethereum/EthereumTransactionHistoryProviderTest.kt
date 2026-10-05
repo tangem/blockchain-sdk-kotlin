@@ -197,6 +197,92 @@ class EthereumTransactionHistoryProviderTest {
         assertThat(tokenItems(tx)).isEmpty()
     }
 
+    @Test
+    fun `fee paid in another token replaces the native fee of a gaslessly sent transfer`() = runTest {
+        // The relayer paid the ETH gas; the wallet paid the service 0.065869 USDC, and that is what the transfer
+        // cost its owner
+        val tx = transaction(
+            sender = RELAYER,
+            recipient = GASLESS_ENTRY_POINT,
+            data = GASLESS_CALL_DATA,
+            fees = "19190194523865",
+            tokenTransfers = listOf(
+                tokenTransfer(from = WALLET, to = RECIPIENT, value = "3000000"),
+                feeTransfer(),
+            ),
+        )
+
+        val item = tokenItems(tx, gaslessFeeAddresses = setOf(FEE_COLLECTOR)).single()
+
+        assertThat(item.amount.value!!.compareTo(BigDecimal("3"))).isEqualTo(0)
+        assertThat(item.fee.currencySymbol).isEqualTo("USDC")
+        assertThat(item.fee.value!!.compareTo(BigDecimal("0.065869"))).isEqualTo(0)
+    }
+
+    @Test
+    fun `fee collector address casing does not hide the fee paid in another token`() = runTest {
+        val tx = transaction(
+            tokenTransfers = listOf(
+                tokenTransfer(from = WALLET, to = RECIPIENT, value = "3000000"),
+                feeTransfer(to = FEE_COLLECTOR.uppercase()),
+            ),
+        )
+
+        val item = tokenItems(tx, gaslessFeeAddresses = setOf(FEE_COLLECTOR)).single()
+
+        assertThat(item.fee.currencySymbol).isEqualTo("USDC")
+    }
+
+    @Test
+    fun `transfer of another token to an unknown address is not taken for the gasless fee`() = runTest {
+        val tx = transaction(
+            fees = "19190194523865",
+            tokenTransfers = listOf(
+                tokenTransfer(from = WALLET, to = RECIPIENT, value = "3000000"),
+                feeTransfer(to = SETTLEMENT),
+            ),
+        )
+
+        val item = tokenItems(tx, gaslessFeeAddresses = setOf(FEE_COLLECTOR)).single()
+
+        assertThat(item.fee.currencySymbol).isEqualTo(Blockchain.Ethereum.currency)
+        assertThat(item.fee.value!!.compareTo(BigDecimal("0.000019190194523865"))).isEqualTo(0)
+    }
+
+    @Test
+    fun `fee paid in the viewed token stays a row of its own and leaves the native fee alone`() = runTest {
+        val tx = transaction(
+            fees = "19190194523865",
+            tokenTransfers = listOf(
+                tokenTransfer(from = WALLET, to = RECIPIENT, value = "3000000"),
+                tokenTransfer(from = WALLET, to = FEE_COLLECTOR, value = "65869"),
+            ),
+        )
+
+        val items = tokenItems(tx, gaslessFeeAddresses = setOf(FEE_COLLECTOR))
+
+        assertThat(items).hasSize(2)
+        assertThat(items.map { it.fee.currencySymbol }).containsExactly(
+            Blockchain.Ethereum.currency,
+            Blockchain.Ethereum.currency,
+        )
+    }
+
+    @Test
+    fun `fee paid in another token is left alone when the caller knows no fee collector`() = runTest {
+        val tx = transaction(
+            fees = "19190194523865",
+            tokenTransfers = listOf(
+                tokenTransfer(from = WALLET, to = RECIPIENT, value = "3000000"),
+                feeTransfer(),
+            ),
+        )
+
+        val item = tokenItems(tx).single()
+
+        assertThat(item.fee.currencySymbol).isEqualTo(Blockchain.Ethereum.currency)
+    }
+
     // region helpers
 
     @Test
@@ -253,7 +339,10 @@ class EthereumTransactionHistoryProviderTest {
         return (provider.getTransactionsHistory(request) as Result.Success).data.items
     }
 
-    private suspend fun tokenItems(tx: GetAddressResponse.Transaction): List<TransactionHistoryItem> {
+    private suspend fun tokenItems(
+        tx: GetAddressResponse.Transaction,
+        gaslessFeeAddresses: Set<String> = emptySet(),
+    ): List<TransactionHistoryItem> {
         val filterType = TransactionHistoryRequest.FilterType.Contract(tokenInfo = TOKEN)
         val request = TransactionHistoryRequest(
             address = WALLET,
@@ -261,6 +350,7 @@ class EthereumTransactionHistoryProviderTest {
             page = Page.Initial,
             pageSize = PAGE_SIZE,
             filterType = filterType,
+            gaslessFeeAddresses = gaslessFeeAddresses,
         )
         coEvery {
             blockBookApi.getTransactions(WALLET, null, PAGE_SIZE, filterType)
@@ -287,6 +377,7 @@ class EthereumTransactionHistoryProviderTest {
         value: String = "0",
         data: String? = null,
         txHash: String = TX_HASH,
+        fees: String = "0",
     ) = GetAddressResponse.Transaction(
         txid = txHash,
         vout = listOfNotNull(
@@ -300,7 +391,7 @@ class EthereumTransactionHistoryProviderTest {
         vin = listOfNotNull(
             sender?.let { GetAddressResponse.Transaction.Vin(addresses = listOf(it), value = value) },
         ),
-        fees = "0",
+        fees = fees,
         tokenTransfers = tokenTransfers,
         ethereumSpecific = GetAddressResponse.Transaction.EthereumSpecific(
             status = GetAddressResponse.Transaction.StatusType.OK,
@@ -320,18 +411,34 @@ class EthereumTransactionHistoryProviderTest {
         voteList = null,
     )
 
-    private fun tokenTransfer(from: String, to: String, value: String?, contract: String = CONTRACT) =
-        GetAddressResponse.Transaction.TokenTransfer(
-            type = "ERC20",
-            from = from,
-            to = to,
-            contract = contract,
-            token = contract,
-            name = "Tether USD",
-            symbol = "USDT",
-            decimals = 6,
-            value = value,
-        )
+    private fun tokenTransfer(
+        from: String,
+        to: String,
+        value: String?,
+        contract: String = CONTRACT,
+        symbol: String = "USDT",
+        name: String = "Tether USD",
+        decimals: Int = 6,
+    ) = GetAddressResponse.Transaction.TokenTransfer(
+        type = "ERC20",
+        from = from,
+        to = to,
+        contract = contract,
+        token = contract,
+        name = name,
+        symbol = symbol,
+        decimals = decimals,
+        value = value,
+    )
+
+    private fun feeTransfer(to: String = FEE_COLLECTOR) = tokenTransfer(
+        from = WALLET,
+        to = to,
+        value = "65869",
+        contract = OTHER_CONTRACT,
+        symbol = "USDC",
+        name = "USD Coin",
+    )
 
     private companion object {
         const val WALLET = "0x4e272d36498f2dd90016d0336304fc985f4dd626"
