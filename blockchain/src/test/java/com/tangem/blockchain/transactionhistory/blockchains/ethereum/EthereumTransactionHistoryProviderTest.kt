@@ -1,6 +1,8 @@
 package com.tangem.blockchain.transactionhistory.blockchains.ethereum
 
 import com.google.common.truth.Truth.assertThat
+import com.tangem.blockchain.common.Amount
+import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.pagination.Page
@@ -222,6 +224,87 @@ class EthereumTransactionHistoryProviderTest {
     }
 
     @Test
+    fun `internal calls of a Safe execution become outgoing transfers of the Safe`() = runTest {
+        // The relayer's execTransaction moves no ETH itself: the transfer and the refund are internal calls
+        val tx = transaction(
+            sender = SAFE_RELAYER,
+            recipient = SAFE,
+            internalTransfers = listOf(
+                internalCall(from = SAFE, to = SAFE_RECIPIENT, value = "159680614810478953"),
+                internalCall(from = SAFE, to = SAFE_RELAYER, value = "33203274238597392"),
+            ),
+        )
+
+        val internal = safeCoinItems(tx).filter { it.type == TransactionHistoryItem.TransactionType.Transfer }
+
+        assertThat(internal).containsExactly(
+            safeTransfer(to = SAFE_RECIPIENT, wei = "159680614810478953"),
+            safeTransfer(to = SAFE_RELAYER, wei = "33203274238597392"),
+        ).inOrder()
+    }
+
+    @Test
+    fun `deploy bundle where the Safe is neither sender nor recipient still yields its internal calls`() = runTest {
+        val tx = transaction(
+            sender = WALLET,
+            recipient = MULTICALL3,
+            internalTransfers = listOf(
+                internalCall(from = PROXY_FACTORY, to = SAFE, value = "0", type = 1),
+                internalCall(from = SAFE, to = SAFE_RECIPIENT, value = "1093522368049869555"),
+                internalCall(from = SAFE, to = SAFE_RELAYER, value = "129211841622438168"),
+            ),
+        )
+
+        assertThat(safeCoinItems(tx)).containsExactly(
+            safeTransfer(to = SAFE_RECIPIENT, wei = "1093522368049869555"),
+            safeTransfer(to = SAFE_RELAYER, wei = "129211841622438168"),
+        ).inOrder()
+    }
+
+    @Test
+    fun `zero-value and foreign internal calls are not history items`() = runTest {
+        val tx = transaction(
+            sender = WALLET,
+            recipient = MULTICALL3,
+            internalTransfers = listOf(
+                internalCall(from = SAFE, to = SAFE_RECIPIENT, value = "0"),
+                internalCall(from = SETTLEMENT, to = RECIPIENT, value = "1000"),
+            ),
+        )
+
+        assertThat(safeCoinItems(tx)).isEmpty()
+    }
+
+    @Test
+    fun `internal calls of a transaction with an execution error are failed`() = runTest {
+        val tx = transaction(
+            sender = WALLET,
+            recipient = MULTICALL3,
+            error = "execution reverted",
+            internalTransfers = listOf(internalCall(from = SAFE, to = SAFE_RECIPIENT, value = "462356000000000000")),
+        )
+
+        assertThat(safeCoinItems(tx)).containsExactly(
+            safeTransfer(
+                to = SAFE_RECIPIENT,
+                wei = "462356000000000000",
+                status = TransactionHistoryItem.TransactionStatus.Failed,
+            ),
+        )
+    }
+
+    @Test
+    fun `without the flag internal calls are ignored and the coin filter is kept`() = runTest {
+        val tx = transaction(
+            sender = WALLET,
+            recipient = MULTICALL3,
+            internalTransfers = listOf(internalCall(from = WALLET, to = RECIPIENT, value = "1000")),
+        )
+
+        assertThat(coinItems(tx)).isEmpty()
+    }
+
+    @Test
     fun `cancelled history state request propagates the cancellation instead of a failed state`() = runTest {
         coEvery {
             blockBookApi.getTransactions(WALLET, null, 1, TransactionHistoryRequest.FilterType.Coin)
@@ -269,6 +352,49 @@ class EthereumTransactionHistoryProviderTest {
         return (provider.getTransactionsHistory(request) as Result.Success).data.items
     }
 
+    private suspend fun safeCoinItems(tx: GetAddressResponse.Transaction): List<TransactionHistoryItem> {
+        val request = TransactionHistoryRequest(
+            address = SAFE,
+            decimals = Blockchain.Ethereum.decimals(),
+            page = Page.Initial,
+            pageSize = PAGE_SIZE,
+            filterType = TransactionHistoryRequest.FilterType.Coin,
+            shouldIncludeInternalTransfers = true,
+        )
+        coEvery { blockBookApi.getTransactions(SAFE, null, PAGE_SIZE, null) } returns
+            addressResponse(transactions = listOf(tx))
+
+        return (provider.getTransactionsHistory(request) as Result.Success).data.items
+    }
+
+    private fun internalCall(from: String, to: String, value: String, type: Int = 0) =
+        GetAddressResponse.Transaction.EthereumSpecific.InternalTransfer(
+            type = type,
+            from = from,
+            to = to,
+            value = value,
+        )
+
+    private fun safeTransfer(
+        to: String,
+        wei: String,
+        status: TransactionHistoryItem.TransactionStatus = TransactionHistoryItem.TransactionStatus.Confirmed,
+    ) = TransactionHistoryItem(
+        txHash = TX_HASH,
+        timestamp = 1_754_563_859_000L,
+        isOutgoing = true,
+        destinationType = TransactionHistoryItem.DestinationType.Single(TransactionHistoryItem.AddressType.User(to)),
+        sourceType = TransactionHistoryItem.SourceType.Single(SAFE),
+        status = status,
+        type = TransactionHistoryItem.TransactionType.Transfer,
+        amount = Amount(
+            value = BigDecimal(wei).movePointLeft(Blockchain.Ethereum.decimals()),
+            blockchain = Blockchain.Ethereum,
+            type = AmountType.Coin,
+        ),
+        fee = Amount(value = BigDecimal.ZERO, blockchain = Blockchain.Ethereum),
+    )
+
     private fun addressResponse(transactions: List<GetAddressResponse.Transaction>?) = GetAddressResponse(
         balance = "0",
         unconfirmedTxs = 0,
@@ -287,6 +413,8 @@ class EthereumTransactionHistoryProviderTest {
         value: String = "0",
         data: String? = null,
         txHash: String = TX_HASH,
+        internalTransfers: List<GetAddressResponse.Transaction.EthereumSpecific.InternalTransfer>? = null,
+        error: String? = null,
     ) = GetAddressResponse.Transaction(
         txid = txHash,
         vout = listOfNotNull(
@@ -310,6 +438,8 @@ class EthereumTransactionHistoryProviderTest {
             gasPrice = null,
             data = data,
             parsedData = null,
+            error = error,
+            internalTransfers = internalTransfers,
         ),
         chainExtraData = null,
         tronTXReceipt = null,
@@ -335,6 +465,11 @@ class EthereumTransactionHistoryProviderTest {
 
     private companion object {
         const val WALLET = "0x4e272d36498f2dd90016d0336304fc985f4dd626"
+        const val SAFE = "0xaf51086ffe17d431d0b046a66bf5a4888fdb4dcc"
+        const val SAFE_RECIPIENT = "0x35995d88a44ee79ddcd03478deefbbba815b0769"
+        const val SAFE_RELAYER = "0xef329c418c43e4afba82a4981d3447207bc2d8ae"
+        const val MULTICALL3 = "0xca11bde05977b3631167028862be2a173976ca11"
+        const val PROXY_FACTORY = "0x4e1dcf7ad4e460cfd30791ccc4f9c8a4f820ec67"
         const val SETTLEMENT = "0x18dc29ca1b75c9a07d4d8f82b5676a0b2b4725b4"
         const val RECIPIENT = "0x1b6257cae4192e62b629efca21771be3d759183d"
         const val FEE_COLLECTOR = "0x0eb8d76a3895938870f70aa77a58214f27ef9aa9"

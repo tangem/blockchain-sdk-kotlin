@@ -9,6 +9,7 @@ data class TransactionHistoryRequest(
     val page: Page,
     val pageSize: Int,
     val filterType: FilterType,
+    val shouldIncludeInternalTransfers: Boolean = false,
 ) {
 
     val pageToLoad: String?

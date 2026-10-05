@@ -183,6 +183,13 @@ internal open class BitcoinWalletManager(
         }
     }
 
+    /** Bitcoin has no internal transfers, so the flag must not take the call off the xpub history */
+    override suspend fun getTransactionHistoryState(
+        address: String,
+        filterType: TransactionHistoryRequest.FilterType,
+        shouldIncludeInternalTransfers: Boolean,
+    ): TransactionHistoryState = getTransactionHistoryState(address, filterType)
+
     override suspend fun getTransactionsHistory(
         request: TransactionHistoryRequest,
     ): Result<PaginationWrapper<TransactionHistoryItem>> {
