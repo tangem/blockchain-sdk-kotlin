@@ -4,6 +4,7 @@ import com.tangem.Log
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.HEX_PREFIX
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.pagination.Page
 import com.tangem.blockchain.common.pagination.PaginationWrapper
@@ -18,7 +19,9 @@ import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.TransactionType.TronStakingTransactionType
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
+import com.tangem.blockchain.transactionhistory.utils.methodIdFromRawData
 import com.tangem.common.extensions.guard
+import com.tangem.common.extensions.isZero
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -197,7 +200,7 @@ internal class TronTransactionHistoryProvider(
             return null
         }
         val type = if (contractType == null) {
-            extractTypeV2(filterType = filterType, tx = this, votes = votes)
+            extractTypeV2(filterType = filterType, tx = this, votes = votes, walletAddress = walletAddress)
         } else {
             extractType(filterType = filterType, tx = this, votes = votes)
         }
@@ -348,6 +351,7 @@ internal class TronTransactionHistoryProvider(
         filterType: TransactionHistoryRequest.FilterType,
         tx: GetAddressResponse.Transaction,
         votes: List<Vote>,
+        walletAddress: String,
     ): TransactionHistoryItem.TransactionType {
         return when (filterType) {
             TransactionHistoryRequest.FilterType.Coin -> {
@@ -362,8 +366,10 @@ internal class TronTransactionHistoryProvider(
                     ?: return TransactionHistoryItem.TransactionType.Transfer
 
                 when (contractType) {
-                    TronTxHistoryPayloadType.Transfer.type, TronTxHistoryPayloadType.SmartContract.type -> {
-                        TransactionHistoryItem.TransactionType.Transfer
+                    TronTxHistoryPayloadType.Transfer.type -> TransactionHistoryItem.TransactionType.Transfer
+
+                    TronTxHistoryPayloadType.SmartContract.type -> {
+                        extractContractCallType(tx = tx, walletAddress = walletAddress)
                     }
 
                     TronTxHistoryPayloadType.Vote.type -> { // vote
@@ -397,6 +403,43 @@ internal class TronTransactionHistoryProvider(
                 TransactionHistoryItem.TransactionType.Transfer
             }
         }
+    }
+
+    /**
+     * A contract call moves no TRX, so in the coin history it survives only as a contract method — that is what
+     * carries it past [shouldExcludeFromHistory], and the selector is what lets the app name the call and decode
+     * the transfer the fee was paid for.
+     *
+     * Two calls stay a (zero) transfer and are dropped instead, because neither cost the wallet anything: one the
+     * wallet did not sign — an incoming token transfer, whose fee belongs to its sender — and a gasless one, where
+     * the rented energy covers the call and the payload reports no fee at all.
+     */
+    private fun extractContractCallType(
+        tx: GetAddressResponse.Transaction,
+        walletAddress: String,
+    ): TransactionHistoryItem.TransactionType {
+        if (!tx.isSentBy(walletAddress)) return TransactionHistoryItem.TransactionType.Transfer
+
+        val paidFee = extractFee(tx).value ?: BigDecimal.ZERO
+        if (paidFee.isZero()) return TransactionHistoryItem.TransactionType.Transfer
+
+        val ethereumSpecific = tx.ethereumSpecific
+        val methodId = ethereumSpecific?.parsedData?.methodId?.takeIf(String::isNotEmpty)
+            ?: methodIdFromRawData(ethereumSpecific?.data)
+            ?: return TransactionHistoryItem.TransactionType.Transfer
+
+        if (methodId == HEX_PREFIX) return TransactionHistoryItem.TransactionType.Transfer
+
+        return TransactionHistoryItem.TransactionType.ContractMethod(
+            id = methodId,
+            callData = ethereumSpecific?.data,
+        )
+    }
+
+    private fun GetAddressResponse.Transaction.isSentBy(walletAddress: String): Boolean {
+        val sender = fromAddress ?: vin.firstOrNull()?.addresses?.firstOrNull()
+
+        return sender.equals(walletAddress, ignoreCase = true)
     }
 
     private fun extractAmount(
