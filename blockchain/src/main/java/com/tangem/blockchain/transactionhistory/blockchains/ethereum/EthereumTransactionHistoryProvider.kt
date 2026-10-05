@@ -25,6 +25,12 @@ internal class EthereumTransactionHistoryProvider(
     override suspend fun getTransactionHistoryState(
         address: String,
         filterType: TransactionHistoryRequest.FilterType,
+    ): TransactionHistoryState = getTransactionHistoryState(address, filterType, shouldIncludeInternalTransfers = false)
+
+    override suspend fun getTransactionHistoryState(
+        address: String,
+        filterType: TransactionHistoryRequest.FilterType,
+        shouldIncludeInternalTransfers: Boolean,
     ): TransactionHistoryState {
         return try {
             val response = withContext(Dispatchers.IO) {
@@ -32,7 +38,7 @@ internal class EthereumTransactionHistoryProvider(
                     address = address,
                     page = null,
                     pageSize = 1, // We don't need to know all transactions to define state
-                    filterType = filterType,
+                    filterType = filterType.takeUnless { isWithInternal(filterType, shouldIncludeInternalTransfers) },
                 )
             }
             if (!response.transactions.isNullOrEmpty()) {
@@ -51,18 +57,22 @@ internal class EthereumTransactionHistoryProvider(
         request: TransactionHistoryRequest,
     ): Result<PaginationWrapper<TransactionHistoryItem>> {
         return try {
+            val isWithInternal = isWithInternal(request.filterType, request.shouldIncludeInternalTransfers)
             val response = withContext(Dispatchers.IO) {
                 blockBookApi.getTransactions(
                     address = request.address,
                     page = request.pageToLoad,
                     pageSize = request.pageSize,
-                    filterType = request.filterType,
+                    // `filter=0` keeps only the transactions the address sent or received itself; the internal
+                    // transfers are indexed apart, so the filter would hide a Safe's own operations
+                    filterType = request.filterType.takeUnless { isWithInternal },
                 )
             }
             val txs = mapper.convert(
                 walletAddress = request.address,
                 filterType = request.filterType,
                 response = response,
+                shouldIncludeInternalTransfers = isWithInternal,
             ).filterNot { item -> shouldExcludeFromHistory(filterType = request.filterType, item = item) }
             val nextPage = if (response.page != null && request.page !is Page.LastPage) {
                 val page = response.page
@@ -82,4 +92,9 @@ internal class EthereumTransactionHistoryProvider(
             Result.Failure(e.toBlockchainSdkError())
         }
     }
+
+    private fun isWithInternal(
+        filterType: TransactionHistoryRequest.FilterType,
+        shouldIncludeInternalTransfers: Boolean,
+    ) = shouldIncludeInternalTransfers && filterType == TransactionHistoryRequest.FilterType.Coin
 }
