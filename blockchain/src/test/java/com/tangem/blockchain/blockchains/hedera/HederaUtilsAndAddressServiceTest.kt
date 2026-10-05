@@ -40,6 +40,24 @@ class HederaUtilsAndAddressServiceTest {
     }
 
     @Test
+    fun validateContractAddress_acceptsTokenId() {
+        assertThat(addressService.validateContractAddress("0.0.1250")).isTrue()
+    }
+
+    @Test
+    fun validateContractAddress_rejectsTokenIdWithPrefix() {
+        assertThat(addressService.validateContractAddress("abc0.0.1250")).isFalse()
+        assertThat(addressService.validateContractAddress("0.0.1​0.0.1250")).isFalse()
+    }
+
+    @Test
+    fun createTokenId_parsesSolidityAddress() {
+        val tokenId = HederaUtils.createTokenId("00000000000000000000000000000000000004e2")
+
+        assertThat(tokenId.toString()).isEqualTo("0.0.1250")
+    }
+
+    @Test
     fun resolveTokenId_convertsZeroPrefixLocally() = runTest {
         val evm = "0x00000000000000000000000000000000000004e2"
 
