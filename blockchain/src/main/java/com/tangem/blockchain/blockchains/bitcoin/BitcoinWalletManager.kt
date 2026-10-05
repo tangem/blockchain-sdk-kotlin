@@ -392,8 +392,13 @@ internal open class BitcoinWalletManager(
         Logger.d(this::class.java.simpleName, "Balance is ${response.balance}")
 
         wallet.changeAmountValue(AmountType.Coin, response.balance)
-        transactionBuilder.unspentOutputs = response.unspentOutputs
-        outputsCount = response.unspentOutputs.size
+        val unspentOutputs = UnspentOutputValidator.filterValid(
+            outputs = response.unspentOutputs,
+            outputIndex = { it.outputIndex },
+            amount = { it.amount },
+        )
+        transactionBuilder.unspentOutputs = unspentOutputs
+        outputsCount = unspentOutputs.size
 
         if (response.recentTransactions.isNotEmpty()) {
             updateRecentTransactionsBasic(response.recentTransactions)

@@ -386,28 +386,36 @@ internal class SolanaTransactionSizeReducer(
 
 private const val COMPUTE_BUDGET_PROGRAM_ID = "ComputeBudget111111111111111111111111111111"
 private const val CU_LIMIT_INSTRUCTION_SIZE = 5 // 1 byte discriminator + 4 bytes limit
+private const val CU_LIMIT_INSTRUCTION_DISCRIMINATOR: Byte = 0x02 // SetComputeUnitLimit
 private const val CU_LIMIT_INSTRUCTION_BYTES = 4
-private const val BUDGET_INCREASE_PERCENTAGE = 120 // Increase budget by 20%
-private const val PERCENTAGE_BASE = 100
+private const val BUDGET_INCREASE_PERCENTAGE = 120L // Increase budget by 20%
+private const val PERCENTAGE_BASE = 100L
+private const val MAX_COMPUTE_UNIT_LIMIT = 1_400_000L // Hard cap enforced by the Solana runtime per transaction
 
 @Suppress("MagicNumber")
-private fun List<TransactionInstruction>.patchComputeBudgetProgramInstructions(): List<TransactionInstruction> {
-    return this.map {
-        if (it.programId.toBase58() == COMPUTE_BUDGET_PROGRAM_ID && it.data.size == CU_LIMIT_INSTRUCTION_SIZE) {
-            val discriminator = it.data[0]
-            val currentBudget = ByteBuffer.wrap(it.data.drop(1).toByteArray())
+internal fun List<TransactionInstruction>.patchComputeBudgetProgramInstructions(): List<TransactionInstruction> {
+    return this.map { instruction ->
+        val isCuLimitInstruction = instruction.programId.toBase58() == COMPUTE_BUDGET_PROGRAM_ID &&
+            instruction.data.size == CU_LIMIT_INSTRUCTION_SIZE &&
+            instruction.data[0] == CU_LIMIT_INSTRUCTION_DISCRIMINATOR
+        if (isCuLimitInstruction) {
+            val discriminator = instruction.data[0]
+            val currentBudget = ByteBuffer.wrap(instruction.data.drop(1).toByteArray())
                 .order(ByteOrder.LITTLE_ENDIAN)
                 .int
-            val increasedBudget = currentBudget * BUDGET_INCREASE_PERCENTAGE / PERCENTAGE_BASE
+                .toUInt()
+                .toLong()
+            val increasedBudget = (currentBudget * BUDGET_INCREASE_PERCENTAGE / PERCENTAGE_BASE)
+                .coerceAtMost(MAX_COMPUTE_UNIT_LIMIT)
             val increasedBudgetBytes = ByteBuffer.allocate(CU_LIMIT_INSTRUCTION_BYTES)
                 .order(ByteOrder.LITTLE_ENDIAN)
-                .putInt(increasedBudget)
+                .putInt(increasedBudget.toInt())
                 .array()
-            it.copy(
+            instruction.copy(
                 data = byteArrayOf(discriminator) + increasedBudgetBytes,
             )
         } else {
-            it
+            instruction
         }
     }
 }
