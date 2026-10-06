@@ -4,6 +4,7 @@ import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinFee
 import com.tangem.blockchain.blockchains.radiant.models.RadiantAccountInfo
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.NetworkProvider
+import com.tangem.blockchain.common.UnspentOutputValidator
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.extensions.successOr
@@ -33,8 +34,13 @@ internal class RadiantNetworkService(providers: List<ElectrumNetworkProvider>) :
                 .successOr { return@coroutineScope it }
             val unspents = multiProvider.performRequest(ElectrumNetworkProvider::getUnspentUTXOs, scriptHash)
                 .successOr { return@coroutineScope it }
+            val validUnspents = UnspentOutputValidator.filterValid(
+                outputs = unspents,
+                outputIndex = { it.txPos },
+                amount = { it.value },
+            )
 
-            Result.Success(RadiantAccountInfo(balance = balance.confirmedAmount, unspentOutputs = unspents))
+            Result.Success(RadiantAccountInfo(balance = balance.confirmedAmount, unspentOutputs = validUnspents))
         }
     }
 

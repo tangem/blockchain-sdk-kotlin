@@ -57,7 +57,10 @@ public class KaspaCashAddr {
         }
 
         KaspaAddressDecodedParts decoded = new KaspaAddressDecodedParts();
-        String[] addressParts = kaspaAddress.split(SEPARATOR);
+        String[] addressParts = kaspaAddress.split(SEPARATOR, -1);
+        if (addressParts.length > 2) {
+            throw new RuntimeException("Address has more than one separator: " + kaspaAddress);
+        }
         if (addressParts.length == 2) {
             decoded.setPrefix(addressParts[0]);
         } else {
@@ -95,7 +98,12 @@ public class KaspaCashAddr {
             String prefix;
 
             if (kaspaAddress.contains(SEPARATOR)) {
-                String[] split = kaspaAddress.split(SEPARATOR);
+                String[] split = kaspaAddress.split(SEPARATOR, -1);
+                // only "prefix:payload" is allowed, otherwise the checksum is verified over a different part
+                // than the one decodeCashAddress() pays to
+                if (split.length != 2) {
+                    return false;
+                }
                 prefix = split[0];
                 if (!prefix.equals(networkPrefix)) {
                     return false;

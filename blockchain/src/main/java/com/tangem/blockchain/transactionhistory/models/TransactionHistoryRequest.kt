@@ -15,6 +15,7 @@ data class TransactionHistoryRequest(
     val pageSize: Int,
     val filterType: FilterType,
     val gaslessFeeAddresses: Set<String> = emptySet(),
+    val shouldIncludeInternalTransfers: Boolean = false,
 ) {
 
     val pageToLoad: String?

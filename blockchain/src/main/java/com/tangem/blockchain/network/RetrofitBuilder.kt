@@ -14,6 +14,7 @@ import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledTransactionA
 import com.tangem.blockchain.blockchains.xrp.network.rippled.RippledTransactionAmountAdapter
 import com.tangem.blockchain.common.EnumeratedEnum
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
+import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.EtherscanInternalResultAdapter
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.PolygonScanResultAdapter
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -85,6 +86,7 @@ internal val moshi: Moshi by lazy {
         .add(RippledTransactionAmount::class.java, RippledTransactionAmountAdapter)
         .add(createEnumJsonAdapter<GetAddressResponse.Transaction.StatusType>())
         .add(PolygonScanResultAdapter())
+        .add(EtherscanInternalResultAdapter())
         .add(KotlinJsonAdapterFactory())
         .build()
 }

@@ -46,7 +46,7 @@ internal class DecimalAddressService : AddressService() {
     override fun validate(address: String): Boolean {
         val addressToValidate = when {
             address.startsWith(ADDRESS_PREFIX) || address.startsWith(LEGACY_ADDRESS_PREFIX) -> {
-                convertDelAddressToDscAddress(address)
+                runCatching { convertDelAddressToDscAddress(address) }.getOrElse { return false }
             }
 
             else -> address
@@ -66,10 +66,15 @@ internal class DecimalAddressService : AddressService() {
                 return addressHex
             }
 
-            val (prefix, addressBytes) = Bech32.decode(addressHex).let { it.hrp to it.data }
-            require(value = prefix != null && addressBytes != null) {
+            val decoded = Bech32.decode(addressHex)
+            // The bech32 separator is the last '1', so a full DEL address is itself a valid HRP of a longer string
+            require(
+                value = decoded.encoding == Bech32.Encoding.BECH32 &&
+                    (decoded.hrp == ADDRESS_PREFIX || decoded.hrp == LEGACY_ADDRESS_PREFIX),
+            ) {
                 "Unable to convert DEL address to DSC address: $addressHex"
             }
+            val addressBytes = decoded.data
 
             val convertedAddressBytes = Crypto.convertBits(addressBytes, 0, addressBytes.size, 5, 8, false)
 

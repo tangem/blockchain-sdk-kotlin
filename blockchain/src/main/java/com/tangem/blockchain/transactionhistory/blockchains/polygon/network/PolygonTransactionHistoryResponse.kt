@@ -43,4 +43,5 @@ internal data class PolygonTransaction(
     @Json(name = "txreceipt_status") val txReceiptStatus: String?,
     @Json(name = "value") val value: String,
     @Json(name = "input") val input: String,
+    @Json(name = "blockNumber") val blockNumber: String? = null,
 )
