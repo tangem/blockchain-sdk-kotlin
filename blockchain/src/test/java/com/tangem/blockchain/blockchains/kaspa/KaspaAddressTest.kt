@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.kaspa
 
 import com.google.common.truth.Truth
 import com.tangem.common.extensions.hexToBytes
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class KaspaAddressTest {
@@ -90,5 +91,24 @@ class KaspaAddressTest {
             0x4c.toByte(), 0x37.toByte(), 0xe8.toByte(), 0xc3.toByte(),
         )
         Truth.assertThat(addressService.makeAddress(publicKey)).isEqualTo(address)
+    }
+
+    @Test
+    fun validateAddressWithMultipleSeparators() {
+        val addressService = KaspaAddressService(isTestnet = false)
+        // checksum of the first payload is valid, the second payload belongs to another wallet
+        val address = "kaspa:qpsqw2aamda868dlgqczeczd28d5nc3rlrj3t87vu9q58l2tugpjs2psdm4fv:" +
+            "qyp4scvsxvkrjxyq98gd4xedhgrqtmf78l7wl8p8p4j0mjuvpwjg5cqhy97n472"
+
+        Truth.assertThat(addressService.validate(address)).isFalse()
+        assertThrows(RuntimeException::class.java) { addressService.getPublicKey(address) }
+    }
+
+    @Test
+    fun validateAddressWithTrailingSeparator() {
+        val addressService = KaspaAddressService(isTestnet = false)
+        val address = "kaspa:qpsqw2aamda868dlgqczeczd28d5nc3rlrj3t87vu9q58l2tugpjs2psdm4fv:"
+
+        Truth.assertThat(addressService.validate(address)).isFalse()
     }
 }

@@ -13,6 +13,13 @@ interface TransactionHistoryProvider {
         filterType: TransactionHistoryRequest.FilterType,
     ): TransactionHistoryState
 
+    /** Only the EVM providers read [shouldIncludeInternalTransfers]; the rest answer as the two-argument call */
+    suspend fun getTransactionHistoryState(
+        address: String,
+        filterType: TransactionHistoryRequest.FilterType,
+        shouldIncludeInternalTransfers: Boolean,
+    ): TransactionHistoryState = getTransactionHistoryState(address, filterType)
+
     suspend fun getTransactionsHistory(
         request: TransactionHistoryRequest,
     ): Result<PaginationWrapper<TransactionHistoryItem>>

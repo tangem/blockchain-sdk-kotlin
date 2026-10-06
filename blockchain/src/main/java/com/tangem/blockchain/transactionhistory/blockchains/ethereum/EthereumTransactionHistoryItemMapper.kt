@@ -16,6 +16,7 @@ import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 
 private const val TOKEN_TRANSFER_METHOD_ID = "a9059cbb"
+private const val INTERNAL_CALL_TYPE = 0
 
 internal class EthereumTransactionHistoryItemMapper(private val blockchain: Blockchain) {
 
@@ -24,12 +25,19 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
         filterType: TransactionHistoryRequest.FilterType,
         response: GetAddressResponse,
         gaslessFeeAddresses: Set<String> = emptySet(),
+        shouldIncludeInternalTransfers: Boolean = false,
     ): List<TransactionHistoryItem> {
         val transactions = response.transactions ?: return emptyList()
 
         return when (filterType) {
-            TransactionHistoryRequest.FilterType.Coin -> transactions.mapNotNull { transaction ->
-                convertFromCoinTransaction(walletAddress = walletAddress, transaction = transaction)
+            TransactionHistoryRequest.FilterType.Coin -> transactions.flatMap { transaction ->
+                val internal = if (shouldIncludeInternalTransfers) {
+                    convertFromInternalTransfers(walletAddress = walletAddress, transaction = transaction)
+                } else {
+                    emptyList()
+                }
+                listOfNotNull(convertFromCoinTransaction(walletAddress = walletAddress, transaction = transaction)) +
+                    internal
             }
             is TransactionHistoryRequest.FilterType.Contract -> {
                 val feeCollectors = gaslessFeeAddresses.mapTo(mutableSetOf(), String::lowercase)
@@ -82,6 +90,38 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
                 type = AmountType.Coin,
             ),
         )
+    }
+
+    /**
+     * A contract's CALL that moved coin of [walletAddress], as a plain transfer. The gas of the transaction was paid by
+     * whoever sent it, so the item carries no fee.
+     */
+    private fun convertFromInternalTransfers(
+        walletAddress: String,
+        transaction: GetAddressResponse.Transaction,
+    ): List<TransactionHistoryItem> {
+        val status = extractInternalStatus(transaction)
+        return transaction.ethereumSpecific?.internalTransfers.orEmpty()
+            .filter { it.type == INTERNAL_CALL_TYPE }
+            .filter { it.from.equalsIgnoreCase(walletAddress) || it.to.equalsIgnoreCase(walletAddress) }
+            .mapNotNull { transfer ->
+                val value = transfer.value.toBigDecimalOrNull()?.takeIf { it.signum() > 0 } ?: return@mapNotNull null
+                TransactionHistoryItem(
+                    txHash = transaction.txid,
+                    timestamp = TimeUnit.SECONDS.toMillis(transaction.blockTime.toLong()),
+                    isOutgoing = transfer.from.equalsIgnoreCase(walletAddress),
+                    destinationType = DestinationType.Single(addressType = AddressType.User(transfer.to)),
+                    sourceType = SourceType.Single(address = transfer.from),
+                    status = status,
+                    type = TransactionType.Transfer,
+                    amount = Amount(
+                        value = value.movePointLeft(blockchain.decimals()),
+                        blockchain = blockchain,
+                        type = AmountType.Coin,
+                    ),
+                    fee = Amount(value = BigDecimal.ZERO, blockchain = blockchain),
+                )
+            }
     }
 
     private fun convertFromTokenTransaction(
@@ -183,6 +223,15 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
             GetAddressResponse.Transaction.StatusType.FAILURE -> TransactionStatus.Failed
             GetAddressResponse.Transaction.StatusType.OK -> TransactionStatus.Confirmed
         }
+    }
+
+    /**
+     * An internal transfer has no status of its own. `error` is set when any call of the trace failed, a caught one
+     * included, so it is a heuristic: a failed CALL with value is still listed in `internalTransfers`.
+     */
+    private fun extractInternalStatus(transaction: GetAddressResponse.Transaction): TransactionStatus {
+        val hasError = !transaction.ethereumSpecific?.error.isNullOrEmpty()
+        return if (hasError) TransactionStatus.Failed else extractStatus(transaction)
     }
 
     private fun extractType(

@@ -1,5 +1,6 @@
 package com.tangem.blockchain.blockchains.hedera
 
+import com.hedera.hashgraph.sdk.AccountId
 import com.hedera.hashgraph.sdk.TokenId
 import com.tangem.Log
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TokenBalanceERC20TokenCallData
@@ -20,16 +21,37 @@ internal object HederaUtils {
     private const val EVM_ADDRESS_FIRST_HALF_LENGTH = 20
     private const val HEX_RADIX = 16
 
+    private val ENTITY_ID_REGEX = Regex("""(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[a-z]{5})?""")
+    private val ACCOUNT_ALIAS_REGEX = Regex("""(0|[1-9]\d*)\.(0|[1-9]\d*)\.([0-9a-fA-F]{2})+""")
+    private val ACCOUNT_EVM_ADDRESS_REGEX = Regex("""(0x)?[0-9a-fA-F]{40}""")
+
+    /**
+     * Strict replacement for [AccountId.fromString]: hedera-sdk-java 2.29.0 matches the id with `Matcher.find()`
+     * and a pattern anchored only at the end, so it silently drops any prefix (`"abc0.0.5"` parses as `0.0.5`).
+     *
+     * @throws IllegalArgumentException if [address] is not entirely an account id, an alias or an EVM address.
+     */
+    fun parseAccountId(address: String): AccountId {
+        require(
+            ENTITY_ID_REGEX.matches(address) ||
+                ACCOUNT_ALIAS_REGEX.matches(address) ||
+                ACCOUNT_EVM_ADDRESS_REGEX.matches(address),
+        ) { "Invalid Hedera account id: $address" }
+
+        return AccountId.fromString(address)
+    }
+
     fun createTokenId(contractAddress: String): TokenId {
         return try {
-            TokenId.fromString(contractAddress)
-        } catch (_: Exception) {
-            try {
+            // TokenId.fromString has the same prefix-dropping parser as AccountId.fromString
+            if (ENTITY_ID_REGEX.matches(contractAddress)) {
+                TokenId.fromString(contractAddress)
+            } else {
                 TokenId.fromSolidityAddress(contractAddress)
-            } catch (e: Exception) {
-                Log.error { e.message.orEmpty() }
-                throw BlockchainSdkError.CustomError(e.message.orEmpty())
             }
+        } catch (e: Exception) {
+            Log.error { e.message.orEmpty() }
+            throw BlockchainSdkError.CustomError(e.message.orEmpty())
         }
     }
 

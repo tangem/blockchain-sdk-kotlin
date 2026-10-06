@@ -111,6 +111,8 @@ data class GetAddressResponse(
             @Json(name = "gasPrice") val gasPrice: String?,
             @Json(name = "data") val data: String?,
             @Json(name = "parsedData") val parsedData: ParsedData?,
+            @Json(name = "error") val error: String? = null,
+            @Json(name = "internalTransfers") val internalTransfers: List<InternalTransfer>? = null,
         ) {
 
             @JsonClass(generateAdapter = true)
@@ -118,6 +120,15 @@ data class GetAddressResponse(
                 // / First 4byte from data. E.g. `0x617ba037`
                 @Json(name = "methodId") val methodId: String,
                 @Json(name = "name") val name: String,
+            )
+
+            /** [type]: 0 — CALL, 1 — CREATE (CREATE2 too), 2 — SELFDESTRUCT */
+            @JsonClass(generateAdapter = true)
+            data class InternalTransfer(
+                @Json(name = "type") val type: Int,
+                @Json(name = "from") val from: String,
+                @Json(name = "to") val to: String,
+                @Json(name = "value") val value: String,
             )
         }
 

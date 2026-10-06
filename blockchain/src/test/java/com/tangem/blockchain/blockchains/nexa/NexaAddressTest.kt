@@ -61,4 +61,12 @@ class NexaAddressTest {
 
         Truth.assertThat(NexaAddressService.getScriptHash(walletPublicKey).lowercase()).isEqualTo(expected)
     }
+
+    @Test
+    fun validateAddressWithMultipleSeparators() {
+        val address = "nexa:qz2e2eesqa4axqm7rtej0nnt6sq6t2y33cu3e7ss2w:" +
+            "nqtsq5g5xwpr2kp6fvhng5lyuafu8jg3gaj8hk34k2r4rvs3"
+
+        Truth.assertThat(addressService.validate(address)).isFalse()
+    }
 }
