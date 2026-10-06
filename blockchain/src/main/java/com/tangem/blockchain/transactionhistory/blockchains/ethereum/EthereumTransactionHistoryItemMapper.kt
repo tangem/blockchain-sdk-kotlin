@@ -24,6 +24,7 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
         walletAddress: String,
         filterType: TransactionHistoryRequest.FilterType,
         response: GetAddressResponse,
+        gaslessFeeAddresses: Set<String> = emptySet(),
         shouldIncludeInternalTransfers: Boolean = false,
     ): List<TransactionHistoryItem> {
         val transactions = response.transactions ?: return emptyList()
@@ -38,12 +39,16 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
                 listOfNotNull(convertFromCoinTransaction(walletAddress = walletAddress, transaction = transaction)) +
                     internal
             }
-            is TransactionHistoryRequest.FilterType.Contract -> transactions.flatMap { transaction ->
-                convertFromTokenTransaction(
-                    walletAddress = walletAddress,
-                    filterType = filterType,
-                    transaction = transaction,
-                )
+            is TransactionHistoryRequest.FilterType.Contract -> {
+                val feeCollectors = gaslessFeeAddresses.mapTo(mutableSetOf(), String::lowercase)
+                transactions.flatMap { transaction ->
+                    convertFromTokenTransaction(
+                        walletAddress = walletAddress,
+                        filterType = filterType,
+                        transaction = transaction,
+                        feeCollectors = feeCollectors,
+                    )
+                }
             }
         }
     }
@@ -123,8 +128,14 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
         walletAddress: String,
         filterType: TransactionHistoryRequest.FilterType.Contract,
         transaction: GetAddressResponse.Transaction,
+        feeCollectors: Set<String>,
     ): List<TransactionHistoryItem> {
         val token = filterType.tokenInfo
+        val fee = transaction.gaslessFeeAmount(
+            walletAddress = walletAddress,
+            token = token,
+            feeCollectors = feeCollectors,
+        ) ?: transaction.feeAmount(blockchain)
 
         return transaction.tokenTransfers
             .filter { transfer ->
@@ -159,10 +170,47 @@ internal class EthereumTransactionHistoryItemMapper(private val blockchain: Bloc
                         status = extractStatus(transaction),
                         type = extractType(transaction = transaction, filterType = filterType),
                         amount = amount,
-                        fee = transaction.feeAmount(blockchain),
+                        fee = fee,
                     )
                 }
             }
+    }
+
+    /**
+     * What a gaslessly sent transaction cost the wallet, in place of the network fee the relayer paid for it: the
+     * transfer the wallet itself made to one of the [feeCollectors] the caller knows.
+     *
+     * Only a fee paid in some *other* token is resolved here. One paid in [token] is a transfer of the viewed token
+     * like any other and already reaches the history as a row of its own, which is what the fee is read from there.
+     */
+    private fun GetAddressResponse.Transaction.gaslessFeeAmount(
+        walletAddress: String,
+        token: Token,
+        feeCollectors: Set<String>,
+    ): Amount? {
+        if (feeCollectors.isEmpty()) return null
+
+        return tokenTransfers.firstNotNullOfOrNull { transfer ->
+            val contract = transfer.contract ?: return@firstNotNullOfOrNull null
+            val isFeeTransfer = transfer.from.equalsIgnoreCase(walletAddress) &&
+                transfer.to.lowercase() in feeCollectors &&
+                !token.contractAddress.equalsIgnoreCase(contract)
+            if (!isFeeTransfer) return@firstNotNullOfOrNull null
+
+            val symbol = transfer.symbol ?: return@firstNotNullOfOrNull null
+            val decimals = transfer.decimals ?: return@firstNotNullOfOrNull null
+            val value = transfer.value?.toBigDecimalOrNull() ?: return@firstNotNullOfOrNull null
+
+            Amount(
+                token = Token(
+                    name = transfer.name ?: symbol,
+                    symbol = symbol,
+                    contractAddress = contract,
+                    decimals = decimals,
+                ),
+                value = value.movePointLeft(decimals),
+            )
+        }
     }
 
     private fun extractStatus(transaction: GetAddressResponse.Transaction): TransactionStatus {
