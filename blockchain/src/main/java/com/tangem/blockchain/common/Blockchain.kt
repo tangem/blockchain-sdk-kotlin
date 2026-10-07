@@ -1143,6 +1143,7 @@ enum class Blockchain(
                 Base,
                 BSC,
                 Polygon,
+                Monad,
                 EthereumTestnet,
             )
         }

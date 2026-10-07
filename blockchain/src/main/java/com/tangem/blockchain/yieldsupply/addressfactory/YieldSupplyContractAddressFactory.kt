@@ -20,6 +20,7 @@ internal class YieldSupplyContractAddressFactory(
         Blockchain.Base,
         Blockchain.BSC,
         Blockchain.Polygon,
+        Blockchain.Monad,
         Blockchain.EthereumTestnet,
         -> true
         else -> false
