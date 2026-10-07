@@ -95,6 +95,7 @@ import com.tangem.blockchain.blockchains.adi.AdiProvidersBuilder
 import com.tangem.blockchain.blockchains.arc.ArcProvidersBuilder
 import com.tangem.blockchain.blockchains.electroneum.ElectroneumProvidersBuilder
 import com.tangem.blockchain.blockchains.igra.IgraProvidersBuilder
+import com.tangem.blockchain.blockchains.onyx.OnyxProvidersBuilder
 import com.tangem.blockchain.blockchains.plasma.PlasmaProvidersBuilder
 import com.tangem.blockchain.blockchains.robinhood.RobinhoodProvidersBuilder
 import com.tangem.blockchain.blockchains.seievm.SeiEvmProvidersBuilder
@@ -198,6 +199,7 @@ import com.tangem.blockchain.network.MultiNetworkProvider
  * | Nexa             | coins            |
  * | OctaSpace        | coins            |
  * | OdysseyChain     | coins            |
+ * | Onyx             | coins + tokens   |
  * | Optimism         | coins + tokens   |
  * | Pepecoin         | coins            |
  * | ADI              | coins            |
@@ -270,6 +272,10 @@ class AssetsDiscoveryServiceFactory(
             Blockchain.Arc, Blockchain.ArcTestnet -> createDefaultEvmDiscoveryService(
                 blockchain = blockchain,
                 providers = ArcProvidersBuilder(types, config).build(blockchain),
+            )
+            Blockchain.Onyx, Blockchain.OnyxTestnet -> createDefaultEvmDiscoveryService(
+                blockchain = blockchain,
+                providers = OnyxProvidersBuilder(types, config).build(blockchain),
             )
             Blockchain.Alephium, Blockchain.AlephiumTestnet -> {
                 val networkService = AlephiumNetworkService(

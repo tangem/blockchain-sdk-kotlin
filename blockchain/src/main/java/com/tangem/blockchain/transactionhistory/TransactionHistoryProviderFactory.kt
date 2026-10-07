@@ -68,6 +68,8 @@ internal object TransactionHistoryProviderFactory {
             Blockchain.ElectroneumTestnet,
             -> createElectroneumExplorerProvider(blockchain)
 
+            Blockchain.Onyx, Blockchain.OnyxTestnet -> createOnyxExplorerProvider(blockchain)
+
             else -> DefaultTransactionHistoryProvider
         }
     }
@@ -195,6 +197,19 @@ internal object TransactionHistoryProviderFactory {
             "https://testnet-blockexplorer.electroneum.com/"
         } else {
             "https://blockexplorer.electroneum.com/"
+        }
+        return EtherscanTransactionHistoryProvider(
+            blockchain = blockchain,
+            api = createRetrofitInstance(baseUrl).create(EtherScanApi::class.java),
+            etherscanApiKey = "",
+        )
+    }
+
+    private fun createOnyxExplorerProvider(blockchain: Blockchain): TransactionHistoryProvider {
+        val baseUrl = if (blockchain.isTestnet()) {
+            "https://testnet.explorer.goliath.net/"
+        } else {
+            "https://explorer.onyx.org/"
         }
         return EtherscanTransactionHistoryProvider(
             blockchain = blockchain,
