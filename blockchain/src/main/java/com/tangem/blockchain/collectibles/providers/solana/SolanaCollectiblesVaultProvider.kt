@@ -42,11 +42,10 @@ internal class SolanaCollectiblesVaultProvider(
 
     override fun isCollectiblesVaultSupported(): Boolean = true
 
-    override fun getCollectiblesVaultAddress(): Result<String> =
-        when (val result = vaultAddress()) {
-            is Result.Success -> Result.Success(result.data.toBase58())
-            is Result.Failure -> result
-        }
+    override fun getCollectiblesVaultAddress(): Result<String> = when (val result = vaultAddress()) {
+        is Result.Success -> Result.Success(result.data.toBase58())
+        is Result.Failure -> result
+    }
 
     override suspend fun isCollectiblesVaultInitialized(): Result<Boolean> {
         return when (val result = getCollectiblesVault()) {
@@ -222,12 +221,12 @@ internal class SolanaCollectiblesVaultProvider(
         // The memo is top level and precedes `purchase_pack`: the gacha counts a spin by it, not by the argument
         val transaction = SolanaTransactionBuilder(
             account = delegate,
-            multiNetworkProvider = multiNetworkProvider
+            multiNetworkProvider = multiNetworkProvider,
         )
             .buildUnsignedTransaction(
                 instructions = listOf(
                     SolanaMemoProgram.createMemoInstruction(chainMemo),
-                    purchasePack
+                    purchasePack,
                 ),
                 computeUnitLimit = SolanaTransactionBuilder.DEFAULT_CU_LIMIT,
                 computeUnitPrice = SolanaTransactionBuilder.DEFAULT_CU_PRICE,
@@ -332,10 +331,12 @@ internal class SolanaCollectiblesVaultProvider(
      */
     private suspend fun validateCapsOnUpdate(perSpinCap: Long?, dailyCap: Long?): Result.Failure? {
         if (perSpinCap == null && dailyCap == null) return null
-        if (perSpinCap != null && dailyCap != null) return validateCaps(
-            perSpinCap = perSpinCap,
-            dailyCap = dailyCap
-        )
+        if (perSpinCap != null && dailyCap != null) {
+            return validateCaps(
+                perSpinCap = perSpinCap,
+                dailyCap = dailyCap,
+            )
+        }
 
         val stored = getCollectiblesVault().successOr { return it }
             ?: return Result.Failure(BlockchainSdkError.CustomError("Vault does not exist"))
@@ -419,11 +420,10 @@ internal class SolanaCollectiblesVaultProvider(
         onFailure = { Result.Failure(BlockchainSdkError.CustomError("Failed to derive config address")) },
     )
 
-    private fun publicKey(address: String): Result<PublicKey> =
-        runCatching { PublicKey(address) }.fold(
-            onSuccess = { Result.Success(it) },
-            onFailure = { Result.Failure(BlockchainSdkError.CustomError("Invalid public key")) },
-        )
+    private fun publicKey(address: String): Result<PublicKey> = runCatching { PublicKey(address) }.fold(
+        onSuccess = { Result.Success(it) },
+        onFailure = { Result.Failure(BlockchainSdkError.CustomError("Invalid public key")) },
+    )
 
     private fun vaultAddress(): Result<PublicKey> = GachaVaultProgram.vaultAddress(coldOwner).fold(
         onSuccess = { Result.Success(it) },
