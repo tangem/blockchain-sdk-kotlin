@@ -233,6 +233,7 @@ enum class Blockchain(
     ArcTestnet("arc/test", "USDC", "Arc Testnet"),
     Onyx("onyx", "XCN", "Onyx"),
     OnyxTestnet("onyx/test", "XCN", "Onyx Testnet"),
+    PublicMasterpiece("public-masterpiece", "PMT", "Public Masterpiece"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -386,6 +387,7 @@ enum class Blockchain(
         Electroneum, ElectroneumTestnet,
         Arc, ArcTestnet,
         Onyx, OnyxTestnet,
+        PublicMasterpiece,
         -> 18
 
         Near, NearTestnet,
@@ -531,6 +533,7 @@ enum class Blockchain(
             Electroneum, ElectroneumTestnet,
             Arc, ArcTestnet,
             Onyx, OnyxTestnet,
+            PublicMasterpiece,
             -> EthereumAddressService()
 
             Quai, QuaiTestnet -> QuaiAddressService()
@@ -727,6 +730,7 @@ enum class Blockchain(
             Clore,
             ArbitrumNova,
             Gonka,
+            PublicMasterpiece,
             -> null
         }
     }
@@ -828,6 +832,7 @@ enum class Blockchain(
             Electroneum, ElectroneumTestnet,
             Arc, ArcTestnet,
             Onyx, OnyxTestnet,
+            PublicMasterpiece,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -964,6 +969,7 @@ enum class Blockchain(
             ArcTestnet -> Chain.ArcTestnet.id
             Onyx -> Chain.Onyx.id
             OnyxTestnet -> Chain.OnyxTestnet.id
+            PublicMasterpiece -> Chain.PublicMasterpiece.id
             Monad -> Chain.Monad.id
             MonadTestnet -> Chain.MonadTestnet.id
             else -> null
@@ -983,8 +989,8 @@ enum class Blockchain(
     }
 
     fun canHandleTokens(): Boolean {
-        // disable tokens support for Taraxa evm until it's not tested
-        if (this == Taraxa || this == EnergyWebChain) return false
+        // Tokens are not supported: Taraxa EVM is not tested yet, Public Masterpiece has none
+        if (this == Taraxa || this == EnergyWebChain || this == PublicMasterpiece) return false
 
         if (isEvm()) return true
 

@@ -9,6 +9,7 @@ import com.tangem.blockchain.blockchains.igra.IgraProvidersBuilder
 import com.tangem.blockchain.blockchains.onyx.OnyxProvidersBuilder
 import com.tangem.blockchain.blockchains.optimism.OptimismProvidersBuilder
 import com.tangem.blockchain.blockchains.plasma.PlasmaProvidersBuilder
+import com.tangem.blockchain.blockchains.publicmasterpiece.PublicMasterpieceProvidersBuilder
 import com.tangem.blockchain.blockchains.quai.QuaiJsonRpcProvider
 import com.tangem.blockchain.blockchains.quai.QuaiNetworkService
 import com.tangem.blockchain.blockchains.robinhood.RobinhoodProvidersBuilder
@@ -191,6 +192,7 @@ internal object EvmNetworkServiceFactory {
             Blockchain.Robinhood, Blockchain.RobinhoodTestnet -> RobinhoodProvidersBuilder(providerTypes, config)
             Blockchain.Igra, Blockchain.IgraTestnet -> IgraProvidersBuilder(providerTypes, config)
             Blockchain.Electroneum, Blockchain.ElectroneumTestnet -> ElectroneumProvidersBuilder(providerTypes, config)
+            Blockchain.PublicMasterpiece -> PublicMasterpieceProvidersBuilder(providerTypes, config)
             else -> null
         }
     }

@@ -187,5 +187,6 @@ val Blockchain.isUTXO: Boolean
         ArcTestnet,
         Onyx,
         OnyxTestnet,
+        PublicMasterpiece,
         -> false
     }

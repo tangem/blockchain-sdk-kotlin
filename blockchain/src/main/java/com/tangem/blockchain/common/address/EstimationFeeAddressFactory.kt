@@ -114,6 +114,7 @@ class EstimationFeeAddressFactory {
             Blockchain.Arc, Blockchain.ArcTestnet,
             Blockchain.Onyx,
             Blockchain.OnyxTestnet,
+            Blockchain.PublicMasterpiece,
             -> "0x52bb4012854f808CF9BAbd855e44E506dAf6C077"
             Blockchain.Quai, Blockchain.QuaiTestnet,
             -> "0x001895747a462F3cDEc145d565645D7fcEbe275d"

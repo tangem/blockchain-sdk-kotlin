@@ -80,6 +80,7 @@ object DerivationConfigV1 : DerivationConfig() {
             Blockchain.IgraTestnet,
             Blockchain.Onyx,
             Blockchain.OnyxTestnet,
+            Blockchain.PublicMasterpiece,
             -> mapOf(AddressType.Default to DerivationPath("m/44'/60'/0'/0/0"))
             Blockchain.SeiEvm,
             Blockchain.SeiEvmTestnet,

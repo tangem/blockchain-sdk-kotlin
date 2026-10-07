@@ -67,6 +67,7 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Igra, Blockchain.IgraTestnet,
             Blockchain.Electroneum, Blockchain.ElectroneumTestnet,
             Blockchain.Arc, Blockchain.ArcTestnet,
+            Blockchain.PublicMasterpiece,
             -> true
             Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet, // eth_feeHistory all zeroes
             Blockchain.EthereumPow, Blockchain.EthereumPowTestnet, // eth_feeHistory with zeros
