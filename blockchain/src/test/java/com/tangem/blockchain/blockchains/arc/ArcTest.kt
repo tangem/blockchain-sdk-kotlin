@@ -65,10 +65,15 @@ internal class ArcTest {
     }
 
     @Test
-    fun `display decimals equal decimals for every blockchain but Arc`() {
+    fun `display decimals equal decimals for every blockchain but Arc and Onyx`() {
         val mismatched = Blockchain.entries.filter { it.displayDecimals() != it.decimals() }
 
-        Truth.assertThat(mismatched).containsExactly(Blockchain.Arc, Blockchain.ArcTestnet)
+        Truth.assertThat(mismatched).containsExactly(
+            Blockchain.Arc,
+            Blockchain.ArcTestnet,
+            Blockchain.Onyx,
+            Blockchain.OnyxTestnet,
+        )
     }
 
     @Test

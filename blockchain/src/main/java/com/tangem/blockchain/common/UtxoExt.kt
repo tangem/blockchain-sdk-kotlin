@@ -185,5 +185,7 @@ val Blockchain.isUTXO: Boolean
         ElectroneumTestnet,
         Arc,
         ArcTestnet,
+        Onyx,
+        OnyxTestnet,
         -> false
     }

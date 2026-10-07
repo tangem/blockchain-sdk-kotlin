@@ -94,6 +94,7 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet,
             Blockchain.Quai, Blockchain.QuaiTestnet,
             Blockchain.Adi, Blockchain.AdiTestnet,
+            Blockchain.Onyx, Blockchain.OnyxTestnet, // eth_feeHistory with zero base fee
             -> false
             else -> error("Don't forget about evm here")
         }

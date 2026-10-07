@@ -567,7 +567,9 @@ open class EthereumWalletManager(
 
         when (amount.type) {
             is AmountType.Coin -> {
-                value = amount.value?.movePointRight(amount.decimals)?.toBigInteger()?.toHexString()
+                value = amount.value?.movePointRight(amount.decimals)?.toBigInteger()
+                    ?.let(wallet.blockchain::toAcceptedCoinValue)
+                    ?.toHexString()
             }
 
             is AmountType.Token -> {
