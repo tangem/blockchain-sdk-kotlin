@@ -287,6 +287,7 @@ class WalletManagerFactory(
             Blockchain.Arc, Blockchain.ArcTestnet,
             Blockchain.Onyx,
             Blockchain.OnyxTestnet,
+            Blockchain.PublicMasterpiece,
             -> EthereumLikeWalletManagerAssembly(dataStorage = dataStorage)
 
             Blockchain.Mantle, Blockchain.MantleTestnet,

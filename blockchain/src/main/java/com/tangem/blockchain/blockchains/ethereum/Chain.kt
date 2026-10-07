@@ -120,4 +120,5 @@ enum class Chain(val id: Int, val blockchain: Blockchain?) {
     ArcTestnet(id = 5042002, blockchain = Blockchain.ArcTestnet),
     Onyx(id = 327, blockchain = Blockchain.Onyx),
     OnyxTestnet(id = 8901, blockchain = Blockchain.OnyxTestnet),
+    PublicMasterpiece(id = 290290, blockchain = Blockchain.PublicMasterpiece),
 }
