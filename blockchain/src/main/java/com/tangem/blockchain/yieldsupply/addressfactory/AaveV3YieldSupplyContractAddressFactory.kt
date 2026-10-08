@@ -30,7 +30,7 @@ internal class AaveV3YieldSupplyContractAddressFactory(
         Blockchain.Base -> "0x487C7bA76BB0611d20A97E89625Ca93c87Ed4AA1"
         Blockchain.BSC -> "0x1A5Dd8e4Feb0bb4E6765DAd78B83e8bA3fba2dAC"
         Blockchain.Polygon -> "0xB04aFaA060097C4a2c9e45FE611BB5db682C9aD6"
-        Blockchain.Monad -> "0x9002A6fC37B8f5916C4ddAD92001394C967011D6"
+        Blockchain.Monad -> "0xcb522FEF86463A665bd5493100FCA7396786c572"
         Blockchain.EthereumTestnet -> "0x9A4b70A216C1A84d72a490f8cD3014Fdb538d249"
         else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
@@ -55,7 +55,7 @@ internal class AaveV3YieldSupplyContractAddressFactory(
         Blockchain.Base -> "0x66cC410eC0Dd4013b7dA0a003404F6c503109093"
         Blockchain.BSC -> "0x6bBB8DDB265A6bae01422fF815a77e72D71F4e17"
         Blockchain.Polygon -> "0x66084220E3dFdd1D8C8F1F868C103F9418DEce7c"
-        Blockchain.Monad -> "0x110E56a8F4bcE93acB0944d6d8FeE5116399A32C"
+        Blockchain.Monad -> "0x8Aa5F827245900cd14EC903bdB00c4e51a1F924b"
         else -> null
     }
 }
