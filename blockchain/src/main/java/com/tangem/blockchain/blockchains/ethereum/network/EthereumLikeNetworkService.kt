@@ -236,7 +236,7 @@ internal abstract class EthereumLikeNetworkService(
                         .toBlockchainSdkError(),
                 )
             } else {
-                Result.Failure(exception.toBlockchainSdkError())
+                Result.Failure(exception as? BlockchainSdkError ?: exception.toBlockchainSdkError())
             }
         }
     }
