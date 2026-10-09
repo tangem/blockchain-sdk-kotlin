@@ -2,6 +2,7 @@
 
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.network.ResultChecker
 import com.tangem.common.core.TangemError
 import java.math.BigDecimal
 
@@ -235,10 +236,7 @@ sealed class BlockchainSdkError(
     ) {
         open class Api(code: Int, message: String) : Ethereum(subCode = code, customMessage = message)
 
-        class InsufficientFundsForOperation(message: String) : Api(
-            code = ERROR_CODE_INSUFFICIENT_FUNDS_FOR_OPERATION,
-            message = message,
-        )
+        class ExecutionReverted(code: Int, message: String) : Api(code = code, message = message)
 
         data class EstimateOverrideError(
             val blockchain: String,
@@ -261,15 +259,16 @@ sealed class BlockchainSdkError(
         )
 
         companion object {
-            internal const val ERROR_CODE_INSUFFICIENT_FUNDS_FOR_OPERATION = 3
             internal const val ERROR_CODE_ESTIMATE_OVERRIDE_ERROR = 4
             internal const val ERROR_CODE_YIELD_MODULE_ADDRESS_MISMATCH = 5
             internal const val ERROR_CODE_YIELD_MODULE_ADDRESS_UNAVAILABLE = 6
 
-            internal fun getApiErrorByCode(code: Int, message: String): Ethereum = when (code) {
-                ERROR_CODE_INSUFFICIENT_FUNDS_FOR_OPERATION -> InsufficientFundsForOperation(message)
-                else -> Api(code, message)
-            }
+            internal fun getApiErrorByCode(code: Int, message: String): Ethereum =
+                if (ResultChecker.isContractExecutionError(code, message)) {
+                    ExecutionReverted(code = code, message = message)
+                } else {
+                    Api(code = code, message = message)
+                }
         }
     }
 
