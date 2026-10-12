@@ -14,4 +14,5 @@ class BlockchainFeatureToggles(
     val isSolanaScaledUiAmountEnabled: Boolean = false,
     val isHederaErc20Enabled: Boolean = false,
     val isStateOverrideGasEstimateEnabled: Boolean = false,
+    val isMonadYieldSupplyEnabled: Boolean = false,
 )
