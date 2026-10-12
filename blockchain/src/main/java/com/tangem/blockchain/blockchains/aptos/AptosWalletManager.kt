@@ -1,11 +1,11 @@
 package com.tangem.blockchain.blockchains.aptos
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.aptos.models.AptosAccountInfo
 import com.tangem.blockchain.blockchains.aptos.models.AptosTransactionInfo
 import com.tangem.blockchain.blockchains.aptos.network.AptosNetworkService
 import com.tangem.blockchain.blockchains.aptos.network.response.AptosResource
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -13,8 +13,8 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toHexString
-import org.joda.time.DateTime
 import java.math.BigDecimal
+import org.joda.time.DateTime
 
 internal class AptosWalletManager(
     wallet: Wallet,
@@ -59,6 +59,7 @@ internal class AptosWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val expirationTimestamp = createExpirationTimestamp()
 
@@ -71,6 +72,8 @@ internal class AptosWalletManager(
         return when (val signingResult = signer.sign(rawTx, wallet.publicKey)) {
             is CompletionResult.Failure -> Result.fromTangemSdkError(signingResult.error)
             is CompletionResult.Success -> {
+                onSigned()
+
                 val hash = txBuilder.buildForSend(
                     sequenceNumber = sequenceNumber,
                     transactionData = transactionData,
@@ -102,7 +105,7 @@ internal class AptosWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 

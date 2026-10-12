@@ -1,9 +1,9 @@
 package com.tangem.blockchain.common.datastorage.implementations
 
-import android.util.Log
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.datastorage.BlockchainDataStorage
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.network.moshi
 import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
@@ -67,7 +67,7 @@ internal class AdvancedDataStorage(
             .fold(
                 onSuccess = { it },
                 onFailure = {
-                    Log.e("BlockchainDataStorage", "Failed to parse data by key: $key")
+                    Logger.e("BlockchainDataStorage", "Failed to parse data by key: $key")
                     null
                 },
             )

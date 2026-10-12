@@ -1,12 +1,12 @@
 package com.tangem.blockchain.blockchains.cardano
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.cardano.network.CardanoNetworkProvider
 import com.tangem.blockchain.blockchains.cardano.network.InfoInput
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoAddressResponse
 import com.tangem.blockchain.blockchains.cardano.network.common.models.CardanoUnspentOutput
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.address.Address
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.transaction.TransactionsSendResult
@@ -61,11 +61,14 @@ internal class CardanoWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val transactionHash = transactionBuilder.buildForSign(transactionData)
 
         return when (val signatureResult = signer.sign(transactionHash, wallet.publicKey)) {
             is CompletionResult.Success -> {
+                onSigned()
+
                 val signatureInfo = SignatureInfo(signatureResult.data, wallet.publicKey.blockchainKey)
 
                 val transactionToSend = transactionBuilder.buildForSend(transactionData, signatureInfo)
@@ -211,7 +214,7 @@ internal class CardanoWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 }

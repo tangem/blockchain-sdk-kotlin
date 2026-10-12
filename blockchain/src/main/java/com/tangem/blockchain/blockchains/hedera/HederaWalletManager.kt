@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.hedera
 
-import android.util.Log
 import com.hedera.hashgraph.sdk.AccountId
 import com.hedera.hashgraph.sdk.Transaction
 import com.hedera.hashgraph.sdk.TransactionResponse
@@ -13,8 +12,9 @@ import com.tangem.blockchain.blockchains.hedera.network.HederaNetworkService
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
-import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
+import com.tangem.blockchain.common.di.DepsContainer
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -66,7 +66,7 @@ internal class HederaWalletManager(
 
     private suspend fun updateWallet(accountId: String, accountInfo: HederaAccountInfo) {
         val balance = accountInfo.balance
-        Log.d(this::class.java.simpleName, "Balance is ${balance.hbarBalance}")
+        Logger.d(this::class.java.simpleName, "Balance is ${balance.hbarBalance}")
         val associatedTokens = balance.associatedTokens()
 
         // Preserve any newly associated tokens that haven't been confirmed on network yet
@@ -182,7 +182,7 @@ internal class HederaWalletManager(
                 tokenEvmAddresses[token.contractAddress] = evmAddress
                 when (val fallbackType = networkService.detectTokenType(evmAddress)) {
                     is Result.Success -> tokenTypes[token.contractAddress] = fallbackType.data.name
-                    is Result.Failure -> Log.w(
+                    is Result.Failure -> Logger.e(
                         this::class.java.simpleName,
                         "Failed to resolve token type for $evmAddress: ${fallbackType.error.customMessage}",
                     )
@@ -247,7 +247,7 @@ internal class HederaWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error !is BlockchainSdkError) error("Error isn't BlockchainSdkError")
     }
 
@@ -328,6 +328,7 @@ internal class HederaWalletManager(
             is CryptoCurrencyType.Coin -> SimpleResult.Success
             is CryptoCurrencyType.Token -> {
                 val resolvedContractAddress = getResolvedContractAddress(currencyType.info.contractAddress)
+                syncClientNetwork()
                 val transaction = transactionBuilder.buildTokenAssociationForSign(
                     tokenAssociation = TokenAssociation(
                         accountId = wallet.address,
@@ -377,6 +378,7 @@ internal class HederaWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val uncompiled = transactionData as? TransactionData.Uncompiled
             ?: return Result.Failure(BlockchainSdkError.CustomError("Expected uncompiled transaction"))
@@ -392,6 +394,7 @@ internal class HederaWalletManager(
             null
         }
 
+        syncClientNetwork()
         val buildTransaction = if (erc20Params != null) {
             transactionBuilder.buildErc20ToSign(
                 transactionData = transactionData,
@@ -404,7 +407,7 @@ internal class HederaWalletManager(
         return when (buildTransaction) {
             is Result.Failure -> Result.Failure(buildTransaction.error)
             is Result.Success -> {
-                when (val sendResult = signAndSendTransaction(signer, buildTransaction.data)) {
+                when (val sendResult = signAndSendTransaction(signer, buildTransaction.data, onSigned)) {
                     is Result.Failure -> Result.Failure(sendResult.error)
                     is Result.Success -> {
                         val txHash = HederaTransactionId.fromTransactionId(sendResult.data.transactionId).rawStringId
@@ -576,14 +579,27 @@ internal class HederaWalletManager(
         )
     }
 
+    private suspend fun syncClientNetwork() {
+        when (val result = networkService.syncClientNetwork()) {
+            is Result.Success -> Unit
+            is Result.Failure -> Logger.e(
+                this::class.java.simpleName,
+                "Failed to sync consensus nodes, using the current client network: ${result.error.customMessage}",
+            )
+        }
+    }
+
     @Suppress("UNCHECKED_CAST")
     private suspend fun <T : Transaction<T>> signAndSendTransaction(
         signer: TransactionSigner,
         builtTransaction: HederaBuiltTransaction<out Transaction<*>>,
+        onSigned: () -> Unit = {},
     ): Result<TransactionResponse> {
         return try {
             when (val signerResult = signer.sign(builtTransaction.signatures, wallet.publicKey)) {
                 is CompletionResult.Success -> {
+                    onSigned()
+
                     val transactionToSend = transactionBuilder.buildToSend(
                         transaction = builtTransaction.transaction as T,
                         signatures = signerResult.data,

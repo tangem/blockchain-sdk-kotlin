@@ -1,10 +1,10 @@
 package com.tangem.blockchain.blockchains.sui
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.sui.model.SuiWalletInfo
 import com.tangem.blockchain.blockchains.sui.network.SuiNetworkService
 import com.tangem.blockchain.blockchains.sui.network.rpc.SuiJsonRpcProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -55,9 +55,15 @@ internal class SuiWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val info = walletInfo ?: return Result.Failure(BlockchainSdkError.FailedToBuildTx)
-        val transactionOutput = txBuilder.buildForSend(info, transactionData, signer)
+        val transactionOutput = txBuilder.buildForSend(
+            walletInfo = info,
+            txData = transactionData,
+            txSigner = signer,
+            onSigned = onSigned,
+        )
             .successOr { return it }
 
         val txResponse = networkService.executeTransaction(
@@ -152,7 +158,7 @@ internal class SuiWalletManager(
     }
 
     private fun updateWithError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 }

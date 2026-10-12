@@ -1,8 +1,8 @@
 package com.tangem.blockchain.blockchains.stellar
 
-import android.util.Log
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.memo.MemoState
 import com.tangem.blockchain.common.memo.MemoValidator
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
@@ -78,13 +78,14 @@ internal class StellarWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val hash = transactionBuilder.buildToSign(transactionData, sequence).successOr {
             return Result.Failure(it.error)
@@ -92,6 +93,8 @@ internal class StellarWalletManager(
 
         return when (val signerResponse = signer.sign(hash, wallet.publicKey)) {
             is CompletionResult.Success -> {
+                onSigned()
+
                 val transactionToSend = transactionBuilder.buildToSend(signerResponse.data)
                 when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
                     is SimpleResult.Failure -> Result.Failure(sendResult.error)

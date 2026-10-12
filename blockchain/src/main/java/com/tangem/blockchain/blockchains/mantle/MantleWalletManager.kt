@@ -71,6 +71,7 @@ class MantleWalletManager(
     override suspend fun sign(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
         return when (transactionData) {
             is TransactionData.Uncompiled -> {
@@ -91,10 +92,11 @@ class MantleWalletManager(
                         ),
                     ),
                     signer = signer,
+                    onSigned = onSigned,
                 )
             }
             is TransactionData.Compiled -> {
-                super.sign(transactionData, signer)
+                super.sign(transactionData, signer, onSigned)
             }
         }
     }

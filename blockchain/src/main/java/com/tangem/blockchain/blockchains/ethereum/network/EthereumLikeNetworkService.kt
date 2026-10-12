@@ -31,7 +31,7 @@ import java.math.BigInteger
  * Abstract base class for Ethereum-like network services
  * Supports different RPC method prefixes (eth_, quai_, etc.)
  */
-@Suppress("LargeClass")
+@Suppress("LargeClass", "TooManyFunctions")
 @OptIn(ExperimentalStdlibApi::class)
 internal abstract class EthereumLikeNetworkService(
     private val multiJsonRpcProvider: MultiNetworkProvider<out EthereumLikeJsonRpcProvider>,
@@ -43,6 +43,7 @@ internal abstract class EthereumLikeNetworkService(
     override val baseUrl get() = multiJsonRpcProvider.currentProvider.baseUrl
     private val stringAdapter by lazy { moshi.adapter<String>() }
     private val feeHistoryAdapter by lazy { moshi.adapter<EthereumFeeHistoryResponse>() }
+    private val receiptAdapter by lazy { moshi.adapter<EthereumTransactionReceiptResponse>() }
 
     /**
      * Get the decimals for this blockchain
@@ -169,57 +170,35 @@ internal abstract class EthereumLikeNetworkService(
         }
     }
 
-    override suspend fun getExternalAddressBalances(
-        address: String,
-        tokens: Set<Token>,
-    ): Result<ExternalAddressBalances> {
-        return try {
-            coroutineScope {
-                val coinBalanceDeferred = async {
-                    multiJsonRpcProvider.performRequest(EthereumLikeJsonRpcProvider::getBalance, address)
-                }
-                // Plain `balanceOf` per token, never through the yield-supply provider: that one is built around
-                // this wallet, so on a foreign address it would answer with our own yield balance
-                val tokenBalancesDeferred = tokens.map { token -> async { getTokenBalance(address, token) } }
-
-                val coinBalance = coinBalanceDeferred.await().extractResult().let { response ->
-                    requireNotNull(
-                        value = EthereumUtils.parseEthereumDecimal(value = response, decimalsCount = getDecimals()),
-                        lazyMessage = { "Error while parsing balance. Balance response: $response" },
-                    )
-                }
-
-                Result.Success(
-                    ExternalAddressBalances(
-                        coinBalance = coinBalance,
-                        tokenBalances = tokenBalancesDeferred.awaitAll(),
-                    ),
-                )
-            }
-        } catch (exception: Exception) {
-            Result.Failure(exception.toBlockchainSdkError())
-        }
-    }
-
     private suspend fun getTokensBalanceInternal(address: String, tokens: Set<Token>): List<Amount> {
         return coroutineScope {
             val isYieldSupported = yieldSupplyProvider.isSupported()
 
             tokens.map { token ->
                 async {
-                    if (isYieldSupported && yieldSupplyProvider.getYieldModuleAddress() != EthereumUtils.ZERO_ADDRESS) {
-                        val yieldLendingStatus = yieldSupplyProvider.getYieldSupplyStatus(token.contractAddress)
-                        if (yieldLendingStatus?.isActive == true) {
-                            yieldSupplyProvider.getBalance(yieldLendingStatus, token)
-                        } else {
-                            getTokenBalance(address, token)
-                        }
+                    if (isYieldSupported) {
+                        getYieldAwareTokenBalance(address, token)
                     } else {
                         getTokenBalance(address, token)
                     }
                 }
             }.awaitAll()
         }
+    }
+
+    private suspend fun getYieldAwareTokenBalance(address: String, token: Token): Amount = try {
+        if (yieldSupplyProvider.getYieldModuleAddress() != EthereumUtils.ZERO_ADDRESS) {
+            val yieldLendingStatus = yieldSupplyProvider.getYieldSupplyStatus(token.contractAddress)
+            if (yieldLendingStatus?.isActive == true) {
+                yieldSupplyProvider.getBalance(yieldLendingStatus, token)
+            } else {
+                getTokenBalance(address, token)
+            }
+        } else {
+            getTokenBalance(address, token)
+        }
+    } catch (e: BlockchainSdkError.Ethereum.YieldModuleAddressMismatch) {
+        getTokenBalance(address, token)
     }
 
     override suspend fun findErc20Tokens(address: String): Result<List<BlockchairToken>> {
@@ -333,6 +312,26 @@ internal abstract class EthereumLikeNetworkService(
         }
     }
 
+    override suspend fun callContract(data: ContractCallData): Result<String> {
+        return try {
+            val result = multiJsonRpcProvider.performRequest(EthereumLikeJsonRpcProvider::call, data)
+                .extractResult()
+            Result.Success(result)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    override suspend fun getCode(address: String): Result<String> {
+        return try {
+            val result = multiJsonRpcProvider.performRequest(EthereumLikeJsonRpcProvider::getCode, address)
+                .extractResult()
+            Result.Success(result)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
     override suspend fun resolveName(namehash: ByteArray, encodedName: ByteArray): ResolveAddressResult {
         return try {
             val data = EthereumResolveENSNameRequestData(
@@ -411,6 +410,32 @@ internal abstract class EthereumLikeNetworkService(
                 .extractResult().responseToBigInteger()
 
             Result.Success(result)
+        } catch (exception: Exception) {
+            Result.Failure(exception.toBlockchainSdkError())
+        }
+    }
+
+    override suspend fun getTransactionReceipt(transactionHash: String): Result<EthereumTransactionReceipt?> {
+        return try {
+            val response = multiJsonRpcProvider.performRequest(
+                EthereumLikeJsonRpcProvider::getTransactionReceipt,
+                transactionHash,
+            )
+
+            val receipt = when (response) {
+                is Result.Success -> {
+                    // A node may answer HTTP 200 with a JSON-RPC error (e.g. rate limit) and a null result.
+                    response.data.error?.let { error ->
+                        throw BlockchainSdkError.Ethereum.getApiErrorByCode(error.code, error.message)
+                    }
+                    // A null result without an error means the node has not mined the transaction yet.
+                    response.data.result?.let { receiptAdapter.fromJsonValue(it) }
+                }
+                is Result.Failure -> throw response.error as? BlockchainSdkError
+                    ?: BlockchainSdkError.CustomError("Unknown error format")
+            }
+
+            Result.Success(receipt?.toDomain())
         } catch (exception: Exception) {
             Result.Failure(exception.toBlockchainSdkError())
         }

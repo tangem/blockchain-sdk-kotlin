@@ -42,25 +42,32 @@ interface EthereumNetworkProvider : NetworkProvider {
     suspend fun getFeeHistory(): Result<EthereumFeeHistory>
     suspend fun getTokensBalance(address: String, tokens: Set<Token>): Result<List<Amount>>
 
-    /**
-     * Coin balance and the balances of [tokens] on an [address] that the caller's wallet does not own.
-     *
-     * Separate from [getInfo] and [getTokensBalance] on purpose. Both of those resolve token balances through the
-     * yield-supply provider, which is built around the caller's own wallet, so on a foreign address they can answer
-     * with the wallet's yield balance instead of that address's token balance. This one reads plain balances only,
-     * and skips the transaction counts and the history that [getInfo] also fetches.
-     *
-     * Default implementation returns a feature-disabled failure so existing concrete providers and tests are not
-     * forced to implement it. The EVM shared service overrides this method.
-     */
-    suspend fun getExternalAddressBalances(address: String, tokens: Set<Token>): Result<ExternalAddressBalances> =
-        Result.Failure(
-            BlockchainSdkError.CustomError(
-                "Balances of an external address are not supported by this network provider",
-            ),
-        )
-
     suspend fun callContractForFee(data: ContractCallData): Result<BigInteger>
+
+    /**
+     * Generic contract call (`eth_call` / `quai_call`, per the chain family) returning the raw hex
+     * response, for contract reads that do not fit the [callContractForFee] `BigInteger` shape —
+     * e.g. Safe's `getOwners()` returning `address[]`. ABI decoding is left to the caller.
+     *
+     * Default implementation returns a feature-disabled failure so existing concrete providers
+     * are not forced to implement it. The EVM shared service overrides this method.
+     */
+    suspend fun callContract(data: ContractCallData): Result<String> = Result.Failure(
+        BlockchainSdkError.CustomError("Raw contract calls are not supported by this network provider"),
+    )
+
+    /**
+     * Returns the raw contract code (`eth_getCode` / `quai_getCode`, per the chain family) at
+     * [address] — `"0x"` when no contract is deployed there, so the caller can tell a counterfactual
+     * Safe from a deployed one.
+     *
+     * Default implementation returns a feature-disabled failure so existing concrete providers
+     * are not forced to implement it. The EVM shared service overrides this method.
+     */
+    suspend fun getCode(address: String): Result<String> = Result.Failure(
+        BlockchainSdkError.CustomError("Contract code reads are not supported by this network provider"),
+    )
+
     suspend fun resolveName(namehash: ByteArray, encodedName: ByteArray): ResolveAddressResult
     suspend fun resolveAddress(address: String): ReverseResolveAddressResult
 
@@ -72,18 +79,23 @@ interface EthereumNetworkProvider : NetworkProvider {
      * @return Result containing the nonce or an error.
      */
     suspend fun getContractNonce(address: String): Result<BigInteger>
-}
 
-/**
- * Balances of an address, and nothing else — see [EthereumNetworkProvider.getExternalAddressBalances].
- *
- * @property coinBalance   the address's coin balance
- * @property tokenBalances the balances of the requested tokens, in the order the tokens were passed
- */
-class ExternalAddressBalances(
-    val coinBalance: BigDecimal,
-    val tokenBalances: List<Amount>,
-)
+    /**
+     * Fetch the receipt of a mined transaction.
+     *
+     * A receipt exists only once the transaction is included in a block, and its status tells a successful
+     * transaction apart from a reverted one. `eth_getTransactionByHash` cannot: a reverted transaction also
+     * carries a block number, so it is indistinguishable from a successful one there.
+     *
+     * Default implementation returns a feature-disabled failure so existing concrete providers and tests are
+     * not forced to implement it. The EVM shared service overrides this method.
+     *
+     * @return the receipt, or null when the transaction has not been mined yet.
+     */
+    suspend fun getTransactionReceipt(transactionHash: String): Result<EthereumTransactionReceipt?> = Result.Failure(
+        BlockchainSdkError.CustomError("Transaction receipts are not supported by this network provider"),
+    )
+}
 
 class EthereumInfoResponse(
     val coinBalance: BigDecimal,

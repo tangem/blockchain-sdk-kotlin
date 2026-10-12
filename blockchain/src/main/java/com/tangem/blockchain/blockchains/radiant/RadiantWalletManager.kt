@@ -1,9 +1,9 @@
 package com.tangem.blockchain.blockchains.radiant
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.radiant.models.RadiantAccountInfo
 import com.tangem.blockchain.blockchains.radiant.network.RadiantNetworkService
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -11,9 +11,9 @@ import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.createWalletCorePublicKey
 import com.tangem.blockchain.network.electrum.ElectrumNetworkProvider
 import com.tangem.common.CompletionResult
-import wallet.core.jni.PublicKeyType
 import java.math.BigDecimal
 import java.math.RoundingMode
+import wallet.core.jni.PublicKeyType
 
 internal class RadiantWalletManager(
     wallet: Wallet,
@@ -46,18 +46,21 @@ internal class RadiantWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage, error)
+        Logger.e(this::class.java.simpleName, error.customMessage, error)
         if (error is BlockchainSdkError) throw error
     }
 
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         return try {
             val hashesForSign = transactionBuilder.buildForSign(transactionData)
             when (val signatureResult = signer.sign(hashes = hashesForSign, publicKey = wallet.publicKey)) {
                 is CompletionResult.Success -> {
+                    onSigned()
+
                     val signatures = signatureResult.data
                     val walletCorePublicKey =
                         createWalletCorePublicKey(wallet.publicKey.blockchainKey, PublicKeyType.SECP256K1)

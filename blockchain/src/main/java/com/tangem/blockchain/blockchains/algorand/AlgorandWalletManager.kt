@@ -1,10 +1,10 @@
 package com.tangem.blockchain.blockchains.algorand
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.algorand.models.AlgorandAccountModel
 import com.tangem.blockchain.blockchains.algorand.models.AlgorandTransactionInfo
 import com.tangem.blockchain.blockchains.algorand.network.AlgorandNetworkService
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -53,13 +53,14 @@ internal class AlgorandWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val uncompiledTransaction = transactionData.requireUncompiled()
 
@@ -67,6 +68,8 @@ internal class AlgorandWalletManager(
         val txToSign = transactionBuilder.buildForSign(uncompiledTransaction, txParams)
         return when (val signatureResult = signer.sign(txToSign, wallet.publicKey)) {
             is CompletionResult.Success -> {
+                onSigned()
+
                 val rawTx =
                     transactionBuilder.buildForSend(
                         transactionData = uncompiledTransaction,

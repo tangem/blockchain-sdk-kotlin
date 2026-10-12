@@ -1,8 +1,8 @@
 package com.tangem.blockchain.transactionhistory.blockchains.bitcoin
 
-import android.util.Log
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.pagination.Page
 import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.common.toBlockchainSdkError
@@ -48,7 +48,11 @@ internal class BitcoinTransactionHistoryProvider(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Log.e(BitcoinTransactionHistoryProvider::class.java.simpleName, e.message, e)
+            Logger.e(
+                BitcoinTransactionHistoryProvider::class.java.simpleName,
+                "Failed to get the transaction history state",
+                e,
+            )
             TransactionHistoryState.Failed.FetchError(e)
         }
     }
@@ -105,7 +109,11 @@ internal class BitcoinTransactionHistoryProvider(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Log.e(BitcoinTransactionHistoryProvider::class.java.simpleName, e.message, e)
+            Logger.e(
+                BitcoinTransactionHistoryProvider::class.java.simpleName,
+                "Failed to get the xpub transaction history state",
+                e,
+            )
             TransactionHistoryState.Failed.FetchError(e)
         }
     }

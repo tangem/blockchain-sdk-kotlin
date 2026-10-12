@@ -49,7 +49,9 @@ internal class ICPIc4jAgentNetworkProvider(
     override suspend fun signAndSendTransaction(transferWithSigner: ICPTransferWithSigner): Result<Long?> {
         return try {
             withContext(Dispatchers.IO) {
-                val signFunction = { messages: List<ByteArray> -> sign(messages, transferWithSigner.signer) }
+                val signFunction = { messages: List<ByteArray> ->
+                    sign(messages, transferWithSigner.signer, transferWithSigner.onSigned)
+                }
 
                 val spec = ECNamedCurveTable.getParameterSpec("secp256k1")
                 val point = spec.curve.decodePoint(publicKey.blockchainKey)
@@ -73,11 +75,15 @@ internal class ICPIc4jAgentNetworkProvider(
         }
     }
 
-    private fun sign(messages: List<ByteArray>, signer: TransactionSigner): List<ByteArray> {
+    private fun sign(messages: List<ByteArray>, signer: TransactionSigner, onSigned: () -> Unit): List<ByteArray> {
         val hashesToSign = messages.map { sha256(it) }
         return runBlocking {
             when (val result = signer.sign(hashesToSign, publicKey)) {
-                is CompletionResult.Success -> result.data
+                is CompletionResult.Success -> {
+                    onSigned()
+
+                    result.data
+                }
                 is CompletionResult.Failure -> throw result.error
             }
         }

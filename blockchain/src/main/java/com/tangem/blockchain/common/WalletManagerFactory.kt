@@ -1,5 +1,8 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.blockchains.ethereum.SafeEthereumWalletManager
+import com.tangem.blockchain.blockchains.ethereum.network.EvmNetworkServiceFactory
+import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
 import com.tangem.blockchain.common.address.Address
 import com.tangem.blockchain.common.assembly.WalletManagerAssembly
 import com.tangem.blockchain.common.assembly.WalletManagerAssemblyInput
@@ -11,6 +14,10 @@ import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.logging.BlockchainSDKLogger
 import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.network.providers.ProviderType
+import com.tangem.blockchain.nft.NFTProviderFactory
+import com.tangem.blockchain.tokenbalance.TokenBalanceEvmProviderFactory
+import com.tangem.blockchain.transactionhistory.TransactionHistoryProviderFactory
+import com.tangem.blockchain.yieldsupply.YieldSupplyProviderFactory
 import com.tangem.common.card.EllipticCurve
 import com.tangem.crypto.hdWallet.DerivationPath
 import kotlinx.coroutines.Dispatchers
@@ -88,6 +95,53 @@ class WalletManagerFactory(
             blockchain = blockchain,
             publicKey = Wallet.PublicKey(walletPublicKey, null),
             curve = curve,
+        )
+    }
+
+    /**
+     * The manager of a Safe co-owned by the wallet behind [publicKey]: the key signs the Safe's operations while the
+     * wallet's address is [safeAddress], so every read is made for the Safe and nothing can be sent through it.
+     *
+     * Returns `null` when the blockchain is not EVM, the address is not valid for it, the key does not fit [curve],
+     * or no RPC providers are configured for the network.
+     */
+    fun createSafeWalletManager(
+        blockchain: Blockchain,
+        publicKey: Wallet.PublicKey,
+        safeAddress: String,
+        curve: EllipticCurve = EllipticCurve.Secp256k1,
+    ): SafeEthereumWalletManager? {
+        if (!blockchain.isEvm() || !blockchain.validateAddress(safeAddress)) return null
+        if (checkIfWrongKey(blockchain, curve, publicKey)) return null
+
+        val multiNetworkProvider = EvmNetworkServiceFactory.createMultiProviderOrNull(
+            blockchain = blockchain,
+            providerTypes = blockchainProviderTypes[blockchain] ?: emptyList(),
+            config = config,
+        ) ?: return null
+        val wallet = Wallet(
+            blockchain = blockchain,
+            addresses = setOf(Address(safeAddress)),
+            publicKey = publicKey,
+            tokens = emptySet(),
+            updatedDerivationPath = null,
+        )
+        // The yield module is the Safe's own, so its positions are read for the Safe like the rest of the balance
+        val yieldSupplyProvider = YieldSupplyProviderFactory(dataStorage).makeProvider(wallet, multiNetworkProvider)
+        val networkProvider = EvmNetworkServiceFactory.createNetworkServiceOrNull(
+            blockchain = blockchain,
+            multiNetworkProvider = multiNetworkProvider,
+            yieldSupplyProvider = yieldSupplyProvider,
+        ) ?: return null
+
+        return SafeEthereumWalletManager(
+            wallet = wallet,
+            transactionBuilder = EthereumTransactionBuilder.create(wallet = wallet),
+            networkProvider = networkProvider,
+            transactionHistoryProvider = TransactionHistoryProviderFactory.makeProvider(blockchain, config),
+            nftProvider = NFTProviderFactory.createNFTProvider(blockchain, config),
+            tokenBalanceProvider = TokenBalanceEvmProviderFactory.createTokenBalanceEvmProvider(blockchain, config),
+            yieldSupplyProvider = yieldSupplyProvider,
         )
     }
 

@@ -105,6 +105,7 @@ internal class KoinosWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val uncompiledTransaction = transactionData.requireUncompiled()
 
@@ -128,6 +129,7 @@ internal class KoinosWalletManager(
 
         val signature = signer.sign(hashToSign, wallet.publicKey)
             .successOr { return Result.fromTangemSdkError(it.error) }
+        onSigned()
 
         val signedTransaction = transactionBuilder.buildToSend(
             transaction = transaction,

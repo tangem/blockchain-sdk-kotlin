@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.ton
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.ton.TonTransactionBuilder.Companion.JETTON_TRANSFER_PROCESSING_FEE
 import com.tangem.blockchain.blockchains.ton.TonTransactionBuilder.Companion.JETTON_TRANSFER_PROCESSING_FEE_ACTIVE_WALLET
 import com.tangem.blockchain.blockchains.ton.models.TonWalletInfo
@@ -8,6 +7,7 @@ import com.tangem.blockchain.blockchains.ton.network.TonAccountState
 import com.tangem.blockchain.blockchains.ton.network.TonNetworkProvider
 import com.tangem.blockchain.blockchains.ton.network.TonNetworkService
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -51,6 +51,7 @@ internal class TonWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> = try {
         val txToSign = when (transactionData) {
             is TransactionData.Compiled -> txBuilder.buildCompiledForSign(
@@ -72,6 +73,8 @@ internal class TonWalletManager(
         ).successOr {
             return Result.fromTangemSdkError(it.error)
         }
+        onSigned()
+
         val txToSend = txBuilder.buildForSend(signature = signatureResult, preSignStructure = txToSign)
         when (val sendResult = networkService.send(txToSend)) {
             is Result.Failure -> Result.Failure(sendResult.error)
@@ -153,7 +156,7 @@ internal class TonWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 

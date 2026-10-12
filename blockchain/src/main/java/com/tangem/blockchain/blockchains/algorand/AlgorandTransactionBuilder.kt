@@ -1,11 +1,11 @@
 package com.tangem.blockchain.blockchains.algorand
 
-import android.util.Log
 import com.google.protobuf.ByteString
 import com.tangem.blockchain.blockchains.algorand.models.AlgorandTransactionBuildParams
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.TransactionData
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.extensions.trustWalletCoinType
 import wallet.core.jni.Base64
 import wallet.core.jni.DataVector
@@ -30,7 +30,10 @@ internal class AlgorandTransactionBuilder(blockchain: Blockchain, private val pu
         val preSigningOutput = PreSigningOutput.parseFrom(preImageHashes)
 
         if (preSigningOutput.error != Common.SigningError.OK || preSigningOutput.data.isEmpty) {
-            Log.e(this::class.java.simpleName, "AlgorandPreSigningOutput has a error: ${preSigningOutput.errorMessage}")
+            Logger.e(
+                this::class.java.simpleName,
+                "AlgorandPreSigningOutput has a error: ${preSigningOutput.errorMessage}",
+            )
             throw BlockchainSdkError.FailedToBuildTx
         }
 
@@ -66,7 +69,7 @@ internal class AlgorandTransactionBuilder(blockchain: Blockchain, private val pu
 
         val output = Algorand.SigningOutput.parseFrom(compiledTransaction)
         if (output.error != Common.SigningError.OK || output.encoded.isEmpty) {
-            Log.e(this::class.java.simpleName, "AlgorandPreSigningOutput has a error: ${output.errorMessage}")
+            Logger.e(this::class.java.simpleName, "AlgorandPreSigningOutput has a error: ${output.errorMessage}")
             throw BlockchainSdkError.FailedToBuildTx
         }
 

@@ -1,9 +1,10 @@
 package com.tangem.blockchain.blockchains.solana
 
 import android.os.SystemClock
-import android.util.Log
 import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionParser
 import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionSizeReducer
+import com.tangem.blockchain.collectibles.CollectiblesVaultProvider
+import com.tangem.blockchain.collectibles.DefaultCollectiblesVaultProvider
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaMainAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaSplAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.TransactionInfo
@@ -11,6 +12,7 @@ import com.tangem.blockchain.blockchains.solana.solanaj.program.SolanaTokenProgr
 import com.tangem.blockchain.blockchains.solana.solanaj.rpc.SolanaRpcClient
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.BlockchainSdkError.UnsupportedOperation
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -41,11 +43,13 @@ class SolanaWalletManager internal constructor(
     transactionHistoryProvider: TransactionHistoryProvider = DefaultTransactionHistoryProvider,
     nftProvider: NFTProvider = DefaultNFTProvider,
     tokenBalanceProvider: TokenBalanceProvider = DefaultTokenBalanceProvider,
+    collectiblesVaultProvider: CollectiblesVaultProvider = DefaultCollectiblesVaultProvider,
 ) : WalletManager(
     wallet,
     transactionHistoryProvider = transactionHistoryProvider,
     nftProvider = nftProvider,
     tokenBalanceProvider = tokenBalanceProvider,
+    collectiblesVaultProvider = collectiblesVaultProvider,
 ),
     RentProvider,
     TransactionPreparer,
@@ -94,7 +98,7 @@ class SolanaWalletManager internal constructor(
     }
 
     private fun updateWithError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
 
         wallet.removeAllTokens()
         throw error
@@ -105,7 +109,7 @@ class SolanaWalletManager internal constructor(
         val signatureStatuses = multiNetworkProvider.performRequest {
             getSignatureStatuses(txSignatures)
         }.successOr {
-            Log.e(this.javaClass.simpleName, it.error.customMessage)
+            Logger.e(this.javaClass.simpleName, it.error.customMessage)
             return
         }
 
@@ -181,11 +185,12 @@ class SolanaWalletManager internal constructor(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         return when (transactionData) {
             is TransactionData.Compiled -> {
                 val startSendingTimestamp = SystemClock.elapsedRealtime()
-                val signedTransaction = prepareForSend(transactionData, signer)
+                val signedTransaction = prepareForSend(transactionData, signer, onSigned)
                     .successOr { return it }
                 sendTransaction(signedTransaction, transactionData, startSendingTimestamp)
             }
@@ -201,9 +206,10 @@ class SolanaWalletManager internal constructor(
 
                 val startSendingTimestamp = SystemClock.elapsedRealtime()
 
-                val signResult = signer.sign(transaction.getSerializedMessage(), wallet.publicKey).successOr {
-                    return Result.fromTangemSdkError(it.error)
-                }
+                val signResult = signer.sign(transaction.getSerializedMessage(), wallet.publicKey)
+                    .successOr { return Result.fromTangemSdkError(it.error) }
+                onSigned()
+
                 transaction.addSignedDataSignature(signResult)
 
                 sendTransaction(transaction.serialize(), transactionData, startSendingTimestamp)
@@ -281,11 +287,18 @@ class SolanaWalletManager internal constructor(
     override suspend fun prepareForSend(
         transactionData: TransactionData,
         signer: TransactionSigner,
+    ): Result<ByteArray> = prepareForSend(transactionData, signer, onSigned = {})
+
+    private suspend fun prepareForSend(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<ByteArray> {
         val compiledTransaction = transactionData.requireCompiled()
         val transactionToSign = prepareForSign(compiledTransaction).successOr { return it }
         val signResult = signer.sign(transactionToSign, wallet.publicKey)
             .successOr { return Result.fromTangemSdkError(it.error) }
+        onSigned()
 
         val signedTransaction = placeSignature(
             transactionData = compiledTransaction,
