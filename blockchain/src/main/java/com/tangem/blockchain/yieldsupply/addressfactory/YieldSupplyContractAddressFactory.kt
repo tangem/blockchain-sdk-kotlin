@@ -1,6 +1,7 @@
 package com.tangem.blockchain.yieldsupply.addressfactory
 
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.yieldsupply.YieldSupplyProviderType
 
 /**
@@ -20,9 +21,10 @@ internal class YieldSupplyContractAddressFactory(
         Blockchain.Base,
         Blockchain.BSC,
         Blockchain.Polygon,
-        Blockchain.Monad,
         Blockchain.EthereumTestnet,
         -> true
+        // Monad's module is the Merkl incentives deployment, so it is released together with the incentives
+        Blockchain.Monad -> DepsContainer.blockchainFeatureToggles.isMonadYieldSupplyEnabled
         else -> false
     }
 
