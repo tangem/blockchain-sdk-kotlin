@@ -63,6 +63,7 @@ internal class EthereumTransactionHistoryProvider(
                 walletAddress = request.address,
                 filterType = request.filterType,
                 response = response,
+                gaslessFeeAddresses = request.gaslessFeeAddresses,
             ).filterNot { item -> shouldExcludeFromHistory(filterType = request.filterType, item = item) }
             val nextPage = if (response.page != null && request.page !is Page.LastPage) {
                 val page = response.page

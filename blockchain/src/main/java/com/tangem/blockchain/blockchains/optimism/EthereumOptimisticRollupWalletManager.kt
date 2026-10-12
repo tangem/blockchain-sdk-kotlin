@@ -218,6 +218,7 @@ class EthereumOptimisticRollupWalletManager(
     override suspend fun sign(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
         val uncompiledTransaction = transactionData.requireUncompiled()
 
@@ -258,7 +259,7 @@ class EthereumOptimisticRollupWalletManager(
         }
 
         val updatedTransactionData = uncompiledTransaction.copy(fee = updatedFee)
-        return super.sign(updatedTransactionData, signer)
+        return super.sign(updatedTransactionData, signer, onSigned)
     }
 
     private suspend fun getLayer1Fee(serializedTransaction: ByteArray): Result<Amount> {

@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.hedera
 
 import com.google.common.truth.Truth.assertThat
+import com.hedera.hashgraph.sdk.Client
 import com.tangem.blockchain.blockchains.hedera.models.HederaTokenType
 import com.tangem.blockchain.blockchains.hedera.network.HederaNetworkService
 import com.tangem.blockchain.common.*
@@ -54,7 +55,11 @@ class HederaWalletManagerAssociationTest {
 
         val manager = HederaWalletManager(
             wallet = wallet,
-            transactionBuilder = HederaTransactionBuilder(curve = EllipticCurve.Ed25519, wallet = wallet),
+            transactionBuilder = HederaTransactionBuilder(
+                curve = EllipticCurve.Ed25519,
+                wallet = wallet,
+                client = Client.forMainnet(),
+            ),
             networkService = networkService,
             dataStorage = dataStorage,
             accountCreator = mockk(),

@@ -1,9 +1,9 @@
 package com.tangem.blockchain.blockchains.chia
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.chia.network.ChiaCoin
 import com.tangem.blockchain.blockchains.chia.network.ChiaNetworkProvider
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -34,7 +34,7 @@ class ChiaWalletManager(
 
     private fun updateWallet(unspentCoins: List<ChiaCoin>) {
         val balance = unspentCoins.sumOf { it.amount }.toBigDecimal().movePointLeft(blockchain.decimals())
-        Log.d(this::class.java.simpleName, "Balance is $balance")
+        Logger.d(this::class.java.simpleName, "Balance is $balance")
 
         if (balance != wallet.amounts[AmountType.Coin]?.value) {
             // assume outgoing transaction has been finalized if balance has changed
@@ -45,19 +45,22 @@ class ChiaWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData)) {
             is Result.Failure -> return Result.Failure(buildTransactionResult.error)
             is Result.Success -> {
                 return when (val signerResult = signer.sign(buildTransactionResult.data, wallet.publicKey)) {
                     is CompletionResult.Success -> {
+                        onSigned()
+
                         val transactionToSend = transactionBuilder.buildToSend(signerResult.data)
                         when (val sendResult = networkProvider.sendTransaction(transactionToSend)) {
                             is SimpleResult.Success -> {

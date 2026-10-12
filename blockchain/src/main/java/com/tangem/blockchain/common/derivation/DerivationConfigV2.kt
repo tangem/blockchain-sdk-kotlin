@@ -30,7 +30,9 @@ object DerivationConfigV2 : DerivationConfig() {
                 AddressType.Default to DerivationPath("m/44'/2'/0'/0/0"),
             )
             Blockchain.Stellar -> mapOf(AddressType.Default to DerivationPath("m/44'/148'/0'"))
-            Blockchain.Solana -> mapOf(AddressType.Default to DerivationPath("m/44'/501'/0'"))
+            Blockchain.Solana,
+            Blockchain.SolanaTestnet,
+            -> mapOf(AddressType.Default to DerivationPath("m/44'/501'/0'"))
             Blockchain.Cardano -> mapOf(
                 AddressType.Default to DerivationPath("m/1852'/1815'/0'/0/0"),
                 AddressType.Legacy to DerivationPath("m/1852'/1815'/0'/0/0"),
@@ -146,7 +148,6 @@ object DerivationConfigV2 : DerivationConfig() {
             Blockchain.KavaTestnet,
             Blockchain.PolygonTestnet,
             Blockchain.StellarTestnet,
-            Blockchain.SolanaTestnet,
             Blockchain.TronTestnet,
             Blockchain.OptimismTestnet,
             Blockchain.EthereumPowTestnet,

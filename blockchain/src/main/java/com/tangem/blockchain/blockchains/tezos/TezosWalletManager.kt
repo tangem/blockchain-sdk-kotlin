@@ -1,11 +1,11 @@
 package com.tangem.blockchain.blockchains.tezos
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.tezos.TezosAddressService.Companion.calculateTezosChecksum
 import com.tangem.blockchain.blockchains.tezos.network.TezosInfoResponse
 import com.tangem.blockchain.blockchains.tezos.network.TezosNetworkProvider
 import com.tangem.blockchain.blockchains.tezos.network.TezosTransactionData
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
@@ -18,11 +18,11 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.isZero
+import java.math.BigDecimal
+import java.util.EnumSet
 import kotlinx.coroutines.*
 import org.bitcoinj.core.Base58
 import org.bitcoinj.core.Utils
-import java.math.BigDecimal
-import java.util.EnumSet
 
 class TezosWalletManager(
     wallet: Wallet,
@@ -45,7 +45,7 @@ class TezosWalletManager(
     }
 
     private fun updateWallet(response: TezosInfoResponse) {
-        Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
+        Logger.d(this::class.java.simpleName, "Balance is ${response.balance}")
         if (response.balance != wallet.amounts[AmountType.Coin]?.value) {
             // assume outgoing transaction has been finalized if balance has changed
             wallet.recentTransactions.clear()
@@ -55,13 +55,14 @@ class TezosWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         if (isPublicKeyRevealed == null) {
             // in case of publicKeyRevealed is null, we should try request it
@@ -91,7 +92,11 @@ class TezosWalletManager(
 
         val signature = when (val signerResponse = signer.sign(dataToSign, wallet.publicKey)) {
             is CompletionResult.Failure -> return Result.fromTangemSdkError(signerResponse.error)
-            is CompletionResult.Success -> signerResponse.data
+            is CompletionResult.Success -> {
+                onSigned()
+
+                signerResponse.data
+            }
         }
         val canonicalSignature = canonicalizeSignature(signature)
 

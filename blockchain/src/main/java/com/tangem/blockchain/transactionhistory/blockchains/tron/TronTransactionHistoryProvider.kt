@@ -4,6 +4,7 @@ import com.tangem.Log
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.HEX_PREFIX
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.pagination.Page
 import com.tangem.blockchain.common.pagination.PaginationWrapper
@@ -18,7 +19,9 @@ import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem.TransactionType.TronStakingTransactionType
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
+import com.tangem.blockchain.transactionhistory.utils.methodIdFromRawData
 import com.tangem.common.extensions.guard
+import com.tangem.common.extensions.isZero
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -114,12 +117,8 @@ internal class TronTransactionHistoryProvider(
      * Technical transactions that are not real coin movements and must not be shown in the coin history.
      *
      * The gasless flow rents energy for the wallet: the rental service delegates energy to the address right
-     * before a gasless transfer and revokes it afterwards, and rental bots additionally probe the address with
-     * dust TRX transfers. None of that is initiated by the user, so it is filtered out to keep the Tron history
-     * consistent with other networks.
-     *
-     * Only *incoming* dust is hidden — an outgoing transaction is always signed by the user, so it stays
-     * visible regardless of its amount.
+     * before a gasless transfer and revokes it afterwards. None of that is initiated by the user, so it is
+     * filtered out to keep the Tron history consistent with other networks.
      */
     private fun shouldHideTechnicalTransaction(
         tx: GetAddressResponse.Transaction,
@@ -127,7 +126,7 @@ internal class TronTransactionHistoryProvider(
     ): Boolean {
         if (request.filterType !is TransactionHistoryRequest.FilterType.Coin) return false
 
-        return tx.isResourceRelated() || tx.isIncomingDust(walletAddress = request.address)
+        return tx.isResourceRelated()
     }
 
     private fun GetAddressResponse.Transaction.isResourceRelated(): Boolean {
@@ -140,15 +139,6 @@ internal class TronTransactionHistoryProvider(
             ?: return false
 
         return payloadContractType in RESOURCE_PAYLOAD_TYPES
-    }
-
-    private fun GetAddressResponse.Transaction.isIncomingDust(walletAddress: String): Boolean {
-        val sender = fromAddress ?: vin.firstOrNull()?.addresses?.firstOrNull()
-        if (sender == null || sender.equals(walletAddress, ignoreCase = true)) return false
-
-        val amount = value.toBigDecimalOrNull()?.movePointLeft(blockchain.decimals()) ?: return false
-
-        return amount < DUST_THRESHOLD
     }
 
     private fun checkHistoryStatus(
@@ -182,6 +172,7 @@ internal class TronTransactionHistoryProvider(
         decimals: Int,
         filterType: TransactionHistoryRequest.FilterType,
     ): TransactionHistoryItem? {
+        val votes = extractVotes(tx = this)
         val destinationType = extractDestinationType(
             tx = this,
             filterType = filterType,
@@ -195,6 +186,7 @@ internal class TronTransactionHistoryProvider(
             decimals = decimals,
             filterType = filterType,
             walletAddress = walletAddress,
+            votes = votes,
         ).guard {
             Log.info { "Transaction $this doesn't contain a required value" }
             return null
@@ -208,9 +200,9 @@ internal class TronTransactionHistoryProvider(
             return null
         }
         val type = if (contractType == null) {
-            extractTypeV2(filterType, tx = this)
+            extractTypeV2(filterType = filterType, tx = this, votes = votes, walletAddress = walletAddress)
         } else {
-            extractType(filterType = filterType, tx = this)
+            extractType(filterType = filterType, tx = this, votes = votes)
         }
         return TransactionHistoryItem(
             txHash = txid.removePrefix(PREFIX),
@@ -221,7 +213,7 @@ internal class TronTransactionHistoryProvider(
             status = extractStatus(tx = this),
             type = type,
             amount = amount,
-            fee = feeAmount(blockchain),
+            fee = extractFee(tx = this),
         )
     }
 
@@ -243,15 +235,15 @@ internal class TronTransactionHistoryProvider(
         }
     }
 
+    /**
+     * Withdraw and claim move TRX back to the account, but on-chain they are owner-initiated, so the generic
+     * "source is the wallet" rule would wrongly call them outgoing. Every other staking operation is signed and
+     * paid for by the owner, so that rule already answers correctly and decides on its own.
+     */
     private fun checkForStakingOutgoingTransaction(type: TransactionHistoryItem.TransactionType): Boolean? {
         return when (type) {
-            is TronStakingTransactionType.VoteWitnessContract,
-            TronStakingTransactionType.FreezeBalanceV2Contract,
-            -> true
-
             TronStakingTransactionType.WithdrawBalanceContract,
             TronStakingTransactionType.WithdrawExpireUnfreezeContract,
-            TronStakingTransactionType.UnfreezeBalanceV2Contract,
             -> false
 
             else -> null
@@ -265,8 +257,12 @@ internal class TronTransactionHistoryProvider(
     ): TransactionHistoryItem.DestinationType? {
         return when (filterType) {
             TransactionHistoryRequest.FilterType.Coin -> {
-                val toAddress = tx.toAddress ?: tx.vout.firstOrNull()?.addresses?.firstOrNull()
-                    ?: return null
+                // Operations that send nothing anywhere - voting for a witness, claiming rewards - carry no
+                // recipient in the Blockbook payload. They act on the account itself, so it stands in as the
+                // destination; requiring one would drop those transactions from the history entirely.
+                val toAddress = tx.toAddress
+                    ?: tx.vout.firstOrNull()?.addresses?.firstOrNull()
+                    ?: walletAddress
                 TransactionHistoryItem.DestinationType.Single(
                     addressType = if (tx.tokenTransfers.isEmpty()) {
                         TransactionHistoryItem.AddressType.User(toAddress)
@@ -309,6 +305,7 @@ internal class TronTransactionHistoryProvider(
     private fun extractType(
         filterType: TransactionHistoryRequest.FilterType,
         tx: GetAddressResponse.Transaction,
+        votes: List<Vote>,
     ): TransactionHistoryItem.TransactionType {
         return when (filterType) {
             TransactionHistoryRequest.FilterType.Coin -> {
@@ -319,7 +316,7 @@ internal class TronTransactionHistoryProvider(
 
                     VOTE_WITNESS_CONTRACT_TYPE -> { // vote
                         TronStakingTransactionType.VoteWitnessContract(
-                            validatorAddress = tx.voteList?.keys?.firstOrNull().orEmpty(),
+                            validatorAddress = votes.firstOrNull()?.witness.orEmpty(),
                         )
                     }
 
@@ -353,6 +350,8 @@ internal class TronTransactionHistoryProvider(
     private fun extractTypeV2(
         filterType: TransactionHistoryRequest.FilterType,
         tx: GetAddressResponse.Transaction,
+        votes: List<Vote>,
+        walletAddress: String,
     ): TransactionHistoryItem.TransactionType {
         return when (filterType) {
             TransactionHistoryRequest.FilterType.Coin -> {
@@ -367,14 +366,15 @@ internal class TronTransactionHistoryProvider(
                     ?: return TransactionHistoryItem.TransactionType.Transfer
 
                 when (contractType) {
-                    TronTxHistoryPayloadType.Transfer.type, TronTxHistoryPayloadType.SmartContract.type -> {
-                        TransactionHistoryItem.TransactionType.Transfer
+                    TronTxHistoryPayloadType.Transfer.type -> TransactionHistoryItem.TransactionType.Transfer
+
+                    TronTxHistoryPayloadType.SmartContract.type -> {
+                        extractContractCallType(tx = tx, walletAddress = walletAddress)
                     }
 
                     TronTxHistoryPayloadType.Vote.type -> { // vote
                         TronStakingTransactionType.VoteWitnessContract(
-                            validatorAddress = extraData.payload.votes?.firstOrNull()
-                                ?.address.orEmpty(),
+                            validatorAddress = votes.firstOrNull()?.witness.orEmpty(),
                         )
                     }
 
@@ -405,15 +405,53 @@ internal class TronTransactionHistoryProvider(
         }
     }
 
+    /**
+     * A contract call moves no TRX, so in the coin history it survives only as a contract method — that is what
+     * carries it past [shouldExcludeFromHistory], and the selector is what lets the app name the call and decode
+     * the transfer the fee was paid for.
+     *
+     * Two calls stay a (zero) transfer and are dropped instead, because neither cost the wallet anything: one the
+     * wallet did not sign — an incoming token transfer, whose fee belongs to its sender — and a gasless one, where
+     * the rented energy covers the call and the payload reports no fee at all.
+     */
+    private fun extractContractCallType(
+        tx: GetAddressResponse.Transaction,
+        walletAddress: String,
+    ): TransactionHistoryItem.TransactionType {
+        if (!tx.isSentBy(walletAddress)) return TransactionHistoryItem.TransactionType.Transfer
+
+        val paidFee = extractFee(tx).value ?: BigDecimal.ZERO
+        if (paidFee.isZero()) return TransactionHistoryItem.TransactionType.Transfer
+
+        val ethereumSpecific = tx.ethereumSpecific
+        val methodId = ethereumSpecific?.parsedData?.methodId?.takeIf(String::isNotEmpty)
+            ?: methodIdFromRawData(ethereumSpecific?.data)
+            ?: return TransactionHistoryItem.TransactionType.Transfer
+
+        if (methodId == HEX_PREFIX) return TransactionHistoryItem.TransactionType.Transfer
+
+        return TransactionHistoryItem.TransactionType.ContractMethod(
+            id = methodId,
+            callData = ethereumSpecific?.data,
+        )
+    }
+
+    private fun GetAddressResponse.Transaction.isSentBy(walletAddress: String): Boolean {
+        val sender = fromAddress ?: vin.firstOrNull()?.addresses?.firstOrNull()
+
+        return sender.equals(walletAddress, ignoreCase = true)
+    }
+
     private fun extractAmount(
         tx: GetAddressResponse.Transaction,
         decimals: Int,
         filterType: TransactionHistoryRequest.FilterType,
         walletAddress: String,
+        votes: List<Vote>,
     ): Amount? {
         return when (filterType) {
             TransactionHistoryRequest.FilterType.Coin -> Amount(
-                value = BigDecimal(tx.value).movePointLeft(blockchain.decimals()),
+                value = extractCoinAmountValue(tx = tx, votes = votes),
                 blockchain = blockchain,
                 type = AmountType.Coin,
             )
@@ -432,6 +470,44 @@ internal class TronTransactionHistoryProvider(
                 Amount(value = BigDecimal(transferValue).movePointLeft(decimals), token = token)
             }
         }
+    }
+
+    /**
+     * The transaction's own `value` stays zero for operations that move nothing between accounts, so the amount
+     * they do carry has to be taken from the contract payload: a vote is backed by one frozen TRX, so the counts
+     * arrive in whole TRX rather than in sun, and a claimed reward comes in its own field.
+     */
+    private fun extractCoinAmountValue(tx: GetAddressResponse.Transaction, votes: List<Vote>): BigDecimal {
+        if (votes.isNotEmpty()) {
+            return votes.sumOf { it.count?.toBigDecimalOrNull() ?: BigDecimal.ZERO }
+        }
+
+        val claimedReward = tx.chainExtraData?.payload?.claimedVoteReward?.toBigDecimalOrNull()
+            ?: return BigDecimal(tx.value).movePointLeft(blockchain.decimals())
+
+        return claimedReward.movePointLeft(blockchain.decimals())
+    }
+
+    /**
+     * NowNodes reports the transaction's own `fees` as zero for every Tron transaction and delivers the charged
+     * amount in the contract payload instead, so the payload wins whenever it carries one.
+     */
+    private fun extractFee(tx: GetAddressResponse.Transaction): Amount {
+        val totalFee = tx.chainExtraData?.payload?.totalFee?.toBigDecimalOrNull()
+            ?: return tx.feeAmount(blockchain)
+
+        return Amount(value = totalFee.movePointLeft(blockchain.decimals()), blockchain = blockchain)
+    }
+
+    /** Votes come either in the `chainExtraData` payload or, for the legacy shape, in the `voteList` map. */
+    private fun extractVotes(tx: GetAddressResponse.Transaction): List<Vote> {
+        tx.chainExtraData?.payload?.votes?.let { payloadVotes ->
+            return payloadVotes.map { Vote(witness = it.address, count = it.count) }
+        }
+
+        return tx.voteList.orEmpty()
+            .toSortedMap()
+            .map { (witness, count) -> Vote(witness = witness, count = count.toString()) }
     }
 
     private fun extractStatus(tx: GetAddressResponse.Transaction): TransactionHistoryItem.TransactionStatus {
@@ -461,6 +537,8 @@ internal class TronTransactionHistoryProvider(
         }
     }
 
+    private data class Vote(val witness: String?, val count: String?)
+
     private companion object {
         private const val TRON_PAYLOAD_TYPE = "tron"
 
@@ -488,12 +566,6 @@ internal class TronTransactionHistoryProvider(
             TronTxHistoryPayloadType.DelegateResource.type,
             TronTxHistoryPayloadType.UnDelegateResource.type,
         )
-
-        /**
-         * Incoming transfers below this amount are treated as energy rental / address poisoning spam.
-         * Two orders of magnitude above the observed spam (1–10 SUN) and far below any meaningful transfer.
-         */
-        private val DUST_THRESHOLD: BigDecimal = BigDecimal("0.001")
     }
 }
 

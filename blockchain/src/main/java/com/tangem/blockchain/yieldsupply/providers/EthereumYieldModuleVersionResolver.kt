@@ -1,6 +1,5 @@
 package com.tangem.blockchain.yieldsupply.providers
 
-import android.util.Log
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
@@ -9,6 +8,7 @@ import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvide
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.HEX_PREFIX
 import com.tangem.blockchain.common.JsonRPCResponse
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.network.moshi
@@ -55,7 +55,7 @@ internal suspend fun resolveOutdatedYieldModuleStatus(
     ).extractYieldRpcResult(stringAdapter).takeLast(EthereumUtils.ADDRESS_HEX_LENGTH)
 
     if (!moduleFactoryAddress.equals(contractAddresses.factoryContractAddress, ignoreCase = true)) {
-        Log.w(
+        Logger.e(
             TAG,
             "Module factory $moduleFactoryAddress differs from configured " +
                 "${contractAddresses.factoryContractAddress}; upgrade to $latestKnown is not " +
@@ -82,6 +82,6 @@ internal suspend fun resolveOutdatedYieldModuleStatus(
         YieldModuleVersionStatus.UpgradeUnavailable(currentImplementation = currentImpl)
     }
 } catch (e: Exception) {
-    Log.w(TAG, "Failed to check factory implementation: ${e.message}")
+    Logger.e(TAG, "Failed to check factory implementation: ${e.message}")
     YieldModuleVersionStatus.UpgradeUnavailable(currentImplementation = currentImpl)
 }

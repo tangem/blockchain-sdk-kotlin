@@ -1,8 +1,6 @@
 package com.tangem.blockchain.blockchains.bitcoin
 
 import android.util.Base64
-import android.util.Log
-import android.util.Log.e
 import com.tangem.blockchain.blockchains.bitcoin.address.BitcoinWalletAddressProvider
 import com.tangem.blockchain.blockchains.bitcoin.messagesigning.BitcoinMessageSigner
 import com.tangem.blockchain.blockchains.bitcoin.network.BitcoinAddressInfo
@@ -14,15 +12,13 @@ import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.DynamicAddressesManager
 import com.tangem.blockchain.common.address.AddressType
 import com.tangem.blockchain.common.logging.Logger
+import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.common.psbt.PsbtProviderFactory
 import com.tangem.blockchain.common.transaction.Fee
-import com.tangem.crypto.NetworkType
-import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.SimpleResult
-import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryState
@@ -34,12 +30,14 @@ import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.toCompressedPublicKey
 import com.tangem.common.extensions.toHexString
+import com.tangem.crypto.NetworkType
 import com.tangem.crypto.hdWallet.DerivationPath
+import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import com.tangem.operations.sign.SignData
+import java.math.BigDecimal
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import java.math.BigDecimal
 
 @Suppress("LargeClass")
 internal open class BitcoinWalletManager(
@@ -391,7 +389,7 @@ internal open class BitcoinWalletManager(
     }
 
     internal fun updateWallet(response: BitcoinAddressInfo) {
-        Log.d(this::class.java.simpleName, "Balance is ${response.balance}")
+        Logger.d(this::class.java.simpleName, "Balance is ${response.balance}")
 
         wallet.changeAmountValue(AmountType.Coin, response.balance)
         transactionBuilder.unspentOutputs = response.unspentOutputs
@@ -408,13 +406,14 @@ internal open class BitcoinWalletManager(
     }
 
     internal fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         (error as? BlockchainSdkError)?.let { throw it }
     }
 
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val utxos = transactionBuilder.unspentOutputs.orEmpty()
 
@@ -432,15 +431,16 @@ internal open class BitcoinWalletManager(
         val isMultiAddressMode = isDynamicAddressesEnabled && hasNonBaseInput
 
         return if (isMultiAddressMode) {
-            sendMultiAddress(transactionData, signer)
+            sendMultiAddress(transactionData, signer, onSigned)
         } else {
-            sendSingleAddress(transactionData, signer)
+            sendSingleAddress(transactionData, signer, onSigned)
         }
     }
 
     private suspend fun sendSingleAddress(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         when (val buildTransactionResult = transactionBuilder.buildToSign(transactionData, dustValue)) {
             is Result.Failure -> return buildTransactionResult
@@ -448,6 +448,8 @@ internal open class BitcoinWalletManager(
                 val hashes = buildTransactionResult.data
                 return when (val signerResult = signer.sign(hashes, wallet.publicKey)) {
                     is CompletionResult.Success -> {
+                        onSigned()
+
                         val transactionToSend = transactionBuilder.buildToSend(
                             signerResult.data.reduce { acc, bytes -> acc + bytes },
                         )
@@ -480,6 +482,7 @@ internal open class BitcoinWalletManager(
     private suspend fun sendMultiAddress(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val changeAddress = dynamicAddressesManager
             ?.findFirstUnusedChangeAddress(xpubUsedAddresses)
@@ -490,7 +493,11 @@ internal open class BitcoinWalletManager(
             is Result.Success -> {
                 val signatureInfos = buildResult.data
 
-                val orderedSignatures = when (val signResult = signMultiAddressInputs(signatureInfos, signer)) {
+                val orderedSignatures = when (val signResult = signMultiAddressInputs(
+                    signatureInfos,
+                    signer,
+                    onSigned,
+                )) {
                     is Result.Failure -> return signResult
                     is Result.Success -> signResult.data
                 }
@@ -515,6 +522,7 @@ internal open class BitcoinWalletManager(
     private suspend fun signMultiAddressInputs(
         signatureInfos: List<MultiAddressSignatureInfo>,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<List<ByteArray>> {
         val signDataList = signatureInfos.map { info ->
             SignData(
@@ -526,6 +534,8 @@ internal open class BitcoinWalletManager(
 
         return when (val signerResult = signer.multiSign(signDataList, wallet.publicKey)) {
             is CompletionResult.Success -> {
+                onSigned()
+
                 // multiSign returns a Map<publicKey, signature> keyed on the per-input public-key label we passed
                 // in SignData. Resolve every input's signature by its own key rather than relying on the Map's value
                 // order: the cold signer emits signatures in reverse (MultipleSignCommand drains an ArrayDeque from

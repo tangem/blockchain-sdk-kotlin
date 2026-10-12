@@ -460,12 +460,12 @@ class TronTransactionHistoryProviderTest {
     }
 
     @Test
-    fun `unfreeze balance is incoming`() = runTest {
+    fun `unfreeze balance is outgoing`() = runTest {
         val tx = coinTransaction(contractType = 55)
         val result = singleCoinItem(tx)
 
         assertThat(result.type).isEqualTo(TronStakingTransactionType.UnfreezeBalanceV2Contract)
-        assertThat(result.isOutgoing).isFalse()
+        assertThat(result.isOutgoing).isTrue()
     }
 
     @Test
@@ -605,7 +605,7 @@ class TronTransactionHistoryProviderTest {
     }
 
     @Test
-    fun `v2 UnfreezeBalanceV2Contract is incoming`() = runTest {
+    fun `v2 UnfreezeBalanceV2Contract is outgoing`() = runTest {
         val tx = coinTransaction(
             contractType = null,
             chainExtraData = chainExtraData(contractType = "UnfreezeBalanceV2Contract"),
@@ -613,6 +613,23 @@ class TronTransactionHistoryProviderTest {
         val result = singleCoinItem(tx)
 
         assertThat(result.type).isEqualTo(TronStakingTransactionType.UnfreezeBalanceV2Contract)
+        assertThat(result.isOutgoing).isTrue()
+    }
+
+    @Test
+    fun `v2 WithdrawBalanceContract stays incoming even though the wallet signed it`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            fromAddress = WALLET,
+            value = "0",
+            chainExtraData = chainExtraData(
+                contractType = "WithdrawBalanceContract",
+                claimedVoteReward = "75223",
+            ),
+        )
+        val result = singleCoinItem(tx)
+
+        assertThat(result.type).isEqualTo(TronStakingTransactionType.WithdrawBalanceContract)
         assertThat(result.isOutgoing).isFalse()
     }
 
@@ -706,62 +723,6 @@ class TronTransactionHistoryProviderTest {
         assertThat(result.amount.value!!.compareTo(BigDecimal.ONE)).isEqualTo(0)
     }
 
-    @Test
-    fun `incoming dust transfer is excluded from coin history`() = runTest {
-        val tx = coinTransaction(fromAddress = RECIPIENT, toAddress = WALLET, value = "5")
-        assertThat(coinItems(tx)).isEmpty()
-    }
-
-    @Test
-    fun `incoming dust transfer is detected by vin when fromAddress is missing`() = runTest {
-        // NowNodes stopped sending `fromAddress`, the sender is only available in `vin`
-        val tx = coinTransaction(
-            fromAddress = null,
-            toAddress = WALLET,
-            value = "5",
-            vin = listOf(GetAddressResponse.Transaction.Vin(addresses = listOf(RECIPIENT), value = "5")),
-        )
-        assertThat(coinItems(tx)).isEmpty()
-    }
-
-    @Test
-    fun `outgoing dust transfer is kept in coin history`() = runTest {
-        // An outgoing transaction is always signed by the user, so it stays visible regardless of its amount
-        val tx = coinTransaction(fromAddress = WALLET, toAddress = RECIPIENT, value = "5")
-        val item = coinItems(tx).single()
-
-        assertThat(item.isOutgoing).isTrue()
-        assertThat(item.amount.value!!.compareTo(BigDecimal("0.000005"))).isEqualTo(0)
-    }
-
-    @Test
-    fun `incoming transfer right below the dust threshold is excluded from coin history`() = runTest {
-        val tx = coinTransaction(fromAddress = RECIPIENT, toAddress = WALLET, value = "999")
-        assertThat(coinItems(tx)).isEmpty()
-    }
-
-    @Test
-    fun `incoming transfer at the dust threshold is kept in coin history`() = runTest {
-        val tx = coinTransaction(fromAddress = RECIPIENT, toAddress = WALLET, value = "1000")
-        val item = coinItems(tx).single()
-
-        assertThat(item.isOutgoing).isFalse()
-        assertThat(item.amount.value!!.compareTo(BigDecimal("0.001"))).isEqualTo(0)
-    }
-
-    @Test
-    fun `incoming dust is not filtered out of token history`() = runTest {
-        val tx = coinTransaction(
-            fromAddress = RECIPIENT,
-            toAddress = WALLET,
-            value = "5",
-            tokenTransfers = listOf(tokenTransfer(from = RECIPIENT, to = WALLET, value = "1000000")),
-        )
-        val result = singleContractItem(tx, decimals = 6)
-
-        assertThat(result.amount.value!!.compareTo(BigDecimal.ONE)).isEqualTo(0)
-    }
-
     // endregion
 
     // region getTransactionsHistory - contract/token mapping
@@ -822,6 +783,216 @@ class TronTransactionHistoryProviderTest {
         val result = singleContractItem(tx, decimals = 6)
 
         assertThat(result.amount.value!!.compareTo(BigDecimal("1"))).isEqualTo(0)
+    }
+
+    // endregion
+
+    // region recipientless staking transactions
+
+    @Test
+    fun `v2 claim rewards without a recipient is kept in coin history`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            fromAddress = null,
+            toAddress = null,
+            value = "0",
+            vin = listOf(vin(WALLET)),
+            vout = listOf(vout(addresses = null)),
+            chainExtraData = chainExtraData(
+                contractType = "WithdrawBalanceContract",
+                claimedVoteReward = "75223",
+            ),
+        )
+
+        val result = singleCoinItem(tx)
+
+        assertThat(result.type).isEqualTo(TronStakingTransactionType.WithdrawBalanceContract)
+        val destination = result.destinationType as TransactionHistoryItem.DestinationType.Single
+        assertThat(destination.addressType.address).isEqualTo(WALLET)
+        assertThat(result.amount.value!!.compareTo(BigDecimal("0.075223"))).isEqualTo(0)
+    }
+
+    @Test
+    fun `v2 vote without a recipient is kept in coin history`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            fromAddress = null,
+            toAddress = null,
+            value = "0",
+            vin = listOf(vin(WALLET)),
+            vout = listOf(vout(addresses = null)),
+            chainExtraData = chainExtraData(
+                contractType = "VoteWitnessContract",
+                votes = listOf(vote(VALIDATOR, "142")),
+                totalFee = "271000",
+            ),
+        )
+
+        val result = singleCoinItem(tx)
+
+        assertThat(result.type).isEqualTo(TronStakingTransactionType.VoteWitnessContract(VALIDATOR))
+        val destination = result.destinationType as TransactionHistoryItem.DestinationType.Single
+        assertThat(destination.addressType.address).isEqualTo(WALLET)
+    }
+
+    @Test
+    fun `v2 vote amount is the sum of vote counts in whole TRX`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            value = "0",
+            chainExtraData = chainExtraData(
+                contractType = "VoteWitnessContract",
+                votes = listOf(vote(VALIDATOR, "142"), vote(RECIPIENT, "20")),
+            ),
+        )
+
+        val result = singleCoinItem(tx)
+
+        assertThat(result.amount.value!!.compareTo(BigDecimal("162"))).isEqualTo(0)
+    }
+
+    @Test
+    fun `legacy vote list is read in key order`() = runTest {
+        val tx = coinTransaction(
+            contractType = 4,
+            value = "0",
+            voteList = linkedMapOf(RECIPIENT to 20, VALIDATOR to 142),
+        )
+
+        val result = singleCoinItem(tx)
+
+        val expectedWitness = minOf(RECIPIENT, VALIDATOR)
+        assertThat(result.type).isEqualTo(TronStakingTransactionType.VoteWitnessContract(expectedWitness))
+        assertThat(result.amount.value!!.compareTo(BigDecimal("162"))).isEqualTo(0)
+    }
+
+    // endregion
+
+    // region getTransactionsHistory - contract calls in the coin history
+
+    @Test
+    fun `v2 contract call the wallet paid for is a contract method`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            value = "0",
+            chainExtraData = chainExtraData(contractType = "TriggerSmartContract", totalFee = "6428500"),
+            ethereumSpecific = ethereumSpecific(methodId = TRANSFER_METHOD_ID, data = TRANSFER_CALL_DATA),
+            tokenTransfers = listOf(tokenTransfer()),
+        )
+
+        val result = singleCoinItem(tx)
+
+        assertThat(result.type).isEqualTo(
+            TransactionHistoryItem.TransactionType.ContractMethod(
+                id = TRANSFER_METHOD_ID,
+                callData = TRANSFER_CALL_DATA,
+            ),
+        )
+        assertThat(result.fee.value!!.compareTo(BigDecimal("6.4285"))).isEqualTo(0)
+    }
+
+    @Test
+    fun `v2 contract call method id falls back to the raw call data`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            value = "0",
+            chainExtraData = chainExtraData(contractType = "TriggerSmartContract", totalFee = "6428500"),
+            ethereumSpecific = ethereumSpecific(methodId = "", data = TRANSFER_CALL_DATA),
+        )
+
+        val result = singleCoinItem(tx)
+
+        assertThat(result.type).isEqualTo(
+            TransactionHistoryItem.TransactionType.ContractMethod(
+                id = TRANSFER_METHOD_ID.removePrefix("0x"),
+                callData = TRANSFER_CALL_DATA,
+            ),
+        )
+    }
+
+    @Test
+    fun `v2 gasless contract call is excluded from coin history`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            value = "0",
+            fees = "0",
+            chainExtraData = chainExtraData(contractType = "TriggerSmartContract"),
+            ethereumSpecific = ethereumSpecific(methodId = TRANSFER_METHOD_ID, data = TRANSFER_CALL_DATA),
+            tokenTransfers = listOf(tokenTransfer()),
+        )
+
+        assertThat(coinItems(tx)).isEmpty()
+    }
+
+    @Test
+    fun `v2 contract call of another wallet is excluded from coin history`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            value = "0",
+            fromAddress = RECIPIENT,
+            chainExtraData = chainExtraData(contractType = "TriggerSmartContract", totalFee = "345000"),
+            ethereumSpecific = ethereumSpecific(methodId = TRANSFER_METHOD_ID, data = TRANSFER_CALL_DATA),
+            tokenTransfers = listOf(tokenTransfer(from = RECIPIENT, to = WALLET)),
+        )
+
+        assertThat(coinItems(tx)).isEmpty()
+    }
+
+    @Test
+    fun `v2 contract call without call data stays a transfer and is excluded`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            value = "0",
+            chainExtraData = chainExtraData(contractType = "TriggerSmartContract", totalFee = "345000"),
+            ethereumSpecific = null,
+        )
+
+        assertThat(coinItems(tx)).isEmpty()
+    }
+
+    @Test
+    fun `v2 contract call in the token history stays a plain transfer`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            value = "0",
+            chainExtraData = chainExtraData(contractType = "TriggerSmartContract", totalFee = "6428500"),
+            ethereumSpecific = ethereumSpecific(methodId = TRANSFER_METHOD_ID, data = TRANSFER_CALL_DATA),
+            tokenTransfers = listOf(tokenTransfer()),
+        )
+
+        val result = singleContractItem(tx = tx, decimals = 6)
+
+        assertThat(result.type).isEqualTo(TransactionHistoryItem.TransactionType.Transfer)
+    }
+
+    // endregion
+
+    // region fee
+
+    @Test
+    fun `payload total fee wins over the zero fees field`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            fees = "0",
+            chainExtraData = chainExtraData(contractType = "TransferContract", totalFee = "1100000"),
+        )
+
+        val result = singleCoinItem(tx)
+
+        assertThat(result.fee.value!!.compareTo(BigDecimal("1.1"))).isEqualTo(0)
+    }
+
+    @Test
+    fun `fee falls back to the fees field when the payload carries no total fee`() = runTest {
+        val tx = coinTransaction(
+            contractType = null,
+            fees = "500000",
+            chainExtraData = chainExtraData(contractType = "TransferContract"),
+        )
+
+        val result = singleCoinItem(tx)
+
+        assertThat(result.fee.value!!.compareTo(BigDecimal("0.5"))).isEqualTo(0)
     }
 
     // endregion
@@ -906,6 +1077,20 @@ class TronTransactionHistoryProviderTest {
         trxTokens = trxTokens,
     )
 
+    private fun vin(address: String?) = GetAddressResponse.Transaction.Vin(
+        addresses = address?.let(::listOf),
+        value = null,
+    )
+
+    private fun vout(addresses: List<String>?) = GetAddressResponse.Transaction.Vout(
+        addresses = addresses,
+        hex = null,
+        value = "0",
+    )
+
+    private fun vote(address: String?, count: String?) =
+        GetAddressResponse.Transaction.ChainExtraData.Payload.Vote(address = address, count = count)
+
     private fun trxToken(id: String, name: String? = "Tether", transfers: Int?, contract: String? = id) =
         GetAddressResponse.TrxToken(
             type = "TRC20",
@@ -929,6 +1114,7 @@ class TronTransactionHistoryProviderTest {
         contractName: String? = null,
         voteList: Map<String, Int>? = null,
         chainExtraData: GetAddressResponse.Transaction.ChainExtraData? = null,
+        ethereumSpecific: GetAddressResponse.Transaction.EthereumSpecific? = null,
         status: GetAddressResponse.Transaction.StatusType? = GetAddressResponse.Transaction.StatusType.OK,
         receipt: GetAddressResponse.Transaction.TronTXReceipt? =
             GetAddressResponse.Transaction.TronTXReceipt(status = status),
@@ -944,7 +1130,7 @@ class TronTransactionHistoryProviderTest {
         vin = vin,
         fees = fees,
         tokenTransfers = tokenTransfers,
-        ethereumSpecific = null,
+        ethereumSpecific = ethereumSpecific,
         chainExtraData = chainExtraData,
         tronTXReceipt = receipt,
         fromAddress = fromAddress,
@@ -954,11 +1140,26 @@ class TronTransactionHistoryProviderTest {
         voteList = voteList,
     )
 
+    private fun ethereumSpecific(methodId: String? = null, data: String? = null) =
+        GetAddressResponse.Transaction.EthereumSpecific(
+            status = GetAddressResponse.Transaction.StatusType.OK,
+            nonce = 0,
+            gasLimit = 0,
+            gasUsed = null,
+            gasPrice = null,
+            data = data,
+            parsedData = methodId?.let {
+                GetAddressResponse.Transaction.EthereumSpecific.ParsedData(methodId = it, name = "")
+            },
+        )
+
     @Suppress("LongParameterList")
     private fun chainExtraData(
         payloadType: String? = "tron",
         contractType: String? = null,
         votes: List<GetAddressResponse.Transaction.ChainExtraData.Payload.Vote>? = null,
+        claimedVoteReward: String? = null,
+        totalFee: String? = null,
     ) = GetAddressResponse.Transaction.ChainExtraData(
         payloadType = payloadType,
         payload = GetAddressResponse.Transaction.ChainExtraData.Payload(
@@ -966,6 +1167,8 @@ class TronTransactionHistoryProviderTest {
             operation = null,
             bandwidthUsage = null,
             votes = votes,
+            claimedVoteReward = claimedVoteReward,
+            totalFee = totalFee,
         ),
     )
 
@@ -995,6 +1198,9 @@ class TronTransactionHistoryProviderTest {
         const val VALIDATOR = "TKSXDA8HfE9E1y39RczVQ1ZascUEtaSToF"
         const val CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
         const val TX_HASH = "abc123deadbeef"
+        const val TRANSFER_METHOD_ID = "0xa9059cbb"
+        const val TRANSFER_CALL_DATA = "0xa9059cbb000000000000000000000041b945de8e80a32a1bf5aa55038d69a1c" +
+            "90f1eca3f00000000000000000000000000000000000000000000000000000000004c4b40"
         const val PAGE_SIZE = 20
     }
 

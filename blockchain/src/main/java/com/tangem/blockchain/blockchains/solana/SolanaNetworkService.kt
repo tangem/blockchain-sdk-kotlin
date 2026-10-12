@@ -69,7 +69,7 @@ internal class SolanaNetworkService(
             }
 
             val isScaledUiAmountEnabled = DepsContainer.blockchainFeatureToggles.isSolanaScaledUiAmountEnabled
-            val tokensByMint = tokenAccounts.map { tokenAccount ->
+            val tokenAccountInfos = tokenAccounts.map { tokenAccount ->
                 val tokenInfo = tokenAccount.account.data.parsed.info
                 val tokenAmount = tokenInfo.tokenAmount
                 val isToken2022 = tokenAccount.account.owner == SolanaTokenProgram.ID.TOKEN_2022.value.toBase58()
@@ -84,7 +84,11 @@ internal class SolanaNetworkService(
                     mint = tokenInfo.mint,
                     solAmount = solAmount,
                 )
-            }.associateBy { it.mint }
+            }
+            val tokensByMint = SolanaTokenAccountSelector.uniqueAccountsByMint(
+                accounts = tokenAccountInfos,
+                ownerAccountId = account.toBase58(),
+            )
 
             val txsInProgress = getTransactionsInProgressInfo(account).successOr { listOf() }
             Result.Success(

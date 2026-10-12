@@ -1,9 +1,9 @@
 package com.tangem.blockchain.blockchains.icp
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.icp.network.ICPNetworkProvider
 import com.tangem.blockchain.blockchains.icp.network.ICPTransferWithSigner
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.memo.MemoState
 import com.tangem.blockchain.common.memo.isValidUInt64
 import com.tangem.blockchain.common.transaction.Fee
@@ -36,18 +36,19 @@ internal class ICPWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage, error)
+        Logger.e(this::class.java.simpleName, error.customMessage, error)
         if (error is BlockchainSdkError) throw error
     }
 
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         val nowMillis = System.currentTimeMillis()
         val nowNanos = nowMillis * NANOSECONDS_IN_MILLISECOND
         val transferRequest = transactionBuilder.buildForSign(transactionData, nowNanos)
-        val transferWithSigner = ICPTransferWithSigner(transferRequest, signer)
+        val transferWithSigner = ICPTransferWithSigner(transferRequest, signer, onSigned)
 
         return when (val sendResult = networkProvider.signAndSendTransaction(transferWithSigner)) {
             is Result.Success -> {

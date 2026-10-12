@@ -133,6 +133,45 @@ internal data class HederaAccountDetailResponse(
 )
 
 @JsonClass(generateAdapter = true)
+internal data class HederaNetworkNodesResponse(
+    @Json(name = "nodes")
+    val nodes: List<HederaNetworkNodeResponse>,
+
+    @Json(name = "links")
+    val links: HederaLinksResponse,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class HederaNetworkNodeResponse(
+    @Json(name = "node_id")
+    val nodeId: Long,
+
+    @Json(name = "node_account_id")
+    val nodeAccountId: String,
+
+    @Json(name = "service_endpoints")
+    val serviceEndpoints: List<HederaServiceEndpointResponse>,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class HederaServiceEndpointResponse(
+    @Json(name = "domain_name")
+    val domainName: String?,
+
+    @Json(name = "ip_address_v4")
+    val ipAddressV4: String?,
+
+    @Json(name = "port")
+    val port: Int,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class HederaLinksResponse(
+    @Json(name = "next")
+    val next: String?,
+)
+
+@JsonClass(generateAdapter = true)
 data class HederaTokenDetailsResponse(
     // there are more fields available here and in the inner objects
     // ignore them for now

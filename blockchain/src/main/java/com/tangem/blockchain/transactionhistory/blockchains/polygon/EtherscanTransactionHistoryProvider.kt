@@ -12,7 +12,11 @@ import com.tangem.blockchain.extensions.toBigDecimalOrDefault
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider.Companion.shouldExcludeFromHistory
 import com.tangem.blockchain.transactionhistory.TransactionHistoryState
-import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.*
+import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.EtherScanApi
+import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.PolygonScanApiError
+import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.PolygonScanResult
+import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.PolygonTransaction
+import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.PolygonTransactionHistoryResponse
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import com.tangem.common.extensions.guard
@@ -207,18 +211,24 @@ internal class EtherscanTransactionHistoryProvider(
             return TransactionHistoryItem.TransactionType.Transfer
         }
 
-        // ERC-20 transfer method
         val fnName = this.functionName?.substringBefore("(")
-        if (fnName == TOKEN_TRANSFER_METHOD_NAME) {
-            return TransactionHistoryItem.TransactionType.Transfer
-        }
 
         // Contract interaction handling
         return if (filterType is TransactionHistoryRequest.FilterType.Coin) {
-            TransactionHistoryItem.TransactionType.ContractMethodName(
-                name = fnName ?: this.functionName ?: UNKNOWN,
-                callData = input,
-            )
+            val methodId = this.methodId
+            // The selector identifies the method even when the explorer reports no name for it, so it wins; the
+            // reported name is what is left when there is no selector to look the method up by.
+            if (methodId.isNullOrEmpty()) {
+                TransactionHistoryItem.TransactionType.ContractMethodName(
+                    name = fnName ?: this.functionName ?: UNKNOWN,
+                    callData = input,
+                )
+            } else {
+                TransactionHistoryItem.TransactionType.ContractMethod(
+                    id = methodId,
+                    callData = input,
+                )
+            }
         } else {
             val methodId = this.methodId
             if (methodId.isNullOrEmpty()) {
@@ -294,6 +304,5 @@ internal class EtherscanTransactionHistoryProvider(
 
     private companion object {
         const val UNKNOWN = "Unknown"
-        const val TOKEN_TRANSFER_METHOD_NAME = "transfer"
     }
 }

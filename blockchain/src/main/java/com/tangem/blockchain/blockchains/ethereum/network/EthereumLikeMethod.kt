@@ -8,12 +8,14 @@ interface EthereumLikeMethod {
     val getBalance: String
     val getTransactionCount: String
     val getTransactionByHash: String
+    val getTransactionReceipt: String
     val call: String
     val sendRawTransaction: String
     val estimateGas: String
     val gasPrice: String
     val feeHistory: String
     val getStorageAt: String
+    val getCode: String
 }
 
 /**
@@ -23,12 +25,14 @@ object EthereumMethod : EthereumLikeMethod {
     override val getBalance = "eth_getBalance"
     override val getTransactionCount = "eth_getTransactionCount"
     override val getTransactionByHash = "eth_getTransactionByHash"
+    override val getTransactionReceipt = "eth_getTransactionReceipt"
     override val call = "eth_call"
     override val sendRawTransaction = "eth_sendRawTransaction"
     override val estimateGas = "eth_estimateGas"
     override val gasPrice = "eth_gasPrice"
     override val feeHistory = "eth_feeHistory"
     override val getStorageAt = "eth_getStorageAt"
+    override val getCode = "eth_getCode"
 }
 
 /**
@@ -38,10 +42,12 @@ object QuaiMethod : EthereumLikeMethod {
     override val getBalance = "quai_getBalance"
     override val getTransactionCount = "quai_getTransactionCount"
     override val getTransactionByHash = "quai_getTransactionByHash"
+    override val getTransactionReceipt = "quai_getTransactionReceipt"
     override val call = "quai_call"
     override val sendRawTransaction = "quai_sendRawTransaction"
     override val estimateGas = "quai_estimateGas"
     override val gasPrice = "quai_gasPrice"
     override val feeHistory = "quai_feeHistory"
     override val getStorageAt = "quai_getStorageAt"
+    override val getCode = "quai_getCode"
 }
