@@ -1,12 +1,14 @@
 package com.tangem.blockchain.yieldsupply.providers
 
 import com.google.common.truth.Truth.assertThat
+import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
 import com.tangem.blockchain.blockchains.ethereum.network.EthCallObject
 import com.tangem.blockchain.blockchains.ethereum.network.EthGetStorageAtData
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumJsonRpcProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.BlockchainFeatureToggles
 import com.tangem.blockchain.common.BlockchainSdkConfig
+import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.JsonRPCResponse
 import com.tangem.blockchain.common.Wallet
 import com.tangem.blockchain.common.datastorage.BlockchainDataStorage
@@ -14,6 +16,7 @@ import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStor
 import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.MultiNetworkProvider
+import com.tangem.blockchain.network.ProviderResult
 import com.tangem.blockchain.yieldsupply.YieldSupplyProviderType
 import com.tangem.blockchain.yieldsupply.addressfactory.YieldSupplyContractAddressFactory
 import com.tangem.blockchain.yieldsupply.addressfactory.YieldSupplyContractAddresses
@@ -32,6 +35,9 @@ internal class EthereumYieldSupplyProviderTest {
     private val blockchainDataStorage = mockk<BlockchainDataStorage>(relaxed = true)
     private val dataStorage = AdvancedDataStorage(blockchainDataStorage)
     private val networkProvider = mockk<MultiNetworkProvider<EthereumJsonRpcProvider>>(relaxed = true)
+    private val jsonRpcProvider = mockk<EthereumJsonRpcProvider>(relaxed = true) {
+        every { baseUrl } returns "https://polygon.example.com"
+    }
     private val contractAddressFactory = mockk<YieldSupplyContractAddressFactory>(relaxed = true)
     private val wallet = mockk<Wallet>(relaxed = true) {
         every { blockchain } returns Blockchain.Polygon
@@ -84,8 +90,8 @@ internal class EthereumYieldSupplyProviderTest {
         coEvery { blockchainDataStorage.getOrNull(any()) } returns null
         // Module factory call returns 32-byte zero word → yieldModuleAddress resolves to ZERO_ADDRESS
         coEvery {
-            networkProvider.performRequest(EthereumJsonRpcProvider::call, any<EthCallObject>())
-        } returns Result.Success(stringResponse(ZERO_PADDED_32))
+            networkProvider.performRequestOnEachHost(EthereumJsonRpcProvider::call, any<EthCallObject>())
+        } returns listOf(answer(ZERO_PADDED_32))
 
         val status = provider.checkModuleVersionStatus()
 
@@ -303,7 +309,7 @@ internal class EthereumYieldSupplyProviderTest {
         assertThat(result).isEqualTo(YIELD_MODULE)
         // Cache hit — the factory is not queried to re-derive the module address
         coVerify(exactly = 0) {
-            networkProvider.performRequest(EthereumJsonRpcProvider::call, any<EthCallObject>())
+            networkProvider.performRequestOnEachHost(EthereumJsonRpcProvider::call, any<EthCallObject>())
         }
     }
 
@@ -318,11 +324,11 @@ internal class EthereumYieldSupplyProviderTest {
             blockchainDataStorage.getOrNull(any())
         } returns yieldSupplyModuleJson(yieldContractAddress = YIELD_MODULE, factoryAddress = BOUND_FACTORY)
         coEvery {
-            networkProvider.performRequest(
+            networkProvider.performRequestOnEachHost(
                 EthereumJsonRpcProvider::call,
                 match<EthCallObject> { it.to.equals(FACTORY, ignoreCase = true) },
             )
-        } returns Result.Success(stringResponse(NEW_MODULE_RAW))
+        } returns listOf(answer(NEW_MODULE_RAW), answer(NEW_MODULE_RAW))
 
         val result = provider.getYieldModuleAddress()
 
@@ -346,15 +352,219 @@ internal class EthereumYieldSupplyProviderTest {
             blockchainDataStorage.getOrNull(any())
         } returns yieldSupplyModuleJson(yieldContractAddress = YIELD_MODULE, factoryAddress = null)
         coEvery {
-            networkProvider.performRequest(
+            networkProvider.performRequestOnEachHost(
                 EthereumJsonRpcProvider::call,
                 match<EthCallObject> { it.to.equals(FACTORY, ignoreCase = true) },
             )
-        } returns Result.Success(stringResponse(NEW_MODULE_RAW))
+        } returns listOf(answer(NEW_MODULE_RAW), answer(NEW_MODULE_RAW))
 
         val result = provider.getYieldModuleAddress()
 
         assertThat(result).isEqualTo(NEW_MODULE)
+    }
+
+    // --- yield module address consensus across providers ([REDACTED_TASK_KEY]) ---
+
+    @Test
+    fun `getYieldModuleAddress resolves through all providers instead of the failover one`() = runTest {
+        every {
+            contractAddressFactory.getYieldSupplyContractAddresses()
+        } returns addresses(latestImplementationAddress = LATEST_IMPL)
+        coEvery { blockchainDataStorage.getOrNull(any()) } returns null
+        coEvery {
+            networkProvider.performRequestOnEachHost(EthereumJsonRpcProvider::call, any<EthCallObject>())
+        } returns listOf(
+            answer(NEW_MODULE_RAW),
+            answer(NEW_MODULE_RAW),
+            answer(NEW_MODULE_RAW),
+        )
+
+        val result = provider.getYieldModuleAddress()
+
+        assertThat(result).isEqualTo(NEW_MODULE)
+        coVerify(exactly = 0) {
+            networkProvider.performRequest(EthereumJsonRpcProvider::call, any<EthCallObject>())
+        }
+    }
+
+    @Test
+    fun `getYieldModuleAddress fails and caches nothing when providers disagree`() = runTest {
+        every {
+            contractAddressFactory.getYieldSupplyContractAddresses()
+        } returns addresses(latestImplementationAddress = LATEST_IMPL)
+        coEvery { blockchainDataStorage.getOrNull(any()) } returns null
+        coEvery {
+            networkProvider.performRequestOnEachHost(EthereumJsonRpcProvider::call, any<EthCallObject>())
+        } returns listOf(
+            answer(NEW_MODULE_RAW),
+            answer(HOSTILE_MODULE_RAW),
+        )
+
+        val error = sdkErrorOf { provider.getYieldModuleAddress() }
+
+        assertThat(error).isInstanceOf(BlockchainSdkError.Ethereum.YieldModuleAddressMismatch::class.java)
+        val mismatch = requireNotNull(error) as BlockchainSdkError.Ethereum.YieldModuleAddressMismatch
+        assertThat(mismatch.addresses).containsExactly(NEW_MODULE, HOSTILE_MODULE)
+        coVerify(exactly = 0) { blockchainDataStorage.store(any(), any()) }
+    }
+
+    @Test
+    fun `getYieldModuleAddress ignores failed providers and zero answers`() = runTest {
+        every {
+            contractAddressFactory.getYieldSupplyContractAddresses()
+        } returns addresses(latestImplementationAddress = LATEST_IMPL)
+        coEvery { blockchainDataStorage.getOrNull(any()) } returns null
+        coEvery {
+            networkProvider.performRequestOnEachHost(EthereumJsonRpcProvider::call, any<EthCallObject>())
+        } returns listOf(
+            failedAnswer("rpc down"),
+            answer(ZERO_PADDED_32),
+            answer(NEW_MODULE_RAW),
+            answer(NEW_MODULE_RAW),
+        )
+
+        val result = provider.getYieldModuleAddress()
+
+        assertThat(result).isEqualTo(NEW_MODULE)
+    }
+
+    @Test
+    fun `getYieldModuleAddress returns ZERO when no provider answered`() = runTest {
+        every {
+            contractAddressFactory.getYieldSupplyContractAddresses()
+        } returns addresses(latestImplementationAddress = LATEST_IMPL)
+        coEvery { blockchainDataStorage.getOrNull(any()) } returns null
+        coEvery {
+            networkProvider.performRequestOnEachHost(EthereumJsonRpcProvider::call, any<EthCallObject>())
+        } returns listOf(
+            failedAnswer("rpc down"),
+            answer(ZERO_PADDED_32),
+        )
+
+        val result = provider.getYieldModuleAddress()
+
+        assertThat(result).isEqualTo(EthereumUtils.ZERO_ADDRESS)
+        coVerify(exactly = 0) { blockchainDataStorage.store(any(), any()) }
+    }
+
+    @Test
+    fun `calculateYieldModuleAddress accepts an address two providers confirmed`() = runTest {
+        every {
+            contractAddressFactory.getYieldSupplyContractAddresses()
+        } returns addresses(latestImplementationAddress = LATEST_IMPL)
+        coEvery {
+            networkProvider.performRequestOnEachHost(EthereumJsonRpcProvider::call, any<EthCallObject>())
+        } returns listOf(
+            failedAnswer("rpc down"),
+            answer(NEW_MODULE_RAW),
+            answer(NEW_MODULE_RAW),
+        )
+
+        val result = provider.calculateYieldModuleAddress()
+
+        assertThat(result).isEqualTo(NEW_MODULE)
+    }
+
+    @Test
+    fun `calculateYieldModuleAddress fails when only one provider answered`() = runTest {
+        every {
+            contractAddressFactory.getYieldSupplyContractAddresses()
+        } returns addresses(latestImplementationAddress = LATEST_IMPL)
+        coEvery {
+            networkProvider.performRequestOnEachHost(EthereumJsonRpcProvider::call, any<EthCallObject>())
+        } returns listOf(
+            failedAnswer("rpc down"),
+            answer(NEW_MODULE_RAW),
+        )
+
+        val error = sdkErrorOf { provider.calculateYieldModuleAddress() }
+
+        assertThat(error).isInstanceOf(BlockchainSdkError.Ethereum.YieldModuleAddressUnavailable::class.java)
+    }
+
+    @Test
+    fun `getYieldModuleAddress returns ZERO when only one provider answered`() = runTest {
+        every {
+            contractAddressFactory.getYieldSupplyContractAddresses()
+        } returns addresses(latestImplementationAddress = LATEST_IMPL)
+        coEvery { blockchainDataStorage.getOrNull(any()) } returns null
+        coEvery {
+            networkProvider.performRequestOnEachHost(EthereumJsonRpcProvider::call, any<EthCallObject>())
+        } returns listOf(
+            failedAnswer("rpc down"),
+            answer(NEW_MODULE_RAW),
+        )
+
+        val result = provider.getYieldModuleAddress()
+
+        assertThat(result).isEqualTo(EthereumUtils.ZERO_ADDRESS)
+        coVerify(exactly = 0) { blockchainDataStorage.store(any(), any()) }
+    }
+
+    @Test
+    fun `a zero answer does not corroborate a real address`() = runTest {
+        every {
+            contractAddressFactory.getYieldSupplyContractAddresses()
+        } returns addresses(latestImplementationAddress = LATEST_IMPL)
+        coEvery { blockchainDataStorage.getOrNull(any()) } returns null
+        coEvery {
+            networkProvider.performRequestOnEachHost(EthereumJsonRpcProvider::call, any<EthCallObject>())
+        } returns listOf(
+            answer(ZERO_PADDED_32),
+            answer(NEW_MODULE_RAW),
+        )
+
+        val result = provider.getYieldModuleAddress()
+
+        assertThat(result).isEqualTo(EthereumUtils.ZERO_ADDRESS)
+    }
+
+    @Test
+    fun `calculateYieldModuleAddress fails when providers disagree`() = runTest {
+        every {
+            contractAddressFactory.getYieldSupplyContractAddresses()
+        } returns addresses(latestImplementationAddress = LATEST_IMPL)
+        coEvery {
+            networkProvider.performRequestOnEachHost(EthereumJsonRpcProvider::call, any<EthCallObject>())
+        } returns listOf(
+            answer(NEW_MODULE_RAW),
+            answer(HOSTILE_MODULE_RAW),
+        )
+
+        val error = sdkErrorOf { provider.calculateYieldModuleAddress() }
+
+        assertThat(error).isInstanceOf(BlockchainSdkError.Ethereum.YieldModuleAddressMismatch::class.java)
+    }
+
+    @Test
+    fun `calculateYieldModuleAddress fails when no provider answered`() = runTest {
+        every {
+            contractAddressFactory.getYieldSupplyContractAddresses()
+        } returns addresses(latestImplementationAddress = LATEST_IMPL)
+        coEvery {
+            networkProvider.performRequestOnEachHost(EthereumJsonRpcProvider::call, any<EthCallObject>())
+        } returns listOf(failedAnswer("rpc down"))
+
+        val error = sdkErrorOf { provider.calculateYieldModuleAddress() }
+
+        assertThat(error).isInstanceOf(BlockchainSdkError.Ethereum.YieldModuleAddressUnavailable::class.java)
+    }
+
+    @Test
+    fun `yield module address answers are compared case-insensitively`() = runTest {
+        every {
+            contractAddressFactory.getYieldSupplyContractAddresses()
+        } returns addresses(latestImplementationAddress = LATEST_IMPL)
+        coEvery {
+            networkProvider.performRequestOnEachHost(EthereumJsonRpcProvider::call, any<EthCallObject>())
+        } returns listOf(
+            answer(MIXED_CASE_MODULE_RAW),
+            answer(MIXED_CASE_MODULE_RAW.lowercase()),
+        )
+
+        val result = provider.calculateYieldModuleAddress()
+
+        assertThat(result).ignoringCase().isEqualTo(MIXED_CASE_MODULE)
     }
 
     // --- isSwapSpenderAllowed / isSwapTargetAllowed (strict ABI bool decoding) ---
@@ -448,6 +658,22 @@ internal class EthereumYieldSupplyProviderTest {
 
     // --- helpers ---
 
+    private fun answer(rawResponse: String) = asAnswer(Result.Success(stringResponse(rawResponse)))
+
+    private fun failedAnswer(message: String) = asAnswer(Result.Failure(BlockchainSdkError.CustomError(message)))
+
+    private fun asAnswer(result: Result<JsonRPCResponse>) = ProviderResult(
+        provider = jsonRpcProvider,
+        result = result,
+    )
+
+    private suspend fun sdkErrorOf(block: suspend () -> String): BlockchainSdkError? = try {
+        block()
+        null
+    } catch (e: BlockchainSdkError) {
+        e
+    }
+
     private fun addresses(latestImplementationAddress: String?) = YieldSupplyContractAddresses(
         factoryContractAddress = FACTORY,
         processorContractAddress = PROCESSOR,
@@ -494,6 +720,14 @@ internal class EthereumYieldSupplyProviderTest {
         const val NEW_MODULE = "0x7777777777777777777777777777777777777777"
         const val NEW_MODULE_RAW =
             "0x0000000000000000000000007777777777777777777777777777777777777777"
+
+        const val HOSTILE_MODULE = "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+        const val HOSTILE_MODULE_RAW =
+            "0x000000000000000000000000deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+
+        const val MIXED_CASE_MODULE = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
+        const val MIXED_CASE_MODULE_RAW =
+            "0x0000000000000000000000005aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
 
         // 32-byte ABI-encoded address responses (0x + 24 leading zero hex chars + 40-char address)
         const val LATEST_IMPL_RAW =

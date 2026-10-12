@@ -1,15 +1,14 @@
 package com.tangem.blockchain.blockchains.ethereum
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.ethereum.eip1559.isSupportEIP1559
 import com.tangem.blockchain.blockchains.ethereum.ens.DefaultENSNameProcessor
 import com.tangem.blockchain.blockchains.ethereum.gasless.DefaultEthereumGaslessDataProvider
 import com.tangem.blockchain.blockchains.ethereum.gasless.EthereumGaslessDataProvider
 import com.tangem.blockchain.blockchains.ethereum.gasless.GaslessContractAddressFactory
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumFeeHistory
+import com.tangem.blockchain.blockchains.ethereum.network.EthereumTransactionReceipt
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumInfoResponse
 import com.tangem.blockchain.blockchains.ethereum.network.EthereumNetworkProvider
-import com.tangem.blockchain.blockchains.ethereum.network.ExternalAddressBalances
 import com.tangem.blockchain.blockchains.ethereum.tokenmethods.ApprovalERC20TokenCallData
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumCompiledTxInfo
 import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionBuilder
@@ -17,6 +16,7 @@ import com.tangem.blockchain.blockchains.ethereum.txbuilder.EthereumTransactionV
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.datastorage.PendingTransaction
 import com.tangem.blockchain.common.di.DepsContainer
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.smartcontract.SmartContractCallData
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -38,14 +38,14 @@ import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
 import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
+import java.math.BigDecimal
+import java.math.BigInteger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.supervisorScope
 import org.kethereum.extensions.toHexString
 import org.kethereum.keccakshortcut.keccak
 import org.komputing.khex.extensions.toHexString
-import java.math.BigDecimal
-import java.math.BigInteger
 
 @Suppress("LargeClass", "TooManyFunctions")
 open class EthereumWalletManager(
@@ -80,9 +80,9 @@ open class EthereumWalletManager(
     Approver,
     NameResolver,
     PendingTransactionHandler,
+    TransactionReceiptProvider,
     TransactionValidator by ethereumTransactionValidator,
-    EthereumGaslessDataProvider by ethereumGaslessDataProvider,
-    ExternalAddressBalanceProvider {
+    EthereumGaslessDataProvider by ethereumGaslessDataProvider {
 
     // move to constructor later
     protected val feesCalculator = EthereumFeesCalculator(wallet.blockchain)
@@ -95,16 +95,6 @@ open class EthereumWalletManager(
 
     override val currentHost: String
         get() = networkProvider.baseUrl
-
-    /**
-     * Balances of an address this wallet does not own — the network provider is otherwise unreachable from outside.
-     */
-    override suspend fun getExternalAddressBalances(
-        address: String,
-        tokens: Set<Token>,
-    ): Result<ExternalAddressBalances> {
-        return networkProvider.getExternalAddressBalances(address = address, tokens = tokens)
-    }
 
     override suspend fun updateInternal() {
         when (val result = networkProvider.getInfo(wallet.address, cardTokens)) {
@@ -147,21 +137,21 @@ open class EthereumWalletManager(
                 val ensResult = reverseResolve(wallet.address)
                 when (ensResult) {
                     is ReverseResolveAddressResult.Error -> {
-                        Log.w(this::class.java.simpleName, "Failed to fetch ENS name: ${ensResult.error}")
+                        Logger.e(this::class.java.simpleName, "Failed to fetch ENS name: ${ensResult.error}")
                     }
                     ReverseResolveAddressResult.NotSupported -> {
-                        Log.w(this::class.java.simpleName, "Ens not supported")
+                        Logger.i(this::class.java.simpleName, "Ens not supported")
                     }
                     is ReverseResolveAddressResult.Resolved -> wallet.setEnsName(ensResult.name)
                 }
             } catch (e: Exception) {
-                Log.w(this::class.java.simpleName, "Failed to fetch ENS name: $e")
+                Logger.e(this::class.java.simpleName, "Failed to fetch ENS name: $e")
             }
         }
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 
@@ -203,12 +193,13 @@ open class EthereumWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         validate(transactionData).onFailure {
             return Result.Failure(it as? BlockchainSdkError ?: BlockchainSdkError.FailedToBuildTx)
         }
 
-        val transactionToSend = prepareForSend(transactionData, signer)
+        val transactionToSend = prepareForSend(transactionData, signer, onSigned)
             .successOr { return it }
 
         return when (val sendResult = networkProvider.sendTransaction(transactionToSend.toHexString())) {
@@ -307,11 +298,15 @@ open class EthereumWalletManager(
     protected open suspend fun sign(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<Pair<ByteArray, EthereumCompiledTxInfo>> {
         val transactionToSign = transactionBuilder.buildForSign(transaction = transactionData)
-
         return when (val signResponse = signer.sign(transactionToSign.hash, wallet.publicKey)) {
-            is CompletionResult.Success -> Result.Success(signResponse.data to transactionToSign)
+            is CompletionResult.Success -> {
+                onSigned()
+
+                Result.Success(signResponse.data to transactionToSign)
+            }
             is CompletionResult.Failure -> Result.fromTangemSdkError(signResponse.error)
         }
     }
@@ -476,6 +471,12 @@ open class EthereumWalletManager(
     override suspend fun prepareForSend(
         transactionData: TransactionData,
         signer: TransactionSigner,
+    ): Result<ByteArray> = prepareForSend(transactionData, signer, onSigned = {})
+
+    protected suspend fun prepareForSend(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<ByteArray> {
         val transactionData = when (transactionData) {
             is TransactionData.Uncompiled -> {
@@ -501,7 +502,7 @@ open class EthereumWalletManager(
             }
             is TransactionData.Compiled -> transactionData
         }
-        return when (val signResponse = sign(transactionData, signer)) {
+        return when (val signResponse = sign(transactionData, signer, onSigned)) {
             is Result.Success -> {
                 val transactionToSend = try {
                     transactionBuilder.buildForSend(
@@ -707,5 +708,9 @@ open class EthereumWalletManager(
     override suspend fun addPendingGaslessTransaction(transactionData: TransactionData, txHash: String) {
         wallet.addOutgoingTransaction(transactionData, txHash)
         pendingTransactionsProvider.addPendingGaslessTransaction(txHash, transactionData)
+    }
+
+    override suspend fun getTransactionReceipt(transactionHash: String): Result<EthereumTransactionReceipt?> {
+        return networkProvider.getTransactionReceipt(transactionHash)
     }
 }

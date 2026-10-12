@@ -25,5 +25,7 @@ internal interface HederaNetworkProvider : NetworkProvider {
 
     suspend fun getNetworkFees(): Result<HederaNetworkFeesResponse>
 
+    suspend fun getNetworkNodes(): Result<List<HederaNetworkNodeResponse>>
+
     suspend fun getAccountDetail(idOrAddress: String): Result<HederaAccountDetailResponse>
 }

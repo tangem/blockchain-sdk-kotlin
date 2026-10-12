@@ -1,8 +1,8 @@
 package com.tangem.blockchain.blockchains.cosmos.network
 
-import android.util.Log
 import com.tangem.blockchain.common.BlockchainSdkError
 import com.tangem.blockchain.common.NetworkProvider
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.createRetrofitInstance
@@ -79,7 +79,7 @@ class CosmosRestProvider(override val baseUrl: String) : NetworkProvider {
         val cosmosError = try {
             errorBody?.let { errorAdapter.fromJson(it) }
         } catch (e: Exception) {
-            Log.e(this::class.java.simpleName, e.message, e)
+            Logger.e(this::class.java.simpleName, "Failed to parse the error body", e)
             null
         }
 

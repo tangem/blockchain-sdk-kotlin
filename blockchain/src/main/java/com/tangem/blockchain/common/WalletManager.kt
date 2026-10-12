@@ -1,5 +1,6 @@
 package com.tangem.blockchain.common
 
+import com.tangem.blockchain.blockchains.ethereum.network.EthereumTransactionReceipt
 import com.tangem.blockchain.common.address.AddressProvider
 import com.tangem.blockchain.common.address.DefaultAddressProvider
 import com.tangem.blockchain.common.memo.MemoState
@@ -13,6 +14,8 @@ import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.common.transaction.TransactionsSendResult
 import com.tangem.blockchain.extensions.*
+import com.tangem.blockchain.collectibles.CollectiblesVaultProvider
+import com.tangem.blockchain.collectibles.DefaultCollectiblesVaultProvider
 import com.tangem.blockchain.nft.DefaultNFTProvider
 import com.tangem.blockchain.nft.NFTProvider
 import com.tangem.blockchain.tokenbalance.DefaultTokenBalanceProvider
@@ -35,6 +38,7 @@ abstract class WalletManager(
     nftProvider: NFTProvider = DefaultNFTProvider,
     tokenBalanceProvider: TokenBalanceProvider = DefaultTokenBalanceProvider,
     yieldSupplyProvider: YieldSupplyProvider = DefaultYieldSupplyProvider,
+    collectiblesVaultProvider: CollectiblesVaultProvider = DefaultCollectiblesVaultProvider,
     messageSigner: MessageSigner = DefaultMessageSigner,
     psbtProvider: PsbtProvider = DefaultPsbtProvider,
     addressProvider: AddressProvider = DefaultAddressProvider(wallet),
@@ -43,6 +47,7 @@ abstract class WalletManager(
     NFTProvider by nftProvider,
     TokenBalanceProvider by tokenBalanceProvider,
     YieldSupplyProvider by yieldSupplyProvider,
+    CollectiblesVaultProvider by collectiblesVaultProvider,
     MessageSigner by messageSigner,
     PsbtProvider by psbtProvider,
     AddressProvider by addressProvider {
@@ -233,7 +238,11 @@ interface TransactionSender {
         sendMode: MultipleTransactionSendMode = MultipleTransactionSendMode.DEFAULT,
     ): Result<TransactionsSendResult>
 
-    suspend fun send(transactionData: TransactionData, signer: TransactionSigner): Result<TransactionSendResult>
+    suspend fun send(
+        transactionData: TransactionData,
+        signer: TransactionSigner,
+        onSigned: () -> Unit = {},
+    ): Result<TransactionSendResult>
 
     /**
      * Broadcasts a signed transaction to the blockchain network.
@@ -308,6 +317,23 @@ interface PendingTransactionHandler {
      * @param txHash The transaction ID (hash) to add.
      */
     suspend fun addPendingGaslessTransaction(transactionData: TransactionData, txHash: String)
+}
+
+/**
+ * Interface for reading the settled outcome of a broadcast transaction.
+ *
+ * Distinct from [PendingTransactionHandler], which only answers whether a transaction is still pending. A
+ * transaction that reverted is no longer pending, yet it did not do what it was sent to do — only a receipt
+ * tells the two apart.
+ */
+interface TransactionReceiptProvider {
+
+    /**
+     * Fetch the receipt of a previously broadcast transaction.
+     *
+     * @return the receipt once the transaction is mined, or null while it is still pending.
+     */
+    suspend fun getTransactionReceipt(transactionHash: String): Result<EthereumTransactionReceipt?>
 }
 
 interface TransactionSigner {

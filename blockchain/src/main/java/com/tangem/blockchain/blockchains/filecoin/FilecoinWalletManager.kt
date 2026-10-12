@@ -1,10 +1,10 @@
 package com.tangem.blockchain.blockchains.filecoin
 
-import android.util.Log
 import com.tangem.blockchain.blockchains.filecoin.models.FilecoinAccountInfo
 import com.tangem.blockchain.blockchains.filecoin.models.FilecoinTxInfo
 import com.tangem.blockchain.blockchains.filecoin.network.FilecoinNetworkService
 import com.tangem.blockchain.common.*
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
@@ -67,6 +67,7 @@ internal class FilecoinWalletManager(
     override suspend fun send(
         transactionData: TransactionData,
         signer: TransactionSigner,
+        onSigned: () -> Unit,
     ): Result<TransactionSendResult> {
         return try {
             val txBuilder = FilecoinTransactionBuilder(wallet)
@@ -75,6 +76,8 @@ internal class FilecoinWalletManager(
             when (val signingResult = signer.sign(hash, wallet.publicKey)) {
                 is CompletionResult.Failure -> Result.fromTangemSdkError(signingResult.error)
                 is CompletionResult.Success -> {
+                    onSigned()
+
                     val signature = UnmarshalHelper.unmarshalSignatureExtended(
                         signature = signingResult.data,
                         hash = hash,
@@ -99,7 +102,7 @@ internal class FilecoinWalletManager(
                 }
             }
         } catch (e: Exception) {
-            Log.e(this::class.java.simpleName, e.toBlockchainSdkError().customMessage)
+            Logger.e(this::class.java.simpleName, e.toBlockchainSdkError().customMessage)
             throw e
         }
     }
@@ -115,7 +118,7 @@ internal class FilecoinWalletManager(
     }
 
     private fun updateError(error: BlockchainError) {
-        Log.e(this::class.java.simpleName, error.customMessage)
+        Logger.e(this::class.java.simpleName, error.customMessage)
         if (error is BlockchainSdkError) throw error
     }
 }
