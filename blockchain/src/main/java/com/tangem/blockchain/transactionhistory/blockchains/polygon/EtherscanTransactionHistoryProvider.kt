@@ -289,8 +289,11 @@ internal class EtherscanTransactionHistoryProvider(
         }
     }
 
+    // An unverified contract has no function name in the explorer, only the selector; a plain transfer reports an empty one
     private val PolygonTransaction.isContractInteraction: Boolean
-        get() = !contractAddress.isNullOrEmpty() || !functionName.isNullOrEmpty()
+        get() = !contractAddress.isNullOrEmpty() ||
+            !functionName.isNullOrEmpty() ||
+            !methodId?.removePrefix("0x").isNullOrEmpty()
 
     private fun PolygonTransactionHistoryResponse.extractApiError(): PolygonScanApiError? {
         return if (!this.isSuccessful) {
