@@ -11,6 +11,8 @@ import com.tangem.blockchain.extensions.toBigDecimalOrDefault
 import com.tangem.blockchain.network.blockbook.network.BlockBookApi
 import com.tangem.blockchain.network.blockbook.network.responses.GetAddressResponse
 import com.tangem.blockchain.network.blockbook.network.responses.feeAmount
+import com.tangem.blockchain.network.blockbook.network.responses.isOwnedBy
+import com.tangem.blockchain.network.blockbook.network.responses.isOwnedByXpub
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.transactionhistory.models.TransactionHistoryItem
@@ -166,7 +168,7 @@ internal class BitcoinTransactionHistoryProvider(
     private fun GetAddressResponse.Transaction.toTransactionHistoryItem(
         walletAddress: String,
     ): TransactionHistoryItem? {
-        val isOutgoing = vin.any { it.addresses?.contains(walletAddress) == true }
+        val isOutgoing = vin.any { it.isOwnedBy(walletAddress) }
         val transactionAmount = extractAmount(
             isOutgoing = isOutgoing,
             tx = this,
@@ -192,7 +194,7 @@ internal class BitcoinTransactionHistoryProvider(
         walletAddress: String,
     ): TransactionHistoryItem.DestinationType {
         val outputsWithOtherAddresses = tx.vout
-            .filter { it.addresses?.contains(walletAddress) == false }
+            .filterNot { it.isOwnedBy(walletAddress) }
             .mapNotNull { it.addresses }
             .flatten()
             .toSet()
@@ -216,7 +218,7 @@ internal class BitcoinTransactionHistoryProvider(
         walletAddress: String,
     ): TransactionHistoryItem.SourceType {
         val inputsWithOtherAddresses = tx.vin
-            .filter { it.addresses?.contains(walletAddress) == false }
+            .filterNot { it.isOwnedBy(walletAddress) }
             .mapNotNull { it.addresses }
             .flatten()
             .toSet()
@@ -239,18 +241,18 @@ internal class BitcoinTransactionHistoryProvider(
         return try {
             val amount = if (isOutgoing) {
                 val outputs = tx.vout
-                    .filter { it.addresses?.contains(walletAddress) == false }
+                    .filterNot { it.isOwnedBy(walletAddress) }
                     .mapNotNull { it.value?.toBigDecimalOrNull() }
                     .sumOf { it }
                 val fee = tx.fees.toBigDecimalOrDefault()
                 outputs + fee
             } else {
                 val outputs = tx.vout
-                    .filter { it.addresses?.contains(walletAddress) == true }
+                    .filter { it.isOwnedBy(walletAddress) }
                     .map { it.value.toBigDecimalOrDefault() }
                     .sumOf { it }
                 val inputs = tx.vin
-                    .filter { it.addresses?.contains(walletAddress) == true }
+                    .filter { it.isOwnedBy(walletAddress) }
                     .map { it.value.toBigDecimalOrDefault() }
                     .sumOf { it }
                 outputs - inputs
@@ -265,7 +267,7 @@ internal class BitcoinTransactionHistoryProvider(
     }
 
     private fun GetAddressResponse.Transaction.toTransactionHistoryItemByOwnership(): TransactionHistoryItem? {
-        val isOutgoing = vin.any { it.isOwn == true }
+        val isOutgoing = vin.any { it.isOwnedByXpub() }
         val transactionAmount = extractAmountByOwnership(isOutgoing = isOutgoing, tx = this, blockchain = blockchain)
 
         return TransactionHistoryItem(
@@ -285,7 +287,7 @@ internal class BitcoinTransactionHistoryProvider(
         tx: GetAddressResponse.Transaction,
     ): TransactionHistoryItem.DestinationType {
         val externalOutputs = tx.vout
-            .filter { it.isOwn != true }
+            .filterNot { it.isOwnedByXpub() }
             .mapNotNull { it.addresses }
             .flatten()
             .toSet()
@@ -306,7 +308,7 @@ internal class BitcoinTransactionHistoryProvider(
 
     private fun sourceTypeByOwnership(tx: GetAddressResponse.Transaction): TransactionHistoryItem.SourceType {
         val externalInputs = tx.vin
-            .filter { it.isOwn != true }
+            .filterNot { it.isOwnedByXpub() }
             .mapNotNull { it.addresses }
             .flatten()
             .toSet()
@@ -325,13 +327,13 @@ internal class BitcoinTransactionHistoryProvider(
         return try {
             val amount = if (isOutgoing) {
                 val outputs = tx.vout
-                    .filter { it.isOwn != true }
+                    .filterNot { it.isOwnedByXpub() }
                     .mapNotNull { it.value?.toBigDecimalOrNull() }
                     .sumOf { it }
                 outputs + tx.fees.toBigDecimalOrDefault()
             } else {
                 tx.vout
-                    .filter { it.isOwn == true }
+                    .filter { it.isOwnedByXpub() }
                     .mapNotNull { it.value?.toBigDecimalOrNull() }
                     .sumOf { it }
             }
@@ -345,8 +347,8 @@ internal class BitcoinTransactionHistoryProvider(
     }
 
     private fun GetAddressResponse.Transaction.firstOwnVoutAddress(): String? =
-        vout.firstOrNull { it.isOwn == true }?.addresses?.firstOrNull()
+        vout.firstOrNull { it.isOwnedByXpub() }?.addresses?.firstOrNull()
 
     private fun GetAddressResponse.Transaction.firstOwnVinAddress(): String? =
-        vin.firstOrNull { it.isOwn == true }?.addresses?.firstOrNull()
+        vin.firstOrNull { it.isOwnedByXpub() }?.addresses?.firstOrNull()
 }
