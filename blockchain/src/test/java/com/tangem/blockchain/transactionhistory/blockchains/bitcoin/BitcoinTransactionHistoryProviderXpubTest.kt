@@ -197,6 +197,45 @@ class BitcoinTransactionHistoryProviderXpubTest {
     }
 
     @Test
+    fun `spending a zero-of-one multisig with an own key is not outgoing`() = runTest {
+        // OP_0 <own key> OP_1 OP_CHECKMULTISIG needs no signature; BlockBook marks it isOwn as it lists one address
+        val tx = tx(
+            txid = "zeroOfOne",
+            fees = "1000000",
+            vin = listOf(vin(address = OWN_MAIN, value = "149902000000", isOwn = true, isAddress = false)),
+            vout = listOf(
+                vout(RECIPIENT, "149900000000", isOwn = null),
+                vout(address = OWN_MAIN, value = "1000000", isOwn = true, isAddress = true),
+            ),
+        )
+        coEvery { blockBookApi.getXpubInfo(DESCRIPTOR, null, PAGE_SIZE) } returns xpubResponse(listOf(tx), page = 1)
+
+        val item = singleItem()
+
+        assertThat(item.isOutgoing).isFalse()
+        assertThat(item.amount.value!!.compareTo(BigDecimal("0.01"))).isEqualTo(0)
+    }
+
+    @Test
+    fun `zero-of-one multisig output with an own key is not counted as received`() = runTest {
+        val tx = tx(
+            txid = "zeroOfOneOutput",
+            fees = "1000000",
+            vin = listOf(vin(SENDER, "149902000000", isOwn = null)),
+            vout = listOf(
+                vout(address = OWN_MAIN, value = "149900000000", isOwn = true, isAddress = false),
+                vout(address = OWN_MAIN, value = "1000000", isOwn = true, isAddress = true),
+            ),
+        )
+        coEvery { blockBookApi.getXpubInfo(DESCRIPTOR, null, PAGE_SIZE) } returns xpubResponse(listOf(tx), page = 1)
+
+        val item = singleItem()
+
+        assertThat(item.isOutgoing).isFalse()
+        assertThat(item.amount.value!!.compareTo(BigDecimal("0.01"))).isEqualTo(0)
+    }
+
+    @Test
     fun `unconfirmed transaction has Unconfirmed status`() = runTest {
         val tx = tx(
             txid = "pending",
@@ -387,11 +426,22 @@ class BitcoinTransactionHistoryProviderXpubTest {
         voteList = null,
     )
 
-    private fun vin(address: String, value: String, isOwn: Boolean?) =
-        GetAddressResponse.Transaction.Vin(addresses = listOf(address), value = value, isOwn = isOwn)
+    private fun vin(address: String, value: String, isOwn: Boolean?, isAddress: Boolean? = null) =
+        GetAddressResponse.Transaction.Vin(
+            addresses = listOf(address),
+            value = value,
+            isAddress = isAddress,
+            isOwn = isOwn,
+        )
 
-    private fun vout(address: String, value: String, isOwn: Boolean?) =
-        GetAddressResponse.Transaction.Vout(addresses = listOf(address), hex = null, value = value, isOwn = isOwn)
+    private fun vout(address: String, value: String, isOwn: Boolean?, isAddress: Boolean? = null) =
+        GetAddressResponse.Transaction.Vout(
+            addresses = listOf(address),
+            hex = null,
+            value = value,
+            isAddress = isAddress,
+            isOwn = isOwn,
+        )
 
     private companion object {
         const val DESCRIPTOR = "pkh(xpub6BwskqRoNd523sEbE7h6hGGg2qT6zyJ5pQKeXESCTSe5iiYcPUmtMQJTL3nwnkgyAq)"
