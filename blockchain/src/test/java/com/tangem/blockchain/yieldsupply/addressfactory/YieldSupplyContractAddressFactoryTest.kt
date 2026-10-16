@@ -14,7 +14,7 @@ internal class YieldSupplyContractAddressFactoryTest {
 
     @Before
     fun setUp() {
-        initToggles(isMonadYieldSupplyEnabled = true)
+        initToggles(isMonadEnabled = true)
     }
 
     @Test
@@ -64,17 +64,17 @@ internal class YieldSupplyContractAddressFactoryTest {
 
     @Test
     fun `Monad is not supported while its yield supply toggle is off`() {
-        initToggles(isMonadYieldSupplyEnabled = false)
+        initToggles(isMonadEnabled = false)
 
         assertThat(YieldSupplyContractAddressFactory(Blockchain.Monad).isSupported()).isFalse()
     }
 
-    private fun initToggles(isMonadYieldSupplyEnabled: Boolean) {
+    private fun initToggles(isMonadEnabled: Boolean) {
         DepsContainer.onInit(
             config = mockk<BlockchainSdkConfig>(relaxed = true),
             featureToggles = BlockchainFeatureToggles(
                 isYieldSupplyEnabled = true,
-                isMonadYieldSupplyEnabled = isMonadYieldSupplyEnabled,
+                isMonadEnabled = isMonadEnabled,
             ),
         )
     }

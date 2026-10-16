@@ -1,10 +1,12 @@
 package com.tangem.blockchain.transactionhistory.blockchains.polygon
 
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.pagination.Page
+import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.transactionhistory.TransactionHistoryState
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.EtherScanApi
@@ -28,6 +30,11 @@ class EtherscanTransactionHistoryProviderTest {
     private val api = mockk<EtherScanApi>()
     private val provider = EtherscanTransactionHistoryProvider(
         blockchain = Blockchain.Polygon,
+        api = api,
+        etherscanApiKey = API_KEY,
+    )
+    private val monadProvider = EtherscanTransactionHistoryProvider(
+        blockchain = Blockchain.Monad,
         api = api,
         etherscanApiKey = API_KEY,
     )
@@ -177,6 +184,90 @@ class EtherscanTransactionHistoryProviderTest {
         }
     }
 
+    @Test
+    fun `a Monad call to an unverified contract is recognised by its selector alone`() = runTest {
+        val call = coinTransaction(to = CONTRACT, value = "0", functionName = "", methodId = CLAIM_SELECTOR)
+        stubCoinPage(chainId = MONAD_CHAIN_ID, txs = listOf(call))
+
+        val page = loadPage(monadProvider)
+
+        assertThat(page.items).containsExactly(
+            coinItem(
+                to = TransactionHistoryItem.AddressType.Contract(CONTRACT),
+                type = TransactionHistoryItem.TransactionType.ContractMethod(
+                    id = CLAIM_SELECTOR,
+                    callData = call.input,
+                ),
+                wei = "0",
+                blockchain = Blockchain.Monad,
+            ),
+        )
+    }
+
+    @Test
+    fun `a Monad coin transfer to a user with input data stays a transfer`() = runTest {
+        val transfer = coinTransaction(to = RECIPIENT, value = "1", functionName = "", methodId = CLAIM_SELECTOR)
+        stubCoinPage(chainId = MONAD_CHAIN_ID, txs = listOf(transfer))
+
+        val page = loadPage(monadProvider)
+
+        assertThat(page.items).containsExactly(
+            coinItem(
+                to = TransactionHistoryItem.AddressType.User(RECIPIENT),
+                type = TransactionHistoryItem.TransactionType.Transfer,
+                wei = "1",
+                blockchain = Blockchain.Monad,
+            ),
+        )
+    }
+
+    @Test
+    fun `outside Monad a selector without a function name is not a contract call`() = runTest {
+        val zeroValueCall = coinTransaction(to = CONTRACT, value = "0", functionName = "", methodId = CLAIM_SELECTOR)
+        val transfer = coinTransaction(to = RECIPIENT, value = "1", functionName = "", methodId = CLAIM_SELECTOR)
+        stubCoinPage(chainId = CHAIN_ID, txs = listOf(zeroValueCall, transfer))
+
+        val page = loadPage(provider)
+
+        assertThat(page.items).containsExactly(
+            coinItem(
+                to = TransactionHistoryItem.AddressType.User(RECIPIENT),
+                type = TransactionHistoryItem.TransactionType.Transfer,
+                wei = "1",
+            ),
+        )
+    }
+
+    @Test
+    fun `a plain coin transfer with an empty selector stays a transfer to the user`() = runTest {
+        listOf("0x", "", null).forEach { methodId ->
+            val transfer = coinTransaction(to = RECIPIENT, value = "1", functionName = "", methodId = methodId)
+            stubCoinPage(chainId = MONAD_CHAIN_ID, txs = listOf(transfer))
+
+            val page = loadPage(monadProvider)
+
+            assertWithMessage("methodId = $methodId").that(page.items).containsExactly(
+                coinItem(
+                    to = TransactionHistoryItem.AddressType.User(RECIPIENT),
+                    type = TransactionHistoryItem.TransactionType.Transfer,
+                    wei = "1",
+                    blockchain = Blockchain.Monad,
+                ),
+            )
+        }
+    }
+
+    private fun stubCoinPage(chainId: Int, txs: List<PolygonTransaction>) {
+        coEvery { api.getCoinTransactionHistory(chainId, SAFE, 1, PAGE_SIZE, API_KEY) } returns txsResponse(txs)
+    }
+
+    private suspend fun loadPage(
+        provider: EtherscanTransactionHistoryProvider,
+    ): PaginationWrapper<TransactionHistoryItem> {
+        val request = request(Page.Initial, shouldIncludeInternalTransfers = false)
+        return (provider.getTransactionsHistory(request) as Result.Success).data
+    }
+
     private fun stubWholeBlock(block: Long, internals: List<EtherscanInternalTransaction>) {
         coEvery {
             api.getCoinTransactionHistory(
@@ -271,6 +362,49 @@ class EtherscanTransactionHistoryProviderTest {
         blockNumber = block.toString(),
     )
 
+    private fun coinTransaction(to: String, value: String, functionName: String, methodId: String?) =
+        PolygonTransaction(
+            confirmations = "12",
+            contractAddress = "",
+            from = SAFE,
+            functionName = functionName,
+            methodId = methodId,
+            gasPrice = "2",
+            gasUsed = "3",
+            hash = TX_HASH,
+            isError = "0",
+            timeStamp = TIMESTAMP,
+            to = to,
+            txReceiptStatus = "1",
+            value = value,
+            input = if (methodId?.removePrefix("0x").isNullOrEmpty()) "0x" else "${methodId}0000",
+            blockNumber = "1",
+        )
+
+    private fun coinItem(
+        to: TransactionHistoryItem.AddressType,
+        type: TransactionHistoryItem.TransactionType,
+        wei: String,
+        blockchain: Blockchain = Blockchain.Polygon,
+    ) = TransactionHistoryItem(
+        txHash = TX_HASH,
+        timestamp = TIMESTAMP.toLong() * MILLIS_IN_SECOND,
+        isOutgoing = true,
+        destinationType = TransactionHistoryItem.DestinationType.Single(to),
+        sourceType = TransactionHistoryItem.SourceType.Single(SAFE),
+        status = TransactionHistoryItem.TransactionStatus.Confirmed,
+        type = type,
+        amount = Amount(
+            value = BigDecimal(wei).movePointLeft(blockchain.decimals()),
+            blockchain = blockchain,
+            type = AmountType.Coin,
+        ),
+        fee = Amount(
+            value = BigDecimal(6).movePointLeft(blockchain.decimals()),
+            blockchain = blockchain,
+        ),
+    )
+
     @Suppress("LongParameterList")
     private fun internal(
         block: Long,
@@ -321,6 +455,9 @@ class EtherscanTransactionHistoryProviderTest {
         const val RECIPIENT = "0x6dbd0c1957dfe9d85f74b8fe3a355b268a39ec91"
         const val FACTORY = "0x14f2982d601c9458f93bd70b218933a6f8165e7b"
         const val OTHER = "0x2c6e7c809ac1adf71c6dd0d67d488d2938eff69a"
+        const val CONTRACT = "0xcb522fef86463a665bd5493100fca7396786c572"
+        const val CLAIM_SELECTOR = "0xb4701e3e"
+        val MONAD_CHAIN_ID = requireNotNull(Blockchain.Monad.getChainId())
         const val TX_HASH = "0x55233c9ef541232c1a94f8b0806401e4e5188930ff0c795ffa51e96a92e53da0"
         const val TIMESTAMP = "1790025057"
     }

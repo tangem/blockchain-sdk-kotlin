@@ -58,6 +58,12 @@ internal object TransactionHistoryProviderFactory {
                 DefaultTransactionHistoryProvider
             }
 
+            Blockchain.Monad -> if (DepsContainer.blockchainFeatureToggles.isMonadEnabled) {
+                createEtherscanProvider(blockchain, config)
+            } else {
+                DefaultTransactionHistoryProvider
+            }
+
             Blockchain.ZkSyncEra -> createZkSyncExplorerProvider(blockchain)
 
             Blockchain.Adi, Blockchain.AdiTestnet -> createAdiExplorerProvider(blockchain)
