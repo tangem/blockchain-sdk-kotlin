@@ -6,6 +6,10 @@ import com.tangem.blockchain.extensions.Result
 object SolanaTransactionHelper {
 
     private const val SIGNATURE_LENGTH = 64
+    private const val MESSAGE_HEADER_LENGTH = 3
+    private const val INSTRUCTION_DISCRIMINATOR_LENGTH = 4
+    private val SYSTEM_PROGRAM_KEY = ByteArray(SolanaMessageFormat.PUBLIC_KEY_LENGTH)
+    private val ADVANCE_NONCE_ACCOUNT_DISCRIMINATOR = byteArrayOf(0x04, 0x00, 0x00, 0x00)
 
     /**
      * Returns the serialized message of a compiled transaction — the exact bytes that are signed.
@@ -51,6 +55,41 @@ object SolanaTransactionHelper {
             Result.Failure(e)
         } catch (e: Exception) {
             Result.Failure(BlockchainSdkError.CustomError("Failed to place Solana signature: ${e.message}"))
+        }
+    }
+
+    /**
+     * Overwrites the recent blockhash of an unsigned compiled [transaction] with [blockhash] in place: only those
+     * 32 bytes change, every other byte is copied verbatim, so the transaction stays exactly as it was built except
+     * for the blockhash.
+     *
+     * Refused, as [Result.Failure], when the slot cannot be replaced safely: a transaction that already carries a
+     * signature ([BlockchainSdkError.Solana.TransactionAlreadySigned] — that signature covers the old bytes) and a
+     * transaction whose first instruction is `SystemProgram::AdvanceNonceAccount`
+     * ([BlockchainSdkError.Solana.DurableNonceTransaction] — the slot holds a durable nonce, not a blockhash).
+     * Never throws — malformed input is returned as a failure too.
+     */
+    fun replaceRecentBlockhash(transaction: ByteArray, blockhash: ByteArray): Result<ByteArray> {
+        if (blockhash.size != SolanaMessageFormat.PUBLIC_KEY_LENGTH) {
+            return Result.Failure(BlockchainSdkError.Solana.InvalidBlockhashLength)
+        }
+
+        return try {
+            val layout = messageLayout(transaction)
+            when {
+                layout.hasSignature -> Result.Failure(BlockchainSdkError.Solana.TransactionAlreadySigned)
+                layout.hasDurableNonce -> Result.Failure(BlockchainSdkError.Solana.DurableNonceTransaction)
+                else -> {
+                    val patched = transaction.copyOf().also { result ->
+                        blockhash.copyInto(result, destinationOffset = layout.blockhashOffset)
+                    }
+                    Result.Success(patched)
+                }
+            }
+        } catch (e: BlockchainSdkError) {
+            Result.Failure(e)
+        } catch (e: Exception) {
+            Result.Failure(BlockchainSdkError.CustomError("Failed to replace Solana recent blockhash: ${e.message}"))
         }
     }
 
@@ -106,6 +145,70 @@ object SolanaTransactionHelper {
             repeat(signerCount) { add(reader.readBytes(SolanaMessageFormat.PUBLIC_KEY_LENGTH)) }
         }
     }.getOrDefault(emptyList())
+
+    /**
+     * Locates the recent blockhash slot of a serialized transaction and tells whether it may be replaced: whether a
+     * signature slot is already filled and whether the slot holds a durable nonce. Throws on malformed input;
+     * callers convert the throw into a result.
+     */
+    private fun messageLayout(transaction: ByteArray): MessageLayout {
+        val parsed = parse(transaction)
+        val messageOffset = transaction.size - parsed.message.size
+        val reader = ShortVecReader(parsed.message)
+
+        // Versioned (v0) messages prefix the header with `0x80 | version`; legacy messages start with the header.
+        val isVersioned = reader.peekU8() and SolanaMessageFormat.HIGH_BIT != 0
+        if (isVersioned) {
+            val version = reader.readU8() and SolanaMessageFormat.HIGH_BIT.inv()
+            if (version != SolanaMessageFormat.SUPPORTED_VERSION) {
+                throw BlockchainSdkError.Solana.UnsupportedMessageVersion
+            }
+        }
+
+        reader.skip(MESSAGE_HEADER_LENGTH)
+        val accountCount = reader.readShortVec()
+        val accountKeys = buildList {
+            repeat(accountCount) { add(reader.readBytes(SolanaMessageFormat.PUBLIC_KEY_LENGTH)) }
+        }
+
+        val blockhashOffset = messageOffset + reader.position()
+        reader.skip(SolanaMessageFormat.PUBLIC_KEY_LENGTH)
+
+        return MessageLayout(
+            blockhashOffset = blockhashOffset,
+            hasSignature = parsed.signatures.any { slot -> slot.any { it != 0.toByte() } },
+            hasDurableNonce = firstInstructionAdvancesNonce(reader, accountKeys),
+        )
+    }
+
+    /**
+     * A durable nonce transaction starts with `SystemProgram::AdvanceNonceAccount`. The program id is resolved against
+     * the static account keys only: a program id never comes from an address lookup table, so an index past the
+     * static keys describes a transaction the chain would reject and is reported rather than read as "no nonce".
+     */
+    private fun firstInstructionAdvancesNonce(reader: ShortVecReader, accountKeys: List<ByteArray>): Boolean {
+        if (reader.readShortVec() == 0) return false
+
+        val programIdIndex = reader.readU8()
+        reader.skip(reader.readShortVec()) // account indexes
+        val data = reader.readBytes(reader.readShortVec())
+
+        val programId = accountKeys.getOrNull(programIdIndex)
+            ?: throw BlockchainSdkError.Solana.ProgramIdOutsideStaticKeys
+        if (!programId.contentEquals(SYSTEM_PROGRAM_KEY)) return false
+
+        return data.size >= INSTRUCTION_DISCRIMINATOR_LENGTH &&
+            data.copyOfRange(0, INSTRUCTION_DISCRIMINATOR_LENGTH).contentEquals(ADVANCE_NONCE_ACCOUNT_DISCRIMINATOR)
+    }
+
+    private class MessageLayout(
+        /** Byte offset of the 32-byte recent blockhash slot in the original transaction buffer. */
+        val blockhashOffset: Int,
+        /** Whether any signature slot holds something other than the zero placeholder. */
+        val hasSignature: Boolean,
+        /** Whether the first instruction is `SystemProgram::AdvanceNonceAccount`, i.e. the slot holds a nonce. */
+        val hasDurableNonce: Boolean,
+    )
 
     private class ParsedTransaction(
         /** The serialized message — the bytes that are signed. */
