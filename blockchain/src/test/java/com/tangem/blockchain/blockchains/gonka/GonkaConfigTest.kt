@@ -37,13 +37,15 @@ internal class GonkaConfigTest {
     }
 
     @Test
-    fun `GIVEN Gonka chain WHEN inspected THEN mainnet ngonka with no fees`() {
+    fun `GIVEN Gonka chain WHEN inspected THEN mainnet ngonka with Keplr gas price steps`() {
         val chain = CosmosChain.Gonka
 
         assertThat(chain.blockchain).isEqualTo(Blockchain.Gonka)
         assertThat(chain.chainId).isEqualTo("gonka-mainnet")
         assertThat(chain.smallestDenomination).isEqualTo("ngonka")
         assertThat(chain.allowsFeeSelection).isEqualTo(FeeSelectionState.Forbids)
-        assertThat(chain.gasPrices(AmountType.Coin)).containsExactly(BigDecimal.ZERO)
+        assertThat(chain.gasPrices(AmountType.Coin))
+            .containsExactly(BigDecimal(1), BigDecimal(1.5), BigDecimal(2))
+            .inOrder()
     }
 }
