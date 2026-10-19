@@ -28,7 +28,7 @@ internal interface EtherScanApi {
         @Query("offset") offset: Int,
         @Query("apikey") apiKey: String,
         @Query("action") action: String = "tokentx",
-        @Query("contractAddress") contractAddress: String?,
+        @Query("contractaddress") contractAddress: String?,
         @Query("module") module: String = "account",
         @Query("startblock") startBlock: Long = 0,
         @Query("endblock") endBlock: Long = DEFAULT_END_BLOCK,
