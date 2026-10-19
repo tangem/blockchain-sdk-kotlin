@@ -189,10 +189,13 @@ class SolanaWalletManager internal constructor(
     ): Result<TransactionSendResult> {
         return when (transactionData) {
             is TransactionData.Compiled -> {
-                val startSendingTimestamp = SystemClock.elapsedRealtime()
-                val signedTransaction = prepareForSend(transactionData, signer, onSigned)
+                val transactionToSend = withFreshBlockhashIfRequested(listOf(transactionData))
                     .successOr { return it }
-                sendTransaction(signedTransaction, transactionData, startSendingTimestamp)
+                    .first()
+                val startSendingTimestamp = SystemClock.elapsedRealtime()
+                val signedTransaction = prepareForSend(transactionToSend, signer, onSigned)
+                    .successOr { return it }
+                sendTransaction(signedTransaction, transactionToSend, startSendingTimestamp)
             }
             is TransactionData.Uncompiled -> {
                 val ownerAccountInfo = getOwnerAccountInfo(transactionData.amount)?.successOr {
@@ -230,16 +233,17 @@ class SolanaWalletManager internal constructor(
             return Result.Failure(BlockchainSdkError.CustomError("Transaction list is empty"))
         }
 
+        val transactionsToSend = withFreshBlockhashIfRequested(transactionDataList).successOr { return it }
         val startSendingTimestamp = SystemClock.elapsedRealtime()
 
-        val signedTransactions = prepareForSendMultiple(transactionDataList, signer)
+        val signedTransactions = prepareForSendMultiple(transactionsToSend, signer)
             .successOr { return it }
 
         val sendResults = mutableListOf<Result<TransactionSendResult>>()
 
         if (sendMode == TransactionSender.MultipleTransactionSendMode.WAIT_AFTER_FIRST) {
             val signedTx = signedTransactions.first()
-            val originalTx = transactionDataList.first()
+            val originalTx = transactionsToSend.first()
 
             when (val result = sendTransaction(signedTx, originalTx, startSendingTimestamp)) {
                 is Result.Success -> {
@@ -259,7 +263,7 @@ class SolanaWalletManager internal constructor(
         val shouldDropFirst = sendMode == TransactionSender.MultipleTransactionSendMode.WAIT_AFTER_FIRST
 
         val remainingSignedTransactions = signedTransactions.dropFirstIfNeeded(shouldDropFirst)
-        val remainingTransactionData = transactionDataList.dropFirstIfNeeded(shouldDropFirst)
+        val remainingTransactionData = transactionsToSend.dropFirstIfNeeded(shouldDropFirst)
 
         val otherSendResults = remainingTransactionData
             .zip(remainingSignedTransactions)
@@ -281,6 +285,59 @@ class SolanaWalletManager internal constructor(
             Result.Failure((failedResult as Result.Failure).error)
         } else {
             Result.Success(TransactionsSendResult(sendResults.mapNotNull { (it as? Result.Success)?.data?.hash }))
+        }
+    }
+
+    /**
+     * Replaces the recent blockhash of every transaction that asks for it ([SolanaTransactionExtras]) with one
+     * fetched right now, so the blockhash is as young as possible when signing starts. Transactions built ahead of
+     * time (StakeKit) otherwise reach the network with a blockhash that is already most of its ~60-90s lifetime old.
+     * A durable nonce transaction never expires, so it is sent as is. Called before the send start timestamp is
+     * taken, so the RPC start delay counts from the fetch.
+     */
+    private suspend fun withFreshBlockhashIfRequested(
+        transactionDataList: List<TransactionData>,
+    ): Result<List<TransactionData>> {
+        if (transactionDataList.none { it.isBlockhashRefreshRequested() }) {
+            return Result.Success(transactionDataList)
+        }
+
+        val blockhashInfo = multiNetworkProvider.performRequest { getLatestBlockhashInfo() }
+            .successOr { return it }
+        val blockhash = blockhashInfo.blockhash.decodeBase58()
+            ?: return Result.Failure(BlockchainSdkError.CustomError("Failed to decode Solana blockhash"))
+
+        val refreshed = transactionDataList.map { transactionData ->
+            if (transactionData.isBlockhashRefreshRequested()) {
+                replaceRecentBlockhash(transactionData.requireCompiled(), blockhash).successOr { return it }
+            } else {
+                transactionData
+            }
+        }
+        return Result.Success(refreshed)
+    }
+
+    private fun TransactionData.isBlockhashRefreshRequested(): Boolean {
+        val extras = (this as? TransactionData.Compiled)?.extras as? SolanaTransactionExtras
+        return extras?.shouldRefreshRecentBlockhash == true
+    }
+
+    private fun replaceRecentBlockhash(
+        transactionData: TransactionData.Compiled,
+        blockhash: ByteArray,
+    ): Result<TransactionData.Compiled> {
+        val original = (transactionData.value as? TransactionData.Compiled.Data.Bytes)?.data
+            ?: return Result.Failure(UnsupportedOperation("Compiled transaction must be in bytes"))
+
+        return when (val result = SolanaTransactionHelper.replaceRecentBlockhash(original, blockhash)) {
+            is Result.Success -> Result.Success(
+                transactionData.copy(value = TransactionData.Compiled.Data.Bytes(result.data)),
+            )
+            is Result.Failure -> if (result.error == BlockchainSdkError.Solana.DurableNonceTransaction) {
+                Result.Success(transactionData)
+            } else {
+                result
+            }
         }
     }
 
