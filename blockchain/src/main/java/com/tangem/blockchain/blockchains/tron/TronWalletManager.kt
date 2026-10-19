@@ -656,15 +656,14 @@ internal class TronWalletManager(
         }
 
         return try {
+            // Validated before signing so an unsupported leg fails without a card tap.
             val rawDataList = transactionDataList.map { transactionData ->
                 val uncompiled = transactionData.requireUncompiled()
-                transactionBuilder.buildForSign(
-                    amount = uncompiled.amount,
-                    source = wallet.address,
-                    destination = uncompiled.destinationAddress,
-                    block = block,
-                    extras = uncompiled.extras as? TronTransactionExtras,
-                )
+                require(uncompiled.sourceAddress == wallet.address) {
+                    "Gasless transaction must be sent from the wallet address"
+                }
+                transactionBuilder.buildForSign(transaction = uncompiled, block = block)
+                    .also(transactionBuilder::requireGaslessCompatible)
             }
 
             val hashes = rawDataList.map { it.encode().calculateSha256() }
