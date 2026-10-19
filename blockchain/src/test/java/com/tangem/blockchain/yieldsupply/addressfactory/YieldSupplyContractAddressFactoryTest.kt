@@ -53,10 +53,10 @@ internal class YieldSupplyContractAddressFactoryTest {
 
         assertThat(addresses).isEqualTo(
             YieldSupplyContractAddresses(
-                factoryContractAddress = "0xd2806fF93F5776FeA2F0c4863c56669Ec972525d",
-                processorContractAddress = "0xcb522FEF86463A665bd5493100FCA7396786c572",
-                swapExecutionRegistryAddress = "0x833C25c0D4Cb2A36A70ea8F3dE1D20C5B2973fC3",
-                latestImplementationAddress = "0x8Aa5F827245900cd14EC903bdB00c4e51a1F924b",
+                factoryContractAddress = "0x727fD7209582A4564566C1955E6C56ce9DF5B366",
+                processorContractAddress = "0xA564bC954DBC4378e4df8B6fA424bc9DAD728529",
+                swapExecutionRegistryAddress = "0xef250e2A35a4F454A9A497A108bA323986cD28B5",
+                latestImplementationAddress = "0xaaF16358336a5e292b1D70057f99c3f2e8241C63",
                 providerType = YieldSupplyProviderType.AaveV3,
             ),
         )
