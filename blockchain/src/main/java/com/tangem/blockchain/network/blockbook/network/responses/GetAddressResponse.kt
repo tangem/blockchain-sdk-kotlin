@@ -76,6 +76,7 @@ data class GetAddressResponse(
         data class Vin(
             @Json(name = "addresses") val addresses: List<String>?,
             @Json(name = "value") val value: String?,
+            @Json(name = "isAddress") val isAddress: Boolean? = null,
             // Present only in xpub queries
             @Json(name = "isOwn") val isOwn: Boolean? = null,
         )
@@ -85,6 +86,7 @@ data class GetAddressResponse(
             @Json(name = "addresses") val addresses: List<String>?,
             @Json(name = "hex") val hex: String?,
             @Json(name = "value") val value: String?,
+            @Json(name = "isAddress") val isAddress: Boolean? = null,
             // Present only in xpub queries
             @Json(name = "isOwn") val isOwn: Boolean? = null,
         )
@@ -162,3 +164,19 @@ fun GetAddressResponse.Transaction.feeAmount(blockchain: Blockchain): Amount {
         blockchain = blockchain,
     )
 }
+
+/**
+ * For bare multisig BlockBook lists the P2PKH address of every key and sets `isAddress = false`, so
+ * `OP_0 <wallet key> OP_1 OP_CHECKMULTISIG`, spendable by anyone, lists exactly the wallet's address.
+ * BlockBook's own `isOwn` ignores `isAddress` and would accept it.
+ */
+internal fun GetAddressResponse.Transaction.Vin.isOwnedBy(walletAddress: String): Boolean =
+    isAddress != false && addresses == listOf(walletAddress)
+
+internal fun GetAddressResponse.Transaction.Vout.isOwnedBy(walletAddress: String): Boolean =
+    isAddress != false && addresses == listOf(walletAddress)
+
+/** BlockBook's `isOwn` plus the `isAddress` check it lacks, see [isOwnedBy] */
+internal fun GetAddressResponse.Transaction.Vin.isOwnedByXpub(): Boolean = isOwn == true && isAddress != false
+
+internal fun GetAddressResponse.Transaction.Vout.isOwnedByXpub(): Boolean = isOwn == true && isAddress != false
