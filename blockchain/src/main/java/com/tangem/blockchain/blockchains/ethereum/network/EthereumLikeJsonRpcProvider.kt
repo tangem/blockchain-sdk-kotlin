@@ -7,10 +7,13 @@ import com.tangem.blockchain.blockchains.ethereum.tokenmethods.TokenBalanceERC20
 import com.tangem.blockchain.common.JsonRPCRequest
 import com.tangem.blockchain.common.JsonRPCResponse
 import com.tangem.blockchain.common.NetworkProvider
+import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.toBlockchainSdkError
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.retryIO
 import com.tangem.blockchain.network.createRetrofitInstance
+import com.tangem.blockchain.network.urlHost
+import kotlinx.coroutines.CancellationException
 
 /**
  * Abstract base class for Ethereum-like JSON RPC providers
@@ -188,8 +191,20 @@ internal abstract class EthereumLikeJsonRpcProvider(
             }
             Result.Success(result)
         } catch (exception: Exception) {
+            if (exception !is CancellationException) {
+                Logger.logNetwork(
+                    "$method to ${baseUrl.urlHost()} failed: ${exception.javaClass.name}: " +
+                        exception.message?.withoutCredentials(),
+                )
+            }
             Result.Failure(exception.toBlockchainSdkError())
         }
+    }
+
+    /** Some providers keep the API key in [baseUrl] or [postfixUrl], and exception messages may echo the URL. */
+    private fun String.withoutCredentials(): String {
+        val withoutBaseUrl = replace(baseUrl, "${baseUrl.urlHost()}/******")
+        return if (postfixUrl.isBlank()) withoutBaseUrl else withoutBaseUrl.replace(postfixUrl, "******")
     }
 
     private companion object {
