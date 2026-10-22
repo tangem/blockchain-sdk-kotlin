@@ -189,19 +189,29 @@ class TronTransactionBuilder {
     }
 
     /**
-     * Serialises a signed Tron transaction into the TronWeb-compatible JSON format that the
-     * gasless backend expects (`JSON.parse`-able signed transaction object).
-     *
-     * Only [Transaction.Contract.ContractType.TriggerSmartContract] contracts are supported
-     * because gasless operations are limited to token transfers via smart contracts.
+     * Only a [Transaction.Contract.ContractType.TriggerSmartContract] without native value and memo is
+     * supported: a gasless sender has no TRX to attach or to pay the memo fee with, and the JSON carries
+     * neither field, so its keys would not match the signed `raw_data_hex`.
      */
-    fun buildSignedTronWebJson(rawData: Transaction.raw, signature: ByteArray): String {
+    fun requireGaslessCompatible(rawData: Transaction.raw): TriggerSmartContract {
         val contract = rawData.contract.firstOrNull() ?: error("Tron raw_data has no contract")
         require(contract.type == Transaction.Contract.ContractType.TriggerSmartContract) {
             "Only TriggerSmartContract is supported for gasless, got ${contract.type}"
         }
         val trigger = contract.parameter?.unpack(TriggerSmartContract.ADAPTER)
             ?: error("Failed to unpack TriggerSmartContract")
+        require(trigger.call_value == 0L) { "Gasless call must not carry native value" }
+        require(rawData.data_.size == 0) { "Gasless transaction must not carry a memo" }
+        return trigger
+    }
+
+    /**
+     * Serialises a signed Tron transaction into the TronWeb-compatible JSON format that the
+     * gasless backend expects (`JSON.parse`-able signed transaction object).
+     * Accepts only what [requireGaslessCompatible] accepts.
+     */
+    fun buildSignedTronWebJson(rawData: Transaction.raw, signature: ByteArray): String {
+        val trigger = requireGaslessCompatible(rawData)
 
         val rawBytes = rawData.encode()
         val dto = TronWebSignedTransaction(

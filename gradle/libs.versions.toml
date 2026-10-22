@@ -52,6 +52,7 @@ kethereum = "0.86.0"
 komputingKhex = "1.1.2"
 eddsa = "0.3.0"
 cbor = "0.8"
+ensNormalize = "0.3.1"
 
 # Tangem native
 blstlib = "master-15"
@@ -153,6 +154,7 @@ crypto-spongycastle-prov = { module = "com.madgag.spongycastle:prov", version.re
 crypto-bouncycastle = { module = "org.bouncycastle:bcprov-jdk15to18", version.ref = "bouncycastle" }
 crypto-eddsa = { module = "net.i2p.crypto:eddsa", version.ref = "eddsa" }
 crypto-cbor = { module = "co.nstant.in:cbor", version.ref = "cbor" }
+crypto-ens-normalize = { module = "io.github.adraffy:ens-normalize", version.ref = "ensNormalize" }
 
 # Kethereum
 kethereum-extensions-kotlin = { module = "com.github.walleth.kethereum:extensions_kotlin", version.ref = "kethereum" }
