@@ -261,18 +261,11 @@ internal class SolanaTransactionBuilder(
         tokenProgramId: SolanaTokenProgram.ID,
         sourceAccountInfo: SolanaSplAccountInfo,
     ): Result<BigDecimal> {
-        if (!DepsContainer.blockchainFeatureToggles.isSolanaScaledUiAmountEnabled) return Result.Success(uiAmount)
         if (tokenProgramId != SolanaTokenProgram.ID.TOKEN_2022) return Result.Success(uiAmount)
 
-        val multiplier = multiplierResolver.resolve(token.contractAddress)
+        val multiplier = resolveScaledUiAmountMultiplier(token)
             .successOr { return it }
             ?: return Result.Success(uiAmount)
-
-        if (multiplier <= BigDecimal.ZERO) {
-            return Result.Failure(BlockchainSdkError.FailedToBuildTx)
-        }
-
-        if (multiplier.compareTo(BigDecimal.ONE) == 0) return Result.Success(uiAmount)
 
         // The multiplier scales the amount the card signs, so it is only trusted as far as it agrees with the
         // balance shown to the user. See [SolanaScaledUiAmount].
@@ -285,10 +278,27 @@ internal class SolanaTransactionBuilder(
         )
     }
 
-    private fun isMultiplierConsistentWithBalance(
-        multiplier: BigDecimal,
-        sourceAccountInfo: SolanaSplAccountInfo,
-    ): Boolean {
+    /**
+     * Returns the multiplier the mint of [token] declares, or `null` when the shown and on-chain amounts coincide.
+     * The value is corroborated by several providers but not yet checked against a balance.
+     */
+    suspend fun resolveScaledUiAmountMultiplier(token: Token): Result<BigDecimal?> {
+        if (!DepsContainer.blockchainFeatureToggles.isSolanaScaledUiAmountEnabled) return Result.Success(null)
+
+        val multiplier = multiplierResolver.resolve(token.contractAddress)
+            .successOr { return it }
+            ?: return Result.Success(null)
+
+        if (multiplier <= BigDecimal.ZERO) {
+            return Result.Failure(BlockchainSdkError.FailedToBuildTx)
+        }
+
+        if (multiplier.compareTo(BigDecimal.ONE) == 0) return Result.Success(null)
+
+        return Result.Success(multiplier)
+    }
+
+    fun isMultiplierConsistentWithBalance(multiplier: BigDecimal, sourceAccountInfo: SolanaSplAccountInfo): Boolean {
         val tokenAmount = sourceAccountInfo.value.data
             ?.parsed
             ?.info

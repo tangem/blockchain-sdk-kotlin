@@ -26,11 +26,14 @@ import com.tangem.blockchain.tokenbalance.TokenBalanceProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.p2p.solanaj.core.PublicKey
 import org.p2p.solanaj.programs.Program
 import org.p2p.solanaj.rpc.Cluster
 import org.p2p.solanaj.rpc.types.config.Commitment
 import java.math.BigDecimal
+import java.util.concurrent.ConcurrentHashMap
 
 /**
 [REDACTED_AUTHOR]
@@ -52,6 +55,7 @@ class SolanaWalletManager internal constructor(
     collectiblesVaultProvider = collectiblesVaultProvider,
 ),
     RentProvider,
+    ScaledUiAmountProvider,
     TransactionPreparer,
     TransactionValidator {
 
@@ -69,6 +73,9 @@ class SolanaWalletManager internal constructor(
     )
 
     private var accountSize: Long = MIN_ACCOUNT_DATA_SIZE
+
+    private val scaledUiAmountMultiplierMutexes = ConcurrentHashMap<String, Mutex>()
+    private val scaledUiAmountMultipliers = ConcurrentHashMap<String, CachedScaledUiAmountMultiplier>()
 
     override val currentHost: String
         get() = multiNetworkProvider.currentProvider.baseUrl
@@ -631,6 +638,48 @@ class SolanaWalletManager internal constructor(
         return Result.Success(rent)
     }
 
+    /**
+     * A swap screen quotes every provider in parallel and re-quotes on each keystroke, and every resolution polls
+     * several providers, so the answer is shared between concurrent callers. It is kept only long enough to answer
+     * that burst: the mint can switch to a scheduled multiplier at any moment.
+     */
+    override suspend fun getScaledUiAmountMultiplier(token: Token): Result<BigDecimal?> =
+        scaledUiAmountMultiplierMutexes.getOrPut(token.contractAddress) { Mutex() }.withLock {
+            val now = SystemClock.elapsedRealtime()
+            scaledUiAmountMultipliers[token.contractAddress]
+                ?.takeIf { now < it.expiresAt }
+                ?.let { return@withLock it.result }
+
+            val result = resolveVerifiedScaledUiAmountMultiplier(token)
+            scaledUiAmountMultipliers[token.contractAddress] =
+                CachedScaledUiAmountMultiplier(result, now + SCALED_UI_AMOUNT_MULTIPLIER_TTL_MS)
+            result
+        }
+
+    /**
+     * The mint alone tells whether the token is scaled, so a plain token never needs the owner's token account -
+     * which may not exist yet. A scaled one is checked against the balance, as a transfer does.
+     */
+    private suspend fun resolveVerifiedScaledUiAmountMultiplier(token: Token): Result<BigDecimal?> {
+        val multiplier = transactionBuilder.resolveScaledUiAmountMultiplier(token)
+            .successOr { return it }
+            ?: return Result.Success(null)
+
+        // Nothing can be spent from an empty balance, and the owner may have no token account to check against yet.
+        if (wallet.getTokenAmount(token)?.value?.signum() == 0) return Result.Success(multiplier)
+
+        val (sourceAccountInfo, _) = tokenAccountInfoFinder.getTokenAccountInfoAndTokenProgramId(
+            account = account,
+            mint = PublicKey(token.contractAddress),
+        ).successOr { return it }
+
+        if (!transactionBuilder.isMultiplierConsistentWithBalance(multiplier, sourceAccountInfo)) {
+            return Result.Failure(BlockchainSdkError.Solana.ScaledUiAmountMultiplierBalanceMismatch)
+        }
+
+        return Result.Success(multiplier)
+    }
+
     override suspend fun minimalBalanceForRentExemption(): Result<BigDecimal> {
         return getMinimalBalanceForRentExemptionInSol(accountSize)
     }
@@ -660,6 +709,8 @@ class SolanaWalletManager internal constructor(
 
     private fun <T> List<T>.dropFirstIfNeeded(condition: Boolean) = if (condition) drop(1) else this
 
+    private class CachedScaledUiAmountMultiplier(val result: Result<BigDecimal?>, val expiresAt: Long)
+
     private companion object {
         const val MIN_ACCOUNT_DATA_SIZE = 0L
 
@@ -670,5 +721,7 @@ class SolanaWalletManager internal constructor(
         // delay between SPLIT transaction (if any) and other (usually UNSTAKE)
         // SPLIT transaction is not executed immediately, so we should wait for 15 seconds to send UNSTAKE transactions
         const val DELAY_AFTER_SPLIT_TRANSACTION = 15000L
+
+        const val SCALED_UI_AMOUNT_MULTIPLIER_TTL_MS = 5_000L
     }
 }

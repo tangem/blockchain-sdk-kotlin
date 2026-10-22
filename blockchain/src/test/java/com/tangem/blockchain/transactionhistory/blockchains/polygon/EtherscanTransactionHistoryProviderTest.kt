@@ -5,6 +5,7 @@ import com.google.common.truth.Truth.assertWithMessage
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.pagination.Page
 import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.extensions.Result
@@ -185,6 +186,31 @@ class EtherscanTransactionHistoryProviderTest {
     }
 
     @Test
+    fun `token history drops transfers of other contracts the explorer returned despite the filter`() = runTest {
+        coEvery {
+            api.getTokenTransactionHistory(
+                chainId = CHAIN_ID,
+                address = SAFE,
+                page = 1,
+                offset = PAGE_SIZE,
+                apiKey = API_KEY,
+                contractAddress = USDC,
+            )
+        } returns txsResponse(
+            listOf(
+                tokenTransfer(hash = USDC_TX_HASH, contract = USDC.uppercase(), value = "974416"),
+                tokenTransfer(hash = FOREIGN_TX_HASH, contract = FOREIGN_TOKEN, value = "5675307337351213033"),
+            ),
+        )
+
+        val result = provider.getTransactionsHistory(tokenRequest()) as Result.Success
+
+        assertThat(result.data.items.map { it.txHash to it.amount.value }).containsExactly(
+            USDC_TX_HASH to BigDecimal("0.974416"),
+        )
+    }
+
+    @Test
     fun `a Monad call to an unverified contract is recognised by its selector alone`() = runTest {
         val call = coinTransaction(to = CONTRACT, value = "0", functionName = "", methodId = CLAIM_SELECTOR)
         stubCoinPage(chainId = MONAD_CHAIN_ID, txs = listOf(call))
@@ -220,6 +246,54 @@ class EtherscanTransactionHistoryProviderTest {
             ),
         )
     }
+
+    @Test
+    fun `token history state ignores transfers of other contracts`() = runTest {
+        coEvery {
+            api.getTokenTransactionHistory(
+                chainId = CHAIN_ID,
+                address = SAFE,
+                page = 1,
+                offset = 100,
+                apiKey = API_KEY,
+                contractAddress = USDC,
+            )
+        } returns txsResponse(
+            listOf(tokenTransfer(hash = FOREIGN_TX_HASH, contract = FOREIGN_TOKEN, value = "5675307337351213033")),
+        )
+
+        val state = provider.getTransactionHistoryState(
+            address = SAFE,
+            filterType = TransactionHistoryRequest.FilterType.Contract(USDC_TOKEN),
+        )
+
+        assertThat(state).isEqualTo(TransactionHistoryState.Success.Empty)
+    }
+
+    private fun tokenRequest() = TransactionHistoryRequest(
+        address = SAFE,
+        decimals = USDC_TOKEN.decimals,
+        page = Page.Initial,
+        pageSize = PAGE_SIZE,
+        filterType = TransactionHistoryRequest.FilterType.Contract(USDC_TOKEN),
+    )
+
+    private fun tokenTransfer(hash: String, contract: String, value: String) = PolygonTransaction(
+        confirmations = "12",
+        contractAddress = contract,
+        from = OTHER,
+        functionName = null,
+        methodId = null,
+        gasPrice = "1",
+        gasUsed = "1",
+        hash = hash,
+        isError = null,
+        timeStamp = TIMESTAMP,
+        to = SAFE,
+        txReceiptStatus = null,
+        value = value,
+        input = "0x",
+    )
 
     @Test
     fun `outside Monad a selector without a function name is not a contract call`() = runTest {
@@ -460,5 +534,10 @@ class EtherscanTransactionHistoryProviderTest {
         val MONAD_CHAIN_ID = requireNotNull(Blockchain.Monad.getChainId())
         const val TX_HASH = "0x55233c9ef541232c1a94f8b0806401e4e5188930ff0c795ffa51e96a92e53da0"
         const val TIMESTAMP = "1790025057"
+        const val USDC = "0x3355df6d4c9c3035724fd0e3914de96a5a83aaf4"
+        const val FOREIGN_TOKEN = "0x5d0d7bca050e2e98fd4a5e8d3ba823b49f39868d"
+        const val USDC_TX_HASH = "0x1dc19f03052e252d05610b4744b103cb8bc23912908ee6ff85071cd166c2614d"
+        const val FOREIGN_TX_HASH = "0x00215c0e850598a99fe01af2e0d3c0cb7b06037ce62b557f3cc94e5ee1c530b8"
+        val USDC_TOKEN = Token(symbol = "USDC.e", contractAddress = USDC, decimals = 6)
     }
 }

@@ -184,6 +184,10 @@ internal class EtherscanTransactionHistoryProvider(
         walletAddress: String,
         filterType: TransactionHistoryRequest.FilterType,
     ): TransactionHistoryItem? {
+        if (!belongsTo(filterType)) {
+            Log.info { "Transaction of another contract $contractAddress received" }
+            return null
+        }
         val transactionAmount = extractAmount(filterType = filterType).guard {
             Log.info { "Transaction with invalid value  $this received" }
             return null
@@ -201,6 +205,17 @@ internal class EtherscanTransactionHistoryProvider(
             amount = transactionAmount,
             fee = feeAmount(blockchain),
         )
+    }
+
+    /**
+     * Some Etherscan-compatible explorers ignore the contract filter of the request and return transfers of all
+     * tokens of the address, so a transfer of another token must not be mapped with the requested token's decimals.
+     */
+    private fun PolygonTransaction.belongsTo(filterType: TransactionHistoryRequest.FilterType): Boolean {
+        if (filterType !is TransactionHistoryRequest.FilterType.Contract) return true
+        val requestedContract = formatAddressIfNeeded(filterType.tokenInfo.contractAddress)
+        val transactionContract = contractAddress?.let(::formatAddressIfNeeded)
+        return transactionContract.equals(requestedContract, ignoreCase = true)
     }
 
     private fun PolygonTransaction.feeAmount(blockchain: Blockchain): Amount {

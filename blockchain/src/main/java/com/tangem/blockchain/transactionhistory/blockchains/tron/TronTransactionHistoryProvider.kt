@@ -530,11 +530,17 @@ internal class TronTransactionHistoryProvider(
         walletAddress: String,
         contractAddress: String,
     ): GetAddressResponse.Transaction.TokenTransfer? {
+        // Blockbook turns any log with the ERC-20 Transfer signature into a token transfer, so a contract anyone
+        // deploys can emit Transfer(from = wallet) next to a real leg. Only a leg of the requested token counts.
         return tokenTransfers.firstOrNull { transfer ->
-            contractAddress.equals(transfer.contract, ignoreCase = true) &&
-                walletAddress.equals(transfer.to, ignoreCase = true) ||
-                walletAddress.equals(transfer.from, ignoreCase = true)
+            transfer.isOfContract(contractAddress) &&
+                (walletAddress.equals(transfer.to, ignoreCase = true) ||
+                    walletAddress.equals(transfer.from, ignoreCase = true))
         }
+    }
+
+    private fun GetAddressResponse.Transaction.TokenTransfer.isOfContract(contractAddress: String): Boolean {
+        return contractAddress.equals(contract, ignoreCase = true) || contractAddress.equals(token, ignoreCase = true)
     }
 
     private data class Vote(val witness: String?, val count: String?)
